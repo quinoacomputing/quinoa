@@ -1012,7 +1012,7 @@ DG::next()
 // Advance equations to next time step
 // *****************************************************************************
 {
-  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
 
   if (pref && m_stage == 0) eval_ndof();
 
@@ -1057,7 +1057,7 @@ DG::comsol( int fromch,
 {
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
-  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
 
   if (pref && fromstage == 0)
     Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsol()" );
@@ -1097,6 +1097,7 @@ DG::eval_ndof()
   const auto ncomp = m_u.nprop()/ndof;
   const auto& inpoel = Disc()->Inpoel();
   const auto& coord = Disc()->Coord();
+  const auto tolref = inciter::g_inputdeck.get< tag::pref, tag::tolref >();
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -1150,7 +1151,7 @@ DG::eval_ndof()
                          + dudx[c][1] * dudx[c][1]
                          + dudx[c][2] * dudx[c][2] );
 
-        if (grad > 0.1) ++sign;
+        if (grad > tolref) ++sign;
       }
 
       if(sign > 0)
@@ -1231,7 +1232,7 @@ DG::lim()
 // Compute limiter function
 // *****************************************************************************
 {
-  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
 
   // Combine own and communicated contributions of unlimited solution and
   // degrees of freedom in cells (if p-adaptive)
@@ -1328,7 +1329,7 @@ DG::comlim( int fromch,
 {
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comlim()" );
 
-  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
 
   if (pref && m_stage == 0)
     Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comlim()" );
@@ -1362,7 +1363,7 @@ DG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
 
   auto d = Disc();
 
@@ -1444,7 +1445,7 @@ DG::solve( tk::real newdt )
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  const auto pref = inciter::g_inputdeck.get< tag::discr, tag::pref >();
+  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
   if (pref && m_stage == 0)
   {
     // When the element are coarsened, high order term should be zero
