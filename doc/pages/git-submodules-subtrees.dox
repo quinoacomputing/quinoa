@@ -1,5 +1,5 @@
 /*!
-  \page      git_submodules_subtrees Third-party libraries and external tools using git submodules and subtrees
+  \page      git_submodules_subtrees Modules
 
 Quinoa uses git _submodules_ as well as git _subtrees_ to pull in third-party
 libraries (TPLs) and auxiliary tools. This allows easy update to a TPL's (or

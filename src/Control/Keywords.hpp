@@ -5167,6 +5167,41 @@ struct amr_info {
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
+struct pref_tolref_info {
+  static std::string name() { return "Tolerance for p-refinement"; }
+  static std::string shortDescription() { return "Configure the tolerance for "
+    "p-refinement for the p-adaptive DG scheme"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a tolerance for p-adaptive
+    refinement  for the DG scheme. The keyword must be used in pref ... end
+    block. All elements with a refinement indicator larger than this tolerance
+    will be p-refined. Example specification: 'tolref 0.1'.)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
+    static std::string description() { return "real"; }
+    static std::string choices() {
+      return "real between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "] (both inclusive)";
+    }
+  };
+};
+using pref_tolref = keyword< pref_tolref_info, TAOCPP_PEGTL_STRING("tolref") >;
+
+struct pref_info {
+  static std::string name() { return "pref"; }
+  static std::string shortDescription() { return
+    "Start configuration block configuring p-adaptive refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the pref ... end block, used to
+    configure p-adaptive refinement. Keywords allowed
+    in this block: )" + std::string("\'")
+    + pref_tolref::string() + "\' | \'";
+  }
+};
+using pref = keyword< pref_info, TAOCPP_PEGTL_STRING("pref") >;
+
 struct diagcg_info {
   static std::string name() { return "CG + LW"; }
   static std::string shortDescription() { return "Select continuous Galerkin "

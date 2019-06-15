@@ -39,6 +39,7 @@ class InputDeck :
                       tag::title,      kw::title::info::expect::type,
                       tag::selected,   selects,
                       tag::amr,        amr,
+                      tag::pref,       pref,
                       tag::discr,      discretization,
                       tag::prec,       precision,
                       tag::flformat,   floatformat,
@@ -152,6 +153,8 @@ class InputDeck :
                                    kw::amr_yplus,
                                    kw::amr_zminus,
                                    kw::amr_zplus,
+                                   kw::pref,
+                                   kw::pref_tolref,
                                    kw::scheme,
                                    kw::diagcg,
                                    kw::alecg,
@@ -199,7 +202,6 @@ class InputDeck :
       set< tag::discr, tag::scheme >( SchemeType::DiagCG );
       set< tag::discr, tag::flux >( FluxType::HLLC );
       set< tag::discr, tag::ndof >( 1 );
-      set< tag::discr, tag::pref >( false );
       set< tag::discr, tag::limiter >( LimiterType::NOLIMITER );
       set< tag::discr, tag::cweight >( 1.0 );
       // Default field output file type
@@ -221,6 +223,9 @@ class InputDeck :
       set< tag::amr, tag::yplus >( rmax );
       set< tag::amr, tag::zminus >( rmax );
       set< tag::amr, tag::zplus >( rmax );
+      // Default p-refinement settings
+      set< tag::pref, tag::pref >( false );
+      set< tag::pref, tag::tolref >( 0.1 );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );
       // Default intervals
@@ -240,6 +245,7 @@ class InputDeck :
       tk::Control< tag::title,      kw::title::info::expect::type,
                    tag::selected,   selects,
                    tag::amr,        amr,
+                   tag::pref,       pref,
                    tag::discr,      discretization,
                    tag::prec,       precision,
                    tag::flformat,   floatformat,
