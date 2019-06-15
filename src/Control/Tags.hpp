@@ -92,7 +92,6 @@ struct pde {};
 struct pref {};
 struct tolref {};
 struct amr {};
-struct tolref {};
 struct tolderef {};
 struct t0ref {};
 struct dtref {};
