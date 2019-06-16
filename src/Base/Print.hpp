@@ -456,9 +456,7 @@ class Print {
                   const std::string& commit,
                   const std::string& copyright ) const
     {
-      auto ce = executable;
-      ce[0] = static_cast< char >( std::toupper( ce[0] ) );
-      stream<s>() << m_version_fmt % ce % version % commit % copyright;
+      stream<s>() << m_version_fmt % executable % version % commit % copyright;
     }
 
     //! Print license information
@@ -466,9 +464,7 @@ class Print {
     void license( const std::string& executable,
                   const std::string& license ) const
     {
-      auto ce = executable;
-      ce[0] = static_cast< char >( std::toupper( ce[0] ) );
-      stream<s>() << m_license_fmt % ce % license;
+      stream<s>() << m_license_fmt % executable % license;
     }
 
     //! Print lower and upper bounds for a keyword if defined
