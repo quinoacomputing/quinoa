@@ -453,11 +453,12 @@ class Print {
     template< Style s = VERBOSE >
     void version( const std::string& executable,
                   const std::string& version,
-                  const std::string& commit ) const
+                  const std::string& commit,
+                  const std::string& copyright ) const
     {
       auto ce = executable;
       ce[0] = static_cast< char >( std::toupper( ce[0] ) );
-      stream<s>() << m_version_fmt % ce % version % commit;
+      stream<s>() << m_version_fmt % ce % version % commit % copyright;
     }
 
     //! Print lower and upper bounds for a keyword if defined
@@ -785,7 +786,7 @@ class Print {
     mutable format m_part_underline_fmt = format("      %|=68|\n");
     mutable format m_section_underline_fmt = format("%s%s\n");
     mutable format m_version_fmt =
-              format("\nQuinoa::%s, version %s (SHA1: %s)\n\n");
+              format("\nQuinoa::%s, version %s (SHA1: %s)\n%s\n\n");
 
     // Stream objects
     std::stringstream m_null;   //!< Default verbose stream

@@ -110,7 +110,8 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   if (version)
     print.version< tk::QUIET >( tk::inciter_executable(),
                                 tk::quinoa_version(),
-                                tk::git_commit() );
+                                tk::git_commit(),
+                                tk::copyright() );
 
   // Immediately exit if any help was output or was called without any argument
   // or version info was requested with zero exit code

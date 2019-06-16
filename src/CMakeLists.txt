@@ -113,6 +113,12 @@ if (NOT ENABLE_TESTS)
   message(STATUS "Tests disabled.")
 endif()
 
+# Extract copyright info from LICENSE file
+set(LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE")
+file(STRINGS ${LICENSE} license)
+string(REGEX REPLACE "All rights reserved\.*" "All rights reserved. See --license for details." COPYRIGHT "${license}")
+string(REGEX REPLACE ";" "\\\\n" COPYRIGHT "${COPYRIGHT}")
+
 # Include third-party libraries configuration
 include(TPLs)
 
@@ -529,7 +535,7 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.hpp.in"
                 "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.hpp" )
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.cpp.in"
-                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.cpp" )
+                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.cpp" ESCAPE_QUOTES)
 
 # Remove build hostname from cmake cache
 unset(HOSTNAME CACHE)
