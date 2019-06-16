@@ -11,17 +11,12 @@
 */
 // *****************************************************************************
 
-#include <map>
-#include <ostream>
-#include <type_traits>
-
 #include "NoWarning/pegtl.hpp"
 #include "NoWarning/charm.hpp"
 
-#include "Print.hpp"
 #include "QuinoaConfig.hpp"
 #include "Exception.hpp"
-#include "HelpFactory.hpp"
+#include "Print.hpp"
 #include "Keywords.hpp"
 #include "Inciter/Types.hpp"
 #include "Inciter/CmdLine/Parser.hpp"

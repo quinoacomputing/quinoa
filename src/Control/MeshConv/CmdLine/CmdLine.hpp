@@ -42,6 +42,8 @@ class CmdLine :
                       tag::help,       bool,
                       tag::quiescence, bool,
                       tag::trace,      bool,
+                      tag::version,    bool,
+                      tag::license,    bool,
                       tag::cmdinfo,    tk::ctr::HelpFactory,
                       tag::ctrinfo,    tk::ctr::HelpFactory,
                       tag::helpkw,     tk::ctr::HelpKw,
@@ -59,6 +61,8 @@ class CmdLine :
                                      , kw::reorder
                                      , kw::quiescence
                                      , kw::trace
+                                     , kw::version
+                                     , kw::license
                                      >;
 
     //! \brief Constructor: set defaults.
@@ -88,6 +92,8 @@ class CmdLine :
                    tag::help,       bool,
                    tag::quiescence, bool,
                    tag::trace,      bool,
+                   tag::version,    bool,
+                   tag::license,    bool,
                    tag::cmdinfo,    tk::ctr::HelpFactory,
                    tag::ctrinfo,    tk::ctr::HelpFactory,
                    tag::helpkw,     tk::ctr::HelpKw,
