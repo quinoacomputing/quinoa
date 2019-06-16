@@ -76,6 +76,8 @@ class CmdLine :
       set< tag::chare >( false ); // No chare state output by default
       set< tag::reorder >( false ); // Do not reorder by default
       set< tag::trace >( true ); // Output call and stack trace by default
+      set< tag::version >( false ); // Do not display version info by default
+      set< tag::license >( false ); // Do not display license info by default
       // Initialize help: fill from own keywords
       brigand::for_each< keywords::set >( tk::ctr::Info(get<tag::cmdinfo>()) );
     }
