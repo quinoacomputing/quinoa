@@ -452,19 +452,19 @@ class Print {
     //! Print version information
     template< Style s = VERBOSE >
     void version( const std::string& executable,
-                  const std::string& version,
+                  const std::string& ver,
                   const std::string& commit,
                   const std::string& copyright ) const
     {
-      stream<s>() << m_version_fmt % executable % version % commit % copyright;
+      stream<s>() << m_version_fmt % executable % ver % commit % copyright;
     }
 
     //! Print license information
     template< Style s = VERBOSE >
     void license( const std::string& executable,
-                  const std::string& license ) const
+                  const std::string& lic ) const
     {
-      stream<s>() << m_license_fmt % executable % license;
+      stream<s>() << m_license_fmt % executable % lic;
     }
 
     //! Print lower and upper bounds for a keyword if defined
