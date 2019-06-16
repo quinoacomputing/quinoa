@@ -113,11 +113,11 @@ if (NOT ENABLE_TESTS)
   message(STATUS "Tests disabled.")
 endif()
 
-# Extract copyright info from LICENSE file
-set(LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE")
-file(STRINGS ${LICENSE} license)
-string(REGEX REPLACE "All rights reserved\.*" "All rights reserved. See --license for details." COPYRIGHT "${license}")
+# Save contents of license file and copyright info in cmake variables
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE" LICENSE)
+string(REGEX REPLACE "All rights reserved\.*" "All rights reserved. See --license for details." COPYRIGHT "${LICENSE}")
 string(REGEX REPLACE ";" "\\\\n" COPYRIGHT "${COPYRIGHT}")
+string(REGEX REPLACE ";" "\\\\n" LICENSE "${LICENSE}")
 
 # Include third-party libraries configuration
 include(TPLs)

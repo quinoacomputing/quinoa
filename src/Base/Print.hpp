@@ -461,6 +461,16 @@ class Print {
       stream<s>() << m_version_fmt % ce % version % commit % copyright;
     }
 
+    //! Print license information
+    template< Style s = VERBOSE >
+    void license( const std::string& executable,
+                  const std::string& license ) const
+    {
+      auto ce = executable;
+      ce[0] = static_cast< char >( std::toupper( ce[0] ) );
+      stream<s>() << m_license_fmt % ce % license;
+    }
+
     //! Print lower and upper bounds for a keyword if defined
     template< Style s = VERBOSE, typename Info >
     void bounds( const Info& info ) const {
@@ -787,6 +797,7 @@ class Print {
     mutable format m_section_underline_fmt = format("%s%s\n");
     mutable format m_version_fmt =
               format("\nQuinoa::%s, version %s (SHA1: %s)\n%s\n\n");
+    mutable format m_license_fmt = format("\nQuinoa::%s\n\n%s\n\n");
 
     // Stream objects
     std::stringstream m_null;   //!< Default verbose stream

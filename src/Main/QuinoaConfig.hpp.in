@@ -63,6 +63,7 @@ std::string fileconv_executable();
 std::string quinoa_version();
 std::string git_commit();
 std::string copyright();
+std::string license();
 std::string mpi_compiler();
 std::string compiler();
 std::string build_hostname();

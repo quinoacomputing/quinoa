@@ -105,7 +105,7 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   if (!helpkw.keyword.empty())
     print.helpkw< tk::QUIET >( tk::inciter_executable(), helpkw );
 
-  // See if version information was requested
+  // Print out version information if it was requested
   const auto version = cmdline.get< tag::version >();
   if (version)
     print.version< tk::QUIET >( tk::inciter_executable(),
@@ -113,10 +113,18 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
                                 tk::git_commit(),
                                 tk::copyright() );
 
+  // Print out license information if it was requested
+  const auto license = cmdline.get< tag::license >();
+  if (license)
+    print.license< tk::QUIET >( tk::inciter_executable(), tk::license() );
+
   // Immediately exit if any help was output or was called without any argument
-  // or version info was requested with zero exit code
-  if (argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty() || version)
+  // or version or license info was requested with zero exit code
+  if (argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty() || version ||
+      license)
+  {
     CkExit();
+  }
 
   // Make sure mandatory arguments are set
   auto ctralias = kw::control().alias();

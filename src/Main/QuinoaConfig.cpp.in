@@ -28,6 +28,7 @@ namespace tk {
 
 #define QUINOA_VERSION               "@MAJOR_VER@.@MINOR_VER@ (C@LACC@)"
 #define COPYRIGHT                    "@COPYRIGHT@"
+#define LICENSE                      "@LICENSE@"
 #define GIT_COMMIT                   "@GIT_SHA1@"
 #define MPI_COMPILER                 "@MPI_COMPILER@"
 #define COMPILER                     "@COMPILER@"
@@ -48,6 +49,7 @@ std::string fileconv_executable() { return FILECONV_EXECUTABLE; }
 std::string quinoa_version() { return QUINOA_VERSION; }
 std::string git_commit() { return GIT_COMMIT; }
 std::string copyright() { return COPYRIGHT; }
+std::string license() { return LICENSE; }
 std::string mpi_compiler() { return MPI_COMPILER; }
 std::string compiler() { return COMPILER; }
 std::string build_hostname() { return BUILD_HOSTNAME; }
