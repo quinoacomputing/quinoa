@@ -33,6 +33,7 @@ rngtest_design page.
 \subpage rngtest_examples
 
 @section rngtest_pages Related pages
+- @ref rngtest_cmd
 - @ref roadmap_rngtest "Roadmap"
 - @ref rngtest_design
 - @ref rngs_input

@@ -23,6 +23,7 @@ directories under src/UnitTest/tests mirroring the directories of the tested
 code.
 
 @section unittest_pages Related pages
+- @ref unittest_cmd
 - @ref roadmap_unittest "Roadmap"
 
 */

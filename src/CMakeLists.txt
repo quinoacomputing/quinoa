@@ -525,7 +525,7 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${UNITTEST_EXECUTABLE}
                 ${FILECONV_EXECUTABLE})
 
-# Configure cmake variable to pass to the code
+# Configure cmake variables to pass to the build
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.hpp.in"
                 "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.hpp" )
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.cpp.in"
@@ -623,7 +623,7 @@ if (NOT BUILD_SHARED_LIBS)
   endforeach()
 endif()
 
-# Add a target to generate API documentation with Doxygen
+# Add a target to generate documentation using doxygen and m.css
 find_package(Doxygen 1.8.15)
 find_package(MCSS)
 if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
@@ -634,7 +634,10 @@ if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
   find_program( XARGS xargs )
   find_program( GIT git )
   find_program( HEAD head )
-  find_program( RECENT_MODS ${CMAKE_CURRENT_SOURCE_DIR}/../tools/recent_mods.sh )
+  find_program( RECENT_MODS
+                ${CMAKE_CURRENT_SOURCE_DIR}/../tools/recent_mods.sh )
+  find_program( EXTRACT_KEYWORDS
+                ${CMAKE_CURRENT_SOURCE_DIR}/../tools/extract_keywords.sh )
 
   if (PERL AND AWK AND XARGS AND GIT AND HEAD AND RECENT_MODS)
 
@@ -647,16 +650,29 @@ if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
       configure_file(${page} ${CMAKE_CURRENT_BINARY_DIR}/doc/${page} @ONLY)
     endforeach()
 
+    set(executables_keywords)
+    foreach(exe IN LISTS EXECUTABLES)
+      add_custom_target(${exe}_keywords
+                        DEPENDS ${exe} ${doc_pages}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                        COMMAND ${EXTRACT_KEYWORDS} ${exe}
+                        COMMENT "Extract ${exe}'s keywords for the docs")
+      list(APPEND executables_keywords "${exe}_keywords")
+    endforeach()
+ 
     add_custom_command(OUTPUT xml
                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
+                               ${executables_keywords}
                        COMMAND ${RECENT_MODS} ${CMAKE_CURRENT_SOURCE_DIR}/..
                        COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
                        COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa.doxy
                        VERBATIM USES_TERMINAL)
+
     add_custom_target(doc DEPENDS xml
                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                       COMMENT "Documentation")
+
     message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
 
   endif()
