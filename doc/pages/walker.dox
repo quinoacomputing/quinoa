@@ -228,6 +228,7 @@ beta variables are mass-fractions. For more details on the beta SDE, see
 
 @section walker_pages Related pages
 - @ref walker_cmd "Command line arguments"
+- @ref walker_ctr "Control file keywords"
 - @ref papers_walker "Publications"
 - @ref roadmap_walker "Roadmap"
 - @ref diffeq

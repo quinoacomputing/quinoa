@@ -636,8 +636,10 @@ if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
   find_program( HEAD head )
   find_program( RECENT_MODS
                 ${CMAKE_CURRENT_SOURCE_DIR}/../tools/recent_mods.sh )
-  find_program( EXTRACT_KEYWORDS
-                ${CMAKE_CURRENT_SOURCE_DIR}/../tools/extract_keywords.sh )
+  find_program( EXTRACT_CMD_KEYWORDS
+                ${CMAKE_CURRENT_SOURCE_DIR}/../tools/extract_cmd_keywords.sh )
+  find_program( EXTRACT_CTR_KEYWORDS
+                ${CMAKE_CURRENT_SOURCE_DIR}/../tools/extract_ctr_keywords.sh )
 
   if (PERL AND AWK AND XARGS AND GIT AND HEAD AND RECENT_MODS)
 
@@ -650,20 +652,35 @@ if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
       configure_file(${page} ${CMAKE_CURRENT_BINARY_DIR}/doc/${page} @ONLY)
     endforeach()
 
-    set(executables_keywords)
+    # Generate targets <executable>_cmd_keywords for extracting and generating
+    # reference documentation pages for command line keywords
+    set(executables_cmd_keywords)
     foreach(exe IN LISTS EXECUTABLES)
-      add_custom_target(${exe}_keywords
+      add_custom_target(${exe}_cmd_keywords
                         DEPENDS ${exe} ${doc_pages}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
-                        COMMAND ${EXTRACT_KEYWORDS} ${exe}
-                        COMMENT "Extract ${exe}'s keywords for the docs")
-      list(APPEND executables_keywords "${exe}_keywords")
+                        COMMAND ${EXTRACT_CMD_KEYWORDS} ${exe}
+                        COMMENT "Extract ${exe}'s command-line keywords")
+      list(APPEND executables_cmd_keywords "${exe}_cmd_keywords")
     endforeach()
- 
+
+    # Generate targets <executable>_ctr_keywords for extracting and generating
+    # reference documentation pages for control file keywords
+    set(executables_ctr_keywords)
+    foreach(exe IN LISTS EXECUTABLES)
+      add_custom_target(${exe}_ctr_keywords
+                        DEPENDS ${exe} ${doc_pages}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                        COMMAND ${EXTRACT_CTR_KEYWORDS} ${exe}
+                        COMMENT "Extract ${exe}'s control file keywords")
+      list(APPEND executables_ctr_keywords "${exe}_ctr_keywords")
+    endforeach()
+
     add_custom_command(OUTPUT xml
                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
-                               ${executables_keywords}
+                               ${executables_cmd_keywords}
+                               ${executables_ctr_keywords}
                        COMMAND ${RECENT_MODS} ${CMAKE_CURRENT_SOURCE_DIR}/..
                        COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
                        COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa.doxy

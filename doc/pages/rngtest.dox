@@ -31,6 +31,7 @@ rngtest_design page.
 
 @section rngtest_pages Related pages
 - @ref rngtest_cmd "Command line arguments"
+- @ref rngtest_ctr "Control file keywords"
 - @ref roadmap_rngtest "Roadmap"
 - @ref rngtest_design
 - @ref rngs_input

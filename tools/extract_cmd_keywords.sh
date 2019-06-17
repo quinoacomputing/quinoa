@@ -1,7 +1,7 @@
 #!/bin/bash -e
 ################################################################################
 #
-# \file      tools/extract_keywords.sh
+# \file      tools/extract_cmd_keywords.sh
 # \brief     Generate documentation pages for command line keywords
 # \copyright 2012-2015 J. Bakosi,
 #            2016-2018 Los Alamos National Security, LLC.,
