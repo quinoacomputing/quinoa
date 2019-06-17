@@ -30,7 +30,7 @@ More details on the software architecture can be found on the @ref
 rngtest_design page.
 
 @section rngtest_pages Related pages
-- @ref rngtest_cmd
+- @ref rngtest_cmd "Command line arguments"
 - @ref roadmap_rngtest "Roadmap"
 - @ref rngtest_design
 - @ref rngs_input

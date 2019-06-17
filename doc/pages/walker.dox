@@ -227,7 +227,7 @@ beta variables are mass-fractions. For more details on the beta SDE, see
    - For coefficients policies, see DiffEq/Beta/MixMassFractionBetaCoeffPolicy.hpp.
 
 @section walker_pages Related pages
-- @ref walker_cmd
+- @ref walker_cmd "Command line arguments"
 - @ref papers_walker "Publications"
 - @ref roadmap_walker "Roadmap"
 - @ref diffeq

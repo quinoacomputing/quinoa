@@ -31,7 +31,7 @@ codes, to large problems on large computers using Charm++'s automatic load
 balancing capabilities.
 
 @section inciter_pages Related pages
-- @ref inciter_cmd
+- @ref inciter_cmd "Command line arguments"
 - @ref papers_inciter "Publications"
 - @ref roadmap_inciter "Roadmap"
 - @ref inciter_performance "Performance"
