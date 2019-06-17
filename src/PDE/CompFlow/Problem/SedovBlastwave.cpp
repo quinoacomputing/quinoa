@@ -69,7 +69,7 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
     w = 0.0;
   }
   // total specific energy
-  rE = eos_totalenergy( system, r, r*u, r*v, r*w, p );
+  rE = eos_totalenergy< eq >( system, r, r*u, r*v, r*w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -246,7 +246,7 @@ CompFlowProblemSedovBlastwave::fieldOutput(
 
   std::vector< tk::real > P( r.size(), 0.0 );
   for (std::size_t i=0; i<P.size(); ++i)
-    P[i] = eos_pressure( system, r[i], ru[i], rv[i], rw[i], re[i] );
+    P[i] = eos_pressure< eq >( system, r[i], ru[i], rv[i], rw[i], re[i] );
   out.push_back( P );
   //out.push_back( Pa );
 

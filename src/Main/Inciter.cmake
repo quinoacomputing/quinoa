@@ -17,7 +17,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       CompFlowProblem
                       MultiMatProblem
                       CGCompFlowPhysics
-                      EoS
                       Integrate
                       MeshRefinement
                       LoadBalance

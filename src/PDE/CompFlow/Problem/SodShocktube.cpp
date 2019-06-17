@@ -68,7 +68,7 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
     w = 0.0;
   }
   // total specific energy
-  rE = eos_totalenergy( system, r, r*u, r*v, r*w, p );
+  rE = eos_totalenergy< eq >( system, r, r*u, r*v, r*w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -246,7 +246,7 @@ CompFlowProblemSodShocktube::fieldOutput(
 
   std::vector< tk::real > P( r.size(), 0.0 );
   for (std::size_t i=0; i<P.size(); ++i)
-    P[i] = eos_pressure( system, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
+    P[i] = eos_pressure< eq >( system, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
                          r[i]*E[i] );
   out.push_back( P );
   //out.push_back( Pa );

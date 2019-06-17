@@ -44,11 +44,13 @@ struct LaxFriedrichs {
     auto rhol = u[0][0];
     auto rhor = u[1][0];
 
-    auto pl = eos_pressure( 0, rhol, u[0][1], u[0][2], u[0][3], u[0][4] );
-    auto pr = eos_pressure( 0, rhor, u[1][1], u[1][2], u[1][3], u[1][4] );
+    auto pl = eos_pressure< tag::compflow >( 0, rhol, u[0][1], u[0][2], u[0][3],
+                                             u[0][4] );
+    auto pr = eos_pressure< tag::compflow >( 0, rhor, u[1][1], u[1][2], u[1][3],
+                                             u[1][4] );
 
-    auto al = eos_soundspeed( 0, rhol, pl );
-    auto ar = eos_soundspeed( 0, rhor, pr );
+    auto al = eos_soundspeed< tag::compflow >( 0, rhol, pl );
+    auto ar = eos_soundspeed< tag::compflow >( 0, rhor, pr );
 
     // Face-normal velocities
     auto ul = u[0][1]/rhol;

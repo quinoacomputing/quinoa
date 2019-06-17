@@ -67,8 +67,8 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
   s[4] = (s[2]+s[3]) * u;
   s[5] = (s[2]+s[3]) * v;
   s[6] = (s[2]+s[3]) * w;
-  s[7] = s[0] * eos_totalenergy( system, 1.0, u, v, w, 1.0e5, 0 );
-  s[8] = s[1] * eos_totalenergy( system, 1.0, u, v, w, 1.0e5, 1 );
+  s[7] = s[0] * eos_totalenergy< eq >( system, 1.0, u, v, w, 1.0e5, 0 );
+  s[8] = s[1] * eos_totalenergy< eq >( system, 1.0, u, v, w, 1.0e5, 1 );
 
   return s;
 }
@@ -246,8 +246,10 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
   std::vector< tk::real > P( r.size(), 0.0 );
   for (std::size_t i=0; i<P.size(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)
-      P[i] += al[k][i] * eos_pressure( system, ar[k][i]/al[k][i], ru[i], rv[i],
-                                       rw[i], ae[k][i]/al[k][i], k );
+      P[i] += al[k][i] * eos_pressure< eq >( system, ar[k][i]/al[k][i], ru[i],
+                                             rv[i],
+                                             rw[i],
+                                             ae[k][i]/al[k][i], k );
   }
   out.push_back( P );
 

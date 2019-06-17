@@ -153,7 +153,8 @@ CompFlowProblemUserDefined::fieldOutput(
 
   std::vector< tk::real > p = r;
   for (std::size_t i=0; i<p.size(); ++i)
-    p[i] = eos_pressure( 0, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i], r[i]*E[i] );
+    p[i] = eos_pressure< eq >( 0, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
+                               r[i]*E[i] );
   out.push_back( p );
 
   std::vector< tk::real > T = r;

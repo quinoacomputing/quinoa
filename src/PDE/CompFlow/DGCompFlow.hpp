@@ -287,9 +287,11 @@ class CompFlow {
           v = ugp[0][2]/rho;
           w = ugp[0][3]/rho;
           rhoE = ugp[0][4];
-          p = eos_pressure( 0, rho, ugp[0][1], ugp[0][2], ugp[0][3], rhoE );
+          p = eos_pressure< tag::compflow >
+                ( 0, rho, ugp[0][1], ugp[0][2], ugp[0][3], rhoE );
 
-          a = eos_soundspeed( 0, rho, p );
+          a = eos_soundspeed< tag::compflow >
+                ( 0, rho, p );
 
           vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
 
@@ -336,9 +338,11 @@ class CompFlow {
             v = ugp[1][2]/rho;
             w = ugp[1][3]/rho;
             rhoE = ugp[1][4];
-            p = eos_pressure( 0, rho, ugp[1][1], ugp[1][2], ugp[1][3], rhoE );
+            p = eos_pressure< tag::compflow >
+                  ( 0, rho, ugp[1][1], ugp[1][2], ugp[1][3], rhoE );
 
-            a = eos_soundspeed( 0, rho, p );
+            a = eos_soundspeed< tag::compflow >
+                  ( 0, rho, p );
 
             vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
 
@@ -486,7 +490,8 @@ class CompFlow {
           auto u = ugp[1] / ugp[0];
           auto v = ugp[2] / ugp[0];
           auto w = ugp[3] / ugp[0];
-          auto p = eos_pressure( 0, ugp[0], ugp[1], ugp[2], ugp[3], ugp[4] );
+          auto p = eos_pressure< tag::compflow >
+                     ( 0, ugp[0], ugp[1], ugp[2], ugp[3], ugp[4] );
 
           out[0][ inpoel[4*e+i] ] += ugp[0];
           out[1][ inpoel[4*e+i] ] += u;
@@ -563,7 +568,8 @@ class CompFlow {
       auto u = ugp[1] / ugp[0];
       auto v = ugp[2] / ugp[0];
       auto w = ugp[3] / ugp[0];
-      auto p = eos_pressure( system, ugp[0], ugp[1], ugp[2], ugp[3], ugp[4] );
+      auto p = eos_pressure< tag::compflow >
+                 ( system, ugp[0], ugp[1], ugp[2], ugp[3], ugp[4] );
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 

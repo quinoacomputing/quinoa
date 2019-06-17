@@ -14,35 +14,110 @@
 #define EoS_h
 
 #include "Data.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
+extern ctr::InputDeck g_inputdeck;
+
 using ncomp_t = kw::ncomp::info::expect::type;
 
-  //! \brief Calculate pressure from the material density, momentum and total energy
-  //!   using the stiffened-gas equation of state
-  tk::real eos_pressure( ncomp_t system,
+  //! \brief Calculate pressure from the material density, momentum and total
+  //!   energy using the stiffened-gas equation of state
+  template< class T > tk::real eos_pressure( ncomp_t system,
                          tk::real rho,
                          tk::real rhou,
                          tk::real rhov,
                          tk::real rhow,
                          tk::real rhoE,
-                         std::size_t imat=0 );
+                         std::size_t imat=0 )
+  // ***************************************************************************
+  //! \brief Calculate pressure from the material density, momentum and total
+  //!   energy using the stiffened-gas equation of state
+  //! \param[in] system Equation system index
+  //! \param[in] rho Material density
+  //! \param[in] rhou X-momentum
+  //! \param[in] rhov Y-momentum
+  //! \param[in] rhow Z-momentum
+  //! \param[in] rhoE Material total energy
+  //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+  //!   for the single-material system, this argument can be left unspecified by
+  //!   the calling code
+  //! \return Material pressure calculated using the stiffened-gas EoS
+  // ***************************************************************************
+  {
+    // query input deck to get gamma, p_c
+    auto g =
+      g_inputdeck.get< tag::param, T, tag::gamma >()[ system ][imat];
+    auto p_c =
+      g_inputdeck.get< tag::param, T, tag::pstiff >()[ system ][imat];
+
+    tk::real pressure = (rhoE - 0.5 * (rhou*rhou +
+                                       rhov*rhov +
+                                       rhow*rhow) / rho - p_c)* (g-1.0) - p_c;
+    return pressure;
+  }
 
   //! Calculate speed of sound from the material density and material pressure
-  tk::real eos_soundspeed( ncomp_t system, tk::real rho, tk::real pr,
-                           std::size_t imat=0 );
+  template< class T > tk::real eos_soundspeed( ncomp_t system,
+                                               tk::real rho, tk::real pr,
+                                               std::size_t imat=0 )
+  // ***************************************************************************
+  //  Calculate speed of sound from the material density and material pressure
+  //! \param[in] system Equation system index
+  //! \param[in] rho Material density
+  //! \param[in] pr Material pressure
+  //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+  //!   for the single-material system, this argument can be left unspecified by
+  //!   the calling code
+  //! \return Material speed of sound using the stiffened-gas EoS
+  // ***************************************************************************
+  {
+    // query input deck to get gamma, p_c
+    auto g =
+      g_inputdeck.get< tag::param, T, tag::gamma >()[ system ][imat];
+    auto p_c =
+      g_inputdeck.get< tag::param, T, tag::pstiff >()[ system ][imat];
 
+    tk::real a = std::sqrt( g * (pr+p_c) / rho );
+    return a;
+  }
 
   //! \brief Calculate material specific total energy from the material density,
   //!   momentum and material pressure
-  tk::real eos_totalenergy( ncomp_t system,
+  template< class T > tk::real eos_totalenergy( ncomp_t system,
                             tk::real rho,
                             tk::real rhou,
                             tk::real rhov,
                             tk::real rhow,
                             tk::real pr,
-                            std::size_t imat=0 );
+                            std::size_t imat=0 )
+  // ***************************************************************************
+  //  \brief Calculate material specific total energy from the material density,
+  //    momentum and material pressure using the stiffened-gas equation of state
+  //! \param[in] system Equation system index
+  //! \param[in] rho Material density
+  //! \param[in] rhou X-momentum
+  //! \param[in] rhov Y-momentum
+  //! \param[in] rhow Z-momentum
+  //! \param[in] pr Material pressure
+  //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+  //!   for the single-material system, this argument can be left unspecified by
+  //!   the calling code
+  //! \return Material specific total energy using the stiffened-gas EoS
+  // ***************************************************************************
+  {
+    // query input deck to get gamma, p_c
+    auto g =
+      g_inputdeck.get< tag::param, T, tag::gamma >()[ system ][imat];
+    auto p_c =
+      g_inputdeck.get< tag::param, T, tag::pstiff >()[ system ][imat];
+
+    tk::real rhoE = (pr + p_c) / (g-1.0) + 0.5 * (rhou*rhou +
+                                                  rhov*rhov +
+                                                  rhow*rhow) / rho + p_c;
+    return rhoE;
+  }
 
 } //inciter::
 

@@ -35,6 +35,7 @@ class CompFlowProblemVorticalFlow {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::compflow;
 
   public:
     //! Evaluate analytical solution at (x,y,z) for all components

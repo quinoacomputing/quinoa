@@ -31,6 +31,7 @@ class MultiMatProblemUserDefined {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
+    using eq = tag::compflow;
 
   public:
     //! Evaluate initial condition solution at (x,y,z,t) for all components
@@ -137,7 +138,7 @@ class MultiMatProblemUserDefined {
       out.push_back( E );
       std::vector< tk::real > p = r;
       for (std::size_t i=0; i<p.size(); ++i)
-        p[i] = eos_pressure( 0, r[i], ru[i], rv[i], rw[i], re[i] );
+        p[i] = eos_pressure< eq >( 0, r[i], ru[i], rv[i], rw[i], re[i] );
       out.push_back( p );
       std::vector< tk::real > T = r;
       tk::real cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0][0];
