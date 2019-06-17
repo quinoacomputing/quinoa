@@ -29,12 +29,10 @@ times, independent of the time taken by the individual tests.
 More details on the software architecture can be found on the @ref
 rngtest_design page.
 
-@section rngtest_ex Examples
-\subpage rngtest_examples
-
 @section rngtest_pages Related pages
 - @ref rngtest_cmd
 - @ref roadmap_rngtest "Roadmap"
 - @ref rngtest_design
 - @ref rngs_input
+- @ref rngtest_examples "Examples"
 */
