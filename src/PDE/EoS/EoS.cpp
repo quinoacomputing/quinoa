@@ -26,7 +26,7 @@ tk::real inciter::eos_pressure( ncomp_t system,
                                 tk::real rhov,
                                 tk::real rhow,
                                 tk::real rhoE,
-                                int imat )
+                                std::size_t imat )
 // *****************************************************************************
 //  \brief Calculate pressure from the material density, momentum and total energy
 //    using the stiffened-gas equation of state
@@ -55,7 +55,7 @@ tk::real inciter::eos_pressure( ncomp_t system,
 }
 
 tk::real inciter::eos_soundspeed( ncomp_t system, tk::real rho, tk::real pr,
-                                  int imat )
+                                  std::size_t imat )
 // *****************************************************************************
 //  Calculate speed of sound from the material density and material pressure
 //! \param[in] system Equation system index
@@ -83,7 +83,7 @@ tk::real inciter::eos_totalenergy( ncomp_t system,
                                    tk::real rhov,
                                    tk::real rhow,
                                    tk::real pr,
-                                   int imat )
+                                   std::size_t imat )
 // *****************************************************************************
 //  \brief Calculate material specific total energy from the material density,
 //    momentum and material pressure using the stiffened-gas equation of state
