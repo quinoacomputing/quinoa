@@ -11,14 +11,9 @@
 */
 // *****************************************************************************
 
-#include <map>
-#include <ostream>
-#include <type_traits>
-
 #include "NoWarning/pegtl.hpp"
 
 #include "Print.hpp"
-#include "HelpFactory.hpp"
 #include "UnitTest/Types.hpp"
 #include "UnitTest/CmdLine/Parser.hpp"
 #include "UnitTest/CmdLine/Grammar.hpp"
@@ -89,9 +84,23 @@ CmdLineParser::CmdLineParser( int argc,
   if (!helpkw.keyword.empty())
     print.helpkw< tk::QUIET >( tk::unittest_executable(), helpkw );
 
+  // Print out version information if it was requested
+  const auto version = cmdline.get< tag::version >();
+  if (version)
+    print.version< tk::QUIET >( tk::unittest_executable(),
+                                tk::quinoa_version(),
+                                tk::git_commit(),
+                                tk::copyright() );
+
+  // Print out license information if it was requested
+  const auto license = cmdline.get< tag::license >();
+  if (license)
+    print.license< tk::QUIET >( tk::unittest_executable(), tk::license() );
+
   // Will exit in main chare constructor if any help was output
   if (cmdline.get< tag::help >() ||           // help on all cmdline args
-      !cmdline.get< tag::helpkw >().keyword.empty()) // help on a keyword
+      !cmdline.get< tag::helpkw >().keyword.empty() || // help on a keyword
+      version || license)                     // version or license output
     helped = true;
   else
     helped = false;
