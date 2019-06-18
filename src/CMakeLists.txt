@@ -118,6 +118,7 @@ file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE" LICENSE)
 string(REGEX REPLACE "All rights reserved\.*" "All rights reserved. See --license for details." COPYRIGHT "${LICENSE}")
 string(REGEX REPLACE ";" "\\\\n" COPYRIGHT "${COPYRIGHT}")
 string(REGEX REPLACE ";" "\\\\n" LICENSE "${LICENSE}")
+string(APPEND LICENSE "\\n\\nFor third-party licenses, see https://quinoacomputing.org/licenses.html")
 
 # Include third-party libraries configuration
 include(TPLs)
