@@ -21,6 +21,7 @@ ARG SMP
 
 ENV PATH=/opt/openmpi/${COMPILER}/bin:$PATH
 ENV RUNNER_ARGS="--bind-to none -oversubscribe"
+ENV OMPI_MCA_btl_base_warn_component_unused="0"
 
 USER quinoa
 COPY . /home/quinoa/
