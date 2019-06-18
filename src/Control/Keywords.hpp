@@ -3982,7 +3982,8 @@ struct problem_info {
                   + rayleigh_taylor::string() + "\' | \'"
                   + taylor_green::string() + "\' | \'"
                   + sod_shocktube::string() + "\' | \'"
-                  + rotated_sod_shocktube::string() + '\'';
+                  + rotated_sod_shocktube::string() + "\' | \'"
+                  + interface_advection::string() + '\'';
     }
   };
 };
