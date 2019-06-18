@@ -10,18 +10,12 @@
 */
 // *****************************************************************************
 
-#include <map>
-#include <ostream>
-#include <string>
-#include <type_traits>
-
 #include "NoWarning/pegtl.hpp"
 #include "NoWarning/charm.hpp"
 
 #include "Print.hpp"
 #include "QuinoaConfig.hpp"
 #include "Exception.hpp"
-#include "HelpFactory.hpp"
 #include "Keywords.hpp"
 #include "Walker/Types.hpp"
 #include "Walker/CmdLine/Parser.hpp"
@@ -105,9 +99,26 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   if (!helpkw.keyword.empty())
     print.helpkw< tk::QUIET >( tk::walker_executable(), helpkw );
 
+  // Print out version information if it was requested
+  const auto version = cmdline.get< tag::version >();
+  if (version)
+    print.version< tk::QUIET >( tk::walker_executable(),
+                                tk::quinoa_version(),
+                                tk::git_commit(),
+                                tk::copyright() );
+
+  // Print out license information if it was requested
+  const auto license = cmdline.get< tag::license >();
+  if (license)
+    print.license< tk::QUIET >( tk::walker_executable(), tk::license() );
+
   // Immediately exit if any help was output or was called without any argument
-  // with zero exit code
-  if (argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty()) CkExit();
+  // or version or license info was requested with zero exit code
+  if (argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty() || version ||
+      license)
+  {
+    CkExit();
+  }
 
   // Make sure mandatory arguments are set
   auto alias = kw::control().alias();
