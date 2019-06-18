@@ -76,7 +76,7 @@ struct AUSM {
                                           k );
       pl += al_l[k] * pk;
       hml[k] = u[0][2*nmat+3+k] + al_l[k]*pk;
-      amatl = eos_soundspeed< tag::multimat >( 0, u[0][nmat+k], pk, k );
+      amatl = eos_soundspeed< tag::multimat >( 0, u[0][nmat+k]/al_l[k], pk, k );
 
       al_r[k] = u[1][k];
       pk = eos_pressure< tag::multimat >( 0, u[1][nmat+k]/al_r[k],
@@ -85,7 +85,7 @@ struct AUSM {
                                           k );
       pr += al_r[k] * pk;
       hmr[k] = u[1][2*nmat+3+k] + al_r[k]*pk;
-      amatr = eos_soundspeed< tag::multimat >( 0, u[1][nmat+k], pk, k );
+      amatr = eos_soundspeed< tag::multimat >( 0, u[1][nmat+k]/al_r[k], pk, k );
 
       // Average states for mixture speed of sound
       al_12[k] = 0.5*(al_l[k]+al_r[k]);
