@@ -74,6 +74,16 @@ namespace cmd {
          tk::grm::process_cmd_switch< use, kw::trace,
                                       tag::trace > {};
 
+  //! Match switch on version output
+  struct version :
+         tk::grm::process_cmd_switch< use, kw::version,
+                                      tag::version > {};
+
+  //! Match switch on license output
+  struct license :
+         tk::grm::process_cmd_switch< use, kw::license,
+                                      tag::license > {};
+
   //! Match all command line keywords
   struct keywords :
          pegtl::sor< verbose,
@@ -83,7 +93,9 @@ namespace cmd {
                      helpctr,
                      helpkw,
                      quiescence,
-                     trace > {};
+                     trace,
+                     version,
+                     license > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :
