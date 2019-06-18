@@ -20,6 +20,8 @@ struct high {};
 struct io {};
 struct quiescence {};
 struct trace {};
+struct version {};
+struct license {};
 struct input {};
 struct output {};
 struct restart {};
