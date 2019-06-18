@@ -3500,8 +3500,29 @@ struct feedback_info {
   }
   using alias = Alias< f >;
 };
-
 using feedback = keyword< feedback_info, TAOCPP_PEGTL_STRING("feedback") >;
+
+struct version_info {
+  static std::string name() { return "Show version"; }
+  static std::string shortDescription() { return "Show version information"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to display version information for the
+       executable/tool on the standard output and exit successfully.)";
+  }
+  using alias = Alias< V >;
+};
+using version = keyword< version_info, TAOCPP_PEGTL_STRING("version") >;
+
+struct license_info {
+  static std::string name() { return "Show license"; }
+  static std::string shortDescription() { return "Show license information"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to display license information for the
+       executable/tool on the standard output and exit successfully.)";
+  }
+  using alias = Alias< L >;
+};
+using license = keyword< license_info, TAOCPP_PEGTL_STRING("license") >;
 
 struct trace_info {
   static std::string name() { return "trace"; }
@@ -3514,7 +3535,6 @@ struct trace_info {
     option.)"; }
   using alias = Alias< t >;
 };
-
 using trace = keyword< trace_info, TAOCPP_PEGTL_STRING("trace") >;
 
 struct quiescence_info {
@@ -3529,7 +3549,6 @@ struct quiescence_info {
   }
   using alias = Alias< q >;
 };
-
 using quiescence =
   keyword< quiescence_info, TAOCPP_PEGTL_STRING("quiescence") >;
 

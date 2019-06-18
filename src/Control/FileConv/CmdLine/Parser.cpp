@@ -11,19 +11,13 @@
 */
 // *****************************************************************************
 
-#include <map>
-#include <ostream>
-#include <string>
-#include <type_traits>
-
 #include "NoWarning/pegtl.hpp"
-
 #include "NoWarning/charm.hpp"
+
 #include "QuinoaConfig.hpp"
 #include "Exception.hpp"
 #include "Print.hpp"
 #include "Keywords.hpp"
-#include "HelpFactory.hpp"
 #include "FileConv/Types.hpp"
 #include "FileConv/CmdLine/Parser.hpp"
 #include "FileConv/CmdLine/Grammar.hpp"
@@ -82,12 +76,33 @@ CmdLineParser::CmdLineParser( int argc,
   // Print out help on all command-line arguments if the executable was invoked
   // without arguments or the help was requested
   const auto helpcmd = cmdline.get< tag::help >();
+  if (argc == 1 || helpcmd)
+    print.help< tk::QUIET >( tk::fileconv_executable(),
+                             cmdline.get< tag::cmdinfo >(),
+                             "Command-line Parameters:", "-" );
 
+  // Print out verbose help for a single keyword if requested
   const auto helpkw = cmdline.get< tag::helpkw >();
+  if (!helpkw.keyword.empty())
+    print.helpkw< tk::QUIET >( tk::fileconv_executable(), helpkw );
+
+  // Print out version information if it was requested
+  const auto version = cmdline.get< tag::version >();
+  if (version)
+    print.version< tk::QUIET >( tk::fileconv_executable(),
+                                tk::quinoa_version(),
+                                tk::git_commit(),
+                                tk::copyright() );
+
+  // Print out license information if it was requested
+  const auto license = cmdline.get< tag::license >();
+  if (license)
+    print.license< tk::QUIET >( tk::fileconv_executable(), tk::license() );
 
   // Immediately exit if any help was output or was called without any argument
-  // with zero exit code
-  if (argc == 1 || helpcmd || !helpkw.keyword.empty()) CkExit();
+  // or version or license info was requested with zero exit code
+  if (argc == 1 || helpcmd || !helpkw.keyword.empty() || version || license)
+    CkExit();
 
   // Make sure mandatory arguments are set
   auto ialias = kw::input().alias();
