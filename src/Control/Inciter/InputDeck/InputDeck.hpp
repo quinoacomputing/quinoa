@@ -163,6 +163,7 @@ class InputDeck :
                                    kw::laxfriedrichs,
                                    kw::hllc,
                                    kw::upwind,
+                                   kw::ausm,
                                    kw::limiter,
                                    kw::cweight,
                                    kw::nolimiter,

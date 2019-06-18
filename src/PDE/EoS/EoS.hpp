@@ -26,9 +26,9 @@ using ncomp_t = kw::ncomp::info::expect::type;
   //!   energy using the stiffened-gas equation of state
   template< class T > tk::real eos_pressure( ncomp_t system,
                          tk::real rho,
-                         tk::real rhou,
-                         tk::real rhov,
-                         tk::real rhow,
+                         tk::real u,
+                         tk::real v,
+                         tk::real w,
                          tk::real rhoE,
                          std::size_t imat=0 )
   // ***************************************************************************
@@ -36,9 +36,9 @@ using ncomp_t = kw::ncomp::info::expect::type;
   //!   energy using the stiffened-gas equation of state
   //! \param[in] system Equation system index
   //! \param[in] rho Material density
-  //! \param[in] rhou X-momentum
-  //! \param[in] rhov Y-momentum
-  //! \param[in] rhow Z-momentum
+  //! \param[in] u X-velocity
+  //! \param[in] v Y-velocity
+  //! \param[in] w Z-velocity
   //! \param[in] rhoE Material total energy
   //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
   //!   for the single-material system, this argument can be left unspecified by
@@ -52,9 +52,8 @@ using ncomp_t = kw::ncomp::info::expect::type;
     auto p_c =
       g_inputdeck.get< tag::param, T, tag::pstiff >()[ system ][imat];
 
-    tk::real pressure = (rhoE - 0.5 * (rhou*rhou +
-                                       rhov*rhov +
-                                       rhow*rhow) / rho - p_c)* (g-1.0) - p_c;
+    tk::real pressure = (rhoE - 0.5 * rho * (u*u + v*v + w*w) - p_c)
+                        * (g-1.0) - p_c;
     return pressure;
   }
 
@@ -87,9 +86,9 @@ using ncomp_t = kw::ncomp::info::expect::type;
   //!   momentum and material pressure
   template< class T > tk::real eos_totalenergy( ncomp_t system,
                             tk::real rho,
-                            tk::real rhou,
-                            tk::real rhov,
-                            tk::real rhow,
+                            tk::real u,
+                            tk::real v,
+                            tk::real w,
                             tk::real pr,
                             std::size_t imat=0 )
   // ***************************************************************************
@@ -97,9 +96,9 @@ using ncomp_t = kw::ncomp::info::expect::type;
   //    momentum and material pressure using the stiffened-gas equation of state
   //! \param[in] system Equation system index
   //! \param[in] rho Material density
-  //! \param[in] rhou X-momentum
-  //! \param[in] rhov Y-momentum
-  //! \param[in] rhow Z-momentum
+  //! \param[in] u X-velocity
+  //! \param[in] v Y-velocity
+  //! \param[in] w Z-velocity
   //! \param[in] pr Material pressure
   //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
   //!   for the single-material system, this argument can be left unspecified by
@@ -113,9 +112,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
     auto p_c =
       g_inputdeck.get< tag::param, T, tag::pstiff >()[ system ][imat];
 
-    tk::real rhoE = (pr + p_c) / (g-1.0) + 0.5 * (rhou*rhou +
-                                                  rhov*rhov +
-                                                  rhow*rhow) / rho + p_c;
+    tk::real rhoE = (pr + p_c) / (g-1.0) + 0.5 * rho * (u*u + v*v + w*w) + p_c;
     return rhoE;
   }
 

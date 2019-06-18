@@ -66,7 +66,7 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
   const tk::real v = ft*z*cos(M_PI*y);
   const tk::real w = ft*(-0.5*M_PI*z*z*(cos(M_PI*x)-sin(M_PI*y)));
   // total specific energy
-  const tk::real rE = eos_totalenergy< eq >( system, r, r*u, r*v, r*w, p );
+  const tk::real rE = eos_totalenergy< eq >( system, r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -274,8 +274,7 @@ CompFlowProblemRayleighTaylor::fieldOutput(
 
   auto p = r;
   for (std::size_t i=0; i<r.size(); ++i)
-    p[i] = eos_pressure< eq >( system, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
-                         r[i]*E[i] );
+    p[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
   out.push_back( p );
 
   auto er = r, ee = r, ep = r, eu = r, ev = r, ew = r;
@@ -286,14 +285,14 @@ CompFlowProblemRayleighTaylor::fieldOutput(
     eu[i] = std::pow( u[i] - s[1]/s[0], 2.0 ) * vol[i] / V;
     ev[i] = std::pow( v[i] - s[2]/s[0], 2.0 ) * vol[i] / V;
     ew[i] = std::pow( w[i] - s[3]/s[0], 2.0 ) * vol[i] / V;
-    auto ap = eos_pressure< eq >( system, s[0], s[1], s[2], s[3], s[4] );
+    auto ap = eos_pressure< eq >( system, s[0], s[1]/s[0], s[2]/s[0], s[3]/s[0],
+                                  s[4] );
     r[i] = s[0];
     u[i] = s[1]/s[0];
     v[i] = s[2]/s[0];
     w[i] = s[3]/s[0];
     E[i] = s[4]/s[0];
-    p[i] = eos_pressure< eq >( system, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
-                         r[i]*E[i] );
+    p[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
     ep[i] = std::pow( ap - p[i], 2.0 ) * vol[i] / V;
   }
 

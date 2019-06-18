@@ -5302,12 +5302,26 @@ struct upwind_info {
 };
 using upwind = keyword< upwind_info, TAOCPP_PEGTL_STRING("upwind") >;
 
+struct ausm_info {
+  static std::string name() { return "AUSM"; }
+  static std::string shortDescription() { return
+    "Select the Advection Upstream Splitting Method (AUSM) flux function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the AUSM flux
+    function used for discontinuous Galerkin (DG) spatial discretization
+    used in inciter. It is only used for for multi-material hydro, it is thus
+    not selectable for anything else, and for multi-material hydro it is the
+    hardcoded flux type. See Control/Inciter/Options/Flux.hpp for other valid
+    options.)"; }
+};
+using ausm = keyword< ausm_info, TAOCPP_PEGTL_STRING("ausm") >;
+
 struct flux_info {
   static std::string name() { return "Flux function"; }
   static std::string shortDescription() { return
     "Select flux function"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select a fllux function, used for
+    R"(This keyword is used to select a flux function, used for
     discontinuous Galerkin (DG) spatial discretization used in inciter. See
     Control/Inciter/Options/Flux.hpp for valid options.)"; }
   struct expect {
@@ -5315,7 +5329,8 @@ struct flux_info {
     static std::string choices() {
       return '\'' + laxfriedrichs::string() + "\' | \'"
                   + hllc::string() + "\' | \'"
-                  + upwind::string() + '\'';
+                  + upwind::string() + "\' | \'"
+                  + ausm::string() + '\'';
     }
   };
 };
