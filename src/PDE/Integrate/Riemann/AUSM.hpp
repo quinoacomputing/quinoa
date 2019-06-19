@@ -180,8 +180,8 @@ struct AUSM {
   //! \param[in] mach Local Mach numner
   //! \return Values of the positive and negative split Mach and pressure
   //!   polynomials.
-  //! \detail This function returns a vector with positive and negative Mach and
-  //!   pressure polynomials, as:
+  //! \details This function returns a vector with positive and negative Mach
+  //!   and pressure polynomials, as:
   //!   ms[0] = M_4(+),
   //!   ms[1] = M_4(-),
   //!   ms[2] = P_5(+), and
