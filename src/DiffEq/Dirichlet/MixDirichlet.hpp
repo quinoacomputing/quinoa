@@ -128,6 +128,8 @@ class MixDirichlet {
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         auto yn = Yn( particles, p );
+        // violating boundedness here is a hard error as indicates a problem
+        // with the initial conditions
         if (yn < 0.0 || yn > 1.0) Throw( "Nth scalar of IC out of bounds" );
         derived( particles, p, yn );
       }
@@ -157,6 +159,8 @@ class MixDirichlet {
 
         // compute Nth scalar
         auto yn = Yn( particles, p );
+        // violating boundedness here is a hard error as indicates a problem
+        // with acception-rejection logic within this time-advancement loop
         if (yn < 0.0 || yn > 1.0) Throw( "Nth scalar out of bounds" );
 
         // Advance first m_ncomp (K=N-1) scalars
@@ -165,7 +169,8 @@ class MixDirichlet {
         for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real y = particles( p, i, m_offset );
           tk::real d = m_k[i] * y * yn * dt;
-          d = (d > 0.0 ? std::sqrt(d) : 0.0);
+          if (d < 0.0) Throw( "Negative diffusion term" );
+          d = std::sqrt( d );
           y += 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i])*y )*dt + d*dW[i];
           // if even a single y is out of bounds, will re-advance this particle
           if (y < 0.0 || y > 1.0) {
