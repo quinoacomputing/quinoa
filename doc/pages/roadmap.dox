@@ -36,9 +36,10 @@ number of years. However, contributions are welcome in the following areas:
 
 @section roadmap_inciter Inciter
 
-@ref inciter_main is less mature compared to all other tools. The following
-areas are currently in active development. Please @ref resources_contact
-"contact us" if you would like to use and/or contribute to Inciter.
+Compared to all other tools @ref inciter_main is currently receiving most of
+the development work. The following areas are active developed. Please @ref
+resources_contact "contact us" if you would like to use and/or contribute to
+Inciter.
 
 @subsection roadmap_inciter_amr Solution-adaptive mesh refinement (AMR)
 
@@ -149,7 +150,8 @@ conditions.
 @subsection roadmap_inciter_eos Equations of state (EOS)
 
 Currently, equations of state for ideal gases are implemented. It would be
-great to implement some more advanced EOSs.
+great to implement some more advanced EOSs, including coupling libraries with
+EOS tables. A good starting point for this is under `PDE/EoS/`.
 
 @subsection roadmap_inciter_fieldoutput Unified field output
 

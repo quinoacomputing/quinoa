@@ -21,7 +21,7 @@ There are many ways to contribute, from writing tutorials and HOWTOs, adding
 examples, improving the documentation, submitting bug reports and feature
 requests to writing code which can be incorporated into Quinoa itself.
 
-@subsection contributing_create Create you own tool
+@subsection contributing_create Create your own tool
 
 One way to contribute to Quinoa is to create your own @ref mainpage_tools
 "tool". A tool is the largest unit of interacting components, such as @ref
