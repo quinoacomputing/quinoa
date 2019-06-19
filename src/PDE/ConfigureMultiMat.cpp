@@ -87,7 +87,7 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
 
   // Viscosity is optional: the outer vector may be empty
   const auto& mu = g_inputdeck.get< tag::param, eq, tag::mu >();
-  if (!mu.empty())
+  if (mu.size() > c)
     nfo.emplace_back( "dynamic viscosity", parameters( mu[c] ) );
 
   nfo.emplace_back( "specific heat at constant volume", parameters(
@@ -95,7 +95,7 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
 
   // Heat conductivity is optional: the outer vector may be empty
   const auto& k = g_inputdeck.get< tag::param, eq, tag::k >();
-  if (!k.empty())
+  if (k.size() > c)
     nfo.emplace_back( "heat conductivity", parameters( k[c] ) );
 
   nfo.emplace_back( "material stiffness", parameters(
