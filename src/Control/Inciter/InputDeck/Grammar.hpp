@@ -155,16 +155,17 @@ namespace grm {
       if (gamma.empty() || gamma.back().size() != 1)
         Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
 
-      // If specific heats are not given, set defaults
+      // If specific heat is not given, set defaults
       using cv_t = kw::mat_cv::info::expect::type;
       auto& cv = stack.template get< tag::param, eq, tag::cv >();
+      // As a default, the specific heat of air (717.5 J/Kg-K) is used
       if (cv.empty())
         cv.push_back( std::vector< cv_t >( 1, 717.5 ) );
       // If specific heat vector is wrong size, error out
       if (cv.back().size() != 1)
         Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
 
-      // If stiffness coefficients are not given, set defaults
+      // If stiffness coefficient is not given, set defaults
       using pstiff_t = kw::mat_pstiff::info::expect::type;
       auto& pstiff = stack.template get< tag::param, eq, tag::pstiff >();
       if (pstiff.empty())
@@ -277,6 +278,7 @@ namespace grm {
       // If specific heats are not given, set defaults
       using cv_t = kw::mat_cv::info::expect::type;
       auto& cv = stack.template get< tag::param, eq, tag::cv >();
+      // As a default, the specific heat of air (717.5 J/Kg-K) is used
       if (cv.empty())
         cv.push_back( std::vector< cv_t >( nmat.back(), 717.5 ) );
       // If specific heat vector is wrong size, error out

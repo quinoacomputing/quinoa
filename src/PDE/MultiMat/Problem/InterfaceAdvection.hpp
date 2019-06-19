@@ -9,7 +9,7 @@
     equations
   \details   This file defines a Problem policy class for the multi-material
     compressible flow equations, defined under PDE/MultiMat. See
-    PDE/MultiMat/Problem.h for general requirements on Problem policy classes
+    PDE/MultiMat/Problem.hpp for general requirements on Problem policy classes
     for MultiMat.
 */
 // *****************************************************************************

@@ -196,7 +196,7 @@ class MultiMat {
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();

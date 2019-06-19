@@ -44,6 +44,9 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
 {
   using tag::param;
 
+  Assert( ncomp == 9, "Incorrect number of components in multi-material "
+          "system" );
+
   std::vector< tk::real > s( ncomp, 0.0 );
   auto u = 10.0;
   auto v = 0.0;

@@ -5331,8 +5331,7 @@ struct ausm_info {
     function used for discontinuous Galerkin (DG) spatial discretization
     used in inciter. It is only used for for multi-material hydro, it is thus
     not selectable for anything else, and for multi-material hydro it is the
-    hardcoded flux type. See Control/Inciter/Options/Flux.hpp for other valid
-    options.)"; }
+    hardcoded flux type.)"; }
 };
 using ausm = keyword< ausm_info, TAOCPP_PEGTL_STRING("ausm") >;
 

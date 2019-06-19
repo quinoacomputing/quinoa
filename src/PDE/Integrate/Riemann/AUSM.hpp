@@ -166,6 +166,9 @@ struct AUSM {
         flx.push_back( 0.5*(al_l[k]+al_r[k]) );
     }
 
+    Assert( flx.size() == (3*nmat+3+nmat+1), "Size of multi-material flux "
+            "vector incorrect" );
+
     return flx;
   }
 
@@ -196,33 +199,33 @@ struct AUSM {
     std::array< tk::real, 3 > msplus, msminus;
     tk::real psplus, psminus;
 
-    msplus[1] = 0.5*(mach + std::fabs(mach));
-    msminus[1]= 0.5*(mach - std::fabs(mach));
+    msplus[0] = 0.5*(mach + std::fabs(mach));
+    msminus[0]= 0.5*(mach - std::fabs(mach));
 
-    msplus[2] = +0.25*(mach + 1.0)*(mach + 1.0);
-    msminus[2]= -0.25*(mach - 1.0)*(mach - 1.0);
+    msplus[1] = +0.25*(mach + 1.0)*(mach + 1.0);
+    msminus[1]= -0.25*(mach - 1.0)*(mach - 1.0);
 
     auto alph_fa = (3.0/16.0) * (-4.0 + 5.0*fa*fa);
 
     if (std::fabs(mach) >= 1.0)
     {
-        msplus[3] = msplus[1];
-        msminus[3]= msminus[1];
+        msplus[2] = msplus[1];
+        msminus[2]= msminus[1];
         psplus    = msplus[1]/mach;
         psminus   = msminus[1]/mach;
     }
     else
     {
-        msplus[3] = msplus[2]* (1.0 - 2.0*msminus[2]);
-        msminus[3]= msminus[2]* (1.0 + 2.0*msplus[2]);
+        msplus[2] = msplus[2]* (1.0 - 2.0*msminus[2]);
+        msminus[2]= msminus[2]* (1.0 + 2.0*msplus[2]);
         psplus    = msplus[2]*
                     ((+2.0 - mach) - (16.0 * alph_fa)*mach*msminus[2]);
         psminus   = msminus[2]*
                     ((-2.0 - mach) + (16.0 * alph_fa)*mach*msplus[2]);
     }
 
-    ms[0] = msplus[3];
-    ms[1] = msminus[3];
+    ms[0] = msplus[2];
+    ms[1] = msminus[2];
     ms[2] = psplus;
     ms[3] = psminus;
 
