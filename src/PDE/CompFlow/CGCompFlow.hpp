@@ -239,7 +239,7 @@ class CompFlow {
         std::array< tk::real, 4 > p;
         for (std::size_t a=0; a<4; ++a)
           p[a] = eos_pressure< tag::compflow >
-                   ( 0, u[0][a], u[1][a]/u[0][a], u[2][a]/u[0][a],
+                   ( m_system, u[0][a], u[1][a]/u[0][a], u[2][a]/u[0][a],
                      u[3][a]/u[0][a], u[4][a] );
 
         // sum nodal averages to element
@@ -312,7 +312,8 @@ class CompFlow {
 
         // pressure
         auto p = eos_pressure< tag::compflow >
-                   ( 0, ue[0], ue[1]/ue[0], ue[2]/ue[0], ue[3]/ue[0], ue[4] );
+                   ( m_system, ue[0], ue[1]/ue[0], ue[2]/ue[0], ue[3]/ue[0],
+                     ue[4] );
 
         // scatter-add flux contributions to rhs at nodes
         tk::real d = deltat * J/6.0;
@@ -385,10 +386,9 @@ class CompFlow {
           auto& rw = u[3][j];    // rho * w
           auto& re = u[4][j];    // rho * e
           auto p = eos_pressure< tag::compflow >
-                     ( 0, r, ru/r, rv/r, rw/r, re ); //pressure
+                     ( m_system, r, ru/r, rv/r, rw/r, re );
           if (p < 0) p = 0.0;
-          auto c = eos_soundspeed< tag::compflow >
-                     ( 0, r, p ); //sound speed
+          auto c = eos_soundspeed< tag::compflow >( m_system, r, p );
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
           if (v > maxvel) maxvel = v;
         }
@@ -465,8 +465,8 @@ class CompFlow {
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
-              auto s =
-                m_problem.solinc( 0, m_ncomp, x[n], y[n], z[n], t, deltat );
+              auto s = m_problem.solinc( m_system, m_ncomp, x[n], y[n], z[n],
+                                         t, deltat );
               bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
                          {true,s[4]} }};
             }
