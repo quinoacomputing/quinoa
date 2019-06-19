@@ -397,7 +397,7 @@ class MultiMat {
       for (std::size_t k=0; k<nmat; ++k)
         ar[k] = U.extract( (nmat+k)*ndof, m_offset, N );
 
-      std::array< tk::real, 4 > r{ 0.0, 0.0, 0.0, 0.0 };
+      std::array< tk::real, 4 > r{{ 0.0, 0.0, 0.0, 0.0 }};
       for (std::size_t i=0; i<r.size(); ++i) {
         for (std::size_t k=0; k<nmat; ++k)
           r[i] += ar[k][i];
