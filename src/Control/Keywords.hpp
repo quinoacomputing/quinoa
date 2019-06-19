@@ -3198,6 +3198,52 @@ struct variant_info {
 };
 using variant = keyword< variant_info, TAOCPP_PEGTL_STRING("variant") >;
 
+struct light_info {
+  static std::string name() { return "light"; }
+  static std::string shortDescription() { return
+    "Select the light-fluid normalization for the mixture Dirichlet SDE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the light-fluid normalization for the
+    mixture Dirichlet PDF/SDE model for multi-material mixing in turbulent
+    flows.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using light = keyword< light_info, TAOCPP_PEGTL_STRING("light") >;
+
+struct heavy_info {
+  static std::string name() { return "heavy"; }
+  static std::string shortDescription() { return
+    "Select the heavy-fluid normalization for the mixture Dirichlet SDE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the heavy-fluid normalization for the
+    mixture Dirichlet PDF/SDE model for multi-material mixing in turbulent
+    flows.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using heavy = keyword< heavy_info, TAOCPP_PEGTL_STRING("heavy") >;
+
+struct normalization_info {
+  static std::string name() { return "normalization"; }
+  static std::string shortDescription() { return
+    "Select mixture Dirichlet PDF model normalization type"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the mixture Dirichlet PDF model
+    normalization type.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + light::string() + "\' | \'"
+                  + heavy::string() + '\'';
+    }
+  };
+};
+using normalization =
+  keyword< normalization_info, TAOCPP_PEGTL_STRING("normalization") >;
+
 struct position_info {
   static std::string name() { return "position"; }
   static std::string shortDescription() { return

@@ -29,6 +29,7 @@
 #include "Options/TxtFloatFormat.hpp"
 #include "Options/Depvar.hpp"
 #include "Options/VelocityVariant.hpp"
+#include "Options/Normalization.hpp"
 #include "Options/RNG.hpp"
 #include "QuinoaConfig.hpp"
 
@@ -131,6 +132,7 @@ using MixDirichletParameters = tk::tuple::tagged_tuple<
                       kw::sde_kappaprime::info::expect::type > >,
   tag::rho,         std::vector< std::vector<
                       kw::sde_rho::info::expect::type > >,
+  tag::normalization, std::vector< ctr::NormalizationType >,
   tag::init,        Init,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,

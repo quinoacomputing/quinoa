@@ -77,13 +77,15 @@
 
 #include "Types.hpp"
 #include "Walker/Options/CoeffPolicy.hpp"
+#include "Walker/Options/Normalization.hpp"
 #include "SystemComponents.hpp"
 
 namespace walker {
 
 //! Compute parameter vector r based on r_i = rho_N/rho_i - 1
 std::vector< kw::sde_r::info::expect::type >
-MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho );
+MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho,
+          ctr::NormalizationType norm );
 
 //! MixDirichlet coefficients policity: constants in time + mean(rho) = const
 //! \details User-defined parameters b and kappaprime are constant vectors in
@@ -97,6 +99,7 @@ class MixDirichletHomCoeffConst {
     //! Constructor: initialize coefficients
     MixDirichletHomCoeffConst(
       tk::ctr::ncomp_type ncomp,
+      ctr::NormalizationType norm,
       const std::vector< kw::sde_b::info::expect::type >& b_,
       const std::vector< kw::sde_S::info::expect::type >& S_,
       const std::vector< kw::sde_kappa::info::expect::type >& kprime_,

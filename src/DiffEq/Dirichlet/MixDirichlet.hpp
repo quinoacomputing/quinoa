@@ -96,6 +96,7 @@ class MixDirichlet {
         g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
+      m_norm( g_inputdeck.get< tag::param, eq, tag::normalization >().at(c) ),
       m_b(),
       m_S(),
       m_kprime(),
@@ -103,6 +104,7 @@ class MixDirichlet {
       m_rho(),
       m_r(),
       coeff( m_ncomp,
+             m_norm,
              g_inputdeck.get< tag::param, eq, tag::b >().at(c),
              g_inputdeck.get< tag::param, eq, tag::S >().at(c),
              g_inputdeck.get< tag::param, eq, tag::kappaprime >().at(c),
@@ -113,48 +115,21 @@ class MixDirichlet {
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[in,out] particles Array of particle properties 
     void initialize( int stream, tk::Particles& particles ) {
+
+      // Ensure the size of the parameter vector holding the pure-fluid
+      // densities is N = K+1 = m_ncomp+1
+      Assert( m_rho.size() == m_ncomp+1, "Size mismatch" );
+
       //! Set initial conditions using initialization policy
       Init::template init< eq >( g_inputdeck, m_rng, stream, particles, m_c,
                                  m_ncomp, m_offset );
 
-    tk::real eps = std::numeric_limits<tk::real>::epsilon() * 100.0;
-
-//std::cout << "rho: " << m_rho[0] << ", " << m_rho[1] << ", " << m_rho[2] << '\n';
-//std::cout << "r: " << m_r[0] << ", " << m_r[1] << ", " << m_r[2] << '\n';
-//std::cout << "Y: ";
       // Initialize derived instantaneous variables
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
-        // start computing specific volume
-        tk::real v = -1.0;
-        // start computing density
-        tk::real rho = 0.0;
-        for (ncomp_t i=0; i<m_ncomp; ++i) {
-          auto Y = particles( p, i, m_offset );
-//std::cout << Y << ", ";
-          if (Y < 0.0 || Y > 1.0) {
-            std::cout << "IC Y out of bounds: " << Y << '\n';
-          }
-          v += m_r[i] * Y;
-          rho += Y / m_rho[i];
-        }
-        // compute Nth scalar
-        tk::real Yn = 1.0 - particles( p, 0, m_offset );
-        for (ncomp_t i=1; i<m_ncomp; ++i) Yn -= particles( p, i, m_offset );
-//std::cout << Yn << '\n';
-        // finish computing specific volume
-        v += m_r[m_ncomp] * Yn;
-        v /= m_rho[m_ncomp];
-        // finish computing density
-        rho += Yn / m_rho[m_ncomp];
-        rho = 1.0 / rho;
-        if (std::abs(rho-1.0/v) > eps)
-          std::cout << "IC: rho != 1/v, rho = " << rho << ", v = " << v
-                    << ", rho-1/v = " << rho - 1.0/v << '\n';
-        // Compute and store instantaneous density
-        particles( p, m_ncomp, m_offset ) = rho; //1.0/v;
-        // Store instantaneous specific volume
-        particles( p, m_ncomp+1, m_offset ) = 1.0/rho; //v;
+        auto yn = Yn( particles, p );
+        if (yn < 0.0 || yn > 1.0) Throw( "Nth scalar of IC out of bounds" );
+        derived( particles, p, yn );
       }
     }
 
@@ -169,51 +144,56 @@ class MixDirichlet {
                   tk::real,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
-      tk::real eps = std::numeric_limits<tk::real>::epsilon() * 100.0;
-
       // Update SDE coefficients
       coeff.update( m_depvar, m_ncomp, moments, m_rho, m_r, m_kprime, m_b, m_k,
                     m_S );
+
       // Advance particles
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance
         std::vector< tk::real > dW( m_ncomp );
         m_rng.gaussian( stream, m_ncomp, dW.data() );
+
         // compute Nth scalar
-        tk::real Yn = 1.0 - particles(p, 0, m_offset);
-        for (ncomp_t i=1; i<m_ncomp; ++i) Yn -= particles( p, i, m_offset );
-        // start computing specific volume
-        tk::real v = -1.0;
-        // start computing density
-        tk::real rho = 0.0;
+        auto yn = Yn( particles, p );
+        if (yn < 0.0 || yn > 1.0) Throw( "Nth scalar out of bounds" );
+
         // Advance first m_ncomp (K=N-1) scalars
+        bool accept = true;
+        std::vector< tk::real > Y( m_ncomp, 0.0 );
         for (ncomp_t i=0; i<m_ncomp; ++i) {
-          tk::real& Y = particles( p, i, m_offset );
-          tk::real d = m_k[i] * Y * Yn * dt;
+          tk::real y = particles( p, i, m_offset );
+          tk::real d = m_k[i] * y * yn * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
-          Y += 0.5*m_b[i]*( m_S[i]*Yn - (1.0-m_S[i]) * Y )*dt + d*dW[i];
-          if (Y < eps) Y = eps;
-          if (Y > 1.0-eps) Y = 1.0-eps;
-          v += m_r[i] * Y;
-          rho += Y / m_rho[i];
+          y += 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i])*y )*dt + d*dW[i];
+          // if even a single y is out of bounds, will re-advance this particle
+          if (y < 0.0 || y > 1.0) {
+            accept = false;
+            i = m_ncomp;
+          } else {
+            Y[i] = y;   // save first N-1 advanced scalars
+          }
         }
-        // recompute Nth scalar after time step just taken
-        Yn = 1.0 - particles(p, 0, m_offset);
-        for (ncomp_t i=1; i<m_ncomp; ++i) Yn -= particles( p, i, m_offset );
-        // Finish computing specific volume
-        v += m_r[m_ncomp] * Yn;
-        v /= m_rho[m_ncomp];
-        // Finish computing density
-        rho += Yn / m_rho[m_ncomp];
-        rho = 1.0 / rho;
-        if (std::abs(rho-1.0/v) > eps)
-          std::cout << "rho != 1/v, rho = " << rho << ", v = " << v
-                    << ", rho-1/v = " << rho - 1.0/v << '\n';
-        // Compute and store instantaneous density
-        particles( p, m_ncomp, m_offset ) = rho; //1.0/v;
-        // Store instantaneous specific volume
-        particles( p, m_ncomp+1, m_offset ) = 1.0/rho; //v;
+
+        // if none of the N-1 scalars are out of bounds, recompute Nth scalar
+        if (accept) {
+          // re-compute Nth scalar (from the just-advanced N-1 scalars)
+          yn = Yn( Y );
+          // if the Nth scalar is out of bounds, will re-advance this particle
+          if (yn < 0.0 || yn > 1.0) {
+            accept = false;
+          } else {
+            // all N scalars are within bounds, accept this advance
+            for (ncomp_t i=0; i<m_ncomp; ++i)
+              particles( p, i, m_offset ) = Y[i];
+            // compute derived particle values
+            derived( particles, p, yn );
+          }
+        }
+
+        // re-advance this particle if a single scalar was out of bounds
+        if (!accept) --p;
       }
     }
 
@@ -223,6 +203,7 @@ class MixDirichlet {
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
+    const ctr::NormalizationType m_norm;//!< Normalization type
 
     //! Coefficients
     std::vector< kw::sde_b::info::expect::type > m_b;
@@ -234,6 +215,80 @@ class MixDirichlet {
 
     //! Coefficients policy
     Coefficients coeff;
+
+    //! Compute Nth mass fraction
+    //! \param[in] Y N-1 scalars as a vector
+    //! \return The Nth scalar
+    tk::real Yn( const std::vector< tk::real >& Y ) const {
+      Assert( Y.size() == m_ncomp, "Size mismatch" );
+      tk::real yn = 1.0;
+      for (ncomp_t i=0; i<m_ncomp; ++i) yn -= Y[i];
+      return yn;
+    }
+
+    //! Compute Nth mass fraction
+    //! \param[in] particles Array of particle properties
+    //! \param[in] p Particle index
+    //! \return The Nth scalar
+    tk::real Yn( const tk::Particles& particles, ncomp_t p ) const {
+      tk::real yn = 1.0;
+      for (ncomp_t i=0; i<m_ncomp; ++i) yn -= particles( p, i, m_offset );
+      return yn;
+    }
+
+    //! \brief Return density for mass fractions
+    //! \details This function returns the instantaneous density, rho,
+    //!   based on the multiple mass fractions, Y_c.
+    //! \param[in] particles Array of particle properties
+    //! \param[in] p Particle index
+    //! \param[in] Yn Nth particle mass fraction
+    //! \return Instantaneous value of the density, rho
+    //! \details This is computed based 1/rho = sum_{i=1}^N Y_i/R_i, where R_i
+    //!   are the constant pure-fluid densities and the Y_i are the mass
+    //!   fractions, of the N materials. (Note that we only solve for K=N-1
+    //!   mass fractions.)
+    tk::real rho( const tk::Particles& particles, ncomp_t p, tk::real Yn ) const
+    {
+      // start computing density
+      tk::real d = 0.0;
+      for (ncomp_t i=0; i<m_ncomp; ++i) {
+        d += particles( p, i, m_offset ) / m_rho[i];
+      }
+      // finish computing density
+      d += Yn / m_rho[m_ncomp];
+      // return particle density
+      return 1.0 / d;
+    }
+
+    //! \brief Return specific volume for mass fractions
+    //! \details This function returns the instantaneous specific volume, v,
+    //!   based on the multiple mass fractions, Y_c.
+    //! \param[in] particles Array of particle properties
+    //! \param[in] p Particle index
+    //! \param[in] Yn Nth particle mass fraction
+    //! \return Instantaneous value of the specific volume, v
+    //! \details This is computed based v = 1/rho = sum_{i=1}^N Y_i/R_i,
+    //!   where R_i are the constant pure-fluid densities and the Y_i are the
+    //!   mass fractions, of the N materials. (Note that we only solve for K=N-1
+    //!   mass fractions.)
+    tk::real vol( const tk::Particles& particles, ncomp_t p, tk::real Yn ) const
+    {
+      return 1.0 / rho( particles, p );
+    }
+
+    //! Compute instantaneous values derived from particle mass fractions
+    //! \param[in,out] particles Particle properties array
+    //! \param[in] p Particle index
+    //! \param[in] Yn Nth particle mass fraction
+    void derived( tk::Particles& particles, ncomp_t p, tk::real Yn ) const {
+      // compute instantaneous fluid-density based on particle mass fractions
+      auto density = rho( particles, p, Yn );
+      // Compute and store instantaneous density
+      particles( p, m_ncomp, m_offset ) = density;
+      // Store instantaneous specific volume
+      particles( p, m_ncomp+1, m_offset ) = 1.0/density;
+    }
+
 };
 
 } // walker::

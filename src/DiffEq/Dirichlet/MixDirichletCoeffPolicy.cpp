@@ -18,10 +18,12 @@
 #include "MixDirichletCoeffPolicy.hpp"
 
 std::vector< kw::sde_r::info::expect::type >
-walker::MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho )
+walker::MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho,
+                  ctr::NormalizationType norm )
 // *****************************************************************************
 //  Compute parameter vector r based on r_i = rho_N/rho_i - 1
 //! \param[in] rho Parameter vector rho to MixDirichlet
+//! \param[in] norm Normalization type (N=heavy or N=light)
 //! \return Parameter vector r, determined by parameter vector rho
 // *****************************************************************************
 {
@@ -30,17 +32,21 @@ walker::MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho )
   std::vector< kw::sde_r::info::expect::type > r( rho.size()-1 );
 
   for (std::size_t i=0; i<rho.size()-1; ++i) {
-    //r[i] = rho.back()/rho[i] - 1.0;
-    r[i] = rho.back()/rho[i] + 1.0;
+    if (norm == ctr::NormalizationType::LIGHT)
+      r[i] = rho.back()/rho[i] + 1.0;
+    else
+      r[i] = rho.back()/rho[i] - 1.0;
   }
 
-  r.push_back( 2.0 );
+  if (norm == ctr::NormalizationType::LIGHT)
+    r.push_back( 2.0 );
 
   return r;
 }
 
 walker::MixDirichletHomCoeffConst::MixDirichletHomCoeffConst(
   tk::ctr::ncomp_type ncomp,
+  ctr::NormalizationType norm,
   const std::vector< kw::sde_b::info::expect::type >& b_,
   const std::vector< kw::sde_S::info::expect::type >& S_,
   const std::vector< kw::sde_kappa::info::expect::type >& kprime_,
@@ -83,7 +89,7 @@ walker::MixDirichletHomCoeffConst::MixDirichletHomCoeffConst(
 
   // Compute parameter vector r based on r_i = rho_N/rho_i - 1
   Assert( r.empty(), "Parameter vector r must be empty" );
-  r = MixDir_r( rho );
+  r = MixDir_r( rho, norm );
 }
 
 void
@@ -239,7 +245,8 @@ walker::MixDirichletHomCoeffConst::update(
 
     //k[c] = kprime[c] * bc[c];
     //k[c] = kprime[c] * ds;
-    k[c] = kprime[c] * y2[c];
+    k[c] = kprime[c];
+    //k[c] = kprime[c] * y2[c];
     //if (k[c] < 0.0)
     // std::cout << "Positivity of k[" << c << "] violated: "
     //           << k[c] << '\n';
@@ -256,7 +263,7 @@ walker::MixDirichletHomCoeffConst::update(
     tk::real drYcYc = -r[c]/rho[ncomp]*R2Y[c];
     tk::real drYcYN = -r[c]/rho[ncomp]*(R2-sumR2Y);
     tk::real drYc2YcYN = 2.0*std::pow(r[c]/rho[ncomp],2.0)*(R3Y[c]-sumR3Y2[c]);
-    S[c] = (drYcYc - k[c]/b[c]*drYc2YcYN) / (drYcYN + drYcYc);
+    //S[c] = (drYcYc - k[c]/b[c]*drYc2YcYN) / (drYcYN + drYcYc);
     //S[c] = Yt[c] / ( 1.0 - sumYt + Yt[c] ) - k[c]/b[c]*drYc2YcYN / (drYcYN + drYcYc);
     //std::cout << "S[" << c << "] = " << S[c] << ", using " << b[c] << ", "
     //          << drYc2YcYN << ", " << drYcYN << ", " << drYcYc << '\n';
