@@ -209,19 +209,19 @@ struct AUSM {
 
     if (std::fabs(mach) >= 1.0)
     {
-        msplus[2] = msplus[1];
-        msminus[2]= msminus[1];
-        psplus    = msplus[1]/mach;
-        psminus   = msminus[1]/mach;
+        msplus[2] = msplus[0];
+        msminus[2]= msminus[0];
+        psplus    = msplus[0]/mach;
+        psminus   = msminus[0]/mach;
     }
     else
     {
-        msplus[2] = msplus[2]* (1.0 - 2.0*msminus[2]);
-        msminus[2]= msminus[2]* (1.0 + 2.0*msplus[2]);
-        psplus    = msplus[2]*
-                    ((+2.0 - mach) - (16.0 * alph_fa)*mach*msminus[2]);
-        psminus   = msminus[2]*
-                    ((-2.0 - mach) + (16.0 * alph_fa)*mach*msplus[2]);
+        msplus[2] = msplus[1]* (1.0 - 2.0*msminus[1]);
+        msminus[2]= msminus[1]* (1.0 + 2.0*msplus[1]);
+        psplus    = msplus[1]*
+                    ((+2.0 - mach) - (16.0 * alph_fa)*mach*msminus[1]);
+        psminus   = msminus[1]*
+                    ((-2.0 - mach) + (16.0 * alph_fa)*mach*msplus[1]);
     }
 
     ms[0] = msplus[2];
