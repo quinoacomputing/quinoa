@@ -23,6 +23,7 @@
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
 #include "EoS/EoS.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
@@ -50,17 +51,17 @@ struct AUSM {
     tk::real rhol(0.0), rhor(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
-      rhol += u[0][nmat+k];
-      rhor += u[1][nmat+k];
+      rhol += u[0][densityIdx(nmat, k)];
+      rhor += u[1][densityIdx(nmat, k)];
     }
 
-    auto ul = u[0][2*nmat]/rhol;
-    auto vl = u[0][2*nmat+1]/rhol;
-    auto wl = u[0][2*nmat+2]/rhol;
+    auto ul = u[0][momentumIdx(nmat, 0)]/rhol;
+    auto vl = u[0][momentumIdx(nmat, 1)]/rhol;
+    auto wl = u[0][momentumIdx(nmat, 2)]/rhol;
 
-    auto ur = u[1][2*nmat]/rhor;
-    auto vr = u[1][2*nmat+1]/rhor;
-    auto wr = u[1][2*nmat+2]/rhor;
+    auto ur = u[1][momentumIdx(nmat, 0)]/rhor;
+    auto vr = u[1][momentumIdx(nmat, 1)]/rhor;
+    auto wr = u[1][momentumIdx(nmat, 2)]/rhor;
 
     tk::real pk(0.0), pl(0.0), pr(0.0), amatl(0.0), amatr(0.0);
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
@@ -69,27 +70,32 @@ struct AUSM {
                             amat12(nmat, 0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
-      al_l[k] = u[0][k];
-      pk = eos_pressure< tag::multimat >( 0, u[0][nmat+k]/al_l[k],
+      al_l[k] = u[0][volfracIdx(nmat, k)];
+      pk = eos_pressure< tag::multimat >( 0, u[0][densityIdx(nmat, k)]/al_l[k],
                                           ul, vl, wl,
-                                          u[0][2*nmat+3+k]/al_l[k],
+                                          u[0][energyIdx(nmat, k)]/al_l[k],
                                           k );
       pl += al_l[k] * pk;
-      hml[k] = u[0][2*nmat+3+k] + al_l[k]*pk;
-      amatl = eos_soundspeed< tag::multimat >( 0, u[0][nmat+k]/al_l[k], pk, k );
+      hml[k] = u[0][energyIdx(nmat, k)] + al_l[k]*pk;
+      amatl = eos_soundspeed< tag::multimat >( 0,
+                                               u[0][densityIdx(nmat, k)]/al_l[k],
+                                               pk, k );
 
-      al_r[k] = u[1][k];
-      pk = eos_pressure< tag::multimat >( 0, u[1][nmat+k]/al_r[k],
+      al_r[k] = u[1][volfracIdx(nmat, k)];
+      pk = eos_pressure< tag::multimat >( 0, u[1][densityIdx(nmat, k)]/al_r[k],
                                           ur, vr, wr,
-                                          u[1][2*nmat+3+k]/al_r[k],
+                                          u[1][energyIdx(nmat, k)]/al_r[k],
                                           k );
       pr += al_r[k] * pk;
-      hmr[k] = u[1][2*nmat+3+k] + al_r[k]*pk;
-      amatr = eos_soundspeed< tag::multimat >( 0, u[1][nmat+k]/al_r[k], pk, k );
+      hmr[k] = u[1][densityIdx(nmat, k)] + al_r[k]*pk;
+      amatr = eos_soundspeed< tag::multimat >( 0,
+                                               u[1][densityIdx(nmat, k)]/al_r[k],
+                                               pk, k );
 
       // Average states for mixture speed of sound
       al_12[k] = 0.5*(al_l[k]+al_r[k]);
-      rhomat12[k] = 0.5*(u[0][nmat+k]/al_l[k] + u[1][nmat+k]/al_r[k]);
+      rhomat12[k] = 0.5*(u[0][densityIdx(nmat, k)]/al_l[k]
+                        + u[1][densityIdx(nmat, k)]/al_r[k]);
       amat12[k] = 0.5*(amatl+amatr);
     }
 
@@ -135,13 +141,18 @@ struct AUSM {
     // Conservative fluxes
     for (std::size_t k=0; k<nmat; ++k)
     {
-      flx[k]          = l_plus*al_l[k]      + l_minus*al_r[k];
-      flx[nmat+k]     = l_plus*u[0][nmat+k] + l_minus*u[1][nmat+k];
-      flx[2*nmat+3+k] = l_plus*hml[k]       + l_minus*hmr[k];
+      flx[volfracIdx(nmat, k)] = l_plus*al_l[k] + l_minus*al_r[k];
+      flx[densityIdx(nmat, k)] = l_plus*u[0][densityIdx(nmat, k)]
+                              + l_minus*u[1][densityIdx(nmat, k)];
+      flx[energyIdx(nmat, k)] = l_plus*hml[k] + l_minus*hmr[k];
     }
-    flx[2*nmat]   = l_plus*u[0][2*nmat]   + l_minus*u[1][2*nmat]   + p12*fn[0];
-    flx[2*nmat+1] = l_plus*u[0][2*nmat+1] + l_minus*u[1][2*nmat+1] + p12*fn[1];
-    flx[2*nmat+2] = l_plus*u[0][2*nmat+2] + l_minus*u[1][2*nmat+2] + p12*fn[2];
+
+    for (std::size_t idir=0; idir<3; ++idir)
+    {
+    flx[momentumIdx(nmat, idir)] = l_plus*u[0][momentumIdx(nmat, idir)]
+                                 + l_minus*u[1][momentumIdx(nmat, idir)]
+                                 + p12*fn[idir];
+    }
 
     // Store Riemann velocity
     flx.push_back( vriem );
