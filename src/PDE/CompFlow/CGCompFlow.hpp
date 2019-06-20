@@ -406,7 +406,7 @@ class CompFlow {
       return mindt;
     }
 
-    //! Extract the velocity field at cell nodes
+    //! Extract the velocity field at cell nodes. Currently unused.
     //! \param[in] U Solution vector at recent time step
     //! \param[in] N Element node indices    
     //! \return Array of the four values of the velocity field
