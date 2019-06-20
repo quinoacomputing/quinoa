@@ -136,6 +136,8 @@ class MultiMat {
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
@@ -150,6 +152,14 @@ class MultiMat {
       // set rhs to zero
       R.fill(0.0);
 
+      // allocate space for non-conservative terms
+      std::vector< std::vector < tk::real > > N;
+      N.resize(3*nmat+1);
+      for (std::size_t k=0; k<3*nmat+1; ++k)
+      {
+        N[k].resize( U.nunk(), 0.0 );
+      }
+
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( this->m_ncomp ); };
@@ -161,8 +171,8 @@ class MultiMat {
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, fd,
-                   geoFace, AUSM::flux, velfn, U, ndofel, R );
+      tk::surfInt( m_system, m_ncomp, nmat, m_offset, ndof, inpoel, coord, fd,
+                   geoFace, AUSM::flux, velfn, U, ndofel, R, N );
 
       // compute source term intehrals
       tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
@@ -175,9 +185,9 @@ class MultiMat {
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, b.first, fd, geoFace,
-                        inpoel, coord, t, AUSM::flux, velfn, b.second, U,
-                        ndofel, R );
+        tk::bndSurfInt( m_system, m_ncomp, nmat, m_offset, ndof, b.first, fd,
+                        geoFace, inpoel, coord, t, AUSM::flux, velfn, b.second,
+                        U, ndofel, R, N );
     }
 
     //! Compute the minimum time step size

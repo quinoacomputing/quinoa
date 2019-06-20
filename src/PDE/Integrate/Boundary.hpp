@@ -32,6 +32,7 @@ using bcconf_t = kw::sideset::info::expect::type;
 void
 bndSurfInt( ncomp_t system,
             ncomp_t ncomp,
+            std::size_t nmat,
             ncomp_t offset,
             const std::size_t ndof,
             const std::vector< bcconf_t >& bcconfig,
@@ -45,19 +46,23 @@ bndSurfInt( ncomp_t system,
             const StateFn& state,
             const Fields& U,
             const std::vector< std::size_t >& ndofel,
-            Fields& R );
+            Fields& R,
+            std::vector< std::vector< tk::real > >& N );
 
 //! Update the rhs by adding the boundary surface integration term
 void
 update_rhs_bc ( ncomp_t ncomp,
+                std::size_t nmat,
                 ncomp_t offset,
                 const std::size_t ndof,
                 const std::size_t ndof_l,
                 const tk::real wt,
+                const std::array< tk::real, 3 >& fn,
                 const std::size_t el,
                 const std::vector< tk::real >& fl,
                 const std::vector< tk::real >& B_l,
-                Fields& R );
+                Fields& R,
+                std::vector< std::vector< tk::real > >& N );
 } // tk::
 
 #endif // Boundary_h
