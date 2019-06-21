@@ -142,7 +142,7 @@ namespace cmd {
                      io< kw::control, tag::control >,
                      io< kw::input, tag::input >,
                      io< kw::output, tag::output >,
-                     io< kw::diagnostics, tag::diag >,
+                     io< kw::diagnostics_cmd, tag::diag >,
                      io< kw::restart, tag::restart > > {};
 
   //! Grammar entry point: parse keywords until end of string
