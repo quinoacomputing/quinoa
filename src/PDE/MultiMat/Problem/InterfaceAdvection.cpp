@@ -29,7 +29,7 @@ tk::SolutionFn::result_type
 MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
                                              ncomp_t ncomp,
                                              tk::real x,
-                                             tk::real /*y*/,
+                                             tk::real y,
                                              tk::real /*z*/,
                                              tk::real t )
 // *****************************************************************************
@@ -49,15 +49,17 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
           "system" );
 
   std::vector< tk::real > s( ncomp, 0.0 );
-  auto u = 10.0;
-  auto v = 0.0;
+  auto u = std::sqrt(50.0);
+  auto v = std::sqrt(50.0);
   auto w = 0.0;
-  // interface location
-  auto x0 = 0.25 + u*t;
-  //auto y0 = 0.25 + v*t;
+
+  // center of the cylinder
+  auto x0 = 0.35 + u*t;
+  auto y0 = 0.35 + v*t;
 
   // interface location
-  if (x<x0) {
+  auto r = std::sqrt( (x-x0)*(x-x0) + (y-y0)*(y-y0) );
+  if (r<0.25) {
     s[0] = 1.0-1.0e-12;
     s[1] = 1.0e-12;
   }
