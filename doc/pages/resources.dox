@@ -6,6 +6,7 @@
 - Source code --- https://github.com/quinoacomputing/quinoa
 - Documentation --- https://quinoacomputing.org
 - GitHub organization --- https://github.com/quinoacomputing
+- Roadmap -- @ref roadmap
 
 @section resources_releases Releases
 
@@ -19,7 +20,7 @@
 
 @section resources_contributing Contributing
 
-- Contributing / Roadmap --- @ref contributing
+- Contributing --- @ref contributing "Contributing guide"
 
 @section resources_quality Code quality
 

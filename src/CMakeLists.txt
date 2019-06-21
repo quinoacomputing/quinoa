@@ -118,6 +118,7 @@ file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE" LICENSE)
 string(REGEX REPLACE "All rights reserved\.*" "All rights reserved. See --license for details." COPYRIGHT "${LICENSE}")
 string(REGEX REPLACE ";" "\\\\n" COPYRIGHT "${COPYRIGHT}")
 string(REGEX REPLACE ";" "\\\\n" LICENSE "${LICENSE}")
+string(APPEND LICENSE "\\n\\nFor third-party licenses, see https://quinoacomputing.org/licenses.html")
 
 # Include third-party libraries configuration
 include(TPLs)
@@ -531,7 +532,7 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${UNITTEST_EXECUTABLE}
                 ${FILECONV_EXECUTABLE})
 
-# Configure cmake variable to pass to the code
+# Configure cmake variables to pass to the build
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.hpp.in"
                 "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.hpp" )
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.cpp.in"
@@ -629,7 +630,7 @@ if (NOT BUILD_SHARED_LIBS)
   endforeach()
 endif()
 
-# Add a target to generate API documentation with Doxygen
+# Add a target to generate documentation using doxygen and m.css
 find_package(Doxygen 1.8.15)
 find_package(MCSS)
 if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
@@ -640,28 +641,62 @@ if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
   find_program( XARGS xargs )
   find_program( GIT git )
   find_program( HEAD head )
-  find_program( RECENT_MODS ${CMAKE_CURRENT_SOURCE_DIR}/../tools/recent_mods.sh )
+  find_program( RECENT_MODS
+                ${CMAKE_CURRENT_SOURCE_DIR}/../tools/recent_mods.sh )
+  find_program( EXTRACT_CMD_KEYWORDS
+                ${CMAKE_CURRENT_SOURCE_DIR}/../tools/extract_cmd_keywords.sh )
+  find_program( EXTRACT_CTR_KEYWORDS
+                ${CMAKE_CURRENT_SOURCE_DIR}/../tools/extract_ctr_keywords.sh )
 
   if (PERL AND AWK AND XARGS AND GIT AND HEAD AND RECENT_MODS)
 
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
                    ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
 
-    file(GLOB doc_pages CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "../doc/pages/*.dox")
+    file(GLOB doc_pages CONFIGURE_DEPENDS
+         RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "../doc/pages/*.dox")
     foreach(page ${doc_pages})
       configure_file(${page} ${CMAKE_CURRENT_BINARY_DIR}/doc/${page} @ONLY)
+    endforeach()
+
+    # Generate targets <executable>_cmd_keywords for extracting and generating
+    # reference documentation pages for command line keywords
+    set(executables_cmd_keywords)
+    foreach(exe IN LISTS EXECUTABLES)
+      add_custom_target(${exe}_cmd_keywords
+                        DEPENDS ${exe} ${doc_pages}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                        COMMAND ${EXTRACT_CMD_KEYWORDS} ${exe}
+                        COMMENT "Extract ${exe}'s command-line keywords")
+      list(APPEND executables_cmd_keywords "${exe}_cmd_keywords")
+    endforeach()
+
+    # Generate targets <executable>_ctr_keywords for extracting and generating
+    # reference documentation pages for control file keywords
+    set(executables_ctr_keywords)
+    foreach(exe IN LISTS EXECUTABLES)
+      add_custom_target(${exe}_ctr_keywords
+                        DEPENDS ${exe} ${doc_pages}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                        COMMAND ${EXTRACT_CTR_KEYWORDS} ${exe}
+                        COMMENT "Extract ${exe}'s control file keywords")
+      list(APPEND executables_ctr_keywords "${exe}_ctr_keywords")
     endforeach()
 
     add_custom_command(OUTPUT xml
                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
+                               ${executables_cmd_keywords}
+                               ${executables_ctr_keywords}
                        COMMAND ${RECENT_MODS} ${CMAKE_CURRENT_SOURCE_DIR}/..
                        COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
                        COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa.doxy
                        VERBATIM USES_TERMINAL)
+
     add_custom_target(doc DEPENDS xml
                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
                       COMMENT "Documentation")
+
     message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
 
   endif()
