@@ -33,6 +33,7 @@
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
+#include "Integrate/NonConservative.hpp"
 #include "Integrate/Source.hpp"
 #include "Integrate/Riemann/AUSM.hpp"
 #include "EoS/EoS.hpp"
@@ -148,6 +149,7 @@ class MultiMat {
               "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
+      Assert( ndof == 1, "DGP1/2 not set up for multi-material" );
 
       // set rhs to zero
       R.fill(0.0);
@@ -188,6 +190,17 @@ class MultiMat {
         tk::bndSurfInt( m_system, m_ncomp, nmat, m_offset, ndof, b.first, fd,
                         geoFace, inpoel, coord, t, AUSM::flux, velfn, b.second,
                         U, ndofel, R, N );
+
+      // get derivatives from N
+      for (std::size_t k=0; k<N.size(); ++k)
+      {
+        for (std::size_t e=0; e<U.nunk(); ++e)
+          N[k][e] /= geoElem(e, 0, 0);
+      }
+
+      // compute volume integrals of non-conservative terms
+      tk::nonConservativeInt( m_system, m_ncomp, nmat, m_offset, ndof, inpoel,
+                              coord, geoElem, U, N, ndofel, R );
     }
 
     //! Compute the minimum time step size

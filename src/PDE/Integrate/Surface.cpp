@@ -252,7 +252,7 @@ tk::update_rhs_fa ( ncomp_t ncomp,
   // Prep for non-conservative terms in multimat
   if (fl.size() > ncomp)
   {
-    // Gradients of volume-fractions
+    // Gradients of partial pressures
     for (std::size_t k=0; k<nmat; ++k)
     {
       for (std::size_t idir=0; idir<3; ++idir)
