@@ -42,7 +42,7 @@ namespace cmd {
 
   //! brief Match and set reorder switch (i.e., reorder mesh nodes or not)
   struct reorder :
-         tk::grm::process_cmd_switch< use, kw::reorder, tag::reorder > {};
+         tk::grm::process_cmd_switch< use, kw::reorder_cmd, tag::reorder > {};
 
   //! \brief Match and set io parameter
   template< typename keyword, typename io_tag >

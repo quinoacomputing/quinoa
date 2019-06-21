@@ -58,7 +58,7 @@ class CmdLine :
                                      , kw::helpkw
                                      , kw::input
                                      , kw::output
-                                     , kw::reorder
+                                     , kw::reorder_cmd
                                      , kw::quiescence
                                      , kw::trace
                                      , kw::version
