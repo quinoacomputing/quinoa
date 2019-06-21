@@ -44,23 +44,22 @@ struct HLLC {
     auto rhol = u[0][0];
     auto rhor = u[1][0];
 
-    auto pl = eos_pressure( 0, rhol, u[0][1], u[0][2], u[0][3], u[0][4] );
-    auto pr = eos_pressure( 0, rhor, u[1][1], u[1][2], u[1][3], u[1][4] );
-
-    auto al = eos_soundspeed( 0, rhol, pl );
-    auto ar = eos_soundspeed( 0, rhor, pr );
-
-    // Face-normal velocities
     auto ul = u[0][1]/rhol;
     auto vl = u[0][2]/rhol;
     auto wl = u[0][3]/rhol;
-
-    tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
 
     auto ur = u[1][1]/rhor;
     auto vr = u[1][2]/rhor;
     auto wr = u[1][3]/rhor;
 
+    auto pl = eos_pressure< tag::compflow >( 0, rhol, ul, vl, wl, u[0][4] );
+    auto pr = eos_pressure< tag::compflow >( 0, rhor, ur, vr, wr, u[1][4] );
+
+    auto al = eos_soundspeed< tag::compflow >( 0, rhol, pl );
+    auto ar = eos_soundspeed< tag::compflow >( 0, rhor, pr );
+
+    // Face-normal velocities
+    tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
     tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
 
     // Roe-averaged variables
