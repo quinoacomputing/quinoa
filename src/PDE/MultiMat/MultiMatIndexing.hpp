@@ -13,17 +13,13 @@
 #ifndef MultiMatIndexing_h
 #define MultiMatIndexing_h
 
-#include "Data.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
-
 namespace inciter {
 
 //! Get the index of the required material volume fraction
 //! \param[in] nmat Number of materials
 //! \param[in] kmat Index of required material
 //! \return Index of the required material volume fraction
-std::size_t volfracIdx( std::size_t nmat,
-                        std::size_t kmat )
+inline std::size_t volfracIdx( std::size_t nmat, std::size_t kmat )
 {
   IGNORE(nmat);
   return kmat;
@@ -33,8 +29,7 @@ std::size_t volfracIdx( std::size_t nmat,
 //! \param[in] nmat Number of materials
 //! \param[in] kmat Index of required material
 //! \return Index of the required material continuity equation
-std::size_t densityIdx( std::size_t nmat,
-                        std::size_t kmat )
+inline std::size_t densityIdx( std::size_t nmat, std::size_t kmat )
 { return (nmat+kmat); }
 
 //! Get the index of the required momentum equation component
@@ -44,16 +39,14 @@ std::size_t densityIdx( std::size_t nmat,
 //!   1: Y-component,
 //!   2: Z-component.
 //! \return Index of the required momentum equation component
-std::size_t momentumIdx( std::size_t nmat,
-                         std::size_t idir )
+inline std::size_t momentumIdx( std::size_t nmat, std::size_t idir )
 { return (2*nmat+idir); }
 
 //! Get the index of the required material total energy equation
 //! \param[in] nmat Number of materials
 //! \param[in] kmat Index of required material
 //! \return Index of the required material total energy equation
-std::size_t energyIdx( std::size_t nmat,
-                       std::size_t kmat )
+inline std::size_t energyIdx( std::size_t nmat, std::size_t kmat )
 { return (2*nmat+3+kmat); }
 
 } //inciter::
