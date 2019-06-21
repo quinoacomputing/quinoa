@@ -44,8 +44,8 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   using tag::param; using std::sin; using std::cos;
 
   // manufactured solution parameters
@@ -68,19 +68,20 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
   const tk::real v = ft*z*cos(M_PI*y);
   const tk::real w = ft*(-0.5*M_PI*z*z*(cos(M_PI*x)-sin(M_PI*y)));
   // total specific energy
-  const tk::real rE = eos_totalenergy( system, r, r*u, r*v, r*w, p );
+  const tk::real rE = eos_totalenergy< eq >( system, r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
 std::vector< tk::real >
-CompFlowProblemRayleighTaylor::solinc( ncomp_t system, tk::real x, tk::real y,
-                                     tk::real z, tk::real t, tk::real dt ) const
+CompFlowProblemRayleighTaylor::solinc( ncomp_t system, ncomp_t ncomp,
+  tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt ) const
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
 // for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -89,20 +90,21 @@ CompFlowProblemRayleighTaylor::solinc( ncomp_t system, tk::real x, tk::real y,
 //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
 // *****************************************************************************
 {
-  auto st1 = solution( system, m_ncomp, x, y, z, t );
-  auto st2 = solution( system, m_ncomp, x, y, z, t+dt );
+  auto st1 = solution( system, ncomp, x, y, z, t );
+  auto st2 = solution( system, ncomp, x, y, z, t+dt );
   std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                   []( tk::real s, tk::real& d ){ return d -= s; } );
   return st2;
 }
 
 tk::SrcFn::result_type
-CompFlowProblemRayleighTaylor::src( ncomp_t system, ncomp_t, tk::real x,
+CompFlowProblemRayleighTaylor::src( ncomp_t system, ncomp_t ncomp, tk::real x,
                                     tk::real y, tk::real z, tk::real t )
 // *****************************************************************************
 //  Compute and return source term for manufactured solution
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -121,10 +123,10 @@ CompFlowProblemRayleighTaylor::src( ncomp_t system, ncomp_t, tk::real x,
   auto k = g_inputdeck.get< param, eq, tag::kappa >()[system];
   auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[system];
   // ratio of specific heats
-  tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];
+  tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system][0];
 
   // evaluate solution at x,y,z,t
-  auto s = solution( system, m_ncomp, x, y, z, t );
+  auto s = solution( system, ncomp, x, y, z, t );
 
   // density, velocity, energy, pressure
   auto rho = s[0];
@@ -161,7 +163,7 @@ CompFlowProblemRayleighTaylor::src( ncomp_t system, ncomp_t, tk::real x,
   auto dwdt =  k*M_PI*sin(k*M_PI*t)/2*M_PI*z*z*(cos(M_PI*x) - sin(M_PI*y));
   auto dedt = u*dudt + v*dvdt + w*dwdt;
 
-  std::vector< tk::real > r( m_ncomp );
+  std::vector< tk::real > r( ncomp );
   // density source
   r[0] = u*drdx[0] + v*drdx[1] + w*drdx[2];
   // momentum source
@@ -224,7 +226,7 @@ CompFlowProblemRayleighTaylor::fieldNames( ncomp_t ) const
 std::vector< std::vector< tk::real > >
 CompFlowProblemRayleighTaylor::fieldOutput(
   ncomp_t system,
-  ncomp_t,
+  ncomp_t ncomp,
   ncomp_t offset,
   tk::real t,
   tk::real V,
@@ -235,6 +237,7 @@ CompFlowProblemRayleighTaylor::fieldOutput(
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
 //! \param[in] t Physical time
@@ -273,26 +276,25 @@ CompFlowProblemRayleighTaylor::fieldOutput(
 
   auto p = r;
   for (std::size_t i=0; i<r.size(); ++i)
-    p[i] = eos_pressure( system, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
-                         r[i]*E[i] );
+    p[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
   out.push_back( p );
 
   auto er = r, ee = r, ep = r, eu = r, ev = r, ew = r;
   for (std::size_t i=0; i<r.size(); ++i) {
-    auto s = solution( system, m_ncomp, x[i], y[i], z[i], t );
+    auto s = solution( system, ncomp, x[i], y[i], z[i], t );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
     ee[i] = std::pow( E[i] - s[4]/s[0], 2.0 ) * vol[i] / V;
     eu[i] = std::pow( u[i] - s[1]/s[0], 2.0 ) * vol[i] / V;
     ev[i] = std::pow( v[i] - s[2]/s[0], 2.0 ) * vol[i] / V;
     ew[i] = std::pow( w[i] - s[3]/s[0], 2.0 ) * vol[i] / V;
-    auto ap = eos_pressure( system, s[0], s[1], s[2], s[3], s[4] );
+    auto ap = eos_pressure< eq >( system, s[0], s[1]/s[0], s[2]/s[0], s[3]/s[0],
+                                  s[4] );
     r[i] = s[0];
     u[i] = s[1]/s[0];
     v[i] = s[2]/s[0];
     w[i] = s[3]/s[0];
     E[i] = s[4]/s[0];
-    p[i] = eos_pressure( system, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
-                         r[i]*E[i] );
+    p[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
     ep[i] = std::pow( ap - p[i], 2.0 ) * vol[i] / V;
   }
 
@@ -314,7 +316,7 @@ CompFlowProblemRayleighTaylor::fieldOutput(
 }
 
 std::vector< std::string >
-CompFlowProblemRayleighTaylor::names( ncomp_t ) const
+CompFlowProblemRayleighTaylor::names( ncomp_t /* ncomp */ ) const
 // *****************************************************************************
 //  Return names of integral variables to be output to diagnostics file
 //! \return Vector of strings labelling integral variables output

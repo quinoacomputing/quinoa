@@ -31,7 +31,6 @@ class CompFlowProblemSedovBlastwave {
   private:
     using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
-    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
     //! Evaluate analytical solution at (x,y,0) for all components
@@ -42,7 +41,7 @@ class CompFlowProblemSedovBlastwave {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     std::vector< tk::real >
-    solinc( ncomp_t system,
+    solinc( ncomp_t system, ncomp_t ncomp,
             tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt ) const;
 
     //! Compute and return source term for this problem
@@ -59,7 +58,7 @@ class CompFlowProblemSedovBlastwave {
     //! Return field output going to file
     std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
-                 ncomp_t,
+                 ncomp_t ncomp,
                  ncomp_t offset,
                  tk::real,
                  tk::real /*V*/,

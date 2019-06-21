@@ -77,8 +77,8 @@ CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   using tag::param;
 
   // manufactured solution parameters
@@ -102,13 +102,14 @@ CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
 }
 
 std::vector< tk::real >
-CompFlowProblemNLEnergyGrowth::solinc( ncomp_t system, tk::real x, tk::real y,
-                                     tk::real z, tk::real t, tk::real dt ) const
+CompFlowProblemNLEnergyGrowth::solinc( ncomp_t system, ncomp_t ncomp,
+  tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt ) const
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
 // for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -117,20 +118,21 @@ CompFlowProblemNLEnergyGrowth::solinc( ncomp_t system, tk::real x, tk::real y,
 //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
 // *****************************************************************************
 {
-  auto st1 = solution( system, m_ncomp, x, y, z, t );
-  auto st2 = solution( system, m_ncomp, x, y, z, t+dt );
+  auto st1 = solution( system, ncomp, x, y, z, t );
+  auto st2 = solution( system, ncomp, x, y, z, t+dt );
   std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                   []( tk::real s, tk::real& d ){ return d -= s; } );
   return st2;
 }
 
 tk::SrcFn::result_type
-CompFlowProblemNLEnergyGrowth::src( ncomp_t system, ncomp_t, tk::real x,
+CompFlowProblemNLEnergyGrowth::src( ncomp_t system, ncomp_t ncomp, tk::real x,
                                     tk::real y, tk::real z, tk::real t )
 // *****************************************************************************
 //  Compute and return source term for NLEG manufactured solution
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -149,7 +151,7 @@ CompFlowProblemNLEnergyGrowth::src( ncomp_t system, ncomp_t, tk::real x,
   const auto kappa = g_inputdeck.get< param, eq, tag::kappa >()[system];
   const auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[system];
   // ratio of specific heats
-  const auto g = g_inputdeck.get< param, eq, tag::gamma >()[system];
+  const auto g = g_inputdeck.get< param, eq, tag::gamma >()[system][0];
   // spatial component of density field
   const auto gx = 1.0 - x*x - y*y - z*z;
   // derivative of spatial component of density field
@@ -176,7 +178,7 @@ CompFlowProblemNLEnergyGrowth::src( ncomp_t system, ncomp_t, tk::real x,
     2.0*std::pow(ie,4.0)*kappa*h*dh[2]*t }};
   const auto dedt = kappa*h*h*std::pow(ie,4.0);
   // sources
-  std::vector< tk::real > r( m_ncomp );
+  std::vector< tk::real > r( ncomp );
   // density source
   r[0] = drdt;
   // momentum source
@@ -233,7 +235,7 @@ CompFlowProblemNLEnergyGrowth::fieldNames( ncomp_t ) const
 std::vector< std::vector< tk::real > >
 CompFlowProblemNLEnergyGrowth::fieldOutput(
   ncomp_t system,
-  ncomp_t,
+  ncomp_t ncomp,
   ncomp_t offset,
   tk::real t,
   tk::real V,
@@ -244,6 +246,7 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
 //! \param[in] t Physical time
@@ -286,13 +289,12 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
 
   auto p = r;
   for (std::size_t i=0; i<r.size(); ++i)
-    p[i] = eos_pressure( system, r[i], r[i]*u[i],  r[i]*v[i], r[i]*w[i],
-                         r[i]*E[i] );
+    p[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
   out.push_back( p );
 
   auto er = r, ee = r;
   for (std::size_t i=0; i<r.size(); ++i) {
-    auto s = solution( system, m_ncomp, x[i], y[i], z[i], t );
+    auto s = solution( system, ncomp, x[i], y[i], z[i], t );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
     ee[i] = std::pow( E[i] - s[4]/s[0], 2.0 ) * vol[i] / V;
     r[i] = s[0];
@@ -300,8 +302,7 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
     v[i] = s[2]/s[0];
     w[i] = s[3]/s[0];
     E[i] = s[4]/s[0];
-    p[i] = eos_pressure( system, r[i], r[i]*u[i],  r[i]*v[i], r[i]*w[i],
-                         r[i]*E[i] );
+    p[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
   }
 
   out.push_back( r );

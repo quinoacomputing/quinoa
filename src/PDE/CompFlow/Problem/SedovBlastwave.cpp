@@ -42,8 +42,8 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   using tag::param;
 
   tk::real r, p, u, v, w, rE;
@@ -68,19 +68,20 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
     w = 0.0;
   }
   // total specific energy
-  rE = eos_totalenergy( system, r, r*u, r*v, r*w, p );
+  rE = eos_totalenergy< eq >( system, r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
 std::vector< tk::real >
-CompFlowProblemSedovBlastwave::solinc( ncomp_t system, tk::real x, tk::real y,
-                                     tk::real z, tk::real t, tk::real dt ) const
+CompFlowProblemSedovBlastwave::solinc( ncomp_t system, ncomp_t ncomp,
+  tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt ) const
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
 // for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -89,8 +90,8 @@ CompFlowProblemSedovBlastwave::solinc( ncomp_t system, tk::real x, tk::real y,
 //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
 // *****************************************************************************
 {
-  auto st1 = solution( system, m_ncomp, x, y, z, t );
-  auto st2 = solution( system, m_ncomp, x, y, z, t+dt );
+  auto st1 = solution( system, ncomp, x, y, z, t );
+  auto st2 = solution( system, ncomp, x, y, z, t+dt );
 
   std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                   []( tk::real s, tk::real& d ){ return d -= s; } );
@@ -244,7 +245,7 @@ CompFlowProblemSedovBlastwave::fieldOutput(
 
   std::vector< tk::real > P( r.size(), 0.0 );
   for (std::size_t i=0; i<P.size(); ++i)
-    P[i] = eos_pressure( system, r[i], ru[i], rv[i], rw[i], re[i] );
+    P[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], re[i] );
   out.push_back( P );
   //out.push_back( Pa );
 

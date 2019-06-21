@@ -1,85 +1,95 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/CompFlow/Problem/SodShocktube.cpp
+  \file      src/PDE/MultiMat/Problem/InterfaceAdvection.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a Problem policy class for the compressible flow
-    equations, defined in PDE/CompFlow/CompFlow.h. See PDE/CompFlow/Problem.h
-    for general requirements on Problem policy classes for CompFlow.
+    equations, defined in PDE/MultiMat/MultiMat.h. See PDE/MultiMat/Problem.h
+    for general requirements on Problem policy classes for MultiMat.
 */
 // *****************************************************************************
 
-#include "SodShocktube.hpp"
+#include "InterfaceAdvection.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
 
-namespace inciter {
+//namespace inciter {
+//
+//extern ctr::InputDeck g_inputdeck;
+//
+//} // ::inciter
 
-extern ctr::InputDeck g_inputdeck;
-
-} // ::inciter
-
-using inciter::CompFlowProblemSodShocktube;
+using inciter::MultiMatProblemInterfaceAdvection;
 
 tk::SolutionFn::result_type
-CompFlowProblemSodShocktube::solution( ncomp_t system,
-                                       [[maybe_unused]] ncomp_t ncomp,
-                                       tk::real x,
-                                       tk::real,
-                                       tk::real,
-                                       tk::real )
+MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
+                                             ncomp_t ncomp,
+                                             tk::real x,
+                                             tk::real /*y*/,
+                                             tk::real /*z*/,
+                                             tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] t Time where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == ncomp, "Number of scalar components must be " +
-                          std::to_string(ncomp) );
   using tag::param;
 
-  tk::real r, p, u, v, w, rE;
-  if (x<0.5) {
-    // density
-    r = 1.0;
-    // pressure
-    p = 1.0;
-    // velocity
-    u = 0.0;
-    v = 0.0;
-    w = 0.0;
+  Assert( ncomp == 9, "Incorrect number of components in multi-material "
+          "system" );
+
+  std::vector< tk::real > s( ncomp, 0.0 );
+  auto u = 10.0;
+  auto v = 0.0;
+  auto w = 0.0;
+  // interface location
+  auto x0 = 0.25 + u*t;
+  //auto y0 = 0.25 + v*t;
+
+  // interface location
+  if (x<x0) {
+    s[0] = 1.0-1.0e-12;
+    s[1] = 1.0e-12;
   }
   else {
-    // density
-    r = 0.125;
-    // pressure
-    p = 0.1;
-    // velocity
-    u = 0.0;
-    v = 0.0;
-    w = 0.0;
+    s[0] = 1.0e-12;
+    s[1] = 1.0-1.0e-12;
   }
-  // total specific energy
-  rE = eos_totalenergy< eq >( system, r, u, v, w, p );
 
-  return {{ r, r*u, r*v, r*w, rE }};
+  s[2] = s[0]*1.0;
+  s[3] = s[1]*1.0;
+  s[4] = (s[2]+s[3]) * u;
+  s[5] = (s[2]+s[3]) * v;
+  s[6] = (s[2]+s[3]) * w;
+  s[7] = s[0] * eos_totalenergy< eq >( system, 1.0, u, v, w, 1.0e5, 0 );
+  s[8] = s[1] * eos_totalenergy< eq >( system, 1.0, u, v, w, 1.0e5, 1 );
+
+  return s;
 }
 
 std::vector< tk::real >
-CompFlowProblemSodShocktube::solinc( ncomp_t system, ncomp_t ncomp, tk::real x,
-  tk::real y, tk::real z, tk::real t, tk::real dt ) const
+MultiMatProblemInterfaceAdvection::solinc( ncomp_t system,
+                                           ncomp_t ncomp,
+                                           tk::real x,
+                                           tk::real y,
+                                           tk::real z,
+                                           tk::real t,
+                                           tk::real dt )
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
 // for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -98,19 +108,21 @@ CompFlowProblemSodShocktube::solinc( ncomp_t system, ncomp_t ncomp, tk::real x,
 }
 
 tk::SrcFn::result_type
-CompFlowProblemSodShocktube::src( ncomp_t, ncomp_t, tk::real,
-                                  tk::real, tk::real, tk::real )
+MultiMatProblemInterfaceAdvection::src( ncomp_t, ncomp_t ncomp, tk::real,
+                                        tk::real, tk::real, tk::real )
 // *****************************************************************************
 //  Compute and return source term for manufactured solution
 //! \return Array of reals containing the source for all components
 //! \note The function signature must follow tk::SrcFn
 // *****************************************************************************
 {
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
+  std::vector< tk::real > s( ncomp, 0.0 );
+
+  return s;
 }
 
 void
-CompFlowProblemSodShocktube::side( std::unordered_set< int >& conf ) const
+MultiMatProblemInterfaceAdvection::side( std::unordered_set< int >& conf )
 // *****************************************************************************
 //  Query all side set IDs the user has configured for all components in this
 //  PDE system
@@ -118,6 +130,9 @@ CompFlowProblemSodShocktube::side( std::unordered_set< int >& conf ) const
 // *****************************************************************************
 {
   using tag::param;
+
+  for (const auto& s : g_inputdeck.get< param, eq, tag::bcdir >())
+    for (const auto& i : s) conf.insert( std::stoi(i) );
 
   for (const auto& s : g_inputdeck.get< param, eq, tag::bcextrapolate >())
     for (const auto& i : s) conf.insert( std::stoi(i) );
@@ -127,7 +142,7 @@ CompFlowProblemSodShocktube::side( std::unordered_set< int >& conf ) const
 }
 
 std::vector< std::string >
-CompFlowProblemSodShocktube::fieldNames( ncomp_t ) const
+MultiMatProblemInterfaceAdvection::fieldNames( ncomp_t )
 // *****************************************************************************
 // Return field names to be output to file
 //! \return Vector of strings labelling fields output in file
@@ -135,125 +150,124 @@ CompFlowProblemSodShocktube::fieldNames( ncomp_t ) const
 {
   std::vector< std::string > n;
 
+  n.push_back( "volfrac1_numerical" );
+  n.push_back( "volfrac2_numerical" );
   n.push_back( "density_numerical" );
-  //n.push_back( "density_analytical" );
   n.push_back( "x-velocity_numerical" );
-  //n.push_back( "x-velocity_analytical" );
-  //n.push_back( "err(u)" );
   n.push_back( "y-velocity_numerical" );
-  //n.push_back( "y-velocity_analytical" );
   n.push_back( "z-velocity_numerical" );
-  //n.push_back( "z-velocity_analytical" );
-  n.push_back( "specific_total_energy_numerical" );
-  //n.push_back( "specific_total_energy_analytical" );
-  //n.push_back( "err(E)" );
   n.push_back( "pressure_numerical" );
+  n.push_back( "total_energy_density_numerical" );
+  //n.push_back( "volfrac1_analytical" );
+  //n.push_back( "volfrac2_analytical" );
   //n.push_back( "pressure_analytical" );
+  //n.push_back( "total_energy_density_analytical" );
 
   return n;
 }
 
 std::vector< std::vector< tk::real > >
-CompFlowProblemSodShocktube::fieldOutput(
+MultiMatProblemInterfaceAdvection::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
-  tk::real,
+  tk::real /*t*/,
   tk::real,
   const std::vector< tk::real >&,
-  const std::array< std::vector< tk::real >, 3 >&,
-  tk::Fields& U ) const
+  const std::array< std::vector< tk::real >, 3 >& /*coord*/,
+  tk::Fields& U )
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] t Physical time
+//! \param[in] coord Mesh node coordinates
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
   // number of degree of freedom
-  const std::size_t ndof =
+  const std::size_t ndof = 
     g_inputdeck.get< tag::discr, tag::ndof >();
 
-  std::vector< std::vector< tk::real > > out;
-  const auto r  = U.extract( 0*ndof, offset );
-  const auto ru = U.extract( 1*ndof, offset );
-  const auto rv = U.extract( 2*ndof, offset );
-  const auto rw = U.extract( 3*ndof, offset );
-  const auto re = U.extract( 4*ndof, offset );
+  //// ratio of specific heats
+  //tk::real g =
+  //  g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
 
-  // mesh node coordinates
+  auto nmat =
+    g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
+
+  std::vector< std::vector< tk::real > > out;
+  std::vector< std::vector< tk::real > > al, ar, ae;
+
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    al.push_back( U.extract( k*ndof, offset ) );
+    ar.push_back( U.extract( (nmat+k)*ndof, offset ) );
+    ae.push_back( U.extract( (2*nmat+3+k)*ndof, offset ) );
+  }
+  const auto ru  = U.extract( 4*ndof, offset );
+  const auto rv  = U.extract( 5*ndof, offset );
+  const auto rw  = U.extract( 6*ndof, offset );
+
+  //// mesh node coordinates
   //const auto& x = coord[0];
   //const auto& y = coord[1];
+  //const auto& z = coord[2];
 
+  // material volume-fractions
+  for (std::size_t k=0; k<nmat; ++k)
+    out.push_back( al[k] );
+
+  // bulk density
+  std::vector< tk::real > r( ru.size(), 0.0 );
+  for (std::size_t i=0; i<r.size(); ++i) {
+    for (std::size_t k=0; k<nmat; ++k)
+      r[i] += ar[k][i];
+  }
   out.push_back( r );
-  //out.push_back( std::vector< tk::real >( r.size(), 1.0 ) );
 
+  // velocity components
   std::vector< tk::real > u = ru;
   std::transform( r.begin(), r.end(), u.begin(), u.begin(),
                   []( tk::real s, tk::real& d ){ return d /= s; } );
   out.push_back( u );
-  //std::vector< tk::real > ua = ru;
-  //for (std::size_t i=0; i<ua.size(); ++i)
-  //  ua[i] = std::sin(M_PI*x[i]) * std::cos(M_PI*y[i]);
-  //out.push_back( ua );
-
-  //// error in x-velocity
-  //auto err = u;
-  //for (std::size_t i=0; i<u.size(); ++i)
-  //   err[i] = std::pow( ua[i] - u[i], 2.0 ) * vol[i] / V;
-  // out.push_back( err );
 
   std::vector< tk::real > v = rv;
-  //std::vector< tk::real > va = rv;
   std::transform( r.begin(), r.end(), v.begin(), v.begin(),
                   []( tk::real s, tk::real& d ){ return d /= s; } );
   out.push_back( v );
-  //for (std::size_t i=0; i<va.size(); ++i)
-  //  va[i] = -std::cos(M_PI*x[i]) * std::sin(M_PI*y[i]);
-  //out.push_back( va );
 
   std::vector< tk::real > w = rw;
-  //std::vector< tk::real > wa = rw;
   std::transform( r.begin(), r.end(), w.begin(), w.begin(),
                   []( tk::real s, tk::real& d ){ return d /= s; } );
   out.push_back( w );
-  //for (std::size_t i=0; i<wa.size(); ++i)
-  //  wa[i] = 0.0;
-  //out.push_back( wa );
 
-  std::vector< tk::real > E = re;
-  //std::vector< tk::real > Ea = re;
-  //std::vector< tk::real > Pa( r.size(), 0.0 );
-  std::transform( r.begin(), r.end(), E.begin(), E.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( E );
-  //for (std::size_t i=0; i<Ea.size(); ++i) {
-  //  Pa[i] = 10.0 +
-  //    r[i]/4.0*(std::cos(2.0*M_PI*x[i]) + std::cos(2.0*M_PI*y[i]));
-  //  Ea[i] = Pa[i]/(g-1.0)/r[i] +
-  //          0.5*(ua[i]*ua[i] + va[i]*va[i] + wa[i]*wa[i])/r[i];
-  //}
-  //out.push_back( Ea );
-
-  //// error in total specific energy
-  //for (std::size_t i=0; i<v.size(); ++i)
-  //  err[i] = std::pow( Ea[i] - E[i], 2.0 ) * vol[i] / V;
-  //out.push_back( err );
-
+  // bulk pressure
   std::vector< tk::real > P( r.size(), 0.0 );
-  for (std::size_t i=0; i<P.size(); ++i)
-    P[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
+  for (std::size_t i=0; i<P.size(); ++i) {
+    for (std::size_t k=0; k<nmat; ++k)
+      P[i] += al[k][i] * eos_pressure< eq >( system, ar[k][i]/al[k][i],
+                                             u[i], v[i], w[i],
+                                             ae[k][i]/al[k][i], k );
+  }
   out.push_back( P );
-  //out.push_back( Pa );
+
+  // bulk total energy density
+  std::vector< tk::real > E( r.size(), 0.0 );
+  for (std::size_t i=0; i<E.size(); ++i) {
+    for (std::size_t k=0; k<nmat; ++k)
+      E[i] += ae[k][i];
+  }
+  out.push_back( E );
 
   return out;
 }
 
 std::vector< std::string >
-CompFlowProblemSodShocktube::names( ncomp_t ) const
+MultiMatProblemInterfaceAdvection::names( ncomp_t )
 // *****************************************************************************
 //  Return names of integral variables to be output to diagnostics file
 //! \return Vector of strings labelling integral variables output

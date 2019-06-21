@@ -42,9 +42,10 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   using tag::param; using std::sin; using std::cos;
+
   // density
   const tk::real r = 1.0;
   // pressure
@@ -54,13 +55,13 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
   const tk::real v = -cos(M_PI*x) * sin(M_PI*y);
   const tk::real w = 0.0;
   // total specific energy
-  const tk::real rE = eos_totalenergy( system, r, r*u, r*v, r*w, p );
+  const tk::real rE = eos_totalenergy< eq >( system, r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
 std::vector< tk::real >
-CompFlowProblemTaylorGreen::solinc( ncomp_t, tk::real, tk::real,
+CompFlowProblemTaylorGreen::solinc( ncomp_t, ncomp_t, tk::real, tk::real,
                                     tk::real, tk::real, tk::real ) const
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
@@ -218,7 +219,8 @@ CompFlowProblemTaylorGreen::fieldOutput(
   for (std::size_t i=0; i<Ea.size(); ++i) {
     Pa[i] = 10.0 +
       r[i]/4.0*(std::cos(2.0*M_PI*x[i]) + std::cos(2.0*M_PI*y[i]));
-    Ea[i] = eos_totalenergy( system, r[i], ua[i], va[i], wa[i], Pa[i]/r[i] );
+    Ea[i] = eos_totalenergy< eq >( system, r[i], ua[i]/r[i], va[i]/r[i],
+                                   wa[i]/r[i], Pa[i]/r[i] );
   }
   out.push_back( Ea );
 
@@ -229,8 +231,7 @@ CompFlowProblemTaylorGreen::fieldOutput(
 
   std::vector< tk::real > P( r.size(), 0.0 );
   for (std::size_t i=0; i<P.size(); ++i)
-    P[i] = eos_pressure( system, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i],
-                         r[i]*E[i] );
+    P[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
   out.push_back( P );
   out.push_back( Pa );
 

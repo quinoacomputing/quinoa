@@ -28,8 +28,7 @@ inciter
     kappa 0.8
 
     material
-      id 1
-      gamma 1.66666666666667 # =5/3 ratio of specific heats
+      gamma 1.66666666666667 end # =5/3 ratio of specific heats
     end
 
     bc_dirichlet

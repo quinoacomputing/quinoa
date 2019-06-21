@@ -287,9 +287,9 @@ class CompFlow {
           v = ugp[0][2]/rho;
           w = ugp[0][3]/rho;
           rhoE = ugp[0][4];
-          p = eos_pressure( 0, rho, ugp[0][1], ugp[0][2], ugp[0][3], rhoE );
+          p = eos_pressure< tag::compflow >( m_system, rho, u, v, w, rhoE );
 
-          a = eos_soundspeed( 0, rho, p );
+          a = eos_soundspeed< tag::compflow >( m_system, rho, p );
 
           vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
 
@@ -336,9 +336,8 @@ class CompFlow {
             v = ugp[1][2]/rho;
             w = ugp[1][3]/rho;
             rhoE = ugp[1][4];
-            p = eos_pressure( 0, rho, ugp[1][1], ugp[1][2], ugp[1][3], rhoE );
-
-            a = eos_soundspeed( 0, rho, p );
+            p = eos_pressure< tag::compflow >( m_system, rho, u, v, w, rhoE );
+            a = eos_soundspeed< tag::compflow >( m_system, rho, p );
 
             vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
 
@@ -361,7 +360,7 @@ class CompFlow {
       return mindt;
     }
 
-    //! Extract the velocity field at cell nodes
+    //! Extract the velocity field at cell nodes. Currently unused.
     //! \param[in] U Solution vector at recent time step
     //! \param[in] N Element node indices
     //! \return Array of the four values of the velocity field
@@ -486,7 +485,8 @@ class CompFlow {
           auto u = ugp[1] / ugp[0];
           auto v = ugp[2] / ugp[0];
           auto w = ugp[3] / ugp[0];
-          auto p = eos_pressure( 0, ugp[0], ugp[1], ugp[2], ugp[3], ugp[4] );
+          auto p =
+            eos_pressure< tag::compflow >( m_system, ugp[0], u, v, w, ugp[4] );
 
           out[0][ inpoel[4*e+i] ] += ugp[0];
           out[1][ inpoel[4*e+i] ] += u;
@@ -562,7 +562,8 @@ class CompFlow {
       auto u = ugp[1] / ugp[0];
       auto v = ugp[2] / ugp[0];
       auto w = ugp[3] / ugp[0];
-      auto p = eos_pressure( system, ugp[0], ugp[1], ugp[2], ugp[3], ugp[4] );
+      auto p =
+        eos_pressure< tag::compflow >( system, ugp[0], u, v, w, ugp[4] );
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
