@@ -114,9 +114,7 @@ tk::nonConservativeInt( ncomp_t system,
         std::array< tk::real, 3 > dap{{0.0, 0.0, 0.0}};
         for (std::size_t k=0; k<nmat; ++k)
         {
-          auto rhok = ugp[inciter::densityIdx(nmat, k)]
-                     /ugp[inciter::volfracIdx(nmat, k)];
-          ymat[k] = rhok/rhob;
+          ymat[k] = ugp[inciter::densityIdx(nmat, k)]/rhob;
 
           for (std::size_t idir=0; idir<3; ++idir)
             dap[idir] += N[3*k+idir][e];

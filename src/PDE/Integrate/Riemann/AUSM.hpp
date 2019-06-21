@@ -88,7 +88,7 @@ struct AUSM {
                                               u[1][energyIdx(nmat, k)]/al_r[k],
                                               k );
       pr += al_r[k] * pmr[k];
-      hmr[k] = u[1][densityIdx(nmat, k)] + al_r[k]*pmr[k];
+      hmr[k] = u[1][energyIdx(nmat, k)] + al_r[k]*pmr[k];
       amatr = eos_soundspeed< tag::multimat >( 0,
                                                u[1][densityIdx(nmat, k)]/al_r[k],
                                                pmr[k], k );

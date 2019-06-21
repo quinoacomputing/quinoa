@@ -157,7 +157,7 @@ class MultiMat {
       // allocate space for non-conservative terms
       std::vector< std::vector < tk::real > > N;
       N.resize(3*nmat+1);
-      for (std::size_t k=0; k<3*nmat+1; ++k)
+      for (std::size_t k=0; k<N.size(); ++k)
       {
         N[k].resize( U.nunk(), 0.0 );
       }
@@ -176,7 +176,7 @@ class MultiMat {
       tk::surfInt( m_system, m_ncomp, nmat, m_offset, ndof, inpoel, coord, fd,
                    geoFace, AUSM::flux, velfn, U, ndofel, R, N );
 
-      // compute source term intehrals
+      // compute source term integrals
       tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
                   Problem::src, ndofel, R );
 
@@ -194,6 +194,8 @@ class MultiMat {
       // get derivatives from N
       for (std::size_t k=0; k<N.size(); ++k)
       {
+        Assert( N[k].size() == U.nunk(), "Non-conservative derivative vector "
+                "has incorrect size" );
         for (std::size_t e=0; e<U.nunk(); ++e)
           N[k][e] /= geoElem(e, 0, 0);
       }
@@ -298,9 +300,7 @@ class MultiMat {
 
           rho = 0.0;
           for (std::size_t k=0; k<nmat; ++k)
-          {
             rho += ugp[0][densityIdx(nmat, k)];
-          }
 
           u = ugp[0][momentumIdx(nmat, 0)]/rho;
           v = ugp[0][momentumIdx(nmat, 1)]/rho;
@@ -355,9 +355,7 @@ class MultiMat {
 
             rho = 0.0;
             for (std::size_t k=0; k<nmat; ++k)
-            {
               rho += ugp[1][densityIdx(nmat, k)];
-            }
 
             u = ugp[1][momentumIdx(nmat, 0)]/rho;
             v = ugp[1][momentumIdx(nmat, 1)]/rho;
@@ -613,12 +611,12 @@ class MultiMat {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Symmetry( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    Symmetry( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
               const std::array< tk::real, 3 >& fn )
     {
       const auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
       tk::real rho(0.0);
       for (std::size_t k=0; k<nmat; ++k)
