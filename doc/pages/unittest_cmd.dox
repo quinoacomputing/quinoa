@@ -1,0 +1,12 @@
+/*!
+  @page      unittest_cmd UnitTest command line parameters
+
+@tableofcontents{xml}
+
+This page documents the command line parameters of @ref unittest_main.
+
+@section unittest_cmd_list List of all command line parameters
+
+@section unittest_cmd_detail Detailed description of command line parameters
+
+*/

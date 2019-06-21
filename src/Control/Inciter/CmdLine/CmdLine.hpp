@@ -67,7 +67,7 @@ class CmdLine : public tk::Control<
                                      , kw::control
                                      , kw::input
                                      , kw::output
-                                     , kw::diagnostics
+                                     , kw::diagnostics_cmd
                                      , kw::quiescence
                                      , kw::lbfreq
                                      , kw::trace

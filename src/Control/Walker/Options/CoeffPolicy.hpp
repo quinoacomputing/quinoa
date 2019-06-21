@@ -50,7 +50,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
                                   , kw::hydrotimescale
                                   , kw::const_shear
                                   , kw::stationary
-                                  , kw::instantaneous_velocity
+                                  , kw::inst_velocity
                                   >;
 
     //! \brief Options constructor
@@ -71,7 +71,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
           { CoeffPolicyType::CONST_SHEAR, kw::const_shear::name() },
           { CoeffPolicyType::STATIONARY, kw::stationary::name() },
           { CoeffPolicyType::INSTANTANEOUS_VELOCITY,
-            kw::instantaneous_velocity::name() } },
+            kw::inst_velocity::name() } },
         //! keywords -> Enums
         {  { kw::constcoeff::string(), CoeffPolicyType::CONST_COEFF },
            { kw::decay::string(), CoeffPolicyType::DECAY },
@@ -82,7 +82,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
            { kw::hydrotimescale::string(), CoeffPolicyType::HYDROTIMESCALE },
            { kw::const_shear::string(), CoeffPolicyType::CONST_SHEAR },
            { kw::stationary::string(), CoeffPolicyType::STATIONARY },
-           { kw::instantaneous_velocity::string(),
+           { kw::inst_velocity::string(),
              CoeffPolicyType::INSTANTANEOUS_VELOCITY } } )
     {
       brigand::for_each< keywords >( assertPolicyCodes() );
@@ -123,7 +123,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
       , { CoeffPolicyType::CONST_SHEAR, *kw::const_shear::code() }
       , { CoeffPolicyType::STATIONARY, *kw::stationary::code() }
       , { CoeffPolicyType::INSTANTANEOUS_VELOCITY,
-          *kw::instantaneous_velocity::code() }
+          *kw::inst_velocity::code() }
     };
 
 };
