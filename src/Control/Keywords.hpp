@@ -3980,6 +3980,24 @@ struct sedov_blastwave_info {
 using sedov_blastwave =
   keyword< sedov_blastwave_info, TAOCPP_PEGTL_STRING("sedov_blastwave") >;
 
+struct interface_advection_info {
+  using code = Code< I >;
+  static std::string name() { return "Interface advection"; }
+  static std::string shortDescription() { return
+    "Select the interface advection test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the interface advection test problem. The
+    purpose of this test problem is to test the well-balancedness of the
+    multi-material discretization and its interface capturing
+    capabilities. Example: "problem interface_advection".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using interface_advection =
+  keyword< interface_advection_info,
+           TAOCPP_PEGTL_STRING("interface_advection") >;
+
 struct problem_info {
   using code = Code< t >;
   static std::string name() { return "Test problem"; }
@@ -4003,7 +4021,8 @@ struct problem_info {
                   + rayleigh_taylor::string() + "\' | \'"
                   + taylor_green::string() + "\' | \'"
                   + sod_shocktube::string() + "\' | \'"
-                  + rotated_sod_shocktube::string() + '\'';
+                  + rotated_sod_shocktube::string() + "\' | \'"
+                  + interface_advection::string() + '\'';
     }
   };
 };
@@ -5342,12 +5361,25 @@ struct upwind_info {
 };
 using upwind = keyword< upwind_info, TAOCPP_PEGTL_STRING("upwind") >;
 
+struct ausm_info {
+  static std::string name() { return "AUSM"; }
+  static std::string shortDescription() { return
+    "Select the Advection Upstream Splitting Method (AUSM) flux function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the AUSM flux
+    function used for discontinuous Galerkin (DG) spatial discretization
+    used in inciter. It is only used for for multi-material hydro, it is thus
+    not selectable for anything else, and for multi-material hydro it is the
+    hardcoded flux type.)"; }
+};
+using ausm = keyword< ausm_info, TAOCPP_PEGTL_STRING("ausm") >;
+
 struct flux_info {
   static std::string name() { return "Flux function"; }
   static std::string shortDescription() { return
     "Select flux function"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select a fllux function, used for
+    R"(This keyword is used to select a flux function, used for
     discontinuous Galerkin (DG) spatial discretization used in inciter. See
     Control/Inciter/Options/Flux.hpp for valid options.)"; }
   struct expect {
@@ -5355,7 +5387,8 @@ struct flux_info {
     static std::string choices() {
       return '\'' + laxfriedrichs::string() + "\' | \'"
                   + hllc::string() + "\' | \'"
-                  + upwind::string() + '\'';
+                  + upwind::string() + "\' | \'"
+                  + ausm::string() + '\'';
     }
   };
 };

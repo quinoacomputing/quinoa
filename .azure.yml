@@ -69,6 +69,7 @@ jobs:
         DISTRO: 'debian-clang-smp'
         SMP: 'on'
       doc:
+        COMPILER: 'gnu'
         DOC: true
         DISTRO: 'debian-doc'
   steps:

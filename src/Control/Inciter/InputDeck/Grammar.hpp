@@ -150,6 +150,30 @@ namespace grm {
       // Set number of components to 5 (mass, 3 x mom, energy)
       stack.template get< tag::component, eq >().push_back( 5 );
 
+      // Verify correct number of multi-material properties configured
+      const auto& gamma = stack.template get< tag::param, eq, tag::gamma >();
+      if (gamma.empty() || gamma.back().size() != 1)
+        Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+
+      // If specific heat is not given, set defaults
+      using cv_t = kw::mat_cv::info::expect::type;
+      auto& cv = stack.template get< tag::param, eq, tag::cv >();
+      // As a default, the specific heat of air (717.5 J/Kg-K) is used
+      if (cv.empty())
+        cv.push_back( std::vector< cv_t >( 1, 717.5 ) );
+      // If specific heat vector is wrong size, error out
+      if (cv.back().size() != 1)
+        Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+      // If stiffness coefficient is not given, set defaults
+      using pstiff_t = kw::mat_pstiff::info::expect::type;
+      auto& pstiff = stack.template get< tag::param, eq, tag::pstiff >();
+      if (pstiff.empty())
+        pstiff.push_back( std::vector< pstiff_t >( 1, 0.0 ) );
+      // If stiffness coefficient vector is wrong size, error out
+      if (pstiff.back().size() != 1)
+        Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
@@ -235,7 +259,7 @@ namespace grm {
       auto& ncomp = stack.template get< tag::component, eq >();
       if (physics.back() == inciter::ctr::PhysicsType::VELEQ) {
         // physics = veleq: m-material compressible flow
-        // scalar components: volfrac:m-1 + mass:m + momentum:3 + energy:m
+        // scalar components: volfrac:m + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
         if (nmat.empty() || nmat.size() != neq.get< eq >()) {
           Message< Stack, WARNING, MsgKey::NONMAT >( stack, in );
@@ -243,8 +267,32 @@ namespace grm {
         }
         // set ncomp based on nmat
         auto m = nmat.back();
-        ncomp.push_back( m-1 + m + 3 + m );
+        ncomp.push_back( m + m + 3 + m );
       }
+
+      // Verify correct number of multi-material properties configured
+      auto& gamma = stack.template get< tag::param, eq, tag::gamma >();
+      if (gamma.empty() || gamma.back().size() != nmat.back())
+        Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+
+      // If specific heats are not given, set defaults
+      using cv_t = kw::mat_cv::info::expect::type;
+      auto& cv = stack.template get< tag::param, eq, tag::cv >();
+      // As a default, the specific heat of air (717.5 J/Kg-K) is used
+      if (cv.empty())
+        cv.push_back( std::vector< cv_t >( nmat.back(), 717.5 ) );
+      // If specific heat vector is wrong size, error out
+      if (cv.back().size() != nmat.back())
+        Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+      // If stiffness coefficients are not given, set defaults
+      using pstiff_t = kw::mat_pstiff::info::expect::type;
+      auto& pstiff = stack.template get< tag::param, eq, tag::pstiff >();
+      if (pstiff.empty())
+        pstiff.push_back( std::vector< pstiff_t >( nmat.back(), 0.0 ) );
+      // If stiffness coefficient vector is wrong size, error out
+      if (pstiff.back().size() != nmat.back())
+        Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
@@ -553,21 +601,20 @@ namespace deck {
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
   struct material_property :
-         tk::grm::process< use< keyword >,
-           tk::grm::Store_back< tag::param, eq, property > > {};
+         pde_parameter_vector< keyword, eq, property > {};
 
   //! Material properties block for compressible flow
   template< class eq >
   struct material_properties :
            pegtl::if_must<
              tk::grm::readkw< use< kw::material >::pegtl_string >,
-             tk::grm::block< use< kw::end >,
-                             material_property< eq, kw::id, tag::id >,
-                             material_property< eq, kw::mat_gamma, tag::gamma >,
-                             material_property< eq, kw::mat_pstiff, tag::pstiff >,
-                             material_property< eq, kw::mat_mu, tag::mu >,
-                             material_property< eq, kw::mat_cv, tag::cv >,
-                             material_property< eq, kw::mat_k, tag::k > > > {};
+             tk::grm::block<
+               use< kw::end >,
+               material_property< eq, kw::mat_gamma, tag::gamma >,
+               material_property< eq, kw::mat_pstiff, tag::pstiff >,
+               material_property< eq, kw::mat_mu, tag::mu >,
+               material_property< eq, kw::mat_cv, tag::cv >,
+               material_property< eq, kw::mat_k, tag::k > > > {};
 
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename p,

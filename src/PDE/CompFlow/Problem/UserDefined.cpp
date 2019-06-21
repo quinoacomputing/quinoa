@@ -38,15 +38,14 @@ CompFlowProblemUserDefined::solution( ncomp_t,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
+  Assert( ncomp == 5, "Number of scalar components must be 5" );
   IGNORE(ncomp);
 
   return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
 }
 
 std::array< tk::real, 5 >
-CompFlowProblemUserDefined::solinc( ncomp_t, tk::real, tk::real,
+CompFlowProblemUserDefined::solinc( ncomp_t, ncomp_t, tk::real, tk::real,
                                     tk::real, tk::real, tk::real ) const
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
@@ -154,11 +153,11 @@ CompFlowProblemUserDefined::fieldOutput(
 
   std::vector< tk::real > p = r;
   for (std::size_t i=0; i<p.size(); ++i)
-    p[i] = eos_pressure( 0, r[i], r[i]*u[i], r[i]*v[i], r[i]*w[i], r[i]*E[i] );
+    p[i] = eos_pressure< eq >( 0, r[i], u[i], v[i], w[i], r[i]*E[i] );
   out.push_back( p );
 
   std::vector< tk::real > T = r;
-  tk::real cv = g_inputdeck.get< tag::param, eq, tag::cv >()[0];
+  tk::real cv = g_inputdeck.get< tag::param, eq, tag::cv >()[0][0];
   for (std::size_t i=0; i<T.size(); ++i)
     T[i] = cv*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
   out.push_back( T );
