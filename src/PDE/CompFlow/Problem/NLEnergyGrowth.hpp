@@ -34,7 +34,6 @@ class CompFlowProblemNLEnergyGrowth {
   private:
     using ncomp_t = tk::ctr::ncomp_type;
     using eq = tag::compflow;
-    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
     //! Compute internal energy parameter
     static tk::real hx( tk::real bx, tk::real by, tk::real bz,
@@ -53,8 +52,8 @@ class CompFlowProblemNLEnergyGrowth {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     std::vector< tk::real >
-    solinc( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real t,
-            tk::real dt ) const;
+    solinc( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+            tk::real t, tk::real dt ) const;
 
     //! Compute and return source term for NLEG manufactured solution
     static tk::SrcFn::result_type
@@ -71,7 +70,7 @@ class CompFlowProblemNLEnergyGrowth {
     //! Return field output going to file
     std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
-                 ncomp_t,
+                 ncomp_t ncomp,
                  ncomp_t offset,
                  tk::real t,
                  tk::real V,

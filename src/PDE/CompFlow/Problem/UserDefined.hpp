@@ -41,7 +41,8 @@ class CompFlowProblemUserDefined {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     std::array< tk::real, 5 >
-    solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) const;
+    solinc( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real )
+    const;
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     static tk::SrcFn::result_type

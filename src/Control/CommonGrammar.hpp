@@ -104,6 +104,9 @@ namespace grm {
     NEGATIVEPARAM,      //!< Negative parameter given configuring a PDF
     NONCOMP,            //!< No number of components selected
     NONMAT,             //!< No number of materials selected
+    EOSGAMMA,           //!< Wrong number of EOS gamma parameters
+    EOSCV,              //!< Wrong number of EOS cv parameters
+    EOSPSTIFF,          //!< Wrong number of EOS pstiff parameters
     NORNG,              //!< No RNG selected
     NODT,               //!< No time-step-size policy selected
     MULDT,              //!< Multiple time-step-size policies selected
@@ -200,6 +203,21 @@ namespace grm {
     { MsgKey::NONMAT, "The number of materials has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'nmat' to specify the number of materials." },
+    { MsgKey::EOSGAMMA, "Incorrect number of multi-material equation of state "
+      "(EOS) 'gamma' parameters configured in the preceding block's 'material "
+      "... end' sub-block. The number of components between 'gamma ... end' is "
+      "incorrect, whose size must equal the number of materials set by keyword "
+      "'nmat'." },
+    { MsgKey::EOSCV, "Incorrect number of multi-material equation of state "
+      "(EOS) 'cv' parameters configured in the preceding block's 'material "
+      "... end' sub-block. The number of components between 'cv... end' is "
+      "incorrect, whose size must equal the number of materials set by keyword "
+      "'nmat'." },
+    { MsgKey::EOSPSTIFF, "Incorrect number of multi-material equation of state "
+      "(EOS) 'pstiff' parameters configured in the preceding block's 'material "
+      "... end' sub-block. The number of components between 'pstiff ... end' "
+      "is incorrect, whose size must equal the number of materials set by "
+      "keyword 'nmat'." },
     { MsgKey::NORNG, "The random number generator has not been specified in "
       "the block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'rng' to specify the random number generator." },

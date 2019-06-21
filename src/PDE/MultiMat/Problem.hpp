@@ -54,14 +54,14 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Problem/UserDefined.hpp"
-#include "Problem/VorticalFlow.hpp"
+#include "Problem/InterfaceAdvection.hpp"
 
 namespace inciter {
 
 //! List of all MultiMat Problem policies (defined in the includes above)
 using MultiMatProblems =
   brigand::list< MultiMatProblemUserDefined
-               , MultiMatProblemVorticalFlow >;
+               , MultiMatProblemInterfaceAdvection >;
 
 } // inciter::
 

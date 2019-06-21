@@ -47,7 +47,7 @@ CompFlowPhysicsNavierStokes::viscousRhs(
 // *****************************************************************************
 {
   // dynamic viscosity
-  auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
+  auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0][0];
 
   // add deviatoric viscous stress contribution to momentum rhs
   auto c = dt * J/6.0 * mu;
@@ -119,7 +119,7 @@ CompFlowPhysicsNavierStokes::viscous_dt(
 // *****************************************************************************
 {
   // dynamic viscosity
-  auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0];
+  auto mu = g_inputdeck.get< tag::param, tag::compflow, tag::mu >()[0][0];
 
   // compute the minimum viscous time step size across the four nodes
   tk::real mindt = std::numeric_limits< tk::real >::max();
@@ -152,9 +152,9 @@ CompFlowPhysicsNavierStokes::conductRhs(
 // *****************************************************************************
 {
   // specific heat at constant volume
-  auto cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
+  auto cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0][0];
   // thermal conductivity
-  auto kc = g_inputdeck.get< tag::param, tag::compflow, tag::k >()[0];
+  auto kc = g_inputdeck.get< tag::param, tag::compflow, tag::k >()[0][0];
 
   // compute temperature
   std::array< tk::real, 4 > T;
@@ -187,9 +187,9 @@ CompFlowPhysicsNavierStokes::conduct_dt(
 // *****************************************************************************
 {
   // specific heat at constant volume
-  auto cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
+  auto cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0][0];
   // thermal conductivity
-  auto kc = g_inputdeck.get< tag::param, tag::compflow, tag::k >()[0];
+  auto kc = g_inputdeck.get< tag::param, tag::compflow, tag::k >()[0][0];
   // specific heat at constant pressure
   auto cp = g * cv;
 
