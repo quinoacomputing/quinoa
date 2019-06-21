@@ -226,16 +226,17 @@ beta variables are mass-fractions. For more details on the beta SDE, see
    - For initialization policies, see DiffEq/InitPolicy.hpp.
    - For coefficients policies, see DiffEq/Beta/MixMassFractionBetaCoeffPolicy.hpp.
 
-@section walker_ex Examples
-\subpage walker_examples
-
 @section walker_pages Related pages
- - @ref papers_walker "Publications"
- - @ref diffeq
- - @ref concurrency
- - @ref inhomogeneity
- - @ref io
- - @ref rngs_input
- - @ref statistics_output
- - @ref layout
+- @ref walker_cmd "Command line arguments"
+- @ref walker_ctr "Control file keywords"
+- @ref papers_walker "Publications"
+- @ref roadmap_walker "Roadmap"
+- @ref diffeq
+- @ref concurrency
+- @ref inhomogeneity
+- @ref io
+- @ref rngs_input
+- @ref statistics_output
+- @ref layout
+- @ref walker_examples "Examples"
 */

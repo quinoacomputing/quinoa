@@ -116,7 +116,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::stationary
                                  , kw::position
                                  , kw::velocity
-                                 , kw::instantaneous_velocity
+                                 , kw::inst_velocity
                                  , kw::seed
                                  #ifdef HAS_MKL
                                  , kw::mkl_mcg31

@@ -60,7 +60,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::helpkw
                                      , kw::input
                                      , kw::output
-                                     , kw::reorder
+                                     , kw::reorder_cmd
                                      , kw::quiescence
                                      , kw::trace
                                      , kw::version

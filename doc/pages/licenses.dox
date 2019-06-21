@@ -181,6 +181,8 @@ executable.
   - Web: https://github.com/edouarda/brigand
   - License: @subpage brigand_license_page
 
+-------------------------------------
+
 \section compiler_web Compilers
 
 \subsection clang_web Clang C++ compiler
@@ -194,6 +196,8 @@ executable.
 
 \subsection cray_web Cray C++ compiler
   - Web: https://pubs.cray.com/content/S-2179/8.7/cray-c-and-c++-reference-manual
+
+-------------------------------------
 
 \section tools_web Tools
 

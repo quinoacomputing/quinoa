@@ -69,7 +69,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::control
                                      , kw::input
                                      , kw::output
-                                     , kw::diagnostics
+                                     , kw::diagnostics_cmd
                                      , kw::quiescence
                                      , kw::lbfreq
                                      , kw::trace

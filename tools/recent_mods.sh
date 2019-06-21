@@ -10,9 +10,9 @@
 # \details   This script runs git and queries recently modified documentation
 # pages and replaces this list in mainpage.dox, which then doxygen incorporates
 # into the documentation. The final product is then renderd under section
-# "Recently modified pages on the main documentation pages.
+# "Recently modified pages" on the main documentation pages.
 #
-# A single command line argument ise required: the root of the quinoa git
+# A single command line argument is required: the root of the quinoa git
 # repository.
 ################################################################################
 
