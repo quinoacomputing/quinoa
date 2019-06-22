@@ -332,7 +332,6 @@ struct InitDirichlet {
     const auto& dir =
       deck.template get< tag::param, eq, tag::init, tag::dirichlet >().at(e);
     Assert( dir.size() == ncomp+1, "Size mismatch" );
-    IGNORE(ncomp);
     std::vector< tk::real > Y( dir.size() );
 
     for (ncomp_t p=0; p<particles.nunk(); ++p) {
@@ -344,30 +343,22 @@ struct InitDirichlet {
 
       auto Ysum = std::accumulate( begin(Y), end(Y), 0.0 );
 
-      // Assign K=N-1 particle values by dividing the gamma-distributed numbers
-      // by the sum of the N vlues, which yields a Dirichlet distribution.
-      for (std::size_t c=0; c<Y.size()-1; ++c) {
+      // Assign N=K+1 particle values by dividing the gamma-distributed numbers
+      // by the sum of the N vlues, which yields a Dirichlet distribution. Note
+      // that we also store the Nth value.
+      for (std::size_t c=0; c<Y.size(); ++c) {
         auto y = Y[c] / Ysum;
         if (y < 0.0 || y > 1.0) Throw( "Dirichlet samples out of bounds" );
         particles( p, c, offset ) = y;
       }
-
-      // compute Nth scalar
-      tk::real yn = 1.0;
-      for (ncomp_t i=0; i<ncomp; ++i) yn -= particles( p, i, offset );
-      // if the Nth scalar is out of bounds, will re-generate this particle
-      if (yn < 0.0 || yn > 1.0) --p;
     }
 
-    // Verify boundedness of all scalars
+    // Verify boundedness of all ncomp+1 (=N=K+1) scalars
     for (ncomp_t p=0; p<particles.nunk(); ++p) {
-      for (ncomp_t i=0; i<ncomp; ++i) {
+      for (ncomp_t i=0; i<ncomp+1; ++i) {
         auto y = particles( p, i, offset );
         if (y < 0.0 || y > 1.0) Throw( "IC Dirichlet sample Y out of bounds" );
       }
-      auto yn = 1.0;
-      for (ncomp_t i=0; i<ncomp; ++i) yn -= particles( p, i, offset );
-      if (yn < 0.0 || yn > 1.0) Throw( "IC Dirichlet sample Yn out of bounds" );
     }
   }
 

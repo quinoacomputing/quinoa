@@ -486,7 +486,7 @@ namespace grm {
       // Ensure correct size for parameter vector rho
       auto& rho = stack.template get< tag::param, eq, tag::rho >().back();
       auto ncomp = stack.template get< tag::component, eq >().back();
-      if (rho.size() != ncomp-1)
+      if (rho.size() != ncomp-2)
         Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
 
       // If normalization is not set, set default

@@ -65,7 +65,8 @@ extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
 //! Number of derived variables computed by the MixDirichlet SDE
-const std::size_t MIXDIR_NUMDERIVED = 2;
+//! \see MixDirichlet::derived()
+const std::size_t MIXDIR_NUMDERIVED = 3;
 
 //! \brief MixDirichlet SDE used polymorphically with DiffEq
 //! \details The template arguments specify policies and are used to configure
@@ -124,14 +125,16 @@ class MixDirichlet {
       Init::template init< eq >( g_inputdeck, m_rng, stream, particles, m_c,
                                  m_ncomp, m_offset );
 
-      // Initialize derived instantaneous variables
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
-        auto yn = Yn( particles, p );
-        // violating boundedness here is a hard error as indicates a problem
+        // Violating boundedness here is a hard error as indicates a problem
         // with the initial conditions
-        if (yn < 0.0 || yn > 1.0) Throw( "Nth scalar of IC out of bounds" );
-        derived( particles, p, yn );
+        for (ncomp_t i=0; i<m_ncomp; ++i) {
+          auto y = particles( p, i, m_offset );
+          if (y < 0.0 || y > 1.0) Throw( "IC scalar out of bounds" );
+        }
+        // Initialize derived instantaneous variables
+        derived( particles, p );
       }
     }
 
@@ -157,55 +160,26 @@ class MixDirichlet {
         std::vector< tk::real > dW( m_ncomp );
         m_rng.gaussian( stream, m_ncomp, dW.data() );
 
-        // compute Nth scalar
-        auto yn = Yn( particles, p );
-        // violating boundedness here is a hard error as indicates a problem
-        // with acception-rejection logic within this time-advancement loop
-        if (yn < 0.0 || yn > 1.0) Throw( "Nth scalar out of bounds" );
-
-        // Advance first m_ncomp (K=N-1) scalars
-        bool accept = true;
-        std::vector< tk::real > Y( m_ncomp, 0.0 );
+        // Advance all m_ncomp (=N=K+1) scalars
+        auto& yn = particles( p, m_ncomp, m_offset );
         for (ncomp_t i=0; i<m_ncomp; ++i) {
-          tk::real y = particles( p, i, m_offset );
+          auto& y = particles( p, i, m_offset );
           tk::real d = m_k[i] * y * yn * dt;
-          if (d < 0.0) Throw( "Negative diffusion term" );
+          if (d < 0.0) d = 0.0;
           d = std::sqrt( d );
-          y += 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i])*y )*dt + d*dW[i];
-          // if even a single y is out of bounds, will re-advance this particle
-          if (y < 0.0 || y > 1.0) {
-            accept = false;
-            i = m_ncomp;
-          } else {
-            Y[i] = y;   // save first N-1 advanced scalars
-          }
+          auto dy = 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i])*y )*dt + d*dW[i];
+          y += dy;
+          yn -= dy;
         }
-
-        // if none of the N-1 scalars are out of bounds, recompute Nth scalar
-        if (accept) {
-          // re-compute Nth scalar (from the just-advanced N-1 scalars)
-          yn = Yn( Y );
-          // if the Nth scalar is out of bounds, will re-advance this particle
-          if (yn < 0.0 || yn > 1.0) {
-            accept = false;
-          } else {
-            // all N scalars are within bounds, accept this advance
-            for (ncomp_t i=0; i<m_ncomp; ++i)
-              particles( p, i, m_offset ) = Y[i];
-            // compute derived particle values
-            derived( particles, p, yn );
-          }
-        }
-
-        // re-advance this particle if a single scalar was out of bounds
-        if (!accept) --p;
+        // Compute derived instantaneous variables
+        derived( particles, p );
       }
     }
 
   private:
     const ncomp_t m_c;                  //!< Equation system index
     const char m_depvar;                //!< Dependent variable
-    const ncomp_t m_ncomp;              //!< Number of components
+    const ncomp_t m_ncomp;              //!< Number of components, K = N-1
     const ncomp_t m_offset;             //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
     const ctr::NormalizationType m_norm;//!< Normalization type
@@ -221,48 +195,23 @@ class MixDirichlet {
     //! Coefficients policy
     Coefficients coeff;
 
-    //! Compute Nth mass fraction
-    //! \param[in] Y N-1 scalars as a vector
-    //! \return The Nth scalar
-    tk::real Yn( const std::vector< tk::real >& Y ) const {
-      Assert( Y.size() == m_ncomp, "Size mismatch" );
-      tk::real yn = 1.0;
-      for (ncomp_t i=0; i<m_ncomp; ++i) yn -= Y[i];
-      return yn;
-    }
-
-    //! Compute Nth mass fraction
-    //! \param[in] particles Array of particle properties
-    //! \param[in] p Particle index
-    //! \return The Nth scalar
-    tk::real Yn( const tk::Particles& particles, ncomp_t p ) const {
-      tk::real yn = 1.0;
-      for (ncomp_t i=0; i<m_ncomp; ++i) yn -= particles( p, i, m_offset );
-      return yn;
-    }
-
     //! \brief Return density for mass fractions
     //! \details This function returns the instantaneous density, rho,
     //!   based on the multiple mass fractions, Y_c.
     //! \param[in] particles Array of particle properties
     //! \param[in] p Particle index
-    //! \param[in] Yn Nth particle mass fraction
     //! \return Instantaneous value of the density, rho
     //! \details This is computed based 1/rho = sum_{i=1}^N Y_i/R_i, where R_i
     //!   are the constant pure-fluid densities and the Y_i are the mass
     //!   fractions, of the N materials. (Note that we only solve for K=N-1
     //!   mass fractions.)
-    tk::real rho( const tk::Particles& particles, ncomp_t p, tk::real Yn ) const
-    {
+    tk::real rho( const tk::Particles& particles, ncomp_t p ) const {
       // start computing density
       tk::real d = 0.0;
-      for (ncomp_t i=0; i<m_ncomp; ++i) {
+      for (ncomp_t i=0; i<m_ncomp+1; ++i)
         d += particles( p, i, m_offset ) / m_rho[i];
-      }
-      // finish computing density
-      d += Yn / m_rho[m_ncomp];
       // return particle density
-      return 1.0 / d;
+      return 1.0/d;
     }
 
     //! \brief Return specific volume for mass fractions
@@ -270,28 +219,25 @@ class MixDirichlet {
     //!   based on the multiple mass fractions, Y_c.
     //! \param[in] particles Array of particle properties
     //! \param[in] p Particle index
-    //! \param[in] Yn Nth particle mass fraction
     //! \return Instantaneous value of the specific volume, v
     //! \details This is computed based v = 1/rho = sum_{i=1}^N Y_i/R_i,
     //!   where R_i are the constant pure-fluid densities and the Y_i are the
     //!   mass fractions, of the N materials. (Note that we only solve for K=N-1
     //!   mass fractions.)
-    tk::real vol( const tk::Particles& particles, ncomp_t p, tk::real Yn ) const
-    {
+    tk::real vol( const tk::Particles& particles, ncomp_t p ) const {
       return 1.0 / rho( particles, p );
     }
 
     //! Compute instantaneous values derived from particle mass fractions
     //! \param[in,out] particles Particle properties array
     //! \param[in] p Particle index
-    //! \param[in] Yn Nth particle mass fraction
-    void derived( tk::Particles& particles, ncomp_t p, tk::real Yn ) const {
+    void derived( tk::Particles& particles, ncomp_t p ) const {
       // compute instantaneous fluid-density based on particle mass fractions
-      auto density = rho( particles, p, Yn );
-      // Compute and store instantaneous density
-      particles( p, m_ncomp, m_offset ) = density;
+      auto density = rho( particles, p );
+      //// Compute and store instantaneous density
+      particles( p, m_ncomp+1, m_offset ) = density;
       // Store instantaneous specific volume
-      particles( p, m_ncomp+1, m_offset ) = 1.0/density;
+      particles( p, m_ncomp+2, m_offset ) = 1.0/density;
     }
 
 };

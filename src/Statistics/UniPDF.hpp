@@ -95,6 +95,14 @@ class UniPDF {
       return {{ x.first->first, x.second->first }};
     }
 
+    //! Compute integral of the distribution across the whole sample space
+    //! \return Integral of the distribution
+    tk::real integral() const {
+      return std::accumulate( m_pdf.cbegin(), m_pdf.cend(), 0.0,
+        [&]( tk::real i, const pair_type& p ){
+          return i + p.second; } ) / m_nsample;
+    }
+
     /** @name Pack/Unpack: Serialize UniPDF object for Charm++ */
     ///@{
     //! Pack/Unpack serialize member function

@@ -1189,7 +1189,7 @@ namespace grm {
       auto ncomp =
         stack.template get< tag::component >().template get< eq >().back();
       // Error out if the number parameters does not equal ncomp
-      if (dir.size() != ncomp-1)
+      if (dir.size() != ncomp-2)
         Message< Stack, ERROR, MsgKey::WRONGDIRICHLET >( stack, in );
       // Error out if the specified shape or scale parameter negative
       for (auto a : dir)
