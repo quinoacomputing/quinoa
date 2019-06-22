@@ -36,6 +36,7 @@
 #include "Integrate/Source.hpp"
 #include "Integrate/Riemann/AUSM.hpp"
 #include "EoS/EoS.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
@@ -275,24 +276,22 @@ class MultiMat {
           rho = 0.0;
           for (std::size_t k=0; k<nmat; ++k)
           {
-            rho += ugp[0][nmat+k];
+            rho += ugp[0][densityIdx(nmat, k)];
           }
+
+          u = ugp[0][momentumIdx(nmat, 0)]/rho;
+          v = ugp[0][momentumIdx(nmat, 1)]/rho;
+          w = ugp[0][momentumIdx(nmat, 2)]/rho;
 
           a = 0.0;
           for (std::size_t k=0; k<nmat; ++k)
           {
-            rhok = ugp[0][nmat+k]/ugp[0][k];
-            p = eos_pressure< tag::multimat >( 0, rhok,
-                                               ugp[0][2*nmat]/rho,
-                                               ugp[0][2*nmat+1]/rho,
-                                               ugp[0][2*nmat+2]/rho,
-                                               ugp[0][2*nmat+3+k]/ugp[0][k], k );
+            rhok = ugp[0][densityIdx(nmat, k)]/ugp[0][volfracIdx(nmat, k)];
+            p = eos_pressure< tag::multimat >( 0, rhok, u, v, w,
+                                               ugp[0][energyIdx(nmat, k)]/ugp[0][volfracIdx(nmat, k)],
+                                               k );
             a = std::max( a, eos_soundspeed< tag::multimat >( 0, rhok, p, k ) );
           }
-
-          u = ugp[0][2*nmat]/rho;
-          v = ugp[0][2*nmat+1]/rho;
-          w = ugp[0][2*nmat+2]/rho;
 
           vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
 
@@ -334,24 +333,22 @@ class MultiMat {
             rho = 0.0;
             for (std::size_t k=0; k<nmat; ++k)
             {
-              rho += ugp[1][nmat+k];
+              rho += ugp[1][densityIdx(nmat, k)];
             }
+
+            u = ugp[1][momentumIdx(nmat, 0)]/rho;
+            v = ugp[1][momentumIdx(nmat, 1)]/rho;
+            w = ugp[1][momentumIdx(nmat, 2)]/rho;
 
             a = 0.0;
             for (std::size_t k=0; k<nmat; ++k)
             {
-              rhok = ugp[1][nmat+k]/ugp[1][k];
-              p = eos_pressure< tag::multimat >( 0, rhok,
-                                                 ugp[1][2*nmat]/rho,
-                                                 ugp[1][2*nmat+1]/rho,
-                                                 ugp[1][2*nmat+2]/rho,
-                                                 ugp[1][2*nmat+3+k]/ugp[1][k], k );
+              rhok = ugp[1][densityIdx(nmat, k)]/ugp[1][volfracIdx(nmat, k)];
+              p = eos_pressure< tag::multimat >( 0, rhok, u, v, w,
+                                                 ugp[1][energyIdx(nmat, k)]/ugp[1][volfracIdx(nmat, k)],
+                                                 k );
               a = std::max( a, eos_soundspeed< tag::multimat >( 0, rhok, p, k ) );
             }
-  
-            u = ugp[1][2*nmat]/rho;
-            v = ugp[1][2*nmat+1]/rho;
-            w = ugp[1][2*nmat+2]/rho;
 
             vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
 
@@ -388,14 +385,14 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
 
       std::array< std::array< tk::real, 4 >, 3 > v;
-      v[0] = U.extract( (2*nmat)*ndof, m_offset, N );
-      v[1] = U.extract( (2*nmat+1)*ndof, m_offset, N );
-      v[2] = U.extract( (2*nmat+2)*ndof, m_offset, N );
+      v[0] = U.extract( momentumIdx(nmat, 0)*ndof, m_offset, N );
+      v[1] = U.extract( momentumIdx(nmat, 1)*ndof, m_offset, N );
+      v[2] = U.extract( momentumIdx(nmat, 2)*ndof, m_offset, N );
 
       std::vector< std::array< tk::real, 4 > > ar;
       ar.resize(nmat);
       for (std::size_t k=0; k<nmat; ++k)
-        ar[k] = U.extract( (nmat+k)*ndof, m_offset, N );
+        ar[k] = U.extract( densityIdx(nmat, k)*ndof, m_offset, N );
 
       std::array< tk::real, 4 > r{{ 0.0, 0.0, 0.0, 0.0 }};
       for (std::size_t i=0; i<r.size(); ++i) {
@@ -509,53 +506,55 @@ class MultiMat {
 
       tk::real rho(0.0), p(0.0);
       for (std::size_t k=0; k<nmat; ++k)
-        rho += ugp[nmat+k];
+        rho += ugp[densityIdx(nmat, k)];
 
-      auto u = ugp[2*nmat] / rho;
-      auto v = ugp[2*nmat+1] / rho;
-      auto w = ugp[2*nmat+2] / rho;
+      auto u = ugp[momentumIdx(nmat, 0)] / rho;
+      auto v = ugp[momentumIdx(nmat, 1)] / rho;
+      auto w = ugp[momentumIdx(nmat, 2)] / rho;
 
       std::vector< tk::real > pk( nmat, 0.0 );
       for (std::size_t k=0; k<nmat; ++k)
       {
-        pk[k] = eos_pressure< tag::multimat >( system, ugp[nmat+k]/ugp[k],
+        pk[k] = eos_pressure< tag::multimat >( system,
+                                               ugp[densityIdx(nmat, k)]/ugp[volfracIdx(nmat, k)],
                                                u, v, w,
-                                               ugp[2*nmat+3+k]/ugp[k], k );
-        p += ugp[k] * pk[k];
+                                               ugp[energyIdx(nmat, k)]/ugp[volfracIdx(nmat, k)],
+                                               k );
+        p += ugp[volfracIdx(nmat, k)] * pk[k];
       }
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
       // conservative part of momentum flux
-      fl[2*nmat][0]   = ugp[2*nmat]   * u + p;
-      fl[2*nmat+1][0] = ugp[2*nmat+1] * u;
-      fl[2*nmat+2][0] = ugp[2*nmat+2] * u;
+      fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
+      fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
+      fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
 
-      fl[2*nmat][1]   = ugp[2*nmat]   * v;
-      fl[2*nmat+1][1] = ugp[2*nmat+1] * v + p;
-      fl[2*nmat+2][1] = ugp[2*nmat+2] * v;
+      fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
+      fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
+      fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
 
-      fl[2*nmat][2]   = ugp[2*nmat]   * w;
-      fl[2*nmat+1][2] = ugp[2*nmat+1] * w;
-      fl[2*nmat+2][2] = ugp[2*nmat+2] * w + p;
+      fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
+      fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
+      fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
 
       for (std::size_t k=0; k<nmat; ++k)
       {
         // conservative part of volume-fraction flux
-        fl[k][0] = 0.0;
-        fl[k][1] = 0.0;
-        fl[k][2] = 0.0;
+        fl[volfracIdx(nmat, k)][0] = 0.0;
+        fl[volfracIdx(nmat, k)][1] = 0.0;
+        fl[volfracIdx(nmat, k)][2] = 0.0;
 
         // conservative part of material continuity flux
-        fl[nmat+k][0] = u * ugp[nmat+k];
-        fl[nmat+k][1] = v * ugp[nmat+k];
-        fl[nmat+k][2] = w * ugp[nmat+k];
+        fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
+        fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
+        fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
 
         // conservative part of material total-energy flux
-        auto hmat = ugp[2*nmat+3+k] + ugp[k]*pk[k];
-        fl[2*nmat+3+k][0] = u * hmat;
-        fl[2*nmat+3+k][1] = v * hmat;
-        fl[2*nmat+3+k][2] = w * hmat;
+        auto hmat = ugp[energyIdx(nmat, k)] + ugp[volfracIdx(nmat, k)]*pk[k];
+        fl[energyIdx(nmat, k)][0] = u * hmat;
+        fl[energyIdx(nmat, k)][1] = v * hmat;
+        fl[energyIdx(nmat, k)][2] = w * hmat;
       }
 
       // NEED TO RETURN m_ncomp flux vectors in fl, not 5
@@ -600,14 +599,14 @@ class MultiMat {
 
       tk::real rho(0.0);
       for (std::size_t k=0; k<nmat; ++k)
-        rho += ul[nmat+k];
+        rho += ul[densityIdx(nmat, k)];
 
       auto ur = ul;
 
       // Internal cell velocity components
-      auto v1l = ul[2*nmat] / rho;
-      auto v2l = ul[2*nmat+1] / rho;
-      auto v3l = ul[2*nmat+2] / rho;
+      auto v1l = ul[momentumIdx(nmat, 0)] / rho;
+      auto v2l = ul[momentumIdx(nmat, 1)] / rho;
+      auto v3l = ul[momentumIdx(nmat, 2)] / rho;
       // Normal component of velocity
       auto vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
       // Ghost state velocity components
@@ -617,13 +616,13 @@ class MultiMat {
       // Boundary condition
       for (std::size_t k=0; k<nmat; ++k)
       {
-        ur[k] = ul[k];
-        ur[nmat+k] = ul[nmat+k];
-        ur[2*nmat+3+k] = ul[2*nmat+3+k];
+        ur[volfracIdx(nmat, k)] = ul[volfracIdx(nmat, k)];
+        ur[densityIdx(nmat, k)] = ul[densityIdx(nmat, k)];
+        ur[energyIdx(nmat, k)] = ul[energyIdx(nmat, k)];
       }
-      ur[2*nmat]   = rho * v1r;
-      ur[2*nmat+1] = rho * v2r;
-      ur[2*nmat+2] = rho * v3r;
+      ur[momentumIdx(nmat, 0)] = rho * v1r;
+      ur[momentumIdx(nmat, 1)] = rho * v2r;
+      ur[momentumIdx(nmat, 2)] = rho * v3r;
       return {{ std::move(ul), std::move(ur) }};
     }
 
