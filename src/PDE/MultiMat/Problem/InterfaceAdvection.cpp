@@ -15,6 +15,7 @@
 #include "InterfaceAdvection.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 
 //namespace inciter {
 //
@@ -204,9 +205,9 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
 
   for (std::size_t k=0; k<nmat; ++k)
   {
-    al.push_back( U.extract( k*ndof, offset ) );
-    ar.push_back( U.extract( (nmat+k)*ndof, offset ) );
-    ae.push_back( U.extract( (2*nmat+3+k)*ndof, offset ) );
+    al.push_back( U.extract( volfracIdx(nmat, k)*ndof, offset ) );
+    ar.push_back( U.extract( densityIdx(nmat, k)*ndof, offset ) );
+    ae.push_back( U.extract( energyIdx(nmat, k)*ndof, offset ) );
   }
   const auto ru  = U.extract( 4*ndof, offset );
   const auto rv  = U.extract( 5*ndof, offset );
