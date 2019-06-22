@@ -19,9 +19,9 @@ namespace inciter {
 //! \param[in] nmat Number of materials
 //! \param[in] kmat Index of required material
 //! \return Index of the required material volume fraction
-inline std::size_t volfracIdx( std::size_t nmat, std::size_t kmat )
+inline std::size_t volfracIdx( std::size_t nmat [[maybe_unused]],
+                               std::size_t kmat )
 {
-  IGNORE(nmat);
   return kmat;
 }
 
