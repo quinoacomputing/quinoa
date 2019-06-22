@@ -256,6 +256,10 @@ namespace grm {
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::VELEQ );
 
+      // Use default flux type as 'ausm'
+      auto& flux = stack.template get< tag::discr, tag::flux >();
+      flux = inciter::ctr::FluxType::AUSM;
+
       // Set number of scalar components based on number of materials
       auto& nmat = stack.template get< tag::param, eq, tag::nmat >();
       auto& ncomp = stack.template get< tag::component, eq >();
