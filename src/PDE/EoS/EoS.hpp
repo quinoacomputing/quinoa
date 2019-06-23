@@ -22,6 +22,34 @@ extern ctr::InputDeck g_inputdeck;
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
+//! \brief Calculate density from the material pressure and temperature using
+//!   the stiffened-gas equation of state
+//! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
+//! \param[in] system Equation system index
+//! \param[in] pr Material pressure
+//! \param[in] temp Material temperature
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \return Material density calculated using the stiffened-gas EoS
+template< class Eq >
+tk::real eos_density( ncomp_t system,
+                      tk::real pr,
+                      tk::real temp,
+                      std::size_t imat=0 )
+{
+  // query input deck to get gamma, p_c
+  auto g =
+    g_inputdeck.get< tag::param, Eq, tag::gamma >()[ system ][imat];
+  auto p_c =
+    g_inputdeck.get< tag::param, Eq, tag::pstiff >()[ system ][imat];
+  auto cv =
+    g_inputdeck.get< tag::param, Eq, tag::cv >()[ system ][imat];
+
+  tk::real rho = (pr + p_c) / ((g-1.0) * cv * temp);
+  return rho;
+}
+
 //! \brief Calculate pressure from the material density, momentum and total
 //!   energy using the stiffened-gas equation of state
 //! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
