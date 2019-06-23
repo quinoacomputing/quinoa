@@ -15,6 +15,7 @@ add_library(Base
             Writer.cpp
             Table.cpp
             Vector.cpp
+            StrConvUtil.cpp
             ChareStateCollector.cpp
 )
 
