@@ -169,6 +169,9 @@ tk::update_rhs_ncn( ncomp_t ncomp,
   Assert( dBdx[2].size() == ndof_el, "Size mismatch for basis function derivatives" );
   Assert( ncf.size() == ncomp, "Size mismatch for non-conservative term" );
 
+  IGNORE(ndof_el);
+  IGNORE(dBdx);
+
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
