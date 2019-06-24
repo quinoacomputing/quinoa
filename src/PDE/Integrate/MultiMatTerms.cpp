@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Integrate/NonConservative.cpp
+  \file      src/PDE/Integrate/MultiMatTerms.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -14,7 +14,7 @@
 */
 // *****************************************************************************
 
-#include "NonConservative.hpp"
+#include "MultiMatTerms.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
 #include "EoS/EoS.hpp"

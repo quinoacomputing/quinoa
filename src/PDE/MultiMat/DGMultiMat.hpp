@@ -33,7 +33,7 @@
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
-#include "Integrate/NonConservative.hpp"
+#include "Integrate/MultiMatTerms.hpp"
 #include "Integrate/Source.hpp"
 #include "Integrate/Riemann/AUSM.hpp"
 #include "EoS/EoS.hpp"

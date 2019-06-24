@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Integrate/NonConservative.hpp
+  \file      src/PDE/Integrate/MultiMatTerms.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -13,8 +13,8 @@
      of numerical representation.
 */
 // *****************************************************************************
-#ifndef NonConservative_h
-#define NonConservative_h
+#ifndef MultiMatTerms_h
+#define MultiMatTerms_h
 
 #include "Basis.hpp"
 #include "Types.hpp"
@@ -54,4 +54,4 @@ update_rhs_ncn( ncomp_t ncomp,
 
 } // tk::
 
-#endif // NonConservative_h
+#endif // MultiMatTerms_h
