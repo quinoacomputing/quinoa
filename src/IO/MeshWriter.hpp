@@ -43,7 +43,7 @@ class MeshWriter : public CBase_MeshWriter {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
-    explicit MeshWriter( CkMigrateMessage* ) {}
+    explicit MeshWriter( CkMigrateMessage* m ) : CBase_MeshWriter( m ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -74,6 +74,8 @@ class MeshWriter : public CBase_MeshWriter {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \note This is a Charm++ group, pup() is thus only for
+    //!    checkpoint/restart.
     void pup( PUP::er &p ) override {
       p | m_filetype;
       p | m_bndCentering;

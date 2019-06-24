@@ -93,13 +93,9 @@ Driver Main( int argc, char* argv[],
 }
 
 //! Generic Main Charm++ module constructor for all executables
-//! \tparam ExecuteProxy Charm++ proxy type for the 'excecute' chare, see
-//!    src/Main/\<executable\>.C
 //! \tparam MainProxy Main Charm++ chare proxy for the executable
 //! \tparam CmdLine Executable-specific tagged tuple storing the rusult of the
 //!    command line parser
-//! \param[in] msg Charm++ CkArgMsg pointer passed (by Charm++) to the main
-//!   chare proxy
 //! \param[in,out] mp MainProxy to set for the main chare
 //! \param[in] thisProxy 'thisProxy' to set as MainProxy
 //! \param[in,out] state Chare state collector proxy
@@ -109,17 +105,14 @@ Driver Main( int argc, char* argv[],
 //!   already parsed)
 //! \param[in] quiescenceTarget Pre-created Charm++ callback to use as the
 //!   target function to call if quiescence is detected
-template< class ExecuteProxy, class MainProxy, class CmdLine >
-void MainCtor( CkArgMsg* msg,
-               MainProxy& mp,
+template< class MainProxy, class CmdLine >
+void MainCtor( MainProxy& mp,
                const MainProxy& thisProxy,
                tk::CProxy_ChareStateCollector& state,
                std::vector< tk::Timer >& timer,
                const CmdLine& cmdline,
                const CkCallback& quiescenceTarget )
 {
-  delete msg;
-
   // Set Charm++ main proxy
   mp = thisProxy;
 
@@ -131,12 +124,6 @@ void MainCtor( CkArgMsg* msg,
 
   // Optionally enable quiscence detection
   if (cmdline.template get< tag::quiescence >()) CkStartQD( quiescenceTarget );
-
-  // Fire up an asynchronous execute object, which when created at some
-  // future point in time will call back to this->execute(). This is
-  // necessary so that this->execute() can access already migrated
-  // global-scope data.
-  ExecuteProxy::ckNew();
 
   // Start new timer measuring the migration of global-scope data
   timer.emplace_back();

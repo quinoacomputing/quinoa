@@ -194,11 +194,40 @@ class Main : public CBase_Main {
       m_timer(1),
       m_timestamp()
     {
+      delete msg;
       g_trace = m_cmdline.get< tag::trace >();
-      tk::MainCtor< CProxy_execute >
-        ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
-          CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
+      tk::MainCtor( mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
+                    CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
+      // Fire up an asynchronous execute object, which when created at some
+      // future point in time will call back to this->execute(). This is
+      // necessary so that this->execute() can access already migrated
+      // global-scope data.
+      CProxy_execute::ckNew();
     } catch (...) { tk::processExceptionCharm(); }
+
+    //! Migrate constructor: returning from a checkpoint
+    explicit Main( CkMigrateMessage* msg ) : CBase_Main( msg ),
+      m_signal( tk::setSignalHandlers() ),
+      m_cmdline(),
+      m_cmdParser( reinterpret_cast<CkArgMsg*>(msg)->argc,
+                   reinterpret_cast<CkArgMsg*>(msg)->argv,
+                   tk::Print(),
+                   m_cmdline ),
+      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
+      m_driver( tk::Main< inciter::InciterDriver >
+                        ( reinterpret_cast<CkArgMsg*>(msg)->argc,
+                          reinterpret_cast<CkArgMsg*>(msg)->argv,
+                          m_cmdline,
+                          tk::HeaderType::INCITER,
+                          tk::inciter_executable(),
+                          m_print ) ),
+      m_timer(1),
+      m_timestamp()
+    {
+      g_trace = m_cmdline.get< tag::trace >();
+      tk::MainCtor( mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
+                    CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
+    }
 
     //! Execute driver created and initialized by constructor
     void execute() {
@@ -227,6 +256,21 @@ class Main : public CBase_Main {
       tk::dumpstate( m_cmdline, m_print, msg );
     }
 
+    /** @name Charm++ pack/unpack serializer member functions */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \note This is a Charm++ mainchare, pup() is thus only for
+    //!    checkpoint/restart.
+    void pup( PUP::er &p ) override {
+      p | m_timer;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] m Mainchare object reference
+    friend void operator|( PUP::er& p, Main& m ) { m.pup(p); }
+    //@}
+
   private:
     int m_signal;                               //!< Used to set signal handlers
     inciter::ctr::CmdLine m_cmdline;            //!< Command line
@@ -234,7 +278,6 @@ class Main : public CBase_Main {
     inciter::InciterPrint m_print;              //!< Pretty printer
     inciter::InciterDriver m_driver;            //!< Driver
     std::vector< tk::Timer > m_timer;           //!< Timers
-
     //! Time stamps in h:m:s with labels
     std::vector< std::pair< std::string, tk::Timer::Watch > > m_timestamp;
 };
@@ -244,7 +287,11 @@ class Main : public CBase_Main {
 //!    has finished migrating all global-scoped read-only objects which happens
 //!    after the main chare constructor has finished.
 class execute : public CBase_execute {
- public: execute() { mainProxy.execute(); }
+  public:
+    //! Constructor
+    execute() { mainProxy.execute(); }
+    //! Migrate constructor
+    explicit execute( CkMigrateMessage* m ) : CBase_execute( m ) {}
 };
 
 #include "NoWarning/inciter.def.h"

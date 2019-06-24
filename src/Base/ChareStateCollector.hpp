@@ -36,6 +36,10 @@ class ChareStateCollector : public CBase_ChareStateCollector {
     //! Constructor
     //! \details Start timer when constructor is called
     explicit ChareStateCollector() : m_state(), m_timer() {}
+
+    //! Migrate constructor
+    explicit ChareStateCollector( CkMigrateMessage* m ) :
+      CBase_ChareStateCollector( m ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -49,6 +53,22 @@ class ChareStateCollector : public CBase_ChareStateCollector {
 
     //! Collect chare state
     void collect( bool error, CkCallback cb );
+
+    /** @name Charm++ pack/unpack serializer member functions */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \note This is a Charm++ group, pup() is thus only for
+    //!    checkpoint/restart.
+    void pup( PUP::er &p ) override {
+      p | m_state;
+      p | m_timer;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] i ChareStateCollector object reference
+    friend void operator|( PUP::er& p, ChareStateCollector& i ) { i.pup(p); }
+    //@}
 
   private:
     std::vector< ChareState > m_state;  //!< Chare states

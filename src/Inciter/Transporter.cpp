@@ -73,14 +73,62 @@ Transporter::Transporter() :
   m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
   m_timer(),
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "p", "d", "r", "b", "c", "m", "r" }},
-              {{ "partition", "distribute", "refine", "bnd", "comm", "mask",
-                  "reorder" }} ),
+              ProgMeshPrefix, ProgMeshLegend ),
   m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "c", "b", "f", "g", "a" }},
-              {{ "create", "bndface", "comfac", "ghost", "adj" }} )
+              ProgWorkPrefix, ProgWorkLegend )
 // *****************************************************************************
 //  Constructor
+// *****************************************************************************
+{
+  // Echo configuration to screen
+  info();
+
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
+
+  // If the desired max number of time steps is larger than zero, and the
+  // termination time is larger than the initial time, and the constant time
+  // step size (if that is used) is smaller than the duration of the time to be
+  // simulated, we have work to do, otherwise, finish right away. If a constant
+  // dt is not used, that part of the logic is always true as the default
+  // constdt is zero, see inciter::ctr::InputDeck::InputDeck().
+  if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
+
+    // Enable SDAG waits for collecting mesh statistics
+    thisProxy.wait4stat();
+
+    // Configure and write diagnostics file header
+    diagHeader();
+
+    // Create mesh partitioner AND boundary condition object group
+    createPartitioner();
+
+  } else finish();      // stop if no time stepping requested
+}
+
+Transporter::Transporter( CkMigrateMessage* m ) :
+  CBase_Transporter( m ),
+  m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
+  m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              ProgMeshPrefix, ProgMeshLegend ),
+    m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              ProgWorkPrefix, ProgWorkLegend )
+// *****************************************************************************
+//  Migrate constructor: returning from a checkpoint
+//! \param[in] m Charm++ migrate message
+// *****************************************************************************
+{
+   m_print.diag( "Restarted from checkpoint" );
+   info();
+   inthead();
+}
+
+void
+Transporter::info()
+// *****************************************************************************
+// Echo configuration to screen
 // *****************************************************************************
 {
   m_print.part( "Factory" );
@@ -201,43 +249,24 @@ Transporter::Transporter() :
     }
   }
 
-  // If the desired max number of time steps is larger than zero, and the
-  // termination time is larger than the initial time, and the constant time
-  // step size (if that is used) is smaller than the duration of the time to be
-  // simulated, we have work to do, otherwise, finish right away. If a constant
-  // dt is not used, that part of the logic is always true as the default
-  // constdt is zero, see inciter::ctr::InputDeck::InputDeck().
-  if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
+  // Print I/O filenames
+  m_print.section( "Output filenames and directories" );
+  m_print.item( "Field output file(s)",
+    g_inputdeck.get< tag::cmd, tag::io, tag::output >() + ".<chareid>" );
+  m_print.item( "Diagnostics file",
+                g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
+  m_print.item( "Checkpoint/restart directory",
+                g_inputdeck.get< tag::cmd, tag::io, tag::restart >() + '/' );
 
-    // Enable SDAG waits for collecting mesh statistics
-    thisProxy.wait4stat();
-
-    // Print I/O filenames
-    m_print.section( "Output filenames and directories" );
-    m_print.item( "Field output file(s)",
-      g_inputdeck.get< tag::cmd, tag::io, tag::output >() + ".<chareid>" );
-    m_print.item( "Diagnostics file",
-                  g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
-    m_print.item( "Checkpoint/restart directory",
-                  g_inputdeck.get< tag::cmd, tag::io, tag::restart >() + '/' );
-
-    // Print output intervals
-    m_print.section( "Output intervals" );
-    m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
-    m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
-    m_print.item( "Diagnostics",
-                  g_inputdeck.get< tag::interval, tag::diag >() );
-    m_print.item( "Checkpoint/restart",
-                  g_inputdeck.get< tag::cmd, tag::rsfreq >() );
-    m_print.endsubsection();
-
-    // Configure and write diagnostics file header
-    diagHeader();
-
-    // Create mesh partitioner AND boundary condition object group
-    createPartitioner();
-
-  } else finish();      // stop if no time stepping requested
+  // Print output intervals
+  m_print.section( "Output intervals" );
+  m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
+  m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
+  m_print.item( "Diagnostics",
+                g_inputdeck.get< tag::interval, tag::diag >() );
+  m_print.item( "Checkpoint/restart",
+                g_inputdeck.get< tag::cmd, tag::rsfreq >() );
+  m_print.endsubsection();
 }
 
 void
@@ -798,6 +827,21 @@ Transporter::stat()
               std::to_string( static_cast<std::size_t>(m_maxstat[2]) ) + " / " +
               std::to_string( static_cast<std::size_t>(m_avgstat[2]) ) );
 
+  // Print out time integration header to screen
+  inthead();
+
+  m_progWork.start( "Preparing workers",
+                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
+  // Create "derived-class" workers
+  m_sorter.createWorkers();
+}
+
+void
+Transporter::inthead()
+// *****************************************************************************
+// Print out time integration header to screen
+// *****************************************************************************
+{
   m_print.inthead( "Time integration", "Navier-Stokes solver",
   "Legend: it - iteration count\n"
   "         t - time\n"
@@ -813,11 +857,6 @@ Transporter::stat()
   "             r - checkpoint/restart\n",
   "\n      it             t            dt        ETE        ETA        EGT  out\n"
     " -------------------------------------------------------------------------\n" );
-
-  m_progWork.start( "Preparing workers",
-                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
-  // Create "derived-class" workers
-  m_sorter.createWorkers();
 }
 
 void

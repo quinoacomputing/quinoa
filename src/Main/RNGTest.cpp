@@ -223,10 +223,15 @@ class Main : public CBase_Main {
       m_timer(1),       // Start new timer measuring the total runtime
       m_timestamp()
     {
+      delete msg;
       g_trace = m_cmdline.get< tag::trace >();
-      tk::MainCtor< CProxy_execute >
-        ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
-          CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
+      tk::MainCtor( mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
+                    CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
+      // Fire up an asynchronous execute object, which when created at some
+      // future point in time will call back to this->execute(). This is
+      // necessary so that this->execute() can access already migrated
+      // global-scope data.
+      CProxy_execute::ckNew();
     } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {

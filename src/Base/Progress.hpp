@@ -41,8 +41,8 @@ class Progress {
     //!   expected per sub-task
     explicit Progress( const tk::Print& print,
                        bool feedback,
-                       std::array< std::string, N >&& prefix,
-                       std::array< std::string, N >&& legend,
+                       const std::array< std::string, N >& prefix,
+                       const std::array< std::string, N >& legend,
                        std::array< int, N >&& max = std::array< int, N >() )
     : m_print( print ),
       m_feedback( feedback ),

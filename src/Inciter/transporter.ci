@@ -18,7 +18,7 @@ module transporter {
 
   namespace inciter {
 
-    chare Transporter {
+    chare [migratable] Transporter {
       entry Transporter();
       entry [reductiontarget] void load( std::size_t nelem, std::size_t npoin );
       entry [reductiontarget] void distributed();

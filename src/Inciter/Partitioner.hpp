@@ -72,7 +72,7 @@ class Partitioner : public CBase_Partitioner {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Migrate constructor
-    explicit Partitioner( CkMigrateMessage* ) {}
+    explicit Partitioner( CkMigrateMessage* m ) : CBase_Partitioner( m ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -100,6 +100,8 @@ class Partitioner : public CBase_Partitioner {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \note This is a Charm++ nodegroup, pup() is thus only for
+    //!    checkpoint/restart.
     void pup( PUP::er &p ) override {
       p | m_cbp;
       p | m_cbr;
