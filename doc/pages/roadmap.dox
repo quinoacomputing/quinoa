@@ -11,6 +11,9 @@ tool, also detailing if/where help is needed. The tool-specific sections are
 followed by more general ones, such as potential improvements to the
 documentation and performance. See also the @ref contributing "contributing guide".
 
+@note This page discusses _what_ to contribute. _How_ to contribute is
+discussed by the @ref contributing "contributing guide".
+
 @tableofcontents{xml}
 
 @section roadmap_walker Walker
@@ -37,7 +40,7 @@ number of years. However, contributions are welcome in the following areas:
 @section roadmap_inciter Inciter
 
 Compared to all other tools @ref inciter_main is currently receiving most of
-the development work. The following areas are active developed. Please @ref
+the development work. The following areas are actively developed. Please @ref
 resources_contact "contact us" if you would like to use and/or contribute to
 Inciter.
 
@@ -45,7 +48,7 @@ Inciter.
 
 The AMR algorithm closely follows [Jacob Waltz's
 paper](http://dx.doi.org/10.1002/fld.674).  The algorithm is specific to
-tetrahedron-only grids and always yields a conforming mesh, i.e., without
+tetrahedron-only grids and, by design, yields a conforming mesh, i.e., without
 hanging nodes. Tetrahedra enable automatic mesh generation for arbitrary
 complex 3D computational domains and since the algorithm always yields a
 conforming mesh, it can be (and _is_) independent of the underlying @ref
@@ -120,7 +123,7 @@ As an experimental feature, Inciter used to have Lagrangian particles that were
 simply advected with the flow being computed. Particles were generated into
 each tetrahedron cell and were also communicated across partition boundaries.
 Such particles can be used for a variety of purposes. Examples are
-visualization tracers, representing physics that are better represented in a a
+visualization tracers, representing physics that are better represented in a
 Lagrangian fashion, potentially interacting with other quantities represented
 on the mesh, or provide a statistical representation of unresolved-scale
 (sub-grid) processes, e.g., in turbulent flows.
@@ -199,8 +202,8 @@ function in the upper right corner. This helps us keep the content up-to-date
 with the code, but does also need some extra (added) content to describe more
 detailed subjects, e.g., in the form of HOWTOs.
 
-The documentation could be improved both in terms of _added_ content as well as
-functionality.
+The documentation could be improved both in terms of _content_ as well as
+_functionality_.
 
 @subsection roadmap_doc_content Content
 
@@ -213,7 +216,7 @@ not really require writing code.
 @subsubsection roadmap_doc_content_howtos HOWTOs
 
 We have a few HOWTOs that detail some specific aspects of Inciter. These are
-the pages titled as _How to add ..._. @ref inciter_main as well as @ref
+the pages titled as _"How to add ..."_. @ref inciter_main as well as @ref
 walker_main could use some additional such pages to lower the barrier of entry
 for contributing to these tools.
 
@@ -240,8 +243,8 @@ fruits. This can be done by profiling first, followed by identifying, then
 optimizing the hot-spots, while continuously benchmarking the changes by
 comparing to (1) current/previous implementation or (2) to a highly optimized
 _other_ code (or codes) implementing a similar functionality. All @ref
-mainpage_tools "tools", but most importantly, @ref inciter_main and @ref walker
-need such performance optimization help.
+mainpage_tools "tools", but most importantly, @ref inciter_main and @ref
+walker_main need such performance optimization help.
 
 @section roadmap_friendly Improve user-friendliness
 
