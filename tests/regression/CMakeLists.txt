@@ -18,6 +18,18 @@ if(ENABLE_MESHCONV AND NOT GMSH_FOUND)
   message(WARNING "Gmsh not found, meshconv regression tests will not be rigorous")
 endif()
 
+# Find valgrind executable
+set(ENABLE_VALGRIND false CACHE BOOL "Run all regression tests using valgrind")
+if (ENABLE_VALGRIND)
+  find_program(VALGRIND valgrind)
+  if (VALGRIND)
+    set(USE_VALGRIND true)
+    message(STATUS "Will run all regression tests using valgrind")
+  else()
+    message(WARNING "Valgrind was enabled but NOT found")
+  endif()
+endif()
+
 # Include function used to add regression tests
 include(add_regression_test)
 
