@@ -1654,18 +1654,27 @@ DG::step()
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
+  const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
 
+    if ( (d->It()) % rsfreq == 0 ) {
+
+      d->contribute(
+        CkCallback( CkReductionTarget(Transporter,checkpoint), d->Tr() ) );
+
     // Load balancing if user frequency is reached or after the second time-step
-    if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
+    } else if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
+
       AtSync();
       if (nonblocking) next();
-    }
-    else {
+
+    } else {
+
       next();
+
     }
 
   } else {

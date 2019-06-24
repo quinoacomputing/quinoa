@@ -625,7 +625,8 @@ DiagCG::step()
       d->contribute(
         CkCallback( CkReductionTarget(Transporter,checkpoint), d->Tr() ) );
 
-    } else if ( (d->It()) % lbfreq == 0 ) {
+    // Load balancing if user frequency is reached or after the second time-step
+    } else if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
 
       AtSync();
       if (nonblocking) next();
