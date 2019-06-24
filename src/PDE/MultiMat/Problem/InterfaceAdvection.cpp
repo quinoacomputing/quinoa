@@ -43,8 +43,6 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  using tag::param;
-
   Assert( ncomp == 9, "Incorrect number of components in multi-material "
           "system" );
 

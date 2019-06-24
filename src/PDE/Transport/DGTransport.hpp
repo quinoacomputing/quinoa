@@ -151,8 +151,10 @@ class Transport {
       // set rhs to zero
       R.fill(0.0);
 
-      // empty vector unused for single-material
-      std::vector< std::vector < tk::real > > N;
+      // empty vector for non-conservative terms. This vector is unused for
+      // linear transport since, there are no non-conservative terms in the
+      // system of PDEs.
+      std::vector< std::vector < tk::real > > riemannDeriv;
 
       // supported boundary condition types and associated state functions
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
@@ -164,7 +166,7 @@ class Transport {
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, inpoel, coord, fd,
                    geoFace, Upwind::flux, Problem::prescribedVelocity, U,
-                   ndofel, R, N );
+                   ndofel, R, riemannDeriv );
 
       if(ndof > 1)
         // compute volume integrals
@@ -175,7 +177,7 @@ class Transport {
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, b.first, fd,
           geoFace, inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
-          b.second, U, ndofel, R, N );
+          b.second, U, ndofel, R, riemannDeriv );
     }
 
     //! Compute the minimum time step size

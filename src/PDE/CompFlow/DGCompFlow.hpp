@@ -152,8 +152,10 @@ class CompFlow {
       // set rhs to zero
       R.fill(0.0);
 
-      // empty vector unused for single-material
-      std::vector< std::vector < tk::real > > N;
+      // empty vector for non-conservative terms. This vector is unused for
+      // single-material hydrodynamics since, there are no non-conservative
+      // terms in the system of PDEs.
+      std::vector< std::vector < tk::real > > riemannDeriv;
 
       // configure Riemann flux function
       auto rieflxfn =
@@ -173,7 +175,7 @@ class CompFlow {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, inpoel, coord, fd,
-                   geoFace, rieflxfn, velfn, U, ndofel, R, N );
+                   geoFace, rieflxfn, velfn, U, ndofel, R, riemannDeriv );
 
       // compute source term intehrals
       tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
@@ -188,7 +190,7 @@ class CompFlow {
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, b.first, fd,
                         geoFace, inpoel, coord, t, rieflxfn, velfn, b.second, U,
-                        ndofel, R, N );
+                        ndofel, R, riemannDeriv );
     }
 
     //! Compute the minimum time step size

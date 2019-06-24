@@ -25,7 +25,7 @@ namespace tk {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! Compute volume integrals of non-conservative terms for DG
+//! Compute volume integrals of non-conservative terms for multi-material DG
 void
 nonConservativeInt( ncomp_t system,
                     ncomp_t ncomp,
@@ -36,7 +36,7 @@ nonConservativeInt( ncomp_t system,
                     const UnsMesh::Coords& coord,
                     const Fields& geoElem,
                     const Fields& U,
-                    const std::vector< std::vector< tk::real > >& N,
+                    const std::vector< std::vector< tk::real > >& riemannDeriv,
                     const std::vector< std::size_t >& ndofel,
                     Fields& R );
 

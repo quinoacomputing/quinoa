@@ -30,11 +30,15 @@ tk::nonConservativeInt( ncomp_t system,
                         const UnsMesh::Coords& coord,
                         const Fields& geoElem,
                         const Fields& U,
-                        const std::vector< std::vector< tk::real > >& N,
+                        const std::vector< std::vector< tk::real > >&
+                          riemannDeriv,
                         const std::vector< std::size_t >& ndofel,
                         Fields& R )
 // *****************************************************************************
-//  Compute volume integrals for DG
+//  Compute volume integrals for multi-material DG
+//! \details This is called for multi-material DG, computing volume integrals of
+//!   terms in the volume fraction and energy equations, which do not exist in
+//!   the single-material flow formulation (for `CompFlow` DG).
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] nmat Number of materials in this PDE system
@@ -44,11 +48,17 @@ tk::nonConservativeInt( ncomp_t system,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
 //! \param[in] U Solution vector at recent time step
-//! \param[in] N Derivatives for non-conservative terms
+//! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::energyIdx;
+
   IGNORE(system);
 
   const auto& cx = coord[0];
@@ -104,35 +114,36 @@ tk::nonConservativeInt( ncomp_t system,
         // get bulk properties
         tk::real rhob(0.0);
         for (std::size_t k=0; k<nmat; ++k)
-            rhob += ugp[inciter::densityIdx(nmat, k)];
+            rhob += ugp[densityIdx(nmat, k)];
 
-        std::array< tk::real, 3 > vel{{ ugp[inciter::momentumIdx(nmat, 0)]/rhob,
-                                        ugp[inciter::momentumIdx(nmat, 1)]/rhob,
-                                        ugp[inciter::momentumIdx(nmat, 2)]/rhob }};
+        std::array< tk::real, 3 > vel{{ ugp[momentumIdx(nmat, 0)]/rhob,
+                                        ugp[momentumIdx(nmat, 1)]/rhob,
+                                        ugp[momentumIdx(nmat, 2)]/rhob }};
 
         std::vector< tk::real > ymat(nmat, 0.0);
         std::array< tk::real, 3 > dap{{0.0, 0.0, 0.0}};
         for (std::size_t k=0; k<nmat; ++k)
         {
-          ymat[k] = ugp[inciter::densityIdx(nmat, k)]/rhob;
+          ymat[k] = ugp[densityIdx(nmat, k)]/rhob;
 
           for (std::size_t idir=0; idir<3; ++idir)
-            dap[idir] += N[3*k+idir][e];
+            dap[idir] += riemannDeriv[3*k+idir][e];
         }
 
         // compute non-conservative terms
         std::vector< tk::real > ncf(ncomp, 0.0);
 
         for (std::size_t idir=0; idir<3; ++idir)
-          ncf[inciter::momentumIdx(nmat, idir)] = 0.0;
+          ncf[momentumIdx(nmat, idir)] = 0.0;
 
         for (std::size_t k=0; k<nmat; ++k)
         {
-          ncf[inciter::densityIdx(nmat, k)] = 0.0;
-          ncf[inciter::volfracIdx(nmat, k)] = ugp[inciter::volfracIdx(nmat, k)] * N[3*nmat][e];
+          ncf[densityIdx(nmat, k)] = 0.0;
+          ncf[volfracIdx(nmat, k)] = ugp[volfracIdx(nmat, k)]
+                                     * riemannDeriv[3*nmat][e];
           for (std::size_t idir=0; idir<3; ++idir)
-            ncf[inciter::energyIdx(nmat, k)] -= vel[idir] * ( ymat[k]*dap[idir]
-                                                   - N[3*k+idir][e] );
+            ncf[energyIdx(nmat, k)] -= vel[idir] * ( ymat[k]*dap[idir]
+                                                  - riemannDeriv[3*k+idir][e] );
         }
 
         update_rhs_ncn( ncomp, offset, ndof, ndofel[e], wt, e, dBdx, ncf, R );
@@ -152,7 +163,7 @@ tk::update_rhs_ncn( ncomp_t ncomp,
                     const std::vector< tk::real >& ncf,
                     Fields& R )
 // *****************************************************************************
-//  Update the rhs by adding the source term integrals
+//  Update the rhs by adding the non-conservative term integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom

@@ -43,7 +43,7 @@ surfInt( ncomp_t system,
          const Fields& U,
          const std::vector< std::size_t >& ndofel,
          Fields& R,
-         std::vector< std::vector< tk::real > >& N );
+         std::vector< std::vector< tk::real > >& riemannDeriv );
 
 // Update the rhs by adding surface integration term
 void
@@ -61,7 +61,7 @@ update_rhs_fa ( ncomp_t ncomp,
                 const std::vector< tk::real >& B_l,
                 const std::vector< tk::real >& B_r,
                 Fields& R,
-                std::vector< std::vector< tk::real > >& N );
+                std::vector< std::vector< tk::real > >& riemannDeriv );
 
 } // tk::
 

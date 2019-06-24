@@ -154,13 +154,9 @@ class MultiMat {
       // set rhs to zero
       R.fill(0.0);
 
-      // allocate space for non-conservative terms
-      std::vector< std::vector < tk::real > > N;
-      N.resize(3*nmat+1);
-      for (std::size_t k=0; k<N.size(); ++k)
-      {
-        N[k].resize( U.nunk(), 0.0 );
-      }
+      // allocate space for Riemann derivatives used in non-conservative terms
+      std::vector< std::vector< tk::real > >
+        riemannDeriv( 3*nmat+1, std::vector<tk::real>(U.nunk(),0.0) );
 
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
@@ -174,7 +170,7 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, nmat, m_offset, ndof, inpoel, coord, fd,
-                   geoFace, AUSM::flux, velfn, U, ndofel, R, N );
+                   geoFace, AUSM::flux, velfn, U, ndofel, R, riemannDeriv );
 
       // compute source term integrals
       tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
@@ -189,20 +185,23 @@ class MultiMat {
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, nmat, m_offset, ndof, b.first, fd,
                         geoFace, inpoel, coord, t, AUSM::flux, velfn, b.second,
-                        U, ndofel, R, N );
+                        U, ndofel, R, riemannDeriv );
 
-      // get derivatives from N
-      for (std::size_t k=0; k<N.size(); ++k)
+      Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
+              "vector incorrect" );
+
+      // get derivatives from riemannDeriv
+      for (std::size_t k=0; k<riemannDeriv.size(); ++k)
       {
-        Assert( N[k].size() == U.nunk(), "Non-conservative derivative vector "
-                "has incorrect size" );
+        Assert( riemannDeriv[k].size() == U.nunk(), "Riemann derivative vector "
+                "for non-conservative terms has incorrect size" );
         for (std::size_t e=0; e<U.nunk(); ++e)
-          N[k][e] /= geoElem(e, 0, 0);
+          riemannDeriv[k][e] /= geoElem(e, 0, 0);
       }
 
       // compute volume integrals of non-conservative terms
       tk::nonConservativeInt( m_system, m_ncomp, nmat, m_offset, ndof, inpoel,
-                              coord, geoElem, U, N, ndofel, R );
+                              coord, geoElem, U, riemannDeriv, ndofel, R );
     }
 
     //! Compute the minimum time step size

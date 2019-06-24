@@ -38,7 +38,7 @@ tk::bndSurfInt( ncomp_t system,
                 const Fields& U,
                 const std::vector< std::size_t >& ndofel,
                 Fields& R,
-                std::vector< std::vector< tk::real > >& N )
+                std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
 //! \details This function computes contributions from surface integrals along
@@ -62,7 +62,10 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] U Solution vector at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector computed
-//! \param[in,out] N Derivatives for non-conservative terms
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
@@ -72,6 +75,9 @@ tk::bndSurfInt( ncomp_t system,
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
+
+  Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
+          "derivative vector for single material compflow" );
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find( std::stoi(s) );// faces for side set
@@ -142,7 +148,7 @@ tk::bndSurfInt( ncomp_t system,
 
           // Add the surface integration term to the rhs
           update_rhs_bc( ncomp, nmat, offset, ndof, ndofel[el], wt, fn, el, fl,
-                         B_l, R, N );
+                         B_l, R, riemannDeriv );
         }
       }
     }
@@ -161,7 +167,7 @@ tk::update_rhs_bc ( ncomp_t ncomp,
                     const std::vector< tk::real >& fl,
                     const std::vector< tk::real >& B_l,
                     Fields& R,
-                    std::vector< std::vector< tk::real > >& N )
+                    std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //  Update the rhs by adding the boundary surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -175,7 +181,10 @@ tk::update_rhs_bc ( ncomp_t ncomp,
 //! \param[in] fl Surface flux
 //! \param[in] B_l Basis function for the left element
 //! \param[in,out] R Right-hand side vector computed
-//! \param[in,out] N Derivatives for non-conservative terms
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
 // *****************************************************************************
 {
   Assert( B_l.size() == ndof_l, "Size mismatch" );
@@ -210,10 +219,10 @@ tk::update_rhs_bc ( ncomp_t ncomp,
     for (std::size_t k=0; k<nmat; ++k)
     {
       for (std::size_t idir=0; idir<3; ++idir)
-        N[3*k+idir][el] += wt * fl[ncomp+k] * fn[idir];
+        riemannDeriv[3*k+idir][el] += wt * fl[ncomp+k] * fn[idir];
     }
 
     // Divergence of velocity
-    N[3*nmat][el] += wt * fl[ncomp+nmat];
+    riemannDeriv[3*nmat][el] += wt * fl[ncomp+nmat];
   }
 }
