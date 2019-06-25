@@ -29,7 +29,7 @@ tk::SolutionFn::result_type
 MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
                                              ncomp_t ncomp,
                                              tk::real x,
-                                             tk::real /*y*/,
+                                             tk::real y,
                                              tk::real /*z*/,
                                              tk::real t )
 // *****************************************************************************
@@ -43,21 +43,21 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  using tag::param;
-
   Assert( ncomp == 9, "Incorrect number of components in multi-material "
           "system" );
 
   std::vector< tk::real > s( ncomp, 0.0 );
-  auto u = 10.0;
-  auto v = 0.0;
+  auto u = std::sqrt(50.0);
+  auto v = std::sqrt(50.0);
   auto w = 0.0;
-  // interface location
-  auto x0 = 0.25 + u*t;
-  //auto y0 = 0.25 + v*t;
+
+  // center of the cylinder
+  auto x0 = 0.35 + u*t;
+  auto y0 = 0.35 + v*t;
 
   // interface location
-  if (x<x0) {
+  auto r = std::sqrt( (x-x0)*(x-x0) + (y-y0)*(y-y0) );
+  if (r<0.25) {
     s[0] = 1.0-1.0e-12;
     s[1] = 1.0e-12;
   }
@@ -66,13 +66,15 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
     s[1] = 1.0-1.0e-12;
   }
 
-  s[2] = s[0]*1.0;
-  s[3] = s[1]*1.0;
+  auto rho1 = eos_density< eq >( system, 1.0e5, 300.0, 0 );
+  auto rho2 = eos_density< eq >( system, 1.0e5, 300.0, 1 );
+  s[2] = s[0]*rho1;
+  s[3] = s[1]*rho2;
   s[4] = (s[2]+s[3]) * u;
   s[5] = (s[2]+s[3]) * v;
   s[6] = (s[2]+s[3]) * w;
-  s[7] = s[0] * eos_totalenergy< eq >( system, 1.0, u, v, w, 1.0e5, 0 );
-  s[8] = s[1] * eos_totalenergy< eq >( system, 1.0, u, v, w, 1.0e5, 1 );
+  s[7] = s[0] * eos_totalenergy< eq >( system, rho1, u, v, w, 1.0e5, 0 );
+  s[8] = s[1] * eos_totalenergy< eq >( system, rho2, u, v, w, 1.0e5, 1 );
 
   return s;
 }

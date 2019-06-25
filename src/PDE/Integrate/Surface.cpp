@@ -22,6 +22,7 @@
 void
 tk::surfInt( ncomp_t system,
              ncomp_t ncomp,
+             std::size_t nmat,
              ncomp_t offset,
              const std::size_t ndof,
              const std::vector< std::size_t >& inpoel,
@@ -32,11 +33,13 @@ tk::surfInt( ncomp_t system,
              const VelFn& vel,
              const Fields& U,
              const std::vector< std::size_t >& ndofel,
-             Fields& R )
+             Fields& R,
+             std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //  Compute internal surface flux integrals
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] inpoel Element-node connectivity
@@ -48,6 +51,10 @@ tk::surfInt( ncomp_t system,
 //! \param[in] U Solution vector at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
 // *****************************************************************************
 {
   const auto& esuf = fd.Esuf();
@@ -56,6 +63,9 @@ tk::surfInt( ncomp_t system,
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
+
+  Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
+          "derivative vector for single material compflow" );
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -113,6 +123,9 @@ tk::surfInt( ncomp_t system,
       {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
       {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
 
+    std::array< real, 3 >
+      fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
     {
@@ -154,42 +167,51 @@ tk::surfInt( ncomp_t system,
 
       // compute flux
       auto fl =
-         flux( {{geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0)}}, state, v );
+         flux( fn, state, v );
 
       // Add the surface integration term to the rhs
-      update_rhs_fa( ncomp, offset, ndof, ndofel[el], ndofel[er], wt, el, er,
-                     fl, B_l, B_r, R );
+      update_rhs_fa( ncomp, nmat, offset, ndof, ndofel[el], ndofel[er], wt, fn,
+                     el, er, fl, B_l, B_r, R, riemannDeriv );
     }
   }
 }
 
 void
 tk::update_rhs_fa ( ncomp_t ncomp,
+                    std::size_t nmat,
                     ncomp_t offset,
                     const std::size_t ndof,
                     const std::size_t ndof_l,
                     const std::size_t ndof_r,
                     const tk::real wt,
+                    const std::array< tk::real, 3 >& fn,
                     const std::size_t el,
                     const std::size_t er,
                     const std::vector< tk::real >& fl,
                     const std::vector< tk::real >& B_l,
                     const std::vector< tk::real >& B_r,
-                    Fields& R )
+                    Fields& R,
+                    std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //  Update the rhs by adding the surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_l Number of degrees of freedom for left element
 //! \param[in] ndof_r Number of degrees of freedom for right element
 //! \param[in] wt Weight of gauss quadrature point
+//! \param[in] fn Face/Surface normal
 //! \param[in] el Left element index
 //! \param[in] er Right element index
 //! \param[in] fl Surface flux
 //! \param[in] B_l Basis function for the left element
 //! \param[in] B_r Basis function for the right element
 //! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
 // *****************************************************************************
 {
   Assert( B_l.size() == ndof_l, "Size mismatch" );
@@ -234,5 +256,23 @@ tk::update_rhs_fa ( ncomp_t ncomp,
       R(er, mark+8, offset) += wt * fl[c] * B_r[8];
       R(er, mark+9, offset) += wt * fl[c] * B_r[9];
     }
+  }
+
+  // Prep for non-conservative terms in multimat
+  if (fl.size() > ncomp)
+  {
+    // Gradients of partial pressures
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      for (std::size_t idir=0; idir<3; ++idir)
+      {
+        riemannDeriv[3*k+idir][el] += wt * fl[ncomp+k] * fn[idir];
+        riemannDeriv[3*k+idir][er] -= wt * fl[ncomp+k] * fn[idir];
+      }
+    }
+
+    // Divergence of velocity
+    riemannDeriv[3*nmat][el] += wt * fl[ncomp+nmat];
+    riemannDeriv[3*nmat][er] -= wt * fl[ncomp+nmat];
   }
 }

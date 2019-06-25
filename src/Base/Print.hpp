@@ -33,6 +33,7 @@
 #include "Exception.hpp"
 #include "Has.hpp"
 #include "ChareState.hpp"
+#include "StrConvUtil.hpp"
 
 namespace tk {
 
@@ -799,47 +800,6 @@ class Print {
     std::stringstream m_null;   //!< Default verbose stream
     std::ostream& m_stream;     //!< Verbose stream
     std::ostream& m_qstream;    //!< Quiet stream
-
-  private:
-    //! \brief Clean up whitespaces and format a long string into multiple lines
-    //! \param[in] str String to format
-    //! \param[in] name String to insert before string to output
-    //! \param[in] indent String to use as identation
-    //! \param[in] width Width in characters to insert newlines for output
-    //! \see http://stackoverflow.com/a/6892562
-    //! \see http://stackoverflow.com/a/8362145
-    // TODO A line longer than 'width' will cause a hang!
-    std::string splitLines( std::string str,
-                            std::string indent,
-                            const std::string& name = "",
-                            std::size_t width = 80 ) const {
-      // remove form feeds, line feeds, carriage returns, horizontal tabs,
-      // vertical tabs, see http://en.cppreference.com/w/cpp/string/byte/isspace
-      str.erase(
-        std::remove_if( str.begin(), str.end(),
-                        []( char x ){ return std::isspace( x ) && x != ' '; } ),
-        str.end() );
-      // remove duplicate spaces
-      str.erase(
-        std::unique( str.begin(), str.end(),
-                     []( char a, char b ){ return a == b && a == ' '; } ),
-        str.end() );
-      // format str to 'width'-character-long lines with indent
-      str.insert( 0, indent + name );
-      std::size_t currIndex = width - 1;
-      while ( currIndex < str.length() ) {
-        const std::string whitespace = " ";
-        currIndex = str.find_last_of( whitespace, currIndex + 1 );
-        if ( currIndex == std::string::npos ) break;
-        currIndex = str.find_last_not_of( whitespace, currIndex );
-        if ( currIndex == std::string::npos ) break;
-        auto sizeToElim =
-          str.find_first_not_of( whitespace, currIndex + 1 ) - currIndex - 1;
-        str.replace( currIndex + 1, sizeToElim , "\n" + indent );
-        currIndex += width + indent.length() + 1;
-      }
-      return str;
-    }
 };
 
 } // tk::
