@@ -223,6 +223,7 @@ class CompFlow {
       // compute internal surface maximum characteristic speed
       for (std::size_t f=0; f<esuf.size()/2; ++f)
       {
+        
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         auto er = esuf[2*f+1];
 
@@ -231,8 +232,10 @@ class CompFlow {
 
         if(er > -1)
         {
+          std::size_t eR = static_cast< std::size_t >( er );
+
           auto ng_l = tk::NGfa(ndofel[el]);
-          auto ng_r = tk::NGfa(ndofel[er]);
+          auto ng_r = tk::NGfa(ndofel[eR]);
 
           // When the number of gauss points for the left and right element are
           // different, choose the larger ng
@@ -342,35 +345,35 @@ class CompFlow {
             }};
 
             // Compute the determinant of Jacobian matrix
-            auto detT_r = 
+            auto detT_r =
               tk::Jacobian(coordel_r[0],coordel_r[1],coordel_r[2],coordel_r[3]);
 
             // Compute the coordinates of quadrature point at physical domain
             gp = tk::eval_gp( igp, coordfa, coordgp );
 
             // Compute the basis function for the right element
-            auto B_r = tk::eval_basis( ndofel[er],
+            auto B_r = tk::eval_basis( ndofel[eR],
               tk::Jacobian(coordel_r[0],gp,coordel_r[2],coordel_r[3])/detT_r,
               tk::Jacobian(coordel_r[0],coordel_r[1],gp,coordel_r[3])/detT_r,
               tk::Jacobian(coordel_r[0],coordel_r[1],coordel_r[2],gp)/detT_r );
  
             for (ncomp_t c=0; c<5; ++c)
             {
-              auto mark = c*ndofel[er];
-              ugp[1].push_back( U(er, mark, m_offset) );
+              auto mark = c*ndofel[eR];
+              ugp[1].push_back( U(eR, mark, m_offset) );
 
-              if(ndofel[er] > 1)          //DG(P1)
-                ugp[1][c] +=  U(er, mark+1, m_offset) * B_r[1]
-                            + U(er, mark+2, m_offset) * B_r[2]
-                            + U(er, mark+3, m_offset) * B_r[3];
+              if(ndofel[eR] > 1)          //DG(P1)
+                ugp[1][c] +=  U(eR, mark+1, m_offset) * B_r[1]
+                            + U(eR, mark+2, m_offset) * B_r[2]
+                            + U(eR, mark+3, m_offset) * B_r[3];
 
-              if(ndofel[er] > 4)         //DG(P2)
-                ugp[1][c] +=  U(er, mark+4, m_offset) * B_r[4]
-                            + U(er, mark+5, m_offset) * B_r[5]
-                            + U(er, mark+6, m_offset) * B_r[6]
-                            + U(er, mark+7, m_offset) * B_r[7]
-                            + U(er, mark+8, m_offset) * B_r[8]
-                            + U(er, mark+9, m_offset) * B_r[9];
+              if(ndofel[eR] > 4)         //DG(P2)
+                ugp[1][c] +=  U(eR, mark+4, m_offset) * B_r[4]
+                            + U(eR, mark+5, m_offset) * B_r[5]
+                            + U(eR, mark+6, m_offset) * B_r[6]
+                            + U(eR, mark+7, m_offset) * B_r[7]
+                            + U(eR, mark+8, m_offset) * B_r[8]
+                            + U(eR, mark+9, m_offset) * B_r[9];
             }
 
             rho = ugp[1][0];
