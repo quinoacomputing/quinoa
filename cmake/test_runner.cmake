@@ -51,6 +51,7 @@ message("  NUMPES (number of processing elements requested for test)   : ${NUMPE
 message("  NUMNODES (number of logical nodes, in Charm++'s SMP mode)   : ${NUMNODES}")
 message("  PPN (number of PEs per logical node, in Charm++'s SMP mode) : ${PPN}")
 message("  HARDWARE_NUMPES (number of PEs used in hardware for test)   : ${HARDWARE_NUMPES}")
+message("  CHECKPOINT (test whose checkpoint to restart from)          : ${CHECKPOINT}")
 message("  POSTPROCESS_PROG (executable to run after test)             : ${POSTPROCESS_PROG}")
 message("  POSTPROCESS_PROG_ARGS (postprocess program arguments)       : ${POSTPROCESS_PROG_ARGS}")
 message("  POSTPROCESS_PROG_OUTPUT (postprocess program output file)   : ${POSTPROCESS_PROG_OUTPUT}")
@@ -72,7 +73,8 @@ message("  FILE_CONV_INPUT (File conv tool input file(s))              : ${FILEC
 message("  FILECONV_RESULT (File conv tool output file(s))             : ${FILECONV_RESULT}")
 
 # Remove previous test output (if any)
-if(TEXT_RESULT OR BIN_RESULT OR FILECONV_RESULT OR FILECONV_INPUT)
+if ( NOT CHECKPOINT AND
+     (TEXT_RESULT OR BIN_RESULT OR FILECONV_RESULT OR FILECONV_INPUT) )
   message("\nRemoving existing result(s) (if any): ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT} ${FILECONV_INPUT}\n")
   file(REMOVE ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT} ${FILECONV_INPUT})
 endif()
