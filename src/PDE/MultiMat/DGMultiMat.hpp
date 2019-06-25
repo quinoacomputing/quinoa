@@ -33,6 +33,7 @@
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
+#include "Integrate/MultiMatTerms.hpp"
 #include "Integrate/Source.hpp"
 #include "Integrate/Riemann/AUSM.hpp"
 #include "EoS/EoS.hpp"
@@ -136,6 +137,8 @@ class MultiMat {
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
@@ -146,9 +149,14 @@ class MultiMat {
               "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
+      Assert( ndof == 1, "DGP1/2 not set up for multi-material" );
 
       // set rhs to zero
       R.fill(0.0);
+
+      // allocate space for Riemann derivatives used in non-conservative terms
+      std::vector< std::vector< tk::real > >
+        riemannDeriv( 3*nmat+1, std::vector<tk::real>(U.nunk(),0.0) );
 
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
@@ -161,10 +169,10 @@ class MultiMat {
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, fd,
-                   geoFace, AUSM::flux, velfn, U, ndofel, R );
+      tk::surfInt( m_system, m_ncomp, nmat, m_offset, ndof, inpoel, coord, fd,
+                   geoFace, AUSM::flux, velfn, U, ndofel, R, riemannDeriv );
 
-      // compute source term intehrals
+      // compute source term integrals
       tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
                   Problem::src, ndofel, R );
 
@@ -175,9 +183,25 @@ class MultiMat {
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, b.first, fd, geoFace,
-                        inpoel, coord, t, AUSM::flux, velfn, b.second, U,
-                        ndofel, R );
+        tk::bndSurfInt( m_system, m_ncomp, nmat, m_offset, ndof, b.first, fd,
+                        geoFace, inpoel, coord, t, AUSM::flux, velfn, b.second,
+                        U, ndofel, R, riemannDeriv );
+
+      Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
+              "vector incorrect" );
+
+      // get derivatives from riemannDeriv
+      for (std::size_t k=0; k<riemannDeriv.size(); ++k)
+      {
+        Assert( riemannDeriv[k].size() == U.nunk(), "Riemann derivative vector "
+                "for non-conservative terms has incorrect size" );
+        for (std::size_t e=0; e<U.nunk(); ++e)
+          riemannDeriv[k][e] /= geoElem(e, 0, 0);
+      }
+
+      // compute volume integrals of non-conservative terms
+      tk::nonConservativeInt( m_system, m_ncomp, nmat, m_offset, ndof, inpoel,
+                              coord, geoElem, U, riemannDeriv, ndofel, R );
     }
 
     //! Compute the minimum time step size
@@ -275,9 +299,7 @@ class MultiMat {
 
           rho = 0.0;
           for (std::size_t k=0; k<nmat; ++k)
-          {
             rho += ugp[0][densityIdx(nmat, k)];
-          }
 
           u = ugp[0][momentumIdx(nmat, 0)]/rho;
           v = ugp[0][momentumIdx(nmat, 1)]/rho;
@@ -332,9 +354,7 @@ class MultiMat {
 
             rho = 0.0;
             for (std::size_t k=0; k<nmat; ++k)
-            {
               rho += ugp[1][densityIdx(nmat, k)];
-            }
 
             u = ugp[1][momentumIdx(nmat, 0)]/rho;
             v = ugp[1][momentumIdx(nmat, 1)]/rho;
@@ -589,12 +609,12 @@ class MultiMat {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Symmetry( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    Symmetry( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
               const std::array< tk::real, 3 >& fn )
     {
       const auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
       tk::real rho(0.0);
       for (std::size_t k=0; k<nmat; ++k)

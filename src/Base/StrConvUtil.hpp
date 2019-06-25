@@ -13,7 +13,7 @@
 #define StrConvUtil_h
 
 #include <sstream>
-#include <type_traits>
+#include <string>
 
 namespace tk {
 
@@ -53,6 +53,13 @@ std::basic_string< Ch, Tr >
 operator<< ( std::basic_string< Ch, Tr >&& lhs, const T& e ) {
   return lhs << e;
 }
+
+//!  Clean up whitespaces and format a long string into multiple lines
+std::string
+splitLines( std::string str,
+            std::string indent,
+            const std::string& name = "",
+            std::size_t width = 80 );
 
 } // tk::
 
