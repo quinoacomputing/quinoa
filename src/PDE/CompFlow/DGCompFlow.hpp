@@ -223,7 +223,7 @@ class CompFlow {
       // compute internal surface maximum characteristic speed
       for (std::size_t f=0; f<esuf.size()/2; ++f)
       {
-        
+
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         auto er = esuf[2*f+1];
 
