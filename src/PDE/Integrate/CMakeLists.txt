@@ -5,6 +5,7 @@ add_library(Integrate
             Surface.cpp
             Boundary.cpp
             Volume.cpp
+            MultiMatTerms.cpp
             Source.cpp
             Basis.cpp
             Riemann/RiemannFactory.cpp)
