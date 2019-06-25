@@ -364,6 +364,8 @@ function(ADD_REGRESSION_TEST test_name executable)
   add_test(NAME ${test_name}
            COMMAND ${CMAKE_COMMAND}
            -DTEST_NAME=${test_name}
+           -DUSE_VALGRIND=${USE_VALGRIND}
+           -DVALGRIND=${VALGRIND}
            -DWORKDIR=${workdir}
            -DRUNNER_REQUIRED=${RUNNER_REQUIRED}
            -DRUNNER=${RUNNER}
@@ -422,11 +424,15 @@ function(ADD_REGRESSION_TEST test_name executable)
   if (ARG_TEXT_BASELINE)
     list(APPEND fail_regexp ".*${test_name}.*FAIL")
   endif()
-  # add pass regular expression for exodiff output if needed
+  # add fail regular expression for exodiff output if needed
   if (ARG_BIN_BASELINE)
     list(APPEND fail_regexp "Binary diff failed"
                             "has not been matched to any"
                             "exodiff: ERROR")
+  endif()
+  # add fail regular expression if running with valgrind
+  if (ENABLE_VALGRIND)
+    list(APPEND fail_regexp "ERROR SUMMARY: [1-9][0-9]* errors")
   endif()
   # add fail regular expression to detect cmake error during test run
   list(APPEND fail_regexp "CMake Error")
