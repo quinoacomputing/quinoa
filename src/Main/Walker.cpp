@@ -204,8 +204,12 @@ class Main : public CBase_Main {
     {
       delete msg;
       g_trace = m_cmdline.get< tag::trace >();
-      tk::MainCtor( mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
+      tk::MainCtor( mainProxy, thisProxy, m_timer, m_cmdline,
                     CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
+      // If quiescence detection is on or user requested it, create chare state
+      // collector Charm++ chare group
+      if ( m_cmdline.get< tag::chare >() || m_cmdline.get< tag::quiescence >() )
+        stateProxy = tk::CProxy_ChareStateCollector::ckNew();
       // Fire up an asynchronous execute object, which when created at some
       // future point in time will call back to this->execute(). This is
       // necessary so that this->execute() can access already migrated
