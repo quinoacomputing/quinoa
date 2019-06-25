@@ -63,34 +63,35 @@ struct AUSM {
     auto vr = u[1][momentumIdx(nmat, 1)]/rhor;
     auto wr = u[1][momentumIdx(nmat, 2)]/rhor;
 
-    tk::real pk(0.0), pl(0.0), pr(0.0), amatl(0.0), amatr(0.0);
+    tk::real pl(0.0), pr(0.0), amatl(0.0), amatr(0.0);
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             hml(nmat, 0.0), hmr(nmat, 0.0),
+                            pml(nmat, 0.0), pmr(nmat, 0.0),
                             al_12(nmat, 0.0), rhomat12(nmat, 0.0),
                             amat12(nmat, 0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
       al_l[k] = u[0][volfracIdx(nmat, k)];
-      pk = eos_pressure< tag::multimat >( 0, u[0][densityIdx(nmat, k)]/al_l[k],
-                                          ul, vl, wl,
-                                          u[0][energyIdx(nmat, k)]/al_l[k],
-                                          k );
-      pl += al_l[k] * pk;
-      hml[k] = u[0][energyIdx(nmat, k)] + al_l[k]*pk;
+      pml[k] = eos_pressure< tag::multimat >( 0, u[0][densityIdx(nmat, k)]/al_l[k],
+                                              ul, vl, wl,
+                                              u[0][energyIdx(nmat, k)]/al_l[k],
+                                              k );
+      pl += al_l[k] * pml[k];
+      hml[k] = u[0][energyIdx(nmat, k)] + al_l[k]*pml[k];
       amatl = eos_soundspeed< tag::multimat >( 0,
                                                u[0][densityIdx(nmat, k)]/al_l[k],
-                                               pk, k );
+                                               pml[k], k );
 
       al_r[k] = u[1][volfracIdx(nmat, k)];
-      pk = eos_pressure< tag::multimat >( 0, u[1][densityIdx(nmat, k)]/al_r[k],
-                                          ur, vr, wr,
-                                          u[1][energyIdx(nmat, k)]/al_r[k],
-                                          k );
-      pr += al_r[k] * pk;
-      hmr[k] = u[1][densityIdx(nmat, k)] + al_r[k]*pk;
+      pmr[k] = eos_pressure< tag::multimat >( 0, u[1][densityIdx(nmat, k)]/al_r[k],
+                                              ur, vr, wr,
+                                              u[1][energyIdx(nmat, k)]/al_r[k],
+                                              k );
+      pr += al_r[k] * pmr[k];
+      hmr[k] = u[1][energyIdx(nmat, k)] + al_r[k]*pmr[k];
       amatr = eos_soundspeed< tag::multimat >( 0,
                                                u[1][densityIdx(nmat, k)]/al_r[k],
-                                               pk, k );
+                                               pmr[k], k );
 
       // Average states for mixture speed of sound
       al_12[k] = 0.5*(al_l[k]+al_r[k]);
@@ -154,28 +155,28 @@ struct AUSM {
                                  + p12*fn[idir];
     }
 
-    // Store Riemann velocity
-    flx.push_back( vriem );
-
     l_plus = l_plus/( std::fabs(vriem) + 1.0e-16 );
     l_minus = l_minus/( std::fabs(vriem) + 1.0e-16 );
 
-    // Store Riemann-advected volume fraction
+    // Store Riemann-advected partial pressures
     if (std::fabs(l_plus) > 1.0e-10)
     {
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( al_l[k] );
+        flx.push_back( al_l[k]*pml[k] );
     }
     else if (std::fabs(l_minus) > 1.0e-10)
     {
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( al_r[k] );
+        flx.push_back( al_r[k]*pmr[k] );
     }
     else
     {
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( 0.5*(al_l[k]+al_r[k]) );
+        flx.push_back( 0.5*(al_l[k]*pml[k] + al_r[k]*pmr[k]) );
     }
+
+    // Store Riemann velocity
+    flx.push_back( vriem );
 
     Assert( flx.size() == (3*nmat+3+nmat+1), "Size of multi-material flux "
             "vector incorrect" );

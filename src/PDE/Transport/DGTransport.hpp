@@ -151,6 +151,11 @@ class Transport {
       // set rhs to zero
       R.fill(0.0);
 
+      // empty vector for non-conservative terms. This vector is unused for
+      // linear transport since, there are no non-conservative terms in the
+      // system of PDEs.
+      std::vector< std::vector < tk::real > > riemannDeriv;
+
       // supported boundary condition types and associated state functions
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
         { m_bcextrapolate, Extrapolate },
@@ -159,9 +164,9 @@ class Transport {
         { m_bcdir, Dirichlet } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, fd,
+      tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, inpoel, coord, fd,
                    geoFace, Upwind::flux, Problem::prescribedVelocity, U,
-                   ndofel, R );
+                   ndofel, R, riemannDeriv );
 
       if(ndof > 1)
         // compute volume integrals
@@ -170,9 +175,9 @@ class Transport {
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, b.first, fd, geoFace,
-          inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
-          b.second, U, ndofel, R );
+        tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, b.first, fd,
+          geoFace, inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
+          b.second, U, ndofel, R, riemannDeriv );
     }
 
     //! Compute the minimum time step size
