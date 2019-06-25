@@ -18,23 +18,24 @@
           tk::ctr::ncomp_type ncomp,
           const std::vector< kw::sde_b::info::expect::type >& b_,
           const std::vector< kw::sde_S::info::expect::type >& S_,
-          const std::vector< kw::sde_kappa::info::expect::type >& k_,
+          const std::vector< kw::sde_kappa::info::expect::type >& kprime_,
           const std::vector< kw::sde_r::info::expect::type >& rho_,
-          const std::vector< kw::sde_r::info::expect::type >& r_,
           std::vector< kw::sde_b::info::expect::type  >& b,
+          std::vector< kw::sde_kappa::info::expect::type >& kprime,
           std::vector< kw::sde_S::info::expect::type >& S,
-          std::vector< kw::sde_kappa::info::expect::type >& k,
-          std::vector< kw::sde_r::info::expect::type >& r_ );
+          std::vector< kw::sde_rho::info::expect::type >& rho,
+          std::vector< kw::sde_r::info::expect::type >& r,
+          std::vector< kw::sde_kappa::info::expect::type >& k );
       \endcode
       where
       - ncomp denotes the number of scalar components of the system of
         MixDirichlet SDEs.
-      - Constant references to b_, S_, k_, rho_, r_, which denote three vectors
+      - Constant references to b_, S_, kprime_, rho_, which denote vectors
         of real values used to initialize the parameter vectors of the
         MixDirichlet SDEs. The length of the vectors must be equal to the number
         of components given by ncomp.
-      - References to b, S, k, rho, r, which denote the parameter vectors to be
-        initialized based on b_, S_, k_, rho_.
+      - References to b, kprime, S, rho, r, k, which denote the parameter
+        vectors to be initialized based on b_, S_, kprime_, rho_.
 
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
@@ -65,9 +66,9 @@
       Dirichlet SDE, specified in the control file by the user, _ncomp_
       is the number of components in the system, _moments_ is the map
       associating moment IDs (tk::ctr::vector< tk::ctr::Term >) to values of
-      statistical moments, _rho_, _r_, _b_, and _kprime_ are user-defined
-      parameters, and _k_ and _S_ are the SDE parameters computed, see
-      DiffEq/DiffEq/MixDirichlet.h.
+      statistical moments, _rho_, _r_, _kprime_, _b_ are user-defined
+      parameters, and _k_ and _S_ are the SDE parameters computed/updated, see
+      also DiffEq/DiffEq/MixDirichlet.h.
 */
 // *****************************************************************************
 #ifndef MixDirichletCoeffPolicy_h
@@ -81,6 +82,45 @@
 #include "SystemComponents.hpp"
 
 namespace walker {
+
+//! \brief MixDirichlet constant coefficients policity: constants in time
+class MixDirichletCoeffConst {
+
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+
+  public:
+    //! Constructor: initialize coefficients
+    MixDirichletCoeffConst(
+      tk::ctr::ncomp_type ncomp,
+      ctr::NormalizationType norm,
+      const std::vector< kw::sde_b::info::expect::type >& b_,
+      const std::vector< kw::sde_S::info::expect::type >& S_,
+      const std::vector< kw::sde_kappa::info::expect::type >& kprime_,
+      const std::vector< kw::sde_rho::info::expect::type >& rho_,
+      std::vector< kw::sde_b::info::expect::type  >& b,
+      std::vector< kw::sde_kappa::info::expect::type >& kprime,
+      std::vector< kw::sde_S::info::expect::type >& S,
+      std::vector< kw::sde_rho::info::expect::type >& rho,
+      std::vector< kw::sde_r::info::expect::type >& r,
+      std::vector< kw::sde_kappa::info::expect::type >& k );
+
+    //! Update coefficients
+    void update(
+      char depvar,
+      ncomp_t ncomp,
+      const std::map< tk::ctr::Product, tk::real >& moments,
+      const std::vector< kw::sde_rho::info::expect::type >& rho,
+      const std::vector< kw::sde_r::info::expect::type >& r,
+      const std::vector< kw::sde_kappa::info::expect::type >& kprime,
+      const std::vector< kw::sde_b::info::expect::type >& b,
+      std::vector< kw::sde_kappa::info::expect::type >& k,
+      std::vector< kw::sde_kappa::info::expect::type >& S ) const;
+
+    //! Coefficients policy type accessor
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::CONST_COEFF; }
+};
 
 //! Compute parameter vector r based on r_i = rho_N/rho_i - 1
 std::vector< kw::sde_r::info::expect::type >
@@ -128,7 +168,8 @@ class MixDirichletHomCoeffConst {
 };
 
 //! List of all MixDirichlet's coefficients policies
-using MixDirichletCoeffPolicies = brigand::list< MixDirichletHomCoeffConst >;
+using MixDirichletCoeffPolicies = brigand::list< MixDirichletCoeffConst
+                                               , MixDirichletHomCoeffConst >;
 
 } // walker::
 

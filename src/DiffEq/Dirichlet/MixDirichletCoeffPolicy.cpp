@@ -44,6 +44,96 @@ walker::MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho,
   return r;
 }
 
+walker::MixDirichletCoeffConst::MixDirichletCoeffConst(
+  tk::ctr::ncomp_type ncomp,
+  ctr::NormalizationType norm,
+  const std::vector< kw::sde_b::info::expect::type >& b_,
+  const std::vector< kw::sde_S::info::expect::type >& S_,
+  const std::vector< kw::sde_kappa::info::expect::type >& kprime_,
+  const std::vector< kw::sde_rho::info::expect::type >& rho_,
+  std::vector< kw::sde_b::info::expect::type  >& b,
+  std::vector< kw::sde_S::info::expect::type >& S,
+  std::vector< kw::sde_kappa::info::expect::type >& kprime,
+  std::vector< kw::sde_rho::info::expect::type >& rho,
+  std::vector< kw::sde_r::info::expect::type >& r,
+  std::vector< kw::sde_kappa::info::expect::type >& k )
+// *****************************************************************************
+// Constructor: initialize coefficients
+//! \param[in] ncomp Number of scalar components in this SDE system
+//! \param[in] b_ Vector used to initialize coefficient vector b
+//! \param[in] S_ Vector used to initialize coefficient vector S
+//! \param[in] kprime_ Vector used to initialize coefficient vector kprime and k
+//! \param[in] rho_ Vector used to initialize coefficient vector rho and r
+//! \param[in,out] b Coefficient vector to be initialized
+//! \param[in,out] S Coefficient vector to be initialized
+//! \param[in,out] kprime Coefficient vector to be initialized
+//! \param[in,out] rho Coefficient vector to be initialized
+//! \param[in,out] r Coefficient vector to be initialized
+//! \param[in,out] k Coefficient vector to be initialized
+// *****************************************************************************
+{
+  ErrChk( b_.size() == ncomp,
+          "Wrong number of MixDirichlet SDE parameters 'b'");
+  ErrChk( S_.size() == ncomp,
+          "Wrong number of MixDirichlet SDE parameters 'S'");
+  ErrChk( kprime_.size() == ncomp,
+          "Wrong number of MixDirichlet SDE parameters 'kappaprime'");
+  ErrChk( rho_.size() == ncomp+1,
+          "Wrong number of MixDirichlet SDE parameters 'rho'");
+
+  b = b_;
+  S = S_;
+  kprime = kprime_;
+  rho = rho_;
+  k.resize( kprime.size(), 0.0 );
+
+  // Compute parameter vector r based on r_i = rho_N/rho_i - 1
+  Assert( r.empty(), "Parameter vector r must be empty" );
+  r = MixDir_r( rho, norm );
+}
+
+void
+walker::MixDirichletCoeffConst::update(
+  char /*depvar*/,
+  ncomp_t ncomp,
+  const std::map< tk::ctr::Product, tk::real >& /*moments*/,
+  const std::vector< kw::sde_rho::info::expect::type >& /*rho*/,
+  const std::vector< kw::sde_r::info::expect::type >& /*r*/,
+  const std::vector< kw::sde_kappa::info::expect::type >& kprime,
+  const std::vector< kw::sde_b::info::expect::type >& /*b*/,
+  std::vector< kw::sde_kappa::info::expect::type >& k,
+  std::vector< kw::sde_kappa::info::expect::type >& S ) const
+// *****************************************************************************
+//  Update coefficients
+//! \param[in] depvar Dependent variable
+//! \param[in] ncomp Number of scalar components in this SDE system
+//! \param[in] moments Map of statistical moments estimated
+//! \param[in] rho Coefficient vector
+//! \param[in] r Coefficient Vector
+//! \param[in] kprime Coefficient vector
+//! \param[in] b Coefficient vector
+//! \param[in,out] k Coefficient vector to be updated
+//! \param[in,out] S Coefficient vector to be updated
+// *****************************************************************************
+{
+  using tk::ctr::lookup;
+  using tk::ctr::mean;
+  using tk::ctr::variance;
+  using tk::ctr::Term;
+  using tk::ctr::Moment;
+  using tk::ctr::Product;
+
+  for (ncomp_t c=0; c<ncomp; ++c) {
+    k[c] = kprime[c];
+  }
+
+  for (ncomp_t c=0; c<ncomp; ++c) {
+    if (S[c] < 0.0 || S[c] > 1.0) {
+      std::cout << "S[" << c << "] bounds violated: " << S[c] << '\n';
+    }
+  }
+}
+
 walker::MixDirichletHomCoeffConst::MixDirichletHomCoeffConst(
   tk::ctr::ncomp_type ncomp,
   ctr::NormalizationType norm,
