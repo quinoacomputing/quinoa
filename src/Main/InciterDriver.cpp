@@ -23,6 +23,7 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
 
 } // inciter::
 
@@ -62,7 +63,8 @@ InciterDriver::InciterDriver( const InciterPrint& print,
                std::to_string(cmdline.get< tag::rsfreq >()) );
 
   // Parse input deck into g_inputdeck
-  m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
+  m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );
+  g_inputdeck = g_inputdeck_defaults;   // overwrite with defaults if restarted
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
   m_print.item( "Parsed control file", "success" );  
   m_print.endpart();
