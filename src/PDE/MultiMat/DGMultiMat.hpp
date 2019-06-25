@@ -211,7 +211,7 @@ class MultiMat {
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] ndofel Vector of local number of degrees of freedom
+//    //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
