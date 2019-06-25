@@ -38,7 +38,10 @@ tk::nonConservativeInt( ncomp_t system,
 //  Compute volume integrals for multi-material DG
 //! \details This is called for multi-material DG, computing volume integrals of
 //!   terms in the volume fraction and energy equations, which do not exist in
-//!   the single-material flow formulation (for `CompFlow` DG).
+//!   the single-material flow formulation (for `CompFlow` DG). For further
+//!   details see Pelanti, M., & Shyue, K. M. (2019). A numerical model for
+//!   multiphase liquid–vapor–gas flows with interfaces and cavitation.
+//!   International Journal of Multiphase Flow, 113, 208-230.
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] nmat Number of materials in this PDE system
