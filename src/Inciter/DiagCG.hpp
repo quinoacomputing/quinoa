@@ -85,7 +85,7 @@ class DiagCG : public CBase_DiagCG {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit DiagCG( CkMigrateMessage* ) {}
+    explicit DiagCG( CkMigrateMessage* msg ) : CBase_DiagCG( msg ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
