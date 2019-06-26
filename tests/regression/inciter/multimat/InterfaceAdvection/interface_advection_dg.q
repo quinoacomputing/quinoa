@@ -17,9 +17,9 @@ inciter
     problem interface_advection
     depvar u
 
-    nmat 2
+    nmat 3
     material
-      gamma 1.4 1.4 end
+      gamma 1.4 1.4 1.4 end
     end
 
     bc_sym
