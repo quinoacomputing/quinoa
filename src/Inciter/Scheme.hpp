@@ -294,16 +294,16 @@ class Scheme : public SchemeBase {
                             proxy );
     }
 
-    //////  proxy.next(...)
-    //! function to call the next entry method of an array proxy (broadcast)
+    //////  proxy.evalLB(...)
+    //! function to call the evalLB entry method of an array proxy (broadcast)
     //! \param[in] args arguments to member function (entry method) to be called
-    //! \details this function calls the next member function of a chare array
-    //!   proxy and thus equivalent to proxy.next(...), specifying a
+    //! \details this function calls the evalLB member function of a chare array
+    //!   proxy and thus equivalent to proxy.evalLB(...), specifying a
     //!   non-default last argument.
     template< class Op, typename... Args, typename std::enable_if<
       std::is_same< Op, tag::bcast >::value, int >::type = 0 >
-    void next( Args&&... args ) {
-      boost::apply_visitor( call_next<Args...>( std::forward<Args>(args)... ),
+    void evalLB( Args&&... args ) {
+      boost::apply_visitor( call_evalLB<Args...>( std::forward<Args>(args)... ),
                             proxy );
     }
 
@@ -551,15 +551,15 @@ class Scheme : public SchemeBase {
      }
    };
 
-   //! Functor to call the chare entry method 'next'
+   //! Functor to call the chare entry method 'evalLB'
    //! \details This class is intended to be used in conjunction with variant
    //!   and boost::visitor. The template argument types are the types of the
    //!   arguments to entry method to be invoked behind the variant holding a
    //!   Charm++ proxy.
    //! \see The base class Call for the definition of operator().
    template< typename... As >
-   struct call_next : Call< call_next<As...>, As... > {
-     using Base = Call< call_next<As...>, As... >;
+   struct call_evalLB : Call< call_evalLB<As...>, As... > {
+     using Base = Call< call_evalLB<As...>, As... >;
      using Base::Base; // inherit base constructors
      //! Invoke the entry method
      //! \param[in,out] p Proxy behind which the entry method is called
@@ -568,7 +568,7 @@ class Scheme : public SchemeBase {
      //!   the entry method to be called.
      template< typename P, typename... Args >
      static void invoke( P& p, Args&&... args ) {
-       p.next( std::forward<Args>(args)... );
+       p.evalLB( std::forward<Args>(args)... );
      }
    };
 

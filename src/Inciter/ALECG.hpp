@@ -142,6 +142,9 @@ class ALECG : public CBase_ALECG {
     //! Evaluate whether to continue with next time step
     void step();
 
+    // Evaluate whether to do load balancing
+    void evalLB();
+
     //! Continue to next time step
     void next();
 
@@ -228,6 +231,9 @@ class ALECG : public CBase_ALECG {
 
     //! Compute time step size
     void dt();
+
+    //! Evaluate whether to save checkpoint/restart
+    void evalRestart();
 };
 
 } // inciter::

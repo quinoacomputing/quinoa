@@ -600,6 +600,53 @@ DiagCG::out()
 }
 
 void
+DiagCG::evalLB()
+// *****************************************************************************
+// Evaluate whether to do load balancing
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
+  const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
+
+  // Load balancing if user frequency is reached or after the second time-step
+  if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
+
+    AtSync();
+    if (nonblocking) next();
+
+  } else {
+
+    next();
+
+  }
+}
+
+void
+DiagCG::evalRestart()
+// *****************************************************************************
+// Evaluate whether to save checkpoint/restart
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
+
+  if ( (d->It()) % rsfreq == 0 ) {
+
+    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
+    d->contribute( t, CkReduction::nop,
+      CkCallback(CkReductionTarget(Transporter,checkpoint), d->Tr()) );
+
+  } else {
+
+    evalLB();
+
+  }
+}
+
+void
 DiagCG::step()
 // *****************************************************************************
 // Evaluate whether to continue with next time step
@@ -613,30 +660,11 @@ DiagCG::step()
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
-  const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
-  const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
 
-    if ( (d->It()) % rsfreq == 0 ) {
-
-      std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
-      d->contribute( t, CkReduction::nop,
-        CkCallback(CkReductionTarget(Transporter,checkpoint), d->Tr()) );
-
-    // Load balancing if user frequency is reached or after the second time-step
-    } else if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
-
-      AtSync();
-      if (nonblocking) next();
-
-    } else {
-
-      next();
-
-    }
+    evalRestart();
 
   } else {
 

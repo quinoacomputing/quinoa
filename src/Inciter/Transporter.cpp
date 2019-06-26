@@ -936,7 +936,7 @@ Transporter::resume()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(m_t-term) > eps && m_it < nstep)
-    m_scheme.next< tag::bcast >();
+    m_scheme.evalLB< tag::bcast >();
   else
     mainProxy.finalize();
 }
