@@ -55,12 +55,14 @@
 
 #include "Problem/UserDefined.hpp"
 #include "Problem/InterfaceAdvection.hpp"
+#include "Problem/SodShocktube.hpp"
 
 namespace inciter {
 
 //! List of all MultiMat Problem policies (defined in the includes above)
 using MultiMatProblems =
   brigand::list< MultiMatProblemUserDefined
+               , MultiMatProblemSodShocktube
                , MultiMatProblemInterfaceAdvection >;
 
 } // inciter::
