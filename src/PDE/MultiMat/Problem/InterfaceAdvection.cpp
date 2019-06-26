@@ -66,8 +66,7 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
   r0[0] = 0.35;
   for (std::size_t k=1; k<nmat-2; ++k)
     r0[k] = r0[k-1] - (r0[0]-r0[nmat-2])
-                      /(std::max( static_cast<tk::real>(0),
-                                  static_cast<tk::real>(nmat-2)) );
+                      /(std::max( 1.0, static_cast<tk::real>(nmat-2)) );
 
   for (std::size_t k=0; k<nmat; ++k)
     s[volfracIdx(nmat, k)] = alphamin;

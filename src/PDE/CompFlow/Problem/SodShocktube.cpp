@@ -39,6 +39,10 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
 //! \param[in] x X coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn
+//! \details This function only initializes the Sod shock tube problem, but does
+//!   not actually give the analytical solution at time greater than 0. The
+//!   analytical solution would require an exact Riemann solver, which has not
+//!   been implemented yet.
 // *****************************************************************************
 {
   Assert( ncomp == 5, "Number of scalar components must be 5" );
