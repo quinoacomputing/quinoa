@@ -358,20 +358,34 @@ namespace grm {
           std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
             std::numeric_limits< tk::real >::epsilon() )
         Message< Stack, WARNING, MsgKey::MULDT >( stack, in );
-      // if DGP1 is configured, set ndofs to be 4
+      // if P0P1 is configured, set ndofs to be 1 and rdofs to be 4
+      if (stack.template get< tag::discr, tag::scheme >() ==
+           inciter::ctr::SchemeType::P0P1)
+      {
+        stack.template get< tag::discr, tag::ndof >() = 1;
+        stack.template get< tag::discr, tag::rdof >() = 4;
+      }
+      // if DGP1 is configured, set ndofs and rdofs to be 4
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::DGP1)
+      {
         stack.template get< tag::discr, tag::ndof >() = 4;
-      // if DGP2 is configured, set ndofs to be 10
+        stack.template get< tag::discr, tag::rdof >() = 4;
+      }
+      // if DGP2 is configured, set ndofs and rdofs to be 10
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::DGP2)
+      {
         stack.template get< tag::discr, tag::ndof >() = 10;
-      // if pDG is configured, set ndofs to be 4 and the adaptive indicator
-      // pref set to be true (temporary for P0/P1 adaptive)
+        stack.template get< tag::discr, tag::rdof >() = 10;
+      }
+      // if pDG is configured, set ndofs and rdofs to be 4 and the adaptive
+      // indicator pref set to be true (temporary for P0/P1 adaptive)
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::PDG)
       {
         stack.template get< tag::discr, tag::ndof >() = 4;
+        stack.template get< tag::discr, tag::rdof >() = 4;
         stack.template get< tag::pref, tag::pref >() = true;
       }
     }
