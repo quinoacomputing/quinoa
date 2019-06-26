@@ -622,8 +622,9 @@ DiagCG::step()
 
     if ( (d->It()) % rsfreq == 0 ) {
 
-      d->contribute(
-        CkCallback( CkReductionTarget(Transporter,checkpoint), d->Tr() ) );
+      std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
+      d->contribute( t, CkReduction::nop,
+        CkCallback(CkReductionTarget(Transporter,checkpoint), d->Tr()) );
 
     // Load balancing if user frequency is reached or after the second time-step
     } else if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
@@ -638,7 +639,11 @@ DiagCG::step()
     }
 
   } else {
-    d->contribute(CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ));
+
+    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
+    d->contribute( t, CkReduction::nop,
+      CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
+
   }
 }
 

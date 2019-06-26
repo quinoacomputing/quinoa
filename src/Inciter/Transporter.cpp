@@ -104,7 +104,7 @@ Transporter::Transporter() :
     // Create mesh partitioner AND boundary condition object group
     createPartitioner();
 
-  } else finish();      // stop if no time stepping requested
+  } else finish( 0, t0 );      // stop if no time stepping requested
 }
 
 Transporter::Transporter( CkMigrateMessage* m ) :
@@ -419,6 +419,7 @@ Transporter::refinserted( int error )
 // *****************************************************************************
 {
   if (error) {
+
     m_print << "\n>>> ERROR: A worker chare was not assigned any mesh "
                "elements. This can happen in SMP-mode with a large +ppn "
                "parameter (number of worker threads per logical node) and is "
@@ -430,9 +431,13 @@ Transporter::refinserted( int error )
                "with +ppn larger than 1. Solution 1: Try a different "
                "partitioning algorithm (e.g., rcb instead of mj). Solution 2: "
                "Decrease +ppn.";
-    finish();
+
+    finish( 0, g_inputdeck.get< tag::discr, tag::t0 >() );
+
   } else {
+
      m_refiner.doneInserting();
+
   }
 }
 
@@ -928,33 +933,39 @@ Transporter::resume()
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  auto d = m_scheme.get()[0].ckLocal();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep)
+  if (std::fabs(m_t-term) > eps && m_it < nstep)
     m_scheme.next< tag::bcast >();
   else
     mainProxy.finalize();
 }
 
 void
-Transporter::checkpoint()
+Transporter::checkpoint( tk::real it, tk::real t )
 // *****************************************************************************
 // Save checkpoint/restart files
+//! \param[in] it Iteration count
+//! \param[in] t Physical time
 // *****************************************************************************
 {
+  m_it = static_cast< uint64_t >( it );
+  m_t = t;
+
   const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
   CkCallback res( CkIndex_Transporter::resume(), thisProxy );
   CkStartCheckpoint( restart.c_str(), res );
 }
 
 void
-Transporter::finish()
+Transporter::finish( tk::real it, tk::real t )
 // *****************************************************************************
 // Normal finish of time stepping
+//! \param[in] it Iteration count
+//! \param[in] t Physical time
 // *****************************************************************************
 {
-  checkpoint();
+  checkpoint( it, t );
 }
 
 #include "NoWarning/transporter.def.h"

@@ -182,10 +182,10 @@ class Transporter : public CBase_Transporter {
     void resume();
 
     //! Save checkpoint/restart files
-    void checkpoint();
+    void checkpoint( tk::real it, tk::real t );
 
     //! Normal finish of time stepping
-    void finish();
+    void finish( tk::real it, tk::real t );
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -205,6 +205,8 @@ class Transporter : public CBase_Transporter {
       p | m_sorter;
       p | m_nelem;
       p | m_npoin_larger;
+      p | m_t;
+      p | m_it;
       p | m_meshvol;
       p | m_minstat;
       p | m_maxstat;
@@ -230,6 +232,8 @@ class Transporter : public CBase_Transporter {
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number of mesh elements
     std::size_t m_npoin_larger;          //!< Total number mesh points
+    tk::real m_t;                        //!< Physical time
+    uint64_t m_it;                       //!< Iteration count
     //! Total mesh volume
     tk::real m_meshvol;
     //! Minimum mesh statistics
