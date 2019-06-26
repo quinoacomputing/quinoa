@@ -412,6 +412,10 @@ namespace AMR {
         //std::cout << "Print Tets" << std::endl;
         //print_tets();
 
+        for (auto& kv : tet_store.edge_store.edges) {
+           auto& local = kv.second;
+           local.needs_refining = 0;
+        }
     }
 
     /**
@@ -1315,6 +1319,11 @@ namespace AMR {
             trace_out << "End iter " << iter << std::endl;
         }
         trace_out << "Deref Loop took " << iter << " rounds." << std::endl;
+
+        for (auto& kv : tet_store.edge_store.edges) {
+           auto& local = kv.second;
+           local.needs_derefining = 0;
+        }
     }
 
     // TODO: document
