@@ -81,11 +81,7 @@ tk::surfInt( ncomp_t system,
 
     // When the number of gauss points for the left and right element are
     // different, choose the larger ng
-    std::size_t ng;
-    if( ng_l > ng_r )
-      ng = ng_l;
-    else
-      ng = ng_r;
+    auto ng = std::max( ng_l, ng_r );
 
     // arrays for quadrature points
     std::array< std::vector< real >, 2 > coordgp;

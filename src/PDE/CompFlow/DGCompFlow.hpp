@@ -232,17 +232,14 @@ class CompFlow {
 
         if(er > -1)
         {
-          std::size_t eR = static_cast< std::size_t >( er );
+          auto eR = static_cast< std::size_t >( er );
 
           auto ng_l = tk::NGfa(ndofel[el]);
           auto ng_r = tk::NGfa(ndofel[eR]);
 
           // When the number of gauss points for the left and right element are
           // different, choose the larger ng
-          if( ng_l > ng_r )
-            ng = ng_l;
-          else
-            ng = ng_r;
+          ng = std::max( ng_l, ng_r );
         }
         else
         {
