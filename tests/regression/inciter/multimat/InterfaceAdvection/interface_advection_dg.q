@@ -7,7 +7,7 @@ title "Material interface advection"
 inciter
 
   nstep 50 # Max number of time steps
-  dt 1e-7
+  dt 5e-7
   ttyi 1    # TTY output interval
   scheme dg
 
@@ -20,6 +20,7 @@ inciter
     nmat 3
     material
       gamma 1.4 1.4 1.4 end
+      cv 83.33 717.5 717.5 end
     end
 
     bc_sym
