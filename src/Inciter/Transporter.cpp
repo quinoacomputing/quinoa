@@ -66,7 +66,6 @@ Transporter::Transporter() :
   m_sorter(),
   m_nelem( 0 ),
   m_npoin_larger( 0 ),
-  m_finish( false ),
   m_meshvol( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
@@ -926,11 +925,16 @@ Transporter::resume()
 //!   when the restart (returning from a checkpoint) is complete
 // *****************************************************************************
 {
-  if (m_finish) {
-    mainProxy.finalize();
-  } else {
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  auto d = m_scheme.get()[0].ckLocal();
+
+  // If neither max iterations nor max time reached, continue, otherwise finish
+  if (std::fabs(d->T()-term) > eps && d->It() < nstep)
     m_scheme.next< tag::bcast >();
-  }
+  else
+    mainProxy.finalize();
 }
 
 void
@@ -950,7 +954,6 @@ Transporter::finish()
 // Normal finish of time stepping
 // *****************************************************************************
 {
-  m_finish = true;
   checkpoint();
 }
 

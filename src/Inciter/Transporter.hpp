@@ -230,7 +230,6 @@ class Transporter : public CBase_Transporter {
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number of mesh elements
     std::size_t m_npoin_larger;          //!< Total number mesh points
-    bool m_finish;                       //!< True if about to finish
     //! Total mesh volume
     tk::real m_meshvol;
     //! Minimum mesh statistics
