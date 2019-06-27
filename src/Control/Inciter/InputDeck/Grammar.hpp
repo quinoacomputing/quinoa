@@ -358,6 +358,23 @@ namespace grm {
           std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
             std::numeric_limits< tk::real >::epsilon() )
         Message< Stack, WARNING, MsgKey::MULDT >( stack, in );
+
+      // "ndof" are the degrees of freedom that are evolved in the numerical
+      // method. For finite volume (or DGP0), these are the cell-averages. This
+      // implies that ndof=1 for DGP0. Similarly, ndof=4 and 10 for DGP1 and
+      // DGP2 respectively, since they evolve higher (>1) order solution
+      // information (e.g. gradients) as well.
+      // "rdof" include degrees of freedom that are both, evolved and
+      // reconstructed. For rDGPnPm methods (e.g. P0P1 and P1P2), "n" denotes
+      // the evolved solution-order and "m" denotes the reconstructed
+      // solution-order; i.e. P0P1 has ndof=1 and rdof=4, whereas P1P2 has
+      // ndof=4 and rdof=10. For a pure DG method without reconstruction (DGP0,
+      // DGP1, DGP2), rdof=ndof.
+      // For more information about rDGPnPm methods, ref. Luo, H. et al. (2013).
+      // A reconstructed discontinuous Galerkin method based on a hierarchical
+      // WENO reconstruction for compressible flows on tetrahedral grids.
+      // Journal of Computational Physics, 236, 477-492.
+
       // if P0P1 is configured, set ndofs to be 1 and rdofs to be 4
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::P0P1)
