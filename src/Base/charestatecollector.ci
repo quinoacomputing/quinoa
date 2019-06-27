@@ -15,7 +15,7 @@ module charestatecollector {
 
   namespace tk {
 
-    group ChareStateCollector {
+    group [migratable] ChareStateCollector {
       entry ChareStateCollector();
       initnode void registerReducers();
       entry void collect( bool error, CkCallback cb );

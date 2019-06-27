@@ -36,7 +36,7 @@ mainmodule inciter {
 
   } // inciter::
 
-  mainchare Main {
+  mainchare [migratable] Main {
     entry Main( CkArgMsg* msg );
     entry void execute();
     entry void finalize();
@@ -44,6 +44,6 @@ mainmodule inciter {
     entry [reductiontarget] void dumpstate( CkReductionMsg* msg );
   }
 
-  chare execute { entry execute(); }
+  chare [migratable] execute { entry execute(); }
 
 }

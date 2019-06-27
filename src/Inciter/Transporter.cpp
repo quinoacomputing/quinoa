@@ -72,14 +72,62 @@ Transporter::Transporter() :
   m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
   m_timer(),
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "p", "d", "r", "b", "c", "m", "r" }},
-              {{ "partition", "distribute", "refine", "bnd", "comm", "mask",
-                  "reorder" }} ),
+              ProgMeshPrefix, ProgMeshLegend ),
   m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "c", "b", "f", "g", "a" }},
-              {{ "create", "bndface", "comfac", "ghost", "adj" }} )
+              ProgWorkPrefix, ProgWorkLegend )
 // *****************************************************************************
 //  Constructor
+// *****************************************************************************
+{
+  // Echo configuration to screen
+  info();
+
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
+
+  // If the desired max number of time steps is larger than zero, and the
+  // termination time is larger than the initial time, and the constant time
+  // step size (if that is used) is smaller than the duration of the time to be
+  // simulated, we have work to do, otherwise, finish right away. If a constant
+  // dt is not used, that part of the logic is always true as the default
+  // constdt is zero, see inciter::ctr::InputDeck::InputDeck().
+  if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
+
+    // Enable SDAG waits for collecting mesh statistics
+    thisProxy.wait4stat();
+
+    // Configure and write diagnostics file header
+    diagHeader();
+
+    // Create mesh partitioner AND boundary condition object group
+    createPartitioner();
+
+  } else finish( 0, t0 );      // stop if no time stepping requested
+}
+
+Transporter::Transporter( CkMigrateMessage* m ) :
+  CBase_Transporter( m ),
+  m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
+  m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              ProgMeshPrefix, ProgMeshLegend ),
+    m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              ProgWorkPrefix, ProgWorkLegend )
+// *****************************************************************************
+//  Migrate constructor: returning from a checkpoint
+//! \param[in] m Charm++ migrate message
+// *****************************************************************************
+{
+   m_print.diag( "Restarted from checkpoint" );
+   info();
+   inthead();
+}
+
+void
+Transporter::info()
+// *****************************************************************************
+// Echo configuration to screen
 // *****************************************************************************
 {
   m_print.part( "Factory" );
@@ -200,38 +248,24 @@ Transporter::Transporter() :
     }
   }
 
-  // If the desired max number of time steps is larger than zero, and the
-  // termination time is larger than the initial time, and the constant time
-  // step size (if that is used) is smaller than the duration of the time to be
-  // simulated, we have work to do, otherwise, finish right away. If a constant
-  // dt is not used, that part of the logic is always true as the default
-  // constdt is zero, see inciter::ctr::InputDeck::InputDeck().
-  if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
+  // Print I/O filenames
+  m_print.section( "Output filenames and directories" );
+  m_print.item( "Field output file(s)",
+    g_inputdeck.get< tag::cmd, tag::io, tag::output >() + ".<chareid>" );
+  m_print.item( "Diagnostics file",
+                g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
+  m_print.item( "Checkpoint/restart directory",
+                g_inputdeck.get< tag::cmd, tag::io, tag::restart >() + '/' );
 
-    // Enable SDAG waits for collecting mesh statistics
-    thisProxy.wait4stat();
-
-    // Print I/O filenames
-    m_print.section( "Output filenames" );
-    m_print.item( "Field", g_inputdeck.get< tag::cmd, tag::io, tag::output >()
-                           + ".<chareid>" );
-    m_print.item( "Diagnostics",
-                  g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
-
-    // Print output intervals
-    m_print.section( "Output intervals" );
-    m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
-    m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
-    m_print.item( "Diagnostics", g_inputdeck.get< tag::interval, tag::diag >() );
-    m_print.endsubsection();
-
-    // Configure and write diagnostics file header
-    diagHeader();
-
-    // Create mesh partitioner AND boundary condition object group
-    createPartitioner();
-
-  } else finish();      // stop if no time stepping requested
+  // Print output intervals
+  m_print.section( "Output intervals" );
+  m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
+  m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
+  m_print.item( "Diagnostics",
+                g_inputdeck.get< tag::interval, tag::diag >() );
+  m_print.item( "Checkpoint/restart",
+                g_inputdeck.get< tag::cmd, tag::rsfreq >() );
+  m_print.endsubsection();
 }
 
 void
@@ -385,6 +419,7 @@ Transporter::refinserted( int error )
 // *****************************************************************************
 {
   if (error) {
+
     m_print << "\n>>> ERROR: A worker chare was not assigned any mesh "
                "elements. This can happen in SMP-mode with a large +ppn "
                "parameter (number of worker threads per logical node) and is "
@@ -396,9 +431,13 @@ Transporter::refinserted( int error )
                "with +ppn larger than 1. Solution 1: Try a different "
                "partitioning algorithm (e.g., rcb instead of mj). Solution 2: "
                "Decrease +ppn.";
-    finish();
+
+    finish( 0, g_inputdeck.get< tag::discr, tag::t0 >() );
+
   } else {
+
      m_refiner.doneInserting();
+
   }
 }
 
@@ -792,7 +831,22 @@ Transporter::stat()
               std::to_string( static_cast<std::size_t>(m_maxstat[2]) ) + " / " +
               std::to_string( static_cast<std::size_t>(m_avgstat[2]) ) );
 
-  m_print.inthead( "Time integration", "Unstructured-mesh PDE solver testbed",
+  // Print out time integration header to screen
+  inthead();
+
+  m_progWork.start( "Preparing workers",
+                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
+  // Create "derived-class" workers
+  m_sorter.createWorkers();
+}
+
+void
+Transporter::inthead()
+// *****************************************************************************
+// Print out time integration header to screen
+// *****************************************************************************
+{
+  m_print.inthead( "Time integration", "Navier-Stokes solver",
   "Legend: it - iteration count\n"
   "         t - time\n"
   "        dt - time step size\n"
@@ -802,14 +856,11 @@ Transporter::stat()
   "       out - output-saved flags\n"
   "             f - field\n"
   "             d - diagnostics\n"
-  "             h - h-refinement\n",
+  "             h - h-refinement\n"
+  "             l - load balancing\n"
+  "             r - checkpoint/restart\n",
   "\n      it             t            dt        ETE        ETA        EGT  out\n"
     " -------------------------------------------------------------------------\n" );
-
-  m_progWork.start( "Preparing workers",
-                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
-  // Create "derived-class" workers
-  m_sorter.createWorkers();
 }
 
 void
@@ -872,12 +923,49 @@ Transporter::diagnostics( CkReductionMsg* msg )
 }
 
 void
-Transporter::finish()
+Transporter::resume()
 // *****************************************************************************
-// Normal finish of time stepping
+// Resume execution from checkpoint/restart files
+//! \details This is invoked by Charm++ after the checkpoint is done, as well as
+//!   when the restart (returning from a checkpoint) is complete
 // *****************************************************************************
 {
-  mainProxy.finalize();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  // If neither max iterations nor max time reached, continue, otherwise finish
+  if (std::fabs(m_t-term) > eps && m_it < nstep)
+    m_scheme.evalLB< tag::bcast >();
+  else
+    mainProxy.finalize();
+}
+
+void
+Transporter::checkpoint( tk::real it, tk::real t )
+// *****************************************************************************
+// Save checkpoint/restart files
+//! \param[in] it Iteration count
+//! \param[in] t Physical time
+// *****************************************************************************
+{
+  m_it = static_cast< uint64_t >( it );
+  m_t = t;
+
+  const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
+  CkCallback res( CkIndex_Transporter::resume(), thisProxy );
+  CkStartCheckpoint( restart.c_str(), res );
+}
+
+void
+Transporter::finish( tk::real it, tk::real t )
+// *****************************************************************************
+// Normal finish of time stepping
+//! \param[in] it Iteration count
+//! \param[in] t Physical time
+// *****************************************************************************
+{
+  checkpoint( it, t );
 }
 
 #include "NoWarning/transporter.def.h"
