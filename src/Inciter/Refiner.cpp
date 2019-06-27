@@ -750,12 +750,12 @@ Refiner::perform()
   for (const auto& t : m_refiner.tet_store.tets)
     m_oldTets.insert( t.second );
 
-  auto& tet_store = m_refiner.tet_store;
-  std::cout << "before ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
+  //auto& tet_store = m_refiner.tet_store;
+  //std::cout << "before ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
   m_refiner.perform_refinement();
-  std::cout << "after ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
+  //std::cout << "after ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
   m_refiner.perform_derefinement();
-  std::cout << "after deref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
+  //std::cout << "after deref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
 
   updateMesh();
 
@@ -1387,9 +1387,9 @@ Refiner::boundary()
   for (const auto& t : m_refiner.tet_store.tets)
     invtets[ t.second ] = t.first;
 
-  std::cout << thisIndex << " invt: " << invtets.size() << '\n';
-  std::cout << thisIndex << " active inpoel size: " << m_refiner.tet_store.get_active_inpoel().size() << '\n';
-  std::cout << thisIndex << " marked derefinement size: " << m_refiner.tet_store.marked_derefinements.size() << '\n';
+  //std::cout << thisIndex << " invt: " << invtets.size() << '\n';
+  //std::cout << thisIndex << " active inpoel size: " << m_refiner.tet_store.get_active_inpoel().size() << '\n';
+  //std::cout << thisIndex << " marked derefinement size: " << m_refiner.tet_store.marked_derefinements.size() << '\n';
 
   // Generate data structure pcReFaceTets, that associates the id of a tet
   // adjacent to a refined boundary triangle face for all (physical and chare)
@@ -1472,10 +1472,10 @@ Refiner::boundary()
   }
   m_parent = std::move( parent ); 
 
-  std::cout << thisIndex << " added: " << m_addedTets.size() << '\n';
-  std::cout << thisIndex << " parent: " << m_parent.size() << '\n';
-  std::cout << thisIndex << " pcret: " << pcReFaceTets.size() << '\n';
-  std::cout << thisIndex << " pcdet: " << pcDeFaceTets.size() << '\n';
+  //std::cout << thisIndex << " added: " << m_addedTets.size() << '\n';
+  //std::cout << thisIndex << " parent: " << m_parent.size() << '\n';
+  //std::cout << thisIndex << " pcret: " << pcReFaceTets.size() << '\n';
+  //std::cout << thisIndex << " pcdet: " << pcDeFaceTets.size() << '\n';
 
   // Generate unique set of faces for each side set
   std::unordered_map< int, FaceSet > bndFaces;
@@ -1632,7 +1632,7 @@ Refiner::updateBndFaces( const std::unordered_set< std::size_t >& ref,
   m_bface = std::move(bface);
   m_triinpoel = std::move(triinpoel);
 
-  std::cout << thisIndex << " bf: " << tk::sumvalsize( m_bface ) << '\n';
+  //std::cout << thisIndex << " bf: " << tk::sumvalsize( m_bface ) << '\n';
 
   // Perform leak-test on boundary face data just updated (only in DEBUG)
   Assert( bndIntegral(), "Partial boundary integral" );
@@ -1782,7 +1782,7 @@ Refiner::updateBndNodes( const std::unordered_set< std::size_t >& ref,
   // Update boundary node lists
   m_bnode = std::move(bnode);
 
-  std::cout << thisIndex << " bn: " << tk::sumvalsize( m_bnode ) << '\n';
+  //std::cout << thisIndex << " bn: " << tk::sumvalsize( m_bnode ) << '\n';
 }
 
 #include "NoWarning/refiner.def.h"
