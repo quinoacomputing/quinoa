@@ -65,8 +65,16 @@ extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
 //! Number of derived variables computed by the MixDirichlet SDE
+//! \details Derived variables: Nth scalar, density, specific volume.
 //! \see MixDirichlet::derived()
 const std::size_t MIXDIR_NUMDERIVED = 3;
+
+//! Offset of particle density in solution array relative to YN
+//! \details Original in DiffEq/Dirichlet/MixDirichletCoeffPolicy.cpp
+extern const std::size_t DENSITY_OFFSET = 1;
+//! Offset of particle specific volume in solution array relative to YN
+//! \details Original in DiffEq/Dirichlet/MixDirichletCoeffPolicy.cpp
+extern const std::size_t VOLUME_OFFSET = 2;
 
 //! \brief MixDirichlet SDE used polymorphically with DiffEq
 //! \details The template arguments specify policies and are used to configure
@@ -208,7 +216,7 @@ class MixDirichlet {
     tk::real rho( const tk::Particles& particles, ncomp_t p ) const {
       // start computing density
       tk::real d = 0.0;
-      for (ncomp_t i=0; i<m_ncomp+1; ++i)
+      for (ncomp_t i=0; i<=m_ncomp; ++i)
         d += particles( p, i, m_offset ) / m_rho[i];
       // return particle density
       return 1.0/d;
@@ -235,9 +243,9 @@ class MixDirichlet {
       // compute instantaneous fluid-density based on particle mass fractions
       auto density = rho( particles, p );
       //// Compute and store instantaneous density
-      particles( p, m_ncomp+1, m_offset ) = density;
+      particles( p, m_ncomp+DENSITY_OFFSET, m_offset ) = density;
       // Store instantaneous specific volume
-      particles( p, m_ncomp+2, m_offset ) = 1.0/density;
+      particles( p, m_ncomp+VOLUME_OFFSET, m_offset ) = 1.0/density;
     }
 
 };

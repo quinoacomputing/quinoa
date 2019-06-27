@@ -17,6 +17,15 @@
 
 #include "MixDirichletCoeffPolicy.hpp"
 
+namespace walker {
+
+//! Offset of particle density in solution array relative to YN
+const std::size_t DENSITY_OFFSET = 1;
+//! Offset of particle specific volume in solution array relative to YN
+const std::size_t VOLUME_OFFSET = 2;
+
+} // ::walker
+
 std::vector< kw::sde_r::info::expect::type >
 walker::MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho,
                   ctr::NormalizationType norm )
@@ -38,8 +47,8 @@ walker::MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho,
       r[i] = rho.back()/rho[i] - 1.0;
   }
 
-  if (norm == ctr::NormalizationType::LIGHT)
-    r.push_back( 2.0 );
+  //if (norm == ctr::NormalizationType::LIGHT)
+  //  r.push_back( 2.0 );
 
   return r;
 }
@@ -134,7 +143,7 @@ walker::MixDirichletCoeffConst::update(
   }
 }
 
-walker::MixDirichletHomCoeffConst::MixDirichletHomCoeffConst(
+walker::MixDirichletHomogeneous::MixDirichletHomogeneous(
   tk::ctr::ncomp_type ncomp,
   ctr::NormalizationType norm,
   const std::vector< kw::sde_b::info::expect::type >& b_,
@@ -183,7 +192,7 @@ walker::MixDirichletHomCoeffConst::MixDirichletHomCoeffConst(
 }
 
 void
-walker::MixDirichletHomCoeffConst::update(
+walker::MixDirichletHomogeneous::update(
   char depvar,
   ncomp_t ncomp,
   const std::map< tk::ctr::Product, tk::real >& moments,
@@ -221,37 +230,40 @@ walker::MixDirichletHomCoeffConst::update(
   //   Y = instantaneous mass fraction
   //   R = instantaneous density
   //   y = Y - <Y>, mass fraction fluctuation about its mean
-  //   r = R - <R>, density fluctuation about its mean
   // <Y> = mean mass fraction
   // <R> = mean density
 
   // <R>
-  tk::real R = lookup( mean(depvar,ncomp), moments );
-  if (R < 1.0e-8) R = 1.0;
+  tk::real R = lookup( mean(depvar,ncomp+DENSITY_OFFSET), moments );
+  //if (R < 1.0e-8) R = 1.0;
 
   // b = -<rv>, density-specific-volume covariance
   Term rhoprime( static_cast<char>(std::tolower(depvar)),
-                 ncomp, Moment::CENTRAL );
+                 ncomp+DENSITY_OFFSET, Moment::CENTRAL );
   Term vprime( static_cast<char>(std::tolower(depvar)),
-               ncomp+1, Moment::CENTRAL );
+               ncomp+VOLUME_OFFSET, Moment::CENTRAL );
   //auto ds = -lookup( Product({rhoprime,vprime}), moments );
 
   // b. = -<ry.>/<R>
   std::vector< tk::real > bc( ncomp, 0.0 );
   for (ncomp_t c=0; c<ncomp; ++c) {
     Term tr( static_cast<char>(std::tolower(depvar)),
-             ncomp, Moment::CENTRAL );
+             ncomp+DENSITY_OFFSET, Moment::CENTRAL );
     Term ty( static_cast<char>(std::tolower(depvar)),
              c, Moment::CENTRAL );
     bc[c] = -lookup( Product({tr,ty}), moments ) / R; // -<ryc>/<R>
   }
 
-  Term tR( static_cast<char>(std::toupper(depvar)), ncomp, Moment::ORDINARY );
+  Term tR( static_cast<char>(std::toupper(depvar)), ncomp+DENSITY_OFFSET,
+           Moment::ORDINARY );
+  Term tYN( static_cast<char>(std::toupper(depvar)), ncomp, Moment::ORDINARY );
+
+  auto R2YN = lookup( Product({tR,tR,tYN}), moments );
 
   std::vector< tk::real > y2( ncomp, 0.0 );
   std::vector< tk::real > RY( ncomp, 0.0 );
   std::vector< tk::real > R2Y( ncomp, 0.0 );
-  std::vector< tk::real > R3Y( ncomp, 0.0 );
+  std::vector< tk::real > R3YNY( ncomp, 0.0 );
   std::vector< tk::real > R3Y2( ncomp*ncomp, 0.0 );
   for (ncomp_t c=0; c<ncomp; ++c) {
     y2[c] = lookup(
@@ -259,7 +271,7 @@ walker::MixDirichletHomCoeffConst::update(
     Term tYc( static_cast<char>(std::toupper(depvar)), c, Moment::ORDINARY );
     RY[c] = lookup( Product({tR,tYc}), moments );    // <RYc>
     R2Y[c] = lookup( Product({tR,tR,tYc}), moments ); // <R^2Yc>
-    R3Y[c] = lookup( Product({tR,tR,tR,tYc}), moments ); // <R^3Yc>
+    R3YNY[c] = lookup( Product({tR,tR,tR,tYN,tYc}), moments ); // <R^3YNYc>
     for (ncomp_t d=0; d<ncomp; ++d) {
       Term tYd( static_cast<char>(std::toupper(depvar)), d, Moment::ORDINARY );
       // <R^3YcYd>
@@ -329,7 +341,7 @@ walker::MixDirichletHomCoeffConst::update(
   //std::cout << "<r^2>: " << rhovar << std::endl;
 
   // <R^2>
-  auto R2 = lookup( Product({tR,tR}), moments );
+  //auto R2 = lookup( Product({tR,tR}), moments );
 
   for (ncomp_t c=0; c<ncomp; ++c) {
 
@@ -350,11 +362,15 @@ walker::MixDirichletHomCoeffConst::update(
     //         (1.0-sumYt-Yt[c])*(r[c]/rho[ncomp]*(rhovar-sumR2Y)) );
 
     // correlation of density gradient wrt Y_alpha and Y_alpha (Y_alpha = Yc)
-    tk::real drYcYc = -r[c]/rho[ncomp]*R2Y[c];
-    tk::real drYcYN = -r[c]/rho[ncomp]*(R2-sumR2Y);
-    tk::real drYc2YcYN = 2.0*std::pow(r[c]/rho[ncomp],2.0)*(R3Y[c]-sumR3Y2[c]);
+    //tk::real drYcYc = -r[c]/rho[ncomp]*R2Y[c];
+    //tk::real drYcYN = -r[c]/rho[ncomp]*(R2-sumR2Y);
+    //tk::real drYc2YcYN = 2.0*std::pow(r[c]/rho[ncomp],2.0)*(R3Y[c]-sumR3Y2[c]);
     //S[c] = (drYcYc - k[c]/b[c]*drYc2YcYN) / (drYcYN + drYcYc);
-    //S[c] = Yt[c] / ( 1.0 - sumYt + Yt[c] ) - k[c]/b[c]*drYc2YcYN / (drYcYN + drYcYc);
+    //S[c] = Yt[c] / (1.0 - sumYt + Yt[c]) - k[c]/b[c]*drYc2YcYN / (drYcYN + drYcYc);
+
+    S[c] = (R2Y[c] + 2.0*r[c]/rho[ncomp]*k[c]/b[c]*R3YNY[c]) / (R2Y[c] + R2YN);
+    //S[c] = Yt[c] / (1.0 - sumYt + Yt[c]);
+
     //std::cout << "S[" << c << "] = " << S[c] << ", using " << b[c] << ", "
     //          << drYc2YcYN << ", " << drYcYN << ", " << drYcYc << '\n';
 

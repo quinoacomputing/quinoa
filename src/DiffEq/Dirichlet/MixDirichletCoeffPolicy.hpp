@@ -127,17 +127,17 @@ std::vector< kw::sde_r::info::expect::type >
 MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho,
           ctr::NormalizationType norm );
 
-//! MixDirichlet coefficients policity: constants in time + mean(rho) = const
-//! \details User-defined parameters b and kappaprime are constant vectors in
-//!   time and, S is constrained to make \f$\mathrm{d}<rho>/\mathrm{d}t = 0\f$.
-class MixDirichletHomCoeffConst {
+//! MixDirichlet coefficients policity: mean(rho) forced const in time
+//! \details User-defined parameter vector S is constrained to make
+//!   \f$\mathrm{d}<rho>/\mathrm{d}t = 0\f$.
+class MixDirichletHomogeneous {
 
   private:
     using ncomp_t = tk::ctr::ncomp_type;
 
   public:
     //! Constructor: initialize coefficients
-    MixDirichletHomCoeffConst(
+    MixDirichletHomogeneous(
       tk::ctr::ncomp_type ncomp,
       ctr::NormalizationType norm,
       const std::vector< kw::sde_b::info::expect::type >& b_,
@@ -169,7 +169,7 @@ class MixDirichletHomCoeffConst {
 
 //! List of all MixDirichlet's coefficients policies
 using MixDirichletCoeffPolicies = brigand::list< MixDirichletCoeffConst
-                                               , MixDirichletHomCoeffConst >;
+                                               , MixDirichletHomogeneous >;
 
 } // walker::
 
