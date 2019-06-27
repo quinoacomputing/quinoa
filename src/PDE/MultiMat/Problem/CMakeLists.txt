@@ -1,4 +1,5 @@
 add_library(MultiMatProblem
+            SodShocktube.cpp
             InterfaceAdvection.cpp)
 
 target_include_directories(MultiMatProblem PUBLIC
