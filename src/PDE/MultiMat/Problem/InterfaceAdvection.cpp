@@ -43,38 +43,62 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == 9, "Incorrect number of components in multi-material "
+  auto nmat =
+    g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
+
+  Assert( ncomp == 3*nmat+3, "Incorrect number of components in multi-material "
           "system" );
 
   std::vector< tk::real > s( ncomp, 0.0 );
   auto u = std::sqrt(50.0);
   auto v = std::sqrt(50.0);
   auto w = 0.0;
+  auto alphamin = 1.0e-12;
 
   // center of the cylinder
-  auto x0 = 0.35 + u*t;
-  auto y0 = 0.35 + v*t;
+  auto x0 = 0.45 + u*t;
+  auto y0 = 0.45 + v*t;
+
+  // radii of the material-rings
+  std::vector< tk::real > r0(nmat, 0.0);
+  r0[nmat-1] = 0.0;
+  r0[nmat-2] = 0.1;
+  r0[0] = 0.35;
+  for (std::size_t k=1; k<nmat-2; ++k)
+    r0[k] = r0[k-1] - (r0[0]-r0[nmat-2])
+                      /(std::max( 1.0, static_cast<tk::real>(nmat-2)) );
+
+  for (std::size_t k=0; k<nmat; ++k)
+    s[volfracIdx(nmat, k)] = alphamin;
 
   // interface location
   auto r = std::sqrt( (x-x0)*(x-x0) + (y-y0)*(y-y0) );
-  if (r<0.25) {
-    s[0] = 1.0-1.0e-12;
-    s[1] = 1.0e-12;
+  bool is_mat(false);
+  for (std::size_t k=0; k<nmat-1; ++k)
+  {
+    if (r<r0[k] && r>=r0[k+1])
+    {
+      s[volfracIdx(nmat, k)] = 1.0 - static_cast<tk::real>(nmat-1)*alphamin;
+      is_mat = true;
+    }
   }
-  else {
-    s[0] = 1.0e-12;
-    s[1] = 1.0-1.0e-12;
+  if (!is_mat)
+  {
+    s[volfracIdx(nmat, nmat-1)] = 1.0 - static_cast<tk::real>(nmat-1)*alphamin;
   }
 
-  auto rho1 = eos_density< eq >( system, 1.0e5, 300.0, 0 );
-  auto rho2 = eos_density< eq >( system, 1.0e5, 300.0, 1 );
-  s[2] = s[0]*rho1;
-  s[3] = s[1]*rho2;
-  s[4] = (s[2]+s[3]) * u;
-  s[5] = (s[2]+s[3]) * v;
-  s[6] = (s[2]+s[3]) * w;
-  s[7] = s[0] * eos_totalenergy< eq >( system, rho1, u, v, w, 1.0e5, 0 );
-  s[8] = s[1] * eos_totalenergy< eq >( system, rho2, u, v, w, 1.0e5, 1 );
+  auto rhob = 0.0;
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    auto rhok = eos_density< eq >( system, 1.0e5, 300.0, k );
+    s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)] * rhok;
+    s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]
+      * eos_totalenergy< eq >( system, rhok, u, v, w, 1.0e5, k );
+    rhob += s[densityIdx(nmat, k)];
+  }
+  s[momentumIdx(nmat, 0)] = rhob * u;
+  s[momentumIdx(nmat, 1)] = rhob * v;
+  s[momentumIdx(nmat, 2)] = rhob * w;
 
   return s;
 }
@@ -115,6 +139,7 @@ MultiMatProblemInterfaceAdvection::src( ncomp_t, ncomp_t ncomp, tk::real,
                                         tk::real, tk::real, tk::real )
 // *****************************************************************************
 //  Compute and return source term for manufactured solution
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \return Array of reals containing the source for all components
 //! \note The function signature must follow tk::SrcFn
 // *****************************************************************************
@@ -151,10 +176,13 @@ MultiMatProblemInterfaceAdvection::fieldNames( ncomp_t )
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
+  auto nmat =
+    g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
+
   std::vector< std::string > n;
 
-  n.push_back( "volfrac1_numerical" );
-  n.push_back( "volfrac2_numerical" );
+  for (std::size_t k=0; k<nmat; ++k)
+    n.push_back( "volfrac"+std::to_string(k+1)+"_numerical" );
   n.push_back( "density_numerical" );
   n.push_back( "x-velocity_numerical" );
   n.push_back( "y-velocity_numerical" );
@@ -211,9 +239,9 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
     ar.push_back( U.extract( densityIdx(nmat, k)*ndof, offset ) );
     ae.push_back( U.extract( energyIdx(nmat, k)*ndof, offset ) );
   }
-  const auto ru  = U.extract( 4*ndof, offset );
-  const auto rv  = U.extract( 5*ndof, offset );
-  const auto rw  = U.extract( 6*ndof, offset );
+  const auto ru  = U.extract( momentumIdx(nmat, 0)*ndof, offset );
+  const auto rv  = U.extract( momentumIdx(nmat, 1)*ndof, offset );
+  const auto rw  = U.extract( momentumIdx(nmat, 2)*ndof, offset );
 
   //// mesh node coordinates
   //const auto& x = coord[0];
