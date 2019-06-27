@@ -35,23 +35,24 @@ WENO_P1( const std::vector< int >& esuel,
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] offset Index for equation systems
 //! \param[in,out] U High-order solution vector which gets limited
+//! \note This limiter function is experimental and untested. Use with caution.
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto cweight = inciter::g_inputdeck.get< tag::discr, tag::cweight >();
   std::array< std::vector< tk::real >, 3 > limU;
   limU[0].resize( U.nunk() );
   limU[1].resize( U.nunk() );
   limU[2].resize( U.nunk() );
 
-  std::size_t ncomp = U.nprop()/ndof;
+  std::size_t ncomp = U.nprop()/rdof;
 
   std::array< std::array< tk::real, 3 >, 5 > gradu;
   std::array< tk::real, 5 > wtStencil, osc, wtDof;
 
   for (inciter::ncomp_t c=0; c<ncomp; ++c)
   {
-    auto mark = c*ndof;
+    auto mark = c*rdof;
 
     for (std::size_t e=0; e<esuel.size()/4; ++e)
     {
@@ -168,8 +169,8 @@ Superbee_P1( const std::vector< int >& esuel,
 //! \param[in,out] U High-order solution vector which gets limited
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  std::size_t ncomp = U.nprop()/ndof;
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  std::size_t ncomp = U.nprop()/rdof;
 
   auto beta_lim = 2.0;
 
@@ -191,7 +192,7 @@ Superbee_P1( const std::vector< int >& esuel,
 
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
       {
-        auto mark = c*ndof;
+        auto mark = c*rdof;
         uMin[c] = U(e, mark, offset);
         uMax[c] = U(e, mark, offset);
       }
@@ -207,7 +208,7 @@ Superbee_P1( const std::vector< int >& esuel,
         auto n = static_cast< std::size_t >( nel );
         for (inciter::ncomp_t c=0; c<ncomp; ++c)
         {
-          auto mark = c*ndof;
+          auto mark = c*rdof;
           uMin[c] = std::min(uMin[c], U(n, mark, offset));
           uMax[c] = std::max(uMax[c], U(n, mark, offset));
         }
@@ -218,7 +219,7 @@ Superbee_P1( const std::vector< int >& esuel,
       // to loop over all the quadrature points of all faces of element e,
       // coordinates of the quadrature points are needed.
       // Number of quadrature points for face integration
-      auto ng = tk::NGfa(ndof);
+      auto ng = tk::NGfa(rdof);
 
       // arrays for quadrature points
       std::array< std::vector< tk::real >, 2 > coordgp;
@@ -267,12 +268,12 @@ Superbee_P1( const std::vector< int >& esuel,
           auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
           //Compute the basis functions
-          auto B_l = tk::eval_basis( ndof,
+          auto B_l = tk::eval_basis( rdof,
                 tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
                 tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
                 tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
-          auto state = tk::eval_state( ncomp, offset, ndof, dof_el, e, U, B_l );
+          auto state = tk::eval_state( ncomp, offset, rdof, dof_el, e, U, B_l );
 
           Assert( state.size() == ncomp, "Size mismatch" );
 
@@ -280,7 +281,7 @@ Superbee_P1( const std::vector< int >& esuel,
           for (inciter::ncomp_t c=0; c<ncomp; ++c)
           {
             auto phi_gp = 1.0;
-            auto mark = c*ndof;
+            auto mark = c*rdof;
             auto uNeg = state[c] - U(e, mark, offset);
             if (uNeg > 1.0e-14)
             {
@@ -305,7 +306,7 @@ Superbee_P1( const std::vector< int >& esuel,
       // ----- Step-3: apply limiter function
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
       {
-        auto mark = c*ndof;
+        auto mark = c*rdof;
         U(e, mark+1, offset) = phi[c] * U(e, mark+1, offset);
         U(e, mark+2, offset) = phi[c] * U(e, mark+2, offset);
         U(e, mark+3, offset) = phi[c] * U(e, mark+3, offset);

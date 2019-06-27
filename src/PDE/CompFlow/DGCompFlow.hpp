@@ -138,6 +138,7 @@ class CompFlow {
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
@@ -174,8 +175,8 @@ class CompFlow {
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, inpoel, coord, fd,
-                   geoFace, rieflxfn, velfn, U, ndofel, R, riemannDeriv );
+      tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, inpoel, coord,
+                   fd, geoFace, rieflxfn, velfn, U, ndofel, R, riemannDeriv );
 
       // compute source term intehrals
       tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
@@ -188,7 +189,7 @@ class CompFlow {
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, b.first, fd,
+        tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, b.first, fd,
                         geoFace, inpoel, coord, t, rieflxfn, velfn, b.second, U,
                         ndofel, R, riemannDeriv );
     }
@@ -209,6 +210,7 @@ class CompFlow {
                  const tk::Fields& U ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
@@ -280,7 +282,7 @@ class CompFlow {
           // left element
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*ndof;
+            auto mark = c*rdof;
             ugp[0].push_back( U(el, mark, m_offset)
                             + U(el, mark+1, m_offset) * B_l[1]
                             + U(el, mark+2, m_offset) * B_l[2]
@@ -329,7 +331,7 @@ class CompFlow {
  
             for (ncomp_t c=0; c<5; ++c)
             {
-              auto mark = c*ndof;
+              auto mark = c*rdof;
               ugp[1].push_back(  U(eR, mark,   m_offset)
                                + U(eR, mark+1, m_offset) * B_r[1]
                                + U(eR, mark+2, m_offset) * B_r[2]
@@ -427,7 +429,7 @@ class CompFlow {
                    const tk::Fields& /*geoElem*/,
                    const tk::Fields& U ) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -476,10 +478,10 @@ class CompFlow {
 
           for (ncomp_t c=0; c<5; ++c)
           {
-            if (ndof == 1) {
+            if (rdof == 1) {
               ugp[c] =  U(e, c, m_offset);
             } else {
-              auto mark = c*ndof;
+              auto mark = c*rdof;
               ugp[c] =  U(e, mark,   m_offset)
                       + U(e, mark+1, m_offset) * B2
                       + U(e, mark+2, m_offset) * B3

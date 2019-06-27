@@ -137,6 +137,7 @@ class Transport {
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
@@ -164,8 +165,8 @@ class Transport {
         { m_bcdir, Dirichlet } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, inpoel, coord, fd,
-                   geoFace, Upwind::flux, Problem::prescribedVelocity, U,
+      tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, inpoel, coord,
+                   fd, geoFace, Upwind::flux, Problem::prescribedVelocity, U,
                    ndofel, R, riemannDeriv );
 
       if(ndof > 1)
@@ -175,7 +176,7 @@ class Transport {
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, b.first, fd,
+        tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, b.first, fd,
           geoFace, inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
           b.second, U, ndofel, R, riemannDeriv );
     }
@@ -249,12 +250,12 @@ class Transport {
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c*ndof, m_offset ) );
+        out.push_back( U.extract( c*rdof, m_offset ) );
       // evaluate analytic solution at time t
       auto E = U;
       for (std::size_t e=0; e<U.nunk(); ++e)
@@ -262,14 +263,14 @@ class Transport {
         auto s = Problem::solution( m_system, m_ncomp, geoElem(e,1,0),
                                     geoElem(e,2,0), geoElem(e,3,0), t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          E( e, c*ndof, m_offset ) = s[c];
+          E( e, c*rdof, m_offset ) = s[c];
       }
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( E.extract( c*ndof, m_offset ) );
+        out.push_back( E.extract( c*rdof, m_offset ) );
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) {
-        auto mark = c*ndof;
+        auto mark = c*rdof;
         auto u = U.extract( mark, m_offset );
         auto e = E.extract( mark, m_offset );
         for (std::size_t i=0; i<u.size(); ++i)

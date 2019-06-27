@@ -201,8 +201,8 @@ MultiMatProblemSodShocktube::fieldOutput(
 // *****************************************************************************
 {
   // number of degree of freedom
-  const std::size_t ndof =
-    g_inputdeck.get< tag::discr, tag::ndof >();
+  const std::size_t rdof =
+    g_inputdeck.get< tag::discr, tag::rdof >();
 
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
@@ -212,13 +212,13 @@ MultiMatProblemSodShocktube::fieldOutput(
 
   for (std::size_t k=0; k<nmat; ++k)
   {
-    al.push_back( U.extract( volfracIdx(nmat, k)*ndof, offset ) );
-    ar.push_back( U.extract( densityIdx(nmat, k)*ndof, offset ) );
-    ae.push_back( U.extract( energyIdx(nmat, k)*ndof, offset ) );
+    al.push_back( U.extract( volfracIdx(nmat, k)*rdof, offset ) );
+    ar.push_back( U.extract( densityIdx(nmat, k)*rdof, offset ) );
+    ae.push_back( U.extract( energyIdx(nmat, k)*rdof, offset ) );
   }
-  const auto ru  = U.extract( momentumIdx(nmat, 0)*ndof, offset );
-  const auto rv  = U.extract( momentumIdx(nmat, 1)*ndof, offset );
-  const auto rw  = U.extract( momentumIdx(nmat, 2)*ndof, offset );
+  const auto ru  = U.extract( momentumIdx(nmat, 0)*rdof, offset );
+  const auto rv  = U.extract( momentumIdx(nmat, 1)*rdof, offset );
+  const auto rw  = U.extract( momentumIdx(nmat, 2)*rdof, offset );
 
   // mesh node coordinates
   //const auto& x = coord[0];
