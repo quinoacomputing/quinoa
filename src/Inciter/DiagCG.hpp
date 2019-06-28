@@ -85,7 +85,7 @@ class DiagCG : public CBase_DiagCG {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit DiagCG( CkMigrateMessage* ) {}
+    explicit DiagCG( CkMigrateMessage* msg ) : CBase_DiagCG( msg ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -147,6 +147,12 @@ class DiagCG : public CBase_DiagCG {
 
     //! Evaluate whether to continue with next time step
     void step();
+
+    // Evaluate whether to do load balancing
+    void evalLB();
+
+    //! Continue to next time step
+    void next();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -256,6 +262,9 @@ class DiagCG : public CBase_DiagCG {
 
     //! Compute time step size
     void dt();
+
+    //! Evaluate whether to save checkpoint/restart
+    void evalRestart();
 };
 
 } // inciter::
