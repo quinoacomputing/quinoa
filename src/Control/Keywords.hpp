@@ -3497,11 +3497,11 @@ using nonblocking =
   keyword< nonblocking_info, TAOCPP_PEGTL_STRING("nonblocking") >;
 
 struct lbfreq_info {
-  static std::string name() { return "lbfreq"; }
+  static std::string name() { return "Load balancing frequency"; }
   static std::string shortDescription()
   { return "Set load-balancing frequency during time stepping"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set frequency of load-balancing during
+    R"(This keyword is used to set the frequency of load-balancing during
        time stepping. The default is 1, which means that load balancing is
        initiated every time step. Note, however, that this does not necessarily
        mean that load balancing will be performed by the runtime system every
@@ -3521,6 +3521,29 @@ struct lbfreq_info {
   };
 };
 using lbfreq = keyword< lbfreq_info, TAOCPP_PEGTL_STRING("lbfreq") >;
+
+struct rsfreq_info {
+  static std::string name() { return "Checkpoint/restart frequency"; }
+  static std::string shortDescription()
+  { return "Set checkpoint/restart frequency during time stepping"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the frequency of dumping checkpoint/restart
+       files during time stepping. The default is 100, which means that
+       checkpoint/restart files are dumped at every 100th time step.)";
+  }
+  using alias = Alias< r >;
+  struct expect {
+    using type = std::size_t;
+    static constexpr type lower = 1;
+    static constexpr type upper = std::numeric_limits< type >::max()-1;
+    static std::string description() { return "int"; }
+    static std::string choices() {
+      return "integer between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "] (both inclusive)";
+    }
+  };
+};
+using rsfreq = keyword< rsfreq_info, TAOCPP_PEGTL_STRING("rsfreq") >;
 
 struct feedback_info {
   static std::string name() { return "feedback"; }
@@ -3677,6 +3700,22 @@ struct output_info {
   };
 };
 using output = keyword< output_info, TAOCPP_PEGTL_STRING("output") >;
+
+struct restart_info {
+  static std::string name() { return "checkpoint/restart directory name"; }
+  static std::string shortDescription()
+    { return "Specify the directory for restart files"; }
+  static std::string longDescription() { return
+    R"(This option is used to specify the directory name in which to save
+    checkpoint/restart files.)";
+  }
+  using alias = Alias< R >;
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using restart = keyword< restart_info, TAOCPP_PEGTL_STRING("restart") >;
 
 struct l2_info {
   static std::string name() { return "L2"; }

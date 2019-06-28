@@ -1448,7 +1448,7 @@ namespace grm {
   //! \brief Process command line 'keyword' and call its 'insert' action if
   //!   matches 'kw_type'
   template< template< class > class use, class keyword, class insert,
-            class kw_type, class tag, class... tags>
+            class kw_type, class tag, class... tags >
   struct process_cmd :
          pegtl::if_must<
            readcmd< use< keyword > >,
