@@ -294,6 +294,19 @@ class Scheme : public SchemeBase {
                             proxy );
     }
 
+    //////  proxy.evalLB(...)
+    //! function to call the evalLB entry method of an array proxy (broadcast)
+    //! \param[in] args arguments to member function (entry method) to be called
+    //! \details this function calls the evalLB member function of a chare array
+    //!   proxy and thus equivalent to proxy.evalLB(...), specifying a
+    //!   non-default last argument.
+    template< class Op, typename... Args, typename std::enable_if<
+      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
+    void evalLB( Args&&... args ) {
+      boost::apply_visitor( call_evalLB<Args...>( std::forward<Args>(args)... ),
+                            proxy );
+    }
+
     //////  proxy[x].insert(...)
     //! Function to call the insert entry method of an element proxy (p2p)
     //! \param[in] x Chare array element index
@@ -334,18 +347,6 @@ class Scheme : public SchemeBase {
       auto e = tk::element< ProxyElem >( proxy, x );
       boost::apply_visitor(
         call_newMesh<Args...>( std::forward<Args>(args)... ), e );
-    }
-
-    //////  proxy.contin(...)
-    //! Function to call the contin entry method of an array proxy (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the contin member function of a chare array
-    //!   proxy and thus equivalent to proxy.contin(...), using the last argument
-    //!   as default.
-    template< typename... Args >
-    void contin( Args&&... args ) {
-      boost::apply_visitor( call_contin<Args...>( std::forward<Args>(args)... ),
-                            proxy );
     }
 
     ///@{
@@ -529,27 +530,6 @@ class Scheme : public SchemeBase {
      }
    };
 
-   //! Functor to call the chare entry method 'contin'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_contin : Call< call_contin<As...>, As... > {
-     using Base = Call< call_contin<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.contin( std::forward<Args>(args)... );
-     }
-   };
-
    //! Functor to call the chare entry method 'diag'
    //! \details This class is intended to be used in conjunction with variant
    //!   and boost::visitor. The template argument types are the types of the
@@ -570,6 +550,28 @@ class Scheme : public SchemeBase {
        p.diag( std::forward<Args>(args)... );
      }
    };
+
+   //! Functor to call the chare entry method 'evalLB'
+   //! \details This class is intended to be used in conjunction with variant
+   //!   and boost::visitor. The template argument types are the types of the
+   //!   arguments to entry method to be invoked behind the variant holding a
+   //!   Charm++ proxy.
+   //! \see The base class Call for the definition of operator().
+   template< typename... As >
+   struct call_evalLB : Call< call_evalLB<As...>, As... > {
+     using Base = Call< call_evalLB<As...>, As... >;
+     using Base::Base; // inherit base constructors
+     //! Invoke the entry method
+     //! \param[in,out] p Proxy behind which the entry method is called
+     //! \param[in] args Function arguments passed to entry method
+     //! \details P is the proxy type, Args are the types of the arguments of
+     //!   the entry method to be called.
+     template< typename P, typename... Args >
+     static void invoke( P& p, Args&&... args ) {
+       p.evalLB( std::forward<Args>(args)... );
+     }
+   };
+
 };
 
 } // inciter::

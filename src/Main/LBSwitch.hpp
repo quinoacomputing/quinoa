@@ -27,6 +27,16 @@ class LBSwitch : public CBase_LBSwitch {
     //! Constructor: turn on automatic load balancing
     explicit LBSwitch( bool verbose );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
+    //! Migrate constructor
+    explicit LBSwitch( CkMigrateMessage* m ) : CBase_LBSwitch( m ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
+
     //! Turn off automatic load balancing
     static void off();
 };

@@ -36,6 +36,8 @@ string(REPLACE " " ";" POSTFIX_RUNNER_ARGS "${POSTFIX_RUNNER_ARGS}")
 message("Test runner configuration:")
 message("  TEST_NAME (name of test)                                    : ${TEST_NAME}")
 message("  WORKDIR (test run directory)                                : ${WORKDIR}")
+message("  USE_VALGRIND (true if we use valgrind)                      : ${USE_VALGRIND}")
+message("  VALGRIND (valgrind executable)                              : ${VALGRIND}")
 message("  RUNNER_REQUIRED (true if an executable runner is required)  : ${RUNNER_REQUIRED}")
 message("  RUNNER (used to run parallel and serial jobs inside cmake)  : ${RUNNER}")
 message("  RUNNER_NCPUS_ARG (used to specify the number of CPUs)       : ${RUNNER_NCPUS_ARG}")
@@ -49,6 +51,7 @@ message("  NUMPES (number of processing elements requested for test)   : ${NUMPE
 message("  NUMNODES (number of logical nodes, in Charm++'s SMP mode)   : ${NUMNODES}")
 message("  PPN (number of PEs per logical node, in Charm++'s SMP mode) : ${PPN}")
 message("  HARDWARE_NUMPES (number of PEs used in hardware for test)   : ${HARDWARE_NUMPES}")
+message("  CHECKPOINT (test whose checkpoint to restart from)          : ${CHECKPOINT}")
 message("  POSTPROCESS_PROG (executable to run after test)             : ${POSTPROCESS_PROG}")
 message("  POSTPROCESS_PROG_ARGS (postprocess program arguments)       : ${POSTPROCESS_PROG_ARGS}")
 message("  POSTPROCESS_PROG_OUTPUT (postprocess program output file)   : ${POSTPROCESS_PROG_OUTPUT}")
@@ -70,7 +73,8 @@ message("  FILE_CONV_INPUT (File conv tool input file(s))              : ${FILEC
 message("  FILECONV_RESULT (File conv tool output file(s))             : ${FILECONV_RESULT}")
 
 # Remove previous test output (if any)
-if(TEXT_RESULT OR BIN_RESULT OR FILECONV_RESULT OR FILECONV_INPUT)
+if ( NOT CHECKPOINT AND
+     (TEXT_RESULT OR BIN_RESULT OR FILECONV_RESULT OR FILECONV_INPUT) )
   message("\nRemoving existing result(s) (if any): ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT} ${FILECONV_INPUT}\n")
   file(REMOVE ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT} ${FILECONV_INPUT})
 endif()
@@ -78,6 +82,10 @@ endif()
 # Set Charm++'s +ppn argument (if configured, used in SMP mode)
 if (PPN)
   set(PPN "+ppn;${PPN}")
+endif()
+
+if (USE_VALGRIND)
+  set(valgrind_memcheck "valgrind --tool=memcheck")
 endif()
 
 # Configure test run command
@@ -92,11 +100,13 @@ if (CHARM_SMP)
   endif()
 
   set(test_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NPE} ${RUNNER_ARGS}
+                   ${valgrind_memcheck}
                    ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS} ${PPN}
                    ${POSTFIX_RUNNER_ARGS})
 else()
 
   set(test_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS}
+                   ${valgrind_memcheck}
                    ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS}
                    ${POSTFIX_RUNNER_ARGS})
 
