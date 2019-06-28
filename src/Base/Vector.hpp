@@ -66,6 +66,10 @@ inverseJacobian( const std::array< real, 3 >& v1,
                  const std::array< real, 3 >& v3,
                  const std::array< real, 3 >& v4 );
 
+//! Compute the determinant of 3x3 matrix
+tk::real
+determinant3by3( const std::array< std::array< tk::real, 3 >, 3 >& a );
+
 } // tk::
 
 #endif // Vector_h

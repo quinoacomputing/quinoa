@@ -195,3 +195,16 @@ tk::inverseJacobian( const std::array< real, 3 >& v1,
 
   return jacInv;
 }
+
+tk::real
+tk::determinant3by3( const std::array< std::array< tk::real, 3 >, 3 >& a )
+// *****************************************************************************
+//  Compute the determinant of 3x3 matrix
+//!  \param[in] a 3x3 matrix
+//!  \return Determinant of the 3x3 matrix
+// *****************************************************************************
+{
+  return ( a[0][0] * (a[1][1]*a[2][2]-a[1][2]*a[2][1])
+         - a[0][1] * (a[1][0]*a[2][2]-a[1][2]*a[2][0])
+         + a[0][2] * (a[1][0]*a[2][1]-a[1][1]*a[2][0]) );
+}

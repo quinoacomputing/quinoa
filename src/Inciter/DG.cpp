@@ -25,6 +25,7 @@
 #include "ElemDiagnostics.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Refiner.hpp"
+#include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "Reorder.hpp"
 #include "Vector.hpp"
@@ -1233,6 +1234,7 @@ DG::lim()
 // *****************************************************************************
 {
   const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
 
   // Combine own and communicated contributions of unlimited solution and
   // degrees of freedom in cells (if p-adaptive)
@@ -1248,9 +1250,13 @@ DG::lim()
 
   if (pref && m_stage==0) propagate_ndof();
 
-  if (g_inputdeck.get< tag::discr, tag::rdof >() > 1) {
+  if (rdof > 1) {
 
     auto d = Disc();
+
+    // Reconstruct second-order solution
+    if (rdof == 4 && inciter::g_inputdeck.get< tag::discr, tag::ndof >() == 1)
+      leastSquares_P0P1( m_fd.Esuel(), 0, m_geoElem, m_u );
 
     const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
     if (limiter == ctr::LimiterType::WENOP1)
