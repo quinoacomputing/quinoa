@@ -23,6 +23,7 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
 
 } // inciter::
 
@@ -53,8 +54,17 @@ InciterDriver::InciterDriver( const InciterPrint& print,
   print.item( "Load-balancing frequency, -" + *kw::lbfreq::alias(),
                std::to_string(cmdline.get< tag::lbfreq >()) );
 
+  auto rsfreq = cmdline.get< tag::rsfreq >();
+  if ( rsfreq < kw::rsfreq::info::expect::lower ||
+       rsfreq > kw::rsfreq::info::expect::upper ) {
+    Throw( "Checkpoint/restart frequency should be greater than 0." );
+  }
+  print.item( "Checkpoint/restart frequency, -" + *kw::rsfreq::alias(),
+               std::to_string(cmdline.get< tag::rsfreq >()) );
+
   // Parse input deck into g_inputdeck
-  m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
+  m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );
+  g_inputdeck = g_inputdeck_defaults;   // overwrite with defaults if restarted
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
   m_print.item( "Parsed control file", "success" );  
   m_print.endpart();
@@ -66,7 +76,6 @@ InciterDriver::execute() const
 //  Run inciter
 // *****************************************************************************
 {
-  // Instantiate Transporter chare on PE 0 which drives the time-integration of
-  // a PDE via several worker chares.
+  // Instantiate Transporter chare on PE 0 which drives time-integration
   CProxy_Transporter::ckNew( 0 );
 }

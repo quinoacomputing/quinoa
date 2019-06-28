@@ -80,7 +80,7 @@ class ALECG : public CBase_ALECG {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit ALECG( CkMigrateMessage* ) {}
+    explicit ALECG( CkMigrateMessage* msg ) : CBase_ALECG( msg ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -141,6 +141,12 @@ class ALECG : public CBase_ALECG {
 
     //! Evaluate whether to continue with next time step
     void step();
+
+    // Evaluate whether to do load balancing
+    void evalLB();
+
+    //! Continue to next time step
+    void next();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -225,6 +231,9 @@ class ALECG : public CBase_ALECG {
 
     //! Compute time step size
     void dt();
+
+    //! Evaluate whether to save checkpoint/restart
+    void evalRestart();
 };
 
 } // inciter::

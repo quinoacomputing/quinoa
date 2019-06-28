@@ -18,7 +18,7 @@ module transporter {
 
   namespace inciter {
 
-    chare Transporter {
+    chare [migratable] Transporter {
       entry Transporter();
       entry [reductiontarget] void load( std::size_t nelem, std::size_t npoin );
       entry [reductiontarget] void distributed();
@@ -52,7 +52,9 @@ module transporter {
                                             tk::real d4, tk::real d5 );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
-      entry [reductiontarget] void finish();
+      entry void resume();
+      entry [reductiontarget] void checkpoint( tk::real it, tk::real t );
+      entry [reductiontarget] void finish( tk::real it, tk::real t );
 
       entry void pepartitioned();
       entry void pedistributed();

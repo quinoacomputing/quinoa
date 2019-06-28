@@ -34,7 +34,6 @@ module dg {
       entry void reqGhost();
       initnode void registerReducers();      
       entry void setup();
-      entry void next();
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
@@ -49,6 +48,8 @@ module dg {
       entry void resized();
       entry void lhs();
       entry void step();
+      entry void next();
+      entry void evalLB();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

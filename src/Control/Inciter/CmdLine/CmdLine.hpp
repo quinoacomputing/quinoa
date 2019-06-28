@@ -50,7 +50,8 @@ class CmdLine : public tk::Control<
                   tag::ctrinfo,        tk::ctr::HelpFactory,
                   tag::helpkw,         tk::ctr::HelpKw,
                   tag::error,          std::vector< std::string >,
-                  tag::lbfreq,         kw::lbfreq::info::expect::type > {
+                  tag::lbfreq,         kw::lbfreq::info::expect::type,
+                  tag::rsfreq,         kw::rsfreq::info::expect::type > {
 
   public:
     //! \brief Inciter command-line keywords
@@ -67,9 +68,11 @@ class CmdLine : public tk::Control<
                                      , kw::control
                                      , kw::input
                                      , kw::output
+                                     , kw::restart
                                      , kw::diagnostics_cmd
                                      , kw::quiescence
                                      , kw::lbfreq
+                                     , kw::rsfreq
                                      , kw::trace
                                      , kw::version
                                      , kw::license
@@ -110,6 +113,7 @@ class CmdLine : public tk::Control<
       set< tag::io, tag::output >( "out" );
       set< tag::io, tag::diag >( "diag" );
       set< tag::io, tag::part >( "track.h5part" );
+      set< tag::io, tag::restart >( "restart" );
       set< tag::virtualization >( 0.0 );
       set< tag::verbose >( false ); // Quiet output by default
       set< tag::chare >( false ); // No chare state output by default
@@ -117,6 +121,7 @@ class CmdLine : public tk::Control<
       set< tag::benchmark >( false ); // No benchmark mode by default
       set< tag::feedback >( false ); // No detailed feedback by default
       set< tag::lbfreq >( 1 ); // Load balancing every time-step by default
+      set< tag::rsfreq >( 100 );// Checkpoint/restart after this many time steps
       set< tag::trace >( true ); // Output call and stack trace by default
       set< tag::version >( false ); // Do not display version info by default
       set< tag::license >( false ); // Do not display license info by default
@@ -147,7 +152,8 @@ class CmdLine : public tk::Control<
                    tag::ctrinfo,        tk::ctr::HelpFactory,
                    tag::helpkw,         tk::ctr::HelpKw,
                    tag::error,          std::vector< std::string >,
-                   tag::lbfreq,         kw::lbfreq::info::expect::type >::pup(p);
+                   tag::lbfreq,         kw::lbfreq::info::expect::type,
+                   tag::rsfreq,        kw::rsfreq::info::expect::type >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

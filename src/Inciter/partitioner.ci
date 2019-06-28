@@ -25,7 +25,7 @@ module partitioner {
 
   namespace inciter {
 
-    nodegroup Partitioner {
+    nodegroup [migratable] Partitioner {
       entry Partitioner(
         const tk::PartitionerCallback& cbp,
         const tk::RefinerCallback& cbr,

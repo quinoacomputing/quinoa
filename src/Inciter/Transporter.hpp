@@ -27,14 +27,23 @@
 
 namespace inciter {
 
+//! Indices for progress report on mesh preparation
+enum ProgMesh{ PART=0, DIST, REFINE, BND, COMM, MASK, REORD };
+//! Prefixes for progress report on mesh preparation
+static const std::array< std::string, 7 >
+  ProgMeshPrefix = {{ "p", "d", "r", "b", "c", "m", "r" }},
+  ProgMeshLegend = {{ "partition", "distribute", "refine", "bnd", "comm",
+                      "mask", "reorder" }};
+
+//! Indices for progress report on workers preparation
+enum ProgWork{ CREATE=0, BNDFACE, COMFAC, GHOST, ADJ };
+//! Prefixes for progress report on workers preparation
+static const std::array< std::string, 5 >
+  ProgWorkPrefix = {{ "c", "b", "f", "g", "a" }},
+  ProgWorkLegend = {{ "create", "bndface", "comfac", "ghost", "adj" }};
+
 //! Transporter drives the time integration of transport equations
 class Transporter : public CBase_Transporter {
-
-  private:
-    //! Indices for progress report on mesh preparation
-    enum ProgMesh{ PART=0, DIST, REFINE, BND, COMM, MASK, REORD };
-    //! Indices for progress report on workers preparation
-    enum ProgWork{ CREATE=0, BNDFACE, COMFAC, GHOST, ADJ };
 
   public:
     #if defined(__clang__)
@@ -62,6 +71,9 @@ class Transporter : public CBase_Transporter {
 
     //! Constructor
     explicit Transporter();
+
+    //! Migrate constructor: returning from a checkpoint
+    explicit Transporter( CkMigrateMessage* m );
 
     //! Reduction target: the mesh has been read from file on all PEs
     void load( std::size_t nelem, std::size_t npoin );
@@ -168,8 +180,46 @@ class Transporter : public CBase_Transporter {
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
+    //! Resume execution from checkpoint/restart files
+    void resume();
+
+    //! Save checkpoint/restart files
+    void checkpoint( tk::real it, tk::real t );
+
     //! Normal finish of time stepping
-    void finish();
+    void finish( tk::real it, tk::real t );
+
+    /** @name Charm++ pack/unpack serializer member functions */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \note This is a Charm++ mainchare, pup() is thus only for
+    //!    checkpoint/restart.
+    void pup( PUP::er &p ) override {
+      p | m_nchare;
+      p | m_ncit;
+      p | m_nt0refit;
+      p | m_ndtrefit;
+      p | m_scheme;
+      p | m_partitioner;
+      p | m_refiner;
+      p | m_meshwriter;
+      p | m_sorter;
+      p | m_nelem;
+      p | m_npoin_larger;
+      p | m_t;
+      p | m_it;
+      p | m_meshvol;
+      p | m_minstat;
+      p | m_maxstat;
+      p | m_avgstat;
+      p | m_timer;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] t Transporter object reference
+    friend void operator|( PUP::er& p, Transporter& t ) { t.pup(p); }
+    //@}
 
   private:
     InciterPrint m_print;                //!< Pretty printer
@@ -184,7 +234,9 @@ class Transporter : public CBase_Transporter {
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number of mesh elements
     std::size_t m_npoin_larger;          //!< Total number mesh points
-     //! Total mesh volume
+    tk::real m_t;                        //!< Physical time
+    uint64_t m_it;                       //!< Iteration count
+    //! Total mesh volume
     tk::real m_meshvol;
     //! Minimum mesh statistics
     std::array< tk::real, 3 > m_minstat;
@@ -206,6 +258,12 @@ class Transporter : public CBase_Transporter {
 
     //! Configure and write diagnostics file header
     void diagHeader();
+
+    //! Echo configuration to screen
+    void info();
+
+    //! Print out time integration header to screen
+    void inthead();
 
     //! Echo diagnostics on mesh statistics
     void stat();
