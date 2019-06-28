@@ -176,14 +176,14 @@ tk::update_rhs_ncn(
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  Assert( dBdx[0].size() == ndof_el,
-          "Size mismatch for basis function derivatives" );
-  Assert( dBdx[1].size() == ndof_el,
-          "Size mismatch for basis function derivatives" );
-  Assert( dBdx[2].size() ==
-          ndof_el, "Size mismatch for basis function derivatives" );
-  Assert( ncf.size() == ncomp,
-          "Size mismatch for non-conservative term" );
+  //Assert( dBdx[0].size() == ndof_el,
+  //        "Size mismatch for basis function derivatives" );
+  //Assert( dBdx[1].size() == ndof_el,
+  //        "Size mismatch for basis function derivatives" );
+  //Assert( dBdx[2].size() == ndof_el,
+  //        "Size mismatch for basis function derivatives" );
+  //Assert( ncf.size() == ncomp,
+  //        "Size mismatch for non-conservative term" );
   Assert( ncf.size() == ncomp, "Size mismatch for non-conservative term" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
