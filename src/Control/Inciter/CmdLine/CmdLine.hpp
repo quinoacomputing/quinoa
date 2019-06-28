@@ -46,6 +46,7 @@ using CmdLineMembers = brigand::list<
   , tag::helpkw,         tk::ctr::HelpKw
   , tag::error,          std::vector< std::string >
   , tag::lbfreq,         kw::lbfreq::info::expect::type
+  , tag::rsfreq,         kw::rsfreq::info::expect::type
 >;
 
 //! \brief CmdLine : Control< specialized to Inciter >
@@ -69,9 +70,11 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::control
                                      , kw::input
                                      , kw::output
+                                     , kw::restart
                                      , kw::diagnostics_cmd
                                      , kw::quiescence
                                      , kw::lbfreq
+                                     , kw::rsfreq
                                      , kw::trace
                                      , kw::version
                                      , kw::license
@@ -119,6 +122,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
       get< tag::benchmark >() = false; // No benchmark mode by default
       get< tag::feedback >() = false; // No detailed feedback by default
       get< tag::lbfreq >() = 1; // Load balancing every time-step by default
+      get< tag::rsfreq >() = 100;// Chkpt/restart after this many time steps
       get< tag::trace >() = true; // Output call and stack trace by default
       get< tag::version >() = false; // Do not display version info by default
       get< tag::license >() = false; // Do not display license info by default

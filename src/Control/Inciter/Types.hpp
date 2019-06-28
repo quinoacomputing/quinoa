@@ -108,7 +108,6 @@ using intervals = tk::TaggedTuple< brigand::list<
     tag::tty,   kw::ttyi::info::expect::type      //!< TTY output interval
   , tag::field, kw::interval::info::expect::type  //!< Field output interval
   , tag::diag,  kw::interval::info::expect::type  //!< Diags output interval
-  , tag::lbfreq,kw::lbfreq::info::expect::type     //!< load-balancing frequency
 > >;
 
 //! IO parameters storage
@@ -118,6 +117,7 @@ using ios = tk::TaggedTuple< brigand::list<
   , tag::output,      std::string                     //!< Output filename
   , tag::diag,        std::string                     //!< Diagnostics filename
   , tag::part,        std::string                     //!< Particles filename
+  , tag::restart,     std::string                     //!< Restart dirname
 > >;
 
 //! Error/diagnostics output configuration

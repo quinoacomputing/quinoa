@@ -105,7 +105,7 @@ ALECG::ResumeFromSync()
 {
   if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
 
-  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) dt();
+  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) next();
 }
 
 void
@@ -145,7 +145,7 @@ ALECG::start()
   Disc()->Timer().zero();
 
   // Start time stepping by computing the size of the next time step)
-  dt();
+  next();
 }
 
 //! [Compute own and send lhs on chare-boundary]
@@ -231,6 +231,15 @@ ALECG::lhsmerge()
   if (m_initial) start(); else lhs_complete();
 }
 //! [Merge lhs and continue]
+
+void
+ALECG::next()
+// *****************************************************************************
+// Continue to next time step
+// *****************************************************************************
+{
+  dt();
+}
 
 void
 ALECG::dt()
@@ -528,9 +537,56 @@ ALECG::out()
 }
 
 void
+ALECG::evalLB()
+// *****************************************************************************
+// Evaluate whether to do load balancing
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
+  const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
+
+  // Load balancing if user frequency is reached or after the second time-step
+  if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
+
+    AtSync();
+    if (nonblocking) next();
+
+  } else {
+
+    next();
+
+  }
+}
+
+void
+ALECG::evalRestart()
+// *****************************************************************************
+// Evaluate whether to save checkpoint/restart
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
+
+  if ( (d->It()) % rsfreq == 0 ) {
+
+    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
+    d->contribute( t, CkReduction::nop,
+      CkCallback(CkReductionTarget(Transporter,checkpoint), d->Tr()) );
+
+  } else {
+
+    evalLB();
+
+  }
+}
+
+void
 ALECG::step()
 // *****************************************************************************
-// Evaluate whether to continue with next step
+// Evaluate whether to continue with next time step
 // *****************************************************************************
 {
   auto d = Disc();
@@ -541,22 +597,18 @@ ALECG::step()
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
-  const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
 
-    if ( (d->It()) % lbfreq == 0 ) {
-      AtSync();
-      if (nonblocking) dt();
-    }
-    else {
-      dt();
-    }
+    evalRestart();
 
   } else {
-    d->contribute( CkCallback( CkReductionTarget(Transporter,finish), d->Tr() ) );
+
+    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
+    d->contribute( t, CkReduction::nop,
+      CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
+
   }
 }
 

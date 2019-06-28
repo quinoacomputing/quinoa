@@ -69,86 +69,85 @@ tk::nonConservativeInt( [[maybe_unused]] ncomp_t system,
   // compute volume integrals
   for (std::size_t e=0; e<U.nunk(); ++e)
   {
-    if(ndofel[e] > 1)
+    auto ng = tk::NGvol(ndofel[e]);
+
+    // arrays for quadrature points
+    std::array< std::vector< real >, 3 > coordgp;
+    std::vector< real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    GaussQuadratureTet( ng, coordgp, wgp );
+
+    // Extract the element coordinates
+    std::array< std::array< real, 3>, 4 > coordel {{
+      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+    }};
+
+    auto jacInv =
+            inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+    // Compute the derivatives of basis function for DG(P1)
+    std::array< std::vector<tk::real>, 3 > dBdx;
+    if (ndofel[e] > 1)
+      dBdx = eval_dBdx_p1( ndofel[e], jacInv );
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<ng; ++igp)
     {
-      auto ng = tk::NGvol(ndofel[e]);
+      if (ndofel[e] > 4)
+        eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
 
-      // arrays for quadrature points
-      std::array< std::vector< real >, 3 > coordgp;
-      std::vector< real > wgp;
+      // Compute the basis function
+      auto B =
+        eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
-      coordgp[0].resize( ng );
-      coordgp[1].resize( ng );
-      coordgp[2].resize( ng );
-      wgp.resize( ng );
+      auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-      GaussQuadratureTet( ng, coordgp, wgp );
+      auto ugp = eval_state( ncomp, offset, ndof, ndofel[e], e, U, B );
 
-      // Extract the element coordinates
-      std::array< std::array< real, 3>, 4 > coordel {{
-        {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-        {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-        {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-        {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-      }};
+      // get bulk properties
+      tk::real rhob(0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+          rhob += ugp[densityIdx(nmat, k)];
 
-      auto jacInv =
-              inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+      std::array< tk::real, 3 > vel{{ ugp[momentumIdx(nmat, 0)]/rhob,
+                                      ugp[momentumIdx(nmat, 1)]/rhob,
+                                      ugp[momentumIdx(nmat, 2)]/rhob }};
 
-      // Compute the derivatives of basis function for DG(P1)
-      auto dBdx = eval_dBdx_p1( ndofel[e], jacInv );
-
-      // Gaussian quadrature
-      for (std::size_t igp=0; igp<ng; ++igp)
+      std::vector< tk::real > ymat(nmat, 0.0);
+      std::array< tk::real, 3 > dap{{0.0, 0.0, 0.0}};
+      for (std::size_t k=0; k<nmat; ++k)
       {
-        if (ndofel[e] > 4)
-          eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
-
-        // Compute the basis function
-        auto B =
-          eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
-
-        auto wt = wgp[igp] * geoElem(e, 0, 0);
-
-        auto ugp = eval_state( ncomp, offset, ndof, ndofel[e], e, U, B );
-
-        // get bulk properties
-        tk::real rhob(0.0);
-        for (std::size_t k=0; k<nmat; ++k)
-            rhob += ugp[densityIdx(nmat, k)];
-
-        std::array< tk::real, 3 > vel{{ ugp[momentumIdx(nmat, 0)]/rhob,
-                                        ugp[momentumIdx(nmat, 1)]/rhob,
-                                        ugp[momentumIdx(nmat, 2)]/rhob }};
-
-        std::vector< tk::real > ymat(nmat, 0.0);
-        std::array< tk::real, 3 > dap{{0.0, 0.0, 0.0}};
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          ymat[k] = ugp[densityIdx(nmat, k)]/rhob;
-
-          for (std::size_t idir=0; idir<3; ++idir)
-            dap[idir] += riemannDeriv[3*k+idir][e];
-        }
-
-        // compute non-conservative terms
-        std::vector< tk::real > ncf(ncomp, 0.0);
+        ymat[k] = ugp[densityIdx(nmat, k)]/rhob;
 
         for (std::size_t idir=0; idir<3; ++idir)
-          ncf[momentumIdx(nmat, idir)] = 0.0;
-
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          ncf[densityIdx(nmat, k)] = 0.0;
-          ncf[volfracIdx(nmat, k)] = ugp[volfracIdx(nmat, k)]
-                                     * riemannDeriv[3*nmat][e];
-          for (std::size_t idir=0; idir<3; ++idir)
-            ncf[energyIdx(nmat, k)] -= vel[idir] * ( ymat[k]*dap[idir]
-                                                  - riemannDeriv[3*k+idir][e] );
-        }
-
-        update_rhs_ncn( ncomp, offset, ndof, ndofel[e], wt, e, dBdx, ncf, R );
+          dap[idir] += riemannDeriv[3*k+idir][e];
       }
+
+      // compute non-conservative terms
+      std::vector< tk::real > ncf(ncomp, 0.0);
+
+      for (std::size_t idir=0; idir<3; ++idir)
+        ncf[momentumIdx(nmat, idir)] = 0.0;
+
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        ncf[densityIdx(nmat, k)] = 0.0;
+        ncf[volfracIdx(nmat, k)] = ugp[volfracIdx(nmat, k)]
+                                   * riemannDeriv[3*nmat][e];
+        for (std::size_t idir=0; idir<3; ++idir)
+          ncf[energyIdx(nmat, k)] -= vel[idir] * ( ymat[k]*dap[idir]
+                                                - riemannDeriv[3*k+idir][e] );
+      }
+
+      update_rhs_ncn( ncomp, offset, ndof, ndofel[e], wt, e, dBdx, ncf, R );
     }
   }
 }
@@ -185,6 +184,7 @@ tk::update_rhs_ncn(
           ndof_el, "Size mismatch for basis function derivatives" );
   Assert( ncf.size() == ncomp,
           "Size mismatch for non-conservative term" );
+  Assert( ncf.size() == ncomp, "Size mismatch for non-conservative term" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {

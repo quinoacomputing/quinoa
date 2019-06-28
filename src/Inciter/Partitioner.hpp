@@ -67,6 +67,16 @@ class Partitioner : public CBase_Partitioner {
                  const std::map< int, std::vector< std::size_t > >& faces,
                  const std::map< int, std::vector< std::size_t > >& bnode );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
+    //! Migrate constructor
+    explicit Partitioner( CkMigrateMessage* m ) : CBase_Partitioner( m ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
+
     //! Partition the computational mesh into a number of chares
     void partition( int nchare );
 
@@ -85,6 +95,46 @@ class Partitioner : public CBase_Partitioner {
 
     //! Optionally start refining the mesh
     void refine();
+
+    /** @name Charm++ pack/unpack serializer member functions */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \note This is a Charm++ nodegroup, pup() is thus only for
+    //!    checkpoint/restart.
+    void pup( PUP::er &p ) override {
+      p | m_cbp;
+      p | m_cbr;
+      p | m_cbs;
+      p | m_host;
+      p | m_refiner;
+      p | m_sorter;
+      p | m_meshwriter;
+      p | m_scheme;
+      p | m_ginpoel;
+      p | m_coord;
+      p | m_inpoel;
+      p | m_lid;
+      p | m_ndist;
+      p | m_nchare;
+      p | m_nface;
+      p | m_nodech;
+      p | m_linnodes;
+      p | m_chinpoel;
+      p | m_chcoordmap;
+      p | m_chbface;
+      p | m_chtriinpoel;
+      p | m_chbnode;
+      p | m_bnodechares;
+      p | m_bface;
+      p | m_triinpoel;
+      p | m_bnode;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] i Partitioner object reference
+    friend void operator|( PUP::er& p, Partitioner& i ) { i.pup(p); }
+    //@}
 
   private:
     //! Charm++ callbacks associated to compile-time tags for partitioner

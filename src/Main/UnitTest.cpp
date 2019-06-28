@@ -160,10 +160,19 @@ class Main : public CBase_Main {
       if (m_helped) CkExit();
       // Save executable name to global-scope string so FileParser can access it
       unittest::g_executable = msg->argv[0];
+      delete msg;
       // Call generic mainchare contructor
-      tk::MainCtor< CProxy_execute >
-        ( msg, mainProxy, thisProxy, stateProxy, m_timer, m_cmdline,
-          CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
+      tk::MainCtor( mainProxy, thisProxy, m_timer, m_cmdline,
+                    CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
+      // If quiescence detection is on or user requested it, create chare state
+      // collector Charm++ chare group
+      if ( m_cmdline.get< tag::chare >() || m_cmdline.get< tag::quiescence >() )
+        stateProxy = tk::CProxy_ChareStateCollector::ckNew();
+      // Fire up an asynchronous execute object, which when created at some
+      // future point in time will call back to this->execute(). This is
+      // necessary so that this->execute() can access already migrated
+      // global-scope data.
+      CProxy_execute::ckNew();
       // Quiet std::cerr
       tk::CProxy_QuietCerr::ckNew();
     } catch (...) { tk::processExceptionCharm(); }

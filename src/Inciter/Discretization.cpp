@@ -508,11 +508,14 @@ Discretization::status()
 
   if (thisIndex==0 && !(m_it%tty)) {
 
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
     const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
     const auto field = g_inputdeck.get< tag::interval,tag::field >();
     const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
+    const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
+    const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
 
     // estimate time elapsed and time for accomplishment
@@ -543,11 +546,16 @@ Discretization::status()
           << std::setw(2) << eta.sec.count() << "  "
           << std::scientific << std::setprecision(6) << std::setfill(' ')
           << std::setw(9) << grind_time << "  ";
-  
+
+    // Determin if this is the last time step
+    bool finish = not (std::fabs(m_t-term) > eps && m_it < nstep);
+
     // Augment one-liner with output indicators
     if (!(m_it % field)) print << 'f';
     if (!(m_it % diag)) print << 'd';
     if (m_refined) print << 'h';
+    if (!(m_it % lbfreq) && !finish) print << 'l';
+    if (!(m_it % rsfreq) || finish) print << 'r';
   
     print << std::endl;
   }
