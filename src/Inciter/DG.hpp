@@ -76,7 +76,7 @@ class DG : public CBase_DG {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit DG( CkMigrateMessage* ) {}
+    explicit DG( CkMigrateMessage* msg ) : CBase_DG( msg ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -105,7 +105,10 @@ class DG : public CBase_DG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
-    //! Continue to next time step stage
+    // Evaluate whether to do load balancing
+    void evalLB();
+
+    //! Continue to next time step
     void next();
 
     //! Receive chare-boundary limiter function data from neighboring chares
@@ -353,6 +356,9 @@ class DG : public CBase_DG {
 
     //! Evaluate whether to continue with next time step stage
     void stage();
+
+    //! Evaluate whether to save checkpoint/restart
+    void evalRestart();
 
     //! Calculate the local number of degrees of freedom for each element for
     //! p-adaptive DG
