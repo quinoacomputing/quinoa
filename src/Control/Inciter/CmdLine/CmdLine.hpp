@@ -115,6 +115,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
       get< tag::io, tag::output >() = "out";
       get< tag::io, tag::diag >() = "diag";
       get< tag::io, tag::part >() = "track.h5part";
+      get< tag::io, tag::restart >() = "restart";
       get< tag::virtualization >() = 0.0;
       get< tag::verbose >() = false; // Quiet output by default
       get< tag::chare >() = false; // No chare state output by default
