@@ -109,8 +109,9 @@ class DGPDE {
                  const inciter::FaceData& fd,
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
+                 const std::vector< std::size_t >& ndofel,
                  const tk::Fields& U ) const
-    { return self->dt( coord, inpoel, fd, geoFace, geoElem, U ); }
+    { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U ); }
 
     //! \brief Public interface for collecting all side set IDs the user has
     //!   configured for all components of a PDE system
@@ -181,6 +182,7 @@ class DGPDE {
                            const inciter::FaceData&,
                            const tk::Fields&,
                            const tk::Fields&,
+                           const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
@@ -230,8 +232,9 @@ class DGPDE {
                    const inciter::FaceData& fd,
                    const tk::Fields& geoFace,
                    const tk::Fields& geoElem,
+                   const std::vector< std::size_t >& ndofel,
                    const tk::Fields& U ) const override
-      { return data.dt( coord, inpoel, fd, geoFace, geoElem, U ); }
+      { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
       std::vector< std::string > fieldNames() const override

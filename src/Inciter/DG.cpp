@@ -1403,7 +1403,7 @@ DG::dt()
       // find the minimum dt across all PDEs integrated
       for (const auto& eq : g_dgpde) {
         auto eqdt =
-          eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem, m_u );
+          eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem, m_ndof, m_u );
         if (eqdt < mindt) mindt = eqdt;
       }
 
