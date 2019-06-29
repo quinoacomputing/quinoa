@@ -199,6 +199,7 @@ class CompFlow {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
+    //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] U Solution vector at recent time step
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -206,23 +207,11 @@ class CompFlow {
                  const inciter::FaceData& fd,
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
+                 const std::vector< std::size_t >& ndofel,
                  const tk::Fields& U ) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
-
-      // Number of quadrature points for  face integration
-      auto ng = tk::NGfa(ndof);
-
-      // arrays for quadrature points
-      std::array< std::vector< tk::real >, 2 > coordgp;
-      std::vector< tk::real > wgp;
-
-      coordgp[0].resize( ng );
-      coordgp[1].resize( ng );
-      wgp.resize( ng );
 
       tk::real rho, u, v, w, rhoE, p, a, vn, dSV_l, dSV_r;
       std::vector< tk::real > delt( U.nunk(), 0.0 );
@@ -231,14 +220,42 @@ class CompFlow {
       const auto& cy = coord[1];
       const auto& cz = coord[2];
 
-      // get quadrature point weights and coordinates for triangle
-      tk::GaussQuadratureTri( ng, coordgp, wgp );
-
       // compute internal surface maximum characteristic speed
       for (std::size_t f=0; f<esuf.size()/2; ++f)
       {
+
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         auto er = esuf[2*f+1];
+
+        // Number of quadrature points for  face integration
+        std::size_t ng;
+
+        if(er > -1)
+        {
+          auto eR = static_cast< std::size_t >( er );
+
+          auto ng_l = tk::NGfa(ndofel[el]);
+          auto ng_r = tk::NGfa(ndofel[eR]);
+
+          // When the number of gauss points for the left and right element are
+          // different, choose the larger ng
+          ng = std::max( ng_l, ng_r );
+        }
+        else
+        {
+          ng = tk::NGfa(ndofel[el]);
+        }
+
+        // arrays for quadrature points
+        std::array< std::vector< tk::real >, 2 > coordgp;
+        std::vector< tk::real > wgp;
+
+        coordgp[0].resize( ng );
+        coordgp[1].resize( ng );
+        wgp.resize( ng );
+
+        // get quadrature point weights and coordinates for triangle
+        tk::GaussQuadratureTri( ng, coordgp, wgp );
 
         // Extract the left element coordinates
         std::array< std::array< tk::real, 3>, 4 > coordel_l {{
@@ -268,7 +285,7 @@ class CompFlow {
           auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
           // Compute the basis function for the left element
-          auto B_l = tk::eval_basis( ndof,
+          auto B_l = tk::eval_basis( ndofel[el],
             tk::Jacobian(coordel_l[0], gp, coordel_l[2], coordel_l[3])/detT_l,
             tk::Jacobian(coordel_l[0], coordel_l[1], gp, coordel_l[3])/detT_l,
             tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], gp)/detT_l );
@@ -280,11 +297,21 @@ class CompFlow {
           // left element
           for (ncomp_t c=0; c<5; ++c)
           {
-            auto mark = c*ndof;
-            ugp[0].push_back( U(el, mark, m_offset)
-                            + U(el, mark+1, m_offset) * B_l[1]
-                            + U(el, mark+2, m_offset) * B_l[2]
-                            + U(el, mark+3, m_offset) * B_l[3] );
+            auto mark = c*ndofel[el];
+            ugp[0].push_back( U(el, mark, m_offset) );
+
+            if(ndofel[el] > 1)          //DG(P1)
+              ugp[0][c] +=  U(el, mark+1, m_offset) * B_l[1]
+                          + U(el, mark+2, m_offset) * B_l[2]
+                          + U(el, mark+3, m_offset) * B_l[3];
+
+            if(ndofel[el] > 4)          //DG(P2)
+              ugp[0][c] +=  U(el, mark+4, m_offset) * B_l[4]
+                          + U(el, mark+5, m_offset) * B_l[5]
+                          + U(el, mark+6, m_offset) * B_l[6]
+                          + U(el, mark+7, m_offset) * B_l[7]
+                          + U(el, mark+8, m_offset) * B_l[8]
+                          + U(el, mark+9, m_offset) * B_l[9];
           }
 
           rho = ugp[0][0];
@@ -315,25 +342,35 @@ class CompFlow {
             }};
 
             // Compute the determinant of Jacobian matrix
-            auto detT_r = 
+            auto detT_r =
               tk::Jacobian(coordel_r[0],coordel_r[1],coordel_r[2],coordel_r[3]);
 
             // Compute the coordinates of quadrature point at physical domain
             gp = tk::eval_gp( igp, coordfa, coordgp );
 
             // Compute the basis function for the right element
-            auto B_r = tk::eval_basis( ndof,
+            auto B_r = tk::eval_basis( ndofel[eR],
               tk::Jacobian(coordel_r[0],gp,coordel_r[2],coordel_r[3])/detT_r,
               tk::Jacobian(coordel_r[0],coordel_r[1],gp,coordel_r[3])/detT_r,
               tk::Jacobian(coordel_r[0],coordel_r[1],coordel_r[2],gp)/detT_r );
  
             for (ncomp_t c=0; c<5; ++c)
             {
-              auto mark = c*ndof;
-              ugp[1].push_back(  U(eR, mark,   m_offset)
-                               + U(eR, mark+1, m_offset) * B_r[1]
-                               + U(eR, mark+2, m_offset) * B_r[2]
-                               + U(eR, mark+3, m_offset) * B_r[3] );
+              auto mark = c*ndofel[eR];
+              ugp[1].push_back( U(eR, mark, m_offset) );
+
+              if(ndofel[eR] > 1)          //DG(P1)
+                ugp[1][c] +=  U(eR, mark+1, m_offset) * B_r[1]
+                            + U(eR, mark+2, m_offset) * B_r[2]
+                            + U(eR, mark+3, m_offset) * B_r[3];
+
+              if(ndofel[eR] > 4)         //DG(P2)
+                ugp[1][c] +=  U(eR, mark+4, m_offset) * B_r[4]
+                            + U(eR, mark+5, m_offset) * B_r[5]
+                            + U(eR, mark+6, m_offset) * B_r[6]
+                            + U(eR, mark+7, m_offset) * B_r[7]
+                            + U(eR, mark+8, m_offset) * B_r[8]
+                            + U(eR, mark+9, m_offset) * B_r[9];
             }
 
             rho = ugp[1][0];
