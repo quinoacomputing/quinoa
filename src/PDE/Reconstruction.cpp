@@ -63,13 +63,14 @@ leastSquares_P0P1( const std::vector< int >& esuel,
       {
         auto nel = esuel[4*e+j];
         if (nel == -1) continue;
+        auto neL = static_cast< std::size_t >(nel);
 
         for (std::size_t idir=0; idir<3; ++idir)
-          wdeltax[idir] = geoElem(nel,idir+1,0)-xe[idir];
+          wdeltax[idir] = geoElem(neL,idir+1,0)-xe[idir];
 
         for (std::size_t idir=0; idir<3; ++idir)
         {
-          rhs_ls[idir] += wdeltax[idir] * (U(nel,mark,offset)-uc);
+          rhs_ls[idir] += wdeltax[idir] * (U(neL,mark,offset)-uc);
           for (std::size_t jdir=0; jdir<3; ++jdir)
             lhs_ls[idir][jdir] += wdeltax[idir] * wdeltax[jdir];
         }
