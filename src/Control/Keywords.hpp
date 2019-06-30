@@ -5383,6 +5383,20 @@ struct dg_info {
 };
 using dg = keyword< dg_info, TAOCPP_PEGTL_STRING("dg") >;
 
+struct p0p1_info {
+  static std::string name() { return "P0P1 + RK"; }
+  static std::string shortDescription() { return
+    "Select 2nd-order finite volume discretization + Runge-Kutta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the second-order accurate finite volume,
+    P0P1, spatial discretiztaion used in Inciter. This method uses a
+    least-squares procedure to reconstruct the second-order solution from the
+    first-order one. Selecting this spatial discretization also selects the
+    Runge-Kutta scheme for time discretization.
+    See Control/Inciter/Options/Scheme.hpp for other valid options.)"; }
+};
+using p0p1 = keyword< p0p1_info, TAOCPP_PEGTL_STRING("p0p1") >;
+
 struct dgp1_info {
   static std::string name() { return "DG(P1) + RK"; }
   static std::string shortDescription() { return

@@ -92,6 +92,7 @@ using discretization = tk::tuple::tagged_tuple<
   tag::limiter,inciter::ctr::LimiterType,       //!< Limiter type
   tag::cweight,kw::cweight::info::expect::type, //!< WENO central stencil weight
   tag::flux,   inciter::ctr::FluxType,          //!< Flux function type
+  tag::rdof,   std::size_t,                     //!< Number of reconstructed solution DOFs
   tag::ndof,   std::size_t                      //!< Number of solution DOFs
 >;
 

@@ -257,15 +257,15 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
 // *****************************************************************************
 {
   // number of degree of freedom
-  const std::size_t ndof =
-    g_inputdeck.get< tag::discr, tag::ndof >();
+  const std::size_t rdof =
+    g_inputdeck.get< tag::discr, tag::rdof >();
 
   std::vector< std::vector< tk::real > > out;
-  auto r = U.extract( 0*ndof, offset );
-  auto u = U.extract( 1*ndof, offset );
-  auto v = U.extract( 2*ndof, offset );
-  auto w = U.extract( 3*ndof, offset );
-  auto E = U.extract( 4*ndof, offset );
+  auto r = U.extract( 0*rdof, offset );
+  auto u = U.extract( 1*rdof, offset );
+  auto v = U.extract( 2*rdof, offset );
+  auto w = U.extract( 3*rdof, offset );
+  auto E = U.extract( 4*rdof, offset );
 
   // mesh node coordinates
   const auto& x = coord[0];

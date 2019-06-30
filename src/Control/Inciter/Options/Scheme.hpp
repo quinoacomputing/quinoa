@@ -26,6 +26,7 @@ namespace ctr {
 enum class SchemeType : uint8_t { DiagCG
                                 , ALECG
                                 , DG
+                                , P0P1 
                                 , DGP1 
                                 , DGP2
                                 , PDG };
@@ -41,6 +42,7 @@ class Scheme : public tk::Toggle< SchemeType > {
     using keywords = brigand::list< kw::diagcg
                                   , kw::alecg
                                   , kw::dg
+                                  , kw::p0p1
                                   , kw::dgp1
                                   , kw::dgp2
                                   , kw::pdg
@@ -57,6 +59,7 @@ class Scheme : public tk::Toggle< SchemeType > {
         { { SchemeType::DiagCG, kw::diagcg::name() },
           { SchemeType::ALECG, kw::alecg::name() },
           { SchemeType::DG, kw::dg::name() },
+          { SchemeType::P0P1, kw::p0p1::name() },
           { SchemeType::DGP1, kw::dgp1::name() },
           { SchemeType::DGP2, kw::dgp2::name() },
           { SchemeType::PDG, kw::pdg::name() } },
@@ -64,6 +67,7 @@ class Scheme : public tk::Toggle< SchemeType > {
         { { kw::diagcg::string(), SchemeType::DiagCG },
           { kw::alecg::string(), SchemeType::ALECG },
           { kw::dg::string(), SchemeType::DG },
+          { kw::p0p1::string(), SchemeType::P0P1 }, 
           { kw::dgp1::string(), SchemeType::DGP1 }, 
           { kw::dgp2::string(), SchemeType::DGP2 },
           { kw::pdg::string(), SchemeType::PDG } } ) {}
@@ -78,6 +82,7 @@ class Scheme : public tk::Toggle< SchemeType > {
         return tk::Centering::NODE;
 
       else if ( type == SchemeType::DG ||
+                type == SchemeType::P0P1 ||
                 type == SchemeType::DGP1 ||
                 type == SchemeType::DGP2 ||
                 type == SchemeType::PDG )

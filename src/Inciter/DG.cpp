@@ -55,7 +55,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nlim( 0 ),
   m_fd( Disc()->Inpoel(), bface, tk::remap(triinpoel,Disc()->Lid()) ),
   m_u( Disc()->Inpoel().size()/4,
-       g_inputdeck.get< tag::discr, tag::ndof >()*
+       g_inputdeck.get< tag::discr, tag::rdof >()*
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), Disc()->Coord()) ),
@@ -1093,8 +1093,8 @@ DG::eval_ndof()
 // *****************************************************************************
 {
   const auto& esuel = m_fd.Esuel();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto ncomp = m_u.nprop()/ndof;
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ncomp = m_u.nprop()/rdof;
   const auto& inpoel = Disc()->Inpoel();
   const auto& coord = Disc()->Coord();
   const auto tolref = inciter::g_inputdeck.get< tag::pref, tag::tolref >();
@@ -1122,7 +1122,7 @@ DG::eval_ndof()
 
       for (std::size_t c=0; c<ncomp; ++c)
       {
-        auto mark = c*ndof;
+        auto mark = c*rdof;
 
         // Gradient of unkowns in reference space
         std::array< std::array< tk::real, 3 >, 5 > dudxi;
@@ -1248,7 +1248,7 @@ DG::lim()
 
   if (pref && m_stage==0) propagate_ndof();
 
-  if (g_inputdeck.get< tag::discr, tag::ndof >() > 1) {
+  if (g_inputdeck.get< tag::discr, tag::rdof >() > 1) {
 
     auto d = Disc();
 
@@ -1441,6 +1441,9 @@ DG::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4lim();
 
   auto d = Disc();
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto neq = m_u.nprop()/rdof;
 
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
@@ -1451,13 +1454,12 @@ DG::solve( tk::real newdt )
     // When the element are coarsened, high order term should be zero
     for(std::size_t e = 0; e < m_nunk; e++)
     {
-      const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-      const auto ncomp= m_u.nprop()/ndof;
+      const auto ncomp= m_u.nprop()/rdof;
       if(m_ndof[e] == 1)
       {
         for (std::size_t c=0; c<ncomp; ++c)
         {
-          auto mark = c*ndof;
+          auto mark = c*rdof;
           m_u(e, mark+1, 0) = 0.0;
           m_u(e, mark+2, 0) = 0.0;
           m_u(e, mark+3, 0) = 0.0;
@@ -1474,8 +1476,16 @@ DG::solve( tk::real newdt )
             m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
-  m_u =  rkcoef[0][m_stage] * m_un
-       + rkcoef[1][m_stage] * ( m_u + d->Dt() * m_rhs/m_lhs );
+  for(std::size_t e=0; e<m_nunk; ++e)
+    for(std::size_t c=0; c<neq; ++c)
+      for (std::size_t k=0; k<ndof; ++k)
+      {
+        auto rmark = c*rdof+k;
+        auto mark = c*ndof+k;
+        m_u(e, rmark, 0) =  rkcoef[0][m_stage] * m_un(e, rmark, 0)
+          + rkcoef[1][m_stage] * ( m_u(e, rmark, 0)
+            + d->Dt() * m_rhs(e, mark, 0)/m_lhs(e, mark, 0) );
+      }
 
   if (m_stage < 2) {
 
