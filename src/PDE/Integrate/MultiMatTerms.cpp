@@ -26,6 +26,7 @@ tk::nonConservativeInt( [[maybe_unused]] ncomp_t system,
                         std::size_t nmat,
                         ncomp_t offset,
                         const std::size_t ndof,
+                        const std::size_t rdof,
                         const std::vector< std::size_t >& inpoel,
                         const UnsMesh::Coords& coord,
                         const Fields& geoElem,
@@ -47,6 +48,7 @@ tk::nonConservativeInt( [[maybe_unused]] ncomp_t system,
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
@@ -104,13 +106,26 @@ tk::nonConservativeInt( [[maybe_unused]] ncomp_t system,
       if (ndofel[e] > 4)
         eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
 
+      // If an rDG method is set up (P0P1), then, currently we compute the P1
+      // basis functions and solutions by default. This implies that P0P1 is
+      // unsupported in the p-adaptive DG (PDG).
+      std::size_t dof_el;
+      if (rdof > ndof)
+      {
+        dof_el = rdof;
+      }
+      else
+      {
+        dof_el = ndofel[e];
+      }
+
       // Compute the basis function
       auto B =
-        eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+        eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-      auto ugp = eval_state( ncomp, offset, ndof, ndofel[e], e, U, B );
+      auto ugp = eval_state( ncomp, offset, rdof, dof_el, e, U, B );
 
       // get bulk properties
       tk::real rhob(0.0);

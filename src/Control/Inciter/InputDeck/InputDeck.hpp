@@ -161,6 +161,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::diagcg,
                                    kw::alecg,
                                    kw::dg,
+                                   kw::p0p1,
                                    kw::dgp1,
                                    kw::dgp2,
                                    kw::pdg,
@@ -208,6 +209,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::limiter >() = LimiterType::NOLIMITER;
       get< tag::discr, tag::cweight >() = 1.0;
+      get< tag::discr, tag::ndof >() = 1;
+      get< tag::discr, tag::rdof >() = 1;
       // Default field output file type
       get< tag::selected, tag::filetype >() = tk::ctr::FieldFileType::EXODUSII;
       // Default AMR settings

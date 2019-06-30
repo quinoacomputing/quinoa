@@ -80,19 +80,21 @@ using pref = tk::TaggedTuple< brigand::list<
 
 //! Discretization parameters storage
 using discretization = tk::TaggedTuple< brigand::list<
-    tag::nstep,  kw::nstep::info::expect::type   //!< Number of time steps
-  , tag::term,   kw::term::info::expect::type    //!< Time to terminate
-  , tag::t0,     kw::t0::info::expect::type      //!< Starting time
-  , tag::dt,     kw::dt::info::expect::type      //!< Size of time step
-  , tag::cfl,    kw::cfl::info::expect::type     //!< CFL coefficient
-  , tag::fct,    bool                            //!< FCT on/off
-  , tag::reorder,bool                            //!< reordering on/off
-  , tag::ctau,   kw::ctau::info::expect::type    //!< FCT mass diffisivity
-  , tag::scheme, inciter::ctr::SchemeType        //!< Spatial discretization type
-  , tag::limiter,inciter::ctr::LimiterType       //!< Limiter type
-  , tag::cweight,kw::cweight::info::expect::type //!< WENO central stencil weight
-  , tag::flux,   inciter::ctr::FluxType          //!< Flux function type
-  , tag::ndof,   std::size_t                     //!< Number of solution DOFs
+    tag::nstep,  kw::nstep::info::expect::type  //!< Number of time steps
+  , tag::term,   kw::term::info::expect::type   //!< Time to terminate
+  , tag::t0,     kw::t0::info::expect::type     //!< Starting time
+  , tag::dt,     kw::dt::info::expect::type     //!< Size of time step
+  , tag::cfl,    kw::cfl::info::expect::type    //!< CFL coefficient
+  , tag::fct,    bool                           //!< FCT on/off
+  , tag::reorder,bool                           //!< reordering on/off
+  , tag::ctau,   kw::ctau::info::expect::type   //!< FCT mass diffisivity
+  , tag::scheme, inciter::ctr::SchemeType       //!< Spatial discretization type
+  , tag::limiter,inciter::ctr::LimiterType      //!< Limiter type
+  , tag::cweight,kw::cweight::info::expect::type//!< WENO central stencil weight
+  , tag::flux,   inciter::ctr::FluxType         //!< Flux function type
+  , tag::rdof,   std::size_t          //!< Number of reconstructed solution DOFs
+  , tag::ndof,   std::size_t                   //!< Number of solution DOFs
+  , tag::ndof,   std::size_t                   //!< Number of solution DOFs
 > >;
 
 //! ASCII output floating-point precision in digits
