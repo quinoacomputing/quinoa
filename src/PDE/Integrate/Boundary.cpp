@@ -26,6 +26,7 @@ tk::bndSurfInt( ncomp_t system,
                 std::size_t nmat,
                 ncomp_t offset,
                 const std::size_t ndof,
+                const std::size_t rdof,
                 const std::vector< bcconf_t >& bcconfig,
                 const inciter::FaceData& fd,
                 const Fields& geoFace,
@@ -49,6 +50,7 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] bcconfig BC configuration vector for multiple side sets
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -128,8 +130,21 @@ tk::bndSurfInt( ncomp_t system,
           // Compute the coordinates of quadrature point at physical domain
           auto gp = eval_gp( igp, coordfa, coordgp );
 
+          // If an rDG method is set up (P0P1), then, currently we compute the P1
+          // basis functions and solutions by default. This implies that P0P1 is
+          // unsupported in the p-adaptive DG (PDG).
+          std::size_t dof_el;
+          if (rdof > ndof)
+          {
+            dof_el = rdof;
+          }
+          else
+          {
+            dof_el = ndofel[el];
+          }
+
           //Compute the basis functions for the left element
-          auto B_l = eval_basis( ndofel[el],
+          auto B_l = eval_basis( dof_el,
             Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
@@ -137,7 +152,7 @@ tk::bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0,0);
 
           // Compute the state variables at the left element
-          auto ugp = eval_state( ncomp, offset, ndof, ndofel[el], el, U, B_l );
+          auto ugp = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
 
           Assert( ugp.size() == ncomp, "Size mismatch" );
 

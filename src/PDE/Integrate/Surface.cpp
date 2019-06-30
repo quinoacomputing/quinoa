@@ -25,6 +25,7 @@ tk::surfInt( ncomp_t system,
              std::size_t nmat,
              ncomp_t offset,
              const std::size_t ndof,
+             const std::size_t rdof,
              const std::vector< std::size_t >& inpoel,
              const UnsMesh::Coords& coord,
              const inciter::FaceData& fd,
@@ -42,6 +43,7 @@ tk::surfInt( ncomp_t system,
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] fd Face connectivity and boundary conditions object
@@ -138,12 +140,27 @@ tk::surfInt( ncomp_t system,
       //  eta  = Jacobian( coordel[0], coordel[2], gp, coordel[3] ) / detT
       //  zeta = Jacobian( coordel[0], coordel[2], coordel[3], gp ) / detT
 
+      // If an rDG method is set up (P0P1), then, currently we compute the P1
+      // basis functions and solutions by default. This implies that P0P1 is
+      // unsupported in the p-adaptive DG (PDG).
+      std::size_t dof_el, dof_er;
+      if (rdof > ndof)
+      {
+        dof_el = rdof;
+        dof_er = rdof;
+      }
+      else
+      {
+        dof_el = ndofel[el];
+        dof_er = ndofel[er];
+      }
+
       //Compute the basis functions
-      auto B_l = eval_basis( ndofel[el],
+      auto B_l = eval_basis( dof_el,
             Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
-      auto B_r = eval_basis( ndofel[er],
+      auto B_r = eval_basis( dof_er,
             Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
             Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
             Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r );
@@ -152,8 +169,8 @@ tk::surfInt( ncomp_t system,
 
       std::array< std::vector< real >, 2 > state;
 
-      state[0] = eval_state( ncomp, offset, ndof, ndofel[el], el, U, B_l );
-      state[1] = eval_state( ncomp, offset, ndof, ndofel[er], er, U, B_r );
+      state[0] = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
+      state[1] = eval_state( ncomp, offset, rdof, dof_er, er, U, B_r );
 
       Assert( state[0].size() == ncomp, "Size mismatch" );
       Assert( state[1].size() == ncomp, "Size mismatch" );

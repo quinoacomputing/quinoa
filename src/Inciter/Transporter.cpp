@@ -179,7 +179,8 @@ Transporter::info()
     if (fct)
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
-  } else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 ||
+  } else if (scheme == ctr::SchemeType::DG ||
+             scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
              scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
   {
     m_print.Item< ctr::Flux, tag::discr, tag::flux >();
@@ -652,7 +653,8 @@ Transporter::diagHeader()
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
-  else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 ||
+  else if (scheme == ctr::SchemeType::DG ||
+           scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
            scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
     for (const auto& eq : g_dgpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
