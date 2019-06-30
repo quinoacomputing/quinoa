@@ -211,7 +211,6 @@ class CompFlow {
                  const std::vector< std::size_t >& ndofel,
                  const tk::Fields& U ) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       const auto& esuf = fd.Esuf();
