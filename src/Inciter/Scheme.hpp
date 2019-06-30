@@ -188,7 +188,7 @@ class Scheme {
     //!    Since the call is behind ckLocal(), the member function does not have
     //!    to be a Charm++ entry method.
     template< typename Fn, typename... Args >
-    auto ckLocal( const CkArrayIndex1D& x, Args&&... args ) {
+    auto ckLocal( const CkArrayIndex1D& x, Args&&... args ) const {
       auto e = element( x );
       return std::visit( [&]( auto& p ){
           if constexpr( std::is_same_v< Fn, resizePostAMR > )

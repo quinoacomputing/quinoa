@@ -54,6 +54,8 @@ using amr = tk::TaggedTuple< brigand::list<
   , tag::refvar,  std::vector< std::string >       //!< List of refinement vars
   , tag::id,      std::vector< std::size_t >       //!< List of refvar indices
   , tag::error,   AMRErrorType                     //!< Error estimator for AMR
+  , tag::tolref,  tk::real                         //!< Refine tolerance
+  , tag::tolderef, tk::real                        //!< De-refine tolerance
   //! List of edges-node pairs
   , tag::edge,    std::vector< kw::amr_edgelist::info::expect::type >
   //! Refinement tagging edges with end-point coordinates lower than x coord

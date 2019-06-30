@@ -138,12 +138,15 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::amr_dtfreq,
                                    kw::amr_initial,
                                    kw::amr_uniform,
+                                   kw::amr_uniform_derefine,
                                    kw::amr_initial_conditions,
                                    kw::amr_coords,
                                    kw::amr_error,
                                    kw::amr_jump,
                                    kw::amr_hessian,
                                    kw::amr_refvar,
+                                   kw::amr_tolref,
+                                   kw::amr_tolderef,
                                    kw::amr_edgelist,
                                    kw::amr_coordref,
                                    kw::amr_xminus,
@@ -214,6 +217,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::dtref_uniform >() = false;
       get< tag::amr, tag::dtfreq >() = 3;
       get< tag::amr, tag::error >() = AMRErrorType::JUMP;
+      get< tag::amr, tag::tolref >() = 0.2;
+      get< tag::amr, tag::tolderef >() = 0.05;
       auto rmax =
         std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
       get< tag::amr, tag::xminus >() = rmax;

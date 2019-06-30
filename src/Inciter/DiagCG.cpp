@@ -437,12 +437,36 @@ DiagCG::writeFields( CkCallback c ) const
     nodefields.insert( end(nodefields), begin(o), end(o) );
   }
 
+  std::vector< std::string > elemfieldnames;
+  std::vector< std::vector< tk::real > > elemfields;
+
   // Query refinement data
-  auto r = d->Ref()->refinementFields();
+  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+
+  std::tuple< std::vector< std::string >,
+            std::vector< std::vector< tk::real > >,
+            std::vector< std::string >,
+            std::vector< std::vector< tk::real > > > r;
+  if (dtref) r = d->Ref()->refinementFields();
+
+  const auto& refinement_elemfieldnames = std::get< 0 >( r );
+  const auto& refinement_elemfields = std::get< 1 >( r );
+  const auto& refinement_nodefieldnames = std::get< 2 >( r );
+  const auto& refinement_nodefields = std::get< 3 >( r );
+
+  nodefieldnames.insert( end(nodefieldnames),
+    begin(refinement_nodefieldnames), end(refinement_nodefieldnames) );
+  nodefields.insert( end(nodefields),
+    begin(refinement_nodefields), end(refinement_nodefields) );
+
+  elemfieldnames.insert( end(elemfieldnames),
+    begin(refinement_elemfieldnames), end(refinement_elemfieldnames) );
+  elemfields.insert( end(elemfields),
+    begin(refinement_elemfields), end(refinement_elemfields) );
 
   // Send mesh and fields data (solution dump) for output to file
   d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {},
-            std::get<0>(r), nodefieldnames, std::get<1>(r), nodefields, c );
+            elemfieldnames, nodefieldnames, elemfields, nodefields, c );
 }
 
 void

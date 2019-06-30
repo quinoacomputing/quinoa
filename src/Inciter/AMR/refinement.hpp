@@ -729,8 +729,8 @@ namespace AMR {
                 Refinement_State& parent = tet_store.data(parent_id);
                 for (auto c : parent.children)
                 {
-                    //tet_store.erase(c);
-                    tet_store.deactivate(c);
+                    tet_store.erase(c);
+                    //tet_store.deactivate(c);
 
                     /*
                     auto children = tet_store.data(c).children;
@@ -765,8 +765,9 @@ namespace AMR {
              * @param tet_store Tet store to use
              * @param parent_id The id of the parent
              */
-            void derefine_two_to_one(tet_store_t& tet_store, size_t parent_id)
+            void derefine_two_to_one(tet_store_t& tet_store, node_connectivity_t&, size_t parent_id)
             {
+                //if (!check_allowed_derefinement(tet_store,parent_id)) return;
                 delete_intermediates_of_children( tet_store, parent_id);
                 generic_derefine(tet_store,parent_id);
             }
@@ -777,8 +778,9 @@ namespace AMR {
              * @param tet_store Tet store to use
              * @param parent_id The id of the parent
              */
-            void derefine_four_to_one(tet_store_t& tet_store, size_t parent_id)
+            void derefine_four_to_one(tet_store_t& tet_store, node_connectivity_t&, size_t parent_id)
             {
+                //if (!check_allowed_derefinement(tet_store,parent_id)) return;
                 delete_intermediates_of_children(tet_store, parent_id);
                 generic_derefine(tet_store,parent_id);
             }
@@ -789,9 +791,13 @@ namespace AMR {
              * @param tet_store Tet store to use
              * @param parent_id The id of the parent
              */
-            void derefine_eight_to_one(tet_store_t& tet_store, size_t parent_id)
+            void derefine_eight_to_one(tet_store_t& tet_store, node_connectivity_t&, size_t parent_id)
             {
+                //if (!check_allowed_derefinement(tet_store,parent_id)) return;
+
                 generic_derefine(tet_store,parent_id);
+
+                // TODO: Do we delete the nodes? Do we even have nodes?
 
                 // Delete the center edges
                     // If edge isn't in the parent, delete it? Is there a better way?
@@ -806,24 +812,30 @@ namespace AMR {
             }
 
             // TODO: Document This.
-            /*
-            void derefine_four_to_two(size_t parent_id)
+            void derefine_four_to_two(tet_store_t& tet_store, node_connectivity_t& node_connectivity, size_t parent_id)
             {
-                assert(0);
+                //if (!check_allowed_derefinement(tet_store,parent_id)) return;
+                derefine_four_to_one(tet_store, node_connectivity, parent_id);
+                // TODO: actually do the refinement
+                refine_one_to_two( tet_store, node_connectivity, parent_id);
             }
 
             // TODO: Document This.
-            void derefine_eight_to_two(size_t parent_id)
+            void derefine_eight_to_two(tet_store_t& tet_store, node_connectivity_t& node_connectivity, size_t parent_id)
             {
-                assert(0);
+                //if (!check_allowed_derefinement(tet_store,parent_id)) return;
+                derefine_eight_to_one(tet_store, node_connectivity, parent_id);
+                refine_one_to_two( tet_store, node_connectivity, parent_id);
             }
 
             // TODO: Document This.
-            void derefine_eight_to_four(size_t parent_id)
+            void derefine_eight_to_four(tet_store_t& tet_store, node_connectivity_t& node_connectivity, size_t parent_id)
             {
-                assert(0);
+                //if (!check_allowed_derefinement(tet_store,parent_id)) return;
+                // TODO: think about if the logic for these derefs are right
+                derefine_eight_to_one(tet_store, node_connectivity, parent_id);
+                refine_one_to_four( tet_store, node_connectivity, parent_id);
             }
-            */
 
             /**
              * @brief Loop over children and delete all intermediate edges

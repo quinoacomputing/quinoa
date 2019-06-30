@@ -310,7 +310,7 @@ genEdsup( const std::vector< std::size_t >& inpoel,
   std::vector< std::size_t > edsup1( 1, 0 ), edsup2( 1, 0 );
 
   // sort non-center points of each star and store nodes and indices in vectors
-  for (auto p : star) {
+  for (auto& p : star) {
     std::sort( begin(p.second), end(p.second) );
     edsup2.push_back( edsup2.back() + p.second.size() );
     edsup1.insert( end(edsup1), begin(p.second), end(p.second) );
@@ -413,7 +413,7 @@ genInpoed( const std::vector< std::size_t >& inpoel,
 
   // sort non-center points of each star and store both start and end points of
   // each star in linear vector
-  for (auto p : star) {
+  for (auto& p : star) {
     std::sort( begin(p.second), end(p.second) );
     for (auto e : p.second) {
       inpoed.push_back( p.first );
@@ -581,7 +581,7 @@ genEsuel( const std::vector< std::size_t >& inpoel,
   std::vector< std::size_t > esuel1( 1, 0 ), esuel2( 1, 0 );
 
   // store elements surrounding elements in linked lists
-  for (auto e : es) {
+  for (const auto& e : es) {
     esuel2.push_back( esuel2.back() + e.second.size() );
     esuel1.insert( end(esuel1), begin(e.second), end(e.second) );
   }
@@ -677,7 +677,7 @@ genInedel( const std::vector< std::size_t >& inpoel,
   // store index of star centers in vector; assume non-center points of each
   // star have already been sorted
   std::vector< std::size_t > edsup2( 1, 0 );
-  for (auto p : star) edsup2.push_back( edsup2.back() + p.second.size() );
+  for (const auto& p : star) edsup2.push_back(edsup2.back() + p.second.size());
   // fill up index array with the last index for points with no new edges
   for (std::size_t i=0; i<npoin-star.size(); ++i)
     edsup2.push_back( edsup2.back() );
@@ -705,7 +705,7 @@ genInedel( const std::vector< std::size_t >& inpoel,
 
   // store edge ids of elements in linear vector
   std::size_t j = 0;
-  for (auto e : edges) for (auto p : e.second) inedel[ j++ ] = p;
+  for (const auto& e : edges) for (auto p : e.second) inedel[ j++ ] = p;
 
   // Return (move out) vector
   return inedel;
@@ -814,7 +814,7 @@ genEsued( const std::vector< std::size_t >& inpoel,
   std::vector< std::size_t > esued1( 1, 0 ), esued2( 1, 0 );
 
   // sort and store elements surrounding edges and their indices in vectors
-  for (auto p : revolver) {
+  for (auto& p : revolver) {
     std::sort( begin(p.second), end(p.second) );
     esued2.push_back( esued2.back() + p.second.size() );
     esued1.insert( end(esued1), begin(p.second), end(p.second) );
