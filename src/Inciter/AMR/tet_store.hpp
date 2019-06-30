@@ -22,6 +22,8 @@ namespace AMR {
                 // wanted a quick-fix so I could move on :(
             std::set<size_t> center_tets; // Store for 1:4 centers
 
+            std::set<size_t> delete_list; // For marking deletions in deref
+
             AMR::active_element_store_t active_elements;
             AMR::master_element_store_t master_elements;
 
@@ -38,7 +40,8 @@ namespace AMR {
             AMR::edge_store_t edge_store;
 
             // TODO: Make this (and others) private at some point
-            AMR::marked_refinements_store_t marked_refinements;
+            AMR::marked_refinements_store_t<AMR::Refinement_Case> marked_refinements;
+            AMR::marked_refinements_store_t<AMR::Derefinement_Case> marked_derefinements;
 
             /**
              * @brief function to return the number of tets stored
@@ -748,6 +751,36 @@ namespace AMR {
             size_t get_parent_id(size_t id) const
             {
                 return master_elements.get_parent(id);
+            }
+
+            // Deref
+            void process_delete_list()
+            {
+                trace_out << "process_delete_list " << delete_list.size() << std::endl;
+                size_t original_size = size();
+                for(auto f : delete_list) {
+                    erase(f);
+                }
+
+                size_t end_size = size();
+                trace_out << "Deleted " << original_size-end_size << std::endl;
+
+                delete_list.clear();
+            }
+            /**
+             * @brief Function to mark a given tet as a specific Derefinement_Case
+             *
+             * @param tet_id The tet to mark
+             * @param decision The Derefinement_case to set
+             */
+            void mark_derefinement_decision(size_t tet_id, AMR::Derefinement_Case decision)
+            {
+                trace_out << "MARKING_DEREF_DECISION" << std::endl;
+                marked_derefinements.add(tet_id, decision);
+            }
+            bool has_derefinement_decision(size_t id)
+            {
+                return marked_derefinements.exists(id);
             }
 
     };

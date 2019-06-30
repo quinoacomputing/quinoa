@@ -4890,6 +4890,17 @@ struct amr_uniform_info {
 };
 using amr_uniform = keyword< amr_uniform_info, TAOCPP_PEGTL_STRING("uniform") >;
 
+struct amr_uniform_derefine_info {
+  using code = Code< d >;
+  static std::string name() { return "uniform_derefine"; }
+  static std::string shortDescription() { return
+    "Select uniform initial mesh de-refinement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select uniform initial mesh de-refinement.)"; }
+};
+using amr_uniform_derefine =
+  keyword< amr_uniform_derefine_info, TAOCPP_PEGTL_STRING("uniform_derefine") >;
+
 struct amr_initial_conditions_info {
   using code = Code< i >;
   static std::string name() { return "ic"; }
@@ -5232,6 +5243,47 @@ struct amr_dtfreq_info {
 };
 using amr_dtfreq = keyword< amr_dtfreq_info, TAOCPP_PEGTL_STRING("dtfreq") >;
 
+struct amr_tolref_info {
+  static std::string name() { return "refine tolerance"; }
+  static std::string shortDescription() { return "Configure refine tolerance"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the tolerance used to tag an edge for
+    refinement if the relative error exceeds this value.)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
+    static std::string description() { return "real"; }
+    static std::string choices() {
+      return "integer between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "] (both inclusive)";
+    }
+  };
+};
+using amr_tolref =
+  keyword< amr_tolref_info, TAOCPP_PEGTL_STRING("tol_refine") >;
+
+struct amr_tolderef_info {
+  static std::string name() { return "derefine tolerance"; }
+  static std::string shortDescription() {
+    return "Configure derefine tolerance"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the tolerance used to tag an edge for
+    derefinement if the relative error is below this value.)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
+    static std::string description() { return "real"; }
+    static std::string choices() {
+      return "integer between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "] (both inclusive)";
+    }
+  };
+};
+using amr_tolderef =
+  keyword< amr_tolderef_info, TAOCPP_PEGTL_STRING("tol_derefine") >;
+
 struct amr_info {
   static std::string name() { return "AMR"; }
   static std::string shortDescription() { return
@@ -5246,6 +5298,8 @@ struct amr_info {
     + amr_dtfreq::string() + "\' | \'"
     + amr_initial::string() + "\' | \'"
     + amr_refvar::string() + "\' | \'"
+    + amr_tolref::string() + "\' | \'"
+    + amr_tolderef::string() + "\' | \'"
     + amr_error::string() + "\' | \'"
     + amr_coordref::string() + "\' | \'"
     + amr_edgelist::string() + "\'.";
