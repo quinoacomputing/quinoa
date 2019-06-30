@@ -115,6 +115,9 @@ class UnsMesh {
     //! Unique set of faces
     using FaceSet = std::unordered_set< Face, Hash<3>, Eq<3> >;
 
+    //! Unique set of tets
+    using TetSet = std::unordered_set< Tet, Hash<4>, Eq<4> >;
+
     /** @name Constructors */
     ///@{
     //! Constructor without initializing anything

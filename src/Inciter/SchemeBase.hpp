@@ -83,7 +83,7 @@ class SchemeBase {
 
     //! Get reference to scheme proxy
     //! \return Variant storing Charm++ chare array proxy configured
-    const Proxy& getProxy() noexcept { return proxy; }
+    const Proxy& getProxy() const noexcept { return proxy; }
 
     //! Query underlying proxy type
     //! \return Zero-based index into the set of types of Proxy

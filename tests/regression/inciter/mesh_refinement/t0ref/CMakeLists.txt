@@ -56,7 +56,7 @@ add_regression_test(amr_t0ref_u_compflow_reord_dg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
                     LABELS amr)
 
-add_regression_test(amr_t0ref_trans_cc_diagcg ${INCITER_EXECUTABLE}
+add_regression_test(amr_t0ref_cc_trans_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES slot_cyl_amr_coords.q unitcube_01_364.exo
                     ARGS -c slot_cyl_amr_coords.q -i unitcube_01_364.exo -v
@@ -105,6 +105,66 @@ add_regression_test(amr_t0ref_u_trans_reord_dg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
                     LABELS amr)
 
+add_regression_test(amr_t0ref_udu_trans_dg ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES gauss_hump_dg_uniform_deref.q
+                               unitsquare_01_955_ss3.exo
+                    ARGS -c gauss_hump_dg_uniform_deref.q
+                         -i unitsquare_01_955_ss3.exo -v
+                    BIN_BASELINE gauss_hump_dg_uniform_deref_t0ref.std.e-s.0.1.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.1.1.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.2.1.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.3.1.0
+                                 gauss_hump_dg.std.exo
+                    BIN_RESULT t0ref.e-s.0.1.0
+                               t0ref.e-s.1.1.0
+                               t0ref.e-s.2.1.0
+                               t0ref.e-s.3.1.0
+                               out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_gauss_hump_dg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS amr)
+
+add_regression_test(amr_t0ref_ududu_trans_dg ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES gauss_hump_dg_uniform_deref_x2.q
+                               unitsquare_01_955_ss3.exo
+                    ARGS -c gauss_hump_dg_uniform_deref_x2.q
+                         -i unitsquare_01_955_ss3.exo -v
+                    BIN_BASELINE gauss_hump_dg_uniform_deref_t0ref.std.e-s.0.1.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.1.1.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.2.1.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.3.1.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.4.1.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.5.1.0
+                                 gauss_hump_dg.std.exo
+                    BIN_RESULT t0ref.e-s.0.1.0
+                               t0ref.e-s.1.1.0
+                               t0ref.e-s.2.1.0
+                               t0ref.e-s.3.1.0
+                               t0ref.e-s.4.1.0
+                               t0ref.e-s.5.1.0
+                               out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_gauss_hump_dg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS amr)
+
 # Parallel, no virtualization
 
 add_regression_test(amr_t0ref_u_trans_diagcg ${INCITER_EXECUTABLE}
@@ -136,18 +196,18 @@ add_regression_test(amr_t0ref_ii ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
 
-add_regression_test(amr_t0ref_trans_iu ${INCITER_EXECUTABLE}
-                    NUMPES 2
-                    INPUTFILES ic_uniform.q unitsquare_01_141.exo
-                    ARGS -c ic_uniform.q -i unitsquare_01_141.exo -v
-                    BIN_BASELINE amr_ic_uniform.std.exo.0
-                                 amr_ic_uniform.std.exo.1
-                    # TODO: double check this numbering scheme
-                    BIN_RESULT  out.e-s.0.2.0
-                                out.e-s.0.2.1
-                    BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg
-                    LABELS amr)
+# add_regression_test(amr_t0ref_iu_trans ${INCITER_EXECUTABLE}
+#                     NUMPES 2
+#                     INPUTFILES ic_uniform.q unitsquare_01_141.exo
+#                     ARGS -c ic_uniform.q -i unitsquare_01_141.exo -v
+#                     BIN_BASELINE amr_ic_uniform.std.exo.0
+#                                  amr_ic_uniform.std.exo.1
+#                     # TODO: double check this numbering scheme
+#                     BIN_RESULT  out.e-s.0.2.0
+#                                 out.e-s.0.2.1
+#                     BIN_DIFF_PROG_ARGS -m
+#                     BIN_DIFF_PROG_CONF exodiff.cfg
+#                     LABELS amr)
 
 add_regression_test(amr_t0ref_u_trans_dg ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -178,6 +238,174 @@ add_regression_test(amr_t0ref_u_trans_dg ${INCITER_EXECUTABLE}
                                out.e-s.0.4.2
                                out.e-s.0.4.3
                     BIN_DIFF_PROG_CONF exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.cfg
+                                       exodiff_gauss_hump_dg.cfg
+                                       exodiff_gauss_hump_dg.cfg
+                                       exodiff_gauss_hump_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_gauss_hump_dg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS amr)
+
+add_regression_test(amr_t0ref_udu_trans_dg ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES gauss_hump_dg_uniform_deref.q
+                               unitsquare_01_955_ss3.exo
+                    ARGS -c gauss_hump_dg_uniform_deref.q
+                         -i unitsquare_01_955_ss3.exo -v
+                    BIN_BASELINE gauss_hump_dg_uniform_deref_t0ref.std.e-s.0.4.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.0.4.1
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.0.4.2
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.0.4.3
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.1.4.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.1.4.1
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.1.4.2
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.1.4.3
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.2.4.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.2.4.1
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.2.4.2
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.2.4.3
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.3.4.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.3.4.1
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.3.4.2
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.3.4.3
+                                 gauss_hump_dg.std.exo.0
+                                 gauss_hump_dg.std.exo.1
+                                 gauss_hump_dg.std.exo.2
+                                 gauss_hump_dg.std.exo.3
+                    BIN_RESULT t0ref.e-s.0.4.0
+                               t0ref.e-s.0.4.1
+                               t0ref.e-s.0.4.2
+                               t0ref.e-s.0.4.3
+                               t0ref.e-s.1.4.0
+                               t0ref.e-s.1.4.1
+                               t0ref.e-s.1.4.2
+                               t0ref.e-s.1.4.3
+                               t0ref.e-s.2.4.0
+                               t0ref.e-s.2.4.1
+                               t0ref.e-s.2.4.2
+                               t0ref.e-s.2.4.3
+                               t0ref.e-s.3.4.0
+                               t0ref.e-s.3.4.1
+                               t0ref.e-s.3.4.2
+                               t0ref.e-s.3.4.3
+                               out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                    BIN_DIFF_PROG_CONF exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.cfg
+                                       exodiff_gauss_hump_dg.cfg
+                                       exodiff_gauss_hump_dg.cfg
+                                       exodiff_gauss_hump_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_gauss_hump_dg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS amr)
+
+add_regression_test(amr_t0ref_ududu_trans_dg ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES gauss_hump_dg_uniform_deref_x2.q
+                               unitsquare_01_955_ss3.exo
+                    ARGS -c gauss_hump_dg_uniform_deref_x2.q
+                         -i unitsquare_01_955_ss3.exo -v
+                    BIN_BASELINE gauss_hump_dg_uniform_deref_t0ref.std.e-s.0.4.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.0.4.1
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.0.4.2
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.0.4.3
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.1.4.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.1.4.1
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.1.4.2
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.1.4.3
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.2.4.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.2.4.1
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.2.4.2
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.2.4.3
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.3.4.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.3.4.1
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.3.4.2
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.3.4.3
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.4.4.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.4.4.1
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.4.4.2
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.4.4.3
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.5.4.0
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.5.4.1
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.5.4.2
+                                 gauss_hump_dg_uniform_deref_t0ref.std.e-s.5.4.3
+                                 gauss_hump_dg.std.exo.0
+                                 gauss_hump_dg.std.exo.1
+                                 gauss_hump_dg.std.exo.2
+                                 gauss_hump_dg.std.exo.3
+                    BIN_RESULT t0ref.e-s.0.4.0
+                               t0ref.e-s.0.4.1
+                               t0ref.e-s.0.4.2
+                               t0ref.e-s.0.4.3
+                               t0ref.e-s.1.4.0
+                               t0ref.e-s.1.4.1
+                               t0ref.e-s.1.4.2
+                               t0ref.e-s.1.4.3
+                               t0ref.e-s.2.4.0
+                               t0ref.e-s.2.4.1
+                               t0ref.e-s.2.4.2
+                               t0ref.e-s.2.4.3
+                               t0ref.e-s.3.4.0
+                               t0ref.e-s.3.4.1
+                               t0ref.e-s.3.4.2
+                               t0ref.e-s.3.4.3
+                               t0ref.e-s.4.4.0
+                               t0ref.e-s.4.4.1
+                               t0ref.e-s.4.4.2
+                               t0ref.e-s.4.4.3
+                               t0ref.e-s.5.4.0
+                               t0ref.e-s.5.4.1
+                               t0ref.e-s.5.4.2
+                               t0ref.e-s.5.4.3
+                               out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                    BIN_DIFF_PROG_CONF exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
+                                       exodiff_gauss_hump_dg.t0ref.cfg
                                        exodiff_gauss_hump_dg.t0ref.cfg
                                        exodiff_gauss_hump_dg.t0ref.cfg
                                        exodiff_gauss_hump_dg.t0ref.cfg

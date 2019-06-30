@@ -1,6 +1,6 @@
 # vim: filetype=cmake:
 #
-# Naming convention for AMR regression tests
+# Rough naming convention for AMR regression tests
 #
 # Example: amr_t0ref_uu_trans_reord_dg_u0.8_migr
 #
@@ -13,6 +13,7 @@
 #        - i: initial conditions based adaptive refinement (keyword: ic)
 #        - c: coordinate based refinement (keyword: coords)
 #        - e: refine a list of tagged edges (keyword: edgelist)
+#        - d : uniform de-refinement (keyword: uniform_derefine)
 # * trans - type of physics, e.g., compflow, transport
 # * reord - perform PE-locality mesh node reordering during setup
 # * dg - discontinuous Galerkin discretization, e.g., dg, diagcg, dpg2, ...
