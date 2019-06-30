@@ -13,6 +13,7 @@ add_regression_test(amr_dtref_u_trans_diagcg ${INCITER_EXECUTABLE}
                                  slot_cyl_diagcg_pe1_u_u0.0.std.e-s.1.1.0
                     BIN_RESULT out.e-s.0.1.0 out.e-s.1.1.0
                     BIN_DIFF_PROG_CONF exodiff_slot_cyl_amr_diagcg.cfg
+                    BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE slot_cyl_amr_diagcg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
@@ -27,6 +28,7 @@ add_regression_test(amr_dtref_u_trans_reord_diagcg ${INCITER_EXECUTABLE}
                     BIN_BASELINE slot_cyl_diagcg_pe1_u_u0.0.std.e-s.0.1.0
                                  slot_cyl_diagcg_pe1_u_u0.0.std.e-s.1.1.0
                     BIN_RESULT out.e-s.0.1.0 out.e-s.1.1.0
+                    BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff_slot_cyl_amr_diagcg.cfg
                     TEXT_BASELINE slot_cyl_amr_diagcg.std
                     TEXT_RESULT diag

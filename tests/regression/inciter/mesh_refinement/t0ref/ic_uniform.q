@@ -43,6 +43,7 @@ inciter
     #initial coords
     refvar c end
     error jump
+    tol_refine 0.8
 
 #    coordref
 #      #x- 0.5

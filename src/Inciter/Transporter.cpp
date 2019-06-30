@@ -246,6 +246,10 @@ Transporter::info()
       m_print.item( "Uniform-only mesh refinement, t>0",
                     g_inputdeck.get< tag::amr, tag::dtref_uniform >() );
     }
+    m_print.item( "Refinement tolerance",
+                  g_inputdeck.get< tag::amr, tag::tolref >() );
+    m_print.item( "De-refinement tolerance",
+                  g_inputdeck.get< tag::amr, tag::tolderef >() );
   }
 
   // Print I/O filenames
@@ -472,16 +476,16 @@ Transporter::compatibility( int modified )
 
 void
 Transporter::matched( std::size_t nextra,
-                      std::size_t nedge,
+                      std::size_t nref,
+                      std::size_t nderef,
                       std::size_t initial )
 // *****************************************************************************
-//  Reduction target: all mesh refiner chares have performed a step of matching
-//  chare-boundary edges
+// Reduction target: all mesh refiner chares have matched/corrected the tagging
+// of chare-boundary edges, all chares are ready to perform refinement.
 //! \param[in] nextra Sum (across all chares) of the number of edges on each
 //!   chare that need correction along chare boundaries
-//! \param[in] nedge Sum (across all chares) of number of edges on each chare.
-//!   This is not really used for anything meaningful (as it is multiply-counted
-//!   in parallel), only as a feedback during  mesh refinement.
+//! \param[in] nref Sum of number of refined tetrahedra across all chares.
+//! \param[in] nderef Sum of number of derefined tetrahedra across all chares.
 //! \param[in] initial Sum of contributions from all chares. If larger than
 //!    zero, we are during time stepping and if zero we are during setup.
 // *****************************************************************************
@@ -498,20 +502,20 @@ Transporter::matched( std::size_t nextra,
     if (initial > 0) {
 
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
-        m_print.diag( { "t0ref", "nedge", "ncorr" },
-                      { ++m_nt0refit, nedge, m_ncit } );
+        m_print.diag( { "t0ref", "nref", "nderef", "ncorr" },
+                      { ++m_nt0refit, nref, nderef, m_ncit } );
       }
       m_progMesh.inc< REFINE >();
 
     } else {
 
-      m_print.diag( { "dtref", "nedge", "ncorr" },
-                    { ++m_ndtrefit, nedge, m_ncit }, false );
+      m_print.diag( { "dtref", "nref", "nderef", "ncorr" },
+                    { ++m_ndtrefit, nref, nderef, m_ncit }, false );
 
     }
 
     m_ncit = 0;
-    m_refiner.eval();
+    m_refiner.perform();
 
   }
 }
