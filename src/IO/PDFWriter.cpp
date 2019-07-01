@@ -84,6 +84,7 @@ PDFWriter::writeTxt( const UniPDF& pdf, const tk::ctr::PDFInfo& info ) const
             << '\n'
             << "# Number of bins output: " << nbi << '\n'
             << "# Sample space extent: [" << min << " : " << max << "]\n"
+            << "# Integral: " << pdf.integral() << "\n"
             << "# Iteration: " << it << "\n"
             << "# Physical time: " << time << "\n#\n"
             << "# Example step-by-step visualization with gnuplot\n"
