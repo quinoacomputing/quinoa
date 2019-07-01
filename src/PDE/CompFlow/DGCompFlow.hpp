@@ -142,9 +142,10 @@ class CompFlow {
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == ndof*5 && R.nprop() == ndof*5,
-              "Number of components in solution and right-hand side vector "
-              "must equal "+ std::to_string(ndof*5) );
+      Assert( U.nprop() == rdof*5, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*5) );
+      Assert( R.nprop() == ndof*5, "Number of components in right-hand "
+              "side vector must equal "+ std::to_string(ndof*5) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
               "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
