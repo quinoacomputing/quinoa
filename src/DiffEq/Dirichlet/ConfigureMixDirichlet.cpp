@@ -84,7 +84,8 @@ infoMixDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
   auto norm = g_inputdeck.get< tag::param, eq, tag::normalization >()[c];
   nfo.emplace_back( "normalization", ctr::Normalization().name(norm)+"-fluid" );
 
-  auto K = ncomp - MIXDIR_NUMDERIVED;
+  auto numderived = MixDirichlet<InitZero,MixDirichletCoeffConst>::NUMDERIVED;
+  auto K = ncomp - numderived;
   auto N = K + 1;
 
   nfo.emplace_back( "coeff b [" + std::to_string(K) + "]",

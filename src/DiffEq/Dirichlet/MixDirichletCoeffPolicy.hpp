@@ -54,6 +54,8 @@
         void update(
                char depvar,
                ncomp_t ncomp,
+               std::size_t density_offset,
+               std::size_t volume_offset,
                const std::map< tk::ctr::Product, tk::real >& moments,
                const std::vector< kw::sde_rho::info::expect::type >& rho,
                const std::vector< kw::sde_r::info::expect::type >& r,
@@ -64,7 +66,10 @@
       \endcode
       where _depvar_ is the dependent variable associated with the mix
       Dirichlet SDE, specified in the control file by the user, _ncomp_
-      is the number of components in the system, _moments_ is the map
+      is the number of components in the system, _density_offset_ is the offset
+      of the particle density in the solution array relative to the Nth scalar,
+      _volume_offset_ is the offset of the particle specific volume in the
+      solution array relative to the Nth scalar, _moments_ is the map
       associating moment IDs (tk::ctr::vector< tk::ctr::Term >) to values of
       statistical moments, _rho_, _r_, _kprime_, _b_ are user-defined
       parameters, and _k_ and _S_ are the SDE parameters computed/updated, see
@@ -109,6 +114,8 @@ class MixDirichletCoeffConst {
     void update(
       char depvar,
       ncomp_t ncomp,
+      std::size_t density_offset,
+      std::size_t volume_offset,
       const std::map< tk::ctr::Product, tk::real >& moments,
       const std::vector< kw::sde_rho::info::expect::type >& rho,
       const std::vector< kw::sde_r::info::expect::type >& r,
@@ -158,6 +165,8 @@ class MixDirichletHomogeneous {
     void update(
       char depvar,
       ncomp_t ncomp,
+      std::size_t density_offset,
+      std::size_t volume_offset,
       const std::map< tk::ctr::Product, tk::real >& moments,
       const std::vector< kw::sde_rho::info::expect::type >& rho,
       const std::vector< kw::sde_r::info::expect::type >& r,

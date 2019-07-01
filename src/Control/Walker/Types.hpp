@@ -119,7 +119,7 @@ using DirichletParameters = tk::tuple::tagged_tuple<
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
-//! Dirichlet parameters storage
+//! Mixture Dirichlet parameters storage
 using MixDirichletParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
   tag::b,           std::vector< std::vector<

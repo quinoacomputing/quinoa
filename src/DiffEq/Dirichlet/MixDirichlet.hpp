@@ -64,18 +64,6 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-//! Number of derived variables computed by the MixDirichlet SDE
-//! \details Derived variables: Nth scalar, density, specific volume.
-//! \see MixDirichlet::derived()
-const std::size_t MIXDIR_NUMDERIVED = 3;
-
-//! Offset of particle density in solution array relative to YN
-//! \details Original in DiffEq/Dirichlet/MixDirichletCoeffPolicy.cpp
-extern const std::size_t DENSITY_OFFSET = 1;
-//! Offset of particle specific volume in solution array relative to YN
-//! \details Original in DiffEq/Dirichlet/MixDirichletCoeffPolicy.cpp
-extern const std::size_t VOLUME_OFFSET = 2;
-
 //! \brief MixDirichlet SDE used polymorphically with DiffEq
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
@@ -89,6 +77,10 @@ class MixDirichlet {
     using eq = tag::mixdirichlet;
 
   public:
+    //! Number of derived variables computed by the MixDirichlet SDE
+    //! \details Derived variables: Nth scalar, density, specific volume.
+    static const std::size_t NUMDERIVED = 3;
+
     //! \brief Constructor
     //! \param[in] c Index specifying which MixDirichlet SDE to construct. There
     //!   can be multiple dirichlet ... end blocks in a control file. This index
@@ -100,7 +92,7 @@ class MixDirichlet {
       m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
       // subtract the number of derived variables computed, see advance()
       m_ncomp( g_inputdeck.get< tag::component >().get< eq >().at(c) -
-               MIXDIR_NUMDERIVED ),
+               NUMDERIVED ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
@@ -158,8 +150,8 @@ class MixDirichlet {
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       // Update SDE coefficients
-      coeff.update( m_depvar, m_ncomp, moments, m_rho, m_r, m_kprime, m_b, m_k,
-                    m_S );
+      coeff.update( m_depvar, m_ncomp, DENSITY_OFFSET, VOLUME_OFFSET, moments,
+                    m_rho, m_r, m_kprime, m_b, m_k, m_S );
 
       // Advance particles
       const auto npar = particles.nunk();
@@ -185,6 +177,11 @@ class MixDirichlet {
     }
 
   private:
+    //! Offset of particle density in solution array relative to YN
+    static const std::size_t DENSITY_OFFSET = 1;
+    //! Offset of particle specific volume in solution array relative to YN
+    static const std::size_t VOLUME_OFFSET = 2;
+
     const ncomp_t m_c;                  //!< Equation system index
     const char m_depvar;                //!< Dependent variable
     const ncomp_t m_ncomp;              //!< Number of components, K = N-1

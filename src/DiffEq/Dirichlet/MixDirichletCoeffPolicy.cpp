@@ -17,15 +17,6 @@
 
 #include "MixDirichletCoeffPolicy.hpp"
 
-namespace walker {
-
-//! Offset of particle density in solution array relative to YN
-const std::size_t DENSITY_OFFSET = 1;
-//! Offset of particle specific volume in solution array relative to YN
-const std::size_t VOLUME_OFFSET = 2;
-
-} // ::walker
-
 std::vector< kw::sde_r::info::expect::type >
 walker::MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho,
                   ctr::NormalizationType norm )
@@ -105,6 +96,8 @@ void
 walker::MixDirichletCoeffConst::update(
   char /*depvar*/,
   ncomp_t ncomp,
+  std::size_t /* density_offset */,
+  std::size_t /* volume_offset */,
   const std::map< tk::ctr::Product, tk::real >& /*moments*/,
   const std::vector< kw::sde_rho::info::expect::type >& /*rho*/,
   const std::vector< kw::sde_r::info::expect::type >& /*r*/,
@@ -116,6 +109,10 @@ walker::MixDirichletCoeffConst::update(
 //  Update coefficients
 //! \param[in] depvar Dependent variable
 //! \param[in] ncomp Number of scalar components in this SDE system
+//! \param[in] density_offset Offset of particle density in solution array
+//!    relative to YN
+//! \param[in] volume_offset Offset of particle specific volume in solution
+//!    array relative to YN
 //! \param[in] moments Map of statistical moments estimated
 //! \param[in] rho Coefficient vector
 //! \param[in] r Coefficient Vector
@@ -195,6 +192,8 @@ void
 walker::MixDirichletHomogeneous::update(
   char depvar,
   ncomp_t ncomp,
+  std::size_t density_offset,
+  std::size_t volume_offset,
   const std::map< tk::ctr::Product, tk::real >& moments,
   const std::vector< kw::sde_rho::info::expect::type >& rho,
   const std::vector< kw::sde_r::info::expect::type >& r,
@@ -206,6 +205,10 @@ walker::MixDirichletHomogeneous::update(
 //  Update coefficients
 //! \param[in] depvar Dependent variable
 //! \param[in] ncomp Number of scalar components in this SDE system
+//! \param[in] density_offset Offset of particle density in solution array
+//!    relative to YN
+//! \param[in] volume_offset Offset of particle specific volume in solution
+//!    array relative to YN
 //! \param[in] moments Map of statistical moments estimated
 //! \param[in] rho Coefficient vector
 //! \param[in] r Coefficient Vector
@@ -234,27 +237,27 @@ walker::MixDirichletHomogeneous::update(
   // <R> = mean density
 
   // <R>
-  tk::real R = lookup( mean(depvar,ncomp+DENSITY_OFFSET), moments );
+  tk::real R = lookup( mean(depvar,ncomp+density_offset), moments );
   //if (R < 1.0e-8) R = 1.0;
 
   // b = -<rv>, density-specific-volume covariance
   Term rhoprime( static_cast<char>(std::tolower(depvar)),
-                 ncomp+DENSITY_OFFSET, Moment::CENTRAL );
+                 ncomp+density_offset, Moment::CENTRAL );
   Term vprime( static_cast<char>(std::tolower(depvar)),
-               ncomp+VOLUME_OFFSET, Moment::CENTRAL );
+               ncomp+volume_offset, Moment::CENTRAL );
   //auto ds = -lookup( Product({rhoprime,vprime}), moments );
 
   // b. = -<ry.>/<R>
   std::vector< tk::real > bc( ncomp, 0.0 );
   for (ncomp_t c=0; c<ncomp; ++c) {
     Term tr( static_cast<char>(std::tolower(depvar)),
-             ncomp+DENSITY_OFFSET, Moment::CENTRAL );
+             ncomp+density_offset, Moment::CENTRAL );
     Term ty( static_cast<char>(std::tolower(depvar)),
              c, Moment::CENTRAL );
     bc[c] = -lookup( Product({tr,ty}), moments ) / R; // -<ryc>/<R>
   }
 
-  Term tR( static_cast<char>(std::toupper(depvar)), ncomp+DENSITY_OFFSET,
+  Term tR( static_cast<char>(std::toupper(depvar)), ncomp+density_offset,
            Moment::ORDINARY );
   Term tYN( static_cast<char>(std::toupper(depvar)), ncomp, Moment::ORDINARY );
 
