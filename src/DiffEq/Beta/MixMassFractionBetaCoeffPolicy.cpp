@@ -16,6 +16,14 @@
 #include <iostream>
 
 #include "MixMassFractionBetaCoeffPolicy.hpp"
+#include "TxtStatWriter.hpp"
+#include "Walker/InputDeck/InputDeck.hpp"
+
+namespace walker {
+
+extern ctr::InputDeck g_inputdeck;
+
+} // ::walker
 
 walker::MixMassFracBetaCoeffDecay::MixMassFracBetaCoeffDecay(
   ncomp_t ncomp,
@@ -442,6 +450,17 @@ MixMassFracBetaCoeffHydroTimeScale(
 
   b.resize( bprime.size() );
   k.resize( kprime.size() );
+
+  // Extra output besides normal statistics output
+  m_extra_out_filename = "coeff";
+  tk::TxtStatWriter sw( m_extra_out_filename );
+  std::vector< std::string > names;
+  for (ncomp_t c=0; c<ncomp; ++c) {
+    names.push_back( "b" + std::to_string(c+1) );
+    names.push_back( "S" + std::to_string(c+1) );
+    names.push_back( "k" + std::to_string(c+1) );
+  }
+  sw.header( names, {}, {} );
 }
 
 void
@@ -493,6 +512,14 @@ walker::MixMassFracBetaCoeffHydroTimeScale::update(
   if (m_it == 0)
     for (ncomp_t c=0; c<ncomp; ++c)
        m_s.push_back( S[c] );
+
+  // Extra output besides normal statistics output
+  tk::TxtStatWriter sw( m_extra_out_filename,
+                        g_inputdeck.get< tag::flformat, tag::stat >(),
+                        g_inputdeck.get< tag::prec, tag::stat >(),
+                        std::ios_base::app );
+
+  std::vector< tk::real > coeffs( ncomp * 3 );
 
   // statistics nomenclature:
   //   Y = instantaneous mass fraction,
@@ -546,6 +573,11 @@ walker::MixMassFracBetaCoeffHydroTimeScale::update(
                   (beta10 + beta2*Thetap*f2 + beta3*Thetap*(1.0-Thetap)*f2);
     b[c] = beta1 * ts;
     k[c] = kprime[c] * beta1 * ts * ds * ds;
+    //b[c] = bprime[c];
+    //k[c] = kprime[c];
+    //b[c] = bprime[c] + 0.25*std::sin(10.0*t);
+    //k[c] = 1.0 + 0.25*std::sin(10.0*t);
+    //k[c] = -(1.0 + std::sin(t)) * (S[c] - 1.0);
 
     tk::real R = 1.0 + d2/d/d;
     tk::real B = -1.0/r[c]/r[c];
@@ -557,7 +589,7 @@ walker::MixMassFracBetaCoeffHydroTimeScale::update(
       D*d*d*d*(1.0 + 3.0*d2/d/d + d3/d/d/d)/rho2[c]/rho2[c]/rho2[c];
     S[c] = (rho2[c]/d/R +
            2.0*k[c]/b[c]*rho2[c]*rho2[c]/d/d*r[c]*r[c]/R*diff - 1.0) / r[c];
-
+    //S[c] = 0.5 + 0.25*std::sin(10.0*t);
 
     // Implementation of a constraint for MixDirichlet for S_al to keep
     // d<rho>/dt = 0 to verify its behavior for beta (binary case). As input
@@ -570,7 +602,14 @@ walker::MixMassFracBetaCoeffHydroTimeScale::update(
     // tk::real drYcYc = -r[c]/rho2[c]*R2Yc;
     // tk::real drYc2YcYN = 2.0*std::pow(r[c]/rho2[c],2.0)*(R3Yc-R3Y2c);
     // S[c] = (drYcYc - k[c]/b[c]*drYc2YcYN) / drYc;
+
+    coeffs[ 3*c+0 ] = b[c];
+    coeffs[ 3*c+1 ] = S[c];
+    coeffs[ 3*c+2 ] = k[c];
   }
+
+  // Extra "stat" output of coefficients
+  sw.stat( 0, t, coeffs, {}, {} );
 
   ++m_it;
 }

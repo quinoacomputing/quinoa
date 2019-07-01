@@ -14,6 +14,7 @@ add_library(Beta
 target_include_directories(Beta PUBLIC
                            ${QUINOA_SOURCE_DIR}
                            ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/IO
                            ${QUINOA_SOURCE_DIR}/RNG
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/Statistics
