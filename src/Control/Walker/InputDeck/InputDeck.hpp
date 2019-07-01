@@ -219,6 +219,9 @@ class InputDeck :
                                      , kw::variant
                                      , kw::slm
                                      , kw::glm
+                                     , kw::normalization
+                                     , kw::light
+                                     , kw::heavy
                                      >;
 
     //! \brief Constructor: set all defaults
