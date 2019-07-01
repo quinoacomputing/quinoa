@@ -170,6 +170,7 @@ struct position {};
 struct dissipation {};
 struct velocity {};
 struct variant {};
+struct normalization {};
 struct mass {};
 struct hydro {};
 struct energy {};

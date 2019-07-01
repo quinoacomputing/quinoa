@@ -483,21 +483,25 @@ namespace grm {
   struct action< check_mixdirichlet > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      const auto& rho =
-        stack.template get< tag::param, tag::mixdirichlet, tag::rho >().back();
-      auto ncomp =
-        stack.template get< tag::component, tag::mixdirichlet >().back();
+      using eq = tag::mixdirichlet;
+      using walker::deck::neq;
+
       // Ensure correct size for parameter vector rho
-      if (rho.size() != ncomp-1)
+      auto& rho = stack.template get< tag::param, eq, tag::rho >().back();
+      auto ncomp = stack.template get< tag::component, eq >().back();
+      if (rho.size() != ncomp-2)
         Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
-      // Ensure parameter vector rho is sorted in increasing order
-      //if (!std::is_sorted( rho.cbegin(), rho.cend() ))
-      //  Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
-      // Ensure parameter vector rho is sorted in decreasing order
-      auto r = rho;
-      std::reverse( begin(r), end(r) );
-      if (!std::is_sorted( r.cbegin(), r.cend() ))
-        Message< Stack, ERROR, MsgKey::MIXDIR_RHO >( stack, in );
+
+      // If normalization is not set, set default
+      auto& normv = stack.template get< tag::param, eq, tag::normalization >();
+      if (normv.size() != neq.get< eq >())
+        normv.push_back( walker::ctr::NormalizationType::LIGHT );
+
+      // Sort parameter vector rho to correct order depending on normalization
+      if (normv.back() == walker::ctr::NormalizationType::HEAVY)
+        std::sort( rho.begin(), rho.end() );
+      else
+        std::sort( rho.begin(), rho.end(), std::greater< tk::real >() );
     }
   };
 
@@ -1317,6 +1321,11 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::mixdirichlet,
                                             tag::coeffpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::normalization >,
+                                            ctr::Normalization,
+                                            tag::mixdirichlet,
+                                            tag::normalization >,
                            icdelta< tag::mixdirichlet >,
                            icbeta< tag::mixdirichlet >,
                            icgamma< tag::mixdirichlet >,

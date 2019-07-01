@@ -222,6 +222,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::variant
                                  , kw::slm
                                  , kw::glm
+                                 , kw::normalization
+                                 , kw::light
+                                 , kw::heavy
                                  >;
 
     //! \brief Constructor: set all defaults

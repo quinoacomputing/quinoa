@@ -29,6 +29,7 @@
 #include "Options/TxtFloatFormat.hpp"
 #include "Options/Depvar.hpp"
 #include "Options/VelocityVariant.hpp"
+#include "Options/Normalization.hpp"
 #include "Options/RNG.hpp"
 #include "QuinoaConfig.hpp"
 
@@ -118,7 +119,7 @@ using DirichletParameters = tk::TaggedTuple< brigand::list<
   , tag::coeffpolicy,   std::vector< ctr::CoeffPolicyType >
 > >;
 
-//! Dirichlet parameters storage
+//! Mixture Dirichlet parameters storage
 using MixDirichletParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::b,             std::vector< std::vector<
@@ -131,6 +132,7 @@ using MixDirichletParameters = tk::TaggedTuple< brigand::list<
                           kw::sde_kappaprime::info::expect::type > >
   , tag::rho,           std::vector< std::vector<
                           kw::sde_rho::info::expect::type > >
+  , tag::normalization, std::vector< ctr::NormalizationType >
   , tag::init,          Init
   , tag::rng,           std::vector< tk::ctr::RNGType >
   , tag::initpolicy,    std::vector< ctr::InitPolicyType >
