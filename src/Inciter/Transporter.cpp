@@ -256,7 +256,8 @@ Transporter::info()
   // Print I/O filenames
   m_print.section( "Output filenames and directories" );
   m_print.item( "Field output file(s)",
-    g_inputdeck.get< tag::cmd, tag::io, tag::output >() + ".<chareid>" );
+    g_inputdeck.get< tag::cmd, tag::io, tag::output >() +
+    "<meshid>.<numchares>.<chareid>" );
   m_print.item( "Diagnostics file",
                 g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
   m_print.item( "Checkpoint/restart directory",
