@@ -225,41 +225,30 @@ walker::MixDirichletHomogeneous::update(
   using tk::ctr::Moment;
   using tk::ctr::Product;
 
-  // note: ncomp = K = N-1
-
-  // constraint: r_i = rho_N/rho_c - 1
-
-  // statistics nomenclature:
-  //   Y = instantaneous mass fraction
-  //   R = instantaneous density
-  //   y = Y - <Y>, mass fraction fluctuation about its mean
-  // <Y> = mean mass fraction
-  // <R> = mean density
+  // Shorthands for dependent variables, Y and y = Y - <Y>, used to construct
+  // statistics
+  auto Yv = static_cast< char >( std::toupper(depvar) );
+  auto yv = static_cast< char >( std::tolower(depvar) );
 
   // <R>
   tk::real R = lookup( mean(depvar,ncomp+density_offset), moments );
   //if (R < 1.0e-8) R = 1.0;
 
   // b = -<rv>, density-specific-volume covariance
-  Term rhoprime( static_cast<char>(std::tolower(depvar)),
-                 ncomp+density_offset, Moment::CENTRAL );
-  Term vprime( static_cast<char>(std::tolower(depvar)),
-               ncomp+volume_offset, Moment::CENTRAL );
+  Term rhoprime( yv, ncomp+density_offset, Moment::CENTRAL );
+  Term vprime( yv, ncomp+volume_offset, Moment::CENTRAL );
   //auto ds = -lookup( Product({rhoprime,vprime}), moments );
 
   // b. = -<ry.>/<R>
   std::vector< tk::real > bc( ncomp, 0.0 );
   for (ncomp_t c=0; c<ncomp; ++c) {
-    Term tr( static_cast<char>(std::tolower(depvar)),
-             ncomp+density_offset, Moment::CENTRAL );
-    Term ty( static_cast<char>(std::tolower(depvar)),
-             c, Moment::CENTRAL );
+    Term tr( yv, ncomp+density_offset, Moment::CENTRAL );
+    Term ty( yv, c, Moment::CENTRAL );
     bc[c] = -lookup( Product({tr,ty}), moments ) / R; // -<ryc>/<R>
   }
 
-  Term tR( static_cast<char>(std::toupper(depvar)), ncomp+density_offset,
-           Moment::ORDINARY );
-  Term tYN( static_cast<char>(std::toupper(depvar)), ncomp, Moment::ORDINARY );
+  Term tR( Yv, ncomp+density_offset, Moment::ORDINARY );
+  Term tYN( Yv, ncomp, Moment::ORDINARY );
 
   auto R2YN = lookup( Product({tR,tR,tYN}), moments );
 
@@ -269,14 +258,13 @@ walker::MixDirichletHomogeneous::update(
   std::vector< tk::real > R3YNY( ncomp, 0.0 );
   std::vector< tk::real > R3Y2( ncomp*ncomp, 0.0 );
   for (ncomp_t c=0; c<ncomp; ++c) {
-    y2[c] = lookup(
-      variance(static_cast<char>(std::tolower(depvar)),c), moments );
-    Term tYc( static_cast<char>(std::toupper(depvar)), c, Moment::ORDINARY );
+    y2[c] = lookup( variance(yv,c), moments );
+    Term tYc( Yv, c, Moment::ORDINARY );
     RY[c] = lookup( Product({tR,tYc}), moments );    // <RYc>
     R2Y[c] = lookup( Product({tR,tR,tYc}), moments ); // <R^2Yc>
-    R3YNY[c] = lookup( Product({tR,tR,tR,tYN,tYc}), moments ); // <R^3YNYc>
+    R3YNY[c] = lookup( Product({tR,tR,tR,tYc,tYN}), moments ); // <R^3YNYc>
     for (ncomp_t d=0; d<ncomp; ++d) {
-      Term tYd( static_cast<char>(std::toupper(depvar)), d, Moment::ORDINARY );
+      Term tYd( Yv, d, Moment::ORDINARY );
       // <R^3YcYd>
       R3Y2[c*ncomp+d] = lookup( Product({tR,tR,tR,tYc,tYd}), moments );
     }
@@ -287,16 +275,16 @@ walker::MixDirichletHomogeneous::update(
   // Reynolds means
 
   // Reynolds means, Yc
-  std::vector< tk::real > Y( ncomp, 0.0 );
-  for (ncomp_t c=0; c<ncomp; ++c) {
-    Y[c] = lookup( mean(depvar,c), moments );
-    //std::cout << "Y: " << Y[c] << ' ';
-  }
+  //std::vector< tk::real > Y( ncomp, 0.0 );
+  //for (ncomp_t c=0; c<ncomp; ++c) {
+  //  Y[c] = lookup( mean(depvar,c), moments );
+  //  //std::cout << "Y: " << Y[c] << ' ';
+  //}
   //std::cout << std::endl;
 
   // sum of Yc
-  tk::real sumY = 0.0;
-  for (ncomp_t c=0; c<ncomp; ++c) sumY += Y[c];
+  //tk::real sumY = 0.0;
+  //for (ncomp_t c=0; c<ncomp; ++c) sumY += Y[c];
 
 //      // Y|Kc
 //      std::vector< tk::real > YK( ncomp, 0.0 );
@@ -309,16 +297,16 @@ walker::MixDirichletHomogeneous::update(
   // Favre means
 
   // Ytc
-  std::vector< tk::real > Yt( ncomp, 0.0 );
-  for (ncomp_t c=0; c<ncomp; ++c) {
-    Yt[c] = RY[c] / R;
-    //std::cout << "Yt: " << Yt[c] << ' ';
-  }
+  //std::vector< tk::real > Yt( ncomp, 0.0 );
+  //for (ncomp_t c=0; c<ncomp; ++c) {
+  //  Yt[c] = RY[c] / R;
+  //  //std::cout << "Yt: " << Yt[c] << ' ';
+  //}
   //std::cout << std::endl;
 
   // sum of Ytc
-  tk::real sumYt = 0.0;
-  for (ncomp_t c=0; c<ncomp; ++c) sumYt += Yt[c];
+  //tk::real sumYt = 0.0;
+  //for (ncomp_t c=0; c<ncomp; ++c) sumYt += Yt[c];
   //std::cout << "sumYt: " << sumYt << '\n';
 
 //      // Yt|Kc
@@ -330,17 +318,16 @@ walker::MixDirichletHomogeneous::update(
 //      //std::cout << std::endl;
 
   // sum of <R^2Yc>
-  tk::real sumR2Y = 0.0;
-  std::vector< tk::real > sumR3Y2( ncomp, 0.0 );
-  for (ncomp_t c=0; c<ncomp; ++c) {
-    sumR2Y += R2Y[c];
-    for (ncomp_t d=0; d<ncomp; ++d) sumR3Y2[c] += R3Y2[c*ncomp+d];
-  }
+  //tk::real sumR2Y = 0.0;
+  //std::vector< tk::real > sumR3Y2( ncomp, 0.0 );
+  //for (ncomp_t c=0; c<ncomp; ++c) {
+  //  sumR2Y += R2Y[c];
+  //  for (ncomp_t d=0; d<ncomp; ++d) sumR3Y2[c] += R3Y2[c*ncomp+d];
+  //}
   //std::cout << "sumR2Y: " << sumR2Y << std::endl;
 
   // <r^2>, density variance
-  //auto rhovar = lookup(
-  //  variance(static_cast<char>(std::tolower(depvar)),ncomp), moments );
+  //auto rhovar = lookup( variance(yv,ncomp), moments );
   //std::cout << "<r^2>: " << rhovar << std::endl;
 
   // <R^2>
@@ -371,11 +358,12 @@ walker::MixDirichletHomogeneous::update(
     //S[c] = (drYcYc - k[c]/b[c]*drYc2YcYN) / (drYcYN + drYcYc);
     //S[c] = Yt[c] / (1.0 - sumYt + Yt[c]) - k[c]/b[c]*drYc2YcYN / (drYcYN + drYcYc);
 
-    S[c] = (R2Y[c] + 2.0*r[c]/rho[ncomp]*k[c]/b[c]*R3YNY[c]) / (R2Y[c] + R2YN);
-    //S[c] = Yt[c] / (1.0 - sumYt + Yt[c]);
+    //S[c] = Yt[c] / (1.0 - sumYt + Yt[c]);     // S_infty
+    S[c] = (R2Y[c] + 2.0*k[c]/b[c]*r[c]/rho[ncomp]*R3YNY[c]) / (R2Y[c] + R2YN);
+    //S[c] = (R2Y[c] + 2.0*k[c]/b[c]/rho[c]*R3YNY[c]) / (R2Y[c] + R2YN);
 
-    //std::cout << "S[" << c << "] = " << S[c] << ", using " << b[c] << ", "
-    //          << drYc2YcYN << ", " << drYcYN << ", " << drYcYc << '\n';
+    //std::cout << "S[" << c << "] = " << S[c] << ", b/k(1-S) = "
+    //          << b[c]/k[c]*(1.0-S[c]) << '\n';
 
   }
   //std::cout << std::endl;

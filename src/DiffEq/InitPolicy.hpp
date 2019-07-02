@@ -337,7 +337,7 @@ struct InitDirichlet {
     for (ncomp_t p=0; p<particles.nunk(); ++p) {
       // Generate N gamma-distributed random numbers with prescribed shape and
       // unit scale scale parameters.
-      for (std::size_t c=0; c<Y.size(); ++c) {
+      for (std::size_t c=0; c<ncomp+1; ++c) {
         rng.gamma( stream, 1, dir[c], 1.0, Y.data()+c );
       }
 
@@ -346,7 +346,7 @@ struct InitDirichlet {
       // Assign N=K+1 particle values by dividing the gamma-distributed numbers
       // by the sum of the N vlues, which yields a Dirichlet distribution. Note
       // that we also store the Nth value.
-      for (std::size_t c=0; c<Y.size(); ++c) {
+      for (std::size_t c=0; c<ncomp+1; ++c) {
         auto y = Y[c] / Ysum;
         if (y < 0.0 || y > 1.0) Throw( "Dirichlet samples out of bounds" );
         particles( p, c, offset ) = y;
