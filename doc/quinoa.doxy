@@ -2415,7 +2415,7 @@ HTML_EXTRA_STYLESHEET = \
 ##! M_FAVICON = @CMAKE_CURRENT_SOURCE_DIR@/../doc/images/quinoa_sum.png
 
 ##! M_LINKS_NAVBAR1 = why \
-##!                   "build <a href=\"https://quinoacomputing.org/index.html#mainpage_build\">Quickstart</a> git_submodules_subtrees licenses" \
+##!                   "build <a href=\"https://quinoacomputing.org/index.html#mainpage_build\">Quickstart</a> git_submodules_subtrees licenses build_system" \
 ##!                   "<a href=\"https://quinoacomputing.org/index.html#mainpage_tools\">Tools</a> walker_main inciter_main rngtest_main unittest_main meshconv_main" \
 ##!                   namespaces annotated files
 
