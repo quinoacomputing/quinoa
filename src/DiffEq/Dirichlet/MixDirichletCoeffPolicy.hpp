@@ -16,6 +16,7 @@
       \code{.cpp}
         CoeffPolicyName(
           tk::ctr::ncomp_type ncomp,
+          ctr::NormalizationType norm,
           const std::vector< kw::sde_b::info::expect::type >& b_,
           const std::vector< kw::sde_S::info::expect::type >& S_,
           const std::vector< kw::sde_kappa::info::expect::type >& kprime_,
@@ -28,8 +29,9 @@
           std::vector< kw::sde_kappa::info::expect::type >& k );
       \endcode
       where
-      - ncomp denotes the number of scalar components of the system of
+      - _ncomp_ denotes the number of scalar components of the system of
         MixDirichlet SDEs.
+      - _norm_ selects the type of normalization used (heavy or light).
       - Constant references to b_, S_, kprime_, rho_, which denote vectors
         of real values used to initialize the parameter vectors of the
         MixDirichlet SDEs. The length of the vectors must be equal to the number
@@ -54,6 +56,7 @@
         void update(
                char depvar,
                ncomp_t ncomp,
+               ctr::NormalizationType norm,
                std::size_t density_offset,
                std::size_t volume_offset,
                const std::map< tk::ctr::Product, tk::real >& moments,
@@ -66,7 +69,8 @@
       \endcode
       where _depvar_ is the dependent variable associated with the mix
       Dirichlet SDE, specified in the control file by the user, _ncomp_
-      is the number of components in the system, _density_offset_ is the offset
+      is the number of components in the system, _norm_ selects the type of
+      normalization used (heavy or light). _density_offset_ is the offset
       of the particle density in the solution array relative to the Nth scalar,
       _volume_offset_ is the offset of the particle specific volume in the
       solution array relative to the Nth scalar, _moments_ is the map
@@ -114,6 +118,7 @@ class MixDirichletCoeffConst {
     void update(
       char depvar,
       ncomp_t ncomp,
+      ctr::NormalizationType norm,
       std::size_t density_offset,
       std::size_t volume_offset,
       const std::map< tk::ctr::Product, tk::real >& moments,
@@ -165,6 +170,7 @@ class MixDirichletHomogeneous {
     void update(
       char depvar,
       ncomp_t ncomp,
+      ctr::NormalizationType norm,
       std::size_t density_offset,
       std::size_t volume_offset,
       const std::map< tk::ctr::Product, tk::real >& moments,

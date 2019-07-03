@@ -32,9 +32,9 @@ walker::MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho,
   std::vector< kw::sde_r::info::expect::type > r( rho.size()-1 );
 
   for (std::size_t i=0; i<rho.size()-1; ++i) {
-    if (norm == ctr::NormalizationType::LIGHT)
+    if (norm == ctr::NormalizationType::LIGHT)  // rhoN = rhoL
       r[i] = rho.back()/rho[i] + 1.0;
-    else
+    else                                        // rhoN = rhoH
       r[i] = rho.back()/rho[i] - 1.0;
   }
 
@@ -60,6 +60,7 @@ walker::MixDirichletCoeffConst::MixDirichletCoeffConst(
 // *****************************************************************************
 // Constructor: initialize coefficients
 //! \param[in] ncomp Number of scalar components in this SDE system
+//! \param[in] norm Normalization type (N=heavy or N=light)
 //! \param[in] b_ Vector used to initialize coefficient vector b
 //! \param[in] S_ Vector used to initialize coefficient vector S
 //! \param[in] kprime_ Vector used to initialize coefficient vector kprime and k
@@ -96,6 +97,7 @@ void
 walker::MixDirichletCoeffConst::update(
   char /*depvar*/,
   ncomp_t ncomp,
+  ctr::NormalizationType /*norm*/,
   std::size_t /* density_offset */,
   std::size_t /* volume_offset */,
   const std::map< tk::ctr::Product, tk::real >& /*moments*/,
@@ -109,6 +111,7 @@ walker::MixDirichletCoeffConst::update(
 //  Update coefficients
 //! \param[in] depvar Dependent variable
 //! \param[in] ncomp Number of scalar components in this SDE system
+//! \param[in] norm Normalization type (N=heavy or N=light)
 //! \param[in] density_offset Offset of particle density in solution array
 //!    relative to YN
 //! \param[in] volume_offset Offset of particle specific volume in solution
@@ -156,6 +159,7 @@ walker::MixDirichletHomogeneous::MixDirichletHomogeneous(
 // *****************************************************************************
 // Constructor: initialize coefficients
 //! \param[in] ncomp Number of scalar components in this SDE system
+//! \param[in] norm Normalization type (N=heavy or N=light)
 //! \param[in] b_ Vector used to initialize coefficient vector b
 //! \param[in] S_ Vector used to initialize coefficient vector S
 //! \param[in] kprime_ Vector used to initialize coefficient vector kprime and k
@@ -192,6 +196,7 @@ void
 walker::MixDirichletHomogeneous::update(
   char depvar,
   ncomp_t ncomp,
+  ctr::NormalizationType norm,
   std::size_t density_offset,
   std::size_t volume_offset,
   const std::map< tk::ctr::Product, tk::real >& moments,
@@ -205,6 +210,7 @@ walker::MixDirichletHomogeneous::update(
 //  Update coefficients
 //! \param[in] depvar Dependent variable
 //! \param[in] ncomp Number of scalar components in this SDE system
+//! \param[in] norm Normalization type (N=heavy or N=light)
 //! \param[in] density_offset Offset of particle density in solution array
 //!    relative to YN
 //! \param[in] volume_offset Offset of particle specific volume in solution
@@ -286,13 +292,13 @@ walker::MixDirichletHomogeneous::update(
   //tk::real sumY = 0.0;
   //for (ncomp_t c=0; c<ncomp; ++c) sumY += Y[c];
 
-//      // Y|Kc
-//      std::vector< tk::real > YK( ncomp, 0.0 );
-//      for (ncomp_t c=0; c<ncomp; ++c) {
-//        YK[c] = sumY - lookup( mean(depvar,c), moments );
-//        //std::cout << "YK: " << YK[c] << ' ';
-//      }
-//      //std::cout << std::endl;
+  //// Y|Kc
+  //std::vector< tk::real > YK( ncomp, 0.0 );
+  //for (ncomp_t c=0; c<ncomp; ++c) {
+  //  YK[c] = sumY - lookup( mean(depvar,c), moments );
+  //  //std::cout << "YK: " << YK[c] << ' ';
+  //}
+  //std::cout << std::endl;
 
   // Favre means
 
@@ -309,13 +315,13 @@ walker::MixDirichletHomogeneous::update(
   //for (ncomp_t c=0; c<ncomp; ++c) sumYt += Yt[c];
   //std::cout << "sumYt: " << sumYt << '\n';
 
-//      // Yt|Kc
-//      std::vector< tk::real > YtK( ncomp, 0.0 );
-//      for (ncomp_t c=0; c<ncomp; ++c) {
-//        YtK[c] = sumYt - Yt[c];
-//        //std::cout << "YtK: " << YtK[c] << ' ';
-//      }
-//      //std::cout << std::endl;
+  // Yt|Kc
+  //std::vector< tk::real > YtK( ncomp, 0.0 );
+  //for (ncomp_t c=0; c<ncomp; ++c) {
+  //  YtK[c] = sumYt - Yt[c];
+  //  //std::cout << "YtK: " << YtK[c] << ' ';
+  //}
+  //std::cout << std::endl;
 
   // sum of <R^2Yc>
   //tk::real sumR2Y = 0.0;
@@ -332,6 +338,14 @@ walker::MixDirichletHomogeneous::update(
 
   // <R^2>
   //auto R2 = lookup( Product({tR,tR}), moments );
+
+  // Assume heavy-fluid normalization by default: rhoN = rhoH
+  tk::real rhoL = rho[0], rhoH = rho[ncomp];
+  // Overwrite if light-fluid normalization is configured
+  if (norm == ctr::NormalizationType::LIGHT) {   // rhoN = rhoL
+    rhoL = rho[ncomp];
+    rhoH = rho[0];
+  }
 
   for (ncomp_t c=0; c<ncomp; ++c) {
 
@@ -359,8 +373,12 @@ walker::MixDirichletHomogeneous::update(
     //S[c] = Yt[c] / (1.0 - sumYt + Yt[c]) - k[c]/b[c]*drYc2YcYN / (drYcYN + drYcYc);
 
     //S[c] = Yt[c] / (1.0 - sumYt + Yt[c]);     // S_infty
-    S[c] = (R2Y[c] + 2.0*k[c]/b[c]*r[c]/rho[ncomp]*R3YNY[c]) / (R2Y[c] + R2YN);
-    //S[c] = (R2Y[c] + 2.0*k[c]/b[c]/rho[c]*R3YNY[c]) / (R2Y[c] + R2YN);
+
+    auto rcp = rhoL/rho[c] + 1.0;
+    auto rc = r[c];     // heavy-fluid normalization by default
+    // Overwrite if light-fluid normalization is configured
+    if (norm == ctr::NormalizationType::LIGHT) rc = (rcp - 2.0) * rhoH/rhoL;
+    S[c] = (R2Y[c] + 2.0*k[c]/b[c]*rc/rhoH*R3YNY[c]) / (R2Y[c] + R2YN);
 
     //std::cout << "S[" << c << "] = " << S[c] << ", b/k(1-S) = "
     //          << b[c]/k[c]*(1.0-S[c]) << '\n';
