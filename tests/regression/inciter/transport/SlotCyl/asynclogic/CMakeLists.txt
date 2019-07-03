@@ -19,7 +19,7 @@
 #   migr: 1: enable migration using RandCentLB, 0: no migration
 function(add_async_test scheme virt npes ppn migr)
   if (migr)
-    set(migr_cmd "+balancer RandCentLB +LBDebug 1 +cs")
+    set(migr_cmd "+balancer RandCentLB +LBDebug 1 +cs +LBPeriod 0.001")
     set(migr_append_name "_migr")
     set(migr_label "migration")
   endif()

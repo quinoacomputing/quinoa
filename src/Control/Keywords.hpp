@@ -3488,7 +3488,8 @@ struct nonblocking_info {
   { return "Select non-blocking migration"; }
   static std::string longDescription() { return
     R"(This keyword is used to select non-blocking, instead of the default
-       blocking, migration.)";
+       blocking, migration. WARNING: This feature is experimental, not well
+       tested, and may not always work as expected.)";
   }
   using alias = Alias< n >;
 };
