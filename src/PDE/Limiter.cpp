@@ -170,13 +170,26 @@ Superbee_P1( const std::vector< int >& esuel,
 // *****************************************************************************
 {
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
 
   auto beta_lim = 2.0;
 
   for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
-    auto dof_el = ndofel[e];
+    // If an rDG method is set up (P0P1), then, currently we compute the P1
+    // basis functions and solutions by default. This implies that P0P1 is
+    // unsupported in the p-adaptive DG (PDG).
+    std::size_t dof_el;
+    if (rdof > ndof)
+    {
+      dof_el = rdof;
+    }
+    else
+    {
+      dof_el = ndofel[e];
+    }
+
     if (dof_el > 1)
     {
       // Superbee is a TVD limiter, which uses min-max bounds that the

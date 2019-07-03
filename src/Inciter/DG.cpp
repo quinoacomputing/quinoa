@@ -25,7 +25,6 @@
 #include "ElemDiagnostics.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Refiner.hpp"
-#include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "Reorder.hpp"
 #include "Vector.hpp"
@@ -1258,7 +1257,9 @@ DG::lim()
 
     // Reconstruct second-order solution
     if (rdof == 4 && inciter::g_inputdeck.get< tag::discr, tag::ndof >() == 1)
-      leastSquares_P0P1( m_fd.Esuel(), 0, m_geoElem, m_u );
+    for (const auto& eq : g_dgpde)
+      eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
+                      d->Coord(), m_u );
 
     const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
     if (limiter == ctr::LimiterType::WENOP1)

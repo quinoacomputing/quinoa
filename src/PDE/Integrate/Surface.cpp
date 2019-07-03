@@ -227,8 +227,8 @@ tk::update_rhs_fa ( ncomp_t ncomp,
 //!   single-material compflow and linear transport.
 // *****************************************************************************
 {
-  Assert( B_l.size() == ndof_l, "Size mismatch" );
-  Assert( B_r.size() == ndof_r, "Size mismatch" );
+  //Assert( B_l.size() == ndof_l, "Size mismatch" );
+  //Assert( B_r.size() == ndof_r, "Size mismatch" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {
