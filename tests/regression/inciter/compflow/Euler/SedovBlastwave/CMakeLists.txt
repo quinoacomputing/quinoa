@@ -71,7 +71,7 @@ add_regression_test(compflow_euler_sedovblastwave_pdg_u0.9_migr ${INCITER_EXECUT
                     NUMPES 4
                     INPUTFILES sedov_blastwave_pdg.q unitsquare_01_3.6k.exo
                     ARGS -c sedov_blastwave_pdg.q -i unitsquare_01_3.6k.exo -v -u 0.9
-                         +balancer RandCentLB +LBDebug 1
+                         +balancer RandCentLB +LBDebug 1 +LBPeriod 0.001
                     BIN_BASELINE sedov_blastwave_pdg_pe4_u0.9.std.exo.0
                                  sedov_blastwave_pdg_pe4_u0.9.std.exo.1
                                  sedov_blastwave_pdg_pe4_u0.9.std.exo.2
