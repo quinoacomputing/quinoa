@@ -189,8 +189,7 @@ add_regression_test(gauss_hump_pdg_u0.8 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS migration)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
 
 
 # Parallel + virtualization + migration
