@@ -51,7 +51,7 @@ add_regression_test(cyl_advect_dgp1_lbfreq5_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES cyl_advect_dgp1.q unitsquare_01_3.6k.exo
                     ARGS -c cyl_advect_dgp1.q -i unitsquare_01_3.6k.exo -v
-                         -l 5 -n +balancer RandCentLB +LBDebug 1
+                         -l 5 +balancer RandCentLB +LBDebug 1
                     BIN_BASELINE cyl_advect_dgp1_pe4_u0.0.std.exo.0
                                  cyl_advect_dgp1_pe4_u0.0.std.exo.1
                                  cyl_advect_dgp1_pe4_u0.0.std.exo.2
