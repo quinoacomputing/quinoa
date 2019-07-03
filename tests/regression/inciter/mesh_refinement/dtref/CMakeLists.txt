@@ -133,7 +133,7 @@ add_regression_test(amr_dtref_u_compflow_nleg_diagcg_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES nleg_diagcg_amr.q unitcube_1k.exo
                     ARGS -c nleg_diagcg_amr.q -i unitcube_1k.exo -v
-                         +balancer RandCentLB +LBDebug 1 +cs +LBPeriod 0.001
+                         +balancer RandCentLB +LBDebug 1 +cs
                     BIN_BASELINE nleg_diagcg_pe4_u.std.e-s.0.4.0
                                  nleg_diagcg_pe4_u.std.e-s.0.4.1
                                  nleg_diagcg_pe4_u.std.e-s.0.4.2
@@ -205,7 +205,7 @@ add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg ${INCITER_EXECUTABLE}
                      NUMPES 4
                      INPUTFILES nleg_reord_diagcg_amr.q unitcube_1k.exo
                      ARGS -c nleg_reord_diagcg_amr.q -i unitcube_1k.exo -v
-                          +balancer RandCentLB +LBDebug 1 +cs +LBPeriod 0.001
+                          +balancer RandCentLB +LBDebug 1 +cs
                      BIN_BASELINE nleg_diagcg_pe4_u.std.e-s.0.4.0
                                   nleg_diagcg_pe4_u.std.e-s.0.4.1
                                   nleg_diagcg_pe4_u.std.e-s.0.4.2
@@ -311,7 +311,7 @@ add_regression_test(amr_dtref_u_trans_gauss_hump_dg_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES gauss_hump.q unitcube_01_112_ss3.exo
                     ARGS -c gauss_hump.q -i unitcube_01_112_ss3.exo -v
-                         +balancer RandCentLB +LBDebug 1 +cs +LBPeriod 0.001
+                         +balancer RandCentLB +LBDebug 1 +cs
                     BIN_BASELINE gauss_hump_u_trans_pe4_u0.0.std.e-s.0.4.0
                                  gauss_hump_u_trans_pe4_u0.0.std.e-s.0.4.1
                                  gauss_hump_u_trans_pe4_u0.0.std.e-s.0.4.2
@@ -348,7 +348,7 @@ add_regression_test(amr_dtref_u_trans_reord_gauss_hump_dg_migr
                     NUMPES 4
                     INPUTFILES gauss_hump_reord.q unitcube_01_112_ss3.exo
                     ARGS -c gauss_hump_reord.q -i unitcube_01_112_ss3.exo -v
-                         +balancer RandCentLB +LBDebug 1 +cs +LBPeriod 0.001
+                         +balancer RandCentLB +LBDebug 1 +cs
                     BIN_BASELINE gauss_hump_u_trans_pe4_u0.0.std.e-s.0.4.0
                                  gauss_hump_u_trans_pe4_u0.0.std.e-s.0.4.1
                                  gauss_hump_u_trans_pe4_u0.0.std.e-s.0.4.2
@@ -474,7 +474,7 @@ add_regression_test(amr_dtref_u_trans_diagcg_u0.8_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_amr_diagcg.q unitsquare_01_955.exo
                     ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo -v
-                         -u 0.8 +balancer RandCentLB +LBDebug 1 +cs +LBPeriod 0.001
+                         -u 0.8 +balancer RandCentLB +LBDebug 1 +cs
                     BIN_BASELINE slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.0
                                  slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.1
                                  slot_cyl_diagcg_pe4_u_u0.8.std.e-s.0.19.2
@@ -682,7 +682,7 @@ add_regression_test(amr_dtref_u_trans_gauss_hump_dg_u0.8_migr
                     NUMPES 4
                     INPUTFILES gauss_hump.q unitcube_01_112_ss3.exo
                     ARGS -c gauss_hump.q -i unitcube_01_112_ss3.exo -v -u 0.8
-                         +balancer RandCentLB +LBDebug 1 +cs +LBPeriod 0.001
+                         +balancer RandCentLB +LBDebug 1 +cs
                     BIN_BASELINE gauss_hump_u_trans_pe4_u0.8.std.e-s.0.18.0
                                  gauss_hump_u_trans_pe4_u0.8.std.e-s.0.18.1
                                  gauss_hump_u_trans_pe4_u0.8.std.e-s.0.18.2
