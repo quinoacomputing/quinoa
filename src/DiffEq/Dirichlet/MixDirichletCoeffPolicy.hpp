@@ -182,9 +182,57 @@ class MixDirichletHomogeneous {
       std::vector< kw::sde_kappa::info::expect::type >& S ) const;
 };
 
+//! MixDirichlet coefficients policity: mean(rho) forced const in time
+//! \details User-defined parameters b' and kappa' are functions of an
+//!   externally, e.g., DNS-, provided hydrodynamics time scale ensuring decay
+//!   in the evolution of \<y_alpha^2\>. Additionally, S_alpha is constrained to
+//!   make d\<rho\>/dt = 0. Additionally, we pull in a hydrodynamic timescale
+//!   from an external function.
+//! \see kw::hydrotimescale_info
+class MixDirichletHydroTimeScale {
+
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+
+  public:
+    //! Constructor: initialize coefficients
+    MixDirichletHydroTimeScale(
+      tk::ctr::ncomp_type ncomp,
+      ctr::NormalizationType norm,
+      const std::vector< kw::sde_b::info::expect::type >& b_,
+      const std::vector< kw::sde_S::info::expect::type >& S_,
+      const std::vector< kw::sde_kappa::info::expect::type >& kprime_,
+      const std::vector< kw::sde_rho::info::expect::type >& rho_,
+      std::vector< kw::sde_b::info::expect::type  >& b,
+      std::vector< kw::sde_kappa::info::expect::type >& kprime,
+      std::vector< kw::sde_S::info::expect::type >& S,
+      std::vector< kw::sde_rho::info::expect::type >& rho,
+      std::vector< kw::sde_r::info::expect::type >& r,
+      std::vector< kw::sde_kappa::info::expect::type >& k );
+
+    static ctr::CoeffPolicyType type() noexcept
+    { return ctr::CoeffPolicyType::HYDROTIMESCALE; }
+
+    //! Update coefficients
+    void update(
+      char depvar,
+      ncomp_t ncomp,
+      ctr::NormalizationType norm,
+      std::size_t density_offset,
+      std::size_t volume_offset,
+      const std::map< tk::ctr::Product, tk::real >& moments,
+      const std::vector< kw::sde_rho::info::expect::type >& rho,
+      const std::vector< kw::sde_r::info::expect::type >& r,
+      const std::vector< kw::sde_kappa::info::expect::type >& kprime,
+      const std::vector< kw::sde_b::info::expect::type >& b,
+      std::vector< kw::sde_kappa::info::expect::type >& k,
+      std::vector< kw::sde_kappa::info::expect::type >& S ) const;
+};
+
 //! List of all MixDirichlet's coefficients policies
 using MixDirichletCoeffPolicies = brigand::list< MixDirichletCoeffConst
-                                               , MixDirichletHomogeneous >;
+                                               , MixDirichletHomogeneous
+                                               , MixDirichletHydroTimeScale >;
 
 } // walker::
 
