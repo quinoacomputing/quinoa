@@ -137,7 +137,8 @@ tk::bndLeastSq_P0P1( ncomp_t system,
           fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
 
         // Compute the state variables at the left element
-        auto ul = eval_state( ncomp, offset, 1, 1, el, U, {{ 1.0 }} );
+        std::vector< real >B(1,1.0);
+        auto ul = eval_state( ncomp, offset, 1, 1, el, U, B );
 
         Assert( ul.size() == ncomp, "Size mismatch" );
 
