@@ -207,17 +207,17 @@ add_regression_test(amr_t0ref_ii ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS amr)
 
-# add_regression_test(amr_t0ref_iu_trans ${INCITER_EXECUTABLE}
-#                     NUMPES 2
-#                     INPUTFILES ic_uniform.q unitsquare_01_141.exo
-#                     ARGS -c ic_uniform.q -i unitsquare_01_141.exo -v
-#                     BIN_BASELINE amr_ic_uniform.std.exo.0
-#                                  amr_ic_uniform.std.exo.1
-#                     BIN_RESULT  out.e-s.0.2.0
-#                                 out.e-s.0.2.1
-#                     BIN_DIFF_PROG_ARGS -m
-#                     BIN_DIFF_PROG_CONF exodiff.cfg
-#                     LABELS amr)
+add_regression_test(amr_t0ref_iu_trans ${INCITER_EXECUTABLE}
+                    NUMPES 2
+                    INPUTFILES ic_uniform.q unitsquare_01_141.exo
+                    ARGS -c ic_uniform.q -i unitsquare_01_141.exo -v
+                    BIN_BASELINE amr_ic_uniform.std.exo.0
+                                 amr_ic_uniform.std.exo.1
+                    BIN_RESULT  out.e-s.0.2.0
+                                out.e-s.0.2.1
+                    BIN_DIFF_PROG_ARGS -m
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS amr)
 
 add_regression_test(amr_t0ref_u_trans_dg ${INCITER_EXECUTABLE}
                     NUMPES 4
