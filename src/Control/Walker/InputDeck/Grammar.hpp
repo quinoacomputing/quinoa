@@ -369,7 +369,7 @@ namespace grm {
         // Ensure a coupled position model is configured
         couple< tag::velocity,
             tag::position, tag::position_id, MsgKey::POSITION_DEPVAR >
-          ( in, stack, MsgKey::POSITION_MISSING );
+          ( in, stack, MsgKey::OPTIONAL );
         // Compute equation id if a coupled dissipation model is configured
         couple< tag::velocity,
             tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
