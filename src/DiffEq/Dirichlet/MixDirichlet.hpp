@@ -129,7 +129,7 @@ class MixDirichlet {
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Violating boundedness here is a hard error as indicates a problem
         // with the initial conditions
-        for (ncomp_t i=0; i<m_ncomp; ++i) {
+        for (ncomp_t i=0; i<m_ncomp+1; ++i) {
           auto y = particles( p, i, m_offset );
           if (y < 0.0 || y > 1.0) Throw( "IC scalar out of bounds" );
         }
@@ -150,8 +150,8 @@ class MixDirichlet {
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       // Update SDE coefficients
-      coeff.update( m_depvar, m_ncomp, DENSITY_OFFSET, VOLUME_OFFSET, moments,
-                    m_rho, m_r, m_kprime, m_b, m_k, m_S );
+      coeff.update( m_depvar, m_ncomp, m_norm, DENSITY_OFFSET, VOLUME_OFFSET,
+                    moments, m_rho, m_r, m_kprime, m_b, m_k, m_S );
 
       // Advance particles
       const auto npar = particles.nunk();
@@ -208,29 +208,14 @@ class MixDirichlet {
     //! \return Instantaneous value of the density, rho
     //! \details This is computed based 1/rho = sum_{i=1}^N Y_i/R_i, where R_i
     //!   are the constant pure-fluid densities and the Y_i are the mass
-    //!   fractions, of the N materials. (Note that we only solve for K=N-1
-    //!   mass fractions.)
+    //!   fractions, of the N materials.
     tk::real rho( const tk::Particles& particles, ncomp_t p ) const {
       // start computing density
       tk::real d = 0.0;
-      for (ncomp_t i=0; i<=m_ncomp; ++i)
+      for (ncomp_t i=0; i<m_ncomp+1; ++i)
         d += particles( p, i, m_offset ) / m_rho[i];
       // return particle density
       return 1.0/d;
-    }
-
-    //! \brief Return specific volume for mass fractions
-    //! \details This function returns the instantaneous specific volume, v,
-    //!   based on the multiple mass fractions, Y_c.
-    //! \param[in] particles Array of particle properties
-    //! \param[in] p Particle index
-    //! \return Instantaneous value of the specific volume, v
-    //! \details This is computed based v = 1/rho = sum_{i=1}^N Y_i/R_i,
-    //!   where R_i are the constant pure-fluid densities and the Y_i are the
-    //!   mass fractions, of the N materials. (Note that we only solve for K=N-1
-    //!   mass fractions.)
-    tk::real vol( const tk::Particles& particles, ncomp_t p ) const {
-      return 1.0 / rho( particles, p );
     }
 
     //! Compute instantaneous values derived from particle mass fractions
