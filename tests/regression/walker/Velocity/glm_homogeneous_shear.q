@@ -34,7 +34,7 @@ walker
   velocity      # configure a velocity equation
     depvar u
     solve fluctuation
-    variant glm # select the simplified Langevin model (SLM/GLM)
+    variant glm # select the generalized Langevin model (SLM/GLM)
     position x  # couple a position model with dependent variable x
     dissipation o  # couple a dissipation model with dependent variable o
     init jointgaussian
