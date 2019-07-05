@@ -118,16 +118,14 @@ class VelocityCoeffStationary {
   public:
     //! Constructor: initialize coefficients
     VelocityCoeffStationary( kw::sde_c0::info::expect::type C0_,
-                               kw::sde_c0::info::expect::type& C0,
-                               std::array< tk::real, 9 >& dU );
+                             kw::sde_c0::info::expect::type& C0,
+                             std::array< tk::real, 9 >& );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::STATIONARY; }
 
-    //! Update the model coefficients (prescribing shear)
-    //! \details Update the dissipation rate (eps) and G_{ij} based on the
-    //!   turbulent kinetic energy (k) for a prescribed honmogeneous shear flow.
+    //! Update the model coefficients forcing a statistically stationary PDF
     void update( char,
                  char,
                  const std::map< tk::ctr::Product, tk::real >&,
@@ -138,10 +136,6 @@ class VelocityCoeffStationary {
                  tk::real,
                  tk::real& eps,
                  std::array< tk::real, 9 >& G ) const;
-
-  private:
-    //! Mean velocity gradient prescribed for simpled 1D homogeneous shear
-    std::array< tk::real, 9 > m_dU;
 };
 
 //! Velocity equation coefficients policy with DNS hydrodynamics time scale
