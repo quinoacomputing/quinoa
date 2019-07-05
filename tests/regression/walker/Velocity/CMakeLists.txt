@@ -11,15 +11,6 @@ add_regression_test(Velocity_SLM_HomogeneousShear ${WALKER_EXECUTABLE}
                     LABELS verification)
 
 add_regression_test(Velocity_SLM_HomogeneousShear ${WALKER_EXECUTABLE}
-                    NUMPES 2
-                    INPUTFILES slm_homogeneous_shear.q
-                    ARGS -c slm_homogeneous_shear.q -v
-                    TEXT_BASELINE slm_homogeneous_shear.stat.txt.std
-                    TEXT_RESULT stat.txt
-                    TEXT_DIFF_PROG_CONF velocity.ndiff.cfg
-                    LABELS verification)
-
-add_regression_test(Velocity_SLM_HomogeneousShear ${WALKER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slm_homogeneous_shear.q
                     ARGS -c slm_homogeneous_shear.q -v
