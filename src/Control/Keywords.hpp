@@ -3692,7 +3692,15 @@ struct output_info {
   static std::string name() { return "output"; }
   static std::string shortDescription() { return "Specify the output file"; }
   static std::string longDescription() { return
-    R"(This option is used to define the output file name.)";
+    R"(This option is used to define the output file name. In MeshConv, this is
+    used to specify the output mesh file name. In Inciter this is used to
+    specify the output base filename. The base filename is appended by
+    ".e-s.<meshid>.<numchares>.<chareid>", where 'e-s' probably stands for
+    ExodusII sequence (the output file format), <meshid> counts the number of
+    new meshes (this is incremented whenever the mesh is new compared to the
+    previous iteration, due to, e.g., mesh refinement), <numchares> is the total
+    number of mesh partitions, and <chareid> is the work unit (or mesh
+    partition) id.)";
   }
   using alias = Alias< o >;
   struct expect {
