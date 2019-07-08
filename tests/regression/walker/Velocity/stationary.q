@@ -3,7 +3,7 @@
 # Keywords are case-sensitive
 
 title "Langevin velocity PDF model keeping the joint
-       PDF constat in time using constant coefficients"
+       PDF constant in time using constant coefficients"
 
 walker
 
