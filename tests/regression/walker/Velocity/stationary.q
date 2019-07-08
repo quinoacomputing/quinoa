@@ -2,7 +2,7 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Coupled position, velocity, dissipation joint PDF keeping a joint
+title "Langevin velocity PDF model keeping the joint
        PDF constat in time using constant coefficients"
 
 walker
