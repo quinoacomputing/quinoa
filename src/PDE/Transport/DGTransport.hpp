@@ -199,9 +199,10 @@ class Transport {
 
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == ndof*m_ncomp && R.nprop() == ndof*m_ncomp,
-              "Number of components in solution and right-hand side vector " 
-              "must equal "+ std::to_string(ndof*m_ncomp) );
+      Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
+              "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
               "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,

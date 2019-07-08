@@ -55,29 +55,26 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
     // least-squares overdetermined system
     std::array< real, 3 > wdeltax{{ 0.0, 0.0, 0.0 }};
 
-    for (std::size_t j=0; j<4; ++j)
+    for (std::size_t idir=0; idir<3; ++idir)
+      wdeltax[idir] = geoElem(er,idir+1,0)-geoElem(el,idir+1,0);
+
+    for (std::size_t idir=0; idir<3; ++idir)
     {
-      for (std::size_t idir=0; idir<3; ++idir)
-        wdeltax[idir] = geoElem(er,idir+1,0)-geoElem(el,idir+1,0);
-
-      for (std::size_t idir=0; idir<3; ++idir)
+      // rhs vector
+      for (ncomp_t c=0; c<ncomp; ++c)
       {
-        // rhs vector
-        for (ncomp_t c=0; c<ncomp; ++c) 
-        {
-          auto mark = c*rdof;
-          rhs_ls[el][c][idir] +=
-            wdeltax[idir] * (U(er,mark,offset)-U(el,mark,offset));
-          rhs_ls[er][c][idir] -=
-            wdeltax[idir] * (U(er,mark,offset)-U(el,mark,offset));
-        }
+        auto mark = c*rdof;
+        rhs_ls[el][c][idir] +=
+          wdeltax[idir] * (U(er,mark,offset)-U(el,mark,offset));
+        rhs_ls[er][c][idir] +=
+          wdeltax[idir] * (U(er,mark,offset)-U(el,mark,offset));
+      }
 
-        // lhs matrix
-        for (std::size_t jdir=0; jdir<3; ++jdir)
-        {
-          lhs_ls[el][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
-          lhs_ls[er][idir][jdir] -= wdeltax[idir] * wdeltax[jdir];
-        }
+      // lhs matrix
+      for (std::size_t jdir=0; jdir<3; ++jdir)
+      {
+        lhs_ls[el][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
+        lhs_ls[er][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
       }
     }
   }
@@ -148,7 +145,7 @@ tk::bndLeastSq_P0P1( ncomp_t system,
         std::array< real, 3 > wdeltax{{ 0.0, 0.0, 0.0 }};
 
         for (std::size_t idir=0; idir<3; ++idir)
-          wdeltax[idir] = geoFace(f,4+idir,0)-geoElem(el,1+idir,0);
+          wdeltax[idir] = fc[idir]-geoElem(el,1+idir,0);
 
         for (std::size_t idir=0; idir<3; ++idir)
         {
@@ -256,7 +253,7 @@ tk::transform_P0P1( ncomp_t offset,
 
     for (std::size_t i=0; i<3; ++i)
       for (std::size_t j=0; j<3; ++j)
-        dBdxa[i][j] = dBdx[j][i+1];
+        dBdxa[i][j] = dBdx[i][j+1];
 
     auto de = tk::determinant3by3( dBdxa );
 
