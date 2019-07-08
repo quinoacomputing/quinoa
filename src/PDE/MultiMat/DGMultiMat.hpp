@@ -143,9 +143,9 @@ class MultiMat {
 
       // allocate and initialize matrix and vector for reconstruction
       std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-        lhs_ls(fd.Esuel().size()/4);
+        lhs_ls(U.nunk());
       std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhs_ls(fd.Esuel().size()/4);
+        rhs_ls(U.nunk());
 
       for (std::size_t e=0; e<rhs_ls.size(); ++e)
       {
