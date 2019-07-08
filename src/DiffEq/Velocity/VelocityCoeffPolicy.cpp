@@ -46,7 +46,7 @@ walker::VelocityCoeffConstShear::update(
   tk::real& eps,
   std::array< tk::real, 9 >& G ) const
 // *****************************************************************************
-//  Update the model coefficients (prescribing shear)
+//  Update the model coefficients prescribing shear
 //! \param[in] depvar Dependent variable for of this SDE
 //! \param[in] dissipation_depvar Dependent variable for coupled dissipation eq
 //! \param[in] moments Map of statistical moments
@@ -117,7 +117,7 @@ walker::VelocityCoeffStationary::update(
 //! \param[in,out] eps Dissipation rate of turbulent kinetic energy, force = 1
 //! \param[in,out] G Coefficient tensor (3x3) in the Langevin equation
 //! \details Update the dissipation rate (eps) and G_{ij} so that the velocity
-//!   PDF is stationary..The value of C0 is insignificant for a forced
+//!   PDF is stationary. The value of C0 is insignificant for a forced
 //!   stationary velocity PDF because drift and diffusion are in balance, so
 //!   that dk/dt = 0.
 // *****************************************************************************
@@ -166,7 +166,8 @@ walker::VelocityCoeffHydroTimeScale::update(
   tk::real& eps,
   std::array< tk::real, 9 >& G ) const
 // *****************************************************************************
-//  Update the model coefficients using a prescribed hydrodynamics time scale
+//  Update the model coefficients sampling the hydrodynamics time scale from a
+//  prescribed function table
 //! \param[in] depvar Dependent variable for of this SDE
 //! \param[in] moments Map of statistical moments
 //! \param[in] hts Table to take hydrodynamics time scale from
