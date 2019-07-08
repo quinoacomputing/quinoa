@@ -232,7 +232,7 @@ Superbee_P1( const std::vector< int >& esuel,
       // to loop over all the quadrature points of all faces of element e,
       // coordinates of the quadrature points are needed.
       // Number of quadrature points for face integration
-      auto ng = tk::NGfa(rdof);
+      auto ng = tk::NGfa(ndof);
 
       // arrays for quadrature points
       std::array< std::vector< tk::real >, 2 > coordgp;
