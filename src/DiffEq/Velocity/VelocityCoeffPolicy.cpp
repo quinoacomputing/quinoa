@@ -133,8 +133,9 @@ walker::VelocityCoeffStationary::update(
   // Compute turbulent kinetic energy dissipation rate
   eps = O*k;
 
-  // Update drift tensor to force the velocity PDF stationary, see Pope,
-  // Turbulent Flows, 2000, Eq.12.100.
+  // Update drift tensor to force the velocity PDF stationary. Note that his is
+  // NOT the simplified or generalized Langevin model, but a modification to
+  // keep the PDF stationary, see Pope, Turbulent Flows, 2000, Eq.12.100.
   G.fill( 0.0 );
   G[0] = G[4] = G[8] = -0.75*C0*O;
 }
