@@ -15,6 +15,18 @@ add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
 
+add_regression_test(gauss_hump_p0p1 ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES gauss_hump_p0p1.q unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_p0p1.q -i unitsquare_01_3.6k.exo -v
+                    BIN_BASELINE gauss_hump_p0p1.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_p0p1.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+
 add_regression_test(gauss_hump_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES gauss_hump_dgp1.q unitsquare_01_3.6k.exo
@@ -66,6 +78,24 @@ add_regression_test(gauss_hump_dg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+
+add_regression_test(gauss_hump_p0p1 ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES gauss_hump_p0p1.q unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_p0p1.q -i unitsquare_01_3.6k.exo -v
+                    BIN_BASELINE gauss_hump_p0p1_pe4_u0.0.std.exo.0
+                                 gauss_hump_p0p1_pe4_u0.0.std.exo.1
+                                 gauss_hump_p0p1_pe4_u0.0.std.exo.2
+                                 gauss_hump_p0p1_pe4_u0.0.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                    BIN_DIFF_PROG_ARGS -m
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
 
