@@ -83,6 +83,7 @@ walker::MixMassFracBetaCoeffDecay::update(
   char,
   char,
   ctr::DepvarType,
+  ctr::DepvarType /*scalar_solve*/,
   ncomp_t ncomp,
   const std::map< tk::ctr::Product, tk::real >& moments,
   const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
@@ -180,6 +181,7 @@ walker::MixMassFracBetaCoeffHomDecay::update(
   char,
   char,
   ctr::DepvarType,
+  ctr::DepvarType /*scalar_solve*/,
   ncomp_t ncomp,
   const std::map< tk::ctr::Product, tk::real >& moments,
   const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
@@ -318,6 +320,7 @@ walker::MixMassFracBetaCoeffMonteCarloHomDecay::update(
   char,
   char,
   ctr::DepvarType,
+  ctr::DepvarType /*scalar_solve*/,
   ncomp_t ncomp,
   const std::map< tk::ctr::Product, tk::real >& moments,
   const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
@@ -469,6 +472,7 @@ walker::MixMassFracBetaCoeffHydroTimeScale::update(
   char,
   char,
   ctr::DepvarType,
+  ctr::DepvarType /*scalar_solve*/,
   ncomp_t ncomp,
   const std::map< tk::ctr::Product, tk::real >& moments,
   const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
@@ -672,12 +676,13 @@ walker::MixMassFracBetaCoeffInstVel::update(
   char dissipation_depvar,
   char /*velocity_depvar*/,
   ctr::DepvarType /*velocity_solve*/,
+  ctr::DepvarType solve,
   ncomp_t ncomp,
   const std::map< tk::ctr::Product, tk::real >& moments,
   const std::vector< kw::sde_bprime::info::expect::type  >& /*bprime*/,
   const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
-  const std::vector< kw::sde_rho2::info::expect::type >& rho2,
-  const std::vector< kw::sde_r::info::expect::type >& r,
+  const std::vector< kw::sde_rho2::info::expect::type >& /*rho2*/,
+  const std::vector< kw::sde_r::info::expect::type >& /*r*/,
   const std::vector< tk::Table >&,
   const std::vector< tk::Table >&,
   std::vector< kw::sde_b::info::expect::type  >& b,
@@ -709,80 +714,49 @@ walker::MixMassFracBetaCoeffInstVel::update(
   using tk::ctr::variance;
   using tk::ctr::cen3;
 
-  if (m_it == 0)
-    for (ncomp_t c=0; c<ncomp; ++c)
+  if (m_it == 0) {
+    for (ncomp_t c=0; c<ncomp; ++c) {
        m_s.push_back( S[c] );
+    }
+  }
 
-  // statistics nomenclature:
-  //   Y = instantaneous mass fraction,
-  //   R = instantaneous density,
-  //   y = Y - <Y>, mass fraction fluctuation about its mean,
-  //   r = R - <R>, density fluctuation about its mean,
-  // <Y> = mean mass fraction,
-  // <R> = mean density,
   for (ncomp_t c=0; c<ncomp; ++c) {
 
-    // const tk::ctr::Term Y( static_cast<char>(std::toupper(depvar)),
-    //                        c,
-    //                        tk::ctr::Moment::ORDINARY );
-    // const tk::ctr::Term dens( static_cast<char>(std::toupper(depvar)),
-    //                           c+ncomp,
-    //                           tk::ctr::Moment::ORDINARY );
-    const tk::ctr::Term s1( static_cast<char>(std::tolower(depvar)),
-                            c+ncomp,
-                            tk::ctr::Moment::CENTRAL );
-    const tk::ctr::Term s2( static_cast<char>(std::tolower(depvar)),
-                            c+ncomp*2,
-                            tk::ctr::Moment::CENTRAL );
-
-    //const auto RY = tk::ctr::Product( { dens, Y } );
-    //tk::real ry = lookup( RY, moments );                       // <RY>
-    const auto dscorr = tk::ctr::Product( { s1, s2 } );
-    tk::real ds = -lookup( dscorr, moments );                  // b = -<rv>
-    tk::real d = lookup( mean(depvar,c+ncomp), moments );      // <R>
-    tk::real d2 = lookup( variance(depvar,c+ncomp), moments ); // <r^2>
-    tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
-    //tk::real yt = ry/d;
-
-    // Compute turbulent kinetic energy
-    // auto K = tke( velocity_depvar, velocity_solve, moments );
-    // Access mean turbulence frequency from coupled dissipation model
-    // hydroptimescale: eps/k = <O>
+    tk::real y2 = 0.0;
     tk::real ts = 1.0;
-    if (dissipation_depvar != '-')      // only if dissipation is coupled
-      ts = lookup( mean(dissipation_depvar,0), moments );
 
-    //auto pe = 1.0; // hydroproductions: P/eps = 1.0 (equilibrium)
+    if (solve == ctr::DepvarType::FULLVAR) {
 
-    // tk::real a = r[c]/(1.0+r[c]*yt);
-    // tk::real bnm = a*a*yt*(1.0-yt);
-    // tk::real thetab = 1.0 - ds/bnm;
-    // tk::real f2 =
-    //   1.0 / std::pow(1.0 + std::pow(pe-1.0,2.0)*std::pow(ds,0.25),0.5);
-    // tk::real b1 = m_s[0];
-    // tk::real b2 = m_s[1];
-    // tk::real b3 = m_s[2];
-    // tk::real eta = d2/d/d/ds;
-    // tk::real beta2 = b2*(1.0+eta*ds);
-    // tk::real Thetap = thetab*0.5*(1.0+eta/(1.0+eta*ds));
-    // tk::real beta3 = b3*(1.0+eta*ds);
-    // tk::real beta10 = b1 * (1.0+ds)/(1.0+eta*ds);
-    tk::real beta1 = 2.0;//bprime[c] * 2.0/(1.0+eta+eta*ds) *
-                  //(beta10 + beta2*Thetap*f2 + beta3*Thetap*(1.0-Thetap)*f2);
+      y2 = lookup( variance(depvar,c), moments );       // <y^2>
+
+      // Access mean turbulence frequency from coupled dissipation model
+      // hydroptimescale: eps/k = <O>
+      if (dissipation_depvar != '-') {     // only if dissipation is coupled
+        ts = lookup( mean(dissipation_depvar,0), moments );
+      }
+
+    } else if (solve == ctr::DepvarType::FLUCTUATION) {
+
+      // Since we are solving for the fluctuating scalar, the "ordinary"
+      // moments are really central moments
+      auto d = static_cast< char >( std::toupper( depvar ) );
+      tk::ctr::Term y( d, c, tk::ctr::Moment::ORDINARY );
+      y2 = lookup( tk::ctr::Product( {y,y} ), moments );       // <y^2>
+
+      // Access mean turbulence frequency from coupled dissipation model
+      // hydroptimescale: eps/k = <O>
+      if (dissipation_depvar != '-') {     // only if dissipation is coupled
+        ts = lookup( mean(dissipation_depvar,0), moments );
+      }
+
+    } else Throw( "Depvar type not implemented" );
+
+    tk::real beta1 = 2.0;
     b[c] = beta1 * ts;
-    k[c] = kprime[c] * beta1 * ts * ds * ds;
+    k[c] = kprime[c] * beta1 * ts * y2;
 
-    tk::real R = 1.0 + d2/d/d;
-    tk::real B = -1.0/r[c]/r[c];
-    tk::real C = (2.0+r[c])/r[c]/r[c];
-    tk::real D = -(1.0+r[c])/r[c]/r[c];
-    tk::real diff =
-      B*d/rho2[c] +
-      C*d*d*R/rho2[c]/rho2[c] +
-      D*d*d*d*(1.0 + 3.0*d2/d/d + d3/d/d/d)/rho2[c]/rho2[c]/rho2[c];
-    S[c] = (rho2[c]/d/R +
-           2.0*k[c]/b[c]*rho2[c]*rho2[c]/d/d*r[c]*r[c]/R*diff - 1.0) / r[c];
-  }
+    S[c] = 0.5;
+  }  
 
   ++m_it;
 }

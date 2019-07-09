@@ -369,7 +369,7 @@ namespace grm {
         // Ensure a coupled position model is configured
         couple< tag::velocity,
             tag::position, tag::position_id, MsgKey::POSITION_DEPVAR >
-          ( in, stack, MsgKey::POSITION_MISSING );
+          ( in, stack, MsgKey::OPTIONAL );
         // Compute equation id if a coupled dissipation model is configured
         couple< tag::velocity,
             tag::dissipation, tag::dissipation_id, MsgKey::DISSIPATION_DEPVAR >
@@ -459,6 +459,10 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       using walker::deck::neq;
       using eq = tag::mixmassfracbeta;
+      // Error out if no dependent variable to solve for was selected
+      const auto& solve = stack.template get< tag::param, eq, tag::solve >();
+      if (solve.size() != neq.get< eq >())
+        Message< Stack, ERROR, MsgKey::NOSOLVE >( stack, in );
       // if there was a mixmassfracbeta eq block defined
       if (neq.get< eq >() > 0) {
         // Compute equation id if a coupled velocity model is configured
@@ -1139,6 +1143,11 @@ namespace deck {
                                             ctr::CoeffPolicy,
                                             tag::mixmassfracbeta,
                                             tag::coeffpolicy >,
+                           tk::grm::policy< use,
+                                            use< kw::solve >,
+                                            ctr::Depvar,
+                                            tag::mixmassfracbeta,
+                                            tag::solve >,
                            icdelta< tag::mixmassfracbeta >,
                            icbeta< tag::mixmassfracbeta >,
                            icgamma< tag::mixmassfracbeta >,

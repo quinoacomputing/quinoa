@@ -94,7 +94,7 @@ add_regression_test(cfl_u0.9_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_cfl_diagcg.q unitsquare_01_3.6k.exo
                     ARGS -c slot_cyl_cfl_diagcg.q -i unitsquare_01_3.6k.exo
-                         -v -u 0.9 +balancer RandCentLB +LBDebug 1 +cs +LBPeriod 0.001
+                         -v -u 0.9 +balancer RandCentLB +LBDebug 1 +cs
                     BIN_BASELINE slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.0
                                  slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.1
                                  slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.2

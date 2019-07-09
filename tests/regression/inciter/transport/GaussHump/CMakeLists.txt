@@ -228,7 +228,7 @@ add_regression_test(gauss_hump_dg_u0.9_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo
                     ARGS -c gauss_hump.q -i unitsquare_01_3.6k.exo -v -u 0.9
-                         +balancer RandCentLB +LBDebug 1 +LBPeriod 0.001
+                         +balancer RandCentLB +LBDebug 1
                     BIN_BASELINE gauss_hump_pe4_u0.9.std.exo.0
                                  gauss_hump_pe4_u0.9.std.exo.1
                                  gauss_hump_pe4_u0.9.std.exo.2
@@ -320,7 +320,7 @@ add_regression_test(gauss_hump_pdg_u0.8_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES gauss_hump_pdg.q unitsquare_01_3.6k.exo
                     ARGS -c gauss_hump_pdg.q -i unitsquare_01_3.6k.exo -v -u 0.8
-                         +balancer GreedyRefineLB +LBDebug 1 +LBPeriod 0.001
+                         +balancer GreedyRefineLB +LBDebug 1
                     BIN_BASELINE gauss_hump_pdg_pe4_u0.8.std.exo.0
                                  gauss_hump_pdg_pe4_u0.8.std.exo.1
                                  gauss_hump_pdg_pe4_u0.8.std.exo.2
