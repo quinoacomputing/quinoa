@@ -322,6 +322,7 @@ using MixMassFractionBetaParameters = tk::TaggedTuple< brigand::list<
   , tag::rng,           std::vector< tk::ctr::RNGType >
   , tag::initpolicy,    std::vector< ctr::InitPolicyType >
   , tag::coeffpolicy,   std::vector< ctr::CoeffPolicyType >
+  , tag::solve,         std::vector< ctr::DepvarType >
   , tag::dissipation,   std::vector< char >
   , tag::dissipation_id,std::vector< std::size_t >
   , tag::velocity,      std::vector< char >

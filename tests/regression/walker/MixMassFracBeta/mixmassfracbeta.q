@@ -18,6 +18,7 @@ walker
     depvar y
     ncomp 20
     init jointbeta
+    solve fullvar
     icbeta
       betapdf 0.01 0.01 0.0 1.0 end       # light = heavy
       betapdf 0.2 0.8 0.0 1.0 end       # light > heavy

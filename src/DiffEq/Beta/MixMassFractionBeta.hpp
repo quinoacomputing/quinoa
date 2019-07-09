@@ -123,9 +123,9 @@ class MixMassFractionBeta {
       // divide by the number of derived variables computed, see derived()
       m_ncomp( g_inputdeck.get< tag::component >().get< eq >().at(c) / 4 ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_grad( initScalarGradient() ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
+      m_solve( g_inputdeck.get< tag::param, eq, tag::solve >().at(c) ),
       m_velocity_coupled( coupled< eq, tag::velocity >( c ) ),
       m_velocity_depvar( depvar< eq, tag::velocity >( c ) ),
       m_velocity_offset( offset< eq, tag::velocity, tag::velocity_id >( c ) ),
@@ -138,6 +138,7 @@ class MixMassFractionBeta {
       m_dissipation_depvar( depvar< eq, tag::dissipation >( c ) ),
       m_dissipation_offset(
         offset< eq, tag::dissipation, tag::dissipation_id >( c ) ),
+      m_dY( initScalarGradient() ),
       m_bprime(),
       m_S(),
       m_kprime(),
@@ -154,6 +155,8 @@ class MixMassFractionBeta {
         g_inputdeck.get< tag::param, eq, tag::r >().at(c),
         m_bprime, m_S, m_kprime, m_rho2, m_r, m_b, m_k )
     {
+      // Zero prescribed scalar gradient if full variable is solved for
+      if (m_solve == ctr::DepvarType::FULLVAR) m_dY.fill( 0.0 );
       // Populate inverse hydrodynamics time scales and hydrodyanmics
       // production/dissipation extracted from DNS
       if ( Coefficients::type() == ctr::CoeffPolicyType::HYDROTIMESCALE ) {
@@ -207,8 +210,9 @@ class MixMassFractionBeta {
     {
       // Update SDE coefficients
       coeff.update( m_depvar, m_dissipation_depvar, m_velocity_depvar,
-                    m_velocity_solve, m_ncomp, moments, m_bprime, m_kprime,
-                    m_rho2, m_r, m_hts, m_hp, m_b, m_k, m_S, t );
+                    m_velocity_solve, m_solve, m_ncomp, moments, m_bprime,
+                    m_kprime, m_rho2, m_r, m_hts, m_hp, m_b, m_k, m_S, t );
+
       // Advance particles
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -229,10 +233,8 @@ class MixMassFractionBeta {
           tk::real& Y = particles( p, i, m_offset );
           tk::real d = m_k[i] * Y * (1.0 - Y) * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
-          Y += 0.5*m_b[i]*(m_S[i] - Y)*dt
-             //+ 0.5*m_k[i]*(1.0 - 2.0*Y)*dt
-             + d*dW[i]
-             - m_grad[0]*u - m_grad[1]*v - m_grad[2]*w;
+          Y += 0.5*m_b[i]*(m_S[i] - Y)*dt + d*dW[i]
+             - (m_dY[0]*u - m_dY[1]*v - m_dY[2]*w)*dt;
           // Compute instantaneous values derived from updated Y
           derived( particles, p, i );
         }
@@ -244,8 +246,8 @@ class MixMassFractionBeta {
     const char m_depvar;                //!< Dependent variable
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
-    const std::vector< tk::real > m_grad; //! Prescribed mean scalar gradient
     const tk::RNG& m_rng;               //!< Random number generator
+    const ctr::DepvarType m_solve;      //!< Depndent variable to solve for
 
     const bool m_velocity_coupled;      //!< True if coupled to velocity
     const char m_velocity_depvar;       //!< Coupled velocity dependent variable
@@ -256,6 +258,8 @@ class MixMassFractionBeta {
     const bool m_dissipation_coupled;   //!< True if coupled to dissipation
     const char m_dissipation_depvar;    //!< Depvar of coupled dissipation eq
     const ncomp_t m_dissipation_offset; //!< Offset of coupled dissipation eq
+
+    std::array<tk::real, 3> m_dY;       //! Prescribed mean scalar gradient
 
     //! Coefficients
     std::vector< kw::sde_bprime::info::expect::type > m_bprime;
@@ -313,16 +317,15 @@ class MixMassFractionBeta {
     }
 
     //! Initialize imposed mean scalar gradient from user input
-    std::vector< tk::real > initScalarGradient() const {
+    std::array< tk::real, 3 > initScalarGradient() {
       const auto& mg = g_inputdeck.get< tag::param, eq, tag::mean_gradient >();
-      std::vector< tk::real > mean_gradient;
-      if (mg.size() > m_c)
-        mean_gradient = mg[ m_c ];
-      else
-        mean_gradient = {{ 0.0, 0.0, 0.0 }};
-      Assert( mean_gradient.size() == 3,
-              "Mean scalar gradient vector size must be 3" );
-      return mean_gradient;
+      std::array< tk::real, 3 > dY{{ 0.0, 0.0, 0.0 }};
+      if (mg.size() > m_c) {
+        const auto& g = mg[ m_c ];
+        dY = {{ g[0], g[1], g[2] }};
+      }
+      Assert( dY.size() == 3, "Mean scalar gradient vector size must be 3" );
+      return dY;
     }
 };
 

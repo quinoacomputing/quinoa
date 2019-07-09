@@ -78,8 +78,6 @@
 namespace walker {
 
 //! Velocity equation coefficients policy with prescribed mean shear
-//! \details C0 is user-defined and we prescibe a hard-coded mean shear in the x
-//!   direction
 //! \see kw::const_shear_info
 class VelocityCoeffConstShear {
 
@@ -93,7 +91,7 @@ class VelocityCoeffConstShear {
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::CONST_SHEAR; }
 
-    //! Update the model coefficients (prescribing shear)
+    //! Update the model coefficients prescribing shear
     void update( char depvar,
                  char dissipation_depvar,
                  const std::map< tk::ctr::Product, tk::real >& moments,
@@ -118,17 +116,15 @@ class VelocityCoeffStationary {
   public:
     //! Constructor: initialize coefficients
     VelocityCoeffStationary( kw::sde_c0::info::expect::type C0_,
-                               kw::sde_c0::info::expect::type& C0,
-                               std::array< tk::real, 9 >& dU );
+                             kw::sde_c0::info::expect::type& C0,
+                             std::array< tk::real, 9 >& );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::STATIONARY; }
 
-    //! Update the model coefficients (prescribing shear)
-    //! \details Update the dissipation rate (eps) and G_{ij} based on the
-    //!   turbulent kinetic energy (k) for a prescribed honmogeneous shear flow.
-    void update( char,
+    //! Update the model coefficients forcing a statistically stationary PDF
+    void update( char depvar,
                  char,
                  const std::map< tk::ctr::Product, tk::real >&,
                  const tk::Table&,
@@ -138,15 +134,9 @@ class VelocityCoeffStationary {
                  tk::real,
                  tk::real& eps,
                  std::array< tk::real, 9 >& G ) const;
-
-  private:
-    //! Mean velocity gradient prescribed for simpled 1D homogeneous shear
-    std::array< tk::real, 9 > m_dU;
 };
 
 //! Velocity equation coefficients policy with DNS hydrodynamics time scale
-//! \details C0 is user-defined and we pull in a hydrodynamic timescale from an
-//!   external function (from DNS).
 //! \see kw::hydrotimescale_info
 class VelocityCoeffHydroTimeScale {
 
@@ -160,7 +150,8 @@ class VelocityCoeffHydroTimeScale {
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::HYDROTIMESCALE; }
 
-    //! \brief Update the model coefficients
+    //! \brief Update the model coefficients sampling the hydrodynamics time
+    //!   scale from a prescribed function table
     void update( char depvar,
                  char,
                  const std::map< tk::ctr::Product, tk::real >& moments,

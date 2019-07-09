@@ -10,7 +10,7 @@ walker
   #nstep 2     # Max number of time steps
   term  15.0    # Max time
   dt    0.2   # Time step size
-  npar  50000 # Number of particles
+  npar  70000 # Number of particles
   ttyi  1    # TTY output interval
 
   rngs
@@ -34,7 +34,7 @@ walker
   velocity      # configure a velocity equation
     depvar u
     solve fluctuation
-    variant glm # select the simplified Langevin model (SLM/GLM)
+    variant glm # select the generalized Langevin model (SLM/GLM)
     position x  # couple a position model with dependent variable x
     dissipation o  # couple a dissipation model with dependent variable o
     init jointgaussian
