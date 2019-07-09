@@ -48,8 +48,8 @@ RUN cat submodule_update.sh
 # Pull in submodules required for the executable
 RUN cd quinoa && git submodule init && git submodule update && cd external && sh ../../submodule_update.sh
 # Build TPLs
-RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -D${EXECUTABLE^^}_ONLY=true -DCMAKE_BUILD_TYPE=Release .. && make -sj$(grep -c processor /proc/cpuinfo)
+RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -D${EXECUTABLE^^}_ONLY=true .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build code
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -DCMAKE_BUILD_TYPE=Release -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS=-oversubscribe ../src && ninja ${EXECUTABLE,,}
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS=-oversubscribe ../src && ninja ${EXECUTABLE,,}
 # Run tests
 RUN cd quinoa/build && npe=$(grep -c processor /proc/cpuinfo) && if [ ${EXECUTABLE} = unittest ]; then mpirun -n $npe Main/unittest -v -q; else ctest -j $npe --output-on-failure -LE extreme -R ${EXECUTABLE,,}; fi
