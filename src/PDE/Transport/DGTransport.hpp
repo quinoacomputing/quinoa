@@ -135,6 +135,13 @@ class Transport {
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
+      Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
+              "size" );
+      Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
+              "Mismatch in inpofa size" );
+
       // supported boundary condition types and associated state functions
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
         { m_bcextrapolate, Extrapolate },
