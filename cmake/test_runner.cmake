@@ -21,6 +21,7 @@ string(REPLACE " " ";" BIN_BASELINE "${BIN_BASELINE}")
 string(REPLACE " " ";" BIN_RESULT "${BIN_RESULT}")
 string(REPLACE " " ";" BIN_DIFF_PROG_CONF "${BIN_DIFF_PROG_CONF}")
 string(REPLACE " " ";" BIN_DIFF_PROG_ARGS "${BIN_DIFF_PROG_ARGS}")
+string(REPLACE " " ";" TEXT_DIFF_PROG_CONF "${TEXT_DIFF_PROG_CONF}")
 # Covert string to list of postprocess program arguments
 string(REPLACE " " ";" POSTPROCESS_PROG_ARGS "${POSTPROCESS_PROG_ARGS}")
 # Covert string to list of test labels
@@ -58,7 +59,7 @@ message("  POSTPROCESS_PROG_OUTPUT (postprocess program output file)   : ${POSTP
 
 message("  TEXT_DIFF_PROG (diff tool used for text diffs)              : ${TEXT_DIFF_PROG}")
 message("  TEXT_DIFF_PROG_ARGS (text diff tool arguments)              : ${TEXT_DIFF_PROG_ARGS}")
-message("  TEXT_DIFF_PROG_CONF (text diff tool configuration file)     : ${TEXT_DIFF_PROG_CONF}")
+message("  TEXT_DIFF_PROG_CONF (text diff tool configuration file(s))  : ${TEXT_DIFF_PROG_CONF}")
 message("  TEXT_BASELINE (text output known good solution file(s))     : ${TEXT_BASELINE}")
 message("  TEXT_RESULT (text output file(s) diffed with good solution) : ${TEXT_RESULT}")
 
@@ -171,7 +172,8 @@ else() # Test command ran successfully, attempt to do diffs
   #  postprocessing, or
   #  - both TEXT_BASELINE and TEXT_RESULT have been specified and doing
   #  postprocessing (and postprocessing program has been found)
-  if( (TEXT_BASELINE AND TEXT_RESULT AND NOT POSTPROCESS_PROG_OUTPUT) OR (TEXT_BASELINE AND TEXT_RESULT AND POSTPROCESS_PROG) )
+  if( (TEXT_BASELINE AND TEXT_RESULT AND NOT POSTPROCESS_PROG_OUTPUT) OR
+      (TEXT_BASELINE AND TEXT_RESULT AND POSTPROCESS_PROG) )
 
     # Make sure the number of result and baseline files are equal
     list(LENGTH TEXT_BASELINE nbaseline)
@@ -181,17 +183,32 @@ else() # Test command ran successfully, attempt to do diffs
               "Number of baselines and number of results must be equal.")
     endif()
 
+    # If there is only one text diff program conf, use that for all, if multiple,
+    # use one of each
+    list(LENGTH TEXT_DIFF_PROG_CONF nconf)
+    if (NOT nconf EQUAL nresult AND NOT nconf EQUAL 1)
+      message(FATAL_ERROR "Number of text-diff-prog conf files (${nconf}) should either be 1 or it must equal the number of results (${nresult}).")
+    endif()
+
     # Do textual diff(s) multiple times diffing matching baseline and result
     math(EXPR b "0")
     foreach(baseline IN LISTS TEXT_BASELINE)
+
       list(GET TEXT_RESULT ${b} result)
       if (RUNNER_REQUIRED)
         set(runner_prefix ${RUNNER} ${RUNNER_NCPUS_ARG} 1 ${RUNNER_ARGS})
       endif()
+
+     if (nconf EQUAL 1)
+        list(GET TEXT_DIFF_PROG_CONF 0 conf)
+      else()
+        list(GET TEXT_DIFF_PROG_CONF ${b} conf)
+      endif()
+
       set(text_diff_command ${runner_prefix}
                             ${TEXT_DIFF_PROG} ${TEXT_DIFF_PROG_ARGS}
                             -b -t ${TEST_NAME}
-                            ${baseline} ${result} ${TEXT_DIFF_PROG_CONF})
+                            ${baseline} ${result} ${conf})
       string(REPLACE ";" " " text_diff_command_string "${text_diff_command}")
       message("\nRunning text diff command: '${text_diff_command_string}'\n")
       execute_process(COMMAND ${text_diff_command} RESULT_VARIABLE ERROR)
@@ -200,6 +217,7 @@ else() # Test command ran successfully, attempt to do diffs
         message(FATAL_ERROR "Textual diff failed to run: '${text_diff_command_string}' returned error code: ${ERROR}")
       endif(ERROR)
       math(EXPR b "${b}+1")
+
     endforeach(baseline)
 
   endif()

@@ -46,7 +46,7 @@ ENV EXECUTABLE $EXECUTABLE
 RUN grep "^@ref $EXECUTABLE" build.dox -A2 | grep -v $EXECUTABLE | grep -v -e "^$" > submodule_update.sh
 RUN cat submodule_update.sh
 # Pull in submodules required for the executable
-RUN cd quinoa && git submodule init && git submodule update && cd external && sh ../../submodule_update.sh && cd .. && git submodule status --recursive
+RUN cd quinoa && git submodule init && git submodule update && cd external && sh ../../submodule_update.sh
 # Build TPLs
 RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -D${EXECUTABLE^^}_ONLY=true -DCMAKE_BUILD_TYPE=Release .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build code

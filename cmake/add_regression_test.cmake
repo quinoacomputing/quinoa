@@ -31,11 +31,11 @@ endfunction()
 #                      [TEXT_DIFF_PROG txtdiff]
 #                      [TEXT_BASELINE stat1.std stat2.std ...]
 #                      [TEXT_RESULT stat1.txt stat2.txt ...]
-#                      [TEXT_DIFF_PROG_CONF ndiff.cfg]
+#                      [TEXT_DIFF_PROG_CONF ndiff1.cfg ndiff2.cfg ...]
 #                      [BIN_DIFF_PROG bindiff]
 #                      [BIN_BASELINE stat1.std stat2.std ...]
 #                      [BIN_RESULT stat1.bin stat2.bin ...]
-#                      [BIN_DIFF_PROG_CONF exodiff.cfg]
+#                      [BIN_DIFF_PROG_CONF exodiff1.cfg exodiff2.cfg ...]
 #                      [FILECONV_PROG fileconv]
 #                      [FILECONV_INPUT arg1 arg2 ...]
 #                      [FILECONV_RESULT out.0.exo out.1.exo ...]
@@ -86,8 +86,8 @@ endfunction()
 # be tested. If empty, no textual diff is performed. Default: "". Note that the
 # number of baseline filenames must equal the number of result files.
 #
-# TEXT_DIFF_PROG_CONF ndiff.cfg - Textual diff program configuration file.
-# Default: "".
+# TEXT_DIFF_PROG_CONF ndiff1.cfg ndiff2.cfg ... - Textual diff program
+# configuration file.  Default: "".
 #
 # TEXT_DIFF_PROG_ARGS arg1 arg2 ... - Textual diff program arguments.
 # Default: "".
@@ -128,13 +128,13 @@ endfunction()
 # ##############################################################################
 function(ADD_REGRESSION_TEST test_name executable)
 
-  set(oneValueArgs NUMPES PPN TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF
+  set(oneValueArgs NUMPES PPN TEXT_DIFF_PROG BIN_DIFF_PROG
                    FILECONV_PROG POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT
                    CHECKPOINT)
   set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT BIN_BASELINE
                      BIN_RESULT LABELS POSTPROCESS_PROG_ARGS BIN_DIFF_PROG_ARGS
-                     TEXT_DIFF_PROG_ARGS BIN_DIFF_PROG_CONF FILECONV_RESULT
-                     FILECONV_INPUT)
+                     TEXT_DIFF_PROG_ARGS TEXT_DIFF_PROG_CONF BIN_DIFF_PROG_CONF
+                     FILECONV_RESULT FILECONV_INPUT)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
@@ -347,56 +347,46 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(REPLACE ";" " " ARG_BIN_RESULT "${ARG_BIN_RESULT}")
   endif()
 
+  # Convert lists to space-separated strings for passing as arguments to test
+  # runner cmake script below
   if(ARG_POSTPROCESS_PROG_ARGS)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_POSTPROCESS_PROG_ARGS
            "${ARG_POSTPROCESS_PROG_ARGS}")
   endif()
 
   if(ARG_TEXT_DIFF_PROG_ARGS)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_TEXT_DIFF_PROG_ARGS "${ARG_TEXT_DIFF_PROG_ARGS}")
   endif()
 
   # Make exodiff quiet (errors and warnings will still come to output)
   list(APPEND ARG_BIN_DIFF_PROG_ARGS "-q")
   if(ARG_BIN_DIFF_PROG_ARGS)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_ARGS "${ARG_BIN_DIFF_PROG_ARGS}")
   endif()
 
   if(ARG_FILECONV_INPUT)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_FILECONV_INPUT "${ARG_FILECONV_INPUT}")
   endif()
 
   # Do sainity check on and prepare to pass as cmake script arguments the
   # filenames of the file converter result(s)
   if(ARG_FILECONV_RESULT)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_FILECONV_RESULT "${ARG_FILECONV_RESULT}")
   endif()
 
   if(ARG_BIN_DIFF_PROG_CONF)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_CONF "${ARG_BIN_DIFF_PROG_CONF}")
   endif()
 
+  if(ARG_TEXT_DIFF_PROG_CONF)
+    string(REPLACE ";" " " ARG_TEXT_DIFF_PROG_CONF "${ARG_TEXT_DIFF_PROG_CONF}")
+  endif()
+
   if(RUNNER_ARGS)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " RUNNER_ARGS "${RUNNER_ARGS}")
   endif()
 
   if(POSTFIX_RUNNER_ARGS)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " POSTFIX_RUNNER_ARGS "${POSTFIX_RUNNER_ARGS}")
   endif()
 
