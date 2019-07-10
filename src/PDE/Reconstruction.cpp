@@ -210,7 +210,8 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
 }
 
 void
-tk::transform_P0P1( ncomp_t offset,
+tk::transform_P0P1( ncomp_t ncomp,
+                    ncomp_t offset,
                     std::size_t rdof,
                     std::size_t nelem,
                     const std::vector< std::size_t >& inpoel,
@@ -218,6 +219,7 @@ tk::transform_P0P1( ncomp_t offset,
                     Fields& U )
 // *****************************************************************************
 //  Transform the reconstructed P1-derivatives to the Dubiner dofs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nelem Total number of elements
@@ -227,8 +229,6 @@ tk::transform_P0P1( ncomp_t offset,
 //!   the Dubiner reference space
 // *****************************************************************************
 {
-  std::size_t ncomp = U.nprop()/rdof;
-
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];

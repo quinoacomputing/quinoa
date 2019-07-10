@@ -63,7 +63,8 @@ solveLeastSq_P0P1( ncomp_t ncomp,
 
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
-transform_P0P1( ncomp_t offset,
+transform_P0P1( ncomp_t ncomp,
+                ncomp_t offset,
                 std::size_t rdof,
                 std::size_t nelem,
                 const std::vector< std::size_t >& inpoel,

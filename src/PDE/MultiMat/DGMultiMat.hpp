@@ -177,7 +177,8 @@ class MultiMat {
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
 
       // transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1( m_offset, rdof, fd.Esuel().size()/4, inpoel, coord, U );
+      tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4, inpoel,
+                          coord, U );
     }
 
     //! Compute right hand side
