@@ -1257,15 +1257,13 @@ DG::lim()
 
     // Reconstruct second-order solution
     if (rdof == 4 && inciter::g_inputdeck.get< tag::discr, tag::ndof >() == 1)
-    for (const auto& eq : g_dgpde)
-      eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
-                      d->Coord(), m_u );
+      for (const auto& eq : g_dgpde)
+        eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
+                        d->Coord(), m_u );
 
-    const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
-    if (limiter == ctr::LimiterType::WENOP1)
-      WENO_P1( m_fd.Esuel(), 0, m_u );
-    else if (limiter == ctr::LimiterType::SUPERBEEP1)
-      Superbee_P1( m_fd.Esuel(), d->Inpoel(), m_ndof, 0, d->Coord(), m_u );
+    for (const auto& eq : g_dgpde)
+      eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
+                m_ndof, m_u );
   }
 
   // Send limited solution to neighboring chares

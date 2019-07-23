@@ -101,6 +101,19 @@ class DGPDE {
       self->reconstruct( t, geoFace, geoElem, fd, inpoel, coord, U );
     }
 
+    //! Public interface to limiting the second-order solution
+    void limit( tk::real t,
+                const tk::Fields& geoFace,
+                const tk::Fields& geoElem,
+                const inciter::FaceData& fd,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const std::vector< std::size_t >& ndofel,
+                tk::Fields& U ) const
+    {
+      self->limit( t, geoFace, geoElem, fd, inpoel, coord, ndofel, U );
+    }
+
     //! Public interface to computing the P1 right-hand side vector
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -187,6 +200,14 @@ class DGPDE {
                                 const std::vector< std::size_t >&,
                                 const tk::UnsMesh::Coords&,
                                 tk::Fields& ) const = 0;
+      virtual void limit( tk::real,
+                          const tk::Fields&,
+                          const tk::Fields&,
+                          const inciter::FaceData&,
+                          const std::vector< std::size_t >&,
+                          const tk::UnsMesh::Coords&,
+                          const std::vector< std::size_t >&,
+                          tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -243,6 +264,17 @@ class DGPDE {
                         tk::Fields& U ) const override
       {
         data.reconstruct( t, geoFace, geoElem, fd, inpoel, coord, U );
+      }
+      void limit( tk::real t,
+                  const tk::Fields& geoFace,
+                  const tk::Fields& geoElem,
+                  const inciter::FaceData& fd,
+                  const std::vector< std::size_t >& inpoel,
+                  const tk::UnsMesh::Coords& coord,
+                  const std::vector< std::size_t >& ndofel,
+                  tk::Fields& U ) const override
+      {
+        data.limit( t, geoFace, geoElem, fd, inpoel, coord, ndofel, U );
       }
       void rhs( tk::real t,
                 const tk::Fields& geoFace,

@@ -39,6 +39,7 @@
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
+#include "Limiter.hpp"
 
 namespace inciter {
 
@@ -179,6 +180,36 @@ class MultiMat {
       // transform reconstructed derivatives to Dubiner dofs
       tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4, inpoel,
                           coord, U );
+    }
+
+    //! Limit second-order solution
+    //! \param[in] t Physical time
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] ndofel Vector of local number of degrees of freedome
+    //! \param[in,out] U Solution vector at recent time step
+    void limit( tk::real t,
+                const tk::Fields& geoFace,
+                const tk::Fields& geoElem,
+                const inciter::FaceData& fd,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const std::vector< std::size_t >& ndofel,
+                tk::Fields& U ) const
+    {
+      IGNORE(t);
+      IGNORE(geoFace);
+      IGNORE(geoElem);
+
+      const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      if (limiter == ctr::LimiterType::SUPERBEEP1)
+        Superbee_P1( nmat, fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
     }
 
     //! Compute right hand side
