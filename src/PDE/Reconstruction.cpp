@@ -112,7 +112,6 @@ tk::bndLeastSq_P0P1( ncomp_t system,
 //! \param[in,out] rhs_ls RHS reconstruction vector
 // *****************************************************************************
 {
-  IGNORE(rdof);
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
 
@@ -135,7 +134,7 @@ tk::bndLeastSq_P0P1( ncomp_t system,
 
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
-        auto ul = eval_state( ncomp, offset, 1, 1, el, U, B );
+        auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B );
 
         Assert( ul.size() == ncomp, "Size mismatch" );
 

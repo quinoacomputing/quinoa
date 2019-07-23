@@ -52,7 +52,7 @@ bndLeastSq_P0P1( ncomp_t system,
                  std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
                  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls );
 
-//!  Solve 3x3 system for least-squares reconstruction
+//! Solve 3x3 system for least-squares reconstruction
 void
 solveLeastSq_P0P1( ncomp_t ncomp,
                    ncomp_t offset,
