@@ -115,6 +115,7 @@ class DG : public CBase_DG {
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
+                 const std::vector< std::vector< tk::real > >& p,
                  const std::vector< std::size_t >& ndof );
 
     //! Receive chare-boundary ghost data from neighboring chares
@@ -176,6 +177,7 @@ class DG : public CBase_DG {
       p | m_fd;
       p | m_u;
       p | m_un;
+      p | m_p;
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
@@ -196,6 +198,7 @@ class DG : public CBase_DG {
       p | m_ndof;
       p | m_bid;
       p | m_uc;
+      p | m_pc;
       p | m_ndofc;
       p | m_initial;
       p | m_expChBndFace;
@@ -237,6 +240,8 @@ class DG : public CBase_DG {
     tk::Fields m_u;
     //! Vector of unknown at previous time-step
     tk::Fields m_un;
+    //! Vector of primitive quantities over each mesh element
+    tk::Fields m_p;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
@@ -288,6 +293,8 @@ class DG : public CBase_DG {
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Solution receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 2 > m_uc;
+    //! Primitive receive buffers for ghosts only
+    std::array< std::vector< std::vector< tk::real > >, 2 > m_pc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
     std::array< std::vector< std::size_t >, 2 > m_ndofc;

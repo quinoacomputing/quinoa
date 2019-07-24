@@ -199,7 +199,8 @@ class Transport {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
-                tk::Fields& U ) const
+                tk::Fields& U,
+                tk::Fields& ) const
     {
       IGNORE(t);
       IGNORE(geoFace);
@@ -230,6 +231,7 @@ class Transport {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
+              const tk::Fields&,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {

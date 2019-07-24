@@ -182,7 +182,7 @@ class MultiMat {
                           coord, U );
     }
 
-    //! Limit second-order solution
+    //! Limit second-order solution, and primitive quantities separately
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
@@ -191,6 +191,7 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \param[in,out] U Solution vector at recent time step
+    //! \param[in,out] P Primitive vector at recent time step
     void limit( tk::real t,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
@@ -198,11 +199,16 @@ class MultiMat {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
-                tk::Fields& U ) const
+                tk::Fields& U,
+                tk::Fields& P ) const
     {
       IGNORE(t);
       IGNORE(geoFace);
       IGNORE(geoElem);
+      IGNORE(P);
+
+      Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
 
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
       const auto nmat =
@@ -220,6 +226,7 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Primitive vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
@@ -229,18 +236,25 @@ class MultiMat {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
+              const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
+      IGNORE(P);
+
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
+      Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( P.nprop() == rdof*3, "Number of components in primitive "
+              "vector must equal "+ std::to_string(rdof*3) );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "

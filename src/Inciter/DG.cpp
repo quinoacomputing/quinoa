@@ -58,6 +58,7 @@ DG::DG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::discr, tag::rdof >()*
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
+  m_p( m_u.nunk(), g_inputdeck.get< tag::discr, tag::rdof >()*3 ),
   m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), Disc()->Coord()) ),
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(),
@@ -79,6 +80,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_ndof(),
   m_bid(),
   m_uc(),
+  m_pc(),
   m_ndofc(),
   m_initial( 1 ),
   m_expChBndFace()
@@ -907,6 +909,7 @@ DG::adj()
   // Resize solution vectors, lhs and rhs by the number of ghost tets
   m_u.resize( m_nunk );
   m_un.resize( m_nunk );
+  m_p.resize( m_nunk );
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
 
@@ -923,6 +926,7 @@ DG::adj()
   // Size communication buffer that receives number of degrees of freedom
   for (auto& n : m_ndofc) n.resize( m_bid.size() );
   for (auto& u : m_uc) u.resize( m_bid.size() );
+  for (auto& p : m_pc) p.resize( m_bid.size() );
 
   // Initialize number of degrees of freedom in mesh elements
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
@@ -1263,7 +1267,7 @@ DG::lim()
 
     for (const auto& eq : g_dgpde)
       eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
-                m_ndof, m_u );
+                m_ndof, m_u, m_p );
   }
 
   // Send limited solution to neighboring chares
@@ -1272,17 +1276,19 @@ DG::lim()
   else
     for(const auto& n : m_ghostData) {
       std::vector< std::size_t > tetid( n.second.size() );
-      std::vector< std::vector< tk::real > > u( n.second.size() );
+      std::vector< std::vector< tk::real > > u( n.second.size() ),
+                                             p( n.second.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : n.second) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
         tetid[j] = i.first;
         u[j] = m_u[i.first];
+        p[j] = m_p[i.first];
         if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         ++j;
       }
-      thisProxy[ n.first ].comlim( thisIndex, tetid, u, ndof );
+      thisProxy[ n.first ].comlim( thisIndex, tetid, u, p, ndof );
     }
 
   ownlim_complete();
@@ -1323,18 +1329,21 @@ void
 DG::comlim( int fromch,
             const std::vector< std::size_t >& tetid,
             const std::vector< std::vector< tk::real > >& u,
+            const std::vector< std::vector< tk::real > >& p,
             const std::vector< std::size_t >& ndof )
 // *****************************************************************************
 //  Receive chare-boundary limiter ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Limited high-order solution
+//! \param[in] p Limited high-order primitive quantities
 //! \param[in] ndof Number of degrees of freedom for chare-boundary elements
 //! \details This function receives contributions to the limited solution from
 //!   fellow chares.
 // *****************************************************************************
 {
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comlim()" );
+  Assert( p.size() == tetid.size(), "Size mismatch in DG::comlim()" );
 
   const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
 
@@ -1349,7 +1358,9 @@ DG::comlim( int fromch,
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
     auto b = tk::cref_find( m_bid, j );
     Assert( b < m_uc[1].size(), "Indexing out of bounds" );
+    Assert( b < m_pc[1].size(), "Indexing out of bounds" );
     m_uc[1][b] = u[i];
+    m_pc[1][b] = p[i];
     if (pref && m_stage == 0) {
       Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
       m_ndofc[1][b] = ndof[i];
@@ -1378,8 +1389,12 @@ DG::dt()
   // of freedom in cells (if p-adaptive)
   for (const auto& b : m_bid) {
     Assert( m_uc[1][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[1][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {
       m_u(b.first,c,0) = m_uc[1][b.second][c];
+    }
+    for (std::size_t c=0; c<m_p.nprop(); ++c) {
+      m_p(b.first,c,0) = m_pc[1][b.second][c];
     }
     if (pref && m_stage == 0) {
       m_ndof[ b.first ] = m_ndofc[1][ b.second ];
@@ -1480,7 +1495,7 @@ DG::solve( tk::real newdt )
 
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
-            m_ndof, m_rhs );
+            m_p, m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<m_nunk; ++e)

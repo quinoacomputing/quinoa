@@ -109,9 +109,10 @@ class DGPDE {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
-                tk::Fields& U ) const
+                tk::Fields& U,
+                tk::Fields& P ) const
     {
-      self->limit( t, geoFace, geoElem, fd, inpoel, coord, ndofel, U );
+      self->limit( t, geoFace, geoElem, fd, inpoel, coord, ndofel, U, P );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -122,10 +123,11 @@ class DGPDE {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
+              const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
-      self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, ndofel, R );
+      self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, P, ndofel, R );
     }
 
     //! Public interface for computing the minimum time step size
@@ -207,6 +209,7 @@ class DGPDE {
                           const std::vector< std::size_t >&,
                           const tk::UnsMesh::Coords&,
                           const std::vector< std::size_t >&,
+                          tk::Fields&,
                           tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
@@ -214,6 +217,7 @@ class DGPDE {
                         const inciter::FaceData&,
                         const std::vector< std::size_t >&,
                         const tk::UnsMesh::Coords&,
+                        const tk::Fields&,
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
                         tk::Fields& ) const = 0;
@@ -272,9 +276,10 @@ class DGPDE {
                   const std::vector< std::size_t >& inpoel,
                   const tk::UnsMesh::Coords& coord,
                   const std::vector< std::size_t >& ndofel,
-                  tk::Fields& U ) const override
+                  tk::Fields& U,
+                  tk::Fields& P ) const override
       {
-        data.limit( t, geoFace, geoElem, fd, inpoel, coord, ndofel, U );
+        data.limit( t, geoFace, geoElem, fd, inpoel, coord, ndofel, U, P );
       }
       void rhs( tk::real t,
                 const tk::Fields& geoFace,
@@ -283,10 +288,11 @@ class DGPDE {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const tk::Fields& U,
+                const tk::Fields& P,
                 const std::vector< std::size_t >& ndofel,
                 tk::Fields& R ) const override
       {
-        data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, ndofel, R );
+        data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, P, ndofel, R );
       }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
