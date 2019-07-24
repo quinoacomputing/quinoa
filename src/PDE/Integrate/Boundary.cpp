@@ -33,10 +33,12 @@ tk::bndSurfInt( ncomp_t system,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 real t,
+                const CellFaceStateFn& cellFaceState,
                 const RiemannFluxFn& flux,
                 const VelFn& vel,
                 const StateFn& state,
                 const Fields& U,
+                const Fields& P,
                 const std::vector< std::size_t >& ndofel,
                 Fields& R,
                 std::vector< std::vector< tk::real > >& riemannDeriv )
@@ -57,11 +59,13 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] t Physical time
+//! \param[in] cellFaceState Cell face state function to use
 //! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
@@ -152,9 +156,11 @@ tk::bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0,0);
 
           // Compute the state variables at the left element
-          auto ugp = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
+          auto solugp = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
+          auto fvel = eval_state( 3, offset, rdof, dof_el, el, P, B_l );
 
-          Assert( ugp.size() == ncomp, "Size mismatch" );
+          // consolidate primitives into state vector
+          auto ugp = cellFaceState( system, ncomp, solugp, fvel);
 
           // Compute the numerical flux
           auto fl = flux( fn,

@@ -317,7 +317,7 @@ tk::getMultiMatPrimitives_P0P1( ncomp_t offset,
     std::vector< real > rhob(rdof, 0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
-      for (std::size_t j=0; j<=3; ++j)
+      for (std::size_t j=0; j<rdof; ++j)
         rhob[j] += U(e, densityIdx(nmat, k)*rdof+j, offset);
     }
 
@@ -331,7 +331,7 @@ tk::getMultiMatPrimitives_P0P1( ncomp_t offset,
     for (std::size_t idir=0; idir<3; ++idir)
     {
       P(e, velocityIdx(nmat, idir)*rdof, offset) = vel[idir];
-      for (std::size_t j=1; j<=3; ++j)
+      for (std::size_t j=1; j<rdof; ++j)
       {
         P(e, velocityIdx(nmat, idir)*rdof+j, offset) =
           ( U(e, momentumIdx(nmat, idir)*rdof+j, offset)

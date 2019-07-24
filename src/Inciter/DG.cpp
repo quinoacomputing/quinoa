@@ -1255,15 +1255,14 @@ DG::lim()
 
   if (pref && m_stage==0) propagate_ndof();
 
+  auto d = Disc();
+
+  // Reconstruct second-order solution and primitive quantities
+  for (const auto& eq : g_dgpde)
+    eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
+                    d->Coord(), m_u, m_p );
+
   if (rdof > 1) {
-
-    auto d = Disc();
-
-    // Reconstruct second-order solution and primitive quantities
-    if (rdof == 4 && inciter::g_inputdeck.get< tag::discr, tag::ndof >() == 1)
-      for (const auto& eq : g_dgpde)
-        eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
-                        d->Coord(), m_u, m_p );
 
     for (const auto& eq : g_dgpde)
       eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),

@@ -137,6 +137,7 @@ class MultiMat {
                       tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
@@ -147,43 +148,47 @@ class MultiMat {
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
-      // supported boundary condition types and associated state functions
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
-        { m_bcdir, Dirichlet },
-        { m_bcsym, Symmetry },
-        { m_bcextrapolate, Extrapolate } }};
-
-      // allocate and initialize matrix and vector for reconstruction
-      std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-        lhs_ls(U.nunk());
-      std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhs_ls(U.nunk());
-
-      for (std::size_t e=0; e<rhs_ls.size(); ++e)
+      if (rdof == 4 && ndof == 1)
       {
-        rhs_ls[e].resize(m_ncomp);
-        for (std::size_t i=0; i<m_ncomp; ++i)
-          rhs_ls[e][i].fill(0.0);
-        for (std::size_t i=0; i<3; ++i)
-          lhs_ls[e][i].fill(0.0);
+        // supported boundary condition types and associated state functions
+        std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >
+          bctypes{{
+            { m_bcdir, Dirichlet },
+            { m_bcsym, Symmetry },
+            { m_bcextrapolate, Extrapolate } }};
+
+        // allocate and initialize matrix and vector for reconstruction
+        std::vector< std::array< std::array< tk::real, 3 >, 3 > >
+          lhs_ls(U.nunk());
+        std::vector< std::vector< std::array< tk::real, 3 > > >
+          rhs_ls(U.nunk());
+
+        for (std::size_t e=0; e<rhs_ls.size(); ++e)
+        {
+          rhs_ls[e].resize(m_ncomp);
+          for (std::size_t i=0; i<m_ncomp; ++i)
+            rhs_ls[e][i].fill(0.0);
+          for (std::size_t i=0; i<3; ++i)
+            lhs_ls[e][i].fill(0.0);
+        }
+
+        // reconstruct x,y,z-derivatives of unknowns
+        tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,
+                             lhs_ls, rhs_ls );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : bctypes)
+          tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
+                               fd, geoFace, geoElem, t, b.second, U, lhs_ls,
+                               rhs_ls );
+
+        // solve 3x3 least-squares system
+        tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
+
+        // transform reconstructed derivatives to Dubiner dofs
+        tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4, inpoel,
+                            coord, U );
       }
-
-      // reconstruct x,y,z-derivatives of unknowns
-      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,
-                           lhs_ls, rhs_ls );
-
-      // compute boundary surface flux integrals
-      for (const auto& b : bctypes)
-        tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                             fd, geoFace, geoElem, t, b.second, U, lhs_ls,
-                             rhs_ls );
-
-      // solve 3x3 least-squares system
-      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
-
-      // transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4, inpoel,
-                          coord, U );
 
       // reconstruct vector of primitives from solution vector
       getMultiMatPrimitives_P0P1( m_offset, nmat, rdof, fd.Esuel().size()/4, U,
@@ -253,8 +258,6 @@ class MultiMat {
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
-      IGNORE(P);
-
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
@@ -295,7 +298,8 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, nmat, m_offset, ndof, rdof, inpoel, coord,
-                   fd, geoFace, AUSM::flux, velfn, U, ndofel, R, riemannDeriv );
+                   fd, geoFace, cellFaceState, AUSM::flux, velfn, U, P, ndofel,
+                   R, riemannDeriv );
 
       // compute source term integrals
       tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
@@ -309,8 +313,9 @@ class MultiMat {
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, nmat, m_offset, ndof, rdof, b.first,
-                        fd, geoFace, inpoel, coord, t, AUSM::flux, velfn,
-                        b.second, U, ndofel, R, riemannDeriv );
+                        fd, geoFace, inpoel, coord, t, cellFaceState,
+                        AUSM::flux, velfn, b.second, U, P, ndofel, R,
+                        riemannDeriv );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );
@@ -711,6 +716,33 @@ class MultiMat {
       return fl;
     }
 
+    //! Evaluate cell-face state required for this PDE system
+    //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] state Solution state at the cell-face for this PDE system
+    //! \return Cell-face state for this PDE system, which is the solution state
+    //!   augmented by the primitive quantity state
+    //! \note The function signature must follow tk::CellFaceStateFn
+    static tk::CellFaceStateFn::result_type
+    cellFaceState( ncomp_t,
+                   ncomp_t ncomp,
+                   const std::vector< tk::real >& state,
+                   const std::vector< tk::real >& prim )
+    {
+      auto new_state = state;
+      Assert( new_state.size() == ncomp, "Size mismatch" );
+
+      // consolidate primitives into state vector
+      for (std::size_t j=0; j<prim.size(); ++j)
+      {
+        new_state.push_back(prim[j]);
+      }
+
+      Assert( new_state.size() == ncomp+prim.size(), "Size mismatch" );
+      IGNORE(ncomp);
+
+      return new_state;
+    }
+
     //! \brief Boundary state function providing the left and right state of a
     //!   face at Dirichlet boundaries
     //! \param[in] system Equation system index
@@ -728,18 +760,38 @@ class MultiMat {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+
+      auto ur = Problem::solution( system, ncomp, x, y, z, t );
+      Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );
+
+      tk::real rho(0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+        rho += ul[densityIdx(nmat, k)];
+
+      // get primitives in boundary state
+      ur.push_back( ur[momentumIdx(nmat, 0)] / rho );
+      ur.push_back( ur[momentumIdx(nmat, 1)] / rho );
+      ur.push_back( ur[momentumIdx(nmat, 2)] / rho );
+
+      Assert( ur.size() == ncomp+3, "Incorrect size for appended boundary "
+              "state vector" );
+
+      return {{ std::move(ul), std::move(ur) }};
     }
 
     //! \brief Boundary state function providing the left and right state of a
     //!   face at symmetry boundaries
+    //! \param[in] system Equation system index
+    //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] ul Left (domain-internal) state
     //! \param[in] fn Unit face normal
     //! \return Left and right states for all scalar components in this PDE
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Symmetry( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
+    Symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
               const std::array< tk::real, 3 >& fn )
     {
@@ -772,6 +824,26 @@ class MultiMat {
       ur[momentumIdx(nmat, 0)] = rho * v1r;
       ur[momentumIdx(nmat, 1)] = rho * v2r;
       ur[momentumIdx(nmat, 2)] = rho * v3r;
+
+      // Internal cell velocity components using the reconstructed primitive
+      // quantities. This is used to get ghost state for primitive quantities
+      v1l = ul[ncomp];
+      v2l = ul[ncomp+1];
+      v3l = ul[ncomp+2];
+      // Normal component of velocity
+      vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
+      // Ghost state velocity components
+      v1r = v1l - 2.0*vnl*fn[0];
+      v2r = v2l - 2.0*vnl*fn[1];
+      v3r = v3l - 2.0*vnl*fn[2];
+      // get primitives in boundary state
+      ur[ncomp] = v1r;
+      ur[ncomp+1] = v2r;
+      ur[ncomp+2] = v3r;
+
+      Assert( ur.size() == ncomp+3, "Incorrect size for appended boundary "
+              "state vector" );
+
       return {{ std::move(ul), std::move(ur) }};
     }
 
