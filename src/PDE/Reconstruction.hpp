@@ -20,6 +20,7 @@
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Integrate/Basis.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 
 namespace tk {
 
@@ -70,6 +71,15 @@ transform_P0P1( ncomp_t ncomp,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 Fields& U );
+
+//! Reconstruct the vector of high-order primitives
+void
+getMultiMatPrimitives_P0P1( ncomp_t offset,
+                            std::size_t nmat,
+                            std::size_t rdof,
+                            std::size_t nelem,
+                            const Fields& U,
+                            Fields& P );
 
 } // tk::
 

@@ -288,3 +288,55 @@ tk::transform_P0P1( ncomp_t ncomp,
     }
   }
 }
+
+void
+tk::getMultiMatPrimitives_P0P1( ncomp_t offset,
+                                std::size_t nmat,
+                                std::size_t rdof,
+                                std::size_t nelem,
+                                const Fields& U,
+                                Fields& P )
+// *****************************************************************************
+//  Reconstruct the vector of high-order primitives
+//! \param[in] offset Index for equation systems
+//! \param[in] nmat Number of materials in this equation system
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nelem Total number of elements
+//! \param[in] U Second-order solution vector
+//! \param[in,out] P Second-order vector of primitives which gets computed from
+//!   the second-order solution vector
+// *****************************************************************************
+{
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::velocityIdx;
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // cell-average and high-order dofs of bulk density
+    std::vector< real > rhob(rdof, 0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      for (std::size_t j=0; j<=3; ++j)
+        rhob[j] += U(e, densityIdx(nmat, k)*rdof+j, offset);
+    }
+
+    // cell-average velocity
+    std::array< real, 3 >
+      vel{{ U(e, momentumIdx(nmat, 0)*rdof, offset)/rhob[0],
+            U(e, momentumIdx(nmat, 1)*rdof, offset)/rhob[0],
+            U(e, momentumIdx(nmat, 2)*rdof, offset)/rhob[0] }};
+
+    // fill up vector of primitives
+    for (std::size_t idir=0; idir<3; ++idir)
+    {
+      P(e, velocityIdx(nmat, idir)*rdof, offset) = vel[idir];
+      for (std::size_t j=1; j<=3; ++j)
+      {
+        P(e, velocityIdx(nmat, idir)*rdof+j, offset) =
+          ( U(e, momentumIdx(nmat, idir)*rdof+j, offset)
+          - vel[idir]*rhob[j] )/rhob[0];
+      }
+    }
+  }
+}

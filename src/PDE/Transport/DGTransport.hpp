@@ -132,7 +132,8 @@ class Transport {
                       const inciter::FaceData& fd,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
-                      tk::Fields& U ) const
+                      tk::Fields& U,
+                      tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 

@@ -96,9 +96,10 @@ class DGPDE {
                       const inciter::FaceData& fd,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
-                      tk::Fields& U ) const
+                      tk::Fields& U,
+                      tk::Fields& P ) const
     {
-      self->reconstruct( t, geoFace, geoElem, fd, inpoel, coord, U );
+      self->reconstruct( t, geoFace, geoElem, fd, inpoel, coord, U, P );
     }
 
     //! Public interface to limiting the second-order solution
@@ -201,6 +202,7 @@ class DGPDE {
                                 const inciter::FaceData&,
                                 const std::vector< std::size_t >&,
                                 const tk::UnsMesh::Coords&,
+                                tk::Fields&,
                                 tk::Fields& ) const = 0;
       virtual void limit( tk::real,
                           const tk::Fields&,
@@ -265,9 +267,10 @@ class DGPDE {
                         const inciter::FaceData& fd,
                         const std::vector< std::size_t >& inpoel,
                         const tk::UnsMesh::Coords& coord,
-                        tk::Fields& U ) const override
+                        tk::Fields& U,
+                        tk::Fields& P ) const override
       {
-        data.reconstruct( t, geoFace, geoElem, fd, inpoel, coord, U );
+        data.reconstruct( t, geoFace, geoElem, fd, inpoel, coord, U, P );
       }
       void limit( tk::real t,
                   const tk::Fields& geoFace,

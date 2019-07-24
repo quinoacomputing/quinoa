@@ -1259,11 +1259,11 @@ DG::lim()
 
     auto d = Disc();
 
-    // Reconstruct second-order solution
+    // Reconstruct second-order solution and primitive quantities
     if (rdof == 4 && inciter::g_inputdeck.get< tag::discr, tag::ndof >() == 1)
       for (const auto& eq : g_dgpde)
         eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
-                        d->Coord(), m_u );
+                        d->Coord(), m_u, m_p );
 
     for (const auto& eq : g_dgpde)
       eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
@@ -1277,18 +1277,18 @@ DG::lim()
     for(const auto& n : m_ghostData) {
       std::vector< std::size_t > tetid( n.second.size() );
       std::vector< std::vector< tk::real > > u( n.second.size() ),
-                                             p( n.second.size() );
+                                             prim( n.second.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : n.second) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
         tetid[j] = i.first;
         u[j] = m_u[i.first];
-        p[j] = m_p[i.first];
+        prim[j] = m_p[i.first];
         if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         ++j;
       }
-      thisProxy[ n.first ].comlim( thisIndex, tetid, u, p, ndof );
+      thisProxy[ n.first ].comlim( thisIndex, tetid, u, prim, ndof );
     }
 
   ownlim_complete();
@@ -1329,21 +1329,21 @@ void
 DG::comlim( int fromch,
             const std::vector< std::size_t >& tetid,
             const std::vector< std::vector< tk::real > >& u,
-            const std::vector< std::vector< tk::real > >& p,
+            const std::vector< std::vector< tk::real > >& prim,
             const std::vector< std::size_t >& ndof )
 // *****************************************************************************
 //  Receive chare-boundary limiter ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Limited high-order solution
-//! \param[in] p Limited high-order primitive quantities
+//! \param[in] prim Limited high-order primitive quantities
 //! \param[in] ndof Number of degrees of freedom for chare-boundary elements
 //! \details This function receives contributions to the limited solution from
 //!   fellow chares.
 // *****************************************************************************
 {
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comlim()" );
-  Assert( p.size() == tetid.size(), "Size mismatch in DG::comlim()" );
+  Assert( prim.size() == tetid.size(), "Size mismatch in DG::comlim()" );
 
   const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
 
@@ -1360,7 +1360,7 @@ DG::comlim( int fromch,
     Assert( b < m_uc[1].size(), "Indexing out of bounds" );
     Assert( b < m_pc[1].size(), "Indexing out of bounds" );
     m_uc[1][b] = u[i];
-    m_pc[1][b] = p[i];
+    m_pc[1][b] = prim[i];
     if (pref && m_stage == 0) {
       Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
       m_ndofc[1][b] = ndof[i];

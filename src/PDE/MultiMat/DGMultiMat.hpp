@@ -126,15 +126,19 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
+    //! \param[in,out] P Vector of primitives at recent time step
     void reconstruct( tk::real t,
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
                       const inciter::FaceData& fd,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
-                      tk::Fields& U ) const
+                      tk::Fields& U,
+                      tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -180,6 +184,10 @@ class MultiMat {
       // transform reconstructed derivatives to Dubiner dofs
       tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4, inpoel,
                           coord, U );
+
+      // reconstruct vector of primitives from solution vector
+      getMultiMatPrimitives_P0P1( m_offset, nmat, rdof, fd.Esuel().size()/4, U,
+                                  P );
     }
 
     //! Limit second-order solution, and primitive quantities separately
@@ -191,7 +199,7 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \param[in,out] U Solution vector at recent time step
-    //! \param[in,out] P Primitive vector at recent time step
+    //! \param[in,out] P Vector of primitives at recent time step
     void limit( tk::real t,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
@@ -205,7 +213,6 @@ class MultiMat {
       IGNORE(t);
       IGNORE(geoFace);
       IGNORE(geoElem);
-      IGNORE(P);
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -215,7 +222,13 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       if (limiter == ctr::LimiterType::SUPERBEEP1)
+      {
+        // limit solution vector
         Superbee_P1( nmat, fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
+
+        // limit vector of primitives
+        Superbee_P1( 1, fd.Esuel(), inpoel, ndofel, m_offset, coord, P );
+      }
     }
 
     //! Compute right hand side
