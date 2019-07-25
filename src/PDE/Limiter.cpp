@@ -387,7 +387,7 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
     auto rhob(0.0), vel(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
-      auto alk = U(e,volfracIdx(nmat, k)*rdof,offset);
+      auto alk = std::max( 1.0e-14, U(e,volfracIdx(nmat, k)*rdof,offset) );
       auto rhok = U(e,densityIdx(nmat, k)*rdof,offset)/alk;
       auto rhoEk = U(e,energyIdx(nmat, k)*rdof,offset)/alk;
       for (std::size_t idir=1; idir<=3; ++idir)

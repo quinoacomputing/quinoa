@@ -177,8 +177,8 @@ class Transport {
         // compute boundary surface flux integrals
         for (const auto& b : bctypes)
           tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                               fd, geoFace, geoElem, t, b.second, U, lhs_ls,
-                               rhs_ls );
+                               fd, geoFace, geoElem, t, cellFaceState, b.second,
+                               U, lhs_ls, rhs_ls );
 
         // solve 3x3 least-squares system
         tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );

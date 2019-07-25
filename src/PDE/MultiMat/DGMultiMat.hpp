@@ -179,8 +179,8 @@ class MultiMat {
         // compute boundary surface flux integrals
         for (const auto& b : bctypes)
           tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                               fd, geoFace, geoElem, t, b.second, U, lhs_ls,
-                               rhs_ls );
+                               fd, geoFace, geoElem, t, cellFaceState, b.second,
+                               U, lhs_ls, rhs_ls );
 
         // solve 3x3 least-squares system
         tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
@@ -797,6 +797,9 @@ class MultiMat {
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+
+      Assert( ul.size() == ncomp+3, "Incorrect size for appended internal "
+              "state vector" );
 
       tk::real rho(0.0);
       for (std::size_t k=0; k<nmat; ++k)

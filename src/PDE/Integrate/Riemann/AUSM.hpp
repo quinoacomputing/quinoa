@@ -42,7 +42,8 @@ struct AUSM {
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& )
   {
-    std::vector< tk::real > flx( u[0].size()-3, 0 );
+    auto ncomp = u[0].size()-3;
+    std::vector< tk::real > flx( ncomp, 0 );
 
     const auto nmat =
       g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
@@ -110,7 +111,15 @@ struct AUSM {
     }
     ac12 = std::sqrt( ac12/rho12 );
 
-    // Face-normal velocities
+    // Independently limited velocities for advection
+    ul = u[0][ncomp+velocityIdx(nmat, 0)];
+    vl = u[0][ncomp+velocityIdx(nmat, 1)];
+    wl = u[0][ncomp+velocityIdx(nmat, 2)];
+    ur = u[1][ncomp+velocityIdx(nmat, 0)];
+    vr = u[1][ncomp+velocityIdx(nmat, 1)];
+    wr = u[1][ncomp+velocityIdx(nmat, 2)];
+
+    // Face-normal velocities from advective velocities
     auto vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
     auto vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
 

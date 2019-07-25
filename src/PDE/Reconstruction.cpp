@@ -90,6 +90,7 @@ tk::bndLeastSq_P0P1( ncomp_t system,
                      const Fields& geoFace,
                      const Fields& geoElem,
                      real t,
+                     const CellFaceStateFn& cellFaceState,
                      const StateFn& state,
                      const Fields& U,
                      std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
@@ -105,6 +106,7 @@ tk::bndLeastSq_P0P1( ncomp_t system,
 //! \param[in] geoFace Face geometry array
 //! \param[in] geoElem Element geometry array
 //! \param[in] t Physical time
+//! \param[in] cellFaceState Cell-face state function to use
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
@@ -134,9 +136,11 @@ tk::bndLeastSq_P0P1( ncomp_t system,
 
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
-        auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B );
+        auto usol = eval_state( ncomp, offset, rdof, 1, el, U, B );
+        std::vector< real >fvel(3,0.0);
 
-        Assert( ul.size() == ncomp, "Size mismatch" );
+        // consolidate primitives into state vector
+        auto ul = cellFaceState( system, ncomp, usol, fvel);
 
         // Compute the state at the face-center using BC
         auto ustate = state( system, ncomp, ul, fc[0], fc[1], fc[2], t, fn );
@@ -310,6 +314,9 @@ tk::getMultiMatPrimitives_P0P1( ncomp_t offset,
   using inciter::densityIdx;
   using inciter::momentumIdx;
   using inciter::velocityIdx;
+
+  Assert( P.nprop() == 3*rdof, "Number of components in vector of primitives "
+          "must equal "+ std::to_string(rdof*3) );
 
   for (std::size_t e=0; e<nelem; ++e)
   {
