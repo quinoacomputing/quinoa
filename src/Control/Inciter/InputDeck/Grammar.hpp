@@ -401,8 +401,8 @@ namespace grm {
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::PDG)
       {
-        stack.template get< tag::discr, tag::ndof >() = 4;
-        stack.template get< tag::discr, tag::rdof >() = 4;
+        stack.template get< tag::discr, tag::ndof >() = 10;
+        stack.template get< tag::discr, tag::rdof >() = 10;
         stack.template get< tag::pref, tag::pref >() = true;
       }
     }

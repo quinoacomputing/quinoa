@@ -5,6 +5,7 @@ project(PDE CXX)
 add_library(PDE
             PDEStack.cpp
             Limiter.cpp
+            Indicator.cpp
             ConfigureTransport.cpp
             ConfigureCompFlow.cpp
             ConfigureMultiMat.cpp)
