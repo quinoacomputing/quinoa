@@ -119,9 +119,6 @@ class Transport {
     }
 
     //! Update the primitives for this PDE system
-    //! \param[in] unk Array of unknowns
-    //! \param[in,out] prim Array of primitives
-    //! \param[in] nielem Number of internal elements
     void updatePrimitives( const tk::Fields&,
                            tk::Fields&,
                            const std::size_t ) const {}
