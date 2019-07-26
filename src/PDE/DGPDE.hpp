@@ -89,6 +89,12 @@ class DGPDE {
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     { self->lhs( geoElem, l ); }
 
+    //! Public interface to updating the primitives for the diff eq
+    void updatePrimitives( const tk::Fields& unk,
+                           tk::Fields& prim,
+                           const std::size_t nielem ) const
+    { self->updatePrimitives( unk, prim, nielem ); }
+
     //! Public interface to reconstructing the second-order solution
     void reconstruct( tk::real t,
                       const tk::Fields& geoFace,
@@ -196,6 +202,9 @@ class DGPDE {
                                tk::real,
                                const std::size_t nielem ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
+      virtual void updatePrimitives( const tk::Fields&,
+                                     tk::Fields&,
+                                     const std::size_t ) const = 0;
       virtual void reconstruct( tk::real,
                                 const tk::Fields&,
                                 const tk::Fields&,
@@ -261,6 +270,10 @@ class DGPDE {
       const override { data.initialize( L, inpoel, coord, unk, t, nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
+      void updatePrimitives( const tk::Fields& unk,
+                             tk::Fields& prim,
+                             const std::size_t nielem )
+      const override { data.updatePrimitives( unk, prim, nielem ); }
       void reconstruct( tk::real t,
                         const tk::Fields& geoFace,
                         const tk::Fields& geoElem,

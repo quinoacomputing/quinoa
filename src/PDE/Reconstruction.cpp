@@ -334,10 +334,9 @@ tk::getMultiMatPrimitives_P0P1( ncomp_t offset,
             U(e, momentumIdx(nmat, 1)*rdof, offset)/rhob[0],
             U(e, momentumIdx(nmat, 2)*rdof, offset)/rhob[0] }};
 
-    // fill up vector of primitives
+    // fill up high-order part of vector of primitives
     for (std::size_t idir=0; idir<3; ++idir)
     {
-      P(e, velocityIdx(nmat, idir)*rdof, offset) = vel[idir];
       for (std::size_t j=1; j<rdof; ++j)
       {
         P(e, velocityIdx(nmat, idir)*rdof+j, offset) =

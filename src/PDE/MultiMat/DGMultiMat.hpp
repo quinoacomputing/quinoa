@@ -118,6 +118,49 @@ class MultiMat {
       tk::mass( m_ncomp, m_offset, geoElem, l );
     }
 
+    //! Update the primitives for this PDE system
+    //! \param[in] unk Array of unknowns
+    //! \param[in,out] prim Array of primitives
+    //! \param[in] nielem Number of internal elements
+    void updatePrimitives( const tk::Fields& unk,
+                           tk::Fields& prim,
+                           const std::size_t nielem ) const
+    {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      for (std::size_t e=0; e<nielem; ++e)
+      {
+        // cell-average and high-order dofs of bulk density
+        std::vector< tk::real > rhob(ndof, 0.0);
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          for (std::size_t j=0; j<ndof; ++j)
+            rhob[j] += unk(e, densityIdx(nmat, k)*rdof+j, m_offset);
+        }
+
+        // cell-average velocity
+        std::array< tk::real, 3 >
+          vel{{ unk(e, momentumIdx(nmat, 0)*rdof, m_offset)/rhob[0],
+                unk(e, momentumIdx(nmat, 1)*rdof, m_offset)/rhob[0],
+                unk(e, momentumIdx(nmat, 2)*rdof, m_offset)/rhob[0] }};
+
+        // fill up vector of primitives
+        for (std::size_t idir=0; idir<3; ++idir)
+        {
+          prim(e, velocityIdx(nmat, idir)*rdof, m_offset) = vel[idir];
+          for (std::size_t j=1; j<ndof; ++j)
+          {
+            prim(e, velocityIdx(nmat, idir)*rdof+j, m_offset) =
+              ( unk(e, momentumIdx(nmat, idir)*rdof+j, m_offset)
+              - vel[idir]*rhob[j] )/rhob[0];
+          }
+        }
+      }
+    }
+
     //! Reconstruct second-order solution from first-order
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
@@ -137,7 +180,6 @@ class MultiMat {
                       tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
@@ -148,47 +190,44 @@ class MultiMat {
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
-      if (rdof == 4 && ndof == 1)
+      // supported boundary condition types and associated state functions
+      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >
+        bctypes{{
+          { m_bcdir, Dirichlet },
+          { m_bcsym, Symmetry },
+          { m_bcextrapolate, Extrapolate } }};
+
+      // allocate and initialize matrix and vector for reconstruction
+      std::vector< std::array< std::array< tk::real, 3 >, 3 > >
+        lhs_ls(U.nunk());
+      std::vector< std::vector< std::array< tk::real, 3 > > >
+        rhs_ls(U.nunk());
+
+      for (std::size_t e=0; e<rhs_ls.size(); ++e)
       {
-        // supported boundary condition types and associated state functions
-        std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >
-          bctypes{{
-            { m_bcdir, Dirichlet },
-            { m_bcsym, Symmetry },
-            { m_bcextrapolate, Extrapolate } }};
-
-        // allocate and initialize matrix and vector for reconstruction
-        std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-          lhs_ls(U.nunk());
-        std::vector< std::vector< std::array< tk::real, 3 > > >
-          rhs_ls(U.nunk());
-
-        for (std::size_t e=0; e<rhs_ls.size(); ++e)
-        {
-          rhs_ls[e].resize(m_ncomp);
-          for (std::size_t i=0; i<m_ncomp; ++i)
-            rhs_ls[e][i].fill(0.0);
-          for (std::size_t i=0; i<3; ++i)
-            lhs_ls[e][i].fill(0.0);
-        }
-
-        // reconstruct x,y,z-derivatives of unknowns
-        tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,
-                             lhs_ls, rhs_ls );
-
-        // compute boundary surface flux integrals
-        for (const auto& b : bctypes)
-          tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                               fd, geoFace, geoElem, t, cellFaceState, b.second,
-                               U, lhs_ls, rhs_ls );
-
-        // solve 3x3 least-squares system
-        tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
-
-        // transform reconstructed derivatives to Dubiner dofs
-        tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4, inpoel,
-                            coord, U );
+        rhs_ls[e].resize(m_ncomp);
+        for (std::size_t i=0; i<m_ncomp; ++i)
+          rhs_ls[e][i].fill(0.0);
+        for (std::size_t i=0; i<3; ++i)
+          lhs_ls[e][i].fill(0.0);
       }
+
+      // reconstruct x,y,z-derivatives of unknowns
+      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,
+                           lhs_ls, rhs_ls );
+
+      // compute boundary surface flux integrals
+      for (const auto& b : bctypes)
+        tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
+                             fd, geoFace, geoElem, t, cellFaceState, b.second,
+                             U, lhs_ls, rhs_ls );
+
+      // solve 3x3 least-squares system
+      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
+
+      // transform reconstructed derivatives to Dubiner dofs
+      tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4, inpoel,
+                          coord, U );
 
       // reconstruct vector of primitives from solution vector
       getMultiMatPrimitives_P0P1( m_offset, nmat, rdof, fd.Esuel().size()/4, U,

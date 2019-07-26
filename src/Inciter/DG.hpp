@@ -123,6 +123,7 @@ class DG : public CBase_DG {
                  std::size_t fromstage,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
+                 const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
     //! Optionally refine/derefine mesh

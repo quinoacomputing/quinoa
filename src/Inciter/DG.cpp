@@ -1001,8 +1001,12 @@ DG::setup()
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_dgpde) 
+  {
     eq.initialize( m_lhs, d->Inpoel(), d->Coord(), m_u, d->T(),
                    m_fd.Esuel().size()/4 );
+    eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
+  }
+
   m_un = m_u;
 
   // Start timer measuring time stepping wall clock time
@@ -1028,17 +1032,19 @@ DG::next()
   else
     for(const auto& n : m_ghostData) {
       std::vector< std::size_t > tetid( n.second.size() );
-      std::vector< std::vector< tk::real > > u( n.second.size() );
+      std::vector< std::vector< tk::real > > u( n.second.size() ),
+                                             prim( n.second.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : n.second) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
         tetid[j] = i.first;
         u[j] = m_u[i.first];
+        prim[j] = m_p[i.first];
         if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         ++j;
       }
-      thisProxy[ n.first ].comsol( thisIndex, m_stage, tetid, u, ndof );
+      thisProxy[ n.first ].comsol( thisIndex, m_stage, tetid, u, prim, ndof );
     }
 
   ownsol_complete();
@@ -1049,6 +1055,7 @@ DG::comsol( int fromch,
             std::size_t fromstage,
             const std::vector< std::size_t >& tetid,
             const std::vector< std::vector< tk::real > >& u,
+            const std::vector< std::vector< tk::real > >& prim,
             const std::vector< std::size_t >& ndof )
 // *****************************************************************************
 //  Receive chare-boundary solution ghost data from neighboring chares
@@ -1056,12 +1063,14 @@ DG::comsol( int fromch,
 //! \param[in] fromstage Sender chare time step stage
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Solution ghost data
+//! \param[in] prim Primitive ghost data
 //! \param[in] ndof Number of degrees of freedom for chare-boundary elements
 //! \details This function receives contributions to the unlimited solution
 //!   from fellow chares.
 // *****************************************************************************
 {
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
+  Assert( prim.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
   const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
 
@@ -1077,6 +1086,7 @@ DG::comsol( int fromch,
     auto b = tk::cref_find( m_bid, j );
     Assert( b < m_uc[0].size(), "Indexing out of bounds" );
     m_uc[0][b] = u[i];
+    m_pc[0][b] = prim[i];
     if (pref && fromstage == 0) {
       Assert( b < m_ndofc[0].size(), "Indexing out of bounds" );
       m_ndofc[0][b] = ndof[i];
@@ -1245,8 +1255,12 @@ DG::lim()
   // degrees of freedom in cells (if p-adaptive)
   for (const auto& b : m_bid) {
     Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[0][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {
       m_u(b.first,c,0) = m_uc[0][b.second][c];
+    }
+    for (std::size_t c=0; c<m_p.nprop(); ++c) {
+      m_p(b.first,c,0) = m_pc[0][b.second][c];
     }
     if (pref && m_stage == 0) {
       m_ndof[ b.first ] = m_ndofc[0][ b.second ];
@@ -1255,14 +1269,15 @@ DG::lim()
 
   if (pref && m_stage==0) propagate_ndof();
 
-  auto d = Disc();
-
-  // Reconstruct second-order solution and primitive quantities
-  for (const auto& eq : g_dgpde)
-    eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
-                    d->Coord(), m_u, m_p );
-
   if (rdof > 1) {
+
+    auto d = Disc();
+
+    // Reconstruct second-order solution and primitive quantities
+    if (rdof == 4 && inciter::g_inputdeck.get< tag::discr, tag::ndof >() == 1)
+      for (const auto& eq : g_dgpde)
+        eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
+                        d->Coord(), m_u, m_p );
 
     for (const auto& eq : g_dgpde)
       eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
@@ -1508,6 +1523,10 @@ DG::solve( tk::real newdt )
             + d->Dt() * m_rhs(e, mark, 0)/m_lhs(e, mark, 0) );
       }
 
+  // Update primitives based on the evolved solution
+  for (const auto& eq : g_dgpde)
+    eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
+
   if (m_stage < 2) {
 
     // continue with next tims step stage
@@ -1595,7 +1614,9 @@ DG::resizePostAMR(
 
   // Update state
   auto nelem = d->Inpoel().size()/4;
-  auto nprop = m_u.nprop();
+  auto nprop = m_p.nprop();
+  m_p.resize( nelem, nprop );
+  nprop = m_u.nprop();
   m_u.resize( nelem, nprop );
   m_un.resize( nelem, nprop );
   m_lhs.resize( nelem, nprop );
@@ -1617,11 +1638,14 @@ DG::resizePostAMR(
 
   // Update solution on new mesh, P0 (cell center value) only for now
   m_un = m_u;
+  auto pn = m_p;
   for (const auto& e : addedTets) {
     Assert( e.first < nelem, "Indexing out of new solution vector" );
     Assert( e.second < old_nelem, "Indexing out of old solution vector" );
     for (std::size_t c=0; c<nprop; ++c)
       m_u(e.first,c,0) = m_un(e.second,c,0);
+    for (std::size_t c=0; c<m_p.nprop(); ++c)
+      m_p(e.first,c,0) = pn(e.second,c,0);
   }
   m_un = m_u;
 
