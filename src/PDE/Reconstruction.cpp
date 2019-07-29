@@ -29,7 +29,6 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
                      std::vector< std::vector< std::array< real, 3 > > >& rhs_ls )
 // *****************************************************************************
 //  Compute internal surface contributions to the least-squares reconstruction
-//! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
@@ -48,15 +47,14 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
     Assert( esuf[2*f] > -1 && esuf[2*f+1] > -1, "Interior element detected "
             "as -1" );
 
-    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+    auto el = static_cast< std::size_t >(esuf[2*f]);
+    auto er = static_cast< std::size_t >(esuf[2*f+1]);
 
     // get a 3x3 system by applying the normal equation approach to the
     // least-squares overdetermined system
-    std::array< real, 3 > wdeltax{{ 0.0, 0.0, 0.0 }};
-
-    for (std::size_t idir=0; idir<3; ++idir)
-      wdeltax[idir] = geoElem(er,idir+1,0)-geoElem(el,idir+1,0);
+    std::array< real, 3 > wdeltax{{ geoElem(er,1,0)-geoElem(el,1,0),
+                                    geoElem(er,2,0)-geoElem(el,2,0),
+                                    geoElem(er,3,0)-geoElem(el,3,0) }};
 
     for (std::size_t idir=0; idir<3; ++idir)
     {
@@ -122,7 +120,7 @@ tk::bndLeastSq_P0P1( ncomp_t system,
       // Compute boundary face contributions
       for (const auto& f : bc->second)
       {
-        Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
+        Assert( esuf[2*f+1] == -1, "physical boundary element not -1" );
 
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
 
@@ -141,10 +139,9 @@ tk::bndLeastSq_P0P1( ncomp_t system,
         // Compute the state at the face-center using BC
         auto ustate = state( system, ncomp, ul, fc[0], fc[1], fc[2], t, fn );
 
-        std::array< real, 3 > wdeltax{{ 0.0, 0.0, 0.0 }};
-
-        for (std::size_t idir=0; idir<3; ++idir)
-          wdeltax[idir] = fc[idir]-geoElem(el,1+idir,0);
+        std::array< real, 3 > wdeltax{{ fc[0]-geoElem(el,1,0),
+                                        fc[1]-geoElem(el,2,0),
+                                        fc[2]-geoElem(el,3,0) }};
 
         for (std::size_t idir=0; idir<3; ++idir)
         {
@@ -181,29 +178,16 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
 {
   for (std::size_t e=0; e<lhs.size(); ++e)
   {
-    auto de = tk::determinant3by3( lhs[e] );
-
     for (ncomp_t c=0; c<ncomp; ++c)
     {
       auto mark = c*rdof;
-      real nu(0.0);
 
       // solve system using Cramer's rule
+      auto ux = tk::cramer( lhs[e], rhs[e][c] );
 
-      nu = tk::determinant3by3( {{{{rhs[e][c][0], lhs[e][0][1], lhs[e][0][2]}},
-                                  {{rhs[e][c][1], lhs[e][1][1], lhs[e][1][2]}},
-                                  {{rhs[e][c][2], lhs[e][2][1], lhs[e][2][2]}}}} );
-      U(e,mark+1,offset) = nu/de;
-
-      nu = tk::determinant3by3( {{{{lhs[e][0][0], rhs[e][c][0], lhs[e][0][2]}},
-                                  {{lhs[e][1][0], rhs[e][c][1], lhs[e][1][2]}},
-                                  {{lhs[e][2][0], rhs[e][c][2], lhs[e][2][2]}}}} );
-      U(e,mark+2,offset) = nu/de;
-
-      nu = tk::determinant3by3( {{{{lhs[e][0][0], lhs[e][0][1], rhs[e][c][0]}},
-                                  {{lhs[e][1][0], lhs[e][1][1], rhs[e][c][1]}},
-                                  {{lhs[e][2][0], lhs[e][2][1], rhs[e][c][2]}}}} );
-      U(e,mark+3,offset) = nu/de;
+      U(e,mark+1,offset) = ux[0];
+      U(e,mark+2,offset) = ux[1];
+      U(e,mark+3,offset) = ux[2];
     }
   }
 }
@@ -248,43 +232,22 @@ tk::transform_P0P1( ncomp_t ncomp,
     // Compute the derivatives of basis function for DG(P1)
     auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
 
-    std::array< std::array< real, 3 >, 3> dBdxa;
-
-    for (std::size_t i=0; i<3; ++i)
-      for (std::size_t j=0; j<3; ++j)
-        dBdxa[i][j] = dBdx[i][j+1];
-
-    auto de = tk::determinant3by3( dBdxa );
-
     for (ncomp_t c=0; c<ncomp; ++c)
     {
       auto mark = c*rdof;
-      std::array< real, 3 > rhs{{ U(e,mark+1,offset),
-                                  U(e,mark+2,offset),
-                                  U(e,mark+3,offset) }};
 
       // solve system using Cramer's rule
-      real nu(0.0);
-
-      nu = tk::determinant3by3( {{{{rhs[0], dBdxa[0][1], dBdxa[0][2]}},
-                                  {{rhs[1], dBdxa[1][1], dBdxa[1][2]}},
-                                  {{rhs[2], dBdxa[2][1], dBdxa[2][2]}}}} );
-      auto ux = nu/de;
-
-      nu = tk::determinant3by3( {{{{dBdxa[0][0], rhs[0], dBdxa[0][2]}},
-                                  {{dBdxa[1][0], rhs[1], dBdxa[1][2]}},
-                                  {{dBdxa[2][0], rhs[2], dBdxa[2][2]}}}} );
-      auto uy = nu/de;
-
-      nu = tk::determinant3by3( {{{{dBdxa[0][0], dBdxa[0][1], rhs[0]}},
-                                  {{dBdxa[1][0], dBdxa[1][1], rhs[1]}},
-                                  {{dBdxa[2][0], dBdxa[2][1], rhs[2]}}}} );
-      auto uz = nu/de;
+      auto ux = tk::cramer( {{ {{dBdx[0][1], dBdx[0][2], dBdx[0][3]}},
+                               {{dBdx[1][1], dBdx[1][2], dBdx[1][3]}},
+                               {{dBdx[2][1], dBdx[2][2], dBdx[2][3]}} }},
+                            {{ U(e,mark+1,offset),
+                               U(e,mark+2,offset),
+                               U(e,mark+3,offset) }} );
 
       // replace physical derivatives with transformed dofs
-      U(e,mark+1,offset) = ux;
-      U(e,mark+2,offset) = uy;
-      U(e,mark+3,offset) = uz;
+      U(e,mark+1,offset) = ux[0];
+      U(e,mark+2,offset) = ux[1];
+      U(e,mark+3,offset) = ux[2];
     }
   }
 }

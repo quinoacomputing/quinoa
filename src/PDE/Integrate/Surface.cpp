@@ -142,7 +142,9 @@ tk::surfInt( ncomp_t system,
 
       // If an rDG method is set up (P0P1), then, currently we compute the P1
       // basis functions and solutions by default. This implies that P0P1 is
-      // unsupported in the p-adaptive DG (PDG).
+      // unsupported in the p-adaptive DG (PDG). This is a workaround until we
+      // have rdofel, which is needed to distinguish between ndofs and rdofs per
+      // element for pDG.
       std::size_t dof_el, dof_er;
       if (rdof > ndof)
       {
@@ -227,6 +229,7 @@ tk::update_rhs_fa ( ncomp_t ncomp,
 //!   single-material compflow and linear transport.
 // *****************************************************************************
 {
+  // following lines commented until rdofel is made available.
   //Assert( B_l.size() == ndof_l, "Size mismatch" );
   //Assert( B_r.size() == ndof_r, "Size mismatch" );
 

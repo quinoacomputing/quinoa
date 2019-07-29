@@ -179,7 +179,9 @@ Superbee_P1( const std::vector< int >& esuel,
   {
     // If an rDG method is set up (P0P1), then, currently we compute the P1
     // basis functions and solutions by default. This implies that P0P1 is
-    // unsupported in the p-adaptive DG (PDG).
+    // unsupported in the p-adaptive DG (PDG). This is a workaround until we
+    // have rdofel, which is needed to distinguish between ndofs and rdofs per
+    // element for pDG.
     std::size_t dof_el;
     if (rdof > ndof)
     {

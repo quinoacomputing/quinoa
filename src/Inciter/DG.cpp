@@ -1256,10 +1256,11 @@ DG::lim()
     auto d = Disc();
 
     // Reconstruct second-order solution
+    // if P0P1
     if (rdof == 4 && inciter::g_inputdeck.get< tag::discr, tag::ndof >() == 1)
-    for (const auto& eq : g_dgpde)
-      eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
-                      d->Coord(), m_u );
+      for (const auto& eq : g_dgpde)
+        eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
+                        d->Coord(), m_u );
 
     const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
     if (limiter == ctr::LimiterType::WENOP1)
