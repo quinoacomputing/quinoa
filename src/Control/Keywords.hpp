@@ -4112,6 +4112,24 @@ using interface_advection =
   keyword< interface_advection_info,
            TAOCPP_PEGTL_STRING("interface_advection") >;
 
+struct gauss_hump_compflow_info {
+  using code = Code< A >;
+  static std::string name()
+  { return "Advection of 2D Gaussian hump for Euler equations"; }
+  static std::string shortDescription() 
+  { return "Select advection of 2D Gaussian hump test problem"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the advection of 2D Gaussian hump test
+    problem. The initial and boundary conditions are specified to set up the
+    test problem suitable to exercise and test the advection terms of the
+    Euler equations. Example: "problem gauss_hump_compflow".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using gauss_hump_compflow = keyword< gauss_hump_compflow_info,
+                            TAOCPP_PEGTL_STRING("gauss_hump_compflow") >;
+
 struct problem_info {
   using code = Code< t >;
   static std::string name() { return "Test problem"; }
@@ -4136,7 +4154,8 @@ struct problem_info {
                   + taylor_green::string() + "\' | \'"
                   + sod_shocktube::string() + "\' | \'"
                   + rotated_sod_shocktube::string() + "\' | \'"
-                  + interface_advection::string() + '\'';
+                  + interface_advection::string() + "\' | \'"
+                  + gauss_hump_compflow::string() + '\'';
     }
   };
 };

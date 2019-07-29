@@ -61,6 +61,7 @@
 #include "Problem/SodShocktube.hpp"
 #include "Problem/RotatedSodShocktube.hpp"
 #include "Problem/SedovBlastwave.hpp"
+#include "Problem/GaussHumpCompflow.hpp"
 
 namespace inciter {
 
@@ -73,6 +74,7 @@ using CompFlowProblems = brigand::list< CompFlowProblemUserDefined
                                       , CompFlowProblemSodShocktube
                                       , CompFlowProblemRotatedSodShocktube
                                       , CompFlowProblemSedovBlastwave
+                                      , CompFlowProblemGaussHump
                                       >;
 
 } // inciter::
