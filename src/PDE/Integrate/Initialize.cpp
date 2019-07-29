@@ -184,6 +184,8 @@ tk::eval_init( ncomp_t ncomp,
     auto mark = c*ndof;
     auto rmark = c*rdof;
     unk(e, rmark, offset) = R[mark] / L(e, mark,   offset);
+
+    // if P0P1, initialize higher dofs to 0
     if (rdof > ndof)
     {
       unk(e, rmark+1, offset) = 0.0;

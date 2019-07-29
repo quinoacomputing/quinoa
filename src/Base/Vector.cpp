@@ -197,7 +197,7 @@ tk::inverseJacobian( const std::array< real, 3 >& v1,
 }
 
 tk::real
-tk::determinant3by3( const std::array< std::array< tk::real, 3 >, 3 >& a )
+tk::determinant( const std::array< std::array< tk::real, 3 >, 3 >& a )
 // *****************************************************************************
 //  Compute the determinant of 3x3 matrix
 //!  \param[in] a 3x3 matrix
@@ -207,4 +207,37 @@ tk::determinant3by3( const std::array< std::array< tk::real, 3 >, 3 >& a )
   return ( a[0][0] * (a[1][1]*a[2][2]-a[1][2]*a[2][1])
          - a[0][1] * (a[1][0]*a[2][2]-a[1][2]*a[2][0])
          + a[0][2] * (a[1][0]*a[2][1]-a[1][1]*a[2][0]) );
+}
+
+std::array < tk::real, 3 >
+tk::cramer( const std::array< std::array< tk::real, 3 >, 3>& a,
+            const std::array< tk::real, 3 >& b )
+// *****************************************************************************
+//  Solve a 3x3 system of equations using Cramer's rule
+//!  \param[in] a 3x3 lhs matrix
+//!  \param[in] b 3x1 rhs matrix
+//!  \return Array of solutions of the 3x3 system
+// *****************************************************************************
+{
+  auto de = determinant( a );
+
+  auto nu(0.0);
+  std::array < real, 3 > x;
+
+  nu = determinant( {{{{b[0], a[0][1], a[0][2]}},
+                      {{b[1], a[1][1], a[1][2]}},
+                      {{b[2], a[2][1], a[2][2]}}}} );
+  x[0] = nu/de;
+
+  nu = determinant( {{{{a[0][0], b[0], a[0][2]}},
+                      {{a[1][0], b[1], a[1][2]}},
+                      {{a[2][0], b[2], a[2][2]}}}} );
+  x[1] = nu/de;
+
+  nu = determinant( {{{{a[0][0], a[0][1], b[0]}},
+                      {{a[1][0], a[1][1], b[1]}},
+                      {{a[2][0], a[2][1], b[2]}}}} );
+  x[2] = nu/de;
+
+  return x;
 }

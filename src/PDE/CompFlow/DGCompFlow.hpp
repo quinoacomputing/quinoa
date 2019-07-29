@@ -159,18 +159,13 @@ class CompFlow {
 
       // allocate and initialize matrix and vector for reconstruction
       std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-        lhs_ls(U.nunk());
+        lhs_ls( U.nunk(), {{ {{0.0, 0.0, 0.0}},
+                             {{0.0, 0.0, 0.0}},
+                             {{0.0, 0.0, 0.0}} }} );
       std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhs_ls(U.nunk());
-
-      for (std::size_t e=0; e<rhs_ls.size(); ++e)
-      {
-        rhs_ls[e].resize(m_ncomp);
-        for (std::size_t i=0; i<m_ncomp; ++i)
-          rhs_ls[e][i].fill(0.0);
-        for (std::size_t i=0; i<3; ++i)
-          lhs_ls[e][i].fill(0.0);
-      }
+        rhs_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
+          ( m_ncomp,
+            {{ 0.0, 0.0, 0.0 }} ) );
 
       // reconstruct x,y,z-derivatives of unknowns
       tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,

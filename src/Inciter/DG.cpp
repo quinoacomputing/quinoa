@@ -1274,6 +1274,7 @@ DG::lim()
     auto d = Disc();
 
     // Reconstruct second-order solution and primitive quantities
+    // if P0P1
     if (rdof == 4 && inciter::g_inputdeck.get< tag::discr, tag::ndof >() == 1)
       for (const auto& eq : g_dgpde)
         eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
