@@ -86,10 +86,10 @@ tk::eval_dBdx_p1( const std::size_t ndof,
 {
   // The derivatives of the basis functions dB/dx are easily calculated
   // via a transformation to the reference space as,
-  // dB/dx = dB/dX . dx/dxi,
+  // dB/dx = dB/dxi . dxi/dx,
   // where, x = (x,y,z) are the physical coordinates, and
   //        xi = (xi, eta, zeta) are the reference coordinates.
-  // The matrix dx/dxi is the inverse of the Jacobian of transformation
+  // The matrix dxi/dx is the inverse of the Jacobian of transformation
   // and the matrix vector product has to be calculated. This follows.
 
   std::array< std::vector<tk::real>, 3 > dBdx;

@@ -55,6 +55,7 @@ tk::initialize( ncomp_t system,
 // *****************************************************************************
 {
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
 
   // Number of quadrature points for volume integration
   auto ng = tk::NGinit(ndof);
@@ -107,7 +108,7 @@ tk::initialize( ncomp_t system,
     }
 
     // Compute the initial conditions
-    eval_init(ncomp, offset, ndof, e, R, L, unk);
+    eval_init(ncomp, offset, ndof, rdof, e, R, L, unk);
   }
 }
 
@@ -160,6 +161,7 @@ void
 tk::eval_init( ncomp_t ncomp,
                ncomp_t offset,
                const std::size_t ndof,
+               const std::size_t rdof,
                const std::size_t e,
                const std::vector< tk::real >& R,
                const Fields& L,
@@ -169,6 +171,7 @@ tk::eval_init( ncomp_t ncomp,
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Number of degrees of freedom
+//! \param[in] rdof Total number of reconstructed degrees of freedom
 //! \param[in] e Element index
 //! \param[in] R Right-hand side vector
 //! \param[in] L Block diagonal mass matrix
@@ -179,22 +182,31 @@ tk::eval_init( ncomp_t ncomp,
   {
     // DG(P0)
     auto mark = c*ndof;
-    unk(e, mark, offset) = R[mark] / L(e, mark,   offset);
+    auto rmark = c*rdof;
+    unk(e, rmark, offset) = R[mark] / L(e, mark,   offset);
+
+    // if P0P1, initialize higher dofs to 0
+    if (rdof > ndof)
+    {
+      unk(e, rmark+1, offset) = 0.0;
+      unk(e, rmark+2, offset) = 0.0;
+      unk(e, rmark+3, offset) = 0.0;
+    }
 
     if(ndof > 1)          // DG(P1)
     {
-      unk(e, mark+1, offset) = R[mark+1] / L(e, mark+1, offset);
-      unk(e, mark+2, offset) = R[mark+2] / L(e, mark+2, offset);
-      unk(e, mark+3, offset) = R[mark+3] / L(e, mark+3, offset);
+      unk(e, rmark+1, offset) = R[mark+1] / L(e, mark+1, offset);
+      unk(e, rmark+2, offset) = R[mark+2] / L(e, mark+2, offset);
+      unk(e, rmark+3, offset) = R[mark+3] / L(e, mark+3, offset);
  
       if(ndof > 4)        // DG(P2)
       {
-        unk(e, mark+4, offset) = R[mark+4] / L(e, mark+4, offset);
-        unk(e, mark+5, offset) = R[mark+5] / L(e, mark+5, offset);
-        unk(e, mark+6, offset) = R[mark+6] / L(e, mark+6, offset);
-        unk(e, mark+7, offset) = R[mark+7] / L(e, mark+7, offset);
-        unk(e, mark+8, offset) = R[mark+8] / L(e, mark+8, offset);
-        unk(e, mark+9, offset) = R[mark+9] / L(e, mark+9, offset);
+        unk(e, rmark+4, offset) = R[mark+4] / L(e, mark+4, offset);
+        unk(e, rmark+5, offset) = R[mark+5] / L(e, mark+5, offset);
+        unk(e, rmark+6, offset) = R[mark+6] / L(e, mark+6, offset);
+        unk(e, rmark+7, offset) = R[mark+7] / L(e, mark+7, offset);
+        unk(e, rmark+8, offset) = R[mark+8] / L(e, mark+8, offset);
+        unk(e, rmark+9, offset) = R[mark+9] / L(e, mark+9, offset);
       }
     }
   }
