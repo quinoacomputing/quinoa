@@ -153,22 +153,24 @@ WENO_P1( const std::vector< int >& esuel,
 }
 
 void
-Superbee_P1( std::size_t nmat,
-             const std::vector< int >& esuel,
+Superbee_P1( const std::vector< int >& esuel,
              const std::vector< std::size_t >& inpoel,
              const std::vector< std::size_t >& ndofel,
              inciter::ncomp_t offset,
              const tk::UnsMesh::Coords& coord,
-             tk::Fields& U )
+             tk::Fields& U,
+             std::size_t nmat )
 // *****************************************************************************
 //  Superbee limiter for DGP1
-//! \param[in] nmat Number of materials in this PDE system
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] offset Index for equation systems
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
+//! \param[in] nmat Number of materials in this PDE system. Default is 1, so
+//!   this argument can be left unspecified for single-material by the calling
+//!   code.
 // *****************************************************************************
 {
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
@@ -370,9 +372,9 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
     }
     auto dmax = std::max(
                   std::max(
-                    std::fabs(U(e,volfracIdx(nmat, k)*rdof+1,offset)),
-                    std::fabs(U(e,volfracIdx(nmat, k)*rdof+2,offset)) ),
-                  std::fabs(U(e,volfracIdx(nmat, k)*rdof+3,offset)) );
+                    std::abs(U(e,volfracIdx(nmat, k)*rdof+1,offset)),
+                    std::abs(U(e,volfracIdx(nmat, k)*rdof+2,offset)) ),
+                  std::abs(U(e,volfracIdx(nmat, k)*rdof+3,offset)) );
     dalmax = std::max( dalmax, dmax );
   }
 

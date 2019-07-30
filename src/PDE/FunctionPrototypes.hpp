@@ -71,10 +71,11 @@ using StateFn = std::function<
 
 //! Function prototype for states reconstructed to the cell-face
 //! \details Functions of this type are used to provide the reconstructed state
-//!    on the left/right side of a cell-face. This changes from multimat to the
-//!    other types of systems available, since multimat requires additional
-//!    state-variables (such as primitives) to be reconstructed to the cell-face
-//!    and passed on to the Riemann flux function.
+//!    on the left/right side of a cell-face. This is required for multimat
+//!    since multimat requires additional state-variables (such as primitive
+//!    quantities) to be reconstructed to the cell-face and passed on to the
+//!    Riemann flux function. Currently, such additional state-variables are
+//!    needed only for multimat.
 using CellFaceStateFn = std::function<
   std::vector< real >
   ( ncomp_t, ncomp_t, const std::vector< real >&,

@@ -294,7 +294,7 @@ class DG : public CBase_DG {
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Solution receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 2 > m_uc;
-    //! Primitive receive buffers for ghosts only
+    //! Primitive-variable receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 2 > m_pc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only

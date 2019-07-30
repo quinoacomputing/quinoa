@@ -103,7 +103,7 @@ tk::real eos_soundspeed( ncomp_t system,
   auto p_c =
     g_inputdeck.get< tag::param, Eq, tag::pstiff >()[ system ][imat];
 
-  auto p_eff = std::max( 1.0e-15, (pr+p_c) );
+  auto p_eff = std::max( 1.0e-15, pr+p_c );
 
   tk::real a = std::sqrt( g * p_eff / rho );
   return a;

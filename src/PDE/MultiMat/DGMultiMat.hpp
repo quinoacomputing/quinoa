@@ -122,14 +122,26 @@ class MultiMat {
     //! \param[in] unk Array of unknowns
     //! \param[in,out] prim Array of primitives
     //! \param[in] nielem Number of internal elements
+    //! \details This function computes and stores the dofs for primitive
+    //!   quantities, which are required for obtaining reconstructed states used
+    //!   in the Riemann solver. See /PDE/Integrate/Riemann/AUSM.hpp, where the
+    //!   normal velocity for advection is calculated from independently
+    //!   reconstructed velocities.
     void updatePrimitives( const tk::Fields& unk,
                            tk::Fields& prim,
-                           const std::size_t nielem ) const
+                           std::size_t nielem ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
+      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( prim.nprop() == rdof*3, "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*3) );
 
       for (std::size_t e=0; e<nielem; ++e)
       {
@@ -263,10 +275,10 @@ class MultiMat {
       if (limiter == ctr::LimiterType::SUPERBEEP1)
       {
         // limit solution vector
-        Superbee_P1( nmat, fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
+        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U, nmat );
 
         // limit vector of primitives
-        Superbee_P1( 1, fd.Esuel(), inpoel, ndofel, m_offset, coord, P );
+        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, P );
       }
     }
 

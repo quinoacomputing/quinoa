@@ -1063,7 +1063,7 @@ DG::comsol( int fromch,
 //! \param[in] fromstage Sender chare time step stage
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Solution ghost data
-//! \param[in] prim Primitive ghost data
+//! \param[in] prim Primitive variables in ghost cells
 //! \param[in] ndof Number of degrees of freedom for chare-boundary elements
 //! \details This function receives contributions to the unlimited solution
 //!   from fellow chares.

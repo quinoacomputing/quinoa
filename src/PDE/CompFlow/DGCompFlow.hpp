@@ -120,9 +120,13 @@ class CompFlow {
     }
 
     //! Update the primitives for this PDE system
+    //! \details This function computes and stores the dofs for primitive
+    //!   quantities, which is currently unused for compflow. But if a limiter
+    //!   requires primitive variables for example, this would be the place to
+    //!   add the computation of the primitive variables.
     void updatePrimitives( const tk::Fields&,
                            tk::Fields&,
-                           const std::size_t ) const {}
+                           std::size_t ) const {}
 
     //! Reconstruct second-order solution from first-order using least-squares
     //! \param[in] t Physical time
@@ -213,7 +217,7 @@ class CompFlow {
       if (limiter == ctr::LimiterType::WENOP1)
         WENO_P1( fd.Esuel(), m_offset, U );
       else if (limiter == ctr::LimiterType::SUPERBEEP1)
-        Superbee_P1( 1, fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
+        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
     }
 
     //! Compute right hand side
@@ -748,16 +752,11 @@ class CompFlow {
     //! \note The function signature must follow tk::CellFaceStateFn
     static tk::CellFaceStateFn::result_type
     cellFaceState( ncomp_t,
-                   ncomp_t ncomp,
+                   ncomp_t,
                    const std::vector< tk::real >& state,
-                   const std::vector< tk::real >& prim)
+                   const std::vector< tk::real >& )
     {
-      auto new_state = state;
-      Assert( new_state.size() == ncomp, "Size mismatch" );
-      IGNORE(ncomp);
-      IGNORE(prim);
-
-      return new_state;
+      return state;
     }
 
     //! \brief Boundary state function providing the left and right state of a
