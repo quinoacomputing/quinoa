@@ -30,7 +30,6 @@ tk::surfInt( ncomp_t system,
              const UnsMesh::Coords& coord,
              const inciter::FaceData& fd,
              const Fields& geoFace,
-             const CellFaceStateFn& cellFaceState,
              const RiemannFluxFn& flux,
              const VelFn& vel,
              const Fields& U,
@@ -50,7 +49,6 @@ tk::surfInt( ncomp_t system,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
-//! \param[in] cellFaceState Cell face state function to use
 //! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
@@ -173,17 +171,22 @@ tk::surfInt( ncomp_t system,
 
       auto wt = wgp[igp] * geoFace(f,0,0);
 
-      std::array< std::vector< real >, 2 > solstate, state;
+      std::array< std::vector< real >, 2 > state;
       std::array< std::vector< real >, 2 > fvel;
 
-      solstate[0] = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
+      state[0] = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
       fvel[0] = eval_state( 3, offset, rdof, dof_el, el, P, B_l );
-      solstate[1] = eval_state( ncomp, offset, rdof, dof_er, er, U, B_r );
+      state[1] = eval_state( ncomp, offset, rdof, dof_er, er, U, B_r );
       fvel[1] = eval_state( 3, offset, rdof, dof_er, er, P, B_r );
 
       // consolidate primitives into state vector
-      state[0] = cellFaceState( system, ncomp, solstate[0], fvel[0]);
-      state[1] = cellFaceState( system, ncomp, solstate[1], fvel[1]);
+      state[0].insert(state[0].end(), fvel[0].begin(), fvel[0].end());
+      state[1].insert(state[1].end(), fvel[1].begin(), fvel[1].end());
+
+      Assert( state[0].size() == ncomp+fvel[0].size(), "Incorrect size for "
+              "appended boundary state vector" );
+      Assert( state[1].size() == ncomp+fvel[1].size(), "Incorrect size for "
+              "appended boundary state vector" );
 
       // evaluate prescribed velocity (if any)
       auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );

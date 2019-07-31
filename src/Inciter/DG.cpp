@@ -58,7 +58,10 @@ DG::DG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::discr, tag::rdof >()*
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
-  m_p( m_u.nunk(), g_inputdeck.get< tag::discr, tag::rdof >()*3 ),
+  m_p( m_u.nunk(),
+       g_inputdeck.get< tag::discr, tag::rdof >()*
+         std::accumulate( begin(g_dgpde), end(g_dgpde), 0u,
+           [](std::size_t s, const DGPDE& eq){ return s + eq.nprim(); } ) ),
   m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), Disc()->Coord()) ),
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(),

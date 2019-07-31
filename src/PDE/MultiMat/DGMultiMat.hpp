@@ -93,6 +93,15 @@ class MultiMat {
       m_bcextrapolate( config< tag::bcextrapolate >( c ) )
     {}
 
+    //! Find the number of primitive quantities required for this PDE system
+    //! \return The number of primitive quantities required to be stored for
+    //!   this PDE system
+    std::size_t nprim() const
+    {
+      // multimat needs and stores velocities currently
+      return 3;
+    }
+
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
@@ -140,8 +149,8 @@ class MultiMat {
               "vector and primitive vector at recent time step incorrect" );
       Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( prim.nprop() == rdof*3, "Number of components in vector of "
-              "primitive quantities must equal "+ std::to_string(rdof*3) );
+      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
       for (std::size_t e=0; e<nielem; ++e)
       {
@@ -226,8 +235,8 @@ class MultiMat {
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                             fd, geoFace, geoElem, t, cellFaceState, b.second,
-                             U, lhs_ls, rhs_ls );
+                             fd, geoFace, geoElem, t, b.second, U, lhs_ls,
+                             rhs_ls, nprim() );
 
       // solve 3x3 least-squares system
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
@@ -315,8 +324,8 @@ class MultiMat {
               "vector and right-hand side at recent time step incorrect" );
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( P.nprop() == rdof*3, "Number of components in primitive "
-              "vector must equal "+ std::to_string(rdof*3) );
+      Assert( P.nprop() == rdof*nprim(), "Number of components in primitive "
+              "vector must equal "+ std::to_string(rdof*nprim()) );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
@@ -344,8 +353,8 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, nmat, m_offset, ndof, rdof, inpoel, coord,
-                   fd, geoFace, cellFaceState, AUSM::flux, velfn, U, P, ndofel,
-                   R, riemannDeriv );
+                   fd, geoFace, AUSM::flux, velfn, U, P, ndofel, R,
+                   riemannDeriv );
 
       // compute source term integrals
       tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
@@ -359,9 +368,8 @@ class MultiMat {
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, nmat, m_offset, ndof, rdof, b.first,
-                        fd, geoFace, inpoel, coord, t, cellFaceState,
-                        AUSM::flux, velfn, b.second, U, P, ndofel, R,
-                        riemannDeriv );
+                        fd, geoFace, inpoel, coord, t, AUSM::flux, velfn,
+                        b.second, U, P, ndofel, R, riemannDeriv );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );
@@ -760,33 +768,6 @@ class MultiMat {
       // NEED TO RETURN m_ncomp flux vectors in fl, not 5
 
       return fl;
-    }
-
-    //! Evaluate cell-face state required for this PDE system
-    //! \param[in] ncomp Number of scalar components in this PDE system
-    //! \param[in] state Solution state at the cell-face for this PDE system
-    //! \return Cell-face state for this PDE system, which is the solution state
-    //!   augmented by the primitive quantity state
-    //! \note The function signature must follow tk::CellFaceStateFn
-    static tk::CellFaceStateFn::result_type
-    cellFaceState( ncomp_t,
-                   ncomp_t ncomp,
-                   const std::vector< tk::real >& state,
-                   const std::vector< tk::real >& prim )
-    {
-      auto new_state = state;
-      Assert( new_state.size() == ncomp, "Size mismatch" );
-
-      // consolidate primitives into state vector
-      for (std::size_t j=0; j<prim.size(); ++j)
-      {
-        new_state.push_back(prim[j]);
-      }
-
-      Assert( new_state.size() == ncomp+prim.size(), "Size mismatch" );
-      IGNORE(ncomp);
-
-      return new_state;
     }
 
     //! \brief Boundary state function providing the left and right state of a

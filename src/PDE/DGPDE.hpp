@@ -76,6 +76,10 @@ class DGPDE {
       self( tk::make_unique< Model<T> >(
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
+    //! Public interface to find number of primitive quantities for the diff eq
+    std::size_t nprim() const
+    { return self->nprim(); }
+
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
@@ -195,6 +199,7 @@ class DGPDE {
       Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
+      virtual std::size_t nprim() const = 0;
       virtual void initialize( const tk::Fields&,
                                const std::vector< std::size_t >&,
                                const tk::UnsMesh::Coords&,
@@ -261,6 +266,8 @@ class DGPDE {
     struct Model : Concept {
       explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
+      std::size_t nprim() const override
+      { return data.nprim(); }
       void initialize( const tk::Fields& L,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,

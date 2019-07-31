@@ -82,17 +82,17 @@ void
 tk::bndLeastSq_P0P1( ncomp_t system,
                      ncomp_t ncomp,
                      ncomp_t offset,
-                     const std::size_t rdof,
+                     std::size_t rdof,
                      const std::vector< bcconf_t >& bcconfig,
                      const inciter::FaceData& fd,
                      const Fields& geoFace,
                      const Fields& geoElem,
                      real t,
-                     const CellFaceStateFn& cellFaceState,
                      const StateFn& state,
                      const Fields& U,
                      std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
-                     std::vector< std::vector< std::array< real, 3 > > >& rhs_ls )
+                     std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
+                     std::size_t nprim )
 // *****************************************************************************
 //  Compute boundary face contributions to the least-squares reconstruction
 //! \param[in] system Equation system index
@@ -104,12 +104,14 @@ tk::bndLeastSq_P0P1( ncomp_t system,
 //! \param[in] geoFace Face geometry array
 //! \param[in] geoElem Element geometry array
 //! \param[in] t Physical time
-//! \param[in] cellFaceState Cell-face state function to use
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
 //! \param[in,out] lhs_ls LHS reconstruction matrix
 //! \param[in,out] rhs_ls RHS reconstruction vector
+//! \param[in] nprim Number of primitive quantities stored for this PDE system.
+//!   A default is set to 0, so that calling code for systems that do not store
+//!   primitive quantities does not need to specify this argument.
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
@@ -134,11 +136,14 @@ tk::bndLeastSq_P0P1( ncomp_t system,
 
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
-        auto usol = eval_state( ncomp, offset, rdof, 1, el, U, B );
-        std::vector< real >fvel(3,0.0);
+        auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B );
+        std::vector< real >fvel(nprim,0.0);
 
         // consolidate primitives into state vector
-        auto ul = cellFaceState( system, ncomp, usol, fvel);
+        ul.insert(ul.end(), fvel.begin(), fvel.end());
+
+        Assert( ul.size() == ncomp+fvel.size(), "Incorrect size for "
+                "appended boundary state vector" );
 
         // Compute the state at the face-center using BC
         auto ustate = state( system, ncomp, ul, fc[0], fc[1], fc[2], t, fn );

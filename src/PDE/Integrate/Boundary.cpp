@@ -33,7 +33,6 @@ tk::bndSurfInt( ncomp_t system,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 real t,
-                const CellFaceStateFn& cellFaceState,
                 const RiemannFluxFn& flux,
                 const VelFn& vel,
                 const StateFn& state,
@@ -59,7 +58,6 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] t Physical time
-//! \param[in] cellFaceState Cell face state function to use
 //! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] state Function to evaluate the left and right solution state at
@@ -158,11 +156,14 @@ tk::bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0,0);
 
           // Compute the state variables at the left element
-          auto solugp = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
+          auto ugp = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
           auto fvel = eval_state( 3, offset, rdof, dof_el, el, P, B_l );
 
           // consolidate primitives into state vector
-          auto ugp = cellFaceState( system, ncomp, solugp, fvel);
+          ugp.insert(ugp.end(), fvel.begin(), fvel.end());
+
+          Assert( ugp.size() == ncomp+fvel.size(), "Incorrect size for "
+                  "appended boundary state vector" );
 
           // Compute the numerical flux
           auto fl = flux( fn,

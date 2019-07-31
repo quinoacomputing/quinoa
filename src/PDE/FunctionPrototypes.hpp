@@ -69,18 +69,6 @@ using StateFn = std::function<
   ( ncomp_t, ncomp_t, const std::vector< real >&, real, real, real, real,
     const std::array< tk::real, 3 >& ) >;
 
-//! Function prototype for states reconstructed to the cell-face
-//! \details Functions of this type are used to provide the reconstructed state
-//!    on the left/right side of a cell-face. This is required for multimat
-//!    since multimat requires additional state-variables (such as primitive
-//!    quantities) to be reconstructed to the cell-face and passed on to the
-//!    Riemann flux function. Currently, such additional state-variables are
-//!    needed only for multimat.
-using CellFaceStateFn = std::function<
-  std::vector< real >
-  ( ncomp_t, ncomp_t, const std::vector< real >&,
-    const std::vector< tk::real >& ) >;
-
 //! Function prototype for evaluating a source term for a system of PDEs
 //! \details Functions of this type are used to evaluate an arbitrary source
 //!   term specialized to a particular problem, e.g., derived using the method

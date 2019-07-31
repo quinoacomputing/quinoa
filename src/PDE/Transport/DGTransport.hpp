@@ -93,6 +93,15 @@ class Transport {
       m_problem.errchk( m_system, m_ncomp );
     }
 
+    //! Find the number of primitive quantities required for this PDE system
+    //! \return The number of primitive quantities required to be stored for
+    //!   this PDE system
+    std::size_t nprim() const
+    {
+      // transport does not need/store any primitive quantities currently
+      return 0;
+    }
+
     //! Initalize the transport equations for DG
     //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
@@ -176,8 +185,8 @@ class Transport {
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                             fd, geoFace, geoElem, t, cellFaceState, b.second,
-                             U, lhs_ls, rhs_ls );
+                             fd, geoFace, geoElem, t, b.second, U, lhs_ls,
+                             rhs_ls );
 
       // solve 3x3 least-squares system
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
@@ -249,8 +258,8 @@ class Transport {
               "vector and right-hand side at recent time step incorrect" );
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( P.nprop() == rdof*3, "Number of components in primitive "
-              "vector must equal "+ std::to_string(rdof*3) );
+      Assert( P.nprop() == 0, "Number of components in primitive "
+              "vector must equal "+ std::to_string(0) );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
@@ -275,8 +284,8 @@ class Transport {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, inpoel, coord,
-                   fd, geoFace, cellFaceState, Upwind::flux,
-                   Problem::prescribedVelocity, U, P, ndofel, R, riemannDeriv );
+                   fd, geoFace, Upwind::flux, Problem::prescribedVelocity, U, P,
+                   ndofel, R, riemannDeriv );
 
       if(ndof > 1)
         // compute volume integrals
@@ -286,8 +295,8 @@ class Transport {
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, b.first, fd,
-          geoFace, inpoel, coord, t, cellFaceState, Upwind::flux,
-          Problem::prescribedVelocity, b.second, U, P, ndofel, R, riemannDeriv );
+          geoFace, inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
+          b.second, U, P, ndofel, R, riemannDeriv );
     }
 
     //! Compute the minimum time step size
@@ -450,20 +459,6 @@ class Transport {
         fl[c] = {{ v[c][0] * ugp[c], v[c][1] * ugp[c], v[c][2] * ugp[c] }};
 
       return fl;
-    }
-
-    //! Evaluate cell-face state required for this PDE system
-    //! \param[in] ncomp Number of scalar components in this PDE system
-    //! \param[in] state Solution state at the cell-face for this PDE system
-    //! \return Cell-face state for this PDE system
-    //! \note The function signature must follow tk::CellFaceStateFn
-    static tk::CellFaceStateFn::result_type
-    cellFaceState( ncomp_t,
-                   ncomp_t,
-                   const std::vector< tk::real >& state,
-                   const std::vector< tk::real >& )
-    {
-      return state;
     }
 
     //! \brief Boundary state function providing the left and right state of a
