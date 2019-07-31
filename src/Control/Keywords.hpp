@@ -5335,6 +5335,27 @@ struct amr_info {
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
+struct pref_ndofmax_info {
+  static std::string name() { return "Maximum ndof for p-refinement"; }
+  static std::string shortDescription() { return "Configure the maximum "
+    "number of degree of freedom for p-adaptive DG scheme"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to configure a maximum number of degree of
+    freedom for p-adaptive refinement  for the DG scheme. The keyword must
+    be used in pref ... end block. Example specification: 'ndofmax 10'.)"; }
+  struct expect {
+    using type = std::size_t;
+    static constexpr type lower = 1;
+    static constexpr type upper = 10;
+    static std::string description() { return "int"; }
+    static std::string choices() {
+      return "int between [ 1, 4, 10 ] (both inclusive)";
+    }
+  };
+};
+using pref_ndofmax =
+          keyword< pref_ndofmax_info, TAOCPP_PEGTL_STRING("ndofmax") >;
+
 struct pref_tolref_info {
   static std::string name() { return "Tolerance for p-refinement"; }
   static std::string shortDescription() { return "Configure the tolerance for "
@@ -5365,6 +5386,7 @@ struct pref_info {
     R"(This keyword is used to introduce the pref ... end block, used to
     configure p-adaptive refinement. Keywords allowed
     in this block: )" + std::string("\'")
+    + pref_ndofmax::string() + "\' | \'"
     + pref_tolref::string() + "\' | \'";
   }
 };

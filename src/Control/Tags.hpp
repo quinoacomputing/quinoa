@@ -96,6 +96,7 @@ struct diffeq {};
 struct pde {};
 struct pref {};
 struct tolref {};
+struct ndofmax {};
 struct amr {};
 struct tolderef {};
 struct t0ref {};

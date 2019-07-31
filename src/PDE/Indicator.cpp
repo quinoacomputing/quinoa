@@ -32,9 +32,12 @@ void eval_ndof( const std::size_t nunk,
 {
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto ncomp = unk.nprop() / ndof;
+  const auto ndofmax = inciter::g_inputdeck.get< tag::pref, tag::ndofmax >();
 
   // The array storing the adaptive indicator for each elements
   std::vector< tk::real > Ind(nunk, 0);
+
+  tk::real ErrMaxp2(0), ErrMaxp1(0), ErrMinp2(1), ErrMinp1(1);
 
   for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
@@ -70,49 +73,70 @@ void eval_ndof( const std::size_t nunk,
 
         auto state = tk::eval_state( ncomp, 0, ndof, ndofel[e], e, unk, B );
 
-        U += wgp[igp] * state[0];
+        U += wgp[igp] * state[0] * state[0];
 
         if(ndofel[e] > 4)
         {
-          auto dU_p2 = unk(e, 4, 0) * B[4]
-                     + unk(e, 5, 0) * B[5]
-                     + unk(e, 6, 0) * B[6]
-                     + unk(e, 7, 0) * B[7]
-                     + unk(e, 8, 0) * B[8]
-                     + unk(e, 9, 0) * B[9];
-
-          dU += wgp[igp] * dU_p2 * dU_p2;
+           auto dU_p2 = unk(e, 4, 0) * B[4]
+                      + unk(e, 5, 0) * B[5]
+                      + unk(e, 6, 0) * B[6]
+                      + unk(e, 7, 0) * B[7]
+                      + unk(e, 8, 0) * B[8]
+                      + unk(e, 9, 0) * B[9];
+ 
+           dU += wgp[igp] * dU_p2 * dU_p2;
         }
         else
         {
-          auto dU_p1 = unk(e, 1, 0) * B[1]
-                     + unk(e, 2, 0) * B[2]
-                     + unk(e, 3, 0) * B[3];
-
-          dU += wgp[igp] * dU_p1 * dU_p1;
+           auto dU_p1 = unk(e, 1, 0) * B[1]
+                      + unk(e, 2, 0) * B[2]
+                      + unk(e, 3, 0) * B[3];
+ 
+           dU += wgp[igp] * dU_p1 * dU_p1;
         }
       }
 
-      Ind[e] = sqrt( dU / U );
+      //std::cout << "dU = " << dU << "\t" << "U = " << U << std::endl;
+      Ind[e] = log10( dU / U );
+
+      if(ndofel[e] > 4)
+      {
+        if(Ind[e] > ErrMaxp2)
+          ErrMaxp2 = Ind[e];
+        if(Ind[e] < ErrMinp2)
+          ErrMinp2 = Ind[e];
+      }
+      else if(ndofel[e] == 4)
+      {
+        if(Ind[e] > ErrMaxp1)
+          ErrMaxp1 = Ind[e];
+        if(Ind[e] < ErrMinp1)
+          ErrMinp1 = Ind[e];
+      }
     }
   }
+
+  //std::cout << "ErrMaxp1 = " << ErrMaxp1 << std::endl;
+  //std::cout << "ErrMinp1 = " << ErrMinp1 << std::endl; 
+  //std::cout << "ErrMaxp2 = " << ErrMaxp2 << std::endl;
+  //std::cout << "ErrMinp2 = " << ErrMinp2 << std::endl;
 
   // Marke the ndof according to the adaptive indicator
   for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
     if(ndofel[e] == 4)
     {
-      if(Ind[e] > 1e-3)      // Refinement
-        ndofel[e] = 10;
-      if(Ind[e] < 1e-4)      // Derefinement
+      if(Ind[e] > -6 && ndofmax > 4)      // Refinement
+       ndofel[e] = 10;
+      if(Ind[e] < -6.5)                     // Derefinement
         ndofel[e] = 1;
     }
-    else if(ndofel[e] > 10)
+    else if(ndofel[e] > 4)
     {
-      if(Ind[e] < 1e-4)      // Derefinement
+      if(Ind[e] < -8)                     // Derefinement
         ndofel[e] = 4;
     }
   }
-} 
+}
 
 } // inciter::

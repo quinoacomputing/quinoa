@@ -16,6 +16,7 @@
 
 #include <array>
 #include <vector>
+#include <algorithm>
 
 #include "Types.hpp"
 #include "Fields.hpp"
@@ -25,6 +26,8 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
+
+using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Evaluate the adaptive indicator and mark the ndof for each element
 void eval_ndof( const std::size_t nunk,

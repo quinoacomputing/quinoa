@@ -154,6 +154,7 @@ class InputDeck :
                                    kw::amr_zminus,
                                    kw::amr_zplus,
                                    kw::pref,
+                                   kw::pref_ndofmax,
                                    kw::pref_tolref,
                                    kw::scheme,
                                    kw::diagcg,
@@ -230,6 +231,7 @@ class InputDeck :
       set< tag::amr, tag::zplus >( rmax );
       // Default p-refinement settings
       set< tag::pref, tag::pref >( false );
+      set< tag::pref, tag::ndofmax >( 10 );
       set< tag::pref, tag::tolref >( 0.1 );
       // Default txt floating-point output precision in digits
       set< tag::prec, tag::diag >( std::cout.precision() );

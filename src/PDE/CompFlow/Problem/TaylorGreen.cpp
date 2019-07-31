@@ -128,6 +128,7 @@ CompFlowProblemTaylorGreen::fieldNames( ncomp_t ) const
   n.push_back( "err(E)" );
   n.push_back( "pressure_numerical" );
   n.push_back( "pressure_analytical" );
+  n.push_back( "number of degree of freedom" );
 
   return n;
 }

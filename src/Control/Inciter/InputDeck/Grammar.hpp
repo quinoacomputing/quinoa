@@ -396,8 +396,8 @@ namespace grm {
         stack.template get< tag::discr, tag::ndof >() = 10;
         stack.template get< tag::discr, tag::rdof >() = 10;
       }
-      // if pDG is configured, set ndofs and rdofs to be 4 and the adaptive
-      // indicator pref set to be true (temporary for P0/P1 adaptive)
+      // if pDG is configured, set ndofs and rdofs to be 10 and the adaptive
+      // indicator pref set to be true
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::PDG)
       {
@@ -864,7 +864,12 @@ namespace deck {
                            tk::grm::control< use< kw::pref_tolref >,
                                              pegtl::digit,
                                              tag::pref,
-                                             tag::tolref > >,
+                                             tag::tolref  >,
+                           tk::grm::control< use< kw::pref_ndofmax >,
+                                             pegtl::digit,
+                                             tag::pref,
+                                             tag::ndofmax > 
+                         >,
            tk::grm::check_pref_errors > {};
 
   //! plotvar ... end block

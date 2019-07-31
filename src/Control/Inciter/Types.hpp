@@ -74,8 +74,9 @@ using amr = tk::tuple::tagged_tuple<
 
 //! p-adaptive refinement options
 using pref = tk::tuple::tagged_tuple<
-  tag::pref,     bool,                           //!< p-refinement on/off
-  tag::tolref,   tk::real                        //!< Threshold of p-refinement
+  tag::pref,        bool,                   //!< p-refinement on/off
+  tag::ndofmax,     std::size_t,            //!< Max number of degree of freedom
+  tag::tolref,      tk::real                //!< Threshold of p-refinement
 >;
 
 //! Discretization parameters storage

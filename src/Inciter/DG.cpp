@@ -924,8 +924,8 @@ DG::adj()
   for (auto& u : m_uc) u.resize( m_bid.size() );
 
   // Initialize number of degrees of freedom in mesh elements
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  m_ndof.resize( m_nunk, ndof );
+  const auto ndofmax = inciter::g_inputdeck.get< tag::pref, tag::ndofmax >();
+  m_ndof.resize( m_nunk, ndofmax );
 
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
@@ -1015,7 +1015,10 @@ DG::next()
 {
   const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
 
-  if (pref && m_stage == 0) eval_ndof( m_nunk, m_fd.Esuel(), m_u, m_ndof );
+  auto d = Disc();
+
+  if (pref && m_stage == 0 && d->T() > 0) 
+    eval_ndof( m_nunk, m_fd.Esuel(), m_u, m_ndof );
 
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
@@ -1218,8 +1221,8 @@ DG::propagate_ndof()
   // Copy number of degrees of freedom for each cell
   auto ndof = m_ndof;
 
-  // p-refine (DGP0 -> DGP1) all neighboring elements of elements that have
-  // been p-refined (DGP0 -> DGP1) as a result of error indicators
+  // p-refine all neighboring elements of elements that have been p-refined as a
+  // result of error indicators
   for( auto f=m_fd.Nbfac(); f<esuf.size()/2; ++f )
   {
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
