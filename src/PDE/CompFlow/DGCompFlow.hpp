@@ -87,6 +87,7 @@ class CompFlow {
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
+      m_bcoutlet( config< tag::bcoutlet >( c ) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) )
       //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
       //        "Boundary conditions not set in control file for DG CompFlow" );
@@ -172,6 +173,7 @@ class CompFlow {
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
         { m_bcdir, Dirichlet },
         { m_bcsym, Symmetry },
+        { m_bcoutlet, Outlet },
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
@@ -586,6 +588,8 @@ class CompFlow {
     const std::vector< bcconf_t > m_bcdir;
     //! Symmetric BC configuration
     const std::vector< bcconf_t > m_bcsym;
+    //! Outlet BC configuration
+    const std::vector< bcconf_t > m_bcoutlet;
     //! Extrapolation BC configuration
     const std::vector< bcconf_t > m_bcextrapolate;
 
@@ -684,6 +688,37 @@ class CompFlow {
       ur[3] = ur[0] * v3r;
       ur[4] = ul[4];
       return {{ std::move(ul), std::move(ur) }};
+    }
+
+    //! \brief Boundary state function providing the left and right state of a
+    //!   face at subsonic outlet boundaries
+    //! \param[in] ul Left (domain-internal) state
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \note The function signature must follow tk::StateFn
+    static tk::StateFn::result_type
+    Outlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+            tk::real x, tk::real y, tk::real z, tk::real t,
+            const std::array< tk::real, 3 >& )
+    {
+      // Sobsonic outlet boudary calculation is based on the characteristic 
+      // theory of hyperbolic system. For subsonic outlet flow, there are 3
+      // outgoing characteristcs and 1 incoming characteristic. Therefore,
+      // we calculate the ghost cell state by taking pressure from outside
+      // and other quantities from the internal cell.
+      auto state_inf = Problem::solution( system, ncomp, x, y, z, t );
+
+      auto u_inf = u_inf[1] / u_inf[0];
+      auto v_inf = u_inf[2] / u_inf[0];
+      auto w_inf = u_inf[3] / u_inf[0];
+      auto p_inf = eos_pressure< eq >( system, u_inf, v_inf, w_inf, u_inf[4] );
+
+      auto ur = ul;
+      auto u_l = ul[1] / ul[0];
+      auto v_l = ul[2] / ul[0];
+      auto w_l = ul[3] / ul[0];
+      ur[4] = eos_totalenergy< eq >( system, ul[0], u_l, v_l, w_l, p_inf);
+      return {{ ul, ur }};
     }
 
     //! \brief Boundary state function providing the left and right state of a
