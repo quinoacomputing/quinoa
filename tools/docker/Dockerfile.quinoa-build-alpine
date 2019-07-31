@@ -20,7 +20,6 @@
 FROM alpine:latest
 
 # Install system-wide prerequisites
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && cat /etc/apk/repositories
 RUN apk update && apk add patch libtool autoconf automake gfortran gcc g++ make boost-dev bash m4 file git cmake perl grep zlib-dev libexecinfo-dev ninja graphviz binutils-dev flex bison vim
 
 # Install OpenMPI
