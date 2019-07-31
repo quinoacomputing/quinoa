@@ -7,6 +7,7 @@ title "Sedov blast wave"
 inciter
 
   nstep 20   # Max number of time steps
+  #term 0.007
   cfl 0.3
   ttyi 5      # TTY output interval
   scheme pdg
@@ -35,6 +36,10 @@ inciter
 
   end
 
+  pref
+    ndofmax 4
+  end
+
   diagnostics
     interval  5
     format    scientific
@@ -42,7 +47,7 @@ inciter
   end
 
   plotvar
-    interval 20
+    interval 5
   end
 
 end
