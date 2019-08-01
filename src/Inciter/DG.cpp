@@ -60,8 +60,10 @@ DG::DG( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), Disc()->Coord()) ),
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
-  m_lhs( m_u.nunk(), m_u.nprop() ),
-  m_rhs( m_u.nunk(), m_u.nprop() ),
+  m_lhs( m_u.nunk(),
+         g_inputdeck.get< tag::discr, tag::ndof >()*
+         g_inputdeck.get< tag::component >().nprop() ),
+  m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_ncoord( Disc()->Coord()[0].size() ),
@@ -1226,6 +1228,7 @@ DG::lim()
 // *****************************************************************************
 {
   const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
 
   // Combine own and communicated contributions of unlimited solution and
   // degrees of freedom in cells (if p-adaptive)
@@ -1241,9 +1244,16 @@ DG::lim()
 
   if (pref && m_stage==0) propagate_ndof();
 
-  if (g_inputdeck.get< tag::discr, tag::rdof >() > 1) {
+  if (rdof > 1) {
 
     auto d = Disc();
+
+    // Reconstruct second-order solution
+    // if P0P1
+    if (rdof == 4 && inciter::g_inputdeck.get< tag::discr, tag::ndof >() == 1)
+      for (const auto& eq : g_dgpde)
+        eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
+                        d->Coord(), m_u );
 
     const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
     if (limiter == ctr::LimiterType::WENOP1)

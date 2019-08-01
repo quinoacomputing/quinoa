@@ -90,6 +90,18 @@ class DGPDE {
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     { self->lhs( geoElem, l ); }
 
+    //! Public interface to reconstructing the second-order solution
+    void reconstruct( tk::real t,
+                      const tk::Fields& geoFace,
+                      const tk::Fields& geoElem,
+                      const inciter::FaceData& fd,
+                      const std::vector< std::size_t >& inpoel,
+                      const tk::UnsMesh::Coords& coord,
+                      tk::Fields& U ) const
+    {
+      self->reconstruct( t, geoFace, geoElem, fd, inpoel, coord, U );
+    }
+
     //! Public interface to computing the P1 right-hand side vector
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -169,6 +181,13 @@ class DGPDE {
                                tk::real,
                                const std::size_t nielem ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
+      virtual void reconstruct( tk::real,
+                                const tk::Fields&,
+                                const tk::Fields&,
+                                const inciter::FaceData&,
+                                const std::vector< std::size_t >&,
+                                const tk::UnsMesh::Coords&,
+                                tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -216,6 +235,16 @@ class DGPDE {
       const override { data.initialize( L, inpoel, coord, unk, t, nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
+      void reconstruct( tk::real t,
+                        const tk::Fields& geoFace,
+                        const tk::Fields& geoElem,
+                        const inciter::FaceData& fd,
+                        const std::vector< std::size_t >& inpoel,
+                        const tk::UnsMesh::Coords& coord,
+                        tk::Fields& U ) const override
+      {
+        data.reconstruct( t, geoFace, geoElem, fd, inpoel, coord, U );
+      }
       void rhs( tk::real t,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
