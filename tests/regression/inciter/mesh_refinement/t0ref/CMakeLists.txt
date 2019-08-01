@@ -165,6 +165,26 @@ add_regression_test(amr_t0ref_ududu_trans_dg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
                     LABELS amr)
 
+add_regression_test(amr_t0ref_idiu_trans ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES ic_uniform_deref.q unitsquare_01_141.exo
+                    ARGS -c ic_uniform_deref.q -i unitsquare_01_141.exo -v
+                    BIN_BASELINE ic_uniform_deref_t0ref.e-s.0.1.0
+                                 ic_uniform_deref_t0ref.e-s.1.1.0
+                                 ic_uniform_deref_t0ref.e-s.2.1.0
+                                 ic_uniform_deref_t0ref.e-s.3.1.0
+                                 ic_uniform_deref_t0ref.e-s.4.1.0
+                                 ic_uniform_deref.std.exo
+                    BIN_RESULT t0ref.e-s.0.1.0
+                               t0ref.e-s.1.1.0
+                               t0ref.e-s.2.1.0
+                               t0ref.e-s.3.1.0
+                               t0ref.e-s.4.1.0
+                               out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    LABELS amr)
+
 # Parallel, no virtualization
 
 add_regression_test(amr_t0ref_u_trans_diagcg ${INCITER_EXECUTABLE}
@@ -217,6 +237,38 @@ add_regression_test(amr_t0ref_iu_trans ${INCITER_EXECUTABLE}
                                 out.e-s.0.2.1
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS amr)
+
+add_regression_test(amr_t0ref_idiu_trans ${INCITER_EXECUTABLE}
+                    NUMPES 2
+                    INPUTFILES ic_uniform_deref.q unitsquare_01_141.exo
+                    ARGS -c ic_uniform_deref.q -i unitsquare_01_141.exo -v
+                    BIN_BASELINE ic_uniform_deref_t0ref.e-s.0.2.0
+                                 ic_uniform_deref_t0ref.e-s.0.2.1
+                                 ic_uniform_deref_t0ref.e-s.1.2.0
+                                 ic_uniform_deref_t0ref.e-s.1.2.1
+                                 ic_uniform_deref_t0ref.e-s.2.2.0
+                                 ic_uniform_deref_t0ref.e-s.2.2.1
+                                 ic_uniform_deref_t0ref.e-s.3.2.0
+                                 ic_uniform_deref_t0ref.e-s.3.2.1
+                                 ic_uniform_deref_t0ref.e-s.4.2.0
+                                 ic_uniform_deref_t0ref.e-s.4.2.1
+                                 ic_uniform_deref.std.exo.0
+                                 ic_uniform_deref.std.exo.1
+                    BIN_RESULT t0ref.e-s.0.2.0
+                               t0ref.e-s.0.2.1
+                               t0ref.e-s.1.2.0
+                               t0ref.e-s.1.2.1
+                               t0ref.e-s.2.2.0
+                               t0ref.e-s.2.2.1
+                               t0ref.e-s.3.2.0
+                               t0ref.e-s.3.2.1
+                               t0ref.e-s.4.2.0
+                               t0ref.e-s.4.2.1
+                               out.e-s.0.2.0
+                               out.e-s.0.2.1
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
                     LABELS amr)
 
 add_regression_test(amr_t0ref_u_trans_dg ${INCITER_EXECUTABLE}
