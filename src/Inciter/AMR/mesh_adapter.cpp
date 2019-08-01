@@ -146,7 +146,7 @@ namespace AMR {
        }
 
        mark_refinement();
-       mark_derefinement();
+       //mark_derefinement();
     }
 
    void mesh_adapter_t::mark_error_refinement_corr( const EdgeData& edges )
