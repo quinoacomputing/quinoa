@@ -12,6 +12,10 @@ inciter
   scheme p0p1
   limiter superbeep1
 
+  partitioning
+    algorithm mj
+  end
+
   multimat
 
     physics veleq
