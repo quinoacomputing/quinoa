@@ -227,6 +227,7 @@ CompFlowProblemNLEnergyGrowth::fieldNames( ncomp_t ) const
   n.push_back( "pressure_analytical" );
   n.push_back( "err(rho)" );
   n.push_back( "err(e)" );
+  n.push_back( "number of degree of freedom" );
 
   return n;
 }

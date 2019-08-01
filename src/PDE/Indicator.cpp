@@ -37,7 +37,7 @@ void eval_ndof( const std::size_t nunk,
   // The array storing the adaptive indicator for each elements
   std::vector< tk::real > Ind(nunk, 0);
 
-  tk::real ErrMaxp2(0), ErrMaxp1(0), ErrMinp2(1), ErrMinp1(1);
+  tk::real ErrMaxp2(-20), ErrMaxp1(-20), ErrMinp2(1), ErrMinp1(1);
 
   for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
@@ -120,20 +120,21 @@ void eval_ndof( const std::size_t nunk,
   //std::cout << "ErrMinp1 = " << ErrMinp1 << std::endl; 
   //std::cout << "ErrMaxp2 = " << ErrMaxp2 << std::endl;
   //std::cout << "ErrMinp2 = " << ErrMinp2 << std::endl;
+  //std::cout << std::endl;
 
   // Marke the ndof according to the adaptive indicator
   for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
     if(ndofel[e] == 4)
     {
-      if(Ind[e] > -6 && ndofmax > 4)      // Refinement
-       ndofel[e] = 10;
+      //if(Ind[e] > -5.5 && ndofmax > 4)      // Refinement
+      // ndofel[e] = 10;
       if(Ind[e] < -6.5)                     // Derefinement
         ndofel[e] = 1;
     }
     else if(ndofel[e] > 4)
     {
-      if(Ind[e] < -8)                     // Derefinement
+      if(Ind[e] < -8.5)                     // Derefinement
         ndofel[e] = 4;
     }
   }

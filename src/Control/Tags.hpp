@@ -97,6 +97,7 @@ struct pde {};
 struct pref {};
 struct tolref {};
 struct ndofmax {};
+struct indicator{};
 struct amr {};
 struct tolderef {};
 struct t0ref {};

@@ -868,7 +868,11 @@ namespace deck {
                            tk::grm::control< use< kw::pref_ndofmax >,
                                              pegtl::digit,
                                              tag::pref,
-                                             tag::ndofmax > 
+                                             tag::ndofmax >,
+                           tk::grm::control< use< kw::pref_indicator >,
+                                             pegtl::digit,
+                                             tag::pref,
+                                             tag::indicator >,
                          >,
            tk::grm::check_pref_errors > {};
 

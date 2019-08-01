@@ -707,11 +707,11 @@ class CompFlow {
       // we calculate the ghost cell state by taking pressure from outside
       // and other quantities from the internal cell.
       auto state_inf = Problem::solution( system, ncomp, x, y, z, t );
-
-      auto u_inf = u_inf[1] / u_inf[0];
-      auto v_inf = u_inf[2] / u_inf[0];
-      auto w_inf = u_inf[3] / u_inf[0];
-      auto p_inf = eos_pressure< eq >( system, u_inf, v_inf, w_inf, u_inf[4] );
+      auto u_inf = state_inf[1] / state_inf[0];
+      auto v_inf = state_inf[2] / state_inf[0];
+      auto w_inf = state_inf[3] / state_inf[0];
+      auto p_inf = eos_pressure< eq >( system, state_inf[0], u_inf, v_inf,
+                                       w_inf, state_inf[4] );
 
       auto ur = ul;
       auto u_l = ul[1] / ul[0];
