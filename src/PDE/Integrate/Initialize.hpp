@@ -51,6 +51,7 @@ void
 eval_init( ncomp_t ncomp,
            ncomp_t offset,
            const std::size_t ndof,
+           const std::size_t rdof,
            const std::size_t e,
            const std::vector< tk::real >& R,
            const Fields& L,
