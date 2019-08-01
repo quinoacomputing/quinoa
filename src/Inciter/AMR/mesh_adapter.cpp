@@ -137,13 +137,16 @@ namespace AMR {
              local.needs_refining = 1;
            }
          } else if (r.second == edge_tag::DEREFINE) {
-           if (local.lock_case == Edge_Lock_Case::unlocked) {
+           if (local.lock_case > Edge_Lock_Case::unlocked) {
+             local.needs_derefining = 0;
+           } else {
              local.needs_derefining = 1;
            }
          }
        }
 
        mark_refinement();
+       mark_derefinement();
     }
 
    void mesh_adapter_t::mark_error_refinement_corr( const EdgeData& edges )
