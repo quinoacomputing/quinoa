@@ -37,11 +37,13 @@ module dg {
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
+                         const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
       entry void comsol( int fromch,
                          std::size_t fromstage,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
+                         const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
       entry void refine();
       entry [reductiontarget] void solve( tk::real newdt );

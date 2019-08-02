@@ -20,6 +20,7 @@
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Integrate/Basis.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 
 namespace tk {
 
@@ -41,7 +42,7 @@ void
 bndLeastSq_P0P1( ncomp_t system,
                  ncomp_t ncomp,
                  ncomp_t offset,
-                 const std::size_t rdof,
+                 std::size_t rdof,
                  const std::vector< bcconf_t >& bcconfig,
                  const inciter::FaceData& fd,
                  const Fields& geoFace,
@@ -50,7 +51,8 @@ bndLeastSq_P0P1( ncomp_t system,
                  const StateFn& state,
                  const Fields& U,
                  std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
-                 std::vector< std::vector< std::array< real, 3 > > >& rhs_ls );
+                 std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
+                 std::size_t nprim=0 );
 
 //! Solve 3x3 system for least-squares reconstruction
 void
@@ -70,6 +72,15 @@ transform_P0P1( ncomp_t ncomp,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 Fields& U );
+
+//! Reconstruct the vector of high-order primitives
+void
+getMultiMatPrimitives_P0P1( ncomp_t offset,
+                            std::size_t nmat,
+                            std::size_t rdof,
+                            std::size_t nelem,
+                            const Fields& U,
+                            Fields& P );
 
 } // tk::
 
