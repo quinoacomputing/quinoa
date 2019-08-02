@@ -46,6 +46,7 @@ bndSurfInt( ncomp_t system,
             const VelFn& vel,
             const StateFn& state,
             const Fields& U,
+            const Fields& P,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
             std::vector< std::vector< tk::real > >& riemannDeriv );

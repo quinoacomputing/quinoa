@@ -88,7 +88,7 @@ tk::initialize( ncomp_t system,
       {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
 
     // right hand side vector
-    std::vector< real > R( unk.nprop(), 0.0 );
+    std::vector< real > R( ncomp*ndof, 0.0 );
 
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
