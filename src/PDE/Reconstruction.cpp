@@ -82,7 +82,7 @@ void
 tk::bndLeastSq_P0P1( ncomp_t system,
                      ncomp_t ncomp,
                      ncomp_t offset,
-                     const std::size_t rdof,
+                     std::size_t rdof,
                      const std::vector< bcconf_t >& bcconfig,
                      const inciter::FaceData& fd,
                      const Fields& geoFace,
@@ -91,7 +91,8 @@ tk::bndLeastSq_P0P1( ncomp_t system,
                      const StateFn& state,
                      const Fields& U,
                      std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
-                     std::vector< std::vector< std::array< real, 3 > > >& rhs_ls )
+                     std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
+                     std::size_t nprim )
 // *****************************************************************************
 //  Compute boundary face contributions to the least-squares reconstruction
 //! \param[in] system Equation system index
@@ -108,6 +109,9 @@ tk::bndLeastSq_P0P1( ncomp_t system,
 //! \param[in] U Solution vector at recent time step
 //! \param[in,out] lhs_ls LHS reconstruction matrix
 //! \param[in,out] rhs_ls RHS reconstruction vector
+//! \param[in] nprim Number of primitive quantities stored for this PDE system.
+//!   A default is set to 0, so that calling code for systems that do not store
+//!   primitive quantities does not need to specify this argument.
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
@@ -133,8 +137,13 @@ tk::bndLeastSq_P0P1( ncomp_t system,
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
         auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B );
+        std::vector< real >fvel(nprim,0.0);
 
-        Assert( ul.size() == ncomp, "Size mismatch" );
+        // consolidate primitives into state vector
+        ul.insert(ul.end(), fvel.begin(), fvel.end());
+
+        Assert( ul.size() == ncomp+fvel.size(), "Incorrect size for "
+                "appended boundary state vector" );
 
         // Compute the state at the face-center using BC
         auto ustate = state( system, ncomp, ul, fc[0], fc[1], fc[2], t, fn );
@@ -248,6 +257,60 @@ tk::transform_P0P1( ncomp_t ncomp,
       U(e,mark+1,offset) = ux[0];
       U(e,mark+2,offset) = ux[1];
       U(e,mark+3,offset) = ux[2];
+    }
+  }
+}
+
+void
+tk::getMultiMatPrimitives_P0P1( ncomp_t offset,
+                                std::size_t nmat,
+                                std::size_t rdof,
+                                std::size_t nelem,
+                                const Fields& U,
+                                Fields& P )
+// *****************************************************************************
+//  Reconstruct the vector of high-order primitives
+//! \param[in] offset Index for equation systems
+//! \param[in] nmat Number of materials in this equation system
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nelem Total number of elements
+//! \param[in] U Second-order solution vector
+//! \param[in,out] P Second-order vector of primitives which gets computed from
+//!   the second-order solution vector
+// *****************************************************************************
+{
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::velocityIdx;
+
+  Assert( P.nprop() == 3*rdof, "Number of components in vector of primitives "
+          "must equal "+ std::to_string(rdof*3) );
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // cell-average and high-order dofs of bulk density
+    std::vector< real > rhob(rdof, 0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      for (std::size_t j=0; j<rdof; ++j)
+        rhob[j] += U(e, densityIdx(nmat, k)*rdof+j, offset);
+    }
+
+    // cell-average velocity
+    std::array< real, 3 >
+      vel{{ U(e, momentumIdx(nmat, 0)*rdof, offset)/rhob[0],
+            U(e, momentumIdx(nmat, 1)*rdof, offset)/rhob[0],
+            U(e, momentumIdx(nmat, 2)*rdof, offset)/rhob[0] }};
+
+    // fill up high-order part of vector of primitives
+    for (std::size_t idir=0; idir<3; ++idir)
+    {
+      for (std::size_t j=1; j<rdof; ++j)
+      {
+        P(e, velocityIdx(nmat, idir)*rdof+j, offset) =
+          ( U(e, momentumIdx(nmat, idir)*rdof+j, offset)
+          - vel[idir]*rhob[j] )/rhob[0];
+      }
     }
   }
 }

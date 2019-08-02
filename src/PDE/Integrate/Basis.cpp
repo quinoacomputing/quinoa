@@ -328,6 +328,8 @@ tk::eval_state ( ncomp_t ncomp,
 {
   Assert( B.size() == ndof_el, "Size mismatch" );
 
+  if (U.empty()) return {};
+
   // Array of state variable for tetrahedron element
   std::vector< tk::real > state( ncomp );
 

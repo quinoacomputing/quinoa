@@ -42,6 +42,7 @@ surfInt( ncomp_t system,
          const RiemannFluxFn& flux,
          const VelFn& vel,
          const Fields& U,
+         const Fields& P,
          const std::vector< std::size_t >& ndofel,
          Fields& R,
          std::vector< std::vector< tk::real > >& riemannDeriv );

@@ -37,6 +37,7 @@ tk::bndSurfInt( ncomp_t system,
                 const VelFn& vel,
                 const StateFn& state,
                 const Fields& U,
+                const Fields& P,
                 const std::vector< std::size_t >& ndofel,
                 Fields& R,
                 std::vector< std::vector< tk::real > >& riemannDeriv )
@@ -62,6 +63,7 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
@@ -155,8 +157,13 @@ tk::bndSurfInt( ncomp_t system,
 
           // Compute the state variables at the left element
           auto ugp = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
+          auto fvel = eval_state( 3, offset, rdof, dof_el, el, P, B_l );
 
-          Assert( ugp.size() == ncomp, "Size mismatch" );
+          // consolidate primitives into state vector
+          ugp.insert(ugp.end(), fvel.begin(), fvel.end());
+
+          Assert( ugp.size() == ncomp+fvel.size(), "Incorrect size for "
+                  "appended boundary state vector" );
 
           // Compute the numerical flux
           auto fl = flux( fn,
