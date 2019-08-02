@@ -423,6 +423,10 @@ class Data {
     void fill( tk::real value )
     { std::fill( begin(m_vec), end(m_vec), value ); }
 
+    //! Check if vector of unknowns is empty
+    bool empty() const noexcept
+    { return m_vec.empty(); }
+
     //! Layout name dispatch
     //! \return The name of the data layout used
     static std::string layout() { return layout( int2type< Layout >() ); }
