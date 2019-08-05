@@ -100,7 +100,9 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES})
+                      ${OMEGA_H_LIBRARIES}
+                      ${LIBCXX_LIBRARIES}       # only for static link with libc++
+                      ${LIBCXXABI_LIBRARIES})   # only for static link with libc++
 
 # Add custom dependencies for UnitTest's main Charm++ module
 if(ENABLE_INCITER)
