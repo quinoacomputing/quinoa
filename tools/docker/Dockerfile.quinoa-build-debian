@@ -40,8 +40,8 @@ RUN cd quinoa && git checkout $COMMIT && git log -1 HEAD
 # Update submodules
 RUN cd quinoa && git submodule init && git submodule update --recursive && cd external && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
 # Build TPLs
-RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -DENABLE_ROOT=true -DENABLE_OMEGA_H=true -DCMAKE_BUILD_TYPE=Release .. && make -sj$(grep -c processor /proc/cpuinfo)
+RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -DENABLE_ROOT=true -DENABLE_OMEGA_H=true -DCXXFLAGS=-w .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build code
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -DCMAKE_BUILD_TYPE=Release -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS=-oversubscribe ../src && ninja
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS="--bind-to none -oversubscribe" ../src && ninja
 # Run tests
 RUN cd quinoa/build && npe=$(grep -c processor /proc/cpuinfo) && mpirun -n $npe Main/unittest -v -q && ctest -j $npe --output-on-failure -LE extreme
