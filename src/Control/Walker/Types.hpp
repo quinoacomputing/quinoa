@@ -379,9 +379,9 @@ using DissipationParameters = tk::TaggedTuple< brigand::list<
 //! Parameters storage
 using parameters = tk::TaggedTuple< brigand::list<
   #ifdef HAS_MKL
-    tag::rngmkl,          tk::ctr::RNGMKLParameters
+    tag::rngmkl,          tk::ctr::RNGMKLParameters,
   #endif
-  , tag::rngsse,          tk::ctr::RNGSSEParameters
+    tag::rngsse,          tk::ctr::RNGSSEParameters
   , tag::rng123,          tk::ctr::RNGRandom123Parameters
   , tag::dirichlet,       DirichletParameters
   , tag::mixdirichlet,    MixDirichletParameters
