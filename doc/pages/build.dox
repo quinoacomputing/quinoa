@@ -13,7 +13,7 @@ See section @ref mainpage_build on the main page.
 @section build_requirements Minimum requirements
 
  - Fortran compiler
- - C and C++ compilers, the latter implementing the C++11 standard
+ - C and C++ compilers, the latter implementing the C++17 standard
  - Message Passing Interface library, e.g., [OpenMPI](https://www.open-mpi.org)
 
 @section build_supported Routinely tested
