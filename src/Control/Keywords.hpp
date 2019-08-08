@@ -4634,6 +4634,26 @@ struct prelax_info {
 };
 using prelax = keyword< prelax_info, TAOCPP_PEGTL_STRING("prelax") >;
 
+struct prelax_timescale_info {
+  static std::string name() { return "Pressure relaxation time-scale"; }
+  static std::string shortDescription() { return
+    "Time-scale for multi-material finite pressure relaxation"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the time-scale at which finite pressure
+       relaxation between multiple materials occurs. The default value of 1.0
+       corresponds to a relaxation time of the order of time required for a
+       sound wave to pass through a computational element. It is used only for
+       multimat, and has no effect for the other PDE types.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.001;
+    static std::string description() { return "real"; }
+  };
+};
+using prelax_timescale = keyword< prelax_timescale_info,
+                                  TAOCPP_PEGTL_STRING("prelax_timescale") >;
+
 struct mat_gamma_info {
   static std::string name() { return "gamma"; }
   static std::string shortDescription() { return "ratio of specific heats"; }
@@ -4794,6 +4814,7 @@ struct multimat_info {
     + material::string() + "\', \'"
     + nmat::string() + "\', \'"
     + prelax::string() + "\', \'"
+    + prelax_timescale::string() + "\', \'"
     + pde_alpha::string() + "\', \'"
     + pde_p0::string() + "\', \'"
     + pde_betax::string() + "\', \'"

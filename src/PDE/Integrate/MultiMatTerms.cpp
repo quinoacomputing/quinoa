@@ -217,6 +217,7 @@ tk::pressureRelaxationInt( ncomp_t system,
                            const Fields& geoElem,
                            const Fields& U,
                            const std::vector< std::size_t >& ndofel,
+                           const tk::real ct,
                            Fields& R )
 // *****************************************************************************
 //  Compute volume integrals of pressure relaxation terms in multi-material DG
@@ -236,11 +237,10 @@ tk::pressureRelaxationInt( ncomp_t system,
 //! \param[in] geoElem Element geometry array
 //! \param[in] U Solution vector at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedome
+//! \param[in] ct Pressure relaxation time-scale for this system
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
-  auto ct = 0.1;
-
   using inciter::volfracIdx;
   using inciter::densityIdx;
   using inciter::momentumIdx;
@@ -250,7 +250,7 @@ tk::pressureRelaxationInt( ncomp_t system,
   for (std::size_t e=0; e<U.nunk(); ++e)
   {
     auto dx = std::cbrt(geoElem(e, 0, 0));
-    auto ng = tk::NGvol(ndofel[e]);
+    auto ng = NGvol(ndofel[e]);
 
     // arrays for quadrature points
     std::array< std::vector< real >, 3 > coordgp;
@@ -264,7 +264,7 @@ tk::pressureRelaxationInt( ncomp_t system,
     GaussQuadratureTet( ng, coordgp, wgp );
 
     // Compute the derivatives of basis function for DG(P1)
-    std::array< std::vector<tk::real>, 3 > dBdx;
+    std::array< std::vector<real>, 3 > dBdx;
 
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
@@ -291,18 +291,18 @@ tk::pressureRelaxationInt( ncomp_t system,
       auto ugp = eval_state( ncomp, offset, rdof, dof_el, e, U, B );
 
       // get bulk properties
-      tk::real rhob(0.0);
+      real rhob(0.0);
       for (std::size_t k=0; k<nmat; ++k)
         rhob += ugp[densityIdx(nmat, k)];
 
-      std::array< tk::real, 3 > vel{{ ugp[momentumIdx(nmat, 0)]/rhob,
-                                      ugp[momentumIdx(nmat, 1)]/rhob,
-                                      ugp[momentumIdx(nmat, 2)]/rhob }};
+      std::array< real, 3 > vel{{ ugp[momentumIdx(nmat, 0)]/rhob,
+                                  ugp[momentumIdx(nmat, 1)]/rhob,
+                                  ugp[momentumIdx(nmat, 2)]/rhob }};
 
       // get pressures and bulk modulii
-      tk::real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
-      std::vector< tk::real > rhomat(nmat, 0.0), pmat(nmat, 0.0),
-                              amat(nmat, 0.0), kmat(nmat, 0.0);
+      real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
+      std::vector< real > rhomat(nmat, 0.0), pmat(nmat, 0.0),
+                          amat(nmat, 0.0), kmat(nmat, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
       {
         rhomat[k] = ugp[densityIdx(nmat, k)]/ugp[volfracIdx(nmat, k)];
@@ -322,7 +322,7 @@ tk::pressureRelaxationInt( ncomp_t system,
       auto p_relax = nume/deno;
 
       // compute pressure relaxation terms
-      std::vector< tk::real > s_prelax(ncomp, 0.0);
+      std::vector< real > s_prelax(ncomp, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
       {
         auto s_alpha = (pmat[k]-p_relax) * (ugp[volfracIdx(nmat, k)]/kmat[k])

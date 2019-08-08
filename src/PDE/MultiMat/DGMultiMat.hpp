@@ -389,8 +389,13 @@ class MultiMat {
                               R );
 
       // compute finite pressure relaxation terms
-      tk::pressureRelaxationInt( m_system, m_ncomp, nmat, m_offset, ndof, rdof,
-                                 geoElem, U, ndofel, R );
+      if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
+      {
+        const auto ct = g_inputdeck.get< tag::param, tag::multimat,
+                                         tag::prelax_timescale >()[m_system];
+        tk::pressureRelaxationInt( m_system, m_ncomp, nmat, m_offset, ndof,
+                                   rdof, geoElem, U, ndofel, ct, R );
+      }
     }
 
     //! Compute the minimum time step size

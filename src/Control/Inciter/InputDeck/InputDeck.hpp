@@ -174,6 +174,7 @@ class InputDeck :
                                    kw::wenop1,
                                    kw::superbeep1,
                                    kw::prelax,
+                                   kw::prelax_timescale,
                                    kw::bc_sym,
                                    kw::bc_inlet,
                                    kw::bc_outlet,
