@@ -792,15 +792,15 @@ namespace deck {
                            bc< kw::bc_extrapolate,
                                tag::multimat,
                                tag::bcextrapolate >,
+                           parameter< tag::multimat,
+                                      kw::prelax_timescale,
+                                      tag::prelax_timescale >,
                            tk::grm::process< use< kw::prelax >,
                                              tk::grm::Store_back<
                                                tag::param,
                                                tag::multimat,
                                                tag::prelax >,
-                                             pegtl::alpha >,
-                           parameter< tag::multimat,
-                                      kw::prelax_timescale,
-                                      tag::prelax_timescale > >,
+                                             pegtl::alpha > >,
            check_errors< tag::multimat, tk::grm::check_multimat > > {};
 
   //! partitioning ... end block

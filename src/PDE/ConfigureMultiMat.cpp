@@ -79,10 +79,13 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
   auto prelax = g_inputdeck.get< tag::param, eq, tag::prelax >()[c];
   nfo.emplace_back( "finite pressure relaxation", std::to_string( prelax ) );
 
-  auto prelax_ts =
-    g_inputdeck.get< tag::param, eq, tag::prelax_timescale >()[c];
-  nfo.emplace_back( "pressure relaxation time-scale",
-                    std::to_string( prelax_ts ) );
+  if (prelax)
+  {
+    auto prelax_ts =
+      g_inputdeck.get< tag::param, eq, tag::prelax_timescale >()[c];
+    nfo.emplace_back( "pressure relaxation time-scale",
+                      std::to_string( prelax_ts ) );
+  }
 
   auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
