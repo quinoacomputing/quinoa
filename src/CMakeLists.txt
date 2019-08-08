@@ -360,6 +360,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #   869: parameter was never referenced
   #   981: operands are evaluated in unspecified order
   #  1011: missing return statement at end of non-void function (constexpr)
+  #  1292: unknown attribute "fallthrough"
   #  1418: external function definition with no prior declaration
   #  1419: external declaration in primary source file
   #  1572: floating-point equality and inequality comparisons are unreliable
@@ -372,7 +373,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  3346: dynamic exception specifications are deprecated
   #  3656: variable may be used before its value is set
   #  10120: overriding '-O3' with '-O2'
-  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1011,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656,10120")
+  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1011,1292,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656,10120")
 
   # Compiler flags for optimization report
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
