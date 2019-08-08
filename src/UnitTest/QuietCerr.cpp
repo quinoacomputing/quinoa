@@ -5,8 +5,8 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Charm++ nodegroup to quiet std::cerr in a thread-safe fashion
-  \details   Charm++ nodegroup to quiet std::cerr in a thread-safe fashion.
+  \brief     Charm++ group to quiet std::cerr in a thread-safe fashion
+  \details   Charm++ group to quiet std::cerr in a thread-safe fashion.
 */
 // *****************************************************************************
 
@@ -39,8 +39,7 @@ void
 QuietCerr::quiet()
 // *****************************************************************************
 //!   Section "Initializations at Program Startup" at in the Charm++ manual
-//!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html. Since it
-//!   is executed once every logical node, it is thread-safe.
+//!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
 // *****************************************************************************
 {
   tk::cerr_old = std::cerr.rdbuf( tk::cerr_quiet.rdbuf() );
