@@ -4112,6 +4112,26 @@ using interface_advection =
   keyword< interface_advection_info,
            TAOCPP_PEGTL_STRING("interface_advection") >;
 
+struct waterair_shocktube_info {
+  using code = Code< W >;
+  static std::string name() { return "Water-air shock-tube"; }
+  static std::string shortDescription() { return
+    "Select the water-air shock-tube test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Water-air shock-tube test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material pressure relaxation procedure and its interface capturing
+    capabilities. Example: "problem waterair_shocktube". For more details, see
+    Chiapolino, A., Saurel, R., & Nkonga, B. (2017). Sharpening diffuse
+    interfaces with compressible fluids on unstructured meshes. Journal of
+    Computational Physics, 340, 389-417.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using waterair_shocktube =
+  keyword< waterair_shocktube_info, TAOCPP_PEGTL_STRING("waterair_shocktube") >;
+
 struct problem_info {
   using code = Code< t >;
   static std::string name() { return "Test problem"; }
