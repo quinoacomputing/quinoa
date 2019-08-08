@@ -240,7 +240,9 @@ using MultiMatPDEParameters = tk::tuple::tagged_tuple<
   tag::k,             std::vector<
                         std::vector< kw::mat_k::info::expect::type > >,
   //! number of materials
-  tag::nmat,          std::vector< kw::nmat::info::expect::type >
+  tag::nmat,          std::vector< kw::nmat::info::expect::type >,
+  //! pressure relaxation toggle
+  tag::prelax,        std::vector< bool >
 >;
 
 //! Parameters storage

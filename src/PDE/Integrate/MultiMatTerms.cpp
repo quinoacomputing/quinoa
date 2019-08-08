@@ -5,12 +5,12 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Functions for computing volume integrals of non-conservative terms
+  \brief     Functions for computing volume integrals of multi-material terms
      using DG methods
   \details   This file contains functionality for computing volume integrals of
-     non-conservative terms that appear in the multi-material hydrodynamic
-     equations, using the discontinuous Galerkin method for various orders
-     of numerical representation.
+     non-conservative and pressure relaxation terms that appear in the
+     multi-material hydrodynamic equations, using the discontinuous Galerkin
+     method for various orders of numerical representation.
 */
 // *****************************************************************************
 
@@ -204,5 +204,134 @@ tk::update_rhs_ncn( ncomp_t ncomp,
   {
     auto mark = c*ndof;
     R(e, mark, offset) += wt * ncf[c];
+  }
+}
+
+void
+tk::pressureRelaxationInt( ncomp_t system,
+                           ncomp_t ncomp,
+                           std::size_t nmat,
+                           ncomp_t offset,
+                           const std::size_t ndof,
+                           const std::size_t rdof,
+                           const Fields& geoElem,
+                           const Fields& U,
+                           const std::vector< std::size_t >& ndofel,
+                           Fields& R )
+// *****************************************************************************
+//  Compute volume integrals of pressure relaxation terms in multi-material DG
+//! \details This is called for multi-material DG to compute volume integrals of
+//!   finite pressure relaxation terms in the volume fraction and energy
+//!   equations, which do not exist in the single-material flow formulation (for
+//!   `CompFlow` DG). For further details see Dobrev, V. A., Kolev, T. V.,
+//!   Rieben, R. N., & Tomov, V. Z. (2016). Multi‐material closure model for
+//!   high‐order finite element Lagrangian hydrodynamics. International Journal
+//!   for Numerical Methods in Fluids, 82(10), 689-706.
+//! \param[in] system Equation system index
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] ndofel Vector of local number of degrees of freedome
+//! \param[in,out] R Right-hand side vector added to
+// *****************************************************************************
+{
+  auto ct = 0.1;
+
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::energyIdx;
+
+  // compute volume integrals
+  for (std::size_t e=0; e<U.nunk(); ++e)
+  {
+    auto dx = std::cbrt(geoElem(e, 0, 0));
+    auto ng = tk::NGvol(ndofel[e]);
+
+    // arrays for quadrature points
+    std::array< std::vector< real >, 3 > coordgp;
+    std::vector< real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    GaussQuadratureTet( ng, coordgp, wgp );
+
+    // Compute the derivatives of basis function for DG(P1)
+    std::array< std::vector<tk::real>, 3 > dBdx;
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      // If an rDG method is set up (P0P1), then, currently we compute the P1
+      // basis functions and solutions by default. This implies that P0P1 is
+      // unsupported in the p-adaptive DG (PDG).
+      std::size_t dof_el;
+      if (rdof > ndof)
+      {
+        dof_el = rdof;
+      }
+      else
+      {
+        dof_el = ndofel[e];
+      }
+
+      // Compute the basis function
+      auto B =
+        eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+
+      auto wt = wgp[igp] * geoElem(e, 0, 0);
+
+      auto ugp = eval_state( ncomp, offset, rdof, dof_el, e, U, B );
+
+      // get bulk properties
+      tk::real rhob(0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+        rhob += ugp[densityIdx(nmat, k)];
+
+      std::array< tk::real, 3 > vel{{ ugp[momentumIdx(nmat, 0)]/rhob,
+                                      ugp[momentumIdx(nmat, 1)]/rhob,
+                                      ugp[momentumIdx(nmat, 2)]/rhob }};
+
+      // get pressures and bulk modulii
+      tk::real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
+      std::vector< tk::real > rhomat(nmat, 0.0), pmat(nmat, 0.0),
+                              amat(nmat, 0.0), kmat(nmat, 0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        rhomat[k] = ugp[densityIdx(nmat, k)]/ugp[volfracIdx(nmat, k)];
+        pmat[k] = inciter::eos_pressure< tag::multimat >
+                    ( system, rhomat[k], vel[0], vel[1], vel[2],
+                      ugp[energyIdx(nmat, k)]/ugp[volfracIdx(nmat, k)], k );
+        amat[k] = inciter::eos_soundspeed< tag::multimat >
+                    ( system, rhomat[k], pmat[k] );
+        kmat[k] = rhomat[k] * amat[k] * amat[k];
+        pb += pmat[k];
+
+        // relaxation parameters
+        trelax = std::max(trelax, ct*dx/amat[k]);
+        nume += ugp[volfracIdx(nmat, k)] / kmat[k] * pmat[k];
+        deno += ugp[volfracIdx(nmat, k)] / kmat[k];
+      }
+      auto p_relax = nume/deno;
+
+      // compute pressure relaxation terms
+      std::vector< tk::real > s_prelax(ncomp, 0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        auto s_alpha = (pmat[k]-p_relax) * (ugp[volfracIdx(nmat, k)]/kmat[k])
+                       / trelax;
+        s_prelax[volfracIdx(nmat, k)] = s_alpha;
+        s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
+      }
+
+      update_rhs_ncn( ncomp, offset, ndof, ndofel[e], wt, e, dBdx, s_prelax, R );
+    }
   }
 }

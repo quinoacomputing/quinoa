@@ -387,6 +387,10 @@ class MultiMat {
       tk::nonConservativeInt( m_system, m_ncomp, nmat, m_offset, ndof, rdof,
                               inpoel, coord, geoElem, U, riemannDeriv, ndofel,
                               R );
+
+      // compute finite pressure relaxation terms
+      tk::pressureRelaxationInt( m_system, m_ncomp, nmat, m_offset, ndof, rdof,
+                                 geoElem, U, ndofel, R );
     }
 
     //! Compute the minimum time step size

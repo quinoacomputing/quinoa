@@ -279,6 +279,11 @@ namespace grm {
       if (gamma.empty() || gamma.back().size() != nmat.back())
         Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
 
+      //// If pressure relaxation is not specified, default to 'false'
+      //auto& prelax = stack.template get< tag::param, eq, tag::prelax >();
+      //if (prelax.empty() || prelax.size() != neq.get< eq >())
+      //  prelax.push_back( false );
+
       // If specific heats are not given, set defaults
       using cv_t = kw::mat_cv::info::expect::type;
       auto& cv = stack.template get< tag::param, eq, tag::cv >();
@@ -780,7 +785,11 @@ namespace deck {
                                tag::bcoutlet >,
                            bc< kw::bc_extrapolate,
                                tag::multimat,
-                               tag::bcextrapolate > >,
+                               tag::bcextrapolate >,
+                           tk::grm::process< use< kw::prelax >,
+                                             tk::grm::Store< tag::multimat,
+                                                             tag::prelax >,
+                                             pegtl::alpha > >,
            check_errors< tag::multimat, tk::grm::check_multimat > > {};
 
   //! partitioning ... end block
