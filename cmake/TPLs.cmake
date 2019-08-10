@@ -25,7 +25,12 @@ set(CHARM_ROOT ${TPL_DIR}/charm)
 find_package(Charm)
 
 #### MKL (optional)
-find_package(MKL)
+if (NOT MATHLIB)        # set default
+  set(MATHLIB mkl)
+endif()
+if (MATHLIB STREQUAL mkl OR MATHLIB STREQUAL MKL)
+  find_package(MKL)
+endif()
 if(MKL_FOUND)
   set(HAS_MKL true)  # will become compiler define in Main/QuinoaConfig.h
 endif()
