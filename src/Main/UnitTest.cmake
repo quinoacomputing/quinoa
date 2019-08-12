@@ -66,6 +66,7 @@ target_include_directories(${UNITTEST_EXECUTABLE} PUBLIC
                            ${QUINOA_SOURCE_DIR}/RNG
                            ${TUT_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
+                           ${RANDOM123_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../UnitTest
                            ${PROJECT_BINARY_DIR}/../IO)
 
