@@ -872,7 +872,7 @@ namespace deck {
                            tk::grm::control< use< kw::pref_indicator >,
                                              pegtl::digit,
                                              tag::pref,
-                                             tag::indicator >,
+                                             tag::indicator >
                          >,
            tk::grm::check_pref_errors > {};
 

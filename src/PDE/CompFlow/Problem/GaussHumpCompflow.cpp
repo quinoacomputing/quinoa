@@ -143,6 +143,8 @@ CompFlowProblemGaussHump::fieldNames( ncomp_t ) const
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
+  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+
   std::vector< std::string > n;
 
   n.push_back( "density_numerical" ); 
@@ -158,7 +160,9 @@ CompFlowProblemGaussHump::fieldNames( ncomp_t ) const
   n.push_back( "specific_total_energy_analytical" );
   n.push_back( "pressure_analytical" );
   n.push_back( "err(rho)" );
-  n.push_back( "ndof" );
+
+  if(pref)
+    n.push_back( "number of degree of freedom" );
 
   return n;
 }

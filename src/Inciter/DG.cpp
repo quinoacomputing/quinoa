@@ -924,8 +924,17 @@ DG::adj()
   for (auto& u : m_uc) u.resize( m_bid.size() );
 
   // Initialize number of degrees of freedom in mesh elements
-  const auto ndofmax = inciter::g_inputdeck.get< tag::pref, tag::ndofmax >();
-  m_ndof.resize( m_nunk, ndofmax );
+  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  if( pref )
+  {
+    const auto ndofmax = inciter::g_inputdeck.get< tag::pref, tag::ndofmax >();
+    m_ndof.resize( m_nunk, ndofmax );
+  }
+  else
+  {
+    const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+    m_ndof.resize( m_nunk, ndof );
+  }
 
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
@@ -1018,7 +1027,7 @@ DG::next()
   auto d = Disc();
 
   if (pref && m_stage == 0 && d->T() > 0) 
-    eval_ndof( m_nunk, m_fd.Esuel(), m_u, m_ndof );
+    eval_ndof( m_nunk, Disc()->Coord(), Disc()->Inpoel(), m_fd, m_u, m_ndof );
 
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())

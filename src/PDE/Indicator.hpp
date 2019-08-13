@@ -21,6 +21,7 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "DerivedData.hpp"
+#include "UnsMesh.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Basis.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
@@ -31,9 +32,28 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Evaluate the adaptive indicator and mark the ndof for each element
 void eval_ndof( const std::size_t nunk,
-                const std::vector< int >& esuel,
+                const tk::UnsMesh::Coords& coord,
+                const std::vector< std::size_t >& inpoel,
+                const inciter::FaceData& fd,
                 const tk::Fields& unk,
                 std::vector< std::size_t >& ndofel );
+
+//! Evaluate the spectral-decay indicator and mark the ndof for each element
+void spectral_decay( const std::size_t nunk,
+                     const std::vector< int >& esuel,
+                     const tk::Fields& unk,
+                     std::vector< std::size_t >& ndofel );
+
+//! Evaluate the non-conformity indicator and mark the ndof for each element
+void non_conformity( const std::size_t nunk,
+                     const std::size_t Nbfac,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::UnsMesh::Coords& coord,
+                     const std::vector< int >& esuel,
+                     const std::vector< int > esuf,
+                     const std::vector< std::size_t >& inpofa,
+                     const tk::Fields& unk,
+                     std::vector< std::size_t >& ndofel );
 
 } // inciter::
 
