@@ -33,6 +33,7 @@ tk::surfInt( ncomp_t system,
              const RiemannFluxFn& flux,
              const VelFn& vel,
              const Fields& U,
+             const Fields& P,
              const std::vector< std::size_t >& ndofel,
              Fields& R,
              std::vector< std::vector< tk::real > >& riemannDeriv )
@@ -51,6 +52,7 @@ tk::surfInt( ncomp_t system,
 //! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
@@ -142,7 +144,9 @@ tk::surfInt( ncomp_t system,
 
       // If an rDG method is set up (P0P1), then, currently we compute the P1
       // basis functions and solutions by default. This implies that P0P1 is
-      // unsupported in the p-adaptive DG (PDG).
+      // unsupported in the p-adaptive DG (PDG). This is a workaround until we
+      // have rdofel, which is needed to distinguish between ndofs and rdofs per
+      // element for pDG.
       std::size_t dof_el, dof_er;
       if (rdof > ndof)
       {
@@ -168,12 +172,21 @@ tk::surfInt( ncomp_t system,
       auto wt = wgp[igp] * geoFace(f,0,0);
 
       std::array< std::vector< real >, 2 > state;
+      std::array< std::vector< real >, 2 > fvel;
 
       state[0] = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
+      fvel[0] = eval_state( 3, offset, rdof, dof_el, el, P, B_l );
       state[1] = eval_state( ncomp, offset, rdof, dof_er, er, U, B_r );
+      fvel[1] = eval_state( 3, offset, rdof, dof_er, er, P, B_r );
 
-      Assert( state[0].size() == ncomp, "Size mismatch" );
-      Assert( state[1].size() == ncomp, "Size mismatch" );
+      // consolidate primitives into state vector
+      state[0].insert(state[0].end(), fvel[0].begin(), fvel[0].end());
+      state[1].insert(state[1].end(), fvel[1].begin(), fvel[1].end());
+
+      Assert( state[0].size() == ncomp+fvel[0].size(), "Incorrect size for "
+              "appended boundary state vector" );
+      Assert( state[1].size() == ncomp+fvel[1].size(), "Incorrect size for "
+              "appended boundary state vector" );
 
       // evaluate prescribed velocity (if any)
       auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
@@ -227,8 +240,9 @@ tk::update_rhs_fa ( ncomp_t ncomp,
 //!   single-material compflow and linear transport.
 // *****************************************************************************
 {
-  Assert( B_l.size() == ndof_l, "Size mismatch" );
-  Assert( B_r.size() == ndof_r, "Size mismatch" );
+  // following lines commented until rdofel is made available.
+  //Assert( B_l.size() == ndof_l, "Size mismatch" );
+  //Assert( B_r.size() == ndof_r, "Size mismatch" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {

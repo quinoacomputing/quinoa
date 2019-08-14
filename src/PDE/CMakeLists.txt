@@ -6,6 +6,7 @@ add_library(PDE
             PDEStack.cpp
             Limiter.cpp
             Indicator.cpp
+            Reconstruction.cpp
             ConfigureTransport.cpp
             ConfigureCompFlow.cpp
             ConfigureMultiMat.cpp)

@@ -38,6 +38,7 @@ tk::mass( ncomp_t ncomp,
   Assert( geoElem.nunk() == l.nunk(), "Size mismatch" );
   const auto nelem = geoElem.nunk();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  Assert( l.nprop() == ndof*ncomp, "lhs mass matrix size incorrect" );
 
   // Compute LHS for DG(P0)
   for (std::size_t e=0; e<nelem; ++e)
