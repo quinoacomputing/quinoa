@@ -33,6 +33,7 @@ inciter
 
   pref
     ndofmax 4
+    tolref 0
   end
 
   diagnostics

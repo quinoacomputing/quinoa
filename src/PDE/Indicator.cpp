@@ -227,7 +227,7 @@ void non_conformity( const std::size_t nunk,
 {
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto ndofmax = inciter::g_inputdeck.get< tag::pref, tag::ndofmax >();
-  const auto tolref = inciter::g_inputdeck.get< tag::pref, tag::tolref >();
+  //const auto tolref = inciter::g_inputdeck.get< tag::pref, tag::tolref >();
   const auto ncomp = unk.nprop() / ndof;
 
   const auto& cx = coord[0];
