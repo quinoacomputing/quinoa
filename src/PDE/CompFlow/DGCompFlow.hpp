@@ -820,7 +820,7 @@ class CompFlow {
             tk::real x, tk::real y, tk::real z, tk::real t,
             const std::array< tk::real, 3 >& )
     {
-      // Sobsonic outlet boudary calculation is based on the characteristic 
+      // Sobsonic outlet boudary calculation is based on the characteristic
       // theory of hyperbolic system. For subsonic outlet flow, there are 3
       // outgoing characteristcs and 1 incoming characteristic. Therefore,
       // we calculate the ghost cell state by taking pressure from outside

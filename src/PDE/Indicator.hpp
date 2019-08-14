@@ -7,7 +7,7 @@
              All rights reserved. See the LICENSE file for details.
   \brief     Adaptive indicators for p-adaptive discontiunous Galerkin methods
   \details   This file contains functions that provide adaptive indicator
-    function calculations for marking the number of degree of freedom of each 
+    function calculations for marking the number of degree of freedom of each
     element.
 */
 // *****************************************************************************

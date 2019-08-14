@@ -7,7 +7,7 @@
              All rights reserved. See the LICENSE file for details.
   \brief     Adaptive indicators for p-adaptive discontiunous Galerkin methods
   \details   This file contains functions that provide adaptive indicator
-    function calculations for marking the number of degree of freedom of each 
+    function calculations for marking the number of degree of freedom of each
     element.
 */
 // *****************************************************************************
@@ -71,8 +71,6 @@ void spectral_decay( const std::size_t nunk,
   // The array storing the adaptive indicator for each elements
   std::vector< tk::real > Ind(nunk, 0);
 
-  tk::real ErrMaxp2(-20), ErrMaxp1(-20), ErrMinp2(1), ErrMinp1(1);
-
   for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
     if(ndofel[e] > 1)
@@ -121,7 +119,7 @@ void spectral_decay( const std::size_t nunk,
                       + unk(e, 7, 0) * B[7]
                       + unk(e, 8, 0) * B[8]
                       + unk(e, 9, 0) * B[9];
- 
+
            dU += wgp[igp] * dU_p2 * dU_p2;
         }
         else
@@ -129,36 +127,14 @@ void spectral_decay( const std::size_t nunk,
            auto dU_p1 = unk(e, 1, 0) * B[1]
                       + unk(e, 2, 0) * B[2]
                       + unk(e, 3, 0) * B[3];
- 
+
            dU += wgp[igp] * dU_p1 * dU_p1;
         }
       }
 
       Ind[e] = log10( dU / U );
-
-      if(ndofel[e] > 4)
-      {
-        if(Ind[e] > ErrMaxp2)
-          ErrMaxp2 = Ind[e];
-        if(Ind[e] < ErrMinp2)
-          ErrMinp2 = Ind[e];
-      }
-      else if(ndofel[e] == 4)
-      {
-        if(Ind[e] > ErrMaxp1)
-          ErrMaxp1 = Ind[e];
-        if(Ind[e] < ErrMinp1)
-          ErrMinp1 = Ind[e];
-      }
     }
   }
-
-  //std::cout << "ErrMaxp1 = " << ErrMaxp1 << std::endl;
-  //std::cout << "ErrMinp1 = " << ErrMinp1 << std::endl; 
-  //std::cout << "ErrMaxp2 = " << ErrMaxp2 << std::endl;
-  //std::cout << "ErrMinp2 = " << ErrMinp2 << std::endl;
-  //std::cout << std::endl;
-
 
   // When it comes to spectral-decay indicator, the adaptation strategy shows
   // that for each element, if the value of indicator is less than epsL, then
@@ -172,13 +148,11 @@ void spectral_decay( const std::size_t nunk,
   // implemented later.
 
   // As for the discretiazation-error based indicator, like spectral-decay
-  // indicator, the choices for epsH and epsL are tricky since these indicators
-  // often represent a qualitative behavior of the approximation error and the
-  // range of these indicators are unpredictable. Empirically, we found that
-  // when the epsH belongs to [-4, -8] and epsL belongs to [-6, -14], decent
-  // results could be observed. And then try to linearly project the epsL and
-  // espH to the range of [0, 1] in order to be controlled by the user-input
-  // variable tolref.
+  // indicator, the choices for epsH and epsL are based on the data from
+  // numerical experimentst. Empirically, we found that when the epsH belongs
+  // to [-4, -8] and epsL belongs to [-6, -14], decent results could be
+  // observed. And then a linear projection is performed to map epsL and espH
+  // to the range of [0, 1] so that it could be controlled by tolref.
   auto epsH = -4 - tolref * 4.0;
   auto epsL = -6 - tolref * 8.0;
 
@@ -227,7 +201,7 @@ void non_conformity( const std::size_t nunk,
 {
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto ndofmax = inciter::g_inputdeck.get< tag::pref, tag::ndofmax >();
-  //const auto tolref = inciter::g_inputdeck.get< tag::pref, tag::tolref >();
+  const auto tolref = inciter::g_inputdeck.get< tag::pref, tag::tolref >();
   const auto ncomp = unk.nprop() / ndof;
 
   const auto& cx = coord[0];
@@ -243,8 +217,6 @@ void non_conformity( const std::size_t nunk,
   //      p-adaptive simulation of steady and unsteady flows with discontinuous
   //      Galerkin methods"
   //      https://doi.org/10.1016/j.jcp.2018.09.045
-
-  tk::real ErrMaxp2(-20), ErrMaxp1(-20), ErrMinp2(1), ErrMinp1(1);
 
   // compute error indicator for each face
   for (auto f=Nbfac; f<esuf.size()/2; ++f)
@@ -325,52 +297,23 @@ void non_conformity( const std::size_t nunk,
       auto rhoL = state[0][0];
       auto rhoR = state[1][0];
 
-      auto ind = log10( fabs( rhoL - rhoR ) / 2.0 * ( rhoL + rhoR ) );
-      Ind[el] = std::min( ind, Ind[el] );
-      Ind[er] = std::min( ind, Ind[er] );
+      auto ind = fabs( rhoL - rhoR ) / 2.0 * ( rhoL + rhoR );
+      Ind[el] = std::max( ind, Ind[el] );
+      Ind[er] = std::max( ind, Ind[er] );
     }
   }
-
-  for (std::size_t e=0; e<esuel.size()/4; ++e)
-  {
-    if(ndofel[e] > 4)
-    {
-      if(Ind[e] > ErrMaxp2)
-        ErrMaxp2 = Ind[e];
-      if(Ind[e] < ErrMinp2)
-        ErrMinp2 = Ind[e];
-    }
-    else if(ndofel[e] == 4)
-    {
-      if(Ind[e] > ErrMaxp1)
-        ErrMaxp1 = Ind[e];
-      if(Ind[e] < ErrMinp1)
-        ErrMinp1 = Ind[e];
-    }
-  }
-
-  std::cout << "ErrMaxp1 = " << ErrMaxp1 << std::endl;
-  std::cout << "ErrMinp1 = " << ErrMinp1 << std::endl; 
-  std::cout << "ErrMaxp2 = " << ErrMaxp2 << std::endl;
-  std::cout << "ErrMinp2 = " << ErrMinp2 << std::endl;
-  std::cout << std::endl;
-
-  // Calculate epsH and espL by tolref
-  //auto tol = pow( 10, -5.0 - 9.0 * tolref );
-  auto epsH = -5;
-  auto epsL = -8;
 
   // Marke the ndof according to the adaptive indicator
   for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
-    if(Ind[e] < epsL)                         // Derefinement
+    if(Ind[e] < 1e-4)                         // Derefinement
     {
       if(ndofel[e] == 10)
         ndofel[e] = 4;
       else if(ndofel[e] == 4)
         ndofel[e] = 1;
     }
-    else if(Ind[e] > epsH)                    // Refinement
+    else if(Ind[e] > 1e-3)                    // Refinement
     {
       if(ndofel[e] == 4 && ndofmax > 4)
         ndofel[e] = 10;

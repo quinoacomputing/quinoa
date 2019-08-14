@@ -1039,7 +1039,7 @@ DG::next()
 
   auto d = Disc();
 
-  if (pref && m_stage == 0 && d->T() > 0) 
+  if (pref && m_stage == 0 && d->T() > 0)
     eval_ndof( m_nunk, Disc()->Coord(), Disc()->Inpoel(), m_fd, m_u, m_ndof );
 
   // communicate solution ghost data (if any)

@@ -4116,7 +4116,7 @@ struct gauss_hump_compflow_info {
   using code = Code< A >;
   static std::string name()
   { return "Advection of 2D Gaussian hump for Euler equations"; }
-  static std::string shortDescription() 
+  static std::string shortDescription()
   { return "Select advection of 2D Gaussian hump test problem"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the advection of 2D Gaussian hump test
