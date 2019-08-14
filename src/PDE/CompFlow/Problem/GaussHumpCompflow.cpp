@@ -62,9 +62,9 @@ CompFlowProblemGaussHump::solution( ncomp_t system,
   // pressure
   p = 1.0;
   // velocity
-  u = 1.0;
-  v = 1.0;
-  w = 1.0;
+  u = 1;
+  v = 1;
+  w = 0;
   // total specific energy
   rE = eos_totalenergy< eq >( system, r, u, v, w, p );
 
@@ -273,7 +273,7 @@ CompFlowProblemGaussHump::prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real,
   std::vector< std::array< tk::real, 3 > > vel( ncomp );
 
   for (ncomp_t c=0; c<ncomp; ++c)
-    vel[c] = {{ 0.1, 0.1, 0.0 }};
+    vel[c] = {{ 1, 1, 0.0 }};
 
   return vel;
 }

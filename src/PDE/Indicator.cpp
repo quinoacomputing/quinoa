@@ -165,6 +165,11 @@ void spectral_decay( const std::size_t nunk,
   // this element will be refined to a higher order of DG scheme. Also if the
   // value of indicator is larger than epsH which means that this element will
   // be derefined to a lower order of DG scheme.
+  // Note: Spectral-decay indicator is a measurement of the continuity of the
+  // numerical solution inside this element. So when this indicator appears
+  // to be relatively large, there might be shock inside this element and a
+  // derefinement or h-refinement should be applied. This condition will be
+  // implemented later.
 
   // As for the discretiazation-error based indicator, like spectral-decay
   // indicator, the choices for epsH and epsL are tricky since these indicators
