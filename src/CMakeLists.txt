@@ -15,8 +15,6 @@ project(QUINOA C CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
-cmake_policy(SET CMP0074 NEW)
-
 # Quinoa cmake modules directory
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
