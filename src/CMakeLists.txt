@@ -531,6 +531,16 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${UNITTEST_EXECUTABLE}
                 ${FILECONV_EXECUTABLE})
 
+
+# Decide if the Exception class will write to std::cerr. This may not always be
+# thread-safe, so it can be disabled here by setting this to false. The default
+# is true, because it works most of the time.
+if (NOT EXCEPTIONS_WRITE_TO_CERR)     # set default
+  # will become compiler define in Main/QuinoaConfig.h
+  set(EXCEPTIONS_WRITE_TO_CERR true CACHE bool "Exceptions will write std::cerr.")
+endif()
+message(STATUS "Exceptions write to cerr: ${EXCEPTIONS_WRITE_TO_CERR}")
+
 # Configure cmake variables to pass to the build
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.hpp.in"
                 "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.hpp" )
