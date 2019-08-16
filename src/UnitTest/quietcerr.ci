@@ -14,7 +14,7 @@ module quietcerr {
 
   namespace tk {
 
-    group QuietCerr {
+    nodegroup QuietCerr {
       entry QuietCerr();
       initnode void quiet();
     };
