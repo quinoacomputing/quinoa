@@ -32,7 +32,7 @@ namespace inciter {
 class CompFlowProblemNLEnergyGrowth {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
 
     //! Compute internal energy parameter

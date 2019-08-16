@@ -37,22 +37,30 @@ find_path(LIBCXX_INCLUDE_DIR NAMES cxxabi.h HINTS ${LIBCXX_ROOT}/include
                                             $ENV{LIBCXX_ROOT}/include/c++/v1)
 
 if(BUILD_SHARED_LIBS)
-  find_library(LIBCXX_LIBRARIES NAMES c++ HINTS ${LIBCXX_ROOT}/lib
-                                                $ENV{LIBCXX_ROOT}/lib)
-  find_library(LIBCXXABI_LIBRARIES NAMES c++abi HINTS ${LIBCXX_ROOT}/lib
-                                                $ENV{LIBCXX_ROOT}/lib)
+  find_library(LIBCXX_LIBRARY NAMES c++ HINTS ${LIBCXX_ROOT}/lib
+                                              $ENV{LIBCXX_ROOT}/lib)
+  find_library(LIBCXXABI_LIBRARY NAMES c++abi HINTS ${LIBCXX_ROOT}/lib
+                                              $ENV{LIBCXX_ROOT}/lib)
 else()
-  find_library(LIBCXX_LIBRARIES NAMES libc++.a HINTS ${LIBCXX_ROOT}/lib
-                                                     $ENV{LIBCXX_ROOT}/lib)
+  find_library(LIBCXX_LIBRARY NAMES libc++.a HINTS ${LIBCXX_ROOT}/lib
+                                                   $ENV{LIBCXX_ROOT}/lib)
   if(ARCH MATCHES "ppc64")
-    set(LIBCXXABI_LIBRARIES " ")
+    set(LIBCXXABI_LIBRARY "")
   else()
-    find_library(LIBCXXABI_LIBRARIES NAMES libc++abi.a HINTS ${LIBCXX_ROOT}/lib
-                                                       $ENV{LIBCXX_ROOT}/lib)
+    find_library(LIBCXXABI_LIBRARY NAMES libc++abi.a HINTS ${LIBCXX_ROOT}/lib
+                                                     $ENV{LIBCXX_ROOT}/lib)
   endif()
 endif()
 
-set(LIBCXX_INCLUDE_DIRS ${LIBCXX_INCLUDE_DIR})
+if(LIBCXX_INCLUDE_DIR AND LIBCXX_LIBRARY AND LIBCXXABI_LIBRARY)
+  set(LIBCXX_INCLUDE_DIRS ${LIBCXX_INCLUDE_DIR})
+  set(LIBCXX_LIBRARIES ${LIBCXX_LIBRARY})
+  set(LIBCXXABI_LIBRARIES ${LIBCXXABI_LIBRARY})
+else()
+  set(LIBCXX_INCLUDE_DIRS "")
+  set(LIBCXX_LIBRARIES "")
+  set(LIBCXXABI_LIBRARIES "")
+endif()
 
 # Handle the QUIETLY and REQUIRED arguments and set LIBCXX_FOUND to TRUE if
 # all listed variables are TRUE.

@@ -15,7 +15,7 @@
       coefficient vector, omega. Required signature:
       \code{.cpp}
         CoeffPolicyName(
-          tk::ctr::ncomp_type ncomp,
+          tk::ctr::ncomp_t ncomp,
           const std::vector< kw::sde_omega::info::expect::type >& omega_,
           std::vector< kw::sde_omega::info::expect::type >& omega )
       \endcode
@@ -56,7 +56,7 @@ class WrightFisherCoeffConst {
   public:
     //! Constructor: initialize coefficients
     WrightFisherCoeffConst(
-      tk::ctr::ncomp_type ncomp,
+      tk::ctr::ncomp_t ncomp,
       const std::vector< kw::sde_omega::info::expect::type >& omega_,
       std::vector< kw::sde_omega::info::expect::type >& omega );
 

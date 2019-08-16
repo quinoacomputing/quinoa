@@ -18,6 +18,7 @@ target_include_directories(Mesh PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main
                            ${TPL_INCLUDE_DIR}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS})
 

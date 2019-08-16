@@ -39,7 +39,7 @@ template< class Init, class Coefficients >
 class Dissipation {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::dissipation;
 
   public:

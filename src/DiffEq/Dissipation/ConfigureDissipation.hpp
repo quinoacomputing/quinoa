@@ -28,7 +28,7 @@ void registerDissipation( DiffEqFactory& f, std::set< ctr::DiffEqType >& t );
 
 //! Return information on the dissipation SDE
 std::vector< std::pair< std::string, std::string > >
-infoDissipation( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoDissipation( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

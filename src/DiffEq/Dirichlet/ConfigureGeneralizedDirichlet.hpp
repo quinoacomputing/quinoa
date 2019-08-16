@@ -27,7 +27,7 @@ void registerGenDir( DiffEqFactory& f, std::set< ctr::DiffEqType >& t );
 
 //! Return information on the generlized Dirichlet SDE
 std::vector< std::pair< std::string, std::string > >
-infoGenDir( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoGenDir( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

@@ -19,11 +19,11 @@
 #define StatTest_h
 
 #include <functional>
+#include <memory>
 
 #include "NoWarning/charm++.hpp"
 
 #include "Macro.hpp"
-#include "Make_unique.hpp"
 #include "Options/RNG.hpp"
 
 namespace rngtest {
@@ -39,28 +39,6 @@ namespace rngtest {
 class StatTest {
 
   public:
-    //! \brief Constructor taking an object modeling Concept
-    //! \details The object of class T comes pre-constructed.
-    //! \param[in] x Instantiated object of type T given by the template
-    //!   argument.
-    template< typename T >
-    explicit StatTest( T x ) :
-      self( tk::make_unique< Model<T> >( std::move(x) ) ){}
-
-    //! \brief Constructor taking a std::function holding a constructor bound to
-    //!   its arguments of an object modeling Concept (see below)
-    //! \details Passing std::function allows late execution of the constructor
-    //!   of T, i.e., as late as inside this class' constructor, and thus usage
-    //!   from a factory. Object of T is constructed here. This overload is
-    //!   disabled for Charm++ chare objects defining typedef 'Proxy', see also
-    //!   below.
-    //! \param[in] x Function pointer to a constructor bound of an object
-    //!   modeling Concept
-    template< typename T,
-      typename std::enable_if< !tk::HasTypedefProxy<T>::value, int >::type = 0 >
-    explicit StatTest( std::function<T()> x ) :
-      self( tk::make_unique< Model<T> >( std::move(x()) ) ) {}
-
     //! \brief Constructor taking a function pointer to a constructor of an
     //!    object modeling Concept
     //! \details Passing std::function allows late execution of the constructor
@@ -71,8 +49,8 @@ class StatTest {
     //!   Charm proxy, defined by T::Proxy. The actual constructor of T is not
     //!   called here but at some future time by the Charm++ runtime system,
     //!   here only an asynchrounous ckNew() is called, i.e., a message (or
-    //!   request) for a future call to T's constructor. This overload is only
-    //!   enabled for Charm++ chare objects defining typedef 'Proxy', which must
+    //!   request) for a future call to T's constructor. This overload can only
+    //!   be used for Charm++ chare objects defining typedef 'Proxy', which must
     //!   define the Charm++ proxy. All optional constructor arguments are
     //!   forwarded to ckNew() and thus to T's constructor. If it was somehow
     //!   possible to obtain all bound arguments' types and values from an
@@ -83,16 +61,12 @@ class StatTest {
     //!    Concept
     //! \param[in] args Constructor arguments
     //! \see See also tk::recordCharmModel().
-    template< typename T, typename... ConstrArgs,
-      typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
-    explicit StatTest( std::function<T()> c, ConstrArgs... args ) :
-      self( tk::make_unique< Model< typename T::Proxy > >
-            (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
+    template< typename T, typename... CtrArgs >
+    explicit StatTest( std::function<T()> c [[maybe_unused]], CtrArgs... args )
+      : self( std::make_unique< Model< typename T::Proxy > >
+              (std::move(T::Proxy::ckNew(std::forward<CtrArgs>(args)...))) ) {
       Assert( c == nullptr, "std::function argument to StatTest Charm "
                             "constructor must be nullptr" );
-      #ifdef NDEBUG
-      IGNORE(c);
-      #endif
     }
 
     //! Public interface to contribute number of results/test, i.e., p-values

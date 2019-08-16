@@ -30,7 +30,7 @@ namespace inciter {
 class MultiMatProblemUserDefined {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
 
   public:
@@ -45,15 +45,15 @@ class MultiMatProblemUserDefined {
     //! \return Values of all components evaluated at (x,y,z,t)
     //! \note The function signature must follow tk::SolutionFn
     static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real t )
+    solution( [[maybe_unused]] ncomp_t system,
+              [[maybe_unused]] ncomp_t ncomp,
+              [[maybe_unused]] tk::real x,
+              [[maybe_unused]] tk::real y,
+              [[maybe_unused]] tk::real z,
+              [[maybe_unused]] tk::real t )
     {
-      IGNORE(system);
-      IGNORE(ncomp);
-      IGNORE(x);
-      IGNORE(y);
-      IGNORE(z);
-      IGNORE(t);
+      Assert( ncomp == ncomp, "Number of scalar components must be " +
+                              std::to_string(ncomp) );
       return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
     }
 

@@ -29,7 +29,7 @@ namespace inciter {
 class CompFlowProblemGaussHump {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
 
   public:

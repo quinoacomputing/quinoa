@@ -30,31 +30,31 @@ namespace tk {
 namespace ctr {
 
 //! RNGSSE random number generator parameters storage
-using RNGSSEParam = tk::tuple::tagged_tuple<
-  tag::seed,          kw::seed::info::expect::type,  //!< seed
-  tag::seqlen,        RNGSSESeqLenType               //!< sequence length type
->;
+using RNGSSEParam = tk::TaggedTuple< brigand::list<
+   tag::seed,          kw::seed::info::expect::type  //!< seed
+ , tag::seqlen,        RNGSSESeqLenType              //!< sequence length type
+> >;
 //! RNGSSE parameters bundle associating RNG types and their parameters
 using RNGSSEParameters = std::map< RNGType, RNGSSEParam >;
 
 //! Random123 random number generator parameters storage
-using RNGRandom123Param = tk::tuple::tagged_tuple<
+using RNGRandom123Param = tk::TaggedTuple< brigand::list<
   tag::seed,          kw::seed::info::expect::type   //!< seed
->;
+> >;
 //! Random123 parameters bundle associating RNG types and their parameters
 using RNGRandom123Parameters = std::map< RNGType, RNGRandom123Param >;
 
 #ifdef HAS_MKL
 //! MKL random number generator parameters storage
-using RNGMKLParam = tk::tuple::tagged_tuple<
-  tag::seed,              kw::seed::info::expect::type, //!< seed
-  tag::uniform_method,    MKLUniformMethodType,         //!< uniform method type
-  tag::gaussian_method,   MKLGaussianMethodType,        //!< Gaussian method type
+using RNGMKLParam = tk::TaggedTuple< brigand::list<
+    tag::seed,              kw::seed::info::expect::type //!< seed
+  , tag::uniform_method,    MKLUniformMethodType         //!< uniform method type
+  , tag::gaussian_method,   MKLGaussianMethodType        //!< Gaussian method type
   //! multi-variate Gaussian method type
-  tag::gaussianmv_method, MKLGaussianMVMethodType,
-  tag::beta_method,       MKLBetaMethodType,            //!< beta method type
-  tag::gamma_method,      MKLGammaMethodType            //!< gamma method type
->;
+  , tag::gaussianmv_method, MKLGaussianMVMethodType
+  , tag::beta_method,       MKLBetaMethodType            //!< beta method type
+  , tag::gamma_method,      MKLGammaMethodType            //!< gamma method type
+> >;
 //! MKL RNG parameters bundle associating RNG types and their parameters
 using RNGMKLParameters = std::map< RNGType, RNGMKLParam >;
 #endif

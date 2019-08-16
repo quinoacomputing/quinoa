@@ -48,7 +48,7 @@ registerNumberFractionBeta( DiffEqFactory& f, std::set< ctr::DiffEqType >& t )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoNumberFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoNumberFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the number fraction beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types

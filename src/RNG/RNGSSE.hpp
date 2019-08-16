@@ -14,11 +14,11 @@
 
 #include <cstring>
 #include <random>
+#include <memory>
 
 #include "NoWarning/beta_distribution.hpp"
 #include <boost/random/gamma_distribution.hpp>
 
-#include "Make_unique.hpp"
 #include "Exception.hpp"
 #include "Macro.hpp"
 #include "Options/RNGSSESeqLen.hpp"
@@ -66,7 +66,7 @@ class RNGSSE {
       Assert( m_init != nullptr, "nullptr passed to RNGSSE constructor" );
       Assert( n > 0, "Need at least one thread" );
       // Allocate array of stream-pointers for threads
-      m_stream = tk::make_unique< State[] >( n );
+      m_stream = std::make_unique< State[] >( n );
       // Initialize thread-streams
       for (SeqNumType i=0; i<n; ++i) m_init( &m_stream[i], i );
     }
@@ -115,15 +115,13 @@ class RNGSSE {
     //!   of length d(d+1)/2
     //! \param[in,out] r Pointer to memory to write the random numbers to
     //! \warning Not implemented!
-    void gaussianmv( int tid, ncomp_t num, ncomp_t d, const double* const mean,
-                     const double* const cov, double* r ) const
+    void gaussianmv( [[maybe_unused]] int tid,
+                     [[maybe_unused]] ncomp_t num,
+                     [[maybe_unused]] ncomp_t d,
+                     [[maybe_unused]] const double* const mean,
+                     [[maybe_unused]] const double* const cov,
+                     [[maybe_unused]] double* r ) const
     {
-      IGNORE(tid);
-      IGNORE(num);
-      IGNORE(d);
-      IGNORE(mean);
-      IGNORE(cov);
-      IGNORE(r);
     }
 
     //! Beta RNG: Generate beta random numbers
@@ -173,7 +171,7 @@ class RNGSSE {
     RNGSSE& operator=( const RNGSSE& x ) {
       m_nthreads = x.m_nthreads;
       m_init = x.m_init;
-      m_stream = tk::make_unique< State[] >( x.m_nthreads );
+      m_stream = std::make_unique< State[] >( x.m_nthreads );
       for (SeqNumType i=0; i<x.m_nthreads; ++i) m_init( &m_stream[i], i );
       return *this;
     }
@@ -185,7 +183,7 @@ class RNGSSE {
     RNGSSE& operator=( RNGSSE&& x ) {
       m_nthreads = x.m_nthreads;
       m_init = x.m_init;
-      m_stream = tk::make_unique< State[] >( x.m_nthreads );
+      m_stream = std::make_unique< State[] >( x.m_nthreads );
       for (SeqNumType i=0; i<x.m_nthreads; ++i) {
         m_stream[i] = x.m_stream[i];
         std::memset( &x.m_stream[i], 0, sizeof(x.m_stream[i]) );

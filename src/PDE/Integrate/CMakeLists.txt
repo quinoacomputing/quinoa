@@ -20,6 +20,7 @@ target_include_directories(Integrate PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS})
 
 set_target_properties(Integrate

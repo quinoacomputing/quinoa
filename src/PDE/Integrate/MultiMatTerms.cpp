@@ -21,7 +21,7 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 
 void
-tk::nonConservativeInt( ncomp_t system,
+tk::nonConservativeInt( [[maybe_unused]] ncomp_t system,
                         ncomp_t ncomp,
                         std::size_t nmat,
                         ncomp_t offset,
@@ -63,8 +63,6 @@ tk::nonConservativeInt( ncomp_t system,
   using inciter::densityIdx;
   using inciter::momentumIdx;
   using inciter::energyIdx;
-
-  IGNORE(system);
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -170,15 +168,16 @@ tk::nonConservativeInt( ncomp_t system,
 }
 
 void
-tk::update_rhs_ncn( ncomp_t ncomp,
-                    ncomp_t offset,
-                    const std::size_t ndof,
-                    const std::size_t ndof_el,
-                    const tk::real wt,
-                    const std::size_t e,
-                    const std::array< std::vector<tk::real>, 3 >& dBdx,
-                    const std::vector< tk::real >& ncf,
-                    Fields& R )
+tk::update_rhs_ncn(
+  ncomp_t ncomp,
+  ncomp_t offset,
+  const std::size_t ndof,
+  [[maybe_unused]] const std::size_t ndof_el,
+  const tk::real wt,
+  const std::size_t e,
+  [[maybe_unused]] const std::array< std::vector<tk::real>, 3 >& dBdx,
+  const std::vector< tk::real >& ncf,
+  Fields& R )
 // *****************************************************************************
 //  Update the rhs by adding the non-conservative term integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -192,13 +191,15 @@ tk::update_rhs_ncn( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  //Assert( dBdx[0].size() == ndof_el, "Size mismatch for basis function derivatives" );
-  //Assert( dBdx[1].size() == ndof_el, "Size mismatch for basis function derivatives" );
-  //Assert( dBdx[2].size() == ndof_el, "Size mismatch for basis function derivatives" );
+  //Assert( dBdx[0].size() == ndof_el,
+  //        "Size mismatch for basis function derivatives" );
+  //Assert( dBdx[1].size() == ndof_el,
+  //        "Size mismatch for basis function derivatives" );
+  //Assert( dBdx[2].size() == ndof_el,
+  //        "Size mismatch for basis function derivatives" );
+  //Assert( ncf.size() == ncomp,
+  //        "Size mismatch for non-conservative term" );
   Assert( ncf.size() == ncomp, "Size mismatch for non-conservative term" );
-
-  IGNORE(ndof_el);
-  IGNORE(dBdx);
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {

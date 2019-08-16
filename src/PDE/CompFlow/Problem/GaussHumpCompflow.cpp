@@ -44,7 +44,6 @@ CompFlowProblemGaussHump::solution( ncomp_t system,
 // *****************************************************************************
 {
   Assert( ncomp == 5, "Number of scalar components must be 5" );
-  IGNORE(ncomp);
 
   using tag::param;
 

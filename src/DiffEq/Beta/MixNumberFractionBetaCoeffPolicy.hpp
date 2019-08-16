@@ -16,7 +16,7 @@
       coefficients, b, S, kappa, rho2, and rcomma. Required signature:
       \code{.cpp}
         CoeffPolicyName(
-          tk::ctr::ncomp_type ncomp,
+          tk::ctr::ncomp_t ncomp,
           const std::vector< kw::sde_bprime::info::expect::type >& bprime_,
           const std::vector< kw::sde_S::info::expect::type >& S_,
           const std::vector< kw::sde_kappaprime::info::expect::type >& kprime_,

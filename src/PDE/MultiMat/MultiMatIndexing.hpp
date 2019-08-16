@@ -19,9 +19,9 @@ namespace inciter {
 //! \param[in] nmat Number of materials
 //! \param[in] kmat Index of required material
 //! \return Index of the required material volume fraction
-inline std::size_t volfracIdx( std::size_t nmat, std::size_t kmat )
+inline std::size_t volfracIdx( std::size_t nmat [[maybe_unused]],
+                               std::size_t kmat )
 {
-  IGNORE(nmat);
   return kmat;
 }
 
@@ -56,9 +56,9 @@ inline std::size_t energyIdx( std::size_t nmat, std::size_t kmat )
 //!   1: Y-component,
 //!   2: Z-component.
 //! \return Index of the required velocity component from vector of primitives
-inline std::size_t velocityIdx( std::size_t nmat, std::size_t idir )
+inline std::size_t velocityIdx( [[maybe_unused]] std::size_t nmat,
+                                std::size_t idir )
 {
-  IGNORE(nmat);
   return idir;
 }
 

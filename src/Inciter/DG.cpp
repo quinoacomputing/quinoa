@@ -552,8 +552,7 @@ DG::setupGhost()
 
   // More in-depth error checking on local ghost data
   for (const auto& c : m_ghostData)
-    for (const auto& t : c.second) {
-      IGNORE(t);
+    for ([[maybe_unused]] const auto& t : c.second) {
       Assert( !std::get< 0 >( t.second ).empty(),
               "Emtpy face vector in ghost data" );
       Assert( std::get< 0 >( t.second ).size() % 3 == 0,
@@ -629,8 +628,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
   auto ncoord = coord[0].size();
 
   // nodelist with fromch, currently only used for an assert
-  const auto& nl = tk::cref_find( m_msumset, fromch );
-  IGNORE(nl);
+  [[maybe_unused]] const auto& nl = tk::cref_find( m_msumset, fromch );
 
   auto& ghostelem = m_ghost[ fromch ];  // will associate to sender chare
 
@@ -802,9 +800,8 @@ DG::addEsuel( const std::array< std::size_t, 2 >& id,
 {
   auto d = Disc();
   const auto& inpoel = d->Inpoel();
-  const auto& esuf = m_fd.Esuf();
+  [[maybe_unused]] const auto& esuf = m_fd.Esuf();
   const auto& lid = d->Lid();
-  IGNORE(esuf);
 
   std::array< tk::UnsMesh::Face, 4 > face;
   for (std::size_t f = 0; f<4; ++f)
@@ -900,10 +897,8 @@ DG::adj()
 
   // Error checking on ghost data
   for(const auto& n : m_ghostData)
-    for(const auto& i : n.second) {
+    for([[maybe_unused]] const auto& i : n.second)
       Assert( i.first < m_fd.Esuel().size()/4, "Sender contains ghost tet id " );
-      IGNORE(i);
-    }
 
   // Perform leak test on face geometry data structure enlarged by ghosts
   Assert( !leakyAdjacency(), "Face adjacency leaky" );
@@ -956,11 +951,9 @@ DG::adj()
 
   // Store expected ghost tet IDs
   for (const auto& n : m_ghost)
-    for (const auto& g : n.second) {
-      IGNORE(g);
+    for ([[maybe_unused]] const auto& g : n.second)
       Assert( m_exptGhost.insert( g.second ).second,
               "Failed to store local tetid as exptected ghost id" );
-    }
 
   // Signal the runtime system that all workers have received their adjacency
   contribute( sizeof(int), &m_initial, CkReduction::sum_int,
@@ -1558,8 +1551,7 @@ DG::resizePostAMR(
   ++d->Itr();
 
   // Save old number of elements
-  auto old_nelem = d->Inpoel().size()/4;
-  IGNORE(old_nelem);
+  [[maybe_unused]] auto old_nelem = d->Inpoel().size()/4;
 
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, msum );

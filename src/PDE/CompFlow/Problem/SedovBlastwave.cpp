@@ -26,7 +26,7 @@ using inciter::CompFlowProblemSedovBlastwave;
 
 tk::SolutionFn::result_type
 CompFlowProblemSedovBlastwave::solution( ncomp_t system,
-                                         ncomp_t ncomp,
+                                         [[maybe_unused]] ncomp_t ncomp,
                                          tk::real x,
                                          tk::real y,
                                          tk::real,
@@ -42,9 +42,8 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == 5, "Number of scalar components must be 5" );
-  IGNORE(ncomp);
-
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   using tag::param;
 
   tk::real r, p, u, v, w, rE;

@@ -78,10 +78,9 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
 {
   // Ensure boundary face ids will not index out of face connectivity
   Assert( std::all_of( begin(m_bface), end(m_bface),
-            [&](const decltype(m_bface)::value_type& s)
+            [&](const auto& s)
             { return std::all_of( begin(s.second), end(s.second),
-                                  [&](decltype(s.second)::value_type f)
-                                  { return f*3+2 < m_triinpoel.size(); } ); } ),
+                       [&](auto f){ return f*3+2 < m_triinpoel.size(); } ); } ),
           "Boundary face data structures inconsistent" );
 }
 
@@ -153,8 +152,8 @@ Sorter::setup( std::size_t npoin )
   if (m_nbnd == 0)
     contribute( m_cbs.get< tag::queried >() );
   else
-    for (const auto& c : chbnode)
-      thisProxy[ c.first ].query( thisIndex, c.second );
+    for (const auto& [ targetchare, bndnodes ] : chbnode)
+      thisProxy[ targetchare ].query( thisIndex, bndnodes );
 }
 
 void
@@ -193,11 +192,11 @@ Sorter::response()
     std::map< int, std::unordered_set< std::size_t > > > exp;
 
   // Compute node communication map to be sent back to chares
-  for (const auto& c : m_chnode) {
-    auto& e = exp[ c.first ];
-    for (auto n : c.second)
+  for (const auto& [ neighborchare, bndnodes ] : m_chnode) {
+    auto& e = exp[ neighborchare ];
+    for (auto n : bndnodes)
       for (auto d : tk::cref_find(m_nodech,n))
-        if (d != c.first)
+        if (d != neighborchare)
           e[ d ].insert( n );
   }
 
@@ -212,8 +211,8 @@ Sorter::response()
   if (m_nbnd == 0)
     contribute( m_cbs.get< tag::responded >() );
   else
-    for (const auto& c : exp)
-      thisProxy[ c.first ].bnd( thisIndex, c.second );
+    for (const auto& [ targetchare, bndnodes ] : exp)
+      thisProxy[ targetchare ].bnd( thisIndex, bndnodes );
 }
 
 void
@@ -225,8 +224,8 @@ Sorter::bnd( int fromch,
 //! \param[in] msum Boundary node communication map assembled by chare fromch
 // *****************************************************************************
 {
-  for (const auto& c : msum)
-    m_msum[ c.first ].insert( begin(c.second), end(c.second) );
+  for (const auto& [ neighborchare, bndnodes ] : msum)
+    m_msum[ neighborchare ].insert( begin(bndnodes), end(bndnodes) );
 
   // Report back to chare message received from
   thisProxy[ fromch ].recvbnd();
@@ -280,7 +279,7 @@ Sorter::mask()
       auto& n = m_reordcomm[ c->first ];
       for (auto j : c->second)
         if (std::none_of( m_msum.cbegin(), c,
-             [ j ]( const decltype(m_msum)::value_type& s )
+             [ j ]( const auto& s )
              { return s.second.find(j) != end(s.second); } )) {
           n.insert(j);
         }
@@ -339,15 +338,15 @@ Sorter::reorder()
   thisProxy[ thisIndex ].wait4prep();
 
   // Send out request for new global node IDs for nodes we do not reorder
-  for (const auto& c : m_reordcomm)
-    thisProxy[ c.first ].request( thisIndex, c.second );
+  for (const auto& [ targetchare, nodes ] : m_reordcomm)
+    thisProxy[ targetchare ].request( thisIndex, nodes );
 
   // Lambda to decide if node is assigned a new ID by this chare. If node is not
   // found in the asymmetric communication map, it is owned, i.e., this chare
   // assigns its new id.
   auto ownnode = [ this ]( std::size_t p ) {
     return std::all_of( m_reordcomm.cbegin(), m_reordcomm.cend(),
-                        [&](const decltype(m_reordcomm)::value_type& s)
+                        [&](const auto& s)
                         { return s.second.find(p) == s.second.cend(); } );
   };
 
@@ -392,15 +391,15 @@ Sorter::prepare()
 // *****************************************************************************
 {
   // Find and return new node IDs to sender
-  for (const auto& r : m_reqnodes) {
+  for (const auto& [ requestorchare, nodes ] : m_reqnodes) {
     std::unordered_map< std::size_t,
       std::tuple< std::size_t, tk::UnsMesh::Coord > > n;
-    for (auto p : r.second) {
+    for (auto p : nodes) {
       auto newid = tk::cref_find( m_newnodes, p );
       n.emplace( p,
         std::make_tuple( newid, tk::cref_find(m_newcoordmap,newid) ) );
     }
-    thisProxy[ r.first ].neworder( n );
+    thisProxy[ requestorchare ].neworder( n );
   }
 
   tk::destroy( m_reqnodes ); // Clear queue of requests just fulfilled
@@ -423,10 +422,10 @@ Sorter::neworder( const std::unordered_map< std::size_t,
 {
   // Store new node IDs associated to old ones, and node coordinates associated
   // to new node IDs.
-  for (const auto& p : nodes) {
-    auto id = std::get< 0 >( p.second );
-    m_newnodes[ p.first ] = id;
-    m_newcoordmap.emplace( id, std::get<1>(p.second) );
+  for (const auto& [ oldid, newnodes ] : nodes) {
+    auto newid = std::get< 0 >( newnodes );
+    m_newnodes[ oldid ] = newid;
+    m_newcoordmap.emplace( newid, std::get< 1 >( newnodes ) );
   }
 
   // If all our nodes have new IDs assigned, reorder complete on this PE
@@ -442,29 +441,23 @@ Sorter::finish()
 // *****************************************************************************
 {
   // Update elem connectivity with the reordered node IDs
-  for (auto& p : m_ginpoel) p = tk::cref_find( m_newnodes, p );
+  tk::remap( m_ginpoel, m_newnodes );
 
   // Update node coordinate map with the reordered IDs
   m_coordmap = m_newcoordmap;
 
   // Update symmetric chare-node communication map with the reordered IDs
-  for (auto& c : m_msum) {
-    decltype(c.second) n;
-    for (auto p : c.second) n.insert( tk::cref_find( m_newnodes, p ) );
-    c.second = std::move( n );
+  for (auto& [ neighborchare, bndnodes ] : m_msum) {
+    decltype(bndnodes) n;
+    for (auto p : bndnodes) n.insert( tk::cref_find( m_newnodes, p ) );
+    bndnodes = std::move( n );
   }
 
-  // Update unique global node IDs of this chare with the reordered node IDs
-  //m_nodeset.clear();
-  //m_nodeset.insert( begin(m_ginpoel), end(m_ginpoel) );
-
   // Update boundary face-node connectivity with the reordered node IDs
-  for (auto& p : m_triinpoel) p = tk::cref_find( m_newnodes, p );
+  tk::remap( m_triinpoel, m_newnodes );
 
   // Update boundary node lists with the reordered node IDs
-  for (auto& s : m_bnode)
-    for (auto& p : s.second)
-      p = tk::cref_find( m_newnodes, p );
+  for (auto& [ setid, nodes ] : m_bnode) tk::remap( nodes, m_newnodes );
 
   // Update mesh in Refiner after reordering
   m_reorderRefiner.send();
@@ -505,11 +498,10 @@ Sorter::createDiscWorkers()
 // *****************************************************************************
 {
   // Create worker array element using Charm++ dynamic chare array element
-  // insertion: 1st arg: chare id, last arg: PE chare is created on, middle
-  // args: Discretization ctor args. See also Charm++ manual, Sec. "Dynamic
-  // Insertion".
-  m_scheme.discInsert( thisIndex, m_host, m_meshwriter, m_ginpoel, m_coordmap,
-                       m_msum, m_nchare );
+  // insertion: last arg: PE chare is created on. See also Charm++ manual, Sec.
+  // "Dynamic Insertion".
+  m_scheme.disc()[ thisIndex ].insert( m_scheme.fct(), m_host, m_meshwriter,
+    m_ginpoel, m_coordmap, m_msum, m_nchare );
 
   contribute( m_cbs.get< tag::discinserted >() );
 }
@@ -521,13 +513,13 @@ Sorter::createWorkers()
 // *****************************************************************************
 {
   // Make sure (bound) base is already created and accessible
-  Assert( m_scheme.get()[thisIndex].ckLocal() != nullptr,
+  Assert( m_scheme.disc()[thisIndex].ckLocal() != nullptr,
           "About to pass nullptr" );
 
   // Create worker array element using Charm++ dynamic chare array element
   // insertion: 1st arg: chare id, other args: Discretization's child ctor args.
   // See also Charm++ manual, Sec. "Dynamic Insertion".
-  m_scheme.insert( thisIndex, m_scheme.get(), m_bface, m_bnode, m_triinpoel );
+  m_scheme.insert( thisIndex, m_scheme.disc(), m_bface, m_bnode, m_triinpoel );
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
 

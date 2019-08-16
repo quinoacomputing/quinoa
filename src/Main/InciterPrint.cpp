@@ -10,7 +10,7 @@
 */
 // *****************************************************************************
 
-#include "NoWarning/replace.hpp"
+#include <regex>
 
 #include "CGPDE.hpp"
 #include "InciterPrint.hpp"
@@ -38,7 +38,7 @@ InciterPrint::inthead( const std::string& t,
 {
   section( t, name );
   std::string l( legend );
-  boost::replace_all( l, "\n", "\n" + m_item_indent );
+  l = std::regex_replace( l, std::regex("\n"), "\n" + m_item_indent );
   raw( m_item_indent + l + head );
 }
 
@@ -106,9 +106,9 @@ void InciterPrint::eqlegend()
 {
   section( "PDE factory legend, policy codes" );
 
-  static_assert( tk::HasTypedefCode< kw::physics::info >::value,
+  static_assert( tk::HasTypedef_code_v< kw::physics::info >,
                  "Policy code undefined for keyword" );
-  static_assert( tk::HasTypedefCode< kw::problem::info >::value,
+  static_assert( tk::HasTypedef_code_v< kw::problem::info >,
                  "Policy code undefined for keyword" );
 
   raw( m_item_indent + kw::physics::name() +

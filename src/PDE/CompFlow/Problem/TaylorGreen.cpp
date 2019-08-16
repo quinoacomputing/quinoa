@@ -26,11 +26,11 @@ using inciter::CompFlowProblemTaylorGreen;
 
 tk::SolutionFn::result_type
 CompFlowProblemTaylorGreen::solution( ncomp_t system,
-                                       ncomp_t ncomp,
-                                       tk::real x,
-                                       tk::real y,
-                                       tk::real,
-                                       tk::real )
+                                      [[maybe_unused]] ncomp_t ncomp,
+                                      tk::real x,
+                                      tk::real y,
+                                      tk::real,
+                                      tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -42,9 +42,8 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == 5, "Number of scalar components must be 5" );
-  IGNORE(ncomp);
-
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   using tag::param; using std::sin; using std::cos;
 
   // density
