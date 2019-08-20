@@ -10,7 +10,7 @@
 */
 // *****************************************************************************
 
-#include "NoWarning/replace.hpp"
+#include <regex>
 
 #include "Exception.hpp"
 #include "Tags.hpp"
@@ -45,7 +45,7 @@ WalkerPrint::inthead( const std::string& t,
 {
   section( t, name );
   std::string l( legend );
-  boost::replace_all( l, "\n", "\n" + m_item_indent );
+  l = std::regex_replace( l, std::regex("\n"), "\n" + m_item_indent );
   raw( m_item_indent + l + head );
 }
 

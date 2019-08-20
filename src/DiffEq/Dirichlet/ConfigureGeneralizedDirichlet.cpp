@@ -47,7 +47,7 @@ registerGenDir( DiffEqFactory& f, std::set< ctr::DiffEqType >& t )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoGenDir( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoGenDir( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the generalized Dirichlet SDE
 //! \param[inout] cnt std::map of counters for all differential equation types

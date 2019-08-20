@@ -31,24 +31,24 @@ using namespace tao;
 using tk::ctr::RNGType;
 
 //! Storage of selected options
-using selects = tk::tuple::tagged_tuple<
-  tag::battery, BatteryType,                   //!< Battery
-  tag::rng,     std::vector< RNGType >         //!< Random number generators
->;
+using selects = tk::TaggedTuple< brigand::list<
+    tag::battery, BatteryType                    //!< Battery
+  , tag::rng,     std::vector< RNGType >         //!< Random number generators
+> >;
 
 //! IO parameters storage
-using ios = tk::tuple::tagged_tuple<
-  tag::control,   std::string                  //!< Control filename
->;
+using ios = tk::TaggedTuple< brigand::list<
+    tag::control,   std::string                  //!< Control filename
+> >;
 
 //! Parameters storage
-using parameters = tk::tuple::tagged_tuple<
-  #ifdef HAS_MKL
-  tag::rngmkl,    tk::ctr::RNGMKLParameters,   //!< MKL RNG parameters
-  #endif
-  tag::rngsse,    tk::ctr::RNGSSEParameters,   //!< RNGSSE parameters
-  tag::rng123,    tk::ctr::RNGRandom123Parameters  //!< Random123 parameters
->;
+using parameters = tk::TaggedTuple< brigand::list<
+    #ifdef HAS_MKL
+    tag::rngmkl,    tk::ctr::RNGMKLParameters,        //!< MKL RNG parameters
+    #endif
+    tag::rngsse,    tk::ctr::RNGSSEParameters        //!< RNGSSE parameters
+  , tag::rng123,    tk::ctr::RNGRandom123Parameters  //!< Random123 parameters
+> >;
 
 //! PEGTL location/position type to use throughout all of RNGTest's parsers
 using Location = pegtl::position;

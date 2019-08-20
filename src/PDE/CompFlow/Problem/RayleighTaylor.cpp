@@ -26,7 +26,7 @@ using inciter::CompFlowProblemRayleighTaylor;
 
 tk::SolutionFn::result_type
 CompFlowProblemRayleighTaylor::solution( ncomp_t system,
-                                         ncomp_t,
+                                         [[maybe_unused]] ncomp_t ncomp,
                                          tk::real x,
                                          tk::real y,
                                          tk::real z,
@@ -44,6 +44,8 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   using tag::param; using std::sin; using std::cos;
 
   // manufactured solution parameters

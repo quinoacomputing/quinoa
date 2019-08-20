@@ -52,7 +52,7 @@ registerMixMassFractionBeta( DiffEqFactory& f, std::set< ctr::DiffEqType >& t )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoMixMassFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoMixMassFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the mix mass fraction beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types

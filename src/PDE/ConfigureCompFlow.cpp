@@ -60,7 +60,7 @@ registerCompFlow( CGFactory& cf,
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt )
+infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the compressible flow system of PDEs
 //! \param[inout] cnt std::map of counters for all PDE types

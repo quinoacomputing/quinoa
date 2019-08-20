@@ -14,10 +14,10 @@
 
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 #include "NoWarning/charm++.hpp"
 
-#include "Make_unique.hpp"
 #include "ContainerUtil.hpp"
 
 namespace tk {
@@ -40,7 +40,7 @@ serialize( const std::unordered_map< Key, T, Hash, Eq >& m ) {
   sizer | const_cast< std::unordered_map< Key, T, Hash, Eq >& >( m );
 
   // Create raw character stream to store the serialized map
-  std::unique_ptr<char[]> flatData = tk::make_unique<char[]>( sizer.size() );
+  std::unique_ptr<char[]> flatData = std::make_unique<char[]>( sizer.size() );
 
   // Serialize map, each message will contain a map
   PUP::toMem packer( flatData.get() );

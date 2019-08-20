@@ -75,7 +75,7 @@ template< class Init, class Coefficients >
 class NumberFractionBeta {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
   public:
     //! \brief Constructor

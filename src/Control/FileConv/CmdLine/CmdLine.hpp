@@ -19,7 +19,6 @@
 #include <brigand/algorithms/for_each.hpp>
 
 #include "Macro.hpp"
-#include "Control.hpp"
 #include "Keywords.hpp"
 #include "HelpFactory.hpp"
 #include "FileConv/Types.hpp"
@@ -28,25 +27,28 @@ namespace fileconv {
 //! File converter control facilitating user input to internal data transfer
 namespace ctr {
 
+//! Member data for tagged tuple
+using CmdLineMembers = brigand::list<
+    tag::io,         ios
+  , tag::verbose,    bool
+  , tag::chare,      bool
+  , tag::help,       bool
+  , tag::quiescence, bool
+  , tag::trace,      bool
+  , tag::version,    bool
+  , tag::license,    bool
+  , tag::cmdinfo,    tk::ctr::HelpFactory
+  , tag::ctrinfo,    tk::ctr::HelpFactory
+  , tag::helpkw,     tk::ctr::HelpKw
+  , tag::error,      std::vector< std::string >
+>;
+
 //! \brief CmdLine : Control< specialized to FileConv >
 //! \details The stack is a tagged tuple, a hierarchical heterogeneous data
 //!    structure where all parsed information is stored.
 //! \see Base/TaggedTuple.h
 //! \see Control/FileConv/Types.h
-class CmdLine :
-  public tk::Control< // tag           type
-                      tag::io,         ios,
-                      tag::verbose,    bool,
-                      tag::chare,      bool,
-                      tag::help,       bool,
-                      tag::quiescence, bool,
-                      tag::trace,      bool,
-                      tag::version,    bool,
-                      tag::license,    bool,
-                      tag::cmdinfo,    tk::ctr::HelpFactory,
-                      tag::ctrinfo,    tk::ctr::HelpFactory,
-                      tag::helpkw,     tk::ctr::HelpKw,
-                      tag::error,      std::vector< std::string > > {
+class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
   public:
     //! \brief FileConv command-line keywords
     //! \see tk::grm::use and its documentation
@@ -69,11 +71,11 @@ class CmdLine :
     //!   control file parser.
     //! \see walker::ctr::CmdLine
     CmdLine() {
-      set< tag::verbose >( false ); // Use quiet output by default
-      set< tag::chare >( false ); // No chare state output by default
-      set< tag::trace >( true ); // Output call and stack trace by default
-      set< tag::version >( false ); // Do not display version info by default
-      set< tag::license >( false ); // Do not display license info by default
+      get< tag::verbose >() = false; // Use quiet output by default
+      get< tag::chare >() = false; // No chare state output by default
+      get< tag::trace >() = true; // Output call and stack trace by default
+      get< tag::version >() = false; // Do not display version info by default
+      get< tag::license >() = false; // Do not display license info by default
       // Initialize help: fill from own keywords
       brigand::for_each< keywords::set >( tk::ctr::Info(get<tag::cmdinfo>()) );
     }
@@ -82,20 +84,7 @@ class CmdLine :
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er& p ) {
-      tk::Control< tag::io,          ios,
-                   tag::verbose,     bool,
-                   tag::chare,       bool,
-                   tag::help,        bool,
-                   tag::quiescence,  bool,
-                   tag::trace,       bool,
-                   tag::version,     bool,
-                   tag::license,     bool,
-                   tag::cmdinfo,     tk::ctr::HelpFactory,
-                   tag::ctrinfo,     tk::ctr::HelpFactory,
-                   tag::helpkw,      tk::ctr::HelpKw,
-                   tag::error,       std::vector< std::string > >::pup(p);
-    }
+    void pup( PUP::er& p ) { tk::TaggedTuple< CmdLineMembers >::pup(p); }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] c CmdLine object reference

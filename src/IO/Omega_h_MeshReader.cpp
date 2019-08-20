@@ -23,10 +23,11 @@ void
 Omega_h_MeshReader::readMeshPart(
   std::vector< std::size_t >& ginpoel,
   std::vector< std::size_t >& inpoel,
-  std::vector< std::size_t >& triinp,
+  [[maybe_unused]] std::vector< std::size_t >& triinp,
   std::unordered_map< std::size_t, std::size_t >& lid,
   tk::UnsMesh::Coords& coord,
-  int numpes, int mype )
+  int numpes,
+  [[maybe_unused]] int mype )
 // *****************************************************************************
 //  Read a part of the mesh (graph and coordinates) from Omega_h file
 //! \param[in,out] ginpoel Container to store element connectivity of this PE's
@@ -50,9 +51,6 @@ Omega_h_MeshReader::readMeshPart(
 //!   called on in parallel.
 // *****************************************************************************
 {
-  IGNORE( mype );       // Avoid compiler warning in Release mode
-  IGNORE( triinp );
-
   Assert( mype < numpes, "Invalid input: PE id must be lower than NumPEs" );
   Assert( ginpoel.empty() && inpoel.empty() && lid.empty() &&
           coord[0].empty() && coord[1].empty() && coord[2].empty(),
@@ -132,39 +130,34 @@ Omega_h_MeshReader::readMeshPart(
 
 std::vector< std::size_t >
 Omega_h_MeshReader::triinpoel(
-  std::map< int, std::vector< std::size_t > >& bface,
-  const std::map< int, std::vector< std::size_t > >& faces,
-  const std::vector< std::size_t >& ginpoel,
-  const std::vector< std::size_t >& triinp ) const
+  [[maybe_unused]] std::map< int, std::vector< std::size_t > >& bface,
+  [[maybe_unused]] const std::map< int, std::vector< std::size_t > >& faces,
+  [[maybe_unused]] const std::vector< std::size_t >& ginpoel,
+  [[maybe_unused]] const std::vector< std::size_t >& triinp ) const
 // *****************************************************************************
 // ...
 //! \note Must be preceded by a call to readElemBlockIDs()
 // *****************************************************************************
 {
-  IGNORE(bface);
-  IGNORE(faces);
-  IGNORE(ginpoel);
-  IGNORE(triinp);
   std::vector< std::size_t > bnd_triinpoel;
   return bnd_triinpoel;
 }
 
 void
 Omega_h_MeshReader::readSidesetFaces(
-  std::map< int, std::vector< std::size_t > >& bface,
-  std::map< int, std::vector< std::size_t > >& faces )
+  [[maybe_unused]] std::map< int, std::vector< std::size_t > >& bface,
+  [[maybe_unused]] std::map< int, std::vector< std::size_t > >& faces )
 // *****************************************************************************
 //  Read side sets from Omega_h file
 //! \param[in,out] bface Elem ids of side sets to read into
 //! \param[in,out] faces Elem-relative face ids of tets of side sets
 // *****************************************************************************
 {
-IGNORE(bface);
-IGNORE(faces);
 }
 
 void
-Omega_h_MeshReader::readFaces( std::vector< std::size_t >& conn ) const
+Omega_h_MeshReader::readFaces(
+  [[maybe_unused]] std::vector< std::size_t >& conn ) const
 // *****************************************************************************
 //  Read face connectivity of a number of boundary faces from Omega_h file
 //! \param[in,out] conn Connectivity vector to push to
@@ -172,7 +165,6 @@ Omega_h_MeshReader::readFaces( std::vector< std::size_t >& conn ) const
 //!   also called triangle-elements, and their connectivity.
 // *****************************************************************************
 {
-IGNORE(conn);
 }
 
 std::map< int, std::vector< std::size_t > >

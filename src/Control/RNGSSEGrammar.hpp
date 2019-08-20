@@ -40,15 +40,13 @@ namespace grm {
       ctr::RNGSSESeqLen opt;
       using EnumType = ctr::RNGSSESeqLen::EnumType;
       // get recently inserted key from <sel,vec>
-      using key_type =
-        typename Stack::template nT< sel >::template nT< vec >::value_type;
-      const key_type& key = stack.template get< sel, vec >().back();
+      const auto& key = stack.template get< sel, vec >().back();
       // Error out if RNG does not support option specified
-      if ( !ctr::RNG().supportsOpt( key, opt.value(in.string()) ) ) {
+      if ( !ctr::RNG().supportsOpt( key, opt.value(in.string()) ) )
         Message< Stack, ERROR, MsgKey::UNSUPPORTED >( stack, in );
-      }
-      stack.template insert_opt< key_type, field, EnumType, tag, tags... >
-                               ( key, opt.value(in.string()) );
+      stack.template
+        insert_field< field, EnumType, tag, tags... >
+                    ( key, opt.value(in.string()) );
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
       brigand::for_each< typename Option::keywords >( is_keyword< use >() );
@@ -84,8 +82,7 @@ namespace rngsse {
             typename vec, typename... tags >
   struct seed :
          tk::grm::process< use< kw::seed >,
-                           tk::grm::Insert_field< tag::seed,
-                                                  sel, vec, tags... > > {};
+                           tk::grm::insert_seed< sel, vec, tags... > > {};
 
   //! \brief Match and set RNG sequence length parameter
   template< template < class > class use, typename keyword,

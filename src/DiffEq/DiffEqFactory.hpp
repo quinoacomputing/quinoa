@@ -25,7 +25,7 @@ namespace walker {
 //! Differential equation factory: keys associated to their constructors
 using DiffEqFactory =
   std::map< ctr::DiffEqKey,
-            std::function< DiffEq(const tk::ctr::ncomp_type&) > >;
+            std::function< DiffEq(const tk::ctr::ncomp_t&) > >;
 
 //! \brief Function object for registering a differential equation into the
 //!   differential equation factory
@@ -54,11 +54,11 @@ struct registerDiffEq {
     // Get coefficients policy: last type of brigand::list U
     using CoeffPolicy = typename brigand::back< U >;
     // Build differential equation key
-    ctr::DiffEqKey key{ type, InitPolicy::type(), CoeffPolicy::type() };
+    ctr::DiffEqKey key{{ type, InitPolicy::type(), CoeffPolicy::type() }};
     // Register equation (with policies given by brigand::list U) into
     // factory
     tk::recordModelLate< DiffEq, Eq< InitPolicy, CoeffPolicy > >
-                       ( factory, key, static_cast<tk::ctr::ncomp_type>(0) );
+                       ( factory, key, static_cast<tk::ctr::ncomp_t>(0) );
   }
 };
 

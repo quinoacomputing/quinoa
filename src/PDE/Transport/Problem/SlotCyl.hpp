@@ -34,7 +34,7 @@ namespace inciter {
 //!   627-665.
 class TransportProblemSlotCyl {
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::transport;
 
   public:

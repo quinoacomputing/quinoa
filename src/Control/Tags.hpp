@@ -26,6 +26,7 @@ struct input {};
 struct output {};
 struct restart {};
 struct diag {};
+struct evalLB {};
 struct seed {};
 struct uniform_method {};
 struct gaussian_method {};

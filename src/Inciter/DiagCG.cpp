@@ -470,7 +470,7 @@ DiagCG::writeFields( CkCallback c ) const
 }
 
 void
-DiagCG::update( const tk::Fields& a, tk::Fields&& dul )
+DiagCG::update( const tk::Fields& a, [[maybe_unused]] tk::Fields&& dul )
 // *****************************************************************************
 // Prepare for next step
 //! \param[in] a Limited antidiffusive element contributions
@@ -483,7 +483,6 @@ DiagCG::update( const tk::Fields& a, tk::Fields&& dul )
   // boundary conditions are set is exactly the amount the BCs prescribe
   Assert( correctBC( a, dul, m_bc, d->Lid() ),
           "Dirichlet boundary condition incorrect" );
-  IGNORE( dul );
 
   // Apply limited antidiffusive element contributions to low order solution
   if (g_inputdeck.get< tag::discr, tag::fct >())

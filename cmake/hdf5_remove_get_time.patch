@@ -1,0 +1,33 @@
+diff --git a/tools/lib/io_timer.c b/tools/lib/io_timer.c
+index b8d44de..9590e70 100644
+--- a/tools/lib/io_timer.c
++++ b/tools/lib/io_timer.c
+@@ -211,6 +211,7 @@ set_time(io_time_t *pt, timer_type t, int start_stop)
+     return pt;
+ }
+ 
++#if 0
+ /*
+  * Function:    get_time
+  * Purpose:     Get the time from a ``io_time_t'' object.
+@@ -224,7 +225,6 @@ get_time(io_time_t *pt, timer_type t)
+     return pt->total_time[t];
+ }
+ 
+-#if 0
+ /* standalone is not working yet. Need fix later. -AKC- */
+ #ifdef STANDALONE
+ #include "pio_standalone.c"
+diff --git a/tools/lib/io_timer.h b/tools/lib/io_timer.h
+index 4ce0733..5165619 100644
+--- a/tools/lib/io_timer.h
++++ b/tools/lib/io_timer.h
+@@ -75,7 +75,7 @@ extern "C" {
+ H5TOOLS_DLL io_time_t   *io_time_new(clock_type t);
+ H5TOOLS_DLL void         io_time_destroy(io_time_t *pt);
+ H5TOOLS_DLL io_time_t   *set_time(io_time_t *pt, timer_type t, int start_stop);
+-H5TOOLS_DLL double       get_time(io_time_t *pt, timer_type t);
++// H5TOOLS_DLL double       get_time(io_time_t *pt, timer_type t);
+ #ifdef __cplusplus
+ }
+ #endif  /* __cplusplus */

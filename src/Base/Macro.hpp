@@ -18,9 +18,6 @@
 
 namespace tk {
 
-//! This macro can be used to suppress compiler warning on unused variable
-#define IGNORE(expr) (static_cast<void>(expr))
-
 //! Start-time macro for fine-grained profiling. Put this in the beginning of
 //! the section of code to be profiled.
 #define STARTTIME \

@@ -51,22 +51,25 @@ namespace deck {
  
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
-  static tk::tuple::tagged_tuple< tag::dirichlet,       std::size_t,
-                                  tag::mixdirichlet,    std::size_t,
-                                  tag::gendir,          std::size_t,
-                                  tag::wrightfisher,    std::size_t,
-                                  tag::ou,              std::size_t,
-                                  tag::diagou,          std::size_t,
-                                  tag::skewnormal,      std::size_t,
-                                  tag::gamma,           std::size_t,
-                                  tag::velocity,        std::size_t,
-                                  tag::position,        std::size_t,
-                                  tag::dissipation,     std::size_t,
-                                  tag::beta,            std::size_t,
-                                  tag::numfracbeta,     std::size_t,
-                                  tag::massfracbeta,    std::size_t,
-                                  tag::mixnumfracbeta,  std::size_t,
-                                  tag::mixmassfracbeta, std::size_t > neq;
+  static tk::TaggedTuple< brigand::list<
+      tag::dirichlet,       std::size_t
+    , tag::mixdirichlet,    std::size_t
+    , tag::gendir,          std::size_t
+    , tag::wrightfisher,    std::size_t
+    , tag::ou,              std::size_t
+    , tag::diagou,          std::size_t
+    , tag::skewnormal,      std::size_t
+    , tag::gamma,           std::size_t
+    , tag::velocity,        std::size_t
+    , tag::position,        std::size_t
+    , tag::dissipation,     std::size_t
+    , tag::beta,            std::size_t
+    , tag::numfracbeta,     std::size_t
+    , tag::massfracbeta,    std::size_t
+    , tag::mixnumfracbeta,  std::size_t
+    , tag::mixmassfracbeta, std::size_t
+  > > neq;
+
 } // ::deck
 } // ::walker
 

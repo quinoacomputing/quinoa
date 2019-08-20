@@ -16,7 +16,7 @@
       coefficients, b, S, kappa, rho2, and rcomma. Required signature:
       \code{.cpp}
         CoeffPolicyName(
-          tk::ctr::ncomp_type ncomp,
+          tk::ctr::ncomp_t ncomp,
           const std::vector< kw::sde_b::info::expect::type >& b_,
           const std::vector< kw::sde_S::info::expect::type >& S_,
           const std::vector< kw::sde_kappa::info::expect::type >& k_,
@@ -67,7 +67,7 @@ class NumFracBetaCoeffConst {
   public:
     //! Constructor: initialize coefficients
     NumFracBetaCoeffConst(
-      tk::ctr::ncomp_type ncomp,
+      tk::ctr::ncomp_t ncomp,
       const std::vector< kw::sde_b::info::expect::type >& b_,
       const std::vector< kw::sde_S::info::expect::type >& S_,
       const std::vector< kw::sde_kappa::info::expect::type >& k_,

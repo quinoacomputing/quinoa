@@ -7,7 +7,7 @@
              All rights reserved. See the LICENSE file for details.
   \brief     Storage for number of components
   \details   Storage for number of components. This is part of the input deck
-     stack and is thus populated during the control file parsing.
+     stack and is thus populated during control file parsing.
 */
 // *****************************************************************************
 #ifndef WalkerComponents_h
@@ -18,24 +18,24 @@
 namespace walker {
 namespace ctr {
 
-//! Number of components of systems of equations
+//! Number of components storage for all systems of equations supported
 using ncomps = tk::ctr::ncomponents<
-   tag::dirichlet,       std::vector< tk::ctr::ncomp_type >
- , tag::mixdirichlet,    std::vector< tk::ctr::ncomp_type >
- , tag::gendir,          std::vector< tk::ctr::ncomp_type >
- , tag::wrightfisher,    std::vector< tk::ctr::ncomp_type >
- , tag::diagou,          std::vector< tk::ctr::ncomp_type >
- , tag::ou,              std::vector< tk::ctr::ncomp_type >
- , tag::skewnormal,      std::vector< tk::ctr::ncomp_type >
- , tag::gamma,           std::vector< tk::ctr::ncomp_type >
- , tag::beta,            std::vector< tk::ctr::ncomp_type >
- , tag::numfracbeta,     std::vector< tk::ctr::ncomp_type >
- , tag::massfracbeta,    std::vector< tk::ctr::ncomp_type >
- , tag::mixnumfracbeta,  std::vector< tk::ctr::ncomp_type >
- , tag::mixmassfracbeta, std::vector< tk::ctr::ncomp_type >
- , tag::velocity,        std::vector< tk::ctr::ncomp_type >
- , tag::position,        std::vector< tk::ctr::ncomp_type >
- , tag::dissipation,     std::vector< tk::ctr::ncomp_type >
+   tag::dirichlet
+ , tag::mixdirichlet
+ , tag::gendir
+ , tag::wrightfisher
+ , tag::diagou
+ , tag::ou
+ , tag::skewnormal
+ , tag::gamma
+ , tag::beta
+ , tag::numfracbeta
+ , tag::massfracbeta
+ , tag::mixnumfracbeta
+ , tag::mixmassfracbeta
+ , tag::velocity
+ , tag::position
+ , tag::dissipation
 >;
 
 } // ctr::
