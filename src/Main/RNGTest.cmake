@@ -25,7 +25,9 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE2_LIBRARIES}
-                      ${BACKWARD_LIBRARIES})
+                      ${BACKWARD_LIBRARIES}
+                      ${LIBCXX_LIBRARIES}       # only for static link with libc++
+                      ${LIBCXXABI_LIBRARIES})   # only for static link with libc++
 
 # Add custom dependencies for RNGTest's main Charm++ module
 addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )

@@ -25,10 +25,10 @@ namespace ctr {
 using namespace tao;
 
 //! IO parameters storage
-using ios = tk::tuple::tagged_tuple<
-  tag::input,           std::string,    //!< Input filename
-  tag::output,          std::string     //!< Output filename
->;
+using ios = tk::TaggedTuple< brigand::list<
+    tag::input, std::string    //!< Input filename
+  , tag::output, std::string   //!< Output filename
+> >;
 
 //! PEGTL location/position type to use throughout all of MeshConv's parsers
 using Location = pegtl::position;

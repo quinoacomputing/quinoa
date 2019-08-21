@@ -199,8 +199,7 @@ class TestU01Props {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] g Reference to raw function pointer to TestU01
     //!   statistical test
-    void pup( PUP::er& p, unif01_Gen*& g ) {
-      IGNORE(p);
+    void pup( [[maybe_unused]] PUP::er& p, unif01_Gen*& g ) {
       using tk::ctr::RNGType;
       using tk::ctr::raw;
       const auto& rngname = tk::ctr::RNG().name(m_rng);

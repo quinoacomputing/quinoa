@@ -17,13 +17,10 @@
 #include <iosfwd>
 #include <vector>
 
-#include "Make_unique.hpp"
-
 #include "NoWarning/TFile.hpp"
 #include "NoWarning/TTree.hpp"
 #include "NoWarning/TGraph2D.hpp"
 #include "ExodusIIMeshWriter.hpp"
-
 #include "Types.hpp"
 
 namespace tk {

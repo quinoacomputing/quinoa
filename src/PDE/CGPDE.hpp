@@ -23,11 +23,11 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <memory>
 #include <unordered_set>
 #include <unordered_map>
 
 #include "Types.hpp"
-#include "Make_unique.hpp"
 #include "Fields.hpp"
 
 namespace inciter {
@@ -51,7 +51,7 @@ class CGPDE {
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
     template< typename T > explicit CGPDE( T x ) :
-      self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
+      self( std::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
     //!   object modeling Concept.
@@ -73,7 +73,7 @@ class CGPDE {
     //! \param[in] args Zero or more constructor arguments
     template< typename T, typename...Args >
     explicit CGPDE( std::function<T(Args...)> x, Args&&... args ) :
-      self( tk::make_unique< Model<T> >(
+      self( std::make_unique< Model<T> >(
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq

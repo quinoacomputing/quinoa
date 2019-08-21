@@ -12,9 +12,9 @@
 
 #include <stddef.h>
 #include <type_traits>
+#include <memory>
 
 #include "DiagReducer.hpp"
-#include "Make_unique.hpp"
 #include "Diagnostics.hpp"
 #include "Exception.hpp"
 
@@ -34,7 +34,7 @@ serialize( const std::vector< std::vector< tk::real > >& d )
   sizer | const_cast< std::vector< std::vector< tk::real > >& >( d );
 
   // Create raw character stream to store the serialized vectors
-  std::unique_ptr<char[]> flatData = tk::make_unique<char[]>( sizer.size() );
+  std::unique_ptr<char[]> flatData = std::make_unique<char[]>( sizer.size() );
 
   // Serialize vector, each message will contain a vector
   PUP::toMem packer( flatData.get() );

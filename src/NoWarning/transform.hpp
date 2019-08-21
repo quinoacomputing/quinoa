@@ -17,6 +17,7 @@
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wundef"
+  #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #endif
 
 #include <brigand/algorithms/transform.hpp>

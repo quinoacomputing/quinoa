@@ -36,7 +36,6 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/${TestMKLBetaMethod}
                ../../tests/unit/${TestMKLGammaMethod}
                ../../tests/unit/Control/Options/TestRNG.cpp
-               ../../tests/unit/Control/TestControl.cpp
                ../../tests/unit/Control/TestFileParser.cpp
                ../../tests/unit/Control/TestStringParser.cpp
                ../../tests/unit/Control/TestSystemComponents.cpp
@@ -67,6 +66,7 @@ target_include_directories(${UNITTEST_EXECUTABLE} PUBLIC
                            ${QUINOA_SOURCE_DIR}/RNG
                            ${TUT_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
+                           ${RANDOM123_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../UnitTest
                            ${PROJECT_BINARY_DIR}/../IO)
 
@@ -100,7 +100,9 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES})
+                      ${OMEGA_H_LIBRARIES}
+                      ${LIBCXX_LIBRARIES}       # only for static link with libc++
+                      ${LIBCXXABI_LIBRARIES})   # only for static link with libc++
 
 # Add custom dependencies for UnitTest's main Charm++ module
 if(ENABLE_INCITER)

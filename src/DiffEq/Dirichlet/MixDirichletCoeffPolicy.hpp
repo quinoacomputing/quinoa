@@ -15,7 +15,7 @@
       coefficients, b, S, and kappa. Required signature:
       \code{.cpp}
         CoeffPolicyName(
-          tk::ctr::ncomp_type ncomp,
+          tk::ctr::ncomp_t ncomp,
           ctr::NormalizationType norm,
           const std::vector< kw::sde_b::info::expect::type >& b_,
           const std::vector< kw::sde_S::info::expect::type >& S_,
@@ -96,12 +96,12 @@ namespace walker {
 class MixDirichletCoeffConst {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
   public:
     //! Constructor: initialize coefficients
     MixDirichletCoeffConst(
-      tk::ctr::ncomp_type ncomp,
+      ncomp_t ncomp,
       ctr::NormalizationType norm,
       const std::vector< kw::sde_b::info::expect::type >& b_,
       const std::vector< kw::sde_S::info::expect::type >& S_,
@@ -145,12 +145,12 @@ MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho,
 class MixDirichletHomogeneous {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
   public:
     //! Constructor: initialize coefficients
     MixDirichletHomogeneous(
-      tk::ctr::ncomp_type ncomp,
+      ncomp_t ncomp,
       ctr::NormalizationType norm,
       const std::vector< kw::sde_b::info::expect::type >& b_,
       const std::vector< kw::sde_S::info::expect::type >& S_,
@@ -192,12 +192,12 @@ class MixDirichletHomogeneous {
 class MixDirichletHydroTimeScale {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
   public:
     //! Constructor: initialize coefficients
     MixDirichletHydroTimeScale(
-      tk::ctr::ncomp_type ncomp,
+      tk::ctr::ncomp_t ncomp,
       ctr::NormalizationType norm,
       const std::vector< kw::sde_b::info::expect::type >& b_,
       const std::vector< kw::sde_S::info::expect::type >& S_,

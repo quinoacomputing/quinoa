@@ -13,10 +13,9 @@
 #define FieldsMerger_h
 
 #include <vector>
+#include <memory>
 
 #include "NoWarning/charm++.hpp"
-
-#include "Make_unique.hpp"
 #include "ContainerUtil.hpp"
 
 namespace inciter {
@@ -33,7 +32,7 @@ serialize( const std::vector< std::pair< int, T > >& m ) {
    const_cast< std::vector< std::pair< int, T > >& >( m );
 
   // Create raw character stream to store the serialized node indices
-  std::unique_ptr<char[]> flatData = tk::make_unique<char[]>( sizer.size() );
+  std::unique_ptr<char[]> flatData = std::make_unique<char[]>( sizer.size() );
 
   // Serialize, each message will contain a list of node indices per chare
   PUP::toMem packer( flatData.get() );

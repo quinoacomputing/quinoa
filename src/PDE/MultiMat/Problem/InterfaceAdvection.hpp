@@ -37,7 +37,7 @@ extern ctr::InputDeck g_inputdeck;
 class MultiMatProblemInterfaceAdvection {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::multimat;
 
   public:

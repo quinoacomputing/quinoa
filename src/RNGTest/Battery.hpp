@@ -19,12 +19,12 @@
 #define Battery_h
 
 #include <functional>
+#include <memory>
 
 #include "NoWarning/charm++.hpp"
 
 #include "Macro.hpp"
 #include "Has.hpp"
-#include "Make_unique.hpp"
 
 namespace rngtest {
 
@@ -39,25 +39,6 @@ namespace rngtest {
 class Battery {
 
   public:
-    //! \brief Constructor taking an object modeling Concept
-    //! \details The object of class T comes pre-constructed.
-    //! \param[in] x Instantiated object of type T given by the template
-    //!   argument.
-    template< typename T > explicit Battery( T x ) :
-      self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
-
-    //! \brief Constructor taking a std::function holding a constructor bound to
-    //!   its arguments of an object modeling Concept.
-    //! \details Passing std::function allows late execution of the constructor
-    //!   of T (given by the template argument), i.e., as late as inside this
-    //!   class' constructor, and thus usage from a factory. Object of T is
-    //!   constructed here. This overload is disabled for Charm++ chare objects
-    //!   defining typedef 'Proxy', see also below.
-    template< typename T,
-      typename std::enable_if< !tk::HasTypedefProxy<T>::value, int >::type = 0 >
-    explicit Battery( std::function<T()> x ) :
-      self( tk::make_unique< Model<T> >( std::move(x()) ) ) {}
-
     //! \brief Constructor taking a function pointer to a constructor of an
     //!    object modeling Concept
     //! \details Passing std::function allows late execution of the constructor
@@ -80,16 +61,12 @@ class Battery {
     //!    Concept.
     //! \param[in] args Constructor arguments
     //! \see See also tk::recordCharmModel().
-    template< typename T, typename... ConstrArgs,
-      typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
-    explicit Battery( std::function<T()> c, ConstrArgs... args ) :
-      self( tk::make_unique< Model< typename T::Proxy > >
-            (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
+    template< typename T, typename... CtrArgs >
+    explicit Battery( std::function<T()> c [[maybe_unused]], CtrArgs... args ) :
+      self( std::make_unique< Model< typename T::Proxy > >
+            (std::move(T::Proxy::ckNew(std::forward<CtrArgs>(args)...))) ) {
       Assert( c == nullptr, "std::function argument to Battery Charm++ "
                             "constructor must be nullptr" );
-      #ifdef NDEBUG
-      IGNORE(c);
-      #endif
     }
 
     //! Public interface to evaluating a statistical test

@@ -26,7 +26,7 @@ using inciter::CompFlowProblemVorticalFlow;
 
 tk::SolutionFn::result_type
 CompFlowProblemVorticalFlow::solution( ncomp_t system,
-                                       ncomp_t ncomp,
+                                       [[maybe_unused]] ncomp_t ncomp,
                                        tk::real x,
                                        tk::real y,
                                        tk::real z,
@@ -43,7 +43,8 @@ CompFlowProblemVorticalFlow::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  IGNORE(ncomp);
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   using tag::param; using tag::compflow;
 
   // manufactured solution parameters

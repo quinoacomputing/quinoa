@@ -10,7 +10,8 @@
 */
 // *****************************************************************************
 
-#include "Make_unique.hpp"
+#include <memory>
+
 #include "STLMesh.hpp"
 
 using tk::STLMesh;
@@ -26,7 +27,7 @@ STLMesh::alloc( std::size_t num )
   m_nnode = num;
 
   // Allocate memory to store the x, y, z coordinates
-  m_x = tk::make_unique< tk::real[] >( num );
-  m_y = tk::make_unique< tk::real[] >( num );
-  m_z = tk::make_unique< tk::real[] >( num );
+  m_x = std::make_unique< tk::real[] >( num );
+  m_y = std::make_unique< tk::real[] >( num );
+  m_z = std::make_unique< tk::real[] >( num );
 }
