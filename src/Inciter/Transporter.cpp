@@ -478,8 +478,7 @@ Transporter::compatibility( int modified )
 }
 
 void
-Transporter::matched( std::size_t ref,
-                      std::size_t nextra,
+Transporter::matched( std::size_t nextra,
                       std::size_t nref,
                       std::size_t nderef,
                       std::size_t initial )
@@ -498,31 +497,27 @@ Transporter::matched( std::size_t ref,
   // otherwise, this mesh refinement step is complete
   if (nextra > 0) {
 
-    if (!ref) ++m_ncit;
+    ++m_ncit;
     m_refiner.comExtra();
 
   } else {
 
     if (initial > 0) {
 
-      if (!ref) ++m_nt0refit;
-
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
-        m_print.diag( { "ref", "t0ref", "nref", "nderef", "ncorr" },
-                      { ref?1u:0u, m_nt0refit, nref, nderef, m_ncit } );
+        m_print.diag( { "t0ref", "nref", "nderef", "ncorr" },
+                      { ++m_nt0refit, nref, nderef, m_ncit } );
       }
       m_progMesh.inc< REFINE >();
 
     } else {
 
-      if (!ref) ++m_ndtrefit;
-
-      m_print.diag( { "ref", "dtref", "nref", "nderef", "ncorr" },
-                    { ref?1u:0u, m_ndtrefit, nref, nderef, m_ncit }, false );
+      m_print.diag( { "dtref", "nref", "nderef", "ncorr" },
+                    { ++m_ndtrefit, nref, nderef, m_ncit }, false );
 
     }
 
-    if (!ref) m_ncit = 0;
+    m_ncit = 0;
     m_refiner.perform();
 
   }

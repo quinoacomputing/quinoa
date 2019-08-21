@@ -123,22 +123,20 @@ namespace AMR {
      * @brief For a given set of edges, set their refinement criteria for
      * refinement
      *
-     * @param ref True if refining, false if derefining
      * @param remote Vector of edges and edge tags
      */
     void mesh_adapter_t::mark_error_refinement(
-            bool ref,
-            const std::vector< edge_t >& remote )
+            const std::vector< std::pair< edge_t, edge_tag > >& remote )
     {
        for (const auto& r : remote) {
-         auto& local = tet_store.edge_store.get( r );
-         if (ref) {
+         auto& local = tet_store.edge_store.get( r.first );
+         if (r.second == edge_tag::REFINE) {
            if (local.lock_case > Edge_Lock_Case::unlocked) {
              local.needs_refining = 0;
            } else {
              local.needs_refining = 1;
            }
-         } else {
+         } else if (r.second == edge_tag::DEREFINE) {
            if (local.lock_case > Edge_Lock_Case::unlocked) {
              local.needs_derefining = 0;
            } else {
@@ -147,10 +145,8 @@ namespace AMR {
          }
        }
 
-       if (ref)
-         mark_refinement();
-       else
-         mark_derefinement();
+       mark_refinement();
+       //mark_derefinement();
     }
 
    void mesh_adapter_t::mark_error_refinement_corr( const EdgeData& edges )

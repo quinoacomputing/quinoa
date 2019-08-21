@@ -109,8 +109,8 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target: all mesh refiner chares have matched/corrected
     //!   the tagging of chare-boundary edges, all chares are ready to perform
     //!   refinement.
-    void matched( std::size_t ref, std::size_t nextra, std::size_t nref,
-                  std::size_t nderef, std::size_t initial );
+    void matched( std::size_t nextra, std::size_t nref, std::size_t nderef,
+                  std::size_t initial );
 
     //! Compute surface integral across the whole problem and perform leak-test
     void bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb );

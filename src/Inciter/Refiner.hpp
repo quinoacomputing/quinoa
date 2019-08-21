@@ -162,7 +162,6 @@ class Refiner : public CBase_Refiner {
       p | m_lref;
       //p | m_oldlref;
       p | m_parent;
-      p | m_ref;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -281,8 +280,6 @@ class Refiner : public CBase_Refiner {
     //std::unordered_map< std::size_t, std::size_t > m_oldlref;
     //! Child -> parent tet map
     std::unordered_map< Tet, Tet, Hash<4>, Eq<4> > m_parent;
-    //! True in a refinement stage, false in a derefinement stage
-    bool m_ref;
 
     //! (Re-)generate boundary data structures for coarse mesh
     void coarseBnd();
