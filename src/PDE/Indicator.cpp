@@ -159,14 +159,14 @@ void spectral_decay( const std::size_t nunk,
   // Marke the ndof according to the adaptive indicator
   for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
-    if(Ind[e] < epsL)                          // Refinement
+    if(Ind[e] < epsL)                          // Derefinement
     {
       if(ndofel[e] == 4)
         ndofel[e] = 1;
       else if(ndofel[e] == 10)
         ndofel[e] = 4;
     }
-    else if(Ind[e] > epsH)                     // Derefinement
+    else if(Ind[e] > epsH)                     // Refinement
     {
       if(ndofel[e] == 4 && ndofmax > 4)
         ndofel[e] = 10;
