@@ -174,4 +174,5 @@ add_regression_test(compflow_euler_sodshocktube_pdg_u0.8_migr ${INCITER_EXECUTAB
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS migration)
