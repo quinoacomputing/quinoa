@@ -38,6 +38,14 @@ void spectral_decay( std::size_t nunk,
 //! \param[in] ndofmax Max number of degrees of freedom for p-refinement
 //! \param[in] tolref Tolerance for p-refinement
 //! \param[in,out] ndofel Vector of local number of degrees of freedome
+//! \details The spectral decay indicator, implemented in this functiopn,
+//!   calculates the difference between the projections of the numerical
+//!   solutions on finite element space of order p and p-1.
+//! \see F. Naddei, et. al., "A comparison of refinement indicators for the
+//!    p-adaptive simulation of steady and unsteady flows with discontinuous
+//!    Galerkin methods" at https://doi.org/10.1016/j.jcp.2018.09.045, and G.
+//!    Gassner, et al., "Explicit discontinuous Galerkin schemes with adaptation
+//!    in space and time"
 // *****************************************************************************
 {
   const auto ncomp = unk.nprop() / ndof;
@@ -61,16 +69,6 @@ void spectral_decay( std::size_t nunk,
       wgp.resize( ng );
 
       tk::GaussQuadratureTet( ng, coordgp, wgp );
-
-      // The spectral decay indicator calculates the difference between the
-      // prohjections of the numerical solutions on finite element space of
-      // order p and p-1. For further references see:
-      //  [1] F. Naddei, etc. "A comparison of refinement indicators for
-      //      the p-adaptive simulation of steady and unsteady flows with
-      //      discontinuous Galerkin methods"
-      //      https://doi.org/10.1016/j.jcp.2018.09.045
-      //  [2] G. Gassner, etc. "Explicit discontinuous Galerkin schemes with
-      //      adaptation in space and time"
 
       tk::real dU(0), U(0);
 
@@ -113,20 +111,22 @@ void spectral_decay( std::size_t nunk,
   // When it comes to spectral-decay indicator, the adaptation strategy shows
   // that for each element, if the value of indicator is less than epsL, then
   // this element will be refined to a higher order of DG scheme. Also if the
-  // value of indicator is larger than epsH which means that this element will
-  // be derefined to a lower order of DG scheme.
+  // value of indicator is larger than epsH, the element will be derefined to a
+  // lower order of DG scheme.
+
   // Note: Spectral-decay indicator is a measurement of the continuity of the
   // numerical solution inside this element. So when this indicator appears
-  // to be relatively large, there might be shock inside this element and a
+  // to be relatively large, there might be a shock inside this element and a
   // derefinement or h-refinement should be applied. This condition will be
   // implemented later.
 
   // As for the discretiazation-error based indicator, like spectral-decay
   // indicator, the choices for epsH and epsL are based on the data from
-  // numerical experimentst. Empirically, we found that when the epsH belongs
+  // numerical experiments. Empirically, we found that when the epsH belongs
   // to [-4, -8] and epsL belongs to [-6, -14], decent results could be
   // observed. And then a linear projection is performed to map epsL and espH
   // to the range of [0, 1] so that it could be controlled by tolref.
+
   auto epsH = -4 - tolref * 4.0;
   auto epsL = -6 - tolref * 8.0;
 
@@ -172,10 +172,15 @@ void non_conformity( std::size_t nunk,
 //! \param[in] ndof Number of degrees of freedom in the solution
 //! \param[in] ndofmax Max number of degrees of freedom for p-refinement
 //! \param[in,out] ndofel Vector of local number of degrees of freedome
-//! Note: This indicator can only be applied in serial test for now because the
-//!       solution communication happens before eval_ndof() in inciter/DG.cpp
-//!       which will lead to incorrect evaluation of numerical solution at the
-//!       neighboring cells
+//! \details The non-conformity indicator, this function implements, evaluates
+//!   the jump in the numerical solutions as a measure of the numerical error.
+//! \see F. Naddei, et. al., "A comparison of refinement indicators for the
+//!   p-adaptive simulation of steady and unsteady flows with discontinuous
+//!   Galerkin methods at https://doi.org/10.1016/j.jcp.2018.09.045.
+//! \warning This indicator can only be applied in serial, i.e., single CPU, for
+//!    now because the solution communication happens before eval_ndof() in DG,
+//!    which will lead to incorrect evaluation of the numerical solution at the
+//!    neighboring cells.
 // *****************************************************************************
 {
   const auto ncomp = unk.nprop() / ndof;
@@ -186,13 +191,6 @@ void non_conformity( std::size_t nunk,
 
   // The array storing the adaptive indicator for each elements
   std::vector< tk::real > Ind(nunk, 0);
-
-  // The non-conformity indicator evaluate the jump in the numerical solutions
-  // as a measure of error. For further reference, see:
-  //  [1] F. Naddei, etc. "A comparison of refinement indicators for the
-  //      p-adaptive simulation of steady and unsteady flows with discontinuous
-  //      Galerkin methods"
-  //      https://doi.org/10.1016/j.jcp.2018.09.045
 
   // compute error indicator for each face
   for (auto f=Nbfac; f<esuf.size()/2; ++f)

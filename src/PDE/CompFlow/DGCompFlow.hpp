@@ -809,17 +809,17 @@ class CompFlow {
     //! \param[in] ul Left (domain-internal) state
     //! \return Left and right states for all scalar components in this PDE
     //!   system
+    //! \details The subsonic outlet boudary calculation, implemented here, is
+    //!   based on the characteristic theory of hyperbolic systems. For subsonic
+    //!   outlet flow, there are 3 outgoing characteristcs and 1 incoming
+    //!   characteristic. Therefore, we calculate the ghost cell state by taking
+    //!   pressure from the outside and other quantities from the internal cell.
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
     Outlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
             tk::real x, tk::real y, tk::real z, tk::real t,
             const std::array< tk::real, 3 >& )
     {
-      // Sobsonic outlet boudary calculation is based on the characteristic
-      // theory of hyperbolic system. For subsonic outlet flow, there are 3
-      // outgoing characteristcs and 1 incoming characteristic. Therefore,
-      // we calculate the ghost cell state by taking pressure from outside
-      // and other quantities from the internal cell.
       auto state_inf = Problem::solution( system, ncomp, x, y, z, t );
       auto u_inf = state_inf[1] / state_inf[0];
       auto v_inf = state_inf[2] / state_inf[0];
