@@ -14,58 +14,32 @@
 
 #include "Indicator.hpp"
 
+#include "Tags.hpp"
+#include "Vector.hpp"
+#include "Integrate/Basis.hpp"
+#include "Integrate/Quadrature.hpp"
+
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
-
-void eval_ndof( const std::size_t nunk,
-                const tk::UnsMesh::Coords& coord,
-                const std::vector< std::size_t >& inpoel,
-                const inciter::FaceData& fd,
-                const tk::Fields& unk,
-                std::vector< std::size_t >& ndofel )
-// *****************************************************************************
-//! Evaluate the adaptive indicator and mark the ndof for each element
-//! \param[in] nunk Number of unknowns
-//! \param[in] coord Array of nodal coordinates
-//! \param[in] inpoel Element-node connectivity
-//! \param[in] fd Face connectivity and boundary conditions object
-//! \param[in] unk Array of unknowns
-//! \param[in,out] ndofel Vector of local number of degrees of freedome
-// *****************************************************************************
-{
-  const auto Nbfac = fd.Nbfac();
-  const auto& esuel = fd.Esuel();
-  const auto& esuf = fd.Esuf();
-  const auto& inpofa = fd.Inpofa();
-  const auto indicator =
-    inciter::g_inputdeck.get< tag::pref, tag::indicator >();
-
-  switch(indicator)
-  {
-    case 1: spectral_decay( nunk, esuel, unk, ndofel );
-            break;
-    case 2: non_conformity( nunk, Nbfac, inpoel, coord, esuel, esuf, inpofa,
-                            unk, ndofel );
-            break;
-  }
-}
-
-void spectral_decay( const std::size_t nunk,
+static
+void spectral_decay( std::size_t nunk,
                      const std::vector< int >& esuel,
                      const tk::Fields& unk,
+                     std::size_t ndof,
+                     std::size_t ndofmax,
+                     tk::real tolref,
                      std::vector< std::size_t >& ndofel )
 // *****************************************************************************
 //! Evaluate the spectral-decay indicator and mark the ndof for each element
 //! \param[in] nunk Number of unknowns
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] unk Array of unknowns
+//! \param[in] ndof Number of degrees of freedom in the solution
+//! \param[in] ndofmax Max number of degrees of freedom for p-refinement
+//! \param[in] tolref Tolerance for p-refinement
 //! \param[in,out] ndofel Vector of local number of degrees of freedome
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto ndofmax = inciter::g_inputdeck.get< tag::pref, tag::ndofmax >();
-  const auto tolref = inciter::g_inputdeck.get< tag::pref, tag::tolref >();
   const auto ncomp = unk.nprop() / ndof;
 
   // The array storing the adaptive indicator for each elements
@@ -174,14 +148,17 @@ void spectral_decay( const std::size_t nunk,
   }
 }
 
-void non_conformity( const std::size_t nunk,
-                     const std::size_t Nbfac,
+static
+void non_conformity( std::size_t nunk,
+                     std::size_t Nbfac,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      const std::vector< int >& esuel,
-                     const std::vector< int > esuf,
+                     const std::vector< int >& esuf,
                      const std::vector< std::size_t >& inpofa,
                      const tk::Fields& unk,
+                     std::size_t ndof,
+                     std::size_t ndofmax,
                      std::vector< std::size_t >& ndofel )
 // *****************************************************************************
 //! Evaluate the non-conformity indicator and mark the ndof for each element
@@ -192,6 +169,8 @@ void non_conformity( const std::size_t nunk,
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] inpofa Face-node connectivity
 //! \param[in] unk Array of unknowns
+//! \param[in] ndof Number of degrees of freedom in the solution
+//! \param[in] ndofmax Max number of degrees of freedom for p-refinement
 //! \param[in,out] ndofel Vector of local number of degrees of freedome
 //! Note: This indicator can only be applied in serial test for now because the
 //!       solution communication happens before eval_ndof() in inciter/DG.cpp
@@ -199,8 +178,6 @@ void non_conformity( const std::size_t nunk,
 //!       neighboring cells
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto ndofmax = inciter::g_inputdeck.get< tag::pref, tag::ndofmax >();
   const auto ncomp = unk.nprop() / ndof;
 
   const auto& cx = coord[0];
@@ -277,13 +254,13 @@ void non_conformity( const std::size_t nunk,
 
       //Compute the basis functions
       auto B_l = tk::eval_basis( ndofel[el],
-            tk::Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
-            tk::Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
-            tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
+        tk::Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+        tk::Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+        tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
       auto B_r = tk::eval_basis( ndofel[er],
-            tk::Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
-            tk::Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
-            tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r );
+        tk::Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
+        tk::Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
+        tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r );
 
       std::array< std::vector< tk::real >, 2 > state;
 
@@ -319,6 +296,42 @@ void non_conformity( const std::size_t nunk,
       else if(ndofel[e] == 1)
         ndofel[e] = 4;
     }
+  }
+}
+
+void eval_ndof( std::size_t nunk,
+                const tk::UnsMesh::Coords& coord,
+                const std::vector< std::size_t >& inpoel,
+                const inciter::FaceData& fd,
+                const tk::Fields& unk,
+                std::size_t indicator,
+                std::size_t ndof,
+                std::size_t ndofmax,
+                tk::real tolref,
+                std::vector< std::size_t >& ndofel )
+// *****************************************************************************
+//! Evaluate the adaptive indicator and mark the ndof for each element
+//! \param[in] nunk Number of unknowns
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] unk Array of unknowns
+//! \param[in] indicator p-refinement indicator type
+//! \param[in] ndof Number of degrees of freedom in the solution
+//! \param[in] ndofmax Max number of degrees of freedom for p-refinement
+//! \param[in] tolref Tolerance for p-refinement
+//! \param[in,out] ndofel Vector of local number of degrees of freedome
+// *****************************************************************************
+{
+  const auto& esuel = fd.Esuel();
+
+  switch(indicator)
+  {
+    case 1: spectral_decay( nunk, esuel, unk, ndof, ndofmax, tolref, ndofel );
+            break;
+    case 2: non_conformity( nunk, fd.Nbfac(), inpoel, coord, esuel, fd.Esuf(),
+                            fd.Inpofa(), unk, ndof, ndofmax, ndofel );
+            break;
   }
 }
 

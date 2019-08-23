@@ -928,15 +928,15 @@ DG::adj()
   for (auto& p : m_pc) p.resize( m_bid.size() );
 
   // Initialize number of degrees of freedom in mesh elements
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   if( pref )
   {
-    const auto ndofmax = inciter::g_inputdeck.get< tag::pref, tag::ndofmax >();
+    const auto ndofmax = g_inputdeck.get< tag::pref, tag::ndofmax >();
     m_ndof.resize( m_nunk, ndofmax );
   }
   else
   {
-    const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+    const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
     m_ndof.resize( m_nunk, ndof );
   }
 
@@ -1028,12 +1028,17 @@ DG::next()
 // Advance equations to next time step
 // *****************************************************************************
 {
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   auto d = Disc();
 
   if (pref && m_stage == 0 && d->T() > 0)
-    eval_ndof( m_nunk, Disc()->Coord(), Disc()->Inpoel(), m_fd, m_u, m_ndof );
+    eval_ndof( m_nunk, Disc()->Coord(), Disc()->Inpoel(), m_fd, m_u,
+               g_inputdeck.get< tag::pref, tag::indicator >(),
+               g_inputdeck.get< tag::discr, tag::ndof >(),
+               g_inputdeck.get< tag::pref, tag::ndofmax >(),
+               g_inputdeck.get< tag::pref, tag::tolref >(),
+               m_ndof );
 
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
@@ -1081,7 +1086,7 @@ DG::comsol( int fromch,
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
   Assert( prim.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   if (pref && fromstage == 0)
     Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsol()" );
@@ -1180,8 +1185,8 @@ DG::lim()
 // Compute limiter function
 // *****************************************************************************
 {
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
   // Combine own and communicated contributions of unlimited solution and
   // degrees of freedom in cells (if p-adaptive)
@@ -1207,7 +1212,7 @@ DG::lim()
 
     // Reconstruct second-order solution and primitive quantities
     // if P0P1
-    if (rdof == 4 && inciter::g_inputdeck.get< tag::discr, tag::ndof >() == 1)
+    if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1)
       for (const auto& eq : g_dgpde)
         eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
                         d->Coord(), m_u, m_p );
@@ -1292,7 +1297,7 @@ DG::comlim( int fromch,
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comlim()" );
   Assert( prim.size() == tetid.size(), "Size mismatch in DG::comlim()" );
 
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   if (pref && m_stage == 0)
     Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comlim()" );
@@ -1328,7 +1333,7 @@ DG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   auto d = Disc();
 
@@ -1410,14 +1415,14 @@ DG::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4lim();
 
   auto d = Disc();
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   const auto neq = m_u.nprop()/rdof;
 
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   if (pref && m_stage == 0)
   {
     // When the element are coarsened, high order terms should be zero

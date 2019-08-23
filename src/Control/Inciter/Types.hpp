@@ -74,10 +74,10 @@ using amr = tk::TaggedTuple< brigand::list<
 
 //! p-adaptive refinement options
 using pref = tk::TaggedTuple< brigand::list<
-    tag::pref,        bool                    //!< p-refinement on/off
-  , tag::indicator,   std::size_t             //!< Choice of adaptive indicator
-  , tag::ndofmax,     std::size_t             //!< Max number of degree of freedom
-  , tag::tolref,      tk::real                //!< Threshold of p-refinement
+    tag::pref,        bool                //!< p-refinement on/off
+  , tag::indicator,   std::size_t         //!< Choice of adaptive indicator
+  , tag::ndofmax,     std::size_t         //!< Max number of degree of freedom
+  , tag::tolref,      tk::real            //!< Threshold of p-refinement
 > >;
 
 //! Discretization parameters storage
@@ -95,7 +95,6 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::cweight,kw::cweight::info::expect::type//!< WENO central stencil weight
   , tag::flux,   inciter::ctr::FluxType         //!< Flux function type
   , tag::rdof,   std::size_t          //!< Number of reconstructed solution DOFs
-  , tag::ndof,   std::size_t                   //!< Number of solution DOFs
   , tag::ndof,   std::size_t                   //!< Number of solution DOFs
 > >;
 
