@@ -35,9 +35,12 @@ inciter
 
   end
 
+  partitioning
+    algorithm mj
+  end
+
   pref
     ndofmax 4
-    tolref 0.1
   end
 
   diagnostics
