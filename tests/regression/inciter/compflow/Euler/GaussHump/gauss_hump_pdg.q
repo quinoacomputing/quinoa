@@ -33,7 +33,6 @@ inciter
   pref
     ndofmax 10
     tolref 0.5
-    indicator 1
   end
 
   diagnostics

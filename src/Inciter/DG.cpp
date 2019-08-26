@@ -26,7 +26,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Refiner.hpp"
 #include "Limiter.hpp"
-#include "Indicator.hpp"
+#include "PrefIndicator.hpp"
 #include "Reorder.hpp"
 #include "Vector.hpp"
 

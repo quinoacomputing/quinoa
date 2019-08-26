@@ -871,10 +871,12 @@ namespace deck {
                                              pegtl::digit,
                                              tag::pref,
                                              tag::ndofmax >,
-                           tk::grm::control< use< kw::pref_indicator >,
-                                             pegtl::digit,
-                                             tag::pref,
-                                             tag::indicator >
+                           tk::grm::process<
+                             use< kw::pref_indicator >,
+                             tk::grm::store_inciter_option<
+                               ctr::PrefIndicator,
+                               tag::pref, tag::indicator >,
+                             pegtl::alpha >
                          >,
            tk::grm::check_pref_errors > {};
 

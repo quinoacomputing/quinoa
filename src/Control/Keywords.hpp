@@ -4122,7 +4122,10 @@ struct gauss_hump_compflow_info {
     R"(This keyword is used to select the advection of 2D Gaussian hump test
     problem. The initial and boundary conditions are specified to set up the
     test problem suitable to exercise and test the advection terms of the
-    Euler equations. Example: "problem gauss_hump_compflow".)"; }
+    Euler equations. The baseline of the density distribution in this testcase
+    is 1 instead of 0 in gauss_hump_transport which enables it to be the
+    regression testcase for p-adaptive DG scheme. Example: "problem
+    gauss_hump_compflow".)"; }
   struct expect {
     static std::string description() { return "string"; }
   };
@@ -5335,6 +5338,30 @@ struct amr_info {
 };
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
+struct pref_spectral_decay_info {
+  static std::string name() { return "SPECTRAL_DECAY"; }
+  static std::string shortDescription() { return "Select the spectral-decay"
+    " indicator for p-adaptive DG scheme"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the spectral-decay indicator used for
+    p-adaptive discontinuous Galerkin (DG) discretization used in inciter.
+    See Control/Inciter/Options/PrefIndicator.hpp for other valid options.)"; }
+};
+using pref_spectral_decay = keyword< pref_spectral_decay_info,
+                                     TAOCPP_PEGTL_STRING("spectral_decay") >;
+
+struct pref_non_conformity_info {
+  static std::string name() { return "NON_CONFORMITY"; }
+  static std::string shortDescription() { return "Select the non-conformity"
+    " indicator for p-adaptive DG scheme"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the non-conformity indicator used for
+    p-adaptive discontinuous Galerkin (DG) discretization used in inciter.
+    See Control/Inciter/Options/PrefIndicator.hpp for other valid options.)"; }
+};
+using pref_non_conformity = keyword< pref_non_conformity_info,
+                                     TAOCPP_PEGTL_STRING("non_conformity") >;
+
 struct pref_indicator_info {
   static std::string name() { return "the choice of adaptive indicator"; }
   static std::string shortDescription() { return "Configure the specific "
@@ -5344,12 +5371,10 @@ struct pref_indicator_info {
     indicator for p-adaptive refinement  of the DG scheme. The keyword must
     be used in pref ... end block. Example specification: 'indicator 1'.)"; }
   struct expect {
-    using type = std::size_t;
-    static constexpr type lower = 1;
-    static constexpr type upper = 3;
-    static std::string description() { return "int"; }
+    static std::string description() { return "string"; }
     static std::string choices() {
-      return "int between [ 1, 2, 3 ] (both inclusive)";
+      return '\'' + pref_spectral_decay::string() + "\' | \'"
+                  + pref_non_conformity::string() + '\'';
     }
   };
 };
@@ -5366,11 +5391,11 @@ struct pref_ndofmax_info {
     be used in pref ... end block. Example specification: 'ndofmax 10'.)"; }
   struct expect {
     using type = std::size_t;
-    static constexpr type lower = 1;
+    static constexpr type lower = 4;
     static constexpr type upper = 10;
     static std::string description() { return "int"; }
     static std::string choices() {
-      return "int between [ 1, 4, 10 ] (both inclusive)";
+      return "int between 4 and 10";
     }
   };
 };

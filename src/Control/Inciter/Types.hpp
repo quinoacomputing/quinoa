@@ -25,6 +25,7 @@
 #include "Inciter/Options/Flux.hpp"
 #include "Inciter/Options/AMRInitial.hpp"
 #include "Inciter/Options/AMRError.hpp"
+#include "Inciter/Options/PrefIndicator.hpp"
 #include "Options/PartitioningAlgorithm.hpp"
 #include "Options/TxtFloatFormat.hpp"
 #include "Options/FieldFile.hpp"
@@ -75,7 +76,7 @@ using amr = tk::TaggedTuple< brigand::list<
 //! p-adaptive refinement options
 using pref = tk::TaggedTuple< brigand::list<
     tag::pref,        bool                //!< p-refinement on/off
-  , tag::indicator,   std::size_t         //!< Choice of adaptive indicator
+  , tag::indicator,   PrefIndicatorType   //!< Choice of adaptive indicator
   , tag::ndofmax,     std::size_t         //!< Max number of degree of freedom
   , tag::tolref,      tk::real            //!< Threshold of p-refinement
 > >;

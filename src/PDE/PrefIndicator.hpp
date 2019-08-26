@@ -20,6 +20,7 @@
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
+#include "Inciter/Options/PrefIndicator.hpp"
 
 namespace inciter {
 
@@ -31,7 +32,7 @@ void eval_ndof( std::size_t nunk,
                 const std::vector< std::size_t >& inpoel,
                 const inciter::FaceData& fd,
                 const tk::Fields& unk,
-                std::size_t indicator,
+                inciter::ctr::PrefIndicatorType indicator,
                 std::size_t ndof,
                 std::size_t ndofmax,
                 tk::real tolref,

@@ -157,6 +157,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::amr_zplus,
                                    kw::pref,
                                    kw::pref_indicator,
+                                   kw::pref_spectral_decay,
+                                   kw::pref_non_conformity,
                                    kw::pref_ndofmax,
                                    kw::pref_tolref,
                                    kw::scheme,
@@ -235,9 +237,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::zplus >() = -rmax;
       // Default p-refinement settings
       get< tag::pref, tag::pref >() = false;
-      get< tag::pref, tag::indicator >() = 1;
+      get< tag::pref, tag::indicator >() = PrefIndicatorType::SPECTRAL_DECAY;
       get< tag::pref, tag::ndofmax >() = 10;
-      get< tag::pref, tag::tolref >() = 0.1;
+      get< tag::pref, tag::tolref >() = 0.5;
       // Default txt floating-point output precision in digits
       get< tag::prec, tag::diag >() = std::cout.precision();
       // Default intervals

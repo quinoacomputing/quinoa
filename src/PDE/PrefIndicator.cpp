@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Indicator.cpp
+  \file      src/PDE/PrefIndicator.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -12,7 +12,7 @@
 */
 // *****************************************************************************
 
-#include "Indicator.hpp"
+#include "PrefIndicator.hpp"
 
 #include "Tags.hpp"
 #include "Vector.hpp"
@@ -302,7 +302,7 @@ void eval_ndof( std::size_t nunk,
                 const std::vector< std::size_t >& inpoel,
                 const inciter::FaceData& fd,
                 const tk::Fields& unk,
-                std::size_t indicator,
+                inciter::ctr::PrefIndicatorType indicator,
                 std::size_t ndof,
                 std::size_t ndofmax,
                 tk::real tolref,
@@ -323,14 +323,13 @@ void eval_ndof( std::size_t nunk,
 {
   const auto& esuel = fd.Esuel();
 
-  switch(indicator)
-  {
-    case 1: spectral_decay( nunk, esuel, unk, ndof, ndofmax, tolref, ndofel );
-            break;
-    case 2: non_conformity( nunk, fd.Nbfac(), inpoel, coord, esuel, fd.Esuf(),
-                            fd.Inpofa(), unk, ndof, ndofmax, ndofel );
-            break;
-  }
+  if(indicator == inciter::ctr::PrefIndicatorType::SPECTRAL_DECAY)
+    spectral_decay( nunk, esuel, unk, ndof, ndofmax, tolref, ndofel );
+  else if(indicator == inciter::ctr::PrefIndicatorType::NON_CONFORMITY)
+    non_conformity( nunk, fd.Nbfac(), inpoel, coord, esuel, fd.Esuf(),
+                    fd.Inpofa(), unk, ndof, ndofmax, ndofel );
+  else
+    Throw( "No such adaptive indicator type" );
 }
 
 }

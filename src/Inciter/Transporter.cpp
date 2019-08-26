@@ -199,8 +199,7 @@ Transporter::info()
     m_print.section( "Polynomial refinement (p-ref)" );
     m_print.item( "p-refinement",
                   g_inputdeck.get< tag::pref, tag::pref >() );
-    m_print.item( "Indicator",
-                  g_inputdeck.get< tag::pref, tag::indicator >() );
+    m_print.Item< ctr::PrefIndicator, tag::pref, tag::indicator >();
     m_print.item( "Max degrees of freedom",
                   g_inputdeck.get< tag::pref, tag::ndofmax >() );
     m_print.item( "Tolerance",
