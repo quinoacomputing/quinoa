@@ -537,7 +537,7 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
 # is true, because it works most of the time.
 if (NOT EXCEPTIONS_WRITE_TO_CERR)     # set default
   # will become compiler define in Main/QuinoaConfig.h
-  set(EXCEPTIONS_WRITE_TO_CERR true CACHE bool "Exceptions will write std::cerr.")
+  set(EXCEPTIONS_WRITE_TO_CERR true CACHE BOOL "Exceptions will write std::cerr.")
 endif()
 message(STATUS "Exceptions write to cerr: ${EXCEPTIONS_WRITE_TO_CERR}")
 
