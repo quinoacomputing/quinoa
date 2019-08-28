@@ -5395,7 +5395,7 @@ struct pref_ndofmax_info {
     static constexpr type upper = 10;
     static std::string description() { return "int"; }
     static std::string choices() {
-      return "int between 4 and 10";
+      return "int either 4 or 10";
     }
   };
 };
