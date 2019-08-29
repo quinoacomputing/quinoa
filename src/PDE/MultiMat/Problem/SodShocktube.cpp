@@ -48,7 +48,6 @@ MultiMatProblemSodShocktube::solution( ncomp_t system,
 // *****************************************************************************
 {
   Assert( ncomp == 9, "Number of scalar components must be 5" );
-  IGNORE(ncomp);
 
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];

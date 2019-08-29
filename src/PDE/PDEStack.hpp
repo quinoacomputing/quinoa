@@ -42,7 +42,7 @@ extern ctr::InputDeck g_inputdeck;
 class PDEStack {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
   public:
     //! Constructor: register partial differential equations into factory
@@ -104,9 +104,9 @@ class PDEStack {
               "equation consists of. See inciter::deck::check_eq." );
       if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
         // re-create key and search for it
-        ctr::PDEKey key{ eq,
+        ctr::PDEKey key{{ eq,
           g_inputdeck.get< tag::param, EqTag, tag::physics >()[c],
-          g_inputdeck.get< tag::param, EqTag, tag::problem >()[c] };
+          g_inputdeck.get< tag::param, EqTag, tag::problem >()[c] }};
         const auto it = f.find( key );
         Assert( it != end( f ),
                 "Can't find PDE with key('" +

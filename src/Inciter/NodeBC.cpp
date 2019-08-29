@@ -25,7 +25,7 @@ namespace inciter {
 extern std::vector< CGPDE > g_cgpde;
 
 std::unordered_map< std::size_t, std::vector< std::pair< bool, tk::real > > >
-match( tk::ctr::ncomp_type ncomp,
+match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
        tk::real t,
        tk::real dt,
        const tk::UnsMesh::Coords& coord,
@@ -144,10 +144,8 @@ match( tk::ctr::ncomp_type ncomp,
   // equal to the total number of scalar components for all systems of PDEs
   // integrated.
   Assert( std::all_of( begin(dirbc), end(dirbc),
-                       [ ncomp ]( const decltype(dirbc)::value_type& n ){
-                        return n.second.size() == ncomp; } ),
+            [ ncomp ]( const auto& n ){ return n.second.size() == ncomp; } ),
           "Size of NodeBC vector incorrect" );
-  IGNORE( ncomp );
  
   return dirbc;
 }

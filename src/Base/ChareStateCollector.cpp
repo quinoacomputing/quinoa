@@ -51,7 +51,7 @@ ChareStateCollector::insert( const std::string& ch, int id, int pe, uint64_t it,
 //! \param[in] fn Chare member function name
 // *****************************************************************************
 {
-  m_state.push_back( ChareState{ ch, id, pe, it, fn, m_timer.dsec() } );
+  m_state.push_back( ChareState{{ ch, id, pe, it, fn, m_timer.dsec() }} );
 }
 
 void

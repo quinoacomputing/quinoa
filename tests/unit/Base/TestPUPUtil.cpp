@@ -468,8 +468,8 @@ class Migrated : public CBase_Migrated {
         tr.exception_typeid } );
   }
 
-  //! Constructor taking (and migrating) a boost::optional< std::string >
-  explicit Migrated( charm::BoostOptionalStr o ) :
+  //! Constructor taking (and migrating) a std::optional< std::string >
+  explicit Migrated( charm::OptionalStr o ) :
     m_enum_default(),
     m_enum_uint8_t(),
     m_enum_cstyle(),
@@ -486,7 +486,7 @@ class Migrated : public CBase_Migrated {
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 10,
-                         "Charm:migrate boost::optional<str> 2",
+                         "Charm:migrate std::optional<str> 2",
                          tut::test_result::result_type::ok );
 
     try {
@@ -494,10 +494,10 @@ class Migrated : public CBase_Migrated {
       std::string expected = "blah";
       std::string actual = o ? *o : "";
       // Evaluate test
-      ensure( "boost::optional<str> different after migrated: "
+      ensure( "std::optional<str> different after migrated: "
               "expected `" + expected + "` actual `" + actual + "`",
               m_boost_optional_str ==
-                charm::BoostOptionalStr{ { "blah" } } );
+                charm::OptionalStr{ { "blah" } } );
     } catch ( const failure& ex ) {
       tr.result = ex.result();
       tr.exception_typeid = ex.type();
@@ -509,8 +509,8 @@ class Migrated : public CBase_Migrated {
         tr.exception_typeid } );
   }
 
-  //! Constructor taking (and migrating) an uninitialized boost::optional< int >
-  explicit Migrated( charm::BoostOptionalInt o ) :
+  //! Constructor taking (and migrating) an uninitialized std::optional< int >
+  explicit Migrated( charm::OptionalInt o ) :
     m_enum_default(),
     m_enum_uint8_t(),
     m_enum_cstyle(),
@@ -527,18 +527,17 @@ class Migrated : public CBase_Migrated {
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 11,
-                         "Charm:migrate boost::optional<int> 2",
+                         "Charm:migrate std::optional<int> 2",
                          tut::test_result::result_type::ok );
 
     try {
       // Generate error message with expected and actual value in case if fail
-      std::string expected = "boost::none";
-      std::string actual = o ? std::to_string(*o) : "boost::none";
+      std::string expected = "std::nullopt";
+      std::string actual = o ? std::to_string(*o) : "std::nullopt";
       // Evaluate test
-      ensure( "boost::optional<int> different after migrated: "
+      ensure( "std::optional<int> different after migrated: "
               "expected `" + expected + "` actual `" + actual + "`",
-              m_boost_optional_int ==
-                charm::BoostOptionalInt{ boost::none } );
+              m_boost_optional_int == charm::OptionalInt{ std::nullopt } );
     } catch ( const failure& ex ) {
       tr.result = ex.result();
       tr.exception_typeid = ex.type();
@@ -579,9 +578,9 @@ class Migrated : public CBase_Migrated {
         std::to_string( m_tagged_tuple.get< charm::tag::age >() ) +
         m_tagged_tuple.get< charm::tag::email >() + " ]";
       // Evaluate test
-      ensure( "tk::tuple::tagged_tuple different after migrated: "
-              "expected `" + expected + "` actual `" + actual + "`",
-              m_tagged_tuple == charm::TaggedTuple{ "Bob", 32, "bob@bob.bob"} );
+      ensure("tk::tuple::tagged_tuple different after migrated: "
+             "expected `" + expected + "` actual `" + actual + "`",
+             m_tagged_tuple == charm::TaggedTuple{{"Bob", 32, "bob@bob.bob"}});
     } catch ( const failure& ex ) {
       tr.result = ex.result();
       tr.exception_typeid = ex.type();
@@ -593,7 +592,7 @@ class Migrated : public CBase_Migrated {
         tr.exception_typeid } );
   }
 
-  //! \brief Constructor taking (and migrating) a tk::Variant<int,double>
+  //! \brief Constructor taking (and migrating) a std::variant<int,double>
   //!   holding int
   explicit Migrated( charm::Variant v, int value ) :
     m_enum_default(),
@@ -612,18 +611,18 @@ class Migrated : public CBase_Migrated {
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 13,
-                         "Charm:migrate tk::Variant<int,double>(int) 2",
+                         "Charm:migrate std::variant<int,double>(int) 2",
                          tut::test_result::result_type::ok );
 
     try {
       // Generate error message with expected and actual value in case if fail
       std::string expected = "[ " + std::to_string(value) + " ]";
       std::string actual = "[ " +
-        std::to_string( boost::get< int >( m_variant ) ) + " ]";
+        std::to_string( std::get< int >( m_variant ) ) + " ]";
       // Evaluate test
-      ensure_equals( "tk::Variant<int,double>(int) different after migrated:"
+      ensure_equals( "std::variant<int,double>(int) different after migrated:"
                      " expected `" + expected + "` actual `" + actual + "`",
-                     boost::get< int >( m_variant ), value );
+                     std::get< int >( m_variant ), value );
     } catch ( const failure& ex ) {
       tr.result = ex.result();
       tr.exception_typeid = ex.type();
@@ -635,7 +634,7 @@ class Migrated : public CBase_Migrated {
         tr.exception_typeid } );
   }
 
-  //! \brief Constructor taking (and migrating) a tk::Variant<int,double>
+  //! \brief Constructor taking (and migrating) a std::variant<int,double>
   //!   holding double
   explicit Migrated( charm::Variant v, double value ) :
     m_enum_default(),
@@ -654,18 +653,18 @@ class Migrated : public CBase_Migrated {
   {
     // Create test result struct, assume test is ok
     tut::test_result tr( "Base/PUPUtil", 14,
-                         "Charm:migrate tk::Variant<int,double>(double) 2",
+                         "Charm:migrate std::variant<int,double>(double) 2",
                          tut::test_result::result_type::ok );
 
     try {
       // Generate error message with expected and actual value in case if fail
       std::string expected = "[ " + std::to_string(value) + " ]";
       std::string actual = "[ " +
-        std::to_string( boost::get< double >( m_variant ) ) + " ]";
+        std::to_string( std::get< double >( m_variant ) ) + " ]";
       // Evaluate test
       ensure_equals( "rk::Variant<int,double>(double) different after "
                      "migrated: expected `" + expected + "` actual `" + actual +
-                     "`", boost::get< double >( m_variant ), value,
+                     "`", std::get< double >( m_variant ), value,
                      1.0e-15 );
     } catch ( const failure& ex ) {
       tr.result = ex.result();
@@ -687,8 +686,8 @@ class Migrated : public CBase_Migrated {
   charm::Array m_array;
   charm::UnorderedMap m_unordered_map;
   charm::UnorderedSet m_unordered_set;
-  charm::BoostOptionalStr m_boost_optional_str;
-  charm::BoostOptionalInt m_boost_optional_int;
+  charm::OptionalStr m_boost_optional_str;
+  charm::OptionalInt m_boost_optional_int;
   charm::TaggedTuple m_tagged_tuple;
   charm::Variant m_variant;
 };
@@ -880,7 +879,7 @@ void PUPUtil_object::test< 9 >() {
   CProxy_Migrated::ckNew( charm::UnorderedSet{ 11, 12 } );
 }
 
-//! Test Pack/Unpack of a boost::optional< std::string >
+//! Test Pack/Unpack of a std::optional< std::string >
 //! \details Every Charm++ migration test, such as this one, consists of two
 //!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
@@ -895,12 +894,12 @@ void PUPUtil_object::test< 10 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "Charm:migrate boost::optional<str> 1" );
+  set_test_name( "Charm:migrate std::optional<str> 1" );
 
-  CProxy_Migrated::ckNew( charm::BoostOptionalStr{ {"blah"} } );
+  CProxy_Migrated::ckNew( charm::OptionalStr{ {"blah"} } );
 }
 
-//! Test Pack/Unpack of an uninitialized boost::optional< int >
+//! Test Pack/Unpack of an uninitialized std::optional< int >
 //! \details Every Charm++ migration test, such as this one, consists of two
 //!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
@@ -915,9 +914,9 @@ void PUPUtil_object::test< 11 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "Charm:migrate boost::optional<none> 1" );
+  set_test_name( "Charm:migrate std::optional<none> 1" );
 
-  CProxy_Migrated::ckNew( charm::BoostOptionalInt{ boost::none } );
+  CProxy_Migrated::ckNew( charm::OptionalInt{ std::nullopt } );
 }
 
 //! Test Pack/Unpack of tk::tuple::tagged_tuple
@@ -937,10 +936,10 @@ void PUPUtil_object::test< 12 >() {
   // executes, the suite will hang waiting for that chare to call back.
   set_test_name( "Charm:migrate tk::tuple::tagged_tuple 1" );
 
-  CProxy_Migrated::ckNew( charm::TaggedTuple{ "Bob", 32, "bob@bob.bob" } );
+  CProxy_Migrated::ckNew( charm::TaggedTuple{{"Bob", 32, "bob@bob.bob"}} );
 }
 
-//! Test Pack/Unpack of tk::Variant<int,double> holding an int
+//! Test Pack/Unpack of std::variant<int,double> holding an int
 //! \details Every Charm++ migration test, such as this one, consists of two
 //!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
@@ -955,13 +954,13 @@ void PUPUtil_object::test< 13 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "Charm:migrate tk::Variant<int,double>(int) 1" );
+  set_test_name( "Charm:migrate std::variant<int,double>(int) 1" );
 
-  boost::variant< int, double > v{213};
+  std::variant< int, double > v{213};
   CProxy_Migrated::ckNew( charm::Variant(v), 213 );
 }
 
-//! Test Pack/Unpack of tk::Variant<int,double> holding a double
+//! Test Pack/Unpack of std::variant<int,double> holding a double
 //! \details Every Charm++ migration test, such as this one, consists of two
 //!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
@@ -976,9 +975,9 @@ void PUPUtil_object::test< 14 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "Charm:migrate tk::Variant<int,double>(double) 1" );
+  set_test_name( "Charm:migrate std::variant<int,double>(double) 1" );
 
-  boost::variant< int, double > v{3.14};
+  std::variant< int, double > v{3.14};
   CProxy_Migrated::ckNew( charm::Variant(v), 3.14 );
 }
 

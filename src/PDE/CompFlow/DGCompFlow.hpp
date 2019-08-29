@@ -207,9 +207,9 @@ class CompFlow {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \param[in,out] U Solution vector at recent time step
-    void limit( tk::real t,
-                const tk::Fields& geoFace,
-                const tk::Fields& geoElem,
+    void limit( [[maybe_unused]] tk::real t,
+                [[maybe_unused]] const tk::Fields& geoFace,
+                [[maybe_unused]] const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
@@ -217,10 +217,6 @@ class CompFlow {
                 tk::Fields& U,
                 tk::Fields& ) const
     {
-      IGNORE(t);
-      IGNORE(geoFace);
-      IGNORE(geoElem);
-
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
       if (limiter == ctr::LimiterType::WENOP1)
@@ -285,7 +281,7 @@ class CompFlow {
               { return m_riemann.flux( fn, u, v ); };
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
-        return std::vector< std::array< tk::real, 3 > >( this->m_ncomp ); };
+        return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // supported boundary condition types and associated state functions
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
@@ -717,12 +713,11 @@ class CompFlow {
     //! \note The function signature must follow tk::FluxFn
     static tk::FluxFn::result_type
     flux( ncomp_t system,
-          ncomp_t ncomp,
+          [[maybe_unused]] ncomp_t ncomp,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
       Assert( ugp.size() == ncomp, "Size mismatch" );
-      IGNORE(ncomp);
 
       auto u = ugp[1] / ugp[0];
       auto v = ugp[2] / ugp[0];

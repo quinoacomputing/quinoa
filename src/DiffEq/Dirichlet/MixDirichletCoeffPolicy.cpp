@@ -45,7 +45,7 @@ walker::MixDir_r( const std::vector< kw::sde_rho::info::expect::type >& rho,
 }
 
 walker::MixDirichletCoeffConst::MixDirichletCoeffConst(
-  tk::ctr::ncomp_type ncomp,
+  ncomp_t ncomp,
   ctr::NormalizationType norm,
   const std::vector< kw::sde_b::info::expect::type >& b_,
   const std::vector< kw::sde_S::info::expect::type >& S_,
@@ -144,7 +144,7 @@ walker::MixDirichletCoeffConst::update(
 }
 
 walker::MixDirichletHomogeneous::MixDirichletHomogeneous(
-  tk::ctr::ncomp_type ncomp,
+  ncomp_t ncomp,
   ctr::NormalizationType norm,
   const std::vector< kw::sde_b::info::expect::type >& b_,
   const std::vector< kw::sde_S::info::expect::type >& S_,
@@ -271,7 +271,7 @@ walker::MixDirichletHomogeneous::update(
 }
 
 walker::MixDirichletHydroTimeScale::MixDirichletHydroTimeScale(
-  tk::ctr::ncomp_type ncomp,
+  tk::ctr::ncomp_t ncomp,
   ctr::NormalizationType norm,
   const std::vector< kw::sde_b::info::expect::type >& b_,
   const std::vector< kw::sde_S::info::expect::type >& S_,

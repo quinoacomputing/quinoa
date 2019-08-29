@@ -388,7 +388,7 @@ namespace grm {
       kw::amr_uniform::string() + "'." },
     { MsgKey::DTREFNOOP, "Mesh refinement configuration for t>0 will be a "
       "no-op. During-timestepping (t>0) mesh refinement configuration "
-      "requires in the amr ... end block: '" + kw::amr_dtref::string() +
+      "requires in the amr ... end block: (1) '" + kw::amr_dtref::string() +
       " true' and (2) a specification of at least one refinement variable, "
       "e.g., '" + kw::amr_refvar::string() + " c end'." },
     { MsgKey::PREFTOL, "The p-refinement tolerance must be a real number "
@@ -430,12 +430,12 @@ namespace grm {
         ss << typestr << " while parsing at " << pos.line << ','
            << pos.byte_in_line << ". " << msg->second;
       }
-      stack.template push_back< tag::error >( ss.str() );
+      stack.template get< tag::error >().push_back( ss.str() );
     } else {
-      stack.template push_back< tag::error >
-        ( std::string("Unknown parser ") +
-          (type == MsgType::ERROR ? "error" : "warning" ) +
-          " with no location information." );
+      stack.template get< tag::error >().push_back(
+        std::string("Unknown parser ") +
+        (type == MsgType::ERROR ? "error" : "warning" ) +
+        " with no location information." );
     }
   }
 
@@ -514,7 +514,7 @@ namespace grm {
                 << opt.name( stack.template get< tags... >() ) << "' with '"
                 << opt.name( opt.value( value ) ) << "' at "
                 << pos.line << ',' << pos.byte_in_line << ".\n\n";
-      stack.template set< tags... >( opt.value( value ) );
+      stack.template get< tags... >() = opt.value( value );
     } else {
       Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
     }
@@ -579,7 +579,7 @@ namespace grm {
   struct action< Set< tag, tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      stack.template set< tag, tags... >( in.string() );
+      stack.template get< tag, tags... >() = in.string();
     }
   };
 
@@ -658,7 +658,7 @@ namespace grm {
   struct action< Invert_switch< tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
-      stack.template set< tags... >( !stack.template get< tags... >() );
+      stack.template get< tags... >() = !stack.template get< tags... >();
     }
   };
 
@@ -682,7 +682,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       Option opt;
       if (opt.exist(in.string())) {
-        stack.template push_back<tag,tags...>( opt.value( in.string() ) );
+        stack.template get<tag,tags...>().push_back( opt.value( in.string() ) );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
       }
@@ -715,7 +715,8 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       Option opt;
       if (opt.exist(in.string())) {
-        stack.template push_back_back<tag,tags...>( opt.value( in.string() ) );
+        stack.template get<tag,tags...>().back().
+              push_back( opt.value( in.string() ) );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
       }
@@ -726,38 +727,30 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename field, typename sel, typename vec,
-            typename tag, typename... tags >
-  struct Insert_field : pegtl::success {};
+  template< typename sel, typename vec, typename Tag, typename... Tags >
+  struct insert_seed : pegtl::success {};
   //! \brief Convert and insert value to map at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!   wrapper for inserting a value into a std::map behind a key in the
-  //!   underlying grammar stack via the member function
-  //!   tk::Control::insert_field. We detect a recently inserted key and its
-  //!   type from the companion tuple field, "selected vector", given by types,
-  //!   sel and vec, and use that key to insert an associated value in a
-  //!   std::map addressed by tag and tags..., requiring at least one tag to
-  //!   address the map. As an example, this is used in parsing parameters
-  //!   associated to a particular random number generator, such as seed.
-  //!   Example input file: "mkl_mcg59 seed 2134 uniform_method accurate end".
-  //!   The selected vector here is the std::vector< tk::ctr::RNGType > under
-  //!   tag::sel (at the second level of the tagged tuple). The
-  //!   std::vector and its member function back() are then interrogated to find
-  //!   out the key type and its value (an enum value) for the particular RNG.
-  //!   This key is then used to insert a new entry in the std::map under
-  //!   tag::param to store the RNG parameter. Client-code is in, e.g.,
-  //!   tk::rngsse::seed.
-  template< typename field, typename sel, typename vec,
-            typename tag, typename...tags >
-  struct action< Insert_field< field, sel, vec, tag, tags... > > {
+  //!   underlying grammar stack via the member function tk::Control::insert.
+  //!   We detect a recently inserted key from the companion tuple field,
+  //!   "selected vector", given by types, sel and vec, and use that key to
+  //!   insert an associated value in a std::map addressed by tag and tags...,
+  //!   requiring at least one tag to address the map. As an example, this is
+  //!   used in parsing parameters associated to a particular random number
+  //!   generator, such as seed. Example input file: "mkl_mcg59 seed 2134
+  //!   uniform_method accurate end". The selected vector here is the
+  //!   std::vector< tk::ctr::RNGType > under tag::sel.
+  //! \see Example client-code: tk::rngsse::seed.
+  template< typename sel, typename vec, typename Tag, typename...Tags >
+  struct action< insert_seed< sel, vec, Tag, Tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      // get recently inserted key from <sel,vec>
-      using key_type =
-        typename Stack::template nT< sel >::template nT< vec >::value_type;
-      const key_type& key = stack.template get< sel, vec >().back();
+      // get recently inserted key from < sel, vec >
+      const auto& key = stack.template get< sel, vec >().back();
       stack.template
-        insert_field< key_type, field, tag, tags... >( key, in.string() );
+        insert_field< tag::seed, kw::seed::info::expect::type, Tag, Tags... >
+                    ( key, in.string() );
     }
   };
 
@@ -779,12 +772,10 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       // get recently inserted key from <sel,vec>
-      using key_type =
-        typename Stack::template nT< sel >::template nT< vec >::value_type;
-      const key_type& key = stack.template get< sel, vec >().back();
+      const auto& key = stack.template get< sel, vec >().back();
       stack.template
-        insert_opt< key_type, field, typename Option::EnumType, tag, tags... >
-                  ( key, Option().value(in.string()) );
+        insert_field< field, typename Option::EnumType, tag, tags... >
+                    ( key, Option().value(in.string()) );
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
       brigand::for_each< typename Option::keywords >( is_keyword< use >() );
@@ -808,7 +799,7 @@ namespace grm {
       std::transform( begin(low), end(low), begin(low), ::tolower );
       if (low == "max") {
         const auto maxprec = PrEx::upper;
-        stack.template set< tag::prec, prec >( maxprec );
+        stack.template get< tag::prec, prec >() = maxprec;
       } else {
         PrEx::type precision = std::cout.precision();  // set default
         try {   //try to convert matched str to int
@@ -819,7 +810,7 @@ namespace grm {
         }
         // only set precision given if it makes sense
         if (precision >= PrEx::lower && precision <= PrEx::upper)
-          stack.template set< tag::prec, prec >( precision );
+          stack.template get< tag::prec, prec >() = precision;
         else
           Message< Stack, WARNING, MsgKey::PRECISIONBOUNDS >( stack, in );
       }
@@ -848,12 +839,12 @@ namespace grm {
       auto it = cmdinfo.find( in.string() );
       if (it != cmdinfo.end()) {
         // store keyword and its info on which help was requested
-        stack.template set< tag::helpkw >( { it->first, it->second, true } );
+        stack.template get< tag::helpkw >() = { it->first, it->second, true };
       } else {
         it = ctrinfo.find( in.string() );
         if (it != ctrinfo.end())
           // store keyword and its info on which help was requested
-          stack.template set< tag::helpkw >( { it->first, it->second, false } );
+          stack.template get< tag::helpkw >() = { it->first, it->second, false };
         else
           Message< Stack, ERROR, MsgKey::KEYWORD >( stack, in );
       }
@@ -891,8 +882,8 @@ namespace grm {
       // find matched name in set of registered ones
       if (pdfnames.find( in.string() ) == pdfnames.end()) {
         pdfnames.insert( in.string() );
-        stack.template
-          push_back< tag::cmd, tag::io, tag::pdfnames >( in.string() );
+        stack.template get< tag::cmd, tag::io, tag::pdfnames >().
+          push_back( in.string() );
       }
       else  // error out if name matched var is already registered
         Message< Stack, ERROR, MsgKey::PDFEXISTS >( stack, in );
@@ -975,7 +966,7 @@ namespace grm {
   struct action< start_vector< tag, tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
-      stack.template push_back< tag, tags... >();  // no arg: use default ctor
+      stack.template get< tag, tags... >().push_back( {} );
     }
   };
 
@@ -988,7 +979,7 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
       // no arg: use default ctor
-      stack.template push_back_back< tag, tags... >();
+      stack.template get< tag, tags... >().back().push_back( {} );
     }
   };
 
@@ -1454,11 +1445,11 @@ namespace grm {
            readcmd< use< keyword > >,
            scan< pegtl::sor< kw_type, msg< ERROR, MsgKey::MISSING > >, insert >,
            typename std::conditional<
-             tk::HasVarExpectLower< typename keyword::info >::value,
+             tk::HasVar_expect_lower< typename keyword::info >::value,
              check_lower_bound< keyword, tag, tags... >,
              pegtl::success >::type,
            typename std::conditional<
-             tk::HasVarExpectUpper< typename keyword::info >::value,
+             tk::HasVar_expect_upper< typename keyword::info >::value,
              check_upper_bound< keyword, tag, tags... >,
              pegtl::success >::type > {};
 
@@ -1606,11 +1597,11 @@ namespace grm {
          pegtl::if_must<
            process< keyword, Store< tags... >, kw_type >,
            typename std::conditional<
-             tk::HasVarExpectLower< typename keyword::info >::value,
+             tk::HasVar_expect_lower< typename keyword::info >::value,
              check_lower_bound< keyword, tags... >,
              pegtl::success >::type,
            typename std::conditional<
-             tk::HasVarExpectUpper< typename keyword::info >::value,
+             tk::HasVar_expect_upper< typename keyword::info >::value,
              check_upper_bound< keyword, tags... >,
              pegtl::success >::type > {};
 

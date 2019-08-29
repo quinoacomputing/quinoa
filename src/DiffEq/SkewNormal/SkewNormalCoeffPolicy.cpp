@@ -16,7 +16,7 @@
 #include "SkewNormalCoeffPolicy.hpp"
 
 walker::SkewNormalCoeffConst::SkewNormalCoeffConst(
-  tk::ctr::ncomp_type ncomp,
+  tk::ctr::ncomp_t ncomp,
   const std::vector< kw::sde_T::info::expect::type >& timescale_,
   const std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq_,
   const std::vector< kw::sde_lambda::info::expect::type >& lambda_,

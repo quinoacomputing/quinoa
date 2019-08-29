@@ -38,7 +38,9 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
-                      ${BACKWARD_LIBRARIES})
+                      ${BACKWARD_LIBRARIES}
+                      ${LIBCXX_LIBRARIES}       # only for static link with libc++
+                      ${LIBCXXABI_LIBRARIES})   # only for static link with libc++
 
 # Add custom dependencies for Walker's main Charm++ module
 addCharmModule( "walker" "${WALKER_EXECUTABLE}" )

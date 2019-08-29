@@ -18,7 +18,6 @@
 
 #include <brigand/algorithms/for_each.hpp>
 
-#include "Control.hpp"
 #include "HelpFactory.hpp"
 #include "Keywords.hpp"
 #include "Inciter/Types.hpp"
@@ -27,31 +26,34 @@ namespace inciter {
 //! Inciter control facilitating user input to internal data transfer
 namespace ctr {
 
+//! Member data for tagged tuple
+using CmdLineMembers = brigand::list<
+    tag::io,             ios
+  , tag::virtualization, kw::virtualization::info::expect::type
+  , tag::verbose,        bool
+  , tag::chare,          bool
+  , tag::nonblocking,    bool
+  , tag::benchmark,      bool
+  , tag::feedback,       bool
+  , tag::help,           bool
+  , tag::helpctr,        bool
+  , tag::quiescence,     bool
+  , tag::trace,          bool
+  , tag::version,        bool
+  , tag::license,        bool
+  , tag::cmdinfo,        tk::ctr::HelpFactory
+  , tag::ctrinfo,        tk::ctr::HelpFactory
+  , tag::helpkw,         tk::ctr::HelpKw
+  , tag::error,          std::vector< std::string >
+  , tag::lbfreq,         kw::lbfreq::info::expect::type
+  , tag::rsfreq,         kw::rsfreq::info::expect::type
+>;
+
 //! \brief CmdLine : Control< specialized to Inciter >
 //! \details The stack is a tagged tuple
 //! \see Base/TaggedTuple.h
 //! \see Control/Inciter/Types.h
-class CmdLine : public tk::Control<
-                  // tag               type
-                  tag::io,             ios,
-                  tag::virtualization, kw::virtualization::info::expect::type,
-                  tag::verbose,        bool,
-                  tag::chare,          bool,
-                  tag::nonblocking,    bool,
-                  tag::benchmark,      bool,
-                  tag::feedback,       bool,
-                  tag::help,           bool,
-                  tag::helpctr,        bool,
-                  tag::quiescence,     bool,
-                  tag::trace,          bool,
-                  tag::version,        bool,
-                  tag::license,        bool,
-                  tag::cmdinfo,        tk::ctr::HelpFactory,
-                  tag::ctrinfo,        tk::ctr::HelpFactory,
-                  tag::helpkw,         tk::ctr::HelpKw,
-                  tag::error,          std::vector< std::string >,
-                  tag::lbfreq,         kw::lbfreq::info::expect::type,
-                  tag::rsfreq,         kw::rsfreq::info::expect::type > {
+class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
 
   public:
     //! \brief Inciter command-line keywords
@@ -110,21 +112,21 @@ class CmdLine : public tk::Control<
     //!   otherwise it would be a mutual dependency.
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
-      set< tag::io, tag::output >( "out" );
-      set< tag::io, tag::diag >( "diag" );
-      set< tag::io, tag::part >( "track.h5part" );
-      set< tag::io, tag::restart >( "restart" );
-      set< tag::virtualization >( 0.0 );
-      set< tag::verbose >( false ); // Quiet output by default
-      set< tag::chare >( false ); // No chare state output by default
-      set< tag::nonblocking>( false ); // Blocking migration by default
-      set< tag::benchmark >( false ); // No benchmark mode by default
-      set< tag::feedback >( false ); // No detailed feedback by default
-      set< tag::lbfreq >( 1 ); // Load balancing every time-step by default
-      set< tag::rsfreq >( 100 );// Checkpoint/restart after this many time steps
-      set< tag::trace >( true ); // Output call and stack trace by default
-      set< tag::version >( false ); // Do not display version info by default
-      set< tag::license >( false ); // Do not display license info by default
+      get< tag::io, tag::output >() = "out";
+      get< tag::io, tag::diag >() = "diag";
+      get< tag::io, tag::part >() = "track.h5part";
+      get< tag::io, tag::restart >() = "restart";
+      get< tag::virtualization >() = 0.0;
+      get< tag::verbose >() = false; // Quiet output by default
+      get< tag::chare >() = false; // No chare state output by default
+      get< tag::nonblocking>() = false; // Blocking migration by default
+      get< tag::benchmark >() = false; // No benchmark mode by default
+      get< tag::feedback >() = false; // No detailed feedback by default
+      get< tag::lbfreq >() = 1; // Load balancing every time-step by default
+      get< tag::rsfreq >() = 100;// Chkpt/restart after this many time steps
+      get< tag::trace >() = true; // Output call and stack trace by default
+      get< tag::version >() = false; // Do not display version info by default
+      get< tag::license >() = false; // Do not display license info by default
       // Initialize help: fill from own keywords + add map passed in
       brigand::for_each< keywords::set >( tk::ctr::Info(get<tag::cmdinfo>()) );
       get< tag::ctrinfo >() = std::move( ctrinfo );
@@ -134,27 +136,7 @@ class CmdLine : public tk::Control<
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er& p ) {
-      tk::Control< tag::io,             ios,
-                   tag::virtualization, kw::virtualization::info::expect::type,
-                   tag::verbose,        bool,
-                   tag::chare,          bool,
-                   tag::nonblocking,    bool,
-                   tag::benchmark,      bool,
-                   tag::feedback,       bool,
-                   tag::help,           bool,
-                   tag::helpctr,        bool,
-                   tag::quiescence,     bool,
-                   tag::trace,          bool,
-                   tag::version,        bool,
-                   tag::license,        bool,
-                   tag::cmdinfo,        tk::ctr::HelpFactory,
-                   tag::ctrinfo,        tk::ctr::HelpFactory,
-                   tag::helpkw,         tk::ctr::HelpKw,
-                   tag::error,          std::vector< std::string >,
-                   tag::lbfreq,         kw::lbfreq::info::expect::type,
-                   tag::rsfreq,        kw::rsfreq::info::expect::type >::pup(p);
-    }
+    void pup( PUP::er& p ) { tk::TaggedTuple< CmdLineMembers >::pup(p); }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] c CmdLine object reference

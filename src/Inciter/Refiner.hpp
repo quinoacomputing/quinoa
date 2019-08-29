@@ -29,7 +29,7 @@
 #include "Callback.hpp"
 #include "UnsMesh.hpp"
 #include "Base/Fields.hpp"
-#include "SchemeBase.hpp"
+#include "Scheme.hpp"
 #include "DiagCG.hpp"
 #include "ALECG.hpp"
 #include "DG.hpp"
@@ -404,45 +404,6 @@ class Refiner : public CBase_Refiner {
     void addBndNodes( const std::array< std::size_t, N >& array, F f ) {
       for (auto n : array) f( n );
     }
-
-    //! \brief Function class to call the resizePostAMR() member function
-    //!   behind SchemeBase::Proxy
-    struct ResizePostAMR: boost::static_visitor<> {
-      const std::vector< std::size_t >& Ginpoel;
-      const tk::UnsMesh::Chunk& Chunk;
-      const tk::UnsMesh::Coords& Coord;
-      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& AddedNodes;
-      const std::unordered_map< std::size_t, std::size_t >& AddedTets;
-      const std::unordered_map< int, std::vector< std::size_t > >& Msum;
-      const std::map< int, std::vector< std::size_t > > Bface;
-      const std::map< int, std::vector< std::size_t > > Bnode;
-      const std::vector< std::size_t > Triinpoel;
-      ResizePostAMR(
-        const std::vector< std::size_t >& ginpoel,
-        const tk::UnsMesh::Chunk& chunk,
-        const tk::UnsMesh::Coords& coord,
-        const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addednodes,
-        const std::unordered_map< std::size_t, std::size_t >& addedtets,
-        const std::unordered_map< int, std::vector< std::size_t > >& msum,
-        const std::map< int, std::vector< std::size_t > >& bface,
-        const std::map< int, std::vector< std::size_t > >& bnode,
-        const std::vector< std::size_t >& triinpoel )
-        : Ginpoel(ginpoel), Chunk(chunk), Coord(coord), AddedNodes(addednodes),
-          AddedTets(addedtets), Msum(msum), Bface(bface), Bnode(bnode),
-          Triinpoel(triinpoel) {}
-      template< typename P > void operator()( const P& p ) const {
-        p.ckLocal()->resizePostAMR( Ginpoel, Chunk, Coord, AddedNodes,
-          AddedTets, Msum, Bface, Bnode, Triinpoel );
-      }
-    };
-
-    //! \brief Function class to call the solution() member function
-    //!   behind SchemeBase::Proxy
-    struct Solution : boost::static_visitor< tk::Fields > {
-      template< typename P > const tk::Fields& operator()( const P& p ) const {
-        return p.ckLocal()->solution();
-      }
-    };
 };
 
 } // inciter::

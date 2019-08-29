@@ -28,7 +28,7 @@ void registerDirichlet( DiffEqFactory& f, std::set< ctr::DiffEqType >& t );
 
 //! Return information on the Dirichlet SDE
 std::vector< std::pair< std::string, std::string > >
-infoDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

@@ -7,7 +7,7 @@
              All rights reserved. See the LICENSE file for details.
   \brief     Storage for number of components
   \details   Storage for number of components. This is part of the input deck
-     stack and is thus populated during the control file parsing.
+     stack and is thus populated during control file parsing.
 */
 // *****************************************************************************
 #ifndef InciterComponents_h
@@ -18,11 +18,11 @@
 namespace inciter {
 namespace ctr {
 
-//! Number of components of partial differential equations
+//! Number of components storage for all systems of equations supported
 using ncomps = tk::ctr::ncomponents<
-  tag::transport,             std::vector< tk::ctr::ncomp_type >,
-  tag::compflow,              std::vector< tk::ctr::ncomp_type >,
-  tag::multimat,              std::vector< tk::ctr::ncomp_type >
+   tag::transport
+ , tag::compflow
+ , tag::multimat
 >;
 
 } // ctr::

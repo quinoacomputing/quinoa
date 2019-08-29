@@ -13,6 +13,7 @@ target_include_directories(IO PUBLIC
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/Statistics
                            ${SEACASExodus_INCLUDE_DIRS}
+                           ${NETCDF_INCLUDES}
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
@@ -46,10 +47,12 @@ target_include_directories(NativeMeshIO PUBLIC
                            ${QUINOA_SOURCE_DIR}/Mesh
                            ${QUINOA_SOURCE_DIR}/Control
                            ${SEACASExodus_INCLUDE_DIRS}
+                           ${NETCDF_INCLUDES}
                            ${TPL_INCLUDE_DIR}
                            ${CHARM_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
                            ${PROJECT_BINARY_DIR}/../Main)
@@ -72,6 +75,8 @@ target_include_directories(ExodusIIMeshIO PUBLIC
                            ${QUINOA_SOURCE_DIR}/Base
                            ${QUINOA_SOURCE_DIR}/Mesh
                            ${SEACASExodus_INCLUDE_DIRS}
+                           ${NETCDF_INCLUDES}
+                           ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH})
 
@@ -94,6 +99,7 @@ if (HAS_OMEGA_H)
                              ${QUINOA_SOURCE_DIR}/Mesh
                              ${TPL_INCLUDE_DIR}
                              ${OMEGA_H_INCLUDE_DIRS}
+                             ${HIGHWAYHASH_INCLUDE_DIRS}
                              ${MPI_CXX_INCLUDE_DIRS}
                              ${MPI_CXX_INCLUDE_PATH})
 
@@ -117,6 +123,7 @@ if (HAS_ROOT)
                              ${QUINOA_SOURCE_DIR}/Base
                              ${QUINOA_SOURCE_DIR}/Mesh
                              ${SEACASExodus_INCLUDE_DIRS}
+                             ${NETCDF_INCLUDES}
                              ${ROOT_INCLUDE_DIRS}
                              ${MPI_CXX_INCLUDE_DIRS}
                              ${MPI_CXX_INCLUDE_PATH})
@@ -139,6 +146,7 @@ target_include_directories(HyperMeshIO PUBLIC
                            ${QUINOA_SOURCE_DIR}/Base
                            ${QUINOA_SOURCE_DIR}/Mesh
                            ${TPL_INCLUDE_DIR}
+                           ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${PUGIXML_INCLUDE_DIRS})
 
 set_target_properties(HyperMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
@@ -177,8 +185,10 @@ target_include_directories(MeshWriter PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main
                            ${PROJECT_BINARY_DIR}/../IO
                            ${SEACASExodus_INCLUDE_DIRS}
+                           ${NETCDF_INCLUDES}
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
+                           ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${ROOT_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS})
 

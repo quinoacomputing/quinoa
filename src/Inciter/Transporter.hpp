@@ -309,8 +309,7 @@ class Transporter : public CBase_Transporter {
         }
       }
       // Remove sidesets not configured as BCs (will not process those further)
-      using Pair = std::pair< const int, std::vector< std::size_t > >;
-      tk::erase_if( bnd, [&]( Pair& item ) {
+      tk::erase_if( bnd, [&]( auto& item ) {
         return sidesets_as_bc.find( item.first ) == end(sidesets_as_bc);
       });
       // Warn on no BCs

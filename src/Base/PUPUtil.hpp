@@ -13,11 +13,13 @@
 #ifndef PUPUtil_h
 #define PUPUtil_h
 
+#include <type_traits>
+
 #include <unordered_map>
 #include <unordered_set>
+#include <variant>
+#include <optional>
 
-#include "NoWarning/optional.hpp"
-#include "NoWarning/variant.hpp"
 #include "NoWarning/pup_stl.hpp"
 
 //! Extensions to Charm++'s Pack/Unpack routines
@@ -124,53 +126,52 @@ inline void operator|( PUP::er& p,
                        std::unordered_set< Key, Hash, KeyEqual >& s )
 { pup( p, s ); }
 
-//////////////////// Serialize boost::optional ////////////////////
+//////////////////// Serialize std::optional ////////////////////
 
-//! Pack/Unpack boost::optional.
+//! Pack/Unpack std::optional
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] o boost::optional< T > of arbitrary type T to pack/unpack
+//! \param[in] o std::optional< T > of arbitrary type T to pack/unpack
 template< class T >
-inline void pup( PUP::er& p, boost::optional< T >& o ) {
+inline void pup( PUP::er& p, std::optional< T >& o ) {
   T underlying_value = o ? *o : T();
   bool exist = o ? true : false;
   p | exist;
   p | underlying_value;
-  o = exist ? boost::make_optional(underlying_value) : boost::none;
+  o = exist ? std::make_optional(underlying_value) : std::nullopt;
 }
-//! Pack/Unpack boost::optional.
+//! Pack/Unpack std::optional
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] o boost::optional< T > of arbitrary type T to pack/unpack
+//! \param[in] o std::optional< T > of arbitrary type T to pack/unpack
 template< class T >
-inline void operator|( PUP::er& p, boost::optional< T >& o ) { pup( p, o ); }
+inline void operator|( PUP::er& p, std::optional< T >& o ) { pup( p, o ); }
 
-//////////////////// Serialize boost::variant ////////////////////
+//////////////////// Serialize std::variant ////////////////////
 
-// Since boost::variant (as well as std::variant) when default-constructed is
-// initialized to hold a value of the first alternative of its type list,
-// calling PUP that works based on a boost::visitor with a templated operator()
-// would always incorrectly trigger the overload for the first type. Thus when
-// PUPing a variant not only its value but its type must also be sent during
-// migration. The pup operator template below achieves this by reading out not
-// only the value but also its zero-based index of the type alternative that is
-// currently held by the variant passed to its initializer constructor.  The
-// index and the variant are then PUPed and when unpacking, as an additional
-// step, the variant is reconstructed using the index and the value in the
-// variant. This latter is done by invoking an expansion of an initializer list,
-// guaranteed to happen in order, stepping through the typelist in the variant.
-// Thanks to Nils Deppe for simplifying the original version of this operation.
-// See UnitTest/tests/Base/TestPUPUtil.h or Inciter::SchemeBase.h for puping a
-// variant in action.
+// Since std::variant when default-constructed is initialized to hold a value of
+// the first alternative of its type list, calling PUP that works based on a
+// std::visit with a templated operator() would always incorrectly trigger the
+// overload for the first type. Thus when PUPing a variant not only its value
+// but its type must also be sent during migration. The pup operator template
+// below achieves this by reading out not only the value but also its zero-based
+// index of the type alternative that is currently held by the variant passed to
+// its initializer constructor. The index and the variant are then PUPed and
+// when unpacking, as an additional step, the variant is reconstructed using the
+// index and the value in the variant. This latter is done by invoking an
+// expansion of an initializer list, guaranteed to happen in order, stepping
+// through the typelist in the variant.  Thanks to Nils Deppe for simplifying
+// the original version of this operation. See UnitTest/tests/Base/TestPUPUtil.h
+// or Inciter::SchemeBase.h for puping a variant in action.
 
-//! Pack/Unpack helper for boost::variant
+//! Pack/Unpack helper for std::variant
 //! \param[in,out] index Counter (location) for type in variant
 //! \param[in] send_index Target counter (location) for type in variant
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] var boost::variant< Ts... > of arbitrary types to pack/unpack
+//! \param[in] var std::variant< Ts... > of arbitrary types to pack/unpack
 template <class T, class... Ts>
-char pup_helper( int& index,
-                 const int send_index,
+char pup_helper( std::size_t& index,
+                 const std::size_t send_index,
                  PUP::er& p,
-                 boost::variant<Ts...>& var )
+                 std::variant<Ts...>& var )
 {
   if (index == send_index) {
     if (p.isUnpacking()) {
@@ -178,31 +179,30 @@ char pup_helper( int& index,
       p | t;
       var = std::move(t);
     } else {
-      p | boost::get<T>(var);
+      p | std::get<T>(var);
     }
   }
   index++;
   return '0';
 }
 
-//! Pack/Unpack boost::variant
+//! Pack/Unpack std::variant
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] var boost::variant< Ts... > of arbitrary types to pack/unpack
+//! \param[in] var std::variant< Ts... > of arbitrary types to pack/unpack
 template <class... Ts>
-void pup(PUP::er& p, boost::variant<Ts...>& var) {
-  // cppcheck-suppress variableScope
-  int index = 0;
-  int send_index = var.which();
+void pup(PUP::er& p, std::variant<Ts...>& var) {
+  std::size_t index = 0;
+  auto send_index = var.index();
   p | send_index;
   (void)std::initializer_list<char>{
       pup_helper<Ts>(index, send_index, p, var)...};
 }
 
-//! Pack/Unpack boost::variant
+//! Pack/Unpack std::variant
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] d boost::variant< Ts... > of arbitrary types to pack/unpack
+//! \param[in] d std::variant< Ts... > of arbitrary types to pack/unpack
 template <typename... Ts>
-inline void operator|(PUP::er& p, boost::variant<Ts...>& d) {
+inline void operator|(PUP::er& p, std::variant<Ts...>& d) {
   pup(p, d);
 }
 

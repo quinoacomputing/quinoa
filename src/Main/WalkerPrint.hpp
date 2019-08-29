@@ -146,9 +146,9 @@ class WalkerPrint : public tk::RNGPrint {
         raw( m_item_indent + "Legend: equation name : supported policies\n" );
         raw( '\n' );
         raw( m_item_indent + "Policy codes:\n" );
-        static_assert( tk::HasTypedefCode< kw::init::info >::value,
+        static_assert( tk::HasTypedef_code_v< kw::init::info >,
                        "Policy code undefined for keyword" );
-        static_assert( tk::HasTypedefCode< kw::coeff::info >::value,
+        static_assert( tk::HasTypedef_code_v< kw::coeff::info >,
                        "Policy code undefined for keyword" );
         raw( m_item_indent + " * " + *kw::init::code() + ": "
                            + kw::init::name() + ":\n" );

@@ -10,8 +10,9 @@
 */
 // *****************************************************************************
 
+#include <memory>
+
 #include "PDFReducer.hpp"
-#include "Make_unique.hpp"
 
 namespace tk {
 
@@ -28,7 +29,7 @@ serialize( const std::vector< tk::UniPDF >& u )
   sizer | const_cast< std::vector< tk::UniPDF >& >( u );
 
   // Create raw character stream to store the serialized PDF
-  std::unique_ptr<char[]> flatData = tk::make_unique<char[]>( sizer.size() );
+  std::unique_ptr<char[]> flatData = std::make_unique<char[]>( sizer.size() );
 
   // Serialize PDF, the message will contain a univariate PDF
   PUP::toMem packer( flatData.get() );
@@ -93,7 +94,7 @@ serialize( const std::vector< tk::UniPDF >& u,
   sizer | const_cast< std::vector< tk::TriPDF >& >( t );
 
   // Create raw character stream to store the serialized PDFs
-  std::unique_ptr<char[]> flatData = tk::make_unique<char[]>( sizer.size() );
+  std::unique_ptr<char[]> flatData = std::make_unique<char[]>( sizer.size() );
 
   // Serialize PDFs, each message will contain a vector of PDFs
   PUP::toMem packer( flatData.get() );

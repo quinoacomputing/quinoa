@@ -24,7 +24,7 @@ void registerBeta( DiffEqFactory& f, std::set< ctr::DiffEqType >& t );
 
 //! Return information on the beta SDE
 std::vector< std::pair< std::string, std::string > >
-infoBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt );
+infoBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt );
 
 } // walker::
 

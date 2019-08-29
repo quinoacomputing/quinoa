@@ -22,6 +22,9 @@
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wundef"
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wcast-qual"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 522 )
@@ -32,6 +35,8 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
 #elif defined(__INTEL_COMPILER)
   #pragma warning( pop )
 #endif

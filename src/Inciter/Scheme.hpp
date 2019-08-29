@@ -5,9 +5,10 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Generic forwarding interface to discretization proxies
-  \details   This file defines a generic interface to discretization proxies.
-
+  \brief     Polymorphic glue for calling Charm++ entry methods to base class
+    Discretization, its children implementing specific discretization schemes,
+    and helper classes
+  \details
     The purpose of this class is to hide, behind a single type, different
     Charm++  proxy types that model a single concept, i.e., define some common
     functions as Charm++ entry methods that can be used in either a broadcast
@@ -22,14 +23,14 @@
     Note that while Charm++ does support inheritance and runtime polymorphism
     with chare arrays, we still prefer the implementation below because it uses
     entirely value semantics (inside and in client code) and thus it keeps the
-    complexity of the dispatch behind this class and does not expose it client
-    code.
+    complexity of the dispatch behind this class and does not expose it to
+    client code.
 
     The advantages of this class over traditional runtime polymorphism are (1)
     value semantics (both internally and to client code), (2) not templated,
     and (3) PUPable, i.e., an instance of Scheme can be sent across the network
     using Charm++'s pup framework. Also, since the class only holds a couple of
-    chare proxies, it is extremely lightweight.
+    chare proxies, it is lightweight.
 
     Example usage from client code:
 
@@ -37,278 +38,168 @@
       // Instantiate a Scheme object
       Scheme s( ctr::SchemeType::DG );  // see Control/Inciter/Options/Scheme.h
 
-      // Call a member function entry method in broadcast fashion
-      s.coord< tag::bcast >( ... );     // equivalent to proxy.coord( ... );
+      // Issue broadcast to child scheme entry method
+      s.bcast< Scheme::setup >(...);
 
-      // Call a member function entry method in addressing a single array
-      // element
-      s.coord< tag::elem >( 0, ... );   // equivalent to proxy[0].coord( ... );
-
-      // Broadcast to a member function with optinoal CkEntryOptions object
-      CkEntryOptions opt;
-      s.coord< tag::bcast >( ..., opt );     // proxy.coord( ..., opt );
-
-      // Address array element with optinoal CkEntryOptions object
-      s.coord< tag::elem >( 0, ..., opt );   // proxy[0].coord( ..., opt );
+      // Issue broadcast to base (Discretization) entry method
+      s.disc().totalvol();
     \endcode
 
     Organization, implementation details, end extension of the class:
 
-    Scheme, via inheriting from SchemeBase, contains two Charm++ proxies:
-    discproxy and proxy. The former contains data and functionality common to
-    all discretizations, and this can be considered as an equivalent to a base
-    class in the OOP sense. The latter, proxy, contains data and functionality
-    specific to a particular discretization. When instantiated, Scheme is
-    configured for a single specific discretization which must be selected from
-    the list of types in SchemeBase::Proxy.
+    Scheme contains (at least) two Charm++ proxies: discproxy and proxy. The
+    former contains data and functionality common to all discretizations, and
+    this can be considered as an equivalent to a base class in the OOP sense.
+    The latter, proxy, contains data and functionality specific to a particular
+    discretization. When instantiated, Scheme is configured for a single
+    specific discretization which must be selected from the list of types in
+    SchemeBase::Proxy.
 
     The underlying type of proxy is a variant, which allows storing exactly one
     object. A variant is a type-safe union. An instance of a variant at any
     given time either holds a value of one of its alternative types. Read more
-    on std::variant or boost::variant on how they work.
+    on std::variant on how they work.
 
-    All new member functions that comprise of the concept of the underlying
-    proxies, i.e., the interface, must be defined in Scheme. Whereas common
-    data, functionality, as well as the list of the proxy types that can be
-    configured are defined in SchemeBase. Adding a new forwarding function
-    either as a broadcast or addressing a particular chare array element can be
-    done by simply copying an existing (similar) one and modifying what
-    underlying function (entry method) it calls. The ones that forward to
-    discproxy are grouped first, while the ones that forward to the specific
-    proxy are listed as second. Using SFINAE, multiple overloads are (and can
-    be) defined for a single function, depending on (1) whether it is a
-    broadcast or addressing an array element, (2) whether it takes an optional
-    (default) last argument, usually used for passing a CkEntryOptions object.
-    You can see the Charm++-generated .decl.h file to see what (if any) default
-    arguments a particular entry method may take.
-
-    Currently, forwarding functions are defined for two types entry method
-    calls: broadcasts, i.e., proxy.fn(), and addressing a particular element,
-    i.e., proxy[x].fn(). Another third might be useful to add in the future and
-    that is addressing an entry method behind a section proxy. As we have not
-    used section proxies so far, this is not yet implemented, but if necessary,
-    it should be relatively straightforward to do.
-
-    Extending this class to other discretization schemes is done entirely in
-    SchemeBase. Adding a new discretization scheme amounts to, at the minimum:
-    (1) Adding a new type of Charm++ chare array proxy to SchemeBase::Proxy,
+    Adding a new child scheme is done by
+    (1) Adding a new type of Charm++ chare array proxy to Scheme::Proxy,
     (2) Adding a new type of Charm++ chare array element proxy to
-        SchemeBase::ProxyElem, and
-    (3) Adding a new branch to the if test in SchemeBase's constructor.
+        Scheme::ProxyElem, and
+    (3) Adding a new branch to the if test in Scheme's constructor.
 
-    Implementation details: All forwarding calls are implemented taking a
-    variadic parameter pack, which can take any number of arguments (including
-    zero) and use perfect forwarding to pass the arguments to the entry method
-    calls. This way the code remains generic, easy to modify, and the compiler
-    automatically adjusts the generated forwarding calls if the types and/or
-    number of the arguments to any of the entry methods change. One exception to
-    this is those forwarding calls that deal with default arguments, allowing
-    for passing CkEntryOptions objects. There the number of arguments are
-    hard-coded in the SFINAE construct, but should also be straightforward to
-    modify if necessary.
-
-    The functors named as call_* are used to dispatch (at compile time) entry
-    method calls behind proxy, whose type is different depending on what
-    specific discretization type is configured in the constructor. All common
-    functionality in the call_* functors are lifted over to SchemeBase::Call.
-    This helps keeping the function-call-specific code in Scheme minimal and
-    reuses the generic part in SchemeBase.
-
-    Note that another way of doing the dispatch, that is now done using the
-    call_* functors, could have been implemented using a (compile-, or runtime)
-    associative container storing std::function objects which would store
-    pre-bound function arguments. That would work, but there are three problems
-    with such an approach: (1) std::function is not obvious how to pup, i.e.,
-    send across the network, (2) std::bind cannot currently be used to bind a
-    variadic number arguments and thus the bind calls would not be very generic,
-    and (3) a runtime associative container would take additional state. (Note
-    that problem (2) above could probably be solved with variadic lambdas, but
-    the (1) and (3) remain.)
-
-  \see Talk on [Concept-based runtime polymorphism with Charm++ chare arrays
+  \see A talk on [Concept-based runtime polymorphism with Charm++ chare arrays
     using value semantics](http://charm.cs.illinois.edu/charmWorkshop/slides/CharmWorkshop2018_bakosi.pdf) at the 16th Annual Workshop on Charm++ and its
-    Applications, April 2018.
+    Applications, April 2018, discussing an earlier, more verbose
+    implementation of the idea, using C++11.
 */
 // *****************************************************************************
 #ifndef Scheme_h
 #define Scheme_h
 
-#include "Tags.hpp"
-#include "SchemeBase.hpp"
+#include "Exception.hpp"
+#include "PUPUtil.hpp"
+#include "Inciter/Options/Scheme.hpp"
+
+#include "NoWarning/discretization.decl.h"
+#include "NoWarning/diagcg.decl.h"
+#include "NoWarning/alecg.decl.h"
+#include "NoWarning/distfct.decl.h"
+#include "NoWarning/dg.decl.h"
 
 namespace inciter {
 
-//! Generic forwarding interface to discretization proxies
-class Scheme : public SchemeBase {
+//! Base class for generic forwarding interface to discretization proxies
+class Scheme {
+
+  private:
+    //! Variant type listing all chare proxy types modeling the same concept
+    using Proxy =
+      std::variant< CProxy_DiagCG
+                  , CProxy_DG
+                  , CProxy_ALECG >;
 
   public:
-    // Inherit base constructors
-    using SchemeBase::SchemeBase;
+    //! Variant type listing all chare element proxy types
+    using ProxyElem =
+      std::variant< CProxy_DiagCG::element_t
+                  , CProxy_DG::element_t
+                  , CProxy_ALECG::element_t >;
 
-    // Calls to discproxy, common to all discretizations
+    //! Empty constructor for Charm++
+    explicit Scheme() {}
 
-    //////  discproxy.vol(...)
-    //! \brief Function to call the vol() entry method of an array discproxy
-    //!   (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the coord member function of a chare array
-    //!   discproxy and thus equivalent to discproxy.vol(...).
-    template< typename... Args >
-    void vol( Args&&... args ) {
-      discproxy.vol( std::forward<Args>(args)... );
+    //! Constructor
+    //! \param[in] scheme Discretization scheme
+    //! \details Based on the input enum we create at least two empty chare
+    //!   arrays: (1) discproxy which contains common functionality and data for
+    //!   all discretizations, and (2) proxy, which have functionality and data
+    //!   specific to a given discretization. Note that proxy is bound (in
+    //!   migration behavior and properties) to discproxy.
+    //! \note There may be other bound proxy arrays created depending on the
+    //!   specific discretization configured by the enum.
+    explicit Scheme( ctr::SchemeType scheme ) :
+      discproxy( CProxy_Discretization::ckNew() )
+    {
+      bound.bindTo( discproxy );
+      if (scheme == ctr::SchemeType::DiagCG) {
+        proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(bound) );
+        fctproxy = CProxy_DistFCT::ckNew(bound);
+      } else if (scheme == ctr::SchemeType::DG ||
+                 scheme == ctr::SchemeType::P0P1 ||
+                 scheme == ctr::SchemeType::DGP1 ||
+                 scheme == ctr::SchemeType::DGP2 ||
+                 scheme == ctr::SchemeType::PDG)
+      {
+        proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
+      } else if (scheme == ctr::SchemeType::ALECG) {
+        proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(bound) );
+      } else Throw( "Unknown discretization scheme" );
     }
 
-    //////  discproxy.stat(...)
-    //! \brief Function to call the stat() entry method of an array discproxy
-    //!   (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the stat member function of a chare array
-    //!   discproxy and thus equivalent to discproxy.stat(...).
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
-    void stat( Args&&... args ) {
-      discproxy.stat( std::forward<Args>(args)... );
+    //! Entry method tags for specific Scheme classes to use with bcast()
+    struct setup {};
+    struct advance {};
+    struct resized {};
+    struct resizeComm {};
+    struct refine {};
+    struct lhs {};
+    struct diag {};
+    struct evalLB {};
+    struct doneInserting {};
+    //! Issue broadcast to Scheme entry method
+    //! \tparam Fn Function tag identifying the entry method to call
+    //! \tparam Args Types of arguments to pass to entry method
+    //! \param[in] args Arguments to member function entry method to be called
+    //! \details This function issues a broadcast to a member function entry
+    //!   method of the Scheme chare array (the child of Discretization) and is
+    //!   thus equivalent to proxy.Fn(...).
+    template< typename Fn, typename... Args >
+    void bcast( Args&&... args ) {
+      std::visit( [&]( auto& p ){
+          if constexpr( std::is_same_v< Fn, setup > )
+            p.setup( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, advance > )
+            p.advance( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, resized > )
+            p.resized( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, resizeComm > )
+            p.resizeComm( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, refine > )
+            p.refine( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, lhs > )
+            p.lhs( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, diag > )
+            p.diag( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, evalLB > )
+            p.evalLB( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, doneInserting > )
+            p.doneInserting( std::forward< Args >( args )... );
+        }, proxy );
     }
-    //////  discproxy[x].stat(...)
-    //! Function to call the stat() entry method of an element discproxy (p2p)
+
+    //! Entry method tags for specific Scheme classes to use with ckLocal()
+    struct resizePostAMR {};
+    struct solution {};
+    //! Call Scheme entry method via Charm++ chare array element's ckLocal()
+    //! \tparam Fn Function tag identifying the entry method to call
+    //! \tparam Args Types of arguments to pass to entry method
     //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the stat member function of a chare array
-    //!   element discproxy and thus equivalent to discproxy[x].stat(...).
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0 >
-    void stat( const CkArrayIndex1D& x, Args&&... args ) {
-      discproxy[x].stat( std::forward<Args>(args)... );
+    //! \param[in] args Arguments to member function entry method to be called
+    //! \details This function calls a member function via Charm++'s ckLocal()
+    //!    behind the element proxy configured, indexed by the array index x.
+    //!    Since the call is behind ckLocal(), the member function does not have
+    //!    to be a Charm++ entry method.
+    template< typename Fn, typename... Args >
+    auto ckLocal( const CkArrayIndex1D& x, Args&&... args ) const {
+      auto e = element( x );
+      return std::visit( [&]( auto& p ){
+          if constexpr( std::is_same_v< Fn, resizePostAMR > )
+            return p.ckLocal()->resizePostAMR( std::forward<Args>(args)... );
+          else if constexpr( std::is_same_v< Fn, solution > )
+            return p.ckLocal()->solution( std::forward<Args>(args)... );
+        }, e );
     }
 
-    //////  discproxy[x].insert(...)
-    //! Function to call the insert entry method of an element discproxy (p2p)
-    //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the insert member function of a chare array
-    //!   element discproxy and thus equivalent to discproxy[x].insert(...),
-    //!   using the last argument as default.
-    template< typename... Args >
-    void discInsert( const CkArrayIndex1D& x, Args&&... args ) {
-      discproxy[x].insert( fctproxy, std::forward<Args>(args)... );
-    }
-
-    //////  discproxy.doneInserting(...)
-    //! \brief Function to call the doneInserting entry method of an array
-    //!   discproxy (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the doneInserting member function of a
-    //!   chare array discproxy and thus equivalent to
-    //!   discproxy.doneInserting(...).
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
-    void doneDiscInserting( Args&&... args ) {
-      discproxy.doneInserting( std::forward<Args>(args)... );
-    }
-
-    //////  fctcproxy.doneInserting(...)
-    //! \brief Function to call the doneInserting entry method of an array
-    //!   fctproxy (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the doneInserting member function of a
-    //!   chare array fctproxy and thus equivalent to
-    //!   fctproxy.doneInserting(...).
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
-    void doneDistFCTInserting( Args&&... args ) {
-      fctproxy.doneInserting( std::forward<Args>(args)... );
-    }
-
-    // Calls to proxy, specific to a particular discretization
-
-    //////  proxy.setup(...)
-    //! Function to call the setup entry method of an array proxy (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the setup member function of a chare array
-    //!   proxy and thus equivalent to proxy.setup(...), using the last argument
-    //!   as default.
-    template< typename... Args >
-    void setup( Args&&... args ) {
-      boost::apply_visitor( call_setup<Args...>( std::forward<Args>(args)... ),
-                            proxy );
-    }
-
-    //////  proxy.resizeComm(...)
-    //! Function to call the resizeComm entry method of an array proxy
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the resizeComm member function of a chare
-    //!   array proxy and thus equivalent to proxy.resizeComm(...), using the
-    //!   last argument as default.
-    template< typename... Args >
-    void resizeComm( Args&&... args ) {
-      boost::apply_visitor( call_resizeComm<Args...>( std::forward<Args>(args)... ),
-                            proxy );
-    }
-
-    //////  proxy.lhs(...)
-    //! Function to call the lhs entry method of an array proxy (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the lhs member function of a chare array
-    //!   proxy and thus equivalent to proxy.lhs(...), using the last argument
-    //!   as default.
-    template< typename... Args >
-    void lhs( Args&&... args ) {
-      boost::apply_visitor( call_lhs<Args...>( std::forward<Args>(args)... ),
-                            proxy );
-    }
-
-    //////  proxy.refine(...)
-    //! Function to call the resized entry method of an array proxy (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the resized member function of a chare
-    //!   array proxy and thus equivalent to proxy.refine(...), using the last
-    //!   argument as default.
-    template< typename... Args >
-    void refine( Args&&... args ) {
-      boost::apply_visitor(
-        call_refine<Args...>( std::forward<Args>(args)... ), proxy );
-    }
-
-    //////  proxy.resized(...)
-    //! Function to call the resized entry method of an array proxy (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the resized member function of a chare
-    //!   array proxy and thus equivalent to proxy.resized(...), using the last
-    //!   argument as default.
-    template< typename... Args >
-    void resized( Args&&... args ) {
-      boost::apply_visitor(
-        call_resized<Args...>( std::forward<Args>(args)... ), proxy );
-    }
-
-    //////  proxy.diag(...)
-    //! function to call the diag entry method of an array proxy (broadcast)
-    //! \param[in] args arguments to member function (entry method) to be called
-    //! \details this function calls the diag member function of a chare array
-    //!   proxy and thus equivalent to proxy.diag(...), specifying a
-    //!   non-default last argument.
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
-    void diag( Args&&... args ) {
-      boost::apply_visitor( call_diag<Args...>( std::forward<Args>(args)... ),
-                            proxy );
-    }
-
-    //////  proxy.evalLB(...)
-    //! function to call the evalLB entry method of an array proxy (broadcast)
-    //! \param[in] args arguments to member function (entry method) to be called
-    //! \details this function calls the evalLB member function of a chare array
-    //!   proxy and thus equivalent to proxy.evalLB(...), specifying a
-    //!   non-default last argument.
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
-    void evalLB( Args&&... args ) {
-      boost::apply_visitor( call_evalLB<Args...>( std::forward<Args>(args)... ),
-                            proxy );
-    }
-
-    //////  proxy[x].insert(...)
-    //! Function to call the insert entry method of an element proxy (p2p)
+    //! Function to call the insert entry method of an element proxy
     //! \param[in] x Chare array element index
     //! \param[in] args Arguments to member function (entry method) to be called
     //! \details This function calls the insert member function of a chare array
@@ -316,44 +207,44 @@ class Scheme : public SchemeBase {
     //!   last argument as default.
     template< typename... Args >
     void insert( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = tk::element< ProxyElem >( proxy, x );
-      boost::apply_visitor( call_insert<Args...>( std::forward<Args>(args)... ),
-                            e );
+      auto e = element( x );
+      std::visit( [&]( auto& p ){ p.insert(std::forward<Args>(args)...); }, e );
     }
 
-    //////  proxy.doneInserting(...)
-    //! \brief Function to call the doneInserting entry method of an array proxy
-    //!   (broadcast)
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the doneInserting member function of a
-    //!   chare array proxy and thus equivalent to proxy.doneInserting(...).
-    template< class Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::bcast >::value, int >::type = 0 >
-    void doneInserting( Args&&... args ) {
-      boost::apply_visitor(
-        call_doneInserting<Args...>( std::forward<Args>(args)... ), proxy );
+    //! Get reference to discretization proxy
+    //! \return Discretization Charm++ chare array proxy
+    CProxy_Discretization& disc() noexcept { return discproxy; }
+
+    //! Get reference to DistFCT proxy
+    //! \return DistFCT Charm++ chare array proxy
+    CProxy_DistFCT& fct() noexcept { return fctproxy; }
+
+    //! Get reference to scheme proxy
+    //! \return Variant storing Charm++ chare array proxy configured
+    const Proxy& getProxy() noexcept { return proxy; }
+
+    //! Query underlying proxy type
+    //! \return Zero-based index into the set of types of Proxy
+    std::size_t index() const noexcept { return proxy.index(); }
+
+    //! Query underlying proxy element type
+    //! \return Zero-based index into the set of types of ProxyElem
+    std::size_t index_element() const noexcept {
+      return element( 0 ).index();
     }
 
-    //////  proxy[x].newMesh(...)
-    //! Function to call the newMesh entry method of an element proxy (p2p)
-    //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function (entry method) to be called
-    //! \details This function calls the newMesh member function of a chare
-    //!   array element proxy and thus equivalent to proxy[x].newMesh(...),
-    //!   specifying a non-default last argument.
-    template< typename Op, typename... Args, typename std::enable_if<
-      std::is_same< Op, tag::elem >::value, int >::type = 0 >
-    void newMesh( const CkArrayIndex1D& x, Args&&... args ) {
-      auto e = tk::element< ProxyElem >( proxy, x );
-      boost::apply_visitor(
-        call_newMesh<Args...>( std::forward<Args>(args)... ), e );
-    }
+    //! Charm++ array options accessor for binding external proxies
+    //! \return Charm++ array options object reference
+    const CkArrayOptions& arrayoptions() { return bound; }
 
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      SchemeBase::pup( p );
+      p | proxy;
+      p | discproxy;
+      p | fctproxy;
+      p | bound;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -362,216 +253,24 @@ class Scheme : public SchemeBase {
     //@}
 
   private:
-   //! Functor to call the chare entry method 'setup'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_setup : Call< call_setup<As...>, As... > {
-     using Base = Call< call_setup<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.setup( std::forward<Args>(args)... );
-     }
-   };
+    //! Variant storing one proxy to which this class is configured for
+    Proxy proxy;
+    //! Charm++ proxy to data and code common to all discretizations
+    CProxy_Discretization discproxy;
+    //! Charm++ proxy to flux-corrected transport (FCT) driver class
+    CProxy_DistFCT fctproxy;
+    //! Charm++ array options for binding chares
+    CkArrayOptions bound;
 
-   //! Functor to call the chare entry method 'resizeComm'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_resizeComm : Call< call_resizeComm<As...>, As... > {
-     using Base = Call< call_resizeComm<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.resizeComm( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'refine'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_refine : Call< call_refine<As...>, As... > {
-     using Base = Call< call_refine<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.refine( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'resized'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_resized : Call< call_resized<As...>, As... > {
-     using Base = Call< call_resized<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.resized( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'lhs'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_lhs : Call< call_lhs<As...>, As... > {
-     using Base = Call< call_lhs<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.lhs( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'insert'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_insert : Call< call_insert<As...>, As... > {
-     using Base = Call< call_insert<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.insert( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'doneInserting'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_doneInserting : Call< call_doneInserting<As...>, As... > {
-     using Base = Call< call_doneInserting<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.doneInserting( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'newMesh'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_newMesh : Call< call_newMesh<As...>, As... > {
-     using Base = Call< call_newMesh<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.newMesh( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'diag'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_diag : Call< call_diag<As...>, As... > {
-     using Base = Call< call_diag<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.diag( std::forward<Args>(args)... );
-     }
-   };
-
-   //! Functor to call the chare entry method 'evalLB'
-   //! \details This class is intended to be used in conjunction with variant
-   //!   and boost::visitor. The template argument types are the types of the
-   //!   arguments to entry method to be invoked behind the variant holding a
-   //!   Charm++ proxy.
-   //! \see The base class Call for the definition of operator().
-   template< typename... As >
-   struct call_evalLB : Call< call_evalLB<As...>, As... > {
-     using Base = Call< call_evalLB<As...>, As... >;
-     using Base::Base; // inherit base constructors
-     //! Invoke the entry method
-     //! \param[in,out] p Proxy behind which the entry method is called
-     //! \param[in] args Function arguments passed to entry method
-     //! \details P is the proxy type, Args are the types of the arguments of
-     //!   the entry method to be called.
-     template< typename P, typename... Args >
-     static void invoke( P& p, Args&&... args ) {
-       p.evalLB( std::forward<Args>(args)... );
-     }
-   };
-
+    //! Function dereferencing operator[] of chare proxy inside variant
+    //! \param[in] x Chare array element index
+    //! \return Chare array element proxy as a variant, defined by ProxyElem
+    //! \details The returning element proxy is a variant, depending on the
+    //!   input proxy.
+    ProxyElem element( const CkArrayIndex1D& x ) const {
+      return std::visit( [&]( const auto& p ){
+               return static_cast< ProxyElem >( p[x] ); }, proxy );
+    }
 };
 
 } // inciter::

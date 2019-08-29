@@ -70,7 +70,7 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 # Set build type (will be exported to the source)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 # Query regression tests directory (will be exported to the source)
-set(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../tests/regression")
+get_filename_component(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../tests/regression" ABSOLUTE)
 
 # Query target architecture
 include(TargetArch)
@@ -104,7 +104,7 @@ message(STATUS "Third-party library dir: " ${TPL_DIR})
 
 # Detect compiler version
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
-    CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   include(DetectCompilerVersion)
 endif()
 
@@ -216,7 +216,7 @@ execute_process(COMMAND "date" "+%A, %b %d, %Y"
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE_SIMPLE "${BUILD_DATE_SIMPLE}")
 
 # Set the requirement for the C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
@@ -237,7 +237,7 @@ macro (add_c_compiler_flag flag)
 endmacro (add_c_compiler_flag)
 
 # Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
 
   # Include function that allows to set standard C++ library
   include(libstdcxx)
@@ -333,13 +333,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Include function that allows to set standard C++ library
   include(libstdcxx)
 
-  # Offer switch between libc++ and libstdc++, using libc++ as default
+  # Offer switch between libc++ and libstdc++, using libstdc++ as default
   if (LIBCXX_FOUND)
-    set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
+    set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libstdc++")
   endif()
-
-  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
-  add_compiler_flag("-std=c++11")
 
   # Compiler flags for intel
   add_compiler_flag("-w3")       # enable diagnostics: remarks, warnings, errors
@@ -362,6 +359,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #   593: parameter was set but never used
   #   869: parameter was never referenced
   #   981: operands are evaluated in unspecified order
+  #  1011: missing return statement at end of non-void function (constexpr)
+  #  1292: unknown attribute "fallthrough"
   #  1418: external function definition with no prior declaration
   #  1419: external declaration in primary source file
   #  1572: floating-point equality and inequality comparisons are unreliable
@@ -374,7 +373,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  3346: dynamic exception specifications are deprecated
   #  3656: variable may be used before its value is set
   #  10120: overriding '-O3' with '-O2'
-  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656,10120")
+  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1011,1292,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656,10120")
 
   # Compiler flags for optimization report
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
@@ -452,6 +451,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   # 11548: comparison between signed and unsigned operands
   add_compiler_flag("-hnomessage=11709:261:12307:12489:193:826:737:997:3138:3137:7405:1418:177:181:401:11749:11548:1982:368:324:47:1:7:111:68:10153:186:550:21:237:174:7212:284:82")
   add_c_compiler_flag("-hnomessage=11709:301:3137:3138:7405:193:1977")
+
+else()
+
+  message(WARNING "Compiler '${CMAKE_CXX_COMPILER_ID}' could not be identified.")
 
 endif()
 
@@ -532,6 +535,16 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${UNITTEST_EXECUTABLE}
                 ${FILECONV_EXECUTABLE})
 
+
+# Decide if the Exception class will write to std::cerr. This may not always be
+# thread-safe, so it can be disabled here by setting this to false. The default
+# is true, because it works most of the time.
+if (NOT EXCEPTIONS_WRITE_TO_CERR)     # set default
+  # will become compiler define in Main/QuinoaConfig.h
+  set(EXCEPTIONS_WRITE_TO_CERR true CACHE BOOL "Exceptions will write std::cerr.")
+endif()
+message(STATUS "Exceptions write to cerr: ${EXCEPTIONS_WRITE_TO_CERR}")
+
 # Configure cmake variables to pass to the build
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.hpp.in"
                 "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.hpp" )
@@ -586,7 +599,7 @@ else()
   PrintMissing(LoadBalance "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND;Zoltan2_FOUND")
 endif()
 
-if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND RANDOM123_FOUND)
   add_subdirectory(RNG)
 else()
   PrintMissing(RNG "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
@@ -598,12 +611,12 @@ else()
   PrintMissing(Statistics "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
 endif()
 
-if ((ENABLE_MESHCONV OR ENABLE_INCITER) AND BRIGAND_FOUND)
+if ((ENABLE_MESHCONV OR ENABLE_INCITER) AND BRIGAND_FOUND AND HIGHWAYHASH_FOUND)
   add_subdirectory(Mesh)
   add_subdirectory(IO)
 endif()
 
-if (ENABLE_INCITER)
+if (ENABLE_INCITER AND HIGHWAYHASH_FOUND)
   add_subdirectory(PDE)
   add_subdirectory(Inciter)
 endif()

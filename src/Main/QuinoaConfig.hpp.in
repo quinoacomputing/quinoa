@@ -51,6 +51,9 @@ namespace tk {
 #cmakedefine01 BACKWARD_HAS_BFD
 #cmakedefine01 BACKWARD_HAS_DWARF
 
+// Exceptions write to std::cerr
+#cmakedefine EXCEPTIONS_WRITE_TO_CERR
+
 // Accessor declarations as strings of configuration values imported from cmake
 
 std::string unittest_executable();

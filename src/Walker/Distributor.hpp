@@ -94,6 +94,12 @@ class Distributor : public CBase_Distributor {
     void nostat();
 
   private:
+    //! Type alias for output indicators
+    using OutputIndicators = tk::TaggedTuple< brigand::list<
+                                 tag::stat, bool
+                               , tag::pdf,  bool
+                             > >;
+
     //! Print information at startup
     void info( uint64_t chunksize, std::size_t nchare );
 
@@ -144,11 +150,8 @@ class Distributor : public CBase_Distributor {
     //! Evaluate time step, compute new time step size
     void evaluateTime();
 
-    //! Pretty printer
-    WalkerPrint m_print;
-    //! Output indicators
-    tk::tuple::tagged_tuple< tag::stat, bool,
-                             tag::pdf,  bool > m_output;
+    WalkerPrint m_print;                        //! Pretty printer
+    OutputIndicators m_output;                  //!< Output indicators
     uint64_t m_it;                              //!< Iteration count
     tk::real m_npar;                            //!< Total number of particles
     tk::real m_t;                               //!< Physical time

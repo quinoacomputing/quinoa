@@ -100,7 +100,7 @@ template< class Init, class Coefficients >
 class DiagOrnsteinUhlenbeck {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
   public:
     //! \brief Constructor
