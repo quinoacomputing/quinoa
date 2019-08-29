@@ -74,15 +74,12 @@ if(RNGSSE2_FOUND)
 endif()
 
 ### HDF5/NetCDF (NetCDF only for static link)
+set(HDF5_PREFER_PARALLEL true)
 if(NOT BUILD_SHARED_LIBS)
-  set(HDF5_PREFER_PARALLEL true)
   set(HDF5_USE_STATIC_LIBRARIES true)
-  find_package(HDF5 COMPONENTS C HL)
-  find_package(NetCDF)
-else()
-  set(HDF5_PREFER_PARALLEL true)
-  find_package(HDF5 COMPONENTS C HL)
 endif()
+find_package(HDF5 COMPONENTS C HL)
+find_package(NetCDF)
 
 if (NOT HDF5_FOUND)
   set(HDF5_INCLUDE_DIRS "")
@@ -200,7 +197,7 @@ endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
     Zoltan2_FOUND AND HDF5_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
-    (MKL_FOUND OR LAPACKE_FOUND) AND Boost_FOUND)
+    (MKL_FOUND OR LAPACKE_FOUND) AND Boost_FOUND AND HIGHWAYHASH_FOUND)
   set(ENABLE_INCITER "true")
   set(INCITER_EXECUTABLE inciter)
 else()
