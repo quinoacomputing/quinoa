@@ -35,6 +35,7 @@ target_include_directories(Inciter PUBLIC
                            ${QUINOA_SOURCE_DIR}/PDE
                            ${QUINOA_TPL_DIR}
                            ${SEACASExodus_INCLUDE_DIRS}
+                           ${NETCDF_INCLUDES}
                            ${BRIGAND_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
