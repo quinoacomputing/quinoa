@@ -19,6 +19,7 @@
   #pragma clang diagnostic ignored "-Wunused-private-field"
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+  #pragma clang diagnostic ignored "-Wzero-length-array"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
   #pragma clang diagnostic ignored "-Wconversion"
   #pragma clang diagnostic ignored "-Wsign-conversion"

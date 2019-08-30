@@ -46,7 +46,10 @@ class CGPDE {
     using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
-    //! \brief Constructor taking an object modeling Concept.
+    //! Default constructor taking no arguments for Charm++
+    explicit CGPDE() = default;
+
+    //! Constructor taking an object modeling Concept.
     //! \details The object of class T comes pre-constructed.
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
