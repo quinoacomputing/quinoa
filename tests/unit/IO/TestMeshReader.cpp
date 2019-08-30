@@ -27,18 +27,6 @@ namespace tut {
 //! All tests in group inherited from this base
 struct MeshReader_common {
 
-  //! Mesh reader configured for ExodusIIMesReader for a simple mesh w/o faces
-  tk::MeshReader er;
-  //! Mesh reader configured for ExodusIIMesReader for mesh w/ faces
-  tk::MeshReader erf;
-
-  //! \brief Constructor for MeshReader_common as base class for all tests in
-  //!   this group
-  MeshReader_common() :
-    er( tk::regression_dir() + "/meshconv/gmsh_output/box_24.exo" ),
-    erf( tk::regression_dir() +
-         "/inciter/transport/GaussHump/unitsquare_01_3.6k.exo" ) {}
-
   // Coordinates for simple tetrahedron-mesh
   std::vector< tk::real > box24_coord { 0,   0,   0,
                                         1,   0,   0,
@@ -162,6 +150,12 @@ template<> template<>
 void MeshReader_object::test< 1 >() {
   set_test_name( "ctor dispatching to ExodusII reader" );
 
+  //! Mesh reader configured for ExodusIIMesReader for a simple mesh w/o faces
+  tk::MeshReader er( tk::regression_dir() + "/meshconv/gmsh_output/box_24.exo" );
+  //! Mesh reader configured for ExodusIIMesReader for mesh w/ faces
+  tk::MeshReader erf( tk::regression_dir() +
+         "/inciter/transport/GaussHump/unitsquare_01_3.6k.exo" );
+
   // Verify the output of mesh reader dispatching to ExodusII reader using two
   // different meshes, one with only tets, one with faces/sidesets.
   verifyTets( er );
@@ -172,6 +166,12 @@ void MeshReader_object::test< 1 >() {
 template<> template<>
 void MeshReader_object::test< 2 >() {
   set_test_name( "copy ctor dispatching to ExodusII reader" );
+
+  //! Mesh reader configured for ExodusIIMesReader for a simple mesh w/o faces
+  tk::MeshReader er( tk::regression_dir() + "/meshconv/gmsh_output/box_24.exo" );
+  //! Mesh reader configured for ExodusIIMesReader for mesh w/ faces
+  tk::MeshReader erf( tk::regression_dir() +
+         "/inciter/transport/GaussHump/unitsquare_01_3.6k.exo" );
 
   std::vector< tk::MeshReader > v;
 
@@ -195,6 +195,12 @@ template<> template<>
 void MeshReader_object::test< 3 >() {
   set_test_name( "move ctor dispatching to ExodusII reader" );
 
+  //! Mesh reader configured for ExodusIIMesReader for a simple mesh w/o faces
+  tk::MeshReader er( tk::regression_dir() + "/meshconv/gmsh_output/box_24.exo" );
+  //! Mesh reader configured for ExodusIIMesReader for mesh w/ faces
+  tk::MeshReader erf( tk::regression_dir() +
+         "/inciter/transport/GaussHump/unitsquare_01_3.6k.exo" );
+
   std::vector< tk::MeshReader > v;
 
   // Invoke move constructor
@@ -214,6 +220,12 @@ void MeshReader_object::test< 3 >() {
 template<> template<>
 void MeshReader_object::test< 4 >() {
   set_test_name( "copy assignment dispatching to ExoII reader" );
+
+  //! Mesh reader configured for ExodusIIMesReader for a simple mesh w/o faces
+  tk::MeshReader er( tk::regression_dir() + "/meshconv/gmsh_output/box_24.exo" );
+  //! Mesh reader configured for ExodusIIMesReader for mesh w/ faces
+  tk::MeshReader erf( tk::regression_dir() +
+         "/inciter/transport/GaussHump/unitsquare_01_3.6k.exo" );
 
   // Invoke constructor
   tk::MeshReader q( er );
@@ -238,6 +250,12 @@ void MeshReader_object::test< 4 >() {
 template<> template<>
 void MeshReader_object::test< 5 >() {
   set_test_name( "move assignment dispatching to ExoII reader" );
+
+  //! Mesh reader configured for ExodusIIMesReader for a simple mesh w/o faces
+  tk::MeshReader er( tk::regression_dir() + "/meshconv/gmsh_output/box_24.exo" );
+  //! Mesh reader configured for ExodusIIMesReader for mesh w/ faces
+  tk::MeshReader erf( tk::regression_dir() +
+         "/inciter/transport/GaussHump/unitsquare_01_3.6k.exo" );
 
   // Invoke move assignment
   auto c = er;

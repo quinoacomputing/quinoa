@@ -105,7 +105,7 @@ message(STATUS "Third-party library dir: " ${TPL_DIR})
 
 # Detect compiler version
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
-    CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   include(DetectCompilerVersion)
 endif()
 
@@ -238,7 +238,7 @@ macro (add_c_compiler_flag flag)
 endmacro (add_c_compiler_flag)
 
 # Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
 
   # Include function that allows to set standard C++ library
   include(libstdcxx)
@@ -453,6 +453,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   add_compiler_flag("-hnomessage=11709:261:12307:12489:193:826:737:997:3138:3137:7405:1418:177:181:401:11749:11548:1982:368:324:47:1:7:111:68:10153:186:550:21:237:174:7212:284:82")
   add_c_compiler_flag("-hnomessage=11709:301:3137:3138:7405:193:1977")
 
+else()
+
+  message(WARNING "Compiler '${CMAKE_CXX_COMPILER_ID}' could not be identified.")
+
 endif()
 
 # Set runner configuration. This is used when generating code coverage and
@@ -538,7 +542,7 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
 # is true, because it works most of the time.
 if (NOT EXCEPTIONS_WRITE_TO_CERR)     # set default
   # will become compiler define in Main/QuinoaConfig.h
-  set(EXCEPTIONS_WRITE_TO_CERR true CACHE bool "Exceptions will write std::cerr.")
+  set(EXCEPTIONS_WRITE_TO_CERR true CACHE BOOL "Exceptions will write std::cerr.")
 endif()
 message(STATUS "Exceptions write to cerr: ${EXCEPTIONS_WRITE_TO_CERR}")
 
