@@ -38,6 +38,9 @@ namespace walker {
 class DiffEq {
 
   public:
+    //! Default constructor taking no arguments for Charm++
+    explicit DiffEq() = default;
+
     //! \brief Constructor taking an object modeling Concept.
     //! \details The object of class T comes pre-constructed.
     //! \param[in] x Instantiated object of type T given by the template

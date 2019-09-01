@@ -39,6 +39,7 @@
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Woverloaded-virtual"
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+  #pragma clang diagnostic ignored "-Wzero-length-array"
   #pragma clang diagnostic ignored "-Wcast-qual"
   #pragma clang diagnostic ignored "-Wshadow-field-in-constructor"
   #pragma clang diagnostic ignored "-Wshadow-field"
