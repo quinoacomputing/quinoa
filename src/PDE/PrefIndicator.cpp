@@ -108,11 +108,13 @@ void spectral_decay( std::size_t nunk,
     }
   }
 
-  // When it comes to spectral-decay indicator, the adaptation strategy shows
-  // that for each element, if the value of indicator is less than epsL, then
-  // this element will be refined to a higher order of DG scheme. Also if the
-  // value of indicator is larger than epsH, the element will be derefined to a
-  // lower order of DG scheme.
+  // As for spectral-decay indicator, rho_p - rho_(p-1) actually is the leading
+  // term of discretization error for the numerical solution of p-1. Therefore,
+  // this function represents the qualitative behavior of the discretization
+  // error. If the value is less than epsL which means the discretization error
+  // is already a really small number, then the element should be de-refined. On
+  // the other hand, if the value is larger than epsH which means the
+  // discretization error is relatively large, then it should be refined.
 
   // Note: Spectral-decay indicator is a measurement of the continuity of the
   // numerical solution inside this element. So when this indicator appears
@@ -276,6 +278,13 @@ void non_conformity( std::size_t nunk,
       Ind[er] = std::max( ind, Ind[er] );
     }
   }
+
+  // By assuming a smooth solution, we use the non-conformity indicator to
+  // represent the error for the numerical solution qualitatively. If the value
+  // is less than epsL which means the error is already a really small number,
+  // then the element should be de-refined. On the other hand, if the value is
+  // larger than epsH which means the error is relatively large, then it should
+  // be refined.
 
   // Marke the ndof according to the adaptive indicator
   for (std::size_t e=0; e<esuel.size()/4; ++e)
