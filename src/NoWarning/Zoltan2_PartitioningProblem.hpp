@@ -56,6 +56,7 @@
   #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
   #pragma GCC diagnostic ignored "-Wswitch-default"
   #pragma GCC diagnostic ignored "-Wdeprecated-copy"
+  #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
   #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
