@@ -78,9 +78,7 @@ set(HDF5_PREFER_PARALLEL true)
 if(NOT BUILD_SHARED_LIBS)
   set(HDF5_USE_STATIC_LIBRARIES true)
 endif()
-set(HDF5_ROOT ${TPL_DIR}) # prefer ours
 find_package(HDF5 COMPONENTS C HL)
-set(NETCDF_ROOT ${TPL_DIR}) # prefer ours
 find_package(NetCDF)
 
 if (NOT HDF5_FOUND)
