@@ -20,7 +20,7 @@
 FROM alpine:latest
 
 # Install system-wide prerequisites
-RUN apk update && apk add patch libtool autoconf automake gfortran gcc g++ make boost-dev bash m4 file git cmake perl grep zlib-dev libexecinfo-dev ninja graphviz binutils-dev flex bison vim
+RUN apk update && apk add patch libtool autoconf automake gfortran gcc g++ make boost-dev bash m4 file git cmake perl grep zlib-dev libexecinfo-dev libexecinfo-static ninja graphviz binutils-dev flex bison vim
 
 # Install OpenMPI
 ADD http://download.open-mpi.org/release/open-mpi/v3.1/openmpi-3.1.1.tar.gz /openmpi/
