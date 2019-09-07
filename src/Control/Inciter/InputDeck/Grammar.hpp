@@ -588,6 +588,7 @@ namespace deck {
            tk::grm::readkw< typename use< keyword >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
+             tk::grm::bcparam< use, kw::p_farfield, tag::p_farfield >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,
@@ -732,7 +733,7 @@ namespace deck {
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           bc< kw::bc_outlet, tag::compflow, tag::bcoutlet >,
+                           bc< kw::bc_outlet, tag::compflow, tag::bcsubsonicoutlet >,
                            bc< kw::bc_extrapolate, tag::compflow,
                                tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};

@@ -35,6 +35,7 @@ using InputDeckMembers = brigand::list<
   , tag::amr,        amr
   , tag::pref,       pref
   , tag::discr,      discretization
+  , tag::bc,         bc
   , tag::prec,       precision
   , tag::flformat,   floatformat
   , tag::component,  ncomps
@@ -183,6 +184,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::bc_inlet,
                                    kw::bc_outlet,
                                    kw::bc_extrapolate,
+                                   kw::p_farfield,
                                    kw::gauss_hump,
                                    kw::rotated_sod_shocktube,
                                    kw::cyl_advect,
@@ -216,6 +218,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::cweight >() = 1.0;
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::rdof >() = 1;
+      // Default boundary condition parameters
+      get< tag::bc, tag::p_farfield >() = 0.0;
       // Default field output file type
       get< tag::selected, tag::filetype >() = tk::ctr::FieldFileType::EXODUSII;
       // Default AMR settings

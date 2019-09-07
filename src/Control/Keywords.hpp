@@ -1768,6 +1768,24 @@ struct ncomp_info {
 };
 using ncomp = keyword< ncomp_info,  TAOCPP_PEGTL_STRING("ncomp") >;
 
+struct p_farfield_info {
+  static std::string name() { return "p_farfield"; }
+  static std::string shortDescription() { return
+    "Select the far-field pressure"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the far-field pressure when subsonic
+    outlet boundary condition is used.  This parameter is set up in boundary
+    condition block. Example specification: 'p_farfield 1.0')";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using p_farfield =
+          keyword< p_farfield_info, TAOCPP_PEGTL_STRING("p_farfield") >;
+
 struct nmat_info {
   static std::string name() { return "nmat"; }
   static std::string shortDescription() { return
