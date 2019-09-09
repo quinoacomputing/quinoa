@@ -316,7 +316,7 @@ CompFlowProblemRayleighTaylor::fieldOutput(
 }
 
 std::vector< std::string >
-CompFlowProblemRayleighTaylor::names( ncomp_t /* ncomp */ ) const
+CompFlowProblemRayleighTaylor::names( ncomp_t /*ncomp*/ ) const
 // *****************************************************************************
 //  Return names of integral variables to be output to diagnostics file
 //! \return Vector of strings labelling integral variables output

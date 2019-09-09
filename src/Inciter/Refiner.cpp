@@ -873,7 +873,7 @@ Refiner::errorsInEdges(
   const tk::Fields& u ) const
 // *****************************************************************************
 //  Compute errors in edges
-//! \param[in] npoint Number nodes in current mesh (partition)
+//! \param[in] npoin Number nodes in current mesh (partition)
 //! \param[in] esup Elements surrounding points linked vectors
 //! \param[in] u Solution evaluated at mesh nodes for all scalar components
 //! \return A map associating errors (real values between 0.0 and 1.0 incusive)
@@ -913,7 +913,7 @@ Refiner::solution( std::size_t npoin,
                                     std::vector< std::size_t > >& esup ) const
 // *****************************************************************************
 //  Update (or evaluate) solution on current mesh
-//! \param[in] npoint Number nodes in current mesh (partition)
+//! \param[in] npoin Number nodes in current mesh (partition)
 //! \param[in] esup Elements surrounding points linked vectors
 //! \return Solution updated/evaluated for all scalar components
 // *****************************************************************************

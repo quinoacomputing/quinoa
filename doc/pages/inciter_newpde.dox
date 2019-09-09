@@ -134,7 +134,7 @@ inciter
   compflow
     depvar u    # assign dependent variable 'u' to this PDE
     physics euler       # select 'euler' as compressible flow physics policy
-    problem vortical_flow       # select 'vortical flow` as problem policy
+    problem interface_advection  # select 'interface_advection` as problem policy
     ...
   end
   ...
@@ -144,11 +144,10 @@ end
 This is a snippet, configuring inciter to compute a single PDE system governing
 compressible flow. Every PDE type is configured via a physics and a problem
 policy. Here the physics is `euler`, configuring the solution of the Euler
-equations for inviscid flow, and the problem is `vortical_flow`, which is a test
-case derived using the method of manufactured solutions, specifying a prescribed
-velocity field with vortices. Since the analytical solution is known for this
-specific case, it can be used to verify the correctness of the implementation of
-the algorithm and the order of accuracy of the numerical method.
+equations for inviscid flow, and the problem is `interface_advection`.  Since
+the analytical solution is known for this specific case, it can be used to
+verify the correctness of the implementation of the algorithm and the order of
+accuracy of the numerical method.
 
 The important parts of this specification are the following.
 
@@ -163,8 +162,8 @@ above this is `euler`, but this is only the simplest choice. Every PDE has a
 default physics which is selected if no physics is specified.
 
 3. The PDE must be specialized with a selected `problem` type. In the example
-above this is `vortical_flow`, but this is only one choice. Every PDE has a
-default problem which is selected if no problem is specified.
+above this is `interface_advection`, but this is only one choice. Every PDE has
+a default problem which is selected if no problem is specified.
 
 4. The `depvar` keyword specifies the dependent variable by a single character
 that is used within the input file to refer to a particular PDE system. Note
@@ -286,6 +285,24 @@ index b3fbcebd..c57c65ce 100644
 +};
 +using multimat = keyword< multimat_info, TAOCPP_PEGTL_STRING("multimat") >;
 +
++struct interface_advection_info {
++  using code = Code< I >;
++  static std::string name() { return "Interface advection"; }
++  static std::string shortDescription() { return
++    "Select the interface advection test problem "; }
++  static std::string longDescription() { return
++    R"(This keyword is used to select the interface advection test problem. The
++    purpose of this test problem is to test the well-balancedness of the
++    multi-material discretization and its interface capturing
++    capabilities. Example: "problem interface_advection".)"; }
++  struct expect {
++    static std::string description() { return "string"; }
++  };
++};
++using interface_advection =
++  keyword< interface_advection_info,
++           TAOCPP_PEGTL_STRING("interface_advection") >;
++
  struct rcb_info {
    static std::string name() { return "recursive coordinate bisection"; }
    static std::string shortDescription() { return
@@ -326,6 +343,7 @@ index 39eff786..155c47dc 100644
 +                                   kw::veleq,
                                     kw::user_defined,
                                     kw::vortical_flow,
++                                   kw::interface_advection,
                                     kw::pde_alpha,
 @endcode
 
@@ -864,7 +882,7 @@ inciter
   multimat    # configure our new PDE block for compressible multi-material flow
     depvar u    # assign dependent variable 'u' to this PDE
     physics veleq       # select 'euler' as compressible flow physics policy
-    problem vortical_flow       # select 'vortical flow` as problem policy
+    problem interface_advection  # select 'interface_advection` as problem policy
     nmat 3      # configure 3 materials
     ...
   end
@@ -977,7 +995,7 @@ index c2ae8d9b..76562c52 100644
 Finally, we add a set of new files that will implement the new PDE using DG. As
 an example, we also add a new physics and a couple of new problem policy
 classes: one for a user-defined problem and another one for a verification
-problem using a vortical flow setup.
+problem using a interface advection.
 
 Here are the new files and subdirectories under `src/PDE/`:
 
@@ -990,8 +1008,8 @@ Here are the new files and subdirectories under `src/PDE/`:
 │   │   ├── DG.h
 │   │   └── DGVelEq.h
 │   ├── Problem
-│   │   ├── UserDefined.h
-│   │   └── VorticalFlow.h
+│   │   ├── UserDefined.hpp
+│   │   └── InterfaceAdvection.hpp
 │   └── Problem.h
 @endcode
 
@@ -1014,8 +1032,8 @@ Physics configuration:
 Problem configuration:
 - @subpage inciter_newpde_userdefined_h -
   a new problem policy for multi-material compflow
-- @subpage inciter_newpde_vorticalflow_h -
-  a new problem policy specialized for the vortical flow verification problem
+- @subpage inciter_newpde_interfaceadvection_h -
+  a new problem policy specialized for the interface advection verification problem
 - @subpage inciter_newpde_problem_h -
   list of all MultiMat problem policies.
 
