@@ -70,7 +70,8 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 # Set build type (will be exported to the source)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 # Query regression tests directory (will be exported to the source)
-get_filename_component(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../tests/regression" ABSOLUTE)
+get_filename_component(REGRESSION_DIR
+  "${PROJECT_SOURCE_DIR}/../tests/regression" ABSOLUTE)
 
 # Query target architecture
 include(TargetArch)

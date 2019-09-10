@@ -47,7 +47,7 @@ class MultiMatProblemInterfaceAdvection {
               ncomp_t ncomp,
               tk::real x,
               tk::real y,
-              tk::real z,
+              tk::real /*z*/,
               tk::real t );
 
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
@@ -63,7 +63,7 @@ class MultiMatProblemInterfaceAdvection {
 
     //! Compute and return source term for interface advection
     static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
+    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real );
 
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system
@@ -75,7 +75,7 @@ class MultiMatProblemInterfaceAdvection {
     //! Return field output going to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
-                 ncomp_t ncomp,
+                 ncomp_t /*ncomp*/,
                  ncomp_t offset,
                  tk::real t,
                  tk::real,
