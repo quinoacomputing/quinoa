@@ -89,7 +89,7 @@ class CompFlow {
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
-      m_bcsubsonicoutlet( config< tag::bcsubsonicoutlet >( c ) ),
+      m_bcsubsonicoutlet( config< tag::bcoutlet >( c ) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) )
       //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
       //        "Boundary conditions not set in control file for DG CompFlow" );
@@ -820,13 +820,14 @@ class CompFlow {
                     tk::real, tk::real, tk::real, tk::real,
                     const std::array< tk::real, 3 >& )
     {
-      const auto p_farfield = g_inputdeck.get< tag::bc, tag::p_farfield >();
+      auto fp =
+        g_inputdeck.get< tag::param, eq, tag::farfield_pressure >()[ system ];
 
       auto ur = ul;
       auto u_l = ul[1] / ul[0];
       auto v_l = ul[2] / ul[0];
       auto w_l = ul[3] / ul[0];
-      ur[4] = eos_totalenergy< eq >( system, ul[0], u_l, v_l, w_l, p_farfield);
+      ur[4] = eos_totalenergy< eq >( system, ul[0], u_l, v_l, w_l, fp );
       return {{ ul, ur }};
     }
 

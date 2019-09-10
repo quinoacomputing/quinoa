@@ -229,6 +229,15 @@ namespace grm {
       for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
         if (s.empty())
           Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+
+      // Put in default farfield pressure if not specified by user
+      // if outlet BC is configured for this compflow system
+      auto& bcoutlet = stack.template get< tag::param, eq, tag::bcoutlet >();
+      if (!bcoutlet.empty() || bcoutlet.size() != neq.get< eq >()) {
+        auto& fp =
+          stack.template get< tag::param, eq, tag::farfield_pressure >();
+        if (fp.size() != bcoutlet.size()) fp.push_back( 1.0 );
+      }
     }
   };
 
@@ -581,6 +590,14 @@ namespace deck {
                                     eq,
                                     param > {};
 
+  //! put in PDE parameter for equation matching keyword
+  template< typename eq, typename keyword, typename p,
+            class kw_type = tk::grm::number >
+  struct parameter :
+         tk::grm::process< use< keyword >,
+                           tk::grm::Store_back< tag::param, eq, p >,
+                           kw_type > {};
+
   //! Boundary conditions block
   template< class keyword, class eq, class param >
   struct bc :
@@ -588,7 +605,22 @@ namespace deck {
            tk::grm::readkw< typename use< keyword >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
-             tk::grm::bcparam< use, kw::p_farfield, tag::p_farfield >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::sideset >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq,
+                                        param > > > {};
+
+  //! Farfield boundary conditions block
+  template< class keyword, class eq, class param >
+  struct subsonic_bc :
+         pegtl::if_must<
+           tk::grm::readkw< typename use< keyword >::pegtl_string >,
+           tk::grm::block<
+             use< kw::end >,
+             parameter< eq, kw::farfield_pressure, tag::farfield_pressure >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,
@@ -653,14 +685,6 @@ namespace deck {
                material_property< eq, kw::mat_mu, tag::mu >,
                material_property< eq, kw::mat_cv, tag::cv >,
                material_property< eq, kw::mat_k, tag::k > > > {};
-
-  //! put in PDE parameter for equation matching keyword
-  template< typename eq, typename keyword, typename p,
-            class kw_type = tk::grm::number >
-  struct parameter :
-         tk::grm::process< use< keyword >,
-                           tk::grm::Store_back< tag::param, eq, p >,
-                           kw_type > {};
 
   //! transport equation for scalars
   struct transport :
@@ -733,7 +757,9 @@ namespace deck {
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           bc< kw::bc_outlet, tag::compflow, tag::bcsubsonicoutlet >,
+                           subsonic_bc< kw::bc_outlet,
+                                        tag::compflow,
+                                        tag::bcoutlet >,
                            bc< kw::bc_extrapolate, tag::compflow,
                                tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};

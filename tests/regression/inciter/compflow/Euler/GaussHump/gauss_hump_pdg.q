@@ -26,7 +26,7 @@ inciter
       sideset 2 end
     end
     bc_outlet
-      p_farfield 1.0
+      farfield_pressure 1.0
       sideset 3 end
     end
   end

@@ -99,11 +99,6 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::ndof,   std::size_t                   //!< Number of solution DOFs
 > >;
 
-//! Boundary condition parameters storage
-using bc = tk::TaggedTuple< brigand::list<
-    tag::p_farfield,    tk::real                //!< Far-field pressure
->>;
-
 //! ASCII output floating-point precision in digits
 using precision = tk::TaggedTuple< brigand::list<
     tag::diag, kw::precision::info::expect::type //!< Diagnostics output precision
@@ -161,17 +156,19 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
 
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
-    tag::depvar,                std::vector< char >
-  , tag::physics,               std::vector< PhysicsType >
-  , tag::problem,               std::vector< ProblemType >
-  , tag::bcdir,                 std::vector< std::vector<
-                                kw::sideset::info::expect::type > >
-  , tag::bcsym,                 std::vector< std::vector<
-                                kw::sideset::info::expect::type > >
-  , tag::bcinlet,               std::vector< std::vector<
-                                kw::sideset::info::expect::type > >
-  , tag::bcsubsonicoutlet,      std::vector< std::vector<
-                                kw::sideset::info::expect::type > >
+    tag::depvar,        std::vector< char >
+  , tag::physics,       std::vector< PhysicsType >
+  , tag::problem,       std::vector< ProblemType >
+  , tag::bcdir,         std::vector< std::vector<
+                          kw::sideset::info::expect::type > >
+  , tag::bcsym,         std::vector< std::vector<
+                          kw::sideset::info::expect::type > >
+  , tag::bcinlet,       std::vector< std::vector<
+                          kw::sideset::info::expect::type > >
+  , tag::bcoutlet,      std::vector< std::vector<
+                          kw::sideset::info::expect::type > >
+  , tag::farfield_pressure,
+                        std::vector< kw::farfield_pressure::info::expect::type >
   , tag::bcextrapolate, std::vector< std::vector<
                          kw::sideset::info::expect::type > >
     //! Parameter vector (for specific, e.g., verification problems)
