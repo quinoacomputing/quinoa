@@ -38,9 +38,11 @@ namespace deck {
 
   //! \brief Number of registered equations
   //! \details Counts the number of parsed equation blocks during parsing.
-  static tk::tuple::tagged_tuple< tag::transport,   std::size_t,
-                                  tag::compflow,    std::size_t,
-                                  tag::multimat,    std::size_t > neq;
+  static tk::TaggedTuple< brigand::list<
+             tag::transport,   std::size_t
+           , tag::compflow,    std::size_t
+           , tag::multimat,    std::size_t
+         > > neq;
 
 } // ::deck
 } // ::inciter
@@ -150,6 +152,30 @@ namespace grm {
       // Set number of components to 5 (mass, 3 x mom, energy)
       stack.template get< tag::component, eq >().push_back( 5 );
 
+      // Verify correct number of multi-material properties configured
+      const auto& gamma = stack.template get< tag::param, eq, tag::gamma >();
+      if (gamma.empty() || gamma.back().size() != 1)
+        Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+
+      // If specific heat is not given, set defaults
+      using cv_t = kw::mat_cv::info::expect::type;
+      auto& cv = stack.template get< tag::param, eq, tag::cv >();
+      // As a default, the specific heat of air (717.5 J/Kg-K) is used
+      if (cv.empty())
+        cv.push_back( std::vector< cv_t >( 1, 717.5 ) );
+      // If specific heat vector is wrong size, error out
+      if (cv.back().size() != 1)
+        Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+      // If stiffness coefficient is not given, set defaults
+      using pstiff_t = kw::mat_pstiff::info::expect::type;
+      auto& pstiff = stack.template get< tag::param, eq, tag::pstiff >();
+      if (pstiff.empty())
+        pstiff.push_back( std::vector< pstiff_t >( 1, 0.0 ) );
+      // If stiffness coefficient vector is wrong size, error out
+      if (pstiff.back().size() != 1)
+        Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
@@ -230,12 +256,16 @@ namespace grm {
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::VELEQ );
 
+      // Use default flux type as 'ausm'
+      auto& flux = stack.template get< tag::discr, tag::flux >();
+      flux = inciter::ctr::FluxType::AUSM;
+
       // Set number of scalar components based on number of materials
       auto& nmat = stack.template get< tag::param, eq, tag::nmat >();
       auto& ncomp = stack.template get< tag::component, eq >();
       if (physics.back() == inciter::ctr::PhysicsType::VELEQ) {
         // physics = veleq: m-material compressible flow
-        // scalar components: volfrac:m-1 + mass:m + momentum:3 + energy:m
+        // scalar components: volfrac:m + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
         if (nmat.empty() || nmat.size() != neq.get< eq >()) {
           Message< Stack, WARNING, MsgKey::NONMAT >( stack, in );
@@ -243,8 +273,32 @@ namespace grm {
         }
         // set ncomp based on nmat
         auto m = nmat.back();
-        ncomp.push_back( m-1 + m + 3 + m );
+        ncomp.push_back( m + m + 3 + m );
       }
+
+      // Verify correct number of multi-material properties configured
+      auto& gamma = stack.template get< tag::param, eq, tag::gamma >();
+      if (gamma.empty() || gamma.back().size() != nmat.back())
+        Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+
+      // If specific heats are not given, set defaults
+      using cv_t = kw::mat_cv::info::expect::type;
+      auto& cv = stack.template get< tag::param, eq, tag::cv >();
+      // As a default, the specific heat of air (717.5 J/Kg-K) is used
+      if (cv.empty())
+        cv.push_back( std::vector< cv_t >( nmat.back(), 717.5 ) );
+      // If specific heat vector is wrong size, error out
+      if (cv.back().size() != nmat.back())
+        Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+      // If stiffness coefficients are not given, set defaults
+      using pstiff_t = kw::mat_pstiff::info::expect::type;
+      auto& pstiff = stack.template get< tag::param, eq, tag::pstiff >();
+      if (pstiff.empty())
+        pstiff.push_back( std::vector< pstiff_t >( nmat.back(), 0.0 ) );
+      // If stiffness coefficient vector is wrong size, error out
+      if (pstiff.back().size() != nmat.back())
+        Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< tag::param, eq, tag::problem >();
@@ -306,21 +360,52 @@ namespace grm {
           std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
             std::numeric_limits< tk::real >::epsilon() )
         Message< Stack, WARNING, MsgKey::MULDT >( stack, in );
-      // if DGP1 is configured, set ndofs to be 4
+
+      // "ndof" are the degrees of freedom that are evolved in the numerical
+      // method. For finite volume (or DGP0), these are the cell-averages. This
+      // implies that ndof=1 for DGP0. Similarly, ndof=4 and 10 for DGP1 and
+      // DGP2 respectively, since they evolve higher (>1) order solution
+      // information (e.g. gradients) as well.
+      // "rdof" include degrees of freedom that are both, evolved and
+      // reconstructed. For rDGPnPm methods (e.g. P0P1 and P1P2), "n" denotes
+      // the evolved solution-order and "m" denotes the reconstructed
+      // solution-order; i.e. P0P1 has ndof=1 and rdof=4, whereas P1P2 has
+      // ndof=4 and rdof=10. For a pure DG method without reconstruction (DGP0,
+      // DGP1, DGP2), rdof=ndof.
+      // For more information about rDGPnPm methods, ref. Luo, H. et al. (2013).
+      // A reconstructed discontinuous Galerkin method based on a hierarchical
+      // WENO reconstruction for compressible flows on tetrahedral grids.
+      // Journal of Computational Physics, 236, 477-492.
+
+      // if P0P1 is configured, set ndofs to be 1 and rdofs to be 4
+      if (stack.template get< tag::discr, tag::scheme >() ==
+           inciter::ctr::SchemeType::P0P1)
+      {
+        stack.template get< tag::discr, tag::ndof >() = 1;
+        stack.template get< tag::discr, tag::rdof >() = 4;
+      }
+      // if DGP1 is configured, set ndofs and rdofs to be 4
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::DGP1)
+      {
         stack.template get< tag::discr, tag::ndof >() = 4;
-      // if DGP2 is configured, set ndofs to be 10
+        stack.template get< tag::discr, tag::rdof >() = 4;
+      }
+      // if DGP2 is configured, set ndofs and rdofs to be 10
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::DGP2)
+      {
         stack.template get< tag::discr, tag::ndof >() = 10;
-      // if pDG is configured, set ndofs to be 4 and the adaptive indicator
-      // pref set to be true (temporary for P0/P1 adaptive)
+        stack.template get< tag::discr, tag::rdof >() = 10;
+      }
+      // if pDG is configured, set ndofs and rdofs to be 4 and the adaptive
+      // indicator pref set to be true (temporary for P0/P1 adaptive)
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::PDG)
       {
         stack.template get< tag::discr, tag::ndof >() = 4;
-        stack.template get< tag::discr, tag::pref >() = true;
+        stack.template get< tag::discr, tag::rdof >() = 4;
+        stack.template get< tag::pref, tag::pref >() = true;
       }
     }
   };
@@ -408,6 +493,19 @@ namespace grm {
       // Error out if mesh refinement frequency is zero (programmer error)
       Assert( (stack.template get< tag::amr, tag::dtfreq >() > 0),
               "Mesh refinement frequency must be positive" );
+    }
+  };
+
+  //! Rule used to trigger action
+  struct check_pref_errors : pegtl::success {};
+  //! Do error checking for the pref...end block
+  template<>
+  struct action< check_pref_errors > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      auto& tolref = stack.template get< tag::pref, tag::tolref >();
+      if (tolref < 0.0 || tolref > 1.0)
+        Message< Stack, ERROR, MsgKey::PREFTOL >( stack, in );
     }
   };
 
@@ -540,20 +638,20 @@ namespace deck {
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
   struct material_property :
-         tk::grm::process< use< keyword >,
-           tk::grm::Store_back< tag::param, eq, property > > {};
+         pde_parameter_vector< keyword, eq, property > {};
 
   //! Material properties block for compressible flow
   template< class eq >
   struct material_properties :
            pegtl::if_must<
              tk::grm::readkw< use< kw::material >::pegtl_string >,
-             tk::grm::block< use< kw::end >,
-                             material_property< eq, kw::id, tag::id >,
-                             material_property< eq, kw::mat_gamma, tag::gamma >,
-                             material_property< eq, kw::mat_mu, tag::mu >,
-                             material_property< eq, kw::mat_cv, tag::cv >,
-                             material_property< eq, kw::mat_k, tag::k > > > {};
+             tk::grm::block<
+               use< kw::end >,
+               material_property< eq, kw::mat_gamma, tag::gamma >,
+               material_property< eq, kw::mat_pstiff, tag::pstiff >,
+               material_property< eq, kw::mat_mu, tag::mu >,
+               material_property< eq, kw::mat_cv, tag::cv >,
+               material_property< eq, kw::mat_k, tag::k > > > {};
 
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename p,
@@ -737,6 +835,14 @@ namespace deck {
                                ctr::AMRError,
                                tag::amr, tag::error >,
                              pegtl::alpha >,
+                           tk::grm::control< use< kw::amr_tolref >,
+                                             pegtl::digit,
+                                             tag::amr,
+                                             tag::tolref >,
+                           tk::grm::control< use< kw::amr_tolderef >,
+                                             pegtl::digit,
+                                             tag::amr,
+                                             tag::tolderef >,
                            tk::grm::process< use< kw::amr_t0ref >,
                              tk::grm::Store< tag::amr, tag::t0ref >,
                              pegtl::alpha >,
@@ -751,6 +857,17 @@ namespace deck {
                              pegtl::digit >
                          >,
            tk::grm::check_amr_errors > {};
+
+  //! p-adaptive refinement (pref) ...end block
+  struct pref :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::pref >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::control< use< kw::pref_tolref >,
+                                             pegtl::digit,
+                                             tag::pref,
+                                             tag::tolref > >,
+           tk::grm::check_pref_errors > {};
 
   //! plotvar ... end block
   struct plotvar :
@@ -776,6 +893,7 @@ namespace deck {
                            discretization,
                            equations,
                            amr,
+                           pref,
                            partitioning,
                            plotvar,
                            tk::grm::diagnostics<

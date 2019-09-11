@@ -29,7 +29,7 @@ namespace inciter {
 class CompFlowProblemUserDefined {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
     static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
@@ -41,7 +41,8 @@ class CompFlowProblemUserDefined {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     std::array< tk::real, 5 >
-    solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) const;
+    solinc( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real )
+    const;
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     static tk::SrcFn::result_type
@@ -55,10 +56,6 @@ class CompFlowProblemUserDefined {
     void side( std::unordered_set< int >& conf ) const;
 
     //! Return field output going to file
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    //! \param[in] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t,
                  ncomp_t,

@@ -1,0 +1,29 @@
+/*!
+  \page      unittest_main UnitTest
+
+@m_div{m-col-m-6 m-right-m}
+<img src="unittest_white.svg"/>
+@m_enddiv
+
+__Test suite for synchronous and asynchronous functions__
+
+UnitTest is an asynchronous distributed-memory-parallel [unit
+test](http://en.wikipedia.org/wiki/Unit_testing) harness, capable of testing
+serial, synchronous (e.g., MPI) parallel, and asynchronous (e.g., Charm++)
+parallel functions.
+
+UnitTest uses the [Charm++](http://charm.cs.illinois.edu) runtime system to run
+the tests concurrently, either on a single machine or a networked set of
+computers. The software design is asynchronous, yielding 100% CPU utilization at
+all times, independent of the unequal time taken by the individual tests.
+
+Unit tests are written using the [C++ Template Unit Test
+framework](http://mrzechonek.github.io/tut-framework/). The tests are organized into
+directories under src/UnitTest/tests mirroring the directories of the tested
+code.
+
+@section unittest_pages Related pages
+- @ref unittest_cmd "Command line arguments"
+- @ref roadmap_unittest "Roadmap"
+
+*/

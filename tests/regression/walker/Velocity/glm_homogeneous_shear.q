@@ -8,9 +8,9 @@ title "Coupled position, velocity, dissipation joint PDF computing a
 walker
 
   #nstep 2     # Max number of time steps
-  term  2.0    # Max time
-  dt    0.1   # Time step size
-  npar  100000 # Number of particles
+  term  15.0    # Max time
+  dt    0.2   # Time step size
+  npar  70000 # Number of particles
   ttyi  1    # TTY output interval
 
   rngs
@@ -34,7 +34,7 @@ walker
   velocity      # configure a velocity equation
     depvar u
     solve fluctuation
-    variant glm # select the simplified Langevin model (SLM/GLM)
+    variant glm # select the generalized Langevin model (SLM/GLM)
     position x  # couple a position model with dependent variable x
     dissipation o  # couple a dissipation model with dependent variable o
     init jointgaussian
@@ -73,17 +73,17 @@ walker
     <O>
   end
 
-  pdfs
-    interval  10
-    filetype  txt
-    policy    multiple
-    centering elem
-    format    scientific
-    precision 6
-    # save marginal PDFs of all velocity components
-    U1( U1 : 1.0e-2 )
-    U2( U2 : 1.0e-2 )
-    U3( U3 : 1.0e-2 )
-    O( O : 1.0e-2 )     # dissipation (turbulence frequency) PDF
-  end
+  #pdfs
+  #  interval  10
+  #  filetype  txt
+  #  policy    multiple
+  #  centering elem
+  #  format    scientific
+  #  precision 6
+  #  # save marginal PDFs of all velocity components
+  #  U1( U1 : 1.0e-2 )
+  #  U2( U2 : 1.0e-2 )
+  #  U3( U3 : 1.0e-2 )
+  #  O( O : 1.0e-2 )     # dissipation (turbulence frequency) PDF
+  #end
 end

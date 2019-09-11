@@ -86,10 +86,10 @@ tk::eval_dBdx_p1( const std::size_t ndof,
 {
   // The derivatives of the basis functions dB/dx are easily calculated
   // via a transformation to the reference space as,
-  // dB/dx = dB/dX . dx/dxi,
+  // dB/dx = dB/dxi . dxi/dx,
   // where, x = (x,y,z) are the physical coordinates, and
   //        xi = (xi, eta, zeta) are the reference coordinates.
-  // The matrix dx/dxi is the inverse of the Jacobian of transformation
+  // The matrix dxi/dx is the inverse of the Jacobian of transformation
   // and the matrix vector product has to be calculated. This follows.
 
   std::array< std::vector<tk::real>, 3 > dBdx;
@@ -155,9 +155,8 @@ tk::eval_dBdx_p2( const std::size_t igp,
                   std::array< std::vector<tk::real>, 3 >& dBdx )
 // *****************************************************************************
 //  Compute the derivatives of basis function for DG(P2)
-//! \param[in] ndof Number of degrees of freedom
 //! \param[in] igp Index of quadrature points
-//! \param[in] coord Array of nodal coordinates for tetrahedron element
+//! \param[in] coordgp Gauss point coordinates for tetrahedron element
 //! \param[in] jacInv Array of the inverse of Jacobian
 //! \param[in,out] dBdx Array of the derivatives of basis function
 // *****************************************************************************
@@ -328,6 +327,8 @@ tk::eval_state ( ncomp_t ncomp,
 // *****************************************************************************
 {
   Assert( B.size() == ndof_el, "Size mismatch" );
+
+  if (U.empty()) return {};
 
   // Array of state variable for tetrahedron element
   std::vector< tk::real > state( ncomp );

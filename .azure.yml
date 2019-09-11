@@ -5,7 +5,7 @@
 
 jobs:
 - job: "Quinoa"
-  timeoutInMinutes: 180
+  timeoutInMinutes: 240
   pool:
     vmImage: 'Ubuntu 16.04'
   variables:
@@ -69,6 +69,7 @@ jobs:
         DISTRO: 'debian-clang-smp'
         SMP: 'on'
       doc:
+        COMPILER: 'gnu'
         DOC: true
         DISTRO: 'debian-doc'
   steps:

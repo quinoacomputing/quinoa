@@ -44,7 +44,7 @@ add_regression_test(BigCrush_r123_philox ${RNGTEST_EXECUTABLE}
                     NUMPES ${PROCESSOR_COUNT}
                     INPUTFILES BigCrush_r123_philox.q
                     ARGS -c BigCrush_r123_philox.q -v
-                    LABELS extreme stringent)
+                    LABELS insane extreme stringent)
 
 add_regression_test(SmallCrush_all_r123 ${RNGTEST_EXECUTABLE}
                     NUMPES 8

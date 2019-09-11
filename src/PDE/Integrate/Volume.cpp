@@ -129,7 +129,7 @@ tk::update_rhs( ncomp_t ncomp,
 //! \param[in] ndof_el Number of degrees of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] e Element index
-//! \param[in] B Vector of basis functions
+//! \param[in] dBdx Vector of basis function derivatives
 //! \param[in] fl Vector of numerical flux
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************

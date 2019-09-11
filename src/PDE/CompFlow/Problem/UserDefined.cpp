@@ -14,6 +14,7 @@
 
 #include "UserDefined.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -25,7 +26,7 @@ using inciter::CompFlowProblemUserDefined;
 
 tk::SolutionFn::result_type
 CompFlowProblemUserDefined::solution( ncomp_t,
-                                      ncomp_t ncomp,
+                                      [[maybe_unused]] ncomp_t ncomp,
                                       tk::real,
                                       tk::real,
                                       tk::real,
@@ -37,15 +38,13 @@ CompFlowProblemUserDefined::solution( ncomp_t,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
-  IGNORE(ncomp);
-
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
 }
 
 std::array< tk::real, 5 >
-CompFlowProblemUserDefined::solinc( ncomp_t, tk::real, tk::real,
+CompFlowProblemUserDefined::solinc( ncomp_t, ncomp_t, tk::real, tk::real,
                                     tk::real, tk::real, tk::real ) const
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
@@ -121,13 +120,16 @@ CompFlowProblemUserDefined::fieldOutput(
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
+  // number of degrees of freedom
+  const std::size_t rdof =
+    g_inputdeck.get< tag::discr, tag::rdof >();
   std::vector< std::vector< tk::real > > out;
 
-  const auto r = U.extract( 0, offset );
-  const auto ru = U.extract( 1, offset );
-  const auto rv = U.extract( 2, offset );
-  const auto rw = U.extract( 3, offset );
-  const auto re = U.extract( 4, offset );
+  const auto r = U.extract( 0*rdof, offset );
+  const auto ru = U.extract( 1*rdof, offset );
+  const auto rv = U.extract( 2*rdof, offset );
+  const auto rw = U.extract( 3*rdof, offset );
+  const auto re = U.extract( 4*rdof, offset );
 
   out.push_back( r );
 
@@ -152,13 +154,12 @@ CompFlowProblemUserDefined::fieldOutput(
   out.push_back( E );
 
   std::vector< tk::real > p = r;
-  tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[0];
   for (std::size_t i=0; i<p.size(); ++i)
-    p[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+    p[i] = eos_pressure< eq >( 0, r[i], u[i], v[i], w[i], r[i]*E[i] );
   out.push_back( p );
 
   std::vector< tk::real > T = r;
-  tk::real cv = g_inputdeck.get< tag::param, eq, tag::cv >()[0];
+  tk::real cv = g_inputdeck.get< tag::param, eq, tag::cv >()[0][0];
   for (std::size_t i=0; i<T.size(); ++i)
     T[i] = cv*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
   out.push_back( T );

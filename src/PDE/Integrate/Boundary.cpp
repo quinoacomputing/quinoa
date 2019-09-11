@@ -23,8 +23,10 @@
 void
 tk::bndSurfInt( ncomp_t system,
                 ncomp_t ncomp,
+                std::size_t nmat,
                 ncomp_t offset,
                 const std::size_t ndof,
+                const std::size_t rdof,
                 const std::vector< bcconf_t >& bcconfig,
                 const inciter::FaceData& fd,
                 const Fields& geoFace,
@@ -35,8 +37,10 @@ tk::bndSurfInt( ncomp_t system,
                 const VelFn& vel,
                 const StateFn& state,
                 const Fields& U,
+                const Fields& P,
                 const std::vector< std::size_t >& ndofel,
-                Fields& R )
+                Fields& R,
+                std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
 //! \details This function computes contributions from surface integrals along
@@ -44,8 +48,10 @@ tk::bndSurfInt( ncomp_t system,
 //!   function
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] bcconfig BC configuration vector for multiple side sets
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -57,8 +63,13 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
@@ -68,6 +79,9 @@ tk::bndSurfInt( ncomp_t system,
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
+
+  Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
+          "derivative vector for single material compflow" );
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find( std::stoi(s) );// faces for side set
@@ -118,8 +132,23 @@ tk::bndSurfInt( ncomp_t system,
           // Compute the coordinates of quadrature point at physical domain
           auto gp = eval_gp( igp, coordfa, coordgp );
 
+          // If an rDG method is set up (P0P1), then, currently we compute the P1
+          // basis functions and solutions by default. This implies that P0P1 is
+          // unsupported in the p-adaptive DG (PDG). This is a workaround until
+          // we have rdofel, which is needed to distinguish between ndofs and
+          // rdofs per element for pDG.
+          std::size_t dof_el;
+          if (rdof > ndof)
+          {
+            dof_el = rdof;
+          }
+          else
+          {
+            dof_el = ndofel[el];
+          }
+
           //Compute the basis functions for the left element
-          auto B_l = eval_basis( ndofel[el],
+          auto B_l = eval_basis( dof_el,
             Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
@@ -127,9 +156,14 @@ tk::bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0,0);
 
           // Compute the state variables at the left element
-          auto ugp = eval_state( ncomp, offset, ndof, ndofel[el], el, U, B_l );
+          auto ugp = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
+          auto fvel = eval_state( 3, offset, rdof, dof_el, el, P, B_l );
 
-          Assert( ugp.size() == ncomp, "Size mismatch" );
+          // consolidate primitives into state vector
+          ugp.insert(ugp.end(), fvel.begin(), fvel.end());
+
+          Assert( ugp.size() == ncomp+fvel.size(), "Incorrect size for "
+                  "appended boundary state vector" );
 
           // Compute the numerical flux
           auto fl = flux( fn,
@@ -137,7 +171,8 @@ tk::bndSurfInt( ncomp_t system,
                       vel( system, ncomp, gp[0], gp[1], gp[2] ) );
 
           // Add the surface integration term to the rhs
-          update_rhs_bc( ncomp, offset, ndof, ndofel[el], wt, el, fl, B_l, R );
+          update_rhs_bc( ncomp, nmat, offset, ndof, ndofel[el], wt, fn, el, fl,
+                         B_l, R, riemannDeriv );
         }
       }
     }
@@ -146,28 +181,38 @@ tk::bndSurfInt( ncomp_t system,
 
 void
 tk::update_rhs_bc ( ncomp_t ncomp,
+                    std::size_t nmat,
                     ncomp_t offset,
                     const std::size_t ndof,
                     const std::size_t ndof_l,
                     const tk::real wt,
+                    const std::array< tk::real, 3 >& fn,
                     const std::size_t el,
                     const std::vector< tk::real >& fl,
                     const std::vector< tk::real >& B_l,
-                    Fields& R )
+                    Fields& R,
+                    std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //  Update the rhs by adding the boundary surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_l Number of degrees of freedom for the left element
 //! \param[in] wt Weight of gauss quadrature point
+//! \param[in] fn Face/Surface normal
 //! \param[in] el Left element index
 //! \param[in] fl Surface flux
 //! \param[in] B_l Basis function for the left element
 //! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
 // *****************************************************************************
 {
-  Assert( B_l.size() == ndof_l, "Size mismatch" );
+  // following line commented until rdofel is made available.
+  //Assert( B_l.size() == ndof_l, "Size mismatch" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {
@@ -190,5 +235,19 @@ tk::update_rhs_bc ( ncomp_t ncomp,
       R(el, mark+8, offset) -= wt * fl[c] * B_l[8];
       R(el, mark+9, offset) -= wt * fl[c] * B_l[9];
     }
+  }
+
+  // Prep for non-conservative terms in multimat
+  if (fl.size() > ncomp)
+  {
+    // Gradients of partial pressures
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      for (std::size_t idir=0; idir<3; ++idir)
+        riemannDeriv[3*k+idir][el] += wt * fl[ncomp+k] * fn[idir];
+    }
+
+    // Divergence of velocity
+    riemannDeriv[3*nmat][el] += wt * fl[ncomp+nmat];
   }
 }

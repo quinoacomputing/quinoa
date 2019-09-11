@@ -65,17 +65,6 @@ void PUP::pup( PUP::er &p, AMR::edge_t& e )
   p | e.get_data();
 }
 
-void PUP::pup( PUP::er &p, AMR::marked_refinements_store_t& m )
-// *****************************************************************************
-//  Pack/Unpack marked_refinements_store_t
-//! \param[in] p Charm++'s pack/unpack object
-//! \param[in,out] m marked_refinements_store_t object reference
-// *****************************************************************************
-{
-  p | m.data();
-  p | m.get_state_changed();
-}
-
 void PUP::pup( PUP::er &p, AMR::active_element_store_t& a )
 // *****************************************************************************
 //  Pack/Unpack active_element_store_t
@@ -115,6 +104,7 @@ void PUP::pup( PUP::er &p, AMR::tet_store_t& t )
 // *****************************************************************************
 {
   p | t.center_tets;
+  p | t.delete_list;
   p | t.active_elements.data();
   p | t.master_elements.data();
   p | t.active_tetinpoel;
@@ -125,6 +115,7 @@ void PUP::pup( PUP::er &p, AMR::tet_store_t& t )
   p | t.tets;
   p | t.edge_store;
   p | t.marked_refinements;
+  p | t.marked_derefinements;
 }
 
 void PUP::pup( PUP::er &p, AMR::mesh_adapter_t& m )

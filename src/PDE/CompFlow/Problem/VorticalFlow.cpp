@@ -14,6 +14,7 @@
 
 #include "VorticalFlow.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -25,7 +26,7 @@ using inciter::CompFlowProblemVorticalFlow;
 
 tk::SolutionFn::result_type
 CompFlowProblemVorticalFlow::solution( ncomp_t system,
-                                       ncomp_t ncomp,
+                                       [[maybe_unused]] ncomp_t ncomp,
                                        tk::real x,
                                        tk::real y,
                                        tk::real z,
@@ -42,9 +43,8 @@ CompFlowProblemVorticalFlow::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
-  IGNORE(ncomp);
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   using tag::param; using tag::compflow;
 
   // manufactured solution parameters
@@ -53,7 +53,7 @@ CompFlowProblemVorticalFlow::solution( ncomp_t system,
   const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
   const auto& p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ system ];
   // ratio of specific heats
-  tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ];
+  tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
   // velocity
   const tk::real ru = a*x - b*y;
   const tk::real rv = b*x + a*y;
@@ -65,24 +65,26 @@ CompFlowProblemVorticalFlow::solution( ncomp_t system,
 }
 
 std::vector< tk::real >
-CompFlowProblemVorticalFlow::solinc( ncomp_t, tk::real, tk::real,
+CompFlowProblemVorticalFlow::solinc( ncomp_t, ncomp_t ncomp, tk::real, tk::real,
                                      tk::real, tk::real, tk::real ) const
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
 // for all components
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
 // *****************************************************************************
 {
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
+  return std::vector< tk::real >( ncomp, 0.0 );
 }
 
 tk::SrcFn::result_type
-CompFlowProblemVorticalFlow::src( ncomp_t system, ncomp_t, tk::real x,
+CompFlowProblemVorticalFlow::src( ncomp_t system, ncomp_t ncomp, tk::real x,
                                   tk::real y, tk::real z, tk::real )
 // *****************************************************************************
 //  Compute and return source term for manufactured solution
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -97,10 +99,10 @@ CompFlowProblemVorticalFlow::src( ncomp_t system, ncomp_t, tk::real x,
     g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
   const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
   // ratio of specific heats
-  tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ];
+  tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
   // evaluate solution at x,y,z
-  auto s = solution( system, m_ncomp, x, y, z, 0.0 );
-  std::vector< tk::real > r( m_ncomp );
+  auto s = solution( system, ncomp, x, y, z, 0.0 );
+  std::vector< tk::real > r( ncomp );
   // density source
   r[0] = 0.0;
   // momentum source
@@ -182,18 +184,18 @@ CompFlowProblemVorticalFlow::fieldOutput(
    const auto& p0 =
      g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[system];
    // number of degree of freedom
-   const std::size_t ndof = 
-     g_inputdeck.get< tag::discr, tag::ndof >();
+   const std::size_t rdof =
+     g_inputdeck.get< tag::discr, tag::rdof >();
    // ratio of specific heats
    tk::real g =
-     g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system];
+     g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system][0];
 
    std::vector< std::vector< tk::real > > out;
-   const auto r  = U.extract( 0*ndof, offset );
-   const auto ru = U.extract( 1*ndof, offset );
-   const auto rv = U.extract( 2*ndof, offset );
-   const auto rw = U.extract( 3*ndof, offset );
-   const auto re = U.extract( 4*ndof, offset );
+   const auto r  = U.extract( 0*rdof, offset );
+   const auto ru = U.extract( 1*rdof, offset );
+   const auto rv = U.extract( 2*rdof, offset );
+   const auto rw = U.extract( 3*rdof, offset );
+   const auto re = U.extract( 4*rdof, offset );
 
    // mesh node coordinates
    const auto& x = coord[0];
@@ -235,7 +237,7 @@ CompFlowProblemVorticalFlow::fieldOutput(
 
    std::vector< tk::real > P( r.size(), 0.0 );
    for (std::size_t i=0; i<P.size(); ++i)
-     P[i] = (g-1.0)*(re[i] - r[i]*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+     P[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], re[i] );
    out.push_back( P );
    for (std::size_t i=0; i<P.size(); ++i)
      P[i] = p0 - 2.0*a*a*z[i]*z[i];

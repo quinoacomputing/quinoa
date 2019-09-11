@@ -100,10 +100,27 @@ namespace cmd {
                                tk::grm::number,
                                tag::lbfreq > {};
 
+  //! Match and set checkpoint/restartfrequency
+  struct rsfreq :
+         tk::grm::process_cmd< use, kw::rsfreq,
+                               tk::grm::Store< tag::rsfreq >,
+                               tk::grm::number,
+                               tag::rsfreq > {};
+
   //! Match switch on trace output
   struct trace :
          tk::grm::process_cmd_switch< use, kw::trace,
                                       tag::trace > {};
+
+  //! Match switch on version output
+  struct version :
+         tk::grm::process_cmd_switch< use, kw::version,
+                                      tag::version > {};
+
+  //! Match switch on license output
+  struct license :
+         tk::grm::process_cmd_switch< use, kw::license,
+                                      tag::license > {};
 
   //! Match all command line keywords
   struct keywords :
@@ -118,11 +135,15 @@ namespace cmd {
                      helpkw,
                      quiescence,
                      lbfreq,
+                     rsfreq,
                      trace,
+                     version,
+                     license,
                      io< kw::control, tag::control >,
                      io< kw::input, tag::input >,
                      io< kw::output, tag::output >,
-                     io< kw::diagnostics, tag::diag > > {};
+                     io< kw::diagnostics_cmd, tag::diag >,
+                     io< kw::restart, tag::restart > > {};
 
   //! Grammar entry point: parse keywords until end of string
   struct read_string :

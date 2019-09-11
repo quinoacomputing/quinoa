@@ -16,7 +16,7 @@
 
 #include <brigand/algorithms/for_each.hpp>
 
-#include "Control.hpp"
+#include "TaggedTuple.hpp"
 #include "HelpFactory.hpp"
 #include "Keywords.hpp"
 #include "Walker/Types.hpp"
@@ -25,21 +25,26 @@ namespace walker {
 //! Walker control facilitating user input to internal data transfer
 namespace ctr {
 
+//! Member data for tagged tuple
+using CmdLineMembers = brigand::list<
+    tag::io,             ios
+  , tag::virtualization, kw::virtualization::info::expect::type
+  , tag::verbose,        bool
+  , tag::chare,          bool
+  , tag::help,           bool
+  , tag::helpctr,        bool
+  , tag::quiescence,     bool
+  , tag::trace,          bool
+  , tag::version,        bool
+  , tag::license,        bool
+  , tag::cmdinfo,        tk::ctr::HelpFactory
+  , tag::ctrinfo,        tk::ctr::HelpFactory
+  , tag::helpkw,         tk::ctr::HelpKw
+  , tag::error,          std::vector< std::string >
+>;
+
 //! CmdLine : Control< specialized to Walker >, see Types.h
-class CmdLine : public tk::Control<
-                  // tag               type
-                  tag::io,             ios,
-                  tag::virtualization, kw::virtualization::info::expect::type,
-                  tag::verbose,        bool,
-                  tag::chare,          bool,
-                  tag::help,           bool,
-                  tag::helpctr,        bool,
-                  tag::quiescence,     bool,
-                  tag::trace,          bool,
-                  tag::cmdinfo,        tk::ctr::HelpFactory,
-                  tag::ctrinfo,        tk::ctr::HelpFactory,
-                  tag::helpkw,         tk::ctr::HelpKw,
-                  tag::error,          std::vector< std::string > > {
+class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
 
   public:
     //! Walker command-line keywords
@@ -52,8 +57,10 @@ class CmdLine : public tk::Control<
                                      , kw::control
                                      , kw::pdf
                                      , kw::stat
-                                     , kw::trace
                                      , kw::quiescence
+                                     , kw::trace
+                                     , kw::version
+                                     , kw::license
                                      >;
 
     //! \brief Constructor: set all defaults.
@@ -88,34 +95,30 @@ class CmdLine : public tk::Control<
     //!   otherwise it would be a mutual dependency.
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
-      set< tag::io, tag::output >( "out" );
-      set< tag::io, tag::pdf >( "pdf" );
-      set< tag::io, tag::stat >( "stat.txt" );
-      set< tag::virtualization >( 0.0 );
-      set< tag::verbose >( false ); // Quiet output by default
-      set< tag::chare >( false ); // No chare state output by default
-      set< tag::trace >( true ); // Output call and stack trace by default
+      get< tag::io, tag::output >() = "out";
+      get< tag::io, tag::pdf >() = "pdf";
+      get< tag::io, tag::stat >() = "stat.txt";
+      get< tag::virtualization >() = 0.0;
+      get< tag::verbose >() = false; // Quiet output by default
+      get< tag::chare >() = false; // No chare state output by default
+      get< tag::trace >() = true; // Output call and stack trace by default
+      get< tag::version >() = false; // Do not display version info by default
+      get< tag::license >() = false; // Do not display license info by default
       // Initialize help: fill from own keywords + add map passed in
       brigand::for_each< keywords::set >( tk::ctr::Info(get<tag::cmdinfo>()) );
       get< tag::ctrinfo >() = std::move( ctrinfo );
     }
 
-    //! Pack/Unpack
-    void pup( PUP::er& p ) {
-      tk::Control< tag::io,             ios,
-                   tag::virtualization, kw::virtualization::info::expect::type,
-                   tag::verbose,        bool,
-                   tag::chare,          bool,
-                   tag::help,           bool,
-                   tag::helpctr,        bool,
-                   tag::quiescence,     bool,
-                   tag::trace,          bool,
-                   tag::cmdinfo,        tk::ctr::HelpFactory,
-                   tag::ctrinfo,        tk::ctr::HelpFactory,
-                   tag::helpkw,         tk::ctr::HelpKw,
-                   tag::error,          std::vector< std::string > >::pup(p);
-    }
+    /** @name Pack/Unpack: Serialize CmdLine object for Charm++ */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er& p ) { tk::TaggedTuple< CmdLineMembers >::pup(p); }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] c CmdLine object reference
     friend void operator|( PUP::er& p, CmdLine& c ) { c.pup(p); }
+    //@}
 };
 
 } // ctr::

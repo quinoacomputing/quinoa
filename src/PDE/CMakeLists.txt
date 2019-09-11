@@ -5,6 +5,7 @@ project(PDE CXX)
 add_library(PDE
             PDEStack.cpp
             Limiter.cpp
+            Reconstruction.cpp
             ConfigureTransport.cpp
             ConfigureCompFlow.cpp
             ConfigureMultiMat.cpp)
@@ -18,6 +19,7 @@ target_include_directories(PDE PUBLIC
                            ${QUINOA_SOURCE_DIR}/PDE
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 
@@ -36,3 +38,4 @@ add_subdirectory(Transport/Physics)
 add_subdirectory(Transport/Problem)
 add_subdirectory(CompFlow/Physics)
 add_subdirectory(CompFlow/Problem)
+add_subdirectory(MultiMat/Problem)

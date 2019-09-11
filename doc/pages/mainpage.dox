@@ -1,4 +1,5 @@
-/** @mainpage Quinoa
+/*!
+@mainpage Quinoa
 
 @m_div{m-col-t-4 m-right-t}
 <img src="quinoa.svg"/>
@@ -19,7 +20,21 @@ Our ultimate goal is to simulate large and complex engineering multiphysics
 problems with a production-quality code that is extensible and maintainable,
 using hardware resources efficiently, even for problems with _a priori_
 unknown, heterogeneous, and dynamic load distribution. Read more at our @ref
-why page.
+why "Philosophy" page.
+
+@m_class{m-note m-default m-landing-news}
+
+  @par Recently modified pages
+  @ref walker_main
+  @m_span{m-text m-dim} <em> Jun 02, 2019 </em> @m_endspan <br>
+  @ref build
+  @m_span{m-text m-dim} <em> Jun 02, 2019 </em> @m_endspan <br>
+  @ref index
+  @m_span{m-text m-dim} <em> Jun 04, 2019 </em> @m_endspan <br>
+  @ref inciter_newpde_problem_h
+  @m_span{m-text m-dim} <em> Jun 01, 2019 </em> @m_endspan <br>
+  @ref files
+  @m_span{m-text m-dim} <em> Jun 01, 2019 </em> @m_endspan <br>
 
 @section mainpage_tools Tools
 
@@ -78,28 +93,17 @@ container](https://hub.docker.com/r/quinoacomputing/quinoa). See also
 - https://quinoacomputing.github.io/examples.html
 - https://github.com/quinoacomputing/quinoa-examples
 
-For larger problems and computers, however, you should build from source.
-
-@section mainpage_directory_layout Directory layout
-
-@verbatim
-    quinoa
-      ├── cmake/ - CMake code, shared between github.com/quinoacomputing/quinoa-tpl and src/
-      ├── doc/ - Documentation, rendered at quinoacomputing.org
-      ├── external/ - External packages, pulled in as submodules from github.com/quinoacomputing/quinoa-tpl
-      ├── src/ - Compilable sources, see quinoacomputing.org/files.html
-      ├── tests/ - Unit-, and regression tests
-      ├── tools/ - Development utilities and docker files
-      ├── LICENSE - Copyright and license
-      └── README.md - This file, rendered at github.com/quinoacomputing/quinoa
-@endverbatim
+For larger problems and computers, however, you should @ref build "build" from source.
 
 @section mainpage_build Build
+
+The simplest way to build from source is to perform the following steps. For
+other ways to build, see the page on @ref build "building Quinoa".
 
 - Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
 
        apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
-       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhypre-dev libhdf5-dev libhdf5-openmpi-dev libhypre-dev binutils-dev flex bison python3-pygments python3-jinja2 texlive-latex-base libdw-dev
+       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libnetcdf-mpi-dev libbackward-dcpp-dev tao-pegtl-dev intel-mkl binutils-dev flex bison python3-pygments python3-jinja2 texlive-latex-base libdw-dev
 
 - Install prerequisites: _Mac OS X_ (line 1: required, line 2: recommended)
 
@@ -110,18 +114,12 @@ For larger problems and computers, however, you should build from source.
 
        git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git; cd quinoa
        mkdir external/build; cd external/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make; cd -
-       mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Release ../src && make -sj8 && ./charmrun +p8 Main/unittest -v -q && ctest -j8 --output-on-failure -LE extreme
+       mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src && make -sj8 && ./charmrun +p8 Main/unittest -v -q && ctest -j8 --output-on-failure -LE extreme
+
+  @note The above will use 8 CPU cores to compile the code and run the tests.
+  You might need to adjust this to get optimal performance.
 
 All executables will be under `build/Main/`.
-
-@note The above is only the simplest way to build from source and by default
-some optional libraries will _not_ be built. If you are building on a different
-system, you might have to experiment with your package manager a bit to get all
-required @ref licenses "libraries" built. The following may help with building in
-various environments:
-- https://github.com/quinoacomputing/quinoa/tree/master/tools/docker
-- https://github.com/quinoacomputing/quinoa-tpl/tree/master/docker
-- https://github.com/quinoacomputing/buildenv
 
 We roughly follow the development model described
 [here](http://nvie.com/posts/a-successful-git-branching-model). As a
@@ -135,55 +133,37 @@ edge) branch. If you want the latest, clone with
 git clone --recurse-submodules --branch=develop https://github.com/quinoacomputing/quinoa.git
 ```
 
-Read more about other ways of cloning and working with [quinoa's
-repositories](https://github.com/quinoacomputing) on the page detailing @ref
-git_submodules_subtrees.
+@section mainpage_directory_layout Directory layout
 
-@section mainpage_contributing Contribute
+@verbatim
+    quinoa
+      ├── cmake/ - CMake code, shared between github.com/quinoacomputing/quinoa-tpl and src/
+      ├── doc/ - Documentation, rendered at quinoacomputing.org
+      ├── external/ - External packages from github.com/quinoacomputing/quinoa-tpl
+      ├── src/ - Compilable sources, see quinoacomputing.org/files.html
+      ├── tests/ - Unit-, and regression tests
+      ├── tools/ - Development utilities and docker files
+      ├── LICENSE - Copyright and license
+      └── README.md - This file, rendered at github.com/quinoacomputing/quinoa
+@endverbatim
 
-Contributions and collaborators are welcome. Contact us via
-[GitHub](https://github.com/quinoacomputing/quinoa),
-[Email](mailto:quinoa@lanl.gov) or
-[Gitter](https://gitter.im/quinoacomputing/quinoa).
+@section mainpage_roadmap Roadmap
 
-@section mainpage_authors Authors
+The rough directions in which each of Quinoa's tools are developed are
+described by the @ref roadmap.
 
-(in chronological order of contribution)
+@section mainpage_contributing Contributing
 
-1. [Jozsef Bakosi](https://github.com/jbakosi)
-2. [Francisco Gonzalez](https://github.com/franjgonzalez)
-3. [Brandon Rogers](https://github.com/brog2610)
-4. [Christoph Junghans](https://github.com/junghans)
-5. [Robert Pavel](https://github.com/rspavel)
-6. [Aditya Pakki](https://github.com/adityapakki)
-7. [Bob Bird](https://github.com/rfbird)
-8. [Aditya Pandare](https://github.com/adityakpandare)
-9. [Weizhao Li](https://github.com/WeizhaoLi2018)
-
-@section mainpage_resources Resources
-
-- Source --- https://github.com/quinoacomputing/quinoa
-- Releases --- https://github.com/quinoacomputing/quinoa/releases
-- Contributing --- https://www.clahub.com/agreements/quinoacomputing/quinoa
-- License --- https://github.com/quinoacomputing/quinoa/blob/master/LICENSE
-- Third-party libraries and licenses --- https://quinoacomputing.github.io/licenses.html
-- Documentation --- https://quinoacomputing.github.io
-- Web --- https://quinoacomputing.github.io
-- Email --- mailto:quinoa@lanl.gov
-- Gitter --- https://gitter.im/quinoacomputing/quinoa
-- Philosophy --- https://quinoacomputing.github.io/why
-- Papers --- https://quinoacomputing.github.io/papers
-- Roadmap --- https://github.com/quinoacomputing/quinoa/issues
-- Doxygen --- https://quinoacomputing.github.io
-- Coverage --- https://quinoacomputing.github.io/coverage
-- Codecov --- https://codecov.io/gh/quinoacomputing/quinoa/commits
-- Sonarqube --- https://sonarqube.com/organizations/quinoacomputing
-- Docker --- https://hub.docker.com/r/quinoacomputing/quinoa
-- Azure --- https://dev.azure.com/quinoacomputing/Quinoa
-- Analytics --- http://www.openhub.net/p/quinoacomputing
-- Cite --- https://zenodo.org/badge/latestdoi/38454430
+Contributors and collaborators are welcome. Please read the @ref roadmap and
+the @ref contributing "Contributing guide" and @ref resources_contact "contact us".
 
 @section mainpage_license License
+
+Quinoa is certified [Open
+Source](http://www.opensource.org/docs/definition.html) software. It may be
+used for any purpose, including commercial purposes, at absolutely no cost. It
+is distributed under the terms of the 3-clause BSD license listed below. See
+also @ref resources_legal.
 
 @include LICENSE
 

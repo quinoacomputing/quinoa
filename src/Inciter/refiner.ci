@@ -46,7 +46,7 @@ module refiner {
         const std::unordered_set< std::size_t > intermediates );
       entry void refine();
       entry void comExtra();
-      entry void eval();
+      entry void perform();
       entry void sendProxy();
     };
 

@@ -33,6 +33,7 @@
 #include "Exception.hpp"
 #include "Has.hpp"
 #include "ChareState.hpp"
+#include "StrConvUtil.hpp"
 
 namespace tk {
 
@@ -449,6 +450,24 @@ class Print {
       }
     }
 
+    //! Print version information
+    template< Style s = VERBOSE >
+    void version( const std::string& executable,
+                  const std::string& ver,
+                  const std::string& commit,
+                  const std::string& copyright ) const
+    {
+      stream<s>() << m_version_fmt % executable % ver % commit % copyright;
+    }
+
+    //! Print license information
+    template< Style s = VERBOSE >
+    void license( const std::string& executable,
+                  const std::string& lic ) const
+    {
+      stream<s>() << m_license_fmt % executable % lic;
+    }
+
     //! Print lower and upper bounds for a keyword if defined
     template< Style s = VERBOSE, typename Info >
     void bounds( const Info& info ) const {
@@ -535,7 +554,7 @@ class Print {
       explicit echoPolicies( const Print* const host ) : m_host( host ) {}
       //! Function call operator templated on the type that echos a policy
       template< typename U > void operator()( brigand::type_<U> ) {
-        static_assert( tk::HasTypedefCode< typename U::info >::value,
+        static_assert( tk::HasTypedef_code_v< typename U::info >,
                        "Policy code undefined for keyword" );
         // Print policy code - policy name
         m_host->raw( m_host->m_item_indent + "   " +
@@ -773,52 +792,14 @@ class Print {
     mutable format m_item_widename_value_fmt = format("%s%-75s : %s\n");
     mutable format m_part_underline_fmt = format("      %|=68|\n");
     mutable format m_section_underline_fmt = format("%s%s\n");
+    mutable format m_version_fmt =
+              format("\nQuinoa::%s, version %s (SHA1: %s)\n%s\n\n");
+    mutable format m_license_fmt = format("\nQuinoa::%s\n\n%s\n\n");
 
     // Stream objects
     std::stringstream m_null;   //!< Default verbose stream
     std::ostream& m_stream;     //!< Verbose stream
     std::ostream& m_qstream;    //!< Quiet stream
-
-  private:
-    //! \brief Clean up whitespaces and format a long string into multiple lines
-    //! \param[in] str String to format
-    //! \param[in] name String to insert before string to output
-    //! \param[in] indent String to use as identation
-    //! \param[in] width Width in characters to insert newlines for output
-    //! \see http://stackoverflow.com/a/6892562
-    //! \see http://stackoverflow.com/a/8362145
-    // TODO A line longer than 'width' will cause a hang!
-    std::string splitLines( std::string str,
-                            std::string indent,
-                            const std::string& name = "",
-                            std::size_t width = 80 ) const {
-      // remove form feeds, line feeds, carriage returns, horizontal tabs,
-      // vertical tabs, see http://en.cppreference.com/w/cpp/string/byte/isspace
-      str.erase(
-        std::remove_if( str.begin(), str.end(),
-                        []( char x ){ return std::isspace( x ) && x != ' '; } ),
-        str.end() );
-      // remove duplicate spaces
-      str.erase(
-        std::unique( str.begin(), str.end(),
-                     []( char a, char b ){ return a == b && a == ' '; } ),
-        str.end() );
-      // format str to 'width'-character-long lines with indent
-      str.insert( 0, indent + name );
-      std::size_t currIndex = width - 1;
-      while ( currIndex < str.length() ) {
-        const std::string whitespace = " ";
-        currIndex = str.find_last_of( whitespace, currIndex + 1 );
-        if ( currIndex == std::string::npos ) break;
-        currIndex = str.find_last_not_of( whitespace, currIndex );
-        if ( currIndex == std::string::npos ) break;
-        auto sizeToElim =
-          str.find_first_not_of( whitespace, currIndex + 1 ) - currIndex - 1;
-        str.replace( currIndex + 1, sizeToElim , "\n" + indent );
-        currIndex += width + indent.length() + 1;
-      }
-      return str;
-    }
 };
 
 } // tk::

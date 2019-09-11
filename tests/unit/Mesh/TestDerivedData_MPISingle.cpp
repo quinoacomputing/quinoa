@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      tests/unit/Mesh/TestDerivedData_MPISingle.C
+  \file      tests/unit/Mesh/TestDerivedData_MPISingle.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Mesh/DerivedData that require to be invoked from a
-    single thread
+             single thread
   \details   Unit tests for Mesh/DerivedData that require to be invoked from a
-     single thread.
+             single thread.
 */
 // *****************************************************************************
 
@@ -39,6 +39,8 @@ using DerivedData_MPISingle_group =
 using DerivedData_MPISingle_object = DerivedData_MPISingle_group::object;
 
 //! Define test group
+//! \note Those test groups whose name contains "MPISingle" will be started as
+//!    MPI tests (from a Charm++ nodegroup) and from only a single MPI rank.
 static DerivedData_MPISingle_group
   DerivedData_MPISingle( "Mesh/DerivedData_MPISingle" );
 

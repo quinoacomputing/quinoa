@@ -9,6 +9,18 @@
 #
 ################################################################################
 
+function(softlink target link_name)
+
+  set(LN_COMMAND "ln -sf ${target} ${link_name}")
+
+  exec_program(${LN_COMMAND} OUTPUT_VARIABLE ln_output RETURN_VALUE ln_retval)
+
+  if ("${ln_retval}" GREATER 0)
+    message(FATAL_ERROR "Problem creating symbolic link from \"${target}\" to \"${link_name}\":\n${ln_output}")
+    endif()
+
+endfunction()
+
 # ##############################################################################
 # Function used to add a regression test to the ctest test suite
 # add_regression_test( <test_name> <executable>
@@ -19,11 +31,11 @@
 #                      [TEXT_DIFF_PROG txtdiff]
 #                      [TEXT_BASELINE stat1.std stat2.std ...]
 #                      [TEXT_RESULT stat1.txt stat2.txt ...]
-#                      [TEXT_DIFF_PROG_CONF ndiff.cfg]
+#                      [TEXT_DIFF_PROG_CONF ndiff1.cfg ndiff2.cfg ...]
 #                      [BIN_DIFF_PROG bindiff]
 #                      [BIN_BASELINE stat1.std stat2.std ...]
 #                      [BIN_RESULT stat1.bin stat2.bin ...]
-#                      [BIN_DIFF_PROG_CONF exodiff.cfg]
+#                      [BIN_DIFF_PROG_CONF exodiff1.cfg exodiff2.cfg ...]
 #                      [FILECONV_PROG fileconv]
 #                      [FILECONV_INPUT arg1 arg2 ...]
 #                      [FILECONV_RESULT out.0.exo out.1.exo ...]
@@ -61,6 +73,8 @@
 # LABELS label1 label2 ... - Optional labels associated with the test.
 # Default: "${executable}".
 #
+# CHECKPOINT test - Optional test with a checkpoint the test should restart from
+#
 # TEXT_DIFF_PROG txtdiff - Diff program used for textual diffs. Default:
 # numdiff.
 #
@@ -72,8 +86,8 @@
 # be tested. If empty, no textual diff is performed. Default: "". Note that the
 # number of baseline filenames must equal the number of result files.
 #
-# TEXT_DIFF_PROG_CONF ndiff.cfg - Textual diff program configuration file.
-# Default: "".
+# TEXT_DIFF_PROG_CONF ndiff1.cfg ndiff2.cfg ... - Textual diff program
+# configuration file.  Default: "".
 #
 # TEXT_DIFF_PROG_ARGS arg1 arg2 ... - Textual diff program arguments.
 # Default: "".
@@ -114,12 +128,13 @@
 # ##############################################################################
 function(ADD_REGRESSION_TEST test_name executable)
 
-  set(oneValueArgs NUMPES PPN TEXT_DIFF_PROG BIN_DIFF_PROG TEXT_DIFF_PROG_CONF
-                   FILECONV_PROG POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT)
+  set(oneValueArgs NUMPES PPN TEXT_DIFF_PROG BIN_DIFF_PROG
+                   FILECONV_PROG POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT
+                   CHECKPOINT)
   set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT BIN_BASELINE
                      BIN_RESULT LABELS POSTPROCESS_PROG_ARGS BIN_DIFF_PROG_ARGS
-                     TEXT_DIFF_PROG_ARGS BIN_DIFF_PROG_CONF FILECONV_RESULT
-                     FILECONV_INPUT)
+                     TEXT_DIFF_PROG_ARGS TEXT_DIFF_PROG_CONF BIN_DIFF_PROG_CONF
+                     FILECONV_RESULT FILECONV_INPUT)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
@@ -213,8 +228,11 @@ function(ADD_REGRESSION_TEST test_name executable)
   if (CHARM_SMP)
     set(test_name "${test_name}_ppn${PPN}")
   endif()
-
   #message("${test_name}: req:${REQUESTED_NUMPES}, nod:${NUMNODES}, ppn:${PPN}, hw:${HARDWARE_NUMPES}")
+
+  # Set and create test run directory
+  set(workdir ${CMAKE_CURRENT_BINARY_DIR}/${test_name})
+  file(MAKE_DIRECTORY ${workdir})
 
   # Tell cmake/ctest how many PEs (processors) the test will use
   list(APPEND test_properties PROCESSORS ${HARDWARE_NUMPES})
@@ -225,7 +243,7 @@ function(ADD_REGRESSION_TEST test_name executable)
     list(APPEND TEST_LABELS ${ARG_LABELS})
   endif()
   # prepare test labels to pass as cmake script arguments
-  set(ARG_LABELS LABELS ${TEST_LABELS})
+  set(ARG_LABELS ${TEST_LABELS})
   string(REPLACE ";" " " ARG_LABELS "${ARG_LABELS}")
 
   # Set textual diff tool
@@ -256,11 +274,7 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(CONCAT msg "${msg}, args: '${ARGUMENTS}'")
   endif()
 
-  # Set and create test run directory
-  set(workdir ${CMAKE_CURRENT_BINARY_DIR}/${test_name})
-  file(MAKE_DIRECTORY ${workdir})
-
-  # Create list of files required to softlink to build directory
+  # Create list of files required to soft-link to build directory
   set(reqfiles)
   foreach(file IN LISTS ARG_TEXT_DIFF_PROG_CONF ARG_INPUTFILES ARG_TEXT_BASELINE ARG_BIN_BASELINE ARG_BIN_DIFF_PROG_CONF)
     list(APPEND reqfiles "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
@@ -268,12 +282,38 @@ function(ADD_REGRESSION_TEST test_name executable)
 
   # Softlink files required to build directory
   foreach(target ${reqfiles})
-    set(LN_COMMAND "ln -sf ${target} ${workdir}")
-    exec_program(${LN_COMMAND} OUTPUT_VARIABLE ln_output RETURN_VALUE ln_retval)
-    if("${ln_retval}" GREATER 0)
-      message(FATAL_ERROR "Problem creating symlink from \"${target}\" to \"${workdir}\":\n${ln_output}")
-    endif()
+    softlink( "${target}" "${workdir}" )
   endforeach()
+
+  # Configure optional checkpoint test as a dependent test
+  if (ARG_CHECKPOINT)
+
+    # Prefix executable and append REQUESTED_NUMPES to dependent test name
+    set(checkpoint "${executable}:${ARG_CHECKPOINT}_pe${REQUESTED_NUMPES}")
+    # In SMP mode, also append ppn to checkpoint test name
+    if (CHARM_SMP)
+      set(checkpoint "${checkpoint}_ppn${PPN}")
+    endif()
+
+    # Softlink checkpoint directory
+    softlink( "${CMAKE_CURRENT_BINARY_DIR}/${checkpoint}/restart"
+              "${workdir}" )
+
+    # Softlink results from checkpoint test
+    foreach(result IN LISTS ARG_BIN_RESULT)
+      softlink( "${CMAKE_CURRENT_BINARY_DIR}/${checkpoint}/${result}"
+                "${workdir}" )
+    endforeach()
+    foreach(result IN LISTS ARG_TEXT_RESULT)
+      softlink( "${CMAKE_CURRENT_BINARY_DIR}/${checkpoint}/${result}"
+                "${workdir}" )
+    endforeach()
+    foreach(result IN LISTS ARG_FILECONV_RESULT)
+      softlink( "${CMAKE_CURRENT_BINARY_DIR}/${checkpoint}/${result}"
+                "${workdir}" )
+    endforeach()
+
+  endif()
 
   # Do sainity check on and prepare to pass as cmake script arguments the
   # filenames of text baseline(s) and text result(s)
@@ -307,56 +347,46 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(REPLACE ";" " " ARG_BIN_RESULT "${ARG_BIN_RESULT}")
   endif()
 
+  # Convert lists to space-separated strings for passing as arguments to test
+  # runner cmake script below
   if(ARG_POSTPROCESS_PROG_ARGS)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_POSTPROCESS_PROG_ARGS
            "${ARG_POSTPROCESS_PROG_ARGS}")
   endif()
 
   if(ARG_TEXT_DIFF_PROG_ARGS)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_TEXT_DIFF_PROG_ARGS "${ARG_TEXT_DIFF_PROG_ARGS}")
   endif()
 
   # Make exodiff quiet (errors and warnings will still come to output)
   list(APPEND ARG_BIN_DIFF_PROG_ARGS "-q")
   if(ARG_BIN_DIFF_PROG_ARGS)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_ARGS "${ARG_BIN_DIFF_PROG_ARGS}")
   endif()
 
   if(ARG_FILECONV_INPUT)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_FILECONV_INPUT "${ARG_FILECONV_INPUT}")
   endif()
 
   # Do sainity check on and prepare to pass as cmake script arguments the
   # filenames of the file converter result(s)
   if(ARG_FILECONV_RESULT)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_FILECONV_RESULT "${ARG_FILECONV_RESULT}")
   endif()
 
   if(ARG_BIN_DIFF_PROG_CONF)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_CONF "${ARG_BIN_DIFF_PROG_CONF}")
   endif()
 
+  if(ARG_TEXT_DIFF_PROG_CONF)
+    string(REPLACE ";" " " ARG_TEXT_DIFF_PROG_CONF "${ARG_TEXT_DIFF_PROG_CONF}")
+  endif()
+
   if(RUNNER_ARGS)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " RUNNER_ARGS "${RUNNER_ARGS}")
   endif()
 
   if(POSTFIX_RUNNER_ARGS)
-    # Convert list to space-separated string for passing as arguments to test
-    # runner cmake script below
     string(REPLACE ";" " " POSTFIX_RUNNER_ARGS "${POSTFIX_RUNNER_ARGS}")
   endif()
 
@@ -364,6 +394,8 @@ function(ADD_REGRESSION_TEST test_name executable)
   add_test(NAME ${test_name}
            COMMAND ${CMAKE_COMMAND}
            -DTEST_NAME=${test_name}
+           -DUSE_VALGRIND=${USE_VALGRIND}
+           -DVALGRIND=${VALGRIND}
            -DWORKDIR=${workdir}
            -DRUNNER_REQUIRED=${RUNNER_REQUIRED}
            -DRUNNER=${RUNNER}
@@ -377,6 +409,7 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DNUMNODES=${NUMNODES}
            -DPPN=${PPN}
            -DHARDWARE_NUMPES=${HARDWARE_NUMPES}
+           -DCHECKPOINT=${checkpoint}
            -DTEXT_DIFF_PROG=${TEXT_DIFF_PROG}
            -DTEXT_DIFF_PROG_ARGS=${ARG_TEXT_DIFF_PROG_ARGS}
            -DTEXT_DIFF_PROG_CONF=${ARG_TEXT_DIFF_PROG_CONF}
@@ -422,11 +455,15 @@ function(ADD_REGRESSION_TEST test_name executable)
   if (ARG_TEXT_BASELINE)
     list(APPEND fail_regexp ".*${test_name}.*FAIL")
   endif()
-  # add pass regular expression for exodiff output if needed
+  # add fail regular expression for exodiff output if needed
   if (ARG_BIN_BASELINE)
     list(APPEND fail_regexp "Binary diff failed"
                             "has not been matched to any"
                             "exodiff: ERROR")
+  endif()
+  # add fail regular expression if running with valgrind
+  if (ENABLE_VALGRIND)
+    list(APPEND fail_regexp "ERROR SUMMARY: [1-9][0-9]* errors")
   endif()
   # add fail regular expression to detect cmake error during test run
   list(APPEND fail_regexp "CMake Error")
@@ -437,7 +474,8 @@ function(ADD_REGRESSION_TEST test_name executable)
   # the regular expressions specified.
   set_tests_properties(${test_name} PROPERTIES ${test_properties}
                        PASS_REGULAR_EXPRESSION "${pass_regexp}"
-                       FAIL_REGULAR_EXPRESSION "${fail_regexp}")
+                       FAIL_REGULAR_EXPRESSION "${fail_regexp}"
+                       DEPENDS "${checkpoint}")
 
   # Set labels cmake test property. The LABELS built-in cmake property is not
   # passed as part of test_properties above in set_test_properties as

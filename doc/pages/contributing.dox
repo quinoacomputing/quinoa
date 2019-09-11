@@ -1,0 +1,376 @@
+/*!
+  \page      contributing Contributing
+
+@note This page discusses _how_ to contribute. The current status and the rough
+direction in which we envision the development of all tools, i.e., _what_ to
+contribute, are described by the @ref roadmap.
+
+Thank you for considering contributing to Quinoa. Please read the information
+below to help make your contribution easy and effective for everyone involved.
+
+Following these guidelines helps to communicate that you respect the time of the
+developers managing this project. In return, they will reciprocate that respect
+in addressing your issue, assessing changes, and helping you finalize your pull
+requests.
+
+@tableofcontents{xml}
+
+@section contributing_seek Types of contributions we are looking for
+
+There are many ways to contribute, from writing tutorials and HOWTOs, adding
+examples, improving the documentation, submitting bug reports and feature
+requests to writing code which can be incorporated into Quinoa itself.
+
+@subsection contributing_create Create your own tool
+
+One way to contribute to Quinoa is to create your own @ref mainpage_tools
+"tool". A tool is the largest unit of interacting components, such as @ref
+walker_main or @ref inciter_main. Creating a new tool provides the largest
+degree of freedom in what and how the tool should do, what its goals are, what
+equations it solves, the numerical methods of choice, etc.
+
+The main benefit of creating a new tool in Quinoa is to be able to build
+something almost entirely new, yet still not having to start it from scratch.
+This can be done by relying on the existing software infrastructure, including
+
+- The Charm++ runtime system and its ecosystem of libraries, allowing
+  distributed-memory-parallel asynchronous programming and providing automatic
+  load balancing, fault tolerance, and many others, to enable high performance
+  for small as well as large problems,
+
+- A CMake build system that easily incorporates third-party libraries and
+  enables integration of Charm++-generated code as well as MPI libraries,
+
+- Command-line, and input-file parsers whose grammars are written purely in C++,
+  allowing custom and arbitrary grammar definitions, specific to each tool, to
+  enable user-friendly configuration of problems,
+
+- Distributed parallel file I/O, with partitioners, converters, and
+  solution-adaptive refinement for tetrahedron meshes,
+
+- Automated testing infrastructure, capable of testing serial, synchronous
+  (e.g., MPI) parallel, and asynchronous (e.g., Charm++) parallel functions and
+  executables, using multiple compilers, operating systems, libraries, container
+  technology, and code quality analysis,
+
+- Beautiful, professional, and no-nonsense documentation, featuring an
+  expertly-designed, as-you-type search-engine, whose result looks great on any
+  device, including math and figures.
+
+In summary, if you want to start a new tool but do not want to start from
+scratch, yet still want the above features (for free), you could create a new
+tool in Quinoa. If you are interested, @ref resources_contact "contact us" so
+we can discuss the best way to go about it.
+
+@subsection contributing_improve Improve an existing tool
+
+Another way to contribute to Quinoa is to improve an existing @ref
+mainpage_tools "tool". For a detailed description on the current status and
+roadmap of each tool, detailing if/where help is needed, see the @ref roadmap.
+
+@section contributing_issues Using the issue tracker
+
+__Please do NOT report security vulnerabilities in public issues!__ Instead,
+please disclose responsibly by letting the [Quinoa
+team](mailto:quinoa@lanl.gov?subject=Security) know upfront. We will assess the
+issue as soon as possible and will give you an estimate for when we have a fix
+and release available.
+
+The issue tracker on GitHub is the preferred channel for @ref contributing_bugs
+"bug reports", @ref contributing_features "feature requests", and submitting
+@ref contributing_pr "pull requests", but please __do not__ use the issue
+tracker for personal support requests &mdash; use our
+[Chat](https://quinoa.zulipchat.com) or [email list](https://quinoa.groups.io)
+for those.
+
+@section contributing_bugs Bug reports
+
+A bug is a problem that can be demonstrated and reproduced. Good bug reports are
+extremely helpful. Thanks in advance for taking the time to produce a useful bug
+report.
+
+Guidelines for bug reports:
+
+1. Use the GitHub [issue
+   search](https://github.com/quinoacomputing/quinoa/issues) &mdash; check if
+   the issue has already been reported.
+
+2. Check if the issue has been fixed &mdash; try to reproduce it using the
+   HEAD of the `develop` branch.
+
+3. Try to see if the bug can be reproduced by any of the regression tests
+   &mdash; see the @ref build "build page" on how to run them.
+
+4. Try to reproduce the bug in `Debug` mode &mdash; this can be configured by
+   setting `CMAKE_BUILD_TYPE=Debug`.
+
+A good bug report shouldn't leave others needing to chase you down for more
+information. Please try to be as detailed as possible in your report. What is
+your environment? What steps will reproduce the issue? What OS experiences the
+problem? What would you expect to be the outcome? All these details will help
+us fix any potential bugs.
+
+Example:
+
+> Short and descriptive example bug report title
+>
+> A summary of the issue and the OS environment in which it occurs. If suitable,
+> include the steps required to reproduce the bug:
+>
+> 1. This is the first step.
+> 2. This is the second step.
+> 3. Further steps, etc.
+>
+>
+> Attach the full screen output of both the _TPL-cmake_ as well as the
+> _Quinoa-cmake_ build configuration steps. See @ref build_stages.
+>
+> Attach the input file and, if relevant, the input mesh file. If the mesh is
+> large, try to reproduce it with a smaller mesh. If you cannot, use our [file
+> transfer service](https://transfer.lanl.gov) to send us the larger mesh and
+> address the file to quinoa@lanl.gov.
+>
+> Attach the full screen output of the run reproducing the problem, including
+> those of the Charm++ runtime system as well as the call and stack traces.
+>
+> Include any other information you want to share that is relevant to the issue
+> being reported. This might include the lines of code that you have identified
+> as causing the bug, and potential solutions.
+
+@subsection contributing_nondeterministic Non-deterministic bugs
+
+Some bugs may be non-deterministic and thus may only be triggered occasionally
+while some other times the code appears to run just fine, producing correct
+output. If this happens, don't panic! ;-) Such bugs are usually due to the fact
+that in Charm++ (and thus in Quinoa) execution is asynchronous by default and
+that the runtime system may (and likely will) schedule messages and tasks (and
+thus execution) in a non-deterministic fashion (while still adhering to
+correctness as specified by the programmer). However, if the programmer misses
+a single path of many possible paths of execution, that is incorrect, which may
+lead to data races and other bugs and thus may only appear randomly. (Which we
+do all the time &mdash; that's why we have an extensive test suite.)
+
+Such non-deterministic bugs are a bit a harder to reproduce. Here are some
+techniques that have helped us in the past trigger such bugs sooner rather than
+later:
+
+- If the bug is reproduced in `Release` mode, see if it can also be reproduced
+  in `Debug` mode.
+
+- Build the Charm++ runtime system using @ref build_rndq "randomized message
+  queues". This mode increases the chances of appearance of such
+  non-deterministic errors.
+
+- Run the case (or subset of regression tests) you believe will trigger the
+  problem in an infinite shell loop _and at the same time_ load all CPUs of the
+  machine with something else. For example, do
+
+       while ctest -j36 -R asynclogic -L migration --output-on-failure; do :; done | c++filt
+
+   While the above is running, in another terminal window do
+
+       make clean && make -sj36
+
+   The above will use 36 CPU cores and run all regression tests that contain the
+   string `asynclogic` in their name _and_ also exercise object migration.
+   If/when the problem happens, the test will produce a screen output with
+   demangled traces using the `c++filt` utility.
+
+- You can also turn on Charm++'s quiescence detection feature by passing the
+  `-q` command line argument to any of the Quinoa executables, which help
+  identify a specific subset of asynchronous-logic bugs.
+
+@section contributing_features Feature requests
+
+Feature requests are welcome. Please use the github [issue
+tracker](https://github.com/quinoacomputing/quinoa/issues).
+
+Please take a moment and consider whether your idea fits within the @ref why
+"scope, aims, and philosophy" of the project and the particular tool. Please
+provide as much detail and context as possible. Also see the @ref roadmap.
+
+@section contributing_rules Ground rules
+
+Here are the basic rules that all of us follow &mdash; we expect all
+contributors to do the same.
+
+@subsection contributing_cla Sign the contributor license agreement
+
+We require all contributors to sign a [contributor license
+agreement](https://www.clahub.com/agreements/quinoacomputing/quinoa) (CLA).
+
+If you are an individual and you are sure you own the intellectual property,
+then you will need to sign the above _individual_ CLA. If you work for a company
+that wants to allow you to contribute your work, then you will need to sign a
+_corporate_ CLA. If you would like to sign the _corporate_ CLA, please send us
+an [email](mailto:quinoa@lanl.gov) so we can send it to you. Once we receive the
+signed CLA, we will be able to accept your pull requests.
+
+__NOTE:__ Only original source code from you and other people that have signed
+the CLA can be accepted into the main repository.
+
+__IMPORTANT__: By contributing code, you agree to license your work under
+Quinoa's
+[license](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE).
+
+@subsection contributing_workflow Workflow
+
+We roughly follow the development model described
+[here](https://nvie.com/posts/a-successful-git-branching-model/). As a
+consequence, our `master` (stable) branch can lag behind our `develop`
+(bleeding edge) branch. In a nutshell, we always develop new code on feature
+branches, forking `develop`, and issue @ref contributing_pr "pull requests"
+against branch `develop`. We only occasionally merge to `master`.
+
+@subsection contributing_build Build with all warnings on, using multiple compilers
+
+We routinely work with three compilers: clang, gnu, and intel &mdash; this helps
+catching more errors, increases portability, and helps decipher more complex
+error messages. Using multiple compilers are not required but recommended since
+our automated testing exercises all of these compilers, and it is more
+time-effective to catch errors and warnings earlier than later.
+
+Additionally, by default we @ref build "build Quinoa" turning on most (if not
+all) compiler warnings. (Also, our continuous integration testing turns all
+warnings to errors.) There are some exceptions to this rule:
+
+- some warnings are turned off _globally_ (these are in `src/CMakeListst.txt`)
+  under `compiler-specific settings` &mdash; a different list for each compiler,
+  and
+
+- we turn off some warnings _locally_, when headers of third-party libraries
+  and Charm++-generated code are included &mdash; these are collected under
+  `src/NoWarning/`.
+
+To ensure good code quality we do not deviate from these settings, and we ask
+all contributors to do the same.
+
+@subsection contributing_buildall Build and test all tools before a push
+
+While it is possible to clone, build the dependencies for, build, and work on
+@ref build_specific_executables "only a single tool", doing so may run the
+risk of breaking some of the code that such a single-tool build does not use
+without noticing it locally. Thus, we recommend, at least before pushing to a
+GitHub branch (e.g., before a @ref contributing_pr "pull request", building
+and running the tests for the _full_ Quinoa build. If something breaks, our
+continuous integration will most likely catch it because they test _all_ the
+tools, thus testing the full build _locally_ (before publishing your changes)
+reduces the chances of such problems and saves time.
+
+@subsection contributing_test Run unit-, and regression tests
+
+For example, on a workstation with 36 CPUs, run the following in the build
+directory
+
+        # Using Charm++'s non-SMP mode:
+        ./charmrun +p 36 Main/unittest -v -q && ctest -j 36 --output-on-failure -LE extreme
+        # in SMP mode:
+        ./charmrun +p 34 --bind-to none Main/unittest -v -q +ppn 17 && ctest -j 36 --output-on-failure -LE extreme
+
+We usually exclude tests labeled as _extreme_ (which also excludes _insane_
+tests), because these would take long time, but sometimes we run those too,
+because we are ... _insane_ ;-).
+
+See the section on @ref build_smp "building Charm++ in SMP mode" on how to
+build Charm++ in non-SMP and SMP mode.
+
+@subsection contributing_coding Follow our priorities for writing code
+
+We don't really have coding guidelines. Please try not to diverge significantly
+from the style of the existing code. This includes file and function definition
+headers, comments, and API documentation. Also, please keep line lengths max 80
+characters. See also @ref priorities "our priorities for writing code".
+
+@subsection contributing_review Use reviewable.io for discussing pull requests
+
+Though we occasionally post comments on GitHub's feed discussing pull requests,
+we have had a better experience and thus prefer using
+[reviewable.io](https://reviewable.io)'s interface.  It is also more featureful
+and posts the review comments back to GitHub's PR page (which are still
+searchable by GitHub later).
+
+@section contributing_pr Pull requests
+
+Good pull requests (PR) &mdash; patches, improvements, new features &mdash; are
+a fantastic help. They should remain focused in scope and avoid containing
+unrelated commits.
+
+@ref resources_contact "Please ask first" before embarking on any significant
+PR (e.g. implementing features, refactoring code), otherwise you risk spending
+a lot of time working on something that we might not want to merge in.
+
+@subsection contributing_new For new contributors
+
+If you have never created a pull request on GitHub before, [here is a great
+tutorial](https://egghead.io/courses/how-to-contribute-to-an-open-source-project-on-github)
+on how it works.
+
+The basic steps for those who are _not_ members of GitHub's [QuinoaComputing](https://github.com/quinoacomputing) organization are as follows.
+
+1. [Fork](https://help.github.com/en/articles/fork-a-repo) the project, clone
+   your fork (so it is available locally to work on), and configure remotes:
+
+       # Clone your fork of the repo into the current directory
+       git clone https://github.com/<your-username>/<repo-name>
+       # Navigate to the newly cloned directory
+       cd <repo-name>
+       # Assign the original repo to a remote called "upstream"
+       git remote add upstream https://github.com/quinoacomputing/<repo-name>
+
+2. If you cloned/updated a while ago, get the latest changes from upstream:
+
+       git checkout develop
+       git pull upstream develop
+
+3. Create a new topic/feature branch (off the main project's `develop` branch) to
+   contain your feature, change, or fix:
+
+       git checkout -b <topic-branch-name>
+
+4. At this point, you are ready to make your changes or develop your feature!
+   Feel free to @ref resources_contact "ask for help" &mdash; everyone is a
+   beginner at first ;-).  If a developer asks you to _rebase_ your PR (or _merge
+   in `develop`_), they're saying that a lot of code has changed, and that you
+   need to update your branch so it's easier to merge. Make sure to update, or add
+   to the tests when appropriate. Patches and features will not be accepted
+   without passing the existing tests. See also the section on @ref
+   contributing_test "how to run the tests".
+
+5. If you added or changed a feature, make sure to document it accordingly so
+   doxygen can generate the correct documentation.
+
+6. Push your topic branch up to your fork:
+
+       git push origin <topic-branch-name>
+
+7. Open a [pull
+   request](https://help.github.com/en/articles/about-pull-requests) with a
+   clear title and description.
+
+@subsection contributing_members For members of GitHub's QuinoaComputing organization
+
+1. Clone the repo and create a branch, forking `develop`
+
+       git clone https://github.com/quinoacomputing/<repo-name>
+       cd <repo-name>
+       git checkout develop
+       git checkout -b <topic-branch-name>
+
+2. Make sure to update, or add to the tests when appropriate. Patches and
+   features will not be accepted without passing the existing tests. See also
+   the section on @ref contributing_test "how to run the tests".
+
+3. Push your topic branch up to our repo
+
+       git push origin <topic-branch-name>
+
+4. Once a pull request is good to go, you can tidy up your commit messages using
+   Git's [interactive
+   rebase](https://help.github.com/en/articles/about-git-rebase).
+
+5. Open a pull request with a clear title and description.
+
+@note If any of the above is unclear, please do not hesitate to @ref
+resources_contact "contact us".
+
+*/

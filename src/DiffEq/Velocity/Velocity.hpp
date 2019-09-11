@@ -41,7 +41,7 @@ template< class Init, class Coefficients >
 class Velocity {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::velocity;
 
   public:
@@ -176,7 +176,8 @@ class Velocity {
     //! Offset of coupled mixmassfracbeta eq
     const ncomp_t m_mixmassfracbeta_offset;
 
-    const ctr::DepvarType m_solve;      //!< Depndent variable to solve for
+    //! Depndent variable to solve for
+    const ctr::DepvarType m_solve;
     //! Array of tk::ctr::Product used to access the mean velocity
     const std::array< tk::ctr::Product, 3 > m_U;
     //! Velocity model variant

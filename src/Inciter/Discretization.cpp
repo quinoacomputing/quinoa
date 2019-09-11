@@ -19,6 +19,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/Options/Scheme.hpp"
 #include "Print.hpp"
+#include "Around.hpp"
 
 namespace inciter {
 
@@ -52,12 +53,14 @@ Discretization::Discretization(
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
   m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
+  m_meshvol( 0.0 ),
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
   m_bid(),
   m_timer(),
-  m_refined( 0 )
+  m_refined( 0 ),
+  m_prevstatus( std::chrono::high_resolution_clock::now() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] fctproxy Distributed FCT proxy
@@ -70,25 +73,30 @@ Discretization::Discretization(
 //! \param[in] nc Total number of Discretization chares
 // *****************************************************************************
 {
+  Assert( !ginpoel.empty(), "No elements assigned to Discretization chare" );
+  Assert( tk::positiveJacobians( m_inpoel, m_coord ),
+          "Jacobian in input mesh to Discretization non-positive" );
+  Assert( tk::conforming( m_inpoel, m_coord ),
+          "Input mesh to Discretization not conforming" );
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
 
   // Convert neighbor nodes to vectors from sets
-  for (const auto& n : msum) {
-    auto& v = m_msum[ n.first ];
-    v.insert( end(v), begin(n.second), end(n.second) );
+  for (const auto& [ neighborchare, sharednodes ] : msum) {
+    auto& v = m_msum[ neighborchare ];
+    v.insert( end(v), begin(sharednodes), end(sharednodes) );
   }
+
+  // Get ready for computing/communicating nodal volumes
+  startvol();
 
   // Count the number of mesh nodes at which we receive data from other chares
   // and compute map associating boundary-chare node ID associated to global ID
   std::vector< std::size_t > c( tk::sumvalsize( m_msum ) );
   std::size_t j = 0;
-  for (const auto& n : m_msum) for (auto i : n.second) c[ j++ ] = i;
+  for (const auto& n : m_msum) for (auto i : n.second) c[j++] = i;
   tk::unique( c );
   m_bid = tk::assignLid( c );
-
-  // Allocate receive buffer for nodal volumes
-  m_volc.resize( m_bid.size(), 0.0 );
 
   // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
   // is configured false in the input deck, at this point, we still need the FCT
@@ -104,7 +112,7 @@ Discretization::Discretization(
 }
 
 void
-Discretization::resize(
+Discretization::resizePostAMR(
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< int, std::vector< std::size_t > >& msum )
@@ -121,14 +129,13 @@ Discretization::resize(
 
   // Generate local ids for new chare boundary global ids
   std::size_t lid = m_bid.size();
-  for (const auto& c : m_msum)
-    for (auto g : c.second)
+  for (const auto& [ neighborchare, sharednodes ] : m_msum)
+    for (auto g : sharednodes)
       if (m_bid.find( g ) == end(m_bid))
         m_bid[ g ] = lid++;
 
-  // Resize receive buffer for nodal volumes
-  std::fill( begin(m_volc), end(m_volc), 0.0 );
-  m_volc.resize( m_bid.size(), 0.0 );
+  // Clear receive buffer that will be used for collecting nodal volumes
+  m_volc.clear();
 
   // Set flag that indicates that we are during time stepping
   m_initial = 0.0;
@@ -136,18 +143,23 @@ Discretization::resize(
   // Update mesh volume
   std::fill( begin(m_vol), end(m_vol), 0.0 );
   m_vol.resize( m_gid.size(), 0.0 );
+}
 
+void
+Discretization::startvol()
+// *****************************************************************************
+//  Get ready for (re-)computing/communicating nodal volumes
+// *****************************************************************************
+{
   m_nvol = 0;
-
-  contribute( CkCallback(CkReductionTarget(Transporter,discresized),
-              m_transporter) );
+  thisProxy[ thisIndex ].wait4vol();
 }
 
 void
 Discretization::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types
-//!  \details Since this is a [nodeinit] routine, see cg.ci, the
+//!  \details Since this is a [initnode] routine, see the .ci file, the
 //!   Charm++ runtime system executes the routine exactly once on every
 //!   logical node early on in the Charm++ init sequence. Must be static as
 //!   it is called without an object. See also: Section "Initializations at
@@ -172,11 +184,11 @@ Discretization::setCoord( const tk::UnsMesh::CoordMap& coordmap )
   coord[1].resize( coordmap.size() );
   coord[2].resize( coordmap.size() );
 
-  for (const auto& p : coordmap) {
-    auto i = tk::cref_find( m_lid, p.first );
-    coord[0][i] = p.second[0];
-    coord[1][i] = p.second[1];
-    coord[2][i] = p.second[2];
+  for (const auto& [ gid, coords ] : coordmap) {
+    auto i = tk::cref_find( m_lid, gid );
+    coord[0][i] = coords[0];
+    coord[1][i] = coords[1];
+    coord[2][i] = coords[2];
   }
 
   return coord;
@@ -240,14 +252,16 @@ Discretization::vol()
 
   // Send our nodal volume contributions to neighbor chares
   if (m_msum.empty())
-    contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
+   totalvol();
   else
-    for (const auto& n : m_msum) {
-      std::vector< tk::real > v( n.second.size() );
+    for (const auto& [ neighborchare, sharednodes ] : m_msum) {
+      std::vector< tk::real > v( sharednodes.size() );
       std::size_t j = 0;
-      for (auto i : n.second) v[ j++ ] = m_vol[ tk::cref_find(m_lid,i) ];
-      thisProxy[ n.first ].comvol( n.second, v );
+      for (auto i : sharednodes) v[ j++ ] = m_vol[ tk::cref_find(m_lid,i) ];
+      thisProxy[ neighborchare ].comvol( sharednodes, v );
     }
+
+  ownvol_complete();
 }
 
 void
@@ -261,20 +275,17 @@ Discretization::comvol( const std::vector< std::size_t >& gid,
 //! \details This function receives contributions to m_vol, which stores the
 //!   nodal volumes. While m_vol stores own contributions, m_volc collects the
 //!   neighbor chare contributions during communication. This way work on m_vol
-//!   and m_volc is overlapped. The two are combined in totalvol().
+//!   and m_volc is overlapped. The contributions are applied in totalvol().
 // *****************************************************************************
 {
   Assert( nodevol.size() == gid.size(), "Size mismatch" );
 
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    auto bid = tk::cref_find( m_bid, gid[i] );
-    Assert( bid < m_volc.size(), "Indexing out of bounds" );
-    m_volc[ bid ] += nodevol[i];
-  }
+  for (std::size_t i=0; i<gid.size(); ++i)
+    m_volc[ gid[i] ] += nodevol[i];
 
   if (++m_nvol == m_msum.size()) {
     m_nvol = 0;
-    contribute( CkCallback(CkReductionTarget(Transporter,vol), m_transporter) );
+    comvol_complete();
   }
 }
 
@@ -284,11 +295,12 @@ Discretization::totalvol()
 // Sum mesh volumes and contribute own mesh volume to total volume
 // *****************************************************************************
 {
-  // Combine own and communicated contributions of nodal volumes
-  for (const auto& b : m_bid) {
-    auto lid = tk::cref_find( m_lid, b.first );
-    m_vol[ lid ] += m_volc[ b.second ];
-  }
+  // Applied received contributions to nodal volumes
+  for (const auto& [gid, vol] : m_volc)
+    m_vol[ tk::cref_find(m_lid,gid) ] += vol;
+
+  // Clear receive buffer
+  tk::destroy(m_volc);
 
   // Sum mesh volume to host
   std::vector< tk::real > tvol{ 0.0, m_initial };
@@ -298,11 +310,15 @@ Discretization::totalvol()
 }
 
 void
-Discretization::stat()
+Discretization::stat( tk::real mesh_volume )
 // *****************************************************************************
 // Compute mesh cell statistics
+//! \param[in] mesh_volume Total mesh volume
 // *****************************************************************************
 {
+  // Store total mesh volume
+  m_meshvol = mesh_volume;
+
   const auto& x = m_coord[0];
   const auto& y = m_coord[1];
   const auto& z = m_coord[2];
@@ -327,10 +343,10 @@ Discretization::stat()
   // small differences. For reproducible average edge lengths and edge length
   // PDFs, run the mesh in serial.
   for (std::size_t p=0; p<m_gid.size(); ++p)
-    for (auto i=m_psup.second[p]+1; i<=m_psup.second[p+1]; ++i) {
-       const auto dx = x[ m_psup.first[i] ] - x[ p ];
-       const auto dy = y[ m_psup.first[i] ] - y[ p ];
-       const auto dz = z[ m_psup.first[i] ] - z[ p ];
+    for (auto i : tk::Around(m_psup,p)) {
+       const auto dx = x[ i ] - x[ p ];
+       const auto dy = y[ i ] - y[ p ];
+       const auto dz = z[ i ] - z[ p ];
        const auto length = std::sqrt( dx*dx + dy*dy + dz*dz );
        if (length < min[0]) min[0] = length;
        if (length > max[0]) max[0] = length;
@@ -448,8 +464,8 @@ Discretization::msumset() const
 // *****************************************************************************
 {
   std::unordered_map< int, std::unordered_set< std::size_t > > m;
-  for (const auto& n : m_msum)
-    m[ n.first ].insert( n.second.cbegin(), n.second.cend() );
+  for (const auto& [ neighborchare, sharednodes ] : m_msum)
+    m[ neighborchare ].insert( begin(sharednodes), end(sharednodes) );
 
   Assert( m.find( thisIndex ) == m.cend(),
           "Chare-node adjacency map should not contain data for own chare ID" );
@@ -492,17 +508,28 @@ Discretization::status()
 
   if (thisIndex==0 && !(m_it%tty)) {
 
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
     const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
     const auto field = g_inputdeck.get< tag::interval,tag::field >();
     const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
+    const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
+    const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
 
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
     m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
  
+    // estimate grind time (taken between this and the previous status line
+    // measurement) in milliseconds
+    using std::chrono::duration_cast;
+    using ms = std::chrono::milliseconds;
+    using clock = std::chrono::high_resolution_clock;
+    auto grind_time = duration_cast< ms >( clock::now() - m_prevstatus ).count();
+    m_prevstatus = clock::now();
+
     tk::Print print( verbose ? std::cout : std::clog );
  
     // Output one-liner
@@ -516,12 +543,19 @@ Discretization::status()
           << std::setw(2) << ete.sec.count() << "  "
           << std::setw(3) << eta.hrs.count() << ":"
           << std::setw(2) << eta.min.count() << ":"
-          << std::setw(2) << eta.sec.count() << "  ";
-  
+          << std::setw(2) << eta.sec.count() << "  "
+          << std::scientific << std::setprecision(6) << std::setfill(' ')
+          << std::setw(9) << grind_time << "  ";
+
+    // Determin if this is the last time step
+    bool finish = not (std::fabs(m_t-term) > eps && m_it < nstep);
+
     // Augment one-liner with output indicators
     if (!(m_it % field)) print << 'f';
     if (!(m_it % diag)) print << 'd';
     if (m_refined) print << 'h';
+    if (!(m_it % lbfreq) && !finish) print << 'l';
+    if (!(m_it % rsfreq) || finish) print << 'r';
   
     print << std::endl;
   }

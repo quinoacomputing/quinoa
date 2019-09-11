@@ -19,6 +19,7 @@ module diagcg {
 
   include "UnsMesh.hpp";
   include "PUPUtil.hpp";
+  include "Fields.hpp";
 
   namespace inciter {
 
@@ -28,19 +29,21 @@ module diagcg {
                     const std::map< int, std::vector< std::size_t > >& bnode,
                     const std::vector< std::size_t >& /* triinpoel */ );
       initnode void registerReducers();
-      entry void setup( tk::real v );
+      entry void setup();
+      entry void resizeComm();
       entry void init();
-      entry void diag();
-      entry void advance( tk::real newdt );
+      entry void refine();
+      entry [reductiontarget] void advance( tk::real newdt );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );
       entry void comrhs( const std::vector< std::size_t >& gid,
-                         const std::vector< std::vector< tk::real > >& R );
-      entry void comdif( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& R,
                          const std::vector< std::vector< tk::real > >& D );
       entry void resized();
       entry void lhs();
       entry void step();
+      entry void next();
+      entry void evalLB();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -49,22 +52,17 @@ module diagcg {
         when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsmerge(); } }
 
       entry void wait4rhs() {
-        when ownrhs_complete(), comrhs_complete(),
-             owndif_complete(), comdif_complete() serial "rhs" { solve(); } }
+        when ownrhs_complete( tk::Fields& dif ), comrhs_complete()
+        serial "rhs" { solve( dif ); } }
 
       entry void wait4out() {
-        when diag_complete(), ref_complete(), lhs_complete(),
-             resize_complete() serial "out" { out(); } }
+        when lhs_complete(), resize_complete() serial "out" { out(); } }
 
       entry void ownlhs_complete();
-      entry void ownrhs_complete();
-      entry void owndif_complete();
       entry void comlhs_complete();
-      entry void comrhs_complete();
-      entry void comdif_complete();
-      entry void diag_complete();
-      entry void ref_complete();
       entry void lhs_complete();
+      entry void ownrhs_complete( tk::Fields& dif );
+      entry void comrhs_complete();
       entry void resize_complete();
     }
 

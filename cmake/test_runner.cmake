@@ -21,6 +21,7 @@ string(REPLACE " " ";" BIN_BASELINE "${BIN_BASELINE}")
 string(REPLACE " " ";" BIN_RESULT "${BIN_RESULT}")
 string(REPLACE " " ";" BIN_DIFF_PROG_CONF "${BIN_DIFF_PROG_CONF}")
 string(REPLACE " " ";" BIN_DIFF_PROG_ARGS "${BIN_DIFF_PROG_ARGS}")
+string(REPLACE " " ";" TEXT_DIFF_PROG_CONF "${TEXT_DIFF_PROG_CONF}")
 # Covert string to list of postprocess program arguments
 string(REPLACE " " ";" POSTPROCESS_PROG_ARGS "${POSTPROCESS_PROG_ARGS}")
 # Covert string to list of test labels
@@ -36,6 +37,8 @@ string(REPLACE " " ";" POSTFIX_RUNNER_ARGS "${POSTFIX_RUNNER_ARGS}")
 message("Test runner configuration:")
 message("  TEST_NAME (name of test)                                    : ${TEST_NAME}")
 message("  WORKDIR (test run directory)                                : ${WORKDIR}")
+message("  USE_VALGRIND (true if we use valgrind)                      : ${USE_VALGRIND}")
+message("  VALGRIND (valgrind executable)                              : ${VALGRIND}")
 message("  RUNNER_REQUIRED (true if an executable runner is required)  : ${RUNNER_REQUIRED}")
 message("  RUNNER (used to run parallel and serial jobs inside cmake)  : ${RUNNER}")
 message("  RUNNER_NCPUS_ARG (used to specify the number of CPUs)       : ${RUNNER_NCPUS_ARG}")
@@ -49,13 +52,14 @@ message("  NUMPES (number of processing elements requested for test)   : ${NUMPE
 message("  NUMNODES (number of logical nodes, in Charm++'s SMP mode)   : ${NUMNODES}")
 message("  PPN (number of PEs per logical node, in Charm++'s SMP mode) : ${PPN}")
 message("  HARDWARE_NUMPES (number of PEs used in hardware for test)   : ${HARDWARE_NUMPES}")
+message("  CHECKPOINT (test whose checkpoint to restart from)          : ${CHECKPOINT}")
 message("  POSTPROCESS_PROG (executable to run after test)             : ${POSTPROCESS_PROG}")
 message("  POSTPROCESS_PROG_ARGS (postprocess program arguments)       : ${POSTPROCESS_PROG_ARGS}")
 message("  POSTPROCESS_PROG_OUTPUT (postprocess program output file)   : ${POSTPROCESS_PROG_OUTPUT}")
 
 message("  TEXT_DIFF_PROG (diff tool used for text diffs)              : ${TEXT_DIFF_PROG}")
 message("  TEXT_DIFF_PROG_ARGS (text diff tool arguments)              : ${TEXT_DIFF_PROG_ARGS}")
-message("  TEXT_DIFF_PROG_CONF (text diff tool configuration file)     : ${TEXT_DIFF_PROG_CONF}")
+message("  TEXT_DIFF_PROG_CONF (text diff tool configuration file(s))  : ${TEXT_DIFF_PROG_CONF}")
 message("  TEXT_BASELINE (text output known good solution file(s))     : ${TEXT_BASELINE}")
 message("  TEXT_RESULT (text output file(s) diffed with good solution) : ${TEXT_RESULT}")
 
@@ -70,7 +74,8 @@ message("  FILE_CONV_INPUT (File conv tool input file(s))              : ${FILEC
 message("  FILECONV_RESULT (File conv tool output file(s))             : ${FILECONV_RESULT}")
 
 # Remove previous test output (if any)
-if(TEXT_RESULT OR BIN_RESULT OR FILECONV_RESULT OR FILECONV_INPUT)
+if ( NOT CHECKPOINT AND
+     (TEXT_RESULT OR BIN_RESULT OR FILECONV_RESULT OR FILECONV_INPUT) )
   message("\nRemoving existing result(s) (if any): ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT} ${FILECONV_INPUT}\n")
   file(REMOVE ${TEXT_RESULT} ${BIN_RESULT} ${FILECONV_RESULT} ${FILECONV_INPUT})
 endif()
@@ -78,6 +83,10 @@ endif()
 # Set Charm++'s +ppn argument (if configured, used in SMP mode)
 if (PPN)
   set(PPN "+ppn;${PPN}")
+endif()
+
+if (USE_VALGRIND)
+  set(valgrind_memcheck "valgrind --tool=memcheck")
 endif()
 
 # Configure test run command
@@ -92,11 +101,13 @@ if (CHARM_SMP)
   endif()
 
   set(test_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NPE} ${RUNNER_ARGS}
+                   ${valgrind_memcheck}
                    ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS} ${PPN}
                    ${POSTFIX_RUNNER_ARGS})
 else()
 
   set(test_command ${RUNNER} ${RUNNER_NCPUS_ARG} ${NUMPES} ${RUNNER_ARGS}
+                   ${valgrind_memcheck}
                    ${TEST_EXECUTABLE} ${TEST_EXECUTABLE_ARGS}
                    ${POSTFIX_RUNNER_ARGS})
 
@@ -161,7 +172,8 @@ else() # Test command ran successfully, attempt to do diffs
   #  postprocessing, or
   #  - both TEXT_BASELINE and TEXT_RESULT have been specified and doing
   #  postprocessing (and postprocessing program has been found)
-  if( (TEXT_BASELINE AND TEXT_RESULT AND NOT POSTPROCESS_PROG_OUTPUT) OR (TEXT_BASELINE AND TEXT_RESULT AND POSTPROCESS_PROG) )
+  if( (TEXT_BASELINE AND TEXT_RESULT AND NOT POSTPROCESS_PROG_OUTPUT) OR
+      (TEXT_BASELINE AND TEXT_RESULT AND POSTPROCESS_PROG) )
 
     # Make sure the number of result and baseline files are equal
     list(LENGTH TEXT_BASELINE nbaseline)
@@ -171,17 +183,32 @@ else() # Test command ran successfully, attempt to do diffs
               "Number of baselines and number of results must be equal.")
     endif()
 
+    # If there is only one text diff program conf, use that for all, if multiple,
+    # use one of each
+    list(LENGTH TEXT_DIFF_PROG_CONF nconf)
+    if (NOT nconf EQUAL nresult AND NOT nconf EQUAL 1)
+      message(FATAL_ERROR "Number of text-diff-prog conf files (${nconf}) should either be 1 or it must equal the number of results (${nresult}).")
+    endif()
+
     # Do textual diff(s) multiple times diffing matching baseline and result
     math(EXPR b "0")
     foreach(baseline IN LISTS TEXT_BASELINE)
+
       list(GET TEXT_RESULT ${b} result)
       if (RUNNER_REQUIRED)
         set(runner_prefix ${RUNNER} ${RUNNER_NCPUS_ARG} 1 ${RUNNER_ARGS})
       endif()
+
+     if (nconf EQUAL 1)
+        list(GET TEXT_DIFF_PROG_CONF 0 conf)
+      else()
+        list(GET TEXT_DIFF_PROG_CONF ${b} conf)
+      endif()
+
       set(text_diff_command ${runner_prefix}
                             ${TEXT_DIFF_PROG} ${TEXT_DIFF_PROG_ARGS}
                             -b -t ${TEST_NAME}
-                            ${baseline} ${result} ${TEXT_DIFF_PROG_CONF})
+                            ${baseline} ${result} ${conf})
       string(REPLACE ";" " " text_diff_command_string "${text_diff_command}")
       message("\nRunning text diff command: '${text_diff_command_string}'\n")
       execute_process(COMMAND ${text_diff_command} RESULT_VARIABLE ERROR)
@@ -190,6 +217,7 @@ else() # Test command ran successfully, attempt to do diffs
         message(FATAL_ERROR "Textual diff failed to run: '${text_diff_command_string}' returned error code: ${ERROR}")
       endif(ERROR)
       math(EXPR b "${b}+1")
+
     endforeach(baseline)
 
   endif()
@@ -233,12 +261,24 @@ else() # Test command ran successfully, attempt to do diffs
     # mode (i.e., equivalent to ppn=1 in SMP mode), but run in SMP mode, may
     # yield the same partitions and the same results but with different file
     # numbers (ranks), due to the partitioner labeling the partitions
-    # differently. In that case we need to search a matching result for all
+    # differently (running on a different number of PEs compared to non-SMP
+    # mode). In that case we need to search a matching result among all
     # baselines in the list of results generated by the test. Thus the loop
     # below is a nested double loop, to traverse the Cartesian product of the
     # lists of baselines and results. Note that the Cartesian product is only
     # needed in SMP mode. In non-SMP mode, only the baseline-result pairs are
     # diffed with the same file number, i.e., in lock-step.
+
+    # While the outer loop is a 'foreach', the inner loop is a 'while'. The
+    # outer loop simple visits every baseline. However, the inner loop only
+    # visits those results for which a match has not yet been found. Those
+    # results that have been matched, collected in 'matched_ids', are taken off
+    # the list of results that are checked in the next iteration. This speeds
+    # up the search of matching baselines to less and less results as more
+    # matches are found. Also, iteration over the results is started from
+    # result id = baseline id, assuming the best case scenario, which is always
+    # true in non-SMP mode, only false for a few results in SMP mode. This
+    # further speeds up the search.
 
     # A baseline file is passed if a matching result is found among the results
     # with any file number. Finding a matching result this way for all
@@ -253,6 +293,7 @@ else() # Test command ran successfully, attempt to do diffs
     # filenames, independent of the order.
 
     set(matched_results)
+    set(matched_ids)
     set(b "-1")
     foreach(baseline ${BIN_BASELINE})
       math(EXPR b "0${b}+1")
@@ -266,13 +307,27 @@ else() # Test command ran successfully, attempt to do diffs
       set(pass FALSE)
       set(matching_result)
       set(baseline_error)
-      set(r "-1")
-      foreach(result ${BIN_RESULT})
-        math(EXPR r "0${r}+1")
+      set(r "${b}-1")   # start result id = baseline id (assume best case)
+      set(unmatched "0")
+      while(NOT pass)
+
+        # Increment result id (that is diffed with this baseline). If result id
+        # overflows, start over. Only consider those result ids for which we do
+        # not have a match yet.
+        set(m "0")
+        while(NOT ${m} EQUAL -1)
+          math(EXPR r "0${r}+1")
+          if (r EQUAL nresult)
+            set(r "0")
+          endif()
+          list(FIND matched_ids ${r} m)
+        endwhile()
+
+        list(GET BIN_RESULT ${r} result)
 
         if (NOT CHARM_SMP AND NOT b EQUAL r)
           #message("Charm++ in non-SMP mode: not diffing baseline ${b} with result ${r}")
-          continue()
+          break()
         endif()
         #message("Diffing baseline ${b} (${baseline}) with result ${r} (${result})")
 
@@ -296,17 +351,20 @@ else() # Test command ran successfully, attempt to do diffs
           set(pass TRUE)
           set(matching_result ${result})
           list(APPEND matched_results ${result})
-        endif()
-
-        # Save return value from binary diff command if any
-        if(ERROR)
+          list(APPEND matched_ids ${r})
+        else()
+          math(EXPR unmatched "0${unmatched}+1")
+          if (${unmatched} EQUAL ${nresult})
+            break()     # tried all without a match, get out, test failed
+          endif()
+          # Save return value from binary diff command if any
           set(baseline_error "${bin_diff_command_string}, error: ${ERROR}")
           if (ERROR_OUTPUT)
             set(baseline_error "${baseline_error}, output: ${BINDIFF_OUTPUT}, error output: ${ERROR_OUTPUT}")
           endif()
         endif()
 
-      endforeach(result)
+      endwhile()
 
       # Echo pass message if test passed, echo output, error, and error output
       # if failed.

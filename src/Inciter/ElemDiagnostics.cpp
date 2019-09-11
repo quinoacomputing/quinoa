@@ -39,8 +39,8 @@ void
 ElemDiagnostics::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types
-//! \details This routine is supposed to be called from a Charm++ nodeinit
-//!   routine. Since the runtime system executes nodeinit routines exactly once
+//! \details This routine is supposed to be called from a Charm++ initnode
+//!   routine. Since the runtime system executes initnode routines exactly once
 //!   on every logical node early on in the Charm++ init sequence, they must be
 //!   static as they are called without an object. See also: Section
 //!   "Initializations at Program Startup" at in the Charm++ manual
@@ -82,15 +82,15 @@ ElemDiagnostics::compute( Discretization& d,
   if ( !((d.It()+1) % diagfreq) ) {  // if remainder, don't compute diagnostics
 
     // Query number of degrees of freedom from user's setting
-    const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+    const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
     // Diagnostics vector (of vectors) during aggregation. See
     // Inciter/Diagnostics.h.
     std::vector< std::vector< tk::real > >
-      diag( NUMDIAG, std::vector< tk::real >( u.nprop()/ndof, 0.0 ) );
+      diag( NUMDIAG, std::vector< tk::real >( u.nprop()/rdof, 0.0 ) );
 
     // Compute diagnostics for DG
-    compute_diag(d, ndof, nchGhost, geoElem, ndofel, u, diag);
+    compute_diag(d, rdof, nchGhost, geoElem, ndofel, u, diag);
 
     // Append diagnostics vector with metadata on the current time step
     // ITER: Current iteration count (only the first entry is used)
@@ -114,7 +114,7 @@ ElemDiagnostics::compute( Discretization& d,
 
 void
 ElemDiagnostics::compute_diag( const Discretization& d,
-                               const std::size_t ndof,
+                               const std::size_t rdof,
                                const std::size_t nchGhost,
                                const tk::Fields& geoElem,
                                const std::vector< std::size_t >& ndofel,
@@ -123,7 +123,7 @@ ElemDiagnostics::compute_diag( const Discretization& d,
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc. for DG
 //! \param[in] d Discretization base class to read from
-//! \param[in] ndof Number of degrees of freedom
+//! \param[in] rdof Number of reconstructed degrees of freedom
 //! \param[in] nchGhost Number of chare boundary ghost elements
 //! \param[in] geoElem Element geometry
 //! \param[in] ndofel Vector of local number of degrees of freedom
@@ -178,9 +178,9 @@ ElemDiagnostics::compute_diag( const Discretization& d,
         // cppcheck-suppress useStlAlgorithm
         s = eq.analyticSolution( gp[0], gp[1], gp[2], d.T()+d.Dt() );
 
-      for (std::size_t c=0; c<u.nprop()/ndof; ++c)
+      for (std::size_t c=0; c<u.nprop()/rdof; ++c)
       {
-        auto mark = c*ndof;
+        auto mark = c*rdof;
         auto ugp = u(e, mark, 0);
 
         if(ndofel[e] > 1)

@@ -22,6 +22,7 @@
 #include "Types.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Problem.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -29,8 +30,8 @@ namespace inciter {
 class MultiMatProblemUserDefined {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
-    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
+    using ncomp_t = tk::ctr::ncomp_t;
+    using eq = tag::compflow;
 
   public:
     //! Evaluate initial condition solution at (x,y,z,t) for all components
@@ -44,17 +45,15 @@ class MultiMatProblemUserDefined {
     //! \return Values of all components evaluated at (x,y,z,t)
     //! \note The function signature must follow tk::SolutionFn
     static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real t )
+    solution( [[maybe_unused]] ncomp_t system,
+              [[maybe_unused]] ncomp_t ncomp,
+              [[maybe_unused]] tk::real x,
+              [[maybe_unused]] tk::real y,
+              [[maybe_unused]] tk::real z,
+              [[maybe_unused]] tk::real t )
     {
-      Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                                std::to_string(m_ncomp) );
-      IGNORE(system);
-      IGNORE(ncomp);
-      IGNORE(x);
-      IGNORE(y);
-      IGNORE(z);
-      IGNORE(t);
+      Assert( ncomp == ncomp, "Number of scalar components must be " +
+                              std::to_string(ncomp) );
       return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
     }
 
@@ -62,7 +61,9 @@ class MultiMatProblemUserDefined {
     //!   at (x,y,z) for all components
     //! \return Increment in values of all components: all zero for now
     static std::array< tk::real, 5 >
-    solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) {
+    solinc( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real,
+            tk::real )
+    {
       return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
     }
 
@@ -136,12 +137,11 @@ class MultiMatProblemUserDefined {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       out.push_back( E );
       std::vector< tk::real > p = r;
-      tk::real g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
       for (std::size_t i=0; i<p.size(); ++i)
-        p[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+        p[i] = eos_pressure< eq >( 0, r[i], u[i], v[i], w[i], re[i], 0 );
       out.push_back( p );
       std::vector< tk::real > T = r;
-      tk::real cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0];
+      tk::real cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0][0];
       for (std::size_t i=0; i<T.size(); ++i)
         T[i] = cv*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
       out.push_back( T );

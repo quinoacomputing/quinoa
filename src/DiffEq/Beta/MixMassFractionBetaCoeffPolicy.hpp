@@ -16,7 +16,7 @@
       coefficients, b, S, kappa, rho2, and r. Required signature:
       \code{.cpp}
         CoeffPolicyName(
-          tk::ctr::ncomp_type ncomp,
+          tk::ctr::ncomp_t ncomp,
           const std::vector< kw::sde_bprime::info::expect::type >& bprime_,
           const std::vector< kw::sde_S::info::expect::type >& S_,
           const std::vector< kw::sde_kappaprime::info::expect::type >& kprime_,
@@ -58,6 +58,7 @@
           char dissipation_depvar,
           char velocity_depvar,
           ctr::DepvarType velocity_solve,
+          ctr::DepvarType solve,
           ncomp_t ncomp,
           const std::map< tk::ctr::Product, tk::real >& moments,
           const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
@@ -71,11 +72,17 @@
           std::vector< kw::sde_S::info::expect::type >& S ) const {}
       \endcode
       where _depvar_ is the dependent variable associated with the mix
-      mass-fraction beta SDE, specified in the control file by the user, _ncomp_
-      is the number of components in the system, _moments_ is the map
-      associating moment IDs (tk::ctr::vector< tk::ctr::Term >) to values of
-      statistical moments, _bprime_, _kprime_, rho2, r, are user-defined
-      parameters, and _b_, _k_, _S_, are the SDE parameters computed, see
+      mass-fraction beta SDE, specified in the control file by the user,
+      _dissipation_depvar_ is a character labeling the coupled dissipation
+      equation, _velocity_depvar_ is an is a character labeling the coupled
+      velocity equation, _velocity_solve_ is an enum selecting whether the
+      coupled velocity equation solves for full variable or its fluctuation,
+      _solve_ is an enum selecting whether the mixmassfracbeta (scalar) equation
+      solves for full variable or its fluctuation, _ncomp_ is the number of
+      components in the system, _moments_ is the map associating moment IDs
+      (tk::ctr::vector< tk::ctr::Term >) to values of statistical moments,
+      _bprime_, _kprime_, rho2, r, are user-defined parameters, and _b_, _k_,
+      _S_, are the SDE parameters computed, see
       DiffEq/Beta/MixMassFractionBeta.h.
 
       The constant reference to hts, denotes a vector of y=f(x) functions (see
@@ -145,7 +152,8 @@ class MixMassFracBetaCoeffDecay {
       char depvar,
       char,
       char,
-      ctr::DepvarType,
+      ctr::DepvarType /*velocity_solve*/,
+      ctr::DepvarType /*solve*/,
       ncomp_t ncomp,
       const std::map< tk::ctr::Product, tk::real >& moments,
       const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
@@ -194,7 +202,8 @@ class MixMassFracBetaCoeffHomDecay {
       char depvar,
       char,
       char,
-      ctr::DepvarType,
+      ctr::DepvarType /*velocity_solve*/,
+      ctr::DepvarType /*solve*/,
       ncomp_t ncomp,
       const std::map< tk::ctr::Product, tk::real >& moments,
       const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
@@ -247,7 +256,8 @@ class MixMassFracBetaCoeffMonteCarloHomDecay {
       char depvar,
       char,
       char,
-      ctr::DepvarType,
+      ctr::DepvarType /*velocity_solve*/,
+      ctr::DepvarType /*solve*/,
       ncomp_t ncomp,
       const std::map< tk::ctr::Product, tk::real >& moments,
       const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
@@ -295,17 +305,13 @@ class MixMassFracBetaCoeffHydroTimeScale {
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::HYDROTIMESCALE; }
 
-    //! \brief Update coefficients b', kappa', and S
-    //! \details This where the mix mass-fraction beta SDE is made consistent
-    //!   with the no-mix and fully mixed limits by specifying the SDE
-    //!   coefficients, b and kappa as functions of b' and kappa'. Additionally,
-    //!   we pull in a hydrodynamic timescale from an external function. We also
-    //!   specify S to force d\<rho\>/dt = 0, where \<rho\> = rho_2/(1+rY).
+    //! Update coefficients b', kappa', and S
     void update(
       char depvar,
       char,
       char,
-      ctr::DepvarType,
+      ctr::DepvarType /*velocity_solve*/,
+      ctr::DepvarType /*solve*/,
       ncomp_t ncomp,
       const std::map< tk::ctr::Product, tk::real >& moments,
       const std::vector< kw::sde_bprime::info::expect::type  >& bprime,
@@ -335,6 +341,7 @@ class MixMassFracBetaCoeffHydroTimeScale {
 
     mutable std::size_t m_it = 0;
     mutable std::vector< tk::real > m_s;
+    mutable std::string m_extra_out_filename;
 };
 
 //! \brief Mix mass-fraction beta SDE coefficients policy coupled to velocity
@@ -372,6 +379,7 @@ class MixMassFracBetaCoeffInstVel {
       char dissipation_depvar,
       char /*velocity_depvar*/,
       ctr::DepvarType /*velocity_solve*/,
+      ctr::DepvarType solve,
       ncomp_t ncomp,
       const std::map< tk::ctr::Product, tk::real >& moments,
       const std::vector< kw::sde_bprime::info::expect::type  >& /*bprime*/,

@@ -106,23 +106,41 @@ namespace AMR {
     }
 
     /**
+     * @brief Helper function to apply uniform derefinement to all tets
+     */
+    void mesh_adapter_t::mark_uniform_derefinement()
+    {
+        for (auto& kv : tet_store.edge_store.edges) {
+           auto& local = kv.second;
+           if (local.lock_case == Edge_Lock_Case::unlocked)
+             local.needs_derefining = 1;
+        }
+        mark_derefinement();
+    }
+
+
+    /**
      * @brief For a given set of edges, set their refinement criteria for
      * refinement
      *
-     * @param edge vector of edges to set the refinement criteria of
-     * @param crit values to set to corresponding edges refinement criteria
-     * @param lock values of lock case to set for edges
+     * @param remote Vector of edges and edge tags
      */
     void mesh_adapter_t::mark_error_refinement(
-            const std::vector< edge_t >& remote )
+            const std::vector< std::pair< edge_t, edge_tag > >& remote )
     {
-       for (std::size_t e=0; e<remote.size(); e++)
-       {
-           auto& local = tet_store.edge_store.get( remote[e] );
-           if (local.lock_case > Edge_Lock_Case::unlocked)
+       for (const auto& r : remote) {
+         auto& local = tet_store.edge_store.get( r.first );
+         if (r.second == edge_tag::REFINE) {
+           if (local.lock_case > Edge_Lock_Case::unlocked) {
              local.needs_refining = 0;
-           else
+           } else {
              local.needs_refining = 1;
+           }
+         } else if (r.second == edge_tag::DEREFINE) {
+           if (local.lock_case == Edge_Lock_Case::unlocked) {
+             local.needs_derefining = 1;
+           }
+         }
        }
 
        mark_refinement();
@@ -146,7 +164,9 @@ namespace AMR {
      * of intermediate edges
      *
      * @param num_locked_edges The number of locked edges
+     * @param num_intermediate_edges The number of intermediate edges
      * @param refinement_case The refinement case of the tet
+     * @param normal TODO: Document this!
      *
      * @return The compatibili4y class of the current scenario
      */
@@ -265,7 +285,7 @@ namespace AMR {
         for (iter = 0; iter < max_num_rounds; iter++)
         {
 
-            tet_store.marked_refinements.set_state_changed(false);
+            tet_store.marked_refinements.get_state_changed() = false;
 
             // Loop over Tets.
             for (const auto& kv : tet_store.tets)
@@ -391,7 +411,6 @@ namespace AMR {
 
         //std::cout << "Print Tets" << std::endl;
         //print_tets();
-
     }
 
     /**
@@ -465,12 +484,12 @@ namespace AMR {
             if (element.children.size() == 2)
             {
                 trace_out << "perform 2:8" << std::endl;
-                refiner.derefine_two_to_one(tet_store,i);
+                refiner.derefine_two_to_one(tet_store,node_connectivity,i);
             }
             else if (element.children.size() == 4)
             {
                 trace_out << "perform 4:8" << std::endl;
-                refiner.derefine_four_to_one(tet_store,i);
+                refiner.derefine_four_to_one(tet_store,node_connectivity,i);
             }
             else {
                 std::cout << "num children " << element.children.size() << std::endl;
@@ -484,7 +503,7 @@ namespace AMR {
 
             // I want to set the children stored in *my* own children, to be
             // the value of my new children....
-            refiner.overwrite_children(tet_store, former_children, current_children);
+            //refiner.overwrite_children(tet_store, former_children, current_children);
 
             tet_store.unset_marked_children(i); // FIXME: This will not work well in parallel
             element.refinement_case = AMR::Refinement_Case::one_to_eight;
@@ -509,6 +528,11 @@ namespace AMR {
         remove_normals();
 
         lock_intermediates();
+
+        for (auto& kv : tet_store.edge_store.edges) {
+           auto& local = kv.second;
+           local.needs_refining = 0;
+        }
     }
 
     void mesh_adapter_t::lock_intermediates()
@@ -527,7 +551,6 @@ namespace AMR {
      * @brief A method implementing "Algorithm 1" from the paper
      *
      * @param num_to_refine Number of edges to refine
-     * @param edge_list The list of the edges for the tet
      * @param tet_id The id of the given tet
      */
     void mesh_adapter_t::refinement_class_one(int num_to_refine, size_t tet_id)
@@ -1053,144 +1076,309 @@ namespace AMR {
         }
     }
 
-    /*
-    void mesh_adapter_t::check_derefinement() {
-        // Go over edges and check if it needs derefining
-        // TODO: This could be implicit based of refinement_criteria value?
-        for (auto& kv : tet_store.edge_store.edges)
+    std::unordered_set<size_t> mesh_adapter_t::child_exclusive_nodes(size_t tet_id)
+    {
+        std::unordered_set<size_t> non_parent_nodes;
+
+        // array
+        auto parent_tet = tet_store.get(tet_id);
+
+        // convert to set
+        std::unordered_set<size_t> parent_set(begin(parent_tet), end(parent_tet));
+
+        child_id_list_t children = tet_store.data(tet_id).children;
+        for (size_t i = 0; i < children.size(); i++)
         {
-            // Mark them as needing refinement
-            if (kv.second.refinement_criteria > derefinement_cut_off)
+            auto child_tet = tet_store.get( children[i] );
+
+            // Look at nodes, if not present add to set
+            for (std::size_t j = 0; j < NUM_TET_NODES; j++)
             {
-                kv.second.needs_derefining = true;
-            }
-            else
-            {
-                // TODO: Check this won't be overwriting valuable information from last iteration
-                kv.second.needs_derefining = false;
+                auto node = child_tet[j];
+                if (parent_set.count(node) == 0)
+                {
+                    non_parent_nodes.insert(node);
+                }
             }
         }
 
-        // Loop over tets
-        for (const auto& kv : tet_store.tets)
+        trace_out <<" Found " << non_parent_nodes.size() << " non parent nodes " << std::endl;
+        return non_parent_nodes;
+
+    }
+
+    void mesh_adapter_t::mark_derefinement()
+    {
+        const size_t max_num_rounds = AMR_MAX_ROUNDS;
+
+        // Mark refinements
+        size_t iter;
+        //Iterate until convergence
+        for (iter = 0; iter < max_num_rounds; iter++)
         {
+            tet_store.marked_derefinements.get_state_changed() = false;
 
-            size_t tet_id = kv.first;
-
-            // This is useful for later inspection
-            edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
-            int num_to_derefine = 0;
-
-            AMR::Refinement_Case refinement_case = tet_store.get_refinement_case(tet_id);
-            for (size_t k = 0; k < NUM_TET_EDGES; k++)
+            // Loop over tets
+            for (const auto& kv : tet_store.tets)
             {
-                edge_t edge = edge_list[k];
+                size_t tet_id = kv.first;
 
-                // Count edges which need refining
-                if (tet_store.edge_store.get(edge).needs_derefining)
+                // Skip tets which have no children
+                child_id_list_t children = tet_store.data(tet_id).children;
+                if (children.size() <= 0) { continue; }
+
+                // This is useful for later inspection
+                //edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
+                std::size_t num_to_derefine = 0; // Nodes
+
+                // Do number of points
+                std::unordered_set<size_t> derefine_node_set;
+
+                AMR::Refinement_Case refinement_case = tet_store.get_refinement_case(tet_id);
+
+                // Find the set of nodes which are not in the parent
+                std::unordered_set<size_t> non_parent_nodes = child_exclusive_nodes(tet_id);
+
+
+                // Look at children
+                trace_out << tet_id << " Looping over " << children.size() << "children" << std::endl;
+                for (size_t i = 0; i < children.size(); i++)
                 {
-                    num_to_derefine++;
-                }
-            }
-
-            // "If nderefine = 1
-            if (num_to_derefine == 1)
-            {
-                // If icase = 1:2
-
-                if (refinement_case == AMR::Refinement_Case::one_to_two)
-                {
-                    // Accept as 2:1 derefine"
-                    refiner.derefine_two_to_one(tet_id);
-                }
-                // "Else
-                else {
-                    // Deactivate all points"
-                    deactivate_tet_edges(tet_id);
-                }
-            }
-
-
-            // "If nderefine = 2
-            else if (num_to_derefine == 2)
-            {
-                // If icase = 1:4
-                if (refinement_case == AMR::Refinement_Case::one_to_four)
-                {
-                    // Accept as 4:2 derefine"
-                    refiner.derefine_four_to_two(tet_id);
-                }
-                // "Else
-                else {
-                    // Deactivate all points"
-                    deactivate_tet_edges(tet_id);
-                }
-            }
-
-            // "If nderefine = 3
-            else if (num_to_derefine == 3)
-            {
-                // If icase = 1:4
-                if (refinement_case == AMR::Refinement_Case::one_to_four)
-                {
-                    // Accept as 4:2 derefine"
-                    refiner.derefine_four_to_two(tet_id);
-                }
-                // "Else if icase = 1:8
-                else if (refinement_case == AMR::Refinement_Case::one_to_eight)
-                {
-                    bool same_face = false; // TODO: This
-                    // If inactive points lie on same face
-                    if (same_face == true)
+                    // TODO: Is this in element or tet ids?
+                    edge_list_t edge_list = tet_store.generate_edge_keys(children[i]);
+                    for (size_t k = 0; k < NUM_TET_EDGES; k++)
                     {
-                        // Accept as 8:4 derefinement
-                        refiner.derefine_eight_to_four(tet_id);
+                        edge_t edge = edge_list[k];
+                        // TODO: where do we makr the edges that need to be derefed? parent of child?
+                        if (tet_store.edge_store.get(edge).needs_derefining)
+                        {
+                            // Check each node, see if its an intermediate
+                            size_t A = edge.first();
+                            size_t B = edge.second();
+                            trace_out << "Needs deref " << A << " - " << B << std::endl;
+
+                            //if (tet_store.is_intermediate(A))
+                            if (non_parent_nodes.count(A) )
+                            {
+                                trace_out << "Adding " << A << std::endl;
+                                derefine_node_set.insert(A);
+                            }
+
+                            //if (tet_store.is_intermediate(B))
+                            if (non_parent_nodes.count(B))
+                            {
+                                trace_out << "Adding " << B << std::endl;
+                                derefine_node_set.insert(B);
+                            }
+                        }
+                    }
+                }
+
+                num_to_derefine = derefine_node_set.size();
+
+                if (num_to_derefine > 0) {
+                    trace_out << "num_to_derefine " << num_to_derefine << std::endl;
+                    trace_out << "ref_case " << refinement_case << std::endl;
+                    trace_out << "num children " << children.size() << std::endl;
+                }
+
+                //num_to_derefine = convert_derefine_edges_to_points(tet_store, tet_id, num_edges_to_derefine, refinement_case);
+
+                // "If nderefine = 1
+                if (num_to_derefine == 1)
+                {
+                    // If icase = 1:2
+
+                    //if (refinement_case == AMR::Refinement_Case::one_to_two)
+                    if (children.size() == 2)
+                    {
+                        // Accept as 2:1 derefine"
+                        trace_out << "Accept as 2:1" << std::endl;
+                        //refiner.derefine_two_to_one(tet_store, node_connectivity, tet_id);
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::two_to_one);
                     }
                     // "Else
                     else {
                         // Deactivate all points"
                         deactivate_tet_edges(tet_id);
+                        trace_out << "giving up on deref decision. deactivate near 2:1 ntd = 1" << std::endl;
                     }
-
                 }
-            }
 
-            // "If nderefine = 4
-            else if (num_to_derefine == 4)
-            {
-                // If inactive points lie on the same face
-                bool same_face = false; // TODO: This
-                if (same_face == true)
+
+                // "If nderefine = 2
+                else if (num_to_derefine == 2)
                 {
-                    // Deactivate third point of face
-                    // TODO: Deactivate third face
-
-                    // Accept as 8:4 derefinement
-                    refiner.derefine_eight_to_four(tet_id);
+                    // If icase = 1:4
+                    //if (refinement_case == AMR::Refinement_Case::one_to_four)
+                    if (children.size() == 4)
+                    {
+                        // Accept as 4:2 derefine"
+                        trace_out << "Accept as 4:2" << std::endl;
+                        //refiner.derefine_four_to_two(tet_store,  node_connectivity, tet_id);
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::four_to_two);
+                    }
+                    // "Else
+                    else {
+                        // Deactivate all points"
+                        deactivate_tet_edges(tet_id);
+                        trace_out << "giving up on deref decision. deactivate near 4:2 ntd = 2" << std::endl;
+                    }
                 }
-                // "Else
+
+                // "If nderefine = 3
+                else if (num_to_derefine == 3)
+                {
+                    // If icase = 1:4
+                    //if (refinement_case == AMR::Refinement_Case::one_to_four)
+                    if (children.size() == 4)
+                    {
+                        // Accept as 4:2 derefine"
+                        trace_out << "Accept as 4:1" << std::endl;
+                        //refiner.derefine_four_to_two(tet_store,  node_connectivity, tet_id);
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::four_to_one);
+                    }
+                    // "Else if icase = 1:8
+                    //else if (refinement_case == AMR::Refinement_Case::one_to_eight)
+                    else if (children.size() == 8)
+                    {
+                        bool same_face = false; // TODO: This
+                        // If inactive points lie on same face
+                        if (same_face == true)
+                        {
+                            // Accept as 8:4 derefinement
+                            trace_out << "Accept as 8:4" << std::endl;
+                            //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
+                            tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_four);
+                        }
+                        // "Else
+                        else {
+                            // Deactivate all points"
+                            deactivate_tet_edges(tet_id);
+                            trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 3" << std::endl;
+                        }
+
+                    }
+                }
+
+                // "If nderefine = 4
+                else if (num_to_derefine == 4)
+                //else if (children.size() == 4)
+                {
+                    // If inactive points lie on the same face
+                    bool same_face = false; // TODO: This
+                    if (same_face == true)
+                    {
+                        // Deactivate third point of face
+                        // TODO: Deactivate third face
+
+                        // Accept as 8:4 derefinement
+                        trace_out << "Accept as 8:4" << std::endl;
+                        //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_four);
+                    }
+                    // "Else
+                    else {
+                        // Deactivate all points"
+                        deactivate_tet_edges(tet_id);
+                    trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 4" << std::endl;
+                    }
+                }
+
+                // "If nderefine = 5
+                else if (num_to_derefine == 5)
+                {
+                    // Accept as 8:2 derefine"
+                    // TODO: MAKE THIS 8:2 NOT 8:1
+                    trace_out << "Accept as 8:2 " << std::endl;
+                    //refiner.derefine_eight_to_two(tet_store,  node_connectivity, tet_id);
+                    //tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_two);
+                    tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_two);
+                }
+
+                // "If nderefine = 6
+                else if (num_to_derefine == 6)
+                {
+                    // Accept as 8:1 derefine"
+                    trace_out << "Accept as 8:1" << std::endl;
+                    //refiner.derefine_eight_to_one(tet_store,  node_connectivity, tet_id);
+                    tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_one);
+                }
+
                 else {
-                    // Deactivate all points"
-                    deactivate_tet_edges(tet_id);
+                    trace_out << "giving up with no deref decision" << std::endl;
                 }
             }
 
-            // "If nderefine = 5
-            else if (num_to_derefine == 5)
+            // If nothing changed during that round, break
+            if (!tet_store.marked_derefinements.get_state_changed())
             {
-                // Accept as 8:2 derefine"
-                refiner.derefine_eight_to_two(tet_id);
+                trace_out << "Terminating loop at iter " << iter << std::endl;
+                break;
             }
+            trace_out << "End iter " << iter << std::endl;
+        }
+        trace_out << "Deref Loop took " << iter << " rounds." << std::endl;
+    }
 
-            // "If nderefine = 8
-            else if (num_to_derefine == 6)
+    // TODO: document
+    void mesh_adapter_t::perform_derefinement()
+    {
+        trace_out << "Perform deref" << std::endl;
+
+        // Do derefinements
+        for (const auto& kv : tet_store.tets)
+        {
+            size_t tet_id = kv.first;
+            //size_t parent_id = 0;
+
+            // TODO: Do I really want to loop all tets?
+
+            // TODO: is this doing a double lookup?
+            if (tet_store.has_derefinement_decision(tet_id))
             {
-                // Accept as 8:1 derefine"
-                refiner.derefine_eight_to_one(tet_id);
+                trace_out << "Do derefine of " << tet_id << std::endl;
+                //size_t parent_id = tet_store.get_parent_id(tet_id);
+                //trace_out << "Parent = " << parent_id << std::endl;
+                switch(tet_store.marked_derefinements.get(tet_id))
+                {
+                    case AMR::Derefinement_Case::two_to_one:
+                        refiner.derefine_two_to_one(tet_store,node_connectivity,tet_id);
+                        break;
+                    case AMR::Derefinement_Case::four_to_one:
+                        refiner.derefine_four_to_one(tet_store,node_connectivity,tet_id);
+                        break;
+                    case AMR::Derefinement_Case::four_to_two:
+                        refiner.derefine_four_to_two(tet_store,node_connectivity,tet_id);
+                        break;
+                    case AMR::Derefinement_Case::eight_to_one:
+                        refiner.derefine_eight_to_one(tet_store,node_connectivity,tet_id);
+                        break;
+                    case AMR::Derefinement_Case::eight_to_two:
+                        refiner.derefine_eight_to_two(tet_store,node_connectivity,tet_id);
+                        break;
+                    case AMR::Derefinement_Case::eight_to_four:
+                        refiner.derefine_eight_to_four(tet_store,node_connectivity,tet_id);
+                        break;
+                    case AMR::Derefinement_Case::skip:
+                        // What do we do with skip?
+                        break;
+                }
+                // Mark tet as not needing refinement
+                tet_store.marked_derefinements.erase(tet_id);
             }
         }
+
+        node_connectivity.print();
+        tet_store.process_delete_list();
+        tet_store.print_node_types();
+
+        for (auto& kv : tet_store.edge_store.edges) {
+           auto& local = kv.second;
+           local.needs_derefining = 0;
+        }
     }
-    */
+
 }
 
 #if defined(__clang__)

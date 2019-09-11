@@ -31,7 +31,7 @@ registerTransport( CGFactory& cf,
 
 //! Return information on the transport PDE
 std::vector< std::pair< std::string, std::string > >
-infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_type >& cnt );
+infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt );
 
 } // inciter::
 

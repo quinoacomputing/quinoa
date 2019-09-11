@@ -47,7 +47,7 @@ registerOrnsteinUhlenbeck( DiffEqFactory& f, std::set< ctr::DiffEqType >& t )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the Ornstein-Uhlenbeck SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -83,9 +83,10 @@ infoOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
     parameters( g_inputdeck.get< tag::param, tag::ou, tag::theta >().at(c) ) );
   nfo.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
     parameters( g_inputdeck.get< tag::param, tag::ou, tag::mu >().at(c) ) );
-  spikes( nfo, g_inputdeck.get< tag::param, tag::ou, tag::spike >().at(c) );
-  betapdfs( nfo,
-            g_inputdeck.get< tag::param, tag::ou, tag::betapdf >().at(c) );
+  spikes( nfo, g_inputdeck.get< tag::param, tag::ou, tag::init,
+                                tag::spike >().at(c) );
+  betapdfs( nfo, g_inputdeck.get< tag::param, tag::ou, tag::init,
+                                  tag::betapdf >().at(c) );
 
   return nfo;
 }

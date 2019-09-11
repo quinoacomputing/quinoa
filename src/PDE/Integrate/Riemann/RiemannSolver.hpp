@@ -20,9 +20,9 @@
 
 #include <array>
 #include <vector>
+#include <memory>
 
 #include "Types.hpp"
-#include "Make_unique.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
 
@@ -44,7 +44,7 @@ class RiemannSolver {
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
     template< typename T > explicit RiemannSolver( T x ) :
-      self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
+      self( std::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a function pointer (std::function) to a
     //!   constructor of an object modeling Concept.
@@ -67,7 +67,7 @@ class RiemannSolver {
     //! \param[in] args Zero or more constructor arguments
     template< typename T, typename...Args >
     explicit RiemannSolver( std::function<T(Args...)> x, Args&&... args ) :
-      self( tk::make_unique< Model<T> >(
+      self( std::make_unique< Model<T> >(
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to computing the Riemann flux

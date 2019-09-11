@@ -15,7 +15,7 @@
       coefficients, b, S, and kappa. Required signature:
       \code{.cpp}
         CoeffPolicyName(
-          tk::ctr::ncomp_type ncomp,
+          tk::ctr::ncomp_t ncomp,
           const std::vector< kw::sde_b::info::expect::type >& b_,
           const std::vector< kw::sde_S::info::expect::type >& S_,
           const std::vector< kw::sde_kappa::info::expect::type >& k_,
@@ -61,7 +61,7 @@ class GammaCoeffConst {
   public:
     //! Constructor: initialize coefficients
     GammaCoeffConst(
-      tk::ctr::ncomp_type ncomp,
+      tk::ctr::ncomp_t ncomp,
       const std::vector< kw::sde_b::info::expect::type >& b_,
       const std::vector< kw::sde_S::info::expect::type >& S_,
       const std::vector< kw::sde_kappa::info::expect::type >& k_,

@@ -29,9 +29,8 @@ namespace inciter {
 class CompFlowProblemSedovBlastwave {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
-    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
     //! Evaluate analytical solution at (x,y,0) for all components
@@ -42,7 +41,7 @@ class CompFlowProblemSedovBlastwave {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     std::vector< tk::real >
-    solinc( ncomp_t system,
+    solinc( ncomp_t system, ncomp_t ncomp,
             tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt ) const;
 
     //! Compute and return source term for this problem
@@ -54,13 +53,12 @@ class CompFlowProblemSedovBlastwave {
     void side( std::unordered_set< int >& conf ) const;
 
     //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames( ncomp_t ) const;
 
     //! Return field output going to file
     std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
-                 ncomp_t,
+                 ncomp_t /*ncomp*/,
                  ncomp_t offset,
                  tk::real,
                  tk::real /*V*/,

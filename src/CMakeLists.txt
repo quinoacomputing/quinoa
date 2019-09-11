@@ -70,7 +70,8 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 # Set build type (will be exported to the source)
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 # Query regression tests directory (will be exported to the source)
-set(REGRESSION_DIR "${PROJECT_SOURCE_DIR}/../tests/regression")
+get_filename_component(REGRESSION_DIR
+  "${PROJECT_SOURCE_DIR}/../tests/regression" ABSOLUTE)
 
 # Query target architecture
 include(TargetArch)
@@ -104,7 +105,7 @@ message(STATUS "Third-party library dir: " ${TPL_DIR})
 
 # Detect compiler version
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
-    CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   include(DetectCompilerVersion)
 endif()
 
@@ -112,6 +113,13 @@ set(ENABLE_TESTS true CACHE BOOL "Enable unit-, and regression tests, as well as
 if (NOT ENABLE_TESTS)
   message(STATUS "Tests disabled.")
 endif()
+
+# Save contents of license file and copyright info in cmake variables
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE" LICENSE)
+string(REGEX REPLACE "All rights reserved\.*" "All rights reserved. See --license for details." COPYRIGHT "${LICENSE}")
+string(REGEX REPLACE ";" "\\\\n" COPYRIGHT "${COPYRIGHT}")
+string(REGEX REPLACE ";" "\\\\n" LICENSE "${LICENSE}")
+string(APPEND LICENSE "\\n\\nFor third-party licenses, see https://quinoacomputing.org/licenses.html")
 
 # Include third-party libraries configuration
 include(TPLs)
@@ -209,7 +217,7 @@ execute_process(COMMAND "date" "+%A, %b %d, %Y"
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE_SIMPLE "${BUILD_DATE_SIMPLE}")
 
 # Set the requirement for the C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 message(STATUS "Required language standard: C++${CMAKE_CXX_STANDARD}")
 
@@ -230,7 +238,7 @@ macro (add_c_compiler_flag flag)
 endmacro (add_c_compiler_flag)
 
 # Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
 
   # Include function that allows to set standard C++ library
   include(libstdcxx)
@@ -282,8 +290,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   add_compiler_flag("-Wall")
   add_compiler_flag("-Wextra")
-  add_compiler_flag("-pedantic")
-  add_compiler_flag("-pedantic-errors")
   add_compiler_flag("-Wcast-align")
   add_compiler_flag("-Wcast-qual")
   add_compiler_flag("-Wdisabled-optimization")
@@ -326,13 +332,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Include function that allows to set standard C++ library
   include(libstdcxx)
 
-  # Offer switch between libc++ and libstdc++, using libc++ as default
+  # Offer switch between libc++ and libstdc++, using libstdc++ as default
   if (LIBCXX_FOUND)
-    set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libc++")
+    set_libstdcpp_vs_libcpp(CMAKE_CXX_FLAGS "libstdc++")
   endif()
-
-  # Use the C++14 standard (CMAKE_CXX_STANDARD does not set this for intel)
-  add_compiler_flag("-std=c++11")
 
   # Compiler flags for intel
   add_compiler_flag("-w3")       # enable diagnostics: remarks, warnings, errors
@@ -355,6 +358,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #   593: parameter was set but never used
   #   869: parameter was never referenced
   #   981: operands are evaluated in unspecified order
+  #  1011: missing return statement at end of non-void function (constexpr)
+  #  1292: unknown attribute "fallthrough"
   #  1418: external function definition with no prior declaration
   #  1419: external declaration in primary source file
   #  1572: floating-point equality and inequality comparisons are unreliable
@@ -367,7 +372,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  3346: dynamic exception specifications are deprecated
   #  3656: variable may be used before its value is set
   #  10120: overriding '-O3' with '-O2'
-  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656,10120")
+  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1011,1292,1418,1419,1572,2259,2407,2415,2547,2557,3280,3346,3656,10120")
 
   # Compiler flags for optimization report
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=0 -qopt-report-phase=loop,vec -qopt-report-file=stderr")
@@ -446,6 +451,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")  # cray-specific settings
   add_compiler_flag("-hnomessage=11709:261:12307:12489:193:826:737:997:3138:3137:7405:1418:177:181:401:11749:11548:1982:368:324:47:1:7:111:68:10153:186:550:21:237:174:7212:284:82")
   add_c_compiler_flag("-hnomessage=11709:301:3137:3138:7405:193:1977")
 
+else()
+
+  message(WARNING "Compiler '${CMAKE_CXX_COMPILER_ID}' could not be identified.")
+
 endif()
 
 # Set runner configuration. This is used when generating code coverage and
@@ -488,6 +497,9 @@ message(STATUS "Parallel job runner ncpus arg: ${RUNNER_NCPUS_ARG}")
 message(STATUS "Parallel/serial job runner args: ${RUNNER_ARGS}")
 message(STATUS "Parallel/serial job runner postfix args: ${POSTFIX_RUNNER_ARGS}")
 
+# Find Python: required for code coverage (fastcov) and doc (m.css)
+find_package(PythonInterp 3.6)
+
 # Attempt to find tools required for code coverage analysis
 include(DetectCodeCoverage)
 
@@ -522,11 +534,21 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${UNITTEST_EXECUTABLE}
                 ${FILECONV_EXECUTABLE})
 
-# Configure cmake variable to pass to the code
+
+# Decide if the Exception class will write to std::cerr. This may not always be
+# thread-safe, so it can be disabled here by setting this to false. The default
+# is true, because it works most of the time.
+if (NOT EXCEPTIONS_WRITE_TO_CERR)     # set default
+  # will become compiler define in Main/QuinoaConfig.h
+  set(EXCEPTIONS_WRITE_TO_CERR true CACHE BOOL "Exceptions will write std::cerr.")
+endif()
+message(STATUS "Exceptions write to cerr: ${EXCEPTIONS_WRITE_TO_CERR}")
+
+# Configure cmake variables to pass to the build
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.hpp.in"
                 "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.hpp" )
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.cpp.in"
-                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.cpp" )
+                "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.cpp" ESCAPE_QUOTES)
 
 # Remove build hostname from cmake cache
 unset(HOSTNAME CACHE)
@@ -576,7 +598,7 @@ else()
   PrintMissing(LoadBalance "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND;Zoltan2_FOUND")
 endif()
 
-if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
+if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND RANDOM123_FOUND)
   add_subdirectory(RNG)
 else()
   PrintMissing(RNG "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
@@ -588,12 +610,12 @@ else()
   PrintMissing(Statistics "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
 endif()
 
-if ((ENABLE_MESHCONV OR ENABLE_INCITER) AND BRIGAND_FOUND)
+if ((ENABLE_MESHCONV OR ENABLE_INCITER) AND BRIGAND_FOUND AND HIGHWAYHASH_FOUND)
   add_subdirectory(Mesh)
   add_subdirectory(IO)
 endif()
 
-if (ENABLE_INCITER)
+if (ENABLE_INCITER AND HIGHWAYHASH_FOUND)
   add_subdirectory(PDE)
   add_subdirectory(Inciter)
 endif()
@@ -620,22 +642,77 @@ if (NOT BUILD_SHARED_LIBS)
   endforeach()
 endif()
 
-# add a target to generate API documentation with Doxygen
+# Add a target to generate documentation using doxygen and m.css
 find_package(Doxygen 1.8.15)
 find_package(MCSS)
-if(DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND JINJA2_FOUND AND LATEX_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
-                 ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
-  add_custom_command(OUTPUT xml
-                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
-                     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
-                     COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
-                     COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa.doxy
-                     VERBATIM USES_TERMINAL)
-  add_custom_target(doc DEPENDS xml
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
-                    COMMENT "Documentation")
-  message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
+if (DOXYGEN_FOUND AND MCSS_FOUND AND PYTHONINTERP_FOUND AND PYGMENTS_FOUND AND
+    JINJA2_FOUND AND LATEX_FOUND)
+
+  find_program( PERL perl )
+  find_program( AWK awk )
+  find_program( XARGS xargs )
+  find_program( GIT git )
+  find_program( HEAD head )
+  find_program( RECENT_MODS
+                ${CMAKE_CURRENT_SOURCE_DIR}/../tools/recent_mods.sh )
+  find_program( EXTRACT_CMD_KEYWORDS
+                ${CMAKE_CURRENT_SOURCE_DIR}/../tools/extract_cmd_keywords.sh )
+  find_program( EXTRACT_CTR_KEYWORDS
+                ${CMAKE_CURRENT_SOURCE_DIR}/../tools/extract_ctr_keywords.sh )
+
+  if (PERL AND AWK AND XARGS AND GIT AND HEAD AND RECENT_MODS)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../doc/quinoa.doxy
+                   ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy @ONLY)
+
+    file(GLOB doc_pages CONFIGURE_DEPENDS
+         RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "../doc/pages/*.dox")
+    foreach(page ${doc_pages})
+      configure_file(${page} ${CMAKE_CURRENT_BINARY_DIR}/doc/${page} @ONLY)
+    endforeach()
+
+    # Generate targets <executable>_cmd_keywords for extracting and generating
+    # reference documentation pages for command line keywords
+    set(executables_cmd_keywords)
+    foreach(exe IN LISTS EXECUTABLES)
+      add_custom_target(${exe}_cmd_keywords
+                        DEPENDS ${exe} ${doc_pages}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                        COMMAND ${EXTRACT_CMD_KEYWORDS} ${exe}
+                        COMMENT "Extract ${exe}'s command-line keywords")
+      list(APPEND executables_cmd_keywords "${exe}_cmd_keywords")
+    endforeach()
+
+    # Generate targets <executable>_ctr_keywords for extracting and generating
+    # reference documentation pages for control file keywords
+    set(executables_ctr_keywords)
+    foreach(exe IN LISTS EXECUTABLES)
+      add_custom_target(${exe}_ctr_keywords
+                        DEPENDS ${exe} ${doc_pages}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                        COMMAND ${EXTRACT_CTR_KEYWORDS} ${exe}
+                        COMMENT "Extract ${exe}'s control file keywords")
+      list(APPEND executables_ctr_keywords "${exe}_ctr_keywords")
+    endforeach()
+
+    add_custom_command(OUTPUT xml
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doc/quinoa.doxy
+                               ${executables_cmd_keywords}
+                               ${executables_ctr_keywords}
+                       COMMAND ${RECENT_MODS} ${CMAKE_CURRENT_SOURCE_DIR}/..
+                       COMMAND ${DOXYGEN_EXECUTABLE} quinoa.doxy
+                       COMMAND ${MCSS_DOX2HTML5} --no-doxygen quinoa.doxy
+                       VERBATIM USES_TERMINAL)
+
+    add_custom_target(doc DEPENDS xml
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc
+                      COMMENT "Documentation")
+
+    message(STATUS "Add target 'doc' to generate documentation to ./doc/html/index.html")
+
+  endif()
+
 endif()
 
 # Optionally enable cppcheck static analysis
@@ -669,7 +746,7 @@ if(CODE_COVERAGE AND ENABLE_TESTS)
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
                             TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
-                                            ${REGRESSION_COVERAGE_ARGS}
+                                            ${REGRESSION_COVERAGE_ARGS} -LE insane
                             DEPENDS ${NONTEST_EXECUTABLES})
   if (REGRESSION_COVERAGE_ARGS)
     message(STATUS "Regression coverage test-runner arguments: '${REGRESSION_COVERAGE_ARGS}'")

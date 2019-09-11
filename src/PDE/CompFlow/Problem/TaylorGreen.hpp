@@ -35,7 +35,7 @@ namespace inciter {
 class CompFlowProblemTaylorGreen {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
     static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
@@ -47,7 +47,8 @@ class CompFlowProblemTaylorGreen {
 
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     std::vector< tk::real >
-    solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) const;
+    solinc( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real )
+    const;
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     static tk::SrcFn::result_type
@@ -72,7 +73,6 @@ class CompFlowProblemTaylorGreen {
                  tk::Fields& U ) const;
 
     //! Return names of integral variables to be output to diagnostics file
-    //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names( ncomp_t ) const;
 
     //! Return problem type

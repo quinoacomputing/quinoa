@@ -47,6 +47,7 @@ find_path (NETCDF_INCLUDES netcdf_par.h
                  ${NETCDF_DIR}
                  $ENV{NETCDF_DIR}
                  ${CMAKE_INSTALL_PREFIX}
+                 /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/netcdf/mpi
             PATH_SUFFIXES include)
 
 if(NOT BUILD_SHARED_LIBS)
@@ -55,6 +56,7 @@ if(NOT BUILD_SHARED_LIBS)
                       ${NETCDF_DIR}
                       $ENV{NETCDF_DIR}
                       ${CMAKE_INSTALL_PREFIX}
+                      /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/netcdf/mpi
                 PATH_SUFFIXES lib lib64)
 else()
   find_library (NETCDF_LIBRARIES_C NAMES netcdf
@@ -62,6 +64,7 @@ else()
                       ${NETCDF_DIR}
                       $ENV{NETCDF_DIR}
                       ${CMAKE_INSTALL_PREFIX}
+                      /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/netcdf/mpi
                 PATH_SUFFIXES lib lib64)
 endif()
 mark_as_advanced(NETCDF_LIBRARIES_C)

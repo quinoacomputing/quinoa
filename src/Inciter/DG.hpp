@@ -76,13 +76,16 @@ class DG : public CBase_DG {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit DG( CkMigrateMessage* ) {}
+    explicit DG( CkMigrateMessage* msg ) : CBase_DG( msg ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
 
     //! Return from migration
     void ResumeFromSync() override;
+
+    //! Start sizing communication buffers and setting up ghost data
+    void resizeComm();
 
     //! Receive unique set of faces we potentially share with/from another chare
     void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
@@ -100,42 +103,42 @@ class DG : public CBase_DG {
     static void registerReducers();
 
     //! Setup: query boundary conditions, output mesh, etc.
-    void setup( tk::real v );
+    void setup();
 
-    //! Continue to next time step stage
+    // Evaluate whether to do load balancing
+    void evalLB();
+
+    //! Continue to next time step
     void next();
 
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
-                 const std::vector< std::vector< tk::real > >& lfn,
+                 const std::vector< std::vector< tk::real > >& u,
+                 const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
+                 std::size_t fromstage,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
+                 const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
-
-    //! Advance equations to next time step
-    void advance( tk::real );
-
-    //! Signal the runtime system that diagnostics have been computed
-    void diag();
 
     //! Optionally refine/derefine mesh
     void refine();
 
     //! Receive new mesh from refiner
-    void resizeAfterRefined(
-      const std::vector< std::size_t >& ginpoel,
+    void resizePostAMR(
+      const std::vector< std::size_t >& /* ginpoel */,
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,
-      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
+      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /* addedNodes */,
       const std::unordered_map< std::size_t, std::size_t >& addedTets,
       const std::unordered_map< int, std::vector< std::size_t > >& msum,
       const std::map< int, std::vector< std::size_t > >& bface,
-      const std::map< int, std::vector< std::size_t > >& bnode,
+      const std::map< int, std::vector< std::size_t > >& /* bnode */,
       const std::vector< std::size_t >& triinpoel );
 
     //! Const-ref access to current solution
@@ -148,15 +151,12 @@ class DG : public CBase_DG {
     //! Compute limiter function
     void lim();
 
-    //! Send limited solution to neighboring chares
-    void sendLim();
-
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
     void solution( tk::Fields& u ) const { u = m_u; }
 
-    //! Resizing data sutrctures after mesh refinement has been completed
-    void resized();
+    //! Unused in DG
+    void resized() {}
 
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
@@ -178,6 +178,7 @@ class DG : public CBase_DG {
       p | m_fd;
       p | m_u;
       p | m_un;
+      p | m_p;
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
@@ -196,8 +197,13 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_stage;
       p | m_ndof;
+      p | m_bid;
+      p | m_uc;
+      p | m_pc;
+      p | m_ndofc;
       p | m_initial;
       p | m_expChBndFace;
+      p | m_infaces;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -235,6 +241,8 @@ class DG : public CBase_DG {
     tk::Fields m_u;
     //! Vector of unknown at previous time-step
     tk::Fields m_un;
+    //! Vector of primitive quantities over each mesh element
+    tk::Fields m_p;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
@@ -282,10 +290,21 @@ class DG : public CBase_DG {
     std::size_t m_stage;
     //! Vector of local number of degrees of freedom for each element
     std::vector< std::size_t > m_ndof;
+    //! Map local ghost tet ids (value) and zero-based boundary ids (key)
+    std::unordered_map< std::size_t, std::size_t > m_bid;
+    //! Solution receive buffers for ghosts only
+    std::array< std::vector< std::vector< tk::real > >, 2 > m_uc;
+    //! Primitive-variable receive buffers for ghosts only
+    std::array< std::vector< std::vector< tk::real > >, 2 > m_pc;
+    //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
+    //!   for ghosts only
+    std::array< std::vector< std::size_t >, 2 > m_ndofc;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
     tk::UnsMesh::FaceSet m_expChBndFace;
+    //! Incoming communication buffer during chare-boundary face communication
+    std::unordered_map< int, tk::UnsMesh::FaceSet > m_infaces;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -293,11 +312,11 @@ class DG : public CBase_DG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! Start sizing communication buffers and setting up ghost data
-    void resizeComm();
+    //! Compute partial boundary surface integral and sum across all chares
+    void bndIntegral();
 
-    //! Start recomputing ghost data after a mesh refinement step
-    void recompGhostRefined();
+    //! Compute chare-boundary faces
+    void bndFaces();
 
     //! Perform leak test on chare-boundary faces
     bool leakyAdjacency();
@@ -345,6 +364,9 @@ class DG : public CBase_DG {
 
     //! Evaluate whether to continue with next time step stage
     void stage();
+
+    //! Evaluate whether to save checkpoint/restart
+    void evalRestart();
 
     //! Calculate the local number of degrees of freedom for each element for
     //! p-adaptive DG

@@ -1,0 +1,791 @@
+namespace inciter {
+/*!
+  \page      inciter_newscheme How to add a new scheme to Inciter
+
+@tableofcontents{xml}
+
+@ref inciter_main supports multiple discretization schemes. This page describes
+how to add a scheme of your choice by walking through an example of adding a
+new one. We also discuss the main steps of the execution logic, which, at a
+high level, is the same for all discretization schemes.
+
+@section inciter_newscheme_rationale Rationale and plan
+
+Similar to the existing discretization schemes, `DiagCG`, or `DG`, the
+new scheme, `ALECG` (short for Arbitrary Lagrangian-Eulerian Continuous
+Galerkin), will interact with `Discretization` in a child-base fashion, e.g.,
+will directly access (and reuse) its member data and functions.  It will also
+intereact with `Refiner`, for mesh refinement, and will also be migratable to
+enable dynamic load balancing. In essence, it will have everything an existing
+scheme has. However, we will _not_ implement the low-level details of the actual
+numerical method, only the glue-code necessary to interact with the rest of the
+code and we make it ready to start implementing the low-level details of a
+particular discretization, done by a `PDE` class, held behind a derived class
+of, e.g., `CGPDE` or `DGPDE`. For more details on how these classes interact,
+see also the @ref inciter_design page.
+
+@section inciter_newscheme_keyword 1. Add a new keyword
+
+A specific discretization scheme is selected by the user in the control (input)
+file via the `scheme` keyword, e.g., `scheme diagcg`. We add the new keyword,
+`alecg`, which then can be recognized by the control file parser, in
+`src/Control/Keywords.h` by adding the following code block:
+
+@subsection inciter_newscheme_keyword_Keywords Control/Keywords.h
+
+@code{.diff}
+$ git diff src/Control/Keywords.h
+diff --git a/src/Control/Keywords.h b/src/Control/Keywords.h
+index 002869cb..c18f193a 100644
+--- a/src/Control/Keywords.h
++++ b/src/Control/Keywords.h
+@@ -4607,6 +4607,19 @@ struct diagcg_info {
+ };
+ using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
+
++struct alecg_info {
++  static std::string name() { return "ALE-CG with RK"; }
++  static std::string shortDescription() { return "Select continuous Galerkin "
++    "with ALE + Runge-Kutta"; }
++  static std::string longDescription() { return
++    R"(This keyword is used to select the continuous Galerkin finite element
++    scheme in the arbitrary Lagrangian-Eulerian (ALE) reference frame combined
++    with Runge-Kutta (RK) time stepping. See Control/Inciter/Options/Scheme.h
++    for other valid options.)"; }
++};
++using alecg = keyword< alecg_info, TAOCPP_PEGTL_STRING("alecg") >;
++
+ struct dg_info {
+   static std::string name() { return "DG(P0) + RK"; }
+   static std::string shortDescription() { return
+@endcode
+
+We also add the new keyword to inciter's grammar's keywords pool:
+
+@subsection inciter_newscheme_keyword_InputDeck Control/Inciter/InputDeck/InputDeck.h
+
+@code{.diff}
+$ git diff src/Control/Inciter/InputDeck/InputDeck.h
+diff --git a/src/Control/Inciter/InputDeck/InputDeck.h b/src/Control/Inciter/InputDeck/InputDeck.h
+index 83572480..20ce8975 100644
+--- a/src/Control/Inciter/InputDeck/InputDeck.h
++++ b/src/Control/Inciter/InputDeck/InputDeck.h
+@@ -144,6 +144,7 @@ class InputDeck :
+                                    kw::scheme,
+                                    kw::matcg,
+                                    kw::diagcg,
++                                   kw::alecg,
+                                    kw::dg,
+                                    kw::dgp1,
+                                    kw::flux,
+@endcode
+
+This is required so that the compiler can generate a database containing the
+help for all the keywords in the grammar understood by inciter's control file
+parser. The above changes not only add the keyword but also some documentation
+that gets displayed when passing the `-C` or `-H` command line arguments to the
+inciter executable, so quick help is available at the user's fingertips:
+
+@code{.ansi}
+$ inciter -C
+inciter Control File Keywords:
+             advdiff     string Specify the advection + diffusion physics configuration for a PDE
+           advection     string Specify the advection physics configuration for a PDE
+               alecg            Select continuous Galerkin with ALE + Runge-Kutta
+           algorithm     string Select mesh partitioning algorithm
+               alpha       real Set PDE parameter(s) alpha
+...
+$ inciter -H alecg
+inciter control file keyword 'alecg'
+
+   Select continuous Galerkin with ALE + Runge-Kutta (RK)
+
+   This keyword is used to select the continuous Galerkin finite element scheme
+   in the arbitrary Lagrangian-Eulerian (ALE) reference frame combined with
+   Runge-Kutta (RK) time stepping. See Control/Inciter/Options/Scheme.h for other
+   valid options.
+@endcode
+
+@section inciter_newscheme_option 2. Add new option switch
+
+Next is to add a new state to the existing Scheme option switch. This "option
+switch" is really only a fancy enum, used to store the user's choice of the
+discretization scheme after parsing the control file in a type-safe manner.
+This fancy enum is an option switch because it inherits from tk::Toggle,
+defined in Control/Toggle.h, which is a generic switch (or option), that helps
+associating enum values to keywords and querying one based on the other.
+Extending the existing Scheme option switch is done by extending the list of
+schemes in `src/Control/Inciter/Options/Scheme.h`:
+
+@subsection inciter_newscheme_option_Scheme Control/Inciter/Options/Scheme.h
+
+@code{.diff}
+$ git diff src/Control/Inciter/Options/Scheme.h
+diff --git a/src/Inciter/SchemeBase.h b/src/Inciter/SchemeBase.h
+index 61510d01..0cb3e9e8 100644
+--- a/src/Inciter/SchemeBase.h
++++ b/src/Inciter/SchemeBase.h
+@@ -22,6 +22,7 @@
+
+ #include "NoWarning/matcg.decl.h"
+ #include "NoWarning/diagcg.decl.h"
++#include "NoWarning/alecg.decl.h"
+ #include "NoWarning/distfct.decl.h"
+ #include "NoWarning/dg.decl.h"
+ #include "NoWarning/discretization.decl.h"
+@@ -52,8 +53,11 @@ class SchemeBase {
+         proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
+         fctproxy= CProxy_DistFCT::ckNew(m_bound);
+       } else if (scheme == ctr::SchemeType::DG ||
+-                 scheme == ctr::SchemeType::DGP1) {
++                 scheme == ctr::SchemeType::DGP1)
++      {
+         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
++      } else if (scheme == ctr::SchemeType::ALECG) {
++        proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(m_bound) );
+       } else Throw( "Unknown discretization scheme" );
+     }
+
+@@ -75,11 +79,12 @@ class SchemeBase {
+     const CkArrayOptions& arrayoptions() { return m_bound; }
+
+     //! Variant type listing all chare proxy types modeling the same concept
+-    using Proxy = boost::variant< CProxy_DiagCG, CProxy_DG >;
++    using Proxy =
++      boost::variant< CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
+     //! Variant type listing all chare element proxy types (behind operator[])
+     using ProxyElem =
+       boost::variant< CProxy_DiagCG::element_t,
+-                      CProxy_DG::element_t >;
++                      CProxy_DG::element_t, CProxy_ALECG::element_t >;
+
+   protected:
+     //! Variant storing one proxy to which this class is configured for
+@endcode
+
+@section inciter_newscheme_proxy 3. Add new Charm++ chare proxy in Scheme
+
+`Scheme` is a class that, together with its base, `SchemeBase`, implements
+concept-based runtime polymorphism for migratable Charm++ chare arrays using
+value semantics. Client code, e.g., `Transporter`, interacts with
+`Discretization` and its children via a uniform interface provided by `Scheme`,
+which dispatches entry method calls to the correct class instance, the base or
+the child, and is capable of performing broadcasts as well as addressing a
+particular chare array element. Read more details at src/Inciter/Scheme.h. To
+teach it to dispatch to our new `ALECG` scheme, besides the existing ones, we
+make the following changes:
+
+@subsection inciter_newscheme_proxy_SchemeBase Inciter/SchemeBase.h
+
+@code{.diff}
+$ git diff src/Inciter/SchemeBase.h
+diff --git a/src/Inciter/SchemeBase.h b/src/Inciter/SchemeBase.h
+index 61510d01..dea3d78a 100644
+--- a/src/Inciter/SchemeBase.h
++++ b/src/Inciter/SchemeBase.h
+@@ -22,6 +22,7 @@
+
+ #include "NoWarning/matcg.decl.h"
+ #include "NoWarning/diagcg.decl.h"
++#include "NoWarning/alecg.decl.h"
+ #include "NoWarning/distfct.decl.h"
+ #include "NoWarning/dg.decl.h"
+ #include "NoWarning/discretization.decl.h"
+@@ -51,6 +52,8 @@ class SchemeBase {
+       } else if (scheme == ctr::SchemeType::DiagCG) {
+         proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
+         fctproxy= CProxy_DistFCT::ckNew(m_bound);
++      } else if (scheme == ctr::SchemeType::ALECG) {
++        proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(m_bound) );
+       } else if (scheme == ctr::SchemeType::DG ||
+                  scheme == ctr::SchemeType::DGP1) {
+         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
+@@ -75,11 +78,12 @@ class SchemeBase {
+     const CkArrayOptions& arrayoptions() { return m_bound; }
+
+     //! Variant type listing all chare proxy types modeling the same concept
+-    using Proxy = boost::variant< CProxy_DiagCG, CProxy_DG >;
++    using Proxy =
++      boost::variant< CProxy_DiagCG, CProxy_ALECG, CProxy_DG >;
+     //! Variant type listing all chare element proxy types (behind operator[])
+     using ProxyElem =
+       boost::variant< CProxy_DiagCG::element_t,
+-                      CProxy_DG::element_t >;
++                      CProxy_ALECG::element_t, CProxy_DG::element_t >;
+
+   protected:
+     //! Variant storing one proxy to which this class is configured for
+@endcode
+
+@section inciter_newscheme_chare 4. Add new Charm++ chare array
+
+Next is to add a new class, `ALECG`, which will serve as the glue between
+`Transporter`, `Refiner`, and `CGPDE`. These classes, respectively, are the
+driver, the mesh refiner, and the polymorphic vector of PDE discretization class
+objects that hold the low-level details of the numerical implementation of
+spatial discretizations, dispatching to multiple specific systems of equations,
+e.g., `cg::Transport` or `cg::CompFlow`.
+
+We create the following new files:
+
+- Inciter/alecg.ci, Charm++ interface file for ALECG,
+- NoWarning/alecg.decl.h and NoWarning/alecg.def.h, which help ignore compiler
+  warnings in Charm++-generated code, and
+- Inciter/ALECG.h and Inciter/ALECG.cpp, header and implementation of ALECG.
+
+Before we discuss the details of the above new files, let's get a couple of
+simple things out of the way. We also need to add the new include to `Refiner.h`
+so, e.g., it can call back to ALECG::resize() after a mesh refinement step:
+
+@subsection inciter_newscheme_chare_Refiner Inciter/Refiner.h
+
+@code{.diff}
+$ git diff src/Inciter/Refiner.h
+diff --git a/src/Inciter/Refiner.h b/src/Inciter/Refiner.h
+index dfcb1ffd..4fe743a4 100644
+--- a/src/Inciter/Refiner.h
++++ b/src/Inciter/Refiner.h
+@@ -29,6 +29,7 @@
+ #include "SchemeBase.h"
+ #include "DiagCG.h"
++#include "ALECG.h"
+ #include "DG.h"
+
+ #include "NoWarning/transporter.decl.h"
+@endcode
+
+We also tell the build system about our new `ALECG` class and its Charm++
+module:
+
+@subsection inciter_newscheme_chare_CMakeLists Inciter/CMakeLists.txt
+
+@code{.diff}
+$ gd src/Inciter/CMakeLists.txt
+diff --git a/src/Inciter/CMakeLists.txt b/src/Inciter/CMakeLists.txt
+index 141055ec..e339b65b 100644
+--- a/src/Inciter/CMakeLists.txt
++++ b/src/Inciter/CMakeLists.txt
+@@ -14,6 +14,7 @@ add_library(Inciter
+             Sorter.cpp
+             DiagCG.cpp
++            ALECG.cpp
+             DG.cpp
+             FluxCorrector.cpp
+             DistFCT.cpp
+@@ -74,6 +75,7 @@ addCharmModule( "refiner" "Inciter" )
+ addCharmModule( "sorter" "Inciter" )
+ addCharmModule( "matcg" "Inciter" )
+ addCharmModule( "diagcg" "Inciter" )
++addCharmModule( "alecg" "Inciter" )
+ addCharmModule( "distfct" "Inciter" )
+ addCharmModule( "dg" "Inciter" )
+@endcode
+
+The `addCharmModule` cmake macro above, defined in `cmake/charm.cmake`, ensures
+that build target `Inciter` will properly depend on our new `alecg` Charm++
+module, defined in `Inciter/alecg.ci`. The macro also tells cmake how the two
+files, `alecg.decl.h` and `alecg.def.h`, are generated from `alecg.ci`: using
+`charmc`, a compiler wrapper that generates Charm++-code to make the `ALECG`
+from an ordinary C++ class into a Charm++ chare array, with _entry_ methods
+callable across the network, make it migratable, enable its structured DAGger,
+etc. See also the [Charm++ manual](http://charm.cs.illinois.edu/manuals/html/charm++/manual.html).
+
+Now to the new files. First is the new Charm++ interface file, Inciter/alecg.ci:
+
+@subsection inciter_newscheme_chare_alecg Inciter/alecg.ci
+
+This is the file that is parsed by Charm++'s compiler which then generates
+additional code that makes ALECG a Charm++ chare array, makes it migratable,
+etc. The full listing is at @subpage inciter_newscheme_alecg_ci some of whose
+details are discussed below.
+
+@subsubsection inciter_newscheme_chare_alecg_headers Inciter/alecg.ci -- External modules and header includes
+
+@snippet Inciter/alecg.ci External modules and includes
+
+First we declare some external Charm++ modules that ALECG needs to interact with
+and thus from where we need type information. The `extern module` statements are
+followed by some usual C++ `include`s (without the `#`): these are in the
+Charm++ interface file because the Charm++ code below requires type information
+from them.
+
+@subsubsection inciter_newscheme_chare_alecg_array Inciter/alecg.ci -- 1D Charm++ chare array
+
+@snippet Inciter/alecg.ci 1D Charm++ chare array
+
+Next comes the specification of the ALECG Charm++ chare array. This is a 1D
+array whose elements at runtime will be distributed across the available
+processing elements and compute nodes. If load balancing is enabled, the array
+elements (C++ objects) are migrated to homogenize load across a simulation.
+Because the array is 1D, we use a single integer index to address a particular
+array element. Charm++ also allows multi-dimensional arrays which can be useful
+if the problem naturally maps to a multi-dimensional notion, e.g., partitioning
+a 3D Cartesian mesh, so index calculations to address array elements (and thus
+work-units) become cleaner.
+
+@subsubsection inciter_newscheme_chare_alecg_entry Inciter/alecg.ci -- Entry methods
+
+@snippet Inciter/alecg.ci Entry methods
+
+We simply list those member functions of ALECG as _entry_ methods, e.g.,
+ALECG::setup() or ALECG::dt(), that we need to be able to call externally,
+potentially across the network, from another processing element (PE). Entry
+methods are always _public_ in the C++ object-oriented programming (OOP) sense.
+Note that there can be other member functions of ALECG. These are simple C++
+class member functions and are usually not _public_ but _private_, such as
+`ALECG::rhs()`. Note also that there is an `initnode` entry method,
+`ALECG::registerReducers()` which is a special member function that is also
+declared as _static_ in the C++ sense (see ALECG.h). This is static because the
+runtime system must be able to call this function without creating an object and
+a lot earlier than the actual ALECG chare array elements are created. This is
+how _custom reducers_ can be associated in Charm++ to a chare array. Such custom
+reducers are an excellent way to rely on the asynchronous, tree-based
+implementation of parallel reductions in Charm++ yet still do it on custom,
+arbitrarily complex data types, e.g., a hash-map that holds vectors, as long as
+one defines how aggregation is to be performed when merging such data. Such an
+example is given in Inciter/DiagReducer.cpp.
+
+@subsubsection inciter_newscheme_chare_alecg_sdag Inciter/alecg.ci -- Structured DAG
+
+@snippet Inciter/alecg.ci DAG
+
+The entry methods, defined in the `.ci` file and with `when` keywords, form a
+structured directed acyclic graph (DAG). These specify logical relations among
+tasks and execution logic within the class. For example, `wait4lhs` tells the
+runtime system that only when `ownlhs_complete()` _and_ `comlhs_complete()` are
+both done will `lhsmerge()` be called. In this case, this construct ensures
+that the runtime system will call a member function that operates on the
+left-hand side matrix, when both the local and external contributions are
+complete. Note that this logic only relates to a given array element, say with
+index 2. Another one, say index 3, may perform this operation at a very
+different time and independently, thus computation and communication can
+overlap. The entry methods listed at the bottom, e.g., `ownlhs_complete()` can
+be thought of as "labels" to the runtime systems that help define the task
+logic. These labels are functions that the runtime system defines and we call
+them when the given task is complete. Note that the construct we used here,
+when \b A _and_ \b B are both complete _then_ do \b C, is probably the simplest
+task-logic Charm++ allows prescribing. There are many more advanced ways of
+expressing such logic, e.g., using loops. For more details, see Section
+_Structured Control Flow: Structured Dagger_ in the [Charm++
+manual](http://charm.cs.illinois.edu/manuals/html/charm++/manual.html).
+
+@subsection inciter_newscheme_nowarning NoWarning/alecg.decl.h and NoWarning/alecg.def.h
+
+The newly added files to the `NoWarning/` directory simply include the
+Charm++-generated `alecg.decl.h` and `alecg.def.h` files and locally, around
+the include, turn off specific compiler warnings for various compilers -- we
+will not discuss them here further. Full listings are at
+@subpage inciter_newscheme_nowarning_page.
+
+@section inciter_newscheme_class 5. New C++ class
+
+Next are the newly added Inciter/ALECG.h and Inciter/ALECG.cpp, header and
+implementation of ALECG. The full listings are at
+@subpage inciter_newscheme_header_page and
+@subpage inciter_newscheme_class_page, some of
+whose details are discussed below, rougly in order of execution.
+
+@subsection inciter_newscheme_class_constructor ALECG::ALECG -- Constructor
+
+@snippet Inciter/ALECG.cpp Constructor
+
+As discussed in Section @ref inciter_create on the @ref inciter_design page, the
+worker chare array elements, such as ALECG, are created using Charm++'s dynamic
+array insertion feature. This is an asynchronous call, issued from
+Sorter::createWorkers(), and it signals the runtime system that it is time to
+start calling individual constructors of ALECG, passing them the appropriate
+data, required for each of them to initialize and operate on a mesh partition
+each is assigned (held by their companion Discretization "base" class). Thus
+running Sorter::createWorkers() eventually triggers calling ALECG's constructors
+distributed across the whole problem and available PEs.
+
+In the constructor's body, listed above, we first enable migration for the
+class, then the local communication buffers are initialized by sizing them for
+the first time.  Finally, we signal the runtime system that _extra_
+communication buffers, specific to this particular discretization scheme, have
+been created.  This is a reduction call, issued by all array elements,
+eventually calling the reduction target `Transporter::comfinal()` a single time.
+
+@note By default, there are no extra communication buffers needed to be setup in
+ALECG, because the symmetric mesh-node communication maps have already been
+setup and stored in Discretization::m_msum, discussed in Section @ref
+inciter_reorder on the @ref inciter_design page. This node communication map is
+made available to all discretization schemes by default. A counter-example to
+ALECG is DG which, in this stage, sets up face communication and ghost element
+data structures, required only by the cell-centered DG-style discretization.
+These _extra_ communication data structures are stored in DG, i.e., locally in
+that class, but DG, just like ALECG (and all other schemes) are expected to
+signal the end of such _extra_ communication maps by issuing the reduction
+targeting `Transporter::comfinal()`.
+
+@subsection inciter_newscheme_class_comfinal Transporter::comfinal() -- Complete communication maps
+
+@snippet Inciter/Transporter.cpp Discretization-specific communication maps
+
+Though asynchronously executed, the reduction operation targeting
+`Transporter::comfinal()` is a global synchronization point: all chares arrive
+in that function body, synchronized, and all continue from there again by
+calling ALECG::setup().
+
+@note The call to ALECG::setup() is hidden behind Scheme::setup(). In an OOP
+sense this is equivalent to calling a virtual member function on a reference or
+a pointer of the base class, Discretization, which then dispatches down to the
+child class member function ALECG::setup().
+
+@note Also note that the call to ALECG::setup(), `m_scheme.setup(m_V)`, does
+_not_ address any particular chare array element, which means that it addresses
+_all_ array elements. Its argument is sent to all elements (across the network)
+in a broadcast fashion.
+
+Transporter::comfinal() is a global synchronization point because _all_ worker
+chares must finish resizing and/or constructing their communication maps before
+their `setup()` member function can be invoked. This is because `setup()` starts
+using those communication maps, e.g., when it starts computing and assembling
+the left hand side matrix or vector. When a chare receives data from others this
+data must be correctly sized and ready on all chares before these data
+containers can be used. If a global synchronization point did not precede
+`setup()`, chares that finish their constructor early might go ahead all the way
+to calling ALECG::comlhs(), which then will attempt to write to a communication
+buffer on the receiving side, which would lead to corrupt data and errors.
+
+@subsection inciter_newscheme_class_setup ALECG::setup() -- Set initial conditions and compute the left hand side
+
+@snippet Inciter/ALECG.cpp init and lhs
+
+In the ALECG::setup() code snippet above we call ALECG::lhs() which starts by
+computing the own contribution of the lhs followed by sending out contributions
+to those chares the given chare shares at least a single mesh node with.
+Previously, during ALECG's constructor, we already told the runtime system to
+start listening for the completion of tasks leading to computing the left-hand
+side (lhs). This is done by the call `wait4lhs()`, which activates the relevant
+part of the DAG, discussed above in Section @ref
+inciter_newscheme_chare_alecg_sdag. Then
+
+@subsection inciter_newscheme_class_lhs ALECG::lhs() -- Compute own and send lhs on chare-boundary
+
+@snippet Inciter/ALECG.cpp Compute own and send lhs on chare-boundary
+
+As the above ALECG::lhs() code snippet shows, to communicate the lhs first we
+check if the node communication map is empty. If so, we are running in serial
+and the communication part is a no-op -- we call `comlhs_complete()` right away.
+If the map is not empty, we loop through the map and for each chare the given
+chare shares a node (or multiple nodes) with we collect the values of the lhs in
+those nodes into a vector and send them to the given destination chare. The send
+is done via the entry method function call `thisProxy[ targetchare ].comlhs()`,
+which sends its arguments to chare id 'target'chare' in a point-point fashion.
+
+@subsection inciter_newscheme_class_comlhs ALECG::comlhs() -- Receive left hand side on chare boundary
+
+@snippet Inciter/ALECG.cpp Receive lhs on chare-boundary
+
+The above code snippet from ALECG::comlhs() shows the implementation of the
+receive side of the lhs communication step. The function receives two vectors:
+in `gid` the list of global node IDs and in `L` the list of lhs values, one for
+each scalar component of the number of equations solved (in a system of
+systems). The sizes of the two vectors must equal -- this is the number of
+nodes we receive data for from one other chare. Then we loop over all incoming
+data, find the local IDs for the global IDs and store them by _adding_ their
+contributions at each node received. As the comment says, when this chare has
+received all contributions it supposed to receive, we tell the runtime system
+that on this chare communication of the lhs is finished by calling
+`comlhs_cmplete()`. The completion condition is implemented via a counter,
+whose value is incremented upon each call to this function and testing its
+equality with the size of the symmetric node communication map
+(Discretization::m_msum), which has data for as many chares as many other chare
+a given chare must communicate with. As discussed in
+@ref inciter_newscheme_chare_alecg_sdag, when both own and communicated parts
+of the lhs are complete, the runtime system calls `lhsmerge`().
+
+@subsection inciter_newscheme_class_lhsmerge ALECG::lhsmerge() -- Merge left hand side and continue
+
+@snippet Inciter/ALECG.cpp Merge lhs and continue
+
+When the own and communicated contributions to the lhs are in place, the
+communication buffer for the lhs, `ALECG::m_lhsc`, is merged into
+`ALECG::m_lhs`. As the above code snippet of ALECG::lhsmerge() shows, we loop
+through the global IDs of all chare-boundary nodes and add the received
+contributions to the lhs. After preparing (zeroing) the communication buffers
+for the right hand side (rhs), at the end of ALECG::lhsmerge() we continue in
+different directions depending on whether this is the first step or we are
+during time stepping. If `lhsmerge()` was called during the first step, we call
+ALECG::start() but if it was called during time stepping, we just tell the
+runtime system that the lhs is complete. (This latter happens after a mesh
+refinement step, in which case we need to regenerate the lhs, and in that case,
+completing the lhs is only part of a DAG, `wait4out`, waiting for multiple
+overlapping tasks, required for continuing.) ALECG::start() calls ALECG::dt(),
+which is the first step in a time step.
+
+@subsection inciter_newscheme_class_dt ALECG::dt() -- Start time step
+
+@snippet Inciter/ALECG.cpp Find the minimum dt across all PDEs integrated
+
+The above code snippet from ALECG::dt() shows a `for` loop that calls the the
+`dt()` member function of all types of PDEs configured by the user and finds the
+minimum size of the time step.
+
+@snippet Inciter/ALECG.cpp Advance
+
+Once we have the time step size, we enable a couple of SDAG waits and issue a
+reduction to Transporter::advance() which yields the global minimum across all
+chares then issues a broadcast to ALECG::advance(). `advance()` saves the new
+time step in `Discretization::m_dt`, which is the _master_ copy, then calls
+`ALECG::rhs()`, which starts computing the right hand sides of all PDEs
+integrated.
+
+@subsection inciter_newscheme_class_rhs ALECG::rhs() & ALECG::comrhs() -- Compute and communicate right hand side
+
+Computing the right hand sides (rhs) of all PDE operators and communicating the
+rhs values in chare boundary nodes look exactly the same as the analogous
+functions for the lhs. When both the own and communicated contributions are
+complete on a chare, the runtime system calls ALECG::solve(), which first
+combines the own and received contributions then solves the system.
+
+@subsection inciter_newscheme_class_solve ALECG::solve() -- Solve, diagnostics, refine
+
+@snippet Inciter/ALECG.cpp Continue after solve
+
+The above code snippet shows what happens immediately after solving the linear
+system on a chare. First we compute _diagnostics_, which is a catch-all phrase
+for various norms and integral quantities, see Inciter/NodeDiagnostics.cpp for
+details. Note that computing diagnostics only happens every few time step,
+depending on user configuration. If `m_diag.compute()` returns true, diagnostics
+have been computed in this time step. If diagnostics have been computed, their
+correct values require global reduction operations, performing different
+aggregation operations depending on the value. As all reductions, diagnostics
+are also collected by Transporter, this time in target
+`Transporter::diagnostics()`, which calls back, via a broadcast, to
+ALECG::diag(), which signals, on the ALECG chare, that diagnostics have been
+computed. If diagnostics have not been computed in this time step, we call
+ALECG::diag() right away. Next we increase the number of iterations taken and
+update physical time on the master copies, Discretization::m_it and
+Discretization::m_t. This is followed by (optionally) refining the mesh, calling
+ALECG::refine().
+
+@subsection inciter_newscheme_class_refine ALECG::refine() -- Optionally refine mesh
+
+@snippet Inciter/ALECG.cpp Refine
+
+The above snippet shows that mesh refinement happens only at every few time step
+with its frequency configured by the user. If the mesh is _not_ refined, we
+simply enable the SDAG waits associated to the tasks of the mesh refinement
+step. If the mesh _is_ refined, we call a member function of the mesh refiner
+object held by Discretization, Refiner::dtref(), which when done, eventually
+calls back to ALECG::resizeAfterRefined(), passing back the new mesh and
+associated data structures.
+
+@subsection inciter_newscheme_class_resize ALECG::resize() -- Resize data after mesh refinement
+
+@snippet Inciter/ALECG.cpp Resize
+
+The above snippet shows ALECG::resize() called by Refiner when it finished mesh
+refinement. Besides resizing the mesh-related data held locally by ALECG, e.g.,
+ALECG::m_u, ALECG::m_du, etc., as well as the communication buffers in
+ALECG::resizeComm(), we also call Discretization::resize(), which resizes all
+mesh-related data structures in Discretization. We also prepare for recomputing
+the lhs on the new mesh by enabling its SDAG wait, `wait4lhs()`. When all of
+this is done, we issue a reduction to Transporter::workresized(), which when
+called will mean that all workers have resized their data after mesh
+refinement. However, this is only one concurrent (asynchronous) thread of
+execution. Another one is started within `d->resize()`, which calls
+Discretization::resize(), which eventually reduces to
+Transporter::discresized(). When both of these independent threads finished,
+Transporter::resized() is called, see `Transporter::wait4resize()`.
+Transporter::resized() then starts two new asynchronous threads, issuing two
+broadcasts: one to Discretization::vol() and another one to ALECG::lhs(). The
+former recomputes the nodal volumes, stored in Discretization, while the latter
+recomputes the lhs stored in ALECG::m_lhs. Both of these threads require
+multiple steps and involve communication, but they are independent and thus we
+let the runtime system schedule them arbitrarily. The first thread, doing
+communication in parallel and going through Transporter::vol(), ends up in
+Transporter::totalvol(). The second one, after recomputing and communicating
+the chare-boundary values of the lhs, ends up in ALECG::lhsmerge(). Note that
+execution can arrive at both end-points, Transporter::totalvol() and
+ALECG::lhsmerge(), during setup, i.e., before time stepping, or during time
+stepping, due to code reuse. Thus both of these end-points check whether
+execution is before or during time stepping, indicated by the booleans
+ALECG::m_initial and the one appearing as the function argument of
+Transporter::totalvol(). During time stepping these bools are false, and ALECG
+enables `lhs_complete()`, while Transporter calls ALECG::resized() which
+enables `resize_complete()`.
+
+The end-of-time-step threads are (1) computing diagnostics, discussed above, (2)
+mesh refinement (and resizing of _some_ of the mesh data structures), (3)
+resized (complete resizeing of mesh data structures, i.e., also those that
+require communication, e.g., nodal volumes), and (4) recomputing the lhs. The
+code-snippet on Inciter/alecg.ci in Section @ref
+inciter_newscheme_chare_alecg_sdag, above shows the DAG that tells the runtime
+system this logic, involving the four tasks.
+
+When all the end-of-time-step, independent threads have finished, we call
+ALECG::out(), which after optionally outputing field data, calls ALECG::step(),
+which decides whether we start a new time step or call Transporter::finish() for
+terminating at the end of time stepping.
+
+@section inciter_newscheme_work 6. Making it all work
+
+Only a couple of minor, but important, steps remain. First we add the
+new Charm++ module as an external module in inciter's Charm++ module. This is
+required so that all Charm++ code that references the new ALECG Charm++ chare
+array is visible and can correctly interact with Inciter's main charm chare.
+
+@subsection inciter_newscheme_work_inciter_ci Main/inciter.ci
+
+@code{.diff}
+$ git diff src/Main/inciter.ci
+diff --git a/src/Main/inciter.ci b/src/Main/inciter.ci
+index bf7eac98..e9b114b6 100644
+--- a/src/Main/inciter.ci
++++ b/src/Main/inciter.ci
+@@ -14,6 +14,7 @@ mainmodule inciter {
+   extern module partitioner;
+   extern module matcg;
+   extern module diagcg;
++  extern module alecg;
+   extern module dg;
+   extern module charestatecollector;
+@endcode
+
+The second, and final, step is to enable triggering the instantiation of
+specialized CGPDE class objects for our new ALECG scheme when the system of
+systems is instantiated. This associates the type of generic PDE systems that is
+used to instantiate the PDE classes, selected by user configuration. Since ALECG
+will be a node-centered scheme, we assign it to use the CGPDE polymorphic
+interface (instead of DGPDE, which is tailored for cell-centered
+discretizations).
+
+@subsection inciter_newscheme_work_PDEStack PDE/PDEStack.cpp
+
+@code{.diff}
+$ git diff src/PDE/PDEStack.cpp
+diff --git a/src/PDE/PDEStack.cpp b/src/PDE/PDEStack.cpp
+index 438cb5e3..9b2e14e7 100644
+--- a/src/PDE/PDEStack.cpp
++++ b/src/PDE/PDEStack.cpp
+@@ -108,7 +108,9 @@ PDEStack::selectedCG() const
+   std::vector< CGPDE > pdes;                // will store instantiated PDEs
+
+   const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
+-  if (sch == ctr::SchemeType::DiagCG) {
++  if (sch == ctr::SchemeType::DiagCG || sch == ctr::SchemeType::ALECG) {
+
+     for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
+       if (d == ctr::PDEType::TRANSPORT)
+         pdes.push_back( createCG< tag::transport >( d, cnt ) );
+       else if (d == ctr::PDEType::COMPFLOW)
+         pdes.push_back( createCG< tag::compflow >( d, cnt ) );
+       else Throw( "Can't find selected CGPDE" );
+     }
+
+   }
+@endcode
+
+@section inciter_newscheme_unittest 7. Augment unit tests for Scheme
+
+Though this is not strictly necessary, we also augment the unit tests of Scheme
+exercising our new discretization scheme:
+
+@code{.diff}
+$ git diff develop src/UnitTest/TUTSuite.h src/UnitTest/tests/Inciter/TestScheme.cpp
+diff --git a/src/UnitTest/TUTSuite.h b/src/UnitTest/TUTSuite.h
+index 191b3972..dd904b02 100644
+--- a/src/UnitTest/TUTSuite.h
++++ b/src/UnitTest/TUTSuite.h
+@@ -61,7 +61,7 @@ class TUTSuite : public CBase_TUTSuite {
+         { "Base/Factory", 2 }
+       , { "Base/PUPUtil", 14 }
+       , { "Base/Timer", 1 }
+-      , { "Inciter/Scheme", 3 }
++      , { "Inciter/Scheme", 4 }
+     };
+
+     // Tests that must be run on PE 0
+diff --git a/src/UnitTest/tests/Inciter/TestScheme.cpp b/src/UnitTest/tests/Inciter/TestScheme.cpp
+index 6dc48c75..e4acfce4 100644
+--- a/src/UnitTest/tests/Inciter/TestScheme.cpp
++++ b/src/UnitTest/tests/Inciter/TestScheme.cpp
+@@ -84,6 +84,8 @@ void Scheme_object::test< 1 >() {
+   ensure_equals( "Underlying type", c.which(), 1 );
+   inciter::Scheme d( inciter::ctr::SchemeType::DG );
+   ensure_equals( "Underlying type", d.which(), 2 );
++  inciter::Scheme a( inciter::ctr::SchemeType::ALECG );
++  ensure_equals( "Underlying type", a.which(), 3 );
+ }
+
+ //! Test if operator[] returns the correct underlying type
+@@ -97,6 +99,8 @@ void Scheme_object::test< 2 >() {
+   ensure_equals( "Underlying element type", c.which_element(), 1 );
+   inciter::Scheme d( inciter::ctr::SchemeType::DG );
+   ensure_equals( "Underlying element type", d.which_element(), 2 );
++  inciter::Scheme a( inciter::ctr::SchemeType::ALECG );
++  ensure_equals( "Underlying element type", a.which_element(), 3 );
+ }
+
+@@ -162,6 +166,27 @@ void Scheme_object::test< 5 >() {
+     inciter::Scheme( inciter::ctr::SchemeType::DG ), 2, "DG" );
+ }
+
++//! Test Pack/Unpack of Scheme holding CProxy_AELCG
++//! \details Every Charm++ migration test, such as this one, consists of two
++//!   unit tests: one for send and one for receive. Both trigger a TUT test,
++//!   but the receive side is created manually, i.e., without the awareness of
++//!   the TUT library. Unfortunately thus, there is no good way to count up
++//!   these additional tests, and thus if a test such as this is added to the
++//!   suite this number must be updated in UnitTest/TUTSuite.h in
++//!   unittest::TUTSuite::m_migrations.
++template<> template<>
++void Scheme_object::test< 6 >() {
++  // This test spawns a new Charm++ chare. The "1" at the end of the test name
++  // signals that this is only the first part of this test: the part up to
++  // firing up an asynchronous Charm++ chare. The second part creates a new test
++  // result, sending it back to the suite if successful. If that chare never
++  // executes, the suite will hang waiting for that chare to call back.
++  set_test_name( "Charm:migrate Scheme(ALECG) 1" );
++
++  CProxy_Receiver::ckNew(
++    inciter::Scheme( inciter::ctr::SchemeType::ALECG ), 3, "ALECG" );
++}
+@endcode
+
+Now that we will test ALECG using the unit test harness, @ref unittest_main, we
+also have to make the UnitTest build target depend on the new ALECG Charm++
+module:
+
+@code{.diff}
+$ git diff src/UnitTest/CMakeLists.txt
+diff --git a/src/UnitTest/CMakeLists.txt b/src/UnitTest/CMakeLists.txt
+index bb740285..e0ea47fe 100644
+--- a/src/UnitTest/CMakeLists.txt
++++ b/src/UnitTest/CMakeLists.txt
+@@ -48,6 +48,7 @@ add_dependencies("UnitTest" "unittestCharmModule")
+ if (ENABLE_INCITER)
+   add_dependencies("UnitTest" "matcgCharmModule")
+   add_dependencies("UnitTest" "diagcgCharmModule")
++  add_dependencies("UnitTest" "alecgCharmModule")
+   add_dependencies("UnitTest" "distfctCharmModule")
+   add_dependencies("UnitTest" "dgCharmModule")
+   add_dependencies("UnitTest" "discretizationCharmModule")
+@endcode
+
+@section inciter_newscheme_regression 8. Add new regression tests
+
+Finally, we also add a bunch of new regression tests that stress-test the
+asynchronous logic in the discretization scheme classes:
+
+@code{.diff}
+$ git diff tests/regression/inciter/transport/SlotCyl/asynclogic/CMakeLists.txt
+index b54a207d..62732129 100644
+--- a/tests/regression/inciter/transport/SlotCyl/asynclogic/CMakeLists.txt
++++ b/tests/regression/inciter/transport/SlotCyl/asynclogic/CMakeLists.txt
+@@ -1,7 +1,7 @@
+ # See cmake/add_regression_test.cmake for documentation on the arguments to
+ # add_regression_test().
+
+-foreach(scheme matcg diagcg dg)
++foreach(scheme matcg diagcg dg alecg)
+   foreach(virt 0.0 0.5 0.9)
+     foreach(npes RANGE 1 8)
+       add_regression_test(asynclogic_${scheme}_${virt} ${INCITER_EXECUTABLE}
+@endcode
+
+*/
+} // inciter::

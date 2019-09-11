@@ -1,12 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      tests/unit/Inciter/TestScheme.C
+  \file      tests/unit/Inciter/TestScheme.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Unit tests for Inciter/Scheme.h
-  \details   Unit tests for Inciter/Scheme.h
+  \brief     Unit tests for Inciter/Scheme.hpp
+  \details   Unit tests for Inciter/Scheme.hpp
 */
 // *****************************************************************************
 
@@ -55,7 +55,7 @@ class Receiver : public CBase_Receiver {
                            tut::test_result::result_type::ok );
 
       try {
-        int actual = s.which();
+        auto actual = s.index();
         // Evaluate test
         ensure_equals( "Scheme underlying type different after migrated",
                        actual, expected );
@@ -79,11 +79,11 @@ void Scheme_object::test< 1 >() {
   set_test_name( "ctor which" );
 
   inciter::Scheme c( inciter::ctr::SchemeType::DiagCG );
-  ensure_equals( "Underlying type", c.which(), 0 );
+  ensure_equals( "Underlying type", c.index(), 0 );
   inciter::Scheme d( inciter::ctr::SchemeType::DG );
-  ensure_equals( "Underlying type", d.which(), 1 );
+  ensure_equals( "Underlying type", d.index(), 1 );
   inciter::Scheme a( inciter::ctr::SchemeType::ALECG );
-  ensure_equals( "Underlying type", a.which(), 2 );
+  ensure_equals( "Underlying type", a.index(), 2 );
 }
 
 //! Test if operator[] returns the correct underlying type
@@ -92,11 +92,11 @@ void Scheme_object::test< 2 >() {
   set_test_name( "operator[] which" );
 
   inciter::Scheme c( inciter::ctr::SchemeType::DiagCG );
-  ensure_equals( "Underlying element type", c.which_element(), 0 );
+  ensure_equals( "Underlying element type", c.index_element(), 0 );
   inciter::Scheme d( inciter::ctr::SchemeType::DG );
-  ensure_equals( "Underlying element type", d.which_element(), 1 );
+  ensure_equals( "Underlying element type", d.index_element(), 1 );
   inciter::Scheme a( inciter::ctr::SchemeType::ALECG );
-  ensure_equals( "Underlying element type", a.which_element(), 2 );
+  ensure_equals( "Underlying element type", a.index_element(), 2 );
 }
 
 //! Test Pack/Unpack of Scheme holding CProxy_DiagCG

@@ -17,12 +17,10 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/Options/Flux.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
 
 //! Lax-Friedrichs approximate Riemann solver
 //! \details This class can be used polymorphically with inciter::RiemannSolver
@@ -42,35 +40,26 @@ struct LaxFriedrichs {
                             fluxl( u[0].size(), 0.0 ),
                             fluxr( u[0].size(), 0.0 );
 
-    // ratio of specific heats
-    auto g = g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[0];
-
     // Primitive variables
     auto rhol = u[0][0];
     auto rhor = u[1][0];
 
-    auto pl = (g-1.0)*(u[0][4] - (u[0][1]*u[0][1] +
-                                  u[0][2]*u[0][2] +
-                                  u[0][3]*u[0][3]) / (2.0*rhol));
-
-    auto pr = (g-1.0)*(u[1][4] - (u[1][1]*u[1][1] +
-                                  u[1][2]*u[1][2] +
-                                  u[1][3]*u[1][3]) / (2.0*rhor));
-
-    auto al = sqrt(g * pl / rhol);
-    auto ar = sqrt(g * pr / rhor);
-
-    // Face-normal velocities
     auto ul = u[0][1]/rhol;
     auto vl = u[0][2]/rhol;
     auto wl = u[0][3]/rhol;
-
-    tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
 
     auto ur = u[1][1]/rhor;
     auto vr = u[1][2]/rhor;
     auto wr = u[1][3]/rhor;
 
+    auto pl = eos_pressure< tag::compflow >( 0, rhol, ul, vl, wl, u[0][4] );
+    auto pr = eos_pressure< tag::compflow >( 0, rhor, ur, vr, wr, u[1][4] );
+
+    auto al = eos_soundspeed< tag::compflow >( 0, rhol, pl );
+    auto ar = eos_soundspeed< tag::compflow >( 0, rhor, pr );
+
+    // Face-normal velocities
+    tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
     tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
 
     // Flux functions

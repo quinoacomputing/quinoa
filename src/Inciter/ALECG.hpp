@@ -80,7 +80,7 @@ class ALECG : public CBase_ALECG {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit ALECG( CkMigrateMessage* ) {}
+    explicit ALECG( CkMigrateMessage* msg ) : CBase_ALECG( msg ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -91,8 +91,11 @@ class ALECG : public CBase_ALECG {
     //! Return from migration
     void ResumeFromSync() override;
 
+    //! Size communication buffers (no-op)
+    void resizeComm() {}
+
     //! Setup: query boundary conditions, output mesh, etc.
-    void setup( tk::real v );
+    void setup();
 
     // Initially compute left hand side diagonal matrix
     void init();
@@ -114,14 +117,11 @@ class ALECG : public CBase_ALECG {
     //! Update solution at the end of time step
     void update( const tk::Fields& a );
 
-    //! Signal the runtime system that diagnostics have been computed
-    void diag();
-
     //! Optionally refine/derefine mesh
     void refine();
 
     //! Receive new mesh from refiner
-    void resizeAfterRefined(
+    void resizePostAMR(
       const std::vector< std::size_t >& ginpoel,
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,
@@ -142,6 +142,12 @@ class ALECG : public CBase_ALECG {
     //! Evaluate whether to continue with next time step
     void step();
 
+    // Evaluate whether to do load balancing
+    void evalLB();
+
+    //! Continue to next time step
+    void next();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -159,7 +165,6 @@ class ALECG : public CBase_ALECG {
       p | m_rhs;
       p | m_lhsc;
       p | m_rhsc;
-      p | m_vol;
       p | m_diag;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -191,10 +196,12 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_lhs;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
-    //! Receive buffers for communication
-    std::vector< std::vector< tk::real > > m_lhsc, m_rhsc;
-    //! Total mesh volume
-    tk::real m_vol;
+    //! Receive buffer for communication of the left hand side
+    //! \details Key: chare id, value: lhs for all scalar components per node
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_lhsc;
+    //! Receive buffer for communication of the right hand side
+    //! \details Key: chare id, value: rhs for all scalar components per node
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
     //! Diagnostics object
     NodeDiagnostics m_diag;
 
@@ -204,17 +211,11 @@ class ALECG : public CBase_ALECG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! Size communication buffers
-    void resizeComm();
-
     //! Output mesh and particle fields to files
     void out();
 
     //! Output mesh-based fields to file
     void writeFields( CkCallback c ) const;
-
-    //! The own and communication portion of the left-hand side is complete
-    void lhsdone();
 
     //! Combine own and communicated contributions to left hand side
     void lhsmerge();
@@ -230,6 +231,9 @@ class ALECG : public CBase_ALECG {
 
     //! Compute time step size
     void dt();
+
+    //! Evaluate whether to save checkpoint/restart
+    void evalRestart();
 };
 
 } // inciter::

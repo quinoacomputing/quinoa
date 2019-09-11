@@ -48,7 +48,7 @@ registerNumberFractionBeta( DiffEqFactory& f, std::set< ctr::DiffEqType >& t )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoNumberFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoNumberFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the number fraction beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -99,11 +99,10 @@ infoNumberFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
     "coeff rcomma [" + std::to_string( ncomp ) + "]",
     parameters(
       g_inputdeck.get< tag::param, tag::numfracbeta, tag::rcomma >().at(c) ) );
-  spikes( nfo,
-          g_inputdeck.get< tag::param, tag::numfracbeta, tag::spike >().at(c) );
-  betapdfs(
-    nfo,
-    g_inputdeck.get< tag::param, tag::numfracbeta, tag::betapdf >().at(c) );
+  spikes( nfo, g_inputdeck.get< tag::param, tag::numfracbeta, tag::init,
+    tag::spike >().at(c) );
+  betapdfs( nfo, g_inputdeck.get< tag::param, tag::numfracbeta, tag::init,
+    tag::betapdf >().at(c) );
 
   return nfo;
 }

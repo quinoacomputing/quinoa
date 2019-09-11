@@ -66,20 +66,68 @@ Transporter::Transporter() :
   m_sorter(),
   m_nelem( 0 ),
   m_npoin_larger( 0 ),
-  m_V( 0.0 ),
+  m_meshvol( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
   m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
   m_timer(),
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "p", "d", "r", "b", "c", "m", "r" }},
-              {{ "partition", "distribute", "refine", "bnd", "comm", "mask",
-                  "reorder" }} ),
+              ProgMeshPrefix, ProgMeshLegend ),
   m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
-              {{ "c", "b", "f", "g", "a" }},
-              {{ "create", "bndface", "comfac", "ghost", "adj" }} )
+              ProgWorkPrefix, ProgWorkLegend )
 // *****************************************************************************
 //  Constructor
+// *****************************************************************************
+{
+  // Echo configuration to screen
+  info();
+
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto constdt = g_inputdeck.get< tag::discr, tag::dt >();
+
+  // If the desired max number of time steps is larger than zero, and the
+  // termination time is larger than the initial time, and the constant time
+  // step size (if that is used) is smaller than the duration of the time to be
+  // simulated, we have work to do, otherwise, finish right away. If a constant
+  // dt is not used, that part of the logic is always true as the default
+  // constdt is zero, see inciter::ctr::InputDeck::InputDeck().
+  if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
+
+    // Enable SDAG waits for collecting mesh statistics
+    thisProxy.wait4stat();
+
+    // Configure and write diagnostics file header
+    diagHeader();
+
+    // Create mesh partitioner AND boundary condition object group
+    createPartitioner();
+
+  } else finish( 0, t0 );      // stop if no time stepping requested
+}
+
+Transporter::Transporter( CkMigrateMessage* m ) :
+  CBase_Transporter( m ),
+  m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
+  m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              ProgMeshPrefix, ProgMeshLegend ),
+    m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+              ProgWorkPrefix, ProgWorkLegend )
+// *****************************************************************************
+//  Migrate constructor: returning from a checkpoint
+//! \param[in] m Charm++ migrate message
+// *****************************************************************************
+{
+   m_print.diag( "Restarted from checkpoint" );
+   info();
+   inthead();
+}
+
+void
+Transporter::info()
+// *****************************************************************************
+// Echo configuration to screen
 // *****************************************************************************
 {
   m_print.part( "Factory" );
@@ -120,16 +168,23 @@ Transporter::Transporter() :
   m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::discr, tag::scheme >();
 
+  if (scheme == ctr::SchemeType::PDG) {
+    m_print.item( "p-refinement tolerance",
+                  g_inputdeck.get< tag::pref, tag::tolref >() );
+  }
+
   if (scheme == ctr::SchemeType::DiagCG) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
     m_print.item( "Flux-corrected transport (FCT)", fct );
     if (fct)
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
-  } else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 ||
+  } else if (scheme == ctr::SchemeType::DG ||
+             scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
              scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
   {
     m_print.Item< ctr::Flux, tag::discr, tag::flux >();
+    m_print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
   m_print.item( "PE-locality mesh reordering",
                 g_inputdeck.get< tag::discr, tag::reorder >() );
@@ -193,40 +248,31 @@ Transporter::Transporter() :
       m_print.item( "Uniform-only mesh refinement, t>0",
                     g_inputdeck.get< tag::amr, tag::dtref_uniform >() );
     }
+    m_print.item( "Refinement tolerance",
+                  g_inputdeck.get< tag::amr, tag::tolref >() );
+    m_print.item( "De-refinement tolerance",
+                  g_inputdeck.get< tag::amr, tag::tolderef >() );
   }
 
-  // If the desired max number of time steps is larger than zero, and the
-  // termination time is larger than the initial time, and the constant time
-  // step size (if that is used) is smaller than the duration of the time to be
-  // simulated, we have work to do, otherwise, finish right away. If a constant
-  // dt is not used, that part of the logic is always true as the default
-  // constdt is zero, see inciter::ctr::InputDeck::InputDeck().
-  if ( nstep != 0 && term > t0 && constdt < term-t0 ) {
+  // Print I/O filenames
+  m_print.section( "Output filenames and directories" );
+  m_print.item( "Field output file(s)",
+    g_inputdeck.get< tag::cmd, tag::io, tag::output >() +
+    ".e-s.<meshid>.<numchares>.<chareid>" );
+  m_print.item( "Diagnostics file",
+                g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
+  m_print.item( "Checkpoint/restart directory",
+                g_inputdeck.get< tag::cmd, tag::io, tag::restart >() + '/' );
 
-    // Enable SDAG waits for collecting mesh statistics
-    thisProxy.wait4stat();
-
-    // Print I/O filenames
-    m_print.section( "Output filenames" );
-    m_print.item( "Field", g_inputdeck.get< tag::cmd, tag::io, tag::output >()
-                           + ".<chareid>" );
-    m_print.item( "Diagnostics",
-                  g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
-
-    // Print output intervals
-    m_print.section( "Output intervals" );
-    m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
-    m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
-    m_print.item( "Diagnostics", g_inputdeck.get< tag::interval, tag::diag >() );
-    m_print.endsubsection();
-
-    // Configure and write diagnostics file header
-    diagHeader();
-
-    // Create mesh partitioner AND boundary condition object group
-    createPartitioner();
-
-  } else finish();      // stop if no time stepping requested
+  // Print output intervals
+  m_print.section( "Output intervals" );
+  m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
+  m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
+  m_print.item( "Diagnostics",
+                g_inputdeck.get< tag::interval, tag::diag >() );
+  m_print.item( "Checkpoint/restart",
+                g_inputdeck.get< tag::cmd, tag::rsfreq >() );
+  m_print.endsubsection();
 }
 
 void
@@ -258,29 +304,29 @@ Transporter::createPartitioner()
   }
 
   // Create partitioner callbacks (order matters)
-  tk::PartitionerCallback cbp {
+  tk::PartitionerCallback cbp {{
       CkCallback( CkReductionTarget(Transporter,load), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
-  };
+  }};
 
   // Create refiner callbacks (order matters)
-  tk::RefinerCallback cbr {
+  tk::RefinerCallback cbr {{
       CkCallback( CkReductionTarget(Transporter,edges), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,compatibility), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,bndint), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
-  };
+  }};
 
   // Create sorter callbacks (order matters)
-  tk::SorterCallback cbs {
+  tk::SorterCallback cbs {{
       CkCallback( CkReductionTarget(Transporter,queried), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,responded), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
-  };
+  }};
 
   // Start timer measuring preparation of the mesh for partitioning
   m_timer[ TimerTag::MESH_READ ];
@@ -380,6 +426,7 @@ Transporter::refinserted( int error )
 // *****************************************************************************
 {
   if (error) {
+
     m_print << "\n>>> ERROR: A worker chare was not assigned any mesh "
                "elements. This can happen in SMP-mode with a large +ppn "
                "parameter (number of worker threads per logical node) and is "
@@ -391,9 +438,13 @@ Transporter::refinserted( int error )
                "with +ppn larger than 1. Solution 1: Try a different "
                "partitioning algorithm (e.g., rcb instead of mj). Solution 2: "
                "Decrease +ppn.";
-    finish();
+
+    finish( 0, g_inputdeck.get< tag::discr, tag::t0 >() );
+
   } else {
+
      m_refiner.doneInserting();
+
   }
 }
 
@@ -411,7 +462,7 @@ Transporter::compatibility( int modified )
 // *****************************************************************************
 // Reduction target: all mesh refiner chares have received a round of edges,
 // and ran their compatibility algorithm
-//! \param[in] Sum acorss all workers, if nonzero, mesh is modified
+//! \param[in] modified Sum acorss all workers, if nonzero, mesh is modified
 //! \details This is called iteratively, until convergence by Refiner. At this
 //!   point all Refiner chares have received a round of edge data (tags whether
 //!   an edge needs to be refined, etc.), and applied the compatibility
@@ -428,16 +479,16 @@ Transporter::compatibility( int modified )
 
 void
 Transporter::matched( std::size_t nextra,
-                      std::size_t nedge,
+                      std::size_t nref,
+                      std::size_t nderef,
                       std::size_t initial )
 // *****************************************************************************
-//  Reduction target: all mesh refiner chares have performed a step of matching
-//  chare-boundary edges
+// Reduction target: all mesh refiner chares have matched/corrected the tagging
+// of chare-boundary edges, all chares are ready to perform refinement.
 //! \param[in] nextra Sum (across all chares) of the number of edges on each
 //!   chare that need correction along chare boundaries
-//! \param[in] nedge Sum (across all chares) of number of edges on each chare.
-//!   This is not really used for anything meaningful (as it is multiply-counted
-//!   in parallel), only as a feedback during  mesh refinement.
+//! \param[in] nref Sum of number of refined tetrahedra across all chares.
+//! \param[in] nderef Sum of number of derefined tetrahedra across all chares.
 //! \param[in] initial Sum of contributions from all chares. If larger than
 //!    zero, we are during time stepping and if zero we are during setup.
 // *****************************************************************************
@@ -454,28 +505,32 @@ Transporter::matched( std::size_t nextra,
     if (initial > 0) {
 
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
-        m_print.diag( { "t0ref", "nedge", "ncorr" },
-                      { ++m_nt0refit, nedge, m_ncit } );
+        m_print.diag( { "t0ref", "nref", "nderef", "ncorr" },
+                      { ++m_nt0refit, nref, nderef, m_ncit } );
       }
       m_progMesh.inc< REFINE >();
 
     } else {
 
-      m_print.diag( { "dtref", "nedge", "ncorr" },
-                    { ++m_ndtrefit, nedge, m_ncit }, false );
+      m_print.diag( { "dtref", "nref", "nderef", "ncorr" },
+                    { ++m_ndtrefit, nref, nderef, m_ncit }, false );
 
     }
 
     m_ncit = 0;
-    m_refiner.eval();
+    m_refiner.perform();
 
   }
 }
 
 void
-Transporter::bndint( tk::real sx, tk::real sy, tk::real sz )
+Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
 // *****************************************************************************
 // Compute surface integral across the whole problem and perform leak-test
+//! \param[in] sx X component of vector summed
+//! \param[in] sy Y component of vector summed
+//! \param[in] sz Z component of vector summed
+//! \param[in] cb Invoke callback if positive
 //! \details This function aggregates partial surface integrals across the
 //!   boundary faces of the whole problem. After this global sum a
 //!   non-zero vector result indicates a leak, e.g., a hole in the boundary,
@@ -483,10 +538,27 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz )
 //!   compute the partial surface integrals.
 // *****************************************************************************
 {
-  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
-  if (std::abs(sx) > eps || std::abs(sy) > eps || std::abs(sz) > eps)
-    Throw( "Mesh boundary leaky, t0ref: " + std::to_string(m_nt0refit) +
-           ", dtref: " + std::to_string(m_ndtrefit) );
+  std::stringstream err;
+  if (cb < 0.0) {  // called from Refiner
+    err << "Mesh boundary leaky after mesh refinement step; this is due to a "
+     "problem with updating the side sets used to specify boundary conditions "
+     "on faces, required for DG methods: ";
+  } else if (cb > 0.0) {  // called from DG
+    err << "Mesh boundary leaky during initialization of the DG algorithm; this "
+    "is due to incorrect or incompletely specified boundary conditions for a "
+    "given input mesh: ";
+  }
+
+  auto eps = std::numeric_limits< tk::real >::epsilon() * 1.0e+3; // ~ 2.0e-13
+
+  if (std::abs(sx) > eps || std::abs(sy) > eps || std::abs(sz) > eps) {
+    err << "Integral result must be a zero vector: " << std::setprecision(12) <<
+           std::abs(sx) << ", " << std::abs(sy) << ", " << std::abs(sz) <<
+           ", eps = " << eps;
+    Throw( err.str() );
+  }
+
+  if (cb > 0.0) m_scheme.bcast< Scheme::resizeComm >();
 }
 
 void
@@ -526,37 +598,15 @@ Transporter::responded()
 }
 
 void
-Transporter::discresized()
-// *****************************************************************************
-// Reduction target: all Discretization chares have resized their own data after
-// mesh refinement
-// *****************************************************************************
-{
-  discresize_complete();
-}
-
-void
-Transporter::workresized()
-// *****************************************************************************
-// Reduction target: all worker chares have resized their own data after
-// mesh refinement
-// *****************************************************************************
-{
-  workresize_complete();
-}
-
-void
 Transporter::resized()
 // *****************************************************************************
 // Reduction target: all worker chares have resized their own data after
 // mesh refinement
+//! \note Only used for nodal schemes
 // *****************************************************************************
 {
-  m_scheme.vol();
-  
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
-    m_scheme.lhs();
+  m_scheme.disc().vol();
+  m_scheme.bcast< Scheme::lhs >();
 }
 
 void
@@ -565,7 +615,7 @@ Transporter::discinserted()
 // Reduction target: all Discretization chares have been inserted
 // *****************************************************************************
 {
-  m_scheme.doneDiscInserting< tag::bcast >();
+  m_scheme.disc().doneInserting();
 }
 
 void
@@ -585,10 +635,9 @@ Transporter::disccreated()
   m_refiner.sendProxy();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::DiagCG)
-    m_scheme.doneDistFCTInserting< tag::bcast >();
+  if (sch == ctr::SchemeType::DiagCG) m_scheme.fct().doneInserting();
 
-  m_scheme.vol();
+  m_scheme.disc().vol();
 }
 
 void
@@ -598,7 +647,7 @@ Transporter::workinserted()
 // inserted
 // *****************************************************************************
 {
-  m_scheme.doneInserting< tag::bcast >();
+  m_scheme.bcast< Scheme::doneInserting >();
 }
 
 void
@@ -617,7 +666,8 @@ Transporter::diagHeader()
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
     for (const auto& eq : g_cgpde) varnames( eq, var );
-  else if (scheme == ctr::SchemeType::DG || scheme == ctr::SchemeType::DGP1 ||
+  else if (scheme == ctr::SchemeType::DG ||
+           scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
            scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
     for (const auto& eq : g_dgpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
@@ -655,24 +705,14 @@ Transporter::comfinal( int initial )
 {
   if (initial > 0) {
     m_progWork.end();
-    m_scheme.setup( m_V );
+    m_scheme.bcast< Scheme::setup >();
     // Turn on automatic load balancing
     tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
   } else {
-    m_scheme.lhs();
+    m_scheme.bcast< Scheme::lhs >();
   }
 }
 // [Discretization-specific communication maps]
-
-void
-Transporter::vol()
-// *****************************************************************************
-// Reduction target indicating that all workers have finished
-// computing/receiving their part of the nodal volumes
-// *****************************************************************************
-{
-  m_scheme.totalvol();
-}
 
 void
 Transporter::totalvol( tk::real v, tk::real initial )
@@ -683,12 +723,12 @@ Transporter::totalvol( tk::real v, tk::real initial )
 //!    zero, we are during time stepping and if zero we are during setup.
 // *****************************************************************************
 {
-  m_V = v;
+  m_meshvol = v;
 
   if (initial > 0.0)
-    m_scheme.stat< tag::bcast >();
+    m_scheme.disc().stat( m_meshvol );
   else
-    m_scheme.resized();
+    m_scheme.bcast< Scheme::resized >();
 }
 
 void
@@ -798,18 +838,8 @@ Transporter::stat()
               std::to_string( static_cast<std::size_t>(m_maxstat[2]) ) + " / " +
               std::to_string( static_cast<std::size_t>(m_avgstat[2]) ) );
 
-  m_print.inthead( "Time integration", "Unstructured-mesh PDE solver testbed",
-  "Legend: it - iteration count\n"
-  "         t - time\n"
-  "        dt - time step size\n"
-  "       ETE - estimated time elapsed (h:m:s)\n"
-  "       ETA - estimated time for accomplishment (h:m:s)\n"
-  "       out - output-saved flags\n"
-  "             f - field\n"
-  "             d - diagnostics\n"
-  "             h - h-refinement\n",
-  "\n      it             t            dt        ETE        ETA   out\n"
-    " ---------------------------------------------------------------\n" );
+  // Print out time integration header to screen
+  inthead();
 
   m_progWork.start( "Preparing workers",
                     {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
@@ -818,16 +848,26 @@ Transporter::stat()
 }
 
 void
-Transporter::advance( tk::real dt )
+Transporter::inthead()
 // *****************************************************************************
-// Reduction target computing the minimum of dt
+// Print out time integration header to screen
 // *****************************************************************************
 {
-  // Enable SDAG waits for resize operations after mesh refinement
-  thisProxy.wait4resize();
-
-  // Comptue size of next time step
-  m_scheme.advance( dt );
+  m_print.inthead( "Time integration", "Navier-Stokes solver",
+  "Legend: it - iteration count\n"
+  "         t - time\n"
+  "        dt - time step size\n"
+  "       ETE - estimated time elapsed (h:m:s)\n"
+  "       ETA - estimated time for accomplishment (h:m:s)\n"
+  "       EGT - estimated grind time (ms/status)\n"
+  "       out - output-saved flags\n"
+  "             f - field\n"
+  "             d - diagnostics\n"
+  "             h - h-refinement\n"
+  "             l - load balancing\n"
+  "             r - checkpoint/restart\n",
+  "\n      it             t            dt        ETE        ETA        EGT  out\n"
+    " -------------------------------------------------------------------------\n" );
 }
 
 void
@@ -835,6 +875,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 // Reduction target optionally collecting diagnostics, e.g., residuals
 //! \param[in] msg Serialized diagnostics vector aggregated across all PEs
+//! \note Only used for nodal schemes
 // *****************************************************************************
 {
   std::vector< std::vector< tk::real > > d;
@@ -858,7 +899,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   // Finish computing diagnostics
   for (std::size_t i=0; i<d[L2SOL].size(); ++i)
-    diag[i] = sqrt( d[L2SOL][i] / m_V );
+    diag[i] = sqrt( d[L2SOL][i] / m_meshvol );
   
   // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diag, tag::error >();
@@ -869,7 +910,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
     if (e == tk::ctr::ErrorType::L2) {
       // Finish computing the L2 norm of the numerical - analytical solution
      for (std::size_t i=0; i<d[L2ERR].size(); ++i)
-       diag.push_back( sqrt( d[L2ERR][i] / m_V ) );
+       diag.push_back( sqrt( d[L2ERR][i] / m_meshvol ) );
     } else if (e == tk::ctr::ErrorType::LINF) {
       // Finish computing the Linf norm of the numerical - analytical solution
       for (std::size_t i=0; i<d[LINFERR].size(); ++i)
@@ -885,16 +926,53 @@ Transporter::diagnostics( CkReductionMsg* msg )
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
   // Evaluate whether to continue with next step
-  m_scheme.diag< tag::bcast >();
+  m_scheme.bcast< Scheme::refine >();
 }
 
 void
-Transporter::finish()
+Transporter::resume()
 // *****************************************************************************
-// Normal finish of time stepping
+// Resume execution from checkpoint/restart files
+//! \details This is invoked by Charm++ after the checkpoint is done, as well as
+//!   when the restart (returning from a checkpoint) is complete
 // *****************************************************************************
 {
-  mainProxy.finalize();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  // If neither max iterations nor max time reached, continue, otherwise finish
+  if (std::fabs(m_t-term) > eps && m_it < nstep)
+    m_scheme.bcast< Scheme::evalLB >();
+  else
+    mainProxy.finalize();
+}
+
+void
+Transporter::checkpoint( tk::real it, tk::real t )
+// *****************************************************************************
+// Save checkpoint/restart files
+//! \param[in] it Iteration count
+//! \param[in] t Physical time
+// *****************************************************************************
+{
+  m_it = static_cast< uint64_t >( it );
+  m_t = t;
+
+  const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
+  CkCallback res( CkIndex_Transporter::resume(), thisProxy );
+  CkStartCheckpoint( restart.c_str(), res );
+}
+
+void
+Transporter::finish( tk::real it, tk::real t )
+// *****************************************************************************
+// Normal finish of time stepping
+//! \param[in] it Iteration count
+//! \param[in] t Physical time
+// *****************************************************************************
+{
+  checkpoint( it, t );
 }
 
 #include "NoWarning/transporter.def.h"

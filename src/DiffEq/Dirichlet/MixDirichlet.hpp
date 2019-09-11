@@ -64,9 +64,6 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-//! Number of derived variables computed by the MixDirichlet SDE
-const std::size_t MIXDIR_NUMDERIVED = 2;
-
 //! \brief MixDirichlet SDE used polymorphically with DiffEq
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
@@ -76,10 +73,14 @@ template< class Init, class Coefficients >
 class MixDirichlet {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::mixdirichlet;
 
   public:
+    //! Number of derived variables computed by the MixDirichlet SDE
+    //! \details Derived variables: Nth scalar, density, specific volume.
+    static const std::size_t NUMDERIVED = 3;
+
     //! \brief Constructor
     //! \param[in] c Index specifying which MixDirichlet SDE to construct. There
     //!   can be multiple dirichlet ... end blocks in a control file. This index
@@ -91,11 +92,12 @@ class MixDirichlet {
       m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
       // subtract the number of derived variables computed, see advance()
       m_ncomp( g_inputdeck.get< tag::component >().get< eq >().at(c) -
-               MIXDIR_NUMDERIVED ),
+               NUMDERIVED ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
+      m_norm( g_inputdeck.get< tag::param, eq, tag::normalization >().at(c) ),
       m_b(),
       m_S(),
       m_kprime(),
@@ -103,6 +105,7 @@ class MixDirichlet {
       m_rho(),
       m_r(),
       coeff( m_ncomp,
+             m_norm,
              g_inputdeck.get< tag::param, eq, tag::b >().at(c),
              g_inputdeck.get< tag::param, eq, tag::S >().at(c),
              g_inputdeck.get< tag::param, eq, tag::kappaprime >().at(c),
@@ -113,27 +116,25 @@ class MixDirichlet {
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[in,out] particles Array of particle properties 
     void initialize( int stream, tk::Particles& particles ) {
+
+      // Ensure the size of the parameter vector holding the pure-fluid
+      // densities is N = K+1 = m_ncomp+1
+      Assert( m_rho.size() == m_ncomp+1, "Size mismatch" );
+
       //! Set initial conditions using initialization policy
       Init::template init< eq >( g_inputdeck, m_rng, stream, particles, m_c,
                                  m_ncomp, m_offset );
 
-      // Initialize derived instantaneous variables
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
-        // compute Nth scalar
-        tk::real yn = 1.0 - particles(p, 0, m_offset);
-        for (ncomp_t i=1; i<m_ncomp; ++i)
-          yn -= particles( p, i, m_offset );
-        // compute specific volume
-        tk::real v = 1.0;
-        for (ncomp_t i=0; i<m_ncomp; ++i)
-          v += m_r[i]*particles( p, i, m_offset );
-        // Finish computing specific volume
-        v /= m_rho[m_ncomp];
-        // Compute and store instantaneous density
-        particles( p, m_ncomp, m_offset ) = 1.0 / v;
-        // Store instantaneous specific volume
-        particles( p, m_ncomp+1, m_offset ) = v;
+        // Violating boundedness here is a hard error as indicates a problem
+        // with the initial conditions
+        for (ncomp_t i=0; i<m_ncomp+1; ++i) {
+          auto y = particles( p, i, m_offset );
+          if (y < 0.0 || y > 1.0) Throw( "IC scalar out of bounds" );
+        }
+        // Initialize derived instantaneous variables
+        derived( particles, p );
       }
     }
 
@@ -149,44 +150,44 @@ class MixDirichlet {
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
       // Update SDE coefficients
-      coeff.update( m_depvar, m_ncomp, moments, m_rho, m_r, m_kprime, m_k,
-                    m_S );
+      coeff.update( m_depvar, m_ncomp, m_norm, DENSITY_OFFSET, VOLUME_OFFSET,
+                    moments, m_rho, m_r, m_kprime, m_b, m_k, m_S );
+
       // Advance particles
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
-        // Compute Nth scalar
-        tk::real yn = 1.0 - particles(p, 0, m_offset);
-        for (ncomp_t i=1; i<m_ncomp; ++i)
-          yn -= particles( p, i, m_offset );
-
         // Generate Gaussian random numbers with zero mean and unit variance
         std::vector< tk::real > dW( m_ncomp );
         m_rng.gaussian( stream, m_ncomp, dW.data() );
 
-        // Advance first m_ncomp (K=N-1) scalars
-        tk::real v = 1.0;
+        // Advance all m_ncomp (=N=K+1) scalars
+        auto& yn = particles( p, m_ncomp, m_offset );
         for (ncomp_t i=0; i<m_ncomp; ++i) {
-          tk::real& Y = particles( p, i, m_offset );
-          tk::real d = m_k[i] * Y * yn * dt;
-          d = (d > 0.0 ? std::sqrt(d) : 0.0);
-          Y += 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i]) * Y )*dt + d*dW[i];
-          v += m_r[i]*Y;
+          auto& y = particles( p, i, m_offset );
+          tk::real d = m_k[i] * y * yn * dt;
+          if (d < 0.0) d = 0.0;
+          d = std::sqrt( d );
+          auto dy = 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i])*y )*dt + d*dW[i];
+          y += dy;
+          yn -= dy;
         }
-        // Finish computing specific volume
-        v /= m_rho[m_ncomp];
-        // Compute and store instantaneous density
-        particles( p, m_ncomp, m_offset ) = 1.0 / v;
-        // Store instantaneous specific volume
-        particles( p, m_ncomp+1, m_offset ) = v;
+        // Compute derived instantaneous variables
+        derived( particles, p );
       }
     }
 
   private:
+    //! Offset of particle density in solution array relative to YN
+    static const std::size_t DENSITY_OFFSET = 1;
+    //! Offset of particle specific volume in solution array relative to YN
+    static const std::size_t VOLUME_OFFSET = 2;
+
     const ncomp_t m_c;                  //!< Equation system index
     const char m_depvar;                //!< Dependent variable
-    const ncomp_t m_ncomp;              //!< Number of components
+    const ncomp_t m_ncomp;              //!< Number of components, K = N-1
     const ncomp_t m_offset;             //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
+    const ctr::NormalizationType m_norm;//!< Normalization type
 
     //! Coefficients
     std::vector< kw::sde_b::info::expect::type > m_b;
@@ -198,6 +199,37 @@ class MixDirichlet {
 
     //! Coefficients policy
     Coefficients coeff;
+
+    //! \brief Return density for mass fractions
+    //! \details This function returns the instantaneous density, rho,
+    //!   based on the multiple mass fractions, Y_c.
+    //! \param[in] particles Array of particle properties
+    //! \param[in] p Particle index
+    //! \return Instantaneous value of the density, rho
+    //! \details This is computed based 1/rho = sum_{i=1}^N Y_i/R_i, where R_i
+    //!   are the constant pure-fluid densities and the Y_i are the mass
+    //!   fractions, of the N materials.
+    tk::real rho( const tk::Particles& particles, ncomp_t p ) const {
+      // start computing density
+      tk::real d = 0.0;
+      for (ncomp_t i=0; i<m_ncomp+1; ++i)
+        d += particles( p, i, m_offset ) / m_rho[i];
+      // return particle density
+      return 1.0/d;
+    }
+
+    //! Compute instantaneous values derived from particle mass fractions
+    //! \param[in,out] particles Particle properties array
+    //! \param[in] p Particle index
+    void derived( tk::Particles& particles, ncomp_t p ) const {
+      // compute instantaneous fluid-density based on particle mass fractions
+      auto density = rho( particles, p );
+      //// Compute and store instantaneous density
+      particles( p, m_ncomp+DENSITY_OFFSET, m_offset ) = density;
+      // Store instantaneous specific volume
+      particles( p, m_ncomp+VOLUME_OFFSET, m_offset ) = 1.0/density;
+    }
+
 };
 
 } // walker::

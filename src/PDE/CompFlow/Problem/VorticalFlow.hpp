@@ -34,8 +34,8 @@ namespace inciter {
 class CompFlowProblemVorticalFlow {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
-    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
+    using ncomp_t = tk::ctr::ncomp_t;
+    using eq = tag::compflow;
 
   public:
     //! Evaluate analytical solution at (x,y,z) for all components
@@ -46,11 +46,13 @@ class CompFlowProblemVorticalFlow {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     std::vector< tk::real >
-    solinc( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real ) const;
+    solinc( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real,
+            tk::real ) const;
 
     //! Compute and return source term for vortical flow manufactured solution
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z, tk::real );
+    src( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+         tk::real );
 
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system
@@ -71,7 +73,6 @@ class CompFlowProblemVorticalFlow {
                  tk::Fields& U ) const;
 
     //! Return names of integral variables to be output to diagnostics file
-    //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names( ncomp_t ) const;
 
     //! Return problem type

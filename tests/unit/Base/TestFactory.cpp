@@ -1,22 +1,22 @@
 // *****************************************************************************
 /*!
-  \file      tests/unit/Base/TestFactory.C
+  \file      tests/unit/Base/TestFactory.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Unit tests for Base/Factory.h
-  \details   Unit tests for Base/Factory.h
+  \brief     Unit tests for Base/Factory.hpp
+  \details   Unit tests for Base/Factory.hpp
 */
 // *****************************************************************************
 
+#include <memory>
 #include <unistd.h>
 
 #include "NoWarning/tut.hpp"
 
 #include "TUTConfig.hpp"
 #include "Macro.hpp"
-#include "Make_unique.hpp"
 #include "Factory.hpp"
 
 #include "QuinoaConfig.hpp"
@@ -64,7 +64,7 @@ struct Factory_common {
     //! of class T was pre-constructed.
     template< typename T >
     explicit VBase( T x ) :
-      self( tk::make_unique< Model<T> >( std::move(x) ) ),
+      self( std::make_unique< Model<T> >( std::move(x) ) ),
       ctor( "val" ),
       assg() {}
 
@@ -74,7 +74,7 @@ struct Factory_common {
     //! constructor, and thus usage from a factory.
     template< typename T >
     explicit VBase( std::function<T()> x ) :
-      self( tk::make_unique< Model<T> >( std::move(x()) ) ),
+      self( std::make_unique< Model<T> >( std::move(x()) ) ),
       ctor( "fun" ),
       assg() {}
 
@@ -392,16 +392,12 @@ struct VBase {
   //! from an already-bound std::function, we could use those instead of
   //! having to explicitly forward the model constructor arguments via this
   //! host constructor. See also tk::recordCharmModel().
-  template< typename T, typename... ConstrArgs,
-    typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
-  explicit VBase( std::function<T()> c, ConstrArgs... args ) :
-    self( tk::make_unique< Model< typename T::Proxy > >
-         (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
+  template< typename T, typename... CtrArgs >
+  explicit VBase( std::function<T()> c [[maybe_unused]], CtrArgs... args ) :
+    self( std::make_unique< Model< typename T::Proxy > >
+          (std::move(T::Proxy::ckNew(std::forward<CtrArgs>(args)...))) ) {
     Assert( c == nullptr, "std::function argument to VBase Charm "
                           "constructor must be nullptr" );
-    #ifdef NDEBUG
-    IGNORE(c);
-    #endif
   }
   //! Copy assignment
   VBase& operator=( const VBase& x )

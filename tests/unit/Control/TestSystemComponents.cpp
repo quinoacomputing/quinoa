@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      tests/unit/Control/TestSystemComponents.C
+  \file      tests/unit/Control/TestSystemComponents.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -19,7 +19,6 @@
 #include "SystemComponents.hpp"
 #include "TaggedTuple.hpp"
 #include "Tags.hpp"
-#include "Control.hpp"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 
@@ -32,17 +31,14 @@ struct eq2 {};
 //! All tests in group inherited from this base
 struct SystemComponents_common {
   // Typedef simple set of equations of two types
-  using ncomps = tk::ctr::ncomponents<
-    eq1, std::vector< tk::ctr::ncomp_type >,
-    eq2, std::vector< tk::ctr::ncomp_type >
-  >;
+  using ncomps = tk::ctr::ncomponents< eq1, eq2 >;
   // Typedef vector of all equation tags
   using eqs = brigand::list< eq1, eq2 >;
 
   // Functor verifying the number of components
   struct testncomp {
     const ncomps& m_host;
-    const std::vector< tk::ctr::ncomp_type > m_comps{ 2, 3, 3, 2 };
+    const std::vector< tk::ctr::ncomp_t > m_comps{ 2, 3, 3, 2 };
     std::size_t m_c;
     explicit testncomp( const ncomps& host ) : m_host( host ), m_c( 0 ) {}
     template< typename U > void operator()( brigand::type_<U> ) {
@@ -55,7 +51,7 @@ struct SystemComponents_common {
   // Functor verifying the offset
   struct testoffset {
     const ncomps& m_host;
-    const std::vector< tk::ctr::ncomp_type > m_offs{ 0, 2, 5, 8 };
+    const std::vector< tk::ctr::ncomp_t > m_offs{ 0, 2, 5, 8 };
     std::size_t m_c;
     explicit testoffset( const ncomps& host ) : m_host( host ), m_c( 0 ) {}
     template< typename U > void operator()( brigand::type_<U> ) {
@@ -153,22 +149,22 @@ void SystemComponents_object::test< 4 >() {
   nc.get< eq2 >().push_back( 2 );
 
   // Dependent variables (as the only parameters) for two equation systems
-  using eq1_parameters = tk::tuple::tagged_tuple<
+  using eq1_parameters = tk::TaggedTuple< brigand::list<
     tag::depvar, std::vector< char >
-  >;
-  using eq2_parameters = tk::tuple::tagged_tuple<
+  > >;
+  using eq2_parameters = tk::TaggedTuple< brigand::list<
     tag::depvar, std::vector< char >
-  >;
+  > >;
 
   // Parameters for two equation systems
-  using parameters = tk::tuple::tagged_tuple<
+  using parameters = tk::TaggedTuple< brigand::list<
     eq1, eq1_parameters,
     eq2, eq2_parameters
-  >;
+  > >;
 
   // Crate mock input deck with two systems of eqations with dependent variables
-  tk::Control< tag::component, ncomps,
-               tag::param, parameters > deck;
+  tk::TaggedTuple< brigand::list< tag::component, ncomps,
+                                  tag::param, parameters > > deck;
 
   // Assign ncomps to deck
   deck.get< tag::component >() = std::move( nc );
@@ -200,22 +196,22 @@ void SystemComponents_object::test< 5 >() {
   nc.get< eq2 >().push_back( 8 );
 
   // Dependent variables (as the only parameters) for two equation systems
-  using eq1_parameters = tk::tuple::tagged_tuple<
+  using eq1_parameters = tk::TaggedTuple< brigand::list<
     tag::depvar, std::vector< char >
-  >;
-  using eq2_parameters = tk::tuple::tagged_tuple<
+  > >;
+  using eq2_parameters = tk::TaggedTuple< brigand::list<
     tag::depvar, std::vector< char >
-  >;
+  > >;
 
   // Parameters for two equation systems
-  using parameters = tk::tuple::tagged_tuple<
+  using parameters = tk::TaggedTuple< brigand::list<
     eq1, eq1_parameters,
     eq2, eq2_parameters
-  >;
+  > >;
 
   // Crate mock input deck with two systems of eqations with dependent variables
-  tk::Control< tag::component, ncomps,
-               tag::param, parameters > deck;
+  tk::TaggedTuple< brigand::list< tag::component, ncomps,
+                                  tag::param, parameters > > deck;
 
   // Assign ncomps to deck
   deck.get< tag::component >() = std::move( nc );

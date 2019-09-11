@@ -32,9 +32,8 @@ namespace inciter {
 class CompFlowProblemRayleighTaylor {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
-    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
     //! Evaluate analytical solution at (x,y,z,t) for all components
@@ -45,12 +44,12 @@ class CompFlowProblemRayleighTaylor {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     std::vector< tk::real >
-    solinc( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real t,
-            tk::real dt ) const;
+    solinc( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+            tk::real t, tk::real dt ) const;
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z,
+    src( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
          tk::real t );
 
     //! \brief Query all side set IDs the user has configured for all components
@@ -63,7 +62,7 @@ class CompFlowProblemRayleighTaylor {
     //! Return field output going to file
     std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
-                 ncomp_t,
+                 ncomp_t ncomp,
                  ncomp_t offset,
                  tk::real t,
                  tk::real V,
@@ -72,7 +71,7 @@ class CompFlowProblemRayleighTaylor {
                  tk::Fields& U ) const;
 
     //! Return names of integral variables to be output to diagnostics file
-    std::vector< std::string > names( ncomp_t ) const;
+    std::vector< std::string > names( ncomp_t /*ncomp*/ ) const;
 
     //! Return problem type
     static ctr::ProblemType type() noexcept

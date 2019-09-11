@@ -47,7 +47,7 @@ registerSkewNormal( DiffEqFactory& f, std::set< ctr::DiffEqType >& t )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoSkewNormal( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoSkewNormal( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the skew-normal SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -88,11 +88,10 @@ infoSkewNormal( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
     "coeff lambda [" + std::to_string( ncomp ) + "]",
     parameters(
       g_inputdeck.get< tag::param, tag::skewnormal, tag::lambda >().at(c) ) );
-  spikes( nfo,
-          g_inputdeck.get< tag::param, tag::skewnormal, tag::spike >().at(c) );
-  betapdfs(
-    nfo,
-    g_inputdeck.get< tag::param, tag::skewnormal, tag::betapdf >().at(c) );
+  spikes( nfo, g_inputdeck.get< tag::param, tag::skewnormal, tag::init,
+                                tag::spike >().at(c) );
+  betapdfs( nfo, g_inputdeck.get< tag::param, tag::skewnormal, tag::init,
+                                  tag::betapdf >().at(c) );
 
   return nfo;
 }

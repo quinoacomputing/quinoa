@@ -16,6 +16,7 @@
 // *****************************************************************************
 
 #include "SlotCyl.hpp"
+#include "SystemComponents.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {

@@ -14,6 +14,7 @@ target_include_directories(RNG PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
                            ${TPL_INCLUDE_DIR}
+                           ${RANDOM123_INCLUDE_DIRS}
                            ${RNGSSE2_INCLUDE_DIRS}
                            ${MKL_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)

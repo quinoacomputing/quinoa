@@ -15,6 +15,7 @@ add_library(Base
             Writer.cpp
             Table.cpp
             Vector.cpp
+            StrConvUtil.cpp
             ChareStateCollector.cpp
 )
 
@@ -25,6 +26,7 @@ target_include_directories(Base PUBLIC
                            ${CHARM_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main
                            ${BACKWARD_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
                            ${PSTREAMS_INCLUDE_DIRS})

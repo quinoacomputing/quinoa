@@ -50,7 +50,7 @@ registerDiagOrnsteinUhlenbeck( DiffEqFactory& f,
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoDiagOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoDiagOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the diagonal Ornstein-Uhlenbeck SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -80,17 +80,16 @@ infoDiagOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt
     g_inputdeck.get< tag::param, tag::diagou, tag::rng >()[c] ) );
   nfo.emplace_back(
     "coeff sigmasq [" + std::to_string( ncomp ) + "]",
-    parameters(
-      g_inputdeck.get< tag::param, tag::diagou, tag::sigmasq >().at(c) ) );
+    parameters( g_inputdeck.get< tag::param, tag::diagou, tag::mu >().at(c) ) );
   nfo.emplace_back( "coeff theta [" + std::to_string( ncomp ) + "]",
     parameters( g_inputdeck.get< tag::param, tag::diagou, tag::theta >().at(c) )
   );
   nfo.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
     parameters( g_inputdeck.get< tag::param, tag::diagou, tag::mu >().at(c) ) );
-  spikes( nfo,
-          g_inputdeck.get< tag::param, tag::diagou, tag::spike >().at(c) );
-  betapdfs( nfo,
-            g_inputdeck.get< tag::param, tag::diagou, tag::betapdf >().at(c) );
+
+  const auto& init = g_inputdeck.get< tag::param, tag::diagou, tag::init >();
+  spikes( nfo, init.get< tag::spike >().at(c) );
+  betapdfs( nfo, init.get< tag::betapdf >().at(c) );
 
   return nfo;
 }

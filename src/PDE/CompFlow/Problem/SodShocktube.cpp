@@ -14,6 +14,7 @@
 
 #include "SodShocktube.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -25,7 +26,7 @@ using inciter::CompFlowProblemSodShocktube;
 
 tk::SolutionFn::result_type
 CompFlowProblemSodShocktube::solution( ncomp_t system,
-                                       ncomp_t ncomp,
+                                       [[maybe_unused]] ncomp_t ncomp,
                                        tk::real x,
                                        tk::real,
                                        tk::real,
@@ -38,14 +39,16 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
 //! \param[in] x X coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn
+//! \details This function only initializes the Sod shock tube problem, but does
+//!   not actually give the analytical solution at time greater than 0. The
+//!   analytical solution would require an exact Riemann solver, which has not
+//!   been implemented yet.
 // *****************************************************************************
 {
-  Assert( ncomp == m_ncomp, "Number of scalar components must be " +
-                            std::to_string(m_ncomp) );
-  IGNORE(ncomp);
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   using tag::param;
-  // ratio of specific heats
-  const tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system];
+
   tk::real r, p, u, v, w, rE;
   if (x<0.5) {
     // density
@@ -68,19 +71,20 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
     w = 0.0;
   }
   // total specific energy
-  rE = p/(g-1.0) + 0.5*r*(u*u + v*v + w*w);
+  rE = eos_totalenergy< eq >( system, r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
 std::vector< tk::real >
-CompFlowProblemSodShocktube::solinc( ncomp_t system, tk::real x, tk::real y,
-                                     tk::real z, tk::real t, tk::real dt ) const
+CompFlowProblemSodShocktube::solinc( ncomp_t system, ncomp_t ncomp, tk::real x,
+  tk::real y, tk::real z, tk::real t, tk::real dt ) const
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
 // for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -89,8 +93,8 @@ CompFlowProblemSodShocktube::solinc( ncomp_t system, tk::real x, tk::real y,
 //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
 // *****************************************************************************
 {
-  auto st1 = solution( system, m_ncomp, x, y, z, t );
-  auto st2 = solution( system, m_ncomp, x, y, z, t+dt );
+  auto st1 = solution( system, ncomp, x, y, z, t );
+  auto st2 = solution( system, ncomp, x, y, z, t+dt );
 
   std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                   []( tk::real s, tk::real& d ){ return d -= s; } );
@@ -175,17 +179,15 @@ CompFlowProblemSodShocktube::fieldOutput(
 // *****************************************************************************
 {
   // number of degree of freedom
-  const std::size_t ndof =
-    g_inputdeck.get< tag::discr, tag::ndof >();
-  // ratio of specific heats
-  tk::real g = g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
+  const std::size_t rdof =
+    g_inputdeck.get< tag::discr, tag::rdof >();
 
   std::vector< std::vector< tk::real > > out;
-  const auto r  = U.extract( 0*ndof, offset );
-  const auto ru = U.extract( 1*ndof, offset );
-  const auto rv = U.extract( 2*ndof, offset );
-  const auto rw = U.extract( 3*ndof, offset );
-  const auto re = U.extract( 4*ndof, offset );
+  const auto r  = U.extract( 0*rdof, offset );
+  const auto ru = U.extract( 1*rdof, offset );
+  const auto rv = U.extract( 2*rdof, offset );
+  const auto rw = U.extract( 3*rdof, offset );
+  const auto re = U.extract( 4*rdof, offset );
 
   // mesh node coordinates
   //const auto& x = coord[0];
@@ -248,7 +250,7 @@ CompFlowProblemSodShocktube::fieldOutput(
 
   std::vector< tk::real > P( r.size(), 0.0 );
   for (std::size_t i=0; i<P.size(); ++i)
-    P[i] = (g-1.0)*r[i]*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+    P[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
   out.push_back( P );
   //out.push_back( Pa );
 

@@ -34,7 +34,7 @@ namespace inciter {
 //!   627-665.
 class TransportProblemSlotCyl {
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::transport;
 
   public:
@@ -46,7 +46,7 @@ class TransportProblemSlotCyl {
     //! \brief Evaluate the increment from t to t+dt of the analytical solution
     //!   at (x,y,z) for all components
     std::vector< tk::real >
-    solinc( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real,
+    solinc( ncomp_t, ncomp_t ncomp, tk::real x, tk::real y, tk::real,
             tk::real t, tk::real dt ) const;
 
     //! Do error checking on PDE parameters

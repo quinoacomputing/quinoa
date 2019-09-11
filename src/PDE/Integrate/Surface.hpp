@@ -31,8 +31,10 @@ using bcconf_t = kw::sideset::info::expect::type;
 void
 surfInt( ncomp_t system,
          ncomp_t ncomp,
+         std::size_t nmat,
          ncomp_t offset,
          const std::size_t ndof,
+         const std::size_t rdof,
          const std::vector< std::size_t >& inpoel,
          const UnsMesh::Coords& coord,
          const inciter::FaceData& fd,
@@ -40,23 +42,28 @@ surfInt( ncomp_t system,
          const RiemannFluxFn& flux,
          const VelFn& vel,
          const Fields& U,
+         const Fields& P,
          const std::vector< std::size_t >& ndofel,
-         Fields& R );
+         Fields& R,
+         std::vector< std::vector< tk::real > >& riemannDeriv );
 
 // Update the rhs by adding surface integration term
 void
 update_rhs_fa ( ncomp_t ncomp,
+                std::size_t nmat,
                 ncomp_t offset,
                 const std::size_t ndof,
                 const std::size_t ndof_l,
                 const std::size_t ndof_r,
                 const tk::real wt,
+                const std::array< tk::real, 3 >& fn,
                 const std::size_t el,
                 const std::size_t er,
                 const std::vector< tk::real >& fl,
                 const std::vector< tk::real >& B_l,
                 const std::vector< tk::real >& B_r,
-                Fields& R );
+                Fields& R,
+                std::vector< std::vector< tk::real > >& riemannDeriv );
 
 } // tk::
 

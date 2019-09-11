@@ -20,9 +20,9 @@
                           const tk::RNG& rng,
                           int stream,
                           tk::Particles& particles,
-                          tk::ctr::ncomp_type e,
-                          tk::ctr::ncomp_type ncomp,
-                          tk::ctr::ncomp_type offset );
+                          tk::ctr::ncomp_t e,
+                          tk::ctr::ncomp_t ncomp,
+                          tk::ctr::ncomp_t offset );
       \endcode
       where _deck_ is the input deck from which configuration is read, _rng_ is
       a reference to a random number generator to use, _stream_ is the thread
@@ -68,15 +68,15 @@ namespace walker {
 //! Raw initialization policy: leave memory uninitialized
 struct InitRaw {
 
-  //! Initialize particle properties
+  //! Do not initialize particle properties
   template< class eq >
   static void init( const ctr::InputDeck&,
                     const tk::RNG&,
                     int,
                     tk::Particles&,
-                    tk::ctr::ncomp_type,
-                    tk::ctr::ncomp_type,
-                    tk::ctr::ncomp_type ) {}
+                    tk::ctr::ncomp_t,
+                    tk::ctr::ncomp_t,
+                    tk::ctr::ncomp_t ) {}
 
   static ctr::InitPolicyType type() noexcept
   { return ctr::InitPolicyType::RAW; }
@@ -85,15 +85,15 @@ struct InitRaw {
 //! Zero initialization policy: zero particle properties
 struct InitZero {
 
-  //! Initialize particle properties
+  //! Initialize particle properties as zero
   template< class eq >
   static void init( const ctr::InputDeck&,
                     const tk::RNG&,
                     int,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type,
-                    tk::ctr::ncomp_type,
-                    tk::ctr::ncomp_type )
+                    tk::ctr::ncomp_t,
+                    tk::ctr::ncomp_t,
+                    tk::ctr::ncomp_t )
   {
     particles.fill( 0.0 );
   }
@@ -105,19 +105,20 @@ struct InitZero {
 //! Delta initialization policy: put in delta-spikes as the joint PDF
 struct InitDelta {
 
-  //! Initialize particle properties
+  //! Initialize particle properties a joint delta
   template< class eq >
   static void init( const ctr::InputDeck& deck,
                     const tk::RNG&,
                     int,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_t e,
+                    tk::ctr::ncomp_t ncomp,
+                    tk::ctr::ncomp_t offset )
   {
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
-    const auto& spike = deck.template get< tag::param, eq, tag::spike >().at(e);
+    const auto& spike =
+      deck.template get< tag::param, eq, tag::init, tag::spike >().at(e);
 
     // use only the first ncomp spikes if there are more than the equation is
     // configured for
@@ -146,20 +147,20 @@ struct InitDelta {
 //! Beta initialization policy: generate samples from a joint beta PDF
 struct InitBeta {
 
-  //! Initialize particle properties (zero)
+  //! Initialize particle properties by sampling from a joint beta distribution
   template< class eq >
   static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_t e,
+                    tk::ctr::ncomp_t ncomp,
+                    tk::ctr::ncomp_t offset )
   {
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
     const auto& betapdf =
-      deck.template get< tag::param, eq, tag::betapdf >().at(e);
+      deck.template get< tag::param, eq, tag::init, tag::betapdf >().at(e);
 
     // use only the first ncomp betapdfs if there are more than the equation is
     // configured for
@@ -187,20 +188,20 @@ struct InitBeta {
 //! \note No correlations supported. For correlations, see jointCorrGaussian
 struct InitGaussian {
 
-  //! Initialize particle properties (zero)
+  //! Initialize particle properties by sampling from independent Gaussians
   template< class eq >
   static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_t e,
+                    tk::ctr::ncomp_t ncomp,
+                    tk::ctr::ncomp_t offset )
   {
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
     const auto& gaussian =
-      deck.template get< tag::param, eq, tag::gaussian >().at(e);
+      deck.template get< tag::param, eq, tag::init, tag::gaussian >().at(e);
 
     // use only the first ncomp gaussian if there are more than the equation is
     // configured for
@@ -232,21 +233,23 @@ struct InitGaussian {
 //!   correlated Gaussian PDF
 struct InitCorrGaussian {
 
-  //! Initialize particle properties (zero)
+  //! Initialize particle properties by sampling from a joint Gaussian
   template< class eq >
   static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_t e,
+                    tk::ctr::ncomp_t ncomp,
+                    tk::ctr::ncomp_t offset )
   {
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
-    const auto& mean = deck.template get< tag::param, eq, tag::mean >().at(e);
+    const auto& mean =
+      deck.template get< tag::param, eq, tag::init, tag::mean >().at(e);
     Assert( mean.size() == ncomp, "Size mismatch" );
-    const auto& cov_ = deck.template get< tag::param, eq, tag::cov >().at(e);
+    const auto& cov_ =
+      deck.template get< tag::param, eq, tag::init, tag::cov >().at(e);
     Assert( cov_.size() == ncomp*(ncomp+1)/2, "Size mismatch" );
 
     // Compute covariance matrix using Cholesky-decompositionm, see Intel MKL
@@ -277,20 +280,20 @@ struct InitCorrGaussian {
 //! Gamma initialization policy: generate samples from a joint gamma PDF
 struct InitGamma {
 
-  //! Initialize particle properties (zero)
+  //! Initialize particle properties by sampling from a joint gamma distribution
   template< class eq >
   static void init( const ctr::InputDeck& deck,
                     const tk::RNG& rng,
                     int stream,
                     tk::Particles& particles,
-                    tk::ctr::ncomp_type e,
-                    tk::ctr::ncomp_type ncomp,
-                    tk::ctr::ncomp_type offset )
+                    tk::ctr::ncomp_t e,
+                    tk::ctr::ncomp_t ncomp,
+                    tk::ctr::ncomp_t offset )
   {
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ctr::ncomp_t;
 
     const auto& gamma =
-      deck.template get< tag::param, eq, tag::gamma >().at(e);
+      deck.template get< tag::param, eq, tag::init, tag::gamma >().at(e);
 
     // use only the first ncomp gamma if there are more than the equation is
     // configured for
@@ -311,6 +314,59 @@ struct InitGamma {
   { return ctr::InitPolicyType::JOINTGAMMA; }
 };
 
+//! Dirichlet initialization policy: generate samples from a Dirichlet PDF
+struct InitDirichlet {
+
+  //! Initialize particle properties by sampling from a Dirichlet distribution
+  //! \see https://en.wikipedia.org/wiki/Dirichlet_distribution#Random_number_generation
+  template< class eq >
+  static void init( const ctr::InputDeck& deck,
+                    const tk::RNG& rng,
+                    int stream,
+                    tk::Particles& particles,
+                    tk::ctr::ncomp_t e,
+                    [[ maybe_unused ]] tk::ctr::ncomp_t ncomp,
+                    tk::ctr::ncomp_t offset )
+  {
+    using ncomp_t = tk::ctr::ncomp_t;
+
+    const auto& dir =
+      deck.template get< tag::param, eq, tag::init, tag::dirichlet >().at(e);
+    Assert( dir.size() == ncomp+1, "Size mismatch" );
+    std::vector< tk::real > Y( dir.size() );
+
+    for (ncomp_t p=0; p<particles.nunk(); ++p) {
+      // Generate N gamma-distributed random numbers with prescribed shape and
+      // unit scale scale parameters.
+      for (std::size_t c=0; c<ncomp+1; ++c) {
+        rng.gamma( stream, 1, dir[c], 1.0, Y.data()+c );
+      }
+
+      auto Ysum = std::accumulate( begin(Y), end(Y), 0.0 );
+
+      // Assign N=K+1 particle values by dividing the gamma-distributed numbers
+      // by the sum of the N vlues, which yields a Dirichlet distribution. Note
+      // that we also store the Nth value.
+      for (std::size_t c=0; c<ncomp+1; ++c) {
+        auto y = Y[c] / Ysum;
+        if (y < 0.0 || y > 1.0) Throw( "Dirichlet samples out of bounds" );
+        particles( p, c, offset ) = y;
+      }
+    }
+
+    // Verify boundedness of all ncomp+1 (=N=K+1) scalars
+    for (ncomp_t p=0; p<particles.nunk(); ++p) {
+      for (ncomp_t i=0; i<ncomp+1; ++i) {
+        auto y = particles( p, i, offset );
+        if (y < 0.0 || y > 1.0) Throw( "IC Dirichlet sample Y out of bounds" );
+      }
+    }
+  }
+
+  static ctr::InitPolicyType type() noexcept
+  { return ctr::InitPolicyType::JOINTDIRICHLET; }
+};
+
 //! List of all initialization policies
 using InitPolicies = brigand::list< InitRaw
                                   , InitZero
@@ -319,6 +375,7 @@ using InitPolicies = brigand::list< InitRaw
                                   , InitGaussian
                                   , InitCorrGaussian
                                   , InitGamma
+                                  , InitDirichlet
                                   >;
 
 } // walker::

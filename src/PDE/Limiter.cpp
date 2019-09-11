@@ -35,23 +35,24 @@ WENO_P1( const std::vector< int >& esuel,
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] offset Index for equation systems
 //! \param[in,out] U High-order solution vector which gets limited
+//! \note This limiter function is experimental and untested. Use with caution.
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto cweight = inciter::g_inputdeck.get< tag::discr, tag::cweight >();
   std::array< std::vector< tk::real >, 3 > limU;
   limU[0].resize( U.nunk() );
   limU[1].resize( U.nunk() );
   limU[2].resize( U.nunk() );
 
-  std::size_t ncomp = U.nprop()/ndof;
+  std::size_t ncomp = U.nprop()/rdof;
 
   std::array< std::array< tk::real, 3 >, 5 > gradu;
   std::array< tk::real, 5 > wtStencil, osc, wtDof;
 
   for (inciter::ncomp_t c=0; c<ncomp; ++c)
   {
-    auto mark = c*ndof;
+    auto mark = c*rdof;
 
     for (std::size_t e=0; e<esuel.size()/4; ++e)
     {
@@ -157,7 +158,8 @@ Superbee_P1( const std::vector< int >& esuel,
              const std::vector< std::size_t >& ndofel,
              inciter::ncomp_t offset,
              const tk::UnsMesh::Coords& coord,
-             tk::Fields& U )
+             tk::Fields& U,
+             std::size_t nmat )
 // *****************************************************************************
 //  Superbee limiter for DGP1
 //! \param[in] esuel Elements surrounding elements
@@ -166,16 +168,34 @@ Superbee_P1( const std::vector< int >& esuel,
 //! \param[in] offset Index for equation systems
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
+//! \param[in] nmat Number of materials in this PDE system. Default is 1, so
+//!   this argument can be left unspecified for single-material by the calling
+//!   code.
 // *****************************************************************************
 {
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  std::size_t ncomp = U.nprop()/ndof;
+  std::size_t ncomp = U.nprop()/rdof;
 
   auto beta_lim = 2.0;
 
   for (std::size_t e=0; e<esuel.size()/4; ++e)
   {
-    auto dof_el = ndofel[e];
+    // If an rDG method is set up (P0P1), then, currently we compute the P1
+    // basis functions and solutions by default. This implies that P0P1 is
+    // unsupported in the p-adaptive DG (PDG). This is a workaround until we
+    // have rdofel, which is needed to distinguish between ndofs and rdofs per
+    // element for pDG.
+    std::size_t dof_el;
+    if (rdof > ndof)
+    {
+      dof_el = rdof;
+    }
+    else
+    {
+      dof_el = ndofel[e];
+    }
+
     if (dof_el > 1)
     {
       // Superbee is a TVD limiter, which uses min-max bounds that the
@@ -191,7 +211,7 @@ Superbee_P1( const std::vector< int >& esuel,
 
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
       {
-        auto mark = c*ndof;
+        auto mark = c*rdof;
         uMin[c] = U(e, mark, offset);
         uMax[c] = U(e, mark, offset);
       }
@@ -204,10 +224,10 @@ Superbee_P1( const std::vector< int >& esuel,
         // ignore physical domain ghosts
         if (nel == -1) continue;
 
+        auto n = static_cast< std::size_t >( nel );
         for (inciter::ncomp_t c=0; c<ncomp; ++c)
         {
-          auto mark = c*ndof;
-          std::size_t n = static_cast< std::size_t >( nel );
+          auto mark = c*rdof;
           uMin[c] = std::min(uMin[c], U(n, mark, offset));
           uMax[c] = std::max(uMax[c], U(n, mark, offset));
         }
@@ -267,12 +287,12 @@ Superbee_P1( const std::vector< int >& esuel,
           auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
           //Compute the basis functions
-          auto B_l = tk::eval_basis( ndof,
+          auto B_l = tk::eval_basis( rdof,
                 tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
                 tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
                 tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
-          auto state = tk::eval_state( ncomp, offset, ndof, dof_el, e, U, B_l );
+          auto state = tk::eval_state( ncomp, offset, rdof, dof_el, e, U, B_l );
 
           Assert( state.size() == ncomp, "Size mismatch" );
 
@@ -280,7 +300,7 @@ Superbee_P1( const std::vector< int >& esuel,
           for (inciter::ncomp_t c=0; c<ncomp; ++c)
           {
             auto phi_gp = 1.0;
-            auto mark = c*ndof;
+            auto mark = c*rdof;
             auto uNeg = state[c] - U(e, mark, offset);
             if (uNeg > 1.0e-14)
             {
@@ -302,15 +322,105 @@ Superbee_P1( const std::vector< int >& esuel,
         }
       }
 
+      if (nmat > 1)
+        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, phi);
+
       // ----- Step-3: apply limiter function
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
       {
-        auto mark = c*ndof;
+        auto mark = c*rdof;
         U(e, mark+1, offset) = phi[c] * U(e, mark+1, offset);
         U(e, mark+2, offset) = phi[c] * U(e, mark+2, offset);
         U(e, mark+3, offset) = phi[c] * U(e, mark+3, offset);
       }
     }
+  }
+}
+
+void consistentMultiMatLimiting_P1( std::size_t nmat,
+                                    ncomp_t offset,
+                                    std::size_t rdof,
+                                    std::size_t e,
+                                    tk::Fields& U,
+                                    std::vector< tk::real >& phi )
+// *****************************************************************************
+//  Consistent limiter modifications for P1 dofs
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] offset Index for equation system
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] e Element being checked for consistency
+//! \param[in,out] U Second-order solution vector which gets modified near
+//!   material interfaces for consistency
+//! \param[in,out] phi Vector of limiter functions for the ncomp unknowns
+// *****************************************************************************
+{
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::energyIdx;
+
+  // find the limiter-function for volume-fractions
+  auto phi_al(1.0), almax(0.0), dalmax(0.0);
+  //std::size_t nmax(0);
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    phi_al = std::min( phi_al, phi[volfracIdx(nmat, k)] );
+    if (almax < U(e,volfracIdx(nmat, k)*rdof,offset))
+    {
+      //nmax = k;
+      almax = U(e,volfracIdx(nmat, k)*rdof,offset);
+    }
+    auto dmax = std::max(
+                  std::max(
+                    std::abs(U(e,volfracIdx(nmat, k)*rdof+1,offset)),
+                    std::abs(U(e,volfracIdx(nmat, k)*rdof+2,offset)) ),
+                  std::abs(U(e,volfracIdx(nmat, k)*rdof+3,offset)) );
+    dalmax = std::max( dalmax, dmax );
+  }
+
+  //phi_al = phi[nmax];
+
+  // determine if cell is a material-interface cell based on ad-hoc tolerances.
+  // if interface-cell, then modify high-order dofs of conserved unknowns
+  // consistently and use same limiter for all equations
+  if ( dalmax > 0.01 ||
+       (almax > 0.0001 && almax < (1.0-0.0001)) )
+  {
+    // 1. consistent high-order dofs
+    std::array< tk::real, 3 > drhob {{ 0.0, 0.0, 0.0 }};
+    auto rhob(0.0), vel(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      auto alk = std::max( 1.0e-14, U(e,volfracIdx(nmat, k)*rdof,offset) );
+      auto rhok = U(e,densityIdx(nmat, k)*rdof,offset)/alk;
+      auto rhoEk = U(e,energyIdx(nmat, k)*rdof,offset)/alk;
+      for (std::size_t idir=1; idir<=3; ++idir)
+      {
+        U(e,densityIdx(nmat, k)*rdof+idir,offset) = rhok *
+          U(e,volfracIdx(nmat, k)*rdof+idir,offset);
+        U(e,energyIdx(nmat, k)*rdof+idir,offset) = rhoEk *
+          U(e,volfracIdx(nmat, k)*rdof+idir,offset);
+        drhob[idir-1] += U(e,densityIdx(nmat, k)*rdof+idir,offset);
+      }
+      rhob += U(e,densityIdx(nmat, k)*rdof,offset);
+    }
+    for (std::size_t idir=1; idir<=3; ++idir)
+    {
+      for (std::size_t jdir=1; jdir<=3; ++jdir)
+      {
+        vel = U(e,momentumIdx(nmat, jdir-1)*rdof,offset)/rhob;
+        U(e,momentumIdx(nmat, jdir-1)*rdof+idir,offset) = vel * drhob[idir-1];
+      }
+    }
+
+    // 2. same limiter for all equations
+    for (auto& p : phi) p = phi_al;
+  }
+  else
+  {
+    // same limiter for all volume-fractions
+    for (std::size_t k=0; k<nmat; ++k)
+      phi[volfracIdx(nmat, k)] = phi_al;
   }
 }
 

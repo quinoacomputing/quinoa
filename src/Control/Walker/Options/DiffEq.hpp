@@ -47,9 +47,11 @@ inline void operator|( PUP::er& p, DiffEqType& e ) { PUP::pup( p, e ); }
 
 //! Differential equation key used to access a diff eq in a factory
 using DiffEqKey =
-  tk::tuple::tagged_tuple< tag::diffeq,      DiffEqType,
-                           tag::initpolicy,  ctr::InitPolicyType,
-                           tag::coeffpolicy, ctr::CoeffPolicyType >;
+  tk::TaggedTuple< brigand::list<
+    tag::diffeq,      DiffEqType
+  , tag::initpolicy,  ctr::InitPolicyType
+  , tag::coeffpolicy, ctr::CoeffPolicyType
+> >;
 
 //! Class with base templated on the above enum class with associations
 class DiffEq : public tk::Toggle< DiffEqType > {

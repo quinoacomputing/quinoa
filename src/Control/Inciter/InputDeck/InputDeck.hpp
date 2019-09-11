@@ -22,32 +22,35 @@
 
 #include "NoWarning/set.hpp"
 
-#include "Control.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
 #include "Inciter/Components.hpp"
 
 namespace inciter {
 namespace ctr {
 
+//! Member data for tagged tuple
+using InputDeckMembers = brigand::list<
+    tag::title,      kw::title::info::expect::type
+  , tag::selected,   selects
+  , tag::amr,        amr
+  , tag::pref,       pref
+  , tag::discr,      discretization
+  , tag::prec,       precision
+  , tag::flformat,   floatformat
+  , tag::component,  ncomps
+  , tag::interval,   intervals
+  , tag::cmd,        CmdLine
+  , tag::param,      parameters
+  , tag::diag,       diagnostics
+  , tag::error,      std::vector< std::string >
+>;
+
 //! \brief InputDeck : Control< specialized to Inciter >, see Types.h,
 //! \details The stack is a tagged tuple, a hierarchical heterogeneous data
 //!    structure where all parsed information is stored.
 //! \see Base/TaggedTuple.h
 //! \see Control/Inciter/Types.h
-class InputDeck :
-  public tk::Control< // tag           type
-                      tag::title,      kw::title::info::expect::type,
-                      tag::selected,   selects,
-                      tag::amr,        amr,
-                      tag::discr,      discretization,
-                      tag::prec,       precision,
-                      tag::flformat,   floatformat,
-                      tag::component,  ncomps,
-                      tag::interval,   intervals,
-                      tag::cmd,        CmdLine,
-                      tag::param,      parameters,
-                      tag::diag,       diagnostics,
-                      tag::error,      std::vector< std::string > > {
+class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
 
   public:
     //! \brief Inciter input deck keywords
@@ -91,6 +94,7 @@ class InputDeck :
                                    kw::material,
                                    kw::id,
                                    kw::mat_gamma,
+                                   kw::mat_pstiff,
                                    kw::mat_mu,
                                    kw::mat_cv,
                                    kw::mat_k,
@@ -134,12 +138,15 @@ class InputDeck :
                                    kw::amr_dtfreq,
                                    kw::amr_initial,
                                    kw::amr_uniform,
+                                   kw::amr_uniform_derefine,
                                    kw::amr_initial_conditions,
                                    kw::amr_coords,
                                    kw::amr_error,
                                    kw::amr_jump,
                                    kw::amr_hessian,
                                    kw::amr_refvar,
+                                   kw::amr_tolref,
+                                   kw::amr_tolderef,
                                    kw::amr_edgelist,
                                    kw::amr_coordref,
                                    kw::amr_xminus,
@@ -148,10 +155,13 @@ class InputDeck :
                                    kw::amr_yplus,
                                    kw::amr_zminus,
                                    kw::amr_zplus,
+                                   kw::pref,
+                                   kw::pref_tolref,
                                    kw::scheme,
                                    kw::diagcg,
                                    kw::alecg,
                                    kw::dg,
+                                   kw::p0p1,
                                    kw::dgp1,
                                    kw::dgp2,
                                    kw::pdg,
@@ -159,6 +169,7 @@ class InputDeck :
                                    kw::laxfriedrichs,
                                    kw::hllc,
                                    kw::upwind,
+                                   kw::ausm,
                                    kw::limiter,
                                    kw::cweight,
                                    kw::nolimiter,
@@ -172,7 +183,8 @@ class InputDeck :
                                    kw::rotated_sod_shocktube,
                                    kw::cyl_advect,
                                    kw::sod_shocktube,
-                                   kw::sedov_blastwave >;
+                                   kw::sedov_blastwave,
+                                   kw::interface_advection >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -180,47 +192,53 @@ class InputDeck :
     //!   default constructor for the corresponding type.
     explicit InputDeck( const CmdLine& cl = {} ) {
       // Set previously parsed command line
-      set< tag::cmd >( cl );
+      get< tag::cmd >() = cl;
       // Default discretization parameters
-      set< tag::discr, tag::nstep >
-         ( std::numeric_limits< kw::nstep::info::expect::type >::max() );
-      set< tag::discr, tag::term >
-         ( std::numeric_limits< kw::term::info::expect::type >::max() );
-      set< tag::discr, tag::t0 >( 0.0 );
-      set< tag::discr, tag::dt >( 0.0 );
-      set< tag::discr, tag::cfl >( 0.0 );
-      set< tag::discr, tag::fct >( true );
-      set< tag::discr, tag::reorder >( false );
-      set< tag::discr, tag::ctau >( 1.0 );
-      set< tag::discr, tag::scheme >( SchemeType::DiagCG );
-      set< tag::discr, tag::flux >( FluxType::HLLC );
-      set< tag::discr, tag::ndof >( 1 );
-      set< tag::discr, tag::pref >( false );
-      set< tag::discr, tag::limiter >( LimiterType::NOLIMITER );
-      set< tag::discr, tag::cweight >( 1.0 );
+      get< tag::discr, tag::nstep >() =
+         std::numeric_limits< kw::nstep::info::expect::type >::max();
+      get< tag::discr, tag::term >() =
+         std::numeric_limits< kw::term::info::expect::type >::max();
+      get< tag::discr, tag::t0 >() = 0.0;
+      get< tag::discr, tag::dt >() = 0.0;
+      get< tag::discr, tag::cfl >() = 0.0;
+      get< tag::discr, tag::fct >() = true;
+      get< tag::discr, tag::reorder >() = false;
+      get< tag::discr, tag::ctau >() = 1.0;
+      get< tag::discr, tag::scheme >() = SchemeType::DiagCG;
+      get< tag::discr, tag::flux >() = FluxType::HLLC;
+      get< tag::discr, tag::ndof >() = 1;
+      get< tag::discr, tag::limiter >() = LimiterType::NOLIMITER;
+      get< tag::discr, tag::cweight >() = 1.0;
+      get< tag::discr, tag::ndof >() = 1;
+      get< tag::discr, tag::rdof >() = 1;
       // Default field output file type
-      set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
+      get< tag::selected, tag::filetype >() = tk::ctr::FieldFileType::EXODUSII;
       // Default AMR settings
-      set< tag::amr, tag::amr >( false );
-      set< tag::amr, tag::t0ref >( false );
-      set< tag::amr, tag::dtref >( false );
-      set< tag::amr, tag::dtref_uniform >( false );
-      set< tag::amr, tag::dtfreq >( 3 );
-      set< tag::amr, tag::error >( AMRErrorType::JUMP );
+      get< tag::amr, tag::amr >() = false;
+      get< tag::amr, tag::t0ref >() = false;
+      get< tag::amr, tag::dtref >() = false;
+      get< tag::amr, tag::dtref_uniform >() = false;
+      get< tag::amr, tag::dtfreq >() = 3;
+      get< tag::amr, tag::error >() = AMRErrorType::JUMP;
+      get< tag::amr, tag::tolref >() = 0.2;
+      get< tag::amr, tag::tolderef >() = 0.05;
       auto rmax =
         std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
-      set< tag::amr, tag::xminus >( rmax );
-      set< tag::amr, tag::xplus >( rmax );
-      set< tag::amr, tag::yminus >( rmax );
-      set< tag::amr, tag::yplus >( rmax );
-      set< tag::amr, tag::zminus >( rmax );
-      set< tag::amr, tag::zplus >( rmax );
+      get< tag::amr, tag::xminus >() = rmax;
+      get< tag::amr, tag::xplus >() = -rmax;
+      get< tag::amr, tag::yminus >() = rmax;
+      get< tag::amr, tag::yplus >() = -rmax;
+      get< tag::amr, tag::zminus >() = rmax;
+      get< tag::amr, tag::zplus >() = -rmax;
+      // Default p-refinement settings
+      get< tag::pref, tag::pref >() = false;
+      get< tag::pref, tag::tolref >() = 0.1;
       // Default txt floating-point output precision in digits
-      set< tag::prec, tag::diag >( std::cout.precision() );
+      get< tag::prec, tag::diag >() = std::cout.precision();
       // Default intervals
-      set< tag::interval, tag::tty >( 1 );
-      set< tag::interval, tag::field >( 1 );
-      set< tag::interval, tag::diag >( 1 );
+      get< tag::interval, tag::tty >() = 1;
+      get< tag::interval, tag::field >() = 1;
+      get< tag::interval, tag::diag >() = 1;
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       brigand::for_each< keywords >( ctrinfoFill );
@@ -230,20 +248,7 @@ class InputDeck :
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er& p ) {
-      tk::Control< tag::title,      kw::title::info::expect::type,
-                   tag::selected,   selects,
-                   tag::amr,        amr,
-                   tag::discr,      discretization,
-                   tag::prec,       precision,
-                   tag::flformat,   floatformat,
-                   tag::component,  ncomps,
-                   tag::interval,   intervals,
-                   tag::cmd,        CmdLine,
-                   tag::param,      parameters,
-                   tag::diag,       diagnostics,
-                   tag::error,      std::vector< std::string > >::pup(p);
-    }
+    void pup( PUP::er& p ) { tk::TaggedTuple< InputDeckMembers >::pup(p); }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] i InputDeck object reference

@@ -16,7 +16,7 @@
       coefficients, sigmasq, theta, and mu. Required signature:
       \code{.cpp}
         CoeffPolicyName(
-          tk::ctr::ncomp_type ncomp,
+          tk::ctr::ncomp_t ncomp,
           const std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq_,
           const std::vector< kw::sde_theta::info::expect::type >& theta_,
           const std::vector< kw::sde_mu::info::expect::type >& mu_,
@@ -63,14 +63,14 @@ class OrnsteinUhlenbeckCoeffConst {
   public:
     //! Constructor: initialize coefficients
     OrnsteinUhlenbeckCoeffConst(
-      tk::ctr::ncomp_type ncomp,
+      tk::ctr::ncomp_t ncomp,
       const std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq_,
       const std::vector< kw::sde_theta::info::expect::type >& theta_,
       const std::vector< kw::sde_mu::info::expect::type >& mu_,
       std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq,
       std::vector< kw::sde_theta::info::expect::type >& theta,
       std::vector< kw::sde_mu::info::expect::type >& mu );
-
+  
     static ctr::CoeffPolicyType type() noexcept
     { return ctr::CoeffPolicyType::CONST_COEFF; }
 };

@@ -47,7 +47,7 @@ registerBeta( DiffEqFactory& f, std::set< ctr::DiffEqType >& t )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -86,9 +86,9 @@ infoBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
     parameters( g_inputdeck.get< tag::param, tag::beta, tag::kappa >().at(c) )
   );
   spikes( nfo,
-          g_inputdeck.get< tag::param, tag::beta, tag::spike >().at(c) );
+    g_inputdeck.get< tag::param, tag::beta, tag::init, tag::spike >().at(c) );
   betapdfs( nfo,
-            g_inputdeck.get< tag::param, tag::beta, tag::betapdf >().at(c) );
+    g_inputdeck.get< tag::param, tag::beta, tag::init, tag::betapdf >().at(c) );
 
   return nfo;
 }

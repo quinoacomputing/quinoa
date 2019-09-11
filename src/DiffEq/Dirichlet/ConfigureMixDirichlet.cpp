@@ -23,6 +23,7 @@
 #include "DiffEqFactory.hpp"
 #include "Walker/Options/DiffEq.hpp"
 #include "Walker/Options/InitPolicy.hpp"
+#include "Walker/Options/Normalization.hpp"
 
 #include "ConfigureMixDirichlet.hpp"
 #include "MixDirichlet.hpp"
@@ -47,7 +48,7 @@ registerMixDirichlet( DiffEqFactory& f, std::set< ctr::DiffEqType >& t )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoMixDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoMixDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the MixDirichlet SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -77,8 +78,14 @@ infoMixDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
     g_inputdeck.get< tag::param, eq, tag::coeffpolicy >()[c] ) );
   nfo.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, eq, tag::rng >()[c] ) );
+  nfo.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, eq, tag::initpolicy >()[c] ) );
 
-  auto K = ncomp - MIXDIR_NUMDERIVED;
+  auto norm = g_inputdeck.get< tag::param, eq, tag::normalization >()[c];
+  nfo.emplace_back( "normalization", ctr::Normalization().name(norm)+"-fluid" );
+
+  auto numderived = MixDirichlet<InitZero,MixDirichletCoeffConst>::NUMDERIVED;
+  auto K = ncomp - numderived;
   auto N = K + 1;
 
   nfo.emplace_back( "coeff b [" + std::to_string(K) + "]",
@@ -96,7 +103,7 @@ infoMixDirichlet( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
     nfo.emplace_back( "coeff rho [" + std::to_string(N) + "]",
                       parameters( rho.at(c) ) );
     nfo.emplace_back( "coeff r [" + std::to_string(K) + "]",
-                      parameters( MixDir_r(rho[c]) ) );
+                      parameters( MixDir_r( rho[c], norm ) ) );
   }
 
   return nfo;

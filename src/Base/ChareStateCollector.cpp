@@ -28,7 +28,7 @@ void
 ChareStateCollector::registerReducers()
 // *****************************************************************************
 //  Configure Charm++ reduction types
-//! \details Since this is a [nodeinit] routine, the runtime system executes the
+//! \details Since this is a [initnode] routine, the runtime system executes the
 //!   routine exactly once on every logical node early on in the Charm++ init
 //!   sequence. Must be static as it is called without an object. See also:
 //!   Section "Initializations at Program Startup" at in the Charm++ manual
@@ -51,7 +51,7 @@ ChareStateCollector::insert( const std::string& ch, int id, int pe, uint64_t it,
 //! \param[in] fn Chare member function name
 // *****************************************************************************
 {
-  m_state.push_back( ChareState{ ch, id, pe, it, fn, m_timer.dsec() } );
+  m_state.push_back( ChareState{{ ch, id, pe, it, fn, m_timer.dsec() }} );
 }
 
 void

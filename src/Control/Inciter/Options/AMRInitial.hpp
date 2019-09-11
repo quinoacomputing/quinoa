@@ -24,6 +24,7 @@ namespace ctr {
 
 //! Initial AMR types
 enum class AMRInitialType : uint8_t { UNIFORM
+                                    , UNIFORM_DEREFINE
                                     , INITIAL_CONDITIONS
                                     , EDGELIST
                                     , COORDINATES };
@@ -38,6 +39,7 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
   public:
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::amr_uniform
+                                  , kw::amr_uniform_derefine
                                   , kw::amr_initial_conditions
                                   , kw::amr_edgelist
                                   , kw::amr_coords >;
@@ -51,12 +53,16 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
         kw::amr_initial::name(),
         //! Enums -> names
         { { AMRInitialType::UNIFORM, kw::amr_uniform::name() },
+          { AMRInitialType::UNIFORM_DEREFINE,
+            kw::amr_uniform_derefine::name() },
           { AMRInitialType::INITIAL_CONDITIONS,
             kw::amr_initial_conditions::name() },
           { AMRInitialType::EDGELIST, kw::amr_edgelist::name() },
           { AMRInitialType::COORDINATES, kw::amr_coords::name() } },
         //! keywords -> Enums
         { { kw::amr_uniform::string(), AMRInitialType::UNIFORM },
+          { kw::amr_uniform_derefine::string(),
+            AMRInitialType::UNIFORM_DEREFINE },
           { kw::amr_initial_conditions::string(),
             AMRInitialType::INITIAL_CONDITIONS },
           { kw::amr_edgelist::string(), AMRInitialType::EDGELIST },
@@ -83,7 +89,7 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
       //! \brief Function call operator templated on the type to assert the
       //!   existence of a policy code
       template< typename U > void operator()( brigand::type_<U> ) {
-        static_assert( tk::HasTypedefCode< typename U::info >::value,
+        static_assert( tk::HasTypedef_code_v< typename U::info >,
                        "Policy code undefined for keyword" );
       }
     };
@@ -91,6 +97,7 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
     //! Enums -> policy code
     std::map< AMRInitialType, std::string > policy {
         { AMRInitialType::UNIFORM, *kw::amr_uniform::code() }
+      , { AMRInitialType::UNIFORM_DEREFINE, *kw::amr_uniform_derefine::code() }
       , { AMRInitialType::INITIAL_CONDITIONS,
           *kw::amr_initial_conditions::code() }
       , { AMRInitialType::EDGELIST, *kw::amr_edgelist::code() }

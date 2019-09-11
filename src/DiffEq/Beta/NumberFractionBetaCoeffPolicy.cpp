@@ -16,7 +16,7 @@
 #include "NumberFractionBetaCoeffPolicy.hpp"
 
 walker::NumFracBetaCoeffConst::NumFracBetaCoeffConst(
-  tk::ctr::ncomp_type ncomp,
+  tk::ctr::ncomp_t ncomp,
   const std::vector< kw::sde_b::info::expect::type >& b_,
   const std::vector< kw::sde_S::info::expect::type >& S_,
   const std::vector< kw::sde_kappa::info::expect::type >& k_,

@@ -22,10 +22,11 @@
 #include <array>
 #include <string>
 #include <vector>
+#include <memory>
 #include <unordered_set>
+#include <functional>
 
 #include "Types.hpp"
-#include "Make_unique.hpp"
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
@@ -46,12 +47,15 @@ class DGPDE {
     using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
+    //! Default constructor taking no arguments for Charm++
+    explicit DGPDE() = default;
+
     //! \brief Constructor taking an object modeling Concept.
     //! \details The object of class T comes pre-constructed.
     //! \param[in] x Instantiated object of type T given by the template
     //!   argument.
     template< typename T > explicit DGPDE( T x ) :
-      self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
+      self( std::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! \brief Constructor taking a function pointer to a constructor of an
     //!   object modeling Concept.
@@ -73,8 +77,12 @@ class DGPDE {
     //! \param[in] args Zero or more constructor arguments
     template< typename T, typename...Args >
     explicit DGPDE( std::function<T(Args...)> x, Args&&... args ) :
-      self( tk::make_unique< Model<T> >(
+      self( std::make_unique< Model<T> >(
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
+
+    //! Public interface to find number of primitive quantities for the diff eq
+    std::size_t nprim() const
+    { return self->nprim(); }
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const tk::Fields& L,
@@ -89,6 +97,39 @@ class DGPDE {
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     { self->lhs( geoElem, l ); }
 
+    //! Public interface to updating the primitives for the diff eq
+    void updatePrimitives( const tk::Fields& unk,
+                           tk::Fields& prim,
+                           std::size_t nielem ) const
+    { self->updatePrimitives( unk, prim, nielem ); }
+
+    //! Public interface to reconstructing the second-order solution
+    void reconstruct( tk::real t,
+                      const tk::Fields& geoFace,
+                      const tk::Fields& geoElem,
+                      const inciter::FaceData& fd,
+                      const std::vector< std::size_t >& inpoel,
+                      const tk::UnsMesh::Coords& coord,
+                      tk::Fields& U,
+                      tk::Fields& P ) const
+    {
+      self->reconstruct( t, geoFace, geoElem, fd, inpoel, coord, U, P );
+    }
+
+    //! Public interface to limiting the second-order solution
+    void limit( tk::real t,
+                const tk::Fields& geoFace,
+                const tk::Fields& geoElem,
+                const inciter::FaceData& fd,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const std::vector< std::size_t >& ndofel,
+                tk::Fields& U,
+                tk::Fields& P ) const
+    {
+      self->limit( t, geoFace, geoElem, fd, inpoel, coord, ndofel, U, P );
+    }
+
     //! Public interface to computing the P1 right-hand side vector
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -97,10 +138,11 @@ class DGPDE {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
+              const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
-      self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, ndofel, R );
+      self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, P, ndofel, R );
     }
 
     //! Public interface for computing the minimum time step size
@@ -109,8 +151,9 @@ class DGPDE {
                  const inciter::FaceData& fd,
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
+                 const std::vector< std::size_t >& ndofel,
                  const tk::Fields& U ) const
-    { return self->dt( coord, inpoel, fd, geoFace, geoElem, U ); }
+    { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U ); }
 
     //! \brief Public interface for collecting all side set IDs the user has
     //!   configured for all components of a PDE system
@@ -160,6 +203,7 @@ class DGPDE {
       Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
+      virtual std::size_t nprim() const = 0;
       virtual void initialize( const tk::Fields&,
                                const std::vector< std::size_t >&,
                                const tk::UnsMesh::Coords&,
@@ -167,12 +211,33 @@ class DGPDE {
                                tk::real,
                                const std::size_t nielem ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
+      virtual void updatePrimitives( const tk::Fields&,
+                                     tk::Fields&,
+                                     std::size_t ) const = 0;
+      virtual void reconstruct( tk::real,
+                                const tk::Fields&,
+                                const tk::Fields&,
+                                const inciter::FaceData&,
+                                const std::vector< std::size_t >&,
+                                const tk::UnsMesh::Coords&,
+                                tk::Fields&,
+                                tk::Fields& ) const = 0;
+      virtual void limit( tk::real,
+                          const tk::Fields&,
+                          const tk::Fields&,
+                          const inciter::FaceData&,
+                          const std::vector< std::size_t >&,
+                          const tk::UnsMesh::Coords&,
+                          const std::vector< std::size_t >&,
+                          tk::Fields&,
+                          tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
                         const inciter::FaceData&,
                         const std::vector< std::size_t >&,
                         const tk::UnsMesh::Coords&,
+                        const tk::Fields&,
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
                         tk::Fields& ) const = 0;
@@ -181,6 +246,7 @@ class DGPDE {
                            const inciter::FaceData&,
                            const tk::Fields&,
                            const tk::Fields&,
+                           const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
@@ -204,6 +270,8 @@ class DGPDE {
     struct Model : Concept {
       explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
+      std::size_t nprim() const override
+      { return data.nprim(); }
       void initialize( const tk::Fields& L,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
@@ -213,6 +281,33 @@ class DGPDE {
       const override { data.initialize( L, inpoel, coord, unk, t, nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
+      void updatePrimitives( const tk::Fields& unk,
+                             tk::Fields& prim,
+                             std::size_t nielem )
+      const override { data.updatePrimitives( unk, prim, nielem ); }
+      void reconstruct( tk::real t,
+                        const tk::Fields& geoFace,
+                        const tk::Fields& geoElem,
+                        const inciter::FaceData& fd,
+                        const std::vector< std::size_t >& inpoel,
+                        const tk::UnsMesh::Coords& coord,
+                        tk::Fields& U,
+                        tk::Fields& P ) const override
+      {
+        data.reconstruct( t, geoFace, geoElem, fd, inpoel, coord, U, P );
+      }
+      void limit( tk::real t,
+                  const tk::Fields& geoFace,
+                  const tk::Fields& geoElem,
+                  const inciter::FaceData& fd,
+                  const std::vector< std::size_t >& inpoel,
+                  const tk::UnsMesh::Coords& coord,
+                  const std::vector< std::size_t >& ndofel,
+                  tk::Fields& U,
+                  tk::Fields& P ) const override
+      {
+        data.limit( t, geoFace, geoElem, fd, inpoel, coord, ndofel, U, P );
+      }
       void rhs( tk::real t,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
@@ -220,18 +315,20 @@ class DGPDE {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const tk::Fields& U,
+                const tk::Fields& P,
                 const std::vector< std::size_t >& ndofel,
                 tk::Fields& R ) const override
       {
-        data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, ndofel, R );
+        data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, P, ndofel, R );
       }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const inciter::FaceData& fd,
                    const tk::Fields& geoFace,
                    const tk::Fields& geoElem,
+                   const std::vector< std::size_t >& ndofel,
                    const tk::Fields& U ) const override
-      { return data.dt( coord, inpoel, fd, geoFace, geoElem, U ); }
+      { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
       std::vector< std::string > fieldNames() const override

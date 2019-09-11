@@ -1,0 +1,12 @@
+/*!
+  @page      meshconv_cmd MeshConv command line parameters
+
+@tableofcontents{xml}
+
+This page documents the command line parameters of @ref meshconv_main.
+
+@section meshconv_cmd_list List of all command line parameters
+
+@section meshconv_cmd_detail Detailed description of command line parameters
+
+*/

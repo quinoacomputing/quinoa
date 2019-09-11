@@ -47,7 +47,7 @@ registerWrightFisher( DiffEqFactory& f, std::set< ctr::DiffEqType >& t )
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoWrightFisher( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoWrightFisher( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the Wright-Fisher SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -79,12 +79,11 @@ infoWrightFisher( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
     "coeff omega [" + std::to_string( ncomp ) + "]",
     parameters(
       g_inputdeck.get< tag::param, tag::wrightfisher, tag::omega >().at(c) ) );
-  spikes( nfo,
-          g_inputdeck.get< tag::param, tag::wrightfisher, tag::spike >().at(c)
+  spikes( nfo, g_inputdeck.get< tag::param, tag::wrightfisher, tag::init,
+                                tag::spike >().at(c)
   );
-  betapdfs(
-    nfo,
-    g_inputdeck.get< tag::param, tag::wrightfisher, tag::betapdf >().at(c) );
+  betapdfs( nfo, g_inputdeck.get< tag::param, tag::wrightfisher, tag::init,
+                                  tag::betapdf >().at(c) );
 
   return nfo;
 }

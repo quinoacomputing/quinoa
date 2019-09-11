@@ -22,7 +22,9 @@ target_link_libraries(${FILECONV_EXECUTABLE}
                       ${ROOT_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES})
+                      ${OMEGA_H_LIBRARIES}
+                      ${LIBCXX_LIBRARIES}       # only for static link with libc++
+                      ${LIBCXXABI_LIBRARIES})   # only for static link with libc++
 
 # Add custom dependencies for FileConv's main Charm++ module
 addCharmModule( "fileconv" "${FILECONV_EXECUTABLE}" )

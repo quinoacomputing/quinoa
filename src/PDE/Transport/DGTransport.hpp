@@ -33,6 +33,8 @@
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
 #include "Integrate/Riemann/Upwind.hpp"
+#include "Reconstruction.hpp"
+#include "Limiter.hpp"
 
 namespace inciter {
 
@@ -91,6 +93,15 @@ class Transport {
       m_problem.errchk( m_system, m_ncomp );
     }
 
+    //! Find the number of primitive quantities required for this PDE system
+    //! \return The number of primitive quantities required to be stored for
+    //!   this PDE system
+    std::size_t nprim() const
+    {
+      // transport does not need/store any primitive quantities currently
+      return 0;
+    }
+
     //! Initalize the transport equations for DG
     //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
@@ -116,6 +127,102 @@ class Transport {
       tk::mass( m_ncomp, m_offset, geoElem, l );
     }
 
+    //! Update the primitives for this PDE system
+    //! \details This function computes and stores the dofs for primitive
+    //!   quantities, which are currently unused for transport.
+    void updatePrimitives( const tk::Fields&,
+                           tk::Fields&,
+                           std::size_t ) const {}
+
+    //! Reconstruct second-order solution from first-order
+    //! \param[in] t Physical time
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in,out] U Solution vector at recent time step
+    void reconstruct( tk::real t,
+                      const tk::Fields& geoFace,
+                      const tk::Fields& geoElem,
+                      const inciter::FaceData& fd,
+                      const std::vector< std::size_t >& inpoel,
+                      const tk::UnsMesh::Coords& coord,
+                      tk::Fields& U,
+                      tk::Fields& ) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+
+      Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
+              "size" );
+      Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
+              "Mismatch in inpofa size" );
+
+      // supported boundary condition types and associated state functions
+      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >
+        bctypes{{
+          { m_bcextrapolate, Extrapolate },
+          { m_bcinlet, Inlet },
+          { m_bcoutlet, Outlet },
+          { m_bcdir, Dirichlet } }};
+
+      // allocate and initialize matrix and vector for reconstruction
+      std::vector< std::array< std::array< tk::real, 3 >, 3 > >
+        lhs_ls( U.nunk(), {{ {{0.0, 0.0, 0.0}},
+                             {{0.0, 0.0, 0.0}},
+                             {{0.0, 0.0, 0.0}} }} );
+      std::vector< std::vector< std::array< tk::real, 3 > > >
+        rhs_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
+          ( m_ncomp,
+            {{ 0.0, 0.0, 0.0 }} ) );
+
+      // reconstruct x,y,z-derivatives of unknowns
+      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,
+                           lhs_ls, rhs_ls );
+
+      // compute boundary surface flux integrals
+      for (const auto& b : bctypes)
+        tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
+                             fd, geoFace, geoElem, t, b.second, U, lhs_ls,
+                             rhs_ls );
+
+      // solve 3x3 least-squares system
+      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
+
+      // transform reconstructed derivatives to Dubiner dofs
+      tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4,
+                          inpoel, coord, U );
+    }
+
+    //! Limit second-order solution
+    //! \param[in] t Physical time
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] ndofel Vector of local number of degrees of freedome
+    //! \param[in,out] U Solution vector at recent time step
+    void limit( [[maybe_unused]] tk::real t,
+                [[maybe_unused]] const tk::Fields& geoFace,
+                [[maybe_unused]] const tk::Fields& geoElem,
+                const inciter::FaceData& fd,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const std::vector< std::size_t >& ndofel,
+                tk::Fields& U,
+                tk::Fields& ) const
+    {
+      const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
+
+      if (limiter == ctr::LimiterType::WENOP1)
+        WENO_P1( fd.Esuel(), m_offset, U );
+      else if (limiter == ctr::LimiterType::SUPERBEEP1)
+        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
+    }
+
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
@@ -124,6 +231,7 @@ class Transport {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Primitive vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
@@ -133,16 +241,23 @@ class Transport {
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
+              const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
+      Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( U.nprop() == ndof*m_ncomp && R.nprop() == ndof*m_ncomp,
-              "Number of components in solution and right-hand side vector " 
-              "must equal "+ std::to_string(ndof*m_ncomp) );
+      Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( P.nprop() == 0, "Number of components in primitive "
+              "vector must equal "+ std::to_string(0) );
+      Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
+              "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
               "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
@@ -150,6 +265,11 @@ class Transport {
 
       // set rhs to zero
       R.fill(0.0);
+
+      // empty vector for non-conservative terms. This vector is unused for
+      // linear transport since, there are no non-conservative terms in the
+      // system of PDEs.
+      std::vector< std::vector < tk::real > > riemannDeriv;
 
       // supported boundary condition types and associated state functions
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
@@ -159,9 +279,9 @@ class Transport {
         { m_bcdir, Dirichlet } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, fd,
-                   geoFace, Upwind::flux, Problem::prescribedVelocity, U,
-                   ndofel, R );
+      tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, inpoel, coord,
+                   fd, geoFace, Upwind::flux, Problem::prescribedVelocity, U, P,
+                   ndofel, R, riemannDeriv );
 
       if(ndof > 1)
         // compute volume integrals
@@ -170,9 +290,9 @@ class Transport {
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, b.first, fd, geoFace,
-          inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
-          b.second, U, ndofel, R );
+        tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, b.first, fd,
+          geoFace, inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
+          b.second, U, P, ndofel, R, riemannDeriv );
     }
 
     //! Compute the minimum time step size
@@ -185,6 +305,7 @@ class Transport {
                  const inciter::FaceData& /*fd*/,
                  const tk::Fields& /*geoFace*/,
                  const tk::Fields& /*geoElem*/,
+                 const std::vector< std::size_t >& /*ndofel*/,
                  const tk::Fields& /*U*/ ) const
     {
       tk::real mindt = std::numeric_limits< tk::real >::max();
@@ -202,7 +323,7 @@ class Transport {
     //! \details This functions should be written in conjunction with
     //!   fieldOutput(), which provides the vector of fields to be output
     std::vector< std::string > fieldNames() const {
-      const auto pref = g_inputdeck.get< tag::discr, tag::pref >();
+      const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
       std::vector< std::string > n;
       const auto& depvar =
       g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
@@ -244,12 +365,12 @@ class Transport {
                  const tk::Fields& geoElem,
                  tk::Fields& U ) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c*ndof, m_offset ) );
+        out.push_back( U.extract( c*rdof, m_offset ) );
       // evaluate analytic solution at time t
       auto E = U;
       for (std::size_t e=0; e<U.nunk(); ++e)
@@ -257,14 +378,14 @@ class Transport {
         auto s = Problem::solution( m_system, m_ncomp, geoElem(e,1,0),
                                     geoElem(e,2,0), geoElem(e,3,0), t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          E( e, c*ndof, m_offset ) = s[c];
+          E( e, c*rdof, m_offset ) = s[c];
       }
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( E.extract( c*ndof, m_offset ) );
+        out.push_back( E.extract( c*rdof, m_offset ) );
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) {
-        auto mark = c*ndof;
+        auto mark = c*rdof;
         auto u = U.extract( mark, m_offset );
         auto e = E.extract( mark, m_offset );
         for (std::size_t i=0; i<u.size(); ++i)

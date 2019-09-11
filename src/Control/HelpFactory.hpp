@@ -13,8 +13,6 @@
 #ifndef HelpFactory_h
 #define HelpFactory_h
 
-#include <boost/optional.hpp>
-
 #include <brigand/sequences/list.hpp>
 #include <brigand/algorithms/for_each.hpp>
 
@@ -39,11 +37,11 @@ namespace ctr {
 struct KeywordInfo {
   std::string shortDescription;           //!< Short description
   std::string longDescription;            //!< Long description
-  boost::optional< std::string > alias;   //!< Keyword alias
-  boost::optional< std::string > expt;    //!< Expected type description
-  boost::optional< std::string > lower;   //!< Lower bound as string
-  boost::optional< std::string > upper;   //!< Upper bound as string
-  boost::optional< std::string > choices; //!< Expected choices descr.
+  std::optional< std::string > alias;     //!< Keyword alias
+  std::optional< std::string > expt;      //!< Expected type description
+  std::optional< std::string > lower;     //!< Lower bound as string
+  std::optional< std::string > upper;     //!< Upper bound as string
+  std::optional< std::string > choices;   //!< Expected choices description
 
   /** @name Pack/Unpack: Serialize KeywordInfo object for Charm++ */
   ///@{

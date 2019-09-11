@@ -15,7 +15,6 @@
 #ifndef Factory_h
 #define Factory_h
 
-#include <list>
 #include <functional>
 
 #include "NoWarning/factory.hpp"

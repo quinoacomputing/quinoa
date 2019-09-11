@@ -50,7 +50,7 @@ registerMixNumberFractionBeta( DiffEqFactory& f, std::set< ctr::DiffEqType >& t 
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoMixNumberFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoMixNumberFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the mix number fraction beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -107,11 +107,10 @@ infoMixNumberFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt
     parameters(
       g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::rcomma >().at(c) )
   );
-  spikes( nfo,
-    g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::spike >().at(c) );
-  betapdfs(
-    nfo,
-    g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::betapdf >().at(c) );
+  spikes( nfo, g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::init,
+                                tag::spike >().at(c) );
+  betapdfs( nfo, g_inputdeck.get< tag::param, tag::mixnumfracbeta, tag::init,
+                                  tag::betapdf >().at(c) );
 
   return nfo;
 }

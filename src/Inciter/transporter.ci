@@ -18,7 +18,7 @@ module transporter {
 
   namespace inciter {
 
-    chare Transporter {
+    chare [migratable] Transporter {
       entry Transporter();
       entry [reductiontarget] void load( std::size_t nelem, std::size_t npoin );
       entry [reductiontarget] void distributed();
@@ -29,20 +29,20 @@ module transporter {
       entry [reductiontarget] void edges();
       entry [reductiontarget] void compatibility( int modified );
       entry [reductiontarget] void matched( std::size_t nextra,
-                                            std::size_t nedge,
+                                            std::size_t nref,
+                                            std::size_t nderef,
                                             std::size_t initial );
       entry [reductiontarget] void bndint( tk::real sx,
                                            tk::real sy,
-                                           tk::real sz );
+                                           tk::real sz,
+                                           tk::real cb );
       entry [reductiontarget] void refined( std::size_t nelem,
                                             std::size_t npoin );
+      entry [reductiontarget] void resized();
       entry [reductiontarget] void queried();
       entry [reductiontarget] void responded();
-      entry [reductiontarget] void discresized();
-      entry [reductiontarget] void workresized();
       entry [reductiontarget] void comfinal( int initial );
       entry [reductiontarget] void totalvol( tk::real v, tk::real initial );
-      entry [reductiontarget] void vol();
       entry [reductiontarget] void minstat( tk::real d0, tk::real d1,
                                             tk::real d2);
       entry [reductiontarget] void maxstat( tk::real d0, tk::real d1,
@@ -52,8 +52,9 @@ module transporter {
                                             tk::real d4, tk::real d5 );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
-      entry [reductiontarget] void advance( tk::real );
-      entry [reductiontarget] void finish();
+      entry void resume();
+      entry [reductiontarget] void checkpoint( tk::real it, tk::real t );
+      entry [reductiontarget] void finish( tk::real it, tk::real t );
 
       entry void pepartitioned();
       entry void pedistributed();
@@ -75,16 +76,10 @@ module transporter {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),
              pdfstat_complete() serial "stat" { stat(); } };
 
-      entry void wait4resize() {
-        when discresize_complete(), workresize_complete() serial "resize"
-        { resized(); } };
-
       entry void minstat_complete();
       entry void maxstat_complete();
       entry void sumstat_complete();
       entry void pdfstat_complete();
-      entry void discresize_complete();
-      entry void workresize_complete();
     }
 
   } // inciter::

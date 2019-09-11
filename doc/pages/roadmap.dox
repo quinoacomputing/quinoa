@@ -1,0 +1,267 @@
+/*!
+  \page      roadmap Roadmap
+
+This page gives an idea on the approximate directions we are heading in terms
+of the near-term future development of each @ref mainpage_tools "tool". The
+directions are _approximate_, because they reflect _our_ views and desires. If
+you have a different one, @ref resources_contact "let's discuss it"!
+
+The following is a brief breakdown on the current status and a roadmap of each
+tool, also detailing if/where help is needed. The tool-specific sections are
+followed by more general ones, such as potential improvements to the
+documentation and performance. See also the @ref contributing "contributing guide".
+
+@note This page discusses _what_ to contribute. _How_ to contribute is
+discussed by the @ref contributing "contributing guide".
+
+@tableofcontents{xml}
+
+@section roadmap_walker Walker
+
+@ref walker_main is relatively mature and has been used in production for a
+number of years. However, contributions are welcome in the following areas:
+
+- **Implement new types of stochastic differential equations** besides the ones
+  listed among @ref walker_equations "Walker's diffrential equations".
+
+- **Document** those equation types that have been implemented but not yet
+  documented. The implementations are under `src/DiffEq/` but not all of them
+  are listed on @ref walker_main "Walker's main page".  "Documentation" here can
+  consist of as little as listing them among @ref walker_equations "Walker's differential equations",
+  and adding examples with their documentation to @ref walker_examples "Walker's example page".
+
+- **Add regression tests** for those equations that are @ref coverage_gcov
+  "not yet adequately tested".
+
+- **Perform strong-, and weak scaling studies**, similar to what produced the
+  figure on @ref walker_performance "Walker's performance", and if not ideal,
+  profile and improve performance and scalability.
+
+@section roadmap_inciter Inciter
+
+Compared to all other tools @ref inciter_main is currently receiving most of
+the development work. The following areas are actively developed. Please @ref
+resources_contact "contact us" if you would like to use and/or contribute to
+Inciter.
+
+@subsection roadmap_inciter_amr Solution-adaptive mesh refinement (AMR)
+
+The AMR algorithm closely follows [Jacob Waltz's
+paper](http://dx.doi.org/10.1002/fld.674).  The algorithm is specific to
+tetrahedron-only grids and, by design, yields a conforming mesh, i.e., without
+hanging nodes. Tetrahedra enable automatic mesh generation for arbitrary
+complex 3D computational domains and since the algorithm always yields a
+conforming mesh, it can be (and _is_) independent of the underlying @ref
+inciter_newscheme "discretization scheme" used to solve partial differential
+equations.
+
+The AMR algorithm (both refinement and derefinement) is already implemented
+on top of Charm++, in a distributed-memory-parallel fashion, using asynchronous
+communication to ensure a conforming mesh across mesh partitions.  In addition,
+any of Charm++'s automatic load balancing strategies can be employed to
+homogenize computational load across a simulation using object migration.
+
+We are currently finishing derefinement in parallel. We need to add more tests
+exercising AMR, and then we will investigate and most likely improve (both
+serial and parallel) performance with and without load balancing.
+
+@subsection roadmap_inciter_dg P-adaptive discontinuous Galerkin (DG) methods.
+
+We are implementing DG finite element methods for solving the equations
+governing single-, and multi-material fluids using the continuum approximation.
+We have already implemented 1st, 2nd, and 3rd order accurate DG methods and we
+are planning to also implement a 3rd order accurate reconstructed DG method as
+well.
+
+Using this family of DG methods, we have also implemented a solution-adaptive
+algorithm to allow _automatically_ selecting the degree of the approximation
+polynomial depending on the accuracy of the local numerical solution
+(_p_-refinement).  This allows concentrating compute resources to those parts
+of the computational domain where required. Such adaptation also yields
+significant load imbalances for a simulation using multiple compute nodes,
+which is then remedied by turning on Charm++'s load balancing.
+
+We are currently researching optimal ways to define refinement criteria and
+experimenting with various numerical error indicators. We are also currently
+implementing a DG algorithm for multi-material compressible flows.
+
+@subsection roadmap_inciter_cg Continuous Galerkin (CG) methods
+
+We also have a CG algorithm implemented for unstructured 3D meshes that uses
+continuous Galerkin finite elements and combines flux-corrected transport with
+explicit Lax-Wendroff-type time stepping for the single-material Euler and
+Navier-Stokes equations.
+
+We are _not_ currently actively working on the CG algorithm but it needs more
+testing, especially with AMR, equations of state other than ideal gas, and more
+@ref inciter_examples "examples" exercising more complex-geometry domains,
+using inviscid and viscous flows.
+
+@subsection roadmap_vnv Verification and validation (V&V)
+
+ While implementing the above algorithms (AMR, DG, and CG) we have mostly
+concentrated on correctness, demonstrating design-order of accuracy for smooth
+problems using manufactured solutions, and parallel scalability. To increase
+confidence in the algorithms, we need to setup and document more verification
+and validation cases.
+
+@subsection roadmap_inciter_examples Add and document more examples
+
+Closely related to V&V, additional
+[examples](https://github.com/quinoacomputing/quinoa-examples/tree/master/inciter)
+that demonstrate different capabilities of Inciter should be @ref
+inciter_examples "documented".
+
+@subsection roadmap_inciter_tests Add regression tests
+
+We need to add more regression tests for those parts of the methods under
+`src/PDE/` that are @ref coverage_gcov "not yet adequately tested".
+
+@subsection roadmap_inciter_particles Hook back up particle tracer and output
+
+As an experimental feature, Inciter used to have Lagrangian particles that were
+simply advected with the flow being computed. Particles were generated into
+each tetrahedron cell and were also communicated across partition boundaries.
+Such particles can be used for a variety of purposes. Examples are
+visualization tracers, representing physics that are better represented in a
+Lagrangian fashion, potentially interacting with other quantities represented
+on the mesh, or provide a statistical representation of unresolved-scale
+(sub-grid) processes, e.g., in turbulent flows.
+
+This code is under `src/Particles/` and parallel particle file output is under
+`src/IO/ParticleWriter.[ch]pp`, but not currently compiled and tested. It would
+be great to hook these pieces of code back into Inciter so additional physics
+capability can use it, e.g., a particle-in-cell solver.
+
+@subsection roadmap_inciter_root Incorporate RootWriter into MeshConv
+
+Inciter can save meshes and field output data in files that can be analyzed by
+[ROOT](https://root.cern.ch). To exercise and test this functionality @ref
+fileconv_main is currently used to convert data between ROOT and ExodusII
+formats. However, a better way to do this is to incorporate the functionality
+in FileConv to @ref meshconv_main.
+
+@subsection roadmap_inciter_omegah Add reading of side sets from Omega_H meshes
+
+Inciter can also read [Omega_H](https://github.com/SNLComputation/omega_h) mesh
+files. This is implemented in `src/IO/Omega_h_MeshReader.[hc]pp`. Currently
+only reading of domain elements (tetrahedra) are implemented. To make this
+functionality more useful for practical purposes, sidesets and surface elements
+should also be read from Omega_H files, which allow specifying boundary
+conditions.
+
+@subsection roadmap_inciter_eos Equations of state (EOS)
+
+Currently, equations of state for ideal gases are implemented. It would be
+great to implement some more advanced EOSs, including coupling libraries with
+EOS tables. A good starting point for this is under `PDE/EoS/`.
+
+@subsection roadmap_inciter_fieldoutput Unified field output
+
+Field output in Inciter is currently implemented by collecting the computed
+fields (where it is available) and passed to tk::MeshWriter, which then
+asynchronously writes the files in parallel, one output stream per compute node
+(which may be less than the number of CPUs or the number of work units).
+
+A way to improve on this is to put in code to query user input on which fields
+(and possibly how: in cells or in nodes of the mesh) are to be output and
+assemble the fields for tk::MeshWriter by a single class that is responsible
+for only that task. This would make the code more user-friendly, more
+featureful, and would also better reuse code.
+
+@section roadmap_rngtest RNGTest
+
+@ref rngtest_main is mature and can be pretty much considered complete. It can
+be used to test most random number generators (RNG) from all RNG libraries that
+are hooked up. Naturally, if there is a need to hook up more RNG libraries, it
+would be great to also ensure that RNGTest can test them. At this point,
+however, the @ref rngtest_main "existing RNGs" are sufficient for our purposes.
+
+@section roadmap_unittest UnitTest
+
+@ref unittest_main is also pretty mature and we heavily use it. There is no
+real need to do more work on it.
+
+@section roadmap_meshconv MeshConv
+
+@ref meshconv_main is also pretty mature for what we have needed it so far. It
+could, of course, can always be augmented with new mesh formats. Examples are
+ROOT and Omega_H, both discussed above.
+
+-------------------------------------
+
+@section roadmap_doc Improve the documentation
+
+The web site at [quinoacomputing.org](https://quinoacomputing.org) is
+automatically generated by our continuous integration server whenever new
+merges to branch `develop` or `master` happen. The procedure uses
+[doxygen](http://www.doxygen.nl) to parse the source code and to extract API
+documentation in XML format which is then post-processed by
+[m.css](https://mcss.mosra.cz/documentation/doxygen) which also adds the search
+function in the upper right corner. This helps us keep the content up-to-date
+with the code, but does also need some extra (added) content to describe more
+detailed subjects, e.g., in the form of HOWTOs.
+
+The documentation could be improved both in terms of _content_ as well as
+_functionality_.
+
+@subsection roadmap_doc_content Content
+
+@subsubsection roadmap_doc_content_examples Examples
+
+Not all existing functionality is demonstrated and documented via @ref examples
+"examples". This could definitely use some extra hands and most of this does
+not really require writing code.
+
+@subsubsection roadmap_doc_content_howtos HOWTOs
+
+We have a few HOWTOs that detail some specific aspects of Inciter. These are
+the pages titled as _"How to add ..."_. @ref inciter_main as well as @ref
+walker_main could use some additional such pages to lower the barrier of entry
+for contributing to these tools.
+
+@subsection roadmap_doc_functionality Functionality
+
+@subsubsection roadmap_doc_functionality_blog Add a blog page
+
+It would be good to post blogs in the future. We currently do not have a
+mechanism on our web site to allow for a nice list of blog posts.  (Well, we
+don't have blog posts either, but we have to start somewhere.) The [magnum
+graphics engine's blog page](https://blog.magnum.graphics/) is a good example
+of how this can be done in a way that nicely fits into the existing style of
+our web site.
+
+@section roadmap_performance Improve performance
+
+For all of Quinoa's tools we have so far prioritized (1) learning how to use
+the Charm++ runtime system the most optimal way, and (2) achieve good parallel
+scalability (good strong and weak scaling) for large problems on large
+computers. Absolute performance has been somewhat secondary. By _absolute
+perfomance_ we mean on-compute-node or single-CPU performance. This latter will
+definitely need some work with some potentially large (and juicy) low-hanging
+fruits. This can be done by profiling first, followed by identifying, then
+optimizing the hot-spots, while continuously benchmarking the changes by
+comparing to (1) current/previous implementation or (2) to a highly optimized
+_other_ code (or codes) implementing a similar functionality. All @ref
+mainpage_tools "tools", but most importantly, @ref inciter_main and @ref
+walker_main need such performance optimization help.
+
+@section roadmap_friendly Improve user-friendliness
+
+Both @ref inciter_main and @ref walker_main need some work on improving their
+user-friendliness. Both parse their input file, expecting a different grammar,
+configuring the numerical solution they are to compute. There is only basic
+error handling during and after parsing their user input.  To make them more
+effective, robust, and fun to use, there is more testing necessary.  For
+example, one could use one of their regression test inputs, under
+`tests/regression/` and randomly altering them, feed them garbage input with
+wrong syntax for various parameters and see if the correct error message is
+generated.
+
+A potentially more fun (and more rewarding) way to do this is to automate this
+with [fuzz testing](https://en.wikipedia.org/wiki/Fuzzing) by setting up, e.g.,
+[american fuzzy lop](http://lcamtuf.coredump.cx/afl). If we could get help
+setting this up and make it part of our continuous integration, that would be
+outstanding!
+
+*/
