@@ -3114,7 +3114,7 @@ struct fluctuation_info {
     "Select fluctuation (as the dependent variable) to solve for"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the fluctuation of a random variable as
-    what quantity to solve for, i.e., use asthe dependent variable, e.g., in a
+    what quantity to solve for, i.e., use as the dependent variable, e.g., in a
     position or velocity model for a stochastic particle. This configures how
     statistics must be interpreted.)"; }
   struct expect {
@@ -3123,6 +3123,23 @@ struct fluctuation_info {
 };
 using fluctuation =
   keyword< fluctuation_info, TAOCPP_PEGTL_STRING("fluctuation") >;
+
+struct product_info {
+  static std::string name() { return "product"; }
+  static std::string shortDescription() { return
+    "Select product (as the dependent variable) to solve for"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the product of multiple random variables
+    as what quantity to solve for, i.e., use as the dependent variable, e.g., in
+    a velocity model, solve for the product of the density and velocity, i.e.,
+    the momentum, for a stochastic particle. This configures how
+    statistics must be interpreted.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using product =
+  keyword< product_info, TAOCPP_PEGTL_STRING("product") >;
 
 struct solve_info {
   static std::string name() { return "solve for"; }
@@ -3136,7 +3153,8 @@ struct solve_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + fullvar::string() + "\' | \'"
-                  + fluctuation::string() + '\'';
+                  + fluctuation::string() + "\' | \'"
+                  + product::string() + '\'';
     }
   };
 };

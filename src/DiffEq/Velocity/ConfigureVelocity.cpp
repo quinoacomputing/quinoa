@@ -65,10 +65,23 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::VELOCITY ), "" );
 
+  auto solve = g_inputdeck.get< tag::param, eq, tag::solve >()[c];
+
   nfo.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
   auto ncomp = g_inputdeck.get< tag::component, eq >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
+  if (solve == ctr::DepvarType::PRODUCT &&
+      coupled< eq, tag::mixmassfracbeta >(c))
+  {
+    auto numderived =
+      Velocity<InitZero,VelocityCoeffStationary>(c).numderived();
+    nfo.emplace_back( "number of components", std::to_string(ncomp) + " (=" +
+                      std::to_string(ncomp - numderived) + '+' +
+                      std::to_string(numderived) + ") " );
+  } else {
+    nfo.emplace_back( "number of components", std::to_string(ncomp) );
+  }
 
   coupledInfo< eq, tag::position, tag::position_id >
              ( c, "position", nfo );
@@ -85,7 +98,6 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
   auto cp = g_inputdeck.get< tag::param, eq, tag::coeffpolicy >()[c];
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
 
-  auto solve = g_inputdeck.get< tag::param, eq, tag::solve >()[c];
   auto dv = ctr::Depvar();
   nfo.emplace_back( dv.group(), dv.name(solve) );
 

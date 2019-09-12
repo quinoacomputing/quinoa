@@ -111,6 +111,13 @@ class MixMassFractionBeta {
     using eq = tag::mixmassfracbeta;
 
   public:
+    //! Number of derived variables computed by the SDE
+    //! \details Derived variables: density, specific volume, 1 - mass fraction
+    //! \warning If you change this, you must also change the constant in
+    //!   Velocity::m_mixmassfracbeta_ncomp in DiffEq/Velocity/Velocity.hpp.
+    //!   To see where, search for NUMDERIVED there.
+    static const std::size_t NUMDERIVED = 3;
+
     //! \brief Constructor
     //! \param[in] c Index specifying which system of mix mass-fraction beta
     //!   SDEs to construct. There can be multiple mixmassfracbeta ... end blocks
@@ -121,7 +128,8 @@ class MixMassFractionBeta {
       m_c( c ),
       m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
       // divide by the number of derived variables computed, see derived()
-      m_ncomp( g_inputdeck.get< tag::component >().get< eq >().at(c) / 4 ),
+      m_ncomp( g_inputdeck.get< tag::component >().get< eq >().at(c) /
+               (NUMDERIVED + 1) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, eq, tag::rng >().at(c) ) ) ),
@@ -213,6 +221,8 @@ class MixMassFractionBeta {
                     m_velocity_solve, m_solve, m_ncomp, moments, m_bprime,
                     m_kprime, m_rho2, m_r, m_hts, m_hp, m_b, m_k, m_S, t );
 
+      const auto eps = std::numeric_limits< tk::real >::epsilon();
+
       // Advance particles
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -222,7 +232,8 @@ class MixMassFractionBeta {
 
         // Access coupled particle velocity
         tk::real u = 0.0, v = 0.0, w = 0.0;
-        if (m_velocity_coupled) {
+        using std::abs;
+        if (abs(m_dY[0]) > eps || abs(m_dY[1]) > eps || abs(m_dY[2]) > eps) {
           u = particles( p, 0, m_velocity_offset );
           v = particles( p, 1, m_velocity_offset );
           w = particles( p, 2, m_velocity_offset );
@@ -259,7 +270,7 @@ class MixMassFractionBeta {
     const char m_dissipation_depvar;    //!< Depvar of coupled dissipation eq
     const ncomp_t m_dissipation_offset; //!< Offset of coupled dissipation eq
 
-    std::array<tk::real, 3> m_dY;       //! Prescribed mean scalar gradient
+    std::array< tk::real, 3 > m_dY;     //! Prescribed mean scalar gradient
 
     //! Coefficients
     std::vector< kw::sde_bprime::info::expect::type > m_bprime;
