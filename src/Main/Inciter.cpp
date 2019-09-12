@@ -52,7 +52,10 @@ tk::CProxy_ChareStateCollector stateProxy;
 tk::CProxy_LBSwitch LBSwitchProxy;
 
 //! If true, call and stack traces are to be output with exceptions
-bool g_trace;
+//! \note This is true by default so that the trace is always output between
+//!   program start and the Main ctor in which the user-input from command line
+//!   setting for this overrides this true setting.
+bool g_trace = true;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
