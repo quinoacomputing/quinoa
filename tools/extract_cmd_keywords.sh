@@ -24,5 +24,5 @@ perl -i -p0e 's/(\@section $ENV{exe}_cmd_list List of all command line parameter
 
 # generate detailed description on all keywords
 export commands=$(../Main/$exe -h | awk "/$exe Command-line Parameters/,0" | grep "^[[:space:]]\|^-" | awk '{print $2}' | sed 's/\-\-//')
-export detail=$(for c in $commands; do ../Main/$exe -H $c ++quiet | grep -v '^Quinoa>' | sed "s/$exe command-line keyword/@subsection ${exe}_cmd_kw_$c Keyword/" | sed 's/Expected type:/_Expected type:_/' | sed 's/Lower bound:/_Lower bound:_/' | sed 's/Upper bound:/_Upper bound:_/' | sed 's/Expected valid choices:/_Expected valid choices:_/'; done)
+export detail=$(for c in $commands; do ../Main/$exe -H $c ++quiet | grep -v '^Quinoa>' | sed "s/$exe command-line keyword/@subsection ${exe}_cmd_kw_$c Keyword/" | sed 's/--/\\--/' | sed 's/Expected type:/_Expected type:_/' | sed 's/Lower bound:/_Lower bound:_/' | sed 's/Upper bound:/_Upper bound:_/' | sed 's/Expected valid choices:/_Expected valid choices:_/'; done)
 perl -i -p0e 's/(\@section $ENV{exe}_cmd_detail Detailed description of command line parameters).*(\*\/)/$1\n$ENV{detail}\n\n$2/s' pages/${exe}_cmd.dox

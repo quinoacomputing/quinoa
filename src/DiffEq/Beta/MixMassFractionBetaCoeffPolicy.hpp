@@ -379,7 +379,7 @@ class MixMassFracBetaCoeffInstVel {
       char dissipation_depvar,
       char /*velocity_depvar*/,
       ctr::DepvarType /*velocity_solve*/,
-      ctr::DepvarType /*solve*/,
+      ctr::DepvarType solve,
       ncomp_t ncomp,
       const std::map< tk::ctr::Product, tk::real >& moments,
       const std::vector< kw::sde_bprime::info::expect::type  >& /*bprime*/,

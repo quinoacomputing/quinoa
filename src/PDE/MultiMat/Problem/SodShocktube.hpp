@@ -49,7 +49,7 @@ class MultiMatProblemSodShocktube {
 
     //! Compute and return source term for this problem
     static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
+    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real );
 
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system
@@ -61,7 +61,7 @@ class MultiMatProblemSodShocktube {
     //! Return field output going to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
-                 ncomp_t ncomp,
+                 ncomp_t /*ncomp*/,
                  ncomp_t offset,
                  tk::real,
                  tk::real /*V*/,

@@ -693,6 +693,8 @@ walker::MixMassFracBetaCoeffInstVel::update(
 //  Update coefficients
 //! \param[in] depvar Dependent variable
 //! \param[in] dissipation_depvar Dependent variable of coupled dissipation eq
+//! \param[in] solve Enum selecting whether the full variable or its
+//!   fluctuation is solved for
 //! \param[in] ncomp Number of scalar components in this SDE system
 //! \param[in] moments Map of statistical moments estimated
 //! \param[in] kprime Coefficient vector kappa'

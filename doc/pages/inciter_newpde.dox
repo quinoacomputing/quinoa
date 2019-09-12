@@ -23,75 +23,75 @@ tree
 which at this time gives
 @code{.ansi}
 .
-├── CGPDE.h
+├── CGPDE.hpp
 ├── CMakeLists.txt
 ├── CompFlow
-│   ├── CGCompFlow.h
-│   ├── DGCompFlow.h
+│   ├── CGCompFlow.hpp
+│   ├── DGCompFlow.hpp
 │   ├── Physics
-│   │   ├── CGEuler.h
-│   │   ├── CG.h
-│   │   ├── CGNavierStokes.h
-│   │   ├── DGEuler.h
-│   │   ├── DG.h
-│   │   └── DGNavierStokes.h
+│   │   ├── CGEuler.hpp
+│   │   ├── CG.hpp
+│   │   ├── CGNavierStokes.hpp
+│   │   ├── DGEuler.hpp
+│   │   ├── DG.hpp
+│   │   └── DGNavierStokes.hpp
 │   ├── Problem
-│   │   ├── NLEnergyGrowth.h
-│   │   ├── RayleighTaylor.h
-│   │   ├── SedovBlastwave.h
-│   │   ├── SodShocktube.h
-│   │   ├── TaylorGreen.h
-│   │   ├── UserDefined.h
-│   │   └── VorticalFlow.h
-│   └── Problem.h
-├── ConfigureCompFlow.C
-├── ConfigureCompFlow.h
-├── ConfigureTransport.C
-├── ConfigureTransport.h
-├── DGPDE.h
-├── FunctionPrototypes.h
+│   │   ├── NLEnergyGrowth.hpp
+│   │   ├── RayleighTaylor.hpp
+│   │   ├── SedovBlastwave.hpp
+│   │   ├── SodShocktube.hpp
+│   │   ├── TaylorGreen.hpp
+│   │   ├── UserDefined.hpp
+│   │   └── VorticalFlow.hpp
+│   └── Problem.hpp
+├── ConfigureCompFlow.cpp
+├── ConfigureCompFlow.hpp
+├── ConfigureTransport.cpp
+├── ConfigureTransport.hpp
+├── DGPDE.hpp
+├── FunctionPrototypes.hpp
 ├── Integrate
-│   ├── Boundary.C
-│   ├── Boundary.h
-│   ├── Initialize.C
-│   ├── Initialize.h
-│   ├── Mass.C
-│   ├── Mass.h
-│   ├── Quadrature.C
-│   ├── Quadrature.h
+│   ├── Boundary.cpp
+│   ├── Boundary.hpp
+│   ├── Initialize.cpp
+│   ├── Initialize.hpp
+│   ├── Mass.cpp
+│   ├── Mass.hpp
+│   ├── Quadrature.cpp
+│   ├── Quadrature.hpp
 │   ├── Riemann
-│   │   ├── HLLC.h
-│   │   ├── LaxFriedrichs.h
-│   │   ├── RiemannFactory.C
-│   │   ├── RiemannFactory.h
-│   │   ├── RiemannSolver.h
-│   │   └── Upwind.h
-│   ├── Source.C
-│   ├── Source.h
-│   ├── Surface.C
-│   ├── Surface.h
-│   ├── Volume.C
-│   └── Volume.h
-├── Limiter.C
-├── Limiter.h
-├── PDEFactory.h
-├── PDEStack.C
-├── PDEStack.h
+│   │   ├── HLLC.hpp
+│   │   ├── LaxFriedrichs.hpp
+│   │   ├── RiemannFactory.cpp
+│   │   ├── RiemannFactory.hpp
+│   │   ├── RiemannSolver.hpp
+│   │   └── Upwind.hpp
+│   ├── Source.cpp
+│   ├── Source.hpp
+│   ├── Surface.cpp
+│   ├── Surface.hpp
+│   ├── Volume.cpp
+│   └── Volume.hpp
+├── Limiter.cpp
+├── Limiter.hpp
+├── PDEFactory.hpp
+├── PDEStack.cpp
+├── PDEStack.hpp
 └── Transport
-    ├── CGTransport.h
-    ├── DGTransport.h
+    ├── CGTransport.hpp
+    ├── DGTransport.hpp
     ├── Physics
-    │   ├── CGAdvDiff.h
-    │   ├── CGAdvection.h
-    │   ├── CG.h
-    │   ├── DGAdvection.h
-    │   └── DG.h
+    │   ├── CGAdvDiff.hpp
+    │   ├── CGAdvection.hpp
+    │   ├── CG.hpp
+    │   ├── DGAdvection.hpp
+    │   └── DG.hpp
     ├── Problem
-    │   ├── CylAdvect.h
-    │   ├── GaussHump.h
-    │   ├── ShearDiff.h
-    │   └── SlotCyl.h
-    └── Problem.h
+    │   ├── CylAdvect.hpp
+    │   ├── GaussHump.hpp
+    │   ├── ShearDiff.hpp
+    │   └── SlotCyl.hpp
+    └── Problem.hpp
 
 8 directories, 61 files
 @endcode
@@ -134,7 +134,7 @@ inciter
   compflow
     depvar u    # assign dependent variable 'u' to this PDE
     physics euler       # select 'euler' as compressible flow physics policy
-    problem vortical_flow       # select 'vortical flow` as problem policy
+    problem vortical_flow  # select 'vortical_flow` as problem policy
     ...
   end
   ...
@@ -144,11 +144,10 @@ end
 This is a snippet, configuring inciter to compute a single PDE system governing
 compressible flow. Every PDE type is configured via a physics and a problem
 policy. Here the physics is `euler`, configuring the solution of the Euler
-equations for inviscid flow, and the problem is `vortical_flow`, which is a test
-case derived using the method of manufactured solutions, specifying a prescribed
-velocity field with vortices. Since the analytical solution is known for this
-specific case, it can be used to verify the correctness of the implementation of
-the algorithm and the order of accuracy of the numerical method.
+equations for inviscid flow, and the problem is `vortical_flow`.  Since
+the analytical solution is known for this specific case, it can be used to
+verify the correctness of the implementation of the algorithm and the order of
+accuracy of the numerical method.
 
 The important parts of this specification are the following.
 
@@ -163,8 +162,8 @@ above this is `euler`, but this is only the simplest choice. Every PDE has a
 default physics which is selected if no physics is specified.
 
 3. The PDE must be specialized with a selected `problem` type. In the example
-above this is `vortical_flow`, but this is only one choice. Every PDE has a
-default problem which is selected if no problem is specified.
+above this is `vortical_flow`, but this is only one choice. Every PDE has
+a default problem which is selected if no problem is specified.
 
 4. The `depvar` keyword specifies the dependent variable by a single character
 that is used within the input file to refer to a particular PDE system. Note
@@ -191,17 +190,18 @@ important feature of the new method to be implemented, _velocity equilibrium_,
 assuming a single velocity field for all materials, while solving for separate
 material fields for mass and internal energy. Another new keyword we add is
 `nmat` which will be used to specify the number of materials for a
-multi-material flow. New keyword definitions with their documentation go to
-src/Control/Keywords.h.
+multi-material flow. We also a new keyword for a problem type,
+`interface_advection`. New keyword definitions with their documentation go to
+src/Control/Keywords.h.pp
 
-@subsection inciter_newpde_keyword_Keywords Control/Keywords.h
+@subsection inciter_newpde_keyword_Keywords Control/Keywords.hpp
 
 @code{.diff}
-git diff src/Control/Keywords.h
-diff --git a/src/Control/Keywords.h b/src/Control/Keywords.h
+git diff src/Control/Keywords.hpp
+diff --git a/src/Control/Keywords.hpp b/src/Control/Keywords.hpp
 index b3fbcebd..c57c65ce 100644
---- a/src/Control/Keywords.h
-+++ b/src/Control/Keywords.h
+--- a/src/Control/Keywords.hpp
++++ b/src/Control/Keywords.hpp
 @@ -1727,6 +1727,23 @@ struct ncomp_info {
  };
  using ncomp = keyword< ncomp_info,  TAOCPP_PEGTL_STRING("ncomp") >;
@@ -286,24 +286,42 @@ index b3fbcebd..c57c65ce 100644
 +};
 +using multimat = keyword< multimat_info, TAOCPP_PEGTL_STRING("multimat") >;
 +
++struct interface_advection_info {
++  using code = Code< I >;
++  static std::string name() { return "Interface advection"; }
++  static std::string shortDescription() { return
++    "Select the interface advection test problem "; }
++  static std::string longDescription() { return
++    R"(This keyword is used to select the interface advection test problem. The
++    purpose of this test problem is to test the well-balancedness of the
++    multi-material discretization and its interface capturing
++    capabilities. Example: "problem interface_advection".)"; }
++  struct expect {
++    static std::string description() { return "string"; }
++  };
++};
++using interface_advection =
++  keyword< interface_advection_info,
++           TAOCPP_PEGTL_STRING("interface_advection") >;
++
  struct rcb_info {
    static std::string name() { return "recursive coordinate bisection"; }
    static std::string shortDescription() { return
 @endcode
 
 For more details on the various (mandatory and optional) fields of a keyword
-specification struct see the documentation in src/Control/Keywords.h.
+specification struct see the documentation in src/Control/Keywords.hpp.
 
 We also add the new keywords to inciter's grammar's keywords pool:
 
-@subsection inciter_newpde_keyword_InputDeck Control/Inciter/InputDeck/InputDeck.h
+@subsection inciter_newpde_keyword_InputDeck Control/Inciter/InputDeck/InputDeck.hpp
 
 @code{.diff}
-git diff src/Control/Inciter/InputDeck/InputDeck.h 
-diff --git a/src/Control/Inciter/InputDeck/InputDeck.h b/src/Control/Inciter/InputDeck/InputDeck.h
+git diff src/Control/Inciter/InputDeck/InputDeck.hpp 
+diff --git a/src/Control/Inciter/InputDeck/InputDeck.hpp b/src/Control/Inciter/InputDeck/InputDeck.hpp
 index 39eff786..155c47dc 100644
---- a/src/Control/Inciter/InputDeck/InputDeck.h
-+++ b/src/Control/Inciter/InputDeck/InputDeck.h
+--- a/src/Control/Inciter/InputDeck/InputDeck.hpp
++++ b/src/Control/Inciter/InputDeck/InputDeck.hpp
 @@ -70,12 +70,14 @@ class InputDeck :
                                     kw::phg,
                                     kw::inciter,
@@ -326,6 +344,7 @@ index 39eff786..155c47dc 100644
 +                                   kw::veleq,
                                     kw::user_defined,
                                     kw::vortical_flow,
++                                   kw::interface_advection,
                                     kw::pde_alpha,
 @endcode
 
@@ -365,19 +384,19 @@ Next is to add a new state to the existing PDE option switch, ctr::PDE. This
 "option switch" is really only a fancy enum, used to store the user's choice of
 the PDE type in a type-safe manner, after parsing a PDE-block, e.g., `compflow
 ... end`, in the control file.  This fancy enum is an option switch because it
-inherits from tk::Toggle, defined in Control/Toggle.h, which is a generic
+inherits from tk::Toggle, defined in Control/Toggle.hpp, which is a generic
 switch (or option), that helps associating enum values to keywords and querying
 one based on the other. Extending the existing PDE option switch is done by
-extending the list of PDE types in `src/Control/Inciter/Options/PDE.h`:
+extending the list of PDE types in `src/Control/Inciter/Options/PDE.hpp`:
 
-@subsection inciter_newpde_keyword_PDEOptions Control/Inciter/Options/PDE.h
+@subsection inciter_newpde_keyword_PDEOptions Control/Inciter/Options/PDE.hpp
 
 @code{.diff}
-git diff src/Control/Inciter/Options/PDE.h
-diff --git a/src/Control/Inciter/Options/PDE.h b/src/Control/Inciter/Options/PDE.h
+git diff src/Control/Inciter/Options/PDE.hpp
+diff --git a/src/Control/Inciter/Options/PDE.hpp b/src/Control/Inciter/Options/PDE.hpp
 index 2b4af067..84b6d3ff 100644
---- a/src/Control/Inciter/Options/PDE.h
-+++ b/src/Control/Inciter/Options/PDE.h
+--- a/src/Control/Inciter/Options/PDE.hpp
++++ b/src/Control/Inciter/Options/PDE.hpp
 @@ -22,7 +22,8 @@ namespace ctr {
  
  //! Differential equation types
@@ -413,16 +432,16 @@ index 2b4af067..84b6d3ff 100644
  } // ctr::
 @endcode
 
-We also augment the switch used for selecting the physics policy:
+We also augment the switch used for selecting the physics policy and problem list:
 
-@subsection inciter_newpde_keyword_PhysicsOptions Control/Inciter/Options/Physics.h
+@subsection inciter_newpde_keyword_PhysicsOptions Control/Inciter/Options/Physics.hpp
 
 @code{.diff}
-git diff src/Control/Inciter/Options/Physics.h
-diff --git a/src/Control/Inciter/Options/Physics.h b/src/Control/Inciter/Options/Physics.h
+git diff src/Control/Inciter/Options/Physics.hpp
+diff --git a/src/Control/Inciter/Options/Physics.hpp b/src/Control/Inciter/Options/Physics.hpp
 index d24ccf1d..f59e85c1 100644
---- a/src/Control/Inciter/Options/Physics.h
-+++ b/src/Control/Inciter/Options/Physics.h
+--- a/src/Control/Inciter/Options/Physics.hpp
++++ b/src/Control/Inciter/Options/Physics.hpp
 @@ -23,7 +23,8 @@ namespace ctr {
  enum class PhysicsType : uint8_t { ADVECTION=0,
                                     ADVDIFF,
@@ -471,6 +490,62 @@ index d24ccf1d..f59e85c1 100644
  };
 @endcode
 
+@subsection inciter_newpde_keyword_ProblemOptions Control/Inciter/Options/Problem.hpp
+
+@code{.diff}
+diff --git a/src/Control/Inciter/Options/Problem.hpp b/src/Control/Inciter/Options/Problem.hpp
+index c953f28f0..b21e2c891 100644
+--- a/src/Control/Inciter/Options/Problem.hpp
++++ b/src/Control/Inciter/Options/Problem.hpp
+@@ -34,7 +34,8 @@ enum class ProblemType : uint8_t { USER_DEFINED,
+                                    CYL_ADVECT,
+                                    SOD_SHOCKTUBE,
+                                    ROTATED_SOD_SHOCKTUBE,
+-                                   SEDOV_BLASTWAVE };
++                                   SEDOV_BLASTWAVE,
++                                   INTERFACE_ADVECTION };
+ 
+ //! Pack/Unpack ProblemType: forward overload to generic enum class packer
+ inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
+@@ -56,6 +57,7 @@ class Problem : public tk::Toggle< ProblemType > {
+                                   , kw::sod_shocktube
+                                   , kw::rotated_sod_shocktube
+                                   , kw::sedov_blastwave
++                                  , kw::interface_advection
+                                   >;
+ 
+     //! \brief Options constructor
+@@ -78,7 +80,9 @@ class Problem : public tk::Toggle< ProblemType > {
+           { ProblemType::SOD_SHOCKTUBE, kw::sod_shocktube::name() },
+           { ProblemType::ROTATED_SOD_SHOCKTUBE,
+             kw::rotated_sod_shocktube::name() },
+-          { ProblemType::SEDOV_BLASTWAVE, kw::sedov_blastwave::name() } },
++          { ProblemType::SEDOV_BLASTWAVE, kw::sedov_blastwave::name() },
++          { ProblemType::INTERFACE_ADVECTION,
++            kw::interface_advection::name() } },
+         //! keywords -> Enums
+         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
+           { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
+@@ -93,7 +97,9 @@ class Problem : public tk::Toggle< ProblemType > {
+           { kw::rotated_sod_shocktube::string(),
+             ProblemType::ROTATED_SOD_SHOCKTUBE },
+           { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE },
+-          { kw::sedov_blastwave::string(), ProblemType::SEDOV_BLASTWAVE } } )
++          { kw::sedov_blastwave::string(), ProblemType::SEDOV_BLASTWAVE },
++          { kw::interface_advection::string(),
++            ProblemType::INTERFACE_ADVECTION } } )
+     {
+        brigand::for_each< keywords >( assertPolicyCodes() );
+     }
+@@ -136,6 +142,7 @@ class Problem : public tk::Toggle< ProblemType > {
+       , { ProblemType::ROTATED_SOD_SHOCKTUBE,
+           *kw::rotated_sod_shocktube::code() }
+       , { ProblemType::SEDOV_BLASTWAVE, *kw::sedov_blastwave::code() }
++      , { ProblemType::INTERFACE_ADVECTION, *kw::interface_advection::code() }
+     };
+ };
+@endcode
+
 @section inciter_newpde_grammar 4. Add parsing/grammar for the new keywords
 
 After adding the new keywords `multimat`, `nmat`, and `veleq`, we have to teach
@@ -479,14 +554,14 @@ the input file parser to recognize them.
 First we augment the data structures that store data parsed associated with the
 new keywords. First is the number of scalar components for each PDE type:
 
-@subsection inciter_newpde_grammar_components Control/Inciter/Components.h
+@subsection inciter_newpde_grammar_components Control/Inciter/Components.hpp
 
 @code{.diff}
-git diff src/Control/Inciter/Components.h
-diff --git a/src/Control/Inciter/Components.h b/src/Control/Inciter/Components.h
+git diff src/Control/Inciter/Components.hpp
+diff --git a/src/Control/Inciter/Components.hpp b/src/Control/Inciter/Components.hpp
 index 64f0696f..ef51a9e9 100644
---- a/src/Control/Inciter/Components.h
-+++ b/src/Control/Inciter/Components.h
+--- a/src/Control/Inciter/Components.hpp
++++ b/src/Control/Inciter/Components.hpp
 @@ -17,8 +17,9 @@ namespace ctr {
  
  //! Number of components of partial differential equations
@@ -506,13 +581,13 @@ there can be multiple PDE systems of each type.
 We also create a new tuple to store data during parsing the `multimat...end`
 block:
 
-@subsection inciter_newpde_grammar_types Control/Inciter/Types.h
+@subsection inciter_newpde_grammar_types Control/Inciter/Types.hpp
 
 @code{.diff}
-git diff src/Control/Inciter/Types.h
+git diff src/Control/Inciter/Types.hpp
 index 4bc3bf64..65a3235f 100644
---- a/src/Control/Inciter/Types.h
-+++ b/src/Control/Inciter/Types.h
+--- a/src/Control/Inciter/Types.hpp
++++ b/src/Control/Inciter/Types.hpp
 @@ -184,10 +184,46 @@ using CompFlowPDEParameters = tk::tuple::tagged_tuple<
    tag::npar,          std::vector< kw::npar::info::expect::type >
  >;
@@ -572,14 +647,14 @@ Next we add a couple of new tags (empty structs used as compile-time labels),
 `tag::nmat` and `tag::multimat`, behind which the parser stores the tuple
 ctr::MultiMatPDEParameters, and the number of materials, respectively,
 
-@subsection inciter_newpde_grammar_tags Control/Tags.h
+@subsection inciter_newpde_grammar_tags Control/Tags.hpp
 
 @code{.diff}
-git diff src/Control/Tags.h
-diff --git a/src/Control/Tags.h b/src/Control/Tags.h
+git diff src/Control/Tags.hpp
+diff --git a/src/Control/Tags.hpp b/src/Control/Tags.hpp
 index 188a86d0..9c0b7ec6 100644
---- a/src/Control/Tags.h
-+++ b/src/Control/Tags.h
+--- a/src/Control/Tags.hpp
++++ b/src/Control/Tags.hpp
 @@ -102,6 +102,7 @@ struct matched {};
  struct part {};
  struct centroid {};
@@ -600,14 +675,14 @@ index 188a86d0..9c0b7ec6 100644
 
 We are now ready to augment the grammar itself:
 
-@subsection inciter_newpde_grammar_grammar Control/Inciter/InputDeck/Grammar.h
+@subsection inciter_newpde_grammar_grammar Control/Inciter/InputDeck/Grammar.hpp
 
 @code{.diff}
-git diff src/Control/Inciter/InputDeck/Grammar.h
-diff --git a/src/Control/Inciter/InputDeck/Grammar.h b/src/Control/Inciter/InputDeck/Grammar.h
+git diff src/Control/Inciter/InputDeck/Grammar.hpp
+diff --git a/src/Control/Inciter/InputDeck/Grammar.hpp b/src/Control/Inciter/InputDeck/Grammar.hpp
 index 6b16b623..43a9bba7 100644
---- a/src/Control/Inciter/InputDeck/Grammar.h
-+++ b/src/Control/Inciter/InputDeck/Grammar.h
+--- a/src/Control/Inciter/InputDeck/Grammar.hpp
++++ b/src/Control/Inciter/InputDeck/Grammar.hpp
 @@ -35,8 +35,9 @@ namespace deck {
  
    //! \brief Number of registered equations
@@ -802,7 +877,7 @@ can surely infer _what_ is (and what is _not_) parsed in this block.  Examples
 of what are parsed: physics and problem policies, depvar, etc., and what is
 _NOT_ parsed: number of (scalar) components, c.f., the definition of the
 transport equation grammar block, deck::transport, not listed, in
-Control/Inciter/InputDeck/Grammar.h.
+Control/Inciter/InputDeck/Grammar.hpp.
 
 @code{.diff}
    //! partitioning ... end block
@@ -825,14 +900,14 @@ equations recognized by the parser.
 One last item is to augment the grammar messages data store to include our new
 warning on unspecified number of materials:
 
-@subsection inciter_newpde_grammar_common Control/CommonGrammar.h
+@subsection inciter_newpde_grammar_common Control/CommonGrammar.hpp
 
 @code{.diff}
-git diff src/Control/CommonGrammar.h
-diff --git a/src/Control/CommonGrammar.h b/src/Control/CommonGrammar.h
+git diff src/Control/CommonGrammar.hpp
+diff --git a/src/Control/CommonGrammar.hpp b/src/Control/CommonGrammar.hpp
 index 40c0b71d..c2de296e 100644
---- a/src/Control/CommonGrammar.h
-+++ b/src/Control/CommonGrammar.h
+--- a/src/Control/CommonGrammar.hpp
++++ b/src/Control/CommonGrammar.hpp
 @@ -98,6 +98,7 @@ namespace grm {
      WRONGGAUSSIAN,      //!< Wrong number of parameters configuring a PDF
      NEGATIVEPARAM,      //!< Negative variance given configuring a Gaussian
@@ -864,7 +939,7 @@ inciter
   multimat    # configure our new PDE block for compressible multi-material flow
     depvar u    # assign dependent variable 'u' to this PDE
     physics veleq       # select 'euler' as compressible flow physics policy
-    problem vortical_flow       # select 'vortical flow` as problem policy
+    problem interface_advection  # select 'interface_advection` as problem policy
     nmat 3      # configure 3 materials
     ...
   end
@@ -880,7 +955,7 @@ instantiated according to user configuration.
 Class PDEStack helps with configuring and instantiating PDE class objects from
 factories. There are separate factories for PDEs with continuous Galerkin (CG)
 and discontinuous Galerkin (DG) finite element discretizations, declared in
-PDE/PDEFactory.h: `CGFactory` and `DGFactory`. These factories are associative
+PDE/PDEFactory.hpp: `CGFactory` and `DGFactory`. These factories are associative
 containers that assign PDE class constructors to a key that uniquely identifies
 a given PDE system configured to a given physics and problem policy.
 
@@ -900,19 +975,19 @@ For more details, see also the discussion in PDEStack's constructor.
 
 The following diff augments PDEStack with our newly added PDE type.
 
-@subsection inciter_newpde_pdestack_pdestack PDE/PDEStack.C
+@subsection inciter_newpde_pdestack_pdestack PDE/PDEStack.cpp
 
 @code{.diff}
-git diff src/PDE/PDEStack.C
-diff --git a/src/PDE/PDEStack.C b/src/PDE/PDEStack.C
+git diff src/PDE/PDEStack.cpp
+diff --git a/src/PDE/PDEStack.cpp b/src/PDE/PDEStack.cpp
 index 70036aad..af1a2de7 100644
---- a/src/PDE/PDEStack.C
-+++ b/src/PDE/PDEStack.C
+--- a/src/PDE/PDEStack.cpp
++++ b/src/PDE/PDEStack.cpp
 @@ -17,6 +17,7 @@
  
- #include "ConfigureTransport.h"
- #include "ConfigureCompFlow.h"
-+#include "ConfigureMultiMat.h"
+ #include "ConfigureTransport.hpp"
+ #include "ConfigureCompFlow.hpp"
++#include "ConfigureMultiMat.hpp"
  
  using inciter::PDEStack;
  
@@ -961,12 +1036,12 @@ index c2ae8d9b..76562c52 100644
 --- a/src/PDE/CMakeLists.txt
 +++ b/src/PDE/CMakeLists.txt
 @@ -14,7 +14,8 @@ add_library(PDE
-             Integrate/Riemann/RiemannFactory.C
-             Limiter.C
-             ConfigureTransport.C
--            ConfigureCompFlow.C)
-+            ConfigureCompFlow.C
-+            ConfigureMultiMat.C)
+             Integrate/Riemann/RiemannFactory.cpp
+             Limiter.cpp
+             ConfigureTransport.cpp
+-            ConfigureCompFlow.cpp)
++            ConfigureCompFlow.cpp
++            ConfigureMultiMat.cpp)
  
  target_include_directories(PDE PUBLIC
                             ${QUINOA_SOURCE_DIR}
@@ -977,21 +1052,21 @@ index c2ae8d9b..76562c52 100644
 Finally, we add a set of new files that will implement the new PDE using DG. As
 an example, we also add a new physics and a couple of new problem policy
 classes: one for a user-defined problem and another one for a verification
-problem using a vortical flow setup.
+problem using a interface advection.
 
 Here are the new files and subdirectories under `src/PDE/`:
 
 @code{.ansi}
-├── ConfigureMultiMat.C
-├── ConfigureMultiMat.h
+├── ConfigureMultiMat.cpp
+├── ConfigureMultiMat.hpp
 ├── MultiMat
-│   ├── DGMultiMat.h
+│   ├── DGMultiMat.hpp
 │   ├── Physics
-│   │   ├── DG.h
-│   │   └── DGVelEq.h
+│   │   ├── DG.hpp
+│   │   └── DGVelEq.hpp
 │   ├── Problem
-│   │   ├── UserDefined.h
-│   │   └── VorticalFlow.h
+│   │   ├── UserDefined.hpp
+│   │   └── InterfaceAdvection.hpp
 │   └── Problem.h
 @endcode
 
@@ -1014,8 +1089,8 @@ Physics configuration:
 Problem configuration:
 - @subpage inciter_newpde_userdefined_h -
   a new problem policy for multi-material compflow
-- @subpage inciter_newpde_vorticalflow_h -
-  a new problem policy specialized for the vortical flow verification problem
+- @subpage inciter_newpde_interfaceadvection_h -
+  a new problem policy specialized for the interface advection verification problem
 - @subpage inciter_newpde_problem_h -
   list of all MultiMat problem policies.
 

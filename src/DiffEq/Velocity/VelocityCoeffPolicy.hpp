@@ -124,7 +124,7 @@ class VelocityCoeffStationary {
     { return ctr::CoeffPolicyType::STATIONARY; }
 
     //! Update the model coefficients forcing a statistically stationary PDF
-    void update( char depvar,
+    void update( char /*depvar*/,
                  char,
                  const std::map< tk::ctr::Product, tk::real >&,
                  const tk::Table&,

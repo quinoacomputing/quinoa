@@ -20,21 +20,23 @@
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
+namespace tk {
+
 void
-tk::nonConservativeInt( [[maybe_unused]] ncomp_t system,
-                        ncomp_t ncomp,
-                        std::size_t nmat,
-                        ncomp_t offset,
-                        const std::size_t ndof,
-                        const std::size_t rdof,
-                        const std::vector< std::size_t >& inpoel,
-                        const UnsMesh::Coords& coord,
-                        const Fields& geoElem,
-                        const Fields& U,
-                        const std::vector< std::vector< tk::real > >&
-                          riemannDeriv,
-                        const std::vector< std::size_t >& ndofel,
-                        Fields& R )
+nonConservativeInt( [[maybe_unused]] ncomp_t system,
+                    ncomp_t ncomp,
+                    std::size_t nmat,
+                    ncomp_t offset,
+                    const std::size_t ndof,
+                    const std::size_t rdof,
+                    const std::vector< std::size_t >& inpoel,
+                    const UnsMesh::Coords& coord,
+                    const Fields& geoElem,
+                    const Fields& U,
+                    const std::vector< std::vector< tk::real > >&
+                      riemannDeriv,
+                    const std::vector< std::size_t >& ndofel,
+                    Fields& R )
 // *****************************************************************************
 //  Compute volume integrals for multi-material DG
 //! \details This is called for multi-material DG, computing volume integrals of
@@ -168,7 +170,7 @@ tk::nonConservativeInt( [[maybe_unused]] ncomp_t system,
 }
 
 void
-tk::update_rhs_ncn(
+update_rhs_ncn(
   ncomp_t ncomp,
   ncomp_t offset,
   const std::size_t ndof,
@@ -207,3 +209,5 @@ tk::update_rhs_ncn(
     R(e, mark, offset) += wt * ncf[c];
   }
 }
+
+} // tk::

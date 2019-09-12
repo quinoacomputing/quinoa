@@ -49,7 +49,7 @@ class CompFlowProblemRayleighTaylor {
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z,
+    src( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
          tk::real t );
 
     //! \brief Query all side set IDs the user has configured for all components
@@ -71,7 +71,7 @@ class CompFlowProblemRayleighTaylor {
                  tk::Fields& U ) const;
 
     //! Return names of integral variables to be output to diagnostics file
-    std::vector< std::string > names( ncomp_t ) const;
+    std::vector< std::string > names( ncomp_t /*ncomp*/ ) const;
 
     //! Return problem type
     static ctr::ProblemType type() noexcept
