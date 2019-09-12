@@ -95,6 +95,10 @@ setSignalHandlers()
   signal( SIGSEGV, tk::signalHandler );
   signal( SIGTERM, tk::signalHandler );
 
+  // This is commented at this time, because there is at least a single SIGFPE
+  // that is generated from a place we have no control over, e.g., pthreads.
+  // Will revisit in the future, because this should be enabled to detect and
+  // terminate with a trace on floating point exceptions.
   //feenableexcept( FE_ALL_EXCEPT );
 
   return 0;
