@@ -38,6 +38,7 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn

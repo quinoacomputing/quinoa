@@ -48,8 +48,10 @@ This can be done by relying on the existing software infrastructure, including
 - Distributed parallel file I/O, with partitioners, converters, and
   solution-adaptive refinement for tetrahedron meshes,
 
-- Automated testing infrastructure using multiple compilers, operating systems,
-  libraries, container technology, and code quality analysis,
+- Automated testing infrastructure, capable of testing serial, synchronous
+  (e.g., MPI) parallel, and asynchronous (e.g., Charm++) parallel functions and
+  executables, using multiple compilers, operating systems, libraries, container
+  technology, and code quality analysis,
 
 - Beautiful, professional, and no-nonsense documentation, featuring an
   expertly-designed, as-you-type search-engine, whose result looks great on any
@@ -97,7 +99,7 @@ Guidelines for bug reports:
    HEAD of the `develop` branch.
 
 3. Try to see if the bug can be reproduced by any of the regression tests
-   &mdash; see the @ref build "build page" on how to run the regression tests.
+   &mdash; see the @ref build "build page" on how to run them.
 
 4. Try to reproduce the bug in `Debug` mode &mdash; this can be configured by
    setting `CMAKE_BUILD_TYPE=Debug`.
@@ -113,7 +115,7 @@ Example:
 > Short and descriptive example bug report title
 >
 > A summary of the issue and the OS environment in which it occurs. If suitable,
-> include the steps required to reproduce the bug.
+> include the steps required to reproduce the bug:
 >
 > 1. This is the first step.
 > 2. This is the second step.
@@ -124,11 +126,12 @@ Example:
 > _Quinoa-cmake_ build configuration steps. See @ref build_stages.
 >
 > Attach the input file and, if relevant, the input mesh file. If the mesh is
-> large, use our [file transfer service](https://transfer.lanl.gov) and address
-> the file to quinoa@lanl.gov.
+> large, try to reproduce it with a smaller mesh. If you cannot, use our [file
+> transfer service](https://transfer.lanl.gov) to send us the larger mesh and
+> address the file to quinoa@lanl.gov.
 >
 > Attach the full screen output of the run reproducing the problem, including
-> those of the Charm++ runtime system as well as the _call and stack traces_.
+> those of the Charm++ runtime system as well as the call and stack traces.
 >
 > Include any other information you want to share that is relevant to the issue
 > being reported. This might include the lines of code that you have identified
@@ -142,10 +145,10 @@ output. If this happens, don't panic! ;-) Such bugs are usually due to the fact
 that in Charm++ (and thus in Quinoa) execution is asynchronous by default and
 that the runtime system may (and likely will) schedule messages and tasks (and
 thus execution) in a non-deterministic fashion (while still adhering to
-correctness as specified by the programmer).  However, if the programmer misses
-a single path of many possible paths of execution, that is incorrect, that can
-lead to data races and other bugs and only appear randomly. (Which we do all
-the time &mdash; that's why we have an extensive test suite.)
+correctness as specified by the programmer). However, if the programmer misses
+a single path of many possible paths of execution, that is incorrect, which may
+lead to data races and other bugs and thus may only appear randomly. (Which we
+do all the time &mdash; that's why we have an extensive test suite.)
 
 Such non-deterministic bugs are a bit a harder to reproduce. Here are some
 techniques that have helped us in the past trigger such bugs sooner rather than
@@ -154,15 +157,17 @@ later:
 - If the bug is reproduced in `Release` mode, see if it can also be reproduced
   in `Debug` mode.
 
-- Build the Charm++ runtime system using @ref build_rndq "randomized message queues".
+- Build the Charm++ runtime system using @ref build_rndq "randomized message
+  queues". This mode increases the chances of appearance of such
+  non-deterministic errors.
 
 - Run the case (or subset of regression tests) you believe will trigger the
   problem in an infinite shell loop _and at the same time_ load all CPUs of the
-  machine with something else. For example:
+  machine with something else. For example, do
 
        while ctest -j36 -R asynclogic -L migration --output-on-failure; do :; done | c++filt
 
-   While the above is running, in another terminal window:
+   While the above is running, in another terminal window do
 
        make clean && make -sj36
 
@@ -225,17 +230,17 @@ error messages. Using multiple compilers are not required but recommended since
 our automated testing exercises all of these compilers, and it is more
 time-effective to catch errors and warnings earlier than later.
 
-Additionally, by default we build @ref build "build Quinoa" turning on most (if
-not all) compiler warnings. (Also, our continuous integration testing turns all
+Additionally, by default we @ref build "build Quinoa" turning on most (if not
+all) compiler warnings. (Also, our continuous integration testing turns all
 warnings to errors.) There are some exceptions to this rule:
 
 - some warnings are turned off _globally_ (these are in `src/CMakeListst.txt`)
   under `compiler-specific settings` &mdash; a different list for each compiler,
   and
 
-- we must turn off some warnings _locally_, when headers of third-party
-  libraries and Charm++-generated code are included &mdash; these are collected
-  under `src/NoWarning/`.
+- we turn off some warnings _locally_, when headers of third-party libraries
+  and Charm++-generated code are included &mdash; these are collected under
+  `src/NoWarning/`.
 
 To ensure good code quality we do not deviate from these settings, and we ask
 all contributors to do the same.
@@ -243,10 +248,10 @@ all contributors to do the same.
 @subsection contributing_buildall Build and test all tools before a push
 
 While it is possible to clone, build the dependencies for, build, and work on
-@ref build_specific_executables "only on a single tool", doing so may run the
+@ref build_specific_executables "only a single tool", doing so may run the
 risk of breaking some of the code that such a single-tool build does not use
 without noticing it locally. Thus, we recommend, at least before pushing to a
-GitHub branch (e.g., before a @ref contributing_pr "pull requests", building
+GitHub branch (e.g., before a @ref contributing_pr "pull request", building
 and running the tests for the _full_ Quinoa build. If something breaks, our
 continuous integration will most likely catch it because they test _all_ the
 tools, thus testing the full build _locally_ (before publishing your changes)
@@ -274,7 +279,7 @@ build Charm++ in non-SMP and SMP mode.
 We don't really have coding guidelines. Please try not to diverge significantly
 from the style of the existing code. This includes file and function definition
 headers, comments, and API documentation. Also, please keep line lengths max 80
-characters. See also @ref priorities.
+characters. See also @ref priorities "our priorities for writing code".
 
 @subsection contributing_review Use reviewable.io for discussing pull requests
 
@@ -322,13 +327,14 @@ The basic steps for those who are _not_ members of GitHub's [QuinoaComputing](ht
 
        git checkout -b <topic-branch-name>
 
-4. At this point, you are ready to make your changes! Feel free to @ref
-   resources_contact "ask for help" &mdash; everyone is a beginner at first ;-).
-   If a developer asks you to _rebase_ your PR (or _merge in `develop`_), they're
-   saying that a lot of code has changed, and that you need to update your branch
-   so it's easier to merge. Make sure to update, or add to the tests when
-   appropriate. Patches and features will not be accepted without passing the
-   existing tests. See also the section on @ref contributing_test "how to run the tests".
+4. At this point, you are ready to make your changes or develop your feature!
+   Feel free to @ref resources_contact "ask for help" &mdash; everyone is a
+   beginner at first ;-).  If a developer asks you to _rebase_ your PR (or _merge
+   in `develop`_), they're saying that a lot of code has changed, and that you
+   need to update your branch so it's easier to merge. Make sure to update, or add
+   to the tests when appropriate. Patches and features will not be accepted
+   without passing the existing tests. See also the section on @ref
+   contributing_test "how to run the tests".
 
 5. If you added or changed a feature, make sure to document it accordingly so
    doxygen can generate the correct documentation.
@@ -364,6 +370,7 @@ The basic steps for those who are _not_ members of GitHub's [QuinoaComputing](ht
 
 5. Open a pull request with a clear title and description.
 
-@note If any of the above is unclear, @ref resources_contact "contact us".
+@note If any of the above is unclear, please do not hesitate to @ref
+resources_contact "contact us".
 
 */

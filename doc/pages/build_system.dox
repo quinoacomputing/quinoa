@@ -1,0 +1,113 @@
+/*!
+  @page      build_system Internals
+
+@tableofcontents{xml}
+
+This page discusses the internals of the build system: how it works, how the
+different pieces fit together, and the various ways it can be configured. This
+page is intended for those who would like to understand how the build system
+works and how it can be modified or extended.
+
+@note This page is _not_ a description of how to build the third-party
+libraries or Quinoa. For various ways of building Quinoa, including
+requirements, optional libraries, defaults, and build system options, see the
+page on @ref build "building".
+
+@section build_system_overview Overview
+
+As section _@ref build_stages_ on the @ref build "build page" describes, Quinoa
+is built in two stages:
+
+ 1. Build third-party libraries (TPLs)
+ 2. Build Quinoa
+
+Both stages consist of the following two steps
+
+ - Use cmake to configure the build
+ - Perform the build
+
+As the section on @ref build_nonrecursive "non-recursive clones" discusses,
+some of the [cmake code](https://github.com/quinoacomputing/cmake-modules) is
+abstracted away into its own git repository so that it can be effectively
+shared between the two repositories:
+[quinoa](https://github.com/quinoacomputing/quinoa) and
+[quinoa-tpl](https://github.com/quinoacomputing/quinoa-tpl). For more details,
+see also the page on @ref git_submodules_subtrees "modules".
+
+@section build_system_tpl Third-party-libraries build
+
+In a @ref build_nonrecursive "recursive clone" the main entry point of the TPL-build is [external/CMakeLists.txt](https://github.com/quinoacomputing/quinoa-tpl/blob/master/CMakeLists.txt). The TPL-build uses cmake's [external project](https://cmake.org/cmake/help/latest/module/ExternalProject.html) functionality to build the third-party libraries.
+
+The following main steps are taken by the TPL-cmake script to configure the build of the third-party libraries:
+
+ - In-source builds are disallowed in [cmake/DisallowInSourceBuilds.cmake](https://github.com/quinoacomputing/cmake-modules/blob/master/DisallowInSourceBuilds.cmake).
+
+ - The default build type is set in [cmake/BuildType.cmake](https://github.com/quinoacomputing/cmake-modules/blob/master/BuildType.cmake). This can be configured by the cmake variable `CMAKE_BUILD_TYPE`. The default is _Release_. Other valid options are described at https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html.
+
+ - The operating system is detected in [cmake/DetectOS.cmake](https://github.com/quinoacomputing/cmake-modules/blob/master/DetectOS.cmake). This is mostly used for working around some quirks for some specific operating systems, e.g., Alpine Linux.
+
+ - Whether a dynamically or statically linked build is performed is decided in [cmake/BuildSharedS.cmake](https://github.com/quinoacomputing/cmake-modules/blob/master/BuildShared.cmake). This can be configured by the cmake variable `BUILD_SHARED_LIBS` (on/off). The default is _off_, yielding a dynamic build (except on Crays, where the default is static).
+
+   @warning If `BUILD_SHARED_LIBS` is configured one way for the TPL-build, it is important to set the same for the Quinoa build as well. The default is _off_ for both, yielding shared objects for the third party libraries as well as for the Quinoa build, allowing dynamic linking, which, in general is less error-prone for a small runtime cost (which is negligible compared to the number crunching cost).
+
+ - The target build architecture is detected and configured in [cmake/TargetArch.cmake](https://github.com/quinoacomputing/cmake-modules/blob/master/TargetArch.cmake). This is used for setting the correct architecture-specific configuration for, e.g., the runtime system, Charm++.
+
+ - The install directory in which to install all third-party libraries is configured by the `CMAKE_INSTALL_PREFIX` cmake variable. For a @ref build_nonrecursive "non-recursive clone" the default is `quinoa/external/install/<compiler>-<architecture>/`, e.g., `quinoa/external/install/clang-x86_64/`. If a custom location is set, the subsequent Quinoa build can be told by setting the `TPL_DIR` cmake variable to the path used as `CMAKE_INSTALL_PREFIX` for the TPL build.
+
+ - Next the TPL cmake run detects the number of CPUs available on the build machine. This is stored in the cmake variable `PROCESSOR_COUNT` and is used to configure longer-running regression tests that need more than a few CPUs, e.g., the whole build machine.
+
+ - Next we set a number of cmake boolean variables, named as `ENABLE_<SOME_TPL>`, e.g., `ENABLE_CHARM`, `ENABLE_HDF5`, etc. These are then selectively set to _true_ if a requested executable requires them. This enables configuring the build system to only build (and only build third-partly libraries for) selected executables. On how to build only a single executable, see @ref build_specific_executables.
+
+  @note The the default is to build all executables and their required TPLs. If you only care about a single executable, e.g., because you are looking for shorter build-types or less disk space, configuring the TPL-build using the `<executable>_ONLY` is your option.
+
+ - After this we configure the Charm++ build: architecture, communication sub-system, SMP mode, etc.
+
+ - Next the compilers are configured. At this time, the TPL build requires Fortran, C, and a C++ compiler. Also required is MPI, e.g., OpenMPI. The Quinoa build only requires C and C++ compilers. The cmake build echoes a detailed output to screen about the MPI wrappers and the underlying compilers configured/found. Also echoed are extra Charm++ arguments, which can be provided on top of the default ones by the cmake variable `CHARM_EXTRA_ARGS`.
+
+  @note While Charm++ does not require MPI, since it provides its own communication layer, at this time, Quinoa _requires_ Charm++ to be built using one the MPI-backends of Charm++. This is because we use MPI-only third-party libraries (which are _not_ aware that they are running on top of Charm++), and thus MPI libraries are required. We are currently exploring how to relax this requirement, by, e.g., providing the MPI layer using Charm++'s adaptive MPI (AMPI), but this is not fully functional at this time.
+
+ - Next are compiler-specific configuration blocks: default standard library, default compiler flags, etc. This section is also a good place to look for to find out what compiler we test, tested or at least tried to use in past.
+
+ - This is followed by multiple configuration blocks that are specific to individual third-party libraries if enabled. In each of these block, first we try to find the library on the system by invoking cmake code reused between the TPL and the Quinoa builds. These are given in the `Find_<TPL>.cmake` files that live under [cmake/BuildType.cmake](https://github.com/quinoacomputing/cmake-modules].
+
+ - After these TPL-specific configuration blocks, there are the calls to cmake's `ExternalProject_Add()` functions, parameterized to the given TPL. These are the sections to look at to see how an individual TPL is built, e.g., whether it uses autotools or cmake, or what it takes to install a given TPL to make suitable for Quinoa. These are also the sections that potentially apply patches that are not (yet) communicated upstream to the given TPL.
+
+@section build_system_quinoa Quinoa build
+
+In the Quinoa repository the main entry point of the Quinoa-build is [src/CMakeLists.txt](https://github.com/quinoacomputing/quinoa/blob/master/src/CMakeLists.txt). The following main steps are taken by the Quinoa-cmake script to configure the build. Many of the steps are the same (or very similar) to configuring the TPL build. See the @ref build_system_tpl for more details.
+
+ - In-source builds are disallowed. See the @ref build_system_tpl for more details.
+
+ - The default build type is set. This can be configured by the cmake variable `CMAKE_BUILD_TYPE`. The default is _Release_. See the @ref build_system_tpl for more details.
+
+ - The operating system is detected. See the @ref build_system_tpl for more details.
+
+ - Whether a dynamically or statically linked build is performed is decided. The default is dynamic linking. See the @ref build_system_tpl for more details.
+
+ - The target build architecture is detected and configured. See the @ref build_system_tpl for more details.
+
+ - The default TPL directory, in the cmake variable `TPL_DIR`, is set to the install directory that is the default in the cmake variable `CMAKE_INSTALL_PREFIX` in the TPL build. See the @ref build_system_tpl for more details.
+
+ - There is an option to disable tests. The default is to enable both unit-, and regression tests. This is controlled by the cmake variable `ENABLE_TESTS`.
+
+ - We then detect all TPLs and enable all executable targets for which TPLs are found.
+
+   @warning At this point no TPLs are _required_. If a TPL is not found, the executable target whose requriements are not found will be disabled. This enables building only specific executables.
+
+ - Similar to the TPL-cmake configuration, there is a detailed information to screen on the compilers: MPI wrappers and their underlying compilers.
+
+ - There is way to pass extra arguments to the linker, configured by the cmake variable `EXTRA_LINK_ARGS`.
+
+ - Extra compiler flags can be set by the cmake variables, `CMAKE_C_FLAGS` and `CMAKE_CXX_FLAGS`.
+
+   @note All of Quinoa is built using a C++ compiler. At this time the C compiler is only required for detecting the system architecture and some details on the HDF5 library.
+
+ - This is followed by compiler-specific settings and flags, e.g., enabling and disabling certain warnings for all of Quinoa. Some warnings are only locally disabled under directory `src/NoWarning/`.
+
+@section build_system_reated Related pages
+- @ref mainpage_build "Quickstart on how to build"
+- @ref git_submodules_subtrees "Third-party libraries and cmake code"
+- @ref licenses "A list of all required and optional third-party libraries"
+- @ref build_system "Build system internals"
+
+*/
