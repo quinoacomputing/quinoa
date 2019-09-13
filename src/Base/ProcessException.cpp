@@ -21,6 +21,7 @@
 #include <cstdio>
 #include <csignal>
 #include <exception>
+#include <cfenv>
 
 #include "NoWarning/charm.hpp"
 #include "NoWarning/mpi.hpp"
@@ -53,9 +54,11 @@ signalHandler( int signum )
   const char* name = nullptr;
   switch( signum ) {
     case SIGABRT: name = "SIGABRT";  break;
-    case SIGSEGV: name = "SIGSEGV";  break;
+    case SIGFPE:  name = "SIGFPE";  break;
     case SIGILL:  name = "SIGILL";   break;
-    case SIGFPE:  name = "SIGFPE";   break;
+    case SIGINT:  name = "SIGINT";  break;
+    case SIGSEGV: name = "SIGSEGV";  break;
+    case SIGTERM: name = "SIGTERM";   break;
   }
 
   // Echo what signal is caught
@@ -86,9 +89,17 @@ setSignalHandlers()
   } );
 
   signal( SIGABRT, tk::signalHandler );
-  signal( SIGSEGV, tk::signalHandler );
-  signal( SIGILL,  tk::signalHandler );
   signal( SIGFPE,  tk::signalHandler );
+  signal( SIGILL,  tk::signalHandler );
+  signal( SIGINT,  tk::signalHandler );
+  signal( SIGSEGV, tk::signalHandler );
+  signal( SIGTERM, tk::signalHandler );
+
+  // This is commented at this time, because there is at least a single SIGFPE
+  // that is generated from a place we have no control over, e.g., pthreads.
+  // Will revisit in the future, because this should be enabled to detect and
+  // terminate with a trace on floating point exceptions.
+  //feenableexcept( FE_ALL_EXCEPT );
 
   return 0;
 }
