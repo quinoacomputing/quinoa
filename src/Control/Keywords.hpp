@@ -1775,7 +1775,7 @@ struct farfield_pressure_info {
   static std::string longDescription() { return
     R"(This keyword is used to specify the far-field pressure when subsonic
     outlet boundary condition is used.  This parameter is set up in boundary
-    condition block. Example specification: 'farfield_pressure1.0')";
+    condition block. Example specification: 'farfield_pressure 1.0')";
   }
   struct expect {
     using type = tk::real;
