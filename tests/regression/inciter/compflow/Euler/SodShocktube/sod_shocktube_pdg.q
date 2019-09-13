@@ -6,7 +6,7 @@ title "Sod shock-tube"
 
 inciter
 
-  nstep 100
+  nstep 20
   cfl 0.3
   ttyi 10       # TTY output interval
   scheme pdg

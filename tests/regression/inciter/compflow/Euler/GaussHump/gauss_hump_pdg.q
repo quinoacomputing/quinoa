@@ -5,9 +5,9 @@
 title "Advection of 2D Gaussian hump"
 
 inciter
-  nstep 100  # Max number of time steps
+  nstep 10  # Max number of time steps
   cfl 0.8
-  ttyi 10      # TTY output interval
+  ttyi 5      # TTY output interval
   scheme pdg
 
   compflow
@@ -37,13 +37,13 @@ inciter
   end
 
   diagnostics
-    interval  10
+    interval  5
     format    scientific
     error l2
   end
 
   plotvar
-    interval 10
+    interval 5
   end
 
 end
