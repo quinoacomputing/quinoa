@@ -38,7 +38,7 @@ Exception::Exception( std::string&& message,
 //! \param[in] file String (moved from) with the file name in which the
 //!   exception ocurred
 //! \param[in] function String (moved from) containing the name of the function
-//    in which the exception ocurred
+//!   in which the exception ocurred
 //! \param[in] line Source code line number at which the exception ocurred
 //! \details While throwing exceptions is possible calling this constructor, the
 //!   easiest and recommend way is to use the Assert, ErrChk, and Throw macros.
@@ -62,8 +62,10 @@ try :
     s << "\n>>> Exception at " << m_file << ":" << m_line << ": " << m_func;
   m_message = s.str();
 
+  #ifdef EXCEPTIONS_WRITE_TO_CERR
   // Uses streams (std::cerr) so it can be redirected
   std::cerr << ">>> Exception: " << m_message << std::endl;
+  #endif
 
   // Save call-trace
   saveTrace();

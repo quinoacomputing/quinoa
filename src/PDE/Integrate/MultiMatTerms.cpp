@@ -20,21 +20,23 @@
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
+namespace tk {
+
 void
-tk::nonConservativeInt( ncomp_t system,
-                        ncomp_t ncomp,
-                        std::size_t nmat,
-                        ncomp_t offset,
-                        const std::size_t ndof,
-                        const std::size_t rdof,
-                        const std::vector< std::size_t >& inpoel,
-                        const UnsMesh::Coords& coord,
-                        const Fields& geoElem,
-                        const Fields& U,
-                        const std::vector< std::vector< tk::real > >&
-                          riemannDeriv,
-                        const std::vector< std::size_t >& ndofel,
-                        Fields& R )
+nonConservativeInt( [[maybe_unused]] ncomp_t system,
+                    ncomp_t ncomp,
+                    std::size_t nmat,
+                    ncomp_t offset,
+                    const std::size_t ndof,
+                    const std::size_t rdof,
+                    const std::vector< std::size_t >& inpoel,
+                    const UnsMesh::Coords& coord,
+                    const Fields& geoElem,
+                    const Fields& U,
+                    const std::vector< std::vector< tk::real > >&
+                      riemannDeriv,
+                    const std::vector< std::size_t >& ndofel,
+                    Fields& R )
 // *****************************************************************************
 //  Compute volume integrals for multi-material DG
 //! \details This is called for multi-material DG, computing volume integrals of
@@ -63,8 +65,6 @@ tk::nonConservativeInt( ncomp_t system,
   using inciter::densityIdx;
   using inciter::momentumIdx;
   using inciter::energyIdx;
-
-  IGNORE(system);
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -170,15 +170,16 @@ tk::nonConservativeInt( ncomp_t system,
 }
 
 void
-tk::update_rhs_ncn( ncomp_t ncomp,
-                    ncomp_t offset,
-                    const std::size_t ndof,
-                    const std::size_t ndof_el,
-                    const tk::real wt,
-                    const std::size_t e,
-                    const std::array< std::vector<tk::real>, 3 >& dBdx,
-                    const std::vector< tk::real >& ncf,
-                    Fields& R )
+update_rhs_ncn(
+  ncomp_t ncomp,
+  ncomp_t offset,
+  const std::size_t ndof,
+  [[maybe_unused]] const std::size_t ndof_el,
+  const tk::real wt,
+  const std::size_t e,
+  [[maybe_unused]] const std::array< std::vector<tk::real>, 3 >& dBdx,
+  const std::vector< tk::real >& ncf,
+  Fields& R )
 // *****************************************************************************
 //  Update the rhs by adding the non-conservative term integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -192,13 +193,15 @@ tk::update_rhs_ncn( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  //Assert( dBdx[0].size() == ndof_el, "Size mismatch for basis function derivatives" );
-  //Assert( dBdx[1].size() == ndof_el, "Size mismatch for basis function derivatives" );
-  //Assert( dBdx[2].size() == ndof_el, "Size mismatch for basis function derivatives" );
+  //Assert( dBdx[0].size() == ndof_el,
+  //        "Size mismatch for basis function derivatives" );
+  //Assert( dBdx[1].size() == ndof_el,
+  //        "Size mismatch for basis function derivatives" );
+  //Assert( dBdx[2].size() == ndof_el,
+  //        "Size mismatch for basis function derivatives" );
+  //Assert( ncf.size() == ncomp,
+  //        "Size mismatch for non-conservative term" );
   Assert( ncf.size() == ncomp, "Size mismatch for non-conservative term" );
-
-  IGNORE(ndof_el);
-  IGNORE(dBdx);
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {
@@ -208,17 +211,17 @@ tk::update_rhs_ncn( ncomp_t ncomp,
 }
 
 void
-tk::pressureRelaxationInt( ncomp_t system,
-                           ncomp_t ncomp,
-                           std::size_t nmat,
-                           ncomp_t offset,
-                           const std::size_t ndof,
-                           const std::size_t rdof,
-                           const Fields& geoElem,
-                           const Fields& U,
-                           const std::vector< std::size_t >& ndofel,
-                           const tk::real ct,
-                           Fields& R )
+pressureRelaxationInt( ncomp_t system,
+                       ncomp_t ncomp,
+                       std::size_t nmat,
+                       ncomp_t offset,
+                       const std::size_t ndof,
+                       const std::size_t rdof,
+                       const Fields& geoElem,
+                       const Fields& U,
+                       const std::vector< std::size_t >& ndofel,
+                       const tk::real ct,
+                       Fields& R )
 // *****************************************************************************
 //  Compute volume integrals of pressure relaxation terms in multi-material DG
 //! \details This is called for multi-material DG to compute volume integrals of
@@ -333,4 +336,4 @@ tk::pressureRelaxationInt( ncomp_t system,
       update_rhs_ncn( ncomp, offset, ndof, ndofel[e], wt, e, dBdx, s_prelax, R );
     }
   }
-}
+} // tk::

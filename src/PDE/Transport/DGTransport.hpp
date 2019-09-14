@@ -205,9 +205,9 @@ class Transport {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \param[in,out] U Solution vector at recent time step
-    void limit( tk::real t,
-                const tk::Fields& geoFace,
-                const tk::Fields& geoElem,
+    void limit( [[maybe_unused]] tk::real t,
+                [[maybe_unused]] const tk::Fields& geoFace,
+                [[maybe_unused]] const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
@@ -215,10 +215,6 @@ class Transport {
                 tk::Fields& U,
                 tk::Fields& ) const
     {
-      IGNORE(t);
-      IGNORE(geoFace);
-      IGNORE(geoElem);
-
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
       if (limiter == ctr::LimiterType::WENOP1)

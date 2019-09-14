@@ -50,7 +50,7 @@ registerDiagOrnsteinUhlenbeck( DiffEqFactory& f,
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoDiagOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_type >& cnt )
+infoDiagOrnsteinUhlenbeck( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the diagonal Ornstein-Uhlenbeck SDE
 //! \param[inout] cnt std::map of counters for all differential equation types

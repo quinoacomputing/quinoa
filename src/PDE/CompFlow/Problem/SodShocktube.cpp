@@ -26,7 +26,7 @@ using inciter::CompFlowProblemSodShocktube;
 
 tk::SolutionFn::result_type
 CompFlowProblemSodShocktube::solution( ncomp_t system,
-                                       ncomp_t ncomp,
+                                       [[maybe_unused]] ncomp_t ncomp,
                                        tk::real x,
                                        tk::real,
                                        tk::real,
@@ -45,9 +45,8 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
 //!   been implemented yet.
 // *****************************************************************************
 {
-  Assert( ncomp == 5, "Number of scalar components must be 5" );
-  IGNORE(ncomp);
-
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   using tag::param;
 
   tk::real r, p, u, v, w, rE;
@@ -85,6 +84,7 @@ CompFlowProblemSodShocktube::solinc( ncomp_t system, ncomp_t ncomp, tk::real x,
 // for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution

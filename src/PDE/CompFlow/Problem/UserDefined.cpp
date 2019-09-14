@@ -26,7 +26,7 @@ using inciter::CompFlowProblemUserDefined;
 
 tk::SolutionFn::result_type
 CompFlowProblemUserDefined::solution( ncomp_t,
-                                      ncomp_t ncomp,
+                                      [[maybe_unused]] ncomp_t ncomp,
                                       tk::real,
                                       tk::real,
                                       tk::real,
@@ -38,9 +38,8 @@ CompFlowProblemUserDefined::solution( ncomp_t,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == 5, "Number of scalar components must be 5" );
-  IGNORE(ncomp);
-
+  Assert( ncomp == ncomp, "Number of scalar components must be " +
+                          std::to_string(ncomp) );
   return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
 }
 

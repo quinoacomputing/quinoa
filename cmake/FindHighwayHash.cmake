@@ -28,10 +28,9 @@ if(HIGHWAYHASH_INCLUDE_DIRS)
   set (HIGHWAYHASH_FIND_QUIETLY TRUE)
 endif()
 
-find_path(HIGHWAYHASH_INCLUDE_DIR NAMES sip_hash.h
+find_path(HIGHWAYHASH_INCLUDE_DIR NAMES highwayhash/sip_hash.h
                                   HINTS ${HIGHWAYHASH_ROOT}
-                                        $ENV{HIGHWAYHASH_ROOT}
-                                  PATH_SUFFIXES include highwayhash)
+                                        $ENV{HIGHWAYHASH_ROOT})
 
 set(HIGHWAYHASH_INCLUDE_DIRS ${HIGHWAYHASH_INCLUDE_DIR})
 

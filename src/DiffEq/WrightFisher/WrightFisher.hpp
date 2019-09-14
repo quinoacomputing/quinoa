@@ -91,8 +91,7 @@ class WrightFisher {
     //! Initalize SDE, prepare for time integration
     //! \param[in] stream Thread (or more precisely stream) ID 
     //! \param[in,out] particles Array of particle properties 
-    void initialize( int stream, tk::Particles& particles ) {
-      IGNORE( stream );
+    void initialize( [[maybe_unused]] int stream, tk::Particles& particles ) {
       //! Set initial conditions using initialization policy
       //Init::template
       //  init< tag::wrightfisher >

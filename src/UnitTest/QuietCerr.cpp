@@ -23,9 +23,9 @@ namespace tk {
 #endif
 
 //! std::tringstream used to quiet std::cerr's stream by redirecting to it
-std::stringstream cerr_quiet;
+static std::stringstream cerr_quiet;
 //! std::streambuf used to store state of std::cerr before redirecting it
-std::streambuf* cerr_old;
+static std::streambuf* cerr_old;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

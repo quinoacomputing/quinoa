@@ -39,6 +39,8 @@ using DerivedData_MPISingle_group =
 using DerivedData_MPISingle_object = DerivedData_MPISingle_group::object;
 
 //! Define test group
+//! \note Those test groups whose name contains "MPISingle" will be started as
+//!    MPI tests (from a Charm++ nodegroup) and from only a single MPI rank.
 static DerivedData_MPISingle_group
   DerivedData_MPISingle( "Mesh/DerivedData_MPISingle" );
 

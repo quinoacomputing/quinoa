@@ -2415,13 +2415,13 @@ HTML_EXTRA_STYLESHEET = \
 ##! M_FAVICON = @CMAKE_CURRENT_SOURCE_DIR@/../doc/images/quinoa_sum.png
 
 ##! M_LINKS_NAVBAR1 = why \
-##!                   "build <a href=\"https://quinoacomputing.org/index.html#mainpage_build\">Quickstart</a> git_submodules_subtrees licenses" \
+##!                   "build <a href=\"https://quinoacomputing.org/index.html#mainpage_build\">Quickstart</a> git_submodules_subtrees licenses build_system" \
 ##!                   "<a href=\"https://quinoacomputing.org/index.html#mainpage_tools\">Tools</a> walker_main inciter_main rngtest_main unittest_main meshconv_main" \
 ##!                   namespaces annotated files
 
 ##! M_LINKS_NAVBAR2 = "resources <a href=\"https://github.com/quinoacomputing/quinoa\">GitHub</a> <a href=\"https://github.com/quinoacomputing/quinoa/releases\">Tarballs</a> <a href=\"https://github.com/quinoacomputing/quinoa/blob/master/LICENSE\">License</a> roadmap contributing papers <a href=\"https://quinoa.zulipchat.com\">Chat</a> <a href=\"https://quinoa.groups.io\">Email list</a> coverage <a href=\"https://dev.azure.com/quinoacomputing/Quinoa\">Azure</a> <a href=\"http://www.openhub.net/p/quinoacomputing\">OpenHub</a> <a href=\"https://bestpractices.coreinfrastructure.org/projects/2120\">Practices</a>"
 
-##! M_PAGE_FINE_PRINT = "<p>Quinoa docs, part of the <a href="http://quinoacomputing.org/">Quinoa project</a>. Copyright © J. Bakosi 2012&ndash;2015, Los Alamos National Security, LLC, 2016&ndash;2018, <a href="https://www.triadns.org/">Triad National Security, LLC,</a> 2019. Generated on @BUILD_DATE_SIMPLE@ based on <a href="https://github.com/quinoacomputing/quinoa/commit/@GIT_SHA1_ONLY@">@GIT_SHA1_ONLY@</a> by <a href="http://doxygen.org/">Doxygen</a> and <a href="http://mcss.mosra.cz/">m.css</a>. Contact us via <a href="https://github.com/quinoacomputing/quinoa/">GitHub</a>, <a href="https://groups.io/g/quinoa">Email</a> or <a href="https://https://quinoa.zulipchat.com">Chat</a>.</p>"
+##! M_PAGE_FINE_PRINT = "<p>Quinoa docs, part of the <a href="http://quinoacomputing.org/">Quinoa project</a>. Copyright © J. Bakosi 2012&ndash;2015, Los Alamos National Security, LLC, 2016&ndash;2018, <a href="https://www.triadns.org/">Triad National Security, LLC,</a> 2019. Generated on @BUILD_DATE_SIMPLE@ based on <a href="https://github.com/quinoacomputing/quinoa/commit/@GIT_SHA1_ONLY@">@GIT_SHA1_ONLY@</a> by <a href="http://doxygen.org/">Doxygen</a> and <a href="http://mcss.mosra.cz/">m.css</a>. Contact us via <a href="https://github.com/quinoacomputing/quinoa/">GitHub</a>, <a href="https://groups.io/g/quinoa">Email</a> or <a href="https://quinoa.zulipchat.com">Chat</a>.</p>"
 
 ALIASES += \
     "m_div{1}=@xmlonly<mcss:div xmlns:mcss=\"http://mcss.mosra.cz/doxygen/\" mcss:class=\"\1\">@endxmlonly" \

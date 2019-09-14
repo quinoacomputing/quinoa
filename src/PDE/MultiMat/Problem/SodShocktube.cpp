@@ -48,7 +48,6 @@ MultiMatProblemSodShocktube::solution( ncomp_t system,
 // *****************************************************************************
 {
   Assert( ncomp == 9, "Number of scalar components must be 9" );
-  IGNORE(ncomp);
 
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
@@ -102,6 +101,7 @@ MultiMatProblemSodShocktube::solinc( ncomp_t system, ncomp_t ncomp, tk::real x,
 // for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution

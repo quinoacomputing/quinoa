@@ -304,29 +304,29 @@ Transporter::createPartitioner()
   }
 
   // Create partitioner callbacks (order matters)
-  tk::PartitionerCallback cbp {
+  tk::PartitionerCallback cbp {{
       CkCallback( CkReductionTarget(Transporter,load), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
-  };
+  }};
 
   // Create refiner callbacks (order matters)
-  tk::RefinerCallback cbr {
+  tk::RefinerCallback cbr {{
       CkCallback( CkReductionTarget(Transporter,edges), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,compatibility), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,bndint), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
-  };
+  }};
 
   // Create sorter callbacks (order matters)
-  tk::SorterCallback cbs {
+  tk::SorterCallback cbs {{
       CkCallback( CkReductionTarget(Transporter,queried), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,responded), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,discinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
-  };
+  }};
 
   // Start timer measuring preparation of the mesh for partitioning
   m_timer[ TimerTag::MESH_READ ];
@@ -558,7 +558,7 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
     Throw( err.str() );
   }
 
-  if (cb > 0.0) m_scheme.resizeComm();
+  if (cb > 0.0) m_scheme.bcast< Scheme::resizeComm >();
 }
 
 void
@@ -598,12 +598,24 @@ Transporter::responded()
 }
 
 void
+Transporter::resized()
+// *****************************************************************************
+// Reduction target: all worker chares have resized their own data after
+// mesh refinement
+//! \note Only used for nodal schemes
+// *****************************************************************************
+{
+  m_scheme.disc().vol();
+  m_scheme.bcast< Scheme::lhs >();
+}
+
+void
 Transporter::discinserted()
 // *****************************************************************************
 // Reduction target: all Discretization chares have been inserted
 // *****************************************************************************
 {
-  m_scheme.doneDiscInserting< tag::bcast >();
+  m_scheme.disc().doneInserting();
 }
 
 void
@@ -623,10 +635,9 @@ Transporter::disccreated()
   m_refiner.sendProxy();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::DiagCG)
-    m_scheme.doneDistFCTInserting< tag::bcast >();
+  if (sch == ctr::SchemeType::DiagCG) m_scheme.fct().doneInserting();
 
-  m_scheme.vol();
+  m_scheme.disc().vol();
 }
 
 void
@@ -636,7 +647,7 @@ Transporter::workinserted()
 // inserted
 // *****************************************************************************
 {
-  m_scheme.doneInserting< tag::bcast >();
+  m_scheme.bcast< Scheme::doneInserting >();
 }
 
 void
@@ -694,11 +705,11 @@ Transporter::comfinal( int initial )
 {
   if (initial > 0) {
     m_progWork.end();
-    m_scheme.setup();
+    m_scheme.bcast< Scheme::setup >();
     // Turn on automatic load balancing
     tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
   } else {
-    m_scheme.lhs();
+    m_scheme.bcast< Scheme::lhs >();
   }
 }
 // [Discretization-specific communication maps]
@@ -715,21 +726,9 @@ Transporter::totalvol( tk::real v, tk::real initial )
   m_meshvol = v;
 
   if (initial > 0.0)
-    m_scheme.stat< tag::bcast >( m_meshvol );
+    m_scheme.disc().stat( m_meshvol );
   else
-    m_scheme.resized();
-}
-
-void
-Transporter::resized()
-// *****************************************************************************
-// Reduction target: all worker chares have resized their own data after
-// mesh refinement
-//! \note Only used for nodal schemes
-// *****************************************************************************
-{
-  m_scheme.vol();
-  m_scheme.lhs();
+    m_scheme.bcast< Scheme::resized >();
 }
 
 void
@@ -927,7 +926,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
   // Evaluate whether to continue with next step
-  m_scheme.refine();
+  m_scheme.bcast< Scheme::refine >();
 }
 
 void
@@ -944,7 +943,7 @@ Transporter::resume()
 
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (std::fabs(m_t-term) > eps && m_it < nstep)
-    m_scheme.evalLB< tag::bcast >();
+    m_scheme.bcast< Scheme::evalLB >();
   else
     mainProxy.finalize();
 }

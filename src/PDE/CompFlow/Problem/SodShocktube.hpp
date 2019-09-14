@@ -31,7 +31,7 @@ namespace inciter {
 class CompFlowProblemSodShocktube {
 
   protected:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
 
   public:
@@ -60,7 +60,7 @@ class CompFlowProblemSodShocktube {
     //! Return field output going to file
     std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
-                 ncomp_t ncomp,
+                 ncomp_t /*ncomp*/,
                  ncomp_t offset,
                  tk::real,
                  tk::real /*V*/,

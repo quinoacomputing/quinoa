@@ -32,7 +32,7 @@ namespace inciter {
 class CompFlowProblemNLEnergyGrowth {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
 
     //! Compute internal energy parameter
@@ -57,7 +57,7 @@ class CompFlowProblemNLEnergyGrowth {
 
     //! Compute and return source term for NLEG manufactured solution
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z,
+    src( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
          tk::real t );
 
     //! \brief Query all side set IDs the user has configured for all components

@@ -35,10 +35,12 @@ target_include_directories(Inciter PUBLIC
                            ${QUINOA_SOURCE_DIR}/PDE
                            ${QUINOA_TPL_DIR}
                            ${SEACASExodus_INCLUDE_DIRS}
+                           ${NETCDF_INCLUDES}
                            ${BRIGAND_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
                            ${HYPRE_INCLUDE_DIRS}
+                           ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${ROOT_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
@@ -62,6 +64,7 @@ target_include_directories(MeshRefinement PUBLIC
                            ${QUINOA_SOURCE_DIR}/Inciter
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
+                           ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${TPL_INCLUDE_DIR}
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)

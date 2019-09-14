@@ -34,8 +34,7 @@ namespace random123 {
             typename vec, typename... tags >
   struct seed :
          tk::grm::process< use< kw::seed >,
-                           tk::grm::Insert_field< tag::seed,
-                                                  sel, vec, tags... > > {};
+                           tk::grm::insert_seed< sel, vec, tags... > > {};
 
   //! \brief Match Random123 RNGs in an rngs ... end block
   //! \see walker::deck::rngs
