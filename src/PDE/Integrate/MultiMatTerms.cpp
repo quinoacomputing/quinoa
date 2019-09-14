@@ -300,22 +300,21 @@ tk::pressureRelaxationInt( ncomp_t system,
                                   ugp[momentumIdx(nmat, 2)]/rhob }};
 
       // get pressures and bulk modulii
-      real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
-      std::vector< real > rhomat(nmat, 0.0), pmat(nmat, 0.0),
-                          amat(nmat, 0.0), kmat(nmat, 0.0);
+      real rhomat(0.0), pb(0.0), amat(0.0), nume(0.0), deno(0.0), trelax(0.0);
+      std::vector< real > pmat(nmat, 0.0), kmat(nmat, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
       {
-        rhomat[k] = ugp[densityIdx(nmat, k)]/ugp[volfracIdx(nmat, k)];
+        rhomat = ugp[densityIdx(nmat, k)]/ugp[volfracIdx(nmat, k)];
         pmat[k] = inciter::eos_pressure< tag::multimat >
-                    ( system, rhomat[k], vel[0], vel[1], vel[2],
+                    ( system, rhomat, vel[0], vel[1], vel[2],
                       ugp[energyIdx(nmat, k)]/ugp[volfracIdx(nmat, k)], k );
-        amat[k] = inciter::eos_soundspeed< tag::multimat >
-                    ( system, rhomat[k], pmat[k] );
-        kmat[k] = rhomat[k] * amat[k] * amat[k];
-        pb += pmat[k];
+        amat = inciter::eos_soundspeed< tag::multimat >
+                 ( system, rhomat, pmat[k] );
+        kmat[k] = rhomat * amat * amat;
+        pb += ugp[volfracIdx(nmat, k)] * pmat[k];
 
         // relaxation parameters
-        trelax = std::max(trelax, ct*dx/amat[k]);
+        trelax = std::max(trelax, ct*dx/amat);
         nume += ugp[volfracIdx(nmat, k)] / kmat[k] * pmat[k];
         deno += ugp[volfracIdx(nmat, k)] / kmat[k];
       }

@@ -128,7 +128,7 @@ struct AUSM {
     auto mr = vnr/ac12;
 
     // All-speed parameters
-    tk::real k_u(0.0), k_p(0.0), f_a(1.0);
+    tk::real k_u(0.5), k_p(0.5), f_a(1.0);
 
     // Split Mach polynomials
     auto msl = splitmach_ausm( f_a, ml );
