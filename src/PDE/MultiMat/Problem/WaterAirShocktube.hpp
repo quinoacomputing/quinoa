@@ -33,7 +33,7 @@ namespace inciter {
 class MultiMatProblemWaterAirShocktube {
 
   protected:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::multimat;
 
   public:
