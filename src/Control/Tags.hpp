@@ -215,6 +215,7 @@ struct bcsym {};
 struct bcinlet {};
 struct bcoutlet {};
 struct bcextrapolate {};
+struct bcsubsonicoutlet {};
 struct material {};
 struct id {};
 struct position_id {};

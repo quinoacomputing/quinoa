@@ -232,11 +232,12 @@ namespace grm {
 
       // Put in default farfield pressure if not specified by user
       // if outlet BC is configured for this compflow system
-      auto& bcoutlet = stack.template get< tag::param, eq, tag::bcoutlet >();
-      if (!bcoutlet.empty() || bcoutlet.size() != neq.get< eq >()) {
+      auto& bcsubsonicoutlet =
+          stack.template get< tag::param, eq, tag::bcsubsonicoutlet >();
+      if (!bcsubsonicoutlet.empty() || bcsubsonicoutlet.size() != neq.get< eq >()) {
         auto& fp =
           stack.template get< tag::param, eq, tag::farfield_pressure >();
-        if (fp.size() != bcoutlet.size()) fp.push_back( 1.0 );
+        if (fp.size() != bcsubsonicoutlet.size()) fp.push_back( 1.0 );
       }
     }
   };
@@ -759,7 +760,7 @@ namespace deck {
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
                            subsonic_bc< kw::bc_outlet,
                                         tag::compflow,
-                                        tag::bcoutlet >,
+                                        tag::bcsubsonicoutlet >,
                            bc< kw::bc_extrapolate, tag::compflow,
                                tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
