@@ -203,22 +203,24 @@ INSTALL(TARGETS MeshWriter
 
 addCharmModule( "meshwriter" "MeshWriter" )
 
-add_library(ParticleIO
-            H5PartWriter.cpp)
-
-target_include_directories(ParticleIO PUBLIC
-                           ${QUINOA_SOURCE_DIR}
-                           ${QUINOA_SOURCE_DIR}/Base
-                           ${H5PART_INCLUDE_DIRS}
-                           ${HDF5_INCLUDE_DIRS}
-                           ${MPI_CXX_INCLUDE_DIRS}
-                           ${MPI_CXX_INCLUDE_PATH})
-
-set_target_properties(ParticleIO PROPERTIES LIBRARY_OUTPUT_NAME
-                      quinoa_particleio)
-
-INSTALL(TARGETS ParticleIO
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+# The following lines are commented out so that meshconv can be cuilt without
+# h5part. Once ParticleIO is hooked in again, these lines will be uncommented.
+#add_library(ParticleIO
+#            H5PartWriter.cpp)
+#
+#target_include_directories(ParticleIO PUBLIC
+#                           ${QUINOA_SOURCE_DIR}
+#                           ${QUINOA_SOURCE_DIR}/Base
+#                           ${H5PART_INCLUDE_DIRS}
+#                           ${HDF5_INCLUDE_DIRS}
+#                           ${MPI_CXX_INCLUDE_DIRS}
+#                           ${MPI_CXX_INCLUDE_PATH})
+#
+#set_target_properties(ParticleIO PROPERTIES LIBRARY_OUTPUT_NAME
+#                      quinoa_particleio)
+#
+#INSTALL(TARGETS ParticleIO
+#        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+#        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+#        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+#)
