@@ -6,7 +6,8 @@ add_library(CompFlowProblem
             SedovBlastwave.cpp
             TaylorGreen.cpp
             UserDefined.cpp
-            VorticalFlow.cpp)
+            VorticalFlow.cpp
+            GaussHumpCompflow.cpp)
 
 target_include_directories(CompFlowProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}

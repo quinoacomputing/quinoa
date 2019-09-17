@@ -26,6 +26,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Refiner.hpp"
 #include "Limiter.hpp"
+#include "PrefIndicator.hpp"
 #include "Reorder.hpp"
 #include "Vector.hpp"
 
@@ -927,8 +928,17 @@ DG::adj()
   for (auto& p : m_pc) p.resize( m_bid.size() );
 
   // Initialize number of degrees of freedom in mesh elements
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  m_ndof.resize( m_nunk, ndof );
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  if( pref )
+  {
+    const auto ndofmax = g_inputdeck.get< tag::pref, tag::ndofmax >();
+    m_ndof.resize( m_nunk, ndofmax );
+  }
+  else
+  {
+    const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+    m_ndof.resize( m_nunk, ndof );
+  }
 
   // Ensure that we also have all the geometry and connectivity data 
   // (including those of ghosts)
@@ -1018,9 +1028,17 @@ DG::next()
 // Advance equations to next time step
 // *****************************************************************************
 {
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
-  if (pref && m_stage == 0) eval_ndof();
+  auto d = Disc();
+
+  if (pref && m_stage == 0 && d->T() > 0)
+    eval_ndof( m_nunk, Disc()->Coord(), Disc()->Inpoel(), m_fd, m_u,
+               g_inputdeck.get< tag::pref, tag::indicator >(),
+               g_inputdeck.get< tag::discr, tag::ndof >(),
+               g_inputdeck.get< tag::pref, tag::ndofmax >(),
+               g_inputdeck.get< tag::pref, tag::tolref >(),
+               m_ndof );
 
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
@@ -1068,7 +1086,7 @@ DG::comsol( int fromch,
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
   Assert( prim.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   if (pref && fromstage == 0)
     Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsol()" );
@@ -1094,83 +1112,6 @@ DG::comsol( int fromch,
   if (++m_nsol == m_ghostData.size()) {
     m_nsol = 0;
     comsol_complete();
-  }
-}
-
-void
-DG::eval_ndof()
-// *****************************************************************************
-// Calculate the local number of degrees of freedom for each element for
-// p-adaptive DG
-// *****************************************************************************
-{
-  const auto& esuel = m_fd.Esuel();
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ncomp = m_u.nprop()/rdof;
-  const auto& inpoel = Disc()->Inpoel();
-  const auto& coord = Disc()->Coord();
-  const auto tolref = inciter::g_inputdeck.get< tag::pref, tag::tolref >();
-
-  const auto& cx = coord[0];
-  const auto& cy = coord[1];
-  const auto& cz = coord[2];
-
-  for (std::size_t e=0; e<esuel.size()/4; ++e)
-  {
-    if(m_ndof[e] == 4)
-    {
-      // Extract the element coordinates
-      std::array< std::array< tk::real, 3>, 4 > coordel {{
-        {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-        {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-        {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-        {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-      }};
-
-      auto jacInv =
-        tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
-
-      std::size_t sign(0);
-
-      for (std::size_t c=0; c<ncomp; ++c)
-      {
-        auto mark = c*rdof;
-
-        // Gradient of unkowns in reference space
-        std::array< std::array< tk::real, 3 >, 5 > dudxi;
-
-        dudxi[c][0] = 2 * m_u(e, mark+1, 0);
-        dudxi[c][1] = m_u(e, mark+1, 0) + 3.0 * m_u(e, mark+2, 0);
-        dudxi[c][2] = m_u(e, mark+1, 0) + m_u(e, mark+2, 0)
-                      + 4.0 * m_u(e, mark+3, 0);
-
-        // Gradient of unkowns in physical space
-        std::array< std::array< tk::real, 3 >, 5 > dudx;
-
-        dudx[c][0] =   dudxi[c][0] * jacInv[0][0]
-                     + dudxi[c][1] * jacInv[1][0]
-                     + dudxi[c][2] * jacInv[2][0];
-
-        dudx[c][1] =   dudxi[c][0] * jacInv[0][1]
-                     + dudxi[c][1] * jacInv[1][1]
-                     + dudxi[c][2] * jacInv[2][1];
-
-        dudx[c][2] =   dudxi[c][0] * jacInv[0][2]
-                     + dudxi[c][1] * jacInv[1][2]
-                     + dudxi[c][2] * jacInv[2][2];
-
-        auto grad = sqrt(  dudx[c][0] * dudx[c][0]
-                         + dudx[c][1] * dudx[c][1]
-                         + dudx[c][2] * dudx[c][2] );
-
-        if (grad > tolref) ++sign;
-      }
-
-      if(sign > 0)
-        m_ndof[e] = 4;
-      else
-        m_ndof[e] = 1;
-    }
   }
 }
 
@@ -1244,8 +1185,8 @@ DG::lim()
 // Compute limiter function
 // *****************************************************************************
 {
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
   // Combine own and communicated contributions of unlimited solution and
   // degrees of freedom in cells (if p-adaptive)
@@ -1271,7 +1212,7 @@ DG::lim()
 
     // Reconstruct second-order solution and primitive quantities
     // if P0P1
-    if (rdof == 4 && inciter::g_inputdeck.get< tag::discr, tag::ndof >() == 1)
+    if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1)
       for (const auto& eq : g_dgpde)
         eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
                         d->Coord(), m_u, m_p );
@@ -1318,18 +1259,18 @@ DG::propagate_ndof()
   // Copy number of degrees of freedom for each cell
   auto ndof = m_ndof;
 
-  // p-refine (DGP0 -> DGP1) all neighboring elements of elements that have
-  // been p-refined (DGP0 -> DGP1) as a result of error indicators
+  // p-refine all neighboring elements of elements that have been p-refined as a
+  // result of error indicators
   for( auto f=m_fd.Nbfac(); f<esuf.size()/2; ++f )
   {
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
-    if (m_ndof[el] == 4)
-      ndof[er] = 4;
+    if (m_ndof[el] > m_ndof[er])
+      ndof[er] = m_ndof[el];
 
-    if (m_ndof[er] == 4)
-      ndof[el] = 4;
+    if (m_ndof[el] < m_ndof[er])
+      ndof[el] = m_ndof[er];
   }
 
   // Update number of degrees of freedom for each cell
@@ -1356,7 +1297,7 @@ DG::comlim( int fromch,
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comlim()" );
   Assert( prim.size() == tetid.size(), "Size mismatch in DG::comlim()" );
 
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   if (pref && m_stage == 0)
     Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comlim()" );
@@ -1392,7 +1333,7 @@ DG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   auto d = Disc();
 
@@ -1474,17 +1415,17 @@ DG::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4lim();
 
   auto d = Disc();
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   const auto neq = m_u.nprop()/rdof;
 
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   if (pref && m_stage == 0)
   {
-    // When the element are coarsened, high order term should be zero
+    // When the element are coarsened, high order terms should be zero
     for(std::size_t e = 0; e < m_nunk; e++)
     {
       const auto ncomp= m_u.nprop()/rdof;
@@ -1496,6 +1437,18 @@ DG::solve( tk::real newdt )
           m_u(e, mark+1, 0) = 0.0;
           m_u(e, mark+2, 0) = 0.0;
           m_u(e, mark+3, 0) = 0.0;
+        }
+      } else if(m_ndof[e] == 4)
+      {
+        for (std::size_t c=0; c<ncomp; ++c)
+        {
+          auto mark = c*ndof;
+          m_u(e, mark+4, 0) = 0.0;
+          m_u(e, mark+5, 0) = 0.0;
+          m_u(e, mark+6, 0) = 0.0;
+          m_u(e, mark+7, 0) = 0.0;
+          m_u(e, mark+8, 0) = 0.0;
+          m_u(e, mark+9, 0) = 0.0;
         }
       }
     }

@@ -229,6 +229,16 @@ namespace grm {
       for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
         if (s.empty())
           Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+
+      // Put in default farfield pressure if not specified by user
+      // if outlet BC is configured for this compflow system
+      auto& bcsubsonicoutlet =
+          stack.template get< tag::param, eq, tag::bcsubsonicoutlet >();
+      if (!bcsubsonicoutlet.empty() || bcsubsonicoutlet.size() != neq.get< eq >()) {
+        auto& fp =
+          stack.template get< tag::param, eq, tag::farfield_pressure >();
+        if (fp.size() != bcsubsonicoutlet.size()) fp.push_back( 1.0 );
+      }
     }
   };
 
@@ -398,13 +408,13 @@ namespace grm {
         stack.template get< tag::discr, tag::ndof >() = 10;
         stack.template get< tag::discr, tag::rdof >() = 10;
       }
-      // if pDG is configured, set ndofs and rdofs to be 4 and the adaptive
-      // indicator pref set to be true (temporary for P0/P1 adaptive)
+      // if pDG is configured, set ndofs and rdofs to be 10 and the adaptive
+      // indicator pref set to be true
       if (stack.template get< tag::discr, tag::scheme >() ==
            inciter::ctr::SchemeType::PDG)
       {
-        stack.template get< tag::discr, tag::ndof >() = 4;
-        stack.template get< tag::discr, tag::rdof >() = 4;
+        stack.template get< tag::discr, tag::ndof >() = 10;
+        stack.template get< tag::discr, tag::rdof >() = 10;
         stack.template get< tag::pref, tag::pref >() = true;
       }
     }
@@ -581,6 +591,14 @@ namespace deck {
                                     eq,
                                     param > {};
 
+  //! put in PDE parameter for equation matching keyword
+  template< typename eq, typename keyword, typename p,
+            class kw_type = tk::grm::number >
+  struct parameter :
+         tk::grm::process< use< keyword >,
+                           tk::grm::Store_back< tag::param, eq, p >,
+                           kw_type > {};
+
   //! Boundary conditions block
   template< class keyword, class eq, class param >
   struct bc :
@@ -588,6 +606,22 @@ namespace deck {
            tk::grm::readkw< typename use< keyword >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::sideset >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq,
+                                        param > > > {};
+
+  //! Farfield boundary conditions block
+  template< class keyword, class eq, class param >
+  struct subsonic_bc :
+         pegtl::if_must<
+           tk::grm::readkw< typename use< keyword >::pegtl_string >,
+           tk::grm::block<
+             use< kw::end >,
+             parameter< eq, kw::farfield_pressure, tag::farfield_pressure >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,
@@ -652,14 +686,6 @@ namespace deck {
                material_property< eq, kw::mat_mu, tag::mu >,
                material_property< eq, kw::mat_cv, tag::cv >,
                material_property< eq, kw::mat_k, tag::k > > > {};
-
-  //! put in PDE parameter for equation matching keyword
-  template< typename eq, typename keyword, typename p,
-            class kw_type = tk::grm::number >
-  struct parameter :
-         tk::grm::process< use< keyword >,
-                           tk::grm::Store_back< tag::param, eq, p >,
-                           kw_type > {};
 
   //! transport equation for scalars
   struct transport :
@@ -732,7 +758,9 @@ namespace deck {
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           bc< kw::bc_outlet, tag::compflow, tag::bcoutlet >,
+                           subsonic_bc< kw::bc_outlet,
+                                        tag::compflow,
+                                        tag::bcsubsonicoutlet >,
                            bc< kw::bc_extrapolate, tag::compflow,
                                tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
@@ -866,7 +894,18 @@ namespace deck {
                            tk::grm::control< use< kw::pref_tolref >,
                                              pegtl::digit,
                                              tag::pref,
-                                             tag::tolref > >,
+                                             tag::tolref  >,
+                           tk::grm::control< use< kw::pref_ndofmax >,
+                                             pegtl::digit,
+                                             tag::pref,
+                                             tag::ndofmax >,
+                           tk::grm::process<
+                             use< kw::pref_indicator >,
+                             tk::grm::store_inciter_option<
+                               ctr::PrefIndicator,
+                               tag::pref, tag::indicator >,
+                             pegtl::alpha >
+                         >,
            tk::grm::check_pref_errors > {};
 
   //! plotvar ... end block
