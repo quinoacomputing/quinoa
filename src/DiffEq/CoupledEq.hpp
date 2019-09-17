@@ -131,13 +131,9 @@ std::size_t offset( std::size_t system )
 //!   tk::grm::couple in Control/Walker/InputDeck/Grammar.h
 //! \param[in] system Relative equation system id of equation 'eq'
 //! \return System offset of coupled equation in tk::Data array of all systems
-//! \note If equation 'eq' is not coupled to equation 'coupledeq', we return a
-//!   large number which will hopefully trigger some problems in client code if
-//!   used. This is used to indicate "no coupling" so that client code can still
-//!   call this function even for an equation that is not coupled, without
-//!   chaning client code, compared to equations that are coupled. In other
-//!   words, calling this function on a coupledeq equation that is not coupled
-//!   is not an error.
+//! \note If equation 'eq' is not coupled to equation 'coupledeq', we return the
+//!   id of the coupled equation. In other words, calling this function on a
+//!   coupledeq equation that is not coupled is not an error.
 // *****************************************************************************
 {
   static_assert( !std::is_same< eq, coupledeq >::value,
@@ -150,6 +146,34 @@ std::size_t offset( std::size_t system )
   if (coupled< eq, coupledeq >( system ))
     return g_inputdeck.get< tag::component >().offset< coupledeq >( cid );
   else 
+    return cid;
+}
+
+template< typename eq, typename coupledeq, typename id >
+std::size_t ncomp( std::size_t system )
+// *****************************************************************************
+//  Query number of components of coupled equation
+//! \tparam eq Tag of the equation that is coupled
+//! \tparam coupledeq Tag of the equation that is coupled to equation 'eq'
+//! \tparam id Tag to access the coupled equation 'eq' (relative) ids, see
+//!   tk::grm::couple in Control/Walker/InputDeck/Grammar.h
+//! \param[in] system Relative equation system id of equation 'eq'
+//! \return Number of scalar components of coupled equation
+//! \note If equation 'eq' is not coupled to equation 'coupledeq', we return the
+//!   id of the coupled equation. In other words, calling this function on a
+//!   coupledeq equation that is not coupled is not an error.
+// *****************************************************************************
+{
+  static_assert( !std::is_same< eq, coupledeq >::value,
+                 "Eq and coupled eq must differ" );
+
+  // Query relative id of coupled eq
+  auto cid = system_id< eq, coupledeq, id >( system );
+
+  // Return number of scalar components of coupled eq
+  if (coupled< eq, coupledeq >( system ))
+    return g_inputdeck.get< tag::component >().get< coupledeq >().at( cid );
+  else
     return cid;
 }
 

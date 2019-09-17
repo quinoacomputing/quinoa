@@ -277,7 +277,7 @@ namespace grm {
   //!   coupled to eq among other DiffEqs of type coupledeq
   //! \tparam depvar_msg Error message key to use on missing coupled depvar
   //! \param[in] in Parser input
-  //! \param[in,out] stack Grammar stack to wrok with
+  //! \param[in,out] stack Grammar stack to work with
   //! \param[in] missing Error message key to use on missing coupled equation
   //!   if the coupling is required. Pass MsgKey::OPTIONAL as missing if the
   //!   coupling is optional.
@@ -359,6 +359,34 @@ namespace grm {
     }
   }
 
+  //! Query if equation 'eq' has been coupled to equation 'coupledeq'
+  //! \tparam eq Tag of the equation to query
+  //! \tparam coupledeq Tag of the equation that is potentially coupled to
+  //!   equation 'eq'
+  //! \param[in] stack Grammar stack to work with
+  //! \return True if equation 'eq' is coupled to equation 'coupledeq'
+  //! \note Always the eq system that is parsed last is interrogated.
+  template< typename eq, typename coupledeq, typename Stack >
+  static bool coupled( const Stack& stack ) {
+    return stack.template get< tag::param, eq, coupledeq >().back() != '-';
+  }
+
+  //! Query number of components of coupled equation
+  //! \tparam eq Tag of the equation that is coupled
+  //! \tparam coupledeq Tag of the equation that is coupled to equation 'eq'
+  //! \tparam id Tag to access the coupled equation 'eq' (relative) ids, see
+  //!   tk::grm::couple.
+  //! \param[in] stack Grammar stack to work with
+  //! \return Number of scalar components of coupled equation
+  //! \note Always the eq system that is parsed last is interrogated.
+  template< typename eq, typename coupledeq, typename id, typename Stack >
+  static std::size_t ncomp_coupled( const Stack& stack ) {
+    Assert( (coupled< eq, coupledeq >( stack )), "Eq must be coupled" );
+    // Query relative id of coupled eq
+    auto cid = stack.template get< tag::param, eq, id >().back();
+    return stack.template get< tag::component, coupledeq >().at( cid );
+  }
+
   //! Rule used to trigger action
   struct check_velocity : pegtl::success {};
   //! \brief Do error checking on the velocity eq block
@@ -386,6 +414,31 @@ namespace grm {
           stack.template get< tag::param, tag::velocity, tag::solve >();
         if (solve.size() != neq.get< tag::velocity >())
           Message< Stack, ERROR, MsgKey::NOSOLVE >( stack, in );
+
+        // Increase number of components by the number of particle densities if
+        // we solve for particle momentum, coupled to mass fractions. This is
+        // to allocate storage for particle velocity as variables derived from
+        // momentum.
+        if (!solve.empty() && solve.back() == walker::ctr::DepvarType::PRODUCT)
+        {
+          //! Error out if not coupled to mixmassfracbeta
+          if (!coupled< tag::velocity, tag::mixmassfracbeta >( stack )) {
+            Message< Stack, ERROR, MsgKey::MIXMASSFRACBETA_DEPVAR >(stack,in);
+          } else {
+            // access number of components of velocity eq just parsed
+            auto& ncomp = stack.template get< tag::component, tag::velocity >();
+            // query number of components of coupled mixmassfracbeta model
+            auto nc = ncomp_coupled< tag::velocity, tag::mixmassfracbeta,
+                                     tag::mixmassfracbeta_id >( stack );
+            // Augment storage of velocity equation, solving for momentum by
+            // the number of scalar components the coupled mixmassfracbeta mix
+            // model solves for. The magic number, 4, below is
+            // MixMassFractionBeta::NUMDERIVED + 1, and the 3 is the number of
+            // velocity components derived from momentum.
+            ncomp.back() += (nc/4)*3;
+          }
+        }
+
         // Set C0 = 2.1 if not specified
         auto& C0 = stack.template get< tag::param, tag::velocity, tag::c0 >();
         if (C0.size() != neq.get< tag::velocity >()) C0.push_back( 2.1 );
