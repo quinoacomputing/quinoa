@@ -156,6 +156,10 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::amr_zminus,
                                    kw::amr_zplus,
                                    kw::pref,
+                                   kw::pref_indicator,
+                                   kw::pref_spectral_decay,
+                                   kw::pref_non_conformity,
+                                   kw::pref_ndofmax,
                                    kw::pref_tolref,
                                    kw::scheme,
                                    kw::diagcg,
@@ -179,12 +183,14 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::bc_inlet,
                                    kw::bc_outlet,
                                    kw::bc_extrapolate,
+                                   kw::farfield_pressure,
                                    kw::gauss_hump,
                                    kw::rotated_sod_shocktube,
                                    kw::cyl_advect,
                                    kw::sod_shocktube,
                                    kw::sedov_blastwave,
-                                   kw::interface_advection >;
+                                   kw::interface_advection,
+                                   kw::gauss_hump_compflow >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -232,7 +238,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::zplus >() = -rmax;
       // Default p-refinement settings
       get< tag::pref, tag::pref >() = false;
-      get< tag::pref, tag::tolref >() = 0.1;
+      get< tag::pref, tag::indicator >() = PrefIndicatorType::SPECTRAL_DECAY;
+      get< tag::pref, tag::ndofmax >() = 10;
+      get< tag::pref, tag::tolref >() = 0.5;
       // Default txt floating-point output precision in digits
       get< tag::prec, tag::diag >() = std::cout.precision();
       // Default intervals

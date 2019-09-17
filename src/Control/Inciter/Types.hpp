@@ -25,6 +25,7 @@
 #include "Inciter/Options/Flux.hpp"
 #include "Inciter/Options/AMRInitial.hpp"
 #include "Inciter/Options/AMRError.hpp"
+#include "Inciter/Options/PrefIndicator.hpp"
 #include "Options/PartitioningAlgorithm.hpp"
 #include "Options/TxtFloatFormat.hpp"
 #include "Options/FieldFile.hpp"
@@ -74,8 +75,10 @@ using amr = tk::TaggedTuple< brigand::list<
 
 //! p-adaptive refinement options
 using pref = tk::TaggedTuple< brigand::list<
-    tag::pref,     bool                          //!< p-refinement on/off
-  , tag::tolref,   tk::real                      //!< Threshold of p-refinement
+    tag::pref,        bool                //!< p-refinement on/off
+  , tag::indicator,   PrefIndicatorType   //!< Choice of adaptive indicator
+  , tag::ndofmax,     std::size_t         //!< Max number of degree of freedom
+  , tag::tolref,      tk::real            //!< Threshold of p-refinement
 > >;
 
 //! Discretization parameters storage
@@ -93,7 +96,6 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::cweight,kw::cweight::info::expect::type//!< WENO central stencil weight
   , tag::flux,   inciter::ctr::FluxType         //!< Flux function type
   , tag::rdof,   std::size_t          //!< Number of reconstructed solution DOFs
-  , tag::ndof,   std::size_t                   //!< Number of solution DOFs
   , tag::ndof,   std::size_t                   //!< Number of solution DOFs
 > >;
 
@@ -158,13 +160,16 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::bcdir,         std::vector< std::vector<
-                        kw::sideset::info::expect::type > >
+                          kw::sideset::info::expect::type > >
   , tag::bcsym,         std::vector< std::vector<
-                        kw::sideset::info::expect::type > >
+                          kw::sideset::info::expect::type > >
   , tag::bcinlet,       std::vector< std::vector<
-                        kw::sideset::info::expect::type > >
-  , tag::bcoutlet,      std::vector< std::vector<
-                        kw::sideset::info::expect::type > >
+                          kw::sideset::info::expect::type > >
+  , tag::bcsubsonicoutlet,
+                        std::vector< std::vector<
+                          kw::sideset::info::expect::type > >
+  , tag::farfield_pressure,
+                        std::vector< kw::farfield_pressure::info::expect::type >
   , tag::bcextrapolate, std::vector< std::vector<
                          kw::sideset::info::expect::type > >
     //! Parameter vector (for specific, e.g., verification problems)

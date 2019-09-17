@@ -89,6 +89,7 @@ class CompFlow {
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
+      m_bcsubsonicoutlet( config< tag::bcsubsonicoutlet >( c ) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) )
       //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
       //        "Boundary conditions not set in control file for DG CompFlow" );
@@ -287,6 +288,7 @@ class CompFlow {
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
         { m_bcdir, Dirichlet },
         { m_bcsym, Symmetry },
+        { m_bcsubsonicoutlet, SubsonicOutlet },
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
@@ -701,6 +703,8 @@ class CompFlow {
     const std::vector< bcconf_t > m_bcdir;
     //! Symmetric BC configuration
     const std::vector< bcconf_t > m_bcsym;
+    //! SubsonicOutlet BC configuration
+    const std::vector< bcconf_t > m_bcsubsonicoutlet;
     //! Extrapolation BC configuration
     const std::vector< bcconf_t > m_bcextrapolate;
 
@@ -798,6 +802,33 @@ class CompFlow {
       ur[3] = ur[0] * v3r;
       ur[4] = ul[4];
       return {{ std::move(ul), std::move(ur) }};
+    }
+
+    //! \brief Boundary state function providing the left and right state of a
+    //!   face at subsonic outlet boundaries
+    //! \param[in] ul Left (domain-internal) state
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \details The subsonic outlet boudary calculation, implemented here, is
+    //!   based on the characteristic theory of hyperbolic systems. For subsonic
+    //!   outlet flow, there are 3 outgoing characteristcs and 1 incoming
+    //!   characteristic. Therefore, we calculate the ghost cell state by taking
+    //!   pressure from the outside and other quantities from the internal cell.
+    //! \note The function signature must follow tk::StateFn
+    static tk::StateFn::result_type
+    SubsonicOutlet( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
+                    tk::real, tk::real, tk::real, tk::real,
+                    const std::array< tk::real, 3 >& )
+    {
+      auto fp =
+        g_inputdeck.get< tag::param, eq, tag::farfield_pressure >()[ system ];
+
+      auto ur = ul;
+      auto u_l = ul[1] / ul[0];
+      auto v_l = ul[2] / ul[0];
+      auto w_l = ul[3] / ul[0];
+      ur[4] = eos_totalenergy< eq >( system, ul[0], u_l, v_l, w_l, fp );
+      return {{ ul, ur }};
     }
 
     //! \brief Boundary state function providing the left and right state of a

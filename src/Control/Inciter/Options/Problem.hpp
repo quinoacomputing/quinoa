@@ -35,7 +35,8 @@ enum class ProblemType : uint8_t { USER_DEFINED,
                                    SOD_SHOCKTUBE,
                                    ROTATED_SOD_SHOCKTUBE,
                                    SEDOV_BLASTWAVE,
-                                   INTERFACE_ADVECTION };
+                                   INTERFACE_ADVECTION,
+                                   GAUSS_HUMP_COMPFLOW };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
@@ -58,6 +59,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                   , kw::rotated_sod_shocktube
                                   , kw::sedov_blastwave
                                   , kw::interface_advection
+                                  , kw::gauss_hump_compflow
                                   >;
 
     //! \brief Options constructor
@@ -82,7 +84,9 @@ class Problem : public tk::Toggle< ProblemType > {
             kw::rotated_sod_shocktube::name() },
           { ProblemType::SEDOV_BLASTWAVE, kw::sedov_blastwave::name() },
           { ProblemType::INTERFACE_ADVECTION,
-            kw::interface_advection::name() } },
+            kw::interface_advection::name() },
+          { ProblemType::GAUSS_HUMP_COMPFLOW,
+            kw::gauss_hump_compflow::name() } },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
           { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
@@ -99,7 +103,9 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE },
           { kw::sedov_blastwave::string(), ProblemType::SEDOV_BLASTWAVE },
           { kw::interface_advection::string(),
-            ProblemType::INTERFACE_ADVECTION } } )
+            ProblemType::INTERFACE_ADVECTION },
+          { kw::gauss_hump_compflow::string(),
+            ProblemType::GAUSS_HUMP_COMPFLOW } } )
     {
        brigand::for_each< keywords >( assertPolicyCodes() );
     }
@@ -143,6 +149,7 @@ class Problem : public tk::Toggle< ProblemType > {
           *kw::rotated_sod_shocktube::code() }
       , { ProblemType::SEDOV_BLASTWAVE, *kw::sedov_blastwave::code() }
       , { ProblemType::INTERFACE_ADVECTION, *kw::interface_advection::code() }
+      , { ProblemType::GAUSS_HUMP_COMPFLOW, *kw::gauss_hump_compflow::code() }
     };
 };
 
