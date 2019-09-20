@@ -23,7 +23,8 @@ namespace ctr {
 
 //! Dependent variable options types
 enum class DepvarType : uint8_t { FULLVAR=0
-                                , FLUCTUATION };
+                                , FLUCTUATION
+                                , PRODUCT };
 
 //! Pack/Unpack DepvarType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, DepvarType& e ) { PUP::pup( p, e ); }
@@ -35,6 +36,7 @@ class Depvar : public tk::Toggle< DepvarType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::fullvar
                                   , kw::fluctuation
+                                  , kw::product
                                   >;
 
     //! \brief Options constructor
@@ -43,13 +45,15 @@ class Depvar : public tk::Toggle< DepvarType > {
     explicit Depvar() :
       tk::Toggle< DepvarType >(
         //! Group, i.e., options, name
-        "Solve for",
+        "solve for",
         //! Enums -> names
         { { DepvarType::FULLVAR, kw::fullvar::name() },
-          { DepvarType::FLUCTUATION, kw::fluctuation::name() } },
+          { DepvarType::FLUCTUATION, kw::fluctuation::name() },
+          { DepvarType::PRODUCT, kw::product::name() } },
         //! keywords -> Enums
         { { kw::fullvar::string(), DepvarType::FULLVAR },
-          { kw::fluctuation::string(), DepvarType::FLUCTUATION } } )
+          { kw::fluctuation::string(), DepvarType::FLUCTUATION },
+          { kw::product::string(), DepvarType::PRODUCT } } )
     {}
 };
 
