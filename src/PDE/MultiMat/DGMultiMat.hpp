@@ -142,7 +142,8 @@ class MultiMat {
                            tk::Fields& prim,
                            std::size_t nielem ) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      [[maybe_unused]] const auto ndof =
+        g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
