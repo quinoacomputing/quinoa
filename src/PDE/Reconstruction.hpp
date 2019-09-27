@@ -43,22 +43,39 @@ intLeastSq_P0P1( ncomp_t ncomp,
                  const Fields& W,
                  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls );
 
-//! Compute boundary face contributions to the least-squares reconstruction
+//! \brief Compute boundary surface contributions to rhs vector of the
+//!   least-squares reconstruction of conserved quantities of the PDE system
 void
-bndLeastSq_P0P1( ncomp_t system,
-                 ncomp_t ncomp,
-                 ncomp_t offset,
-                 std::size_t rdof,
-                 const std::vector< bcconf_t >& bcconfig,
-                 const inciter::FaceData& fd,
-                 const Fields& geoFace,
-                 const Fields& geoElem,
-                 real t,
-                 const StateFn& state,
-                 const Fields& W,
-                 std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-                 std::size_t nprim=0,
-                 bool isConserved=true );
+bndLeastSqConservedVar_P0P1( ncomp_t system,
+  ncomp_t ncomp,
+  ncomp_t offset,
+  std::size_t rdof,
+  const std::vector< bcconf_t >& bcconfig,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  real t,
+  const StateFn& state,
+  const Fields& U,
+  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
+  std::size_t nprim=0 );
+
+//! \brief Compute boundary surface contributions to rhs vector of the
+//!   least-squares reconstruction of primitive quantities of the PDE system
+void
+bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
+  ncomp_t nprim,
+  ncomp_t offset,
+  std::size_t rdof,
+  const std::vector< bcconf_t >& bcconfig,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  real t,
+  const StateFn& state,
+  const Fields& P,
+  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
+  std::size_t ncomp );
 
 //! Solve 3x3 system for least-squares reconstruction
 void

@@ -264,12 +264,10 @@ class MultiMat {
       // 2. boundary face contributions
       for (const auto& b : bctypes)
       {
-        tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                             fd, geoFace, geoElem, t, b.second, U,
-                             rhsu_ls, nprim() );
-        tk::bndLeastSq_P0P1( m_system, nprim(), m_offset, rdof, b.first,
-                             fd, geoFace, geoElem, t, b.second, P,
-                             rhsp_ls, m_ncomp, false );
+        tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
+          b.first, fd, geoFace, geoElem, t, b.second, U, rhsu_ls, nprim() );
+        tk::bndLeastSqPrimitiveVar_P0P1( m_system, nprim(), m_offset, rdof,
+          b.first, fd, geoFace, geoElem, t, b.second, P, rhsp_ls, m_ncomp );
       }
 
       // 3. solve 3x3 least-squares system
