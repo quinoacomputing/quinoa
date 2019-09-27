@@ -36,7 +36,7 @@ tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
   const auto& esuf = fd.Esuf();
 
   // Compute internal and boundary face contributions
-  for (auto f=0; f<esuf.size()/2; ++f)
+  for (std::size_t f=0; f<esuf.size()/2; ++f)
   {
     Assert( esuf[2*f] > -1, "Left-side element detected as -1" );
 
@@ -44,7 +44,7 @@ tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
     auto er = esuf[2*f+1];
 
     std::array< real, 3 > geoElemR;
-    std::size_t eR;
+    std::size_t eR(0);
 
     // get a 3x3 system by applying the normal equation approach to the
     // least-squares overdetermined system
