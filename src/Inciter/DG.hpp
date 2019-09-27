@@ -368,10 +368,6 @@ class DG : public CBase_DG {
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
 
-    //! Calculate the local number of degrees of freedom for each element for
-    //! p-adaptive DG
-    void eval_ndof();
-
     //! p-refine all elements that are adjacent to p-refined elements
     void propagate_ndof();
 };

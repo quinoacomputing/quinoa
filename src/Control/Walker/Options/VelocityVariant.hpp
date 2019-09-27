@@ -45,7 +45,7 @@ class VelocityVariant : public tk::Toggle< VelocityVariantType > {
     explicit VelocityVariant() :
       tk::Toggle< VelocityVariantType >(
         //! Group, i.e., options, name
-        "Model variant",
+        "model variant",
         //! Enums -> names
         { { VelocityVariantType::SLM, kw::slm::name() },
           { VelocityVariantType::GLM, kw::glm::name() } },

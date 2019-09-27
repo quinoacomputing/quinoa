@@ -1610,6 +1610,11 @@ namespace grm {
   struct discrparam :
            control< use< keyword >, pegtl::digit, tag::discr, Tag > {};
 
+  //! Match boundary control parameter
+  template< template< class > class use, typename keyword, typename Tag >
+  struct bcparam :
+           control< use< keyword >, pegtl::digit, tag::bc, Tag > {};
+
   //! Match component control parameter
   template< typename keyword, typename Tag >
   struct component :

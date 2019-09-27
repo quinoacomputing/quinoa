@@ -326,7 +326,10 @@ tk::eval_state ( ncomp_t ncomp,
 //! \return Vector of state variable for tetrahedron element
 // *****************************************************************************
 {
-  Assert( B.size() == ndof_el, "Size mismatch" );
+  // This is commented for now because that when p0/p1 adaptive with limiter
+  // applied, the size of basis will be 10. However, ndof_el will be 4 which
+  // leads to a size mismatch in limiter function.
+  //Assert( B.size() == ndof_el, "Size mismatch" );
 
   if (U.empty()) return {};
 

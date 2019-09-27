@@ -168,11 +168,6 @@ Transporter::info()
   m_print.section( "Discretization parameters" );
   m_print.Item< ctr::Scheme, tag::discr, tag::scheme >();
 
-  if (scheme == ctr::SchemeType::PDG) {
-    m_print.item( "p-refinement tolerance",
-                  g_inputdeck.get< tag::pref, tag::tolref >() );
-  }
-
   if (scheme == ctr::SchemeType::DiagCG) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
     m_print.item( "Flux-corrected transport (FCT)", fct );
@@ -198,6 +193,18 @@ Transporter::info()
   else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
              std::numeric_limits< tk::real >::epsilon())
     m_print.item( "CFL coefficient", cfl );
+
+  // Print out adaptive polynomial refinement configuration
+  if (scheme == ctr::SchemeType::PDG) {
+    m_print.section( "Polynomial refinement (p-ref)" );
+    m_print.item( "p-refinement",
+                  g_inputdeck.get< tag::pref, tag::pref >() );
+    m_print.Item< ctr::PrefIndicator, tag::pref, tag::indicator >();
+    m_print.item( "Max degrees of freedom",
+                  g_inputdeck.get< tag::pref, tag::ndofmax >() );
+    m_print.item( "Tolerance",
+                  g_inputdeck.get< tag::pref, tag::tolref >() );
+  }
 
   // Print out adaptive mesh refinement configuration
   const auto amr = g_inputdeck.get< tag::amr, tag::amr >();

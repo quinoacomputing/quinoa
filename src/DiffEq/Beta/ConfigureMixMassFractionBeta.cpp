@@ -75,8 +75,12 @@ infoMixMassFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
   auto ncomp = g_inputdeck.get< tag::component, eq >()[c];
-  nfo.emplace_back( "number of components",
-    std::to_string( ncomp ) + " (" + std::to_string(ncomp/4) + "*4) " );
+
+  auto numderived =
+    MixMassFractionBeta<InitZero,MixMassFracBetaCoeffInstVel>::NUMDERIVED;
+  nfo.emplace_back( "number of components", std::to_string(ncomp) + " (=" +
+                    std::to_string(ncomp/(numderived+1)) + '*' +
+                    std::to_string(numderived+1) + ") " );
 
   coupledInfo< eq, tag::velocity, tag::velocity_id >
              ( c, "velocity", nfo );

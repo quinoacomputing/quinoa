@@ -27,6 +27,7 @@
   #pragma clang diagnostic ignored "-Wmissing-noreturn"
   #pragma clang diagnostic ignored "-Wimplicit-int-conversion"
   #pragma clang diagnostic ignored "-Wundef"
+  #pragma clang diagnostic ignored "-Wconversion"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"

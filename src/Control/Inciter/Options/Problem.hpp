@@ -36,6 +36,7 @@ enum class ProblemType : uint8_t { USER_DEFINED,
                                    ROTATED_SOD_SHOCKTUBE,
                                    SEDOV_BLASTWAVE,
                                    INTERFACE_ADVECTION,
+                                   GAUSS_HUMP_COMPFLOW,
                                    WATERAIR_SHOCKTUBE };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
@@ -59,6 +60,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                   , kw::rotated_sod_shocktube
                                   , kw::sedov_blastwave
                                   , kw::interface_advection
+                                  , kw::gauss_hump_compflow
                                   , kw::waterair_shocktube
                                   >;
 
@@ -85,6 +87,8 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::SEDOV_BLASTWAVE, kw::sedov_blastwave::name() },
           { ProblemType::INTERFACE_ADVECTION,
             kw::interface_advection::name() },
+          { ProblemType::GAUSS_HUMP_COMPFLOW,
+            kw::gauss_hump_compflow::name() },
           { ProblemType::WATERAIR_SHOCKTUBE, kw::waterair_shocktube::name() } },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
@@ -103,6 +107,8 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::sedov_blastwave::string(), ProblemType::SEDOV_BLASTWAVE },
           { kw::interface_advection::string(),
             ProblemType::INTERFACE_ADVECTION },
+          { kw::gauss_hump_compflow::string(),
+            ProblemType::GAUSS_HUMP_COMPFLOW },
           { kw::waterair_shocktube::string(),
             ProblemType::WATERAIR_SHOCKTUBE } } )
     {
@@ -148,6 +154,7 @@ class Problem : public tk::Toggle< ProblemType > {
           *kw::rotated_sod_shocktube::code() }
       , { ProblemType::SEDOV_BLASTWAVE, *kw::sedov_blastwave::code() }
       , { ProblemType::INTERFACE_ADVECTION, *kw::interface_advection::code() }
+      , { ProblemType::GAUSS_HUMP_COMPFLOW, *kw::gauss_hump_compflow::code() }
       , { ProblemType::WATERAIR_SHOCKTUBE, *kw::waterair_shocktube::code() }
     };
 };
