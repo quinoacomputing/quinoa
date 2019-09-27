@@ -26,6 +26,13 @@ namespace tk {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
+//! Compute lhs matrix for the least-squares reconstruction
+void
+lhsLeastSq_P0P1( const inciter::FaceData& fd,
+  const Fields& geoElem,
+  const Fields& geoFace,
+  std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls );
+
 //! Compute internal surface contributions to the least-squares reconstruction
 void
 intLeastSq_P0P1( ncomp_t ncomp,
@@ -34,9 +41,7 @@ intLeastSq_P0P1( ncomp_t ncomp,
                  const inciter::FaceData& fd,
                  const Fields& geoElem,
                  const Fields& W,
-                 std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
-                 std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-                 bool isConserved=true );
+                 std::vector< std::vector< std::array< real, 3 > > >& rhs_ls );
 
 //! Compute boundary face contributions to the least-squares reconstruction
 void
@@ -51,7 +56,6 @@ bndLeastSq_P0P1( ncomp_t system,
                  real t,
                  const StateFn& state,
                  const Fields& W,
-                 std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
                  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
                  std::size_t nprim=0,
                  bool isConserved=true );

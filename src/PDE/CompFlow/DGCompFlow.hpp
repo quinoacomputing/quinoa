@@ -181,19 +181,21 @@ class CompFlow {
             {{ 0.0, 0.0, 0.0 }} ) );
 
       // reconstruct x,y,z-derivatives of unknowns
-      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,
-                           lhs_ls, rhs_ls );
+      // 0. get lhs matrix, which is only geometry dependent
+      tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
-      // compute boundary surface flux integrals
+      // 1. internal face contributions
+      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U, rhs_ls );
+
+      // 2. boundary face contributions
       for (const auto& b : bctypes)
         tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                             fd, geoFace, geoElem, t, b.second, U, lhs_ls,
-                             rhs_ls );
+                             fd, geoFace, geoElem, t, b.second, U, rhs_ls );
 
-      // solve 3x3 least-squares system
+      // 3. solve 3x3 least-squares system
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
 
-      // transform reconstructed derivatives to Dubiner dofs
+      // 4. transform reconstructed derivatives to Dubiner dofs
       tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4,
                           inpoel, coord, U );
     }

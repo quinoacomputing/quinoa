@@ -19,15 +19,70 @@
 #include "Reconstruction.hpp"
 
 void
+tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
+  const Fields& geoElem,
+  const Fields& geoFace,
+  std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls )
+// *****************************************************************************
+//  Compute lhs matrix for the least-squares reconstruction
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoElem Element geometry array
+//! \param[in] geoFace Face geometry array
+//! \param[in,out] lhs_ls LHS reconstruction matrix
+// *****************************************************************************
+{
+  const auto& esuf = fd.Esuf();
+
+  // Compute internal and boundary face contributions
+  for (auto f=0; f<esuf.size()/2; ++f)
+  {
+    Assert( esuf[2*f] > -1, "Left-side element detected as -1" );
+
+    auto el = static_cast< std::size_t >(esuf[2*f]);
+    auto er = esuf[2*f+1];
+
+    std::array< real, 3 > geoElemR;
+    std::size_t eR;
+
+    // get a 3x3 system by applying the normal equation approach to the
+    // least-squares overdetermined system
+
+    if (er > -1)
+    // internal face contribution
+    {
+      eR = static_cast< std::size_t >(er);
+      geoElemR = {{ geoElem(eR,1,0), geoElem(eR,2,0), geoElem(eR,3,0) }};
+    }
+    else
+    // boundary face contribution
+    {
+      geoElemR = {{ geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0) }};
+    }
+
+    std::array< real, 3 > wdeltax{{ geoElemR[0]-geoElem(el,1,0),
+                                    geoElemR[1]-geoElem(el,2,0),
+                                    geoElemR[2]-geoElem(el,3,0) }};
+
+    for (std::size_t idir=0; idir<3; ++idir)
+    {
+      // lhs matrix
+      for (std::size_t jdir=0; jdir<3; ++jdir)
+      {
+        lhs_ls[el][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
+        if (er > -1) lhs_ls[eR][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
+      }
+    }
+  }
+}
+
+void
 tk::intLeastSq_P0P1( ncomp_t ncomp,
                      ncomp_t offset,
                      const std::size_t rdof,
                      const inciter::FaceData& fd,
                      const Fields& geoElem,
                      const Fields& W,
-                     std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
-                     std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-                     bool isConserved )
+                     std::vector< std::vector< std::array< real, 3 > > >& rhs_ls )
 // *****************************************************************************
 //  Compute internal surface contributions to the least-squares reconstruction
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -36,11 +91,7 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoElem Element geometry array
 //! \param[in] W Solution vector to be reconstructed at recent time step
-//! \param[in,out] lhs_ls LHS reconstruction matrix
 //! \param[in,out] rhs_ls RHS reconstruction vector
-//! \param[in] isConserved Boolean which is true if conserved variables are
-//!   being reconstructed. Default is true, so that it can be left unspecified
-//!   by the calling code.
 // *****************************************************************************
 {
   const auto& esuf = fd.Esuf();
@@ -71,21 +122,6 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
         rhs_ls[er][c][idir] +=
           wdeltax[idir] * (W(er,mark,offset)-W(el,mark,offset));
       }
-
-      // lhs matrix
-      if (isConserved) {
-        // if primitive quantities are being reconstructed, it is assumed that
-        // conserved variables have/will be reconstructed (i.e. this function
-        // will be called) before solveLeastSq_P0P1() is called.
-        // The lhs_ls matrix has/will be filled in, when this function is called
-        // for the conserved variables. This is done so that lhs_ls is not
-        // modified when this function is called for primitive quantities.
-        for (std::size_t jdir=0; jdir<3; ++jdir)
-        {
-          lhs_ls[el][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
-          lhs_ls[er][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
-        }
-      }
     }
   }
 }
@@ -102,7 +138,6 @@ tk::bndLeastSq_P0P1( ncomp_t system,
                      real t,
                      const StateFn& state,
                      const Fields& W,
-                     std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
                      std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
                      std::size_t nappend,
                      bool isConserved )
@@ -120,7 +155,6 @@ tk::bndLeastSq_P0P1( ncomp_t system,
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
 //! \param[in] W Solution vector to be reconstructed at recent time step
-//! \param[in,out] lhs_ls LHS reconstruction matrix
 //! \param[in,out] rhs_ls RHS reconstruction vector
 //! \param[in] nappend If conserved variables are being reconstructed, this is
 //!   the number of primitive quantities stored for this PDE system. If
@@ -191,12 +225,6 @@ tk::bndLeastSq_P0P1( ncomp_t system,
             if (!isConserved) cp = ustate[0].size()-ncomp+c;
             rhs_ls[el][c][idir] +=
               wdeltax[idir] * (ustate[1][cp]-ustate[0][cp]);
-          }
-
-          // lhs matrix
-          if (isConserved) {
-            for (std::size_t jdir=0; jdir<3; ++jdir)
-              lhs_ls[el][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
           }
         }
       }

@@ -254,20 +254,21 @@ class MultiMat {
 
       // reconstruct x,y,z-derivatives of unknowns. For multimat, conserved and
       // primitive quantities are reconstructed separately.
+      // 0. get lhs matrix, which is only geometry dependent
+      tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
+
       // 1. internal face contributions
-      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,
-                           lhs_ls, rhsu_ls );
-      tk::intLeastSq_P0P1( nprim(), m_offset, rdof, fd, geoElem, P,
-                           lhs_ls, rhsp_ls, false );
+      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U, rhsu_ls );
+      tk::intLeastSq_P0P1( nprim(), m_offset, rdof, fd, geoElem, P, rhsp_ls );
 
       // 2. boundary face contributions
       for (const auto& b : bctypes)
       {
         tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                             fd, geoFace, geoElem, t, b.second, U, lhs_ls,
+                             fd, geoFace, geoElem, t, b.second, U,
                              rhsu_ls, nprim() );
         tk::bndLeastSq_P0P1( m_system, nprim(), m_offset, rdof, b.first,
-                             fd, geoFace, geoElem, t, b.second, P, lhs_ls,
+                             fd, geoFace, geoElem, t, b.second, P,
                              rhsp_ls, m_ncomp, false );
       }
 
