@@ -46,13 +46,20 @@ inline std::size_t energyIdx( std::size_t nmat, std::size_t kmat )
 { return (2*nmat+3+kmat); }
 
 //! Get the index of the required velocity component from vector of primitives
+//! \param[in] nmat Number of materials
 //! \param[in] idir Required component direction;
 //!   0: X-component,
 //!   1: Y-component,
 //!   2: Z-component.
 //! \return Index of the required velocity component from vector of primitives
-inline std::size_t velocityIdx( std::size_t /*nmat*/, std::size_t idir )
-{ return idir; }
+inline std::size_t velocityIdx( std::size_t nmat, std::size_t idir )
+{ return nmat+idir; }
+
+//! Get the index of the required material pressure from vector of primitives
+//! \param[in] kmat Index of required material
+//! \return Index of the required material pressure from vector of primitives
+inline std::size_t pressureIdx( std::size_t /*nmat*/, std::size_t kmat )
+{ return kmat; }
 
 } //inciter::
 

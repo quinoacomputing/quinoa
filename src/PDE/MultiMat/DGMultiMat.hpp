@@ -98,8 +98,10 @@ class MultiMat {
     //!   this PDE system
     std::size_t nprim() const
     {
-      // multimat needs and stores velocities currently
-      return 3;
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      // multimat needs individual material pressures and velocities currently
+      return (nmat+3);
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
@@ -151,33 +153,39 @@ class MultiMat {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
+      Assert( ndof == 1, "High-order discretizations not set up for multimat "
+              "updatePrimitives()" );
 
       for (std::size_t e=0; e<nielem; ++e)
       {
-        // cell-average and high-order dofs of bulk density
-        std::vector< tk::real > rhob(ndof, 0.0);
+        // cell-average bulk density
+        tk::real rhob(0.0);
         for (std::size_t k=0; k<nmat; ++k)
         {
-          for (std::size_t j=0; j<ndof; ++j)
-            rhob[j] += unk(e, densityIdx(nmat, k)*rdof+j, m_offset);
+          rhob += unk(e, densityIdx(nmat, k)*rdof, m_offset);
         }
 
         // cell-average velocity
         std::array< tk::real, 3 >
-          vel{{ unk(e, momentumIdx(nmat, 0)*rdof, m_offset)/rhob[0],
-                unk(e, momentumIdx(nmat, 1)*rdof, m_offset)/rhob[0],
-                unk(e, momentumIdx(nmat, 2)*rdof, m_offset)/rhob[0] }};
+          vel{{ unk(e, momentumIdx(nmat, 0)*rdof, m_offset)/rhob,
+                unk(e, momentumIdx(nmat, 1)*rdof, m_offset)/rhob,
+                unk(e, momentumIdx(nmat, 2)*rdof, m_offset)/rhob }};
 
-        // fill up vector of primitives
         for (std::size_t idir=0; idir<3; ++idir)
         {
           prim(e, velocityIdx(nmat, idir)*rdof, m_offset) = vel[idir];
-          for (std::size_t j=1; j<ndof; ++j)
-          {
-            prim(e, velocityIdx(nmat, idir)*rdof+j, m_offset) =
-              ( unk(e, momentumIdx(nmat, idir)*rdof+j, m_offset)
-              - vel[idir]*rhob[j] )/rhob[0];
-          }
+        }
+
+        // cell-average material pressure
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          tk::real rhomat = unk(e, densityIdx(nmat, k)*rdof, m_offset)
+            / unk(e, volfracIdx(nmat, k)*rdof, m_offset);
+          tk::real rhoemat = unk(e, energyIdx(nmat, k)*rdof, m_offset)
+            / unk(e, volfracIdx(nmat, k)*rdof, m_offset);
+          prim(e, pressureIdx(nmat, k)*rdof, m_offset) =
+            eos_pressure< tag::multimat >( m_system, rhomat, vel[0], vel[1],
+              vel[2], rhoemat, k );
         }
       }
     }
@@ -201,8 +209,6 @@ class MultiMat {
                       tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -218,36 +224,62 @@ class MultiMat {
           { m_bcsym, Symmetry },
           { m_bcextrapolate, Extrapolate } }};
 
-      // allocate and initialize matrix and vector for reconstruction
+      // allocate and initialize matrix and vector for reconstruction:
+      // lhs_ls is the left-hand side matrix for solving the least-squares
+      // system using the normal equation approach, for each mesh element.
+      // It is indexed as follows:
+      // The first index is the element id;
+      // the second index is the row id of the 3-by-3 matrix;
+      // the third index is the column id of the 3-by-3 matrix.
       std::vector< std::array< std::array< tk::real, 3 >, 3 > >
         lhs_ls( U.nunk(), {{ {{0.0, 0.0, 0.0}},
                              {{0.0, 0.0, 0.0}},
                              {{0.0, 0.0, 0.0}} }} );
+      // rhs_ls is the right-hand side vector for solving the least-squares
+      // system using the normal equation approach, for each element.
+      // It is indexed as follows:
+      // The first index is the element id;
+      // the second index is the scalar equation which is being reconstructed;
+      // the third index is the row id of the rhs vector.
+      // two rhs_ls vectors are needed for reconstructing conserved and
+      // primitive quantites separately
       std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhs_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
+        rhsu_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
           ( m_ncomp,
             {{ 0.0, 0.0, 0.0 }} ) );
+      std::vector< std::vector< std::array< tk::real, 3 > > >
+        rhsp_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
+          ( nprim(),
+            {{ 0.0, 0.0, 0.0 }} ) );
 
-      // reconstruct x,y,z-derivatives of unknowns
+      // reconstruct x,y,z-derivatives of unknowns. For multimat, conserved and
+      // primitive quantities are reconstructed separately.
+      // 1. internal face contributions
       tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,
-                           lhs_ls, rhs_ls );
+                           lhs_ls, rhsu_ls );
+      tk::intLeastSq_P0P1( nprim(), m_offset, rdof, fd, geoElem, P,
+                           lhs_ls, rhsp_ls, false );
 
-      // compute boundary surface flux integrals
+      // 2. boundary face contributions
       for (const auto& b : bctypes)
+      {
         tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
                              fd, geoFace, geoElem, t, b.second, U, lhs_ls,
-                             rhs_ls, nprim() );
+                             rhsu_ls, nprim() );
+        tk::bndLeastSq_P0P1( m_system, nprim(), m_offset, rdof, b.first,
+                             fd, geoFace, geoElem, t, b.second, P, lhs_ls,
+                             rhsp_ls, m_ncomp, false );
+      }
 
-      // solve 3x3 least-squares system
-      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
+      // 3. solve 3x3 least-squares system
+      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhsu_ls, U );
+      tk::solveLeastSq_P0P1( nprim(), m_offset, rdof, lhs_ls, rhsp_ls, P );
 
-      // transform reconstructed derivatives to Dubiner dofs
+      // 4. transform reconstructed derivatives to Dubiner dofs
       tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4, inpoel,
                           coord, U );
-
-      // reconstruct vector of primitives from solution vector
-      getMultiMatPrimitives_P0P1( m_offset, nmat, rdof, fd.Esuel().size()/4, U,
-                                  P );
+      tk::transform_P0P1( nprim(), m_offset, rdof, fd.Esuel().size()/4, inpoel,
+                          coord, P );
     }
 
     //! Limit second-order solution, and primitive quantities separately
@@ -348,7 +380,7 @@ class MultiMat {
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, nmat, m_offset, ndof, rdof, inpoel, coord,
+      tk::surfInt( m_system, nmat, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, AUSM::flux, velfn, U, P, ndofel, R,
                    riemannDeriv );
 
@@ -363,7 +395,7 @@ class MultiMat {
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, nmat, m_offset, ndof, rdof, b.first,
+        tk::bndSurfInt( m_system, nmat, m_offset, ndof, rdof, b.first,
                         fd, geoFace, inpoel, coord, t, AUSM::flux, velfn,
                         b.second, U, P, ndofel, R, riemannDeriv );
 
@@ -380,8 +412,8 @@ class MultiMat {
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeInt( m_system, m_ncomp, nmat, m_offset, ndof, rdof,
-                              inpoel, coord, geoElem, U, riemannDeriv, ndofel,
+      tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, inpoel,
+                              coord, geoElem, U, P, riemannDeriv, ndofel,
                               R );
 
       // compute finite pressure relaxation terms
@@ -785,7 +817,9 @@ class MultiMat {
     //! \param[in] t Physical time
     //! \return Left and right states for all scalar components in this PDE
     //!   system
-    //! \note The function signature must follow tk::StateFn
+    //! \note The function signature must follow tk::StateFn. For multimat, the
+    //!   left or right state is the vector of conserved quantities, followed by
+    //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
     Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
@@ -797,17 +831,32 @@ class MultiMat {
       auto ur = Problem::solution( system, ncomp, x, y, z, t );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );
 
+      ur.resize(ul.size());
+
       tk::real rho(0.0);
       for (std::size_t k=0; k<nmat; ++k)
-        rho += ul[densityIdx(nmat, k)];
+        rho += ur[densityIdx(nmat, k)];
 
       // get primitives in boundary state
-      ur.push_back( ur[momentumIdx(nmat, 0)] / rho );
-      ur.push_back( ur[momentumIdx(nmat, 1)] / rho );
-      ur.push_back( ur[momentumIdx(nmat, 2)] / rho );
 
-      Assert( ur.size() == ncomp+3, "Incorrect size for appended boundary "
-              "state vector" );
+      // velocity
+      ur[ncomp+velocityIdx(nmat, 0)] = ur[momentumIdx(nmat, 0)] / rho;
+      ur[ncomp+velocityIdx(nmat, 1)] = ur[momentumIdx(nmat, 1)] / rho;
+      ur[ncomp+velocityIdx(nmat, 2)] = ur[momentumIdx(nmat, 2)] / rho;
+
+      // material pressures
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        tk::real rhomat = ur[densityIdx(nmat, k)] / ur[volfracIdx(nmat, k)];
+        tk::real rhoemat = ur[energyIdx(nmat, k)] / ur[volfracIdx(nmat, k)];
+        ur[ncomp+pressureIdx(nmat, k)] =
+          eos_pressure< tag::multimat >( system, rhomat,
+            ur[ncomp+velocityIdx(nmat, 0)], ur[ncomp+velocityIdx(nmat, 1)],
+            ur[ncomp+velocityIdx(nmat, 2)], rhoemat, k );
+      }
+
+      Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "
+              "boundary state vector" );
 
       return {{ std::move(ul), std::move(ur) }};
     }
@@ -820,7 +869,9 @@ class MultiMat {
     //! \param[in] fn Unit face normal
     //! \return Left and right states for all scalar components in this PDE
     //!   system
-    //! \note The function signature must follow tk::StateFn
+    //! \note The function signature must follow tk::StateFn. For multimat, the
+    //!   left or right state is the vector of conserved quantities, followed by
+    //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
     Symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
@@ -829,7 +880,7 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      Assert( ul.size() == ncomp+3, "Incorrect size for appended internal "
+      Assert( ul.size() == ncomp+nmat+3, "Incorrect size for appended internal "
               "state vector" );
 
       tk::real rho(0.0);
@@ -839,9 +890,9 @@ class MultiMat {
       auto ur = ul;
 
       // Internal cell velocity components
-      auto v1l = ul[momentumIdx(nmat, 0)] / rho;
-      auto v2l = ul[momentumIdx(nmat, 1)] / rho;
-      auto v3l = ul[momentumIdx(nmat, 2)] / rho;
+      auto v1l = ul[ncomp+velocityIdx(nmat, 0)];
+      auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
+      auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
       // Normal component of velocity
       auto vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
       // Ghost state velocity components
@@ -859,23 +910,29 @@ class MultiMat {
       ur[momentumIdx(nmat, 1)] = rho * v2r;
       ur[momentumIdx(nmat, 2)] = rho * v3r;
 
-      // Internal cell velocity components using the reconstructed primitive
-      // quantities. This is used to get ghost state for primitive quantities
-      v1l = ul[ncomp];
-      v2l = ul[ncomp+1];
-      v3l = ul[ncomp+2];
+      // Internal cell primitive quantities using the separately reconstructed
+      // primitive quantities. This is used to get ghost state for primitive
+      // quantities
+      v1l = ul[ncomp+velocityIdx(nmat, 0)];
+      v2l = ul[ncomp+velocityIdx(nmat, 1)];
+      v3l = ul[ncomp+velocityIdx(nmat, 2)];
       // Normal component of velocity
       vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
       // Ghost state velocity components
       v1r = v1l - 2.0*vnl*fn[0];
       v2r = v2l - 2.0*vnl*fn[1];
       v3r = v3l - 2.0*vnl*fn[2];
-      // get primitives in boundary state
-      ur[ncomp] = v1r;
-      ur[ncomp+1] = v2r;
-      ur[ncomp+2] = v3r;
 
-      Assert( ur.size() == ncomp+3, "Incorrect size for appended boundary "
+      // get primitives in boundary state
+      // velocity
+      ur[ncomp+velocityIdx(nmat, 0)] = v1r;
+      ur[ncomp+velocityIdx(nmat, 1)] = v2r;
+      ur[ncomp+velocityIdx(nmat, 2)] = v3r;
+      // material pressures
+      for (std::size_t k=0; k<nmat; ++k)
+        ur[ncomp+pressureIdx(nmat, k)] = ul[ncomp+pressureIdx(nmat, k)];
+
+      Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended boundary "
               "state vector" );
 
       return {{ std::move(ul), std::move(ur) }};
@@ -886,7 +943,9 @@ class MultiMat {
     //! \param[in] ul Left (domain-internal) state
     //! \return Left and right states for all scalar components in this PDE
     //!   system
-    //! \note The function signature must follow tk::StateFn
+    //! \note The function signature must follow tk::StateFn. For multimat, the
+    //!   left or right state is the vector of conserved quantities, followed by
+    //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
     Extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,

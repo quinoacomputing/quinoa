@@ -33,9 +33,10 @@ intLeastSq_P0P1( ncomp_t ncomp,
                  const std::size_t rdof,
                  const inciter::FaceData& fd,
                  const Fields& geoElem,
-                 const Fields& U,
+                 const Fields& W,
                  std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
-                 std::vector< std::vector< std::array< real, 3 > > >& rhs_ls );
+                 std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
+                 bool isConserved=true );
 
 //! Compute boundary face contributions to the least-squares reconstruction
 void
@@ -49,10 +50,11 @@ bndLeastSq_P0P1( ncomp_t system,
                  const Fields& geoElem,
                  real t,
                  const StateFn& state,
-                 const Fields& U,
+                 const Fields& W,
                  std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
                  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-                 std::size_t nprim=0 );
+                 std::size_t nprim=0,
+                 bool isConserved=true );
 
 //! Solve 3x3 system for least-squares reconstruction
 void
@@ -61,7 +63,7 @@ solveLeastSq_P0P1( ncomp_t ncomp,
                    const std::size_t rdof,
                    const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
                    const std::vector< std::vector< std::array< real, 3 > > >& rhs,
-                   Fields& U );
+                   Fields& W );
 
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
@@ -71,16 +73,7 @@ transform_P0P1( ncomp_t ncomp,
                 std::size_t nelem,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
-                Fields& U );
-
-//! Reconstruct the vector of high-order primitives
-void
-getMultiMatPrimitives_P0P1( ncomp_t offset,
-                            std::size_t nmat,
-                            std::size_t rdof,
-                            std::size_t nelem,
-                            const Fields& U,
-                            Fields& P );
+                Fields& W );
 
 } // tk::
 

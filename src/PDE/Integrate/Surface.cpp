@@ -21,7 +21,6 @@
 
 void
 tk::surfInt( ncomp_t system,
-             ncomp_t ncomp,
              std::size_t nmat,
              ncomp_t offset,
              const std::size_t ndof,
@@ -40,7 +39,6 @@ tk::surfInt( ncomp_t system,
 // *****************************************************************************
 //  Compute internal surface flux integrals
 //! \param[in] system Equation system index
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -67,6 +65,9 @@ tk::surfInt( ncomp_t system,
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
 
   Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
           "derivative vector for single material compflow" );
@@ -172,20 +173,20 @@ tk::surfInt( ncomp_t system,
       auto wt = wgp[igp] * geoFace(f,0,0);
 
       std::array< std::vector< real >, 2 > state;
-      std::array< std::vector< real >, 2 > fvel;
+      std::array< std::vector< real >, 2 > sprim;
 
       state[0] = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
-      fvel[0] = eval_state( 3, offset, rdof, dof_el, el, P, B_l );
+      sprim[0] = eval_state( nprim, offset, rdof, dof_el, el, P, B_l );
       state[1] = eval_state( ncomp, offset, rdof, dof_er, er, U, B_r );
-      fvel[1] = eval_state( 3, offset, rdof, dof_er, er, P, B_r );
+      sprim[1] = eval_state( nprim, offset, rdof, dof_er, er, P, B_r );
 
       // consolidate primitives into state vector
-      state[0].insert(state[0].end(), fvel[0].begin(), fvel[0].end());
-      state[1].insert(state[1].end(), fvel[1].begin(), fvel[1].end());
+      state[0].insert(state[0].end(), sprim[0].begin(), sprim[0].end());
+      state[1].insert(state[1].end(), sprim[1].begin(), sprim[1].end());
 
-      Assert( state[0].size() == ncomp+fvel[0].size(), "Incorrect size for "
+      Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
-      Assert( state[1].size() == ncomp+fvel[1].size(), "Incorrect size for "
+      Assert( state[1].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
 
       // evaluate prescribed velocity (if any)

@@ -24,7 +24,6 @@ namespace tk {
 
 void
 nonConservativeInt( [[maybe_unused]] ncomp_t system,
-                    ncomp_t ncomp,
                     std::size_t nmat,
                     ncomp_t offset,
                     const std::size_t ndof,
@@ -33,6 +32,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
                     const UnsMesh::Coords& coord,
                     const Fields& geoElem,
                     const Fields& U,
+                    const Fields& P,
                     const std::vector< std::vector< tk::real > >&
                       riemannDeriv,
                     const std::vector< std::size_t >& ndofel,
@@ -46,7 +46,6 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 //!   multiphase liquid–vapor–gas flows with interfaces and cavitation.
 //!   International Journal of Multiphase Flow, 113, 208-230.
 //! \param[in] system Equation system index
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -55,6 +54,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
 //! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitive quantities at recent time step
 //! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms
 //! \param[in] ndofel Vector of local number of degrees of freedome
@@ -65,10 +65,14 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
   using inciter::densityIdx;
   using inciter::momentumIdx;
   using inciter::energyIdx;
+  using inciter::velocityIdx;
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
 
   // compute volume integrals
   for (std::size_t e=0; e<U.nunk(); ++e)
@@ -128,15 +132,16 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
       auto ugp = eval_state( ncomp, offset, rdof, dof_el, e, U, B );
+      auto pgp = eval_state( nprim, offset, rdof, dof_el, e, P, B );
 
       // get bulk properties
       tk::real rhob(0.0);
       for (std::size_t k=0; k<nmat; ++k)
           rhob += ugp[densityIdx(nmat, k)];
 
-      std::array< tk::real, 3 > vel{{ ugp[momentumIdx(nmat, 0)]/rhob,
-                                      ugp[momentumIdx(nmat, 1)]/rhob,
-                                      ugp[momentumIdx(nmat, 2)]/rhob }};
+      std::array< tk::real, 3 > vel{{ pgp[velocityIdx(nmat, 0)],
+                                      pgp[velocityIdx(nmat, 1)],
+                                      pgp[velocityIdx(nmat, 2)] }};
 
       std::vector< tk::real > ymat(nmat, 0.0);
       std::array< tk::real, 3 > dap{{0.0, 0.0, 0.0}};

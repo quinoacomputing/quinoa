@@ -30,7 +30,6 @@ using bcconf_t = kw::sideset::info::expect::type;
 //! Compute internal surface flux integrals for DG
 void
 surfInt( ncomp_t system,
-         ncomp_t ncomp,
          std::size_t nmat,
          ncomp_t offset,
          const std::size_t ndof,
