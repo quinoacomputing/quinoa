@@ -180,13 +180,12 @@ class MultiMat {
         // cell-average material pressure
         for (std::size_t k=0; k<nmat; ++k)
         {
-          tk::real rhomat = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset)
-            / unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
-          tk::real rhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset)
-            / unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
+          tk::real arhomat = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset);
+          tk::real arhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset);
+          tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
-            eos_pressure< tag::multimat >( m_system, rhomat, vel[0], vel[1],
-              vel[2], rhoemat, k );
+            eos_pressure< tag::multimat >( m_system, arhomat, vel[0], vel[1],
+              vel[2], arhoemat, alphamat, k ) / alphamat;
         }
       }
     }
@@ -462,7 +461,7 @@ class MultiMat {
       coordgp[1].resize( ng );
       wgp.resize( ng );
 
-      tk::real rhok, rho, u, v, w, p, a, vn, dSV_l, dSV_r;
+      tk::real rho, u, v, w, ap, a, vn, dSV_l, dSV_r;
       std::vector< tk::real > delt( U.nunk(), 0.0 );
 
       const auto& cx = coord[0];
@@ -533,13 +532,12 @@ class MultiMat {
           a = 0.0;
           for (std::size_t k=0; k<nmat; ++k)
           {
-            rhok = ugp[0][densityIdx(nmat, k)]/ugp[0][volfracIdx(nmat, k)];
-            p = eos_pressure< tag::multimat >( 0, rhok, u, v, w,
-                                               ugp[0][energyIdx(nmat, k)]/ugp[0][volfracIdx(nmat, k)],
-                                               k );
+            ap = eos_pressure< tag::multimat >( 0, ugp[0][densityIdx(nmat, k)],
+              u, v, w, ugp[0][energyIdx(nmat, k)], ugp[0][volfracIdx(nmat, k)],
+              k );
             a = std::max( a, eos_soundspeed< tag::multimat >( 0,
-              ugp[0][densityIdx(nmat, k)], ugp[0][volfracIdx(nmat, k)]*p,
-              ugp[0][volfracIdx(nmat, k)], k ) );
+              ugp[0][densityIdx(nmat, k)], ap, ugp[0][volfracIdx(nmat, k)],
+              k ) );
           }
 
           vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
@@ -590,13 +588,12 @@ class MultiMat {
             a = 0.0;
             for (std::size_t k=0; k<nmat; ++k)
             {
-              rhok = ugp[1][densityIdx(nmat, k)]/ugp[1][volfracIdx(nmat, k)];
-              p = eos_pressure< tag::multimat >( 0, rhok, u, v, w,
-                                                 ugp[1][energyIdx(nmat, k)]/ugp[1][volfracIdx(nmat, k)],
-                                                 k );
+              ap = eos_pressure< tag::multimat >( 0, ugp[1][densityIdx(nmat, k)],
+                u, v, w, ugp[1][energyIdx(nmat, k)], ugp[1][volfracIdx(nmat, k)],
+                k );
               a = std::max( a, eos_soundspeed< tag::multimat >( 0,
-                ugp[1][densityIdx(nmat, k)], ugp[1][volfracIdx(nmat, k)]*p,
-                ugp[1][volfracIdx(nmat, k)], k ) );
+                ugp[1][densityIdx(nmat, k)], ap, ugp[1][volfracIdx(nmat, k)],
+                k ) );
             }
 
             vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
@@ -760,15 +757,13 @@ class MultiMat {
       auto v = ugp[momentumIdx(nmat, 1)] / rho;
       auto w = ugp[momentumIdx(nmat, 2)] / rho;
 
-      std::vector< tk::real > pk( nmat, 0.0 );
+      std::vector< tk::real > apk( nmat, 0.0 );
       for (std::size_t k=0; k<nmat; ++k)
       {
-        pk[k] = eos_pressure< tag::multimat >( system,
-                                               ugp[densityIdx(nmat, k)]/ugp[volfracIdx(nmat, k)],
-                                               u, v, w,
-                                               ugp[energyIdx(nmat, k)]/ugp[volfracIdx(nmat, k)],
-                                               k );
-        p += ugp[volfracIdx(nmat, k)] * pk[k];
+        apk[k] = eos_pressure< tag::multimat >( system,
+          ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
+          ugp[volfracIdx(nmat, k)], k );
+        p += apk[k];
       }
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
@@ -799,7 +794,7 @@ class MultiMat {
         fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
 
         // conservative part of material total-energy flux
-        auto hmat = ugp[energyIdx(nmat, k)] + ugp[volfracIdx(nmat, k)]*pk[k];
+        auto hmat = ugp[energyIdx(nmat, k)] + apk[k];
         fl[energyIdx(nmat, k)][0] = u * hmat;
         fl[energyIdx(nmat, k)][1] = v * hmat;
         fl[energyIdx(nmat, k)][2] = w * hmat;
@@ -851,12 +846,13 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
-        tk::real rhomat = ur[densityIdx(nmat, k)] / ur[volfracIdx(nmat, k)];
-        tk::real rhoemat = ur[energyIdx(nmat, k)] / ur[volfracIdx(nmat, k)];
-        ur[ncomp+pressureIdx(nmat, k)] =
-          eos_pressure< tag::multimat >( system, rhomat,
-            ur[ncomp+velocityIdx(nmat, 0)], ur[ncomp+velocityIdx(nmat, 1)],
-            ur[ncomp+velocityIdx(nmat, 2)], rhoemat, k );
+        tk::real arhomat = ur[densityIdx(nmat, k)];
+        tk::real arhoemat = ur[energyIdx(nmat, k)];
+        tk::real alphamat = ur[volfracIdx(nmat, k)];
+        ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
+          arhomat, ur[ncomp+velocityIdx(nmat, 0)],
+          ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
+          arhoemat, alphamat, k ) / alphamat;
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

@@ -308,24 +308,23 @@ pressureRelaxationInt( ncomp_t system,
                                   ugp[momentumIdx(nmat, 2)]/rhob }};
 
       // get pressures and bulk modulii
-      real rhomat(0.0), pb(0.0), amat(0.0), nume(0.0), deno(0.0), trelax(0.0);
-      std::vector< real > pmat(nmat, 0.0), kmat(nmat, 0.0);
+      real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
+      std::vector< real > apmat(nmat, 0.0), kmat(nmat, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
       {
-        rhomat = ugp[densityIdx(nmat, k)]/ugp[volfracIdx(nmat, k)];
-        pmat[k] = inciter::eos_pressure< tag::multimat >
-                    ( system, rhomat, vel[0], vel[1], vel[2],
-                      ugp[energyIdx(nmat, k)]/ugp[volfracIdx(nmat, k)], k );
-        amat = inciter::eos_soundspeed< tag::multimat >( system,
-          ugp[densityIdx(nmat, k)], ugp[volfracIdx(nmat, k)]*pmat[k],
-          ugp[volfracIdx(nmat, k)], k );
-        kmat[k] = rhomat * amat * amat;
-        pb += ugp[volfracIdx(nmat, k)] * pmat[k];
+        real arhomat = ugp[densityIdx(nmat, k)];
+        real alphamat = ugp[volfracIdx(nmat, k)];
+        apmat[k] = inciter::eos_pressure< tag::multimat >( system, arhomat,
+          vel[0], vel[1], vel[2], ugp[energyIdx(nmat, k)], alphamat, k );
+        real amat = inciter::eos_soundspeed< tag::multimat >( system, arhomat,
+          apmat[k], alphamat, k );
+        kmat[k] = arhomat * amat * amat;
+        pb += apmat[k];
 
         // relaxation parameters
         trelax = std::max(trelax, ct*dx/amat);
-        nume += ugp[volfracIdx(nmat, k)] / kmat[k] * pmat[k];
-        deno += ugp[volfracIdx(nmat, k)] / kmat[k];
+        nume += alphamat * apmat[k] / kmat[k];
+        deno += alphamat * alphamat / kmat[k];
       }
       auto p_relax = nume/deno;
 
@@ -333,8 +332,8 @@ pressureRelaxationInt( ncomp_t system,
       std::vector< real > s_prelax(ncomp, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
       {
-        auto s_alpha = (pmat[k]-p_relax) * (ugp[volfracIdx(nmat, k)]/kmat[k])
-                       / trelax;
+        auto s_alpha = (apmat[k]-p_relax*ugp[volfracIdx(nmat, k)])
+          * (ugp[volfracIdx(nmat, k)]/kmat[k]) / trelax;
         s_prelax[volfracIdx(nmat, k)] = s_alpha;
         s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
       }
