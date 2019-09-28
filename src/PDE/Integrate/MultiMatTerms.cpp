@@ -316,8 +316,9 @@ pressureRelaxationInt( ncomp_t system,
         pmat[k] = inciter::eos_pressure< tag::multimat >
                     ( system, rhomat, vel[0], vel[1], vel[2],
                       ugp[energyIdx(nmat, k)]/ugp[volfracIdx(nmat, k)], k );
-        amat = inciter::eos_soundspeed< tag::multimat >
-                 ( system, rhomat, pmat[k] );
+        amat = inciter::eos_soundspeed< tag::multimat >( system,
+          ugp[densityIdx(nmat, k)], ugp[volfracIdx(nmat, k)]*pmat[k],
+          ugp[volfracIdx(nmat, k)], k );
         kmat[k] = rhomat * amat * amat;
         pb += ugp[volfracIdx(nmat, k)] * pmat[k];
 

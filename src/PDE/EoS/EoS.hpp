@@ -86,16 +86,19 @@ tk::real eos_pressure( ncomp_t system,
 //! Calculate speed of sound from the material density and material pressure
 //! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
 //! \param[in] system Equation system index
-//! \param[in] rho Material density
-//! \param[in] pr Material pressure
+//! \param[in] arho Material partial density (\alpha_k * \rho_k)
+//! \param[in] apr Material partial pressure (\alpha_k * p_k)
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for the
+//!   single-material system, this argument can be left unspecified by the
+//!   calling code
 //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
 //!   for the single-material system, this argument can be left unspecified by
 //!   the calling code
 //! \return Material speed of sound using the stiffened-gas EoS
 template< class Eq >
 tk::real eos_soundspeed( ncomp_t system,
-                         tk::real rho, tk::real pr,
-                         std::size_t imat=0 )
+                         tk::real arho, tk::real apr,
+                         tk::real alpha=1.0, std::size_t imat=0 )
 {
   // query input deck to get gamma, p_c
   auto g =
@@ -103,9 +106,9 @@ tk::real eos_soundspeed( ncomp_t system,
   auto p_c =
     g_inputdeck.get< tag::param, Eq, tag::pstiff >()[ system ][imat];
 
-  auto p_eff = std::max( 1.0e-15, pr+p_c );
+  auto p_eff = std::max( 1.0e-15, apr+(alpha*p_c) );
 
-  tk::real a = std::sqrt( g * p_eff / rho );
+  tk::real a = std::sqrt( g * p_eff / arho );
   return a;
 }
 

@@ -537,7 +537,9 @@ class MultiMat {
             p = eos_pressure< tag::multimat >( 0, rhok, u, v, w,
                                                ugp[0][energyIdx(nmat, k)]/ugp[0][volfracIdx(nmat, k)],
                                                k );
-            a = std::max( a, eos_soundspeed< tag::multimat >( 0, rhok, p, k ) );
+            a = std::max( a, eos_soundspeed< tag::multimat >( 0,
+              ugp[0][densityIdx(nmat, k)], ugp[0][volfracIdx(nmat, k)]*p,
+              ugp[0][volfracIdx(nmat, k)], k ) );
           }
 
           vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
@@ -592,7 +594,9 @@ class MultiMat {
               p = eos_pressure< tag::multimat >( 0, rhok, u, v, w,
                                                  ugp[1][energyIdx(nmat, k)]/ugp[1][volfracIdx(nmat, k)],
                                                  k );
-              a = std::max( a, eos_soundspeed< tag::multimat >( 0, rhok, p, k ) );
+              a = std::max( a, eos_soundspeed< tag::multimat >( 0,
+                ugp[1][densityIdx(nmat, k)], ugp[1][volfracIdx(nmat, k)]*p,
+                ugp[1][volfracIdx(nmat, k)], k ) );
             }
 
             vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);

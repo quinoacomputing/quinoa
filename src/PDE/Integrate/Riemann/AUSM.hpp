@@ -77,16 +77,16 @@ struct AUSM {
       pl += al_l[k] * pml[k];
       hml[k] = u[0][energyIdx(nmat, k)] + al_l[k]*pml[k];
       amatl = eos_soundspeed< tag::multimat >( 0,
-                                               u[0][densityIdx(nmat, k)]/al_l[k],
-                                               pml[k], k );
+                                               u[0][densityIdx(nmat, k)],
+                                               al_l[k]*pml[k], al_l[k], k );
 
       al_r[k] = u[1][volfracIdx(nmat, k)];
       pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
       pr += al_r[k] * pmr[k];
       hmr[k] = u[1][energyIdx(nmat, k)] + al_r[k]*pmr[k];
       amatr = eos_soundspeed< tag::multimat >( 0,
-                                               u[1][densityIdx(nmat, k)]/al_r[k],
-                                               pmr[k], k );
+                                               u[1][densityIdx(nmat, k)],
+                                               al_r[k]*pmr[k], al_r[k], k );
 
       // Average states for mixture speed of sound
       al_12[k] = 0.5*(al_l[k]+al_r[k]);
