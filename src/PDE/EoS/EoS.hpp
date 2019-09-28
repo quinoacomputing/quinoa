@@ -54,18 +54,18 @@ tk::real eos_density( ncomp_t system,
 //!   energy using the stiffened-gas equation of state
 //! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
 //! \param[in] system Equation system index
-//! \param[in] arho Material partial density (\alpha_k * \rho_k)
+//! \param[in] arho Material partial density (alpha_k * rho_k)
 //! \param[in] u X-velocity
 //! \param[in] v Y-velocity
 //! \param[in] w Z-velocity
-//! \param[in] arhoE Material total energy (\alpha_k * \rho_k * E_k)
+//! \param[in] arhoE Material total energy (alpha_k * rho_k * E_k)
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for the
 //!   single-material system, this argument can be left unspecified by the
 //!   calling code
 //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
 //!   for the single-material system, this argument can be left unspecified by
 //!   the calling code
-//! \return Material partial pressure (\alpha_k * p_k) calculated using the
+//! \return Material partial pressure (alpha_k * p_k) calculated using the
 //!   stiffened-gas EoS
 template< class Eq >
 tk::real eos_pressure( ncomp_t system,
@@ -91,8 +91,8 @@ tk::real eos_pressure( ncomp_t system,
 //! Calculate speed of sound from the material density and material pressure
 //! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
 //! \param[in] system Equation system index
-//! \param[in] arho Material partial density (\alpha_k * \rho_k)
-//! \param[in] apr Material partial pressure (\alpha_k * p_k)
+//! \param[in] arho Material partial density (alpha_k * rho_k)
+//! \param[in] apr Material partial pressure (alpha_k * p_k)
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for the
 //!   single-material system, this argument can be left unspecified by the
 //!   calling code
