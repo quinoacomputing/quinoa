@@ -68,7 +68,7 @@ struct AUSM {
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             hml(nmat, 0.0), hmr(nmat, 0.0),
                             pml(nmat, 0.0), pmr(nmat, 0.0),
-                            al_12(nmat, 0.0), rhomat12(nmat, 0.0),
+                            arhom12(nmat, 0.0),
                             amat12(nmat, 0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
@@ -89,9 +89,7 @@ struct AUSM {
                                                al_r[k]*pmr[k], al_r[k], k );
 
       // Average states for mixture speed of sound
-      al_12[k] = 0.5*(al_l[k]+al_r[k]);
-      rhomat12[k] = 0.5*(u[0][densityIdx(nmat, k)]/al_l[k]
-                        + u[1][densityIdx(nmat, k)]/al_r[k]);
+      arhom12[k] = 0.5*(u[0][densityIdx(nmat, k)] + u[1][densityIdx(nmat, k)]);
       amat12[k] = 0.5*(amatl+amatr);
     }
 
@@ -101,7 +99,7 @@ struct AUSM {
     tk::real ac12(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
-      ac12 += (al_12[k]*rhomat12[k]*amat12[k]*amat12[k]);
+      ac12 += (arhom12[k]*amat12[k]*amat12[k]);
     }
     ac12 = std::sqrt( ac12/rho12 );
 
