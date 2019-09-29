@@ -185,7 +185,7 @@ class MultiMat {
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
             eos_pressure< tag::multimat >( m_system, arhomat, vel[0], vel[1],
-              vel[2], arhoemat, alphamat, k ) / alphamat;
+              vel[2], arhoemat, alphamat, k );
         }
       }
     }
@@ -852,7 +852,7 @@ class MultiMat {
         ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
           arhomat, ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          arhoemat, alphamat, k ) / alphamat;
+          arhoemat, alphamat, k );
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

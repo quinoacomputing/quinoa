@@ -74,19 +74,19 @@ struct AUSM {
     {
       al_l[k] = u[0][volfracIdx(nmat, k)];
       pml[k] = u[0][ncomp+pressureIdx(nmat, k)];
-      pl += al_l[k] * pml[k];
-      hml[k] = u[0][energyIdx(nmat, k)] + al_l[k]*pml[k];
+      pl += pml[k];
+      hml[k] = u[0][energyIdx(nmat, k)] + pml[k];
       amatl = eos_soundspeed< tag::multimat >( 0,
                                                u[0][densityIdx(nmat, k)],
-                                               al_l[k]*pml[k], al_l[k], k );
+                                               pml[k], al_l[k], k );
 
       al_r[k] = u[1][volfracIdx(nmat, k)];
       pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
-      pr += al_r[k] * pmr[k];
-      hmr[k] = u[1][energyIdx(nmat, k)] + al_r[k]*pmr[k];
+      pr += pmr[k];
+      hmr[k] = u[1][energyIdx(nmat, k)] + pmr[k];
       amatr = eos_soundspeed< tag::multimat >( 0,
                                                u[1][densityIdx(nmat, k)],
-                                               al_r[k]*pmr[k], al_r[k], k );
+                                               pmr[k], al_r[k], k );
 
       // Average states for mixture speed of sound
       arhom12[k] = 0.5*(u[0][densityIdx(nmat, k)] + u[1][densityIdx(nmat, k)]);
@@ -163,17 +163,17 @@ struct AUSM {
     if (std::fabs(l_plus) > 1.0e-10)
     {
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( al_l[k]*pml[k] );
+        flx.push_back( pml[k] );
     }
     else if (std::fabs(l_minus) > 1.0e-10)
     {
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( al_r[k]*pmr[k] );
+        flx.push_back( pmr[k] );
     }
     else
     {
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( 0.5*(al_l[k]*pml[k] + al_r[k]*pmr[k]) );
+        flx.push_back( 0.5*(pml[k] + pmr[k]) );
     }
 
     // Store Riemann velocity

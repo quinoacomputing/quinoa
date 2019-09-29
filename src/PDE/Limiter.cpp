@@ -384,8 +384,8 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
   // determine if cell is a material-interface cell based on ad-hoc tolerances.
   // if interface-cell, then modify high-order dofs of conserved unknowns
   // consistently and use same limiter for all equations
-  if ( dalmax > 0.01 ||
-       (almax > 0.0001 && almax < (1.0-0.0001)) )
+  if ( dalmax > 0.1 &&
+       (almax > 0.1 && almax < (1.0-0.1)) )
   {
     // 1. consistent high-order dofs
     std::array< tk::real, 3 > drhob {{ 0.0, 0.0, 0.0 }};
