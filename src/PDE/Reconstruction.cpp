@@ -46,16 +46,27 @@ tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
     std::array< real, 3 > geoElemR;
     std::size_t eR(0);
 
+    // A second-order (piecewise linear) solution polynomial can be obtained
+    // from the first-order (piecewise constant) FV solutions by using a
+    // least-squares (LS) reconstruction process. LS uses the first-order
+    // solutions from the cell being processed, and the cells surrounding it,
+    // to obtain a system of equations for the three second-order DOFs that are
+    // to be determined. In 3D tetrahedral meshes, this would give four
+    // equations for the three unknown DOFs. This overdetermined system is
+    // solved in the least-squares sense using the normal equations approach.
+
     // get a 3x3 system by applying the normal equation approach to the
     // least-squares overdetermined system
 
     if (er > -1) {
     // internal face contribution
       eR = static_cast< std::size_t >(er);
+      // Put in cell-centroid coordinates
       geoElemR = {{ geoElem(eR,1,0), geoElem(eR,2,0), geoElem(eR,3,0) }};
     }
     else {
     // boundary face contribution
+      // Put in face-centroid coordinates
       geoElemR = {{ geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0) }};
     }
 
@@ -63,15 +74,19 @@ tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
                                     geoElemR[1]-geoElem(el,2,0),
                                     geoElemR[2]-geoElem(el,3,0) }};
 
+    // define a lambda for contributing to lhs matrix
+    auto lhs = [&]( std::size_t e ){
     for (std::size_t idir=0; idir<3; ++idir)
-    {
-      // lhs matrix
       for (std::size_t jdir=0; jdir<3; ++jdir)
-      {
-        lhs_ls[el][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
-        if (er > -1) lhs_ls[eR][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
-      }
-    }
+        lhs_ls[e][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
+    };
+
+    // always add left element contribution (at a boundary face, the internal
+    // element is always the left element)
+    lhs(el);
+    // add right element contribution for internal faces only
+    if (er > -1) lhs(eR);
+
   }
 }
 
@@ -95,7 +110,9 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
 //! \param[in,out] rhs_ls RHS reconstruction vector
 //! \details This function computing the internal face contributions to the rhs
 //!   vector for reconstruction, is common for primitive and conserved
-//!   quantities.
+//!   quantities. If `W` == `U`, compute internal face contributions for the
+//!   conserved variables. If `W` == `P`, compute internal face contributions
+//!   for the primitive variables.
 // *****************************************************************************
 {
   const auto& esuf = fd.Esuf();
@@ -111,6 +128,9 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
 
     // get a 3x3 system by applying the normal equation approach to the
     // least-squares overdetermined system
+
+    // 'wdeltax' is the distance vector between the centroids of this element
+    // and its neighbor
     std::array< real, 3 > wdeltax{{ geoElem(er,1,0)-geoElem(el,1,0),
                                     geoElem(er,2,0)-geoElem(el,2,0),
                                     geoElem(er,3,0)-geoElem(el,3,0) }};
@@ -166,7 +186,8 @@ tk::bndLeastSqConservedVar_P0P1( ncomp_t system,
 //!   A default is set to 0, so that calling code for systems that do not store
 //!   primitive quantities does not need to specify this argument.
 //! \details This function computing the boundary face contributions to the rhs
-//!   vector for reconstruction, is specialized for conserved quantities.
+//!   vector for reconstruction, is specialized for conserved quantities. Also
+//!   see the version for primitve quantities bndLeastSqPrimitiveVar_P0P1().
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
@@ -253,8 +274,9 @@ tk::bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
 //!   system. This is necessary to extend the state vector to the right size,
 //!   so that correct boundary conditions are obtained.
 //! \details Since this function computes rhs contributions of boundary faces
-//!   for the reconstruction of primitive quantities only, it cannot be called
-//!   for systems of PDEs that do not store primitive quantities.
+//!   for the reconstruction of primitive quantities only, it should not be
+//!   called for systems of PDEs that do not store primitive quantities. Also
+//!   see the version for conserved quantities bndLeastSqConservedVar_P0P1().
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
@@ -318,13 +340,17 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
   Fields& W )
 // *****************************************************************************
-//  Solve 3x3 system for least-squares reconstruction
+//  Solve the 3x3 linear system for least-squares reconstruction
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] lhs LHS reconstruction matrix
 //! \param[in] rhs RHS reconstruction vector
 //! \param[in,out] W Solution vector to be reconstructed at recent time step
+//! \details Solves the 3x3 linear system for each element, individually. For
+//!   systems that require reconstructions of primitive quantities, this should
+//!   be called twice, once with the argument 'W' as U (conserved), and again
+//!   with 'W' as P (primitive).
 // *****************************************************************************
 {
   for (std::size_t e=0; e<lhs.size(); ++e)
@@ -361,6 +387,9 @@ tk::transform_P0P1( ncomp_t ncomp,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] W Second-order reconstructed vector which gets transformed to
 //!   the Dubiner reference space
+//! \details Since the DG solution (and the primitive quantities) are assumed to
+//!   be stored in the Dubiner space, this transformation from Taylor
+//!   coefficients to Dubiner coefficients is necessary.
 // *****************************************************************************
 {
   const auto& cx = coord[0];

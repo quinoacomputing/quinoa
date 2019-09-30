@@ -4701,8 +4701,8 @@ struct prelax_info {
     "Turn multi-material finite pressure relaxation on/off"; }
   static std::string longDescription() { return
     R"(This keyword is used to turn finite pressure relaxation between multiple
-       materials on/off. It is used only for multimat, and has no effect for the
-       other PDE types.)";
+       materials on/off. It is used only for the multi-material solver, and has
+       no effect when used for the other PDE types.)";
   }
   struct expect {
     using type = bool;
