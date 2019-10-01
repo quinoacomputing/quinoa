@@ -47,6 +47,7 @@ MultiMatProblemWaterAirShocktube::solution( ncomp_t system,
 //!   stiffened gas EoS, which has not been implemented yet.
 // *****************************************************************************
 {
+  // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 9, "Number of scalar components must be 9" );
 
   auto nmat =
