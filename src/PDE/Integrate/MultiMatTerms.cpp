@@ -217,13 +217,13 @@ update_rhs_ncn(
 
 void
 pressureRelaxationInt( ncomp_t system,
-                       ncomp_t ncomp,
                        std::size_t nmat,
                        ncomp_t offset,
                        const std::size_t ndof,
                        const std::size_t rdof,
                        const Fields& geoElem,
                        const Fields& U,
+                       const Fields& P,
                        const std::vector< std::size_t >& ndofel,
                        const tk::real ct,
                        Fields& R )
@@ -237,13 +237,13 @@ pressureRelaxationInt( ncomp_t system,
 //!   high‐order finite element Lagrangian hydrodynamics. International Journal
 //!   for Numerical Methods in Fluids, 82(10), 689-706.
 //! \param[in] system Equation system index
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] geoElem Element geometry array
 //! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitive quantities at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in] ct Pressure relaxation time-scale for this system
 //! \param[in,out] R Right-hand side vector added to
@@ -253,6 +253,11 @@ pressureRelaxationInt( ncomp_t system,
   using inciter::densityIdx;
   using inciter::momentumIdx;
   using inciter::energyIdx;
+  using inciter::pressureIdx;
+  using inciter::velocityIdx;
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
 
   // compute volume integrals
   for (std::size_t e=0; e<U.nunk(); ++e)
@@ -297,15 +302,12 @@ pressureRelaxationInt( ncomp_t system,
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
       auto ugp = eval_state( ncomp, offset, rdof, dof_el, e, U, B );
+      auto pgp = eval_state( nprim, offset, rdof, dof_el, e, P, B );
 
       // get bulk properties
       real rhob(0.0);
       for (std::size_t k=0; k<nmat; ++k)
         rhob += ugp[densityIdx(nmat, k)];
-
-      std::array< real, 3 > vel{{ ugp[momentumIdx(nmat, 0)]/rhob,
-                                  ugp[momentumIdx(nmat, 1)]/rhob,
-                                  ugp[momentumIdx(nmat, 2)]/rhob }};
 
       // get pressures and bulk modulii
       real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
@@ -314,8 +316,7 @@ pressureRelaxationInt( ncomp_t system,
       {
         real arhomat = ugp[densityIdx(nmat, k)];
         real alphamat = ugp[volfracIdx(nmat, k)];
-        apmat[k] = inciter::eos_pressure< tag::multimat >( system, arhomat,
-          vel[0], vel[1], vel[2], ugp[energyIdx(nmat, k)], alphamat, k );
+        apmat[k] = pgp[pressureIdx(nmat, k)];
         real amat = inciter::eos_soundspeed< tag::multimat >( system, arhomat,
           apmat[k], alphamat, k );
         kmat[k] = arhomat * amat * amat;

@@ -328,7 +328,8 @@ class CompFlow {
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
                  const std::vector< std::size_t >& ndofel,
-                 const tk::Fields& U ) const
+                 const tk::Fields& U,
+                 const tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 

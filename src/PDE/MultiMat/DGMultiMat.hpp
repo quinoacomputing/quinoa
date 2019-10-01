@@ -420,8 +420,8 @@ class MultiMat {
       {
         const auto ct = g_inputdeck.get< tag::param, tag::multimat,
                                          tag::prelax_timescale >()[m_system];
-        tk::pressureRelaxationInt( m_system, m_ncomp, nmat, m_offset, ndof,
-                                   rdof, geoElem, U, ndofel, ct, R );
+        tk::pressureRelaxationInt( m_system, nmat, m_offset, ndof, rdof,
+                                   geoElem, U, P, ndofel, ct, R );
       }
     }
 
@@ -431,8 +431,9 @@ class MultiMat {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
-    //! \param[in] U Solution vector at recent time step
 //    //! \param[in] ndofel Vector of local number of degrees of freedom
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Vector of primitive quantities at recent time step
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
@@ -440,7 +441,8 @@ class MultiMat {
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
                  const std::vector< std::size_t >& /*ndofel*/,
-                 const tk::Fields& U ) const
+                 const tk::Fields& U,
+                 const tk::Fields& P ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -461,7 +463,7 @@ class MultiMat {
       coordgp[1].resize( ng );
       wgp.resize( ng );
 
-      tk::real rho, u, v, w, ap, a, vn, dSV_l, dSV_r;
+      tk::real u, v, w, a, vn, dSV_l, dSV_r;
       std::vector< tk::real > delt( U.nunk(), 0.0 );
 
       const auto& cx = coord[0];
@@ -512,7 +514,7 @@ class MultiMat {
 
           auto wt = wgp[igp] * geoFace(f,0,0);
 
-          std::array< std::vector< tk::real >, 2 > ugp;
+          std::array< std::vector< tk::real >, 2 > ugp, pgp;
 
           // left element
           for (ncomp_t c=0; c<m_ncomp; ++c)
@@ -520,24 +522,24 @@ class MultiMat {
             auto mark = c*rdof;
             ugp[0].push_back( U(el, mark, m_offset) );
           }
+          for (ncomp_t c=0; c<nprim(); ++c)
+          {
+            auto mark = c*rdof;
+            pgp[0].push_back( P(el, mark, m_offset) );
+          }
 
-          rho = 0.0;
-          for (std::size_t k=0; k<nmat; ++k)
-            rho += ugp[0][densityIdx(nmat, k)];
-
-          u = ugp[0][momentumIdx(nmat, 0)]/rho;
-          v = ugp[0][momentumIdx(nmat, 1)]/rho;
-          w = ugp[0][momentumIdx(nmat, 2)]/rho;
+          u = pgp[0][velocityIdx(nmat, 0)];
+          v = pgp[0][velocityIdx(nmat, 1)];
+          w = pgp[0][velocityIdx(nmat, 2)];
 
           a = 0.0;
           for (std::size_t k=0; k<nmat; ++k)
           {
-            ap = eos_pressure< tag::multimat >( 0, ugp[0][densityIdx(nmat, k)],
-              u, v, w, ugp[0][energyIdx(nmat, k)], ugp[0][volfracIdx(nmat, k)],
-              k );
-            a = std::max( a, eos_soundspeed< tag::multimat >( 0,
-              ugp[0][densityIdx(nmat, k)], ap, ugp[0][volfracIdx(nmat, k)],
-              k ) );
+            if (ugp[0][volfracIdx(nmat, k)] > 1.0e-06) {
+              a = std::max( a, eos_soundspeed< tag::multimat >( 0,
+                ugp[0][densityIdx(nmat, k)], pgp[0][pressureIdx(nmat, k)],
+                ugp[0][volfracIdx(nmat, k)], k ) );
+            }
           }
 
           vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
@@ -571,29 +573,29 @@ class MultiMat {
              tk::Jacobian(coordel_r[0], coordel_r[1], gp, coordel_r[3])/detT_r,
              tk::Jacobian(coordel_r[0], coordel_r[1], coordel_r[2], gp)/detT_r);
 
-            for (ncomp_t c=0; c<5; ++c)
+            for (ncomp_t c=0; c<m_ncomp; ++c)
             {
               auto mark = c*rdof;
               ugp[1].push_back( U(eR, mark, m_offset) );
             }
+            for (ncomp_t c=0; c<nprim(); ++c)
+            {
+              auto mark = c*rdof;
+              pgp[1].push_back( P(eR, mark, m_offset) );
+            }
 
-            rho = 0.0;
-            for (std::size_t k=0; k<nmat; ++k)
-              rho += ugp[1][densityIdx(nmat, k)];
-
-            u = ugp[1][momentumIdx(nmat, 0)]/rho;
-            v = ugp[1][momentumIdx(nmat, 1)]/rho;
-            w = ugp[1][momentumIdx(nmat, 2)]/rho;
+            u = pgp[1][velocityIdx(nmat, 0)];
+            v = pgp[1][velocityIdx(nmat, 1)];
+            w = pgp[1][velocityIdx(nmat, 2)];
 
             a = 0.0;
             for (std::size_t k=0; k<nmat; ++k)
             {
-              ap = eos_pressure< tag::multimat >( 0, ugp[1][densityIdx(nmat, k)],
-                u, v, w, ugp[1][energyIdx(nmat, k)], ugp[1][volfracIdx(nmat, k)],
-                k );
-              a = std::max( a, eos_soundspeed< tag::multimat >( 0,
-                ugp[1][densityIdx(nmat, k)], ap, ugp[1][volfracIdx(nmat, k)],
-                k ) );
+              if (ugp[1][volfracIdx(nmat, k)] > 1.0e-06) {
+                a = std::max( a, eos_soundspeed< tag::multimat >( 0,
+                  ugp[1][densityIdx(nmat, k)], pgp[1][pressureIdx(nmat, k)],
+                  ugp[1][volfracIdx(nmat, k)], k ) );
+              }
             }
 
             vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
