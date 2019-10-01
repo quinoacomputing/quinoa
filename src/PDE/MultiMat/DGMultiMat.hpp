@@ -142,8 +142,6 @@ class MultiMat {
                            tk::Fields& prim,
                            std::size_t nielem ) const
     {
-      [[maybe_unused]] const auto ndof =
-        g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
@@ -154,8 +152,8 @@ class MultiMat {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
-      Assert( ndof == 1, "High-order discretizations not set up for multimat "
-              "updatePrimitives()" );
+      Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) == 1, "High-order "
+              "discretizations not set up for multimat updatePrimitives()" );
 
       for (std::size_t e=0; e<nielem; ++e)
       {
