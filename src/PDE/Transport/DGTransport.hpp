@@ -179,19 +179,21 @@ class Transport {
             {{ 0.0, 0.0, 0.0 }} ) );
 
       // reconstruct x,y,z-derivatives of unknowns
-      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,
-                           lhs_ls, rhs_ls );
+      // 0. get lhs matrix, which is only geometry dependent
+      tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
-      // compute boundary surface flux integrals
+      // 1. internal face contributions
+      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U, rhs_ls );
+
+      // 2. boundary face contributions
       for (const auto& b : bctypes)
-        tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                             fd, geoFace, geoElem, t, b.second, U, lhs_ls,
-                             rhs_ls );
+        tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
+          b.first, fd, geoFace, geoElem, t, b.second, U, rhs_ls );
 
-      // solve 3x3 least-squares system
+      // 3. solve 3x3 least-squares system
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
 
-      // transform reconstructed derivatives to Dubiner dofs
+      // 4. transform reconstructed derivatives to Dubiner dofs
       tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4,
                           inpoel, coord, U );
     }
@@ -279,7 +281,7 @@ class Transport {
         { m_bcdir, Dirichlet } }};
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, inpoel, coord,
+      tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, Upwind::flux, Problem::prescribedVelocity, U, P,
                    ndofel, R, riemannDeriv );
 
@@ -290,7 +292,7 @@ class Transport {
 
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, b.first, fd,
+        tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
           geoFace, inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
           b.second, U, P, ndofel, R, riemannDeriv );
     }

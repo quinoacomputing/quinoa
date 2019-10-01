@@ -4185,6 +4185,26 @@ struct gauss_hump_compflow_info {
 using gauss_hump_compflow = keyword< gauss_hump_compflow_info,
                             TAOCPP_PEGTL_STRING("gauss_hump_compflow") >;
 
+struct waterair_shocktube_info {
+  using code = Code< W >;
+  static std::string name() { return "Water-air shock-tube"; }
+  static std::string shortDescription() { return
+    "Select the water-air shock-tube test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Water-air shock-tube test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material pressure relaxation procedure and its interface capturing
+    capabilities. Example: "problem waterair_shocktube". For more details, see
+    Chiapolino, A., Saurel, R., & Nkonga, B. (2017). Sharpening diffuse
+    interfaces with compressible fluids on unstructured meshes. Journal of
+    Computational Physics, 340, 389-417.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using waterair_shocktube =
+  keyword< waterair_shocktube_info, TAOCPP_PEGTL_STRING("waterair_shocktube") >;
+
 struct problem_info {
   using code = Code< t >;
   static std::string name() { return "Test problem"; }
@@ -4691,6 +4711,43 @@ struct id_info {
 };
 using id = keyword< id_info, TAOCPP_PEGTL_STRING("id") >;
 
+struct prelax_info {
+  static std::string name() { return "Pressure relaxation"; }
+  static std::string shortDescription() { return
+    "Turn multi-material finite pressure relaxation on/off"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to turn finite pressure relaxation between multiple
+       materials on/off. It is used only for the multi-material solver, and has
+       no effect when used for the other PDE types.)";
+  }
+  struct expect {
+    using type = bool;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using prelax = keyword< prelax_info, TAOCPP_PEGTL_STRING("prelax") >;
+
+struct prelax_timescale_info {
+  static std::string name() { return "Pressure relaxation time-scale"; }
+  static std::string shortDescription() { return
+    "Time-scale for multi-material finite pressure relaxation"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the time-scale at which finite pressure
+       relaxation between multiple materials occurs. The default value of 1.0
+       corresponds to a relaxation time of the order of time required for a
+       sound wave to pass through a computational element. It is used only for
+       multimat, and has no effect for the other PDE types.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.001;
+    static std::string description() { return "real"; }
+  };
+};
+using prelax_timescale = keyword< prelax_timescale_info,
+                                  TAOCPP_PEGTL_STRING("prelax_timescale") >;
+
 struct mat_gamma_info {
   static std::string name() { return "gamma"; }
   static std::string shortDescription() { return "ratio of specific heats"; }
@@ -4850,6 +4907,8 @@ struct multimat_info {
     + problem::string() + "\', \'"
     + material::string() + "\', \'"
     + nmat::string() + "\', \'"
+    + prelax::string() + "\', \'"
+    + prelax_timescale::string() + "\', \'"
     + pde_alpha::string() + "\', \'"
     + pde_p0::string() + "\', \'"
     + pde_betax::string() + "\', \'"

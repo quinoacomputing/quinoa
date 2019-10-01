@@ -259,6 +259,11 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
                           std::vector< kw::mat_k::info::expect::type > >
   //! number of materials
   , tag::nmat,          std::vector< kw::nmat::info::expect::type >
+  //! pressure relaxation toggle
+  , tag::prelax,        std::vector< bool >
+  //! pressure relaxation time scale
+  , tag::prelax_timescale,
+                      std::vector< kw::prelax_timescale::info::expect::type >
 > >;
 
 //! Parameters storage

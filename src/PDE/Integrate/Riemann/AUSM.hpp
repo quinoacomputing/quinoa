@@ -42,11 +42,11 @@ struct AUSM {
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& )
   {
-    auto ncomp = u[0].size()-3;
-    std::vector< tk::real > flx( ncomp, 0 );
-
     const auto nmat =
       g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
+
+    auto ncomp = u[0].size()-(3+nmat);
+    std::vector< tk::real > flx( ncomp, 0 );
 
     // Primitive variables
     tk::real rhol(0.0), rhor(0.0);
@@ -73,10 +73,7 @@ struct AUSM {
     for (std::size_t k=0; k<nmat; ++k)
     {
       al_l[k] = u[0][volfracIdx(nmat, k)];
-      pml[k] = eos_pressure< tag::multimat >( 0, u[0][densityIdx(nmat, k)]/al_l[k],
-                                              ul, vl, wl,
-                                              u[0][energyIdx(nmat, k)]/al_l[k],
-                                              k );
+      pml[k] = u[0][ncomp+pressureIdx(nmat, k)];
       pl += al_l[k] * pml[k];
       hml[k] = u[0][energyIdx(nmat, k)] + al_l[k]*pml[k];
       amatl = eos_soundspeed< tag::multimat >( 0,
@@ -84,10 +81,7 @@ struct AUSM {
                                                pml[k], k );
 
       al_r[k] = u[1][volfracIdx(nmat, k)];
-      pmr[k] = eos_pressure< tag::multimat >( 0, u[1][densityIdx(nmat, k)]/al_r[k],
-                                              ur, vr, wr,
-                                              u[1][energyIdx(nmat, k)]/al_r[k],
-                                              k );
+      pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
       pr += al_r[k] * pmr[k];
       hmr[k] = u[1][energyIdx(nmat, k)] + al_r[k]*pmr[k];
       amatr = eos_soundspeed< tag::multimat >( 0,

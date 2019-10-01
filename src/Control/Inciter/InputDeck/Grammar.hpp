@@ -291,6 +291,17 @@ namespace grm {
       if (gamma.empty() || gamma.back().size() != nmat.back())
         Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
 
+      // If pressure relaxation is not specified, default to 'false'
+      auto& prelax = stack.template get< tag::param, eq, tag::prelax >();
+      if (prelax.empty() || prelax.size() != neq.get< eq >())
+        prelax.push_back( false );
+
+      // If pressure relaxation time-scale is not specified, default to 1.0
+      auto& prelax_ts = stack.template get< tag::param, eq,
+                                            tag::prelax_timescale >();
+      if (prelax_ts.empty() || prelax_ts.size() != neq.get< eq >())
+        prelax_ts.push_back( 1.0 );
+
       // If specific heats are not given, set defaults
       using cv_t = kw::mat_cv::info::expect::type;
       auto& cv = stack.template get< tag::param, eq, tag::cv >();
@@ -810,7 +821,16 @@ namespace deck {
                                tag::bcoutlet >,
                            bc< kw::bc_extrapolate,
                                tag::multimat,
-                               tag::bcextrapolate > >,
+                               tag::bcextrapolate >,
+                           parameter< tag::multimat,
+                                      kw::prelax_timescale,
+                                      tag::prelax_timescale >,
+                           tk::grm::process< use< kw::prelax >,
+                                             tk::grm::Store_back<
+                                               tag::param,
+                                               tag::multimat,
+                                               tag::prelax >,
+                                             pegtl::alpha > >,
            check_errors< tag::multimat, tk::grm::check_multimat > > {};
 
   //! partitioning ... end block
