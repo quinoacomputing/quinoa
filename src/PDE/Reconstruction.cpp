@@ -49,11 +49,18 @@ tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
     // A second-order (piecewise linear) solution polynomial can be obtained
     // from the first-order (piecewise constant) FV solutions by using a
     // least-squares (LS) reconstruction process. LS uses the first-order
-    // solutions from the cell being processed, and the cells surrounding it,
-    // to obtain a system of equations for the three second-order DOFs that are
+    // solutions from the cell being processed, and the cells surrounding it.
+    // The LS system is obtaining by requiring the following to hold:
+    // 'Taylor expansions of solution from cell-i to the centroids of each of
+    // its neighboring cells should be equal to the cell average solution on
+    // that neighbor cell.'
+    // This gives a system of equations for the three second-order DOFs that are
     // to be determined. In 3D tetrahedral meshes, this would give four
-    // equations for the three unknown DOFs. This overdetermined system is
-    // solved in the least-squares sense using the normal equations approach.
+    // equations (one for each neighbor )for the three unknown DOFs. This
+    // overdetermined system is solved in the least-squares sense using the
+    // normal equations approach. The normal equations approach involves
+    // pre-multiplying the overdetermined system by the transpose of the system
+    // matrix to obtain a square matrix (3x3 in this case).
 
     // get a 3x3 system by applying the normal equation approach to the
     // least-squares overdetermined system
@@ -281,6 +288,9 @@ tk::bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
 {
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
+
+  Assert( nprim != 0, "Primitive variables reconstruction should not be called "
+          "for PDE systems not storing primitive quantities");
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find( std::stoi(s) );// faces for side set
