@@ -183,17 +183,21 @@ class Velocity {
         // Optionally compute particle velocities derived from particle momentum
         if (m_solve == ctr::DepvarType::PRODUCT) {      // if solve for momentum
           for (ncomp_t i=0; i<m_numderived/3; ++i) {
-            auto rho = particles( p, m_mixmassfracbeta_ncomp+i,
+            auto rhoi = particles( p, m_mixmassfracbeta_ncomp+i,
                                   m_mixmassfracbeta_offset );
-            if (std::abs(rho) > epsilon) {
-              particles( p, m_ncomp+(i*3)+0, m_offset ) = Up/rho;
-              particles( p, m_ncomp+(i*3)+1, m_offset ) = Vp/rho;
-              particles( p, m_ncomp+(i*3)+2, m_offset ) = Wp/rho;
-              Up += rho * m_gravity[0] * dt;
-              Vp += rho * m_gravity[1] * dt;
-              Wp += rho * m_gravity[2] * dt;
+            if (std::abs(rhoi) > epsilon) {
+              particles( p, m_ncomp+(i*3)+0, m_offset ) = Up/rhoi;
+              particles( p, m_ncomp+(i*3)+1, m_offset ) = Vp/rhoi;
+              particles( p, m_ncomp+(i*3)+2, m_offset ) = Wp/rhoi;
+              Up += rhoi * m_gravity[0] * dt;
+              Vp += rhoi * m_gravity[1] * dt;
+              Wp += rhoi * m_gravity[2] * dt;
             }
           }
+        } else {
+          Up += m_gravity[0] * dt;
+          Vp += m_gravity[1] * dt;
+          Wp += m_gravity[2] * dt;
         }
       }
     }
