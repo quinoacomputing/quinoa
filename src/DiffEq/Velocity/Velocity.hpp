@@ -84,7 +84,8 @@ class Velocity {
       m_variant( g_inputdeck.get< tag::param, eq, tag::variant >().at(c) ),
       m_c0(),
       m_G(),
-      m_coeff( g_inputdeck.get< tag::param, eq, tag::c0 >().at(c), m_c0, m_dU )
+      m_coeff( g_inputdeck.get< tag::param, eq, tag::c0 >().at(c), m_c0, m_dU ),
+      m_gravity( { 0.0, 0.0, 0.0 } )
     {
       Assert( m_ncomp == 3, "Velocity eq number of components must be 3" );
       // Zero prescribed mean velocity gradient if full variable is solved for
@@ -97,6 +98,14 @@ class Velocity {
         Assert( hts.size() == 1,
                 "Velocity eq Hydrotimescales vector size must be 1" );
         m_hts = ctr::HydroTimeScales().table( hts[0] );
+      }
+      // Initialize gravity body force if configured
+      const auto& gravity =
+        g_inputdeck.get< tag::param, eq, tag::gravity >().at(c);
+      if (!gravity.empty()) {
+        m_gravity[0] = gravity[0];
+        m_gravity[1] = gravity[1];
+        m_gravity[2] = gravity[2];
       }
     }
 
@@ -180,6 +189,9 @@ class Velocity {
               particles( p, m_ncomp+(i*3)+0, m_offset ) = Up/rho;
               particles( p, m_ncomp+(i*3)+1, m_offset ) = Vp/rho;
               particles( p, m_ncomp+(i*3)+2, m_offset ) = Wp/rho;
+              Up += rho * m_gravity[0] * dt;
+              Vp += rho * m_gravity[1] * dt;
+              Wp += rho * m_gravity[2] * dt;
             }
           }
         }
@@ -232,6 +244,9 @@ class Velocity {
 
     //! (Optionally) prescribed mean velocity gradient
     std::array< tk::real, 9 > m_dU;
+
+    //! Optional gravity body force
+    std::array< tk::real, 3 > m_gravity;
 };
 
 } // walker::

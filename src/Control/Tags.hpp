@@ -146,6 +146,7 @@ struct rcomma {};
 struct r {};
 struct c {};
 struct c0 {};
+struct gravity {};
 struct c1 {};
 struct c2 {};
 struct c3 {};

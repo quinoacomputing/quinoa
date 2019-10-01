@@ -172,6 +172,21 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< class eq, class vec >
+  struct check_gravity : pegtl::success {};
+  //! Do error checking for a vector of prescribed mean gradient
+  template< class eq, class vec  >
+  struct action< check_gravity< eq, vec > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      auto& vv = stack.template get< tag::param, eq, vec >();
+      Assert( !vv.empty(), "Vector of vectors checked must not be empty" );
+      if (vv.back().size() != 3)
+        Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
   template< class eq > struct check_eq : pegtl::success {};
   //! \brief Do general error checking on the differential equation block
   //! \details This is error checking that all equation types must satisfy.
@@ -447,6 +462,12 @@ namespace grm {
           stack.template get< tag::param, tag::velocity, tag::variant >();
         if (variant.size() != neq.get< tag::velocity >())
           variant.push_back( walker::ctr::VelocityVariantType::SLM );
+
+        // Set gravity to {0,0,0} if unspecified
+        auto& gravity =
+          stack.template get< tag::param, tag::velocity, tag::gravity >();
+        if (gravity.size() != neq.get< tag::velocity >())
+          gravity.push_back( { 0.0, 0.0, 0.0 } );
       }
     }
   };
@@ -1531,6 +1552,10 @@ namespace deck {
                                             ctr::VelocityVariant,
                                             tag::velocity,
                                             tag::variant >,
+                           sde_parameter_vector< kw::gravity,
+                                                 tk::grm::check_gravity,
+                                                 tag::velocity,
+                                                 tag::gravity >,
                            icdelta< tag::velocity >,
                            icbeta< tag::velocity >,
                            icgamma< tag::velocity >,
