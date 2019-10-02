@@ -125,6 +125,10 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "coeff C0", std::to_string(
     g_inputdeck.get< tag::param, eq, tag::c0 >().at(c) ) );
 
+  const auto& gravity =
+    g_inputdeck.get< tag::param, tag::velocity, tag::gravity >().at(c);
+  if (!gravity.empty()) nfo.emplace_back( "gravity [3]", parameters(gravity) );
+
   return nfo;
 }
 

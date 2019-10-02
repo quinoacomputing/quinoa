@@ -333,6 +333,8 @@ using MixMassFractionBetaParameters = tk::TaggedTuple< brigand::list<
 using VelocityParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::c0,            std::vector< kw::sde_c0::info::expect::type >
+  , tag::gravity,       std::vector< std::vector<
+                          kw::gravity::info::expect::type > >
   , tag::position,      std::vector< char >
   , tag::position_id,   std::vector< std::size_t >
   , tag::dissipation,   std::vector< char >

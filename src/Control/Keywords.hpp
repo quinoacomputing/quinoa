@@ -1960,6 +1960,22 @@ struct sde_c0_info {
 };
 using sde_c0 = keyword< sde_c0_info,  TAOCPP_PEGTL_STRING("C0") >;
 
+struct gravity_info {
+  static std::string name() { return "gravity"; }
+  static std::string shortDescription() { return
+    R"(Set Langevin SDE parameter gravity)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of 3 real numbers used to
+    parameterize the Langevin model for the fluctuating velocity in homogeneous
+    variable-density turbulence, prescribing a gravy body force in the three
+    coordinate directions, x, y, z. Example: "gravity 0.0 0.2 1.0 end".)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "3 reals"; }
+  };
+};
+using gravity = keyword< gravity_info, TAOCPP_PEGTL_STRING("gravity") >;
+
 struct sde_c3_info {
   static std::string name() { return "C3"; }
   static std::string shortDescription() { return
