@@ -85,15 +85,6 @@ class CGPDE {
                      tk::real t ) const
     { self->initialize( coord, unk, t ); }
 
-    //! Public interface to computing the left-hand side matrix for the diff eq
-    void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& psup,
-              tk::Fields& lhsd,
-              tk::Fields& lhso ) const
-    { self->lhs( coord, inpoel, psup, lhsd, lhso ); }
-
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
               tk::real deltat,
@@ -164,11 +155,6 @@ class CGPDE {
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
                                tk::Fields&,
                                tk::real ) const = 0;
-      virtual void lhs( const std::array< std::vector< tk::real >, 3 >&,
-                        const std::vector< std::size_t >&,
-                        const std::pair< std::vector< std::size_t >,
-                                         std::vector< std::size_t > >&,
-                        tk::Fields&, tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
@@ -208,12 +194,6 @@ class CGPDE {
                        tk::Fields& unk,
                        tk::real t )
       const override { data.initialize( coord, unk, t ); }
-      void lhs( const std::array< std::vector< tk::real >, 3 >& coord,
-                const std::vector< std::size_t >& inpoel,
-                const std::pair< std::vector< std::size_t >,
-                                 std::vector< std::size_t > >& psup,
-                tk::Fields& lhsd, tk::Fields& lhso ) const override
-      { data.lhs( coord, inpoel, psup, lhsd, lhso ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,
