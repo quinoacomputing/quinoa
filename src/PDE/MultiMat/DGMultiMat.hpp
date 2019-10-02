@@ -161,28 +161,28 @@ class MultiMat {
         tk::real rhob(0.0);
         for (std::size_t k=0; k<nmat; ++k)
         {
-          rhob += unk(e, densityIdx(nmat, k)*rdof, m_offset);
+          rhob += unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset);
         }
 
         // cell-average velocity
         std::array< tk::real, 3 >
-          vel{{ unk(e, momentumIdx(nmat, 0)*rdof, m_offset)/rhob,
-                unk(e, momentumIdx(nmat, 1)*rdof, m_offset)/rhob,
-                unk(e, momentumIdx(nmat, 2)*rdof, m_offset)/rhob }};
+          vel{{ unk(e, momentumDofIdx(nmat, 0, rdof, 0), m_offset)/rhob,
+                unk(e, momentumDofIdx(nmat, 1, rdof, 0), m_offset)/rhob,
+                unk(e, momentumDofIdx(nmat, 2, rdof, 0), m_offset)/rhob }};
 
         for (std::size_t idir=0; idir<3; ++idir)
         {
-          prim(e, velocityIdx(nmat, idir)*rdof, m_offset) = vel[idir];
+          prim(e, velocityDofIdx(nmat, idir, rdof, 0), m_offset) = vel[idir];
         }
 
         // cell-average material pressure
         for (std::size_t k=0; k<nmat; ++k)
         {
-          tk::real rhomat = unk(e, densityIdx(nmat, k)*rdof, m_offset)
-            / unk(e, volfracIdx(nmat, k)*rdof, m_offset);
-          tk::real rhoemat = unk(e, energyIdx(nmat, k)*rdof, m_offset)
-            / unk(e, volfracIdx(nmat, k)*rdof, m_offset);
-          prim(e, pressureIdx(nmat, k)*rdof, m_offset) =
+          tk::real rhomat = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset)
+            / unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
+          tk::real rhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset)
+            / unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
+          prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
             eos_pressure< tag::multimat >( m_system, rhomat, vel[0], vel[1],
               vel[2], rhoemat, k );
         }
@@ -628,14 +628,14 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
 
       std::array< std::array< tk::real, 4 >, 3 > v;
-      v[0] = U.extract( momentumIdx(nmat, 0)*rdof, m_offset, N );
-      v[1] = U.extract( momentumIdx(nmat, 1)*rdof, m_offset, N );
-      v[2] = U.extract( momentumIdx(nmat, 2)*rdof, m_offset, N );
+      v[0] = U.extract( momentumDofIdx(nmat, 0, rdof, 0), m_offset, N );
+      v[1] = U.extract( momentumDofIdx(nmat, 1, rdof, 0), m_offset, N );
+      v[2] = U.extract( momentumDofIdx(nmat, 2, rdof, 0), m_offset, N );
 
       std::vector< std::array< tk::real, 4 > > ar;
       ar.resize(nmat);
       for (std::size_t k=0; k<nmat; ++k)
-        ar[k] = U.extract( densityIdx(nmat, k)*rdof, m_offset, N );
+        ar[k] = U.extract( densityDofIdx(nmat, k, rdof, 0), m_offset, N );
 
       std::array< tk::real, 4 > r{{ 0.0, 0.0, 0.0, 0.0 }};
       for (std::size_t i=0; i<r.size(); ++i) {

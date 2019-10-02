@@ -237,13 +237,13 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
 
   for (std::size_t k=0; k<nmat; ++k)
   {
-    al.push_back( U.extract( volfracIdx(nmat, k)*rdof, offset ) );
-    ar.push_back( U.extract( densityIdx(nmat, k)*rdof, offset ) );
-    ae.push_back( U.extract( energyIdx(nmat, k)*rdof, offset ) );
+    al.push_back( U.extract( volfracDofIdx(nmat, k, rdof, 0), offset ) );
+    ar.push_back( U.extract( densityDofIdx(nmat, k, rdof, 0), offset ) );
+    ae.push_back( U.extract( energyDofIdx(nmat, k, rdof, 0), offset ) );
   }
-  const auto ru  = U.extract( momentumIdx(nmat, 0)*rdof, offset );
-  const auto rv  = U.extract( momentumIdx(nmat, 1)*rdof, offset );
-  const auto rw  = U.extract( momentumIdx(nmat, 2)*rdof, offset );
+  const auto ru  = U.extract( momentumDofIdx(nmat, 0, rdof, 0), offset );
+  const auto rv  = U.extract( momentumDofIdx(nmat, 1, rdof, 0), offset );
+  const auto rw  = U.extract( momentumDofIdx(nmat, 2, rdof, 0), offset );
 
   //// mesh node coordinates
   //const auto& x = coord[0];

@@ -358,6 +358,7 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
   using inciter::densityIdx;
   using inciter::momentumIdx;
   using inciter::energyIdx;
+  using inciter::volfracDofIdx;
 
   // find the limiter-function for volume-fractions
   auto phi_al(1.0), almax(0.0), dalmax(0.0);
@@ -365,16 +366,16 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
   for (std::size_t k=0; k<nmat; ++k)
   {
     phi_al = std::min( phi_al, phi[volfracIdx(nmat, k)] );
-    if (almax < U(e,volfracIdx(nmat, k)*rdof,offset))
+    if (almax < U(e,volfracDofIdx(nmat, k, rdof, 0),offset))
     {
       //nmax = k;
-      almax = U(e,volfracIdx(nmat, k)*rdof,offset);
+      almax = U(e,volfracDofIdx(nmat, k, rdof, 0),offset);
     }
     auto dmax = std::max(
                   std::max(
-                    std::abs(U(e,volfracIdx(nmat, k)*rdof+1,offset)),
-                    std::abs(U(e,volfracIdx(nmat, k)*rdof+2,offset)) ),
-                  std::abs(U(e,volfracIdx(nmat, k)*rdof+3,offset)) );
+                    std::abs(U(e,volfracDofIdx(nmat, k, rdof, 1),offset)),
+                    std::abs(U(e,volfracDofIdx(nmat, k, rdof, 2),offset)) ),
+                  std::abs(U(e,volfracDofIdx(nmat, k, rdof, 3),offset)) );
     dalmax = std::max( dalmax, dmax );
   }
 
@@ -391,25 +392,25 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
     auto rhob(0.0), vel(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
-      auto alk = std::max( 1.0e-14, U(e,volfracIdx(nmat, k)*rdof,offset) );
-      auto rhok = U(e,densityIdx(nmat, k)*rdof,offset)/alk;
-      auto rhoEk = U(e,energyIdx(nmat, k)*rdof,offset)/alk;
+      auto alk = std::max( 1.0e-14, U(e,volfracDofIdx(nmat, k, rdof, 0),offset) );
+      auto rhok = U(e,densityDofIdx(nmat, k, rdof, 0),offset)/alk;
+      auto rhoEk = U(e,energyDofIdx(nmat, k, rdof, 0),offset)/alk;
       for (std::size_t idir=1; idir<=3; ++idir)
       {
-        U(e,densityIdx(nmat, k)*rdof+idir,offset) = rhok *
-          U(e,volfracIdx(nmat, k)*rdof+idir,offset);
-        U(e,energyIdx(nmat, k)*rdof+idir,offset) = rhoEk *
-          U(e,volfracIdx(nmat, k)*rdof+idir,offset);
-        drhob[idir-1] += U(e,densityIdx(nmat, k)*rdof+idir,offset);
+        U(e,densityDofIdx(nmat, k, rdof, idir),offset) = rhok *
+          U(e,volfracDofIdx(nmat, k, rdof, idir),offset);
+        U(e,energyDofIdx(nmat, k, rdof, idir),offset) = rhoEk *
+          U(e,volfracDofIdx(nmat, k, rdof, idir),offset);
+        drhob[idir-1] += U(e,densityDofIdx(nmat, k, rdof, idir),offset);
       }
-      rhob += U(e,densityIdx(nmat, k)*rdof,offset);
+      rhob += U(e,densityDofIdx(nmat, k, rdof, 0),offset);
     }
     for (std::size_t idir=1; idir<=3; ++idir)
     {
       for (std::size_t jdir=1; jdir<=3; ++jdir)
       {
-        vel = U(e,momentumIdx(nmat, jdir-1)*rdof,offset)/rhob;
-        U(e,momentumIdx(nmat, jdir-1)*rdof+idir,offset) = vel * drhob[idir-1];
+        vel = U(e,momentumDofIdx(nmat, jdir-1, rdof, 0),offset)/rhob;
+        U(e,momentumDofIdx(nmat, jdir-1, rdof, idir),offset) = vel * drhob[idir-1];
       }
     }
 
