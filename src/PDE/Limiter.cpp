@@ -383,7 +383,20 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
 
   // determine if cell is a material-interface cell based on ad-hoc tolerances.
   // if interface-cell, then modify high-order dofs of conserved unknowns
-  // consistently and use same limiter for all equations
+  // consistently and use same limiter for all equations.
+  // Slopes of solution variables \alpha_k \rho_k and \alpha_k \rho_k E_k need
+  // to be modified in interface cells, such that slopes in the \rho_k and
+  // \rho_k E_k part are ignored and only slopes in \alpha_k are considered.
+  // Ideally, we would like to not do this, but this is a necessity to avoid
+  // limiter-limiter interactions in multiphase CFD (see "K.-M. Shyue, F. Xiao,
+  // An Eulerian interface sharpening algorithm for compressible two-phase flow:
+  // the algebraic THINC approach, Journal of Computational Physics 268, 2014,
+  // 326–354. doi:10.1016/j.jcp.2014.03.010." and "A. Chiapolino, R. Saurel,
+  // B. Nkonga, Sharpening diffuse interfaces with compressible fluids on
+  // unstructured meshes, Journal of Computational Physics 340 (2017) 389–417.
+  // doi:10.1016/j.jcp.2017.03.042."). This approximation should be applied in
+  // as narrow a band of interface-cells as possible. The following if-test
+  // defines this band of interface-cells.
   if ( dalmax > 0.1 &&
        (almax > 0.1 && almax < (1.0-0.1)) )
   {
