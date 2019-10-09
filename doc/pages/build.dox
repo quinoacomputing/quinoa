@@ -189,16 +189,14 @@ about a particular tool, e.g., @ref inciter_main, you can
  1. Clone only those TPLs that are required for the given tool (instead of
     cloning them all), e.g.,
 
-         git clone https://github.com/quinoacomputing/quinoa.git
+         git clone https://github.com/quinoacomputing/quinoa.git && cd quinoa
          git submodule init && git submodule update && cd external
-         git -c submodule."src/pstreams".update=none -c submodule."src/pugixml".update=none -c submodule."src/rngsse2".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/root".update=none -c submodule."src/aec".update=none submodule update --init --recursive
+         git -c submodule."src/pugixml".update=none -c submodule."src/rngsse2".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/root".update=none -c submodule."src/aec".update=none submodule update --init --recursive
 
  2. Build only those TPLs that are required for the given executable by setting
     the `<executable>_ONLY` cmake variable to `true`, e.g.,
 
-         cd quinoa
-         mkdir external/build
-         cd external/build
+         cd quinoa && mkdir external/build && cd external/build
          cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DINCITER_ONLY=true ..
          make -sj$(grep -c processor /proc/cpuinfo)
 

@@ -87,6 +87,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::sde_mean
                                  , kw::sde_cov
                                  , kw::mean_gradient
+                                 , kw::gravity
                                  , kw::sde_T
                                  , kw::sde_lambda
                                  , kw::sde_b
