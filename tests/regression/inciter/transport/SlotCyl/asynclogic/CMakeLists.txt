@@ -42,8 +42,9 @@ foreach(scheme diagcg dg alecg)
     foreach(migr 0 1)
 
       # Add some tests across a range of PEs (both non-SMP & SMP)
-      foreach(npes RANGE 1 8)
-        add_async_test(${scheme} ${virt} ${npes} 1 ${migr})
+      set(npes 1 3 8)
+      foreach(n ${npes})
+        add_async_test(${scheme} ${virt} ${n} 1 ${migr})
       endforeach()
 
       # In Charm++ SMP mode add some extra tests with npe != ppn
