@@ -308,7 +308,8 @@ class Transport {
                  const tk::Fields& /*geoFace*/,
                  const tk::Fields& /*geoElem*/,
                  const std::vector< std::size_t >& /*ndofel*/,
-                 const tk::Fields& /*U*/ ) const
+                 const tk::Fields& /*U*/,
+                 const tk::Fields& ) const
     {
       tk::real mindt = std::numeric_limits< tk::real >::max();
       return mindt;

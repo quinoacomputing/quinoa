@@ -152,8 +152,9 @@ class DGPDE {
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
                  const std::vector< std::size_t >& ndofel,
-                 const tk::Fields& U ) const
-    { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U ); }
+                 const tk::Fields& U,
+                 const tk::Fields& P ) const
+    { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U, P ); }
 
     //! \brief Public interface for collecting all side set IDs the user has
     //!   configured for all components of a PDE system
@@ -247,6 +248,7 @@ class DGPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::vector< std::size_t >&,
+                           const tk::Fields&,
                            const tk::Fields& ) const = 0;
       virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
@@ -327,8 +329,9 @@ class DGPDE {
                    const tk::Fields& geoFace,
                    const tk::Fields& geoElem,
                    const std::vector< std::size_t >& ndofel,
-                   const tk::Fields& U ) const override
-      { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U ); }
+                   const tk::Fields& U,
+                   const tk::Fields& P ) const override
+      { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U, P ); }
       void side( std::unordered_set< int >& conf ) const override
       { data.side( conf ); }
       std::vector< std::string > fieldNames() const override

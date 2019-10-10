@@ -68,30 +68,28 @@ struct AUSM {
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             hml(nmat, 0.0), hmr(nmat, 0.0),
                             pml(nmat, 0.0), pmr(nmat, 0.0),
-                            al_12(nmat, 0.0), rhomat12(nmat, 0.0),
+                            arhom12(nmat, 0.0),
                             amat12(nmat, 0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
       al_l[k] = u[0][volfracIdx(nmat, k)];
       pml[k] = u[0][ncomp+pressureIdx(nmat, k)];
-      pl += al_l[k] * pml[k];
-      hml[k] = u[0][energyIdx(nmat, k)] + al_l[k]*pml[k];
+      pl += pml[k];
+      hml[k] = u[0][energyIdx(nmat, k)] + pml[k];
       amatl = eos_soundspeed< tag::multimat >( 0,
-                                               u[0][densityIdx(nmat, k)]/al_l[k],
-                                               pml[k], k );
+                                               u[0][densityIdx(nmat, k)],
+                                               pml[k], al_l[k], k );
 
       al_r[k] = u[1][volfracIdx(nmat, k)];
       pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
-      pr += al_r[k] * pmr[k];
-      hmr[k] = u[1][energyIdx(nmat, k)] + al_r[k]*pmr[k];
+      pr += pmr[k];
+      hmr[k] = u[1][energyIdx(nmat, k)] + pmr[k];
       amatr = eos_soundspeed< tag::multimat >( 0,
-                                               u[1][densityIdx(nmat, k)]/al_r[k],
-                                               pmr[k], k );
+                                               u[1][densityIdx(nmat, k)],
+                                               pmr[k], al_r[k], k );
 
       // Average states for mixture speed of sound
-      al_12[k] = 0.5*(al_l[k]+al_r[k]);
-      rhomat12[k] = 0.5*(u[0][densityIdx(nmat, k)]/al_l[k]
-                        + u[1][densityIdx(nmat, k)]/al_r[k]);
+      arhom12[k] = 0.5*(u[0][densityIdx(nmat, k)] + u[1][densityIdx(nmat, k)]);
       amat12[k] = 0.5*(amatl+amatr);
     }
 
@@ -101,7 +99,7 @@ struct AUSM {
     tk::real ac12(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
-      ac12 += (al_12[k]*rhomat12[k]*amat12[k]*amat12[k]);
+      ac12 += (arhom12[k]*amat12[k]*amat12[k]);
     }
     ac12 = std::sqrt( ac12/rho12 );
 
@@ -165,17 +163,17 @@ struct AUSM {
     if (std::fabs(l_plus) > 1.0e-10)
     {
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( al_l[k]*pml[k] );
+        flx.push_back( pml[k] );
     }
     else if (std::fabs(l_minus) > 1.0e-10)
     {
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( al_r[k]*pmr[k] );
+        flx.push_back( pmr[k] );
     }
     else
     {
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( 0.5*(al_l[k]*pml[k] + al_r[k]*pmr[k]) );
+        flx.push_back( 0.5*(pml[k] + pmr[k]) );
     }
 
     // Store Riemann velocity

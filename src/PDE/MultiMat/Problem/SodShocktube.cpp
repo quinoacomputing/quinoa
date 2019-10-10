@@ -257,9 +257,8 @@ MultiMatProblemSodShocktube::fieldOutput(
   std::vector< tk::real > P( r.size(), 0.0 );
   for (std::size_t i=0; i<P.size(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)
-      P[i] += al[k][i] * eos_pressure< eq >( system, ar[k][i]/al[k][i],
-                                             u[i], v[i], w[i],
-                                             ae[k][i]/al[k][i], k );
+      P[i] += eos_pressure< eq >( system, ar[k][i], u[i], v[i], w[i],
+                                  ae[k][i], al[k][i], k );
   }
   out.push_back( P );
 
