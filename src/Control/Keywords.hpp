@@ -5551,7 +5551,7 @@ struct pref_info {
 using pref = keyword< pref_info, TAOCPP_PEGTL_STRING("pref") >;
 
 struct diagcg_info {
-  static std::string name() { return "CG + LW"; }
+  static std::string name() { return "CG+LW"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
     "+ Lax Wendroff with a lumped-mass matrix LHS"; }
   static std::string longDescription() { return
@@ -5566,7 +5566,7 @@ struct diagcg_info {
 using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 
 struct alecg_info {
-  static std::string name() { return "ALE-CG + RK"; }
+  static std::string name() { return "ALECG+RK"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
     "with ALE + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5578,7 +5578,7 @@ struct alecg_info {
 using alecg = keyword< alecg_info, TAOCPP_PEGTL_STRING("alecg") >;
 
 struct dg_info {
-  static std::string name() { return "DG(P0) + RK"; }
+  static std::string name() { return "DG(P0)+RK"; }
   static std::string shortDescription() { return
     "Select 1st-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5592,7 +5592,7 @@ struct dg_info {
 using dg = keyword< dg_info, TAOCPP_PEGTL_STRING("dg") >;
 
 struct p0p1_info {
-  static std::string name() { return "P0P1 + RK"; }
+  static std::string name() { return "P0P1+RK"; }
   static std::string shortDescription() { return
     "Select 2nd-order finite volume discretization + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5606,7 +5606,7 @@ struct p0p1_info {
 using p0p1 = keyword< p0p1_info, TAOCPP_PEGTL_STRING("p0p1") >;
 
 struct dgp1_info {
-  static std::string name() { return "DG(P1) + RK"; }
+  static std::string name() { return "DG(P1)+RK"; }
   static std::string shortDescription() { return
     "Select 2nd-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5619,7 +5619,7 @@ struct dgp1_info {
 using dgp1 = keyword< dgp1_info, TAOCPP_PEGTL_STRING("dgp1") >;
 
 struct dgp2_info {
-  static std::string name() { return "DG(P2) + RK"; }
+  static std::string name() { return "DG(P2)+RK"; }
   static std::string shortDescription() { return
     "Select 3nd-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5632,7 +5632,7 @@ struct dgp2_info {
 using dgp2 = keyword< dgp2_info, TAOCPP_PEGTL_STRING("dgp2") >;
 
 struct pdg_info {
-  static std::string name() { return "p-adaptive DG + RK"; }
+  static std::string name() { return "pDG+RK"; }
   static std::string shortDescription() { return
     "Select adaptive discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
