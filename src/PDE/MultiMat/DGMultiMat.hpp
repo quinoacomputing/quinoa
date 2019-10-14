@@ -432,6 +432,7 @@ class MultiMat {
 //    //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
+    //! \param[in] nielem Number of internal elements
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
@@ -472,7 +473,7 @@ class MultiMat {
       // get quadrature point weights and coordinates for triangle
       tk::GaussQuadratureTri( ng, coordgp, wgp );
 
-      // compute internal surface maximum characteristic speed
+      // compute maximum characteristic speed at all internal element faces
       for (std::size_t f=0; f<esuf.size()/2; ++f)
       {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
