@@ -39,6 +39,20 @@ Superbee_P1( const std::vector< int >& esuel,
              tk::Fields& U,
              std::size_t nmat=1 );
 
+//! Superbee limiter function calculation for P1 dofs
+std::vector< tk::real >
+SuperbeeFunction( const tk::Fields& U,
+                  const std::vector< int >& esuel,
+                  const std::vector< std::size_t >& inpoel,
+                  const tk::UnsMesh::Coords& coord,
+                  std::size_t e,
+                  std::size_t ndof,
+                  std::size_t rdof,
+                  std::size_t dof_el,
+                  inciter::ncomp_t offset,
+                  inciter:: ncomp_t ncomp,
+                  tk::real beta_lim );
+
 //! Consistent limiter modifications for P1 dofs
 void consistentMultiMatLimiting_P1( std::size_t nmat,
                                     ncomp_t offset,
