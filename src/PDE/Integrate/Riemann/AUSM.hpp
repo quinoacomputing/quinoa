@@ -56,14 +56,6 @@ struct AUSM {
       rhor += u[1][densityIdx(nmat, k)];
     }
 
-    auto ul = u[0][momentumIdx(nmat, 0)]/rhol;
-    auto vl = u[0][momentumIdx(nmat, 1)]/rhol;
-    auto wl = u[0][momentumIdx(nmat, 2)]/rhol;
-
-    auto ur = u[1][momentumIdx(nmat, 0)]/rhor;
-    auto vr = u[1][momentumIdx(nmat, 1)]/rhor;
-    auto wr = u[1][momentumIdx(nmat, 2)]/rhor;
-
     tk::real pl(0.0), pr(0.0), amatl(0.0), amatr(0.0);
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             hml(nmat, 0.0), hmr(nmat, 0.0),
@@ -104,12 +96,12 @@ struct AUSM {
     ac12 = std::sqrt( ac12/rho12 );
 
     // Independently limited velocities for advection
-    ul = u[0][ncomp+velocityIdx(nmat, 0)];
-    vl = u[0][ncomp+velocityIdx(nmat, 1)];
-    wl = u[0][ncomp+velocityIdx(nmat, 2)];
-    ur = u[1][ncomp+velocityIdx(nmat, 0)];
-    vr = u[1][ncomp+velocityIdx(nmat, 1)];
-    wr = u[1][ncomp+velocityIdx(nmat, 2)];
+    auto ul = u[0][ncomp+velocityIdx(nmat, 0)];
+    auto vl = u[0][ncomp+velocityIdx(nmat, 1)];
+    auto wl = u[0][ncomp+velocityIdx(nmat, 2)];
+    auto ur = u[1][ncomp+velocityIdx(nmat, 0)];
+    auto vr = u[1][ncomp+velocityIdx(nmat, 1)];
+    auto wr = u[1][ncomp+velocityIdx(nmat, 2)];
 
     // Face-normal velocities from advective velocities
     auto vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];

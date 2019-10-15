@@ -922,17 +922,7 @@ class MultiMat {
       // Internal cell primitive quantities using the separately reconstructed
       // primitive quantities. This is used to get ghost state for primitive
       // quantities
-      v1l = ul[ncomp+velocityIdx(nmat, 0)];
-      v2l = ul[ncomp+velocityIdx(nmat, 1)];
-      v3l = ul[ncomp+velocityIdx(nmat, 2)];
-      // Normal component of velocity
-      vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
-      // Ghost state velocity components
-      v1r = v1l - 2.0*vnl*fn[0];
-      v2r = v2l - 2.0*vnl*fn[1];
-      v3r = v3l - 2.0*vnl*fn[2];
 
-      // get primitives in boundary state
       // velocity
       ur[ncomp+velocityIdx(nmat, 0)] = v1r;
       ur[ncomp+velocityIdx(nmat, 1)] = v2r;
