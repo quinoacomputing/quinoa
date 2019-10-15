@@ -36,8 +36,19 @@ Superbee_P1( const std::vector< int >& esuel,
              const std::vector< std::size_t >& ndofel,
              inciter::ncomp_t offset,
              const tk::UnsMesh::Coords& coord,
-             tk::Fields& U,
-             std::size_t nmat=1 );
+             tk::Fields& U );
+
+//! Superbee limiter for multi-material DGP1
+void
+SuperbeeMultiMat_P1(
+  const std::vector< int >& esuel,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  inciter::ncomp_t offset,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U,
+  tk::Fields& P,
+  std::size_t nmat );
 
 //! Superbee limiter function calculation for P1 dofs
 std::vector< tk::real >
@@ -59,7 +70,9 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
                                     std::size_t rdof,
                                     std::size_t e,
                                     tk::Fields& U,
-                                    std::vector< tk::real >& phi );
+                                    tk::Fields& P,
+                                    std::vector< tk::real >& phic,
+                                    std::vector< tk::real >& phip );
 
 } // inciter::
 

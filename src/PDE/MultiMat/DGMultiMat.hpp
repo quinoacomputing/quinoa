@@ -308,11 +308,9 @@ class MultiMat {
 
       if (limiter == ctr::LimiterType::SUPERBEEP1)
       {
-        // limit solution vector
-        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U, nmat );
-
-        // limit vector of primitives
-        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, P );
+        // limit vectors of conserved and primitive quantities
+        SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U, P,
+          nmat );
       }
     }
 

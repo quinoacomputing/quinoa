@@ -158,8 +158,7 @@ Superbee_P1( const std::vector< int >& esuel,
              const std::vector< std::size_t >& ndofel,
              inciter::ncomp_t offset,
              const tk::UnsMesh::Coords& coord,
-             tk::Fields& U,
-             std::size_t nmat )
+             tk::Fields& U )
 // *****************************************************************************
 //  Superbee limiter for DGP1
 //! \param[in] esuel Elements surrounding elements
@@ -168,9 +167,7 @@ Superbee_P1( const std::vector< int >& esuel,
 //! \param[in] offset Index for equation systems
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
-//! \param[in] nmat Number of materials in this PDE system. Default is 1, so
-//!   this argument can be left unspecified for single-material by the calling
-//!   code.
+//! \details This Superbee function should be called for transport and compflow
 // *****************************************************************************
 {
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
@@ -198,12 +195,8 @@ Superbee_P1( const std::vector< int >& esuel,
 
     if (dof_el > 1)
     {
-
       auto phi = SuperbeeFunction(U, esuel, inpoel, coord, e, ndof, rdof,
                    dof_el, offset, ncomp, beta_lim);
-
-      if (nmat > 1)
-        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, phi);
 
       // apply limiter function
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
@@ -212,6 +205,83 @@ Superbee_P1( const std::vector< int >& esuel,
         U(e, mark+1, offset) = phi[c] * U(e, mark+1, offset);
         U(e, mark+2, offset) = phi[c] * U(e, mark+2, offset);
         U(e, mark+3, offset) = phi[c] * U(e, mark+3, offset);
+      }
+    }
+  }
+}
+
+void
+SuperbeeMultiMat_P1(
+  const std::vector< int >& esuel,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  inciter::ncomp_t offset,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U,
+  tk::Fields& P,
+  std::size_t nmat )
+// *****************************************************************************
+//  Superbee limiter for multi-material DGP1
+//! \param[in] esuel Elements surrounding elements
+//! \param[in] inpoel Element connectivity
+//! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in] offset Index for equation systems
+//! \param[in] coord Array of nodal coordinates
+//! \param[in,out] U High-order solution vector which gets limited
+//! \param[in,out] P High-order vector of primitives which gets limited
+//! \param[in] nmat Number of materials in this PDE system
+//! \details This Superbee function should be called for multimat
+// *****************************************************************************
+{
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  std::size_t ncomp = U.nprop()/rdof;
+  std::size_t nprim = P.nprop()/rdof;
+
+  auto beta_lim = 2.0;
+
+  for (std::size_t e=0; e<esuel.size()/4; ++e)
+  {
+    // If an rDG method is set up (P0P1), then, currently we compute the P1
+    // basis functions and solutions by default. This implies that P0P1 is
+    // unsupported in the p-adaptive DG (PDG). This is a workaround until we
+    // have rdofel, which is needed to distinguish between ndofs and rdofs per
+    // element for pDG.
+    std::size_t dof_el;
+    if (rdof > ndof)
+    {
+      dof_el = rdof;
+    }
+    else
+    {
+      dof_el = ndofel[e];
+    }
+
+    if (dof_el > 1)
+    {
+      // limit conserved quantities
+      auto phic = SuperbeeFunction(U, esuel, inpoel, coord, e, ndof, rdof,
+                    dof_el, offset, ncomp, beta_lim);
+      // limit primitive quantities
+      auto phip = SuperbeeFunction(P, esuel, inpoel, coord, e, ndof, rdof,
+                    dof_el, offset, nprim, beta_lim);
+
+      consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+
+      // apply limiter function
+      for (inciter::ncomp_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*rdof;
+        U(e, mark+1, offset) = phic[c] * U(e, mark+1, offset);
+        U(e, mark+2, offset) = phic[c] * U(e, mark+2, offset);
+        U(e, mark+3, offset) = phic[c] * U(e, mark+3, offset);
+      }
+      for (inciter::ncomp_t c=0; c<nprim; ++c)
+      {
+        auto mark = c*rdof;
+        P(e, mark+1, offset) = phip[c] * P(e, mark+1, offset);
+        P(e, mark+2, offset) = phip[c] * P(e, mark+2, offset);
+        P(e, mark+3, offset) = phip[c] * P(e, mark+3, offset);
       }
     }
   }
@@ -372,12 +442,15 @@ SuperbeeFunction( const tk::Fields& U,
   return phi;
 }
 
-void consistentMultiMatLimiting_P1( std::size_t nmat,
-                                    ncomp_t offset,
-                                    std::size_t rdof,
-                                    std::size_t e,
-                                    tk::Fields& U,
-                                    std::vector< tk::real >& phi )
+void consistentMultiMatLimiting_P1(
+  std::size_t nmat,
+  ncomp_t offset,
+  std::size_t rdof,
+  std::size_t e,
+  tk::Fields& U,
+  [[maybe_unused]] tk::Fields& P,
+  std::vector< tk::real >& phic,
+  [[maybe_unused]] std::vector< tk::real >& phip )
 // *****************************************************************************
 //  Consistent limiter modifications for P1 dofs
 //! \param[in] nmat Number of materials in this PDE system
@@ -386,7 +459,10 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
 //! \param[in] e Element being checked for consistency
 //! \param[in,out] U Second-order solution vector which gets modified near
 //!   material interfaces for consistency
-//! \param[in,out] phi Vector of limiter functions for the ncomp unknowns
+//! \param[in,out] P Second-order vector of primitive quantities which gets
+//!   modified near material interfaces for consistency
+//! \param[in,out] phic Vector of limiter functions for the conserved quantities
+//! \param[in,out] phip Vector of limiter functions for the primitive quantities
 // *****************************************************************************
 {
   using inciter::volfracIdx;
@@ -400,7 +476,7 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
   //std::size_t nmax(0);
   for (std::size_t k=0; k<nmat; ++k)
   {
-    phi_al = std::min( phi_al, phi[volfracIdx(nmat, k)] );
+    phi_al = std::min( phi_al, phic[volfracIdx(nmat, k)] );
     if (almax < U(e,volfracDofIdx(nmat, k, rdof, 0),offset))
     {
       //nmax = k;
@@ -414,7 +490,7 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
     dalmax = std::max( dalmax, dmax );
   }
 
-  //phi_al = phi[nmax];
+  //phi_al = phic[nmax];
 
   // determine if cell is a material-interface cell based on ad-hoc tolerances.
   // if interface-cell, then modify high-order dofs of conserved unknowns
@@ -469,13 +545,13 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
     }
 
     // 2. same limiter for all equations
-    for (auto& p : phi) p = phi_al;
+    for (auto& p : phic) p = phi_al;
   }
   else
   {
     // same limiter for all volume-fractions
     for (std::size_t k=0; k<nmat; ++k)
-      phi[volfracIdx(nmat, k)] = phi_al;
+      phic[volfracIdx(nmat, k)] = phi_al;
   }
 }
 
