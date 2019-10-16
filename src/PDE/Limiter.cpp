@@ -47,101 +47,14 @@ WENO_P1( const std::vector< int >& esuel,
 
   std::size_t ncomp = U.nprop()/rdof;
 
-  std::array< std::array< tk::real, 3 >, 5 > gradu;
-  std::array< tk::real, 5 > wtStencil, osc, wtDof;
-
   for (inciter::ncomp_t c=0; c<ncomp; ++c)
   {
-    auto mark = c*rdof;
-
     for (std::size_t e=0; e<esuel.size()/4; ++e)
     {
-      // reset all stencil values to zero
-      for (auto& g : gradu) g.fill(0.0);
-      osc.fill(0);
-      wtDof.fill(0);
-      wtStencil.fill(0);
-
-      // The WENO limiter uses solution data from the neighborhood in the form
-      // of stencils to enforce non-oscillatory conditions. The immediate
-      // (Von Neumann) neighborhood of a tetrahedral cell consists of the 4
-      // cells that share faces with it. These are the 4 neighborhood-stencils
-      // for the tetrahedron. The primary stencil is the tet itself. Weights are
-      // assigned to these stencils, with the primary stencil usually assigned
-      // the highest weight. The lower the primary/central weight, the more
-      // dissipative the limiting effect. This central weight is usually problem
-      // dependent. It is set higher for relatively weaker discontinuities, and
-      // lower for stronger discontinuities.
-
-      // primary stencil
-      gradu[0][0] = U(e, mark+1, offset);
-      gradu[0][1] = U(e, mark+2, offset);
-      gradu[0][2] = U(e, mark+3, offset);
-      wtStencil[0] = cweight;
-
-      // stencils from the neighborhood
-      for (std::size_t is=1; is<5; ++is)
-      {
-        auto nel = esuel[ 4*e+(is-1) ];
-
-        // ignore physical domain ghosts
-        if (nel == -1)
-        {
-          gradu[is].fill(0.0);
-          wtStencil[is] = 0.0;
-          continue;
-        }
-
-        std::size_t n = static_cast< std::size_t >( nel );
-        gradu[is][0] = U(n, mark+1, offset);
-        gradu[is][1] = U(n, mark+2, offset);
-        gradu[is][2] = U(n, mark+3, offset);
-        wtStencil[is] = 1.0;
-      }
-
-      // From these stencils, an oscillation indicator is calculated, which
-      // determines the effective weights for the high-order solution DOFs.
-      // These effective weights determine the contribution of each of the
-      // stencils to the high-order solution DOFs of the current cell which are
-      // being limited. If this indicator detects a large oscillation in the
-      // solution of the current cell, it reduces the effective weight for the
-      // central stencil contribution to its high-order DOFs. This results in
-      // a more dissipative and well-behaved solution in the troubled cell.
-
-      // oscillation indicators
-      for (std::size_t is=0; is<5; ++is)
-        osc[is] = std::sqrt( tk::dot(gradu[is], gradu[is]) );
-
-      tk::real wtotal = 0;
-
-      // effective weights for dofs
-      for (std::size_t is=0; is<5; ++is)
-      {
-        // A small number (1.0e-8) is needed here to avoid dividing by a zero in
-        // the case of a constant solution, where osc would be zero. The number
-        // is not set to machine zero because it is squared, and a number
-        // between 1.0e-8 to 1.0e-6 is needed.
-        wtDof[is] = wtStencil[is] * pow( (1.0e-8 + osc[is]), -2 );
-        wtotal += wtDof[is];
-      }
-
-      for (std::size_t is=0; is<5; ++is)
-      {
-        wtDof[is] = wtDof[is]/wtotal;
-      }
-
-      limU[0][e] = 0.0;
-      limU[1][e] = 0.0;
-      limU[2][e] = 0.0;
-
-      // limiter function
-      for (std::size_t is=0; is<5; ++is)
-      {
-        limU[0][e] += wtDof[is]*gradu[is][0];
-        limU[1][e] += wtDof[is]*gradu[is][1];
-        limU[2][e] += wtDof[is]*gradu[is][2];
-      }
+      WENOFunction(U, esuel, e, c, rdof, offset, cweight, limU);
     }
+
+    auto mark = c*rdof;
 
     for (std::size_t e=0; e<esuel.size()/4; ++e)
     {
@@ -284,6 +197,119 @@ SuperbeeMultiMat_P1(
         P(e, mark+3, offset) = phip[c] * P(e, mark+3, offset);
       }
     }
+  }
+}
+
+void
+WENOFunction( const tk::Fields& U,
+              const std::vector< int >& esuel,
+              std::size_t e,
+              inciter::ncomp_t c,
+              std::size_t rdof,
+              inciter::ncomp_t offset,
+              tk::real cweight,
+              std::array< std::vector< tk::real >, 3 >& limU )
+// *****************************************************************************
+//  WENO limiter function calculation for P1 dofs
+//! \param[in] U High-order solution vector which is to be limited
+//! \param[in] esuel Elements surrounding elements
+//! \param[in] e Id of element whose solution is to be limited
+//! \param[in] c Index of component which is to be limited
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] offset Index for equation systems
+//! \param[in] cweight Weight of the central stencil
+//! \param[in,out] limU Limited gradients of component c
+// *****************************************************************************
+{
+  std::array< std::array< tk::real, 3 >, 5 > gradu;
+  std::array< tk::real, 5 > wtStencil, osc, wtDof;
+
+  auto mark = c*rdof;
+
+  // reset all stencil values to zero
+  for (auto& g : gradu) g.fill(0.0);
+  osc.fill(0);
+  wtDof.fill(0);
+  wtStencil.fill(0);
+
+  // The WENO limiter uses solution data from the neighborhood in the form
+  // of stencils to enforce non-oscillatory conditions. The immediate
+  // (Von Neumann) neighborhood of a tetrahedral cell consists of the 4
+  // cells that share faces with it. These are the 4 neighborhood-stencils
+  // for the tetrahedron. The primary stencil is the tet itself. Weights are
+  // assigned to these stencils, with the primary stencil usually assigned
+  // the highest weight. The lower the primary/central weight, the more
+  // dissipative the limiting effect. This central weight is usually problem
+  // dependent. It is set higher for relatively weaker discontinuities, and
+  // lower for stronger discontinuities.
+
+  // primary stencil
+  gradu[0][0] = U(e, mark+1, offset);
+  gradu[0][1] = U(e, mark+2, offset);
+  gradu[0][2] = U(e, mark+3, offset);
+  wtStencil[0] = cweight;
+
+  // stencils from the neighborhood
+  for (std::size_t is=1; is<5; ++is)
+  {
+    auto nel = esuel[ 4*e+(is-1) ];
+
+    // ignore physical domain ghosts
+    if (nel == -1)
+    {
+      gradu[is].fill(0.0);
+      wtStencil[is] = 0.0;
+      continue;
+    }
+
+    std::size_t n = static_cast< std::size_t >( nel );
+    gradu[is][0] = U(n, mark+1, offset);
+    gradu[is][1] = U(n, mark+2, offset);
+    gradu[is][2] = U(n, mark+3, offset);
+    wtStencil[is] = 1.0;
+  }
+
+  // From these stencils, an oscillation indicator is calculated, which
+  // determines the effective weights for the high-order solution DOFs.
+  // These effective weights determine the contribution of each of the
+  // stencils to the high-order solution DOFs of the current cell which are
+  // being limited. If this indicator detects a large oscillation in the
+  // solution of the current cell, it reduces the effective weight for the
+  // central stencil contribution to its high-order DOFs. This results in
+  // a more dissipative and well-behaved solution in the troubled cell.
+
+  // oscillation indicators
+  for (std::size_t is=0; is<5; ++is)
+    osc[is] = std::sqrt( tk::dot(gradu[is], gradu[is]) );
+
+  tk::real wtotal = 0;
+
+  // effective weights for dofs
+  for (std::size_t is=0; is<5; ++is)
+  {
+    // A small number (1.0e-8) is needed here to avoid dividing by a zero in
+    // the case of a constant solution, where osc would be zero. The number
+    // is not set to machine zero because it is squared, and a number
+    // between 1.0e-8 to 1.0e-6 is needed.
+    wtDof[is] = wtStencil[is] * pow( (1.0e-8 + osc[is]), -2 );
+    wtotal += wtDof[is];
+  }
+
+  for (std::size_t is=0; is<5; ++is)
+  {
+    wtDof[is] = wtDof[is]/wtotal;
+  }
+
+  limU[0][e] = 0.0;
+  limU[1][e] = 0.0;
+  limU[2][e] = 0.0;
+
+  // limiter function
+  for (std::size_t is=0; is<5; ++is)
+  {
+    limU[0][e] += wtDof[is]*gradu[is][0];
+    limU[1][e] += wtDof[is]*gradu[is][1];
+    limU[2][e] += wtDof[is]*gradu[is][2];
   }
 }
 

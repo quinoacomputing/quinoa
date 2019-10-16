@@ -50,6 +50,17 @@ SuperbeeMultiMat_P1(
   tk::Fields& P,
   std::size_t nmat );
 
+//! WENO limiter function calculation for P1 dofs
+void
+WENOFunction( const tk::Fields& U,
+              const std::vector< int >& esuel,
+              std::size_t e,
+              inciter::ncomp_t c,
+              std::size_t rdof,
+              inciter::ncomp_t offset,
+              tk::real cweight,
+              std::array< std::vector< tk::real >, 3 >& limU );
+
 //! Superbee limiter function calculation for P1 dofs
 std::vector< tk::real >
 SuperbeeFunction( const tk::Fields& U,
