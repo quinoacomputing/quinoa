@@ -306,11 +306,15 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
+      // limit vectors of conserved and primitive quantities
       if (limiter == ctr::LimiterType::SUPERBEEP1)
       {
-        // limit vectors of conserved and primitive quantities
         SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U, P,
           nmat );
+      }
+      else if (limiter == ctr::LimiterType::WENOP1)
+      {
+        WENOMultiMat_P1( fd.Esuel(), m_offset, U, P, nmat );
       }
     }
 

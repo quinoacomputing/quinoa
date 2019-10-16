@@ -35,6 +35,7 @@ WENO_P1( const std::vector< int >& esuel,
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] offset Index for equation systems
 //! \param[in,out] U High-order solution vector which gets limited
+//! \details This WENO function should be called for transport and compflow
 //! \note This limiter function is experimental and untested. Use with caution.
 // *****************************************************************************
 {
@@ -62,6 +63,76 @@ WENO_P1( const std::vector< int >& esuel,
       U(e, mark+2, offset) = limU[1][e];
       U(e, mark+3, offset) = limU[2][e];
     }
+  }
+}
+
+void
+WENOMultiMat_P1( const std::vector< int >& esuel,
+                 inciter::ncomp_t offset,
+                 tk::Fields& U,
+                 tk::Fields& P,
+                 std::size_t nmat )
+// *****************************************************************************
+//  Weighted Essentially Non-Oscillatory (WENO) limiter for multi-material DGP1
+//! \param[in] esuel Elements surrounding elements
+//! \param[in] offset Index for equation systems
+//! \param[in,out] U High-order solution vector which gets limited
+//! \param[in,out] P High-order vector of primitives which gets limited
+//! \param[in] nmat Number of materials in this PDE system
+//! \details This WENO function should be called for multimat
+//! \note This limiter function is experimental and untested. Use with caution.
+// *****************************************************************************
+{
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto cweight = inciter::g_inputdeck.get< tag::discr, tag::cweight >();
+  std::array< std::vector< tk::real >, 3 > limU;
+  limU[0].resize( U.nunk() );
+  limU[1].resize( U.nunk() );
+  limU[2].resize( U.nunk() );
+
+  std::size_t ncomp = U.nprop()/rdof;
+  std::size_t nprim = P.nprop()/rdof;
+
+  // limit conserved quantities
+  for (inciter::ncomp_t c=0; c<ncomp; ++c)
+  {
+    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    {
+      WENOFunction(U, esuel, e, c, rdof, offset, cweight, limU);
+    }
+
+    auto mark = c*rdof;
+
+    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    {
+      U(e, mark+1, offset) = limU[0][e];
+      U(e, mark+2, offset) = limU[1][e];
+      U(e, mark+3, offset) = limU[2][e];
+    }
+  }
+
+  // limit primitive quantities
+  for (inciter::ncomp_t c=0; c<nprim; ++c)
+  {
+    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    {
+      WENOFunction(P, esuel, e, c, rdof, offset, cweight, limU);
+    }
+
+    auto mark = c*rdof;
+
+    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    {
+      P(e, mark+1, offset) = limU[0][e];
+      P(e, mark+2, offset) = limU[1][e];
+      P(e, mark+3, offset) = limU[2][e];
+    }
+  }
+
+  std::vector< tk::real > phic(ncomp, 1.0), phip(ncomp, 1.0);
+  for (std::size_t e=0; e<esuel.size()/4; ++e)
+  {
+    consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
   }
 }
 
@@ -496,6 +567,11 @@ void consistentMultiMatLimiting_P1(
   using inciter::momentumIdx;
   using inciter::energyIdx;
   using inciter::volfracDofIdx;
+
+  Assert(phic.size() == U.nprop()/rdof, "Number of unknowns in vector of "
+    "conserved quantities incorrect");
+  Assert(phip.size() == P.nprop()/rdof, "Number of unknowns in vector of "
+    "primitive quantities incorrect");
 
   // find the limiter-function for volume-fractions
   auto phi_al(1.0), almax(0.0), dalmax(0.0);
