@@ -54,6 +54,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
+  m_nreco( 0 ),
   m_fd( Disc()->Inpoel(), bface, tk::remap(triinpoel,Disc()->Lid()) ),
   m_u( Disc()->Inpoel().size()/4,
        g_inputdeck.get< tag::discr, tag::rdof >()*
@@ -163,6 +164,7 @@ DG::resizeComm()
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
     thisProxy[ thisIndex ].wait4lim();
+    thisProxy[ thisIndex ].wait4reco();
   }
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
@@ -1180,15 +1182,15 @@ DG::lhs()
 }
 
 void
-DG::lim()
+DG::reco()
 // *****************************************************************************
-// Compute limiter function
+// Compute reconstructions
 // *****************************************************************************
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
-  // Combine own and communicated contributions of unlimited solution and
+  // Combine own and communicated contributions of unreconstructed solution and
   // degrees of freedom in cells (if p-adaptive)
   for (const auto& b : m_bid) {
     Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
@@ -1216,6 +1218,110 @@ DG::lim()
       for (const auto& eq : g_dgpde)
         eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
                         d->Coord(), m_u, m_p );
+  }
+
+  // Send reconstructed solution to neighboring chares
+  if (m_ghostData.empty())
+    comreco_complete();
+  else
+    for(const auto& n : m_ghostData) {
+      std::vector< std::size_t > tetid( n.second.size() );
+      std::vector< std::vector< tk::real > > u( n.second.size() ),
+                                             prim( n.second.size() );
+      std::vector< std::size_t > ndof;
+      std::size_t j = 0;
+      for(const auto& i : n.second) {
+        Assert( i.first < m_fd.Esuel().size()/4, "Sending reconstructed ghost "
+          "data" );
+        tetid[j] = i.first;
+        u[j] = m_u[i.first];
+        prim[j] = m_p[i.first];
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
+        ++j;
+      }
+      thisProxy[ n.first ].comreco( thisIndex, tetid, u, prim, ndof );
+    }
+
+  ownreco_complete();
+}
+
+void
+DG::comreco( int fromch,
+             const std::vector< std::size_t >& tetid,
+             const std::vector< std::vector< tk::real > >& u,
+             const std::vector< std::vector< tk::real > >& prim,
+             const std::vector< std::size_t >& ndof )
+// *****************************************************************************
+//  Receive chare-boundary reconstructed ghost data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive solution data for
+//! \param[in] u Reconstructed high-order solution
+//! \param[in] prim Limited high-order primitive quantities
+//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
+//! \details This function receives contributions to the reconstructed solution
+//!   from fellow chares.
+// *****************************************************************************
+{
+  Assert( u.size() == tetid.size(), "Size mismatch in DG::comreco()" );
+  Assert( prim.size() == tetid.size(), "Size mismatch in DG::comreco()" );
+
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  if (pref && m_stage == 0)
+    Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comreco()" );
+
+  // Find local-to-ghost tet id map for sender chare
+  const auto& n = tk::cref_find( m_ghost, fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( n, tetid[i] );
+    Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
+    auto b = tk::cref_find( m_bid, j );
+    Assert( b < m_uc[1].size(), "Indexing out of bounds" );
+    Assert( b < m_pc[1].size(), "Indexing out of bounds" );
+    m_uc[1][b] = u[i];
+    m_pc[1][b] = prim[i];
+    if (pref && m_stage == 0) {
+      Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
+      m_ndofc[1][b] = ndof[i];
+    }
+  }
+
+  // if we have received all solution ghost contributions from those chares we
+  // communicate along chare-boundary faces with, proceed to limiting
+  if (++m_nreco == m_ghostData.size()) {
+    m_nreco = 0;
+    comreco_complete();
+  }
+}
+
+void
+DG::lim()
+// *****************************************************************************
+// Compute limiter function
+// *****************************************************************************
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+
+  // Combine own and communicated contributions of unlimited solution and
+  // degrees of freedom in cells (if p-adaptive)
+  for (const auto& b : m_bid) {
+    Assert( m_uc[1][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[1][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c) {
+      m_u(b.first,c,0) = m_uc[1][b.second][c];
+    }
+    for (std::size_t c=0; c<m_p.nprop(); ++c) {
+      m_p(b.first,c,0) = m_pc[1][b.second][c];
+    }
+    if (pref && m_stage == 0) {
+      m_ndof[ b.first ] = m_ndofc[0][ b.second ];
+    }
+  }
+
+  if (rdof > 1) {
+    auto d = Disc();
 
     for (const auto& eq : g_dgpde)
       eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
@@ -1309,10 +1415,10 @@ DG::comlim( int fromch,
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
     auto b = tk::cref_find( m_bid, j );
-    Assert( b < m_uc[1].size(), "Indexing out of bounds" );
-    Assert( b < m_pc[1].size(), "Indexing out of bounds" );
-    m_uc[1][b] = u[i];
-    m_pc[1][b] = prim[i];
+    Assert( b < m_uc[2].size(), "Indexing out of bounds" );
+    Assert( b < m_pc[2].size(), "Indexing out of bounds" );
+    m_uc[2][b] = u[i];
+    m_pc[2][b] = prim[i];
     if (pref && m_stage == 0) {
       Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
       m_ndofc[1][b] = ndof[i];
@@ -1340,13 +1446,13 @@ DG::dt()
   // Combine own and communicated contributions of limited solution and degrees
   // of freedom in cells (if p-adaptive)
   for (const auto& b : m_bid) {
-    Assert( m_uc[1][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
-    Assert( m_pc[1][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+    Assert( m_uc[2][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[2][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c,0) = m_uc[1][b.second][c];
+      m_u(b.first,c,0) = m_uc[2][b.second][c];
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(b.first,c,0) = m_pc[1][b.second][c];
+      m_p(b.first,c,0) = m_pc[2][b.second][c];
     }
     if (pref && m_stage == 0) {
       m_ndof[ b.first ] = m_ndofc[1][ b.second ];
@@ -1414,6 +1520,7 @@ DG::solve( tk::real newdt )
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4lim();
+  thisProxy[ thisIndex ].wait4reco();
 
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
