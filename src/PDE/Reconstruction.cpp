@@ -93,7 +93,8 @@ tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
     // element is always the left element)
     lhs(el);
     // add right element contribution for internal faces only
-    if (er > -1 && er < nelem) lhs(eR);
+    if (er > -1)
+      if (eR < nelem) lhs(eR);
 
   }
 }
