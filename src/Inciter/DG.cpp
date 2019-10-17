@@ -163,8 +163,8 @@ DG::resizeComm()
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
-    thisProxy[ thisIndex ].wait4lim();
     thisProxy[ thisIndex ].wait4reco();
+    thisProxy[ thisIndex ].wait4lim();
   }
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
@@ -1209,7 +1209,6 @@ DG::reco()
   if (pref && m_stage==0) propagate_ndof();
 
   if (rdof > 1) {
-
     auto d = Disc();
 
     // Reconstruct second-order solution and primitive quantities
@@ -1316,7 +1315,7 @@ DG::lim()
       m_p(b.first,c,0) = m_pc[1][b.second][c];
     }
     if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[0][ b.second ];
+      m_ndof[ b.first ] = m_ndofc[1][ b.second ];
     }
   }
 
@@ -1327,6 +1326,7 @@ DG::lim()
       eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
                 m_ndof, m_u, m_p );
   }
+
 
   // Send limited solution to neighboring chares
   if (m_ghostData.empty())
@@ -1420,8 +1420,8 @@ DG::comlim( int fromch,
     m_uc[2][b] = u[i];
     m_pc[2][b] = prim[i];
     if (pref && m_stage == 0) {
-      Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
-      m_ndofc[1][b] = ndof[i];
+      Assert( b < m_ndofc[2].size(), "Indexing out of bounds" );
+      m_ndofc[2][b] = ndof[i];
     }
   }
 
@@ -1455,7 +1455,7 @@ DG::dt()
       m_p(b.first,c,0) = m_pc[2][b.second][c];
     }
     if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[1][ b.second ];
+      m_ndof[ b.first ] = m_ndofc[2][ b.second ];
     }
   }
 
@@ -1519,8 +1519,8 @@ DG::solve( tk::real newdt )
 {
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
-  thisProxy[ thisIndex ].wait4lim();
   thisProxy[ thisIndex ].wait4reco();
+  thisProxy[ thisIndex ].wait4lim();
 
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();

@@ -41,23 +41,24 @@ WENO_P1( const std::vector< int >& esuel,
 {
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto cweight = inciter::g_inputdeck.get< tag::discr, tag::cweight >();
+  auto nelem = esuel.size()/4;
   std::array< std::vector< tk::real >, 3 > limU;
-  limU[0].resize( U.nunk() );
-  limU[1].resize( U.nunk() );
-  limU[2].resize( U.nunk() );
+  limU[0].resize( nelem );
+  limU[1].resize( nelem );
+  limU[2].resize( nelem );
 
   std::size_t ncomp = U.nprop()/rdof;
 
   for (inciter::ncomp_t c=0; c<ncomp; ++c)
   {
-    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    for (std::size_t e=0; e<nelem; ++e)
     {
       WENOFunction(U, esuel, e, c, rdof, offset, cweight, limU);
     }
 
     auto mark = c*rdof;
 
-    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    for (std::size_t e=0; e<nelem; ++e)
     {
       U(e, mark+1, offset) = limU[0][e];
       U(e, mark+2, offset) = limU[1][e];
@@ -85,10 +86,11 @@ WENOMultiMat_P1( const std::vector< int >& esuel,
 {
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto cweight = inciter::g_inputdeck.get< tag::discr, tag::cweight >();
+  auto nelem = esuel.size()/4;
   std::array< std::vector< tk::real >, 3 > limU;
-  limU[0].resize( U.nunk() );
-  limU[1].resize( U.nunk() );
-  limU[2].resize( U.nunk() );
+  limU[0].resize( nelem );
+  limU[1].resize( nelem );
+  limU[2].resize( nelem );
 
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
@@ -96,14 +98,14 @@ WENOMultiMat_P1( const std::vector< int >& esuel,
   // limit conserved quantities
   for (inciter::ncomp_t c=0; c<ncomp; ++c)
   {
-    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    for (std::size_t e=0; e<nelem; ++e)
     {
       WENOFunction(U, esuel, e, c, rdof, offset, cweight, limU);
     }
 
     auto mark = c*rdof;
 
-    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    for (std::size_t e=0; e<nelem; ++e)
     {
       U(e, mark+1, offset) = limU[0][e];
       U(e, mark+2, offset) = limU[1][e];
@@ -114,14 +116,14 @@ WENOMultiMat_P1( const std::vector< int >& esuel,
   // limit primitive quantities
   for (inciter::ncomp_t c=0; c<nprim; ++c)
   {
-    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    for (std::size_t e=0; e<nelem; ++e)
     {
       WENOFunction(P, esuel, e, c, rdof, offset, cweight, limU);
     }
 
     auto mark = c*rdof;
 
-    for (std::size_t e=0; e<esuel.size()/4; ++e)
+    for (std::size_t e=0; e<nelem; ++e)
     {
       P(e, mark+1, offset) = limU[0][e];
       P(e, mark+2, offset) = limU[1][e];
@@ -130,7 +132,7 @@ WENOMultiMat_P1( const std::vector< int >& esuel,
   }
 
   std::vector< tk::real > phic(ncomp, 1.0), phip(ncomp, 1.0);
-  for (std::size_t e=0; e<esuel.size()/4; ++e)
+  for (std::size_t e=0; e<nelem; ++e)
   {
     consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
   }

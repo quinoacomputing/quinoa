@@ -155,12 +155,6 @@ class DG : public CBase_DG {
     //! Compute left hand side
     void lhs();
 
-    //! Compute solution reconstructions
-    void reco();
-
-    //! Compute limiter function
-    void lim();
-
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
     void solution( tk::Fields& u ) const { u = m_u; }
@@ -311,7 +305,7 @@ class DG : public CBase_DG {
     std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
-    std::array< std::vector< std::size_t >, 2 > m_ndofc;
+    std::array< std::vector< std::size_t >, 3 > m_ndofc;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
@@ -371,6 +365,12 @@ class DG : public CBase_DG {
 
     //! Output mesh-based fields to file
     void writeFields( CkCallback c ) const;
+
+    //! Compute solution reconstructions
+    void reco();
+
+    //! Compute limiter function
+    void lim();
 
     //! Compute time step size
     void dt();

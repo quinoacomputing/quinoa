@@ -34,6 +34,7 @@ tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
 // *****************************************************************************
 {
   const auto& esuf = fd.Esuf();
+  const auto nelem = fd.Esuel().size()/4;
 
   // Compute internal and boundary face contributions
   for (std::size_t f=0; f<esuf.size()/2; ++f)
@@ -92,7 +93,7 @@ tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
     // element is always the left element)
     lhs(el);
     // add right element contribution for internal faces only
-    if (er > -1) lhs(eR);
+    if (er > -1 && er < nelem) lhs(eR);
 
   }
 }
@@ -123,6 +124,7 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
 // *****************************************************************************
 {
   const auto& esuf = fd.Esuf();
+  const auto nelem = fd.Esuel().size()/4;
 
   // Compute internal face contributions
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -150,8 +152,9 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
         auto mark = c*rdof;
         rhs_ls[el][c][idir] +=
           wdeltax[idir] * (W(er,mark,offset)-W(el,mark,offset));
-        rhs_ls[er][c][idir] +=
-          wdeltax[idir] * (W(er,mark,offset)-W(el,mark,offset));
+        if (er < nelem)
+          rhs_ls[er][c][idir] +=
+            wdeltax[idir] * (W(er,mark,offset)-W(el,mark,offset));
       }
     }
   }
@@ -348,6 +351,7 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
   const std::size_t rdof,
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
+  std::size_t nelem,
   Fields& W )
 // *****************************************************************************
 //  Solve the 3x3 linear system for least-squares reconstruction
@@ -356,6 +360,7 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] lhs LHS reconstruction matrix
 //! \param[in] rhs RHS reconstruction vector
+//! \param[in] nelem Total number of elements
 //! \param[in,out] W Solution vector to be reconstructed at recent time step
 //! \details Solves the 3x3 linear system for each element, individually. For
 //!   systems that require reconstructions of primitive quantities, this should
@@ -363,7 +368,7 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
 //!   with 'W' as P (primitive).
 // *****************************************************************************
 {
-  for (std::size_t e=0; e<lhs.size(); ++e)
+  for (std::size_t e=0; e<nelem; ++e)
   {
     for (ncomp_t c=0; c<ncomp; ++c)
     {

@@ -207,6 +207,7 @@ class MultiMat {
                       tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nelem = fd.Esuel().size()/4;
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -230,9 +231,9 @@ class MultiMat {
       // the second index is the row id of the 3-by-3 matrix;
       // the third index is the column id of the 3-by-3 matrix.
       std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-        lhs_ls( U.nunk(), {{ {{0.0, 0.0, 0.0}},
-                             {{0.0, 0.0, 0.0}},
-                             {{0.0, 0.0, 0.0}} }} );
+        lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
+                          {{0.0, 0.0, 0.0}},
+                          {{0.0, 0.0, 0.0}} }} );
       // rhs_ls is the right-hand side vector for solving the least-squares
       // system using the normal equation approach, for each element.
       // It is indexed as follows:
@@ -242,11 +243,11 @@ class MultiMat {
       // two rhs_ls vectors are needed for reconstructing conserved and
       // primitive quantites separately
       std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhsu_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
+        rhsu_ls( nelem, std::vector< std::array< tk::real, 3 > >
           ( m_ncomp,
             {{ 0.0, 0.0, 0.0 }} ) );
       std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhsp_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
+        rhsp_ls( nelem, std::vector< std::array< tk::real, 3 > >
           ( nprim(),
             {{ 0.0, 0.0, 0.0 }} ) );
 
@@ -269,14 +270,12 @@ class MultiMat {
       }
 
       // 3. solve 3x3 least-squares system
-      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhsu_ls, U );
-      tk::solveLeastSq_P0P1( nprim(), m_offset, rdof, lhs_ls, rhsp_ls, P );
+      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhsu_ls, nelem, U );
+      tk::solveLeastSq_P0P1( nprim(), m_offset, rdof, lhs_ls, rhsp_ls, nelem, P );
 
       // 4. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4, inpoel,
-                          coord, U );
-      tk::transform_P0P1( nprim(), m_offset, rdof, fd.Esuel().size()/4, inpoel,
-                          coord, P );
+      tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
+      tk::transform_P0P1( nprim(), m_offset, rdof, nelem, inpoel, coord, P );
     }
 
     //! Limit second-order solution, and primitive quantities separately

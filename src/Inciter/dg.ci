@@ -70,8 +70,7 @@ module dg {
         { sendGhost(); } }
 
       entry void wait4sol() {
-        when ownsol_complete(), comsol_complete() serial "sol"
-        { reco(); } }
+        when ownsol_complete(), comsol_complete() serial "sol" { reco(); } }
 
       entry void wait4reco() {
         when ownreco_complete(), comreco_complete() serial "reco" { lim(); } }
