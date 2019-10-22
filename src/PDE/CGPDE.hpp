@@ -20,6 +20,7 @@
 #define CGPDE_h
 
 #include <array>
+#include <iostream>
 #include <string>
 #include <vector>
 #include <functional>
@@ -84,6 +85,15 @@ class CGPDE {
                      tk::Fields& unk,
                      tk::real t ) const
     { self->initialize( coord, unk, t ); }
+    
+    void rhs( tk::real t,
+              tk::real deltat,
+              const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const std::pair< std::vector< std::size_t >, std::vector< std::size_t > >& psup,
+              const tk::Fields& U,
+              tk::Fields& R ) const
+    { std::cout << "CGPDE::self->rhs" << std::endl; self->rhs( t, deltat, coord, inpoel, psup, U, R ); }
 
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
@@ -159,6 +169,13 @@ class CGPDE {
                         tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
+                        const std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&,
+                        const tk::Fields&,
+                        tk::Fields& ) const = 0;
+      virtual void rhs( tk::real,
+                        tk::real,
+                        const std::array< std::vector< tk::real >, 3 >&,
+                        const std::vector< std::size_t >&,
                         const tk::Fields&,
                         tk::Fields&,
                         tk::Fields& ) const = 0;
@@ -194,6 +211,14 @@ class CGPDE {
                        tk::Fields& unk,
                        tk::real t )
       const override { data.initialize( coord, unk, t ); }
+      void rhs( tk::real t,
+                tk::real deltat,
+                const std::array< std::vector< tk::real >, 3 >& coord,
+                const std::vector< std::size_t >& inpoel,
+                const std::pair< std::vector< std::size_t >, std::vector< std::size_t > >& psup,
+                const tk::Fields& U,
+                tk::Fields& R ) const override
+      { std::cout << "CGPDE::data->rhs" << std::endl;  data.rhs( t, deltat, coord, inpoel, psup, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,

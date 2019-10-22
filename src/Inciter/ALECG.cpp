@@ -294,7 +294,10 @@ ALECG::rhs()
   auto d = Disc();
 
   // Compute own portion of the right-hand side
-  // ...
+  std::cout << "CALLING RHS" << std::endl;
+  for (const auto& eq : g_cgpde)
+    eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), d->Psup(), m_u, m_rhs );
+  std::cout << "done" << std::endl;
 
   // Communicate rhs to other chares on chare-boundary
   if (d->Msum().empty())        // in serial we are done

@@ -22,6 +22,7 @@
 #include "Exception.hpp"
 #include "Vector.hpp"
 #include "EoS/EoS.hpp"
+#include "Mesh/Around.hpp"
 
 namespace inciter {
 
@@ -91,6 +92,198 @@ class CompFlow {
     {
       auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
       return std::vector< tk::real >( begin(s), end(s) );
+    }
+    
+    void rhs( tk::real t,
+              tk::real deltat,
+              const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const std::pair< std::vector< std::size_t >, std::vector< std::size_t > >& psup,
+              const tk::Fields& U,
+              tk::Fields& R ) const
+    {
+      std::cout << "CGCompflow::rhs" << std::endl;
+
+      constexpr int num_vars = 7;
+      
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+     
+      //------------------------------------------------------------------------
+      // Update solution quntities
+      //------------------------------------------------------------------------
+
+      // get the number of nodes in the mesh
+      const auto num_nodes = x.size();
+      std::vector<tk::real> nodal_pressure(num_nodes);
+      std::vector<tk::real> nodal_soundspeed(num_nodes);
+
+      for ( std::size_t n=0; n<num_nodes; ++n ) {
+        
+        // access solution
+        auto rho  = U( n, 0, m_offset ); 
+        auto inv_rho = 1 / rho;
+        auto velx = U( n, 1, m_offset ) * inv_rho; 
+        auto vely = U( n, 2, m_offset ) * inv_rho; 
+        auto velz = U( n, 3, m_offset ) * inv_rho; 
+        auto ener = U( n, 4, m_offset );
+          
+        // get updated pressure and sound speed
+        nodal_pressure[n] = eos_pressure< tag::compflow >
+          ( m_system, rho, velx, vely, velz, ener );
+        nodal_soundspeed[n] = eos_soundspeed< tag::compflow >( m_system, rho, nodal_pressure[n] );
+
+      }
+
+      //------------------------------------------------------------------------
+      // Compute limited gradients
+      //------------------------------------------------------------------------
+
+      std::vector< tk::real > dudx_ave;
+      dudx_ave.reserve( 3 * num_vars * num_nodes );
+
+      std::vector< tk::real > phi( num_vars * num_nodes, 1 );
+
+      for ( std::size_t n=0; n<num_nodes; ++n ) {
+
+        // get current solution
+        auto x0 = std::array<tk::real, 3>{ x[n], y[n], z[n] };
+
+        std::array< tk::real, num_vars > u0;
+        for (ncomp_t c=0; c<5; ++c) u0[c] = U( n, c, m_offset );
+        u0[5] = nodal_pressure[n];
+        u0[6] = nodal_soundspeed[n];
+
+        auto umax = u0;
+        auto umin = u0;
+
+        // coefficients
+        tk::real dxdx{0}, dxdy{0}, dxdz{0}, dydy{0}, dydz{0}, dzdz{0};
+
+        std::array< tk::real, num_vars > dudx = {0, 0, 0, 0, 0, 0, 0};
+        std::array< tk::real, num_vars > dudy = {0, 0, 0, 0, 0, 0, 0};
+        std::array< tk::real, num_vars > dudz = {0, 0, 0, 0, 0, 0, 0};
+
+        for (auto q : tk::Around(psup,n) ) {
+
+          // get neighbor solution
+          std::array< tk::real, num_vars > u1;
+          for (ncomp_t c=0; c<5; ++c) u1[c] = U( q, c, m_offset );
+          u1[5] = nodal_pressure[n];
+          u1[6] = nodal_soundspeed[n];
+          
+          // keep track of max and min
+          for ( int i=0; i<num_vars; ++i ) {
+            umax[i] = std::max( umax[i], u1[i] );
+            umin[i] = std::min( umin[i], u1[i] );
+          }
+
+          // deltas
+          tk::real dx = x[q] - x0[0];
+          tk::real dy = y[q] - x0[0];
+          tk::real dz = z[q] - x0[0];
+
+          // compute contributions
+          dxdx += dx*dx;
+          dxdy += dx*dy;
+          dxdz += dx*dz;
+          dydy += dy*dy;
+          dydz += dy*dz;
+          dzdz += dz*dz;
+
+          for ( int i=0; i<num_vars; ++i ){
+            auto du = u1[i] - u0[i];
+            dudx[i] += du * dx;
+            dudy[i] += du * dy;
+            dudz[i] += du * dz;
+          }
+
+        } // neighbor
+
+        // First compute minors
+        auto min1 = dydy*dzdz-dydz*dydz;
+        auto min2 = dxdy*dzdz-dydz*dxdz;
+        auto min3 = dxdy*dydz-dydy*dxdz;
+        // Now determinants
+        auto denom = 1 / (dxdx*min1-dxdy*min2+dxdz*min3);
+
+        for ( int i=0; i<num_vars; ++i ) {
+          // component 1
+          dudx_ave.emplace_back( (
+              dudx[i] * min1
+            - dxdy*(dudy[i]*dzdz-dydz*dudz[i])
+            + dxdz*(dudy[i]*dydz-dydy*dudz[i])
+          ) * denom );
+          // component 2
+          dudx_ave.emplace_back( (
+              dxdx*(dudy[i]*dzdz-dydz*dudz[i])
+            - dudx[i] * min2
+            + dxdz*(dudz[i]*dxdy-dxdz*dudy[i])
+          ) * denom );
+          // component 3
+          dudx_ave.emplace_back( (
+              dxdx*(dudz[i]*dydy-dydz*dudy[i])
+            - dxdy*(dudz[i]*dxdy-dxdz*dudy[i])
+            + dudx[i] * min3
+          ) * denom );
+        }// vars
+
+        // now check limiter
+        tk::real * limiter = &phi[ n*num_vars ];
+        auto grad_offset = n*3*num_vars;
+
+        for (auto q : tk::Around(psup,n) ) {
+
+          // get interpolation point
+          decltype(x0) xm = {
+            0.5*(x0[0] + x[q]),
+            0.5*(x0[1] + y[q]),
+            0.5*(x0[2] + z[q])
+          };
+         
+          for ( int ivar=0; ivar<num_vars; ++ivar ) {
+            // interpolate
+            auto u = u0[ivar];
+            for ( int idim=0; idim<3; ++idim )
+                u += dudx_ave[ grad_offset + ivar*3 + idim] * (xm[idim] - x0[idim]);
+            // compute limiter
+            tk::real lq = 1;
+            if ( u - u0[ivar] > 1.e-7 )   
+              lq = (umax[ivar] - u0[ivar]) / (u - u0[ivar]);
+            else if ( u - u0[ivar] < -1.e-7 )
+              lq = (umin[ivar] - u0[ivar]) / (u - u0[ivar]);
+            limiter[ivar] = std::min(lq, limiter[ivar]); 
+          } // var
+        } // neighbors
+
+        // make sure none of them are less than zero
+        for ( int ivar=0; ivar<num_vars; ++ivar ) 
+          limiter[ivar] = std::max(0., limiter[ivar]);
+
+      } // points
+
+ 
+      //------------------------------------------------------------------------
+      // Compute RHS
+      //------------------------------------------------------------------------
+
+
+      // 1st stage: update element values from node values (gather-add)
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+
+        // access node IDs
+        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
+                                               inpoel[e*4+2], inpoel[e*4+3] }};
+        
+        // compute element Jacobi determinant
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+        const auto J = tk::triple( ba, ca, da );        // J = 6V
+        Assert( J > 0, "Element Jacobian non-positive" );
+      }
     }
 
     //! Compute right hand side
