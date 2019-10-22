@@ -18,6 +18,7 @@
 #include <unordered_set>
 #include <unordered_map>
 
+#include "DerivedData.hpp"
 #include "Macro.hpp"
 #include "Exception.hpp"
 #include "Vector.hpp"
@@ -109,6 +110,10 @@ class CompFlow {
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
+
+      // edges surrounding points
+      auto esup = tk::genEsup( inpoel, 4 );
+      auto esued = tk::genEsued( inpoel, 4, esup );
      
       //------------------------------------------------------------------------
       // Update solution quntities
@@ -268,6 +273,14 @@ class CompFlow {
       // Compute RHS
       //------------------------------------------------------------------------
 
+      auto num_edge = esued.second.size()-1;
+
+      for ( std::size_t e=0; e<num_edge; ++e ) {
+
+         for (auto c : tk::Around(esued,e) ) {
+         }
+
+      }
 
       // 1st stage: update element values from node values (gather-add)
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
