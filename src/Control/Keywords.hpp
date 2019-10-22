@@ -4205,6 +4205,26 @@ struct waterair_shocktube_info {
 using waterair_shocktube =
   keyword< waterair_shocktube_info, TAOCPP_PEGTL_STRING("waterair_shocktube") >;
 
+struct triple_point_info {
+  using code = Code< T >;
+  static std::string name() { return "Triple point problem"; }
+  static std::string shortDescription() { return
+    "Select the triple point test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the triple point test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material algorithm and its interface capturing
+    capabilities. Example: "problem triple_point". For more details, see
+    Galera, S., Maire, P. H., & Breil, J. (2010). A two-dimensional unstructured
+    cell-centered multi-material ALE scheme using VOF interface reconstruction.
+    Journal of Computational Physics, 229(16), 5755-5787.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using triple_point =
+  keyword< triple_point_info, TAOCPP_PEGTL_STRING("triple_point") >;
+
 struct problem_info {
   using code = Code< t >;
   static std::string name() { return "Test problem"; }

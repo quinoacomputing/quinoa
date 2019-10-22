@@ -57,6 +57,7 @@
 #include "Problem/InterfaceAdvection.hpp"
 #include "Problem/SodShocktube.hpp"
 #include "Problem/WaterAirShocktube.hpp"
+#include "Problem/TriplePoint.hpp"
 
 namespace inciter {
 
@@ -65,7 +66,8 @@ using MultiMatProblems =
   brigand::list< MultiMatProblemUserDefined
                , MultiMatProblemSodShocktube
                , MultiMatProblemInterfaceAdvection
-               , MultiMatProblemWaterAirShocktube >;
+               , MultiMatProblemWaterAirShocktube
+               , MultiMatProblemTriplePoint >;
 
 } // inciter::
 

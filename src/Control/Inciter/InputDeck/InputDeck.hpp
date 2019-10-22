@@ -193,7 +193,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::sedov_blastwave,
                                    kw::interface_advection,
                                    kw::gauss_hump_compflow,
-                                   kw::waterair_shocktube >;
+                                   kw::waterair_shocktube,
+                                   kw::triple_point >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
