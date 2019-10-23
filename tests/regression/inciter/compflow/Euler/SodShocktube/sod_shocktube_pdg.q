@@ -47,7 +47,7 @@ inciter
   end
 
   plotvar
-    interval 5
+    interval 10
   end
 
 end
