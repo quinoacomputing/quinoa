@@ -131,7 +131,7 @@ WENOMultiMat_P1( const std::vector< int >& esuel,
     }
   }
 
-  std::vector< tk::real > phic(ncomp, 1.0), phip(ncomp, 1.0);
+  std::vector< tk::real > phic(ncomp, 1.0), phip(nprim, 1.0);
   for (std::size_t e=0; e<nelem; ++e)
   {
     consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
@@ -520,10 +520,12 @@ SuperbeeFunction( const tk::Fields& U,
         auto uNeg = state[c] - U(e, mark, offset);
         if (uNeg > 1.0e-14)
         {
+          uNeg = std::max(uNeg, 1.0e-08);
           phi_gp = std::min( 1.0, (uMax[c]-U(e, mark, offset))/(2.0*uNeg) );
         }
         else if (uNeg < -1.0e-14)
         {
+          uNeg = std::min(uNeg, -1.0e-08);
           phi_gp = std::min( 1.0, (uMin[c]-U(e, mark, offset))/(2.0*uNeg) );
         }
         else
