@@ -388,6 +388,51 @@ class CompFlow {
       return bc;
     }
 
+    //! Set symmetry boundary conditions at nodes
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] bnorm Face normals in boundary points: key global node id,
+    //!    value: unit normal
+    void
+    symbc( tk::Fields& U,
+           const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm )
+    const {
+      for (const auto& [ i, nr ] : bnorm ) {
+        std::array< tk::real, 3 >
+          n{ nr[0], nr[1], nr[2] },
+          v{ U(i,1,m_offset), U(i,2,m_offset), U(i,3,m_offset) };
+        auto v_dot_n = tk::dot( v, n );
+        U(i,1,m_offset) -= v_dot_n * n[0];
+        U(i,2,m_offset) -= v_dot_n * n[1];
+        U(i,3,m_offset) -= v_dot_n * n[2];
+      }
+    }
+
+    //! Query nodes at which symmetry boundary conditions are set
+    //! \param[in] bface Boundary-faces mapped to side set ids
+    //! \param[in] triinpoel Boundary-face connectivity
+    //! \param[in,out] nodes Node ids at which symmetry BCs are set
+    void
+    symbcnodes( const std::map< int, std::vector< std::size_t > >& bface,
+                const std::vector< std::size_t >& triinpoel,
+                std::unordered_set< std::size_t >& nodes ) const
+    {
+      using tag::param; using tag::compflow; using tag::bcsym;
+      const auto& bc = g_inputdeck.get< param, compflow, bcsym >();
+      if (!bc.empty() && bc.size() > m_system) {
+        const auto& ss = bc[ m_system ];// side sets with sym bcs specified
+        for (const auto& s : ss) {
+          auto k = bface.find( std::stoi(s) );
+          if (k != end(bface)) {
+            for (auto f : k->second) {  // face ids on symbc side set
+              nodes.insert( triinpoel[f*3+0] );
+              nodes.insert( triinpoel[f*3+1] );
+              nodes.insert( triinpoel[f*3+2] );
+            }
+          }
+        }
+      }
+    }
+
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const

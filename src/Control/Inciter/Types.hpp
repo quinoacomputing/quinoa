@@ -89,6 +89,7 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::dt,     kw::dt::info::expect::type     //!< Size of time step
   , tag::cfl,    kw::cfl::info::expect::type    //!< CFL coefficient
   , tag::fct,    bool                           //!< FCT on/off
+  , tag::sysfct, bool                           //!< FCT for system of eqs
   , tag::reorder,bool                           //!< reordering on/off
   , tag::ctau,   kw::ctau::info::expect::type   //!< FCT mass diffisivity
   , tag::scheme, inciter::ctr::SchemeType       //!< Spatial discretization type

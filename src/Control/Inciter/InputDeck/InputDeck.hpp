@@ -130,6 +130,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::l2,
                                    kw::linf,
                                    kw::fct,
+                                   kw::sysfct,
                                    kw::reorder,
                                    kw::amr,
                                    kw::amr_t0ref,
@@ -211,6 +212,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::dt >() = 0.0;
       get< tag::discr, tag::cfl >() = 0.0;
       get< tag::discr, tag::fct >() = true;
+      get< tag::discr, tag::sysfct >() = false;
       get< tag::discr, tag::reorder >() = false;
       get< tag::discr, tag::ctau >() = 1.0;
       get< tag::discr, tag::scheme >() = SchemeType::DiagCG;

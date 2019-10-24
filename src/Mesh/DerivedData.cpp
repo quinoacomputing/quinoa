@@ -1303,6 +1303,7 @@ genGeoFaceTri( std::size_t nipfac,
 //!   pointing outward of the element to the left of the face, and face
 //!   centroid coordinates. Use the following examples to access this
 //!   information for face-f.
+//! \details
 //!   face area: geoFace(f,0,0),
 //!   unit-normal x-component: geoFace(f,1,0),
 //!               y-component: geoFace(f,2,0),
@@ -1396,6 +1397,14 @@ geoFaceTri( const std::array< tk::real, 3 >& x,
 //! \return Face geometry information. This includes face area, unit normal
 //!   pointing outward of the element to the left of the face, and face
 //!   centroid coordinates.
+//! \details
+//!   face area: geoFace(f,0,0),
+//!   unit-normal x-component: geoFace(f,1,0),
+//!               y-component: geoFace(f,2,0),
+//!               z-component: geoFace(f,3,0),
+//!   centroid x-coordinate: geoFace(f,4,0),
+//!            y-coordinate: geoFace(f,5,0),
+//!            z-coordinate: geoFace(f,6,0).
 // *****************************************************************************
 {
   tk::Fields geoiFace( 1, 7 );

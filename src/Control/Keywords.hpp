@@ -4593,9 +4593,12 @@ struct bc_dirichlet_info {
     "Start configuration block describing Dirichlet boundary conditions"; }
   static std::string longDescription() { return
     R"(This keyword is used to introduce an bc_dirichlet ... end block, used to
-    specify the configuration for setting Dirichlet boundary conditions for a
-    partial differential equation. Keywords allowed in a bc_dirichlet ... end
-    block: )" + std::string("\'")
+    specify the configuration for setting Dirichlet boundary conditions (BC) for
+    a partial differential equation. This keyword is used to list multiple side
+    sets on which a prescribed Dirichlet BC is then applied. Such prescribed BCs
+    at each point in space and time are evaluated using a built-in function,
+    e.g., using the method of manufactured solutions.
+    Keywords allowed in a bc_dirichlet ... end block: )" + std::string("\'")
     + sideset::string() + "\'. "
     + R"(For an example bc_dirichlet ... end block, see
       doc/html/inicter_example_shear.html.)";
@@ -5805,6 +5808,29 @@ struct fct_info {
   };
 };
 using fct = keyword< fct_info, TAOCPP_PEGTL_STRING("fct") >;
+
+struct sysfct_info {
+  static std::string name() { return "Flux-corrected transport for systems"; }
+  static std::string shortDescription() { return
+    "Turn on system nature of flux-corrected transport"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to enable a system-nature for flux-corrected
+    transport (FCT). Note that FCT is only used in conjunction with continuous
+    Galerkin finite element discretization, configured by scheme diagcg and it
+    has no effect when the discontinuous Galerkin (DG) scheme is used,
+    configured by 'scheme dg'. Enabling the system-nature for FCT will choose
+    the limiter coefficients for a system of equations, e.g., compressible flow,
+    in way that takes the system-nature of the equations into account. An
+    example is assinging the minimum of the limit coefficient to all variables
+    limited in a computational cell, e.g., density, momentum, and specitic total
+    energy. This yields better, more monotonic, results.)"; }
+  struct expect {
+    using type = bool;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using sysfct = keyword< sysfct_info, TAOCPP_PEGTL_STRING("sysfct") >;
 
 ////////// NOT YET FULLY DOCUMENTED //////////
 

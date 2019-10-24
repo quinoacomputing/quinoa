@@ -114,6 +114,19 @@ class CGPDE {
            const std::array< std::vector< tk::real >, 3 >& coord ) const
     { return self->dirbc( t, deltat, sides, coord ); }
 
+    //! Public interface to set symmetry boundary conditions at nodes
+    void
+    symbc( tk::Fields& U,
+           const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm )
+    const { self->symbc( U, bnorm ); }
+
+    //! Public interface to querying symmetry boundary nodes
+    void
+    symbcnodes( const std::map< int, std::vector< std::size_t > >& bface,
+                const std::vector< std::size_t >& triinpoel,
+                std::unordered_set< std::size_t >& nodes ) const
+    { self->symbcnodes( bface, triinpoel, nodes ); }
+
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
 
@@ -172,6 +185,13 @@ class CGPDE {
              tk::real,
              const std::pair< const int, std::vector< std::size_t > >&,
              const std::array< std::vector< tk::real >, 3 >& ) const = 0;
+      virtual void symbc( tk::Fields& U,
+         const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& )
+         const = 0;
+      virtual void symbcnodes(
+         const std::map< int, std::vector< std::size_t > >&,
+         const std::vector< std::size_t >&,
+         std::unordered_set< std::size_t >& ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
@@ -214,6 +234,14 @@ class CGPDE {
              const std::pair< const int, std::vector< std::size_t > >& sides,
              const std::array< std::vector< tk::real >, 3 >& coord ) const
         override { return data.dirbc( t, deltat, sides, coord ); }
+      void symbc( tk::Fields& U,
+        const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm )
+        const override { data.symbc( U, bnorm ); }
+      void symbcnodes(
+         const std::map< int, std::vector< std::size_t > >& bface,
+         const std::vector< std::size_t >& triinpoel,
+         std::unordered_set< std::size_t >& nodes ) const override
+      { data.symbcnodes( bface, triinpoel, nodes ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
       std::vector< std::string > names() const override

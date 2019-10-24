@@ -115,6 +115,7 @@ struct t0 {};
 struct dt {};
 struct cfl {};
 struct fct {};
+struct sysfct {};
 struct ctau {};
 struct npar {};
 struct refined {};

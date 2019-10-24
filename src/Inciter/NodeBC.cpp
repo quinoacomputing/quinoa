@@ -29,31 +29,29 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
        tk::real t,
        tk::real dt,
        const tk::UnsMesh::Coords& coord,
-       const std::vector< std::size_t >& gid,
        const std::unordered_map< std::size_t, std::size_t >& lid,
-       const std::map< int, std::vector< std::size_t > >& sidenodes )
+       const std::map< int, std::vector< std::size_t > >& bnode )
 // *****************************************************************************
 //  Match user-specified boundary conditions at nodes for side sets
 //! \param[in] ncomp Number of scalar components in PDE system
 //! \param[in] t Physical time at which to query boundary conditions
 //! \param[in] dt Time step size (for querying BC increments in time)
 //! \param[in] coord Mesh node coordinates
-//! \param[in] gid Global node IDs
-//! \param[in] lid Local node IDs associated to global node IDs
-//! \param[in] sidenodes Map storing global mesh node IDs mapped to side set ids
+//! \param[in] lid Local node IDs associated to local node IDs
+//! \param[in] bnode Map storing global mesh node IDs mapped to side set ids
 //! \return Vector of pairs of bool and boundary condition value associated to
-//!   mesh node IDs at which the user has set Dirichlet boundary conditions for
-//!   all systems of PDEs integrated. The bool indicates whether the BC is set
-//!   at the node for that component: if true, the real value is the increment
-//!   (from t to dt) in the BC specified for a component.
+//!   local mesh node IDs at which the user has set Dirichlet boundary
+//!   conditions for all systems of PDEs integrated. The bool indicates whether
+//!   the BC is set at the node for that component: if true, the real value is
+//!   the increment (from t to dt) in the BC specified for a component.
 //! \details Boundary conditions (BC), mathematically speaking, are applied on
 //!   finite surfaces. These finite surfaces are given by element sets (i.e., a
 //!   list of elements). This function queries Dirichlet boundary condition
 //!   values from all PDEs in the system of systems of PDEs integrated at the
-//!   node lists associated to side set IDs, given by sidenodes. Each
+//!   node lists associated to side set IDs, given by bnode  Each
 //!   PDE system returns a BC data structure. Note that the BC mesh nodes that
 //!   this function results in, stored in dirbc, only contains those nodes that
-//!   are supplied via sidenodes, i.e., in parallel only a part of the mesh is
+//!   are supplied via bnode  i.e., in parallel only a part of the mesh is
 //!   worked on.
 // *****************************************************************************
 {
@@ -103,7 +101,7 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
   // implementation, every side set applies the BC to the common node in
   // question, successively overwriting the BC applied by the previous side set.
   // Effectively, the BC corresponding to the last side set ID is applied to the
-  // common node. Since sidenodes is an ordered map, the side set with a larger
+  // common node. Since bnode is an ordered map, the side set with a larger
   // id wins if a node belongs to multiple side sets.
 
   // Lambda to convert global to local node ids of a list of nodes
@@ -115,7 +113,7 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
   };
 
   // Query Dirichlet BCs for all PDEs integrated and assign to nodes
-  for (const auto& s : sidenodes) {     // for all side sets passed in
+  for (const auto& s : bnode) {     // for all side sets passed in
     std::size_t c = 0;
     auto l = local(s.second);   // generate local node ids on side set
     for (std::size_t eq=0; eq<g_cgpde.size(); ++eq) {
@@ -124,7 +122,7 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
       for (const auto& n : eqbc) {
         auto id = n.first;                      // BC node ID
         const auto& bcs = n.second;             // BCs
-        auto& nodebc = dirbc[ gid[id] ];        // BCs to be set for node
+        auto& nodebc = dirbc[ id ];     // BCs to be set for node
         if (nodebc.size() > c) {        // node already has BCs from this PDE
           Assert( nodebc.size() == c+bcs.size(), "Size mismatch" );
           for (std::size_t i=0; i<bcs.size(); i++) {
@@ -154,16 +152,15 @@ bool
 correctBC( const tk::Fields& a,
            const tk::Fields& dul,
            const std::unordered_map< std::size_t,
-                   std::vector< std::pair< bool, tk::real > > >& bc,
-           const std::unordered_map< std::size_t, std::size_t >& lid )
+                   std::vector< std::pair< bool, tk::real > > >& dirbc )
 // *****************************************************************************
 //  Verify that the change in the solution at those nodes where Dirichlet
 //  boundary conditions are set is exactly the amount the BCs prescribe
 //! \param[in] a Limited antidiffusive element contributions (from FCT)
 //! \param[in] dul Low order solution increment
-//! \param[in] bc Vector of boundary conditions (true/false + BC value) for all
-//!   scalar components integrated associated of all systems to global node ID
-//! \param[in] lid Local node IDs associated to global node IDs
+//! \param[in] dirbc Vector of boundary conditions (true/false + BC value) for
+//!   all scalar components integrated associated of all systems to local node
+//!   ID
 //! \return True if solution is correct at Dirichlet boundary condition nodes
 //! \details We loop through the map that associates a vector of of boundary
 //!   conditions (true/false, indicating whether the BC is set + BC value if
@@ -178,19 +175,14 @@ correctBC( const tk::Fields& a,
 //!   error.
 // *****************************************************************************
 {
-  for (const auto& n : bc) {
-    auto k = lid.find(n.first);
-    if (k!=end(lid)) {
-      auto l = k->second;
-      const auto& b = n.second;
-      Assert( b.size() == dul.nprop(), "Size mismatch" );
-      for (std::size_t c=0; c<b.size(); ++c) {
-        if ( b[c].first &&
-             std::abs( dul(l,c,0) + a(l,c,0) - b[c].second ) >
-               std::numeric_limits< tk::real >::epsilon() )
-        {
-           return false;
-        }
+  for (const auto& [i,bc] : dirbc) {
+    Assert( bc.size() == dul.nprop(), "Size mismatch" );
+    for (std::size_t c=0; c<bc.size(); ++c) {
+      if ( bc[c].first &&
+           std::abs( dul(i,c,0) + a(i,c,0) - bc[c].second ) >
+             std::numeric_limits< tk::real >::epsilon() )
+      {
+         return false;
       }
     }
   }
