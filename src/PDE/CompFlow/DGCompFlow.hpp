@@ -242,6 +242,7 @@ class CompFlow {
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -275,7 +276,7 @@ class CompFlow {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
+      tk::surfInt( pref, m_system, 1, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, riemannDeriv );
 
       // compute source term intehrals

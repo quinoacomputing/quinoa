@@ -499,6 +499,7 @@ class MultiMat {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -519,9 +520,12 @@ class MultiMat {
       // set rhs to zero
       R.fill(0.0);
 
+      //std::cout << "riemannDeriv: " << std::endl;
+      //STARTTIME
       // allocate space for Riemann derivatives used in non-conservative terms
       std::vector< std::vector< tk::real > >
         riemannDeriv( 3*nmat+1, std::vector<tk::real>(U.nunk(),0.0) );
+      //ENDTIME
 
       // configure Riemann flux function
       auto rieflxfn =
@@ -534,10 +538,13 @@ class MultiMat {
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
+      std::cout << "intSurfInt: " << std::endl;
+      {STARTTIME
       // compute internal surface flux integrals
-      tk::surfInt( m_system, nmat, m_offset, ndof, rdof, inpoel, coord,
+      tk::surfInt( pref, m_system, nmat, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R,
                    riemannDeriv );
+      ENDTIME}
 
       // compute source term integrals
       tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, nelem, inpoel, coord,
@@ -548,15 +555,20 @@ class MultiMat {
         tk::volInt( m_system, m_ncomp, m_offset, ndof, nelem, inpoel, coord,
                     geoElem, flux, velfn, U, ndofel, R );
 
+      //std::cout << "bndSurfInt: " << std::endl;
+      //{STARTTIME
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, nmat, m_offset, ndof, rdof, b.first,
                         fd, geoFace, inpoel, coord, t, rieflxfn, velfn,
                         b.second, U, P, ndofel, R, riemannDeriv );
+      //ENDTIME}
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );
 
+      //std::cout << "rD_recalc: " << std::endl;
+      //{STARTTIME
       // get derivatives from riemannDeriv
       for (std::size_t k=0; k<riemannDeriv.size(); ++k)
       {
@@ -565,12 +577,18 @@ class MultiMat {
         for (std::size_t e=0; e<U.nunk(); ++e)
           riemannDeriv[k][e] /= geoElem(e, 0, 0);
       }
+      //ENDTIME}
 
+      //std::cout << "ncnInt: " << std::endl;
+      //{STARTTIME
       // compute volume integrals of non-conservative terms
       tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R );
+      //ENDTIME}
 
+      //std::cout << "pressureRelax: " << std::endl;
+      //{STARTTIME
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
       {
@@ -579,6 +597,7 @@ class MultiMat {
         tk::pressureRelaxationInt( m_system, nmat, m_offset, ndof, rdof, nelem,
                                    geoElem, U, P, ndofel, ct, R );
       }
+      //ENDTIME}
     }
 
     //! Compute the minimum time step size

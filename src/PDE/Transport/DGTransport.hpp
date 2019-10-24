@@ -237,6 +237,7 @@ class Transport {
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -260,7 +261,7 @@ class Transport {
       std::vector< std::vector < tk::real > > riemannDeriv;
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
+      tk::surfInt( pref, m_system, 1, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, Upwind::flux, Problem::prescribedVelocity, U, P,
                    ndofel, R, riemannDeriv );
 

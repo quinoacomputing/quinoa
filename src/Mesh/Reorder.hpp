@@ -56,6 +56,11 @@ std::map< int, std::vector< std::size_t > >
 remap( const std::map< int, std::vector< std::size_t > >& id,
        const std::unordered_map< std::size_t, std::size_t >& map );
 
+//! Create remapped map of vector of indices using a map
+void
+remap( std::map< int, std::vector< std::size_t > >& ids,
+       const std::vector< std::size_t >& map );
+
 //! Reorder mesh points with the advancing front technique
 std::vector< std::size_t >
 renumber( const std::pair< std::vector< std::size_t >,

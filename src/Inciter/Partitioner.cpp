@@ -270,6 +270,29 @@ Partitioner::refine()
 
   } else {
 
+    // renumber node-ids on each chare according to proximity
+    for (int c=0; c<dist[1]; ++c)
+    {
+      // compute chare ID
+      auto cid = CkMyNode() * dist[0] + c;
+      auto& inpoel = tk::ref_find(m_chinpoel, cid);
+      auto& triinpoel = tk::ref_find(m_chtriinpoel, cid);
+      auto& bnode = tk::ref_find(m_chbnode, cid);
+      auto psup = tk::genPsup(inpoel, 4, tk::genEsup(inpoel, 4));
+      auto map = tk::renumber( psup );
+      tk::remap(inpoel, map);
+      tk::remap(triinpoel, map);
+      tk::remap(bnode, map);
+
+      // reorder the chcoordmap
+      auto& coordmap = tk::ref_find(m_chcoordmap,cid);
+      tk::UnsMesh::CoordMap cmap_temp;
+      for (auto&& [i, coords] : coordmap)
+        cmap_temp[map[i]] = std::move(coords);
+
+      coordmap = std::move(cmap_temp);
+    }
+
     for (int c=0; c<dist[1]; ++c) {
       // compute chare ID
       auto cid = CkMyNode() * dist[0] + c;

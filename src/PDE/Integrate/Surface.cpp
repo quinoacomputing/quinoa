@@ -20,7 +20,8 @@
 #include "Quadrature.hpp"
 
 void
-tk::surfInt( ncomp_t system,
+tk::surfInt( bool pref,
+             ncomp_t system,
              std::size_t nmat,
              ncomp_t offset,
              const std::size_t ndof,
@@ -72,6 +73,21 @@ tk::surfInt( ncomp_t system,
   Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
           "derivative vector for single material compflow" );
 
+  auto ng_l = tk::NGfa(ndof);
+  auto ng_r = tk::NGfa(ndof);
+
+  // When the number of gauss points for the left and right element are
+  // different, choose the larger ng
+  auto ng = std::max( ng_l, ng_r );
+
+  // arrays for quadrature points
+  std::array< std::vector< real >, 2 >
+    coordgp{ std::vector< real >(ng), std::vector< real >(ng) };
+  std::vector< real > wgp(ng);
+
+  // get quadrature point weights and coordinates for triangle
+  GaussQuadratureTri( ng, coordgp, wgp );
+
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
   {
@@ -81,23 +97,23 @@ tk::surfInt( ncomp_t system,
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
-    auto ng_l = tk::NGfa(ndofel[el]);
-    auto ng_r = tk::NGfa(ndofel[er]);
+    if (pref)
+    {
+      ng_l = tk::NGfa(ndofel[el]);
+      ng_r = tk::NGfa(ndofel[er]);
 
-    // When the number of gauss points for the left and right element are
-    // different, choose the larger ng
-    auto ng = std::max( ng_l, ng_r );
+      // When the number of gauss points for the left and right element are
+      // different, choose the larger ng
+      ng = std::max( ng_l, ng_r );
 
-    // arrays for quadrature points
-    std::array< std::vector< real >, 2 > coordgp;
-    std::vector< real > wgp;
+      // arrays for quadrature points
+      std::array< std::vector< real >, 2 >
+        coordgp{ std::vector< real >(ng), std::vector< real >(ng) };
+      std::vector< real > wgp(ng);
 
-    coordgp[0].resize( ng );
-    coordgp[1].resize( ng );
-    wgp.resize( ng );
-
-    // get quadrature point weights and coordinates for triangle
-    GaussQuadratureTri( ng, coordgp, wgp );
+      // get quadrature point weights and coordinates for triangle
+      GaussQuadratureTri( ng, coordgp, wgp );
+    }
 
     // Extract the element coordinates
     std::array< std::array< tk::real, 3>, 4 > coordel_l {{ 
@@ -148,16 +164,19 @@ tk::surfInt( ncomp_t system,
       // unsupported in the p-adaptive DG (PDG). This is a workaround until we
       // have rdofel, which is needed to distinguish between ndofs and rdofs per
       // element for pDG.
-      std::size_t dof_el, dof_er;
-      if (rdof > ndof)
+      std::size_t dof_el(rdof), dof_er(rdof);
+      if (pref)
       {
-        dof_el = rdof;
-        dof_er = rdof;
-      }
-      else
-      {
-        dof_el = ndofel[el];
-        dof_er = ndofel[er];
+        if (rdof > ndof)
+        {
+          dof_el = rdof;
+          dof_er = rdof;
+        }
+        else
+        {
+          dof_el = ndofel[el];
+          dof_er = ndofel[er];
+        }
       }
 
       //Compute the basis functions
@@ -172,13 +191,12 @@ tk::surfInt( ncomp_t system,
 
       auto wt = wgp[igp] * geoFace(f,0,0);
 
-      std::array< std::vector< real >, 2 > state;
-      std::array< std::vector< real >, 2 > sprim;
-
-      state[0] = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
-      sprim[0] = eval_state( nprim, offset, rdof, dof_el, el, P, B_l );
-      state[1] = eval_state( ncomp, offset, rdof, dof_er, er, U, B_r );
-      sprim[1] = eval_state( nprim, offset, rdof, dof_er, er, P, B_r );
+      std::array< std::vector< real >, 2 > state{
+        eval_state( ncomp, offset, rdof, dof_el, el, U, B_l ),
+        eval_state( ncomp, offset, rdof, dof_er, er, U, B_r ) };
+      std::array< std::vector< real >, 2 > sprim {
+        eval_state( nprim, offset, rdof, dof_el, el, P, B_l ),
+        eval_state( nprim, offset, rdof, dof_er, er, P, B_r ) };
 
       // consolidate primitives into state vector
       state[0].insert(state[0].end(), sprim[0].begin(), sprim[0].end());
