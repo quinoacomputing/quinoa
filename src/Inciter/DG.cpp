@@ -1372,7 +1372,7 @@ DG::dt()
       for (const auto& eq : g_dgpde) {
         auto eqdt =
           eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem, m_ndof,
-            m_u, m_p );
+            m_u, m_p, m_fd.Esuel().size()/4 );
         if (eqdt < mindt) mindt = eqdt;
       }
 

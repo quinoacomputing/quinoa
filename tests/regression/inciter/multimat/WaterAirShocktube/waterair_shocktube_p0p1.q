@@ -2,12 +2,12 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Sod shock-tube"
+title "Water-air shock-tube"
 
 inciter
 
-  nstep 25   # Max number of time steps
-  dt   1.0e-3 # Time step size
+  nstep 25
+  cfl 0.25
   ttyi 10     # TTY output interval
   scheme p0p1
   limiter superbeep1
@@ -19,12 +19,17 @@ inciter
   multimat
 
     physics veleq
-    problem sod_shocktube
+    problem waterair_shocktube
     depvar u
+
+    prelax true
+    prelax_timescale 0.0025
 
     nmat 2
     material
-      gamma 1.4 1.4 end # ratio of specific heats
+      gamma 4.4 1.4 end # ratio of specific heats
+      cv 951.36 717.5 end # specific heat at const volume
+      pstiff 6.0e8 0.0 end # sg-eos stiffness parameter
     end
 
     bc_extrapolate
@@ -37,7 +42,7 @@ inciter
   end
 
   diagnostics
-    interval  1
+    interval 1
     format    scientific
     error l2
   end

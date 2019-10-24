@@ -396,7 +396,13 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
   // unstructured meshes, Journal of Computational Physics 340 (2017) 389–417.
   // doi:10.1016/j.jcp.2017.03.042."). This approximation should be applied in
   // as narrow a band of interface-cells as possible. The following if-test
-  // defines this band of interface-cells.
+  // defines this band of interface-cells. This tests checks the value of the
+  // maximum volume-fraction in the cell (almax) and the maximum change in
+  // volume-fraction in the cell (dalmax, calculated from second-order DOFs),
+  // to determine the band of interface-cells where the aforementioned fix needs
+  // to be applied. This if-test says that, the fix is applied when the change
+  // in volume-fraction across a cell is greater than 0.1, *and* the
+  // volume-fraction is between 0.1 and 0.9.
   if ( dalmax > 0.1 &&
        (almax > 0.1 && almax < (1.0-0.1)) )
   {

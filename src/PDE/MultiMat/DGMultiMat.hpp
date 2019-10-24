@@ -432,6 +432,7 @@ class MultiMat {
 //    //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
+    //! \param[in] nielem Number of internal elements
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
@@ -440,7 +441,8 @@ class MultiMat {
                  const tk::Fields& geoElem,
                  const std::vector< std::size_t >& /*ndofel*/,
                  const tk::Fields& U,
-                 const tk::Fields& P ) const
+                 const tk::Fields& P,
+                 const std::size_t nielem ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -471,7 +473,7 @@ class MultiMat {
       // get quadrature point weights and coordinates for triangle
       tk::GaussQuadratureTri( ng, coordgp, wgp );
 
-      // compute internal surface maximum characteristic speed
+      // compute maximum characteristic speed at all internal element faces
       for (std::size_t f=0; f<esuf.size()/2; ++f)
       {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
@@ -514,22 +516,25 @@ class MultiMat {
 
           std::array< std::vector< tk::real >, 2 > ugp, pgp;
 
-          // left element
+          // get left element conserved quantities
           for (ncomp_t c=0; c<m_ncomp; ++c)
           {
             auto mark = c*rdof;
             ugp[0].push_back( U(el, mark, m_offset) );
           }
+          // get left element primitive quantities
           for (ncomp_t c=0; c<nprim(); ++c)
           {
             auto mark = c*rdof;
             pgp[0].push_back( P(el, mark, m_offset) );
           }
 
+          // advection velocity
           u = pgp[0][velocityIdx(nmat, 0)];
           v = pgp[0][velocityIdx(nmat, 1)];
           w = pgp[0][velocityIdx(nmat, 2)];
 
+          // acoustic speed
           a = 0.0;
           for (std::size_t k=0; k<nmat; ++k)
           {
@@ -571,21 +576,25 @@ class MultiMat {
              tk::Jacobian(coordel_r[0], coordel_r[1], gp, coordel_r[3])/detT_r,
              tk::Jacobian(coordel_r[0], coordel_r[1], coordel_r[2], gp)/detT_r);
 
+            // get right element conserved quantities
             for (ncomp_t c=0; c<m_ncomp; ++c)
             {
               auto mark = c*rdof;
               ugp[1].push_back( U(eR, mark, m_offset) );
             }
+            // get right element primitive quantities
             for (ncomp_t c=0; c<nprim(); ++c)
             {
               auto mark = c*rdof;
               pgp[1].push_back( P(eR, mark, m_offset) );
             }
 
+            // advection velocity
             u = pgp[1][velocityIdx(nmat, 0)];
             v = pgp[1][velocityIdx(nmat, 1)];
             w = pgp[1][velocityIdx(nmat, 2)];
 
+            // acoustic speed
             a = 0.0;
             for (std::size_t k=0; k<nmat; ++k)
             {
@@ -609,7 +618,7 @@ class MultiMat {
       tk::real mindt = std::numeric_limits< tk::real >::max();
 
       // compute allowable dt
-      for (std::size_t e=0; e<U.nunk(); ++e)
+      for (std::size_t e=0; e<nielem; ++e)
       {
         mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
       }
@@ -913,17 +922,7 @@ class MultiMat {
       // Internal cell primitive quantities using the separately reconstructed
       // primitive quantities. This is used to get ghost state for primitive
       // quantities
-      v1l = ul[ncomp+velocityIdx(nmat, 0)];
-      v2l = ul[ncomp+velocityIdx(nmat, 1)];
-      v3l = ul[ncomp+velocityIdx(nmat, 2)];
-      // Normal component of velocity
-      vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
-      // Ghost state velocity components
-      v1r = v1l - 2.0*vnl*fn[0];
-      v2r = v2l - 2.0*vnl*fn[1];
-      v3r = v3l - 2.0*vnl*fn[2];
 
-      // get primitives in boundary state
       // velocity
       ur[ncomp+velocityIdx(nmat, 0)] = v1r;
       ur[ncomp+velocityIdx(nmat, 1)] = v2r;
