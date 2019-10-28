@@ -549,12 +549,11 @@ DiagCG::solve( tk::Fields& dif )
   // Solve low and high order diagonal systems and update low order solution
   auto dul = (m_rhs + dif) / m_lhs;
 
-  // Apply symmetry BCs on low order solution increment
-
   m_ul = m_u + dul;
   m_du = m_rhs / m_lhs;
 
-  // Apply symmetry BCs on high order solution increment
+  // Apply symmetry BCs on low and high order solution increments, and low
+  // order solution
   for (const auto& eq : g_cgpde) {
     eq.symbc( dul, m_bnorm );
     eq.symbc( m_ul, m_bnorm );

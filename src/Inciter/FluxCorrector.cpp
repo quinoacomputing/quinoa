@@ -400,14 +400,12 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
                     const tk::Fields& P,
                     const tk::Fields& Ul,
                     tk::Fields& Q,
-                    tk::Fields& A ) //const
+                    tk::Fields& A ) const
 // *****************************************************************************
 // Compute limited antiffusive element contributions and apply to mesh nodes
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] bcdir Vector of pairs of bool and boundary condition value
 //!   associated to mesh node IDs at which to set Dirichlet boundary conditions.
-//!   Note that this BC data structure must include boundary conditions set
-//!   across all PEs, not just the ones need to be set on this PE.
 //! \param[in] P The sums of all positive (negative) AECs to nodes
 //! \param[in] Ul Low order solution
 //! \param[in,out] Q The maximum and mimimum unknowns of elements surrounding
