@@ -126,7 +126,7 @@ class FluxCorrector {
               const tk::Fields& P,
               const tk::Fields& Ul,
               tk::Fields& Q,
-              tk::Fields& A );// const;
+              tk::Fields& A ) const;
 
     // Collect mesh output fields from FCT
     std::tuple< std::vector< std::string >,
