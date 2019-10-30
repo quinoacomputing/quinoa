@@ -15,9 +15,10 @@ inciter
 
   scheme diagcg
   #ctau 0.5
+  fcteps 1.0e-6
 
   partitioning
-    algorithm rcb
+    algorithm mj
   end
 
   compflow
