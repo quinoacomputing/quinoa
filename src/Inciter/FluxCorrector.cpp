@@ -150,15 +150,17 @@ FluxCorrector::aec(
       auto i = bnorm.find( N[j] );  // Symmetry BCs
       if (i != end(bnorm)) {
         const auto& norm = i->second;
-        std::array< tk::real, 3 >
-          v{ m_aec(e*4+j,m_vel[0],0),
-             m_aec(e*4+j,m_vel[1],0),
-             m_aec(e*4+j,m_vel[2],0) },
-          n{ norm[0], norm[1], norm[2] };
-        auto vn = tk::dot( v, n );
-        m_aec(e*4+j,m_vel[0],0) -= vn * n[0];
-        m_aec(e*4+j,m_vel[1],0) -= vn * n[1];
-        m_aec(e*4+j,m_vel[2],0) -= vn * n[2];
+        for (const auto& vel : m_vel) {
+          std::array< tk::real, 3 >
+            v{ m_aec(e*4+j,vel[0],0),
+               m_aec(e*4+j,vel[1],0),
+               m_aec(e*4+j,vel[2],0) },
+            n{ norm[0], norm[1], norm[2] };
+          auto vn = tk::dot( v, n );
+          m_aec(e*4+j,vel[0],0) -= vn * n[0];
+          m_aec(e*4+j,vel[1],0) -= vn * n[1];
+          m_aec(e*4+j,vel[2],0) -= vn * n[2];
+        }
       }
     }
   }
@@ -477,9 +479,11 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
 
   // System limiting
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-    tk::real cs = 1.0;
-    for (auto i : m_sys) if (C(e,i,0) < cs) cs = C(e,i,0);
-    for (auto i : m_sys) C(e,i,0) = cs;
+    for (const auto& sys : m_sys) {
+      tk::real cs = 1.0;
+      for (auto i : sys) if (C(e,i,0) < cs) cs = C(e,i,0);
+      for (auto i : sys) C(e,i,0) = cs;
+    }
   }
 
   // save the limited antidiffusive element contributions (Lohner: AEC^c)

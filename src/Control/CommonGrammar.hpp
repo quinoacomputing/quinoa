@@ -132,6 +132,7 @@ namespace grm {
     ENERGY_UNFINISHED,  //!< Nonlinear energy growth problem config unfinished
     RT_UNFINISHED,      //!< Reyleigh-Taylor unstable configuration unfinished
     BC_EMPTY,           //!< Empty boundary condition block
+    SYSFCTVAR,          //!< System-FCT variable index incorrect
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
@@ -344,6 +345,8 @@ namespace grm {
       "above."},
     { MsgKey::BC_EMPTY, "Error in the preceding block. Empty boundary "
       "condition specifications, e.g., 'sideset end', are not allowed." },
+    { MsgKey::SYSFCTVAR, "Error in the system-FCT variable definition block. "
+      "The block must list integers between 1 and 5 both inclusive." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
     { MsgKey::HYDROTIMESCALES, "Error in the preceding line or block. "

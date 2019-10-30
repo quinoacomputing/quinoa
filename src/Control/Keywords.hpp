@@ -5832,6 +5832,25 @@ struct sysfct_info {
 };
 using sysfct = keyword< sysfct_info, TAOCPP_PEGTL_STRING("sysfct") >;
 
+struct sysfctvar_info {
+  static std::string name() { return "Variables considered for system FCT"; }
+  static std::string shortDescription() { return
+    "Specify a list of scalar component indices that considered for system FCT";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a list of integers that are considered
+    for computing the system-nature of flux-corrected transport. Example:
+    'sysfctvar 0 1 2 3 end', which means ignoring the energy (by not listing 4)
+    when computing the coupled limit coefficient for a system of mass, momentum,
+    and energy for single-material compressible flow.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static std::string description() { return "integers"; }
+  };
+};
+using sysfctvar = keyword< sysfctvar_info, TAOCPP_PEGTL_STRING("sysfctvar") >;
+
 ////////// NOT YET FULLY DOCUMENTED //////////
 
 struct mix_iem_info {

@@ -154,9 +154,6 @@ Transporter::info()
   if ( !g_inputdeck.get< tag::title >().empty() )
     m_print.title( g_inputdeck.get< tag::title >() );
 
-  // Print out info on settings of selected partial differential equations
-  m_print.pdes( "Partial differential equations integrated", stack.info() );
-
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
@@ -174,8 +171,6 @@ Transporter::info()
     if (fct) {
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
-      m_print.item( "FCT system character",
-                    g_inputdeck.get< tag::discr, tag::sysfct >() );
     }
   } else if (scheme == ctr::SchemeType::DG ||
              scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
@@ -196,6 +191,9 @@ Transporter::info()
   else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
              std::numeric_limits< tk::real >::epsilon())
     m_print.item( "CFL coefficient", cfl );
+
+  // Print out info on settings of selected partial differential equations
+  m_print.pdes( "Partial differential equations integrated", stack.info() );
 
   // Print out adaptive polynomial refinement configuration
   if (scheme == ctr::SchemeType::PDG) {

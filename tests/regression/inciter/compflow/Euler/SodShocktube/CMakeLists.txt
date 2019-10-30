@@ -190,29 +190,10 @@ add_regression_test(compflow_euler_sodshocktube_pdg_u0.8_migr ${INCITER_EXECUTAB
                     LABELS migration)
 
 add_regression_test(compflow_euler_sodshocktube_u0.8_migr ${INCITER_EXECUTABLE}
-                    NUMPES 2 PPN 1
+                    NUMPES 2
                     INPUTFILES sod_shocktube.q rectangle_01_1.5k.exo
                     ARGS -c sod_shocktube.q -i rectangle_01_1.5k.exo -v -u 0.8
                          +balancer RandCentLB +LBDebug 1
-                    BIN_BASELINE sod_shocktube_pe4_u0.8.std.exo.0
-                                 sod_shocktube_pe4_u0.8.std.exo.1
-                                 sod_shocktube_pe4_u0.8.std.exo.2
-                                 sod_shocktube_pe4_u0.8.std.exo.3
-                                 sod_shocktube_pe4_u0.8.std.exo.4
-                                 sod_shocktube_pe4_u0.8.std.exo.5
-                                 sod_shocktube_pe4_u0.8.std.exo.6
-                                 sod_shocktube_pe4_u0.8.std.exo.7
-                                 sod_shocktube_pe4_u0.8.std.exo.8
-                    BIN_RESULT out.e-s.0.9.0
-                               out.e-s.0.9.1
-                               out.e-s.0.9.2
-                               out.e-s.0.9.3
-                               out.e-s.0.9.4
-                               out.e-s.0.9.5
-                               out.e-s.0.9.6
-                               out.e-s.0.9.7
-                               out.e-s.0.9.8
-                    BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg

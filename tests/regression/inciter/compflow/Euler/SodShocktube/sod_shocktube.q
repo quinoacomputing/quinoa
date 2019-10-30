@@ -15,7 +15,6 @@ inciter
 
   scheme diagcg
   #ctau 0.5
-  sysfct true
 
   partitioning
     algorithm rcb

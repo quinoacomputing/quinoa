@@ -659,9 +659,6 @@ DiagCG::update( const tk::Fields& a, [[maybe_unused]] tk::Fields&& dul )
   else
     m_u = m_u + m_du;
 
-  // Set symmetry BCs
-  //for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
-
   // Compute diagnostics, e.g., residuals
   auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time

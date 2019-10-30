@@ -49,36 +49,57 @@ class FluxCorrector {
     //! Collect scalar comonent indices for equation systems
     //! \tparam Eq Equation types to consider as equation systems
     //! \return List of component indices to treat as a system
-    //! \warning At this point multiple CompFlow eq systems will be limited as
-    //!    one single coupled system!
     template< class... Eq >
-    std::vector< ncomp_t >
+    std::vector< std::vector< ncomp_t > >
     findsys() {
-      std::vector< ncomp_t > s;
-      if (g_inputdeck.get< tag::discr, tag::sysfct >()) {
-        ( ... , [&](){
-          const auto& ncompv = g_inputdeck.get< tag::component >().get< Eq >();
-          for (std::size_t e=0; e<ncompv.size(); ++e) {
+      std::vector< std::vector< ncomp_t > > sys;
+      ( ... , [&](){
+        // Access system-FCT variable indices for all systems of type Eq
+        const auto& sv = g_inputdeck.get< tag::param, Eq, tag::sysfctvar >();
+        // Access number of scalar components in all systems of type Eq
+        const auto& ncompv = g_inputdeck.get< tag::component >().get< Eq >();
+        // Assign variable indices for system FCT for each Eq system
+        for (std::size_t e=0; e<ncompv.size(); ++e) {
+          if (g_inputdeck.get< tag::param, Eq, tag::sysfct >().at(e)) {
             auto offset = g_inputdeck.get< tag::component >().offset< Eq >( e );
-            for (std::size_t c=0; c<ncompv[e]; ++c) s.push_back( offset + c );
+            sys.push_back( std::vector< ncomp_t >() );
+            for (auto c : sv.at(e)) {
+              sys.back().push_back( offset + c );
+            }
           }
-          }() );
+        } }() );
+      for ([[maybe_unused]] const auto& s : sys) {
+        Assert( std::all_of( begin(s), end(s), [&]( std::size_t i ){
+                  return i < g_inputdeck.get< tag::component >().nprop(); } ),
+                "Eq system index larger than total number of components" );
       }
-      Assert( std::all_of( begin(s), end(s), [&]( std::size_t i ){
-                return i < g_inputdeck.get< tag::component >().nprop(); } ),
-              "Eq system index larger than total number of components" );
-      return s;
+      return sys;
     }
 
     //! Find components of a velocity for equation systems
     //! \tparam Eq Equation types to consider as equation systems
     //! \return List of 3 component indices to treat as a velocity
     //! \warning Currently, this is only a punt for single-material flow: we
-    //!   simply take the components 1,2,3 as the velocity.
+    //!   simply take the components 1,2,3 as the velocity for each system of
+    //!   type Eq
     template< class... Eq >
-    std::array< ncomp_t, 3 >
+    std::vector< std::array< ncomp_t, 3 > >
     findvel() {
-      return { 1, 2, 3 };
+      std::vector< std::array< ncomp_t, 3 > > vel;
+      ( ... , [&](){
+        // Access number of scalar components in all systems of type Eq
+        const auto& ncompv = g_inputdeck.get< tag::component >().get< Eq >();
+        // Assign variable indices for system FCT for each Eq system
+        for (std::size_t e=0; e<ncompv.size(); ++e) {
+          auto offset = g_inputdeck.get< tag::component >().offset< Eq >( e );
+          vel.push_back( { offset+1, offset+2, offset+3 } );
+        } }() );
+      for ([[maybe_unused]] const auto& v : vel) {
+        Assert( std::all_of( begin(v), end(v), [&]( std::size_t i ){
+                  return i < g_inputdeck.get< tag::component >().nprop(); } ),
+                "Eq system index larger than total number of components" );
+      }
+      return vel;
     }
 
     //! Resize state (e.g., after mesh refinement)
@@ -151,10 +172,10 @@ class FluxCorrector {
   private:
    //! Antidiffusive element contributions for all scalar components
    tk::Fields m_aec;
-   //! Component indices to treat as a system
-   std::vector< ncomp_t > m_sys;
-   //! Component indices to treat as a velocity vector
-   std::array< ncomp_t, 3 > m_vel;
+   //! Component indices to treat as a system for multiple systems
+   std::vector< std::vector< ncomp_t > > m_sys;
+   //! Component indices to treat as a velocity vector for multiple systems
+   std::vector< std::array< ncomp_t, 3 > > m_vel;
 };
 
 } // inciter::
