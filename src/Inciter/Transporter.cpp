@@ -171,6 +171,8 @@ Transporter::info()
     if (fct) {
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
+      m_print.item( "FCT small number",
+                    g_inputdeck.get< tag::discr, tag::fcteps >() );
     }
   } else if (scheme == ctr::SchemeType::DG ||
              scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||

@@ -117,6 +117,7 @@ struct cfl {};
 struct fct {};
 struct sysfct {};
 struct sysfctvar {};
+struct fcteps {};
 struct ctau {};
 struct npar {};
 struct refined {};

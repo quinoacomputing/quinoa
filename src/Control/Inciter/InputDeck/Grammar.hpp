@@ -602,6 +602,8 @@ namespace deck {
            tk::grm::discrparam< use, kw::t0, tag::t0 >,
            tk::grm::discrparam< use, kw::dt, tag::dt >,
            tk::grm::discrparam< use, kw::cfl, tag::cfl >,
+           tk::grm::process< use< kw::fcteps >,
+                             tk::grm::Store< tag::discr, tag::fcteps > >,
            tk::grm::process< use< kw::fct >,
                              tk::grm::Store< tag::discr, tag::fct >,
                              pegtl::alpha >,

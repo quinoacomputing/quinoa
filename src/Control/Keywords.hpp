@@ -4549,6 +4549,28 @@ struct ctau_info {
 };
 using ctau = keyword< ctau_info, TAOCPP_PEGTL_STRING("ctau") >;
 
+struct fcteps_info {
+  static std::string name() { return "Small number for FCT"; }
+  static std::string shortDescription() { return
+    R"(A number that is considered small enough for FCT)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the epsilon (a small number) below which FCT
+    quantities are considered small enough to be treated as zero. Setting this
+    number to be somewhat larger than the machine zero, e.g., 1.0e-15, helps
+    ignoring some noise that otherwise could contaminate the solution.)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
+    static std::string description() { return "real"; }
+    static std::string choices() {
+      return "real between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "]";
+    }
+  };
+};
+using fcteps = keyword< fcteps_info, TAOCPP_PEGTL_STRING("fcteps") >;
+
 struct cweight_info {
   static std::string name() { return "cweight"; }
   static std::string shortDescription() { return

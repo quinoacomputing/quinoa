@@ -90,6 +90,7 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::cfl,    kw::cfl::info::expect::type    //!< CFL coefficient
   , tag::reorder,bool                           //!< reordering on/off
   , tag::fct,    bool                           //!< FCT on/off
+  , tag::fcteps, kw::fcteps::info::expect::type //!< FCT small number
   , tag::ctau,   kw::ctau::info::expect::type   //!< FCT mass diffisivity
   , tag::scheme, inciter::ctr::SchemeType       //!< Spatial discretization type
   , tag::limiter,inciter::ctr::LimiterType      //!< Limiter type

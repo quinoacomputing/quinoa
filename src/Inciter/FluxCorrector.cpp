@@ -431,7 +431,7 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
       Q(p,c*2+1,0) -= Ul(p,c,0);
     }
 
-  auto eps = std::numeric_limits< tk::real >::epsilon();
+  auto eps = g_inputdeck.get< tag::discr, tag::fcteps >();
 
   // compute the ratios of positive and negative element contributions that
   // ensure monotonicity (Lohner: R^{+,-})
