@@ -438,17 +438,15 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
   for (std::size_t p=0; p<P.nunk(); ++p) {
     for (ncomp_t c=0; c<ncomp; ++c) {
 
-      if (std::abs(P(p,c*2+0,0)) < eps) {
+      if (P(p,c*2+0,0) < eps)
         Q(p,c*2+0,0) = 1.0;
-      } else if (P(p,c*2+0,0) > 0.0) {
+      else
         Q(p,c*2+0,0) = std::min(1.0,Q(p,c*2+0,0)/P(p,c*2+0,0));
-      }
 
-      if (std::abs(P(p,c*2+1,0)) < eps) {
+      if (P(p,c*2+1,0) > -eps)
         Q(p,c*2+1,0) = 1.0;
-      } else if (P(p,c*2+1,0) < 0.0) {
+      else
         Q(p,c*2+1,0) = std::min(1.0,Q(p,c*2+1,0)/P(p,c*2+1,0));
-      }
 
     }
   }
@@ -461,13 +459,14 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
     for (ncomp_t c=0; c<ncomp; ++c) {
       std::array< tk::real, 4 > R;
       for (std::size_t j=0; j<4; ++j) {
-        if (std::abs(m_aec(e*4+j,c,0)) < eps) {
+
+        if (std::abs(m_aec(e*4+j,c,0)) < eps)
           R[j] = 1.0;
-        } else if (m_aec(e*4+j,c,0) > 0.0) {
+        else if (m_aec(e*4+j,c,0) > 0.0)
           R[j] = Q(N[j],c*2+0,0);
-        } else {
+        else
           R[j] = Q(N[j],c*2+1,0);
-        }
+
       }
       C(e,c,0) = *std::min_element( begin(R), end(R) );
       // if all vertices happened to be on a Dirichlet boundary, ignore limiting
