@@ -165,13 +165,11 @@ namespace grm {
         sysfctvar.push_back( {0,1,2,3,4} );
       } else {  // if specified, do error checking on variables
         auto& vars = sysfctvar.back();
-        if (vars.size() < 1 || vars.size() > 5) {
+        if (vars.size() > 4) {
           Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
         }
         for (const auto& i : vars) {
-          if (i < 1 || i > 5) {
-            Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
-          }
+          if (i > 4) Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
         }
       }
 
