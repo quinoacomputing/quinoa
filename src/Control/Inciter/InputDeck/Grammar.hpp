@@ -165,7 +165,7 @@ namespace grm {
         sysfctvar.push_back( {0,1,2,3,4} );
       } else {  // if specified, do error checking on variables
         auto& vars = sysfctvar.back();
-        if (vars.size() > 4) {
+        if (vars.size() > 5) {
           Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
         }
         for (const auto& i : vars) {
