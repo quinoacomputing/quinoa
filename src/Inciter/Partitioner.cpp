@@ -24,12 +24,15 @@
 #include "UnsMesh.hpp"
 #include "ContainerUtil.hpp"
 #include "Callback.hpp"
+#include "HashSetReducer.hpp"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
+
+static CkReduction::reducerType NpoinMerger;
 
 } // inciter::
 
@@ -101,9 +104,30 @@ Partitioner::Partitioner(
   ownBndNodes( m_lid, m_bnode );
 
   // Compute number of cells across whole problem
-  std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,
-                                        m_coord[0].size() }};
-  contribute( meshsize, CkReduction::sum_ulong, m_cbp.get< tag::load >() );
+  std::size_t nelem = m_ginpoel.size()/4;
+  contribute( sizeof(std::size_t), &nelem, CkReduction::sum_ulong,
+              m_cbp.get< tag::nelem >() );
+
+  // Compute number of unique nodes across whole problem
+  std::unordered_set< std::size_t > gid;
+  for (const auto& [g,l] : m_lid) gid.insert( g );
+  auto stream = tk::serialize( gid );
+  contribute( stream.first, stream.second.get(), NpoinMerger,
+              m_cbp.get< tag::npoin >() );
+}
+
+void
+Partitioner::registerReducers()
+// *****************************************************************************
+//  Configure Charm++ reduction types
+//! \details Since this is a [initnode] routine, the runtime system executes the
+//!   routine exactly once on every logical node early on in the Charm++ init
+//!   sequence. Must be static as it is called without an object. See also:
+//!   Section "Initializations at Program Startup" at in the Charm++ manual
+//!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
+// *****************************************************************************
+{
+  NpoinMerger = CkReduction::addReducer( tk::mergeHashSet< std::size_t > );
 }
 
 void

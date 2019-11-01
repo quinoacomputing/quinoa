@@ -77,6 +77,9 @@ class Partitioner : public CBase_Partitioner {
       #pragma clang diagnostic pop
     #endif
 
+    //! Configure Charm++ reduction types
+    static void registerReducers();
+
     //! Partition the computational mesh into a number of chares
     void partition( int nchare );
 

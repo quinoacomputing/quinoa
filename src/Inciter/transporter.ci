@@ -20,7 +20,10 @@ module transporter {
 
     chare [migratable] Transporter {
       entry Transporter();
-      entry [reductiontarget] void load( std::size_t nelem, std::size_t npoin );
+      entry [reductiontarget] void nelemPart( std::size_t n );
+      entry [reductiontarget] void npoinPart( CkReductionMsg* msg );
+      entry [reductiontarget] void nelemRef( std::size_t n );
+      entry [reductiontarget] void npoinRef( CkReductionMsg* msg );
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void refinserted( int error );
       entry [reductiontarget] void discinserted();
@@ -36,8 +39,6 @@ module transporter {
                                            tk::real sy,
                                            tk::real sz,
                                            tk::real cb );
-      entry [reductiontarget] void refined( std::size_t nelem,
-                                            std::size_t npoin );
       entry [reductiontarget] void resized();
       entry [reductiontarget] void queried();
       entry [reductiontarget] void responded();
@@ -72,10 +73,24 @@ module transporter {
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
+      entry void wait4load() {
+        when nelempart_complete( std::size_t nelem ),
+             npoinpart_complete( std::size_t npoin ) serial "load"
+        { load( nelem, npoin ); } };
+
+      entry void wait4ref() {
+        when nelemref_complete( std::size_t nelem ),
+             npoinref_complete( std::size_t npoin ) serial "ref"
+        { refined( nelem, npoin ); } };
+
       entry void wait4stat() {
         when minstat_complete(), maxstat_complete(), sumstat_complete(),
              pdfstat_complete() serial "stat" { stat(); } };
 
+      entry void nelempart_complete( std::size_t nelem );
+      entry void npoinpart_complete( std::size_t npoin );
+      entry void nelemref_complete( std::size_t nelem );
+      entry void npoinref_complete( std::size_t npoin );
       entry void minstat_complete();
       entry void maxstat_complete();
       entry void sumstat_complete();

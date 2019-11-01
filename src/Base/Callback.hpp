@@ -21,10 +21,10 @@ namespace tk {
 
 using PartitionerCallback =
   tk::TaggedTuple< brigand::list<
-      tag::load,           CkCallback
+      tag::nelem,          CkCallback
+    , tag::npoin,          CkCallback
     , tag::distributed,    CkCallback
     , tag::refinserted,    CkCallback
-    , tag::refined,        CkCallback
   > >;
 
 using RefinerCallback =
@@ -33,7 +33,8 @@ using RefinerCallback =
     , tag::compatibility,  CkCallback
     , tag::bndint,         CkCallback
     , tag::matched,        CkCallback
-    , tag::refined,        CkCallback
+    , tag::nelem,          CkCallback
+    , tag::npoin,          CkCallback
   > >;
 
 using SorterCallback =

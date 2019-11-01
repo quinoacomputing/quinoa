@@ -26,6 +26,7 @@
 #include "Around.hpp"
 #include "Sorter.hpp"
 #include "HashMapReducer.hpp"
+#include "HashSetReducer.hpp"
 #include "Discretization.hpp"
 
 namespace inciter {
@@ -35,6 +36,7 @@ extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
 
 static CkReduction::reducerType BndEdgeMerger;
+static CkReduction::reducerType NpoinMerger;
 
 } // inciter::
 
@@ -185,6 +187,8 @@ Refiner::registerReducers()
   BndEdgeMerger = CkReduction::addReducer(
                     tk::mergeHashMap< decltype(m_bndEdges)::key_type,
                                       decltype(m_bndEdges)::mapped_type > );
+
+  NpoinMerger = CkReduction::addReducer( tk::mergeHashSet< std::size_t > );
 }
 
 void
@@ -826,10 +830,17 @@ Refiner::endt0ref()
     CkCallback( CkIndex_Refiner::reorder(), thisProxy[thisIndex] ),
     m_ginpoel, m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare );
 
-  // Compute final number of cells across whole problem
-  std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,
-                                        m_coord[0].size() }};
-  contribute( meshsize, CkReduction::sum_ulong, m_cbr.get< tag::refined >() );
+  // Compute number of cells across whole problem
+  std::size_t nelem = m_ginpoel.size()/4;
+  contribute( sizeof(std::size_t), &nelem, CkReduction::sum_ulong,
+              m_cbr.get< tag::nelem >() );
+
+  // Compute number of unique nodes across whole problem
+  std::unordered_set< std::size_t > gid;
+  for (const auto& [g,l] : m_lid) gid.insert( g );
+  auto stream = tk::serialize( gid );
+  contribute( stream.first, stream.second.get(), NpoinMerger,
+              m_cbr.get< tag::npoin >() );
 }
 
 void

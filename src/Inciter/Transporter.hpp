@@ -76,7 +76,16 @@ class Transporter : public CBase_Transporter {
     explicit Transporter( CkMigrateMessage* m );
 
     //! Reduction target: the mesh has been read from file on all PEs
-    void load( std::size_t nelem, std::size_t npoin );
+    void nelemPart( std::size_t n );
+
+    //! Reduction target: the mesh has been read from file on all PEs
+    void npoinPart( CkReductionMsg* msg );
+
+    //! Reduction target: Initial mesh refinement has been completed on all PEs
+    void nelemRef( std::size_t n );
+
+    //! Reduction target: Initial mesh refinement has been completed on all PEs
+    void npoinRef( CkReductionMsg* msg );
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
@@ -114,9 +123,6 @@ class Transporter : public CBase_Transporter {
 
     //! Compute surface integral across the whole problem and perform leak-test
     void bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb );
-
-    //! Reduction target: all PEs have optionally refined their mesh
-    void refined( std::size_t nelem, std::size_t npoin );
 
     //! \brief Reduction target: all worker chares have resized their own data
     //!   after mesh refinement
@@ -206,7 +212,7 @@ class Transporter : public CBase_Transporter {
       p | m_meshwriter;
       p | m_sorter;
       p | m_nelem;
-      p | m_npoin_larger;
+      p | m_npoin;
       p | m_t;
       p | m_it;
       p | m_meshvol;
@@ -233,7 +239,7 @@ class Transporter : public CBase_Transporter {
     tk::CProxy_MeshWriter m_meshwriter;  //!< Mesh writer nodegroup proxy
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number of mesh elements
-    std::size_t m_npoin_larger;          //!< Total number mesh points
+    std::size_t m_npoin;                 //!< Total number mesh points
     tk::real m_t;                        //!< Physical time
     uint64_t m_it;                       //!< Iteration count
     //! Total mesh volume
@@ -255,6 +261,12 @@ class Transporter : public CBase_Transporter {
 
     //! Create mesh partitioner and boundary condition object group
     void createPartitioner();
+
+    //! Compute total load
+    void load( std::size_t nelem, std::size_t npoin );
+
+    //! Initial mesh refinemend has been completed, continue to ordering
+    void refined( std::size_t nelem, std::size_t npoin );
 
     //! Configure and write diagnostics file header
     void diagHeader();

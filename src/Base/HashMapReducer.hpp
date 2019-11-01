@@ -18,13 +18,11 @@
 
 #include "NoWarning/charm++.hpp"
 
-#include "ContainerUtil.hpp"
-
 namespace tk {
 
 //! Serialize std::unordered_map to raw memory stream
-//! \tparam Key Map key
-//! \tparam T Map value
+//! \tparam Key Type of map key
+//! \tparam T Type of map value
 //! \tparam Hash Map hasher
 //! \tparam Eq Map equality operator
 //! \param[in] m Hash map to serialize
@@ -70,8 +68,8 @@ void concat( const std::vector< std::pair< bool, T > >& src,
 }
 
 //! Concatenate unordered sets
-//! \tparam Key Set key
-//! \tparam Hash Set hasher
+//! \tparam Key Type of set key
+//! \tparam Hash Type of set hasher
 //! \tparam Eq Set equality operator
 //! \param[in] src Source set
 //! \param[in,out] dst Destination set
@@ -86,8 +84,8 @@ void concat( const std::unordered_set< Key, Hash,Eq >& src,
 
 //! \brief Charm++ custom reducer for merging std::unordered_maps during
 //!   reduction across PEs
-//! \tparam Key Map key
-//! \tparam T Map value
+//! \tparam Key Type of Map key
+//! \tparam T Type of map value
 //! \tparam Hash Map hasher
 //! \tparam Eq Map equality operator
 //! \param[in] nmsg Number of messages in msgs
