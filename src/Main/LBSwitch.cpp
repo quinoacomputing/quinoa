@@ -26,7 +26,8 @@ LBSwitch::LBSwitch( bool verbose )
   TurnManualLBOff();
 
   if (CkMyPe() == 0)
-    Print( verbose ? std::cout : std::clog ).diag( "Load balancing on" );
+    Print( verbose ? std::cout : std::clog ).
+      diag( "Load balancing on (if enabled in Charm++)" );
 }
 
 void
