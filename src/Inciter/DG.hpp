@@ -111,6 +111,9 @@ class DG : public CBase_DG {
     //! Continue to next time step
     void next();
 
+    //! Send ndof ghost data to fellow chares
+    void sendInd();
+
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
@@ -120,10 +123,13 @@ class DG : public CBase_DG {
 
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
-                 std::size_t fromstage,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
-                 const std::vector< std::vector< tk::real > >& prim,
+                 const std::vector< std::vector< tk::real > >& prim );
+
+    //! Receive ndof ghost data from neighboring chares
+    void comdof( int fromch,
+                 const std::vector< std::size_t >& tetid,
                  const std::vector< std::size_t >& ndof );
 
     //! Optionally refine/derefine mesh

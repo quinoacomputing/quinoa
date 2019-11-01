@@ -162,6 +162,7 @@ DG::resizeComm()
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
+    thisProxy[ thisIndex ].wait4dof();
     thisProxy[ thisIndex ].wait4lim();
   }
 
@@ -1028,18 +1029,7 @@ DG::next()
 // Advance equations to next time step
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-
-  auto d = Disc();
-
-  if (pref && m_stage == 0 && d->T() > 0)
-    eval_ndof( m_nunk, Disc()->Coord(), Disc()->Inpoel(), m_fd, m_u,
-               g_inputdeck.get< tag::pref, tag::indicator >(),
-               g_inputdeck.get< tag::discr, tag::ndof >(),
-               g_inputdeck.get< tag::pref, tag::ndofmax >(),
-               g_inputdeck.get< tag::pref, tag::tolref >(),
-               m_ndof );
-
+  std::cout << " start to comsol" << std::endl;
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
     comsol_complete();
@@ -1048,17 +1038,15 @@ DG::next()
       std::vector< std::size_t > tetid( n.second.size() );
       std::vector< std::vector< tk::real > > u( n.second.size() ),
                                              prim( n.second.size() );
-      std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : n.second) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
         tetid[j] = i.first;
         u[j] = m_u[i.first];
         prim[j] = m_p[i.first];
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         ++j;
       }
-      thisProxy[ n.first ].comsol( thisIndex, m_stage, tetid, u, prim, ndof );
+      thisProxy[ n.first ].comsol( thisIndex, tetid, u, prim );
     }
 
   ownsol_complete();
@@ -1066,15 +1054,12 @@ DG::next()
 
 void
 DG::comsol( int fromch,
-            std::size_t fromstage,
             const std::vector< std::size_t >& tetid,
             const std::vector< std::vector< tk::real > >& u,
-            const std::vector< std::vector< tk::real > >& prim,
-            const std::vector< std::size_t >& ndof )
+            const std::vector< std::vector< tk::real > >& prim )
 // *****************************************************************************
 //  Receive chare-boundary solution ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
-//! \param[in] fromstage Sender chare time step stage
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Solution ghost data
 //! \param[in] prim Primitive variables in ghost cells
@@ -1086,11 +1071,6 @@ DG::comsol( int fromch,
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
   Assert( prim.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-
-  if (pref && fromstage == 0)
-    Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsol()" );
-
   // Find local-to-ghost tet id map for sender chare
   const auto& n = tk::cref_find( m_ghost, fromch );
 
@@ -1101,10 +1081,6 @@ DG::comsol( int fromch,
     Assert( b < m_uc[0].size(), "Indexing out of bounds" );
     m_uc[0][b] = u[i];
     m_pc[0][b] = prim[i];
-    if (pref && fromstage == 0) {
-      Assert( b < m_ndofc[0].size(), "Indexing out of bounds" );
-      m_ndofc[0][b] = ndof[i];
-    }
   }
 
   // if we have received all solution ghost contributions from those chares we
@@ -1112,6 +1088,97 @@ DG::comsol( int fromch,
   if (++m_nsol == m_ghostData.size()) {
     m_nsol = 0;
     comsol_complete();
+  }
+}
+
+void DG::sendInd()
+// *****************************************************************************
+// Send ndof ghost data to fellow chares
+// *****************************************************************************
+{
+  std::cout << "start to comdof" << std::endl;
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  auto d = Disc();
+
+  // Combine own and communicated contributions of unlimited solution and in
+  // cells
+  for (const auto& b : m_bid) {
+    Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[0][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c) {
+      m_u(b.first,c,0) = m_uc[0][b.second][c];
+    }
+    for (std::size_t c=0; c<m_p.nprop(); ++c) {
+      m_p(b.first,c,0) = m_pc[0][b.second][c];
+    }
+  }
+
+  if (pref && m_stage == 0 && d->T() > 0)
+  {
+    eval_ndof( m_nunk, Disc()->Coord(), Disc()->Inpoel(), m_fd, m_u,
+               g_inputdeck.get< tag::pref, tag::indicator >(),
+               g_inputdeck.get< tag::discr, tag::ndof >(),
+               g_inputdeck.get< tag::pref, tag::ndofmax >(),
+               g_inputdeck.get< tag::pref, tag::tolref >(),
+               m_ndof );
+
+    // communicate ndof of ghost (if any)
+    if (m_ghostData.empty())
+      comdof_complete();
+    else
+      for(const auto& n : m_ghostData) {
+        std::vector< std::size_t > tetid( n.second.size() );
+        std::vector< std::size_t > ndof;
+        std::size_t j = 0;
+        for(const auto& i : n.second) {
+          Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
+          tetid[j] = i.first;
+          ndof.push_back( m_ndof[i.first] );
+          ++j;
+        }
+        thisProxy[ n.first ].comdof( thisIndex, tetid, ndof );
+      }
+    }
+    // when this is not the last stage of RK time integration or p-daptive is
+    // not applied which means no updates to ndof data, there is no need to
+    // communicate ndof
+    else
+      comdof_complete();
+
+  owndof_complete();
+}
+
+void DG::comdof( int fromch,
+                 const std::vector< std::size_t >& tetid,
+                 const std::vector< std::size_t >& ndof )
+// *****************************************************************************
+//  Receive ndof ghost data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive solution data for
+//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
+//! \details This function receives number of degrees of freedom from fellow
+//!   chares.
+// *****************************************************************************
+{
+  Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsol()" );
+
+  // Find local-to-ghost tet id map for sender chare
+  const auto& n = tk::cref_find( m_ghost, fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( n, tetid[i] );
+    Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
+    auto b = tk::cref_find( m_bid, j );
+    Assert( b < m_ndofc[0].size(), "Indexing out of bounds" );
+    m_ndofc[0][b] = ndof[i];
+  }
+
+  // if we have received all ndof ghost contributions from those chares we
+  // communicate along chare-boundary faces with, solve the system
+  if (++m_nsol == m_ghostData.size()) {
+    m_nsol = 0;
+    comdof_complete();
   }
 }
 
@@ -1185,20 +1252,12 @@ DG::lim()
 // Compute limiter function
 // *****************************************************************************
 {
+  std::cout << "start to lim()" << std::endl;
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
-  // Combine own and communicated contributions of unlimited solution and
-  // degrees of freedom in cells (if p-adaptive)
+  // Combine own and communicated contributions of degrees of freedom in cells
   for (const auto& b : m_bid) {
-    Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
-    Assert( m_pc[0][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
-    for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c,0) = m_uc[0][b.second][c];
-    }
-    for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(b.first,c,0) = m_pc[0][b.second][c];
-    }
     if (pref && m_stage == 0) {
       m_ndof[ b.first ] = m_ndofc[0][ b.second ];
     }
@@ -1413,6 +1472,7 @@ DG::solve( tk::real newdt )
 {
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
+  thisProxy[ thisIndex ].wait4dof();
   thisProxy[ thisIndex ].wait4lim();
 
   auto d = Disc();

@@ -40,10 +40,11 @@ module dg {
                          const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
       entry void comsol( int fromch,
-                         std::size_t fromstage,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
-                         const std::vector< std::vector< tk::real > >& prim,
+                         const std::vector< std::vector< tk::real > >& prim );
+      entry void comdof( int fromch,
+                         const std::vector< std::size_t >& tetid,
                          const std::vector< std::size_t >& ndof );
       entry void refine();
       entry [reductiontarget] void solve( tk::real newdt );
@@ -51,6 +52,7 @@ module dg {
       entry void lhs();
       entry void step();
       entry void next();
+      entry void sendInd();
       entry void evalLB();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
@@ -66,6 +68,10 @@ module dg {
 
       entry void wait4sol() {
         when ownsol_complete(), comsol_complete() serial "sol"
+        { sendInd(); } }
+
+      entry void wait4dof() {
+        when owndof_complete(), comdof_complete() serial "dof"
         { lim(); } }
 
       entry void wait4lim() {
@@ -77,6 +83,8 @@ module dg {
       entry void reqghost_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
+      entry void owndof_complete();
+      entry void comdof_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
     }
