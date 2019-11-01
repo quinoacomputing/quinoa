@@ -5831,6 +5831,24 @@ struct fct_info {
 };
 using fct = keyword< fct_info, TAOCPP_PEGTL_STRING("fct") >;
 
+struct fctclip_info {
+  static std::string name() { return "Clipping Flux-corrected transport"; }
+  static std::string shortDescription() { return
+    "Turn on clipping flux-corrected transport on/off"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to turn on/off the clipping limiter used for
+    flux-corrected transport (FCT). The clipping limiter only looks at the
+    current low order solution to determine the allowed solution minima and
+    maxima, instead of the minimum and maximum of the low order solution and
+    the previous solution.)"; }
+  struct expect {
+    using type = bool;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using fctclip = keyword< fctclip_info, TAOCPP_PEGTL_STRING("fctclip") >;
+
 struct sysfct_info {
   static std::string name() { return "Flux-corrected transport for systems"; }
   static std::string shortDescription() { return

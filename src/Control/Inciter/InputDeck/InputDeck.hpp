@@ -130,6 +130,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::l2,
                                    kw::linf,
                                    kw::fct,
+                                   kw::fctclip,
                                    kw::fcteps,
                                    kw::sysfct,
                                    kw::sysfctvar,
@@ -214,6 +215,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::dt >() = 0.0;
       get< tag::discr, tag::cfl >() = 0.0;
       get< tag::discr, tag::fct >() = true;
+      get< tag::discr, tag::fctclip >() = false;
       get< tag::discr, tag::ctau >() = 1.0;
       get< tag::discr, tag::fcteps >() =
         std::numeric_limits< tk::real >::epsilon();

@@ -115,6 +115,7 @@ struct t0 {};
 struct dt {};
 struct cfl {};
 struct fct {};
+struct fctclip {};
 struct sysfct {};
 struct sysfctvar {};
 struct fcteps {};

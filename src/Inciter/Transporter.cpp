@@ -173,6 +173,8 @@ Transporter::info()
                     g_inputdeck.get< tag::discr, tag::ctau >() );
       m_print.item( "FCT small number",
                     g_inputdeck.get< tag::discr, tag::fcteps >() );
+      m_print.item( "Clipping FCT",
+                    g_inputdeck.get< tag::discr, tag::fctclip >() );
     }
   } else if (scheme == ctr::SchemeType::DG ||
              scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||

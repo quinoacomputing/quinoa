@@ -361,6 +361,7 @@ FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
           "unknowns of elements surrounding nodes array size mismatch" );
 
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
+  auto clip = g_inputdeck.get< tag::discr, tag::fctclip >();
 
   // compute maximum and minimum nodal values of all elements (Lohner: u^*_el)
   tk::Fields S( inpoel.size()/4, ncomp*2 );
@@ -372,10 +373,8 @@ FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
       S(e,c*2+1,0) = std::numeric_limits< tk::real >::max();
       for (std::size_t j=0; j<4; ++j) {
         // compute maximum and minimum nodal values of Ul and Un (Lohner: u^*_i)
-        auto jmax = std::max( Ul(N[j],c,0), Un(N[j],c,0) );
-        auto jmin = std::min( Ul(N[j],c,0), Un(N[j],c,0) );
-        //auto jmax = Ul(N[j],c,0);     // clipping limiter
-        //auto jmin = Ul(N[j],c,0);
+        auto jmax = clip ? Ul(N[j],c,0) : std::max(Ul(N[j],c,0), Un(N[j],c,0));
+        auto jmin = clip ? Ul(N[j],c,0) : std::min(Ul(N[j],c,0), Un(N[j],c,0));
         if (jmax > S(e,c*2+0,0)) S(e,c*2+0,0) = jmax;
         if (jmin < S(e,c*2+1,0)) S(e,c*2+1,0) = jmin;
       }
