@@ -52,6 +52,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_nsol( 0 ),
+  m_idof( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
   m_fd( Disc()->Inpoel(), bface, tk::remap(triinpoel,Disc()->Lid()) ),
@@ -1029,7 +1030,6 @@ DG::next()
 // Advance equations to next time step
 // *****************************************************************************
 {
-  std::cout << " start to comsol" << std::endl;
   // communicate solution ghost data (if any)
   if (m_ghostData.empty())
     comsol_complete();
@@ -1096,7 +1096,6 @@ void DG::sendInd()
 // Send ndof ghost data to fellow chares
 // *****************************************************************************
 {
-  std::cout << "start to comdof" << std::endl;
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   auto d = Disc();
@@ -1176,8 +1175,8 @@ void DG::comdof( int fromch,
 
   // if we have received all ndof ghost contributions from those chares we
   // communicate along chare-boundary faces with, solve the system
-  if (++m_nsol == m_ghostData.size()) {
-    m_nsol = 0;
+  if (++m_idof == m_ghostData.size()) {
+    m_idof = 0;
     comdof_complete();
   }
 }
@@ -1252,7 +1251,6 @@ DG::lim()
 // Compute limiter function
 // *****************************************************************************
 {
-  std::cout << "start to lim()" << std::endl;
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
