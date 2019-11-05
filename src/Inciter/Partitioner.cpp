@@ -101,7 +101,7 @@ Partitioner::Partitioner(
   ownBndNodes( m_lid, m_bnode );
 
   // Compute number of cells across whole problem
-  std::size_t nelem = m_coord[0].size();
+  std::size_t nelem = m_ginpoel.size()/4;
   contribute( sizeof(std::size_t), &nelem, CkReduction::sum_ulong,
               m_cbp.get< tag::load >() );
 }
