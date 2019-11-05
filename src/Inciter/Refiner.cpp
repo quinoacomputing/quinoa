@@ -25,7 +25,6 @@
 #include "Centering.hpp"
 #include "Around.hpp"
 #include "Sorter.hpp"
-#include "HashMapReducer.hpp"
 #include "Discretization.hpp"
 
 namespace inciter {
@@ -33,8 +32,6 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
-
-static CkReduction::reducerType BndEdgeMerger;
 
 } // inciter::
 
@@ -71,11 +68,13 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_ninitref( g_inputdeck.get< tag::amr, tag::init >().size() ),
   m_refiner( m_inpoel ),
   m_nref( 0 ),
+  m_nbnd( 0 ),
   m_extra( 0 ),
   m_ch(),
+  m_edgech(),
+  m_chedge(),
   m_localEdgeData(),
   m_remoteEdgeData(),
-  m_bndEdges(),
   m_msumset(),
   m_oldTets(),
   m_addedNodes(),
@@ -172,22 +171,6 @@ Refiner::sendProxy()
 }
 
 void
-Refiner::registerReducers()
-// *****************************************************************************
-//  Configure Charm++ reduction types
-//! \details Since this is a [initnode] routine, the runtime system executes the
-//!   routine exactly once on every logical node early on in the Charm++ init
-//!   sequence. Must be static as it is called without an object. See also:
-//!   Section "Initializations at Program Startup" at in the Charm++ manual
-//!   http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
-// *****************************************************************************
-{
-  BndEdgeMerger = CkReduction::addReducer(
-                    tk::mergeHashMap< decltype(m_bndEdges)::key_type,
-                                      decltype(m_bndEdges)::mapped_type > );
-}
-
-void
 Refiner::reorder()
 // *****************************************************************************
 // Query Sorter and update local mesh with the reordered one
@@ -268,11 +251,12 @@ Refiner::t0ref()
   // Output initial mesh to file
   auto l = m_ninitref - m_initref.size();  // num initref steps completed
   auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
-  if (l == 0)
+  if (l == 0) {
     writeMesh( "t0ref", l, t0-1.0,
       CkCallback( CkIndex_Refiner::start(), thisProxy[thisIndex] ) );
-  else
+  } else {
     start();
+  }
 }
 
 void
@@ -282,7 +266,6 @@ Refiner::start()
 // *****************************************************************************
 {
   m_extra = 0;
-  m_bndEdges.clear();
   m_ch.clear();
   m_remoteEdgeData.clear();
   m_remoteEdges.clear();
@@ -302,8 +285,13 @@ Refiner::bndEdges()
 //!   mesh across chares boundaries.
 // *****************************************************************************
 {
+  // Compute the number of edges (chunksize) a chare will respond to when
+  // computing shared edges
+  auto N = static_cast< std::size_t >( m_nchare );
+  std::size_t chunksize = std::numeric_limits< std::size_t >::max() / N;
+
   // Generate boundary edges of our mesh chunk
-  EdgeSet bnded;
+  std::unordered_map< int, EdgeSet > chbedges;
   auto esup = tk::genEsup( m_inpoel, 4 );         // elements surrounding points
   auto esuel = tk::genEsuelTet( m_inpoel, esup ); // elems surrounding elements
   for (std::size_t e=0; e<esuel.size()/4; ++e) {
@@ -313,47 +301,113 @@ Refiner::bndEdges()
         auto A = m_ginpoel[ mark+tk::lpofa[f][0] ];
         auto B = m_ginpoel[ mark+tk::lpofa[f][1] ];
         auto C = m_ginpoel[ mark+tk::lpofa[f][2] ];
-        bnded.insert( {{{A,B}}} );
-        bnded.insert( {{{B,C}}} );
-        bnded.insert( {{{C,A}}} );
         Assert( m_lid.find( A ) != end(m_lid), "Local node ID not found" );
         Assert( m_lid.find( B ) != end(m_lid), "Local node ID not found" );
         Assert( m_lid.find( C ) != end(m_lid), "Local node ID not found" );
+        // assign edges to bins a single chare will respond to when computing
+        // shared edges
+        auto bin = A / chunksize;
+        Assert( bin < N, "Will index out of number of chares" );
+        chbedges[ static_cast<int>(bin) ].insert( {A,B} );
+        bin = B / chunksize;
+        Assert( bin < N, "Will index out of number of chares" );
+        chbedges[ static_cast<int>(bin) ].insert( {B,C} );
+        bin = C / chunksize;
+        Assert( bin < N, "Will index out of number of chares" );
+        chbedges[ static_cast<int>(bin) ].insert( {C,A} );
       }
     }
   }
 
-  // Aggregate boundary edges across all refiner chares
-  decltype(m_bndEdges) bnd{{ thisIndex, std::move(bnded) }};
-  auto stream = tk::serialize( bnd );
-  contribute( stream.first, stream.second.get(), BndEdgeMerger,
-    CkCallback(CkIndex_Refiner::addBndEdges(nullptr),thisProxy) );
+  // Send edges in bins to chares that will compute shared edges
+  m_nbnd = chbedges.size();
+  if (m_nbnd == 0)
+    contribute( m_cbr.get< tag::queried >() );
+  else
+    for (const auto& [ targetchare, bndedges ] : chbedges)
+      thisProxy[ targetchare ].query( thisIndex, bndedges );
 }
 
 void
-Refiner::addBndEdges( CkReductionMsg* msg )
+Refiner::query( int fromch, const EdgeSet& edges )
 // *****************************************************************************
-//! Receive boundary edges from all refiner chares (including this one)
-//! \param[in] msg Charm++ message containing the aggregated map of bnd edges
+// Incoming query for a list boundary edges for which this chare compiles
+// shared edges
+//! \param[in] fromch Sender chare ID
+//! \param[in] edges Chare-boundary edge list from another chare
 // *****************************************************************************
 {
-  PUP::fromMem creator( msg->getData() );
-  creator | m_bndEdges;
-  delete msg;
+  // Store incoming edges in edge->chare and its inverse, chare->edge, maps
+  for (const auto& e : edges) m_edgech[ e ].push_back( fromch );
+  m_chedge[ fromch ].insert( begin(edges), end(edges) );
+  // Report back to chare message received from
+  thisProxy[ fromch ].recvquery();
+}
 
-  // Compute unique set of chares that share at least a single edge with us
-  const auto& ownedges = tk::cref_find( m_bndEdges, thisIndex );
-  for (const auto& [ chareid, sharededges ] : m_bndEdges) {   // for all chares
-    if (chareid != thisIndex) {           // for all chares other than this one
-      for (const auto& e : sharededges) { // for all boundary edges
-        if (ownedges.find(e) != end(ownedges)) {
-          m_ch.insert( chareid );      // if edge is shared, store its chare id
-        }
-      }
-    }
+void
+Refiner::recvquery()
+// *****************************************************************************
+// Receive receipt of boundary edge lists to query
+// *****************************************************************************
+{
+  if (--m_nbnd == 0) contribute( m_cbr.get< tag::queried >() );
+}
+
+void
+Refiner::response()
+// *****************************************************************************
+//  Respond to boundary edge list queries
+// *****************************************************************************
+{
+  std::unordered_map< int, std::vector< int > > exp;
+
+  // Compute shared edges whose chare ids will be sent back to querying chares
+  for (const auto& [ neighborchare, bndedges ] : m_chedge) {
+    auto& e = exp[ neighborchare ];
+    for (const auto& ed : bndedges)
+      for (auto d : tk::cref_find(m_edgech,ed))
+        if (d != neighborchare)
+          e.push_back( d );
   }
 
-  contribute( m_cbr.get< tag::edges >() );
+  // Send chare ids of shared edges to chares that issued a query to us. Shared
+  // boundary edges assigned to chare ids sharing the boundary edge were
+  // computed above for those chares that queried this map from us. These
+  // boundary edges form a distributed table and we only work on a chunk of it.
+  // Note that we only send data back to those chares that have queried us. The
+  // receiving sides do not know in advance if they receive messages or not.
+  // Completion is detected by having the receiver respond back and counting
+  // the responses on the sender side, i.e., this chare.
+  m_nbnd = exp.size();
+  if (m_nbnd == 0)
+    contribute( m_cbr.get< tag::responded >() );
+  else
+    for (const auto& [ targetchare, bndedges ] : exp)
+      thisProxy[ targetchare ].bnd( thisIndex, bndedges );
+}
+
+void
+Refiner::bnd( int fromch, const std::vector< int >& chares )
+// *****************************************************************************
+// Receive shared boundary edges for our mesh chunk
+//! \param[in] fromch Sender chare ID
+//! \param[in] chares Chare ids we share edges with
+// *****************************************************************************
+{
+  // Store chare ids we share edges with
+  m_ch.insert( begin(chares), end(chares) );
+
+  // Report back to chare message received from
+  thisProxy[ fromch ].recvbnd();
+}
+
+void
+Refiner::recvbnd()
+// *****************************************************************************
+// Receive receipt of shared boundary edges
+// *****************************************************************************
+{
+  if (--m_nbnd == 0) contribute( m_cbr.get< tag::responded >() );
 }
 
 void
@@ -369,16 +423,15 @@ Refiner::refine()
 //!   only do a single step during time stepping.
 // *****************************************************************************
 {
+  // Free memory used for computing shared boundary edges
+  tk::destroy( m_edgech );
+  tk::destroy( m_chedge );
+
   // Perform leak test on old mesh
   Assert( !tk::leakyPartition(
             tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) ),
             m_inpoel, m_coord ),
           "Mesh partition before refinement leaky" );
-
-  for ([[maybe_unused]] const auto& e : tk::cref_find(m_bndEdges,thisIndex))
-    Assert( m_lid.find( e[0] ) != end( m_lid ) &&
-            m_lid.find( e[1] ) != end( m_lid ),
-            "Boundary edge not found before refinement" );
 
   if (m_initial) {      // if initial (t<0) AMR (t0ref)
 
@@ -404,11 +457,6 @@ Refiner::refine()
       uniformRefine();
     else
       errorRefine();
-
-    for ([[maybe_unused]] const auto& e : tk::cref_find(m_bndEdges,thisIndex))
-      Assert( m_lid.find( e[0] ) != end( m_lid ) &&
-              m_lid.find( e[1] ) != end( m_lid ),
-              "Boundary edge not found after refinement" );
   }
 
   // Communicate extra edges
@@ -767,7 +815,9 @@ Refiner::perform()
     // Output mesh after refinement step
     writeMesh( "t0ref", itr, t,
                CkCallback( CkIndex_Refiner::next(), thisProxy[thisIndex] ) );
-  } else next();
+  } else {
+    next();
+  }
 }
 
 void
