@@ -981,9 +981,15 @@ Transporter::checkpoint( tk::real it, tk::real t )
   m_it = static_cast< uint64_t >( it );
   m_t = t;
 
-  const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
-  CkCallback res( CkIndex_Transporter::resume(), thisProxy );
-  CkStartCheckpoint( restart.c_str(), res );
+  const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
+
+  if (!benchmark) {
+    const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
+    CkCallback res( CkIndex_Transporter::resume(), thisProxy );
+    CkStartCheckpoint( restart.c_str(), res );
+  } else {
+    resume();
+  }
 }
 
 void
