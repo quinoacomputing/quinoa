@@ -111,10 +111,6 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      // edges surrounding points
-      auto esup = tk::genEsup( inpoel, 4 );
-      auto esued = tk::genEsued( inpoel, 4, esup );
-     
       //------------------------------------------------------------------------
       // Update solution quntities
       //------------------------------------------------------------------------
@@ -142,13 +138,11 @@ class CompFlow {
       }
 
       //------------------------------------------------------------------------
-      // Compute limited gradients
+      // Compute gradients
       //------------------------------------------------------------------------
 
       std::vector< tk::real > dudx_ave;
       dudx_ave.reserve( 3 * num_vars * num_nodes );
-
-      std::vector< tk::real > phi( num_vars * num_nodes, 1 );
 
       for ( std::size_t n=0; n<num_nodes; ++n ) {
 
@@ -234,61 +228,100 @@ class CompFlow {
           ) * denom );
         }// vars
 
-        // now check limiter
-        tk::real * limiter = &phi[ n*num_vars ];
-        auto grad_offset = n*3*num_vars;
-
-        for (auto q : tk::Around(psup,n) ) {
-
-          // get interpolation point
-          decltype(x0) xm = {
-            0.5*(x0[0] + x[q]),
-            0.5*(x0[1] + y[q]),
-            0.5*(x0[2] + z[q])
-          };
-         
-          for ( int ivar=0; ivar<num_vars; ++ivar ) {
-            // interpolate
-            auto u = u0[ivar];
-            for ( int idim=0; idim<3; ++idim )
-                u += dudx_ave[ grad_offset + ivar*3 + idim] * (xm[idim] - x0[idim]);
-            // compute limiter
-            tk::real lq = 1;
-            if ( u - u0[ivar] > 1.e-7 )   
-              lq = (umax[ivar] - u0[ivar]) / (u - u0[ivar]);
-            else if ( u - u0[ivar] < -1.e-7 )
-              lq = (umin[ivar] - u0[ivar]) / (u - u0[ivar]);
-            limiter[ivar] = std::min(lq, limiter[ivar]); 
-          } // var
-        } // neighbors
-
-        // make sure none of them are less than zero
-        for ( int ivar=0; ivar<num_vars; ++ivar ) 
-          limiter[ivar] = std::max(0., limiter[ivar]);
 
       } // points
 
  
       //------------------------------------------------------------------------
-      // Compute RHS
+      // Compute Limited values
       //------------------------------------------------------------------------
+      
+      constexpr tk::real muscl_eps = 1.e-09;
+      constexpr tk::real muscl_const = 0.3333333;
+      constexpr auto muscl_con_m1 = muscl_const - 1;
+      constexpr auto muscl_con_p1 = muscl_const + 1;
+      
+      // edges to node connectivity
+      auto esup = tk::genEsup( inpoel, 4 );
+      auto edge_points = tk::genInpoed(inpoel,4,esup);
+      auto num_edge = edge_points.size() / 2;
 
-      auto num_edge = esued.second.size()-1;
+      std::vector< tk::real > edge_unknowns( 2 * num_edge * num_vars );
 
       for ( std::size_t e=0; e<num_edge; ++e ) {
+        auto p1 = edge_points[2*e];
+        auto p2 = edge_points[2*e + 1];
 
-         for (auto c : tk::Around(esued,e) ) {
-         }
+        // edge vector, doubled since a factor of two is needed
+        std::array< tk::real, 3 > l;
+        l[0] = 2. * ( x[p2] - x[p1] );
+        l[1] = 2. * ( y[p2] - y[p1] );
+        l[3] = 2. * ( z[p2] - z[p1] );
+
+        for ( int ivar = 0; ivar<num_vars; ++ivar ) {
+
+          tk::real u1, u2;
+          switch (ivar) {
+            case (5):
+              u1 = nodal_pressure[p1];
+              u2 = nodal_pressure[p2];
+              break;
+            case (6):
+              u1 = nodal_soundspeed[p1];
+              u2 = nodal_soundspeed[p2];
+              break;
+            default:
+              u1 = U( p1, ivar, m_offset );
+              u2 = U( p2, ivar, m_offset );
+          }
+
+          // form delta_2 (u_j - u_i)
+          auto delta_2 = u2 - u1;
+
+          // form delta_1 (u_i - u_i-1) and delta_3 (u_j+1 - u_j)
+          tk::real dot{0};
+          for ( int i=0; i<3; ++i ) dot += dudx_ave[p1*3*num_vars + ivar*3 + i] * l[i];
+          auto delta_1 = dot - delta_2;
+          
+          dot = 0;
+          for ( int i=0; i<3; ++i ) dot += dudx_ave[p2*3*num_vars + ivar*3 + i] * l[i];
+          auto delta_3 = dot - delta_2;
+
+          // form limiters
+          auto r_L = (delta_2 + muscl_eps) / (delta_1 + muscl_eps);
+          auto r_R = (delta_2 + muscl_eps) / (delta_3 + muscl_eps);
+          auto r_L_inv = (delta_1 + muscl_eps) / (delta_2 + muscl_eps);
+          auto r_R_inv = (delta_3 + muscl_eps) / (delta_2 + muscl_eps);
+          auto phi_L = (std::abs(r_L) + r_L) / (std::abs(r_L) + 1.);
+          auto phi_R = (std::abs(r_R) + r_R) / (std::abs(r_R) + 1.);
+          auto phi_L_inv = (std::abs(r_L_inv) + r_L_inv) / (std::abs(r_L_inv) + 1.);
+          auto phi_R_inv = (std::abs(r_R_inv) + r_R_inv) / (std::abs(r_R_inv) + 1.);
+
+          // final form of higher-order unknown
+          edge_unknowns[e*2*num_vars + ivar] = u1 +
+            0.25*(delta_1*muscl_con_m1*phi_L + delta_2*muscl_con_p1*phi_L_inv);
+
+          edge_unknowns[e*2*num_vars + num_vars + ivar] = u2 -
+            0.25*(delta_3*muscl_con_m1*phi_R + delta_2*muscl_con_p1*phi_R_inv);
+          
+        } // var
 
       }
+      
+      //------------------------------------------------------------------------
+      // Compute some element geometry parameters
+      //------------------------------------------------------------------------
+      
+      auto num_elem = inpoel.size()/4;
+      std::vector< std::array< std::array< tk::real, 3 >, 4 > > elem_grad(num_elem);
+      std::vector< tk::real > elem_volume(num_elem);
 
-      // 1st stage: update element values from node values (gather-add)
-      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-
+      for ( std::size_t e=0; e<num_elem; ++e ) {
+        
         // access node IDs
         const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
                                                inpoel[e*4+2], inpoel[e*4+3] }};
-        
+
         // compute element Jacobi determinant
         const std::array< tk::real, 3 >
           ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
@@ -296,7 +329,42 @@ class CompFlow {
           da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
         const auto J = tk::triple( ba, ca, da );        // J = 6V
         Assert( J > 0, "Element Jacobian non-positive" );
+        elem_volume[e] = J/6.;
+        
+        // shape function derivatives, nnode*ndim [4][3]
+        auto & grad = elem_grad[e];
+        grad[1] = tk::crossdiv( ca, da, J );
+        grad[2] = tk::crossdiv( da, ba, J );
+        grad[3] = tk::crossdiv( ba, ca, J );
+        for (std::size_t i=0; i<3; ++i)
+          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
       }
+
+      //------------------------------------------------------------------------
+      // Compute some edge geometry parameters
+      //------------------------------------------------------------------------
+     
+      // elements surrounding edges
+      auto esued = tk::genEsued( inpoel, 4, esup );
+
+      for ( std::size_t ed=0; ed<num_edge; ++ed ) {
+        for ( auto el : tk::Around(esued, ed) ) {
+        }
+      }
+
+      //------------------------------------------------------------------------
+      // Compute RHS
+      //------------------------------------------------------------------------
+      
+      for ( std::size_t e=0; e<num_edge; ++e ) {
+        auto p1 = edge_points[2*e];
+        auto p2 = edge_points[2*e + 1];
+        auto ul = &edge_unknowns[e*2*num_vars];
+        auto ur = &edge_unknowns[e*2*num_vars + num_vars];
+        //auto f = flux( ul, ur, );
+        
+      }
+
     }
 
     //! Compute right hand side
