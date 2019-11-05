@@ -892,6 +892,8 @@ Refiner::endt0ref()
     tk::destroy( m_triinpoel );
     tk::destroy( m_initref );
     tk::destroy( m_ch );
+    tk::destroy( m_edgech );
+    tk::destroy( m_chedge );
     tk::destroy( m_localEdgeData );
     tk::destroy( m_remoteEdgeData );
     tk::destroy( m_remoteEdges );
@@ -899,6 +901,7 @@ Refiner::endt0ref()
     tk::destroy( m_msumset );
     tk::destroy( m_oldTets );
     tk::destroy( m_addedNodes );
+    tk::destroy( m_addedTets );
     tk::destroy( m_coarseBndFaces );
     tk::destroy( m_coarseBndNodes );
     tk::destroy( m_rid );
