@@ -1310,7 +1310,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
 
   // Generate coordinates and ids to newly added nodes after refinement
   std::unordered_map< std::size_t, std::size_t > gid_add;
-  m_addedNodes.clear();
+  tk::destroy( m_addedNodes );
   for (auto r : ref) {               // for all unique nodes of the refined mesh
     if (old.find(r) == end(old)) {   // if node is newly added
       // get (local) parent ids of newly added node
@@ -1346,6 +1346,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
       }
     }
   }
+  tk::destroy( m_coord );
 
   // Remove coordinates and ids of removed nodes due to derefinement
   std::unordered_map< std::size_t, std::size_t > gid_rem;
@@ -1364,7 +1365,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   //m_oldlref = m_lref;
 
   // Generate new node id maps for nodes kept
-  m_lref.clear();
+  tk::destroy( m_lref );
   std::vector< std::size_t > rid( ref.size() );
   std::vector< std::size_t > gid( ref.size() );
   std::size_t l = 0;    // will generate new local node id
@@ -1384,7 +1385,9 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
     gid[l] = g;
     rid[l] = r;
     m_lref[r] = l;
-    addedNodes[l] = tk::cref_find( m_addedNodes, r );
+    auto it = m_addedNodes.find( r );
+    Assert( it != end(m_addedNodes), "Cannot find added node" );
+    addedNodes[l] = std::move(it->second);
     ++l;
   }
   Assert( m_lref.size() == ref.size(), "Size mismatch" );
@@ -1392,10 +1395,9 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   m_addedNodes = std::move( addedNodes );
 
   // Update node coordinates, ids, and id maps
-  tk::UnsMesh::Coords coord;
-  auto& rx = coord[0];
-  auto& ry = coord[1];
-  auto& rz = coord[2];
+  auto& rx = m_coord[0];
+  auto& ry = m_coord[1];
+  auto& rz = m_coord[2];
   rx.resize( ref.size() );
   ry.resize( ref.size() );
   rz.resize( ref.size() );
@@ -1407,7 +1409,6 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
     rz[i] = c[2];
   }
   m_gid = std::move( gid );
-  m_coord = std::move( coord );
   Assert( m_gid.size() == m_lid.size(), "Size mismatch" );
 }
 
@@ -1506,7 +1507,7 @@ Refiner::boundary()
   }
 
   // Generate child->parent tet and id maps after refinement/derefinement step
-  decltype(m_parent) parent;
+  tk::destroy( m_parent );
   m_addedTets.clear();
   std::size_t p = 0;
   std::size_t c = 0;
@@ -1528,15 +1529,14 @@ Refiner::boundary()
       //auto pC = tk::cref_find( m_lref, t.second[2] );
       //auto pD = tk::cref_find( m_lref, t.second[3] );
       // assign parent tet to child tet
-      //parent[ {{cA,cB,cC,cD}} ] = {{pA,pB,pC,pD}};
-      parent[ ct->second ] = t.second; //{{pA,pB,pC,pD}};
+      //m_parent[ {{cA,cB,cC,cD}} ] = {{pA,pB,pC,pD}};
+      m_parent[ ct->second ] = t.second; //{{pA,pB,pC,pD}};
       if (m_oldTets.find(ct->second) == end(m_oldTets)) {
         m_addedTets[ c++ ] = p - m_oldntets;
       }
     }
     ++p;
   }
-  m_parent = std::move( parent ); 
 
   //std::cout << thisIndex << " added: " << m_addedTets.size() << '\n';
   //std::cout << thisIndex << " parent: " << m_parent.size() << '\n';
@@ -1583,9 +1583,10 @@ Refiner::updateBndFaces(
 // *****************************************************************************
 {
   // storage for boundary faces associated to side-set IDs of the refined mesh
-  decltype(m_bface) bface;              // will become m_bface
+  tk::destroy( m_bface );
   // storage for boundary faces-node connectivity of the refined mesh
-  decltype(m_triinpoel) triinpoel;      // will become m_triinpoel
+  tk::destroy( m_triinpoel );
+
   // face id counter
   std::size_t facecnt = 0;
   // will collect unique faces added for each side set
@@ -1600,7 +1601,7 @@ Refiner::updateBndFaces(
     // only add face if it has not yet been aded to this side set
     if (bf[ ss ].insert( f ).second) {
       s.push_back( facecnt++ );
-      triinpoel.insert( end(triinpoel), begin(f), end(f) );
+      m_triinpoel.insert( end(m_triinpoel), begin(f), end(f) );
     }
   };
 
@@ -1615,7 +1616,7 @@ Refiner::updateBndFaces(
     // for all side sets of the face, match children's faces to side sets
     for (const auto& ss : keys(bndFaces,face)) {
       // will associate to side set id of old (unrefined) mesh boundary face
-      auto& faces = bface[ ss ];
+      auto& faces = m_bface[ ss ];
       const auto& coarsefaces = tk::cref_find( m_coarseBndFaces, ss );
       // query number of children of boundary tet adjacent to boundary face
       auto nc = tet_store.data( tetid ).children.size();
@@ -1668,7 +1669,7 @@ Refiner::updateBndFaces(
   for (const auto& f : pcDeFaceTets) {
     for (const auto& ss : keys(bndFaces,f.first)) {
       // will associate to side set id of old (refined) mesh boundary face
-      auto& faces = bface[ ss ];
+      auto& faces = m_bface[ ss ];
       const auto& coarsefaces = tk::cref_find( m_coarseBndFaces, ss );
       // form all 4 faces of parent tet
       auto A = f.second[0];
@@ -1692,10 +1693,6 @@ Refiner::updateBndFaces(
       }
     }
   }
-
-  // Update boundary face data structures
-  m_bface = std::move(bface);
-  m_triinpoel = std::move(triinpoel);
 
   //std::cout << thisIndex << " bf: " << tk::sumvalsize( m_bface ) << '\n';
 
@@ -1757,7 +1754,7 @@ Refiner::updateBndNodes(
 // *****************************************************************************
 {
   // storage for boundary nodes associated to side-set IDs of the refined mesh
-  decltype(m_bnode) bnode;              // will become m_node
+  tk::destroy( m_bnode );
 
   // Lambda to search the parents in the coarsest mesh of a mesh node and if
   // found, add its global id to boundary node lists associated to the side
@@ -1769,7 +1766,7 @@ Refiner::updateBndNodes(
       // node was part of the coarse mesh
       auto ss = keys( m_coarseBndNodes, m_gid[*a.cbegin()] );
       for (auto s : ss)
-        bnode[ s ].push_back( m_gid[n] );
+        m_bnode[ s ].push_back( m_gid[n] );
     } else if (a.size() == 2) {
       // node was added to an edge of a coarse face
       std::vector< std::size_t > p( begin(a), end(a) );
@@ -1777,7 +1774,7 @@ Refiner::updateBndNodes(
       auto ss2 = keys( m_coarseBndNodes, m_gid[p[1]] );
       for (auto s : ss1) {
         if (ss2.find(s) != end(ss2)) {
-          bnode[ s ].push_back( m_gid[n] );
+          m_bnode[ s ].push_back( m_gid[n] );
         }
       }
     } else if (a.size() == 3) {
@@ -1788,7 +1785,7 @@ Refiner::updateBndNodes(
       auto ss3 = keys( m_coarseBndNodes, m_gid[p[2]] );
       for (auto s : ss1) {
         if (ss2.find(s) != end(ss2) && ss3.find(s) != end(ss3)) {
-          bnode[ s ].push_back( m_gid[n] );
+          m_bnode[ s ].push_back( m_gid[n] );
         }
       }
     }
@@ -1841,10 +1838,7 @@ Refiner::updateBndNodes(
   for (const auto& f : pcDeFaceTets) addBndNodes( f.second, search );
 
   // Make boundary node IDs unique for each physical boundary (side set)
-  for (auto& s : bnode) tk::unique( s.second );
-
-  // Update boundary node lists
-  m_bnode = std::move(bnode);
+  for (auto& s : m_bnode) tk::unique( s.second );
 
   //std::cout << thisIndex << " bn: " << tk::sumvalsize( m_bnode ) << '\n';
 }
