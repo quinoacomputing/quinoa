@@ -100,9 +100,8 @@ class CompFlow {
     //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] psup Points surrounding points
     //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] Ue Element-centered solution vector at intermediate step
-    //!    (used here internally as a scratch array)
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               tk::real deltat,
@@ -183,7 +182,7 @@ class CompFlow {
           u1[6] = nodal_soundspeed[n];
           
           // keep track of max and min
-          for ( int i=0; i<num_vars; ++i ) {
+          for ( std::size_t i=0; i<num_vars; ++i ) {
             umax[i] = std::max( umax[i], u1[i] );
             umin[i] = std::min( umin[i], u1[i] );
           }
@@ -201,7 +200,7 @@ class CompFlow {
           dydz += dy*dz;
           dzdz += dz*dz;
 
-          for ( int i=0; i<num_vars; ++i ){
+          for ( std::size_t i=0; i<num_vars; ++i ){
             auto du = u1[i] - u0[i];
             dudx[i] += du * dx;
             dudy[i] += du * dy;
@@ -217,7 +216,7 @@ class CompFlow {
         // Now determinants
         auto denom = 1 / (dxdx*min1-dxdy*min2+dxdz*min3);
 
-        for ( int i=0; i<num_vars; ++i ) {
+        for ( std::size_t i=0; i<num_vars; ++i ) {
           // component 1
           dudx_ave.emplace_back( (
               dudx[i] * min1
@@ -263,12 +262,11 @@ class CompFlow {
         auto p2 = edge_points[2*e + 1];
 
         // edge vector, doubled since a factor of two is needed
-        std::array< tk::real, 3 > l;
-        l[0] = 2. * ( x[p2] - x[p1] );
-        l[1] = 2. * ( y[p2] - y[p1] );
-        l[3] = 2. * ( z[p2] - z[p1] );
+        std::array< tk::real, 3 > l{ 2. * ( x[p2] - x[p1] ),
+                                     2. * ( y[p2] - y[p1] ),
+                                     2. * ( z[p2] - z[p1] ) };
 
-        for ( int ivar = 0; ivar<num_vars; ++ivar ) {
+        for ( std::size_t ivar = 0; ivar<num_vars; ++ivar ) {
 
           tk::real u1, u2;
           switch (ivar) {
@@ -290,11 +288,13 @@ class CompFlow {
 
           // form delta_1 (u_i - u_i-1) and delta_3 (u_j+1 - u_j)
           tk::real dot{0};
-          for ( int i=0; i<3; ++i ) dot += dudx_ave[p1*3*num_vars + ivar*3 + i] * l[i];
+          for ( std::size_t i=0; i<3; ++i )
+            dot += dudx_ave[p1*3*num_vars + ivar*3 + i] * l[i];
           auto delta_1 = dot - delta_2;
           
           dot = 0;
-          for ( int i=0; i<3; ++i ) dot += dudx_ave[p2*3*num_vars + ivar*3 + i] * l[i];
+          for ( std::size_t i=0; i<3; ++i )
+            dot += dudx_ave[p2*3*num_vars + ivar*3 + i] * l[i];
           auto delta_3 = dot - delta_2;
 
           // form limiters
@@ -357,23 +357,23 @@ class CompFlow {
       // elements surrounding edges
       auto esued = tk::genEsued( inpoel, 4, esup );
 
-      for ( std::size_t ed=0; ed<num_edge; ++ed ) {
-        for ( auto el : tk::Around(esued, ed) ) {
-        }
-      }
+      //for ( std::size_t ed=0; ed<num_edge; ++ed ) {
+      //  for ( auto el : tk::Around(esued, ed) ) {
+      //  }
+      //}
 
       //------------------------------------------------------------------------
       // Compute RHS
       //------------------------------------------------------------------------
       
-      for ( std::size_t e=0; e<num_edge; ++e ) {
-        auto p1 = edge_points[2*e];
-        auto p2 = edge_points[2*e + 1];
-        auto ul = &edge_unknowns[e*2*num_vars];
-        auto ur = &edge_unknowns[e*2*num_vars + num_vars];
-        //auto f = flux( ul, ur, );
-        
-      }
+      //for ( std::size_t e=0; e<num_edge; ++e ) {
+      //  auto p1 = edge_points[2*e];
+      //  auto p2 = edge_points[2*e + 1];
+      //  auto ul = &edge_unknowns[e*2*num_vars];
+      //  auto ur = &edge_unknowns[e*2*num_vars + num_vars];
+      //  //auto f = flux( ul, ur, );
+      //  
+      //}
 
     }
 

@@ -96,13 +96,13 @@ class Transport {
     void rhs( tk::real,
               tk::real /* deltat */,
               const std::array< std::vector< tk::real >, 3 >& /* coord */,
-              const std::vector< std::size_t >& inpoel,
+              const std::vector< std::size_t >& /* inpoel */,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& /* psup */,
               const tk::Fields& /* U */,
               tk::Fields& /* R */ ) const
     {
-      std::cout << "CGTransport::rhs" << std::endl;
+      std::cout << "(ALE)CGTransport::rhs not implemented" << std::endl;
     }
       
     //! Compute right hand side for DiagCG (CG-FCT)
