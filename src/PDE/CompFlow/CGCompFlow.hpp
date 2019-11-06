@@ -126,7 +126,7 @@ class CompFlow {
       const auto& z = coord[2];
 
       //------------------------------------------------------------------------
-      // Update solution quntities
+      // Update solution quantities
       //------------------------------------------------------------------------
 
       // get the number of nodes in the mesh
