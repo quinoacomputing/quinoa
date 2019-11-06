@@ -94,12 +94,22 @@ class CompFlow {
       auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
       return std::vector< tk::real >( begin(s), end(s) );
     }
-    
+
+    //! Compute right hand side for ALECG
+    //! \param[in] t Physical time
+    //! \param[in] deltat Size of time step
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] Ue Element-centered solution vector at intermediate step
+    //!    (used here internally as a scratch array)
+    //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const std::pair< std::vector< std::size_t >, std::vector< std::size_t > >& psup,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& psup,
               const tk::Fields& U,
               tk::Fields& R ) const
     {
@@ -367,7 +377,7 @@ class CompFlow {
 
     }
 
-    //! Compute right hand side
+    //! Compute right hand side for DiagCG (CG-FCT)
     //! \param[in] t Physical time
     //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates

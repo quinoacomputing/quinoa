@@ -117,7 +117,7 @@ class Discretization : public CBase_Discretization {
     std::vector< std::size_t >& Gid() { return m_gid; }
 
     //! Local ids accessors as const-ref
-    const std::unordered_map< std::size_t, std::size_t >& Lid() const
+     const std::unordered_map< std::size_t, std::size_t >& Lid() const
     { return m_lid; }
     //! Local ids accessors as non-const-ref
     std::unordered_map< std::size_t, std::size_t >& Lid() { return m_lid; }
@@ -193,13 +193,6 @@ class Discretization : public CBase_Discretization {
     //! Nodal communication map accessor as non-const-ref
     std::unordered_map< int, std::vector< std::size_t > >& Msum()
     { return m_msum; }
-
-    //! Points surrounding points accessor as const-ref
-    const std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&
-    Psup() const { return m_psup; }
-    //! Points surrounding points accessor as non-const-ref
-    std::pair< std::vector< std::size_t >, std::vector< std::size_t > >&
-    Psup() { return m_psup; }
     //@}
 
     //! Set time step size
@@ -252,7 +245,6 @@ class Discretization : public CBase_Discretization {
         m_lid = std::get< 2 >( m_el );
       }
       p | m_coord;
-      p | m_psup;
       p | m_msum;
       p | m_meshvol;
       p | m_v;
@@ -320,8 +312,6 @@ class Discretization : public CBase_Discretization {
     std::unordered_map< std::size_t, std::size_t >& m_lid = std::get< 2 >( m_el );
     //! Mesh point coordinates
     tk::UnsMesh::Coords m_coord;
-    //! Points surrounding points of our chunk of the mesh
-    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!   Discretization chares associated to their chare IDs
     //! \details msum: mesh chunks surrounding mesh chunks and their neighbor

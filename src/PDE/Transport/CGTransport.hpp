@@ -92,19 +92,20 @@ class Transport {
       return std::vector< tk::real >( begin(s), end(s) );
     }
     
+    //! Compute right hand side for ALECG
     void rhs( tk::real,
-              tk::real deltat,
-              const std::array< std::vector< tk::real >, 3 >& coord,
+              tk::real /* deltat */,
+              const std::array< std::vector< tk::real >, 3 >& /* coord */,
               const std::vector< std::size_t >& inpoel,
-              const std::pair< std::vector< std::size_t >, std::vector< std::size_t > >& psup,
-              const tk::Fields& U,
-              tk::Fields& R ) const
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& /* psup */,
+              const tk::Fields& /* U */,
+              tk::Fields& /* R */ ) const
     {
       std::cout << "CGTransport::rhs" << std::endl;
-
     }
       
-    //! Compute right hand side
+    //! Compute right hand side for DiagCG (CG-FCT)
     //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity

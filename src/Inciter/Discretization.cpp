@@ -52,7 +52,6 @@ Discretization::Discretization(
   m_meshwriter( meshwriter ),
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
-  m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_meshvol( 0.0 ),
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
@@ -78,8 +77,6 @@ Discretization::Discretization(
           "Jacobian in input mesh to Discretization non-positive" );
   Assert( tk::conforming( m_inpoel, m_coord ),
           "Input mesh to Discretization not conforming" );
-  Assert( m_psup.second.size()-1 == m_gid.size(),
-          "Number of mesh points and number of global IDs unequal" );
 
   // Convert neighbor nodes to vectors from sets
   for (const auto& [ neighborchare, sharednodes ] : msum) {
@@ -332,6 +329,11 @@ Discretization::stat( tk::real mesh_volume )
   tk::UniPDF volPDF( 1e-4 );
   tk::UniPDF ntetPDF( 1e-4 );
 
+  // Compute points surrounding points
+  auto psup = tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) );
+  Assert( psup.second.size()-1 == m_gid.size(),
+          "Number of mesh points and number of global IDs unequal" );
+
   // Compute edge length statistics
   // Note that while the min and max edge lengths are independent of the number
   // of CPUs (by the time they are aggregated across all chares), the sum of
@@ -343,7 +345,7 @@ Discretization::stat( tk::real mesh_volume )
   // small differences. For reproducible average edge lengths and edge length
   // PDFs, run the mesh in serial.
   for (std::size_t p=0; p<m_gid.size(); ++p)
-    for (auto i : tk::Around(m_psup,p)) {
+    for (auto i : tk::Around(psup,p)) {
        const auto dx = x[ i ] - x[ p ];
        const auto dy = y[ i ] - y[ p ];
        const auto dz = z[ i ] - z[ p ];
