@@ -24,6 +24,7 @@
 #include "Vector.hpp"
 #include "EoS/EoS.hpp"
 #include "Mesh/Around.hpp"
+#include "Integrate/Riemann/HLLC.hpp"
 
 namespace inciter {
 
@@ -96,19 +97,23 @@ class CompFlow {
     }
 
     //! Compute right hand side for ALECG
-    //! \param[in] t Physical time
     //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] psup Points surrounding points
+    //! \param[in] esued Elements surrounding edges
+    //! \param[in] inpoed Edge connectivity
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    void rhs( tk::real t,
+    void rhs( tk::real /* t */,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& esued,
+              const std::vector< std::size_t >& inpoed,
               const tk::Fields& U,
               tk::Fields& R ) const
     {
@@ -142,7 +147,8 @@ class CompFlow {
         // get updated pressure and sound speed
         nodal_pressure[n] = eos_pressure< tag::compflow >
           ( m_system, rho, velx, vely, velz, ener );
-        nodal_soundspeed[n] = eos_soundspeed< tag::compflow >( m_system, rho, nodal_pressure[n] );
+        nodal_soundspeed[n] =
+          eos_soundspeed< tag::compflow >( m_system, rho, nodal_pressure[n] );
 
       }
 
@@ -156,8 +162,6 @@ class CompFlow {
       for ( std::size_t n=0; n<num_nodes; ++n ) {
 
         // get current solution
-        auto x0 = std::array<tk::real, 3>{ x[n], y[n], z[n] };
-
         std::array< tk::real, num_vars > u0;
         for (ncomp_t c=0; c<5; ++c) u0[c] = U( n, c, m_offset );
         u0[5] = nodal_pressure[n];
@@ -188,9 +192,9 @@ class CompFlow {
           }
 
           // deltas
-          tk::real dx = x[q] - x0[0];
-          tk::real dy = y[q] - x0[0];
-          tk::real dz = z[q] - x0[0];
+          tk::real dx = x[q] - x[n];
+          tk::real dy = y[q] - y[n];
+          tk::real dz = z[q] - z[n];
 
           // compute contributions
           dxdx += dx*dx;
@@ -251,15 +255,13 @@ class CompFlow {
       constexpr auto muscl_con_p1 = muscl_const + 1;
       
       // edges to node connectivity
-      auto esup = tk::genEsup( inpoel, 4 );
-      auto edge_points = tk::genInpoed(inpoel,4,esup);
-      auto num_edge = edge_points.size() / 2;
+      auto num_edge = inpoed.size() / 2;
 
       std::vector< tk::real > edge_unknowns( 2 * num_edge * num_vars );
 
       for ( std::size_t e=0; e<num_edge; ++e ) {
-        auto p1 = edge_points[2*e];
-        auto p2 = edge_points[2*e + 1];
+        auto p1 = inpoed[2*e];
+        auto p2 = inpoed[2*e + 1];
 
         // edge vector, doubled since a factor of two is needed
         std::array< tk::real, 3 > l{ 2. * ( x[p2] - x[p1] ),
@@ -319,62 +321,60 @@ class CompFlow {
       }
       
       //------------------------------------------------------------------------
-      // Compute some element geometry parameters
-      //------------------------------------------------------------------------
-      
-      auto num_elem = inpoel.size()/4;
-      std::vector< std::array< std::array< tk::real, 3 >, 4 > > elem_grad(num_elem);
-      std::vector< tk::real > elem_volume(num_elem);
-
-      for ( std::size_t e=0; e<num_elem; ++e ) {
-        
-        // access node IDs
-        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
-                                               inpoel[e*4+2], inpoel[e*4+3] }};
-
-        // compute element Jacobi determinant
-        const std::array< tk::real, 3 >
-          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-        const auto J = tk::triple( ba, ca, da );        // J = 6V
-        Assert( J > 0, "Element Jacobian non-positive" );
-        elem_volume[e] = J/6.;
-        
-        // shape function derivatives, nnode*ndim [4][3]
-        auto & grad = elem_grad[e];
-        grad[1] = tk::crossdiv( ca, da, J );
-        grad[2] = tk::crossdiv( da, ba, J );
-        grad[3] = tk::crossdiv( ba, ca, J );
-        for (std::size_t i=0; i<3; ++i)
-          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-      }
-
-      //------------------------------------------------------------------------
-      // Compute some edge geometry parameters
-      //------------------------------------------------------------------------
-     
-      // elements surrounding edges
-      auto esued = tk::genEsued( inpoel, 4, esup );
-
-      //for ( std::size_t ed=0; ed<num_edge; ++ed ) {
-      //  for ( auto el : tk::Around(esued, ed) ) {
-      //  }
-      //}
-
-      //------------------------------------------------------------------------
       // Compute RHS
       //------------------------------------------------------------------------
-      
-      //for ( std::size_t e=0; e<num_edge; ++e ) {
-      //  auto p1 = edge_points[2*e];
-      //  auto p2 = edge_points[2*e + 1];
-      //  auto ul = &edge_unknowns[e*2*num_vars];
-      //  auto ur = &edge_unknowns[e*2*num_vars + num_vars];
-      //  //auto f = flux( ul, ur, );
-      //  
-      //}
+      for ( std::size_t ed=0; ed<num_edge; ++ed ) {
+        auto v = inpoed[2*ed];
+        auto w = inpoed[2*ed + 1];
+        std::array< tk::real, 3 > fn{ x[w]-x[v], y[w]-y[v], z[w]-z[v] };
 
+        // Access left and right state of solution
+        std::array< std::vector< tk::real >, 2 >
+          u{ std::vector< tk::real >( 5 ), std::vector< tk::real >( 5 ) };
+        for (std::size_t c=0; c<5; ++c) {
+          u[0][c] = edge_unknowns[ed*2*num_vars + c];
+          u[1][c] = edge_unknowns[ed*2*num_vars + num_vars + c];
+        }
+
+        // Compute flux. The signature of flux() should follow
+        // tk::RiemannFluxFn, if possible, so that we can switch Riemann
+        // solvers. Hardcode HLLC for now.
+        auto f = HLLC::flux( fn, u, {{0.0,0.0,0.0}} );
+
+        for ( auto e : tk::Around(esued, ed) ) {
+          // access node IDs
+          const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
+                                                 inpoel[e*4+2], inpoel[e*4+3] }};
+
+          // compute element Jacobi determinant
+          const std::array< tk::real, 3 >
+            ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+            ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+            da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+          const auto J = tk::triple( ba, ca, da );        // J = 6V
+          Assert( J > 0, "Element Jacobian non-positive" );
+
+          // shape function derivatives, nnode*ndim [4][3]
+          std::array< std::array< tk::real, 3 >, 4 > grad;
+          grad[1] = tk::crossdiv( ca, da, J );
+          grad[2] = tk::crossdiv( da, ba, J );
+          grad[3] = tk::crossdiv( ba, ca, J );
+          for (std::size_t i=0; i<3; ++i)
+            grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+
+          // access pointer to right hand side at component and offset
+          std::array< const tk::real*, 5 > r;
+          for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
+
+          // sum flux contributions to nodes
+          tk::real d = deltat * J/6.0 / 2.0;
+          for (std::size_t j=0; j<3; ++j)
+            for (std::size_t c=0; c<5; ++c)
+              for (std::size_t a=0; a<4; ++a)
+                for (std::size_t b=0; b<4; ++b)
+                  R.var(r[c],N[a]) += d * (grad[b][j] - grad[a][j]) * f[c];
+        }
+      }
     }
 
     //! Compute right hand side for DiagCG (CG-FCT)

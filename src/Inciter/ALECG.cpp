@@ -55,6 +55,10 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_nlhs( 0 ),
   m_nrhs( 0 ),
   m_bnode( bnode ),
+  m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
+  m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
+  m_esued( tk::genEsued( Disc()->Inpoel(), 4, m_esup ) ),
+  m_inpoed( tk::genInpoed( Disc()->Inpoel(), 4, m_esup ) ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
@@ -134,6 +138,7 @@ ALECG::init()
   lhs();
 }
 //! [init and lhs]
+
 
 void
 ALECG::start()
@@ -293,12 +298,11 @@ ALECG::rhs()
 {
   auto d = Disc();
 
-  // Compute points surrounding points
-  auto psup = tk::genPsup( d->Inpoel(), 4, tk::genEsup(d->Inpoel(),4) );
-
   // Compute own portion of the right-hand side
-  for (const auto& eq : g_cgpde)
-    eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), psup, m_u, m_rhs );
+  for (const auto& eq : g_cgpde) {
+    eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_psup, m_esued, m_inpoed,
+            m_u, m_rhs );
+  }
 
   // Communicate rhs to other chares on chare-boundary
   if (d->Msum().empty())        // in serial we are done
@@ -443,6 +447,15 @@ ALECG::resizePostAMR(
 
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, msum );
+
+  // Recompute elements surrounding points
+  m_esup = tk::genEsup( d->Inpoel(), 4 );
+  // Recompute points surrounding points
+  m_psup = tk::genPsup( d->Inpoel(), 4, m_esup );
+  // Recompute elements surrounding edges
+  m_esued = tk::genEsued( d->Inpoel(), 4, m_esup );
+  // Recompute edge connectivity
+  m_inpoed = tk::genInpoed( d->Inpoel(), 4, m_esup );
 
   // Resize auxiliary solution vectors
   auto npoin = coord[0].size();

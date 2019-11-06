@@ -92,9 +92,12 @@ class CGPDE {
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& esued,
+              const std::vector< std::size_t >& inpoed,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( t, deltat, coord, inpoel, psup, U, R ); }
+    { self->rhs( t, deltat, coord, inpoel, psup, esued, inpoed, U, R ); }
 
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
@@ -172,6 +175,9 @@ class CGPDE {
                         const std::vector< std::size_t >&,
                         const std::pair< std::vector< std::size_t >,
                                          std::vector< std::size_t > >&,
+                        const std::pair< std::vector< std::size_t >,
+                                         std::vector< std::size_t > >&,
+                        const std::vector< std::size_t >&,
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
@@ -219,9 +225,12 @@ class CGPDE {
                 const std::vector< std::size_t >& inpoel,
                 const std::pair< std::vector< std::size_t >,
                                  std::vector< std::size_t > >& psup,
+                const std::pair< std::vector< std::size_t >,
+                                 std::vector< std::size_t > >& esued,
+                const std::vector< std::size_t >& inpoed,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( t, deltat, coord, inpoel, psup, U, R ); }
+      { data.rhs( t, deltat, coord, inpoel, psup, esued, inpoed, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,

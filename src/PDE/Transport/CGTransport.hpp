@@ -99,6 +99,9 @@ class Transport {
               const std::vector< std::size_t >& /* inpoel */,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& /* psup */,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& /* esued */,
+              const std::vector< std::size_t >& /* inpoed */,
               const tk::Fields& /* U */,
               tk::Fields& /* R */ ) const
     {

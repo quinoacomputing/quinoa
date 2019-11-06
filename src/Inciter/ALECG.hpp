@@ -159,6 +159,10 @@ class ALECG : public CBase_ALECG {
       p | m_nlhs;
       p | m_nrhs;
       p | m_bnode;
+      p | m_esup;
+      p | m_psup;
+      p | m_esued;
+      p | m_inpoed;
       p | m_u;
       p | m_du;
       p | m_lhs;
@@ -188,6 +192,14 @@ class ALECG : public CBase_ALECG {
     std::size_t m_nrhs;
     //! Boundary node lists mapped to side set ids
     std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Elements surrounding points
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_esup;
+    //! Points surrounding points
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
+    //! Elements surrounding edges
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_esued;
+    //! Edge connectivity
+    std::vector< std::size_t > m_inpoed;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector increment (high order)
