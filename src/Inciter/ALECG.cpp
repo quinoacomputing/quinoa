@@ -30,6 +30,7 @@
 #include "NodeBC.hpp"
 #include "Refiner.hpp"
 #include "Reorder.hpp"
+#include "Integrate/Mass.hpp"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.hpp"
@@ -61,12 +62,14 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_inpoed( tk::genInpoed( Disc()->Inpoel(), 4, m_esup ) ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
+  m_un( m_u.nunk(), m_u.nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_lhsc(),
   m_rhsc(),
-  m_diag()
+  m_diag(),
+  m_stage( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -162,8 +165,8 @@ ALECG::lhs()
 {
   auto d = Disc();
 
-  // Compute own portion of the lhs
-  // m_lhs = ...
+  // Compute lumped mass lhs
+  m_lhs = tk::lump( m_u.nprop(), d->Coord(), d->Inpoel() );
 
   if (d->Msum().empty())        // in serial we are done
     comlhs_complete();
@@ -525,7 +528,7 @@ ALECG::advance( tk::real newdt )
   auto d = Disc();
 
   // Set new time step size
-  d->setdt( newdt );
+  if (m_stage == 0) d->setdt( newdt );
 
   // Compute rhs for next time step
   rhs();

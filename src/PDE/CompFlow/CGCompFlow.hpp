@@ -343,8 +343,8 @@ class CompFlow {
 
         for ( auto e : tk::Around(esued, ed) ) {
           // access node IDs
-          const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
-                                                 inpoel[e*4+2], inpoel[e*4+3] }};
+          const std::array< std::size_t, 4 > N{ inpoel[e*4+0], inpoel[e*4+1],
+                                                inpoel[e*4+2], inpoel[e*4+3] };
 
           // compute element Jacobi determinant
           const std::array< tk::real, 3 >

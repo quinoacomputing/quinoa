@@ -130,17 +130,6 @@ DistFCT::resize( std::size_t nu,
 }
 
 tk::Fields
-DistFCT::lump( const Discretization& d )
-// *****************************************************************************
-//  Compute lumped mass lhs required for the low order solution
-//! \param[in] d Discretization proxy to read mesh data from
-//! \return Lumped mass matrix
-// *****************************************************************************
-{
-  return m_fluxcorrector.lump( d.Coord(), m_inpoel );
-}
-
-tk::Fields
 DistFCT::diff( const Discretization& d, const tk::Fields& Un )
 // *****************************************************************************
 //  Compute mass diffusion rhs contribution required for the low order solution

@@ -126,7 +126,8 @@ class CompFlow {
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      tk::mass( m_ncomp, m_offset, geoElem, l );
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
     }
 
     //! Update the primitives for this PDE system

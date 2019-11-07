@@ -164,12 +164,14 @@ class ALECG : public CBase_ALECG {
       p | m_esued;
       p | m_inpoed;
       p | m_u;
+      p | m_un;
       p | m_du;
       p | m_lhs;
       p | m_rhs;
       p | m_lhsc;
       p | m_rhsc;
       p | m_diag;
+      p | m_stage;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -202,6 +204,8 @@ class ALECG : public CBase_ALECG {
     std::vector< std::size_t > m_inpoed;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
+    //! Unknown/solution vector at mesh nodes at previous time
+    tk::Fields m_un;
     //! Unknown/solution vector increment (high order)
     tk::Fields m_du;
     //! Lumped lhs mass matrix
@@ -216,6 +220,8 @@ class ALECG : public CBase_ALECG {
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
     //! Diagnostics object
     NodeDiagnostics m_diag;
+    //! Runge-Kutta stage counter
+    std::size_t m_stage;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

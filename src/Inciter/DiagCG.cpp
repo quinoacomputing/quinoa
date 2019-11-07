@@ -32,6 +32,7 @@
 #include "NodeBC.hpp"
 #include "Refiner.hpp"
 #include "Reorder.hpp"
+#include "Integrate/Mass.hpp"
 
 namespace inciter {
 
@@ -163,7 +164,7 @@ DiagCG::lhs()
   auto d = Disc();
 
   // Compute lumped mass lhs required for both high and low order solutions
-  m_lhs = d->FCT()->lump( *d );
+  m_lhs = tk::lump( m_u.nprop(), d->Coord(), d->Inpoel() );
 
   if (d->Msum().empty())
     comlhs_complete();

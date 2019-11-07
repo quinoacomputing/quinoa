@@ -96,9 +96,6 @@ class DistFCT : public CBase_DistFCT {
       #pragma clang diagnostic pop
     #endif
 
-    //! Compute lumped mass lhs required for the low order solution
-    tk::Fields lump( const Discretization& d );
-
     //! \brief Compute mass diffusion rhs contribution required for the low
     //!   order solution
     tk::Fields diff( const Discretization& d, const tk::Fields& Un );

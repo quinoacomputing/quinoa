@@ -63,10 +63,6 @@ class FluxCorrector {
                  const tk::Fields& dUh,
                  const tk::Fields& dUl ) const;
 
-    //! Compute lumped mass matrix lhs for low order system
-    tk::Fields lump( const std::array< std::vector< tk::real >, 3 >& coord,
-                     const std::vector< std::size_t >& inpoel ) const;
-
     //! Compute mass diffusion contribution to the rhs of the low order system
     tk::Fields diff( const std::array< std::vector< tk::real >, 3 >& coord,
                      const std::vector< std::size_t >& inpoel,
