@@ -1480,7 +1480,7 @@ DG::solve( tk::real newdt )
 
   if (m_stage < 2) {
 
-    // continue with next tims step stage
+    // continue with next time step stage
     stage();
 
   } else {

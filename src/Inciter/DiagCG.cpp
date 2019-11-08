@@ -294,7 +294,7 @@ DiagCG::rhs()
 {
   auto d = Disc();
 
-  // Compute right-hand side and query Dirichlet BCs for all equations
+  // Compute right-hand side for all equations
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
 
