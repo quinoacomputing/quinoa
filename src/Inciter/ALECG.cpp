@@ -42,6 +42,9 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 
+//! Runge-Kutta coefficients
+static const std::array< tk::real, 3 > rkcoef{ 0.6, 0.6, 1.0 };
+
 } // inciter::
 
 using inciter::ALECG;
@@ -63,9 +66,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
-  m_du( m_u.nunk(), m_u.nprop() ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
+  m_bcdir(),
   m_lhsc(),
   m_rhsc(),
   m_diag(),
@@ -285,12 +288,28 @@ ALECG::dt()
   //! [Advance]
   // Actiavate SDAG waits for time step
   thisProxy[ thisIndex ].wait4rhs();
-  thisProxy[ thisIndex ].wait4out();
+  thisProxy[ thisIndex ].wait4stage();
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
               CkCallback(CkReductionTarget(ALECG,advance), thisProxy) );
   //! [Advance]
+}
+
+void
+ALECG::advance( tk::real newdt )
+// *****************************************************************************
+// Advance equations to next time step
+//! \param[in] newdt Size of this new time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Set new time step size
+  if (m_stage == 0) d->setdt( newdt );
+
+  // Compute rhs for next time step
+  rhs();
 }
 
 void
@@ -301,11 +320,15 @@ ALECG::rhs()
 {
   auto d = Disc();
 
-  // Compute own portion of the right-hand side
+  // Compute own portion of right-hand side for all equations
   for (const auto& eq : g_cgpde) {
-    eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_psup, m_esued, m_inpoed,
-            m_u, m_rhs );
+    eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_psup, m_esued,
+            m_inpoed, m_u, m_rhs );
   }
+
+  // Query and match user-specified boundary conditions to side sets
+  m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), d->Gid(),
+                   d->Lid(), m_bnode );
 
   // Communicate rhs to other chares on chare-boundary
   if (d->Msum().empty())        // in serial we are done
@@ -369,16 +392,41 @@ ALECG::solve()
   // clear receive buffer
   tk::destroy(m_rhsc);  
 
+  // Set Dirichlet BCs for lhs and rhs
+  for (const auto& [b,bc] : m_bcdir) {
+    auto lid = tk::cref_find( d->Lid(), b );
+    for (ncomp_t c=0; c<ncomp; ++c) {
+      if (bc[c].first) {
+        m_lhs( lid, c, 0 ) = 1.0;
+        m_rhs( lid, c, 0 ) = bc[c].second;
+      }
+    }
+  }
+
+  // Update Un
+  if (m_stage == 0) m_un = m_u;
+
   // Solve sytem
-  // m_du = m_rhs / m_lhs;
+  m_u = m_un - rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
 
   //! [Continue after solve]
-  // Compute diagnostics, e.g., residuals
-  auto diag_computed = m_diag.compute( *d, m_u );
-  // Increase number of iterations and physical time
-  d->next();
-  // Continue to mesh refinement (if configured)
-  if (!diag_computed) refine();
+  if (m_stage < 2) {
+
+    // Activate SDAG wait for assembling the rhs in next stage
+    thisProxy[ thisIndex ].wait4rhs();
+
+    // continue with next time step stage
+    stage();
+
+  } else {
+
+    // Compute diagnostics, e.g., residuals
+    auto diag_computed = m_diag.compute( *d, m_u );
+    // Increase number of iterations and physical time
+    d->next();
+    // Continue to mesh refinement (if configured)
+    if (!diag_computed) refine();
+  }
   //! [Continue after solve]
 }
 
@@ -464,7 +512,6 @@ ALECG::resizePostAMR(
   auto npoin = coord[0].size();
   auto nprop = m_u.nprop();
   m_u.resize( npoin, nprop );
-  m_du.resize( npoin, nprop );
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
 
@@ -487,6 +534,20 @@ ALECG::resized()
 // *****************************************************************************
 {
   resize_complete();
+}
+
+void
+ALECG::stage()
+// *****************************************************************************
+// Evaluate whether to continue with next time step stage
+// *****************************************************************************
+{
+  // Increment Runge-Kutta stage counter
+  ++m_stage;
+
+  // if not all Runge-Kutta stages complete, continue to next time stage,
+  // otherwise output field data to file(s)
+  if (m_stage < 3) rhs(); else out();
 }
 
 void
@@ -516,22 +577,6 @@ ALECG::writeFields( CkCallback c ) const
   // Send mesh and fields data (solution dump) for output to file
   d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {}, {},
             nodefieldnames, {}, nodefields, c );
-}
-
-void
-ALECG::advance( tk::real newdt )
-// *****************************************************************************
-// Advance equations to next time step
-//! \param[in] newdt Size of this new time step
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Set new time step size
-  if (m_stage == 0) d->setdt( newdt );
-
-  // Compute rhs for next time step
-  rhs();
 }
 
 void
@@ -613,6 +658,8 @@ ALECG::step()
 
   // Output one-liner status report to screen
   d->status();
+  // Reset Runge-Kutta stage counter
+  m_stage = 0;
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();

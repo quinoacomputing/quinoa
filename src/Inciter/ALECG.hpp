@@ -165,9 +165,9 @@ class ALECG : public CBase_ALECG {
       p | m_inpoed;
       p | m_u;
       p | m_un;
-      p | m_du;
       p | m_lhs;
       p | m_rhs;
+      p | m_bcdir;
       p | m_lhsc;
       p | m_rhsc;
       p | m_diag;
@@ -206,12 +206,18 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes at previous time
     tk::Fields m_un;
-    //! Unknown/solution vector increment (high order)
-    tk::Fields m_du;
     //! Lumped lhs mass matrix
     tk::Fields m_lhs;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
+    //! Boundary conditions evaluated and assigned to local mesh node IDs
+    //! \details Vector of pairs of bool and boundary condition value associated
+    //!   to local mesh node IDs at which the user has set Dirichlet boundary
+    //!   conditions for all PDEs integrated. The bool indicates whether the BC
+    //!   is set at the node for that component the if true, the real value is
+    //!   the increment (from t to dt) in the BC specified for a component.
+    std::unordered_map< std::size_t,
+      std::vector< std::pair< bool, tk::real > > > m_bcdir;
     //! Receive buffer for communication of the left hand side
     //! \details Key: chare id, value: lhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_lhsc;
@@ -249,6 +255,9 @@ class ALECG : public CBase_ALECG {
 
     //! Compute time step size
     void dt();
+
+    //! Evaluate whether to continue with next time step stage
+    void stage();
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
