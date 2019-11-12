@@ -152,6 +152,27 @@ namespace grm {
       // Set number of components to 5 (mass, 3 x mom, energy)
       stack.template get< tag::component, eq >().push_back( 5 );
 
+      // Set default to sysfct (on/off) if not specified
+      auto& sysfct = stack.template get< tag::param, eq, tag::sysfct >();
+      if (sysfct.empty() || sysfct.size() != neq.get< eq >())
+        sysfct.push_back( true );
+
+      // Verify that sysfctvar variables are within bounds (if specified) and
+      // defaults if not
+      auto& sysfctvar = stack.template get< tag::param, eq, tag::sysfctvar >();
+      // If sysfctvar is not specified, use all variables for system FCT
+      if (sysfctvar.empty() || sysfctvar.back().empty()) {
+        sysfctvar.push_back( {0,1,2,3,4} );
+      } else {  // if specified, do error checking on variables
+        auto& vars = sysfctvar.back();
+        if (vars.size() > 5) {
+          Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
+        }
+        for (const auto& i : vars) {
+          if (i > 4) Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
+        }
+      }
+
       // Verify correct number of multi-material properties configured
       const auto& gamma = stack.template get< tag::param, eq, tag::gamma >();
       if (gamma.empty() || gamma.back().size() != 1)
@@ -161,7 +182,7 @@ namespace grm {
       using cv_t = kw::mat_cv::info::expect::type;
       auto& cv = stack.template get< tag::param, eq, tag::cv >();
       // As a default, the specific heat of air (717.5 J/Kg-K) is used
-      if (cv.empty())
+      if (cv.empty() || cv.size() != neq.get< eq >())
         cv.push_back( std::vector< cv_t >( 1, 717.5 ) );
       // If specific heat vector is wrong size, error out
       if (cv.back().size() != 1)
@@ -170,7 +191,7 @@ namespace grm {
       // If stiffness coefficient is not given, set defaults
       using pstiff_t = kw::mat_pstiff::info::expect::type;
       auto& pstiff = stack.template get< tag::param, eq, tag::pstiff >();
-      if (pstiff.empty())
+      if (pstiff.empty() || pstiff.size() != neq.get< eq >())
         pstiff.push_back( std::vector< pstiff_t >( 1, 0.0 ) );
       // If stiffness coefficient vector is wrong size, error out
       if (pstiff.back().size() != 1)
@@ -234,7 +255,9 @@ namespace grm {
       // if outlet BC is configured for this compflow system
       auto& bcsubsonicoutlet =
           stack.template get< tag::param, eq, tag::bcsubsonicoutlet >();
-      if (!bcsubsonicoutlet.empty() || bcsubsonicoutlet.size() != neq.get< eq >()) {
+      if (!bcsubsonicoutlet.empty() ||
+          bcsubsonicoutlet.size() != neq.get< eq >())
+      {
         auto& fp =
           stack.template get< tag::param, eq, tag::farfield_pressure >();
         if (fp.size() != bcsubsonicoutlet.size()) fp.push_back( 1.0 );
@@ -577,10 +600,16 @@ namespace deck {
            tk::grm::discrparam< use, kw::t0, tag::t0 >,
            tk::grm::discrparam< use, kw::dt, tag::dt >,
            tk::grm::discrparam< use, kw::cfl, tag::cfl >,
-           tk::grm::discrparam< use, kw::ctau, tag::ctau >,
-           tk::grm::process< use< kw::fct >, 
+           tk::grm::process< use< kw::fcteps >,
+                             tk::grm::Store< tag::discr, tag::fcteps > >,
+           tk::grm::process< use< kw::fctclip >,
+                             tk::grm::Store< tag::discr, tag::fctclip >,
+                             pegtl::alpha >,
+           tk::grm::process< use< kw::fct >,
                              tk::grm::Store< tag::discr, tag::fct >,
                              pegtl::alpha >,
+           tk::grm::process< use< kw::ctau >,
+                             tk::grm::Store< tag::discr, tag::ctau > >,
            tk::grm::process< use< kw::reorder >,
                              tk::grm::Store< tag::discr, tag::reorder >,
                              pegtl::alpha >,
@@ -755,6 +784,11 @@ namespace deck {
                                             tag::depvar >,
                            //ic_compflow< tag::compflow, tag::ic > >,
                            material_properties< tag::compflow >,
+                           pde_parameter_vector< kw::sysfctvar,
+                                                 tag::compflow,
+                                                 tag::sysfctvar >,
+                           parameter< tag::compflow, kw::sysfct, tag::sysfct,
+                                      pegtl::alpha >,
                            parameter< tag::compflow, kw::npar, tag::npar,
                                       pegtl::digit >,
                            parameter< tag::compflow, kw::pde_alpha, tag::alpha >,

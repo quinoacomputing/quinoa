@@ -38,13 +38,19 @@ module distfct {
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       entry void wait4fct() {
-        when ownaec_complete(), comaec_complete(),
-             ownalw_complete(), comalw_complete() serial "fct" { lim(); } };
+        when ownaec_complete(
+               const std::unordered_map< std::size_t,
+                       std::vector< std::pair< bool, tk::real > > >& bcdir ),
+             comaec_complete(),
+             ownalw_complete(),
+             comalw_complete() serial "fct" { lim( bcdir ); } };
 
       entry void wait4app() {
         when ownlim_complete(), comlim_complete() serial "app" { apply(); } };
 
-      entry void ownaec_complete();
+      entry void ownaec_complete(
+               const std::unordered_map< std::size_t,
+                       std::vector< std::pair< bool, tk::real > > >& bcdir );
       entry void ownalw_complete();
       entry void ownlim_complete();
       entry void comaec_complete();

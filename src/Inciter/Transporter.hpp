@@ -291,8 +291,9 @@ class Transporter : public CBase_Transporter {
     //! \tparam Eq Equation type, e.g., CG, DG, used to solve PDEs
     //! \param[in] pde List of PDE system solved
     //! \param[in,out] bnd Node or face lists mapped to side set ids
+    //! \return True if BCs have been set on sidesets found
     template< class Eq >
-    void matchBCs( const std::vector< Eq >& pde,
+    bool matchBCs( const std::vector< Eq >& pde,
                    std::map< int, std::vector< std::size_t > >& bnd )
     {
       // Query side set ids at which BCs assigned for all PDEs
@@ -312,9 +313,7 @@ class Transporter : public CBase_Transporter {
       tk::erase_if( bnd, [&]( auto& item ) {
         return sidesets_as_bc.find( item.first ) == end(sidesets_as_bc);
       });
-      // Warn on no BCs
-      if (bnd.empty())
-        m_print << "\n>>> WARNING: No boundary conditions set\n\n";
+      return !bnd.empty();
     }
 };
 
