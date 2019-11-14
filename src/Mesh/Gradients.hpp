@@ -38,11 +38,9 @@ nodegrad( std::size_t node,
 
 //! Compute gradient at a mesh edge
 std::array< tk::real, 3 >
-edgegrad( std::size_t edge,
-          const std::array< std::vector< tk::real >, 3 >& coord,
+edgegrad( const std::array< std::vector< tk::real >, 3 >& coord,
           const std::vector< std::size_t >& inpoel,
-          const std::pair< std::vector< std::size_t >,
-                           std::vector< std::size_t > >& esued,
+          const std::vector< std::size_t >& esued,
           const tk::Fields& U,
           ncomp_t c );
 

@@ -70,9 +70,9 @@ class ALECG : public CBase_ALECG {
 
     //! Constructor
     explicit ALECG( const CProxy_Discretization& disc,
-                    const std::map< int, std::vector< std::size_t > >& /* bface */,
+                    const std::map< int, std::vector< std::size_t > >& bface,
                     const std::map< int, std::vector< std::size_t > >& bnode,
-                    const std::vector< std::size_t >& /* triinpoel */ );
+                    const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -105,6 +105,10 @@ class ALECG : public CBase_ALECG {
 
     //! Compute left-hand side of transport equations
     void lhs();
+
+    //! Receive boundary point normals on chare-boundaries
+    void comnorm(
+      const std::unordered_map< std::size_t, std::array<tk::real,4> >& innorm );
 
     //! Receive contributions to left-hand side matrix on chare-boundaries
     void comlhs( const std::vector< std::size_t >& gid,
@@ -158,11 +162,10 @@ class ALECG : public CBase_ALECG {
       p | m_nsol;
       p | m_nlhs;
       p | m_nrhs;
+      p | m_nnorm;
       p | m_bnode;
-      p | m_esup;
-      p | m_psup;
+      p | m_triinpoel;
       p | m_esued;
-      p | m_inpoed;
       p | m_u;
       p | m_un;
       p | m_lhs;
@@ -171,6 +174,8 @@ class ALECG : public CBase_ALECG {
       p | m_lhsc;
       p | m_rhsc;
       p | m_diag;
+      p | m_bnorm;
+      p | m_bnormc;
       p | m_stage;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -192,16 +197,15 @@ class ALECG : public CBase_ALECG {
     std::size_t m_nlhs;
     //! Counter for right-hand side vector nodes updated
     std::size_t m_nrhs;
+    //! Counter for receiving boundary point normals
+    std::size_t m_nnorm;
     //! Boundary node lists mapped to side set ids
     std::map< int, std::vector< std::size_t > > m_bnode;
-    //! Elements surrounding points
-    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_esup;
-    //! Points surrounding points
-    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
+    //! Boundary triangle face connecitivity
+    std::vector< std::size_t > m_triinpoel;
     //! Elements surrounding edges
-    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_esued;
-    //! Edge connectivity
-    std::vector< std::size_t > m_inpoed;
+    std::unordered_map< tk::UnsMesh::Edge, std::vector< std::size_t >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_esued;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes at previous time
@@ -226,6 +230,14 @@ class ALECG : public CBase_ALECG {
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
     //! Diagnostics object
     NodeDiagnostics m_diag;
+    //! Face normals in boundary points
+    //! \details Key: local node id, value: unit normal and inverse distance
+    //!   square between face centroids and points
+    std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnorm;
+    //! Receive buffer for communication of the boundary point normals
+    //! \details Key: global node id, value: normals (first 3 components),
+    //!   inverse distance squared (4th component)
+    std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnormc;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
 
@@ -234,6 +246,15 @@ class ALECG : public CBase_ALECG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
+
+    //! Compute boundary point normals
+    void
+    bnorm( const std::map< int, std::vector< std::size_t > >& bface,
+           const std::vector< std::size_t >& triinpoel,
+           std::unordered_set< std::size_t >&& symbcnodes );
+
+    //! Finish setting up communication maps (norms, etc.)
+    void normfinal();
 
     //! Output mesh and particle fields to files
     void out();

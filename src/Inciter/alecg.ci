@@ -30,15 +30,17 @@ module alecg {
     //! [1D Charm++ chare array]
       //! [Entry methods]
       entry ALECG( const CProxy_Discretization& disc,
-                   const std::map< int, std::vector< std::size_t > >& /* bface */,
+                   const std::map< int, std::vector< std::size_t > >& bface,
                    const std::map< int, std::vector< std::size_t > >& bnode,
-                   const std::vector< std::size_t >& /* triinpoel */ );
+                   const std::vector< std::size_t >& triinpoel );
       initnode void registerReducers();
       entry void setup();
       entry void resizeComm();
       entry void init();
       entry void refine();
       entry [reductiontarget] void advance( tk::real newdt );
+      entry void comnorm( const std::unordered_map< std::size_t,
+                                  std::array< tk::real, 4 > >& innorm );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );
       entry void comrhs( const std::vector< std::size_t >& gid,
@@ -54,6 +56,10 @@ module alecg {
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       //! [DAG]
+      entry void wait4norm() {
+        when ownnorm_complete(), comnorm_complete() serial "norm" {
+          normfinal(); } }
+
       entry void wait4lhs() {
         when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsmerge(); } }
 
@@ -63,6 +69,8 @@ module alecg {
       entry void wait4stage() {
         when lhs_complete(), resize_complete() serial "stage" { stage(); } }
 
+      entry void ownnorm_complete();
+      entry void comnorm_complete();
       entry void ownlhs_complete();
       entry void ownrhs_complete();
       entry void comlhs_complete();

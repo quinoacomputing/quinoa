@@ -226,15 +226,12 @@ void Gradients_object::test< 2 >() {
   // Generate elements surrounding edges
   auto esued = tk::genEsued( inpoel, 4, esup );
 
-  // find out number of edges in mesh
-  auto nedge = tk::genInpoed(inpoel,4,esup).size()/2;
-
   // generate a constant scalar field
   tk::Fields uc( npoin, 1 );
   uc.fill( 1.2 );
   // test gradients
-  for (std::size_t e=0; e<nedge; ++e) {
-    auto g = edgegrad( e, coord, inpoel, esued, uc, 0 );
+  for (const auto& [edge,surr_elems] : esued) {
+    auto g = edgegrad( coord, inpoel, surr_elems, uc, 0 );
     ensure_equals( "x-gradient of constant field incorrect", g[0], 0, pr );
     ensure_equals( "y-gradient of constant field incorrect", g[1], 0, pr );
     ensure_equals( "z-gradient of constant field incorrect", g[2], 0, pr );
@@ -244,8 +241,8 @@ void Gradients_object::test< 2 >() {
   tk::Fields ux( npoin, 1 );
   for (std::size_t p=0; p<npoin; ++p) ux(p,0,0) = coord[0][p];
   // test gradients
-  for (std::size_t e=0; e<nedge; ++e) {
-    auto g = edgegrad( e, coord, inpoel, esued, ux, 0 );
+  for (const auto& [edge,surr_elems] : esued) {
+    auto g = edgegrad( coord, inpoel, surr_elems, ux, 0 );
     ensure_equals( "x-gradient of x-linear field incorrect", g[0], 1, pr );
     ensure_equals( "y-gradient of x-linear field incorrect", g[1], 0, pr );
     ensure_equals( "z-gradient of x-linear field incorrect", g[2], 0, pr );
@@ -255,8 +252,8 @@ void Gradients_object::test< 2 >() {
   tk::Fields uy( npoin, 1 );
   for (std::size_t p=0; p<npoin; ++p) uy(p,0,0) = coord[1][p];
   // test gradients
-  for (std::size_t e=0; e<nedge; ++e) {
-    auto g = edgegrad( e, coord, inpoel, esued, uy, 0 );
+  for (const auto& [edge,surr_elems] : esued) {
+    auto g = edgegrad( coord, inpoel, surr_elems, uy, 0 );
     ensure_equals( "x-gradient of y-linear field incorrect", g[0], 0, pr );
     ensure_equals( "y-gradient of y-linear field incorrect", g[1], 1, pr );
     ensure_equals( "z-gradient of y-linear field incorrect", g[2], 0, pr );
@@ -266,8 +263,8 @@ void Gradients_object::test< 2 >() {
   tk::Fields uz( npoin, 1 );
   for (std::size_t p=0; p<npoin; ++p) uz(p,0,0) = coord[2][p];
   // test gradients
-  for (std::size_t e=0; e<nedge; ++e) {
-    auto g = edgegrad( e, coord, inpoel, esued, uz, 0 );
+  for (const auto& [edge,surr_elems] : esued) {
+    auto g = edgegrad( coord, inpoel, surr_elems, uz, 0 );
     ensure_equals( "x-gradient of z-linear field incorrect", g[0], 0, pr );
     ensure_equals( "y-gradient of z-linear field incorrect", g[1], 0, pr );
     ensure_equals( "z-gradient of z-linear field incorrect", g[2], 1, pr );
@@ -281,16 +278,16 @@ void Gradients_object::test< 2 >() {
      u3(p,2,0) = -0.5*coord[2][p];
   }
   // test gradients
-  for (std::size_t e=0; e<nedge; ++e) {
-    auto gx = edgegrad( e, coord, inpoel, esued, u3, 0 );
+  for (const auto& [edge,surr_elems] : esued) {
+    auto gx = edgegrad( coord, inpoel, surr_elems, u3, 0 );
     ensure_equals( "x-gradient of x-linear vector incorrect", gx[0], 2.0, pr );
     ensure_equals( "y-gradient of x-linear vector incorrect", gx[1], 0, pr );
     ensure_equals( "z-gradient of x-linear vector incorrect", gx[2], 0, pr );
-    auto gy = edgegrad( e, coord, inpoel, esued, u3, 1 );
+    auto gy = edgegrad( coord, inpoel, surr_elems, u3, 1 );
     ensure_equals( "x-gradient of y-linear vector incorrect", gy[0], 0, pr );
     ensure_equals( "y-gradient of y-linear vector incorrect", gy[1], 1.5, pr );
     ensure_equals( "z-gradient of y-linear vector incorrect", gy[2], 0, pr );
-    auto gz = edgegrad( e, coord, inpoel, esued, u3, 2 );
+    auto gz = edgegrad( coord, inpoel, surr_elems, u3, 2 );
     ensure_equals( "x-gradient of z-linear vector incorrect", gz[0], 0, pr );
     ensure_equals( "y-gradient of z-linear vector incorrect", gz[1], 0, pr );
     ensure_equals( "z-gradient of z-linear vector incorrect", gz[2], -0.5, pr );

@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <array>
 #include <unordered_set>
+#include <unordered_map>
 #include <iostream>
 
 #include "Exception.hpp"
@@ -711,7 +712,8 @@ genInedel( const std::vector< std::size_t >& inpoel,
   return inedel;
 }
 
-std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+std::unordered_map< UnsMesh::Edge, std::vector< std::size_t >,
+                    UnsMesh::Hash<2>, UnsMesh::Eq<2> >
 genEsued( const std::vector< std::size_t >& inpoel,
           std::size_t nnpe,
           const std::pair< std::vector< std::size_t >,
@@ -728,28 +730,22 @@ genEsued( const std::vector< std::size_t >& inpoel,
 //!   and { 10, 14, 13, 12 }.
 //! \param[in] nnpe Number of nodes per element (3 or 4)
 //! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
-//! \return Linked lists storing elements surrounding edges
+//! \return Associative container storing elements surrounding edges (value),
+//!    assigned to edge-end points (key)
 //! \warning It is not okay to call this function with an empty container for
 //!   inpoel or esup.first or esup.second or a non-positive number of nodes per
 //!   element; it will throw an exception.
-//! \details The data generated here is stored in a linked list, more precisely,
-//!   two linked arrays (vectors), _esued1_ and _esued2_, where _esued2_ holds
-//!   the indices at which _esued1_ holds the element ids surrounding edges.
-//!   Looping over all elements surrounding edges can then be accomplished by
+//! \details Looping over elements surrounding all edges can be accomplished by
 //!   the following loop:
 //!   \code{.cpp}
-//!     for (std::size_t e=0; e<nedge; ++e)
-//!       for (auto i=esued.second[e]+1; i<=esued.second[e+1]; ++i)
-//!         use element id esued.first[i]
+//!    for (const auto& [edge,surr_elements] : esued) {
+//!      use element edge-end-point ids edge[0] and edge[1]
+//!      for (auto e : surr_elements) {
+//!         use element id e
+//!      }
+//!    }
 //!   \endcode
-//!   To find out the number of edges, _nedge_, the edge connectivity, _inpoed_,
-//!   can be queried:
-//!   \code{.cpp}
-//!     auto esup = tk::genEsup(inpoel,nnpe);
-//!     auto nedge = tk::genInpoed(inpoel,nnpe,esup).size()/2;
-//!   \endcode
-//!   where _nnpe_ is the number of nodes per element (4 for tetrahedra, 3 for
-//!   triangles).
+//!   esued.size() equals the number of edges.
 //! \note At first sight, this function seems to work for elements with more
 //!   vertices than that of tetrahedra. However, that is not the case since the
 //!   algorithm for nnpe > 4 would erronously identify any two combination of
@@ -780,20 +776,18 @@ genEsued( const std::vector< std::size_t >& inpoel,
   std::vector< std::size_t > lpoin( npoin, 0 );
 
   // lambda that returns true if element e contains edge (p < q)
-  auto has = [ &inpoel, nnpe ]( std::size_t e, std::size_t p, std::size_t q )
-  -> bool {
-    std::vector< bool > sp;
+  auto has = [ &inpoel, nnpe ]( std::size_t e, std::size_t p, std::size_t q ) {
+    int sp = 0;
     for (std::size_t n=0; n<nnpe; ++n)
-      if (inpoel[e*nnpe+n] == p || inpoel[e*nnpe+n] == q)
-        sp.push_back( true );
-    if (sp.size() == 2) return true; else return false;
+      if (inpoel[e*nnpe+n] == p || inpoel[e*nnpe+n] == q) ++sp;
+    return sp == 2;
   };
 
   // map to associate edges to unique surrounding element ids
-  std::map< std::size_t,  std::vector< std::size_t > > revolver;
+  std::unordered_map< UnsMesh::Edge, std::vector< std::size_t >,
+                      UnsMesh::Hash<2>, UnsMesh::Eq<2> > esued;
 
   // generate edges and associated vector of unique surrounding element ids
-  std::size_t ed = 0;
   for (std::size_t p=0; p<npoin; ++p)
     for (std::size_t i=esup2[p]+1; i<=esup2[p+1]; ++i )
       for (std::size_t n=0; n<nnpe; ++n) {
@@ -802,26 +796,18 @@ genEsued( const std::vector< std::size_t >& inpoel,
           if (p < q) {  // for edge given point ids p < q
             for (std::size_t j=esup2[p]+1; j<=esup2[p+1]; ++j ) {
               auto e = esup1[j];
-              if (has(e,p,q)) revolver[ed].push_back(e);
+              if (has(e,p,q)) esued[{p,q}].push_back(e);
             }
-            ++ed;
           }
           lpoin[q] = p+1;
         }
       }
 
-  // linked lists (vectors) to store elements surrounding edges
-  std::vector< std::size_t > esued1( 1, 0 ), esued2( 1, 0 );
+  // sort element ids surrounding edges for each edge
+  for (auto& p : esued) std::sort( begin(p.second), end(p.second) );
 
-  // sort and store elements surrounding edges and their indices in vectors
-  for (auto& p : revolver) {
-    std::sort( begin(p.second), end(p.second) );
-    esued2.push_back( esued2.back() + p.second.size() );
-    esued1.insert( end(esued1), begin(p.second), end(p.second) );
-  }
-
-  // Return (move out) linked lists
-  return std::make_pair( std::move(esued1), std::move(esued2) );
+  // Return elements surrounding edges data structure
+  return esued;
 }
 
 std::size_t
@@ -1385,6 +1371,35 @@ normal( const std::array< tk::real, 3 >& x,
   return {{ nx/farea, ny/farea, nz/farea }};
 }
 
+tk::real
+area( const std::array< tk::real, 3 >& x,
+      const std::array< tk::real, 3 >& y,
+      const std::array< tk::real, 3 >& z )
+// *****************************************************************************
+//! Compute the are of a triangle
+//! \param[in] x x-coordinates of the three vertices of the triangle
+//! \param[in] y y-coordinates of the three vertices of the triangle
+//! \param[in] z z-coordinates of the three vertices of the triangle
+//! \return Area
+// *****************************************************************************
+{
+  auto sidea = std::sqrt( (x[1]-x[0])*(x[1]-x[0])
+                        + (y[1]-y[0])*(y[1]-y[0])
+                        + (z[1]-z[0])*(z[1]-z[0]) );
+
+  auto sideb = std::sqrt( (x[2]-x[1])*(x[2]-x[1])
+                        + (y[2]-y[1])*(y[2]-y[1])
+                        + (z[2]-z[1])*(z[2]-z[1]) );
+
+  auto sidec = std::sqrt( (x[0]-x[2])*(x[0]-x[2])
+                        + (y[0]-y[2])*(y[0]-y[2])
+                        + (z[0]-z[2])*(z[0]-z[2]) );
+
+  auto semip = 0.5 * (sidea + sideb + sidec);
+
+  return std::sqrt( semip * (semip-sidea) * (semip-sideb) * (semip-sidec) );
+}
+
 tk::Fields
 geoFaceTri( const std::array< tk::real, 3 >& x,
             const std::array< tk::real, 3 >& y,
@@ -1409,32 +1424,16 @@ geoFaceTri( const std::array< tk::real, 3 >& x,
 {
   tk::Fields geoiFace( 1, 7 );
 
-  auto sidea = std::sqrt( (x[1]-x[0])*(x[1]-x[0])
-                        + (y[1]-y[0])*(y[1]-y[0])
-                        + (z[1]-z[0])*(z[1]-z[0]) );
+  // compute area
+  geoiFace(0,0,0) = area( x, y, z );
 
-  auto sideb = std::sqrt( (x[2]-x[1])*(x[2]-x[1])
-                        + (y[2]-y[1])*(y[2]-y[1])
-                        + (z[2]-z[1])*(z[2]-z[1]) );
-
-  auto sidec = std::sqrt( (x[0]-x[2])*(x[0]-x[2])
-                        + (y[0]-y[2])*(y[0]-y[2])
-                        + (z[0]-z[2])*(z[0]-z[2]) );
-
-  auto semip = 0.5 * (sidea + sideb + sidec);
-
-  geoiFace(0,0,0) = sqrt( semip
-                        * (semip-sidea)
-                        * (semip-sideb)
-                        * (semip-sidec) );
-
-  // get unit normal to face
+  // compute unit normal to face
   auto n = normal( x, y, z );
   geoiFace(0,1,0) = n[0];
   geoiFace(0,2,0) = n[1];
   geoiFace(0,3,0) = n[2];
 
-  // get centroid
+  // compute centroid
   geoiFace(0,4,0) = (x[0]+x[1]+x[2])/3.0;
   geoiFace(0,5,0) = (y[0]+y[1]+y[2])/3.0;
   geoiFace(0,6,0) = (z[0]+z[1]+z[2])/3.0;

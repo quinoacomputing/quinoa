@@ -30,6 +30,11 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
+static constexpr tk::real muscl_eps = 1.0e-9;
+static constexpr tk::real muscl_const = 1.0/3.0;
+static constexpr tk::real muscl_m1 = 1.0 - muscl_const;
+static constexpr tk::real muscl_p1 = 1.0 + muscl_const;
+
 namespace cg {
 
 //! \brief CompFlow used polymorphically with tk::CGPDE
@@ -97,255 +102,133 @@ class CompFlow {
     }
 
     //! Compute right hand side for ALECG
-    //! \param[in] deltat Size of time step
+    //! \param[in] t Physical time
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] psup Points surrounding points
+    //! \param[in] vol Nodal volumes
     //! \param[in] esued Elements surrounding edges
-    //! \param[in] inpoed Edge connectivity
+    //! \param[in] triinpoel Boundary triangle face connecitivity
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    void rhs( tk::real /* t */,
-              tk::real deltat,
+    void rhs( tk::real t,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& psup,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& esued,
-              const std::vector< std::size_t >& inpoed,
+              const std::vector< tk::real >& vol,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                      std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
+                      tk::UnsMesh::Eq<2> >& esued,
+              const std::vector< std::size_t >& triinpoel,
               const tk::Fields& U,
               tk::Fields& R ) const
     {
-      std::cout << "CGCompflow::rhs" << std::endl;
+      Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
+              "vector at recent time step incorrect" );
+      Assert( R.nunk() == coord[0].size(),
+              "Number of unknowns and/or number of components in right-hand "
+              "side vector incorrect" );
 
-      constexpr int num_vars = 7;
-      
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
+      
+      // zero right hand side for all components
+      for (ncomp_t c=0; c<5; ++c) R.fill( c, m_offset, 0.0 );
 
-      //------------------------------------------------------------------------
-      // Update solution quantities
-      //------------------------------------------------------------------------
+      // access pointer to right hand side at component and offset
+      std::array< const tk::real*, 5 > r;
+      for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
 
-      // get the number of nodes in the mesh
-      const auto num_nodes = x.size();
-      std::vector<tk::real> nodal_pressure(num_nodes);
-      std::vector<tk::real> nodal_soundspeed(num_nodes);
+      tk::Fields V( U.nunk(), 3 );
+      V.fill( 0.0 );
 
-      for ( std::size_t n=0; n<num_nodes; ++n ) {
-        
-        // access solution
-        auto rho  = U( n, 0, m_offset ); 
-        auto inv_rho = 1 / rho;
-        auto velx = U( n, 1, m_offset ) * inv_rho; 
-        auto vely = U( n, 2, m_offset ) * inv_rho; 
-        auto velz = U( n, 3, m_offset ) * inv_rho; 
-        auto ener = U( n, 4, m_offset );
-          
-        // get updated pressure and sound speed
-        nodal_pressure[n] = eos_pressure< tag::compflow >
-          ( m_system, rho, velx, vely, velz, ener );
-        nodal_soundspeed[n] =
-          eos_soundspeed< tag::compflow >( m_system, rho, nodal_pressure[n] );
-
+      // compute gradients of primitive variables in points
+      tk::Fields G( U.nunk(), 5*3 );
+      G.fill( 0.0 );
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+        // access node IDs
+        const std::array< std::size_t, 4 >
+          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
+        // compute element Jacobi determinant
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+        const auto J = tk::triple( ba, ca, da );        // J = 6V
+        Assert( J > 0, "Element Jacobian non-positive" );
+        // shape function derivatives, nnode*ndim [4][3]
+        std::array< std::array< tk::real, 3 >, 4 > grad;
+        grad[1] = tk::crossdiv( ca, da, J );
+        grad[2] = tk::crossdiv( da, ba, J );
+        grad[3] = tk::crossdiv( ba, ca, J );
+        for (std::size_t i=0; i<3; ++i)
+          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+        // access conserved variables at element nodes
+        std::array< std::array< tk::real, 4 >, 5 > u;
+        for (ncomp_t c=0; c<5; ++c) u[c] = U.extract( c, m_offset, N );
+        // compute primitive variables
+        for (std::size_t a=0; a<4; ++a)
+          for (std::size_t c=1; c<5; ++c)
+            u[c][a] /= u[0][a];
+        // scatter-add gradients to points
+        auto J24 = J/24.0;
+        for (std::size_t a=0; a<4; ++a)
+          for (std::size_t b=0; b<4; ++b)
+            for (std::size_t j=0; j<3; ++j)
+              for (std::size_t c=0; c<5; ++c)
+                G(N[a],c*3+j,0) += J24 * grad[b][j] * u[c][b] / vol[N[a]];
       }
 
-      //------------------------------------------------------------------------
-      // Compute gradients
-      //------------------------------------------------------------------------
-
-      std::vector< tk::real > dudx_ave;
-      dudx_ave.reserve( 3 * num_vars * num_nodes );
-
-      for ( std::size_t n=0; n<num_nodes; ++n ) {
-
-        // get current solution
-        std::array< tk::real, num_vars > u0;
-        for (ncomp_t c=0; c<5; ++c) u0[c] = U( n, c, m_offset );
-        u0[5] = nodal_pressure[n];
-        u0[6] = nodal_soundspeed[n];
-
-        auto umax = u0;
-        auto umin = u0;
-
-        // coefficients
-        tk::real dxdx{0}, dxdy{0}, dxdz{0}, dydy{0}, dydz{0}, dzdz{0};
-
-        std::array< tk::real, num_vars > dudx = {0, 0, 0, 0, 0, 0, 0};
-        std::array< tk::real, num_vars > dudy = {0, 0, 0, 0, 0, 0, 0};
-        std::array< tk::real, num_vars > dudz = {0, 0, 0, 0, 0, 0, 0};
-
-        for (auto q : tk::Around(psup,n) ) {
-
-          // get neighbor solution
-          std::array< tk::real, num_vars > u1;
-          for (ncomp_t c=0; c<5; ++c) u1[c] = U( q, c, m_offset );
-          u1[5] = nodal_pressure[n];
-          u1[6] = nodal_soundspeed[n];
-          
-          // keep track of max and min
-          for ( std::size_t i=0; i<num_vars; ++i ) {
-            umax[i] = std::max( umax[i], u1[i] );
-            umin[i] = std::min( umin[i], u1[i] );
-          }
-
-          // deltas
-          tk::real dx = x[q] - x[n];
-          tk::real dy = y[q] - y[n];
-          tk::real dz = z[q] - z[n];
-
-          // compute contributions
-          dxdx += dx*dx;
-          dxdy += dx*dy;
-          dxdz += dx*dz;
-          dydy += dy*dy;
-          dydz += dy*dz;
-          dzdz += dz*dz;
-
-          for ( std::size_t i=0; i<num_vars; ++i ){
-            auto du = u1[i] - u0[i];
-            dudx[i] += du * dx;
-            dudy[i] += du * dy;
-            dudz[i] += du * dz;
-          }
-
-        } // neighbor
-
-        // First compute minors
-        auto min1 = dydy*dzdz-dydz*dydz;
-        auto min2 = dxdy*dzdz-dydz*dxdz;
-        auto min3 = dxdy*dydz-dydy*dxdz;
-        // Now determinants
-        auto denom = 1 / (dxdx*min1-dxdy*min2+dxdz*min3);
-
-        for ( std::size_t i=0; i<num_vars; ++i ) {
-          // component 1
-          dudx_ave.emplace_back( (
-              dudx[i] * min1
-            - dxdy*(dudy[i]*dzdz-dydz*dudz[i])
-            + dxdz*(dudy[i]*dydz-dydy*dudz[i])
-          ) * denom );
-          // component 2
-          dudx_ave.emplace_back( (
-              dxdx*(dudy[i]*dzdz-dydz*dudz[i])
-            - dudx[i] * min2
-            + dxdz*(dudz[i]*dxdy-dxdz*dudy[i])
-          ) * denom );
-          // component 3
-          dudx_ave.emplace_back( (
-              dxdx*(dudz[i]*dydy-dydz*dudy[i])
-            - dxdy*(dudz[i]*dxdy-dxdz*dudy[i])
-            + dudx[i] * min3
-          ) * denom );
-        }// vars
-
-
-      } // points
-
- 
-      //------------------------------------------------------------------------
-      // Compute Limited values
-      //------------------------------------------------------------------------
-      
-      constexpr tk::real muscl_eps = 1.e-09;
-      constexpr tk::real muscl_const = 0.3333333;
-      constexpr auto muscl_con_m1 = muscl_const - 1;
-      constexpr auto muscl_con_p1 = muscl_const + 1;
-      
-      // edges to node connectivity
-      auto num_edge = inpoed.size() / 2;
-
-      std::vector< tk::real > edge_unknowns( 2 * num_edge * num_vars );
-
-      for ( std::size_t e=0; e<num_edge; ++e ) {
-        auto p1 = inpoed[2*e];
-        auto p2 = inpoed[2*e + 1];
-
-        // edge vector, doubled since a factor of two is needed
-        std::array< tk::real, 3 > l{ 2. * ( x[p2] - x[p1] ),
-                                     2. * ( y[p2] - y[p1] ),
-                                     2. * ( z[p2] - z[p1] ) };
-
-        for ( std::size_t ivar = 0; ivar<num_vars; ++ivar ) {
-
-          tk::real u1, u2;
-          switch (ivar) {
-            case (5):
-              u1 = nodal_pressure[p1];
-              u2 = nodal_pressure[p2];
-              break;
-            case (6):
-              u1 = nodal_soundspeed[p1];
-              u2 = nodal_soundspeed[p2];
-              break;
-            default:
-              u1 = U( p1, ivar, m_offset );
-              u2 = U( p2, ivar, m_offset );
-          }
-
-          // form delta_2 (u_j - u_i)
-          auto delta_2 = u2 - u1;
-
-          // form delta_1 (u_i - u_i-1) and delta_3 (u_j+1 - u_j)
-          tk::real dot{0};
-          for ( std::size_t i=0; i<3; ++i )
-            dot += dudx_ave[p1*3*num_vars + ivar*3 + i] * l[i];
-          auto delta_1 = dot - delta_2;
-          
-          dot = 0;
-          for ( std::size_t i=0; i<3; ++i )
-            dot += dudx_ave[p2*3*num_vars + ivar*3 + i] * l[i];
-          auto delta_3 = dot - delta_2;
-
-          // form limiters
-          auto r_L = (delta_2 + muscl_eps) / (delta_1 + muscl_eps);
-          auto r_R = (delta_2 + muscl_eps) / (delta_3 + muscl_eps);
-          auto r_L_inv = (delta_1 + muscl_eps) / (delta_2 + muscl_eps);
-          auto r_R_inv = (delta_3 + muscl_eps) / (delta_2 + muscl_eps);
-          auto phi_L = (std::abs(r_L) + r_L) / (std::abs(r_L) + 1.);
-          auto phi_R = (std::abs(r_R) + r_R) / (std::abs(r_R) + 1.);
-          auto phi_L_inv = (std::abs(r_L_inv) + r_L_inv) / (std::abs(r_L_inv) + 1.);
-          auto phi_R_inv = (std::abs(r_R_inv) + r_R_inv) / (std::abs(r_R_inv) + 1.);
-
-          // final form of higher-order unknown
-          edge_unknowns[e*2*num_vars + ivar] = u1 +
-            0.25*(delta_1*muscl_con_m1*phi_L + delta_2*muscl_con_p1*phi_L_inv);
-
-          edge_unknowns[e*2*num_vars + num_vars + ivar] = u2 -
-            0.25*(delta_3*muscl_con_m1*phi_R + delta_2*muscl_con_p1*phi_R_inv);
-          
-        } // var
-
-      }
-      
-      //------------------------------------------------------------------------
-      // Compute RHS
-      //------------------------------------------------------------------------
-      for ( std::size_t ed=0; ed<num_edge; ++ed ) {
-        auto v = inpoed[2*ed];
-        auto w = inpoed[2*ed + 1];
-        std::array< tk::real, 3 > fn{ x[w]-x[v], y[w]-y[v], z[w]-z[v] };
-
-        // Access left and right state of solution
+      // Domain edge integral
+      for (const auto& [edge,surr_elements] : esued) {
+        // access edge-end point node IDs
+        auto p1 = edge[0];
+        auto p2 = edge[1];
+        // edge vector = outward face normal of the dual mesh face
+        std::array< tk::real, 3 > fn{ x[p2]-x[p1], y[p2]-y[p1], z[p2]-z[p1] };
+        // Access primitive variables at edge-end points
         std::array< std::vector< tk::real >, 2 >
-          u{ std::vector< tk::real >( 5 ), std::vector< tk::real >( 5 ) };
-        for (std::size_t c=0; c<5; ++c) {
-          u[0][c] = edge_unknowns[ed*2*num_vars + c];
-          u[1][c] = edge_unknowns[ed*2*num_vars + num_vars + c];
+          ru{ std::vector<tk::real>(5,0.0), std::vector<tk::real>(5,0.0) };
+        for (std::size_t p=0; p<2; ++p) {
+          ru[p][0] = U(edge[p], 0, m_offset);
+          for (std::size_t c=1; c<5; ++c)
+            ru[p][c] = U(edge[p], c, m_offset) / ru[p][0];
         }
 
-        // Compute flux. The signature of flux() should follow
-        // tk::RiemannFluxFn, if possible, so that we can switch Riemann
-        // solvers. Hardcode HLLC for now.
-        auto f = HLLC::flux( fn, u, {{0.0,0.0,0.0}} );
+        // MUSCL reconstruction of edge-end-point primitive variables
+        for (std::size_t c=0; c<5; ++c) {
+          auto delta_2 = ru[1][c] - ru[0][c];
+          std::array< tk::real, 3 >
+             g1{ G(p1,c*3+0,0), G(p1,c*3+1,0), G(p1,c*3+2,0) },
+             g2{ G(p2,c*3+0,0), G(p2,c*3+1,0), G(p2,c*3+2,0) };
+          auto delta_1 = 2.0 * tk::dot(g1,fn) - delta_2;
+          auto delta_3 = 2.0 * tk::dot(g2,fn) - delta_2;
+          // form limiters
+          auto rL = (delta_2 + muscl_eps) / (delta_1 + muscl_eps);
+          auto rR = (delta_2 + muscl_eps) / (delta_3 + muscl_eps);
+          auto rLinv = (delta_1 + muscl_eps) / (delta_2 + muscl_eps);
+          auto rRinv = (delta_3 + muscl_eps) / (delta_2 + muscl_eps);
+          auto phiL = (std::abs(rL) + rL) / (std::abs(rL) + 1.0);
+          auto phiR = (std::abs(rR) + rR) / (std::abs(rR) + 1.0);
+          auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
+          auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
+          // final form of higher-order unknown
+          ru[0][c] += 0.25*(delta_1*muscl_m1*phiL + delta_2*muscl_p1*phi_L_inv);
+          ru[1][c] -= 0.25*(delta_3*muscl_m1*phiR + delta_2*muscl_p1*phi_R_inv);
+        }
 
-        for ( auto e : tk::Around(esued, ed) ) {
+        // Compute conserved variables from primitive reconstructed ones
+        for (std::size_t p=0; p<2; ++p)
+          for (std::size_t c=1; c<5; ++c)
+            ru[p][c] *= ru[p][0];
+
+        // Compute Riemann flux using edge-end point states
+        auto f = HLLC::flux( fn, ru, {{0.0,0.0,0.0}} );
+
+        // scatter-add flux contributions to interior-edge-end points
+        for (auto e : surr_elements) {
           // access node IDs
           const std::array< std::size_t, 4 > N{ inpoel[e*4+0], inpoel[e*4+1],
                                                 inpoel[e*4+2], inpoel[e*4+3] };
-
           // compute element Jacobi determinant
           const std::array< tk::real, 3 >
             ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
@@ -362,19 +245,93 @@ class CompFlow {
           for (std::size_t i=0; i<3; ++i)
             grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
-          // access pointer to right hand side at component and offset
-          std::array< const tk::real*, 5 > r;
-          for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
-
           // sum flux contributions to nodes
-          tk::real d = deltat * J/6.0 / 2.0;
-          for (std::size_t j=0; j<3; ++j)
-            for (std::size_t c=0; c<5; ++c)
-              for (std::size_t a=0; a<4; ++a)
-                for (std::size_t b=0; b<4; ++b)
-                  R.var(r[c],N[a]) += d * (grad[b][j] - grad[a][j]) * f[c];
+          auto J48 = J/48.0;
+          for (const auto& l : tk::lpoed) {
+            auto a = l[0];
+            auto b = l[1];
+            if ((N[a]==p1 && N[b]==p2) || (N[a]==p2 && N[b]==p1)) {
+              for (std::size_t j=0; j<3; ++j) {
+                for (std::size_t c=0; c<5; ++c) {
+                  auto d = J48 * (grad[a][j] - grad[b][j]) * f[c];
+                  R.var(r[c],N[a]) -= d;
+                  R.var(r[c],N[b]) += d;
+                }
+                auto d = 2.0*J48 * (grad[a][j] - grad[b][j]);
+                V(N[a],j,0) -= d;
+                V(N[b],j,0) += d;
+              }
+            }
+          }
         }
       }
+
+      // Test 2*sum_{vw in v} D_i^{vw} = 0 for interior points.
+      std::unordered_set< std::size_t > bp( triinpoel.cbegin(), triinpoel.cend() );
+      //std::cout << "tr: " << triinpoel.size() << ": ";
+      //for (auto b : bp) std::cout << b << ' ';
+      //std::cout << '\n';
+      for (std::size_t p=0; p<coord[0].size(); ++p) {
+        if (bp.find(p) == end(bp))
+          for (std::size_t j=0; j<3; ++j)
+            if (std::abs(V(p,j,m_offset)) > 1.0e-15)
+              std::cout << '!';
+      }
+
+      // Optional source
+      for (std::size_t p=0; p<U.nunk(); ++p) {
+        auto s = Problem::src( m_system, m_ncomp, x[p], y[p], z[p], t );
+        for (std::size_t c=0; c<5; ++c) R.var(r[c],p) += vol[p] * s[c];
+      }
+
+      // Boundary integrals
+      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
+        // access node IDs
+        const std::array< std::size_t, 3 >
+          N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+        // compute face area
+        auto A = tk::area( { x[N[0]], x[N[1]], x[N[2]] },
+                           { y[N[0]], y[N[1]], y[N[2]] },
+                           { z[N[0]], z[N[1]], z[N[2]] } );
+        auto A24 = A/24.0;
+        auto A6 = A/6.0;
+        // compute face normal
+        auto n = tk::normal( { x[N[0]], x[N[1]], x[N[2]] },
+                             { y[N[0]], y[N[1]], y[N[2]] },
+                             { z[N[0]], z[N[1]], z[N[2]] } );
+        // access solution at element nodes
+        std::array< std::array< tk::real, 3 >, 5 > u;
+        for (ncomp_t c=0; c<5; ++c) u[c] = U.extract( c, m_offset, N );
+        // sum boundary integrals to boundary nodes
+        for (std::size_t j=0; j<3; ++j) {
+          for (const auto& l : tk::lpoet) {
+            auto a = l[0];
+            auto b = l[1];
+            for (std::size_t c=0; c<5; ++c) {
+              auto d = A24 * n[j] * (u[c][a] + u[c][b]);
+              R.var(r[c],N[a]) += d;
+              R.var(r[c],N[b]) += d;
+              R.var(r[c],N[a]) += A6 * n[j] * u[c][a];
+            }
+            auto d = 2.0*A24 * n[j];
+            V(N[a],j,0) += d;
+            V(N[b],j,0) += d;
+            d = A6 * n[j];
+            V(N[a],j,0) += d;
+          }
+        }
+      }
+
+      // Test 2*sum_{vw in v} D_i^{vw} + 2*sum_{vw in v} B_i^{vw} + B_i^v = 0
+      // for boundary points.
+      for (std::size_t p=0; p<coord[0].size(); ++p) {
+        if (bp.find(p) != end(bp))
+          for (std::size_t j=0; j<3; ++j)
+            if (std::abs(V(p,j,m_offset)) > 1.0e-15)
+              std::cout << '$';
+      }
+      std::cout << "max(abs(V)): " << tk::maxabs(V) << '\n';
+      //std::cout << "max(abs(R)): " << tk::maxabs(R) << '\n';
     }
 
     //! Compute right hand side for DiagCG (CG-FCT)
@@ -674,7 +631,7 @@ class CompFlow {
 
     //! Set symmetry boundary conditions at nodes
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] bnorm Face normals in boundary points: key global node id,
+    //! \param[in] bnorm Face normals in boundary points: key local node id,
     //!    value: unit normal
     void
     symbc( tk::Fields& U,

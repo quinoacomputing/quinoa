@@ -98,6 +98,9 @@ DiagCG::bnorm( const std::map< int, std::vector< std::size_t > >& bface,
                std::unordered_set< std::size_t >&& symbcnodes )
 // *****************************************************************************
 //  Compute boundary point normals
+//! \param[in] bface Boundary faces side-set information
+//! \param[in] triinpoel Boundary triangle face connecitivity
+//! \param[in] Node ids at which symmetry BCs are set
 // *****************************************************************************
 {
   auto d = Disc();

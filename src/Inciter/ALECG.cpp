@@ -43,26 +43,25 @@ extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 
 //! Runge-Kutta coefficients
-static const std::array< tk::real, 3 > rkcoef{ 0.6, 0.6, 1.0 };
+static const std::array< tk::real, 3 > rkcoef{ 1.0/3.0, 0.5, 1.0 };
 
 } // inciter::
 
 using inciter::ALECG;
 
 ALECG::ALECG( const CProxy_Discretization& disc,
-              const std::map< int, std::vector< std::size_t > >& /* bface */,
+              const std::map< int, std::vector< std::size_t > >& bface,
               const std::map< int, std::vector< std::size_t > >& bnode,
-              const std::vector< std::size_t >& /* triinpoel */ ) :
+              const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_initial( 1 ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
+  m_nnorm( 0 ),
   m_bnode( bnode ),
-  m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
-  m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
-  m_esued( tk::genEsued( Disc()->Inpoel(), 4, m_esup ) ),
-  m_inpoed( tk::genInpoed( Disc()->Inpoel(), 4, m_esup ) ),
+  m_triinpoel( triinpoel ),
+  m_esued(tk::genEsued(Disc()->Inpoel(), 4, tk::genEsup(Disc()->Inpoel(),4))),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
@@ -72,24 +71,168 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_lhsc(),
   m_rhsc(),
   m_diag(),
+  m_bnorm(),
+  m_bnormc(),
   m_stage( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
+//! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 //! [Constructor]
 {
   usesAtSync = true;    // enable migration at AtSync
 
   // Activate SDAG wait for initially computing the left-hand side
+  thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4lhs();
+
+  // Query nodes at which symmetry BCs are specified
+  std::unordered_set< std::size_t > symbcnodes;
+  for (const auto& eq : g_cgpde) eq.symbcnodes( bface, triinpoel, symbcnodes );
+
+  // Compute boundary point normals
+  bnorm( bface, triinpoel, std::move(symbcnodes) );
+}
+//! [Constructor]
+
+void
+ALECG::bnorm( const std::map< int, std::vector< std::size_t > >& bface,
+              const std::vector< std::size_t >& triinpoel,
+              std::unordered_set< std::size_t >&& symbcnodes )
+// *****************************************************************************
+//  Compute boundary point normals
+//! \param[in] bface Boundary faces side-set information
+//! \param[in] triinpoel Boundary triangle face connecitivity
+//! \param[in] Node ids at which symmetry BCs are set
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  const auto& coord = d->Coord();
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // Lambda to compute the inverse distance squared between boundary face
+  // centroid and boundary point. Here p is the global node id and g is the
+  // geometry of the boundary face, see tk::geoFaceTri().
+  auto invdistsq = [&]( const tk::Fields& g, std::size_t p ){
+    return 1.0 / ( (g(0,4,0) - x[p])*(g(0,4,0) - x[p]) +
+                   (g(0,5,0) - y[p])*(g(0,5,0) - y[p]) +
+                   (g(0,6,0) - z[p])*(g(0,6,0) - z[p]) );
+  };
+
+  // Compute boundary point normals on all side sets summing inverse distance
+  // weighted face normals to points. This is only a partial sum at shared
+  // boundary points in parallel.
+  const auto& lid = d->Lid();
+  const auto& gid = d->Gid();
+  for (const auto& [ setid, faceids ] : bface) {
+    for (auto f : faceids) {
+      tk::UnsMesh::Face
+        face{ tk::cref_find( lid, triinpoel[f*3+0] ),
+              tk::cref_find( lid, triinpoel[f*3+1] ),
+              tk::cref_find( lid, triinpoel[f*3+2] ) };
+      std::array< tk::real, 3 > fx{ x[face[0]], x[face[1]], x[face[2]] };
+      std::array< tk::real, 3 > fy{ y[face[0]], y[face[1]], y[face[2]] };
+      std::array< tk::real, 3 > fz{ z[face[0]], z[face[1]], z[face[2]] };
+      auto g = tk::geoFaceTri( fx, fy, fz );
+      for (auto p : face) {
+        auto i = symbcnodes.find( gid[p] );
+        if (i != end(symbcnodes)) {     // only if user set symbc on node
+          tk::real r = invdistsq( g, p );
+          auto& n = m_bnorm[ gid[p] ];  // associate global node id
+          n[0] += r*g(0,1,0);
+          n[1] += r*g(0,2,0);
+          n[2] += r*g(0,3,0);
+          n[3] += r;
+        }
+      }
+    }
+  }
+
+  // Send our nodal normal contributions to neighbor chares
+  if (d->Msum().empty())
+   comnorm_complete();
+  else
+    for (const auto& [ neighborchare, sharednodes ] : d->Msum()) {
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > exp;
+      for (auto i : sharednodes) {      // symmetry BCs may be specified on only
+        auto j = m_bnorm.find(i);       // a subset of chare boundary nodes
+        if (j != end(m_bnorm)) exp[i] = j->second;
+      }
+      thisProxy[ neighborchare ].comnorm( exp );
+    }
+
+  ownnorm_complete();
+}
+
+void
+ALECG::comnorm(
+  const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& innorm )
+// *****************************************************************************
+// Receive boundary point normals on chare-boundaries
+//! \param[in] innorm Incoming partial sums of boundary point normal
+//!   contributions to normals (first 3 components), inverse distance squared
+//!   (4th component)
+// *****************************************************************************
+{
+  // Buffer up inccoming contributions
+  for (const auto& [ p, n ] : innorm) {
+    auto& bnorm = m_bnormc[ p ];
+    bnorm[0] += n[0];
+    bnorm[1] += n[1];
+    bnorm[2] += n[2];
+    bnorm[3] += n[3];
+  }
+
+  if (++m_nnorm == Disc()->Msum().size()) {
+    m_nnorm = 0;
+    comnorm_complete();
+  }
+}
+
+void
+ALECG::normfinal()
+// *****************************************************************************
+//  Finish computing boundary point normals
+// *****************************************************************************
+{
+  // Combine own and communicated contributions to boundary point normals
+  for (auto& [ p, n ] : m_bnormc) {
+    auto j = m_bnorm.find(p);
+    if (j != end(m_bnorm)) {
+      auto& norm = j->second;
+      norm[0] += n[0];
+      norm[1] += n[1];
+      norm[2] += n[2];
+      norm[3] += n[3];
+    }
+  }
+
+  // Divie summed point normals by the sum of inverse distance squared
+  for (auto& [ p, n ] : m_bnorm) {
+    n[0] /= n[3];
+    n[1] /= n[3];
+    n[2] /= n[3];
+    Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
+            std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
+  }
+
+  // Replace global->local ids associated to boundary normals of symbc nodes
+  decltype(m_bnorm) bnorm;
+  for (auto&& [g,n] : m_bnorm) {
+    bnorm[ tk::cref_find( Disc()->Lid(), g ) ] = std::move(n);
+  }
+  m_bnorm = std::move(bnorm);
 
   // Signal the runtime system that the workers have been created
   contribute( sizeof(int), &m_initial, CkReduction::sum_int,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
-//! [Constructor]
 
 void
 ALECG::registerReducers()
@@ -128,6 +271,9 @@ ALECG::setup()
 
   // Set initial conditions for all PDEs
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
+
+  // Apply symmetry boundary conditions on initial conditions
+  //for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields( CkCallback(CkIndex_ALECG::init(), thisProxy[thisIndex]) );
@@ -321,13 +467,12 @@ ALECG::rhs()
   auto d = Disc();
 
   // Compute own portion of right-hand side for all equations
-  for (const auto& eq : g_cgpde) {
-    eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_psup, m_esued,
-            m_inpoed, m_u, m_rhs );
-  }
+  for (const auto& eq : g_cgpde)
+    eq.rhs( d->T(), d->Coord(), d->Inpoel(), d->Vol(), m_esued,
+            m_triinpoel, m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
-  m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), d->Gid(),
+  m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(), d->Coord(),
                    d->Lid(), m_bnode );
 
   // Communicate rhs to other chares on chare-boundary
@@ -394,11 +539,10 @@ ALECG::solve()
 
   // Set Dirichlet BCs for lhs and rhs
   for (const auto& [b,bc] : m_bcdir) {
-    auto lid = tk::cref_find( d->Lid(), b );
     for (ncomp_t c=0; c<ncomp; ++c) {
       if (bc[c].first) {
-        m_lhs( lid, c, 0 ) = 1.0;
-        m_rhs( lid, c, 0 ) = bc[c].second;
+        m_lhs( b, c, 0 ) = 1.0;
+        m_rhs( b, c, 0 ) = bc[c].second;
       }
     }
   }
@@ -407,7 +551,10 @@ ALECG::solve()
   if (m_stage == 0) m_un = m_u;
 
   // Solve sytem
-  m_u = m_un - rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
+  m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
+
+  // Apply symmetry BCs
+  //for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
 
   //! [Continue after solve]
   if (m_stage < 2) {
@@ -499,19 +646,14 @@ ALECG::resizePostAMR(
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, msum );
 
-  // Recompute elements surrounding points
-  m_esup = tk::genEsup( d->Inpoel(), 4 );
-  // Recompute points surrounding points
-  m_psup = tk::genPsup( d->Inpoel(), 4, m_esup );
   // Recompute elements surrounding edges
-  m_esued = tk::genEsued( d->Inpoel(), 4, m_esup );
-  // Recompute edge connectivity
-  m_inpoed = tk::genInpoed( d->Inpoel(), 4, m_esup );
+  m_esued = tk::genEsued( d->Inpoel(), 4, tk::genEsup(d->Inpoel(),4) );
 
   // Resize auxiliary solution vectors
   auto npoin = coord[0].size();
   auto nprop = m_u.nprop();
   m_u.resize( npoin, nprop );
+  m_un.resize( npoin, nprop );
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
 

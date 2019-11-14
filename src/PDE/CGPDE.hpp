@@ -29,6 +29,7 @@
 
 #include "Types.hpp"
 #include "Fields.hpp"
+#include "UnsMesh.hpp"
 
 namespace inciter {
 
@@ -86,17 +87,16 @@ class CGPDE {
     { self->initialize( coord, unk, t ); }
     
     void rhs( tk::real t,
-              tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& psup,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& esued,
-              const std::vector< std::size_t >& inpoed,
+              const std::vector< tk::real >& vol,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                      std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
+                      tk::UnsMesh::Eq<2> >& esued,
+              const std::vector< std::size_t >& triinpoel,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( t, deltat, coord, inpoel, psup, esued, inpoed, U, R ); }
+    { self->rhs( t, coord, inpoel, vol, esued, triinpoel, U, R ); }
 
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
@@ -182,13 +182,12 @@ class CGPDE {
                                tk::Fields&,
                                tk::real ) const = 0;
       virtual void rhs( tk::real,
-                        tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
-                        const std::pair< std::vector< std::size_t >,
-                                         std::vector< std::size_t > >&,
-                        const std::pair< std::vector< std::size_t >,
-                                         std::vector< std::size_t > >&,
+                        const std::vector< tk::real >&,
+                        const std::unordered_map< tk::UnsMesh::Edge,
+                          std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
+                          tk::UnsMesh::Eq<2> >&,
                         const std::vector< std::size_t >&,
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
@@ -239,17 +238,16 @@ class CGPDE {
                        tk::real t )
       const override { data.initialize( coord, unk, t ); }
       void rhs( tk::real t,
-                tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
-                const std::pair< std::vector< std::size_t >,
-                                 std::vector< std::size_t > >& psup,
-                const std::pair< std::vector< std::size_t >,
-                                 std::vector< std::size_t > >& esued,
-                const std::vector< std::size_t >& inpoed,
+                const std::vector< tk::real >& vol,
+                const std::unordered_map< tk::UnsMesh::Edge,
+                        std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
+                        tk::UnsMesh::Eq<2> >& esued,
+                const std::vector< std::size_t >& triinpoel,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( t, deltat, coord, inpoel, psup, esued, inpoed, U, R ); }
+      { data.rhs( t, coord, inpoel, vol, esued, triinpoel, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,

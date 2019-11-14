@@ -94,18 +94,17 @@ class Transport {
     
     //! Compute right hand side for ALECG
     void rhs( tk::real,
-              tk::real /* deltat */,
               const std::array< std::vector< tk::real >, 3 >& /* coord */,
               const std::vector< std::size_t >& /* inpoel */,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& /* psup */,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& /* esued */,
-              const std::vector< std::size_t >& /* inpoed */,
+              const std::vector< tk::real >& /* vol */,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                      std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
+                      tk::UnsMesh::Eq<2> >& /* esued */,
+              const std::vector< std::size_t >& /* triinpoel */,
               const tk::Fields& /* U */,
               tk::Fields& /* R */ ) const
     {
-      std::cout << "(ALE)CGTransport::rhs not implemented" << std::endl;
+      std::cout << "(ALE)CGTransport::rhs() not implemented" << std::endl;
     }
       
     //! Compute right hand side for DiagCG (CG-FCT)
