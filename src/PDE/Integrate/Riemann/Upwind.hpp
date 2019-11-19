@@ -16,6 +16,7 @@
 
 #include "Types.hpp"
 #include "Fields.hpp"
+#include "Vector.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
 
@@ -42,7 +43,7 @@ struct Upwind {
       for(std::size_t c=0; c<v.size(); ++c)
       {
         // wave speed based on prescribed velocity
-        auto swave = v[c][0]*fn[0] + v[c][1]*fn[1] + v[c][2]*fn[2];
+        auto swave = tk::dot( v[c], fn );
       
         // upwinding
         tk::real splus  = 0.5 * (swave + fabs(swave));
