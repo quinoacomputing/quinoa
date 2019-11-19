@@ -118,7 +118,7 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
-    //! Receive chare-boundary recpnstructed data from neighboring chares
+    //! Receive chare-boundary reconstructed data from neighboring chares
     void comreco( int fromch,
                   const std::vector< std::size_t >& tetid,
                   const std::vector< std::vector< tk::real > >& u,

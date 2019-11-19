@@ -1046,13 +1046,13 @@ DG::next()
   if (m_ghostData.empty())
     comsol_complete();
   else
-    for(const auto& n : m_ghostData) {
-      std::vector< std::size_t > tetid( n.second.size() );
-      std::vector< std::vector< tk::real > > u( n.second.size() ),
-                                             prim( n.second.size() );
+    for(const auto& [tet, ghostdata] : m_ghostData) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::vector< tk::real > > u( ghostdata.size() ),
+                                             prim( ghostdata.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
-      for(const auto& i : n.second) {
+      for(const auto& i : ghostdata) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
         tetid[j] = i.first;
         u[j] = m_u[i.first];
@@ -1060,7 +1060,7 @@ DG::next()
         if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         ++j;
       }
-      thisProxy[ n.first ].comsol( thisIndex, m_stage, tetid, u, prim, ndof );
+      thisProxy[ tet ].comsol( thisIndex, m_stage, tetid, u, prim, ndof );
     }
 
   ownsol_complete();
@@ -1109,8 +1109,9 @@ DG::comsol( int fromch,
     }
   }
 
-  // if we have received all solution ghost contributions from those chares we
-  // communicate along chare-boundary faces with, solve the system
+  // if we have received all solution ghost contributions from neighboring
+  // chares (chares we communicate along chare-boundary faces with), and
+  // contributed our solution to these neighbors, proceed to reconstructions
   if (++m_nsol == m_ghostData.size()) {
     m_nsol = 0;
     comsol_complete();
@@ -1223,13 +1224,13 @@ DG::reco()
   if (m_ghostData.empty())
     comreco_complete();
   else
-    for(const auto& n : m_ghostData) {
-      std::vector< std::size_t > tetid( n.second.size() );
-      std::vector< std::vector< tk::real > > u( n.second.size() ),
-                                             prim( n.second.size() );
+    for(const auto& [tet, ghostdata] : m_ghostData) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::vector< tk::real > > u( ghostdata.size() ),
+                                             prim( ghostdata.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
-      for(const auto& i : n.second) {
+      for(const auto& i : ghostdata) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending reconstructed ghost "
           "data" );
         tetid[j] = i.first;
@@ -1238,7 +1239,7 @@ DG::reco()
         if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         ++j;
       }
-      thisProxy[ n.first ].comreco( thisIndex, tetid, u, prim, ndof );
+      thisProxy[ tet ].comreco( thisIndex, tetid, u, prim, ndof );
     }
 
   ownreco_complete();
@@ -1286,8 +1287,9 @@ DG::comreco( int fromch,
     }
   }
 
-  // if we have received all solution ghost contributions from those chares we
-  // communicate along chare-boundary faces with, proceed to limiting
+  // if we have received all solution ghost contributions from neighboring
+  // chares (chares we communicate along chare-boundary faces with), and
+  // contributed our solution to these neighbors, proceed to limiting
   if (++m_nreco == m_ghostData.size()) {
     m_nreco = 0;
     comreco_complete();
@@ -1303,19 +1305,19 @@ DG::lim()
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
-  // Combine own and communicated contributions of unlimited solution and
-  // degrees of freedom in cells (if p-adaptive)
-  for (const auto& b : m_bid) {
-    Assert( m_uc[1][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
-    Assert( m_pc[1][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+  // Combine own and communicated contributions of unlimited solution, and
+  // if a p-adaptive algorithm is used, degrees of freedom in cells
+  for (const auto& [boundary, localtet] : m_bid) {
+    Assert( m_uc[1][localtet].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[1][localtet].size() == m_p.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c,0) = m_uc[1][b.second][c];
+      m_u(boundary,c,0) = m_uc[1][localtet][c];
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(b.first,c,0) = m_pc[1][b.second][c];
+      m_p(boundary,c,0) = m_pc[1][localtet][c];
     }
     if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[1][ b.second ];
+      m_ndof[ boundary ] = m_ndofc[1][ localtet ];
     }
   }
 
@@ -1332,13 +1334,13 @@ DG::lim()
   if (m_ghostData.empty())
     comlim_complete();
   else
-    for(const auto& n : m_ghostData) {
-      std::vector< std::size_t > tetid( n.second.size() );
-      std::vector< std::vector< tk::real > > u( n.second.size() ),
-                                             prim( n.second.size() );
+    for(const auto& [tet, ghostdata] : m_ghostData) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::vector< tk::real > > u( ghostdata.size() ),
+                                             prim( ghostdata.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
-      for(const auto& i : n.second) {
+      for(const auto& i : ghostdata) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
         tetid[j] = i.first;
         u[j] = m_u[i.first];
@@ -1346,7 +1348,7 @@ DG::lim()
         if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         ++j;
       }
-      thisProxy[ n.first ].comlim( thisIndex, tetid, u, prim, ndof );
+      thisProxy[ tet ].comlim( thisIndex, tetid, u, prim, ndof );
     }
 
   ownlim_complete();
@@ -1425,8 +1427,9 @@ DG::comlim( int fromch,
     }
   }
 
-  // if we have received all solution ghost contributions from those chares we
-  // communicate along chare-boundary faces with, solve the system
+  // if we have received all solution ghost contributions from neighboring
+  // chares (chares we communicate along chare-boundary faces with), and
+  // contributed our solution to these neighbors, proceed to limiting
   if (++m_nlim == m_ghostData.size()) {
     m_nlim = 0;
     comlim_complete();

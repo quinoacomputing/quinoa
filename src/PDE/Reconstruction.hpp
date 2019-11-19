@@ -84,7 +84,6 @@ solveLeastSq_P0P1( ncomp_t ncomp,
                    const std::size_t rdof,
                    const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
                    const std::vector< std::vector< std::array< real, 3 > > >& rhs,
-                   std::size_t nelem,
                    Fields& W );
 
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs

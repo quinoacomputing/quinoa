@@ -270,8 +270,8 @@ class MultiMat {
       }
 
       // 3. solve 3x3 least-squares system
-      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhsu_ls, nelem, U );
-      tk::solveLeastSq_P0P1( nprim(), m_offset, rdof, lhs_ls, rhsp_ls, nelem, P );
+      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhsu_ls, U );
+      tk::solveLeastSq_P0P1( nprim(), m_offset, rdof, lhs_ls, rhsp_ls, P );
 
       // 4. transform reconstructed derivatives to Dubiner dofs
       tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );

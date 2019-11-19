@@ -352,7 +352,6 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
   const std::size_t rdof,
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
-  std::size_t nelem,
   Fields& W )
 // *****************************************************************************
 //  Solve the 3x3 linear system for least-squares reconstruction
@@ -361,7 +360,6 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] lhs LHS reconstruction matrix
 //! \param[in] rhs RHS reconstruction vector
-//! \param[in] nelem Total number of elements
 //! \param[in,out] W Solution vector to be reconstructed at recent time step
 //! \details Solves the 3x3 linear system for each element, individually. For
 //!   systems that require reconstructions of primitive quantities, this should
@@ -369,6 +367,8 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
 //!   with 'W' as P (primitive).
 // *****************************************************************************
 {
+  auto nelem = lhs.size();
+
   for (std::size_t e=0; e<nelem; ++e)
   {
     for (ncomp_t c=0; c<ncomp; ++c)

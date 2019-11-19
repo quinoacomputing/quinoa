@@ -42,10 +42,10 @@ WENO_P1( const std::vector< int >& esuel,
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto cweight = inciter::g_inputdeck.get< tag::discr, tag::cweight >();
   auto nelem = esuel.size()/4;
-  std::array< std::vector< tk::real >, 3 > limU;
-  limU[0].resize( nelem );
-  limU[1].resize( nelem );
-  limU[2].resize( nelem );
+  std::array< std::vector< tk::real >, 3 >
+    limU {{ std::vector< tk::real >(nelem),
+            std::vector< tk::real >(nelem),
+            std::vector< tk::real >(nelem) }};
 
   std::size_t ncomp = U.nprop()/rdof;
 
@@ -87,10 +87,10 @@ WENOMultiMat_P1( const std::vector< int >& esuel,
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto cweight = inciter::g_inputdeck.get< tag::discr, tag::cweight >();
   auto nelem = esuel.size()/4;
-  std::array< std::vector< tk::real >, 3 > limU;
-  limU[0].resize( nelem );
-  limU[1].resize( nelem );
-  limU[2].resize( nelem );
+  std::array< std::vector< tk::real >, 3 >
+    limU {{ std::vector< tk::real >(nelem),
+            std::vector< tk::real >(nelem),
+            std::vector< tk::real >(nelem) }};
 
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;

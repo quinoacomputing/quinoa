@@ -195,7 +195,7 @@ class CompFlow {
           b.first, fd, geoFace, geoElem, t, b.second, U, rhs_ls );
 
       // 3. solve 3x3 least-squares system
-      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, nelem, U );
+      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
 
       // 4. transform reconstructed derivatives to Dubiner dofs
       tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
