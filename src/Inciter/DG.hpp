@@ -118,6 +118,13 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
+    //! Receive chare-boundary reconstructed data from neighboring chares
+    void comreco( int fromch,
+                  const std::vector< std::size_t >& tetid,
+                  const std::vector< std::vector< tk::real > >& u,
+                  const std::vector< std::vector< tk::real > >& prim,
+                  const std::vector< std::size_t >& ndof );
+
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
                  std::size_t fromstage,
@@ -148,9 +155,6 @@ class DG : public CBase_DG {
     //! Compute left hand side
     void lhs();
 
-    //! Compute limiter function
-    void lim();
-
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
     void solution( tk::Fields& u ) const { u = m_u; }
@@ -175,6 +179,7 @@ class DG : public CBase_DG {
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
+      p | m_nreco;
       p | m_fd;
       p | m_u;
       p | m_un;
@@ -235,6 +240,8 @@ class DG : public CBase_DG {
     std::size_t m_ninitsol;
     //! Counter signaling that we have received all our limiter function ghost data
     std::size_t m_nlim;
+    //! Counter signaling that we have received all our reconstructed ghost data
+    std::size_t m_nreco;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
@@ -293,12 +300,12 @@ class DG : public CBase_DG {
     //! Map local ghost tet ids (value) and zero-based boundary ids (key)
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Solution receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 2 > m_uc;
+    std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 2 > m_pc;
+    std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
-    std::array< std::vector< std::size_t >, 2 > m_ndofc;
+    std::array< std::vector< std::size_t >, 3 > m_ndofc;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
@@ -358,6 +365,12 @@ class DG : public CBase_DG {
 
     //! Output mesh-based fields to file
     void writeFields( CkCallback c ) const;
+
+    //! Compute solution reconstructions
+    void reco();
+
+    //! Compute limiter function
+    void lim();
 
     //! Compute time step size
     void dt();

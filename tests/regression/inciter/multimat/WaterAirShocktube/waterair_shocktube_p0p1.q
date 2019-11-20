@@ -7,7 +7,7 @@ title "Water-air shock-tube"
 inciter
 
   nstep 25
-  cfl 0.25
+  dt 1.0e-8
   ttyi 10     # TTY output interval
   scheme p0p1
   limiter superbeep1
@@ -48,7 +48,7 @@ inciter
   end
 
   plotvar
-    interval 5
+    interval 25
   end
 
 end
