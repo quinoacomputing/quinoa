@@ -123,7 +123,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
       get< tag::benchmark >() = false; // No benchmark mode by default
       get< tag::feedback >() = false; // No detailed feedback by default
       get< tag::lbfreq >() = 1; // Load balancing every time-step by default
-      get< tag::rsfreq >() = 100;// Chkpt/restart after this many time steps
+      get< tag::rsfreq >() = 1000;// Chkpt/restart after this many time steps
       get< tag::trace >() = true; // Output call and stack trace by default
       get< tag::version >() = false; // Do not display version info by default
       get< tag::license >() = false; // Do not display license info by default

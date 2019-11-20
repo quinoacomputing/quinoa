@@ -882,12 +882,12 @@ Transporter::inthead()
   "       ETE - estimated time elapsed (h:m:s)\n"
   "       ETA - estimated time for accomplishment (h:m:s)\n"
   "       EGT - estimated grind time (ms/status)\n"
-  "       out - output-saved flags\n"
+  "       flg - status flags, legend:\n"
   "             f - field\n"
   "             d - diagnostics\n"
   "             h - h-refinement\n"
   "             l - load balancing\n"
-  "             r - checkpoint/restart\n",
+  "             r - checkpoint\n",
   "\n      it             t            dt        ETE        ETA        EGT  out\n"
     " -------------------------------------------------------------------------\n" );
 }
