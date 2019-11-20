@@ -29,6 +29,14 @@ WENO_P1( const std::vector< int >& esuel,
          inciter::ncomp_t offset,
          tk::Fields& U );
 
+//! Weighted Essentially Non-Oscillatory (WENO) limiter for multi-material DGP1
+void
+WENOMultiMat_P1( const std::vector< int >& esuel,
+                 inciter::ncomp_t offset,
+                 tk::Fields& U,
+                 tk::Fields& P,
+                 std::size_t nmat );
+
 //! Superbee limiter for DGP1
 void
 Superbee_P1( const std::vector< int >& esuel,
@@ -36,8 +44,44 @@ Superbee_P1( const std::vector< int >& esuel,
              const std::vector< std::size_t >& ndofel,
              inciter::ncomp_t offset,
              const tk::UnsMesh::Coords& coord,
-             tk::Fields& U,
-             std::size_t nmat=1 );
+             tk::Fields& U );
+
+//! Superbee limiter for multi-material DGP1
+void
+SuperbeeMultiMat_P1(
+  const std::vector< int >& esuel,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  inciter::ncomp_t offset,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U,
+  tk::Fields& P,
+  std::size_t nmat );
+
+//! WENO limiter function calculation for P1 dofs
+void
+WENOFunction( const tk::Fields& U,
+              const std::vector< int >& esuel,
+              std::size_t e,
+              inciter::ncomp_t c,
+              std::size_t rdof,
+              inciter::ncomp_t offset,
+              tk::real cweight,
+              std::array< std::vector< tk::real >, 3 >& limU );
+
+//! Superbee limiter function calculation for P1 dofs
+std::vector< tk::real >
+SuperbeeFunction( const tk::Fields& U,
+                  const std::vector< int >& esuel,
+                  const std::vector< std::size_t >& inpoel,
+                  const tk::UnsMesh::Coords& coord,
+                  std::size_t e,
+                  std::size_t ndof,
+                  std::size_t rdof,
+                  std::size_t dof_el,
+                  inciter::ncomp_t offset,
+                  inciter:: ncomp_t ncomp,
+                  tk::real beta_lim );
 
 //! Consistent limiter modifications for P1 dofs
 void consistentMultiMatLimiting_P1( std::size_t nmat,
@@ -45,7 +89,9 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
                                     std::size_t rdof,
                                     std::size_t e,
                                     tk::Fields& U,
-                                    std::vector< tk::real >& phi );
+                                    tk::Fields& P,
+                                    std::vector< tk::real >& phic,
+                                    std::vector< tk::real >& phip );
 
 } // inciter::
 
