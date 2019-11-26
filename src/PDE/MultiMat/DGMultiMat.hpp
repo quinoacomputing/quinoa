@@ -624,6 +624,19 @@ class MultiMat {
         mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
       }
 
+      tk::real dgp = 0.0;
+      if (ndof == 4)
+      {
+        dgp = 1.0;
+      }
+      else if (ndof == 10)
+      {
+        dgp = 2.0;
+      }
+
+      // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
+      // where p is the order of the DG polynomial by linear stability theory.
+      mindt /= (2.0*dgp + 1.0);
       return mindt;
     }
 
