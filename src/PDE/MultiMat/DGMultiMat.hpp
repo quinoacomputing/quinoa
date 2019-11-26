@@ -188,6 +188,100 @@ class MultiMat {
       }
     }
 
+    //! Clean up the state of trace materials for this PDE system
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in,out] prim Array of primitives
+    //! \param[in] nielem Number of internal elements
+    //! \details This function cleans up the state of materials present in trace
+    //!   quantities in each cell. Specifically, the state of materials with
+    //!   very low volume-fractions in a cell is replaced by the state of the
+    //!   material which is present in the largest quantity in that cell.
+    void cleanTraceMaterial( const tk::Fields& geoElem,
+                             tk::Fields& unk,
+                             tk::Fields& prim,
+                             std::size_t nielem ) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
+      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
+      Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) == 1, "High-order "
+              "discretizations not set up for multimat cleanTraceMaterial()" );
+
+      auto al_eps = 1.0e-14;
+
+      for (std::size_t e=0; e<nielem; ++e)
+      {
+        // find material in largest quantity
+        auto almax = 0.0;
+        std::size_t kmax = 0;
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          auto al = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
+          if (al > almax)
+          {
+            almax = al;
+            kmax = k;
+          }
+        }
+
+        auto u = prim(e, velocityDofIdx(nmat, 0, rdof, 0), m_offset);
+        auto v = prim(e, velocityDofIdx(nmat, 1, rdof, 0), m_offset);
+        auto w = prim(e, velocityDofIdx(nmat, 2, rdof, 0), m_offset);
+        auto pmax = prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset)/almax;
+        auto tmax = eos_temperature< tag::multimat >(m_system,
+          unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
+          unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset), kmax);
+
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) < al_eps)
+          {
+            auto rhomat = eos_density< tag::multimat >(m_system, pmax, tmax, k);
+            auto rhoEmat = eos_totalenergy< tag::multimat >(m_system, rhomat,
+              u, v, w, pmax, k);
+
+            // clean conserved quantities
+            unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) = al_eps;
+            unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) = al_eps*rhomat;
+            unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = al_eps*rhoEmat;
+
+            // clean primitive quantities
+            prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = al_eps*pmax;
+          }
+
+          // check for unphysical state
+          auto arho = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset);
+          auto apr = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset);
+
+          // lambda for screen outputs
+          auto screenout = [&]()
+          {
+            std::cout << "Element centroid: " << geoElem(e,1,0) << ", "
+              << geoElem(e,2,0) << ", " << geoElem(e,3,0) << std::endl;
+            std::cout << "Material-id:      " << k << std::endl;
+            std::cout << "Partial density:  " << arho << std::endl;
+            std::cout << "Partial pressure: " << apr << std::endl;
+            std::cout << "Velocity:         " << u << ", " << v << ", " << w
+              << std::endl;
+          };
+
+          if (arho < 0.0)
+          {
+            screenout();
+            Throw("Negative partial density.");
+          }
+        }
+      }
+    }
+
     //! Reconstruct second-order solution from first-order
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
@@ -467,11 +561,16 @@ class MultiMat {
       // get quadrature point weights and coordinates for tetrahedron
       tk::GaussQuadratureTet( ng, coordgp, wgp );
 
-      auto v_char = 0.0;
+      tk::real dt_char = std::numeric_limits< tk::real >::max();
+      std::array< tk::real, 2 > v_char = {{0.0, 0.0}};
+      std::array< tk::real, 4 > state = {{0.0, 0.0}};
+      std::array< std::size_t, 2 > idx = {{0, 0}};
 
       // compute maximum characteristic speed for all elements
       for (std::size_t e=0; e<nielem; ++e)
       {
+        std::vector< tk::real > ugp(m_ncomp, 0.0);
+        std::vector< tk::real > pgp(nprim(), 0.0);
         v_e = 0.0;
 
         // Gaussian quadrature
@@ -484,9 +583,9 @@ class MultiMat {
           auto wt = wgp[igp];
 
           // get conserved quantities
-          auto ugp = eval_state( m_ncomp, m_offset, rdof, ndof, e, U, B_e);
+          ugp = eval_state( m_ncomp, m_offset, rdof, ndof, e, U, B_e);
           // get primitive quantities
-          auto pgp = eval_state( nprim(), m_offset, rdof, ndof, e, P, B_e);
+          pgp = eval_state( nprim(), m_offset, rdof, ndof, e, P, B_e);
 
           // advection velocity
           u = pgp[velocityIdx(nmat, 0)];
@@ -499,28 +598,41 @@ class MultiMat {
           a = 0.0;
           for (std::size_t k=0; k<nmat; ++k)
           {
-            if (ugp[volfracIdx(nmat, k)] > 1.0e-10) {
-              a = std::max( a, eos_soundspeed< tag::multimat >( 0,
+            if (ugp[volfracIdx(nmat, k)] > 1.0e-08) {
+              auto alocal = eos_soundspeed< tag::multimat >( 0,
                 ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-                ugp[volfracIdx(nmat, k)], k ) );
+                ugp[volfracIdx(nmat, k)], k );
+
+              if (alocal > a) idx[0] = k;
+
+              a = std::max( a, alocal );
             }
           }
 
           v_e += wt * (vmag + a);
+          v_char[1] = std::max(v_char[1], a);
         }
 
-        v_char = std::max( v_char, v_e );
+        if (v_e > v_char[0])
+        {
+          state[0] = ugp[volfracIdx(nmat, idx[0])];
+          state[1] = ugp[densityIdx(nmat, idx[0])];
+          state[2] = pgp[pressureIdx(nmat, idx[0])];
+          state[3] = pgp[pressureIdx(nmat, 0)] + pgp[pressureIdx(nmat, 1)];
+        }
+
+        v_char[0] = std::max(v_char[0], v_e);
+        dt_char = std::min( dt_char, std::cbrt(geoElem(e,0,0))/v_e );
       }
 
-      tk::real mindt = std::numeric_limits< tk::real >::max();
+      //std::cout << std::endl;
+      //std::cout << "v_char: " << v_char[0] << "  " << v_char[1] << std::endl;
+      //std::cout << "mat state: " << idx[0] << "  "
+      //  << state[0] << "  " << state[1] << "  " << state[2] << "  " << state[3]
+      //  << std::endl;
+      //std::cout << std::endl;
 
-      // compute allowable dt
-      for (std::size_t e=0; e<nielem; ++e)
-      {
-        mindt = std::min( mindt, std::cbrt(geoElem(e,0,0))/v_char );
-      }
-
-      return mindt;
+      return dt_char;
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.

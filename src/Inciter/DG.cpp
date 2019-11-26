@@ -1501,6 +1501,8 @@ DG::dt()
       // where p is the order of the DG polynomial by linear stability theory.
       mindt *= g_inputdeck.get< tag::discr, tag::cfl >() / (2.0*dgp + 1.0);
 
+      if (d->It()<=10) mindt *= static_cast<double>(d->It()+1) * 0.01;
+
     }
   }
   else
@@ -1586,7 +1588,10 @@ DG::solve( tk::real newdt )
 
   // Update primitives based on the evolved solution
   for (const auto& eq : g_dgpde)
+  {
     eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
+    eq.cleanTraceMaterial( m_geoElem, m_u, m_p, m_fd.Esuel().size()/4 );
+  }
 
   if (m_stage < 2) {
 

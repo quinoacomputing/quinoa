@@ -134,6 +134,14 @@ class Transport {
                            tk::Fields&,
                            std::size_t ) const {}
 
+    //! Clean up the state of trace materials for this PDE system
+    //! \details This function cleans up the state of materials present in trace
+    //!   quantities in each cell. This is currently unused for transport.
+    void cleanTraceMaterial( const tk::Fields&,
+                             tk::Fields&,
+                             tk::Fields&,
+                             std::size_t ) const {}
+
     //! Reconstruct second-order solution from first-order
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array

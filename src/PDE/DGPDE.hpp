@@ -103,6 +103,13 @@ class DGPDE {
                            std::size_t nielem ) const
     { self->updatePrimitives( unk, prim, nielem ); }
 
+    //! Public interface to cleaning up trace materials for the diff eq
+    void cleanTraceMaterial( const tk::Fields& geoElem,
+                             tk::Fields& unk,
+                             tk::Fields& prim,
+                             std::size_t nielem ) const
+    { self->cleanTraceMaterial( geoElem, unk, prim, nielem ); }
+
     //! Public interface to reconstructing the second-order solution
     void reconstruct( tk::real t,
                       const tk::Fields& geoFace,
@@ -216,6 +223,10 @@ class DGPDE {
       virtual void updatePrimitives( const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t ) const = 0;
+      virtual void cleanTraceMaterial( const tk::Fields&,
+                                       tk::Fields&,
+                                       tk::Fields&,
+                                       std::size_t ) const = 0;
       virtual void reconstruct( tk::real,
                                 const tk::Fields&,
                                 const tk::Fields&,
@@ -289,6 +300,11 @@ class DGPDE {
                              tk::Fields& prim,
                              std::size_t nielem )
       const override { data.updatePrimitives( unk, prim, nielem ); }
+      void cleanTraceMaterial( const tk::Fields& geoElem,
+                               tk::Fields& unk,
+                               tk::Fields& prim,
+                               std::size_t nielem )
+      const override { data.cleanTraceMaterial( geoElem, unk, prim, nielem ); }
       void reconstruct( tk::real t,
                         const tk::Fields& geoFace,
                         const tk::Fields& geoElem,
