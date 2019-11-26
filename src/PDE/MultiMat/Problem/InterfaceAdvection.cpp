@@ -16,6 +16,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "FieldOutput.hpp"
 
 //namespace inciter {
 //
@@ -181,22 +182,7 @@ MultiMatProblemInterfaceAdvection::fieldNames( ncomp_t )
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
 
-  std::vector< std::string > n;
-
-  for (std::size_t k=0; k<nmat; ++k)
-    n.push_back( "volfrac"+std::to_string(k+1)+"_numerical" );
-  n.push_back( "density_numerical" );
-  n.push_back( "x-velocity_numerical" );
-  n.push_back( "y-velocity_numerical" );
-  n.push_back( "z-velocity_numerical" );
-  n.push_back( "pressure_numerical" );
-  n.push_back( "total_energy_density_numerical" );
-  //n.push_back( "volfrac1_analytical" );
-  //n.push_back( "volfrac2_analytical" );
-  //n.push_back( "pressure_analytical" );
-  //n.push_back( "total_energy_density_analytical" );
-
-  return n;
+  return MultiMatFieldNames(nmat);
 }
 
 std::vector< std::vector< tk::real > >
@@ -221,81 +207,15 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  // number of degree of freedom
+  // number of degrees of freedom
   const std::size_t rdof =
     g_inputdeck.get< tag::discr, tag::rdof >();
 
-  //// ratio of specific heats
-  //tk::real g =
-  //  g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
-
+  // number of materials
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
-  std::vector< std::vector< tk::real > > out;
-  std::vector< std::vector< tk::real > > al, ar, ae;
-
-  for (std::size_t k=0; k<nmat; ++k)
-  {
-    al.push_back( U.extract( volfracDofIdx(nmat, k, rdof, 0), offset ) );
-    ar.push_back( U.extract( densityDofIdx(nmat, k, rdof, 0), offset ) );
-    ae.push_back( U.extract( energyDofIdx(nmat, k, rdof, 0), offset ) );
-  }
-  const auto ru  = U.extract( momentumDofIdx(nmat, 0, rdof, 0), offset );
-  const auto rv  = U.extract( momentumDofIdx(nmat, 1, rdof, 0), offset );
-  const auto rw  = U.extract( momentumDofIdx(nmat, 2, rdof, 0), offset );
-
-  //// mesh node coordinates
-  //const auto& x = coord[0];
-  //const auto& y = coord[1];
-  //const auto& z = coord[2];
-
-  // material volume-fractions
-  for (std::size_t k=0; k<nmat; ++k)
-    out.push_back( al[k] );
-
-  // bulk density
-  std::vector< tk::real > r( ru.size(), 0.0 );
-  for (std::size_t i=0; i<r.size(); ++i) {
-    for (std::size_t k=0; k<nmat; ++k)
-      r[i] += ar[k][i];
-  }
-  out.push_back( r );
-
-  // velocity components
-  std::vector< tk::real > u = ru;
-  std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( u );
-
-  std::vector< tk::real > v = rv;
-  std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( v );
-
-  std::vector< tk::real > w = rw;
-  std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( w );
-
-  // bulk pressure
-  std::vector< tk::real > P( r.size(), 0.0 );
-  for (std::size_t i=0; i<P.size(); ++i) {
-    for (std::size_t k=0; k<nmat; ++k)
-      P[i] += eos_pressure< eq >( system, ar[k][i], u[i], v[i], w[i],
-                                  ae[k][i], al[k][i], k );
-  }
-  out.push_back( P );
-
-  // bulk total energy density
-  std::vector< tk::real > E( r.size(), 0.0 );
-  for (std::size_t i=0; i<E.size(); ++i) {
-    for (std::size_t k=0; k<nmat; ++k)
-      E[i] += ae[k][i];
-  }
-  out.push_back( E );
-
-  return out;
+  return MultiMatFieldOutput(system, nmat, offset, rdof, U);
 }
 
 std::vector< std::string >
