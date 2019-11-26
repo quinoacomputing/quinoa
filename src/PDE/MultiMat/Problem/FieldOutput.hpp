@@ -14,11 +14,8 @@
 #define FieldOutput_h
 
 #include "Data.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
