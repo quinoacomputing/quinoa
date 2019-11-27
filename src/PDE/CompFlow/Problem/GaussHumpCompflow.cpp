@@ -118,6 +118,10 @@ CompFlowProblemGaussHump::side( std::unordered_set< int >& conf ) const
 {
   using tag::param;
 
+  for (const auto& s : g_inputdeck.get< param, eq, tag::bcsym >())
+    for (const auto& i : s)
+      conf.insert( std::stoi(i) );
+
   for (const auto& s : g_inputdeck.get< param, eq, tag::bcinlet >())
     for (const auto& i : s)
       conf.insert( std::stoi(i) );
