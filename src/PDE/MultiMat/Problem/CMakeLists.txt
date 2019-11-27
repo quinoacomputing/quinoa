@@ -1,4 +1,5 @@
 add_library(MultiMatProblem
+            FieldOutput.cpp
             SodShocktube.cpp
             InterfaceAdvection.cpp
             WaterAirShocktube.cpp
