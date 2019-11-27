@@ -16,8 +16,6 @@
 
 namespace inciter {
 
-using ncomp_t = kw::ncomp::info::expect::type;
-
 std::vector< std::string >
 MultiMatFieldNames( std::size_t nmat )
 // *****************************************************************************
