@@ -13,7 +13,6 @@
 #ifndef FieldOutput_h
 #define FieldOutput_h
 
-#include "Data.hpp"
 #include "Fields.hpp"
 
 namespace inciter {
