@@ -258,6 +258,7 @@ class MultiMat {
           }
 
           // check for unphysical state
+          auto alpha = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           auto arho = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset);
           auto apr = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset);
 
@@ -267,6 +268,7 @@ class MultiMat {
             std::cout << "Element centroid: " << geoElem(e,1,0) << ", "
               << geoElem(e,2,0) << ", " << geoElem(e,3,0) << std::endl;
             std::cout << "Material-id:      " << k << std::endl;
+            std::cout << "Volume-fraction:  " << alpha << std::endl;
             std::cout << "Partial density:  " << arho << std::endl;
             std::cout << "Partial pressure: " << apr << std::endl;
             std::cout << "Velocity:         " << u << ", " << v << ", " << w
