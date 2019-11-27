@@ -102,6 +102,7 @@ class MultiMatProblemUserDefined {
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Vector of primitive variables at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t,
@@ -111,7 +112,8 @@ class MultiMatProblemUserDefined {
                  tk::real,
                  const std::vector< tk::real >&,
                  const std::array< std::vector< tk::real >, 3 >&,
-                 tk::Fields& U )
+                 tk::Fields& U,
+                 const tk::Fields& )
     {
       std::vector< std::vector< tk::real > > out;
       const auto r = U.extract( 0, offset );

@@ -81,7 +81,8 @@ class MultiMatProblemInterfaceAdvection {
                  tk::real,
                  const std::vector< tk::real >&,
                  const std::array< std::vector< tk::real >, 3 >& coord,
-                 tk::Fields& U );
+                 tk::Fields& U,
+                 const tk::Fields& P );
 
     //! Return names of integral variables to be output to diagnostics file
     static std::vector< std::string > names( ncomp_t );

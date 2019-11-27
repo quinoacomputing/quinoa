@@ -375,7 +375,8 @@ class Transport {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  const tk::Fields& geoElem,
-                 tk::Fields& U ) const
+                 tk::Fields& U,
+                 const tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );

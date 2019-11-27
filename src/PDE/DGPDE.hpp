@@ -178,8 +178,9 @@ class DGPDE {
     std::vector< std::vector< tk::real > > fieldOutput(
       tk::real t,
       const tk::Fields& geoElem,
-      tk::Fields& U ) const
-    { return self->fieldOutput( t, geoElem, U ); }
+      tk::Fields& U,
+      const tk::Fields& P ) const
+    { return self->fieldOutput( t, geoElem, U, P ); }
 
     //! Public interface to returning nodal field output
     std::vector< std::vector< tk::real > > avgElemToNode(
@@ -269,7 +270,8 @@ class DGPDE {
       virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
         const tk::Fields&,
-        tk::Fields& ) const = 0;
+        tk::Fields&,
+        const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > > avgElemToNode(
         const std::vector< std::size_t >&,
         const tk::UnsMesh::Coords&,
@@ -360,8 +362,9 @@ class DGPDE {
       std::vector< std::vector< tk::real > > fieldOutput(
         tk::real t,
         const tk::Fields& geoElem,
-        tk::Fields& U ) const override
-      { return data.fieldOutput( t, geoElem, U ); }
+        tk::Fields& U,
+        const tk::Fields& P ) const override
+      { return data.fieldOutput( t, geoElem, U, P ); }
       std::vector< std::vector< tk::real > > avgElemToNode(
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,

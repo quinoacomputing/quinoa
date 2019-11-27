@@ -175,7 +175,8 @@ MultiMatProblemSodShocktube::fieldOutput(
   tk::real,
   const std::vector< tk::real >&,
   const std::array< std::vector< tk::real >, 3 >&,
-  tk::Fields& U )
+  tk::Fields& U,
+  const tk::Fields& P )
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
@@ -183,6 +184,7 @@ MultiMatProblemSodShocktube::fieldOutput(
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
 //! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitive quantities at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
@@ -194,7 +196,7 @@ MultiMatProblemSodShocktube::fieldOutput(
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
-  return MultiMatFieldOutput(system, nmat, offset, rdof, U);
+  return MultiMatFieldOutput(system, nmat, offset, rdof, U, P);
 }
 
 std::vector< std::string >

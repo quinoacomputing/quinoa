@@ -617,9 +617,10 @@ class MultiMat {
 
         if (v_e > v_char[0])
         {
-          state[0] = ugp[volfracIdx(nmat, idx[0])];
-          state[1] = ugp[densityIdx(nmat, idx[0])];
-          state[2] = pgp[pressureIdx(nmat, idx[0])];
+          idx[1] = idx[0];
+          state[0] = ugp[volfracIdx(nmat, idx[1])];
+          state[1] = ugp[densityIdx(nmat, idx[1])]/state[0];
+          state[2] = pgp[pressureIdx(nmat, idx[1])]/state[0];
           state[3] = pgp[pressureIdx(nmat, 0)] + pgp[pressureIdx(nmat, 1)];
         }
 
@@ -629,7 +630,7 @@ class MultiMat {
 
       //std::cout << std::endl;
       //std::cout << "v_char: " << v_char[0] << "  " << v_char[1] << std::endl;
-      //std::cout << "mat state: " << idx[0] << "  "
+      //std::cout << "mat state: " << idx[1] << "  "
       //  << state[0] << "  " << state[1] << "  " << state[2] << "  " << state[3]
       //  << std::endl;
       //std::cout << std::endl;
@@ -690,11 +691,13 @@ class MultiMat {
     //! \param[in] t Physical time
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
+    //! \param[in] P Vector of primitive quantities at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  const tk::Fields& geoElem,
-                 tk::Fields& U ) const
+                 tk::Fields& U,
+                 const tk::Fields& P ) const
     {
       std::array< std::vector< tk::real >, 3 > coord;
       std::vector< tk::real > v;
@@ -704,7 +707,7 @@ class MultiMat {
       coord[2] = geoElem.extract(3,0);
 
       return Problem::fieldOutput( m_system, m_ncomp, m_offset, t,
-                                   0.0, v, coord, U );
+                                   0.0, v, coord, U, P );
     }
 
     //! Return nodal field output going to file

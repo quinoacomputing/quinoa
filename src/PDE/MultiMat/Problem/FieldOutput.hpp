@@ -30,7 +30,8 @@ MultiMatFieldOutput(
   std::size_t nmat,
   ncomp_t offset,
   std::size_t rdof,
-  tk::Fields& U );
+  tk::Fields& U,
+  const tk::Fields& P );
 
 } //inciter::
 

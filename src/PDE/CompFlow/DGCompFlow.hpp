@@ -576,7 +576,8 @@ class CompFlow {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  const tk::Fields& geoElem,
-                 tk::Fields& U ) const
+                 tk::Fields& U,
+                 const tk::Fields& ) const
     {
       std::array< std::vector< tk::real >, 3 > coord;
       std::vector< tk::real > v;

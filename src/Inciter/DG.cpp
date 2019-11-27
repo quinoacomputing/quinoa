@@ -1146,7 +1146,7 @@ DG::writeFields( CkCallback c ) const
   std::vector< std::vector< tk::real > > elemfields;
   auto u = m_u;
   for (const auto& eq : g_dgpde) {
-    auto o = eq.fieldOutput( d->T(), m_geoElem, u );
+    auto o = eq.fieldOutput( d->T(), m_geoElem, u, m_p );
 
     // cut off ghost elements
     for (auto& f : o) f.resize( esuel.size()/4 );

@@ -44,7 +44,8 @@ MultiMatFieldOutput(
   std::size_t nmat,
   ncomp_t offset,
   std::size_t rdof,
-  tk::Fields& U )
+  tk::Fields& U,
+  const tk::Fields& )
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
@@ -54,6 +55,7 @@ MultiMatFieldOutput(
 //!   PDEs among other systems
 //! \param[in] rdof Number of reconstructed degrees of freedom
 //! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitive quantities at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
@@ -104,13 +106,13 @@ MultiMatFieldOutput(
   out.push_back( w );
 
   // bulk pressure
-  std::vector< tk::real > P( r.size(), 0.0 );
-  for (std::size_t i=0; i<P.size(); ++i) {
+  std::vector< tk::real > pr( r.size(), 0.0 );
+  for (std::size_t i=0; i<pr.size(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)
-      P[i] += eos_pressure< tag::multimat >( system, ar[k][i], u[i], v[i], w[i],
+      pr[i] += eos_pressure< tag::multimat >( system, ar[k][i], u[i], v[i], w[i],
         ae[k][i], al[k][i], k );
   }
-  out.push_back( P );
+  out.push_back( pr );
 
   // bulk total energy density
   std::vector< tk::real > E( r.size(), 0.0 );
