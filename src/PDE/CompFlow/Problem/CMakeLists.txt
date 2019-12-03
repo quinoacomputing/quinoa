@@ -1,4 +1,5 @@
 add_library(CompFlowProblem
+            FieldOutput.cpp
             NLEnergyGrowth.cpp
             RayleighTaylor.cpp
             SodShocktube.cpp
