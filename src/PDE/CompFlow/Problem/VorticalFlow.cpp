@@ -186,8 +186,6 @@ CompFlowProblemVorticalFlow::fieldOutput(
 
    auto out = CompFlowFieldOutput(system, offset, U);   
 
-  std::vector< std::vector< tk::real > > out;
-
    const auto r  = U.extract( 0*rdof, offset );
    const auto ru = U.extract( 1*rdof, offset );
    const auto rv = U.extract( 2*rdof, offset );
