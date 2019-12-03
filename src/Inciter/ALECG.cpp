@@ -43,7 +43,8 @@ extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 
 //! Runge-Kutta coefficients
-static const std::array< tk::real, 3 > rkcoef{ 1.0/3.0, 0.5, 1.0 };
+static const std::array< std::array< tk::real, 3 >, 2 >
+  rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
 } // inciter::
 
@@ -60,8 +61,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_nrhs( 0 ),
   m_nnorm( 0 ),
   m_bnode( bnode ),
-  m_triinpoel( triinpoel ),
+  m_triinpoel( triinp() ),
   m_esued(tk::genEsued(Disc()->Inpoel(), 4, tk::genEsup(Disc()->Inpoel(),4))),
+  m_psup(tk::genPsup(Disc()->Inpoel(), 4, tk::genEsup(Disc()->Inpoel(),4))),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
@@ -77,9 +79,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] bface Boundary-faces mapped to side set ids
-//! \param[in] bnode Boundary-node lists mapped to side set ids
-//! \param[in] triinpoel Boundary-face connectivity
+//! \param[in] bface Boundary-faces mapped to side set ids where BCs set
+//! \param[in] bnode Boundary-node lists mapped to side set ids where BCs set
+//! \param[in] triinpoel Boundary-face connectivity where BCs set
 // *****************************************************************************
 //! [Constructor]
 {
@@ -97,6 +99,33 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   bnorm( bface, triinpoel, std::move(symbcnodes) );
 }
 //! [Constructor]
+//
+std::vector< std::size_t >
+ALECG::triinp()
+// *****************************************************************************
+//  Generate boundary points (independent of BCs set)
+//! \return Boundary face connectivity of boundary faces
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Generate boundary edges of our mesh chunk
+  std::vector< std::size_t > triinpoel;
+  auto esup = tk::genEsup( d->Inpoel(), 4 );
+  auto esuel = tk::genEsuelTet( d->Inpoel(), esup );
+  for (std::size_t e=0; e<esuel.size()/4; ++e) {
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f) {
+      if (esuel[mark+f] == -1) {
+        triinpoel.push_back( d->Inpoel()[ mark+tk::lpofa[f][0] ] );
+        triinpoel.push_back( d->Inpoel()[ mark+tk::lpofa[f][1] ] );
+        triinpoel.push_back( d->Inpoel()[ mark+tk::lpofa[f][2] ] );
+      }
+    }
+  }
+
+  return triinpoel;
+}
 
 void
 ALECG::bnorm( const std::map< int, std::vector< std::size_t > >& bface,
@@ -468,12 +497,12 @@ ALECG::rhs()
 
   // Compute own portion of right-hand side for all equations
   for (const auto& eq : g_cgpde)
-    eq.rhs( d->T(), d->Coord(), d->Inpoel(), d->Vol(), m_esued,
+    eq.rhs( d->T(), d->Coord(), d->Inpoel(), d->Vol(), m_esued, m_psup,
             m_triinpoel, m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
-  m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(), d->Coord(),
-                   d->Lid(), m_bnode );
+  m_bcdir = match( m_u.nprop(), d->T(), rkcoef[1][m_stage] * d->Dt(),
+                   d->Coord(),  d->Lid(), m_bnode );
 
   // Communicate rhs to other chares on chare-boundary
   if (d->Msum().empty())        // in serial we are done
@@ -542,7 +571,7 @@ ALECG::solve()
     for (ncomp_t c=0; c<ncomp; ++c) {
       if (bc[c].first) {
         m_lhs( b, c, 0 ) = 1.0;
-        m_rhs( b, c, 0 ) = bc[c].second;
+        m_rhs( b, c, 0 ) = bc[c].second / (rkcoef[1][m_stage]*d->Dt());
       }
     }
   }
@@ -551,7 +580,8 @@ ALECG::solve()
   if (m_stage == 0) m_un = m_u;
 
   // Solve sytem
-  m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
+  m_u = rkcoef[0][m_stage] * m_un
+    + rkcoef[1][m_stage] * (m_u + d->Dt() * m_rhs / m_lhs);
 
   // Apply symmetry BCs
   //for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
@@ -620,7 +650,7 @@ ALECG::resizePostAMR(
   const std::unordered_map< int, std::vector< std::size_t > >& msum,
   const std::map< int, std::vector< std::size_t > >& /*bface*/,
   const std::map< int, std::vector< std::size_t > >& bnode,
-  const std::vector< std::size_t >& /*triinpoel*/ )
+  const std::vector< std::size_t >& /* triinpoel */ )
 // *****************************************************************************
 //  Receive new mesh from Refiner
 //! \param[in] ginpoel Mesh connectivity with global node ids
@@ -646,8 +676,9 @@ ALECG::resizePostAMR(
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, msum );
 
-  // Recompute elements surrounding edges
+  // Recompute derived data structures
   m_esued = tk::genEsued( d->Inpoel(), 4, tk::genEsup(d->Inpoel(),4) );
+  m_psup = tk::genPsup( d->Inpoel(), 4, tk::genEsup( d->Inpoel(),4) );
 
   // Resize auxiliary solution vectors
   auto npoin = coord[0].size();

@@ -42,6 +42,10 @@ const std::array< UnsMesh::Edge, 6 >
 //! Const array defining the node ordering convention for triangle edges
 const std::array< UnsMesh::Edge, 3 > lpoet{{ {{0,1}}, {{1,2}}, {{2,0}} }};
 
+//! Determine edge orientation
+tk::real
+orient( const UnsMesh::Edge& t, const UnsMesh::Edge& e );
+
 //! Compute number of points (nodes) in mesh from connectivity
 std::size_t
 npoin_in_graph( const std::vector< std::size_t >& inpoel );

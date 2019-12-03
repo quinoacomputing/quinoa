@@ -19,7 +19,6 @@
 #include <unordered_map>
 
 #include "DerivedData.hpp"
-#include "Macro.hpp"
 #include "Exception.hpp"
 #include "Vector.hpp"
 #include "EoS/EoS.hpp"
@@ -117,6 +116,8 @@ class CompFlow {
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
                       tk::UnsMesh::Eq<2> >& esued,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& /* psup */,
               const std::vector< std::size_t >& triinpoel,
               const tk::Fields& U,
               tk::Fields& R ) const

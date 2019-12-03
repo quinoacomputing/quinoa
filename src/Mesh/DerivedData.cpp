@@ -30,6 +30,21 @@
 
 namespace tk {
 
+tk::real
+orient( const UnsMesh::Edge& t, const UnsMesh::Edge& e )
+// *****************************************************************************
+// Determine edge orientation
+//! \return -1.0 if edge t is oriented the same as edge e, +1.0 opposite
+// *****************************************************************************
+{
+  if (t[0] == e[0] && t[1] == e[1])
+    return -1.0;
+  else if (t[0] == e[1] && t[1] == e[0])
+    return 1.0;
+  else
+    return 0.0;
+}
+
 std::size_t
 npoin_in_graph( const std::vector< std::size_t >& inpoel )
 // *****************************************************************************

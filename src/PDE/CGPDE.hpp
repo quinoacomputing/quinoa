@@ -93,10 +93,12 @@ class CGPDE {
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
                       tk::UnsMesh::Eq<2> >& esued,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& psup,
               const std::vector< std::size_t >& triinpoel,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( t, coord, inpoel, vol, esued, triinpoel, U, R ); }
+    { self->rhs( t, coord, inpoel, vol, esued, psup, triinpoel, U, R ); }
 
     //! Public interface to computing the right-hand side vector for the diff eq
     void rhs( tk::real t,
@@ -188,6 +190,8 @@ class CGPDE {
                         const std::unordered_map< tk::UnsMesh::Edge,
                           std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
                           tk::UnsMesh::Eq<2> >&,
+                        const std::pair< std::vector< std::size_t >,
+                                         std::vector< std::size_t > >&,
                         const std::vector< std::size_t >&,
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
@@ -244,10 +248,12 @@ class CGPDE {
                 const std::unordered_map< tk::UnsMesh::Edge,
                         std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
                         tk::UnsMesh::Eq<2> >& esued,
+                const std::pair< std::vector< std::size_t >,
+                                 std::vector< std::size_t > >& psup,
                 const std::vector< std::size_t >& triinpoel,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( t, coord, inpoel, vol, esued, triinpoel, U, R ); }
+      { data.rhs( t, coord, inpoel, vol, esued, psup, triinpoel, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,

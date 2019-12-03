@@ -447,3 +447,66 @@ tk::transform_P0P1( ncomp_t ncomp,
     }
   }
 }
+
+constexpr tk::real muscl_eps = 1.0e-9;
+constexpr tk::real muscl_const = 1.0/3.0;
+constexpr tk::real muscl_m1 = 1.0 - muscl_const;
+constexpr tk::real muscl_p1 = 1.0 + muscl_const;
+
+void
+tk::muscl( const UnsMesh::Edge& edge,
+           const UnsMesh::Coords& coord,
+           const Fields& G,
+           std::array< std::vector< tk::real >, 2 >& u )
+// *****************************************************************************
+// Compute MUSCL reconstruction in edge-end points using a MUSCL procedure with
+// Van Leer limiting
+//! \param[in] edge Node ids of edge-end points
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] G Gradient of all unknowns in mesh points
+//! \param[in,out] u Primitive variables at edge-end points, size ncomp x 2
+// *****************************************************************************
+{
+  const auto ncomp = G.nprop()/3;
+
+  Assert( u[0].size() == ncomp && u[1].size() == ncomp, "Size mismatch" );
+
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // edge-end points
+  auto p = edge[0];
+  auto q = edge[1];
+
+  // edge vector
+  std::array< tk::real, 3 > vw{ x[q]-x[p], y[q]-y[p], z[q]-z[p] };
+
+  // MUSCL reconstruction of edge-end-point primitive variables
+  for (std::size_t c=0; c<ncomp; ++c) {
+
+    // gradients
+    std::array< tk::real, 3 >
+       g1{ G(p,c*3+0,0), G(p,c*3+1,0), G(p,c*3+2,0) },
+       g2{ G(q,c*3+0,0), G(q,c*3+1,0), G(q,c*3+2,0) };
+
+    auto delta_2 = u[1][c] - u[0][c];
+    auto delta_1 = 2.0 * tk::dot(g1,vw) - delta_2;
+    auto delta_3 = 2.0 * tk::dot(g2,vw) - delta_2;
+
+    // form limiters
+    auto rL = (delta_2 + muscl_eps) / (delta_1 + muscl_eps);
+    auto rR = (delta_2 + muscl_eps) / (delta_3 + muscl_eps);
+    auto rLinv = (delta_1 + muscl_eps) / (delta_2 + muscl_eps);
+    auto rRinv = (delta_3 + muscl_eps) / (delta_2 + muscl_eps);
+    auto phiL = (std::abs(rL) + rL) / (std::abs(rL) + 1.0);
+    auto phiR = (std::abs(rR) + rR) / (std::abs(rR) + 1.0);
+    auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
+    auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
+
+    // update unknowns with reconstructed unknowns
+    u[0][c] += 0.25*(delta_1*muscl_m1*phiL + delta_2*muscl_p1*phi_L_inv);
+    u[1][c] -= 0.25*(delta_3*muscl_m1*phiR + delta_2*muscl_p1*phi_R_inv);
+
+  }
+}

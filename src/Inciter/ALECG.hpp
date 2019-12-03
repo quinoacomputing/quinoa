@@ -134,7 +134,7 @@ class ALECG : public CBase_ALECG {
       const std::unordered_map< int, std::vector< std::size_t > >& msum,
       const std::map< int, std::vector< std::size_t > >& /* bface */,
       const std::map< int, std::vector< std::size_t > >& bnode,
-      const std::vector< std::size_t >& /* triinpoel */ );
+      const std::vector< std::size_t >& triinpoel );
 
     //! Const-ref access to current solution
     //! \return Const-ref to current solution
@@ -166,6 +166,7 @@ class ALECG : public CBase_ALECG {
       p | m_bnode;
       p | m_triinpoel;
       p | m_esued;
+      p | m_psup;
       p | m_u;
       p | m_un;
       p | m_lhs;
@@ -199,13 +200,15 @@ class ALECG : public CBase_ALECG {
     std::size_t m_nrhs;
     //! Counter for receiving boundary point normals
     std::size_t m_nnorm;
-    //! Boundary node lists mapped to side set ids
+    //! Boundary node lists mapped to side set ids where BCs are set by user
     std::map< int, std::vector< std::size_t > > m_bnode;
-    //! Boundary triangle face connecitivity
+    //! Boundary triangle face connecitivity independent of BCs
     std::vector< std::size_t > m_triinpoel;
     //! Elements surrounding edges
     std::unordered_map< tk::UnsMesh::Edge, std::vector< std::size_t >,
                         tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_esued;
+    //! Points surrounding points
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes at previous time
@@ -246,6 +249,9 @@ class ALECG : public CBase_ALECG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
+
+    //! Generate boundary points (independent of BCs set)
+    std::vector< std::size_t > triinp();
 
     //! Compute boundary point normals
     void

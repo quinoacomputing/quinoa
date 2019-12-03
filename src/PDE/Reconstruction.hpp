@@ -5,10 +5,12 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Reconstruction for reconstructed discontinuous Galerkin methods
+  \brief     Reconstruction for reconstructed Galerkin methods
   \details   This file contains functions that reconstruct an "n"th order
     polynomial to an "n+1"th order polynomial using a least-squares
-    reconstruction procedure.
+    reconstruction procedure, used for reconstructed discontinuous Galerkin (DG)
+    methods. It also contains functions used to compute reconstruction in 1D,
+    used in edge-based continuous Galerkin methods.
 */
 // *****************************************************************************
 #ifndef Reconstruction_h
@@ -79,12 +81,13 @@ bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
 
 //! Solve 3x3 system for least-squares reconstruction
 void
-solveLeastSq_P0P1( ncomp_t ncomp,
-                   ncomp_t offset,
-                   const std::size_t rdof,
-                   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
-                   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
-                   Fields& W );
+solveLeastSq_P0P1(
+  ncomp_t ncomp,
+  ncomp_t offset,
+  const std::size_t rdof,
+  const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
+  const std::vector< std::vector< std::array< real, 3 > > >& rhs,
+  Fields& W );
 
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
@@ -95,6 +98,14 @@ transform_P0P1( ncomp_t ncomp,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 Fields& W );
+
+//! \brief Compute MUSCL reconstruction in edge-end points using a MUSCL
+//!   procedure with Van Leer limiting
+void
+muscl( const UnsMesh::Edge& edge,
+       const UnsMesh::Coords& coord,
+       const Fields& G,
+       std::array< std::vector< tk::real >, 2 >& u );
 
 } // tk::
 
