@@ -294,7 +294,7 @@ namespace grm {
       // If pressure relaxation is not specified, default to 'false'
       auto& prelax = stack.template get< tag::param, eq, tag::prelax >();
       if (prelax.empty() || prelax.size() != neq.get< eq >())
-        prelax.push_back( false );
+        prelax.push_back( 0 );
 
       // If pressure relaxation time-scale is not specified, default to 1.0
       auto& prelax_ts = stack.template get< tag::param, eq,
@@ -825,12 +825,9 @@ namespace deck {
                            parameter< tag::multimat,
                                       kw::prelax_timescale,
                                       tag::prelax_timescale >,
-                           tk::grm::process< use< kw::prelax >,
-                                             tk::grm::Store_back<
-                                               tag::param,
-                                               tag::multimat,
-                                               tag::prelax >,
-                                             pegtl::alpha > >,
+                           parameter< tag::multimat,
+                                      kw::prelax,
+                                      tag::prelax > >,
            check_errors< tag::multimat, tk::grm::check_multimat > > {};
 
   //! partitioning ... end block
