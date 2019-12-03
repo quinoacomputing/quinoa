@@ -4721,9 +4721,9 @@ struct prelax_info {
        no effect when used for the other PDE types.)";
   }
   struct expect {
-    using type = bool;
+    using type = int;
     static std::string description() { return "string"; }
-    static std::string choices() { return "true | false"; }
+    static std::string choices() { return "1 | 0"; }
   };
 };
 using prelax = keyword< prelax_info, TAOCPP_PEGTL_STRING("prelax") >;
