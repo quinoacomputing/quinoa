@@ -211,7 +211,8 @@ class ALECG : public CBase_ALECG {
     std::size_t m_nnorm;
     //! Boundary node lists mapped to side set ids where BCs are set by user
     std::map< int, std::vector< std::size_t > > m_bnode;
-    //! Boundary triangle face connecitivity independent of BCs
+    //! Boundary triangle face connecitivity where BCs are set by user
+    //! \details Local node ids
     std::vector< std::size_t > m_triinpoel;
     //! Elements surrounding edges
     std::unordered_map< tk::UnsMesh::Edge, std::vector< std::size_t >,
@@ -264,9 +265,6 @@ class ALECG : public CBase_ALECG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
-
-    //! Generate boundary points (independent of BCs set)
-    std::vector< std::size_t > triinp();
 
     //! Compute boundary point normals
     void

@@ -62,7 +62,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_nrhs( 0 ),
   m_nnorm( 0 ),
   m_bnode( bnode ),
-  m_triinpoel( triinp() ),
+  m_triinpoel( tk::remap(triinpoel,Disc()->Lid()) ),
   m_esued(tk::genEsued(Disc()->Inpoel(), 4, tk::genEsup(Disc()->Inpoel(),4))),
   m_psup(tk::genPsup(Disc()->Inpoel(), 4, tk::genEsup(Disc()->Inpoel(),4))),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
@@ -84,7 +84,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 //! \param[in] disc Discretization proxy
 //! \param[in] bface Boundary-faces mapped to side set ids where BCs set
 //! \param[in] bnode Boundary-node lists mapped to side set ids where BCs set
-//! \param[in] triinpoel Boundary-face connectivity where BCs set
+//! \param[in] triinpoel Boundary-face connectivity where BCs set (global ids)
 // *****************************************************************************
 //! [Constructor]
 {
@@ -102,33 +102,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   bnorm( bface, triinpoel, std::move(symbcnodes) );
 }
 //! [Constructor]
-
-std::vector< std::size_t >
-ALECG::triinp()
-// *****************************************************************************
-//  Generate boundary points (independent of BCs set)
-//! \return Boundary face connectivity of boundary faces
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Generate boundary edges of our mesh chunk
-  std::vector< std::size_t > triinpoel;
-  auto esup = tk::genEsup( d->Inpoel(), 4 );
-  auto esuel = tk::genEsuelTet( d->Inpoel(), esup );
-  for (std::size_t e=0; e<esuel.size()/4; ++e) {
-    auto mark = e*4;
-    for (std::size_t f=0; f<4; ++f) {
-      if (esuel[mark+f] == -1) {
-        triinpoel.push_back( d->Inpoel()[ mark+tk::lpofa[f][0] ] );
-        triinpoel.push_back( d->Inpoel()[ mark+tk::lpofa[f][1] ] );
-        triinpoel.push_back( d->Inpoel()[ mark+tk::lpofa[f][2] ] );
-      }
-    }
-  }
-
-  return triinpoel;
-}
 
 void
 ALECG::bnorm( const std::map< int, std::vector< std::size_t > >& bface,

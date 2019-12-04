@@ -291,13 +291,14 @@ class Transport {
         }
       }
 
-      // test 2*sum_{vw in v} D_i^{vw} = 0 for interior points
-      std::unordered_set< std::size_t > bp(begin(triinpoel), end(triinpoel));
-      for (std::size_t p=0; p<coord[0].size(); ++p)
-        if (bp.find(p) == end(bp))
-          for (std::size_t j=0; j<3; ++j)
-            if (std::abs(V(p,j,0)) > 1.0e-15)
-              std::cout << 'd';
+      // test 2*sum_{vw in v} D_i^{vw} = 0 for interior points (this only makes
+      // sense in serial)
+      //std::unordered_set< std::size_t > bp(begin(triinpoel), end(triinpoel));
+      //for (std::size_t p=0; p<coord[0].size(); ++p)
+      //  if (bp.find(p) == end(bp))
+      //    for (std::size_t j=0; j<3; ++j)
+      //      if (std::abs(V(p,j,0)) > 1.0e-15)
+      //        std::cout << 'd';
 
       // boundary integrals
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
@@ -331,12 +332,12 @@ class Transport {
       }
 
       // test 2*sum_{vw in v} D_i^{vw} + 2*sum_{vw in v} B_i^{vw} + B_i^v = 0
-      // for boundary points
-      for (std::size_t p=0; p<coord[0].size(); ++p)
-        if (bp.find(p) != end(bp))
-          for (std::size_t j=0; j<3; ++j)
-            if (std::abs(V(p,j,0)) > 1.0e-15)
-              std::cout << 'b';
+      // for boundary points (this only makes sense in serial)
+      //for (std::size_t p=0; p<coord[0].size(); ++p)
+      //  if (bp.find(p) != end(bp))
+      //    for (std::size_t j=0; j<3; ++j)
+      //      if (std::abs(V(p,j,0)) > 1.0e-15)
+      //        std::cout << 'b';
     }
       
     //! Compute right hand side for DiagCG (CG-FCT)
