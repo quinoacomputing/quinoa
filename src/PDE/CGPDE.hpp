@@ -85,22 +85,30 @@ class CGPDE {
                      tk::Fields& unk,
                      tk::real t ) const
     { self->initialize( coord, unk, t ); }
-    
+
+    //! Public interface to computing the nodal gradients for ALECG
+    void grad( const std::array< std::vector< tk::real >, 3 >& coord,
+               const std::vector< std::size_t >& inpoel,
+               const tk::Fields& U,
+               tk::Fields& G ) const
+    { self->grad( coord, inpoel, U, G ); }
+
+    //! Public interface to computing the right-hand side vector for ALECG
     void rhs( tk::real t,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const std::vector< tk::real >& vol,
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
                       tk::UnsMesh::Eq<2> >& esued,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
               const std::vector< std::size_t >& triinpoel,
+              const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( t, coord, inpoel, vol, esued, psup, triinpoel, U, R ); }
+    { self->rhs( t, coord, inpoel, esued, psup, triinpoel, G, U, R ); }
 
-    //! Public interface to computing the right-hand side vector for the diff eq
+    //! Public interface to computing the right-hand side vector for DiagCG
     void rhs( tk::real t,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
@@ -183,16 +191,20 @@ class CGPDE {
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
                                tk::Fields&,
                                tk::real ) const = 0;
+      virtual void grad( const std::array< std::vector< tk::real >, 3 >&,
+                         const std::vector< std::size_t >&,
+                         const tk::Fields&,
+                         tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
-                        const std::vector< tk::real >&,
                         const std::unordered_map< tk::UnsMesh::Edge,
                           std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
                           tk::UnsMesh::Eq<2> >&,
                         const std::pair< std::vector< std::size_t >,
                                          std::vector< std::size_t > >&,
                         const std::vector< std::size_t >&,
+                        const tk::Fields&,
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
@@ -241,19 +253,24 @@ class CGPDE {
                        tk::Fields& unk,
                        tk::real t )
       const override { data.initialize( coord, unk, t ); }
+      void grad( const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::Fields& U,
+                 tk::Fields& G ) const override
+      { data.grad( coord, inpoel, U, G ); }
       void rhs( tk::real t,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
-                const std::vector< tk::real >& vol,
                 const std::unordered_map< tk::UnsMesh::Edge,
                         std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
                         tk::UnsMesh::Eq<2> >& esued,
                 const std::pair< std::vector< std::size_t >,
                                  std::vector< std::size_t > >& psup,
                 const std::vector< std::size_t >& triinpoel,
+                const tk::Fields& G,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( t, coord, inpoel, vol, esued, psup, triinpoel, U, R ); }
+      { data.rhs( t, coord, inpoel, esued, psup, triinpoel, G, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,

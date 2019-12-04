@@ -43,6 +43,8 @@ module alecg {
                                   std::array< tk::real, 4 > >& innorm );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );
+      entry void comgrad( const std::vector< std::size_t >& gid,
+                          const std::vector< std::vector< tk::real > >& G );
       entry void comrhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& R );
       entry void resized();
@@ -63,6 +65,9 @@ module alecg {
       entry void wait4lhs() {
         when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsmerge(); } }
 
+      entry void wait4grad() {
+        when owngrad_complete(), comgrad_complete() serial "grad" { rhs(); } }
+
       entry void wait4rhs() {
         when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } }
 
@@ -72,9 +77,11 @@ module alecg {
       entry void ownnorm_complete();
       entry void comnorm_complete();
       entry void ownlhs_complete();
-      entry void ownrhs_complete();
       entry void comlhs_complete();
+      entry void ownrhs_complete();
       entry void comrhs_complete();
+      entry void owngrad_complete();
+      entry void comgrad_complete();
       entry void lhs_complete();
       entry void resize_complete();
       //! [DAG]

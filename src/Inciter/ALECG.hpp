@@ -114,6 +114,10 @@ class ALECG : public CBase_ALECG {
     void comlhs( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& L );
 
+    //! Receive contributions to gradients on chare-boundaries
+    void comgrad( const std::vector< std::size_t >& gid,
+                  const std::vector< std::vector< tk::real > >& G );
+
     //! Receive contributions to right-hand side vector on chare-boundaries
     void comrhs( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& R );
@@ -161,6 +165,7 @@ class ALECG : public CBase_ALECG {
       p | m_initial;
       p | m_nsol;
       p | m_nlhs;
+      p | m_ngrad;
       p | m_nrhs;
       p | m_nnorm;
       p | m_bnode;
@@ -171,8 +176,10 @@ class ALECG : public CBase_ALECG {
       p | m_un;
       p | m_lhs;
       p | m_rhs;
+      p | m_grad;
       p | m_bcdir;
       p | m_lhsc;
+      p | m_gradc;
       p | m_rhsc;
       p | m_diag;
       p | m_bnorm;
@@ -196,6 +203,8 @@ class ALECG : public CBase_ALECG {
     std::size_t m_nsol;
     //! Counter for left-hand side matrix (vector) nodes updated
     std::size_t m_nlhs;
+    //! Counter for nodal gradients updated
+    std::size_t m_ngrad;
     //! Counter for right-hand side vector nodes updated
     std::size_t m_nrhs;
     //! Counter for receiving boundary point normals
@@ -217,6 +226,8 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_lhs;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
+    //! Nodal gradients
+    tk::Fields m_grad;
     //! Boundary conditions evaluated and assigned to local mesh node IDs
     //! \details Vector of pairs of bool and boundary condition value associated
     //!   to local mesh node IDs at which the user has set Dirichlet boundary
@@ -228,6 +239,10 @@ class ALECG : public CBase_ALECG {
     //! Receive buffer for communication of the left hand side
     //! \details Key: chare id, value: lhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_lhsc;
+    //! Receive buffer for communication of the nodal gradients
+    //! \details Key: chare id, value: gradients for all scalar components per
+    //!   node
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_gradc;
     //! Receive buffer for communication of the right hand side
     //! \details Key: chare id, value: rhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
@@ -270,6 +285,9 @@ class ALECG : public CBase_ALECG {
 
     //! Combine own and communicated contributions to left hand side
     void lhsmerge();
+
+    //! Compute gradients
+    void grad();
 
     //! Compute righ-hand side vector of transport equations
     void rhs();

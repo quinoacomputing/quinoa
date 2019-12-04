@@ -58,6 +58,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_initial( 1 ),
   m_nsol( 0 ),
   m_nlhs( 0 ),
+  m_ngrad( 0 ),
   m_nrhs( 0 ),
   m_nnorm( 0 ),
   m_bnode( bnode ),
@@ -69,8 +70,10 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
+  m_grad( m_u.nunk(), m_u.nprop()*3 ),
   m_bcdir(),
   m_lhsc(),
+  m_gradc(),
   m_rhsc(),
   m_diag(),
   m_bnorm(),
@@ -87,7 +90,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
-  // Activate SDAG wait for initially computing the left-hand side
+  // Activate SDAG wait for initially computing the left-hand side and normals
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4lhs();
 
@@ -99,7 +102,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   bnorm( bface, triinpoel, std::move(symbcnodes) );
 }
 //! [Constructor]
-//
+
 std::vector< std::size_t >
 ALECG::triinp()
 // *****************************************************************************
@@ -461,7 +464,8 @@ ALECG::dt()
   }
 
   //! [Advance]
-  // Actiavate SDAG waits for time step
+  // Actiavate SDAG waits for next time step stage
+  thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
   thisProxy[ thisIndex ].wait4stage();
 
@@ -483,8 +487,60 @@ ALECG::advance( tk::real newdt )
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  // Compute rhs for next time step
-  rhs();
+  // Compute gradients for next time step
+  grad();
+}
+
+void
+ALECG::grad()
+// *****************************************************************************
+// Compute nodal gradients
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Compute own portion of gradients for all equations
+  for (const auto& eq : g_cgpde)
+    eq.grad( d->Coord(), d->Inpoel(), m_u, m_grad );
+
+  // Communicate gradients to other chares on chare-boundary
+  if (d->Msum().empty())        // in serial we are done
+    comgrad_complete();
+  else // send gradients contributions to chare-boundary nodes to fellow chares
+    for (const auto& n : d->Msum()) {
+      std::vector< std::vector< tk::real > > g( n.second.size() );
+      std::size_t j = 0;
+      for (auto i : n.second) g[ j++ ] = m_grad[ tk::cref_find(d->Lid(),i) ];
+      thisProxy[ n.first ].comgrad( n.second, g );
+    }
+
+  owngrad_complete();
+}
+
+void
+ALECG::comgrad( const std::vector< std::size_t >& gid,
+                const std::vector< std::vector< tk::real > >& G )
+// *****************************************************************************
+//  Receive contributions to nodal gradients on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive grad contributions
+//! \param[in] G Partial contributions of gradients to chare-boundary nodes
+//! \details This function receives contributions to m_grad, which stores the
+//!   nodal gradients at mesh nodes. While m_grad stores own
+//!   contributions, m_gradc collects the neighbor chare contributions during
+//!   communication. This way work on m_grad and m_gradc is overlapped. The two
+//!   are combined in rhs().
+// *****************************************************************************
+{
+  Assert( G.size() == gid.size(), "Size mismatch" );
+
+  using tk::operator+=;
+
+  for (std::size_t i=0; i<gid.size(); ++i) m_gradc[ gid[i] ] += G[i];
+
+  if (++m_ngrad == Disc()->Msum().size()) {
+    m_ngrad = 0;
+    comgrad_complete();
+  }
 }
 
 void
@@ -495,10 +551,21 @@ ALECG::rhs()
 {
   auto d = Disc();
 
+  // Combine own and communicated contributions to nodal gradients
+  for (const auto& b : m_gradc) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
+    for (ncomp_t c=0; c<m_grad.nprop(); ++c) m_grad(lid,c,0) += b.second[c];
+  }
+
+  // divide weak result in gradients by nodal volume
+  for (std::size_t p=0; p<m_grad.nunk(); ++p)
+    for (std::size_t c=0; c<m_grad.nprop(); ++c)
+       m_grad(p,c,0) /= d->Vol()[p];
+
   // Compute own portion of right-hand side for all equations
   for (const auto& eq : g_cgpde)
-    eq.rhs( d->T(), d->Coord(), d->Inpoel(), d->Vol(), m_esued, m_psup,
-            m_triinpoel, m_u, m_rhs );
+    eq.rhs( d->T(), d->Coord(), d->Inpoel(), m_esued, m_psup, m_triinpoel,
+            m_grad, m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[1][m_stage] * d->Dt(),
@@ -589,7 +656,8 @@ ALECG::solve()
   //! [Continue after solve]
   if (m_stage < 2) {
 
-    // Activate SDAG wait for assembling the rhs in next stage
+    // Activate SDAG wait for next time step stage
+    thisProxy[ thisIndex ].wait4grad();
     thisProxy[ thisIndex ].wait4rhs();
 
     // continue with next time step stage
@@ -720,7 +788,7 @@ ALECG::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise output field data to file(s)
-  if (m_stage < 3) rhs(); else out();
+  if (m_stage < 3) grad(); else out();
 }
 
 void

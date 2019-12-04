@@ -100,28 +100,87 @@ class CompFlow {
       return std::vector< tk::real >( begin(s), end(s) );
     }
 
-    //! Compute right hand side for ALECG
-    //! \param[in] t Physical time
+    //! Compute nodal gradients of primitive variables for ALECG
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] vol Nodal volumes
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] G Nodal gradients of primitive variables
+    void grad( const std::array< std::vector< tk::real >, 3 >& coord,
+               const std::vector< std::size_t >& inpoel,
+               const tk::Fields& U,
+               tk::Fields& G ) const
+    {
+      Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
+              "vector at recent time step incorrect" );
+      Assert( G.nunk() == coord[0].size(),
+              "Number of unknowns in gradient vector incorrect" );
+      Assert( G.nprop() == m_ncomp*3,
+              "Number of components in gradient vector incorrect" );
+
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      // compute gradients of primitive variables in points
+      G.fill( 0.0 );
+
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+        // access node IDs
+        const std::array< std::size_t, 4 >
+          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
+        // compute element Jacobi determinant
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+        const auto J = tk::triple( ba, ca, da );        // J = 6V
+        Assert( J > 0, "Element Jacobian non-positive" );
+        // shape function derivatives, nnode*ndim [4][3]
+        std::array< std::array< tk::real, 3 >, 4 > grad;
+        grad[1] = tk::crossdiv( ca, da, J );
+        grad[2] = tk::crossdiv( da, ba, J );
+        grad[3] = tk::crossdiv( ba, ca, J );
+        for (std::size_t i=0; i<3; ++i)
+          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+        // access solution at element nodes
+        std::vector< std::array< tk::real, 4 > > u( m_ncomp );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        // scatter-add gradient contributions to points
+        auto J24 = J/24.0;
+        for (std::size_t a=0; a<4; ++a)
+          for (std::size_t b=0; b<4; ++b)
+            for (std::size_t j=0; j<3; ++j)
+              for (std::size_t c=0; c<m_ncomp; ++c)
+                G(N[a],c*3+j,0) += J24 * grad[b][j] * u[c][b];
+      }
+    }
+
+    //! Compute right hand side for ALECG
+//    //! \param[in] t Physical time
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
     //! \param[in] esued Elements surrounding edges
     //! \param[in] triinpoel Boundary triangle face connecitivity
+    //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    void rhs( tk::real t,
+    void rhs( tk::real /* t */,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const std::vector< tk::real >& vol,
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
                       tk::UnsMesh::Eq<2> >& esued,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& /* psup */,
               const std::vector< std::size_t >& triinpoel,
+              const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
     {
+      Assert( G.nunk() == coord[0].size(),
+              "Number of unknowns in gradient vector incorrect" );
+      Assert( G.nprop() == m_ncomp*3,
+              "Number of components in gradient vector incorrect" );
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
       Assert( R.nunk() == coord[0].size(),
@@ -141,43 +200,6 @@ class CompFlow {
 
       tk::Fields V( U.nunk(), 3 );
       V.fill( 0.0 );
-
-      // compute gradients of primitive variables in points
-      tk::Fields G( U.nunk(), 5*3 );
-      G.fill( 0.0 );
-      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-        // access node IDs
-        const std::array< std::size_t, 4 >
-          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
-        // compute element Jacobi determinant
-        const std::array< tk::real, 3 >
-          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-        const auto J = tk::triple( ba, ca, da );        // J = 6V
-        Assert( J > 0, "Element Jacobian non-positive" );
-        // shape function derivatives, nnode*ndim [4][3]
-        std::array< std::array< tk::real, 3 >, 4 > grad;
-        grad[1] = tk::crossdiv( ca, da, J );
-        grad[2] = tk::crossdiv( da, ba, J );
-        grad[3] = tk::crossdiv( ba, ca, J );
-        for (std::size_t i=0; i<3; ++i)
-          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-        // access conserved variables at element nodes
-        std::array< std::array< tk::real, 4 >, 5 > u;
-        for (ncomp_t c=0; c<5; ++c) u[c] = U.extract( c, m_offset, N );
-        // compute primitive variables
-        for (std::size_t a=0; a<4; ++a)
-          for (std::size_t c=1; c<5; ++c)
-            u[c][a] /= u[0][a];
-        // scatter-add gradients to points
-        auto J24 = J/24.0;
-        for (std::size_t a=0; a<4; ++a)
-          for (std::size_t b=0; b<4; ++b)
-            for (std::size_t j=0; j<3; ++j)
-              for (std::size_t c=0; c<5; ++c)
-                G(N[a],c*3+j,0) += J24 * grad[b][j] * u[c][b] / vol[N[a]];
-      }
 
       // Domain edge integral
       for (const auto& [edge,surr_elements] : esued) {
@@ -279,11 +301,11 @@ class CompFlow {
               std::cout << '!';
       }
 
-      // Optional source
-      for (std::size_t p=0; p<U.nunk(); ++p) {
-        auto s = Problem::src( m_system, m_ncomp, x[p], y[p], z[p], t );
-        for (std::size_t c=0; c<5; ++c) R.var(r[c],p) += vol[p] * s[c];
-      }
+      //// Optional source
+      //for (std::size_t p=0; p<U.nunk(); ++p) {
+      //  auto s = Problem::src( m_system, m_ncomp, x[p], y[p], z[p], t );
+      //  for (std::size_t c=0; c<5; ++c) R.var(r[c],p) += vol[p] * s[c];
+      //}
 
       // Boundary integrals
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
