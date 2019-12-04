@@ -22,7 +22,7 @@ inciter
     problem waterair_shocktube
     depvar u
 
-    prelax true
+    prelax 1
     prelax_timescale 0.0025
 
     nmat 2
