@@ -124,9 +124,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
         auto A = gid[ inpoel[ mark+tk::lpofa[f][0] ] ];
         auto B = gid[ inpoel[ mark+tk::lpofa[f][1] ] ];
         auto C = gid[ inpoel[ mark+tk::lpofa[f][2] ] ];
-        bnded.insert( {{{A,B}}} );
-        bnded.insert( {{{B,C}}} );
-        bnded.insert( {{{C,A}}} );
+        bnded.insert( {A,B} );
+        bnded.insert( {B,C} );
+        bnded.insert( {C,A} );
       }
     }
   }

@@ -313,9 +313,9 @@ Refiner::bndEdges()
         auto A = m_ginpoel[ mark+tk::lpofa[f][0] ];
         auto B = m_ginpoel[ mark+tk::lpofa[f][1] ];
         auto C = m_ginpoel[ mark+tk::lpofa[f][2] ];
-        bnded.insert( {{{A,B}}} );
-        bnded.insert( {{{B,C}}} );
-        bnded.insert( {{{C,A}}} );
+        bnded.insert( {A,B} );
+        bnded.insert( {B,C} );
+        bnded.insert( {C,A} );
         Assert( m_lid.find( A ) != end(m_lid), "Local node ID not found" );
         Assert( m_lid.find( B ) != end(m_lid), "Local node ID not found" );
         Assert( m_lid.find( C ) != end(m_lid), "Local node ID not found" );
