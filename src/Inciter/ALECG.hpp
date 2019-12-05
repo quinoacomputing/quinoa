@@ -88,6 +88,9 @@ class ALECG : public CBase_ALECG {
     //! Configure Charm++ custom reduction types initiated from this chare array
     static void registerReducers();
 
+    //! Receive boundary edges from all PEs (including this one)
+    void addBndEdges( CkReductionMsg* msg );
+
     //! Return from migration
     void ResumeFromSync() override;
 
@@ -105,6 +108,12 @@ class ALECG : public CBase_ALECG {
 
     //! Compute left-hand side of transport equations
     void lhs();
+
+    //! Receive contributions to duual-face normals on chare boundaries
+    void comdfnorm(
+      const std::unordered_map< tk::UnsMesh::Edge,
+              std::array< tk::real, 3 >,
+              tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm );
 
     //! Receive boundary point normals on chare-boundaries
     void comnorm(
@@ -168,15 +177,18 @@ class ALECG : public CBase_ALECG {
       p | m_ngrad;
       p | m_nrhs;
       p | m_nnorm;
+      p | m_ndfnorm;
       p | m_bnode;
       p | m_triinpoel;
       p | m_esued;
       p | m_psup;
+      p | m_dfnorm;
       p | m_u;
       p | m_un;
       p | m_lhs;
       p | m_rhs;
       p | m_grad;
+      p | m_bndEdges;
       p | m_bcdir;
       p | m_lhsc;
       p | m_gradc;
@@ -184,6 +196,7 @@ class ALECG : public CBase_ALECG {
       p | m_diag;
       p | m_bnorm;
       p | m_bnormc;
+      p | m_dfnormc;
       p | m_stage;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -209,6 +222,8 @@ class ALECG : public CBase_ALECG {
     std::size_t m_nrhs;
     //! Counter for receiving boundary point normals
     std::size_t m_nnorm;
+    //! Counter for receiving dual-face normals on chare-boundary edges
+    std::size_t m_ndfnorm;
     //! Boundary node lists mapped to side set ids where BCs are set by user
     std::map< int, std::vector< std::size_t > > m_bnode;
     //! Boundary triangle face connecitivity where BCs are set by user
@@ -219,6 +234,9 @@ class ALECG : public CBase_ALECG {
                         tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_esued;
     //! Points surrounding points
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
+    //! Dual-face normals along edges
+    std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnorm;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes at previous time
@@ -229,6 +247,8 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_rhs;
     //! Nodal gradients
     tk::Fields m_grad;
+    //! Chare-boundary edges associated to chares we share these edges with
+    std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
     //! Boundary conditions evaluated and assigned to local mesh node IDs
     //! \details Vector of pairs of bool and boundary condition value associated
     //!   to local mesh node IDs at which the user has set Dirichlet boundary
@@ -257,6 +277,9 @@ class ALECG : public CBase_ALECG {
     //! \details Key: global node id, value: normals (first 3 components),
     //!   inverse distance squared (4th component)
     std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnormc;
+    //! Receive buffer for dual-face normals along chare-boundary edges
+    std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
+                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnormc;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
 
@@ -265,6 +288,12 @@ class ALECG : public CBase_ALECG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
+
+    //! Compute chare-boundary edges
+    void bndEdges();
+
+    //! Compute dual-face normals associated to edges
+    void dfnorm();
 
     //! Compute boundary point normals
     void

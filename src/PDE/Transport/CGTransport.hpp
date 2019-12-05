@@ -155,6 +155,8 @@ class Transport {
     //! \param[in] esued Elements surrounding edges
     //! \param[in] psup Points surrounding points
     //! \param[in] triinpoel Boundary triangle face connecitivity
+    //! \param[in] gid Local->global node id map
+    //! \param[in] norm Dual-face normals associated to edges
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
@@ -167,6 +169,10 @@ class Transport {
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
               const std::vector< std::size_t >& triinpoel,
+              const std::vector< std::size_t >& gid,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                      std::array< tk::real, 3 >,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& norm,
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
@@ -199,43 +205,11 @@ class Transport {
       // domain-edge integral
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
         for (auto q : tk::Around(psup,p)) {     // for each edge p-q
-
           // access elements surrounding edge p-q
           const auto& surr_elements = tk::cref_find(esued,{p,q});
-
-          // compute normal of dual-mesh associated to edge p-q
-          std::array< tk::real, 3 > n{ 0.0, 0.0, 0.0 };
-          for (auto e : surr_elements) {
-            // access node IDs
-            const std::array< std::size_t, 4 >
-              N{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
-            // compute element Jacobi determinant
-            const std::array< tk::real, 3 >
-              ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-              ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-              da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-            const auto J = tk::triple( ba, ca, da );        // J = 6V
-            Assert( J > 0, "Element Jacobian non-positive" );
-            // shape function derivatives, nnode*ndim [4][3]
-            std::array< std::array< tk::real, 3 >, 4 > grad;
-            grad[1] = tk::crossdiv( ca, da, J );
-            grad[2] = tk::crossdiv( da, ba, J );
-            grad[3] = tk::crossdiv( ba, ca, J );
-            for (std::size_t i=0; i<3; ++i)
-              grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-            // sum normal contributions to nodes
-            auto J48 = J/48.0;
-            for (const auto& l : tk::lpoed) {
-              auto a = l[0];
-              auto b = l[1];
-              auto s = tk::orient( {N[a],N[b]}, {p,q} );
-              for (std::size_t j=0; j<3; ++j)
-                n[j] += J48 * s * (grad[a][j] - grad[b][j]);
-            }
-          }
-          if (tk::dot(n,n) < 1.0e-14) std::cout << 'n';
-          tk::unit( n );
-
+          // access and orient dual-face normals for edge p-q
+          auto n = tk::cref_find( norm, {gid[p],gid[q]} );
+          if (gid[p] > gid[q]) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
           // compute primitive variables at edge-end points (for Transport,
           // these are the same as the conserved variables)
           std::array< std::vector< tk::real >, 2 >
@@ -245,14 +219,11 @@ class Transport {
             ru[0][c] = U(p,c,m_offset);
             ru[1][c] = U(q,c,m_offset);
           }
-
           // compute MUSCL reconstruction in edge-end points
           tk::muscl( {p,q}, coord, G, ru );
-
           // evaluate prescribed velocity
           auto v =
             Problem::prescribedVelocity( m_system, m_ncomp, x[p], y[p], z[p] );
-
           // compute domain integral
           for (auto e : surr_elements) {
             // access node IDs
@@ -274,15 +245,14 @@ class Transport {
               grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
             // sum flux contributions to nodes
             auto J48 = J/48.0;
-            for (const auto& l : tk::lpoed) {
-              auto a = l[0];
-              auto b = l[1];
+            for (const auto& [a,b] : tk::lpoed) {
               auto s = tk::orient( {N[a],N[b]}, {p,q} );
               for (std::size_t j=0; j<3; ++j) {
                 for (std::size_t c=0; c<m_ncomp; ++c) {
                   R.var(r[c],p) -= J48 * s * (grad[a][j] - grad[b][j])
                                  * (v[c][j]*(ru[0][c] + ru[1][c])
                                     - tk::dot(v[c],n)*(ru[1][c] - ru[0][c]));
+
                 }
                 V(p,j,0) -= 2.0*J48 * s * (grad[a][j] - grad[b][j]);
               }

@@ -103,10 +103,14 @@ class CGPDE {
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
               const std::vector< std::size_t >& triinpoel,
+              const std::vector< std::size_t >& gid,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                      std::array< tk::real, 3 >,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& norm,
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( t, coord, inpoel, esued, psup, triinpoel, G, U, R ); }
+    { self->rhs( t, coord, inpoel, esued, psup, triinpoel, gid, norm, G, U, R ); }
 
     //! Public interface to computing the right-hand side vector for DiagCG
     void rhs( tk::real t,
@@ -204,6 +208,11 @@ class CGPDE {
                         const std::pair< std::vector< std::size_t >,
                                          std::vector< std::size_t > >&,
                         const std::vector< std::size_t >&,
+                        const std::vector< std::size_t >&,
+                        const std::unordered_map< tk::UnsMesh::Edge,
+                                std::array< tk::real, 3 >,
+                                tk::UnsMesh::Hash<2>,
+                                tk::UnsMesh::Eq<2> >&,
                         const tk::Fields&,
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
@@ -267,10 +276,14 @@ class CGPDE {
                 const std::pair< std::vector< std::size_t >,
                                  std::vector< std::size_t > >& psup,
                 const std::vector< std::size_t >& triinpoel,
+                const std::vector< std::size_t >& gid,
+                const std::unordered_map< tk::UnsMesh::Edge,
+                        std::array< tk::real, 3 >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& norm,
                 const tk::Fields& G,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( t, coord, inpoel, esued, psup, triinpoel, G, U, R ); }
+      { data.rhs( t, coord, inpoel, esued, psup, triinpoel, gid, norm, G, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,
