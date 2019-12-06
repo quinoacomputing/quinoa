@@ -160,6 +160,16 @@ class Velocity {
       // Modify G with the mean velocity gradient
       for (std::size_t i=0; i<9; ++i) m_G[i] -= m_dU[i];
 
+      // Access mean specific volume (if needed)
+      auto mixncomp = m_mixmassfracbeta_ncomp;
+      std::vector< tk::real > V( mixncomp, 0.0 );
+      if (m_solve == DepvarType::PRODUCT) {
+        for (std::size_t c=0; c<mixncomp; ++c) {
+          auto mV = tk::ctr::mean( m_mixmassfracbeta_depvar, mixncomp * 2 + c );
+          V[c] = 1.0/lookup( mV, moments );
+        }
+      }
+
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance
@@ -189,9 +199,9 @@ class Velocity {
               particles( p, m_ncomp+(i*3)+0, m_offset ) = Up/rhoi;
               particles( p, m_ncomp+(i*3)+1, m_offset ) = Vp/rhoi;
               particles( p, m_ncomp+(i*3)+2, m_offset ) = Wp/rhoi;
-              Up += rhoi * m_gravity[0] * dt;
-              Vp += rhoi * m_gravity[1] * dt;
-              Wp += rhoi * m_gravity[2] * dt;
+              Up += (rhoi - V[i]) * m_gravity[0] * dt;
+              Vp += (rhoi - V[i]) * m_gravity[1] * dt;
+              Wp += (rhoi - V[i]) * m_gravity[2] * dt;
             }
           }
         } else {
