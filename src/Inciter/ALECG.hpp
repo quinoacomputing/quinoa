@@ -88,9 +88,6 @@ class ALECG : public CBase_ALECG {
     //! Configure Charm++ custom reduction types initiated from this chare array
     static void registerReducers();
 
-    //! Receive boundary edges from all PEs (including this one)
-    void addBndEdges( CkReductionMsg* msg );
-
     //! Return from migration
     void ResumeFromSync() override;
 
@@ -188,7 +185,6 @@ class ALECG : public CBase_ALECG {
       p | m_lhs;
       p | m_rhs;
       p | m_grad;
-      p | m_bndEdges;
       p | m_bcdir;
       p | m_lhsc;
       p | m_gradc;
@@ -247,8 +243,6 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_rhs;
     //! Nodal gradients
     tk::Fields m_grad;
-    //! Chare-boundary edges associated to chares we share these edges with
-    std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
     //! Boundary conditions evaluated and assigned to local mesh node IDs
     //! \details Vector of pairs of bool and boundary condition value associated
     //!   to local mesh node IDs at which the user has set Dirichlet boundary

@@ -34,7 +34,6 @@ module alecg {
                    const std::map< int, std::vector< std::size_t > >& bnode,
                    const std::vector< std::size_t >& triinpoel );
       initnode void registerReducers();
-      entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
       entry void setup();
       entry void resizeComm();
       entry void init();

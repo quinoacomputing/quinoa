@@ -187,10 +187,15 @@ class Discretization : public CBase_Discretization {
     //! Boundary node ids accessor as non-const-ref
     std::unordered_map< std::size_t, std::size_t >& Bid() { return m_bid; }
 
-    //! Nodal communication map accessor as const-ref
+    //! Node communication map accessor as const-ref
     const tk::NodeCommMap& NodeCommMap() const { return m_nodeCommMap; }
-    //! Nodal communication map accessor as non-const-ref
+    //! Node communication map accessor as non-const-ref
     tk::NodeCommMap& NodeCommMap() { return m_nodeCommMap; }
+
+    //! Edge communication map accessor as const-ref
+    const tk::EdgeCommMap& EdgeCommMap() const { return m_edgeCommMap; }
+    //! Edge communication map accessor as non-const-ref
+    tk::EdgeCommMap& EdgeCommMap() { return m_edgeCommMap; }
     //@}
 
     //! Set time step size

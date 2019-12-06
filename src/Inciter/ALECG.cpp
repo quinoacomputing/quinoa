@@ -31,7 +31,6 @@
 #include "Refiner.hpp"
 #include "Reorder.hpp"
 #include "Around.hpp"
-#include "HashMapReducer.hpp"
 #include "Integrate/Mass.hpp"
 
 #ifdef HAS_ROOT
@@ -47,8 +46,6 @@ extern std::vector< CGPDE > g_cgpde;
 //! Runge-Kutta coefficients
 static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
-
-static CkReduction::reducerType BndEdgeMerger;
 
 } // inciter::
 
@@ -77,7 +74,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_grad( m_u.nunk(), m_u.nprop()*3 ),
-  m_bndEdges(),
   m_bcdir(),
   m_lhsc(),
   m_gradc(),
@@ -108,56 +104,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 
   // Compute boundary point normals
   bnorm( bface, triinpoel, std::move(symbcnodes) );
-
-  auto d = Disc();
-  const auto& gid = d->Gid();
-  const auto& inpoel = d->Inpoel();
-
-  // Generate boundary edges of our mesh chunk
-  tk::UnsMesh::EdgeSet bnded;
-  auto esup = tk::genEsup( inpoel, 4 );         // elements surrounding points
-  auto esuel = tk::genEsuelTet( inpoel, esup ); // elems surrounding elements
-  for (std::size_t e=0; e<esuel.size()/4; ++e) {
-    auto mark = e*4;
-    for (std::size_t f=0; f<4; ++f) {
-      if (esuel[mark+f] == -1) {
-        auto A = gid[ inpoel[ mark+tk::lpofa[f][0] ] ];
-        auto B = gid[ inpoel[ mark+tk::lpofa[f][1] ] ];
-        auto C = gid[ inpoel[ mark+tk::lpofa[f][2] ] ];
-        bnded.insert( {A,B} );
-        bnded.insert( {B,C} );
-        bnded.insert( {C,A} );
-      }
-    }
-  }
-
-  // Aggregate boundary edges across all chares
-  decltype(m_bndEdges) bnd{{ thisIndex, std::move(bnded) }};
-  auto stream = tk::serialize( bnd );
-  contribute( stream.first, stream.second.get(), BndEdgeMerger,
-    CkCallback(CkIndex_ALECG::addBndEdges(nullptr),thisProxy) );
-}
-//! [Constructor]
-
-void
-ALECG::addBndEdges( CkReductionMsg* msg )
-// *****************************************************************************
-//! Receive boundary edges from all refiner chares (including this one)
-//! \param[in] msg Charm++ message containing the aggregated map of bnd edges
-// *****************************************************************************
-{
-  decltype(m_bndEdges) allBndEdges;
-  PUP::fromMem creator( msg->getData() );
-  creator | allBndEdges;
-  delete msg;
-
-  // Compute unique set of chares that share at least a single edge with us
-  const auto& ownedges = tk::cref_find( allBndEdges, thisIndex );
-  for (const auto& [c,edges] : allBndEdges)
-    if (c != thisIndex)
-      for (const auto& e : edges)
-        if (ownedges.find(e) != end(ownedges))
-          m_bndEdges[c].insert(e);
 
   // Compute dual-face normals associated to edges
   dfnorm();
@@ -218,10 +164,10 @@ ALECG::dfnorm()
   }
 
   // Send our dual-face normal contributions to neighbor chares
-  if (m_bndEdges.empty())
+  if (d->EdgeCommMap().empty())
     comdfnorm_complete();
   else
-    for (const auto& [c,edges] : m_bndEdges) {
+    for (const auto& [c,edges] : d->EdgeCommMap()) {
       decltype(m_dfnorm) exp;
       for (const auto& e : edges) exp[e] = tk::cref_find(m_dfnorm,e);
       thisProxy[c].comdfnorm( exp );
@@ -248,7 +194,7 @@ ALECG::comdfnorm( const std::unordered_map< tk::UnsMesh::Edge,
     dfn[2] += n[2];
   }
 
-  if (++m_ndfnorm == m_bndEdges.size()) {
+  if (++m_ndfnorm == Disc()->EdgeCommMap().size()) {
     m_ndfnorm = 0;
     comdfnorm_complete();
   }
@@ -415,10 +361,6 @@ ALECG::registerReducers()
 // *****************************************************************************
 {
   NodeDiagnostics::registerReducers();
-
-  BndEdgeMerger = CkReduction::addReducer(
-                    tk::mergeHashMap< decltype(m_bndEdges)::key_type,
-                                      decltype(m_bndEdges)::mapped_type > );
 }
 
 void

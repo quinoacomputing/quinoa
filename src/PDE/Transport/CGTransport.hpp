@@ -205,8 +205,6 @@ class Transport {
       // domain-edge integral
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
         for (auto q : tk::Around(psup,p)) {     // for each edge p-q
-          // access elements surrounding edge p-q
-          const auto& surr_elements = tk::cref_find(esued,{p,q});
           // access and orient dual-face normals for edge p-q
           auto n = tk::cref_find( norm, {gid[p],gid[q]} );
           if (gid[p] > gid[q]) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
@@ -225,7 +223,7 @@ class Transport {
           auto v =
             Problem::prescribedVelocity( m_system, m_ncomp, x[p], y[p], z[p] );
           // compute domain integral
-          for (auto e : surr_elements) {
+          for (auto e : tk::cref_find(esued,{p,q})) {
             // access node IDs
             const std::array< std::size_t, 4 >
                 N{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
