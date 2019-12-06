@@ -165,11 +165,19 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
                           kw::sideset::info::expect::type > >
   , tag::bcinlet,       std::vector< std::vector<
                           kw::sideset::info::expect::type > >
-  , tag::bcsubsonicoutlet,
+  , tag::bccharacteristic,
                         std::vector< std::vector<
                           kw::sideset::info::expect::type > >
   , tag::farfield_pressure,
                         std::vector< kw::farfield_pressure::info::expect::type >
+  , tag::farfield_density,
+                        std::vector< kw::farfield_density::info::expect::type >
+  , tag::farfield_x_velocity,
+                        std::vector< kw::farfield_x_velocity::info::expect::type >
+  , tag::farfield_y_velocity,
+                        std::vector< kw::farfield_y_velocity::info::expect::type >
+  , tag::farfield_z_velocity,
+                        std::vector< kw::farfield_z_velocity::info::expect::type >
   , tag::bcextrapolate, std::vector< std::vector<
                          kw::sideset::info::expect::type > >
     //! Parameter vector (for specific, e.g., verification problems)

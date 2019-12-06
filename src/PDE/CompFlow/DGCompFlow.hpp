@@ -89,7 +89,7 @@ class CompFlow {
                    g_inputdeck.get< tag::discr, tag::flux >() ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
-      m_bcsubsonicoutlet( config< tag::bcsubsonicoutlet >( c ) ),
+      m_bccharacteristic( config< tag::bccharacteristic >( c ) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) )
       //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
       //        "Boundary conditions not set in control file for DG CompFlow" );
@@ -290,7 +290,7 @@ class CompFlow {
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
         { m_bcdir, Dirichlet },
         { m_bcsym, Symmetry },
-        { m_bcsubsonicoutlet, SubsonicOutlet },
+        { m_bccharacteristic, Characteristic },
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
@@ -720,8 +720,8 @@ class CompFlow {
     const std::vector< bcconf_t > m_bcdir;
     //! Symmetric BC configuration
     const std::vector< bcconf_t > m_bcsym;
-    //! SubsonicOutlet BC configuration
-    const std::vector< bcconf_t > m_bcsubsonicoutlet;
+    //! Characteristic BC configuration
+    const std::vector< bcconf_t > m_bccharacteristic;
     //! Extrapolation BC configuration
     const std::vector< bcconf_t > m_bcextrapolate;
 
@@ -822,29 +822,85 @@ class CompFlow {
     }
 
     //! \brief Boundary state function providing the left and right state of a
-    //!   face at subsonic outlet boundaries
+    //!   face at characteristic boundaries
     //! \param[in] ul Left (domain-internal) state
+    //! \param[in] fn Unit face normal
     //! \return Left and right states for all scalar components in this PDE
     //!   system
-    //! \details The subsonic outlet boudary calculation, implemented here, is
-    //!   based on the characteristic theory of hyperbolic systems. For subsonic
-    //!   outlet flow, there are 3 outgoing characteristcs and 1 incoming
-    //!   characteristic. Therefore, we calculate the ghost cell state by taking
-    //!   pressure from the outside and other quantities from the internal cell.
+    //! \details The characteristic boudary calculation, implemented here, is
+    //!   based on the characteristic theory of hyperbolic systems.
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    SubsonicOutlet( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
+    Characteristic( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
                     tk::real, tk::real, tk::real, tk::real,
-                    const std::array< tk::real, 3 >& )
+                    const std::array< tk::real, 3 >& fn )
     {
-      auto fp =
-        g_inputdeck.get< tag::param, eq, tag::farfield_pressure >()[ system ];
+      // Primitive variables from farfield
+      auto frho = g_inputdeck.get< tag::param, eq,
+                                   tag::farfield_density >()[ system ];
+      auto fp   = g_inputdeck.get< tag::param, eq,
+                                   tag::farfield_pressure >()[ system ];
+      auto fu   = g_inputdeck.get< tag::param, eq,
+                                   tag::farfield_x_velocity >()[ system ];
+      auto fv   = g_inputdeck.get< tag::param, eq,
+                                   tag::farfield_y_velocity >()[ system ];
+      auto fw   = g_inputdeck.get< tag::param, eq,
+                                   tag::farfield_z_velocity >()[ system ];
+
+      // Speed of sound from farfield
+      auto fa = eos_soundspeed< eq >( system, frho, fp );
+
+      // Normal component from farfield
+      auto fvn = fu*fn[0] + fv*fn[1] + fw*fn[2];
+
+      // Mach number from farfield
+      auto fM = fvn / fa;
+
+      // Specific total energy from farfield
+      auto frhoE =
+        eos_totalenergy< eq >( system, frho, fu, fv, fw, fp );
+
+      // Pressure from internal cell
+      auto p = eos_pressure< eq >( system, ul[0], ul[1]/ul[0], ul[2]/ul[0],
+                                   ul[3]/ul[0], ul[4] );
 
       auto ur = ul;
-      auto u_l = ul[1] / ul[0];
-      auto v_l = ul[2] / ul[0];
-      auto w_l = ul[3] / ul[0];
-      ur[4] = eos_totalenergy< eq >( system, ul[0], u_l, v_l, w_l, fp );
+
+      if(fM <= -1)                         // Supersonic inflow
+      {
+        // For supersonic inflow, all the characteristics are from outside.
+        // Therefore, we calculate the ghost cell state using the primitive
+        // variables from outside.
+        ur[0] = frho;
+        ur[1] = frho * fu;
+        ur[2] = frho * fv;
+        ur[3] = frho * fw;
+        ur[4] = frhoE;
+      } else if(fM > -1 && fM < 0)       // Subsonic inflow
+      {
+        // For subsonic inflow, there are 1 outgoing characteristcs and 4
+        // incoming characteristic. Therefore, we calculate the ghost cell state
+        // by taking pressure from the internal cell and other quantities from
+        // the outside.
+        ur[0] = frho;
+        ur[1] = frho * fu;
+        ur[2] = frho * fv;
+        ur[3] = frho * fw;
+        ur[4] =
+          eos_totalenergy< eq >( system, frho, fu, fv, fw, p );
+      } else if(fM > 0 && fM < 1)       // Subsonic outflow
+      {
+        // For subsonic outflow, there are 1 incoming characteristcs and 4
+        // outgoing characteristic. Therefore, we calculate the ghost cell state
+        // by taking pressure from the outside and other quantities from the
+        // internal cell.
+        ur[4] = eos_totalenergy< eq >( system, ul[0], ul[1]/ul[0], ul[2]/ul[0],
+                                       ul[3]/ul[0], fp );
+      }
+      // Otherwise, for supersonic outflow, all the characteristics are from
+      // internal cell. Therefore, we calculate the ghost cell state using the
+      // conservative variables from outside.
+
       return {{ ul, ur }};
     }
 

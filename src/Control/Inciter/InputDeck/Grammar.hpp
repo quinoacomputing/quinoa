@@ -231,14 +231,14 @@ namespace grm {
           Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
 
       // Put in default farfield pressure if not specified by user
-      // if outlet BC is configured for this compflow system
-      auto& bcsubsonicoutlet =
-          stack.template get< tag::param, eq, tag::bcsubsonicoutlet >();
-      if (!bcsubsonicoutlet.empty() || bcsubsonicoutlet.size() != neq.get< eq >()) {
-        auto& fp =
-          stack.template get< tag::param, eq, tag::farfield_pressure >();
-        if (fp.size() != bcsubsonicoutlet.size()) fp.push_back( 1.0 );
-      }
+      // if characteristic BC is configured for this compflow system
+      //auto& bccharacteristic =
+      //    stack.template get< tag::param, eq, tag::bccharacteristic >();
+      //if (!bccharacteristic.empty() || bccharacteristic.size() != neq.get< eq >()) {
+      //  auto& fp =
+      //    stack.template get< tag::param, eq, tag::farfield_pressure >();
+      //  if (fp.size() != bccharacteristic.size()) fp.push_back( 1.0 );
+      //}
     }
   };
 
@@ -627,12 +627,16 @@ namespace deck {
 
   //! Farfield boundary conditions block
   template< class keyword, class eq, class param >
-  struct subsonic_bc :
+  struct characteristic_bc :
          pegtl::if_must<
            tk::grm::readkw< typename use< keyword >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
              parameter< eq, kw::farfield_pressure, tag::farfield_pressure >,
+             parameter< eq, kw::farfield_density, tag::farfield_density >,
+             parameter< eq, kw::farfield_x_velocity, tag::farfield_x_velocity >,
+             parameter< eq, kw::farfield_y_velocity, tag::farfield_y_velocity >,
+             parameter< eq, kw::farfield_z_velocity, tag::farfield_z_velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,
@@ -769,9 +773,9 @@ namespace deck {
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           subsonic_bc< kw::bc_outlet,
-                                        tag::compflow,
-                                        tag::bcsubsonicoutlet >,
+                           characteristic_bc< kw::bc_outlet,
+                                              tag::compflow,
+                                              tag::bccharacteristic >,
                            bc< kw::bc_extrapolate, tag::compflow,
                                tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
