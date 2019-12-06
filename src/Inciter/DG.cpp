@@ -73,7 +73,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_ncoord( Disc()->Coord()[0].size() ),
-  m_msumset( Disc()->msumset() ),
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
@@ -202,10 +201,10 @@ DG::resizeComm()
 
   // In the following we assume that the size of the (potential) boundary-face
   // adjacency map above does not necessarily equal to that of the node
-  // adjacency map (m_msumset). This is because while a node can be shared at a
-  // single corner or along an edge, that does not necessarily share a face as
-  // well (in other words, shared nodes or edges can exist that are not part of
-  // a shared face). So the chares we communicate with across faces are not
+  // adjacency map. This is because while a node can be shared at a single
+  // corner or along an edge, that does not necessarily share a face as well
+  // (in other words, shared nodes or edges can exist that are not part of a
+  // shared face). So the chares we communicate with across faces are not
   // necessarily the same as the chares we would communicate nodes with.
   //
   // Since the sizes of the node and face adjacency maps are not the same, while
@@ -224,10 +223,11 @@ DG::resizeComm()
   // communication pattern and code.
 
   // Send sets of faces adjacent to chare boundaries to fellow workers (if any)
-  if (m_msumset.empty())        // in serial, skip setting up ghosts altogether
+  if (d->NodeCommMap().empty())  // in serial, skip setting up ghosts altogether
     adj();
   else
-    for (const auto& c : m_msumset) {   // for all chares we share nodes with
+    // for all chares we share nodes with
+    for (const auto& c : d->NodeCommMap()) {
       thisProxy[ c.first ].comfac( thisIndex, potbndface );
     }
 
@@ -331,7 +331,7 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 
   // if we have heard from all fellow chares that we share at least a single
   // node, edge, or face with
-  if (++m_ncomfac == m_msumset.size()) {
+  if (++m_ncomfac == Disc()->NodeCommMap().size()) {
     m_ncomfac = 0;
     comfac_complete();
   }
@@ -421,12 +421,12 @@ DG::bndFaces()
   setupGhost();
   // Besides setting up our own ghost data, we also issue requests (for ghost
   // data) to those chares which we share faces with. Note that similar to
-  // comfac() we are calling reqGhost() by going through msumset instead,
-  // which may send requests to those chare we do not share faces with. This
-  // is so that we can test for completing by querying the size of the already
-  // complete msumset in reqGhost. Requests in sendGhost will only be
-  // fullfilled based on m_ghostData.
-  for (const auto& c : m_msumset)     // for all chares we share nodes with
+  // comfac() we are calling reqGhost() by going through the node communication
+  // map instead, which may send requests to those chare we do not share faces
+  // with. This is so that we can test for completing by querying the size of
+  // the already complete node commincation map in reqGhost. Requests in
+  // sendGhost will only be fullfilled based on m_ghostData.
+  for (const auto& c : d->NodeCommMap())  // for all chares we share nodes with
     thisProxy[ c.first ].reqGhost();
 }
 
@@ -580,7 +580,7 @@ DG::reqGhost()
 {
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
-  if (++m_ghostReq == m_msumset.size()) {
+  if (++m_ghostReq == Disc()->NodeCommMap().size()) {
     m_ghostReq = 0;
     reqghost_complete();
   }
@@ -630,7 +630,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
   auto ncoord = coord[0].size();
 
   // nodelist with fromch, currently only used for an assert
-  [[maybe_unused]] const auto& nl = tk::cref_find( m_msumset, fromch );
+  [[maybe_unused]] const auto& nl = tk::cref_find( d->NodeCommMap(), fromch );
 
   auto& ghostelem = m_ghost[ fromch ];  // will associate to sender chare
 
@@ -995,8 +995,6 @@ DG::setup()
 // Set initial conditions, generate lhs, output mesh
 // *****************************************************************************
 {
-  tk::destroy(m_msumset);
-
   auto d = Disc();
 
   // Basic error checking on sizes of element geometry data and connectivity
@@ -1626,7 +1624,7 @@ DG::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
   const std::unordered_map< std::size_t, std::size_t >& addedTets,
-  const std::unordered_map< int, std::vector< std::size_t > >& msum,
+  const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
   const std::vector< std::size_t >& triinpoel )
@@ -1635,7 +1633,7 @@ DG::resizePostAMR(
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
-//! \param[in] msum New node communication map
+//! \param[in] nodeCommMap New node communication map
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
@@ -1655,7 +1653,7 @@ DG::resizePostAMR(
   [[maybe_unused]] auto old_nelem = d->Inpoel().size()/4;
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, msum );
+  d->resizePostAMR( chunk, coord, nodeCommMap );
 
   // Update state
   auto nelem = d->Inpoel().size()/4;
@@ -1676,7 +1674,6 @@ DG::resizePostAMR(
   m_nfac = m_fd.Inpofa().size()/3;
   m_nunk = nelem;
   m_ncoord = coord[0].size();
-  m_msumset = d->msumset();
   m_bndFace.clear();
   m_ghostData.clear();
   m_ghost.clear();

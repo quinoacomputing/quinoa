@@ -311,10 +311,10 @@ ALECG::bnorm( const std::map< int, std::vector< std::size_t > >& bface,
   }
 
   // Send our nodal normal contributions to neighbor chares
-  if (d->Msum().empty())
+  if (d->NodeCommMap().empty())
    comnorm_complete();
   else
-    for (const auto& [ neighborchare, sharednodes ] : d->Msum()) {
+    for (const auto& [ neighborchare, sharednodes ] : d->NodeCommMap()) {
       std::unordered_map< std::size_t, std::array< tk::real, 4 > > exp;
       for (auto i : sharednodes) {      // symmetry BCs may be specified on only
         auto j = m_bnorm.find(i);       // a subset of chare boundary nodes
@@ -345,7 +345,7 @@ ALECG::comnorm(
     bnorm[3] += n[3];
   }
 
-  if (++m_nnorm == Disc()->Msum().size()) {
+  if (++m_nnorm == Disc()->NodeCommMap().size()) {
     m_nnorm = 0;
     comnorm_complete();
   }
@@ -490,14 +490,14 @@ ALECG::lhs()
   // Compute lumped mass lhs
   m_lhs = tk::lump( m_u.nprop(), d->Coord(), d->Inpoel() );
 
-  if (d->Msum().empty())        // in serial we are done
+  if (d->NodeCommMap().empty())        // in serial we are done
     comlhs_complete();
   else // send contributions of lhs to chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > l( n.second.size() );
+    for (const auto& [c,n] : d->NodeCommMap()) {
+      std::vector< std::vector< tk::real > > l( n.size() );
       std::size_t j = 0;
-      for (auto i : n.second) l[ j++ ] = m_lhs[ tk::cref_find(d->Lid(),i) ];
-      thisProxy[ n.first ].comlhs( n.second, l );
+      for (auto i : n) l[ j++ ] = m_lhs[ tk::cref_find(d->Lid(),i) ];
+      thisProxy[c].comlhs( std::vector<std::size_t>(begin(n),end(n)), l );
     }
 
   ownlhs_complete();
@@ -530,7 +530,7 @@ ALECG::comlhs( const std::vector< std::size_t >& gid,
   }
 
   // When we have heard from all chares we communicate with, this chare is done
-  if (++m_nlhs == d->Msum().size()) {
+  if (++m_nlhs == d->NodeCommMap().size()) {
     m_nlhs = 0;
     comlhs_complete();
   }
@@ -645,14 +645,14 @@ ALECG::grad()
     eq.grad( d->Coord(), d->Inpoel(), m_u, m_grad );
 
   // Communicate gradients to other chares on chare-boundary
-  if (d->Msum().empty())        // in serial we are done
+  if (d->NodeCommMap().empty())        // in serial we are done
     comgrad_complete();
   else // send gradients contributions to chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > g( n.second.size() );
+    for (const auto& [c,n] : d->NodeCommMap()) {
+      std::vector< std::vector< tk::real > > g( n.size() );
       std::size_t j = 0;
-      for (auto i : n.second) g[ j++ ] = m_grad[ tk::cref_find(d->Lid(),i) ];
-      thisProxy[ n.first ].comgrad( n.second, g );
+      for (auto i : n) g[ j++ ] = m_grad[ tk::cref_find(d->Lid(),i) ];
+      thisProxy[c].comgrad( std::vector<std::size_t>(begin(n),end(n)), g );
     }
 
   owngrad_complete();
@@ -678,7 +678,7 @@ ALECG::comgrad( const std::vector< std::size_t >& gid,
 
   for (std::size_t i=0; i<gid.size(); ++i) m_gradc[ gid[i] ] += G[i];
 
-  if (++m_ngrad == Disc()->Msum().size()) {
+  if (++m_ngrad == Disc()->NodeCommMap().size()) {
     m_ngrad = 0;
     comgrad_complete();
   }
@@ -713,14 +713,14 @@ ALECG::rhs()
                    d->Coord(),  d->Lid(), m_bnode );
 
   // Communicate rhs to other chares on chare-boundary
-  if (d->Msum().empty())        // in serial we are done
+  if (d->NodeCommMap().empty())        // in serial we are done
     comrhs_complete();
   else // send contributions of rhs to chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > r( n.second.size() );
+    for (const auto& [c,n] : d->NodeCommMap()) {
+      std::vector< std::vector< tk::real > > r( n.size() );
       std::size_t j = 0;
-      for (auto i : n.second) r[ j++ ] = m_rhs[ tk::cref_find(d->Lid(),i) ];
-      thisProxy[ n.first ].comrhs( n.second, r );
+      for (auto i : n) r[ j++ ] = m_rhs[ tk::cref_find(d->Lid(),i) ];
+      thisProxy[c].comrhs( std::vector<std::size_t>(begin(n),end(n)), r );
     }
 
   ownrhs_complete();
@@ -749,7 +749,7 @@ ALECG::comrhs( const std::vector< std::size_t >& gid,
   }
 
   // When we have heard from all chares we communicate with, this chare is done
-  if (++m_nrhs == Disc()->Msum().size()) {
+  if (++m_nrhs == Disc()->NodeCommMap().size()) {
     m_nrhs = 0;
     comrhs_complete();
   }
@@ -856,7 +856,7 @@ ALECG::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
-  const std::unordered_map< int, std::vector< std::size_t > >& msum,
+  const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& /*bface*/,
   const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& /* triinpoel */ )
@@ -867,7 +867,7 @@ ALECG::resizePostAMR(
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
-//! \param[in] msum New node communication map
+//! \param[in] nodeCommMap New node communication map
 //! \param[in] bnode Boundary-node lists mapped to side set ids
 // *****************************************************************************
 {
@@ -883,7 +883,7 @@ ALECG::resizePostAMR(
   ++d->Itr();
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, msum );
+  d->resizePostAMR( chunk, coord, nodeCommMap );
 
   // Recompute derived data structures
   m_esued = tk::genEsued( d->Inpoel(), 4, tk::genEsup(d->Inpoel(),4) );

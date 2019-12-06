@@ -20,6 +20,7 @@
 #include "PUPUtil.hpp"
 #include "PDFReducer.hpp"
 #include "UnsMesh.hpp"
+#include "CommMap.hpp"
 
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
@@ -62,7 +63,7 @@ class Discretization : public CBase_Discretization {
         const tk::CProxy_MeshWriter& meshwriter,
         const std::vector< std::size_t >& ginpoel,
         const tk::UnsMesh::CoordMap& coordmap,
-        const std::map< int, std::unordered_set< std::size_t > >& msum,
+        const tk::CommMaps& msum,
         int nc );
 
     #if defined(__clang__)
@@ -82,8 +83,7 @@ class Discretization : public CBase_Discretization {
     //! Resize mesh data structures (e.g., after mesh refinement)
     void resizePostAMR( const tk::UnsMesh::Chunk& chunk,
                         const tk::UnsMesh::Coords& coord,
-                        const std::unordered_map< int,
-                                std::vector< std::size_t > >& msum );
+                        const tk::NodeCommMap& nodeCommMap );
 
     //! Get ready for (re-)computing/communicating nodal volumes
     void startvol();
@@ -188,11 +188,9 @@ class Discretization : public CBase_Discretization {
     std::unordered_map< std::size_t, std::size_t >& Bid() { return m_bid; }
 
     //! Nodal communication map accessor as const-ref
-    const std::unordered_map< int, std::vector< std::size_t > >& Msum() const
-    { return m_msum; }
+    const tk::NodeCommMap& NodeCommMap() const { return m_nodeCommMap; }
     //! Nodal communication map accessor as non-const-ref
-    std::unordered_map< int, std::vector< std::size_t > >& Msum()
-    { return m_msum; }
+    tk::NodeCommMap& NodeCommMap() { return m_nodeCommMap; }
     //@}
 
     //! Set time step size
@@ -215,10 +213,6 @@ class Discretization : public CBase_Discretization {
                 const std::vector< std::vector< tk::real > >& elemfields,
                 const std::vector< std::vector< tk::real > >& nodefields,
                 CkCallback c );
-
-    //! Return chare-node adjacency map as sets
-    std::unordered_map< int, std::unordered_set< std::size_t > >
-    msumset() const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -245,7 +239,8 @@ class Discretization : public CBase_Discretization {
         m_lid = std::get< 2 >( m_el );
       }
       p | m_coord;
-      p | m_msum;
+      p | m_nodeCommMap;
+      p | m_edgeCommMap;
       p | m_meshvol;
       p | m_v;
       p | m_vol;
@@ -314,9 +309,10 @@ class Discretization : public CBase_Discretization {
     tk::UnsMesh::Coords m_coord;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!   Discretization chares associated to their chare IDs
-    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
-    //!   points
-    std::unordered_map< int, std::vector< std::size_t > > m_msum;
+    tk::NodeCommMap m_nodeCommMap;
+    //! \brief Edges with global node IDs bordering the mesh chunk held by
+    //!   fellow Discretization chares associated to their chare IDs
+    tk::EdgeCommMap m_edgeCommMap;
     //! Total mesh volume
     tk::real m_meshvol;
     //! Nodal mesh volumes

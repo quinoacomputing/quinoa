@@ -78,7 +78,7 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u ) const
     // chare ID than any other chare that also contributes to the node.
     std::unordered_set< std::size_t > slave;
 
-    for (const auto& c : d.Msum())      // for all chares that neighbor our mesh
+    for (const auto& c : d.NodeCommMap())// for all neighbor chares
       if (d.thisIndex > c.first)        // if our chare ID is larger than theirs
         for (auto i : c.second)         // store local ID in set
           slave.insert( tk::cref_find( d.Lid(), i ) );

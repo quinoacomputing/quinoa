@@ -143,7 +143,7 @@ class DG : public CBase_DG {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /* addedNodes */,
       const std::unordered_map< std::size_t, std::size_t >& addedTets,
-      const std::unordered_map< int, std::vector< std::size_t > >& msum,
+      const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::map< int, std::vector< std::size_t > >& /* bnode */,
       const std::vector< std::size_t >& triinpoel );
@@ -191,7 +191,6 @@ class DG : public CBase_DG {
       p | m_nfac;
       p | m_nunk;
       p | m_ncoord;
-      p | m_msumset;
       p | m_ipface;
       p | m_bndFace;
       p | m_ghostData;
@@ -264,12 +263,6 @@ class DG : public CBase_DG {
     std::size_t m_nunk;
     //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_ncoord;
-    //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
-    //!    worker chares associated to their chare IDs
-    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
-    //!   points. This is the same data as in Discretization::m_msum, but the
-    //!   nodelist is stored as a set.
-    std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
     //! Internal + physical boundary faces (inverse of inpofa)
     tk::UnsMesh::FaceSet m_ipface;
     //! Face & tet IDs associated to global node IDs of the face for each chare

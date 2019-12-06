@@ -36,7 +36,7 @@ Discretization::Discretization(
   const tk::CProxy_MeshWriter& meshwriter,
   const std::vector< std::size_t >& ginpoel,
   const tk::UnsMesh::CoordMap& coordmap,
-  const std::map< int, std::unordered_set< std::size_t > >& msum,
+  const tk::CommMaps& msum,
   int nc ) :
   m_nchare( nc ),
   m_it( 0 ),
@@ -52,6 +52,8 @@ Discretization::Discretization(
   m_meshwriter( meshwriter ),
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
+  m_nodeCommMap(),
+  m_edgeCommMap(),
   m_meshvol( 0.0 ),
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
@@ -67,7 +69,7 @@ Discretization::Discretization(
 //! \param[in] meshwriter Mesh writer proxy
 //! \param[in] ginpoel Vector of mesh element connectivity owned (global IDs)
 //! \param[in] coordmap Coordinates of mesh nodes and their global IDs
-//! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
+//! \param[in] msum Communication maps associated to chare IDs bordering the
 //!   mesh chunk we operate on
 //! \param[in] nc Total number of Discretization chares
 // *****************************************************************************
@@ -78,20 +80,20 @@ Discretization::Discretization(
   Assert( tk::conforming( m_inpoel, m_coord ),
           "Input mesh to Discretization not conforming" );
 
-  // Convert neighbor nodes to vectors from sets
-  for (const auto& [ neighborchare, sharednodes ] : msum) {
-    auto& v = m_msum[ neighborchare ];
-    v.insert( end(v), begin(sharednodes), end(sharednodes) );
+  // Store communication maps
+  for (const auto& [ c, maps ] : msum) {
+    m_nodeCommMap[c] = maps.get< tag::node >();
+    m_edgeCommMap[c] = maps.get< tag::edge >();
   }
 
   // Get ready for computing/communicating nodal volumes
   startvol();
 
   // Count the number of mesh nodes at which we receive data from other chares
-  // and compute map associating boundary-chare node ID associated to global ID
-  std::vector< std::size_t > c( tk::sumvalsize( m_msum ) );
+  std::vector< std::size_t > c( tk::sumvalsize( m_nodeCommMap ) );
+  // Compute map associating boundary-chare node ID associated to global ID
   std::size_t j = 0;
-  for (const auto& n : m_msum) for (auto i : n.second) c[j++] = i;
+  for (const auto& [ch,n] : m_nodeCommMap) for (auto i : n) c[j++] = i;
   tk::unique( c );
   m_bid = tk::assignLid( c );
 
@@ -102,31 +104,30 @@ Discretization::Discretization(
   const auto nprop = g_inputdeck.get< tag::component >().nprop();
   if (sch == ctr::SchemeType::DiagCG)
     m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
-                               m_msum, m_bid, m_lid, m_inpoel );
+                               m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
               m_transporter) );
 }
 
 void
-Discretization::resizePostAMR(
-  const tk::UnsMesh::Chunk& chunk,
-  const tk::UnsMesh::Coords& coord,
-  const std::unordered_map< int, std::vector< std::size_t > >& msum )
+Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
+                               const tk::UnsMesh::Coords& coord,
+                               const tk::NodeCommMap& nodeCommMap )
 // *****************************************************************************
 //  Resize mesh data structures (e.g., after mesh refinement)
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
-//! \param[in] msum New node communication map
+//! \param[in] nodeCommMap New node communication map
 // *****************************************************************************
 {
   m_el = chunk;         // updates m_inpoel, m_gid, m_lid
   m_coord = coord;      // update mesh node coordinates
-  m_msum = msum;        // update node communication map
+  m_nodeCommMap = nodeCommMap;        // update node communication map
 
   // Generate local ids for new chare boundary global ids
   std::size_t lid = m_bid.size();
-  for (const auto& [ neighborchare, sharednodes ] : m_msum)
+  for (const auto& [ neighborchare, sharednodes ] : m_nodeCommMap)
     for (auto g : sharednodes)
       if (m_bid.find( g ) == end(m_bid))
         m_bid[ g ] = lid++;
@@ -248,14 +249,14 @@ Discretization::vol()
   m_v = m_vol;
 
   // Send our nodal volume contributions to neighbor chares
-  if (m_msum.empty())
+  if (m_nodeCommMap.empty())
    totalvol();
   else
-    for (const auto& [ neighborchare, sharednodes ] : m_msum) {
-      std::vector< tk::real > v( sharednodes.size() );
+    for (const auto& [c,n] : m_nodeCommMap) {
+      std::vector< tk::real > v( n.size() );
       std::size_t j = 0;
-      for (auto i : sharednodes) v[ j++ ] = m_vol[ tk::cref_find(m_lid,i) ];
-      thisProxy[ neighborchare ].comvol( sharednodes, v );
+      for (auto i : n) v[ j++ ] = m_vol[ tk::cref_find(m_lid,i) ];
+      thisProxy[c].comvol( std::vector<std::size_t>(begin(n), end(n)), v );
     }
 
   ownvol_complete();
@@ -280,7 +281,7 @@ Discretization::comvol( const std::vector< std::size_t >& gid,
   for (std::size_t i=0; i<gid.size(); ++i)
     m_volc[ gid[i] ] += nodevol[i];
 
-  if (++m_nvol == m_msum.size()) {
+  if (++m_nvol == m_nodeCommMap.size()) {
     m_nvol = 0;
     comvol_complete();
   }
@@ -456,23 +457,6 @@ Discretization::write(
            g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
            inpoel, coord, bface, bnode, triinpoel, elemfieldnames,
            nodefieldnames, elemfields, nodefields, c );
-}
-
-std::unordered_map< int, std::unordered_set< std::size_t > >
-Discretization::msumset() const
-// *****************************************************************************
-// Return chare-node adjacency map as sets
-//! \return Chare-node adjacency map that holds sets instead of vectors
-// *****************************************************************************
-{
-  std::unordered_map< int, std::unordered_set< std::size_t > > m;
-  for (const auto& [ neighborchare, sharednodes ] : m_msum)
-    m[ neighborchare ].insert( begin(sharednodes), end(sharednodes) );
-
-  Assert( m.find( thisIndex ) == m.cend(),
-          "Chare-node adjacency map should not contain data for own chare ID" );
-
-  return m;
 }
 
 void

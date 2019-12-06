@@ -257,6 +257,7 @@ struct pe {};
 struct it {};
 struct fn {};
 struct time {};
+struct node {};
 
 struct BirthdaySpacings {};
 struct Collision {};
