@@ -625,7 +625,7 @@ namespace deck {
                                         eq,
                                         param > > > {};
 
-  //! Farfield boundary conditions block
+  //! Characteristic boundary conditions block
   template< class keyword, class eq, class param >
   struct characteristic_bc :
          pegtl::if_must<
@@ -773,7 +773,7 @@ namespace deck {
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           characteristic_bc< kw::bc_outlet,
+                           characteristic_bc< kw::bc_outlet, 
                                               tag::compflow,
                                               tag::bccharacteristic >,
                            bc< kw::bc_extrapolate, tag::compflow,

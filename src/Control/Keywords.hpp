@@ -4157,6 +4157,25 @@ struct taylor_green_info {
 using taylor_green =
   keyword< taylor_green_info, TAOCPP_PEGTL_STRING("taylor_green") >;
 
+struct shedding_flow_info {
+  using code = Code< F >;
+  static std::string name() { return "Shedding flow over triangular wedge"; }
+  static std::string shortDescription() { return
+    "Select the Shedding flow test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Shedding flow test problem. It
+    describe a quasi-2D inviscid flow over a triangular wedge in tetrahedron
+    grid. The purpose of this test problem is to test the capability of DG
+    scheme for retaining the shape of vortices and also different error
+    indicator behavior for this external flow problem when p-adaptive DG scheme
+    is applied. Example: "problem shedding_flow".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using shedding_flow =
+  keyword< shedding_flow_info, TAOCPP_PEGTL_STRING("shedding_flow") >;
+
 struct sod_shocktube_info {
   using code = Code< H >;
   static std::string name() { return "Sod shock-tube"; }
@@ -4752,6 +4771,23 @@ struct transport_info {
 };
 using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
 
+struct bc_characteristic_info {
+  static std::string name() { return "Characteristic boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing Characteristic boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a bc_characteristic ... end block, used
+    to specify the configuration for setting characteristic boundary conditions
+    for a partial differential equation. Keywords allowed in a bc_characteristic
+    ... end block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_characteristic ... end block, see
+      doc/html/inciter_example_gausshump.html.)";
+  }
+};
+using bc_characteristic =
+  keyword< bc_characteristic_info, TAOCPP_PEGTL_STRING("bc_characteristic") >;
+
 struct bc_extrapolate_info {
   static std::string name() { return "Extrapolation boundary condition"; }
   static std::string shortDescription() { return
@@ -4958,6 +4994,7 @@ struct compflow_info {
     + bc_sym::string() + "\', \'"
     + bc_inlet::string() + "\', \'"
     + bc_outlet::string() + "\', \'"
+    + bc_characteristic::string() + "\', \'"
     + bc_extrapolate::string() + "\'."
     + R"(For an example compflow ... end block, see
       doc/html/inicter_example_compflow.html.)";

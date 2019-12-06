@@ -59,6 +59,7 @@
 #include "Problem/RayleighTaylor.hpp"
 #include "Problem/TaylorGreen.hpp"
 #include "Problem/SodShocktube.hpp"
+#include "Problem/SheddingFlow.hpp"
 #include "Problem/RotatedSodShocktube.hpp"
 #include "Problem/SedovBlastwave.hpp"
 #include "Problem/GaussHumpCompflow.hpp"
@@ -72,6 +73,7 @@ using CompFlowProblems = brigand::list< CompFlowProblemUserDefined
                                       , CompFlowProblemRayleighTaylor
                                       , CompFlowProblemTaylorGreen
                                       , CompFlowProblemSodShocktube
+                                      , CompFlowProblemSheddingFlow
                                       , CompFlowProblemRotatedSodShocktube
                                       , CompFlowProblemSedovBlastwave
                                       , CompFlowProblemGaussHump
