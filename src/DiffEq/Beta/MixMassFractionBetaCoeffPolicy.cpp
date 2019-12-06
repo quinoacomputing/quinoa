@@ -681,8 +681,8 @@ walker::MixMassFracBetaCoeffInstVel::update(
   const std::map< tk::ctr::Product, tk::real >& moments,
   const std::vector< kw::sde_bprime::info::expect::type  >& /*bprime*/,
   const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
-  const std::vector< kw::sde_rho2::info::expect::type >& /*rho2*/,
-  const std::vector< kw::sde_r::info::expect::type >& /*r*/,
+  const std::vector< kw::sde_rho2::info::expect::type >& rho2,
+  const std::vector< kw::sde_r::info::expect::type >& r,
   const std::vector< tk::Table >&,
   const std::vector< tk::Table >&,
   std::vector< kw::sde_b::info::expect::type  >& b,
@@ -753,11 +753,26 @@ walker::MixMassFracBetaCoeffInstVel::update(
 
     } else Throw( "Depvar type not implemented" );
 
+    // simple decay for now
     tk::real beta1 = 2.0;
     b[c] = beta1 * ts;
     k[c] = kprime[c] * beta1 * ts * y2;
 
-    S[c] = 0.5;
+    tk::real d = lookup( mean(depvar,c+ncomp), moments );      // <R>
+    tk::real d2 = lookup( variance(depvar,c+ncomp), moments ); // <r^2>
+    tk::real d3 = lookup( cen3(depvar,c+ncomp), moments );     // <r^3>
+
+    // force d\<rho\>/dt = 0
+    tk::real R = 1.0 + d2/d/d;
+    tk::real B = -1.0/r[c]/r[c];
+    tk::real C = (2.0+r[c])/r[c]/r[c];
+    tk::real D = -(1.0+r[c])/r[c]/r[c];
+    tk::real diff =
+      B*d/rho2[c] +
+      C*d*d*R/rho2[c]/rho2[c] +
+      D*d*d*d*(1.0 + 3.0*d2/d/d + d3/d/d/d)/rho2[c]/rho2[c]/rho2[c];
+    S[c] = (rho2[c]/d/R +
+           2.0*k[c]/b[c]*rho2[c]*rho2[c]/d/d*r[c]*r[c]/R*diff - 1.0) / r[c];
   }  
 
   ++m_it;
