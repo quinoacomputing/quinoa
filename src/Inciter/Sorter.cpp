@@ -115,6 +115,8 @@ Sorter::setup( std::size_t npoin )
   std::array< std::size_t, 2 > chunksize{{
      npoin / N, std::numeric_limits< std::size_t >::max() / N }};
 
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+
   // Find chare-boundary nodes and edges of our mesh chunk. This algorithm
   // collects the global mesh node ids and edges on the chare boundary. A node
   // is on a chare boundary if it belongs to a face of a tetrahedron that has
@@ -142,8 +144,10 @@ Sorter::setup( std::size_t npoin )
           Assert( bin < N, "Will index out of number of chares" );
           auto& b = chbnd[ static_cast< int >( bin ) ];
           b.get< tag::node >().insert( g );
-          auto h = m_ginpoel[ mark + tk::lpofa[ f ][ tk::lpoet[n][1] ] ];
-          b.get< tag::edge >().insert( {g,h} );
+          if (scheme == ctr::SchemeType::ALECG) {
+            auto h = m_ginpoel[ mark + tk::lpofa[ f ][ tk::lpoet[n][1] ] ];
+            b.get< tag::edge >().insert( {g,h} );
+          }
         }
   }
 
