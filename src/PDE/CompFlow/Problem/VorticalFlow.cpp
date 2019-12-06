@@ -14,7 +14,7 @@
 
 #include "VorticalFlow.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
+#include "FieldOutput.hpp"
 
 namespace inciter {
 
@@ -137,19 +137,13 @@ CompFlowProblemVorticalFlow::fieldNames( ncomp_t ) const
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
-  std::vector< std::string > n;
+  auto n = CompFlowFieldNames();
 
-  n.push_back( "density_numerical" );
   n.push_back( "density_analytical" );
-  n.push_back( "x-velocity_numerical" );
   n.push_back( "x-velocity_analytical" );
-  n.push_back( "y-velocity_numerical" );
   n.push_back( "y-velocity_analytical" );
-  n.push_back( "z-velocity_numerical" );
   n.push_back( "z-velocity_analytical" );
-  n.push_back( "specific_total_energy_numerical" );
   n.push_back( "specific_total_energy_analytical" );
-  n.push_back( "pressure_numerical" );
   n.push_back( "pressure_analytical" );
 
   return n;
@@ -190,7 +184,8 @@ CompFlowProblemVorticalFlow::fieldOutput(
    tk::real g =
      g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system][0];
 
-   std::vector< std::vector< tk::real > > out;
+   auto out = CompFlowFieldOutput(system, offset, U);   
+
    const auto r  = U.extract( 0*rdof, offset );
    const auto ru = U.extract( 1*rdof, offset );
    const auto rv = U.extract( 2*rdof, offset );
@@ -202,43 +197,27 @@ CompFlowProblemVorticalFlow::fieldOutput(
    const auto& y = coord[1];
    const auto& z = coord[2];
 
-   out.push_back( r );
    out.push_back( std::vector< tk::real >( r.size(), 1.0 ) );
 
    std::vector< tk::real > u = ru;
-   std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                   []( tk::real s, tk::real& d ){ return d /= s; } );
-   out.push_back( u );
    for (std::size_t i=0; i<u.size(); ++i) u[i] = a*x[i] - b*y[i];
    out.push_back( u );
 
    std::vector< tk::real > v = rv;
-   std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                   []( tk::real s, tk::real& d ){ return d /= s; } );
-   out.push_back( v );
    for (std::size_t i=0; i<v.size(); ++i) v[i] = b*x[i] + a*y[i];
    out.push_back( v );
 
    std::vector< tk::real > w = rw;
-   std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                   []( tk::real s, tk::real& d ){ return d /= s; } );
-   out.push_back( w );
    for (std::size_t i=0; i<w.size(); ++i) w[i] = -2.0*a*z[i];
    out.push_back( w );
 
    std::vector< tk::real > E = re;
-   std::transform( r.begin(), r.end(), E.begin(), E.begin(),
-                   []( tk::real s, tk::real& d ){ return d /= s; } );
-   out.push_back( E );
    for (std::size_t i=0; i<E.size(); ++i)
      E[i] = 0.5*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i]) +
             (p0 - 2.0*a*a*z[i]*z[i])/(g-1.0);
    out.push_back( E );
 
    std::vector< tk::real > P( r.size(), 0.0 );
-   for (std::size_t i=0; i<P.size(); ++i)
-     P[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], re[i] );
-   out.push_back( P );
    for (std::size_t i=0; i<P.size(); ++i)
      P[i] = p0 - 2.0*a*a*z[i]*z[i];
    out.push_back( P );

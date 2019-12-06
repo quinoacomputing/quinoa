@@ -517,11 +517,24 @@ class CompFlow {
       }
 
       tk::real mindt = std::numeric_limits< tk::real >::max();
+      tk::real dgp = 0.0;
 
       // compute allowable dt
       for (std::size_t e=0; e<U.nunk(); ++e)
       {
-        mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
+        dgp = 0.0;
+        if (ndofel[e] == 4)
+        {
+          dgp = 1.0;
+        }
+        else if (ndofel[e] == 10)
+        {
+          dgp = 2.0;
+        }
+
+        // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
+        // where p is the order of the DG polynomial by linear stability theory.
+        mindt = std::min( mindt, geoElem(e,0,0)/ (delt[e] * (2.0*dgp + 1.0)) );
       }
 
       return mindt;
