@@ -122,8 +122,8 @@ Sorter::setup( std::size_t npoin )
   // is on a chare boundary if it belongs to a face of a tetrahedron that has
   // no neighbor tet at a face. The edge is on the chare boundary if its first
   // edge-end point is on a chare boundary. The nodes are categorized to bins
-  // that will be sent to different chares to build the (point-to-point) node
-  // communication map across all chares. The binning is determined by the
+  // that will be sent to different chares to build point-to-point
+  // communication maps across all chares. The binning is determined by the
   // global node id divided by the chunksizes. See discussion above on how we
   // use two chunksizes for global node ids assigned by the hash algorithm in
   // Refiner (if initial mesh refinement has been done).
@@ -146,7 +146,7 @@ Sorter::setup( std::size_t npoin )
           b.get< tag::node >().insert( g );
           if (scheme == ctr::SchemeType::ALECG) {
             auto h = m_ginpoel[ mark + tk::lpofa[ f ][ tk::lpoet[n][1] ] ];
-            b.get< tag::edge >().insert( {g,h} );
+            b.get< tag::edge >().insert( { std::min(g,h), std::max(g,h) } );
           }
         }
   }
