@@ -207,6 +207,7 @@ class MultiMat {
                       tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nelem = fd.Esuel().size()/4;
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -230,9 +231,9 @@ class MultiMat {
       // the second index is the row id of the 3-by-3 matrix;
       // the third index is the column id of the 3-by-3 matrix.
       std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-        lhs_ls( U.nunk(), {{ {{0.0, 0.0, 0.0}},
-                             {{0.0, 0.0, 0.0}},
-                             {{0.0, 0.0, 0.0}} }} );
+        lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
+                          {{0.0, 0.0, 0.0}},
+                          {{0.0, 0.0, 0.0}} }} );
       // rhs_ls is the right-hand side vector for solving the least-squares
       // system using the normal equation approach, for each element.
       // It is indexed as follows:
@@ -242,11 +243,11 @@ class MultiMat {
       // two rhs_ls vectors are needed for reconstructing conserved and
       // primitive quantites separately
       std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhsu_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
+        rhsu_ls( nelem, std::vector< std::array< tk::real, 3 > >
           ( m_ncomp,
             {{ 0.0, 0.0, 0.0 }} ) );
       std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhsp_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
+        rhsp_ls( nelem, std::vector< std::array< tk::real, 3 > >
           ( nprim(),
             {{ 0.0, 0.0, 0.0 }} ) );
 
@@ -273,10 +274,8 @@ class MultiMat {
       tk::solveLeastSq_P0P1( nprim(), m_offset, rdof, lhs_ls, rhsp_ls, P );
 
       // 4. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4, inpoel,
-                          coord, U );
-      tk::transform_P0P1( nprim(), m_offset, rdof, fd.Esuel().size()/4, inpoel,
-                          coord, P );
+      tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
+      tk::transform_P0P1( nprim(), m_offset, rdof, nelem, inpoel, coord, P );
     }
 
     //! Limit second-order solution, and primitive quantities separately
@@ -306,13 +305,15 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
+      // limit vectors of conserved and primitive quantities
       if (limiter == ctr::LimiterType::SUPERBEEP1)
       {
-        // limit solution vector
-        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U, nmat );
-
-        // limit vector of primitives
-        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, P );
+        SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U, P,
+          nmat );
+      }
+      else if (limiter == ctr::LimiterType::WENOP1)
+      {
+        WENOMultiMat_P1( fd.Esuel(), m_offset, U, P, nmat );
       }
     }
 
@@ -623,6 +624,19 @@ class MultiMat {
         mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
       }
 
+      tk::real dgp = 0.0;
+      if (ndof == 4)
+      {
+        dgp = 1.0;
+      }
+      else if (ndof == 10)
+      {
+        dgp = 2.0;
+      }
+
+      // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
+      // where p is the order of the DG polynomial by linear stability theory.
+      mindt /= (2.0*dgp + 1.0);
       return mindt;
     }
 

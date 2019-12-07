@@ -14,7 +14,7 @@
 
 #include "UserDefined.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
+#include "FieldOutput.hpp"
 
 namespace inciter {
 
@@ -89,14 +89,7 @@ CompFlowProblemUserDefined::fieldNames( ncomp_t ) const
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
-  std::vector< std::string > n;
-
-  n.push_back( "density" );
-  n.push_back( "x-velocity" );
-  n.push_back( "y-velocity" );
-  n.push_back( "z-velocity" );
-  n.push_back( "specific total energy" );
-  n.push_back( "pressure" );
+  auto n = CompFlowFieldNames();
   n.push_back( "temperature" );
 
   return n;
@@ -123,45 +116,24 @@ CompFlowProblemUserDefined::fieldOutput(
   // number of degrees of freedom
   const std::size_t rdof =
     g_inputdeck.get< tag::discr, tag::rdof >();
-  std::vector< std::vector< tk::real > > out;
 
-  const auto r = U.extract( 0*rdof, offset );
+  auto out = CompFlowFieldOutput(0, offset, U);
+
+  const auto r  = U.extract( 0*rdof, offset );
   const auto ru = U.extract( 1*rdof, offset );
   const auto rv = U.extract( 2*rdof, offset );
   const auto rw = U.extract( 3*rdof, offset );
   const auto re = U.extract( 4*rdof, offset );
 
-  out.push_back( r );
-
-  std::vector< tk::real > u = ru;
-  std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( u );
-
-  std::vector< tk::real > v = rv;
-  std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( v );
-
-  std::vector< tk::real > w = rw;
-  std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( w );
-
-  std::vector< tk::real > E = re;
-  std::transform( r.begin(), r.end(), E.begin(), E.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( E );
-
   std::vector< tk::real > p = r;
   for (std::size_t i=0; i<p.size(); ++i)
-    p[i] = eos_pressure< eq >( 0, r[i], u[i], v[i], w[i], r[i]*E[i] );
+    p[i] = eos_pressure< eq >( 0, r[i], ru[i], rv[i], rw[i], re[i] );
   out.push_back( p );
 
   std::vector< tk::real > T = r;
   tk::real cv = g_inputdeck.get< tag::param, eq, tag::cv >()[0][0];
   for (std::size_t i=0; i<T.size(); ++i)
-    T[i] = cv*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
+    T[i] = cv*(re[i] - (ru[i]*ru[i] + rv[i]*rv[i] + rw[i]*rw[i])/2.0);
   out.push_back( T );
 
   return out;

@@ -156,6 +156,7 @@ class CompFlow {
                       tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nelem = fd.Esuel().size()/4;
 
       Assert( U.nprop() == rdof*5, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*5) );
@@ -173,11 +174,11 @@ class CompFlow {
 
       // allocate and initialize matrix and vector for reconstruction
       std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-        lhs_ls( U.nunk(), {{ {{0.0, 0.0, 0.0}},
-                             {{0.0, 0.0, 0.0}},
-                             {{0.0, 0.0, 0.0}} }} );
+        lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
+                          {{0.0, 0.0, 0.0}},
+                          {{0.0, 0.0, 0.0}} }} );
       std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhs_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
+        rhs_ls( nelem, std::vector< std::array< tk::real, 3 > >
           ( m_ncomp,
             {{ 0.0, 0.0, 0.0 }} ) );
 
@@ -197,8 +198,7 @@ class CompFlow {
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
 
       // 4. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4,
-                          inpoel, coord, U );
+      tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
     }
 
     //! Limit second-order solution
@@ -516,11 +516,24 @@ class CompFlow {
       }
 
       tk::real mindt = std::numeric_limits< tk::real >::max();
+      tk::real dgp = 0.0;
 
       // compute allowable dt
       for (std::size_t e=0; e<U.nunk(); ++e)
       {
-        mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
+        dgp = 0.0;
+        if (ndofel[e] == 4)
+        {
+          dgp = 1.0;
+        }
+        else if (ndofel[e] == 10)
+        {
+          dgp = 2.0;
+        }
+
+        // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
+        // where p is the order of the DG polynomial by linear stability theory.
+        mindt = std::min( mindt, geoElem(e,0,0)/ (delt[e] * (2.0*dgp + 1.0)) );
       }
 
       return mindt;

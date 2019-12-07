@@ -14,7 +14,7 @@
 
 #include "GaussHumpCompflow.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
+#include "FieldOutput.hpp"
 
 namespace inciter {
 
@@ -118,6 +118,10 @@ CompFlowProblemGaussHump::side( std::unordered_set< int >& conf ) const
 {
   using tag::param;
 
+  for (const auto& s : g_inputdeck.get< param, eq, tag::bcsym >())
+    for (const auto& i : s)
+      conf.insert( std::stoi(i) );
+
   for (const auto& s : g_inputdeck.get< param, eq, tag::bcinlet >())
     for (const auto& i : s)
       conf.insert( std::stoi(i) );
@@ -144,14 +148,8 @@ CompFlowProblemGaussHump::fieldNames( ncomp_t ) const
 {
   const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
 
-  std::vector< std::string > n;
+  auto n = CompFlowFieldNames();
 
-  n.push_back( "density_numerical" );
-  n.push_back( "x-velocity_numerical" );
-  n.push_back( "y-velocity_numerical" );
-  n.push_back( "z-velocity_numerical" );
-  n.push_back( "specific_total_energy_numerical" );
-  n.push_back( "pressure_numerical" );
   n.push_back( "density_analytical" );
   n.push_back( "x-velocity_analytical" );
   n.push_back( "y-velocity_analytical" );
@@ -194,7 +192,8 @@ CompFlowProblemGaussHump::fieldOutput(
 {
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
-  std::vector< std::vector< tk::real > > out;
+  auto out = CompFlowFieldOutput(system, offset, U);
+
   auto r = U.extract( 0*rdof, offset );
   auto u = U.extract( 1*rdof, offset );
   auto v = U.extract( 2*rdof, offset );
@@ -206,26 +205,7 @@ CompFlowProblemGaussHump::fieldOutput(
   const auto& y = coord[1];
   const auto& z = coord[2];
 
-  out.push_back( r );
-  std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( u );
-  std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( v );
-  std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( w );
-  std::transform( r.begin(), r.end(), e.begin(), e.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( e );
-
-  auto p = r;
-  for (std::size_t i=0; i<r.size(); ++i)
-    p[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*e[i] );
-  out.push_back( p );
-
-  auto er = r;
+  auto er = r, p = r;
   for (std::size_t i=0; i<r.size(); ++i) {
     auto s = solution( system, ncomp, x[i], y[i], z[i], t );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
