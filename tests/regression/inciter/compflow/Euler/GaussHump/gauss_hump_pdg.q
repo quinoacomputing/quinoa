@@ -19,7 +19,7 @@ inciter
       gamma 1.66666666666667 end # =5/3 ratio of specific heats
     end
 
-    bc_extrapolate
+    bc_sym
       sideset 1 end
     end
     bc_dirichlet
