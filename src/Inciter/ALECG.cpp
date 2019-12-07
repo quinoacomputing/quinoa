@@ -333,8 +333,8 @@ ALECG::normfinal()
   m_bnorm = std::move(bnorm);
 
   // Combine own and communicated contributions to dual-face normals
-  for (auto& [e,n] : m_dfnormc) {
-    auto& dfn = tk::ref_find(m_dfnorm,e);
+  for (const auto& [e,n] : m_dfnormc) {
+    auto& dfn = tk::ref_find( m_dfnorm, e );
     dfn[0] += n[0];
     dfn[1] += n[1];
     dfn[2] += n[2];
