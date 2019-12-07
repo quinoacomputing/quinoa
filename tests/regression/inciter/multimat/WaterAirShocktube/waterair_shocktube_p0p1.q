@@ -7,7 +7,7 @@ title "Water-air shock-tube"
 inciter
 
   nstep 25
-  cfl 0.25
+  dt 1.0e-8
   ttyi 10     # TTY output interval
   scheme p0p1
   limiter superbeep1
@@ -22,7 +22,7 @@ inciter
     problem waterair_shocktube
     depvar u
 
-    prelax true
+    prelax 1
     prelax_timescale 0.0025
 
     nmat 2
@@ -48,7 +48,7 @@ inciter
   end
 
   plotvar
-    interval 5
+    interval 25
   end
 
 end

@@ -3581,8 +3581,8 @@ struct rsfreq_info {
   { return "Set checkpoint/restart frequency during time stepping"; }
   static std::string longDescription() { return
     R"(This keyword is used to set the frequency of dumping checkpoint/restart
-       files during time stepping. The default is 100, which means that
-       checkpoint/restart files are dumped at every 100th time step.)";
+       files during time stepping. The default is 1000, which means that
+       checkpoint/restart files are dumped at every 1000th time step.)";
   }
   using alias = Alias< r >;
   struct expect {
@@ -4746,9 +4746,9 @@ struct prelax_info {
        no effect when used for the other PDE types.)";
   }
   struct expect {
-    using type = bool;
+    using type = int;
     static std::string description() { return "string"; }
-    static std::string choices() { return "true | false"; }
+    static std::string choices() { return "1 | 0"; }
   };
 };
 using prelax = keyword< prelax_info, TAOCPP_PEGTL_STRING("prelax") >;

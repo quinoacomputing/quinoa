@@ -39,6 +39,11 @@ module dg {
                          const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
+      entry void comreco( int fromch,
+                          const std::vector< std::size_t >& tetid,
+                          const std::vector< std::vector< tk::real > >& u,
+                          const std::vector< std::vector< tk::real > >& prim,
+                          const std::vector< std::size_t >& ndof );
       entry void comsol( int fromch,
                          std::size_t fromstage,
                          const std::vector< std::size_t >& tetid,
@@ -65,8 +70,10 @@ module dg {
         { sendGhost(); } }
 
       entry void wait4sol() {
-        when ownsol_complete(), comsol_complete() serial "sol"
-        { lim(); } }
+        when ownsol_complete(), comsol_complete() serial "sol" { reco(); } }
+
+      entry void wait4reco() {
+        when ownreco_complete(), comreco_complete() serial "reco" { lim(); } }
 
       entry void wait4lim() {
         when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
@@ -77,6 +84,8 @@ module dg {
       entry void reqghost_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
+      entry void ownreco_complete();
+      entry void comreco_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
     }
