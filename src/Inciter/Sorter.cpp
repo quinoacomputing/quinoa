@@ -273,6 +273,17 @@ Sorter::start()
 //  Start reordering (if enabled it)
 // *****************************************************************************
 {
+  // Keep only those edges in edge comm map whose both end-points are in the
+  // node comm map
+  for (auto& [ neighborchare, maps ] : m_msum) {
+    const auto& nodes = maps.get< tag::node >();
+    tk::EdgeSet edges;
+    for (const auto& e : maps.get< tag::edge >())
+      if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes))
+        edges.insert( e );
+    maps.get< tag::edge >() = std::move(edges);
+  }
+
   if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chcomm();
 
   tk::destroy( m_nodech );

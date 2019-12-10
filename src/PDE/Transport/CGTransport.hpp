@@ -249,9 +249,9 @@ class Transport {
                 for (std::size_t c=0; c<m_ncomp; ++c) {
                   R.var(r[c],p) -= J48 * s * (grad[a][j] - grad[b][j])
                                  * v[c][j]*(ru[0][c] + ru[1][c])
-                   - J48 * std::abs(s * (grad[a][j] - grad[b][j]))
-                         * std::abs(tk::dot(v[c],n))
-                         * (ru[1][c] - ru[0][c]);
+                    - J48 * std::abs(s * (grad[a][j] - grad[b][j]))
+                          * std::abs(tk::dot(v[c],n))
+                          * (ru[1][c] - ru[0][c]);
 
                 }
                 V(p,j,0) -= 2.0*J48 * s * (grad[a][j] - grad[b][j]);

@@ -156,9 +156,6 @@ ALECG::dfnorm()
               n[j] += J48 * s * (grad[a][j] - grad[b][j]);
           }
         }
-        Assert( std::abs(tk::dot(n,n)) >
-                  std::numeric_limits< tk::real >::epsilon(),
-                "Dual-face normal zero length" );
       }
     }
   }
@@ -342,7 +339,12 @@ ALECG::normfinal()
   tk::destroy( m_dfnormc );
 
   // Normalize dual-face normals
-  for (auto& [e,n] : m_dfnorm) tk::unit(n);
+  for (auto& [e,n] : m_dfnorm) {
+    Assert( std::abs(tk::dot(n,n)) >
+              std::numeric_limits< tk::real >::epsilon(),
+                "Dual-face normal zero length" );
+    tk::unit(n);
+  }
 
   // Signal the runtime system that the workers have been created
   contribute( sizeof(int), &m_initial, CkReduction::sum_int,
@@ -635,10 +637,13 @@ ALECG::rhs()
   auto d = Disc();
 
   // Combine own and communicated contributions to nodal gradients
-  for (const auto& b : m_gradc) {
-    auto lid = tk::cref_find( d->Lid(), b.first );
-    for (ncomp_t c=0; c<m_grad.nprop(); ++c) m_grad(lid,c,0) += b.second[c];
+  for (const auto& [gid,g] : m_gradc) {
+    auto lid = tk::cref_find( d->Lid(), gid );
+    for (ncomp_t c=0; c<m_grad.nprop(); ++c) m_grad(lid,c,0) += g[c];
   }
+
+  // clear gradients receive buffer
+  tk::destroy(m_gradc);
 
   // divide weak result in gradients by nodal volume
   for (std::size_t p=0; p<m_grad.nunk(); ++p)
@@ -686,9 +691,7 @@ ALECG::comrhs( const std::vector< std::size_t >& gid,
 
   using tk::operator+=;
 
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    m_rhsc[ gid[i] ] += R[i];
-  }
+  for (std::size_t i=0; i<gid.size(); ++i) m_rhsc[ gid[i] ] += R[i];
 
   // When we have heard from all chares we communicate with, this chare is done
   if (++m_nrhs == Disc()->NodeCommMap().size()) {
@@ -731,7 +734,7 @@ ALECG::solve()
 
   // Solve sytem
   m_u = rkcoef[0][m_stage] * m_un
-    + rkcoef[1][m_stage] * (m_u + d->Dt() * m_rhs / m_lhs);
+      + rkcoef[1][m_stage] * (m_u + d->Dt() * m_rhs / m_lhs);
 
   // Apply symmetry BCs
   //for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );

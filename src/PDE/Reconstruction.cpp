@@ -487,8 +487,8 @@ tk::muscl( const UnsMesh::Edge& edge,
 
     // gradients
     std::array< tk::real, 3 >
-       g1{ G(p,c*3+0,0), G(p,c*3+1,0), G(p,c*3+2,0) },
-       g2{ G(q,c*3+0,0), G(q,c*3+1,0), G(q,c*3+2,0) };
+      g1{ G(p,c*3+0,0), G(p,c*3+1,0), G(p,c*3+2,0) },
+      g2{ G(q,c*3+0,0), G(q,c*3+1,0), G(q,c*3+2,0) };
 
     auto delta_2 = u[1][c] - u[0][c];
     auto delta_1 = 2.0 * tk::dot(g1,vw) - delta_2;
