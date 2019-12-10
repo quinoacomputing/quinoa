@@ -831,8 +831,9 @@ ALECG::resizePostAMR(
   d->resizePostAMR( chunk, coord, nodeCommMap );
 
   // Recompute derived data structures
-  m_esued = tk::genEsued( d->Inpoel(), 4, tk::genEsup(d->Inpoel(),4) );
-  m_psup = tk::genPsup( d->Inpoel(), 4, tk::genEsup( d->Inpoel(),4) );
+  auto esup = tk::genEsup( d->Inpoel(), 4 );
+  m_esued = tk::genEsued( d->Inpoel(), 4, esup );
+  m_psup = tk::genPsup( d->Inpoel(), 4, esup );
 
   // Resize auxiliary solution vectors
   auto npoin = coord[0].size();
@@ -841,6 +842,7 @@ ALECG::resizePostAMR(
   m_un.resize( npoin, nprop );
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
+  m_grad.resize( npoin, nprop*3 );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)
