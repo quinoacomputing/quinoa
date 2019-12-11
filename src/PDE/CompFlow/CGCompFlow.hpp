@@ -103,10 +103,17 @@ class CompFlow {
     //! Compute nodal gradients of primitive variables for ALECG
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
+//    //! \param[in] bndel List of elements contributing to chare-boundary nodes
+//    //! \param[in] gid Local->global node id map
+//    //! \param[in] bid Local chare-boundary node ids (value) associated to
+//    //!    global node ids (key)
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] G Nodal gradients of primitive variables
     void grad( const std::array< std::vector< tk::real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
+               const std::vector< std::size_t >& /* bndel */,
+               const std::vector< std::size_t >& /* gid */,
+               const std::unordered_map< std::size_t, std::size_t >& /* bid */,
                const tk::Fields& U,
                tk::Fields& G ) const
     {
@@ -160,6 +167,11 @@ class CompFlow {
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] esued Elements surrounding edges
     //! \param[in] triinpoel Boundary triangle face connecitivity
+//    //! \param[in] gid Local->global node id map
+//    //! \param[in] bid Local chare-boundary node ids (value) associated to
+//    //!    global node ids (key)
+//    //! \param[in] lid Global->local node ids
+//    //! \param[in] vol Nodal volumes
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
@@ -173,9 +185,12 @@ class CompFlow {
                                std::vector< std::size_t > >& /* psup */,
               const std::vector< std::size_t >& triinpoel,
               const std::vector< std::size_t >& /* gid */,
+              const std::unordered_map< std::size_t, std::size_t >& /* bid */,
+              const std::unordered_map< std::size_t, std::size_t >& /* lid */,
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::array< tk::real, 3 >,
                       tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& /* norm */,
+              const std::vector< tk::real >& /* vol */,
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const

@@ -89,9 +89,12 @@ class CGPDE {
     //! Public interface to computing the nodal gradients for ALECG
     void grad( const std::array< std::vector< tk::real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
+               const std::vector< std::size_t >& bndel,
+               const std::vector< std::size_t >& gid,
+               const std::unordered_map< std::size_t, std::size_t >& bid,
                const tk::Fields& U,
                tk::Fields& G ) const
-    { self->grad( coord, inpoel, U, G ); }
+    { self->grad( coord, inpoel, bndel, gid, bid, U, G ); }
 
     //! Public interface to computing the right-hand side vector for ALECG
     void rhs( tk::real t,
@@ -104,13 +107,17 @@ class CGPDE {
                                std::vector< std::size_t > >& psup,
               const std::vector< std::size_t >& triinpoel,
               const std::vector< std::size_t >& gid,
+              const std::unordered_map< std::size_t, std::size_t >& bid,
+              const std::unordered_map< std::size_t, std::size_t >& lid,
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::array< tk::real, 3 >,
                       tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& norm,
+              const std::vector< tk::real >& vol,
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( t, coord, inpoel, esued, psup, triinpoel, gid, norm, G, U, R ); }
+    { self->rhs( t, coord, inpoel, esued, psup, triinpoel, gid, bid, lid, norm,
+                 vol, G, U, R ); }
 
     //! Public interface to computing the right-hand side vector for DiagCG
     void rhs( tk::real t,
@@ -197,6 +204,9 @@ class CGPDE {
                                tk::real ) const = 0;
       virtual void grad( const std::array< std::vector< tk::real >, 3 >&,
                          const std::vector< std::size_t >&,
+                         const std::vector< std::size_t >&,
+                         const std::vector< std::size_t >&,
+                         const std::unordered_map< std::size_t, std::size_t >&,
                          const tk::Fields&,
                          tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
@@ -209,10 +219,13 @@ class CGPDE {
                                          std::vector< std::size_t > >&,
                         const std::vector< std::size_t >&,
                         const std::vector< std::size_t >&,
+                        const std::unordered_map< std::size_t, std::size_t >&,
+                        const std::unordered_map< std::size_t, std::size_t >&,
                         const std::unordered_map< tk::UnsMesh::Edge,
                                 std::array< tk::real, 3 >,
                                 tk::UnsMesh::Hash<2>,
                                 tk::UnsMesh::Eq<2> >&,
+                        const std::vector< tk::real >&,
                         const tk::Fields&,
                         const tk::Fields&,
                         tk::Fields& ) const = 0;
@@ -264,9 +277,12 @@ class CGPDE {
       const override { data.initialize( coord, unk, t ); }
       void grad( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
+                 const std::vector< std::size_t >& bndel,
+                 const std::vector< std::size_t >& gid,
+                 const std::unordered_map< std::size_t, std::size_t >& bid,
                  const tk::Fields& U,
                  tk::Fields& G ) const override
-      { data.grad( coord, inpoel, U, G ); }
+      { data.grad( coord, inpoel, bndel, gid, bid, U, G ); }
       void rhs( tk::real t,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
@@ -277,13 +293,17 @@ class CGPDE {
                                  std::vector< std::size_t > >& psup,
                 const std::vector< std::size_t >& triinpoel,
                 const std::vector< std::size_t >& gid,
+                const std::unordered_map< std::size_t, std::size_t >& bid,
+                const std::unordered_map< std::size_t, std::size_t >& lid,
                 const std::unordered_map< tk::UnsMesh::Edge,
                         std::array< tk::real, 3 >,
                         tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& norm,
+                const std::vector< tk::real >& vol,
                 const tk::Fields& G,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( t, coord, inpoel, esued, psup, triinpoel, gid, norm, G, U, R ); }
+      { data.rhs( t, coord, inpoel, esued, psup, triinpoel, gid, bid, lid, norm,
+                  vol, G, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,

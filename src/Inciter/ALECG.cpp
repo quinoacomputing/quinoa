@@ -67,13 +67,14 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_triinpoel( tk::remap(triinpoel,Disc()->Lid()) ),
   m_esued(tk::genEsued(Disc()->Inpoel(), 4, tk::genEsup(Disc()->Inpoel(),4))),
   m_psup(tk::genPsup(Disc()->Inpoel(), 4, tk::genEsup(Disc()->Inpoel(),4))),
+  m_bndel( bndel() ),
   m_dfnorm(),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
-  m_grad( m_u.nunk(), m_u.nprop()*3 ),
+  m_grad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_bcdir(),
   m_lhsc(),
   m_gradc(),
@@ -107,6 +108,32 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 
   // Compute dual-face normals associated to edges
   dfnorm();
+}
+
+std::vector< std::size_t >
+ALECG::bndel() const
+// *****************************************************************************
+// Find elements along our mesh chunk boundary
+//! \return List of local element ids that have at least a single node
+//!   contributing to a chare boundary
+// *****************************************************************************
+{
+  // Lambda to find out if a mesh node is shared with another chare
+  auto shared = [this]( std::size_t i ){
+    for (const auto& [c,n] : Disc()->NodeCommMap())
+      if (n.find(i) != end(n)) return true;
+    return false;
+  };
+
+  // Find elements along our mesh chunk boundary
+  std::vector< std::size_t > e;
+  const auto& inpoel = Disc()->Inpoel();
+  const auto gid = Disc()->Gid();
+  for (std::size_t n=0; n<inpoel.size(); ++n)
+    if (shared( gid[ inpoel[n] ] )) e.push_back( n/4 );
+  tk::unique( e );
+
+  return e;
 }
 
 void
@@ -586,7 +613,7 @@ ALECG::grad()
 
   // Compute own portion of gradients for all equations
   for (const auto& eq : g_cgpde)
-    eq.grad( d->Coord(), d->Inpoel(), m_u, m_grad );
+    eq.grad(d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u, m_grad);
 
   // Communicate gradients to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
@@ -595,7 +622,7 @@ ALECG::grad()
     for (const auto& [c,n] : d->NodeCommMap()) {
       std::vector< std::vector< tk::real > > g( n.size() );
       std::size_t j = 0;
-      for (auto i : n) g[ j++ ] = m_grad[ tk::cref_find(d->Lid(),i) ];
+      for (auto i : n) g[ j++ ] = m_grad[ tk::cref_find(d->Bid(),i) ];
       thisProxy[c].comgrad( std::vector<std::size_t>(begin(n),end(n)), g );
     }
 
@@ -638,26 +665,22 @@ ALECG::rhs()
 
   // Combine own and communicated contributions to nodal gradients
   for (const auto& [gid,g] : m_gradc) {
-    auto lid = tk::cref_find( d->Lid(), gid );
-    for (ncomp_t c=0; c<m_grad.nprop(); ++c) m_grad(lid,c,0) += g[c];
+    auto bid = tk::cref_find( d->Bid(), gid );
+    for (ncomp_t c=0; c<m_grad.nprop(); ++c) m_grad(bid,c,0) += g[c];
   }
 
   // clear gradients receive buffer
   tk::destroy(m_gradc);
 
-  // divide weak result in gradients by nodal volume
-  for (std::size_t p=0; p<m_grad.nunk(); ++p)
-    for (std::size_t c=0; c<m_grad.nprop(); ++c)
-       m_grad(p,c,0) /= d->Vol()[p];
-
   // Compute own portion of right-hand side for all equations
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T(), d->Coord(), d->Inpoel(), m_esued, m_psup, m_triinpoel,
-            d->Gid(), m_dfnorm, m_grad, m_u, m_rhs );
+            d->Gid(), d->Bid(), d->Lid(), m_dfnorm, d->Vol(), m_grad, m_u,
+            m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[1][m_stage] * d->Dt(),
-                   d->Coord(),  d->Lid(), m_bnode );
+                   d->Coord(), d->Lid(), m_bnode );
 
   // Communicate rhs to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
@@ -842,7 +865,7 @@ ALECG::resizePostAMR(
   m_un.resize( npoin, nprop );
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
-  m_grad.resize( npoin, nprop*3 );
+  m_grad.resize( d->Bid().size(), nprop*3 );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)

@@ -179,6 +179,7 @@ class ALECG : public CBase_ALECG {
       p | m_triinpoel;
       p | m_esued;
       p | m_psup;
+      p | m_bndel;
       p | m_dfnorm;
       p | m_u;
       p | m_un;
@@ -230,6 +231,8 @@ class ALECG : public CBase_ALECG {
                         tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_esued;
     //! Points surrounding points
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
+    //! Elements along mesh boundary
+    std::vector< std::size_t > m_bndel;
     //! Dual-face normals along edges
     std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
                         tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnorm;
@@ -282,6 +285,9 @@ class ALECG : public CBase_ALECG {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
+
+    //! Find elements along our mesh chunk boundary
+    std::vector< std::size_t > bndel() const;
 
     //! Compute chare-boundary edges
     void bndEdges();
