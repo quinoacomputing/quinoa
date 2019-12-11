@@ -1791,9 +1791,9 @@ struct farfield_density_info {
   static std::string shortDescription() { return
     "Select the far-field density"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field pressure when
-    characteristic boundary condition is used. This parameter is set up in
-    boundary condition block. Example specification: 'farfield_density 1.0')";
+    R"(This keyword is used to specify the far-field density when characteristic
+    boundary condition is used. This parameter is set up in boundary condition
+    block. Example specification: 'farfield_density 1.0')";
   }
   struct expect {
     using type = tk::real;
@@ -1804,59 +1804,24 @@ struct farfield_density_info {
 using farfield_density = keyword< farfield_density_info,
                             TAOCPP_PEGTL_STRING("farfield_density") >;
 
-struct farfield_x_velocity_info {
-  static std::string name() { return "farfield_x_velocity"; }
+struct farfield_velocity_info {
+  static std::string name() { return "farfield_velocity"; }
   static std::string shortDescription() { return
-    "Select the far-field velocity component in x direction"; }
+    "Select the far-field velocity vector"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field velocity in x direction
-    when characteristic boundary condition is used. This parameter is set up in
-    boundary condition block. Example specification: 'farfield_x_velocity 1.0')";
+    R"(This keyword is used to specify the far-field velocity vector when
+    characteristic boundary condition is used. This parameter is set up in
+    boundary condition block.
+    Example specification: 'farfield_velocity 1.0 0.0 0.0 end')";
   }
   struct expect {
     using type = tk::real;
     static constexpr type lower = 0.0;
-    static std::string description() { return "real"; }
+    static std::string description() { return "real(s)"; }
   };
 };
-using farfield_x_velocity = keyword< farfield_x_velocity_info,
-                              TAOCPP_PEGTL_STRING("farfield_x_velocity") >;
-
-struct farfield_y_velocity_info {
-  static std::string name() { return "farfield_y_velocity"; }
-  static std::string shortDescription() { return
-    "Select the far-field velocity component in y direction"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field velocity in y direction
-    when characteristic boundary condition is used. This parameter is set up in
-    boundary condition block. Example specification: 'farfield_y_velocity 1.0')";
-  }
-  struct expect {
-    using type = tk::real;
-    static constexpr type lower = 0.0;
-    static std::string description() { return "real"; }
-  };
-};
-using farfield_y_velocity = keyword< farfield_y_velocity_info,
-                              TAOCPP_PEGTL_STRING("farfield_y_velocity") >;
-
-struct farfield_z_velocity_info {
-  static std::string name() { return "farfield_z_velocity"; }
-  static std::string shortDescription() { return
-    "Select the far-field velocity component in z direction"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field velocity in z direction
-    when characteristic boundary condition is used. This parameter is set up in
-    boundary condition block. Example specification: 'farfield_z_velocity 1.0')";
-  }
-  struct expect {
-    using type = tk::real;
-    static constexpr type lower = 0.0;
-    static std::string description() { return "real"; }
-  };
-};
-using farfield_z_velocity = keyword< farfield_z_velocity_info,
-                              TAOCPP_PEGTL_STRING("farfield_z_velocity") >;
+using farfield_velocity = keyword< farfield_velocity_info,
+                             TAOCPP_PEGTL_STRING("farfield_velocity") >;
 
 struct nmat_info {
   static std::string name() { return "nmat"; }

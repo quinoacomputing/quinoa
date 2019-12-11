@@ -28,9 +28,7 @@ inciter
     bc_outlet
       farfield_pressure 1.0
       farfield_density 1.0
-      farfield_x_velocity 0.0
-      farfield_y_velocity 0.0
-      farfield_z_velocity 0.0
+      farfield_velocity 0.0 0.0 0.0 end
       sideset 3 end
     end
   end

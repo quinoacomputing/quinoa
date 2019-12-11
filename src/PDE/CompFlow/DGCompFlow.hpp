@@ -841,24 +841,20 @@ class CompFlow {
       auto fp   = g_inputdeck.get< tag::param, eq,
                                    tag::farfield_pressure >()[ system ];
       auto fu   = g_inputdeck.get< tag::param, eq,
-                                   tag::farfield_x_velocity >()[ system ];
-      auto fv   = g_inputdeck.get< tag::param, eq,
-                                   tag::farfield_y_velocity >()[ system ];
-      auto fw   = g_inputdeck.get< tag::param, eq,
-                                   tag::farfield_z_velocity >()[ system ];
+                                   tag::farfield_velocity >()[ system ];
 
       // Speed of sound from farfield
       auto fa = eos_soundspeed< eq >( system, frho, fp );
 
       // Normal component from farfield
-      auto fvn = fu*fn[0] + fv*fn[1] + fw*fn[2];
+      auto fvn = fu[0]*fn[0] + fu[1]*fn[1] + fu[2]*fn[2];
 
       // Mach number from farfield
       auto fM = fvn / fa;
 
       // Specific total energy from farfield
       auto frhoE =
-        eos_totalenergy< eq >( system, frho, fu, fv, fw, fp );
+        eos_totalenergy< eq >( system, frho, fu[0], fu[1], fu[2], fp );
 
       // Pressure from internal cell
       auto p = eos_pressure< eq >( system, ul[0], ul[1]/ul[0], ul[2]/ul[0],
@@ -872,9 +868,9 @@ class CompFlow {
         // Therefore, we calculate the ghost cell state using the primitive
         // variables from outside.
         ur[0] = frho;
-        ur[1] = frho * fu;
-        ur[2] = frho * fv;
-        ur[3] = frho * fw;
+        ur[1] = frho * fu[0];
+        ur[2] = frho * fu[1];
+        ur[3] = frho * fu[2];
         ur[4] = frhoE;
       } else if(fM > -1 && fM < 0)       // Subsonic inflow
       {
@@ -883,11 +879,11 @@ class CompFlow {
         // by taking pressure from the internal cell and other quantities from
         // the outside.
         ur[0] = frho;
-        ur[1] = frho * fu;
-        ur[2] = frho * fv;
-        ur[3] = frho * fw;
+        ur[1] = frho * fu[0];
+        ur[2] = frho * fu[1];
+        ur[3] = frho * fu[2];
         ur[4] =
-          eos_totalenergy< eq >( system, frho, fu, fv, fw, p );
+          eos_totalenergy< eq >( system, frho, fu[0], fu[1], fu[2], p );
       } else if(fM > 0 && fM < 1)       // Subsonic outflow
       {
         // For subsonic outflow, there are 1 incoming characteristcs and 4
