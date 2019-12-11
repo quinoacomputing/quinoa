@@ -44,8 +44,7 @@ extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 
 //! Runge-Kutta coefficients
-static const std::array< std::array< tk::real, 3 >, 2 >
-  rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
+static const std::array< tk::real, 3 > rkcoef{{ 1.0/3.0, 1.0/2.0, 1.0 }};
 
 } // inciter::
 
@@ -679,7 +678,7 @@ ALECG::rhs()
             m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
-  m_bcdir = match( m_u.nprop(), d->T(), rkcoef[1][m_stage] * d->Dt(),
+  m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
                    d->Coord(), d->Lid(), m_bnode );
 
   // Communicate rhs to other chares on chare-boundary
@@ -747,7 +746,7 @@ ALECG::solve()
     for (ncomp_t c=0; c<ncomp; ++c) {
       if (bc[c].first) {
         m_lhs( b, c, 0 ) = 1.0;
-        m_rhs( b, c, 0 ) = bc[c].second / (rkcoef[1][m_stage]*d->Dt());
+        m_rhs( b, c, 0 ) = bc[c].second / d->Dt() / rkcoef[m_stage];
       }
     }
   }
@@ -756,8 +755,7 @@ ALECG::solve()
   if (m_stage == 0) m_un = m_u;
 
   // Solve sytem
-  m_u = rkcoef[0][m_stage] * m_un
-      + rkcoef[1][m_stage] * (m_u + d->Dt() * m_rhs / m_lhs);
+  m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
 
   // Apply symmetry BCs
   //for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
