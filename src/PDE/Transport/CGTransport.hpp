@@ -274,13 +274,18 @@ class Transport {
         // access solution at element nodes
         std::vector< std::array< tk::real, 3 > > u( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        // evaluate prescribed velocity
+        auto v =
+          Problem::prescribedVelocity( m_system, m_ncomp, xp[0], yp[0], zp[0] );
         // sum boundary integral contributions to boundary nodes
         for (std::size_t a=0; a<3; ++a) {
           for (std::size_t j=0; j<3; ++j) {
             for (std::size_t c=0; c<m_ncomp; ++c) {
-              for (std::size_t b=0; b<3; ++b)
-                R.var(r[c],N[a]) -= A/12.0 * n[j] * (u[c][a] + u[c][b]);
-              R.var(r[c],N[a]) += A/6.0 * n[j] * u[c][a];
+              for (std::size_t b=0; b<3; ++b) {
+                R.var(r[c],N[a]) -=
+                  A/12.0 * n[j] * v[c][j] * (u[c][a] + u[c][b]);
+              }
+              R.var(r[c],N[a]) += A/6.0 * n[j] * v[c][j] * u[c][a];
             }
           }
         }
