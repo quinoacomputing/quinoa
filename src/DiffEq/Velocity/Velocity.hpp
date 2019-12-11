@@ -161,12 +161,13 @@ class Velocity {
       for (std::size_t i=0; i<9; ++i) m_G[i] -= m_dU[i];
 
       // Access mean specific volume (if needed)
+      using tk::ctr::mean;
       auto mixncomp = m_mixmassfracbeta_ncomp;
-      std::vector< tk::real > V( mixncomp, 0.0 );
+      std::vector< tk::real > R( mixncomp, 0.0 );
       if (m_solve == DepvarType::PRODUCT) {
         for (std::size_t c=0; c<mixncomp; ++c) {
-          auto mV = tk::ctr::mean( m_mixmassfracbeta_depvar, mixncomp * 2 + c );
-          V[c] = 1.0/lookup( mV, moments );
+          auto mR = mean( m_mixmassfracbeta_depvar,c + mixncomp );
+          R[c] = lookup( mR, moments );
         }
       }
 
@@ -199,9 +200,9 @@ class Velocity {
               particles( p, m_ncomp+(i*3)+0, m_offset ) = Up/rhoi;
               particles( p, m_ncomp+(i*3)+1, m_offset ) = Vp/rhoi;
               particles( p, m_ncomp+(i*3)+2, m_offset ) = Wp/rhoi;
-              Up += (rhoi - V[i]) * m_gravity[0] * dt;
-              Vp += (rhoi - V[i]) * m_gravity[1] * dt;
-              Wp += (rhoi - V[i]) * m_gravity[2] * dt;
+              Up += (rhoi - R[i]) * m_gravity[0] * dt;
+              Vp += (rhoi - R[i]) * m_gravity[1] * dt;
+              Wp += (rhoi - R[i]) * m_gravity[2] * dt;
             }
           }
         } else {
