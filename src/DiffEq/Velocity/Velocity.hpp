@@ -112,11 +112,13 @@ class Velocity {
     //! Compute number of derived variables
     //! \return Number of derived variables computed
     std::size_t numderived() const {
-      if (m_solve == ctr::DepvarType::PRODUCT)  // solve for momentum
-        // 3 velocity components for each coupled mass fraction
+      if (m_solve == ctr::DepvarType::PRODUCT ||
+          m_solve == ctr::DepvarType::FLUCTUATING_MOMENTUM)
+      { // 3 velocity components for each coupled mass fraction
         return m_mixmassfracbeta_ncomp * 3;
-      else
+      } else {
         return 0;
+      }
     }
 
     //! Initalize SDE, prepare for time integration
@@ -164,7 +166,7 @@ class Velocity {
       using tk::ctr::mean;
       auto mixncomp = m_mixmassfracbeta_ncomp;
       std::vector< tk::real > R( mixncomp, 0.0 );
-      if (m_solve == DepvarType::PRODUCT) {
+      if (m_solve == DepvarType::FLUCTUATING_MOMENTUM) {
         for (std::size_t c=0; c<mixncomp; ++c) {
           auto mR = mean( m_mixmassfracbeta_depvar,c + mixncomp );
           R[c] = lookup( mR, moments );
@@ -192,7 +194,9 @@ class Velocity {
         Vp += (m_G[3]*u + m_G[4]*v + m_G[5]*w)*dt + d*dW[1];
         Wp += (m_G[6]*u + m_G[7]*v + m_G[8]*w)*dt + d*dW[2];
         // Optionally compute particle velocities derived from particle momentum
-        if (m_solve == ctr::DepvarType::PRODUCT) {      // if solve for momentum
+        if (m_solve == ctr::DepvarType::PRODUCT ||
+            m_solve == ctr::DepvarType::FLUCTUATING_MOMENTUM)
+        {
           for (ncomp_t i=0; i<m_numderived/3; ++i) {
             auto rhoi = particles( p, m_mixmassfracbeta_ncomp+i,
                                   m_mixmassfracbeta_offset );
