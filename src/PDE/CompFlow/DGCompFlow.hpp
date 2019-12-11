@@ -884,7 +884,7 @@ class CompFlow {
         ur[3] = frho * fu[2];
         ur[4] =
           eos_totalenergy< eq >( system, frho, fu[0], fu[1], fu[2], p );
-      } else if(fM > 0 && fM < 1)       // Subsonic outflow
+      } else if(fM >= 0 && fM < 1)       // Subsonic outflow
       {
         // For subsonic outflow, there are 1 incoming characteristcs and 4
         // outgoing characteristic. Therefore, we calculate the ghost cell state
