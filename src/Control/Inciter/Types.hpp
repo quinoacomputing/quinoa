@@ -175,7 +175,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::bcextrapolate, std::vector< std::vector<
                          kw::sideset::info::expect::type > >
   //! System FCT character
-  , tag::sysfct,        std::vector< bool >
+  , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system
   , tag::sysfctvar,     std::vector<
                           std::vector< kw::sysfctvar::info::expect::type > >
