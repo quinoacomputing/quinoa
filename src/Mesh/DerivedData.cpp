@@ -30,7 +30,7 @@
 
 namespace tk {
 
-tk::real
+int
 orient( const UnsMesh::Edge& t, const UnsMesh::Edge& e )
 // *****************************************************************************
 // Determine edge orientation
@@ -38,11 +38,11 @@ orient( const UnsMesh::Edge& t, const UnsMesh::Edge& e )
 // *****************************************************************************
 {
   if (t[0] == e[0] && t[1] == e[1])
-    return -1.0;
+    return -1;
   else if (t[0] == e[1] && t[1] == e[0])
-    return 1.0;
+    return 1;
   else
-    return 0.0;
+    return 0;
 }
 
 std::size_t

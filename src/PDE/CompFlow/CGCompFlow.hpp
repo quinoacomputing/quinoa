@@ -23,6 +23,7 @@
 #include "Vector.hpp"
 #include "EoS/EoS.hpp"
 #include "Mesh/Around.hpp"
+#include "Reconstruction.hpp"
 #include "Integrate/Riemann/HLLC.hpp"
 
 namespace inciter {
@@ -111,54 +112,31 @@ class CompFlow {
     //! \param[in,out] G Nodal gradients of primitive variables
     void grad( const std::array< std::vector< tk::real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
-               const std::vector< std::size_t >& /* bndel */,
-               const std::vector< std::size_t >& /* gid */,
-               const std::unordered_map< std::size_t, std::size_t >& /* bid */,
+               const std::vector< std::size_t >& bndel,
+               const std::vector< std::size_t >& gid,
+               const std::unordered_map< std::size_t, std::size_t >& bid,
                const tk::Fields& U,
                tk::Fields& G ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
-      Assert( G.nunk() == coord[0].size(),
-              "Number of unknowns in gradient vector incorrect" );
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
-
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
 
       // compute gradients of primitive variables in points
       G.fill( 0.0 );
 
-      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-        // access node IDs
-        const std::array< std::size_t, 4 >
-          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
-        // compute element Jacobi determinant
-        const std::array< tk::real, 3 >
-          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-        const auto J = tk::triple( ba, ca, da );        // J = 6V
-        Assert( J > 0, "Element Jacobian non-positive" );
-        // shape function derivatives, nnode*ndim [4][3]
-        std::array< std::array< tk::real, 3 >, 4 > grad;
-        grad[1] = tk::crossdiv( ca, da, J );
-        grad[2] = tk::crossdiv( da, ba, J );
-        grad[3] = tk::crossdiv( ba, ca, J );
-        for (std::size_t i=0; i<3; ++i)
-          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-        // access solution at element nodes
-        std::vector< std::array< tk::real, 4 > > u( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
-        // scatter-add gradient contributions to points
+      for (auto e : bndel) {  // for elements contributing to chare boundary
+        const auto [ N, grad, u, J ] = egrad( e, coord, inpoel, U );
         auto J24 = J/24.0;
-        for (std::size_t a=0; a<4; ++a)
-          for (std::size_t b=0; b<4; ++b)
-            for (std::size_t j=0; j<3; ++j)
-              for (std::size_t c=0; c<m_ncomp; ++c)
-                G(N[a],c*3+j,0) += J24 * grad[b][j] * u[c][b];
+        for (std::size_t a=0; a<4; ++a) {
+          auto i = bid.find( gid[N[a]] );
+          if (i != end(bid))    // only contribute to chare-boundary node
+            for (std::size_t b=0; b<4; ++b)
+              for (std::size_t j=0; j<3; ++j)
+                for (std::size_t c=0; c<m_ncomp; ++c)
+                  G(i->second,c*3+j,0) += J24 * grad[b][j] * u[c][b];
+        }
       }
     }
 
@@ -182,21 +160,19 @@ class CompFlow {
                       std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
                       tk::UnsMesh::Eq<2> >& esued,
               const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& /* psup */,
-              const std::vector< std::size_t >& triinpoel,
-              const std::vector< std::size_t >& /* gid */,
-              const std::unordered_map< std::size_t, std::size_t >& /* bid */,
-              const std::unordered_map< std::size_t, std::size_t >& /* lid */,
+                               std::vector< std::size_t > >& psup,
+              const std::vector< std::size_t >& /* triinpoel */,
+              const std::vector< std::size_t >& gid,
+              const std::unordered_map< std::size_t, std::size_t >& bid,
+              const std::unordered_map< std::size_t, std::size_t >& lid,
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::array< tk::real, 3 >,
-                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& /* norm */,
-              const std::vector< tk::real >& /* vol */,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& norm,
+              const std::vector< tk::real >& vol,
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
     {
-      Assert( G.nunk() == coord[0].size(),
-              "Number of unknowns in gradient vector incorrect" );
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
@@ -215,110 +191,114 @@ class CompFlow {
       // access pointer to right hand side at component and offset
       std::array< const tk::real*, 5 > r;
       for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
+      
+      // allocate storage for nodal gradients of primitive variables
+      tk::Fields Grad( U.nunk(), m_ncomp*3 );
+      Grad.fill( 0.0 );
 
-      tk::Fields V( U.nunk(), 3 );
-      V.fill( 0.0 );
+      // copy in nodal gradients of chare-boundary points
+      for (const auto& [g,b] : bid) {
+        auto i = tk::cref_find( lid, g );
+        for (ncomp_t c=0; c<Grad.nprop(); ++c)
+          Grad(i,c,0) = G(b,c,0);
+      }
 
-      // Domain edge integral
-      for (const auto& [edge,surr_elements] : esued) {
-        // access edge-end point node IDs
-        auto p1 = edge[0];
-        auto p2 = edge[1];
-        // edge vector = outward face normal of the dual mesh face
-        std::array< tk::real, 3 > fn{ x[p2]-x[p1], y[p2]-y[p1], z[p2]-z[p1] };
-        // Access primitive variables at edge-end points
-        std::array< std::vector< tk::real >, 2 >
-          ru{ std::vector<tk::real>(5,0.0), std::vector<tk::real>(5,0.0) };
-        for (std::size_t p=0; p<2; ++p) {
-          ru[p][0] = U(edge[p], 0, m_offset);
-          for (std::size_t c=1; c<5; ++c)
-            ru[p][c] = U(edge[p], c, m_offset) / ru[p][0];
+      // compute gradients of primitive variables in internal points
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+        const auto [ N, grad, u, J ] = egrad( e, coord, inpoel, U );
+        auto J24 = J/24.0;
+        for (std::size_t a=0; a<4; ++a) {
+          auto i = bid.find( gid[N[a]] );
+          if (i == end(bid))    // only contribute to internal nodes
+            for (std::size_t b=0; b<4; ++b)
+              for (std::size_t j=0; j<3; ++j)
+                for (std::size_t c=0; c<m_ncomp; ++c)
+                  Grad(N[a],c*3+j,0) += J24 * grad[b][j] * u[c][b];
         }
+      }
 
-        // MUSCL reconstruction of edge-end-point primitive variables
-        for (std::size_t c=0; c<5; ++c) {
-          auto delta_2 = ru[1][c] - ru[0][c];
-          std::array< tk::real, 3 >
-             g1{ G(p1,c*3+0,0), G(p1,c*3+1,0), G(p1,c*3+2,0) },
-             g2{ G(p2,c*3+0,0), G(p2,c*3+1,0), G(p2,c*3+2,0) };
-          auto delta_1 = 2.0 * tk::dot(g1,fn) - delta_2;
-          auto delta_3 = 2.0 * tk::dot(g2,fn) - delta_2;
-          // form limiters
-          auto rL = (delta_2 + muscl_eps) / (delta_1 + muscl_eps);
-          auto rR = (delta_2 + muscl_eps) / (delta_3 + muscl_eps);
-          auto rLinv = (delta_1 + muscl_eps) / (delta_2 + muscl_eps);
-          auto rRinv = (delta_3 + muscl_eps) / (delta_2 + muscl_eps);
-          auto phiL = (std::abs(rL) + rL) / (std::abs(rL) + 1.0);
-          auto phiR = (std::abs(rR) + rR) / (std::abs(rR) + 1.0);
-          auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
-          auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
-          // final form of higher-order unknown
-          ru[0][c] += 0.25*(delta_1*muscl_m1*phiL + delta_2*muscl_p1*phi_L_inv);
-          ru[1][c] -= 0.25*(delta_3*muscl_m1*phiR + delta_2*muscl_p1*phi_R_inv);
-        }
+      // divide weak result in gradients by nodal volume
+      for (std::size_t p=0; p<Grad.nunk(); ++p)
+        for (std::size_t c=0; c<Grad.nprop(); ++c)
+           Grad(p,c,0) /= vol[p];
 
-        // Compute conserved variables from primitive reconstructed ones
-        for (std::size_t p=0; p<2; ++p)
-          for (std::size_t c=1; c<5; ++c)
-            ru[p][c] *= ru[p][0];
+      // domain-edge integral
+      for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
+        for (auto q : tk::Around(psup,p)) {     // for each edge p-q
+          // access and orient dual-face normals for edge p-q
+          auto n = tk::cref_find( norm, {gid[p],gid[q]} );
+          if (gid[p] > gid[q]) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
+          // Access primitive variables at edge-end points
+          std::array< std::vector< tk::real >, 2 >
+            ru{ std::vector<tk::real>(5,0.0), std::vector<tk::real>(5,0.0) };
+          // density
+          ru[0][0] = U(p, 0, m_offset);
+          ru[1][0] = U(q, 0, m_offset);
+          // divide out density
+          for (std::size_t c=1; c<5; ++c) {
+            ru[0][c] =  U(p, c, m_offset)/ ru[0][0];
+            ru[1][c] =  U(q, c, m_offset)/ ru[1][0];
+          }
+          // convert to internal energy
+          for (std::size_t d=0; d<3; ++d) {
+            ru[0][4] -= 0.5*ru[0][1+d]*ru[0][1+d];
+            ru[1][4] -= 0.5*ru[1][1+d]*ru[1][1+d];
+          }
+          // compute MUSCL reconstruction in edge-end points
+          tk::muscl( {p,q}, coord, Grad, ru );
+          // convert back to conserved
+          // convert to internal energy
+          for (std::size_t d=0; d<3; ++d) {
+            ru[0][4] += 0.5*ru[0][1+d]*ru[0][1+d];
+            ru[1][4] += 0.5*ru[1][1+d]*ru[1][1+d];
+          }
+          // multiply density
+          for (std::size_t c=1; c<5; ++c) {
+            ru[0][c] *= ru[0][0];
+            ru[1][c] *= ru[1][0];
+          }
+            
+          // edge vector = outward face normal of the dual mesh face
+          std::array< tk::real, 3 > fn{ 0., 0., 0. };
 
-        // Compute Riemann flux using edge-end point states
-        auto f = HLLC::flux( fn, ru, {{0.0,0.0,0.0}} );
-
-        // scatter-add flux contributions to interior-edge-end points
-        for (auto e : surr_elements) {
-          // access node IDs
-          const std::array< std::size_t, 4 > N{ inpoel[e*4+0], inpoel[e*4+1],
-                                                inpoel[e*4+2], inpoel[e*4+3] };
-          // compute element Jacobi determinant
-          const std::array< tk::real, 3 >
-            ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-            ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-            da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-          const auto J = tk::triple( ba, ca, da );        // J = 6V
-          Assert( J > 0, "Element Jacobian non-positive" );
-
-          // shape function derivatives, nnode*ndim [4][3]
-          std::array< std::array< tk::real, 3 >, 4 > grad;
-          grad[1] = tk::crossdiv( ca, da, J );
-          grad[2] = tk::crossdiv( da, ba, J );
-          grad[3] = tk::crossdiv( ba, ca, J );
-          for (std::size_t i=0; i<3; ++i)
-            grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-
-          // sum flux contributions to nodes
-          auto J48 = J/48.0;
-          for (const auto& l : tk::lpoed) {
-            auto a = l[0];
-            auto b = l[1];
-            if ((N[a]==p1 && N[b]==p2) || (N[a]==p2 && N[b]==p1)) {
+          // compute domain integral
+          for (auto e : tk::cref_find(esued,{p,q})) {
+            // access node IDs
+            const std::array< std::size_t, 4 >
+                N{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+            // compute element Jacobi determinant
+            const std::array< tk::real, 3 >
+              ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+              ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+              da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+            const auto J = tk::triple( ba, ca, da );        // J = 6V
+            Assert( J > 0, "Element Jacobian non-positive" );
+            // shape function derivatives, nnode*ndim [4][3]
+            std::array< std::array< tk::real, 3 >, 4 > grad;
+            grad[1] = tk::crossdiv( ca, da, J );
+            grad[2] = tk::crossdiv( da, ba, J );
+            grad[3] = tk::crossdiv( ba, ca, J );
+            for (std::size_t i=0; i<3; ++i)
+              grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+            // sum flux contributions to nodes
+            auto J48 = J/48.0;
+            for (const auto& [a,b] : tk::lpoed) {
+              auto s = tk::orient( {N[a],N[b]}, {p,q} );
               for (std::size_t j=0; j<3; ++j) {
-                for (std::size_t c=0; c<5; ++c) {
-                  auto d = J48 * (grad[a][j] - grad[b][j]) * f[c];
-                  R.var(r[c],N[a]) -= d;
-                  R.var(r[c],N[b]) += d;
-                }
-                auto d = 2.0*J48 * (grad[a][j] - grad[b][j]);
-                V(N[a],j,0) -= d;
-                V(N[b],j,0) += d;
+                fn[j] += J48 * s * (grad[a][j] - grad[b][j]);
               }
             }
           }
+              
+          // Compute Riemann flux using edge-end point states
+          auto f = HLLC::flux( fn, ru, {{0.0,0.0,0.0}} );
+          for (std::size_t c=0; c<m_ncomp; ++c) {
+            R.var(r[c],p) -= f[c];
+          }
+
         }
       }
-
-      // Test 2*sum_{vw in v} D_i^{vw} = 0 for interior points.
-      std::unordered_set< std::size_t > bp( triinpoel.cbegin(), triinpoel.cend() );
-      //std::cout << "tr: " << triinpoel.size() << ": ";
-      //for (auto b : bp) std::cout << b << ' ';
-      //std::cout << '\n';
-      for (std::size_t p=0; p<coord[0].size(); ++p) {
-        if (bp.find(p) == end(bp))
-          for (std::size_t j=0; j<3; ++j)
-            if (std::abs(V(p,j,m_offset)) > 1.0e-15)
-              std::cout << '!';
-      }
-
+      
       //// Optional source
       //for (std::size_t p=0; p<U.nunk(); ++p) {
       //  auto s = Problem::src( m_system, m_ncomp, x[p], y[p], z[p], t );
@@ -326,53 +306,33 @@ class CompFlow {
       //}
 
       // Boundary integrals
-      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
-        // access node IDs
-        const std::array< std::size_t, 3 >
-          N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
-        // compute face area
-        auto A = tk::area( { x[N[0]], x[N[1]], x[N[2]] },
-                           { y[N[0]], y[N[1]], y[N[2]] },
-                           { z[N[0]], z[N[1]], z[N[2]] } );
-        auto A24 = A/24.0;
-        auto A6 = A/6.0;
-        // compute face normal
-        auto n = tk::normal( { x[N[0]], x[N[1]], x[N[2]] },
-                             { y[N[0]], y[N[1]], y[N[2]] },
-                             { z[N[0]], z[N[1]], z[N[2]] } );
-        // access solution at element nodes
-        std::array< std::array< tk::real, 3 >, 5 > u;
-        for (ncomp_t c=0; c<5; ++c) u[c] = U.extract( c, m_offset, N );
-        // sum boundary integrals to boundary nodes
-        for (std::size_t j=0; j<3; ++j) {
-          for (const auto& l : tk::lpoet) {
-            auto a = l[0];
-            auto b = l[1];
-            for (std::size_t c=0; c<5; ++c) {
-              auto d = A24 * n[j] * (u[c][a] + u[c][b]);
-              R.var(r[c],N[a]) += d;
-              R.var(r[c],N[b]) += d;
-              R.var(r[c],N[a]) += A6 * n[j] * u[c][a];
-            }
-            auto d = 2.0*A24 * n[j];
-            V(N[a],j,0) += d;
-            V(N[b],j,0) += d;
-            d = A6 * n[j];
-            V(N[a],j,0) += d;
-          }
-        }
-      }
+      //for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
+      //  // access node IDs
+      //  const std::array< std::size_t, 3 >
+      //    N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+      //  // node coordinates
+      //  std::array< tk::real, 3 > xp{ x[N[0]], x[N[1]], x[N[2]] },
+      //                            yp{ y[N[0]], y[N[1]], y[N[2]] },
+      //                            zp{ z[N[0]], z[N[1]], z[N[2]] };
+      //  // compute face area
+      //  auto A = tk::area( xp, yp, zp );
+      //  // compute face normal
+      //  auto n = tk::normal( xp, yp, zp );
+      //  // access solution at element nodes
+      //  std::array< std::array< tk::real, 3 >, 5 > u;
+      //  for (ncomp_t c=0; c<5; ++c) u[c] = U.extract( c, m_offset, N );
+      //  // sum boundary integral contributions to boundary nodes
+      //  for (std::size_t a=0; a<3; ++a) {
+      //    for (std::size_t j=0; j<3; ++j) {
+      //      for (std::size_t c=0; c<5; ++c) {
+      //        for (std::size_t b=0; b<3; ++b)
+      //          R.var(r[c],N[a]) -= A/12.0 * n[j] * (u[c][a] + u[c][b]);
+      //        R.var(r[c],N[a]) += A/6.0 * n[j] * u[c][a];
+      //      }
+      //    }
+      //  }
+      //}
 
-      // Test 2*sum_{vw in v} D_i^{vw} + 2*sum_{vw in v} B_i^{vw} + B_i^v = 0
-      // for boundary points.
-      for (std::size_t p=0; p<coord[0].size(); ++p) {
-        if (bp.find(p) != end(bp))
-          for (std::size_t j=0; j<3; ++j)
-            if (std::abs(V(p,j,m_offset)) > 1.0e-15)
-              std::cout << '$';
-      }
-      std::cout << "max(abs(V)): " << tk::maxabs(V) << '\n';
-      //std::cout << "max(abs(R)): " << tk::maxabs(R) << '\n';
     }
 
     //! Compute right hand side for DiagCG (CG-FCT)
@@ -749,6 +709,57 @@ class CompFlow {
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset PDE operates from
+    
+    //! Compute element contribution to nodal gradient
+    //! \param[in] e Element whose contribution to compute
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] U Solution vector at recent time step
+    //! \return Tuple of element contribution
+    auto egrad( std::size_t e,
+                const std::array< std::vector< tk::real >, 3 >& coord,
+                const std::vector< std::size_t >& inpoel,
+                const tk::Fields& U ) const
+    {
+      // access node cooordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      // access node IDs
+      const std::array< std::size_t, 4 >
+        N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
+      // compute element Jacobi determinant
+      const std::array< tk::real, 3 >
+        ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+        ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+        da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+      const auto J = tk::triple( ba, ca, da );        // J = 6V
+      Assert( J > 0, "Element Jacobian non-positive" );
+      // shape function derivatives, nnode*ndim [4][3]
+      std::array< std::array< tk::real, 3 >, 4 > grad;
+      grad[1] = tk::crossdiv( ca, da, J );
+      grad[2] = tk::crossdiv( da, ba, J );
+      grad[3] = tk::crossdiv( ba, ca, J );
+      for (std::size_t i=0; i<3; ++i)
+        grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+      // access solution at element nodes
+      std::vector< std::array< tk::real, 4 > > u( m_ncomp );
+      for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+      // divide out density
+      for (std::size_t c=1; c<5; ++c)
+        for (std::size_t j=0; j<4; ++j )
+          u[c][j] /= u[0][j];
+      // convert to internal energy
+      for (std::size_t d=0; d<3; ++d)
+        for (std::size_t j=0; j<4; ++j )
+          u[4][j] -= 0.5*u[1+d][j]*u[1+d][j];
+      // return data needed to scatter add element contribution to gradient
+      return std::tuple< std::array< std::size_t, 4 >,
+                         std::array< std::array< tk::real, 3 >, 4 >,
+                         std::vector< std::array< tk::real, 4 > >,
+                         tk::real >
+               { std::move(N), std::move(grad), std::move(u), std::move(J) };
+    }
 };
 
 } // cg::

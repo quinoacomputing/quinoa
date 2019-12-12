@@ -43,7 +43,7 @@ const std::array< UnsMesh::Edge, 6 >
 const std::array< UnsMesh::Edge, 3 > lpoet{{ {{0,1}}, {{1,2}}, {{2,0}} }};
 
 //! Determine edge orientation
-tk::real
+int
 orient( const UnsMesh::Edge& t, const UnsMesh::Edge& e );
 
 //! Compute number of points (nodes) in mesh from connectivity
