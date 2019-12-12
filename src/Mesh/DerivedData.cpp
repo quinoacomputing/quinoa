@@ -570,13 +570,13 @@ genEsuel( const std::vector< std::size_t >& inpoel,
 
   auto nelem = inpoel.size()/nnpe;
 
-  // lambda that returns true if elements hel and gel share a face
+  // lambda that returns 1 if elements hel and gel share a face
   auto adj = [ &inpoel, nnpe ]( std::size_t hel, std::size_t gel ) -> bool {
-    std::vector< bool > sp;
+    int sp = 0;
     for (std::size_t h=0; h<nnpe; ++h)
       for (std::size_t g=0; g<nnpe; ++g)
-        if (inpoel[hel*nnpe+h] == inpoel[gel*nnpe+g]) sp.push_back( true );
-    if (sp.size() == nnpe-1) return true; else return false;
+        if (inpoel[hel*nnpe+h] == inpoel[gel*nnpe+g]) ++sp;
+    if (sp == nnpe-1) return true; else return false;
   };
 
   // map to associate unique elements and their surrounding elements
