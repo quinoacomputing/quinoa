@@ -155,7 +155,7 @@ namespace grm {
       // Set default to sysfct (on/off) if not specified
       auto& sysfct = stack.template get< tag::param, eq, tag::sysfct >();
       if (sysfct.empty() || sysfct.size() != neq.get< eq >())
-        sysfct.push_back( true );
+        sysfct.push_back( 1 );
 
       // Verify that sysfctvar variables are within bounds (if specified) and
       // defaults if not
@@ -639,6 +639,13 @@ namespace deck {
                            tk::grm::Store_back< tag::param, eq, p >,
                            kw_type > {};
 
+  //! put in PDE bool parameter for equation matching keyword into vector< int >
+  template< typename eq, typename keyword, typename p >
+  struct parameter_bool :
+         tk::grm::process< use< keyword >,
+                           tk::grm::Store_back_bool< tag::param, eq, p >,
+                           pegtl::alpha > {};
+
   //! Boundary conditions block
   template< class keyword, class eq, class param >
   struct bc :
@@ -787,8 +794,9 @@ namespace deck {
                            pde_parameter_vector< kw::sysfctvar,
                                                  tag::compflow,
                                                  tag::sysfctvar >,
-                           parameter< tag::compflow, kw::sysfct, tag::sysfct,
-                                      pegtl::alpha >,
+                           parameter_bool< tag::compflow,
+                                           kw::sysfct,
+                                           tag::sysfct >,
                            parameter< tag::compflow, kw::npar, tag::npar,
                                       pegtl::digit >,
                            parameter< tag::compflow, kw::pde_alpha, tag::alpha >,
