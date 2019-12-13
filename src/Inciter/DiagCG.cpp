@@ -207,6 +207,9 @@ DiagCG::normfinal()
     }
   }
 
+  // Clear communication buffer
+  tk::destroy( m_bnormc );
+
   // Divie summed point normals by the sum of inverse distance squared
   for (auto& [ p, n ] : m_bnorm) {
     n[0] /= n[3];

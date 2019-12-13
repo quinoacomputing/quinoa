@@ -14,7 +14,6 @@ inciter
   #dt   1.0e-4 # Time step size
 
   scheme diagcg
-  #ctau 0.5
   fcteps 1.0e-6
 
   partitioning
@@ -38,13 +37,6 @@ inciter
       sideset 2 4 5 6 end
     end
   end
-
- # amr
- #   t0ref true
- #   refvar u end
- #   initial uniform
- #   initial uniform
- # end
 
   plotvar
     interval 10000
