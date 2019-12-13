@@ -29,7 +29,7 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
                                          [[maybe_unused]] ncomp_t ncomp,
                                          tk::real x,
                                          tk::real y,
-                                         tk::real,
+                                         tk::real z,
                                          tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
@@ -44,29 +44,31 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
 {
   Assert( ncomp == ncomp, "Number of scalar components must be " +
                           std::to_string(ncomp) );
-  using tag::param;
 
-  tk::real r, p, u, v, w, rE;
-  if ( (x<0.05) && (y<0.05) ) {
-    // density
-    r = 1.0;
-    // pressure
-    p = 783.4112;
-    // velocity
-    u = 0.0;
-    v = 0.0;
-    w = 0.0;
+  tk::real r=0, p=0, u=0, v=0, w=0, rE=0;
+
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  const auto centering = ctr::Scheme().centering( scheme );
+
+  // pressure
+  if (centering == tk::Centering::ELEM) {
+
+    if ( (x<0.05) && (y<0.05) ) p = 783.4112; else p = 1.0e-6;
+
+  } else if (centering == tk::Centering::NODE) {
+
+    auto eps = std::numeric_limits< tk::real >::epsilon();
+    if (std::abs(x) < eps && std::abs(y) < eps && std::abs(z) < eps)
+      p = g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[ system ];
+    else
+      p = 0.67e-4;
+
   }
-  else {
-    // density
-    r = 1.0;
-    // pressure
-    p = 1.0e-6;
-    // velocity
-    u = 0.0;
-    v = 0.0;
-    w = 0.0;
-  }
+
+  // density
+  r = 1.0;
+  // velocity
+  u = v = w = 0.0;
   // total specific energy
   rE = eos_totalenergy< eq >( system, r, u, v, w, p );
 

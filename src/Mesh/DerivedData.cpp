@@ -554,12 +554,12 @@ genEsuel( const std::vector< std::size_t >& inpoel,
 
   auto nelem = inpoel.size()/nnpe;
 
-  // lambda that returns true if elements hel and gel share a face
+  // lambda that returns 1 if elements hel and gel share a face
   auto adj = [ &inpoel, nnpe ]( std::size_t hel, std::size_t gel ) -> bool {
-    std::vector< bool > sp;
+    std::vector< int > sp;
     for (std::size_t h=0; h<nnpe; ++h)
       for (std::size_t g=0; g<nnpe; ++g)
-        if (inpoel[hel*nnpe+h] == inpoel[gel*nnpe+g]) sp.push_back( true );
+        if (inpoel[hel*nnpe+h] == inpoel[gel*nnpe+g]) sp.push_back( 1 );
     if (sp.size() == nnpe-1) return true; else return false;
   };
 
@@ -782,10 +782,10 @@ genEsued( const std::vector< std::size_t >& inpoel,
   // lambda that returns true if element e contains edge (p < q)
   auto has = [ &inpoel, nnpe ]( std::size_t e, std::size_t p, std::size_t q )
   -> bool {
-    std::vector< bool > sp;
+    std::vector< int > sp;
     for (std::size_t n=0; n<nnpe; ++n)
       if (inpoel[e*nnpe+n] == p || inpoel[e*nnpe+n] == q)
-        sp.push_back( true );
+        sp.push_back( 1 );
     if (sp.size() == 2) return true; else return false;
   };
 
@@ -1303,6 +1303,7 @@ genGeoFaceTri( std::size_t nipfac,
 //!   pointing outward of the element to the left of the face, and face
 //!   centroid coordinates. Use the following examples to access this
 //!   information for face-f.
+//! \details
 //!   face area: geoFace(f,0,0),
 //!   unit-normal x-component: geoFace(f,1,0),
 //!               y-component: geoFace(f,2,0),
@@ -1396,6 +1397,14 @@ geoFaceTri( const std::array< tk::real, 3 >& x,
 //! \return Face geometry information. This includes face area, unit normal
 //!   pointing outward of the element to the left of the face, and face
 //!   centroid coordinates.
+//! \details
+//!   face area: geoFace(f,0,0),
+//!   unit-normal x-component: geoFace(f,1,0),
+//!               y-component: geoFace(f,2,0),
+//!               z-component: geoFace(f,3,0),
+//!   centroid x-coordinate: geoFace(f,4,0),
+//!            y-coordinate: geoFace(f,5,0),
+//!            z-coordinate: geoFace(f,6,0).
 // *****************************************************************************
 {
   tk::Fields geoiFace( 1, 7 );

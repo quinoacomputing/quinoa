@@ -154,9 +154,6 @@ Transporter::info()
   if ( !g_inputdeck.get< tag::title >().empty() )
     m_print.title( g_inputdeck.get< tag::title >() );
 
-  // Print out info on settings of selected partial differential equations
-  m_print.pdes( "Partial differential equations integrated", stack.info() );
-
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
@@ -171,9 +168,14 @@ Transporter::info()
   if (scheme == ctr::SchemeType::DiagCG) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
     m_print.item( "Flux-corrected transport (FCT)", fct );
-    if (fct)
+    if (fct) {
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
+      m_print.item( "FCT small number",
+                    g_inputdeck.get< tag::discr, tag::fcteps >() );
+      m_print.item( "Clipping FCT",
+                    g_inputdeck.get< tag::discr, tag::fctclip >() );
+    }
   } else if (scheme == ctr::SchemeType::DG ||
              scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
              scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
@@ -193,6 +195,9 @@ Transporter::info()
   else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
              std::numeric_limits< tk::real >::epsilon())
     m_print.item( "CFL coefficient", cfl );
+
+  // Print out info on settings of selected partial differential equations
+  m_print.pdes( "Partial differential equations integrated", stack.info() );
 
   // Print out adaptive polynomial refinement configuration
   if (scheme == ctr::SchemeType::PDG) {
@@ -298,17 +303,27 @@ Transporter::createPartitioner()
   // Read boundary (side set) data from input file
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
+
+  // Read boundary-face connectivity on side sets
+  mr.readSidesetFaces( bface, faces );
+
+  bool bcs_set = false;
   if (centering == tk::Centering::ELEM) {
-    // Read boundary-face connectivity on side sets
-    mr.readSidesetFaces( bface, faces );
+
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    matchBCs( g_dgpde, bface );
+    bcs_set = matchBCs( g_dgpde, bface );
+
   } else if (centering == tk::Centering::NODE) {
+
     // Read node lists on side sets
     bnode = mr.readSidesetNodes();
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    matchBCs( g_cgpde, bnode );
+    bcs_set = matchBCs( g_cgpde, bnode );
+    bcs_set = bcs_set || matchBCs( g_cgpde, bface );
   }
+
+  // Warn on no BCs
+  if (!bcs_set) m_print << "\n>>> WARNING: No boundary conditions set\n\n";
 
   // Create partitioner callbacks (order matters)
   tk::PartitionerCallback cbp {{
