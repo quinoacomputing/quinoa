@@ -290,11 +290,22 @@ Partitioner::refine()
 
   }
 
+  tk::destroy( m_ginpoel );
+  tk::destroy( m_coord );
+  tk::destroy( m_inpoel );
+  tk::destroy( m_lid );
+  tk::destroy( m_nface );
+  tk::destroy( m_nodech );
+  tk::destroy( m_linnodes );
   tk::destroy( m_chinpoel );
   tk::destroy( m_chcoordmap );
   tk::destroy( m_chbface );
   tk::destroy( m_chtriinpoel );
   tk::destroy( m_chbnode );
+  tk::destroy( m_bnodechares );
+  tk::destroy( m_bface );
+  tk::destroy( m_triinpoel );
+  tk::destroy( m_bnode );
 
   contribute( sizeof(int), &error, CkReduction::max_int,
               m_cbp.get< tag::refinserted >() );

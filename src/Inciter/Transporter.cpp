@@ -338,7 +338,8 @@ Transporter::createPartitioner()
 
   // Create refiner callbacks (order matters)
   tk::RefinerCallback cbr {{
-      CkCallback( CkReductionTarget(Transporter,edges), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,queriedRef), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,respondedRef), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,compatibility), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,bndint), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
@@ -466,7 +467,16 @@ Transporter::refinserted( int error )
 }
 
 void
-Transporter::edges()
+Transporter::queriedRef()
+// *****************************************************************************
+// Reduction target: all Sorter chares have queried their boundary nodes
+// *****************************************************************************
+{
+  m_refiner.response();
+}
+
+void
+Transporter::respondedRef()
 // *****************************************************************************
 // Reduction target: all mesh refiner chares have setup their boundary edges
 // *****************************************************************************
@@ -975,9 +985,15 @@ Transporter::checkpoint( tk::real it, tk::real t )
   m_it = static_cast< uint64_t >( it );
   m_t = t;
 
-  const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
-  CkCallback res( CkIndex_Transporter::resume(), thisProxy );
-  CkStartCheckpoint( restart.c_str(), res );
+  const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
+
+  if (!benchmark) {
+    const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
+    CkCallback res( CkIndex_Transporter::resume(), thisProxy );
+    CkStartCheckpoint( restart.c_str(), res );
+  } else {
+    resume();
+  }
 }
 
 void

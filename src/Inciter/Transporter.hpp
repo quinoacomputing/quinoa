@@ -85,6 +85,12 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: all PEs have distrbuted their mesh after partitioning
     void distributed();
 
+    //! Reduction target: all Refiner chares have queried their boundary edges
+    void queriedRef();
+    //! \brief Reduction target: all Refiner mesh refiner chares have setup their
+    //!   boundary edges
+    void respondedRef();
+
     //! Reduction target: all PEs have created the mesh refiners
     void refinserted( int error );
 
@@ -97,10 +103,6 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target: all worker (derived discretization) chares have
     //!   been inserted
     void workinserted();
-
-    //! \brief Reduction target: all mesh refiner chares have setup their
-    //!   boundary edges
-    void edges();
 
     //! \brief Reduction target: all mesh refiner chares have received a round
     //!   of edges, and ran their compatibility algorithm

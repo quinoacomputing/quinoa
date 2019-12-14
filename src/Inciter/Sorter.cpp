@@ -159,7 +159,7 @@ Sorter::setup( std::size_t npoin )
 void
 Sorter::query( int fromch, const std::vector< std::size_t >& nodes )
 // *****************************************************************************
-// Incoming query for a list mesh nodes for which this chare compiles node
+// Incoming query for a list of mesh nodes for which this chare compiles node
 // communication maps
 //! \param[in] fromch Sender chare ID
 //! \param[in] nodes Chare-boundary node list from another chare
@@ -204,7 +204,7 @@ Sorter::response()
   // communication maps were computed above for those chares that queried this
   // map from us. These mesh nodes form a distributed table and we only work on
   // a chunk of it. Note that we only send data back to those chares that have
-  // queried us. The receiving sides do not know in advance if the receive
+  // queried us. The receiving sides do not know in advance if they receive
   // messages or not. Completion is detected by having the receiver respond
   // back and counting the responses on the sender side, i.e., this chare.
   m_nbnd = exp.size();
@@ -524,6 +524,20 @@ Sorter::createWorkers()
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
 
   contribute( m_cbs.get< tag::workinserted >() );
+
+  // Free up some memory
+  tk::destroy( m_ginpoel );
+  tk::destroy( m_coordmap );
+  tk::destroy( m_bface );
+  tk::destroy( m_triinpoel );
+  tk::destroy( m_bnode );
+  tk::destroy( m_nodeset );
+  tk::destroy( m_nodech );
+  tk::destroy( m_chnode );
+  tk::destroy( m_msum );
+  tk::destroy( m_reordcomm );
+  tk::destroy( m_newnodes );
+  tk::destroy( m_reqnodes );
 }
 
 #include "NoWarning/sorter.def.h"
