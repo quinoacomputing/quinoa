@@ -161,7 +161,7 @@ class CompFlow {
                       tk::UnsMesh::Eq<2> >& esued,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
-              const std::vector< std::size_t >& /* triinpoel */,
+              const std::vector< std::size_t >& triinpoel,
               const std::vector< std::size_t >& gid,
               const std::unordered_map< std::size_t, std::size_t >& bid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
@@ -292,9 +292,7 @@ class CompFlow {
               
           // Compute Riemann flux using edge-end point states
           auto f = HLLC::flux( fn, ru, {{0.0,0.0,0.0}} );
-          for (std::size_t c=0; c<m_ncomp; ++c) {
-            R.var(r[c],p) -= f[c];
-          }
+          for (std::size_t c=0; c<m_ncomp; ++c) R.var(r[c],p) -= f[c];
 
         }
       }
@@ -306,32 +304,57 @@ class CompFlow {
       //}
 
       // Boundary integrals
-      //for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
-      //  // access node IDs
-      //  const std::array< std::size_t, 3 >
-      //    N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
-      //  // node coordinates
-      //  std::array< tk::real, 3 > xp{ x[N[0]], x[N[1]], x[N[2]] },
-      //                            yp{ y[N[0]], y[N[1]], y[N[2]] },
-      //                            zp{ z[N[0]], z[N[1]], z[N[2]] };
-      //  // compute face area
-      //  auto A = tk::area( xp, yp, zp );
-      //  // compute face normal
-      //  auto n = tk::normal( xp, yp, zp );
-      //  // access solution at element nodes
-      //  std::array< std::array< tk::real, 3 >, 5 > u;
-      //  for (ncomp_t c=0; c<5; ++c) u[c] = U.extract( c, m_offset, N );
-      //  // sum boundary integral contributions to boundary nodes
-      //  for (std::size_t a=0; a<3; ++a) {
-      //    for (std::size_t j=0; j<3; ++j) {
-      //      for (std::size_t c=0; c<5; ++c) {
-      //        for (std::size_t b=0; b<3; ++b)
-      //          R.var(r[c],N[a]) -= A/12.0 * n[j] * (u[c][a] + u[c][b]);
-      //        R.var(r[c],N[a]) += A/6.0 * n[j] * u[c][a];
-      //      }
-      //    }
-      //  }
-      //}
+      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
+        // access node IDs
+        const std::array< std::size_t, 3 >
+          N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+        // node coordinates
+        std::array< tk::real, 3 > xp{ x[N[0]], x[N[1]], x[N[2]] },
+                                  yp{ y[N[0]], y[N[1]], y[N[2]] },
+                                  zp{ z[N[0]], z[N[1]], z[N[2]] };
+        // compute face area
+        auto A = tk::area( xp, yp, zp );
+        // compute face normal
+        auto n = tk::normal( xp, yp, zp );
+        // access solution at element nodes
+        std::vector< std::array< tk::real, 3 > > u( m_ncomp );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        // compute fluxes
+        std::array< std::array< tk::real, 3 >, 5 > f;
+        flux( n, u, f );
+
+        // sum boundary integral contributions to boundary nodes
+        for ( auto & edge_pair : { std::pair<int,int>{0, 1}, {1, 2}, {2, 0} } ) {
+          auto a = edge_pair.first;
+          auto b = edge_pair.second;
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            R.var(r[c],N[a]) -= A/24.0 * (f[c][a] + f[c][b]) + A/6.0 * f[c][a];
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            R.var(r[c],N[b]) += A/24.0 * (f[c][a] + f[c][b]);
+        }
+      }
+
+    }
+
+    static void flux(
+        const std::array< tk::real, 3 >& fn,
+        const std::vector< std::array< tk::real, 3 > >& u,
+        std::array< std::array< tk::real, 3 >, 5 >& f)
+    {
+
+      for (std::size_t i=0; i<3; ++i) {
+        auto dinv = u[0][i];
+        auto p = eos_pressure< tag::compflow >(
+            0, u[0][i], u[1][i]*dinv, u[2][i]*dinv, u[3][i]*dinv, u[4][i] );
+      
+        tk::real div = 0;
+        for (std::size_t d=0; d<3; ++d) div += fn[d] * u[1+d][i];
+        div *= dinv;
+
+        f[0][i] = u[0][i] * div;
+        for (std::size_t d=0; d<3; ++d) f[1+d][i] = u[1+d][i]*div + p*fn[d];
+        f[4][i] = (u[4][i] + p) * div;
+      }
 
     }
 
