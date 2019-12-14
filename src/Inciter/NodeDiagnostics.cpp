@@ -132,7 +132,7 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u ) const
 
     // Contribute to diagnostics
     auto stream = serialize( diag );
-    d.Ref()->contribute( stream.first, stream.second.get(), DiagMerger,
+    d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 
     return true;        // diagnostics have been computed

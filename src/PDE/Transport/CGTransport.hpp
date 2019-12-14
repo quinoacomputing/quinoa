@@ -217,6 +217,10 @@ class Transport {
         for (std::size_t c=0; c<Grad.nprop(); ++c)
            Grad(p,c,0) /= vol[p];
 
+      //// for verification only, will go away once correct
+      //tk::Fields V( U.nunk(), 3 );
+      //V.fill( 0.0 );
+
       // domain-edge integral
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
         for (auto q : tk::Around(psup,p)) {     // for each edge p-q
@@ -252,11 +256,21 @@ class Transport {
                           * (ru[1][c] - ru[0][c]);
 
                 }
+                //V(p,j,0) -= 2.0*J48 * s * (grad[a][j] - grad[b][j]);
               }
             }
           }
         }
       }
+
+      //// test 2*sum_{vw in v} D_i^{vw} = 0 for interior points (this only makes
+      //// sense in serial)
+      //std::unordered_set< std::size_t > bp(begin(triinpoel), end(triinpoel));
+      //for (std::size_t p=0; p<coord[0].size(); ++p)
+      //  if (bp.find(p) == end(bp))
+      //    for (std::size_t j=0; j<3; ++j)
+      //      if (std::abs(V(p,j,0)) > 1.0e-15)
+      //        std::cout << 'd';
 
       // boundary integrals
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
@@ -282,14 +296,28 @@ class Transport {
           for (std::size_t j=0; j<3; ++j) {
             for (std::size_t c=0; c<m_ncomp; ++c) {
               for (std::size_t b=0; b<3; ++b) {
-                R.var(r[c],N[a]) -=
-                  A/12.0 * n[j] * v[c][j] * (u[c][a] + u[c][b]);
+                if (a != b) {
+                  R.var(r[c],N[a]) -=
+                    A/24.0 * n[j] * v[c][j] * (u[c][a] + u[c][b]);
+                }
+                R.var(r[c],N[a]) -= A/6.0 * n[j] * v[c][j] * u[c][a];
               }
-              R.var(r[c],N[a]) += A/6.0 * n[j] * v[c][j] * u[c][a];
             }
+            //for (std::size_t b=0; b<3; ++b)
+            //  if (a != b)
+            //    V(N[a],j,0) -= 2.0*A/24.0 * n[j];
+            //V(N[a],j,0) -= A/6.0 * n[j];
           }
         }
       }
+
+      //// test 2*sum_{vw in v} D_i^{vw} + 2*sum_{vw in v} B_i^{vw} + B_i^v = 0
+      //// for boundary points (this only makes sense in serial)
+      //for (std::size_t p=0; p<coord[0].size(); ++p)
+      //  if (bp.find(p) != end(bp))
+      //    for (std::size_t j=0; j<3; ++j)
+      //      if (std::abs(V(p,j,0)) > 1.0e-15)
+      //        std::cout << 'b';
     }
 
     //! Compute right hand side for DiagCG (CG-FCT)
