@@ -168,7 +168,7 @@ Sorter::setup( std::size_t npoin )
 void
 Sorter::query( int fromch, const tk::AllCommMaps& bnd )
 // *****************************************************************************
-// Incoming query for a list mesh nodes for which this chare compiles node
+// Incoming query for a list of mesh nodes for which this chare compiles node
 // communication maps
 //! \param[in] fromch Sender chare ID
 //! \param[in] bnd Chare-boundary data from another chare
@@ -574,6 +574,20 @@ Sorter::createWorkers()
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
 
   contribute( m_cbs.get< tag::workinserted >() );
+
+  // Free up some memory
+  tk::destroy( m_ginpoel );
+  tk::destroy( m_coordmap );
+  tk::destroy( m_bface );
+  tk::destroy( m_triinpoel );
+  tk::destroy( m_bnode );
+  tk::destroy( m_nodeset );
+  tk::destroy( m_nodech );
+  tk::destroy( m_chnode );
+  tk::destroy( m_msum );
+  tk::destroy( m_reordcomm );
+  tk::destroy( m_newnodes );
+  tk::destroy( m_reqnodes );
 }
 
 #include "NoWarning/sorter.def.h"
