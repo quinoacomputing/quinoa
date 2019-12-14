@@ -1770,8 +1770,9 @@ DG::evalRestart()
   auto d = Disc();
 
   const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
+  const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
 
-  if ( (d->It()) % rsfreq == 0 ) {
+  if ( !benchmark && (d->It()) % rsfreq == 0 ) {
 
     std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
     d->contribute( t, CkReduction::nop,
