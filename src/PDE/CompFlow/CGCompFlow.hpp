@@ -231,6 +231,12 @@ class CompFlow {
           // Access primitive variables at edge-end points
           std::array< std::vector< tk::real >, 2 >
             ru{ std::vector<tk::real>(5,0.0), std::vector<tk::real>(5,0.0) };
+#if 0
+          for (std::size_t c=0; c<5; ++c) {
+            ru[0][c] = U(p, c, m_offset);
+            ru[1][c] = U(q, c, m_offset);
+          }
+#else
           // density
           ru[0][0] = U(p, 0, m_offset);
           ru[1][0] = U(q, 0, m_offset);
@@ -256,7 +262,8 @@ class CompFlow {
           for (std::size_t c=1; c<5; ++c) {
             ru[0][c] *= ru[0][0];
             ru[1][c] *= ru[1][0];
-          }
+         }
+#endif
             
           // edge vector = outward face normal of the dual mesh face
           std::array< tk::real, 3 > fn{ 0., 0., 0. };
@@ -289,10 +296,14 @@ class CompFlow {
               }
             }
           }
+          tk::real A = 0;
+          for (std::size_t i=0; i<3; ++i) A += fn[i] * fn[i];
+          A = std::sqrt(A);
+          for (std::size_t i=0; i<3; ++i) fn[i] /= A;
               
           // Compute Riemann flux using edge-end point states
           auto f = HLLC::flux( fn, ru, {{0.0,0.0,0.0}} );
-          for (std::size_t c=0; c<m_ncomp; ++c) R.var(r[c],p) -= f[c];
+          for (std::size_t c=0; c<m_ncomp; ++c) R.var(r[c],p) -= A*f[c];
 
         }
       }
@@ -314,6 +325,8 @@ class CompFlow {
                                   zp{ z[N[0]], z[N[1]], z[N[2]] };
         // compute face area
         auto A = tk::area( xp, yp, zp );
+        auto A24 = A / 24.0;
+        auto A6 = A / 6.;
         // compute face normal
         auto n = tk::normal( xp, yp, zp );
         // access solution at element nodes
@@ -327,10 +340,11 @@ class CompFlow {
         for ( auto & edge_pair : { std::pair<int,int>{0, 1}, {1, 2}, {2, 0} } ) {
           auto a = edge_pair.first;
           auto b = edge_pair.second;
-          for (std::size_t c=0; c<m_ncomp; ++c)
-            R.var(r[c],N[a]) -= A/24.0 * (f[c][a] + f[c][b]) + A/6.0 * f[c][a];
-          for (std::size_t c=0; c<m_ncomp; ++c)
-            R.var(r[c],N[b]) += A/24.0 * (f[c][a] + f[c][b]);
+          for (std::size_t c=0; c<m_ncomp; ++c) {
+            auto Bab = A24 * (f[c][a] + f[c][b]);
+            R.var(r[c],N[a]) -= Bab + A6 * f[c][a];
+            R.var(r[c],N[b]) += Bab;
+          }
         }
       }
 
