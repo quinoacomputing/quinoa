@@ -65,7 +65,7 @@ Transporter::Transporter() :
   m_meshwriter(),
   m_sorter(),
   m_nelem( 0 ),
-  m_npoin_larger( 0 ),
+  m_npoin( 0 ),
   m_meshvol( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
@@ -296,6 +296,9 @@ Transporter::createPartitioner()
   // Create mesh reader for reading side sets from file
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
+  // Read out total number of mesh points from mesh file
+  m_npoin = mr.npoin();
+
   std::map< int, std::vector< std::size_t > > bface;
   std::map< int, std::vector< std::size_t > > faces;
   std::map< int, std::vector< std::size_t > > bnode;
@@ -376,17 +379,12 @@ Transporter::createPartitioner()
 }
 
 void
-Transporter::load( std::size_t nelem, std::size_t npoin )
+Transporter::load( std::size_t nelem )
 // *****************************************************************************
 // Reduction target: the mesh has been read from file on all PEs
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
-//! \param[in] npoin Total number of mesh nodes (summed across all PEs). Note
-//!    that in parallel this is larger than the total number of points in the
-//!    mesh, because the boundary nodes are double-counted.
 // *****************************************************************************
 {
-  m_npoin_larger = npoin;
-
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
   uint64_t chunksize, remainder;
@@ -399,10 +397,6 @@ Transporter::load( std::size_t nelem, std::size_t npoin )
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
   m_print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
 
-  // Print out mesh graph stats
-  m_print.section( "Input mesh graph statistics" );
-  m_print.item( "Number of tetrahedra", nelem );
-
   // Print out mesh partitioning configuration
   m_print.section( "Mesh partitioning" );
   m_print.Item< tk::ctr::PartitioningAlgorithm,
@@ -413,6 +407,7 @@ Transporter::load( std::size_t nelem, std::size_t npoin )
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
   m_print.item( "Number of tetrahedra", nelem );
+  m_print.item( "Number of points", m_npoin );
   m_print.item( "Number of work units", m_nchare );
 
   m_print.endsubsection();
@@ -606,9 +601,8 @@ Transporter::refined( std::size_t nelem, std::size_t npoin )
   m_sorter.doneInserting();
 
   m_nelem = nelem;
-  m_npoin_larger = npoin;
 
-  m_sorter.setup( m_npoin_larger );
+  m_sorter.setup( npoin );
 }
 
 void
