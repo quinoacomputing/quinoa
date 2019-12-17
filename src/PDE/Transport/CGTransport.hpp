@@ -164,6 +164,7 @@ class Transport {
                       std::array< tk::real, 3 >,
                       tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& norm,
               const std::vector< tk::real >& vol,
+              const std::unordered_map<std::size_t,std::array<tk::real,4>>& /* bnorm */,
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
