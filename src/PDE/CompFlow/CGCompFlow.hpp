@@ -351,9 +351,7 @@ class CompFlow {
         }
 
         // sum boundary integral contributions to boundary nodes
-        for ( auto & edge_pair : { std::pair<int,int>{0, 1}, {1, 2}, {2, 0} } ) {
-          auto a = edge_pair.first;
-          auto b = edge_pair.second;
+        for (const auto& [a,b] : tk::lpoet) {
           for (std::size_t c=0; c<m_ncomp; ++c) {
             auto Bab = A24 * (f[c][a] + f[c][b]);
             R.var(r[c],N[a]) -= Bab + A6 * f[c][a];
