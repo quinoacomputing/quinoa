@@ -62,6 +62,9 @@ class ExodusIIMeshReader {
     //! Read only connectivity graph from file
     void readGraph( UnsMesh& mesh );
 
+    //! Return total number of mesh points in mesh file
+    std::size_t npoin() { return readHeader(); }
+
     //! Read part of the mesh (graph and coords) from file
     //! \details Total number of PEs defaults to 1 for a single-CPU read, this
     //!    PE defaults to 0 for a single-CPU read.

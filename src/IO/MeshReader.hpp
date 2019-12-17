@@ -57,6 +57,9 @@ class MeshReader {
       } else Throw( "Mesh type not implemented or not supported" );
     }
 
+    //! Public interface to return the total number of nodes in mesh file
+    std::size_t npoin() { return self->npoin(); }
+
     //! Public interface to read part of the mesh (graph and coords) from file
     //! \details Total number of PEs defaults to 1 for a single-CPU read, this
     //!    PE defaults to 0 for a single-CPU read.
@@ -107,6 +110,7 @@ class MeshReader {
       Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
+      virtual std::size_t npoin() = 0;
       virtual void readMeshPart(
                      std::vector< std::size_t >&,
                      std::vector< std::size_t >&,
@@ -133,6 +137,7 @@ class MeshReader {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
+      std::size_t npoin() override { return data.npoin(); }
       void readMeshPart( std::vector< std::size_t >& ginpoel,
                          std::vector< std::size_t >& inpoel,
                          std::vector< std::size_t >& triinp,

@@ -284,6 +284,8 @@ class Transport {
                                   zp{ z[N[0]], z[N[1]], z[N[2]] };
         // compute face area
         auto A = tk::area( xp, yp, zp );
+        auto A24 = A / 24.0;
+        auto A6 = A / 6.0;
         // compute face normal
         auto n = tk::normal( xp, yp, zp );
         // access solution at element nodes
@@ -293,21 +295,15 @@ class Transport {
         auto v =
           Problem::prescribedVelocity( m_system, m_ncomp, xp[0], yp[0], zp[0] );
         // sum boundary integral contributions to boundary nodes
-        for (std::size_t a=0; a<3; ++a) {
+        for (const auto& [a,b] : tk::lpoet) {
           for (std::size_t j=0; j<3; ++j) {
             for (std::size_t c=0; c<m_ncomp; ++c) {
-              for (std::size_t b=0; b<3; ++b) {
-                if (a != b) {
-                  R.var(r[c],N[a]) -=
-                    A/24.0 * n[j] * v[c][j] * (u[c][a] + u[c][b]);
-                }
-                R.var(r[c],N[a]) -= A/6.0 * n[j] * v[c][j] * u[c][a];
-              }
+              auto Bab = A24 * n[j] * v[c][j] * (u[c][a] + u[c][b]);
+              R.var(r[c],N[a]) -= Bab + A6 * n[j] * v[c][j] * u[c][a];
+              R.var(r[c],N[b]) -= Bab;
             }
-            //for (std::size_t b=0; b<3; ++b)
-            //  if (a != b)
-            //    V(N[a],j,0) -= 2.0*A/24.0 * n[j];
-            //V(N[a],j,0) -= A/6.0 * n[j];
+            //V(N[a],j,0) -= (2.0*A24 + A6) * n[j];
+            //V(N[b],j,0) -= 2.0*A24 * n[j];
           }
         }
       }
