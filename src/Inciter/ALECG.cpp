@@ -364,14 +364,6 @@ ALECG::normfinal()
   }
   tk::destroy( m_dfnormc );
 
-  // Normalize dual-face normals
-  for (auto& [e,n] : m_dfnorm) {
-    Assert( std::abs(tk::dot(n,n)) >
-              std::numeric_limits< tk::real >::epsilon(),
-                "Dual-face normal zero length" );
-    tk::unit(n);
-  }
-
   // Signal the runtime system that the workers have been created
   contribute( sizeof(int), &m_initial, CkReduction::sum_int,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );

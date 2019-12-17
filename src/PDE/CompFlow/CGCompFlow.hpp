@@ -158,7 +158,7 @@ class CompFlow {
               const std::vector< std::size_t >& inpoel,
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
-                      tk::UnsMesh::Eq<2> >& esued,
+                      tk::UnsMesh::Eq<2> >& /* esued */,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
               const std::vector< std::size_t >& triinpoel,
@@ -236,12 +236,16 @@ class CompFlow {
           // Access primitive variables at edge-end points
           std::array< std::vector< tk::real >, 2 >
             ru{ std::vector<tk::real>(5,0.0), std::vector<tk::real>(5,0.0) };
+
+
 #if 0
+          // First order
           for (std::size_t c=0; c<5; ++c) {
             ru[0][c] = U(p, c, m_offset);
             ru[1][c] = U(q, c, m_offset);
           }
 #else
+          // second order
           // density
           ru[0][0] = U(p, 0, m_offset);
           ru[1][0] = U(q, 0, m_offset);
@@ -271,46 +275,17 @@ class CompFlow {
 #endif
             
           // edge vector = outward face normal of the dual mesh face
-          std::array< tk::real, 3 > fn{ 0., 0., 0. };
-
-          // compute domain integral
-          for (auto e : tk::cref_find(esued,{p,q})) {
-            // access node IDs
-            const std::array< std::size_t, 4 >
-                N{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
-            // compute element Jacobi determinant
-            const std::array< tk::real, 3 >
-              ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-              ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-              da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-            const auto J = tk::triple( ba, ca, da );        // J = 6V
-            Assert( J > 0, "Element Jacobian non-positive" );
-            // shape function derivatives, nnode*ndim [4][3]
-            std::array< std::array< tk::real, 3 >, 4 > grad;
-            grad[1] = tk::crossdiv( ca, da, J );
-            grad[2] = tk::crossdiv( da, ba, J );
-            grad[3] = tk::crossdiv( ba, ca, J );
-            for (std::size_t i=0; i<3; ++i)
-              grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-            // sum flux contributions to nodes
-            auto J24 = J/24.0;
-            for (const auto& [a,b] : tk::lpoed) {
-              auto s = tk::orient( {N[a],N[b]}, {p,q} );
-              for (std::size_t j=0; j<3; ++j) {
-                fn[j] += J24 * s * (grad[a][j] - grad[b][j]);
-                //V(p,j,0) -= 2.0*J48 * s * (grad[a][j] - grad[b][j]);
-              }
-            }
-          }
           tk::real A = 0;
-          for (std::size_t i=0; i<3; ++i) A += fn[i] * fn[i];
+          for (std::size_t i=0; i<3; ++i) A += n[i] * n[i];
           A = std::sqrt(A);
-          for (std::size_t i=0; i<3; ++i) fn[i] /= A;
+          auto Ainv = 1 / A;
+          std::array< tk::real, 3 > fn;
+          for (std::size_t i=0; i<3; ++i) fn[i] = Ainv * n[i];
               
           // Compute Riemann flux using edge-end point states
           //auto f = HLLC::flux( fn, ru, {{0.0,0.0,0.0}} );
           auto f = rusanov_flux( fn, ru );
-          for (std::size_t c=0; c<m_ncomp; ++c) R.var(r[c],p) -= A*f[c];
+          for (std::size_t c=0; c<m_ncomp; ++c) R.var(r[c],p) -= 2*A*f[c];
                 
         }
       }

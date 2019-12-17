@@ -25,6 +25,7 @@
 #include "DerivedData.hpp"
 #include "Around.hpp"
 #include "Reconstruction.hpp"
+#include "Integrate/Riemann/Upwind.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
@@ -153,7 +154,7 @@ class Transport {
               const std::vector< std::size_t >& inpoel,
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
-                      tk::UnsMesh::Eq<2> >& esued,
+                      tk::UnsMesh::Eq<2> >& /* esued */,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
               const std::vector< std::size_t >& triinpoel,
@@ -164,7 +165,7 @@ class Transport {
                       std::array< tk::real, 3 >,
                       tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& norm,
               const std::vector< tk::real >& vol,
-              const std::unordered_map<std::size_t,std::array<tk::real,4>>& /* bnorm */,
+              const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm,
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
@@ -243,24 +244,9 @@ class Transport {
           auto v =
             Problem::prescribedVelocity( m_system, m_ncomp, x[p], y[p], z[p] );
           // compute domain integral
-          for (auto e : tk::cref_find(esued,{p,q})) {
-            const auto [ N, grad, u, J ] = egrad( e, coord, inpoel, U );
-            auto J48 = J/48.0;
-            for (const auto& [a,b] : tk::lpoed) {
-              auto s = tk::orient( {N[a],N[b]}, {p,q} );
-              for (std::size_t j=0; j<3; ++j) {
-                for (std::size_t c=0; c<m_ncomp; ++c) {
-                  R.var(r[c],p) -= J48 * s * (grad[a][j] - grad[b][j])
-                                 * v[c][j]*(ru[0][c] + ru[1][c])
-                    - J48 * std::abs(s * (grad[a][j] - grad[b][j]))
-                          * std::abs(tk::dot(v[c],n))
-                          * (ru[1][c] - ru[0][c]);
-
-                }
-                //V(p,j,0) -= 2.0*J48 * s * (grad[a][j] - grad[b][j]);
-              }
-            }
-          }
+          auto f = Upwind::flux( n, ru, v );
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            R.var(r[c],p) -= f[c];
         }
       }
 
@@ -278,6 +264,8 @@ class Transport {
         // access node IDs
         const std::array< std::size_t, 3 >
           N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+        // if symetry, zero flux
+        if ( bnorm.find(N[0]) != bnorm.end() ) continue;
         // node coordinates
         std::array< tk::real, 3 > xp{ x[N[0]], x[N[1]], x[N[2]] },
                                   yp{ y[N[0]], y[N[1]], y[N[2]] },
@@ -295,13 +283,12 @@ class Transport {
         auto v =
           Problem::prescribedVelocity( m_system, m_ncomp, xp[0], yp[0], zp[0] );
         // sum boundary integral contributions to boundary nodes
-        for (const auto& [a,b] : tk::lpoet) {
-          for (std::size_t j=0; j<3; ++j) {
-            for (std::size_t c=0; c<m_ncomp; ++c) {
-              auto Bab = A24 * n[j] * v[c][j] * (u[c][a] + u[c][b]);
-              R.var(r[c],N[a]) -= Bab + A6 * n[j] * v[c][j] * u[c][a];
-              R.var(r[c],N[b]) -= Bab;
-            }
+        for (std::size_t c=0; c<m_ncomp; ++c) {
+          auto vdotn = tk::dot( v[c], n );
+          for (const auto& [a,b] : tk::lpoet) {
+            auto Bab = A24 * vdotn * (u[c][a] + u[c][b]);
+            R.var(r[c],N[a]) -= Bab + A6 * vdotn * u[c][a];
+            R.var(r[c],N[b]) -= Bab;
             //V(N[a],j,0) -= (2.0*A24 + A6) * n[j];
             //V(N[b],j,0) -= 2.0*A24 * n[j];
           }
