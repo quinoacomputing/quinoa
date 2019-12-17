@@ -114,7 +114,7 @@ class Velocity {
     std::size_t numderived() const {
       if (m_solve == ctr::DepvarType::PRODUCT ||
           m_solve == ctr::DepvarType::FLUCTUATING_MOMENTUM)
-      { // 3 velocity components for each coupled mass fraction
+      { // derived: 3 velocity components for each coupled mass fraction
         return m_mixmassfracbeta_ncomp * 3;
       } else {
         return 0;
@@ -164,12 +164,30 @@ class Velocity {
 
       // Access mean specific volume (if needed)
       using tk::ctr::mean;
+      using tk::ctr::Term;
+      using tk::ctr::Product;
       auto mixncomp = m_mixmassfracbeta_ncomp;
       std::vector< tk::real > R( mixncomp, 0.0 );
-      if (m_solve == DepvarType::FLUCTUATING_MOMENTUM) {
+      std::vector< tk::real > RU( mixncomp*3, 0.0 );
+      auto Uc = static_cast< char >( std::toupper(m_depvar) );
+      if (m_solve == ctr::DepvarType::PRODUCT ||
+          m_solve == DepvarType::FLUCTUATING_MOMENTUM)
+      {
         for (std::size_t c=0; c<mixncomp; ++c) {
-          auto mR = mean( m_mixmassfracbeta_depvar,c + mixncomp );
-          R[c] = lookup( mR, moments );
+          R[c] = lookup(mean(m_mixmassfracbeta_depvar, c+mixncomp), moments);
+          Term Rs( static_cast<char>(std::toupper(m_mixmassfracbeta_depvar)),
+                   mixncomp + c,
+                   tk::ctr::Moment::ORDINARY );
+          std::array< Term, 3 > Us{
+            Term( Uc, m_ncomp+(c*3)+0, tk::ctr::Moment::ORDINARY ),
+            Term( Uc, m_ncomp+(c*3)+1, tk::ctr::Moment::ORDINARY ),
+            Term( Uc, m_ncomp+(c*3)+2, tk::ctr::Moment::ORDINARY ) };
+          std::array< Product, 3 > RsUs{ Product( { Us[0], Rs } ),
+                                         Product( { Us[1], Rs } ),
+                                         Product( { Us[2], Rs } ) };
+          RU[ c*3+0 ] = lookup( RsUs[0], moments );
+          RU[ c*3+1 ] = lookup( RsUs[1], moments );
+          RU[ c*3+2 ] = lookup( RsUs[2], moments );
         }
       }
 
@@ -189,24 +207,26 @@ class Velocity {
         tk::real u = Up - U[0];
         tk::real v = Vp - U[1];
         tk::real w = Wp - U[2];
-        // Update particle velocity
+        // Update particle velocity based on Langevin model
         Up += (m_G[0]*u + m_G[1]*v + m_G[2]*w)*dt + d*dW[0];
         Vp += (m_G[3]*u + m_G[4]*v + m_G[5]*w)*dt + d*dW[1];
         Wp += (m_G[6]*u + m_G[7]*v + m_G[8]*w)*dt + d*dW[2];
-        // Optionally compute particle velocities derived from particle momentum
+        // Add gravity
         if (m_solve == ctr::DepvarType::PRODUCT ||
             m_solve == ctr::DepvarType::FLUCTUATING_MOMENTUM)
         {
-          for (ncomp_t i=0; i<m_numderived/3; ++i) {
+          for (ncomp_t i=0; i<mixncomp; ++i) {
             auto rhoi = particles( p, m_mixmassfracbeta_ncomp+i,
                                   m_mixmassfracbeta_offset );
             if (std::abs(rhoi) > epsilon) {
-              particles( p, m_ncomp+(i*3)+0, m_offset ) = Up/rhoi;
-              particles( p, m_ncomp+(i*3)+1, m_offset ) = Vp/rhoi;
-              particles( p, m_ncomp+(i*3)+2, m_offset ) = Wp/rhoi;
+              // add gravity force to particle momentum
               Up += (rhoi - R[i]) * m_gravity[0] * dt;
               Vp += (rhoi - R[i]) * m_gravity[1] * dt;
               Wp += (rhoi - R[i]) * m_gravity[2] * dt;
+              // compute derived particle velocity
+              particles( p, m_ncomp+(i*3)+0, m_offset ) = (Up + RU[0])/rhoi;
+              particles( p, m_ncomp+(i*3)+1, m_offset ) = (Vp + RU[1])/rhoi;
+              particles( p, m_ncomp+(i*3)+2, m_offset ) = (Wp + RU[2])/rhoi;
             }
           }
         } else {
