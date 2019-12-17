@@ -34,12 +34,15 @@ module refiner {
                      const std::vector< std::size_t >& triinpoel,
                      const std::map< int, std::vector< std::size_t > >& bnode,
                      int nchare );
-      initnode void registerReducers();
       entry void start();
       entry void reorder();
       entry void correctref();
       entry void next();
-      entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
+      entry void query( int fromch, const tk::UnsMesh::EdgeSet& edges );
+      entry void recvquery();
+      entry void response();
+      entry void bnd( int fromch, const std::vector< int >& chares );
+      entry void recvbnd();
       entry void addRefBndEdges(
         int fromch,
         const AMR::EdgeData& en,

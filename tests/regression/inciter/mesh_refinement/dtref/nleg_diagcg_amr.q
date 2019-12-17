@@ -29,6 +29,7 @@ inciter
     r0 2.0
     ce -1.0
     kappa 0.8
+    sysfct false
 
     material
       gamma 1.66666666666667 end # =5/3 ratio of specific heats

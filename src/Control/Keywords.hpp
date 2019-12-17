@@ -4570,6 +4570,28 @@ struct ctau_info {
 };
 using ctau = keyword< ctau_info, TAOCPP_PEGTL_STRING("ctau") >;
 
+struct fcteps_info {
+  static std::string name() { return "Small number for FCT"; }
+  static std::string shortDescription() { return
+    R"(A number that is considered small enough for FCT)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the epsilon (a small number) below which FCT
+    quantities are considered small enough to be treated as zero. Setting this
+    number to be somewhat larger than the machine zero, e.g., 1.0e-15, helps
+    ignoring some noise that otherwise could contaminate the solution.)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
+    static std::string description() { return "real"; }
+    static std::string choices() {
+      return "real between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "]";
+    }
+  };
+};
+using fcteps = keyword< fcteps_info, TAOCPP_PEGTL_STRING("fcteps") >;
+
 struct cweight_info {
   static std::string name() { return "cweight"; }
   static std::string shortDescription() { return
@@ -4614,9 +4636,12 @@ struct bc_dirichlet_info {
     "Start configuration block describing Dirichlet boundary conditions"; }
   static std::string longDescription() { return
     R"(This keyword is used to introduce an bc_dirichlet ... end block, used to
-    specify the configuration for setting Dirichlet boundary conditions for a
-    partial differential equation. Keywords allowed in a bc_dirichlet ... end
-    block: )" + std::string("\'")
+    specify the configuration for setting Dirichlet boundary conditions (BC) for
+    a partial differential equation. This keyword is used to list multiple side
+    sets on which a prescribed Dirichlet BC is then applied. Such prescribed BCs
+    at each point in space and time are evaluated using a built-in function,
+    e.g., using the method of manufactured solutions.
+    Keywords allowed in a bc_dirichlet ... end block: )" + std::string("\'")
     + sideset::string() + "\'. "
     + R"(For an example bc_dirichlet ... end block, see
       doc/html/inicter_example_shear.html.)";
@@ -5826,6 +5851,66 @@ struct fct_info {
   };
 };
 using fct = keyword< fct_info, TAOCPP_PEGTL_STRING("fct") >;
+
+struct fctclip_info {
+  static std::string name() { return "Clipping Flux-corrected transport"; }
+  static std::string shortDescription() { return
+    "Turn on clipping flux-corrected transport on/off"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to turn on/off the clipping limiter used for
+    flux-corrected transport (FCT). The clipping limiter only looks at the
+    current low order solution to determine the allowed solution minima and
+    maxima, instead of the minimum and maximum of the low order solution and
+    the previous solution.)"; }
+  struct expect {
+    using type = bool;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using fctclip = keyword< fctclip_info, TAOCPP_PEGTL_STRING("fctclip") >;
+
+struct sysfct_info {
+  static std::string name() { return "Flux-corrected transport for systems"; }
+  static std::string shortDescription() { return
+    "Turn on system nature of flux-corrected transport"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to enable a system-nature for flux-corrected
+    transport (FCT). Note that FCT is only used in conjunction with continuous
+    Galerkin finite element discretization, configured by scheme diagcg and it
+    has no effect when the discontinuous Galerkin (DG) scheme is used,
+    configured by 'scheme dg'. Enabling the system-nature for FCT will choose
+    the limiter coefficients for a system of equations, e.g., compressible flow,
+    in way that takes the system-nature of the equations into account. An
+    example is assinging the minimum of the limit coefficient to all variables
+    limited in a computational cell, e.g., density, momentum, and specitic total
+    energy. This yields better, more monotonic, results.)"; }
+  struct expect {
+    using type = bool;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using sysfct = keyword< sysfct_info, TAOCPP_PEGTL_STRING("sysfct") >;
+
+struct sysfctvar_info {
+  static std::string name() { return "Variables considered for system FCT"; }
+  static std::string shortDescription() { return
+    "Specify a list of scalar component indices that considered for system FCT";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a list of integers that are considered
+    for computing the system-nature of flux-corrected transport. Example:
+    'sysfctvar 0 1 2 3 end', which means ignoring the energy (by not listing 4)
+    when computing the coupled limit coefficient for a system of mass, momentum,
+    and energy for single-material compressible flow.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static std::string description() { return "integers"; }
+  };
+};
+using sysfctvar = keyword< sysfctvar_info, TAOCPP_PEGTL_STRING("sysfctvar") >;
 
 ////////// NOT YET FULLY DOCUMENTED //////////
 
