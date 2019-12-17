@@ -674,8 +674,8 @@ ALECG::rhs()
   // Compute own portion of right-hand side for all equations
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T(), d->Coord(), d->Inpoel(), m_esued, m_psup, m_triinpoel,
-            d->Gid(), d->Bid(), d->Lid(), m_dfnorm, d->Vol(), m_bnorm, m_grad, m_u,
-            m_rhs );
+            d->Gid(), d->Bid(), d->Lid(), m_dfnorm, d->Vol(), m_bnorm, m_grad,
+            m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),

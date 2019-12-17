@@ -145,11 +145,13 @@ class CompFlow {
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] esued Elements surrounding edges
     //! \param[in] triinpoel Boundary triangle face connecitivity
-//    //! \param[in] gid Local->global node id map
-//    //! \param[in] bid Local chare-boundary node ids (value) associated to
-//    //!    global node ids (key)
-//    //! \param[in] lid Global->local node ids
-//    //! \param[in] vol Nodal volumes
+    //! \param[in] gid Local->global node id map
+    //! \param[in] bid Local chare-boundary node ids (value) associated to
+    //!    global node ids (key)
+    //! \param[in] lid Global->local node ids
+    //! \param[in] dfnorm Dual-face normals associated to edges
+    //! \param[in] bnorm Face normals in boundary points
+    //! \param[in] vol Nodal volumes
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
@@ -167,9 +169,10 @@ class CompFlow {
               const std::unordered_map< std::size_t, std::size_t >& lid,
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::array< tk::real, 3 >,
-                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& norm,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm,
+              const std::unordered_map< std::size_t,
+                      std::array< tk::real, 4 > >& bnorm,
               const std::vector< tk::real >& vol,
-              const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm,
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
@@ -231,7 +234,7 @@ class CompFlow {
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
         for (auto q : tk::Around(psup,p)) {     // for each edge p-q
           // access and orient dual-face normals for edge p-q
-          auto n = tk::cref_find( norm, {gid[p],gid[q]} );
+          auto n = tk::cref_find( dfnorm, {gid[p],gid[q]} );
           if (gid[p] > gid[q]) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
           // Access primitive variables at edge-end points
           std::array< std::vector< tk::real >, 2 >

@@ -143,7 +143,8 @@ class Transport {
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] lid Global->local node ids
-    //! \param[in] norm Dual-face normals associated to edges
+    //! \param[in] dfnorm Dual-face normals associated to edges
+//    //! \param[in] bnorm Face normals in boundary points
     //! \param[in] vol Nodal volumes
     //! \param[in] G Nodal gradients in chare-boundary nodes
     //! \param[in] U Solution vector at recent time step
@@ -162,9 +163,10 @@ class Transport {
               const std::unordered_map< std::size_t, std::size_t >& lid,
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::array< tk::real, 3 >,
-                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& norm,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm,
+              const std::unordered_map< std::size_t,
+                      std::array< tk::real, 4 > >& bnorm,
               const std::vector< tk::real >& vol,
-              const std::unordered_map<std::size_t,std::array<tk::real,4>>& /* bnorm */,
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
@@ -226,7 +228,7 @@ class Transport {
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
         for (auto q : tk::Around(psup,p)) {     // for each edge p-q
           // access and orient dual-face normals for edge p-q
-          auto n = tk::cref_find( norm, {gid[p],gid[q]} );
+          auto n = tk::cref_find( dfnorm, {gid[p],gid[q]} );
           if (gid[p] > gid[q]) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
           // compute primitive variables at edge-end points (for Transport,
           // these are the same as the conserved variables)
