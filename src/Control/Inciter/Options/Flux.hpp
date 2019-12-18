@@ -25,7 +25,9 @@ namespace ctr {
 enum class FluxType : uint8_t { LaxFriedrichs
                               , HLLC
                               , UPWIND
-                              , AUSM };
+                              , AUSM
+                              , Rusanov
+                              };
 
 //! Pack/Unpack FluxType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, FluxType& e ) { PUP::pup( p, e ); }
@@ -39,6 +41,7 @@ class Flux : public tk::Toggle< FluxType > {
                                   , kw::hllc
                                   , kw::upwind
                                   , kw::ausm
+                                  , kw::rusanov
                                   >;
 
     //! \brief Options constructor
@@ -49,15 +52,19 @@ class Flux : public tk::Toggle< FluxType > {
         //! Group, i.e., options, name
         kw::flux::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { FluxType::LaxFriedrichs, kw::laxfriedrichs::name() },
-          { FluxType::HLLC, kw::hllc::name() },
-          { FluxType::UPWIND, kw::upwind::name() },
-          { FluxType::AUSM, kw::ausm::name() } },
+        { { FluxType::LaxFriedrichs, kw::laxfriedrichs::name() }
+        , { FluxType::HLLC, kw::hllc::name() }
+        , { FluxType::UPWIND, kw::upwind::name() }
+        , { FluxType::AUSM, kw::ausm::name() }
+        , { FluxType::Rusanov, kw::rusanov::name() }
+        },
         //! keywords -> Enums
-        { { kw::laxfriedrichs::string(), FluxType::LaxFriedrichs },
-          { kw::hllc::string(), FluxType::HLLC },
-          { kw::upwind::string(), FluxType::UPWIND },
-          { kw::ausm::string(), FluxType::AUSM } } )
+        { { kw::laxfriedrichs::string(), FluxType::LaxFriedrichs }
+        , { kw::hllc::string(), FluxType::HLLC }
+        , { kw::upwind::string(), FluxType::UPWIND }
+        , { kw::ausm::string(), FluxType::AUSM }
+        , { kw::rusanov::string(), FluxType::Rusanov }
+        } )
     {}
 
 };

@@ -5738,6 +5738,16 @@ struct ausm_info {
 };
 using ausm = keyword< ausm_info, TAOCPP_PEGTL_STRING("ausm") >;
 
+struct rusanov_info {
+  static std::string name() { return "Rusanov"; }
+  static std::string shortDescription() { return
+    "Select the Rusanov flux function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Rusanov flux
+    function used in inciter.)"; }
+};
+using rusanov = keyword< rusanov_info, TAOCPP_PEGTL_STRING("rusanov") >;
+
 struct flux_info {
   static std::string name() { return "Flux function"; }
   static std::string shortDescription() { return
@@ -5752,7 +5762,8 @@ struct flux_info {
       return '\'' + laxfriedrichs::string() + "\' | \'"
                   + hllc::string() + "\' | \'"
                   + upwind::string() + "\' | \'"
-                  + ausm::string() + '\'';
+                  + ausm::string() + "\' | \'"
+                  + rusanov::string() + '\'';
     }
   };
 };

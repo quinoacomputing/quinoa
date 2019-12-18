@@ -40,7 +40,7 @@ struct AUSM {
   static tk::RiemannFluxFn::result_type
   flux( const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
-        const std::vector< std::array< tk::real, 3 > >& )
+        const std::vector< std::array< tk::real, 3 > >& = {} )
   {
     const auto nmat =
       g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
