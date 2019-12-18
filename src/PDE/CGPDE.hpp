@@ -40,6 +40,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 using BidMap = std::unordered_map< std::size_t, std::size_t >;
 using BidMapIt = BidMap::const_iterator;
 
+//! Compute nodal gradients of primitive variables for ALECG on chare boundary
 void
 chbgrad( ncomp_t ncomp,
          ncomp_t offset,
@@ -49,8 +50,23 @@ chbgrad( ncomp_t ncomp,
          const std::vector< std::size_t >& gid,
          const std::unordered_map< std::size_t, std::size_t >& bid,
          const tk::Fields& U,
-         tk::Fields& G,
-         tk::ElemGradFn egrad );
+         tk::ElemGradFn egrad,
+         tk::Fields& G );
+
+//! \brief Compute/assemble nodal gradients of primitive variables for ALECG in
+//!   all points
+tk::Fields
+nodegrad( ncomp_t ncomp,
+          ncomp_t offset,
+          const std::array< std::vector< tk::real >, 3 >& coord,
+          const std::vector< std::size_t >& inpoel,
+          const std::vector< std::size_t >& gid,
+          const std::unordered_map< std::size_t, std::size_t >& lid,
+          const std::unordered_map< std::size_t, std::size_t >& bid,
+          const std::vector< tk::real >& vol,
+          const tk::Fields& U,
+          const tk::Fields& G,
+          tk::ElemGradFn egrad );
 
 } // cg::
 

@@ -118,7 +118,7 @@ class CompFlow {
                const tk::Fields& U,
                tk::Fields& G ) const
     {
-      chbgrad( m_ncomp, m_offset, coord, inpoel, bndel, gid, bid, U, G, egrad );
+      chbgrad( m_ncomp, m_offset, coord, inpoel, bndel, gid, bid, U, egrad, G );
     }
 
     //! Compute right hand side for ALECG
@@ -167,40 +167,13 @@ class CompFlow {
       std::array< const tk::real*, 5 > r;
       for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
       
-      // allocate storage for nodal gradients of primitive variables
-      tk::Fields Grad( U.nunk(), m_ncomp*3 );
-      Grad.fill( 0.0 );
-
-      // copy in nodal gradients of chare-boundary points
-      for (const auto& [g,b] : bid) {
-        auto i = tk::cref_find( lid, g );
-        for (ncomp_t c=0; c<Grad.nprop(); ++c)
-          Grad(i,c,0) = G(b,c,0);
-      }
-      
       //// for verification only, will go away once correct
       //tk::Fields V( U.nunk(), 3 );
       //V.fill( 0.0 );
 
-      // compute gradients of primitive variables in internal points
-      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-        const auto [ N, grad, u, J ] =
-          egrad( m_ncomp, m_offset, e, coord, inpoel, U );
-        auto J24 = J/24.0;
-        for (std::size_t a=0; a<4; ++a) {
-          auto i = bid.find( gid[N[a]] );
-          if (i == end(bid))    // only contribute to internal nodes
-            for (std::size_t b=0; b<4; ++b)
-              for (std::size_t j=0; j<3; ++j)
-                for (std::size_t c=0; c<m_ncomp; ++c)
-                  Grad(N[a],c*3+j,0) += J24 * grad[b][j] * u[c][b];
-        }
-      }
-
-      // divide weak result in gradients by nodal volume
-      for (std::size_t p=0; p<Grad.nunk(); ++p)
-        for (std::size_t c=0; c<Grad.nprop(); ++c)
-           Grad(p,c,0) /= vol[p];
+      // compute/assemble gradients in points
+      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, gid, lid, bid,
+                            vol, U, G, egrad );
 
       // compute derived data structures
       auto esup = tk::genEsup( inpoel, 4 );
