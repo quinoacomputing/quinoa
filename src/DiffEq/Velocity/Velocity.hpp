@@ -215,18 +215,18 @@ class Velocity {
         if (m_solve == ctr::DepvarType::PRODUCT ||
             m_solve == ctr::DepvarType::FLUCTUATING_MOMENTUM)
         {
-          for (ncomp_t i=0; i<mixncomp; ++i) {
-            auto rhoi = particles( p, m_mixmassfracbeta_ncomp+i,
+          for (ncomp_t c=0; c<mixncomp; ++c) {
+            auto rhoi = particles( p, m_mixmassfracbeta_ncomp+c,
                                   m_mixmassfracbeta_offset );
             if (std::abs(rhoi) > epsilon) {
               // add gravity force to particle momentum
-              Up += (rhoi - R[i]) * m_gravity[0] * dt;
-              Vp += (rhoi - R[i]) * m_gravity[1] * dt;
-              Wp += (rhoi - R[i]) * m_gravity[2] * dt;
+              Up += (rhoi - R[c]) * m_gravity[0] * dt;
+              Vp += (rhoi - R[c]) * m_gravity[1] * dt;
+              Wp += (rhoi - R[c]) * m_gravity[2] * dt;
               // compute derived particle velocity
-              particles( p, m_ncomp+(i*3)+0, m_offset ) = (Up + RU[0])/rhoi;
-              particles( p, m_ncomp+(i*3)+1, m_offset ) = (Vp + RU[1])/rhoi;
-              particles( p, m_ncomp+(i*3)+2, m_offset ) = (Wp + RU[2])/rhoi;
+              particles( p, m_ncomp+(c*3)+0, m_offset ) = (Up + RU[c*3+0])/rhoi;
+              particles( p, m_ncomp+(c*3)+1, m_offset ) = (Vp + RU[c*3+1])/rhoi;
+              particles( p, m_ncomp+(c*3)+2, m_offset ) = (Wp + RU[c*3+2])/rhoi;
             }
           }
         } else {
