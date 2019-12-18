@@ -104,6 +104,10 @@ TransportProblemGaussHump::side( std::unordered_set< int >& conf ) const
   for (const auto& s : g_inputdeck.get< param, eq, tag::bcdir >())
     for (const auto& i : s)
       conf.insert( std::stoi(i) );
+
+  for (const auto& s : g_inputdeck.get< param, eq, tag::bcsym >())
+    for (const auto& i : s)
+      conf.insert( std::stoi(i) );
 }
 
 std::vector< std::array< tk::real, 3 > >

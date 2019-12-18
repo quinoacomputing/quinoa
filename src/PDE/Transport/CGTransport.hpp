@@ -136,7 +136,7 @@ class Transport {
               const std::unordered_map< std::size_t, std::size_t >& bid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
               const std::unordered_map< std::size_t,
-                      std::array< tk::real, 4 > >& /* bnorm */,
+                      std::array< tk::real, 4 > >& bnorm,
               const std::vector< tk::real >& vol,
               const tk::Fields& G,
               const tk::Fields& U,
@@ -224,7 +224,9 @@ class Transport {
         for (std::size_t c=0; c<m_ncomp; ++c) {
           auto vdotn = tk::dot( v[c], n );
           for (const auto& [a,b] : tk::lpoet) {
-            auto Bab = A24 * vdotn * (u[c][a] + u[c][b]);
+            tk::real syma = bnorm.find(N[a]) != end(bnorm) ? 0.0 : 1.0;
+            tk::real symb = bnorm.find(N[b]) != end(bnorm) ? 0.0 : 1.0;
+            auto Bab = A24 * vdotn * (u[c][a]*syma + u[c][b]*symb);
             R.var(r[c],N[a]) -= Bab + A6 * vdotn * u[c][a];
             R.var(r[c],N[b]) -= Bab;
           }
@@ -483,10 +485,30 @@ class Transport {
     const {}
 
     //! Query nodes at which symmetry boundary conditions are set
+    //! \param[in] bface Boundary-faces mapped to side set ids
+    //! \param[in] triinpoel Boundary-face connectivity
+    //! \param[in,out] nodes Node ids at which symmetry BCs are set
     void
-    symbcnodes( const std::map< int, std::vector< std::size_t > >&,
-                const std::vector< std::size_t >&,
-                std::unordered_set< std::size_t >& ) const {}
+    symbcnodes( const std::map< int, std::vector< std::size_t > >& bface,
+                const std::vector< std::size_t >& triinpoel,
+                std::unordered_set< std::size_t >& nodes ) const
+    {
+      using tag::param; using tag::transport; using tag::bcsym;
+      const auto& bc = g_inputdeck.get< param, transport, bcsym >();
+      if (!bc.empty() && bc.size() > m_system) {
+        const auto& ss = bc[ m_system ];// side sets with sym bcs specified
+        for (const auto& s : ss) {
+          auto k = bface.find( std::stoi(s) );
+          if (k != end(bface)) {
+            for (auto f : k->second) {  // face ids on symbc side set
+              nodes.insert( triinpoel[f*3+0] );
+              nodes.insert( triinpoel[f*3+1] );
+              nodes.insert( triinpoel[f*3+2] );
+            }
+          }
+        }
+      }
+    }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
