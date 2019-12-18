@@ -146,6 +146,18 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   const auto& p0 = g_inputdeck.get< tag::param, eq, tag::p0 >();
   if (!p0.empty()) nfo.emplace_back( "coeff p0", parameters( p0 ) );
 
+  const auto& densityic = g_inputdeck.get< tag::param, eq, tag::densityic >();
+  if (densityic.size() > c)
+    nfo.emplace_back( "density IC", std::to_string(densityic[c]) );
+
+  const auto& velocityic = g_inputdeck.get< tag::param, eq, tag::velocityic >();
+  if (velocityic.size() > c)
+    nfo.emplace_back( "velocity IC", parameters(velocityic[c]) );
+
+  const auto& pressureic = g_inputdeck.get< tag::param, eq, tag::pressureic >();
+  if (pressureic.size() > c)
+    nfo.emplace_back( "pressure IC", std::to_string(pressureic[c]) );
+
   auto bool_to_string = [](bool b) -> std::string {
     return b ? "true" : "false";
   };

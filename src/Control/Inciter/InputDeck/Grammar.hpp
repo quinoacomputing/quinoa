@@ -250,17 +250,6 @@ namespace grm {
       for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
         if (s.empty())
           Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
-
-      // if outlet BC is configured for this compflow system
-      auto& bcsubsonicoutlet =
-          stack.template get< tag::param, eq, tag::bcsubsonicoutlet >();
-      if (!bcsubsonicoutlet.empty() ||
-          bcsubsonicoutlet.size() != neq.get< eq >())
-      {
-        auto& fp =
-          stack.template get< tag::param, eq, tag::farfield_pressure >();
-        if (fp.size() != bcsubsonicoutlet.size()) fp.push_back( 1.0 );
-      }
     }
   };
 
@@ -711,14 +700,8 @@ namespace deck {
                use< kw::end >,
                parameter< eq, kw::pressureic, tag::pressureic >,
                parameter< eq, kw::densityic, tag::densityic >,
-               pde_parameter_vector< kw::velocityic, eq, tag::velocityic >,
-               tk::grm::parameter_vector< use,
-                                          use< keyword >,
-                                          tk::grm::Store_back_back,
-                                          tk::grm::start_vector,
-                                          tk::grm::check_vector,
-                                          eq,
-                                          param > > > {};
+               pde_parameter_vector< kw::velocityic, eq, tag::velocityic >
+             > > {};
 
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
