@@ -124,7 +124,6 @@ class Transport {
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] lid Global->local node ids
-    //! \param[in] bnorm Face normals in boundary points
     //! \param[in] vol Nodal volumes
     //! \param[in] G Nodal gradients in chare-boundary nodes
     //! \param[in] U Solution vector at recent time step
@@ -137,7 +136,7 @@ class Transport {
               const std::unordered_map< std::size_t, std::size_t >& bid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
               const std::unordered_map< std::size_t,
-                      std::array< tk::real, 4 > >& bnorm,
+                      std::array< tk::real, 4 > >& /* bnorm */,
               const std::vector< tk::real >& vol,
               const tk::Fields& G,
               const tk::Fields& U,
@@ -165,10 +164,6 @@ class Transport {
       // compute/assemble gradients in points
       auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, gid, lid, bid,
                             vol, U, G, egrad );
-
-      //// for verification only, will go away once correct
-      //tk::Fields V( U.nunk(), 3 );
-      //V.fill( 0.0 );
 
       // compute derived data structures
       auto esup = tk::genEsup( inpoel, 4 );
@@ -204,22 +199,11 @@ class Transport {
         }
       }
 
-      //// test 2*sum_{vw in v} D_i^{vw} = 0 for interior points (this only makes
-      //// sense in serial)
-      //std::unordered_set< std::size_t > bp(begin(triinpoel), end(triinpoel));
-      //for (std::size_t p=0; p<coord[0].size(); ++p)
-      //  if (bp.find(p) == end(bp))
-      //    for (std::size_t j=0; j<3; ++j)
-      //      if (std::abs(V(p,j,0)) > 1.0e-15)
-      //        std::cout << 'd';
-
       // boundary integrals
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
         // access node IDs
         const std::array< std::size_t, 3 >
           N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
-        // if symmetry, zero flux
-        if ( bnorm.find(N[0]) != bnorm.end() ) continue;
         // node coordinates
         std::array< tk::real, 3 > xp{ x[N[0]], x[N[1]], x[N[2]] },
                                   yp{ y[N[0]], y[N[1]], y[N[2]] },
@@ -243,19 +227,9 @@ class Transport {
             auto Bab = A24 * vdotn * (u[c][a] + u[c][b]);
             R.var(r[c],N[a]) -= Bab + A6 * vdotn * u[c][a];
             R.var(r[c],N[b]) -= Bab;
-            //V(N[a],j,0) -= (2.0*A24 + A6) * n[j];
-            //V(N[b],j,0) -= 2.0*A24 * n[j];
           }
         }
       }
-
-      //// test 2*sum_{vw in v} D_i^{vw} + 2*sum_{vw in v} B_i^{vw} + B_i^v = 0
-      //// for boundary points (this only makes sense in serial)
-      //for (std::size_t p=0; p<coord[0].size(); ++p)
-      //  if (bp.find(p) != end(bp))
-      //    for (std::size_t j=0; j<3; ++j)
-      //      if (std::abs(V(p,j,0)) > 1.0e-15)
-      //        std::cout << 'b';
     }
 
     //! Compute right hand side for DiagCG (CG-FCT)

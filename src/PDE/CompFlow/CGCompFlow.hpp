@@ -167,10 +167,6 @@ class CompFlow {
       std::array< const tk::real*, 5 > r;
       for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
       
-      //// for verification only, will go away once correct
-      //tk::Fields V( U.nunk(), 3 );
-      //V.fill( 0.0 );
-
       // compute/assemble gradients in points
       auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, gid, lid, bid,
                             vol, U, G, egrad );
@@ -191,7 +187,6 @@ class CompFlow {
           // Access primitive variables at edge-end points
           std::array< std::vector< tk::real >, 2 >
             ru{ std::vector<tk::real>(5,0.0), std::vector<tk::real>(5,0.0) };
-
 
 #if 0
           // First order
@@ -284,22 +279,8 @@ class CompFlow {
             R.var(r[c],N[a]) -= Bab + A6 * f[c][a];
             R.var(r[c],N[b]) -= Bab;
           }
-          //for (std::size_t j=0; j<3; ++j ) {
-          //  V(N[a],j,0) -= 2.0 * A24 * n[j];
-          //  V(N[b],j,0) -= 2.0 * A24 * n[j];
-          //  V(N[a],j,0) -= A6 * n[j];
-          //}
-
         }
       }
-      
-      // test 2*sum_{vw in v} D_i^{vw} + 2*sum_{vw in v} B_i^{vw} + B_i^v = 0
-      // for boundary points (this only makes sense in serial)
-      // for (std::size_t p=0; p<coord[0].size(); ++p)
-      //     for (std::size_t j=0; j<3; ++j)
-      //       if (std::abs(V(p,j,0)) > 1.0e-15)
-      //         std::cout << 'b' << std::endl;
-
     }
 
     static void flux(
