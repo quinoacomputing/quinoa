@@ -4932,6 +4932,36 @@ struct velocityic_info {
 };
 using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
 
+struct densityic_info {
+  static std::string name() { return "velocity"; }
+  static std::string shortDescription() { return
+    "Specify density initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the density field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using densityic = keyword< densityic_info, TAOCPP_PEGTL_STRING("density") >;
+
+struct pressureic_info {
+  static std::string name() { return "pressure"; }
+  static std::string shortDescription() { return
+    "Specify pressure initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the pressure field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pressureic = keyword< pressureic_info, TAOCPP_PEGTL_STRING("pressure") >;
+
 struct compflow_info {
   static std::string name() { return "Compressible single-material flow"; }
   static std::string shortDescription() { return

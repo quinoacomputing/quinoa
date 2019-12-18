@@ -168,6 +168,10 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::bccharacteristic,
                         std::vector< std::vector<
                           kw::sideset::info::expect::type > >
+  , tag::densityic,    std::vector< kw::densityic::info::expect::type >
+  , tag::velocityic,   std::vector< std::vector<
+                          kw::velocityic::info::expect::type > >
+  , tag::pressureic,   std::vector< kw::pressureic::info::expect::type >
   , tag::farfield_pressure,
                         std::vector< kw::farfield_pressure::info::expect::type >
   , tag::farfield_density,

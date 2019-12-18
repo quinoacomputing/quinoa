@@ -255,6 +255,10 @@ struct pe {};
 struct it {};
 struct fn {};
 struct time {};
+struct ic {};
+struct velocityic {};
+struct densityic {};
+struct pressureic {};
 
 struct BirthdaySpacings {};
 struct Collision {};
