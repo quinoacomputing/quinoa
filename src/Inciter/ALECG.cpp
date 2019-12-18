@@ -252,6 +252,13 @@ ALECG::normfinal()
             std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
   }
 
+  // Replace global->local ids associated to boundary normals of symbc nodes
+  decltype(m_bnorm) bnorm;
+  for (auto&& [g,n] : m_bnorm) {
+    bnorm[ tk::cref_find( Disc()->Lid(), g ) ] = std::move(n);
+  }
+  m_bnorm = std::move(bnorm);
+
   // Signal the runtime system that the workers have been created
   contribute( sizeof(int), &m_initial, CkReduction::sum_int,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
@@ -296,7 +303,7 @@ ALECG::setup()
   for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
 
   // Apply symmetry boundary conditions on initial conditions
-  //for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
+  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields( CkCallback(CkIndex_ALECG::init(), thisProxy[thisIndex]) );
@@ -636,9 +643,6 @@ ALECG::solve()
 
   // Solve sytem
   m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
-
-  // Apply symmetry BCs
-  //for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
 
   //! [Continue after solve]
   if (m_stage < 2) {

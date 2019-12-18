@@ -246,7 +246,7 @@ class ALECG : public CBase_ALECG {
     //! Diagnostics object
     NodeDiagnostics m_diag;
     //! Face normals in boundary points
-    //! \details Key: global node id, value: unit normal and inverse distance
+    //! \details Key: local node id, value: unit normal and inverse distance
     //!   square between face centroids and points
     std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnorm;
     //! Receive buffer for communication of the boundary point normals
