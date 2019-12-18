@@ -68,6 +68,18 @@ nodegrad( ncomp_t ncomp,
           const tk::Fields& G,
           tk::ElemGradFn egrad );
 
+//! Compute dual-face normals
+std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
+                    tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >
+dfnorm( const std::array< std::vector< tk::real >, 3 >& coord,
+        const std::vector< std::size_t >& inpoel,
+        const std::vector< std::size_t >& gid,
+        const std::pair< std::vector< std::size_t >,
+                         std::vector< std::size_t > >& esup,
+        const std::pair< std::vector< std::size_t >,
+                         std::vector< std::size_t > >& psup,
+        const tk::Fields& U );
+
 } // cg::
 
 //! \brief Partial differential equation base for continuous Galerkin PDEs
