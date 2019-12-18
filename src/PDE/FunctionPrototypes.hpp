@@ -77,6 +77,19 @@ using StateFn = std::function<
 using SrcFn = std::function<
   std::vector< tk::real >( ncomp_t, ncomp_t, real, real, real, real ) >;
 
+//! \brief Function prototype for computing the element gradient contribution to a
+//!    nodal gradient in ALECG
+using ElemGradFn = std::function<
+  std::tuple< std::array< std::size_t, 4 >,
+              std::array< std::array< tk::real, 3 >, 4 >,
+              std::vector< std::array< tk::real, 4 > >,
+              tk::real >( ncomp_t,
+                          ncomp_t,
+                          std::size_t,
+                          const std::array< std::vector< tk::real >, 3 >&,
+                          const std::vector< std::size_t >&,
+                          const tk::Fields& ) >;
+
 } // tk::
 
 #endif // FunctionPrototypes_h

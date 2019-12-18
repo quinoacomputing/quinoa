@@ -9,7 +9,8 @@ add_library(PDE
             Reconstruction.cpp
             ConfigureTransport.cpp
             ConfigureCompFlow.cpp
-            ConfigureMultiMat.cpp)
+            ConfigureMultiMat.cpp
+            CGPDE.cpp)
 
 target_include_directories(PDE PUBLIC
                            ${QUINOA_SOURCE_DIR}

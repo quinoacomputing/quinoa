@@ -30,8 +30,29 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
+#include "FunctionPrototypes.hpp"
 
 namespace inciter {
+
+namespace cg {
+
+using ncomp_t = kw::ncomp::info::expect::type;
+using BidMap = std::unordered_map< std::size_t, std::size_t >;
+using BidMapIt = BidMap::const_iterator;
+
+void
+chbgrad( ncomp_t ncomp,
+         ncomp_t offset,
+         const std::array< std::vector< tk::real >, 3 >& coord,
+         const std::vector< std::size_t >& inpoel,
+         const std::vector< std::size_t >& bndel,
+         const std::vector< std::size_t >& gid,
+         const std::unordered_map< std::size_t, std::size_t >& bid,
+         const tk::Fields& U,
+         tk::Fields& G,
+         tk::ElemGradFn egrad );
+
+} // cg::
 
 //! \brief Partial differential equation base for continuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side

@@ -104,10 +104,10 @@ class CompFlow {
     //! Compute nodal gradients of primitive variables for ALECG
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-//    //! \param[in] bndel List of elements contributing to chare-boundary nodes
-//    //! \param[in] gid Local->global node id map
-//    //! \param[in] bid Local chare-boundary node ids (value) associated to
-//    //!    global node ids (key)
+    //! \param[in] bndel List of elements contributing to chare-boundary nodes
+    //! \param[in] gid Local->global node id map
+    //! \param[in] bid Local chare-boundary node ids (value) associated to
+    //!    global node ids (key)
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] G Nodal gradients of primitive variables
     void grad( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -118,26 +118,7 @@ class CompFlow {
                const tk::Fields& U,
                tk::Fields& G ) const
     {
-      Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
-              "vector at recent time step incorrect" );
-      Assert( G.nprop() == m_ncomp*3,
-              "Number of components in gradient vector incorrect" );
-
-      // compute gradients of primitive variables in points
-      G.fill( 0.0 );
-
-      for (auto e : bndel) {  // for elements contributing to chare boundary
-        const auto [ N, grad, u, J ] = egrad( e, coord, inpoel, U );
-        auto J24 = J/24.0;
-        for (std::size_t a=0; a<4; ++a) {
-          auto i = bid.find( gid[N[a]] );
-          if (i != end(bid))    // only contribute to chare-boundary node
-            for (std::size_t b=0; b<4; ++b)
-              for (std::size_t j=0; j<3; ++j)
-                for (std::size_t c=0; c<m_ncomp; ++c)
-                  G(i->second,c*3+j,0) += J24 * grad[b][j] * u[c][b];
-        }
-      }
+      chbgrad( m_ncomp, m_offset, coord, inpoel, bndel, gid, bid, U, G, egrad );
     }
 
     //! Compute right hand side for ALECG
@@ -203,7 +184,8 @@ class CompFlow {
 
       // compute gradients of primitive variables in internal points
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-        const auto [ N, grad, u, J ] = egrad( e, coord, inpoel, U );
+        const auto [ N, grad, u, J ] =
+          egrad( m_ncomp, m_offset, e, coord, inpoel, U );
         auto J24 = J/24.0;
         for (std::size_t a=0; a<4; ++a) {
           auto i = bid.find( gid[N[a]] );
@@ -862,10 +844,14 @@ class CompFlow {
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] U Solution vector at recent time step
     //! \return Tuple of element contribution
-    auto egrad( std::size_t e,
-                const std::array< std::vector< tk::real >, 3 >& coord,
-                const std::vector< std::size_t >& inpoel,
-                const tk::Fields& U ) const
+    //! \note The function signature must follow tk::ElemGradFn
+    static tk::ElemGradFn::result_type
+    egrad( ncomp_t ncomp,
+           ncomp_t offset,
+           std::size_t e,
+           const std::array< std::vector< tk::real >, 3 >& coord,
+           const std::vector< std::size_t >& inpoel,
+           const tk::Fields& U )
     {
       // access node cooordinates
       const auto& x = coord[0];
@@ -889,8 +875,8 @@ class CompFlow {
       for (std::size_t i=0; i<3; ++i)
         grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
       // access solution at element nodes
-      std::vector< std::array< tk::real, 4 > > u( m_ncomp );
-      for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+      std::vector< std::array< tk::real, 4 > > u( ncomp );
+      for (ncomp_t c=0; c<ncomp; ++c) u[c] = U.extract( c, offset, N );
       // divide out density
       for (std::size_t c=1; c<5; ++c)
         for (std::size_t j=0; j<4; ++j )
