@@ -25,15 +25,17 @@ module diagcg {
 
     array [1D] DiagCG {
       entry DiagCG( const CProxy_Discretization& disc,
-                    const std::map< int, std::vector< std::size_t > >& /* bface */,
+                    const std::map< int, std::vector< std::size_t > >& bface,
                     const std::map< int, std::vector< std::size_t > >& bnode,
-                    const std::vector< std::size_t >& /* triinpoel */ );
+                    const std::vector< std::size_t >& triinpoel );
       initnode void registerReducers();
       entry void setup();
       entry void resizeComm();
       entry void init();
       entry void refine();
       entry [reductiontarget] void advance( tk::real newdt );
+      entry void comnorm( const std::unordered_map< std::size_t,
+                                  std::array< tk::real, 4 > >& innorm );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );
       entry void comrhs( const std::vector< std::size_t >& gid,
@@ -48,6 +50,10 @@ module diagcg {
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
+      entry void wait4norm() {
+        when ownnorm_complete(), comnorm_complete() serial "norm" {
+          normfinal(); } }
+
       entry void wait4lhs() {
         when ownlhs_complete(), comlhs_complete() serial "lhs" { lhsmerge(); } }
 
@@ -58,6 +64,8 @@ module diagcg {
       entry void wait4out() {
         when lhs_complete(), resize_complete() serial "out" { out(); } }
 
+      entry void ownnorm_complete();
+      entry void comnorm_complete();
       entry void ownlhs_complete();
       entry void comlhs_complete();
       entry void lhs_complete();

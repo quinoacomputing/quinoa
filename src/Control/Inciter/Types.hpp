@@ -88,8 +88,10 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::t0,     kw::t0::info::expect::type     //!< Starting time
   , tag::dt,     kw::dt::info::expect::type     //!< Size of time step
   , tag::cfl,    kw::cfl::info::expect::type    //!< CFL coefficient
-  , tag::fct,    bool                           //!< FCT on/off
   , tag::reorder,bool                           //!< reordering on/off
+  , tag::fct,    bool                           //!< FCT on/off
+  , tag::fctclip,bool                           //!< FCT clipping limiter on/off
+  , tag::fcteps, kw::fcteps::info::expect::type //!< FCT small number
   , tag::ctau,   kw::ctau::info::expect::type   //!< FCT mass diffisivity
   , tag::scheme, inciter::ctr::SchemeType       //!< Spatial discretization type
   , tag::limiter,inciter::ctr::LimiterType      //!< Limiter type
@@ -180,6 +182,11 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
                               kw::farfield_velocity::info::expect::type > >
   , tag::bcextrapolate, std::vector< std::vector<
                          kw::sideset::info::expect::type > >
+  //! System FCT character
+  , tag::sysfct,        std::vector< int >
+  //! Indices of system-FCT scalar components considered as a system
+  , tag::sysfctvar,     std::vector<
+                          std::vector< kw::sysfctvar::info::expect::type > >
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)

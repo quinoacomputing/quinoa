@@ -76,7 +76,7 @@ class Transporter : public CBase_Transporter {
     explicit Transporter( CkMigrateMessage* m );
 
     //! Reduction target: the mesh has been read from file on all PEs
-    void load( std::size_t nelem, std::size_t npoin );
+    void load( std::size_t nelem );
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
@@ -84,6 +84,12 @@ class Transporter : public CBase_Transporter {
 
     //! Reduction target: all PEs have distrbuted their mesh after partitioning
     void distributed();
+
+    //! Reduction target: all Refiner chares have queried their boundary edges
+    void queriedRef();
+    //! \brief Reduction target: all Refiner mesh refiner chares have setup their
+    //!   boundary edges
+    void respondedRef();
 
     //! Reduction target: all PEs have created the mesh refiners
     void refinserted( int error );
@@ -97,10 +103,6 @@ class Transporter : public CBase_Transporter {
     //! \brief Reduction target: all worker (derived discretization) chares have
     //!   been inserted
     void workinserted();
-
-    //! \brief Reduction target: all mesh refiner chares have setup their
-    //!   boundary edges
-    void edges();
 
     //! \brief Reduction target: all mesh refiner chares have received a round
     //!   of edges, and ran their compatibility algorithm
@@ -206,7 +208,7 @@ class Transporter : public CBase_Transporter {
       p | m_meshwriter;
       p | m_sorter;
       p | m_nelem;
-      p | m_npoin_larger;
+      p | m_npoin;
       p | m_t;
       p | m_it;
       p | m_meshvol;
@@ -233,7 +235,7 @@ class Transporter : public CBase_Transporter {
     tk::CProxy_MeshWriter m_meshwriter;  //!< Mesh writer nodegroup proxy
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number of mesh elements
-    std::size_t m_npoin_larger;          //!< Total number mesh points
+    std::size_t m_npoin;                 //!< Total number mesh points
     tk::real m_t;                        //!< Physical time
     uint64_t m_it;                       //!< Iteration count
     //! Total mesh volume
@@ -291,8 +293,9 @@ class Transporter : public CBase_Transporter {
     //! \tparam Eq Equation type, e.g., CG, DG, used to solve PDEs
     //! \param[in] pde List of PDE system solved
     //! \param[in,out] bnd Node or face lists mapped to side set ids
+    //! \return True if BCs have been set on sidesets found
     template< class Eq >
-    void matchBCs( const std::vector< Eq >& pde,
+    bool matchBCs( const std::vector< Eq >& pde,
                    std::map< int, std::vector< std::size_t > >& bnd )
     {
       // Query side set ids at which BCs assigned for all PDEs
@@ -312,9 +315,7 @@ class Transporter : public CBase_Transporter {
       tk::erase_if( bnd, [&]( auto& item ) {
         return sidesets_as_bc.find( item.first ) == end(sidesets_as_bc);
       });
-      // Warn on no BCs
-      if (bnd.empty())
-        m_print << "\n>>> WARNING: No boundary conditions set\n\n";
+      return !bnd.empty();
     }
 };
 
