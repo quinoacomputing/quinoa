@@ -144,8 +144,7 @@ class Transport {
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] lid Global->local node ids
-    //! \param[in] dfnorm Dual-face normals associated to edges
-//    //! \param[in] bnorm Face normals in boundary points
+    //! \param[in] bnorm Face normals in boundary points
     //! \param[in] vol Nodal volumes
     //! \param[in] G Nodal gradients in chare-boundary nodes
     //! \param[in] U Solution vector at recent time step
@@ -155,16 +154,13 @@ class Transport {
               const std::vector< std::size_t >& inpoel,
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
-                      tk::UnsMesh::Eq<2> >& /* esued */,
+                      tk::UnsMesh::Eq<2> >& esued,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
               const std::vector< std::size_t >& triinpoel,
               const std::vector< std::size_t >& gid,
               const std::unordered_map< std::size_t, std::size_t >& bid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
-              const std::unordered_map< tk::UnsMesh::Edge,
-                      std::array< tk::real, 3 >,
-                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm,
               const std::unordered_map< std::size_t,
                       std::array< tk::real, 4 > >& bnorm,
               const std::vector< tk::real >& vol,
@@ -225,6 +221,45 @@ class Transport {
       //tk::Fields V( U.nunk(), 3 );
       //V.fill( 0.0 );
 
+      // compute dual-face normals
+      std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
+                          tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > dfnorm;
+      for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
+        for (auto q : tk::Around(psup,p)) {     // for each edge p-q
+          if (gid[p] < gid[q]) {
+            // compute normal of dual-mesh associated to edge p-q
+            auto& n = dfnorm[ {gid[p],gid[q]} ];
+            n = { 0.0, 0.0, 0.0 };
+            for (auto e : tk::cref_find(esued,{p,q})) {
+              // access node IDs
+              const std::array< std::size_t, 4 >
+                N{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+              // compute element Jacobi determinant
+              const std::array< tk::real, 3 >
+                ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+                ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+                da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+              const auto J = tk::triple( ba, ca, da );        // J = 6V
+              Assert( J > 0, "Element Jacobian non-positive" );
+              // shape function derivatives, nnode*ndim [4][3]
+              std::array< std::array< tk::real, 3 >, 4 > grad;
+              grad[1] = tk::crossdiv( ca, da, J );
+              grad[2] = tk::crossdiv( da, ba, J );
+              grad[3] = tk::crossdiv( ba, ca, J );
+              for (std::size_t i=0; i<3; ++i)
+                grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+              // sum normal contributions to nodes
+              auto J48 = J/48.0;
+              for (const auto& [a,b] : tk::lpoed) {
+                auto s = tk::orient( {N[a],N[b]}, {p,q} );
+                for (std::size_t j=0; j<3; ++j)
+                  n[j] += J48 * s * (grad[a][j] - grad[b][j]);
+              }
+            }
+          }
+        }
+      }
+
       // domain-edge integral
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
         for (auto q : tk::Around(psup,p)) {     // for each edge p-q
@@ -248,7 +283,7 @@ class Transport {
           // compute domain integral
           auto f = Upwind::flux( n, ru, v );
           for (std::size_t c=0; c<m_ncomp; ++c)
-            R.var(r[c],p) -= f[c];
+            R.var(r[c],p) -= 2.0*f[c];
         }
       }
 
