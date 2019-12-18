@@ -170,8 +170,6 @@ class ALECG : public CBase_ALECG {
       p | m_nnorm;
       p | m_bnode;
       p | m_triinpoel;
-      p | m_esued;
-      p | m_psup;
       p | m_bndel;
       p | m_u;
       p | m_un;
@@ -215,11 +213,6 @@ class ALECG : public CBase_ALECG {
     //! Boundary triangle face connecitivity where BCs are set by user
     //! \details Local node ids
     std::vector< std::size_t > m_triinpoel;
-    //! Elements surrounding edges
-    std::unordered_map< tk::UnsMesh::Edge, std::vector< std::size_t >,
-                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_esued;
-    //! Points surrounding points
-    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Elements along mesh boundary
     std::vector< std::size_t > m_bndel;
     //! Unknown/solution vector at mesh nodes

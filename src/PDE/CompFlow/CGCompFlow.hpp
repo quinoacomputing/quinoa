@@ -143,7 +143,6 @@ class CompFlow {
     //! Compute right hand side for ALECG
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] esued Elements surrounding edges
     //! \param[in] triinpoel Boundary triangle face connecitivity
     //! \param[in] gid Local->global node id map
     //! \param[in] bid Local chare-boundary node ids (value) associated to
@@ -157,11 +156,6 @@ class CompFlow {
     void rhs( tk::real /* t */,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
-              const std::unordered_map< tk::UnsMesh::Edge,
-                      std::vector< std::size_t >, tk::UnsMesh::Hash<2>,
-                      tk::UnsMesh::Eq<2> >& esued,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& psup,
               const std::vector< std::size_t >& triinpoel,
               const std::vector< std::size_t >& gid,
               const std::unordered_map< std::size_t, std::size_t >& bid,
@@ -225,6 +219,11 @@ class CompFlow {
       for (std::size_t p=0; p<Grad.nunk(); ++p)
         for (std::size_t c=0; c<Grad.nprop(); ++c)
            Grad(p,c,0) /= vol[p];
+
+      // compute derived data structures
+      auto esup = tk::genEsup( inpoel, 4 );
+      auto esued = tk::genEsued( inpoel, 4, esup );
+      auto psup = tk::genPsup( inpoel, 4, esup );
 
       // compute dual-face normals
       std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,

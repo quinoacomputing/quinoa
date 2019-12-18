@@ -63,8 +63,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_nnorm( 0 ),
   m_bnode( bnode ),
   m_triinpoel( tk::remap(triinpoel,Disc()->Lid()) ),
-  m_esued(tk::genEsued(Disc()->Inpoel(), 4, tk::genEsup(Disc()->Inpoel(),4))),
-  m_psup(tk::genPsup(Disc()->Inpoel(), 4, tk::genEsup(Disc()->Inpoel(),4))),
   m_bndel( bndel() ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
@@ -555,7 +553,7 @@ ALECG::rhs()
 
   // Compute own portion of right-hand side for all equations
   for (const auto& eq : g_cgpde)
-    eq.rhs( d->T(), d->Coord(), d->Inpoel(), m_esued, m_psup, m_triinpoel,
+    eq.rhs( d->T(), d->Coord(), d->Inpoel(), m_triinpoel,
             d->Gid(), d->Bid(), d->Lid(), d->Vol(), m_bnorm, m_grad,
             m_u, m_rhs );
 
@@ -732,11 +730,6 @@ ALECG::resizePostAMR(
 
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, nodeCommMap );
-
-  // Recompute derived data structures
-  auto esup = tk::genEsup( d->Inpoel(), 4 );
-  m_esued = tk::genEsued( d->Inpoel(), 4, esup );
-  m_psup = tk::genPsup( d->Inpoel(), 4, esup );
 
   // Resize auxiliary solution vectors
   auto npoin = coord[0].size();
