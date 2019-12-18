@@ -232,8 +232,6 @@ ALECG::normfinal()
 //  Finish computing dual-face and boundary point normals
 // *****************************************************************************
 {
-  const auto& lid = Disc()->Lid();
-
   // Combine own and communicated contributions to boundary point normals
   for (auto& [ p, n ] : m_bnormc) {
     auto j = m_bnorm.find(p);
@@ -255,11 +253,6 @@ ALECG::normfinal()
     Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
             std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
   }
-
-  // Replace global->local ids associated to boundary normals of symbc nodes
-  decltype(m_bnorm) bnorm;
-  for (auto&& [g,n] : m_bnorm) bnorm[ tk::cref_find(lid,g) ] = std::move(n);
-  m_bnorm = std::move(bnorm);
 
   // Signal the runtime system that the workers have been created
   contribute( sizeof(int), &m_initial, CkReduction::sum_int,

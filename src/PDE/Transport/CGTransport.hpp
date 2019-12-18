@@ -301,7 +301,7 @@ class Transport {
         // access node IDs
         const std::array< std::size_t, 3 >
           N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
-        // if symetry, zero flux
+        // if symmetry, zero flux
         if ( bnorm.find(N[0]) != bnorm.end() ) continue;
         // node coordinates
         std::array< tk::real, 3 > xp{ x[N[0]], x[N[1]], x[N[2]] },
