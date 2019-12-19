@@ -216,8 +216,7 @@ class Velocity {
             m_solve == ctr::DepvarType::FLUCTUATING_MOMENTUM)
         {
           for (ncomp_t c=0; c<mixncomp; ++c) {
-            auto rhoi = particles( p, m_mixmassfracbeta_ncomp+c,
-                                  m_mixmassfracbeta_offset );
+            auto rhoi = particles( p, mixncomp + c, m_mixmassfracbeta_offset );
             if (std::abs(rhoi) > epsilon) {
               // add gravity force to particle momentum
               Up += (rhoi - R[c]) * m_gravity[0] * dt;
