@@ -579,71 +579,79 @@ DiagCG::writeFields( CkCallback c ) const
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  auto d = Disc();
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
 
-  // Query and collect field names from PDEs integrated
-  std::vector< std::string > nodefieldnames;
-  for (const auto& eq : g_cgpde) {
-    auto n = eq.fieldNames();
-    nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
+    c.send();
+
+  } else {
+
+    auto d = Disc();
+
+    // Query and collect field names from PDEs integrated
+    std::vector< std::string > nodefieldnames;
+    for (const auto& eq : g_cgpde) {
+      auto n = eq.fieldNames();
+      nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
+    }
+
+    // Collect node field solution
+    auto u = m_u;
+    std::vector< std::vector< tk::real > > nodefields;
+    for (const auto& eq : g_cgpde) {
+      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
+      nodefields.insert( end(nodefields), begin(o), end(o) );
+    }
+
+    std::vector< std::string > elemfieldnames;
+    std::vector< std::vector< tk::real > > elemfields;
+
+    // Query refinement data
+    auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+
+    std::tuple< std::vector< std::string >,
+                std::vector< std::vector< tk::real > >,
+                std::vector< std::string >,
+                std::vector< std::vector< tk::real > > > r;
+    if (dtref) r = d->Ref()->refinementFields();
+
+    const auto& refinement_elemfieldnames = std::get< 0 >( r );
+    const auto& refinement_elemfields = std::get< 1 >( r );
+    const auto& refinement_nodefieldnames = std::get< 2 >( r );
+    const auto& refinement_nodefields = std::get< 3 >( r );
+
+    nodefieldnames.insert( end(nodefieldnames),
+      begin(refinement_nodefieldnames), end(refinement_nodefieldnames) );
+    nodefields.insert( end(nodefields),
+      begin(refinement_nodefields), end(refinement_nodefields) );
+
+    elemfieldnames.insert( end(elemfieldnames),
+      begin(refinement_elemfieldnames), end(refinement_elemfieldnames) );
+    elemfields.insert( end(elemfields),
+      begin(refinement_elemfields), end(refinement_elemfields) );
+
+    // Collect FCT field data (for debugging)
+    auto f = d->FCT()->fields();
+
+    const auto& fct_elemfieldnames = std::get< 0 >( f );
+    const auto& fct_elemfields = std::get< 1 >( f );
+    const auto& fct_nodefieldnames = std::get< 2 >( f );
+    const auto& fct_nodefields = std::get< 3 >( f );
+
+    nodefieldnames.insert( end(nodefieldnames),
+      begin(fct_nodefieldnames), end(fct_nodefieldnames) );
+    nodefields.insert( end(nodefields),
+      begin(fct_nodefields), end(fct_nodefields) );
+
+    elemfieldnames.insert( end(elemfieldnames),
+      begin(fct_elemfieldnames), end(fct_elemfieldnames) );
+    elemfields.insert( end(elemfields),
+      begin(fct_elemfields), end(fct_elemfields) );
+
+    // Send mesh and fields data (solution dump) for output to file
+    d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {},
+              elemfieldnames, nodefieldnames, elemfields, nodefields, c );
+
   }
-
-  // Collect node field solution
-  auto u = m_u;
-  std::vector< std::vector< tk::real > > nodefields;
-  for (const auto& eq : g_cgpde) {
-    auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
-    nodefields.insert( end(nodefields), begin(o), end(o) );
-  }
-
-  std::vector< std::string > elemfieldnames;
-  std::vector< std::vector< tk::real > > elemfields;
-
-  // Query refinement data
-  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-
-  std::tuple< std::vector< std::string >,
-              std::vector< std::vector< tk::real > >,
-              std::vector< std::string >,
-              std::vector< std::vector< tk::real > > > r;
-  if (dtref) r = d->Ref()->refinementFields();
-
-  const auto& refinement_elemfieldnames = std::get< 0 >( r );
-  const auto& refinement_elemfields = std::get< 1 >( r );
-  const auto& refinement_nodefieldnames = std::get< 2 >( r );
-  const auto& refinement_nodefields = std::get< 3 >( r );
-
-  nodefieldnames.insert( end(nodefieldnames),
-    begin(refinement_nodefieldnames), end(refinement_nodefieldnames) );
-  nodefields.insert( end(nodefields),
-    begin(refinement_nodefields), end(refinement_nodefields) );
-
-  elemfieldnames.insert( end(elemfieldnames),
-    begin(refinement_elemfieldnames), end(refinement_elemfieldnames) );
-  elemfields.insert( end(elemfields),
-    begin(refinement_elemfields), end(refinement_elemfields) );
-
-  // Collect FCT field data (for debugging)
-  auto f = d->FCT()->fields();
-
-  const auto& fct_elemfieldnames = std::get< 0 >( f );
-  const auto& fct_elemfields = std::get< 1 >( f );
-  const auto& fct_nodefieldnames = std::get< 2 >( f );
-  const auto& fct_nodefields = std::get< 3 >( f );
-
-  nodefieldnames.insert( end(nodefieldnames),
-    begin(fct_nodefieldnames), end(fct_nodefieldnames) );
-  nodefields.insert( end(nodefields),
-    begin(fct_nodefields), end(fct_nodefields) );
-
-  elemfieldnames.insert( end(elemfieldnames),
-    begin(fct_elemfieldnames), end(fct_elemfieldnames) );
-  elemfields.insert( end(elemfields),
-    begin(fct_elemfields), end(fct_elemfields) );
-
-  // Send mesh and fields data (solution dump) for output to file
-  d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {},
-            elemfieldnames, nodefieldnames, elemfields, nodefields, c );
 }
 
 void
