@@ -269,12 +269,8 @@ class CompFlow {
         // access solution at element nodes
         std::vector< std::array< tk::real, 3 > > u( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
-        // compute fluxes
-        std::array< std::array< tk::real, 3 >, 5 > f;
-        if ( bnorm.find(N[0]) == bnorm.end() )
-          flux( n, u, f );
-        else
-          wall_flux( n, u, f );
+        // compute boundary fluxes
+        auto f = bnorm.find(N[0]) != bnorm.end() ? symbflux(n,u) : bflux(n,u);
         // sum boundary integral contributions
         for (const auto& [a,b] : tk::lpoet) {
           for (std::size_t c=0; c<m_ncomp; ++c) {
@@ -316,8 +312,7 @@ class CompFlow {
       auto u = ugp[1] / ugp[0];
       auto v = ugp[2] / ugp[0];
       auto w = ugp[3] / ugp[0];
-      auto p =
-        eos_pressure< tag::compflow >( system, ugp[0], u, v, w, ugp[4] );
+      auto p = eos_pressure< tag::compflow >( system, ugp[0], u, v, w, ugp[4] );
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
@@ -342,11 +337,15 @@ class CompFlow {
       return fl;
     }
 
-    static void flux(
-        const std::array< tk::real, 3 >& fn,
-        const std::vector< std::array< tk::real, 3 > >& u,
-        std::array< std::array< tk::real, 3 >, 5 >& f)
+    //! Compute boundary flux on triangle face
+    //! \param[in] fn Boundary face normal
+    //! \param[in] u Solution for all components in the 3 vertices
+    //! \return Boundary (normal) flux for 5 components in 3 vertices
+    static std::array< std::array< tk::real, 3 >, 5 >
+    bflux( const std::array< tk::real, 3 >& fn,
+           const std::vector< std::array< tk::real, 3 > >& u )
     {
+      std::array< std::array< tk::real, 3 >, 5 > f;
 
       for (std::size_t i=0; i<3; ++i) {
         auto r = u[0][i];
@@ -362,12 +361,18 @@ class CompFlow {
         f[4][i] = (u[4][i] + p) * vn;
       }
 
+      return f;
     }
-    static void wall_flux(
-        const std::array< tk::real, 3 >& fn,
-        const std::vector< std::array< tk::real, 3 > >& u,
-        std::array< std::array< tk::real, 3 >, 5 >& f)
+
+    //! Compute boundary flux on triangle face applying symmetry condition
+    //! \param[in] fn Boundary face normal
+    //! \param[in] u Solution for all components in the 3 vertices
+    //! \return Boundary (normal) flux for 5 components in 3 vertices
+    static std::array< std::array< tk::real, 3 >, 5 >
+    symbflux( const std::array< tk::real, 3 >& fn,
+              const std::vector< std::array< tk::real, 3 > >& u )
     {
+      std::array< std::array< tk::real, 3 >, 5 > f;
 
       for (std::size_t i=0; i<3; ++i) {
         auto r = u[0][i];
@@ -379,6 +384,7 @@ class CompFlow {
         f[4][i] = 0;
       }
 
+      return f;
     }
   
     //! Compute right hand side for DiagCG (CG-FCT)
