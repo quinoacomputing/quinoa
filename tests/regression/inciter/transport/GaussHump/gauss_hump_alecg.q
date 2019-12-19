@@ -29,7 +29,6 @@ inciter
   diagnostics
     interval  1
     format    scientific
-    precision 12
     error l2
   end
 

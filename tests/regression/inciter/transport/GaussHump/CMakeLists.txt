@@ -57,7 +57,7 @@ add_regression_test(gauss_hump_alecg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_alecg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag_alecg.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
 
 add_regression_test(gauss_hump_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 4
