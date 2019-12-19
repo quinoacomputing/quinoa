@@ -24,7 +24,6 @@
 #include "EoS/EoS.hpp"
 #include "Mesh/Around.hpp"
 #include "Reconstruction.hpp"
-#include "Integrate/Riemann/Rusanov.hpp"
 
 namespace inciter {
 
@@ -129,6 +128,7 @@ class CompFlow {
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] lid Global->local node ids
+    //! \param[in] dfnorm Dual-face normals along edges
     //! \param[in] bnorm Face normals in boundary points
     //! \param[in] vol Nodal volumes
     //! \param[in] G Nodal gradients
@@ -141,6 +141,9 @@ class CompFlow {
               const std::vector< std::size_t >& gid,
               const std::unordered_map< std::size_t, std::size_t >& bid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                        std::array< tk::real, 3 >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm,
               const std::unordered_map< std::size_t,
                       std::array< tk::real, 4 > >& bnorm,
               const std::vector< tk::real >& vol,
@@ -174,15 +177,13 @@ class CompFlow {
       // compute derived data structures
       auto esup = tk::genEsup( inpoel, 4 );
       auto psup = tk::genPsup( inpoel, 4, esup );
-
-      // compute dual-face normals
-      auto dfn = dfnorm( coord, inpoel, gid, esup, psup, U );
+      auto esued = tk::genEsued( inpoel, 4, esup );
 
       // domain-edge integral
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
         for (auto q : tk::Around(psup,p)) {     // for each edge p-q
           // access and orient dual-face normals for edge p-q
-          auto n = tk::cref_find( dfn, {gid[p],gid[q]} );
+          auto n = tk::cref_find( dfnorm, {gid[p],gid[q]} );
           if (gid[p] > gid[q]) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
           // Access primitive variables at edge-end points
           std::array< std::vector< tk::real >, 2 >
@@ -223,29 +224,33 @@ class CompFlow {
             ru[1][c] *= ru[1][0];
          }
 #endif
-            
-          // edge vector = outward face normal of the dual mesh face
-          tk::real A = 0;
-          for (std::size_t i=0; i<3; ++i) A += n[i] * n[i];
-          A = std::sqrt(A);
-          auto Ainv = 1 / A;
-          std::array< tk::real, 3 > fn;
-          for (std::size_t i=0; i<3; ++i) fn[i] = Ainv * n[i];
-              
-          // Compute Riemann flux using edge-end point states
-          auto f = Rusanov::flux( fn, ru );
-          for (std::size_t c=0; c<m_ncomp; ++c) R.var(r[c],p) -= 2*A*f[c];
-                
+
+          // compute flux at edge-end point states
+          auto fp = flux( m_system, m_ncomp, ru[0] );
+          auto fq = flux( m_system, m_ncomp, ru[1] );
+          // compute wave speed at edge-end points
+          auto lambda = std::max( swave(n,ru[0]), swave(n,ru[1]) );
+          // sum domain-edge contributions
+          for (auto e : tk::cref_find(esued,{p,q})) {
+            const auto [ N, grad, u, J ] =
+              egrad( m_ncomp, m_offset, e, coord, inpoel, U );
+            auto J48 = J/48.0;
+            for (const auto& [a,b] : tk::lpoed) {
+              auto s = tk::orient( {N[a],N[b]}, {p,q} );
+              for (std::size_t j=0; j<3; ++j) {
+                for (std::size_t c=0; c<m_ncomp; ++c) {
+                  R.var(r[c],p) -= J48 * s * (grad[a][j] - grad[b][j])
+                                   * (fp[c][j] + fq[c][j])
+                    - J48 * std::abs(s * (grad[a][j] - grad[b][j]))
+                          * lambda * (ru[1][c] - ru[0][c]);
+                }
+              }
+            }
+          }
         }
       }
-      
-      //// Optional source
-      //for (std::size_t p=0; p<U.nunk(); ++p) {
-      //  auto s = Problem::src( m_system, m_ncomp, x[p], y[p], z[p], t );
-      //  for (std::size_t c=0; c<5; ++c) R.var(r[c],p) += vol[p] * s[c];
-      //}
 
-      // Boundary integrals
+      // boundary integrals
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
         // access node IDs
         const std::array< std::size_t, 3 >
@@ -270,8 +275,7 @@ class CompFlow {
         else {
           wall_flux(n, u, f);
         }
-
-        // sum boundary integral contributions to boundary nodes
+        // sum boundary integral contributions
         for (const auto& [a,b] : tk::lpoet) {
           for (std::size_t c=0; c<m_ncomp; ++c) {
             auto Bab = A24 * (f[c][a] + f[c][b]);
@@ -280,6 +284,62 @@ class CompFlow {
           }
         }
       }
+    }
+
+    //! Compute wave speed at a point
+    //! \param[in] n Unit dual-face normal
+    //! \param[in] u Conserved variable unknowns at a point
+    //! \return Wave speed
+    static tk::real
+    swave( const std::array< tk::real, 3 >& n,
+           const std::vector< tk::real >& u )
+    {
+      std::array< tk::real, 3 > v{ u[1]/u[0], u[2]/u[0], u[3]/u[0] };
+      auto p = eos_pressure< tag::compflow >( 0, u[0], v[0], v[1], v[2], u[4] );
+      auto c = eos_soundspeed< tag::compflow >( 0, u[0], p );
+      return std::abs(tk::dot(v,n)) + c;
+    }
+
+    //! Evaluate physical flux function for this PDE system
+    //! \param[in] system Equation system index
+    //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] ugp Numerical solution at which to evaluate the flux
+    //! \return Flux vectors for all components in this PDE system
+    //! \note The function signature must follow tk::FluxFn
+    static tk::FluxFn::result_type
+    flux( ncomp_t system,
+          [[maybe_unused]] ncomp_t ncomp,
+          const std::vector< tk::real >& ugp )
+    {
+      Assert( ugp.size() == ncomp, "Size mismatch" );
+
+      auto u = ugp[1] / ugp[0];
+      auto v = ugp[2] / ugp[0];
+      auto w = ugp[3] / ugp[0];
+      auto p =
+        eos_pressure< tag::compflow >( system, ugp[0], u, v, w, ugp[4] );
+
+      std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
+
+      fl[0][0] = ugp[1];
+      fl[1][0] = ugp[1] * u + p;
+      fl[2][0] = ugp[1] * v;
+      fl[3][0] = ugp[1] * w;
+      fl[4][0] = u * (ugp[4] + p);
+
+      fl[0][1] = ugp[2];
+      fl[1][1] = ugp[2] * u;
+      fl[2][1] = ugp[2] * v + p;
+      fl[3][1] = ugp[2] * w;
+      fl[4][1] = v * (ugp[4] + p);
+
+      fl[0][2] = ugp[3];
+      fl[1][2] = ugp[3] * u;
+      fl[2][2] = ugp[3] * v;
+      fl[3][2] = ugp[3] * w + p;
+      fl[4][2] = w * (ugp[4] + p);
+
+      return fl;
     }
 
     static void flux(

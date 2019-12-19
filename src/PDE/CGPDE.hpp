@@ -68,18 +68,6 @@ nodegrad( ncomp_t ncomp,
           const tk::Fields& G,
           tk::ElemGradFn egrad );
 
-//! Compute dual-face normals
-std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
-                    tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >
-dfnorm( const std::array< std::vector< tk::real >, 3 >& coord,
-        const std::vector< std::size_t >& inpoel,
-        const std::vector< std::size_t >& gid,
-        const std::pair< std::vector< std::size_t >,
-                         std::vector< std::size_t > >& esup,
-        const std::pair< std::vector< std::size_t >,
-                         std::vector< std::size_t > >& psup,
-        const tk::Fields& U );
-
 } // cg::
 
 //! \brief Partial differential equation base for continuous Galerkin PDEs
@@ -153,14 +141,17 @@ class CGPDE {
               const std::vector< std::size_t >& gid,
               const std::unordered_map< std::size_t, std::size_t >& bid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
-              const std::vector< tk::real >& vol,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                      std::array< tk::real, 3 >,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm,
               const std::unordered_map< std::size_t,
                       std::array< tk::real, 4 > >& bnorm,
+              const std::vector< tk::real >& vol,
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
     { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid,
-                 bnorm, vol, G, U, R ); }
+                 dfnorm, bnorm, vol, G, U, R ); }
 
     //! Public interface to computing the right-hand side vector for DiagCG
     void rhs( tk::real t,
@@ -259,6 +250,8 @@ class CGPDE {
                         const std::vector< std::size_t >&,
                         const std::unordered_map< std::size_t, std::size_t >&,
                         const std::unordered_map< std::size_t, std::size_t >&,
+              const std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >&,
                         const std::unordered_map< std::size_t,
                                                   std::array< tk::real, 4 > >&,
                         const std::vector< tk::real >&,
@@ -326,13 +319,17 @@ class CGPDE {
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
                 const std::unordered_map< std::size_t, std::size_t >& lid,
-                const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm,
+                const std::unordered_map< tk::UnsMesh::Edge,
+                        std::array< tk::real, 3 >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm,
+                const std::unordered_map< std::size_t,
+                        std::array< tk::real, 4 > >& bnorm,
                 const std::vector< tk::real >& vol,
                 const tk::Fields& G,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
       { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid,
-                  bnorm, vol, G, U, R ); }
+                 dfnorm, bnorm, vol, G, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,

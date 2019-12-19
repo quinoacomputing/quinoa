@@ -25,7 +25,6 @@
 #include "DerivedData.hpp"
 #include "Around.hpp"
 #include "Reconstruction.hpp"
-#include "Integrate/Riemann/Upwind.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "CGPDE.hpp"
 
@@ -124,6 +123,8 @@ class Transport {
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] lid Global->local node ids
+    //! \param[in] dfnorm Dual-face normals along edges
+    //! \param[in] bnorm Face normals in boundary points
     //! \param[in] vol Nodal volumes
     //! \param[in] G Nodal gradients in chare-boundary nodes
     //! \param[in] U Solution vector at recent time step
@@ -135,6 +136,9 @@ class Transport {
               const std::vector< std::size_t >& gid,
               const std::unordered_map< std::size_t, std::size_t >& bid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                        std::array< tk::real, 3 >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm,
               const std::unordered_map< std::size_t,
                       std::array< tk::real, 4 > >& bnorm,
               const std::vector< tk::real >& vol,
@@ -168,15 +172,13 @@ class Transport {
       // compute derived data structures
       auto esup = tk::genEsup( inpoel, 4 );
       auto psup = tk::genPsup( inpoel, 4, esup );
-
-      // compute dual-face normals
-      auto dfn = dfnorm( coord, inpoel, gid, esup, psup, U );
+      auto esued = tk::genEsued( inpoel, 4, esup );
 
       // domain-edge integral
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
         for (auto q : tk::Around(psup,p)) {     // for each edge p-q
           // access and orient dual-face normals for edge p-q
-          auto n = tk::cref_find( dfn, {gid[p],gid[q]} );
+          auto n = tk::cref_find( dfnorm, {gid[p],gid[q]} );
           if (gid[p] > gid[q]) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
           // compute primitive variables at edge-end points (for Transport,
           // these are the same as the conserved variables)
@@ -192,14 +194,28 @@ class Transport {
           // evaluate prescribed velocity
           auto v =
             Problem::prescribedVelocity( m_system, m_ncomp, x[p], y[p], z[p] );
-          // compute domain integral
-          auto f = Upwind::flux( n, ru, v );
-          for (std::size_t c=0; c<m_ncomp; ++c)
-            R.var(r[c],p) -= 2.0*f[c];
+          // sum donain-edge contributions
+          for (auto e : tk::cref_find(esued,{p,q})) {
+            const auto [ N, grad, u, J ] =
+              egrad( m_ncomp, m_offset, e, coord, inpoel, U );
+            auto J48 = J/48.0;
+            for (const auto& [a,b] : tk::lpoed) {
+              auto s = tk::orient( {N[a],N[b]}, {p,q} );
+              for (std::size_t j=0; j<3; ++j) {
+                for (std::size_t c=0; c<m_ncomp; ++c) {
+                  R.var(r[c],p) -= J48 * s * (grad[a][j] - grad[b][j])
+                                   * v[c][j]*(ru[0][c] + ru[1][c])
+                    - J48 * std::abs(s * (grad[a][j] - grad[b][j]))
+                          * std::abs(tk::dot(v[c],n))
+                          * (ru[1][c] - ru[0][c]);
+                }
+              }
+            }
+          }
         }
       }
 
-      // boundary integrals
+      // boundary-edge integrals
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
         // access node IDs
         const std::array< std::size_t, 3 >
@@ -220,14 +236,14 @@ class Transport {
         // evaluate prescribed velocity
         auto v =
           Problem::prescribedVelocity( m_system, m_ncomp, xp[0], yp[0], zp[0] );
-        // sum boundary integral contributions to boundary nodes
+        // sum boundary integral contributions
         for (std::size_t c=0; c<m_ncomp; ++c) {
           auto vdotn = tk::dot( v[c], n );
           for (const auto& [a,b] : tk::lpoet) {
             tk::real syma = bnorm.find(N[a]) != end(bnorm) ? 0.0 : 1.0;
             tk::real symb = bnorm.find(N[b]) != end(bnorm) ? 0.0 : 1.0;
             auto Bab = A24 * vdotn * (u[c][a]*syma + u[c][b]*symb);
-            R.var(r[c],N[a]) -= Bab + A6 * vdotn * u[c][a];
+            R.var(r[c],N[a]) -= Bab + A6 * vdotn * u[c][a]*syma;
             R.var(r[c],N[b]) -= Bab;
           }
         }

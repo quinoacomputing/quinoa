@@ -39,6 +39,10 @@ module alecg {
       entry void init();
       entry void refine();
       entry [reductiontarget] void advance( tk::real newdt );
+      entry void comdfnorm(
+              const std::unordered_map< tk::UnsMesh::Edge,
+              std::array< tk::real, 3 >,
+              tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm );
       entry void comnorm( const std::unordered_map< std::size_t,
                                   std::array< tk::real, 4 > >& innorm );
       entry void comlhs( const std::vector< std::size_t >& gid,
@@ -59,7 +63,8 @@ module alecg {
 
       //! [DAG]
       entry void wait4norm() {
-        when ownnorm_complete(), comnorm_complete() serial "norm" {
+        when ownnorm_complete(), comnorm_complete(),
+             owndfnorm_complete(), comdfnorm_complete() serial "norm" {
           normfinal(); } }
 
       entry void wait4lhs() {
@@ -76,6 +81,8 @@ module alecg {
 
       entry void ownnorm_complete();
       entry void comnorm_complete();
+      entry void owndfnorm_complete();
+      entry void comdfnorm_complete();
       entry void ownlhs_complete();
       entry void comlhs_complete();
       entry void ownrhs_complete();

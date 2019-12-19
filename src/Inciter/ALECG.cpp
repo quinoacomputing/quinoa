@@ -61,9 +61,11 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_ngrad( 0 ),
   m_nrhs( 0 ),
   m_nnorm( 0 ),
+  m_ndfnorm( 0 ),
   m_bnode( bnode ),
   m_triinpoel( tk::remap(triinpoel,Disc()->Lid()) ),
   m_bndel( bndel() ),
+  m_dfnorm(),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
@@ -77,6 +79,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_diag(),
   m_bnorm(),
   m_bnormc(),
+  m_dfnormc(),
   m_stage( 0 )
 // *****************************************************************************
 //  Constructor
@@ -99,6 +102,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 
   // Compute boundary point normals
   bnorm( bface, triinpoel, std::move(symbcnodes) );
+
+  // Compute dual-face normals associated to edges
+  dfnorm();
 }
 
 std::vector< std::size_t >
@@ -125,6 +131,99 @@ ALECG::bndel() const
   tk::unique( e );
 
   return e;
+}
+
+void
+ALECG::dfnorm()
+// *****************************************************************************
+// Compute dual-face normals associated to edges
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto& inpoel = d->Inpoel();
+  const auto& coord = d->Coord();
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+  const auto& gid = d->Gid();
+
+  // compute derived data structures
+  auto esup = tk::genEsup( inpoel, 4 );
+  auto psup = tk::genPsup( inpoel, 4, esup );
+  auto esued = tk::genEsued( inpoel, 4, esup );
+
+  // compute own portion of dual-face normals
+  for (std::size_t p=0; p<m_u.nunk(); ++p) {  // for each point p
+    for (auto q : tk::Around(psup,p)) {       // for each edge p-q
+      if (gid[p] < gid[q]) {
+        // compute normal of dual-mesh associated to edge p-q
+        auto& n = m_dfnorm[ {gid[p],gid[q]} ];
+        n = { 0.0, 0.0, 0.0 };
+        for (auto e : tk::cref_find(esued,{p,q})) {
+          // access node IDs
+          const std::array< std::size_t, 4 >
+            N{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+          // compute element Jacobi determinant
+          const std::array< tk::real, 3 >
+            ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+            ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+            da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+          const auto J = tk::triple( ba, ca, da );        // J = 6V
+          Assert( J > 0, "Element Jacobian non-positive" );
+          // shape function derivatives, nnode*ndim [4][3]
+          std::array< std::array< tk::real, 3 >, 4 > grad;
+          grad[1] = tk::crossdiv( ca, da, J );
+          grad[2] = tk::crossdiv( da, ba, J );
+          grad[3] = tk::crossdiv( ba, ca, J );
+          for (std::size_t i=0; i<3; ++i)
+            grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+          // sum normal contributions to nodes
+          auto J48 = J/48.0;
+          for (const auto& [a,b] : tk::lpoed) {
+            auto s = tk::orient( {N[a],N[b]}, {p,q} );
+            for (std::size_t j=0; j<3; ++j)
+              n[j] += J48 * s * (grad[a][j] - grad[b][j]);
+          }
+        }
+      }
+    }
+  }
+
+  // Send our dual-face normal contributions to neighbor chares
+  if (d->EdgeCommMap().empty())
+    comdfnorm_complete();
+  else
+    for (const auto& [c,edges] : d->EdgeCommMap()) {
+      decltype(m_dfnorm) exp;
+      for (const auto& e : edges) exp[e] = tk::cref_find(m_dfnorm,e);
+      thisProxy[c].comdfnorm( exp );
+    }
+
+  owndfnorm_complete();
+}
+
+void
+ALECG::comdfnorm( const std::unordered_map< tk::UnsMesh::Edge,
+                    std::array< tk::real, 3 >,
+                    tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm )
+// *****************************************************************************
+// Receive contributions to dual-face normals on chare-boundaries
+//! \param[in] dfnorm Incoming partial sums of dual-face normals associated to
+//!   chare-boundary edges
+// *****************************************************************************
+{
+  // Buffer up inccoming contributions to dual-face normals
+  for (const auto& [e,n] : dfnorm) {
+    auto& dfn = m_dfnormc[e];
+    dfn[0] += n[0];
+    dfn[1] += n[1];
+    dfn[2] += n[2];
+  }
+
+  if (++m_ndfnorm == Disc()->EdgeCommMap().size()) {
+    m_ndfnorm = 0;
+    comdfnorm_complete();
+  }
 }
 
 void
@@ -230,6 +329,8 @@ ALECG::normfinal()
 //  Finish computing dual-face and boundary point normals
 // *****************************************************************************
 {
+  const auto& lid = Disc()->Lid();
+
   // Combine own and communicated contributions to boundary point normals
   for (auto& [ p, n ] : m_bnormc) {
     auto j = m_bnorm.find(p);
@@ -254,10 +355,25 @@ ALECG::normfinal()
 
   // Replace global->local ids associated to boundary normals of symbc nodes
   decltype(m_bnorm) bnorm;
-  for (auto&& [g,n] : m_bnorm) {
-    bnorm[ tk::cref_find( Disc()->Lid(), g ) ] = std::move(n);
-  }
+  for (auto&& [g,n] : m_bnorm) bnorm[ tk::cref_find(lid,g) ] = std::move(n);
   m_bnorm = std::move(bnorm);
+
+  // Combine own and communicated contributions to dual-face normals
+  for (const auto& [e,n] : m_dfnormc) {
+    auto& dfn = tk::ref_find( m_dfnorm, e );
+    dfn[0] += n[0];
+    dfn[1] += n[1];
+    dfn[2] += n[2];
+  }
+  tk::destroy( m_dfnormc );
+
+  // Normalize dual-face normals
+  for (auto& [e,n] : m_dfnorm) {
+    Assert( std::abs(tk::dot(n,n)) >
+              std::numeric_limits< tk::real >::epsilon(),
+                "Dual-face normal zero length" );
+    tk::unit(n);
+  }
 
   // Signal the runtime system that the workers have been created
   contribute( sizeof(int), &m_initial, CkReduction::sum_int,
@@ -561,7 +677,7 @@ ALECG::rhs()
   // Compute own portion of right-hand side for all equations
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T(), d->Coord(), d->Inpoel(), m_triinpoel,
-            d->Gid(), d->Bid(), d->Lid(), d->Vol(), m_bnorm, m_grad,
+            d->Gid(), d->Bid(), d->Lid(), m_dfnorm, m_bnorm, d->Vol(), m_grad,
             m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
