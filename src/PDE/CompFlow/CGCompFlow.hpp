@@ -187,7 +187,8 @@ class CompFlow {
           if (gid[p] > gid[q]) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
           // Access primitive variables at edge-end points
           std::array< std::vector< tk::real >, 2 >
-            ru{ std::vector<tk::real>(5,0.0), std::vector<tk::real>(5,0.0) };
+            ru{ std::vector< tk::real >( m_ncomp, 0.0 ),
+                std::vector< tk::real >( m_ncomp, 0.0 ) };
 
 #if 0
           // First order
@@ -225,7 +226,7 @@ class CompFlow {
          }
 #endif
 
-          // compute flux at edge-end point states
+          // evaluate flux at edge-end points
           auto fp = flux( m_system, m_ncomp, ru[0] );
           auto fq = flux( m_system, m_ncomp, ru[1] );
           // compute wave speed at edge-end points
@@ -272,9 +273,8 @@ class CompFlow {
         std::array< std::array< tk::real, 3 >, 5 > f;
         if ( bnorm.find(N[0]) == bnorm.end() )
           flux( n, u, f );
-        else {
-          wall_flux(n, u, f);
-        }
+        else
+          wall_flux( n, u, f );
         // sum boundary integral contributions
         for (const auto& [a,b] : tk::lpoet) {
           for (std::size_t c=0; c<m_ncomp; ++c) {
@@ -349,17 +349,17 @@ class CompFlow {
     {
 
       for (std::size_t i=0; i<3; ++i) {
-        auto dinv = 1 / u[0][i];
-        auto p = eos_pressure< tag::compflow >(
-            0, u[0][i], u[1][i]*dinv, u[2][i]*dinv, u[3][i]*dinv, u[4][i] );
-      
-        tk::real div = 0;
-        for (std::size_t d=0; d<3; ++d) div += fn[d] * u[1+d][i];
-        div *= dinv;
+        auto r = u[0][i];
+        auto p = eos_pressure< tag::compflow >( 0,
+           u[0][i], u[1][i]/r, u[2][i]/r, u[3][i]/r, u[4][i] );
 
-        f[0][i] = u[0][i] * div;
-        for (std::size_t d=0; d<3; ++d) f[1+d][i] = u[1+d][i]*div + p*fn[d];
-        f[4][i] = (u[4][i] + p) * div;
+        tk::real vn = 0;
+        for (std::size_t d=0; d<3; ++d) vn += fn[d] * u[1+d][i];
+        vn /= r;
+
+        f[0][i] = u[0][i] * vn;
+        for (std::size_t d=0; d<3; ++d) f[1+d][i] = u[1+d][i]*vn + p*fn[d];
+        f[4][i] = (u[4][i] + p) * vn;
       }
 
     }
@@ -370,9 +370,9 @@ class CompFlow {
     {
 
       for (std::size_t i=0; i<3; ++i) {
-        auto dinv = 1 / u[0][i];
-        auto p = eos_pressure< tag::compflow >(
-            0, u[0][i], u[1][i]*dinv, u[2][i]*dinv, u[3][i]*dinv, u[4][i] );
+        auto r = u[0][i];
+        auto p = eos_pressure< tag::compflow >( 0,
+           u[0][i], u[1][i]/r, u[2][i]/r, u[3][i]/r, u[4][i] );
       
         f[0][i] = 0;
         for (std::size_t d=0; d<3; ++d) f[1+d][i] = p*fn[d];
