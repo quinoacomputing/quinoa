@@ -220,6 +220,8 @@ class Transport {
         // access node IDs
         const std::array< std::size_t, 3 >
           N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+        // apply symmetry BCs
+        if (bnorm.find(N[0]) != end(bnorm)) continue;
         // node coordinates
         std::array< tk::real, 3 > xp{ x[N[0]], x[N[1]], x[N[2]] },
                                   yp{ y[N[0]], y[N[1]], y[N[2]] },
@@ -240,10 +242,8 @@ class Transport {
         for (std::size_t c=0; c<m_ncomp; ++c) {
           auto vdotn = tk::dot( v[c], n );
           for (const auto& [a,b] : tk::lpoet) {
-            tk::real syma = bnorm.find(N[a]) != end(bnorm) ? 0.0 : 1.0;
-            tk::real symb = bnorm.find(N[b]) != end(bnorm) ? 0.0 : 1.0;
-            auto Bab = A24 * vdotn * (u[c][a]*syma + u[c][b]*symb);
-            R.var(r[c],N[a]) -= Bab + A6 * vdotn * u[c][a]*syma;
+            auto Bab = A24 * vdotn * (u[c][a] + u[c][b]);
+            R.var(r[c],N[a]) -= Bab + A6 * vdotn * u[c][a];
             R.var(r[c],N[b]) -= Bab;
           }
         }
