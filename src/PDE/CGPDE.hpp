@@ -135,6 +135,7 @@ class CGPDE {
 
     //! Public interface to computing the right-hand side vector for ALECG
     void rhs( tk::real t,
+              tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::size_t >& triinpoel,
@@ -150,7 +151,7 @@ class CGPDE {
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
-    { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid,
+    { self->rhs( t, deltat, coord, inpoel, triinpoel, gid, bid, lid,
                  dfnorm, bnorm, vol, G, U, R ); }
 
     //! Public interface to computing the right-hand side vector for DiagCG
@@ -244,14 +245,16 @@ class CGPDE {
                          const tk::Fields&,
                          tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
+                        tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::vector< std::size_t >&,
                         const std::vector< std::size_t >&,
                         const std::unordered_map< std::size_t, std::size_t >&,
                         const std::unordered_map< std::size_t, std::size_t >&,
-              const std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
-                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >&,
+                        const std::unordered_map< tk::UnsMesh::Edge,
+                                std::array< tk::real, 3 >,
+                                tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >&,
                         const std::unordered_map< std::size_t,
                                                   std::array< tk::real, 4 > >&,
                         const std::vector< tk::real >&,
@@ -313,6 +316,7 @@ class CGPDE {
                  tk::Fields& G ) const override
       { data.grad( coord, inpoel, bndel, gid, bid, U, G ); }
       void rhs( tk::real t,
+                tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::vector< std::size_t >& triinpoel,
@@ -328,7 +332,7 @@ class CGPDE {
                 const tk::Fields& G,
                 const tk::Fields& U,
                 tk::Fields& R ) const override
-      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid,
+      { data.rhs( t, deltat, coord, inpoel, triinpoel, gid, bid, lid,
                  dfnorm, bnorm, vol, G, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,

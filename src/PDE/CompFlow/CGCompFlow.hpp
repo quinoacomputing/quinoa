@@ -121,6 +121,8 @@ class CompFlow {
     }
 
     //! Compute right hand side for ALECG
+    //! \param[in] t Physical time
+    //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] triinpoel Boundary triangle face connecitivity
@@ -134,7 +136,8 @@ class CompFlow {
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    void rhs( tk::real /* t */,
+    void rhs( tk::real t,
+              tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::size_t >& triinpoel,
@@ -279,6 +282,32 @@ class CompFlow {
             R.var(r[c],N[b]) -= Bab;
           }
         }
+      }
+
+      // add optional source
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+        // access node IDs
+        const std::array< std::size_t, 4 >
+          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
+        // compute element Jacobi determinant
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+        const auto J = tk::triple( ba, ca, da );        // J = 6V
+        Assert( J > 0, "Element Jacobian non-positive" );
+        auto J24 = J/24.0;
+        // evaluate source in vertices
+        std::array< std::vector< tk::real >, 4 > s{{
+          Problem::src(m_system, m_ncomp, x[N[0]], y[N[0]], z[N[0]], t+deltat),
+          Problem::src(m_system, m_ncomp, x[N[1]], y[N[1]], z[N[1]], t+deltat),
+          Problem::src(m_system, m_ncomp, x[N[2]], y[N[2]], z[N[2]], t+deltat),
+          Problem::src(m_system, m_ncomp, x[N[3]], y[N[3]], z[N[3]], t+deltat)
+        }};
+        // sum source contributions to nodes
+        for (std::size_t c=0; c<5; ++c)
+          for (std::size_t a=0; a<4; ++a)
+            R.var(r[c],N[a]) += J24 * s[a][c];
       }
     }
 
@@ -524,7 +553,7 @@ class CompFlow {
                      ue[4] );
 
         // scatter-add flux contributions to rhs at nodes
-        tk::real d = deltat * J/6.0;
+        tk::real d = deltat*J/6.0;
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t a=0; a<4; ++a) {
             // mass: advection
@@ -652,7 +681,7 @@ class CompFlow {
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
     //!   that instead of the actual boundary condition value, we return the
-    //!   increment between t+dt and t, since that is what the solution requires
+    //!   increment between t+deltat and t, since that is what the solution requires
     //!   as we solve for the soution increments and not the solution itself.
     std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
     dirbc( tk::real t,
