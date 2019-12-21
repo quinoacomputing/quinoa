@@ -134,5 +134,101 @@ nodegrad( ncomp_t ncomp,
   return Grad;
 }
 
+std::array< tk::real, 3 >
+edfnorm( const tk::UnsMesh::Edge& edge,
+         const std::array< std::vector< tk::real >, 3 >&  coord,
+         const std::vector< std::size_t >& inpoel,
+         const std::unordered_map< tk::UnsMesh::Edge,
+                  std::vector< std::size_t >,
+                  tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued )
+// *****************************************************************************
+//  Compute normal of dual-mesh associated to edge
+//! \param[in] edge Edge whose dual-face normal to compute given by local ids
+//! \param[in] coord Mesh node coordinates
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] esued Elements surrounding edges
+//! \return Dual-face normal for edge
+// *****************************************************************************
+{
+  std::array< tk::real, 3 > n{ 0.0, 0.0, 0.0 };
+
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  for (auto e : tk::cref_find(esued,edge)) {
+    // access node IDs
+    const std::array< std::size_t, 4 >
+      N{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+    // compute element Jacobi determinant
+    const std::array< tk::real, 3 >
+      ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+      ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+      da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+    const auto J = tk::triple( ba, ca, da );        // J = 6V
+    Assert( J > 0, "Element Jacobian non-positive" );
+    // shape function derivatives, nnode*ndim [4][3]
+    std::array< std::array< tk::real, 3 >, 4 > grad;
+    grad[1] = tk::crossdiv( ca, da, J );
+    grad[2] = tk::crossdiv( da, ba, J );
+    grad[3] = tk::crossdiv( ba, ca, J );
+    for (std::size_t i=0; i<3; ++i)
+      grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+    // sum normal contributions
+    auto J48 = J/48.0;
+    for (const auto& [a,b] : tk::lpoed) {
+      auto s = tk::orient( {N[a],N[b]}, edge );
+      for (std::size_t j=0; j<3; ++j)
+        n[j] += J48 * s * (grad[a][j] - grad[b][j]);
+    }
+  }
+
+  return n;
+}
+
+std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
+                    tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >
+intdfnorm( const std::vector< std::size_t >& gid,
+           const std::vector< std::size_t >& inpoel,
+           const std::pair< std::vector< std::size_t >,
+                            std::vector< std::size_t > >& psup,
+           const std::unordered_map< tk::UnsMesh::Edge,
+                    std::vector< std::size_t >,
+                    tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued,
+           const std::array< std::vector< tk::real >, 3 >&  coord,
+           const std::unordered_map< tk::UnsMesh::Edge,
+                    std::array< tk::real, 3 >,
+                    tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfn )
+// *****************************************************************************
+// Augment dual-face normals with those of the internal edges
+//! \param[in] gid Local->global node id map
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] psup Points surrounding points
+//! \param[in] esued Elements surrounding edges
+//! \param[in] coord Mesh node coordinates
+//! \param[in] dfn Dual-face normals on the chare boundary only
+//! \return Dual-face normals in all edges
+// *****************************************************************************
+{
+  // copy in chare-boundary dual-face normals
+  auto dfnorm = dfn;
+
+  // Compute dual-face normals for domain edges
+  for (std::size_t p=0; p<gid.size(); ++p)    // for each point p
+    for (auto q : tk::Around(psup,p))         // for each edge p-q
+      if (gid[p] < gid[q] && dfn.find({gid[p],gid[q]}) == end(dfn))
+        dfnorm[{gid[p],gid[q]}] = edfnorm( {p,q}, coord, inpoel, esued );
+
+  // Normalize dual-face normals
+  for (auto& [e,n] : dfnorm) {
+    Assert( std::abs(tk::dot(n,n)) >
+              std::numeric_limits< tk::real >::epsilon(),
+                "Dual-face normal zero length" );
+    tk::unit(n);
+  }
+
+  return dfnorm;
+}
+
 } // cg::
 } // inciter::

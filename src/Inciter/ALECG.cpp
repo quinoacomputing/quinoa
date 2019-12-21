@@ -31,6 +31,7 @@
 #include "Refiner.hpp"
 #include "Reorder.hpp"
 #include "Around.hpp"
+#include "CGPDE.hpp"
 #include "Integrate/Mass.hpp"
 
 #ifdef HAS_ROOT
@@ -142,52 +143,22 @@ ALECG::dfnorm()
   auto d = Disc();
   const auto& inpoel = d->Inpoel();
   const auto& coord = d->Coord();
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
   const auto& gid = d->Gid();
 
   // compute derived data structures
   auto esup = tk::genEsup( inpoel, 4 );
-  auto psup = tk::genPsup( inpoel, 4, esup );
   auto esued = tk::genEsued( inpoel, 4, esup );
 
-  // compute own portion of dual-face normals
-  for (std::size_t p=0; p<m_u.nunk(); ++p) {  // for each point p
-    for (auto q : tk::Around(psup,p)) {       // for each edge p-q
-      if (gid[p] < gid[q]) {
-        // compute normal of dual-mesh associated to edge p-q
-        auto& n = m_dfnorm[ {gid[p],gid[q]} ];
-        n = { 0.0, 0.0, 0.0 };
-        for (auto e : tk::cref_find(esued,{p,q})) {
-          // access node IDs
-          const std::array< std::size_t, 4 >
-            N{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
-          // compute element Jacobi determinant
-          const std::array< tk::real, 3 >
-            ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-            ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-            da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-          const auto J = tk::triple( ba, ca, da );        // J = 6V
-          Assert( J > 0, "Element Jacobian non-positive" );
-          // shape function derivatives, nnode*ndim [4][3]
-          std::array< std::array< tk::real, 3 >, 4 > grad;
-          grad[1] = tk::crossdiv( ca, da, J );
-          grad[2] = tk::crossdiv( da, ba, J );
-          grad[3] = tk::crossdiv( ba, ca, J );
-          for (std::size_t i=0; i<3; ++i)
-            grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-          // sum normal contributions to nodes
-          auto J48 = J/48.0;
-          for (const auto& [a,b] : tk::lpoed) {
-            auto s = tk::orient( {N[a],N[b]}, {p,q} );
-            for (std::size_t j=0; j<3; ++j)
-              n[j] += J48 * s * (grad[a][j] - grad[b][j]);
-          }
-        }
-      }
-    }
-  }
+  // generate unique edges of chare-boundary
+  tk::UnsMesh::EdgeSet chbed;
+  for (const auto& [c,edges] : d->EdgeCommMap())
+    for (const auto& e : edges)
+      chbed.insert( { tk::cref_find( d->Lid(), e[0] ),
+                      tk::cref_find( d->Lid(), e[1] ) } );
+
+  // compute dual-face normals on chare boundary
+  for (const auto& [p,q] : chbed)
+    m_dfnorm[{gid[p],gid[q]}] = cg::edfnorm( {p,q}, coord, inpoel, esued );
 
   // Send our dual-face normal contributions to neighbor chares
   if (d->EdgeCommMap().empty())
@@ -366,14 +337,6 @@ ALECG::normfinal()
     dfn[2] += n[2];
   }
   tk::destroy( m_dfnormc );
-
-  // Normalize dual-face normals
-  for (auto& [e,n] : m_dfnorm) {
-    Assert( std::abs(tk::dot(n,n)) >
-              std::numeric_limits< tk::real >::epsilon(),
-                "Dual-face normal zero length" );
-    tk::unit(n);
-  }
 
   // Signal the runtime system that the workers have been created
   contribute( sizeof(int), &m_initial, CkReduction::sum_int,
