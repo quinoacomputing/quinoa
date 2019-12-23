@@ -292,6 +292,7 @@ namespace grm {
       // Use default flux type as 'ausm'
       auto& flux = stack.template get< tag::discr, tag::flux >();
       flux = inciter::ctr::FluxType::AUSM;
+      //flux = inciter::ctr::FluxType::HLL;
 
       // Set number of scalar components based on number of materials
       auto& nmat = stack.template get< tag::param, eq, tag::nmat >();
