@@ -27,9 +27,6 @@
       analytic solution (if defined) and for initialization of the computed
       fields at time _t_.
 
-    - Must define the function _solinc()_, used to evaluate the
-      increment from t to t+dt of the analytic solution (if defined).
-
     - Must define the static function _prescribedVelocity()_, used to query the
       prescribed velocity at a point.
 */

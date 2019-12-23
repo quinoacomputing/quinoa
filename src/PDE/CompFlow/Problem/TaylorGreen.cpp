@@ -60,18 +60,6 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-std::vector< tk::real >
-CompFlowProblemTaylorGreen::solinc( ncomp_t, ncomp_t, tk::real, tk::real,
-                                    tk::real, tk::real, tk::real ) const
-// *****************************************************************************
-// Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-// for all components
-//! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-}
-
 tk::SrcFn::result_type
 CompFlowProblemTaylorGreen::src( ncomp_t, ncomp_t, tk::real x,
                                  tk::real y, tk::real, tk::real )

@@ -57,16 +57,6 @@ class MultiMatProblemUserDefined {
       return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
     }
 
-    //! \brief Evaluate the increment from t to t+dt of the analytical solution
-    //!   at (x,y,z) for all components
-    //! \return Increment in values of all components: all zero for now
-    static std::array< tk::real, 5 >
-    solinc( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real,
-            tk::real )
-    {
-      return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-    }
-
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! \details No-op for user-deefined problems.
     //! \return Array of reals containing the source for all components

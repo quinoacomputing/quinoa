@@ -66,32 +66,6 @@ TransportProblemShearDiff::solution( ncomp_t system, ncomp_t ncomp,
   return r;
 }
 
-std::vector< tk::real >
-TransportProblemShearDiff::solinc( ncomp_t system, ncomp_t ncomp, tk::real x,
-                              tk::real y, tk::real z, tk::real t, tk::real dt )
-const
-// *****************************************************************************
-//  Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-//  for all components
-//! \param[in] system Equation system index
-//! \param[in] ncomp Number of components in this transport equation system
-//! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in] t Time where to evaluate the solution increment starting from
-//! \param[in] dt Time increment at which evaluate the solution increment to
-//! \return Increment in values of all components evaluated at (x,y,t+dt)
-// *****************************************************************************
-{
-  auto st1 = solution( system, ncomp, x, y, z, t );
-  auto st2 = solution( system, ncomp, x, y, z, t+dt );
-
-  std::transform( begin(st1), end(st1), begin(st2), begin(st2),
-                  []( tk::real s, tk::real& d ){ return d -= s; } );
-
-  return st2;
-}
-
 void
 TransportProblemShearDiff::errchk( ncomp_t system, ncomp_t ncomp ) const
 // *****************************************************************************

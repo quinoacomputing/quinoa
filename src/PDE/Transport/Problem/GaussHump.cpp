@@ -55,30 +55,6 @@ TransportProblemGaussHump::solution( ncomp_t system, ncomp_t ncomp,
   return s;
 }
 
-std::vector< tk::real >
-TransportProblemGaussHump::solinc( ncomp_t, ncomp_t ncomp, tk::real x,
-                                tk::real y, tk::real, tk::real t, tk::real dt )
-const
-// *****************************************************************************
-//  Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-//  for all components
-//! \param[in] ncomp Number of components in this transport equation system
-//! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] t Time where to evaluate the solution increment starting from
-//! \param[in] dt Time increment at which evaluate the solution increment to
-//! \return Increment in values of all components evaluated at (x,y,t+dt)
-// *****************************************************************************
-{
-  auto st1 = solution( 0, ncomp, x, y, 0.0, t );
-  auto st2 = solution( 0, ncomp, x, y, 0.0, t+dt );
-
-  std::transform( begin(st1), end(st1), begin(st2), begin(st2),
-                  []( tk::real s, tk::real& d ){ return d -= s; } );
-
-  return st2;
-}
-
 std::vector< std::array< tk::real, 3 > >
 TransportProblemGaussHump::prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real,
                                                tk::real, tk::real )

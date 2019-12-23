@@ -45,11 +45,6 @@ class CompFlowProblemTaylorGreen {
     solution( ncomp_t system, ncomp_t ncomp,
               tk::real x, tk::real y, tk::real, tk::real );
 
-    //! \brief Evaluate the increment from t to t+dt of the analytical solution
-    std::vector< tk::real >
-    solinc( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real )
-    const;
-
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     static tk::SrcFn::result_type
     src( ncomp_t, ncomp_t, tk::real x, tk::real y, tk::real, tk::real );

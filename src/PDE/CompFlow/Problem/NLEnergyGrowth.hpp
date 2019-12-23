@@ -49,12 +49,6 @@ class CompFlowProblemNLEnergyGrowth {
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
               tk::real t );
 
-    //! \brief Evaluate the increment from t to t+dt of the analytical solution
-    //!   at (x,y,z) for all components
-    std::vector< tk::real >
-    solinc( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-            tk::real t, tk::real dt ) const;
-
     //! Compute and return source term for NLEG manufactured solution
     static tk::SrcFn::result_type
     src( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,

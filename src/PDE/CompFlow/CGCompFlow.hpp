@@ -22,6 +22,7 @@
 #include "Exception.hpp"
 #include "Vector.hpp"
 #include "EoS/EoS.hpp"
+#include "ProblemCommon.hpp"
 
 namespace inciter {
 
@@ -373,8 +374,8 @@ class CompFlow {
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
-              auto s = m_problem.solinc( m_system, m_ncomp, x[n], y[n], z[n],
-                                         t, deltat );
+              auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
+                               t, deltat, Problem::solution );
               bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
                          {true,s[4]} }};
             }
