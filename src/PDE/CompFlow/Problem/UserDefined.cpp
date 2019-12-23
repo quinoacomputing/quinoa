@@ -43,18 +43,6 @@ CompFlowProblemUserDefined::solution( ncomp_t,
   return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
 }
 
-std::array< tk::real, 5 >
-CompFlowProblemUserDefined::solinc( ncomp_t, ncomp_t, tk::real, tk::real,
-                                    tk::real, tk::real, tk::real ) const
-// *****************************************************************************
-// Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-// for all components
-//! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-}
-
 tk::SrcFn::result_type
 CompFlowProblemUserDefined::src( ncomp_t, ncomp_t, tk::real,
                                  tk::real, tk::real, tk::real )

@@ -27,6 +27,7 @@
 #include "Reconstruction.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "CGPDE.hpp"
+#include "ProblemCommon.hpp"
 
 namespace inciter {
 
@@ -488,8 +489,8 @@ class Transport {
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
-              const auto s = m_problem.solinc( m_system, m_ncomp,
-                                               x[n], y[n], z[n], t, deltat );
+              const auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
+                                     t, deltat, Problem::solution );
               auto& nbc = bc[n] = NodeBC( m_ncomp );
               for (ncomp_t c=0; c<m_ncomp; ++c)
                 nbc[c] = { true, s[c] };

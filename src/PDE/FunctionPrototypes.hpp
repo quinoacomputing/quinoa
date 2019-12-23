@@ -20,6 +20,7 @@
 
 #include "Types.hpp"
 #include "Keywords.hpp"
+#include "Fields.hpp"
 
 namespace tk {
 

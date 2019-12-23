@@ -64,19 +64,6 @@ CompFlowProblemVorticalFlow::solution( ncomp_t system,
   return {{ 1.0, ru, rv, rw, rE }};
 }
 
-std::vector< tk::real >
-CompFlowProblemVorticalFlow::solinc( ncomp_t, ncomp_t ncomp, tk::real, tk::real,
-                                     tk::real, tk::real, tk::real ) const
-// *****************************************************************************
-// Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-// for all components
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-// *****************************************************************************
-{
-  return std::vector< tk::real >( ncomp, 0.0 );
-}
-
 tk::SrcFn::result_type
 CompFlowProblemVorticalFlow::src( ncomp_t system, ncomp_t ncomp, tk::real x,
                                   tk::real y, tk::real z, tk::real )
