@@ -28,9 +28,6 @@
       the computed fields and/or sampling the analytical solution (if exist) at
       time t.
 
-    - Must define the function _solinc()_, used to evaluate the increment
-      from t to t+dt of the analytic solution (if defined).
-
     - Must define the static function _src()_, used for adding source terms to
       the righ hand side.
 
