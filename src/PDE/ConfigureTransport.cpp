@@ -67,6 +67,9 @@ infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 //! \return vector of string pairs describing the PDE configuration
 // *****************************************************************************
 {
+  using tag::param;
+  using tag::transport;
+
   auto c = ++cnt[ ctr::PDEType::TRANSPORT ];       // count eqs
   --c;  // used to index vectors starting with 0
 
@@ -75,60 +78,60 @@ infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
 
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, tag::transport, tag::depvar >()[c] ) );
+    g_inputdeck.get< param, transport, tag::depvar >()[c] ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< tag::param, tag::transport, tag::problem >()[c] ) );
+    g_inputdeck.get< param, transport, tag::problem >()[c] ) );
 
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::transport >(c) ) );
+    g_inputdeck.get< tag::component >().offset< transport >(c) ) );
 
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::transport >()[c];
+  auto ncomp = g_inputdeck.get< tag::component >().get< transport >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
   const auto& diff =
-     g_inputdeck.get< tag::param, tag::transport, tag::diffusivity >();
+     g_inputdeck.get< param, transport, tag::diffusivity >();
   if (diff.size() > c)
     nfo.emplace_back( "coeff diffusivity [" + std::to_string( ncomp ) + "]",
                        parameters( diff[c] ) );
 
-  const auto& u0 = g_inputdeck.get< tag::param, tag::transport, tag::u0 >();
+  const auto& u0 = g_inputdeck.get< param, transport, tag::u0 >();
   if (u0.size() > c)
     nfo.emplace_back( "coeff u0 [" + std::to_string( ncomp ) + "]",
                        parameters( u0[c] ) );
 
   const auto& lambda =
-    g_inputdeck.get< tag::param, tag::transport, tag::lambda >();
+    g_inputdeck.get< param, transport, tag::lambda >();
   if (lambda.size() > c)
     nfo.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
       parameters( lambda[c] ) );
 
   const auto& bcdir =
-    g_inputdeck.get< tag::param, tag::transport, tag::bcdir >();
+    g_inputdeck.get< param, transport, tag::bc, tag::bcdir >();
   if (bcdir.size() > c)
     nfo.emplace_back( "Dirichlet boundary [" + std::to_string( ncomp ) + "]",
       parameters( bcdir[c] ) );
 
   const auto& bcsym =
-    g_inputdeck.get< tag::param, tag::transport, tag::bcsym >();
+    g_inputdeck.get< param, transport, tag::bc, tag::bcsym >();
   if (bcsym.size() > c)
     nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
       parameters( bcsym[c] ) );
 
   const auto& bcinlet =
-    g_inputdeck.get< tag::param, tag::transport, tag::bcinlet >();
+    g_inputdeck.get< param, transport, tag::bc, tag::bcinlet >();
   if (bcinlet.size() > c)
     nfo.emplace_back( "Inlet boundary [" + std::to_string( ncomp ) + "]",
       parameters( bcinlet[c] ) );
 
   const auto& bcoutlet =
-    g_inputdeck.get< tag::param, tag::transport, tag::bcoutlet >();
+    g_inputdeck.get< param, transport, tag::bc, tag::bcoutlet >();
   if (bcoutlet.size() > c)
     nfo.emplace_back( "Outlet boundary [" + std::to_string( ncomp ) + "]",
       parameters( bcoutlet[c] ) );
 
   const auto& bcextrapolate =
-    g_inputdeck.get< tag::param, tag::transport, tag::bcextrapolate >();
+    g_inputdeck.get< param, transport, tag::bc, tag::bcextrapolate >();
   if (bcextrapolate.size() > c)
     nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
       parameters( bcextrapolate[c] ) );

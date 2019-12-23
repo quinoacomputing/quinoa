@@ -116,21 +116,6 @@ TransportProblemShearDiff::errchk( ncomp_t system, ncomp_t ncomp ) const
     "Wrong number of advection-diffusion PDE parameters 'diffusivity'" );
 }
 
-void
-TransportProblemShearDiff::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param; using tag::bcdir;
-
-  for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-}
-
 std::vector< std::array< tk::real, 3 > >
 TransportProblemShearDiff::prescribedVelocity( ncomp_t system, ncomp_t ncomp,
                                               tk::real, tk::real y, tk::real z )

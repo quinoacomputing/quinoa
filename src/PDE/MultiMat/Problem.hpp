@@ -34,9 +34,6 @@
     - Must define the static function _src()_, used for adding source terms to
       the righ hand side.
 
-    - Must define the static function _side()_,  used to query all side set IDs
-      the user has configured for all components.
-
     - Must define the static function _dirbc()_,  used to query Dirichlet
       boundary condition value on a given side set for all components in the PDE
       system.

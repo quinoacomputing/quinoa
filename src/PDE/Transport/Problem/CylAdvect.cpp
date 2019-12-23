@@ -83,33 +83,6 @@ const
   return st2;
 }
 
-void
-TransportProblemCylAdvect::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param;
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcinlet >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcoutlet >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcextrapolate >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcdir >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-}
-
 std::vector< std::array< tk::real, 3 > >
 TransportProblemCylAdvect::prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real,
                                                tk::real, tk::real )

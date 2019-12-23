@@ -68,20 +68,6 @@ CompFlowProblemUserDefined::src( ncomp_t, ncomp_t, tk::real,
   return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
 }
 
-void
-CompFlowProblemUserDefined::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param; using tag::bcdir;
-
-  for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
-    conf.insert( std::stoi(s[0]) );
-}
-
 std::vector< std::string >
 CompFlowProblemUserDefined::fieldNames( ncomp_t ) const
 // *****************************************************************************
