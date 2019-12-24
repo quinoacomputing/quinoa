@@ -64,7 +64,9 @@ class Velocity {
         // but cannot be given as such, because that would lead to circular
         // dependencies of Velocity depending on MixMassfractionBeta, and vice
         // versa.
-        ncomp< eq, tag::mixmassfracbeta, tag::mixmassfracbeta_id >( c ) / 4 ),
+        m_mixmassfracbeta_coupled ?
+        ncomp< eq, tag::mixmassfracbeta, tag::mixmassfracbeta_id >( c ) / 4 :
+        0 ),
       m_numderived( numderived() ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) - m_numderived ),
       m_offset(
@@ -167,12 +169,14 @@ class Velocity {
       using tk::ctr::Term;
       using tk::ctr::Product;
       auto mixncomp = m_mixmassfracbeta_ncomp;
-      std::vector< tk::real > R( mixncomp, 0.0 );
-      std::vector< tk::real > RU( mixncomp*3, 0.0 );
+      std::vector< tk::real > R;
+      std::vector< tk::real > RU;
       auto Uc = static_cast< char >( std::toupper(m_depvar) );
       if (m_solve == ctr::DepvarType::PRODUCT ||
           m_solve == DepvarType::FLUCTUATING_MOMENTUM)
       {
+        R.resize( mixncomp, 0.0 );
+        RU.resize( mixncomp*3, 0.0 );
         for (std::size_t c=0; c<mixncomp; ++c) {
           R[c] = lookup(mean(m_mixmassfracbeta_depvar, c+mixncomp), moments);
           Term Rs( static_cast<char>(std::toupper(m_mixmassfracbeta_depvar)),
