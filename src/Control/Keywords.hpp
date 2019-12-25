@@ -3165,15 +3165,35 @@ struct product_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the product of multiple random variables
     as what quantity to solve for, i.e., use as the dependent variable, e.g., in
-    a velocity model, solve for the product of the density and velocity, i.e.,
-    the momentum, for a stochastic particle. This configures how
-    statistics must be interpreted.)"; }
+    a velocity model, solve for the product of the full density and the full
+    velocity, i.e., the full momentum, for a stochastic particle. This
+    configures how statistics must be interpreted.)"; }
   struct expect {
     static std::string description() { return "string"; }
   };
 };
 using product =
   keyword< product_info, TAOCPP_PEGTL_STRING("product") >;
+
+struct fluctuating_momentum_info {
+  static std::string name() { return "fluctuating momentum"; }
+  static std::string shortDescription() { return
+    "Select fluctuating moment (as the dependent variable) to solve for"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select fluctuating moment as the dependent
+    variable. This is a very specific quantity and used in conjunction with the
+    Langevin equation for the velocity/momentum. The dependent variable is
+    phi_i^* = rho^* u_i - <rho^* u_i^*>, where the star superscript means a full
+    (i.e., not only a fluctuation about some mean) random variable, u_i is the
+    fluctuating velocity, u_i = u^*_i - <u_i^*>, and angle brackets denote the
+    ensemble average. This also configures how statistics must be
+    interpreted.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using fluctuating_momentum = keyword< fluctuating_momentum_info,
+                               TAOCPP_PEGTL_STRING("fluctuating_momentum") >;
 
 struct solve_info {
   static std::string name() { return "solve for"; }
@@ -3188,7 +3208,8 @@ struct solve_info {
     static std::string choices() {
       return '\'' + fullvar::string() + "\' | \'"
                   + fluctuation::string() + "\' | \'"
-                  + product::string() + '\'';
+                  + product::string() + "\' | \'"
+                  + fluctuating_momentum::string() + '\'';
     }
   };
 };
