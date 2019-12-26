@@ -18,14 +18,11 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <list>
 #include <cmath>
 #include <array>
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
-
-#include <brigand/algorithms/for_each.hpp>
 
 #include "NoWarning/format.hpp"
 
@@ -34,6 +31,7 @@
 #include "Has.hpp"
 #include "ChareState.hpp"
 #include "StrConvUtil.hpp"
+#include "TeeBuf.hpp"
 
 namespace tk {
 
@@ -66,7 +64,10 @@ class Print {
                     std::ostream& qstr = std::cout ) :
       m_null(),
       m_stream( str.rdbuf() == std::clog.rdbuf() ? m_null : str ),
-      m_qstream( qstr ) {}
+      m_qstream( qstr ),
+      m_file( "screen.log" ),
+      m_tee( m_file.rdbuf(), m_stream.rdbuf() ),
+      m_ssa( m_stream, &m_tee ) {}
 
     //! Save pointer to stream. This function, used in conjunction with reset(),
     //! can be used to pass streams around. This is not possible in general,
@@ -480,7 +481,7 @@ class Print {
     }
 
     //! \brief Formatted print of verbose help on a single command-line
-    //!   parameter or control file keywords
+    //!   parameter or control file keyword
     //! \param[in] executable Name of executable to output help for
     //! \param[in] kw Keyword help struct on which help is to be printed
     template< Style s = VERBOSE, class HelpKw >
@@ -800,6 +801,11 @@ class Print {
     std::stringstream m_null;   //!< Default verbose stream
     std::ostream& m_stream;     //!< Verbose stream
     std::ostream& m_qstream;    //!< Quiet stream
+
+  private:
+    std::ofstream m_file;       //!< File stream to save verbose stream in
+    tk::teebuf m_tee;           //!< Used to tie m_stream and m_file
+    tk::scoped_streambuf_assignment m_ssa;
 };
 
 } // tk::
