@@ -185,7 +185,8 @@ class Main : public CBase_Main {
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
+      m_print( m_cmdline.get< tag::io, tag::screen >(),
+               m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create Inciter driver
       m_driver( tk::Main< inciter::InciterDriver >
                         ( msg->argc, msg->argv,
@@ -220,7 +221,9 @@ class Main : public CBase_Main {
                    reinterpret_cast<CkArgMsg*>(msg)->argv,
                    tk::Print(),
                    m_cmdline ),
-      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
+      m_print( m_cmdline.get< tag::io, tag::screen >(),
+               m_cmdline.get< tag::verbose >() ? std::cout : std::clog,
+               std::ios_base::app ),
       m_driver( tk::Main< inciter::InciterDriver >
                         ( reinterpret_cast<CkArgMsg*>(msg)->argc,
                           reinterpret_cast<CkArgMsg*>(msg)->argv,

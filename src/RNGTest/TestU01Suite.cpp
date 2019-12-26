@@ -40,8 +40,10 @@ extern TestStack g_testStack;
 using rngtest::TestU01Suite;
 
 TestU01Suite::TestU01Suite( ctr::BatteryType suite ) :
-  m_print( rngtest::g_inputdeck.get< tag::cmd, tag::verbose >() ?
-           std::cout : std::clog ),
+  m_print( rngtest::g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
+            rngtest::g_inputdeck.get< tag::cmd, tag::verbose >() ?
+              std::cout : std::clog,
+            std::ios_base::app ),
   m_ctrs(),
   m_tests(),
   m_name(),

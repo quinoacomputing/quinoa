@@ -24,6 +24,7 @@ struct version {};
 struct license {};
 struct input {};
 struct output {};
+struct screen {};
 struct restart {};
 struct diag {};
 struct evalLB {};

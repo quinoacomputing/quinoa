@@ -215,7 +215,8 @@ class Main : public CBase_Main {
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
+      m_print( m_cmdline.get< tag::io, tag::screen >(),
+               m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create RNGTest driver
       m_driver( tk::Main< rngtest::RNGTestDriver >
                         ( msg->argc, msg->argv,

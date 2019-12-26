@@ -15,7 +15,7 @@ module lbswitch {
   namespace tk {
 
     group [migratable] LBSwitch {
-      entry LBSwitch( bool verbose );
+      entry LBSwitch( const std::string& screen, bool verbose );
       initproc void off();
     };
 

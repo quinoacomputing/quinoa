@@ -103,6 +103,7 @@ namespace cmd {
                      version,
                      license,
                      io< kw::control, tag::control >,
+                     io< kw::screen, tag::screen >,
                      io< kw::pdf, tag::pdf >,
                      io< kw::stat, tag::stat > > {};
 

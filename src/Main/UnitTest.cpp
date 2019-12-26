@@ -147,7 +147,8 @@ class Main : public CBase_Main {
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline, m_helped ),
       // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
+      m_print( m_cmdline.get< tag::screen >(),
+               m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create UnitTest driver
       m_driver( tk::Main< unittest::UnitTestDriver >
                         ( msg->argc, msg->argv,

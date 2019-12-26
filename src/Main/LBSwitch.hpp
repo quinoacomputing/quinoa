@@ -25,7 +25,7 @@ class LBSwitch : public CBase_LBSwitch {
 
   public:
     //! Constructor: turn on automatic load balancing
-    explicit LBSwitch( bool verbose );
+    explicit LBSwitch( const std::string& screen, bool verbose );
 
     #if defined(__clang__)
       #pragma clang diagnostic push

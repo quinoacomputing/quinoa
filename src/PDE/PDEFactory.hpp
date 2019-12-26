@@ -15,8 +15,6 @@
 #include <map>
 #include <set>
 
-#include <brigand/algorithms/for_each.hpp>
-
 #include "CGPDE.hpp"
 #include "DGPDE.hpp"
 #include "Factory.hpp"

@@ -142,6 +142,7 @@ namespace cmd {
                      io< kw::control, tag::control >,
                      io< kw::input, tag::input >,
                      io< kw::output, tag::output >,
+                     io< kw::screen, tag::screen >,
                      io< kw::diagnostics_cmd, tag::diag >,
                      io< kw::restart, tag::restart > > {};
 

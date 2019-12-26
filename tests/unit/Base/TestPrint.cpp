@@ -23,7 +23,9 @@ namespace tut {
 
 //! All tests in group inherited from this base
 struct Print_common {
-  Print_common() : verb(), quiet(), prd(), prv( verb ), prq( verb, quiet ) {}
+  Print_common() : verb(), quiet(), prd(),
+                   prv( "", verb ),
+                   prq( "", verb, std::ios_base::out, quiet ) {}
   std::stringstream verb;
   std::stringstream quiet;
   tk::Print prd;                //!< for testing default-constructed object
@@ -102,7 +104,7 @@ void Print_object::test< 5 >() {
   // std::cout and thus we would see no screen output after the reset call
   // below.
   std::stringstream v, q;
-  tk::Print pr( v, q );
+  tk::Print pr( "", v, std::ios_base::out, q );
   // Reset quiet stream in new printer to saved one, has "blah"
   pr.reset< tk::QUIET >( p );
   // Write to new quiet stream, now should have "blah blah"

@@ -54,7 +54,9 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Transporter;
 
 Transporter::Transporter() :
-  m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
+  m_print(g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
+          g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
+          std::ios_base::app ),
   m_nchare( 0 ),
   m_ncit( 0 ),
   m_nt0refit( 0 ),
@@ -109,7 +111,9 @@ Transporter::Transporter() :
 
 Transporter::Transporter( CkMigrateMessage* m ) :
   CBase_Transporter( m ),
-  m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
+  m_print( g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
+    g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
+    std::ios_base::app ),
   m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgMeshPrefix, ProgMeshLegend ),
     m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
@@ -273,6 +277,8 @@ Transporter::info()
     ".e-s.<meshid>.<numchares>.<chareid>" );
   m_print.item( "Diagnostics file",
                 g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
+  m_print.item( "Screen output file",
+                g_inputdeck.get< tag::cmd, tag::io, tag::screen >() );
   m_print.item( "Checkpoint/restart directory",
                 g_inputdeck.get< tag::cmd, tag::io, tag::restart >() + '/' );
 
@@ -733,7 +739,9 @@ Transporter::comfinal( int initial )
     m_progWork.end();
     m_scheme.bcast< Scheme::setup >();
     // Turn on automatic load balancing
-    tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
+    tk::CProxy_LBSwitch::ckNew(
+      g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
+      g_inputdeck.get< tag::cmd, tag::verbose >() );
   } else {
     m_scheme.bcast< Scheme::lhs >();
   }

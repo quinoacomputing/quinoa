@@ -41,7 +41,9 @@ using unittest::TUTSuite;
 
 TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
   m_mpirunner(),
-  m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
+  m_print( cmdline.get< tag::screen >(),
+           cmdline.get< tag::verbose >() ? std::cout : std::clog,
+           std::ios_base::app ),
   m_nrun( 0 ),
   m_ngroup( 0 ),
   m_ncomplete( 0 ),

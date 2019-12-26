@@ -52,7 +52,9 @@ using walker::Distributor;
 
 Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   __dep(),
-  m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
+  m_print( cmdline.get< tag::io, tag::screen >(),
+           cmdline.get< tag::verbose >() ? std::cout : std::clog,
+           std::ios_base::app ),
   m_output( { false, false } ),
   m_it( 0 ),
   m_npar( 0 ),
