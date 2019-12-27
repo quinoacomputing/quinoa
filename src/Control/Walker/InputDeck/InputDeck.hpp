@@ -220,6 +220,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::fullvar
                                  , kw::fluctuation
                                  , kw::product
+                                 , kw::fluctuating_momentum
                                  , kw::solve
                                  , kw::variant
                                  , kw::slm
