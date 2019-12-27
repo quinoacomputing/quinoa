@@ -25,6 +25,7 @@
 #include <iostream>
 #include <streambuf>
 #include <fstream>
+#include <memory>
 
 namespace tk {
 
@@ -42,19 +43,18 @@ class basic_teebuf : public std::basic_streambuf< charT, traits > {
   private:
     streambuf_type* m_sbuf1;
     streambuf_type* m_sbuf2;
-    char_type* m_buffer;
+    std::unique_ptr< char_type[] > m_buffer;
 
     enum { BUFFER_SIZE = 4096 / sizeof( char_type ) };
 
   public:
     basic_teebuf( streambuf_type *sbuf1, streambuf_type *sbuf2 )
       : m_sbuf1( sbuf1 ), m_sbuf2( sbuf2 ),
-        m_buffer( new char_type[BUFFER_SIZE] )
-    { this->setp(m_buffer, m_buffer + BUFFER_SIZE); }
+        m_buffer( std::make_unique< char_type[] >( BUFFER_SIZE ) )
+    { this->setp( m_buffer.get(), m_buffer.get() + BUFFER_SIZE ); }
 
     ~basic_teebuf() {
       this->pubsync();
-      delete[] m_buffer;
     }
 
   protected:
@@ -67,7 +67,7 @@ class basic_teebuf : public std::basic_streambuf< charT, traits > {
       if ( size1 != n || size2 != n ) return traits_type::eof();
 
       // reset our buffer
-      this->setp( m_buffer, m_buffer + BUFFER_SIZE );
+      this->setp( m_buffer.get(), m_buffer.get() + BUFFER_SIZE );
 
       // write the passed character if necessary
       if ( !traits_type::eq_int_type(c, traits_type::eof()) ) {
