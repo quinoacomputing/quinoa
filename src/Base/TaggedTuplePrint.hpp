@@ -66,7 +66,6 @@ operator<< ( std::ostream& os, const tk::TaggedTuple< List >& t ) {
 //! \tparam Ignore brigand::list of types to not print
 //! \param os Output stream to output to
 //! \param t TaggedTuple to print
-//! \return Output stream
 template< class List, class Ignore >
 inline void
 print( std::ostream& os, const tk::TaggedTuple< List >& t ) {
