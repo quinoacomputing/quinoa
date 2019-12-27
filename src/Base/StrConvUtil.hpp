@@ -17,17 +17,15 @@
 
 namespace tk {
 
-//! Delegate operator << to default for writing non-enums to output streams.
+//! Delegate operator << to default for writing enums to output streams
 //! \param[in] os Output stream into which t is written
 //! \param[in] e  Value of arbitrary non-enum-class type to write to stream
 //! \return Updated output stream for chain-use of the operator
-template< typename T, typename Ch, typename Tr >
+template< typename Enum, typename Ch, typename Tr,
+          typename std::enable_if_t< std::is_enum_v<Enum>, int > = 0 >
 inline std::basic_ostream< Ch, Tr >&
-operator<< ( std::basic_ostream< Ch, Tr >& os, const T& e ) {
-  if constexpr( std::is_enum_v<T> )
-    os << static_cast< unsigned int >( e );
-  else
-    os << e;
+operator<< ( std::basic_ostream< Ch, Tr >& os, const Enum& e ) {
+  os << static_cast< std::underlying_type_t< Enum> >( e );
   return os;
 }
 
