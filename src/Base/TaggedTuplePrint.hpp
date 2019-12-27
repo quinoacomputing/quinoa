@@ -9,8 +9,8 @@
   \details   Tagged tuple printer.
 */
 // *****************************************************************************
-#ifndef TaggedTuplePrinter_h
-#define TaggedTuplePrinter_h
+#ifndef TaggedTuplePrint_h
+#define TaggedTuplePrint_h
 
 #include <ostream>
 
@@ -76,4 +76,4 @@ print( std::ostream& os, const tk::TaggedTuple< List >& t ) {
 
 } // tk::
 
-#endif // TaggedTuple_h
+#endif // TaggedTuplePrint_h
