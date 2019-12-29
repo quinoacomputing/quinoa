@@ -74,6 +74,9 @@ class TaggedTuple{
     Tuple m_members;
 
   public:
+    //! List of key-value pairs
+    using PairList = List;
+
     //! List of keys
     using Keys = typename Pair::second_type;
 
