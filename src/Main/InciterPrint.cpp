@@ -12,6 +12,8 @@
 
 #include <regex>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "CGPDE.hpp"
 #include "InciterPrint.hpp"
 

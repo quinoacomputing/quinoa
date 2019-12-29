@@ -15,8 +15,6 @@
 #include <iostream>
 #include <string>
 
-#include <brigand/algorithms/for_each.hpp>
-
 #include "NoWarning/format.hpp"
 
 #include "Print.hpp"
