@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Base/StrConvUtil.cpp
+  \file      src/Base/PrintUtil.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -14,7 +14,7 @@
 #include <sstream>
 #include <algorithm>
 
-#include "StrConvUtil.hpp"
+#include "PrintUtil.hpp"
 
 std::string
 tk::splitLines( std::string str,

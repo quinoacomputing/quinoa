@@ -26,7 +26,7 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Base/TestProcessControl.cpp
                ../../tests/unit/Base/TestPUPUtil.cpp
                ../../tests/unit/Base/TestReader.cpp
-               ../../tests/unit/Base/TestStrConvUtil.cpp
+               ../../tests/unit/Base/TestPrintUtil.cpp
                ../../tests/unit/Base/TestTaggedTuple.cpp
                ../../tests/unit/Base/TestTaggedTuplePrint.cpp
                ../../tests/unit/Base/TestTimer.cpp

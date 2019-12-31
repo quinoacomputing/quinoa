@@ -30,7 +30,7 @@
 #include "Exception.hpp"
 #include "Has.hpp"
 #include "ChareState.hpp"
-#include "StrConvUtil.hpp"
+#include "PrintUtil.hpp"
 #include "TeeBuf.hpp"
 
 namespace tk {

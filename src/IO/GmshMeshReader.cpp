@@ -24,7 +24,7 @@
 #include "GmshMeshReader.hpp"
 #include "GmshMeshIO.hpp"
 #include "Reorder.hpp"
-#include "StrConvUtil.hpp"
+#include "PrintUtil.hpp"
 
 using tk::GmshMeshReader;
 

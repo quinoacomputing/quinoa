@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Base/StrConvUtil.hpp
+  \file      src/Base/PrintUtil.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -9,23 +9,39 @@
   \details   Various string conversion utilities.
 */
 // *****************************************************************************
-#ifndef StrConvUtil_h
-#define StrConvUtil_h
+#ifndef PrintUtil_h
+#define PrintUtil_h
 
+#include <ostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace tk {
 
-//! Delegate operator << to default for writing enums to output streams
-//! \param[in] os Output stream into which t is written
-//! \param[in] e  Value of arbitrary non-enum-class type to write to stream
+//! Operator << for writing an enum class to an output stream
+//! \param[in] os Output stream into to write to
+//! \param[in] e Value of enum-class type to write to stream
 //! \return Updated output stream for chain-use of the operator
 template< typename Enum, typename Ch, typename Tr,
           typename std::enable_if_t< std::is_enum_v<Enum>, int > = 0 >
 inline std::basic_ostream< Ch, Tr >&
 operator<< ( std::basic_ostream< Ch, Tr >& os, const Enum& e ) {
   os << static_cast< std::underlying_type_t< Enum> >( e );
+  return os;
+}
+
+//! Operator << for writing a std::vector to an output stream
+//! \param[in] os Output stream into which t is written
+//! \param[in] v Vector to write to stream
+//! \return Updated output stream for chain-use of the operator
+template< class T, typename Ch, typename Tr >
+inline std::basic_ostream< Ch, Tr >&
+operator<< ( std::basic_ostream< Ch, Tr >& os, const std::vector< T >& v ) {
+  os << std::boolalpha;
+  os << "[ ";
+  for (const auto& p : v) os << p << ' ';
+  os << ']';
   return os;
 }
 
@@ -61,4 +77,4 @@ splitLines( std::string str,
 
 } // tk::
 
-#endif // StrConvUtil_h
+#endif // PrintUtil_h
