@@ -10,13 +10,13 @@
 */
 // *****************************************************************************
 
-#include <unordered_map>
-
 #include "InciterPrint.hpp"
 #include "InciterDriver.hpp"
 #include "Inciter/InputDeck/Parser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "CmdLinePrint.hpp"
+#include "Writer.hpp"
 
 #include "NoWarning/transporter.decl.h"
 
@@ -61,6 +61,11 @@ InciterDriver::InciterDriver( const InciterPrint& print,
   }
   print.item( "Checkpoint/restart frequency, -" + *kw::rsfreq::alias(),
                std::to_string(cmdline.get< tag::rsfreq >()) );
+
+  // Output command line object to file
+  auto logfilename = tk::inciter_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), cmdline );
 
   // Parse input deck into g_inputdeck
   m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );

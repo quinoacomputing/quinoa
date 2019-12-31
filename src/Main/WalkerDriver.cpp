@@ -42,16 +42,16 @@ WalkerDriver::WalkerDriver( const WalkerPrint& print,
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
 
+  // Output command line object to file
+  auto logfilename = tk::walker_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), cmdline );
+
   // Parse input deck into g_inputdeck
   m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
   m_print.item( "Parsed control file", "success" );  
   m_print.endpart();
-
-  // Output command line object to file
-  auto logfilename = tk::walker_executable() + "_input.log";
-  tk::Writer log( logfilename );
-  tk::print( log.stream(), cmdline );
 
   // Instantiate Distributor chare on PE 0 which drives the time-integration of
   // differential equations via several integrator chares. We only support a
