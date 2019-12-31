@@ -10,14 +10,14 @@
 */
 // *****************************************************************************
 
-#include <string>
-
 #include "Tags.hpp"
 #include "WalkerPrint.hpp"
 #include "WalkerDriver.hpp"
 #include "Walker/InputDeck/Parser.hpp"
 #include "Walker/CmdLine/CmdLine.hpp"
 #include "Walker/InputDeck/InputDeck.hpp"
+#include "CmdLinePrint.hpp"
+#include "Writer.hpp"
 
 #include "NoWarning/distributor.decl.h"
 
@@ -47,6 +47,11 @@ WalkerDriver::WalkerDriver( const WalkerPrint& print,
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
   m_print.item( "Parsed control file", "success" );  
   m_print.endpart();
+
+  // Output command line object to file
+  auto logfilename = tk::walker_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), cmdline );
 
   // Instantiate Distributor chare on PE 0 which drives the time-integration of
   // differential equations via several integrator chares. We only support a

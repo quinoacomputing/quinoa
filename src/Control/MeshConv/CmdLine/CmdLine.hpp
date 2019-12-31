@@ -68,6 +68,13 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::license
                                      >;
 
+    //! Set of tags to ignore when printing this CmdLine
+    using ignore =
+      brigand::set< tag::cmdinfo
+                  , tag::ctrinfo
+                  , tag::helpkw
+                  , tag::error >;
+
     //! \brief Constructor: set defaults.
     //! \details Anything not set here is initialized by the compiler using the
     //!   default constructor for the corresponding type. While there is a

@@ -10,12 +10,12 @@
 */
 // *****************************************************************************
 
-#include <utility>
-
 #include "Types.hpp"
 #include "Tags.hpp"
 #include "MeshConvDriver.hpp"
 #include "MeshFactory.hpp"
+#include "CmdLinePrint.hpp"
+#include "Writer.hpp"
 
 #include "NoWarning/meshconv.decl.h"
 
@@ -40,6 +40,12 @@ MeshConvDriver::MeshConvDriver( const tk::Print& print,
   m_input = cmdline.get< tag::io, tag::input >();
   // Save output file name
   m_output = cmdline.get< tag::io, tag::output >();
+
+
+  // Output command line object to file
+  auto logfilename = tk::meshconv_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), cmdline );
 }
 
 void

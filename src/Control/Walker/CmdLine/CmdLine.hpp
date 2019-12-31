@@ -64,6 +64,17 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::screen
                                      >;
 
+    //! Set of tags to ignore when printing this CmdLine
+    //! \note It would be misleading to print the data behind 'pdfnames' with
+    //!   the command line object, since only InputDeck parser populates this
+    //!   (after the CmdLine parser) into its copy of CmdLine.
+    using ignore =
+      brigand::set< tag::cmdinfo
+                  , tag::ctrinfo
+                  , tag::helpkw
+                  , tag::pdfnames  // printed with InputDeck instead
+                  , tag::error >;
+
     //! \brief Constructor: set all defaults.
     //! \param[in] ctrinfo std::map of control file keywords and their info
     //!  \details Anything not set here is initialized by the compiler using the

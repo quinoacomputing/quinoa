@@ -10,10 +10,6 @@
 */
 // *****************************************************************************
 
-#include <string>
-#include <utility>
-#include <iterator>
-
 #include "Tags.hpp"
 #include "Exception.hpp"
 #include "Factory.hpp"
@@ -23,6 +19,8 @@
 #include "RNGTestDriver.hpp"
 #include "RNGTest/InputDeck/InputDeck.hpp"
 #include "RNGTest/InputDeck/Parser.hpp"
+#include "CmdLinePrint.hpp"
+#include "Writer.hpp"
 
 namespace rngtest {
 
@@ -44,7 +42,12 @@ RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
 {
   // All global-scope data to be migrated to all PEs initialized here
 
-  // Parse input deck into g_inputdeck, transfer cmdline (no longer needed)
+  // Output command line object to file
+  auto logfilename = tk::rngtest_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), cmdline );
+
+  // Parse input deck into g_inputdeck
   m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
   m_print.item( "Parsed control file", "success" );  

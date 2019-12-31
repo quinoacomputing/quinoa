@@ -10,13 +10,12 @@
 */
 // *****************************************************************************
 
-#include <utility>
-#include <memory>
-
 #include "Types.hpp"
 #include "Tags.hpp"
 #include "FileConvDriver.hpp"
 #include "FileConvWriter.hpp"
+#include "CmdLinePrint.hpp"
+#include "Writer.hpp"
 
 #include "NoWarning/fileconv.decl.h"
 
@@ -37,6 +36,11 @@ FileConvDriver::FileConvDriver( const tk::Print&,
   m_input = cmdline.get< tag::io, tag::input >();
   // Save output file name
   m_output = cmdline.get< tag::io, tag::output >();
+
+  // Output command line object to file
+  auto logfilename = tk::fileconv_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), cmdline );
 }
 
 void
