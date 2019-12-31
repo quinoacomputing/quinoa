@@ -73,19 +73,17 @@ void CmdLinePrint_object::test< 1 >() {
   set_test_name( "print()" );
 
   std::stringstream s;
-  tk::print( s, "Cmd", cmd );
+  tk::print( s, cmd );
   ensure_equals( "print()", s.str(),
 R"(# vim: filetype=sh:
 #
 # Contents of a tagged tuple.
 #
-# The first string is the name of the tuple followed by its type in
-# double quotes. A string in single quotes denote the name/tag of a
-# (nested) tagged tuple. The contents of tuples are enclosed within
-# braces, indented, and aligned to the same column, compared to the
-# parent tuple.
+# A string in single quotes denotes the name/tag of a (nested)
+# tagged tuple. The contents of tuples are enclosed within braces,
+# indented, and aligned compared to the parent tuple.
 
-Cmd "cmdline" {
+'cmdline' {
   name       : Bob
   age        : 32
   'tag1' {

@@ -21,6 +21,7 @@
 #include "NoWarning/set.hpp"
 
 #include "TaggedTuple.hpp"
+#include "PrintUtil.hpp"
 
 namespace tk {
 
@@ -57,7 +58,8 @@ struct DeepTuplePrinter {
         --depth;
       } else {
         std::string indent( depth * 2, ' ' );
-        os << boost::format("\n%s%-10s : %b") % indent % key % value;
+        os << boost::format("\n%s%-10s : ") % indent % key;
+        os << std::boolalpha << value;
       }
     }
   }
@@ -66,24 +68,18 @@ struct DeepTuplePrinter {
 //! Output command line object (a TaggedTuple) to file
 //! \tparam CmdLine Command line object type
 //! \param[in,out] os Output stream to print to
-//! \param[in] name Name of the command line, e.g., executable name
 //! \param[in] c Command line object to output to file
 template< class CmdLine >
-void print( std::ostream& os,
-            const std::string& name,
-            const CmdLine& c )
-{
+void print( std::ostream& os, const CmdLine& c ) {
   using Keys = typename CmdLine::Keys;
   using Ignore = typename CmdLine::ignore;
   using List = typename CmdLine::PairList;
   os << "# vim: filetype=sh:\n#\n"
         "# Contents of a tagged tuple.\n#\n"
-        "# The first string is the name of the tuple followed by its type in\n"
-        "# double quotes. A string in single quotes denote the name/tag of a\n"
-        "# (nested) tagged tuple. The contents of tuples are enclosed within\n"
-        "# braces, indented, and aligned to the same column, compared to the\n"
-        "# parent tuple.\n\n";
-  os << name << " \"cmdline\" {";
+        "# A string in single quotes denotes the name/tag of a (nested)\n"
+        "# tagged tuple. The contents of tuples are enclosed within braces,\n"
+        "# indented, and aligned compared to the parent tuple.\n\n";
+  os << "'cmdline' {";
   std::size_t depth = 1;
   brigand::for_each< Keys >( DeepTuplePrinter< List, Ignore >( os, c, depth ) );
   os << " }";
