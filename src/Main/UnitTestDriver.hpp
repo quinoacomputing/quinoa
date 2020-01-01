@@ -16,15 +16,12 @@
 
 namespace unittest {
 
-class UnitTestPrint;
-
 //! Unit test suite driver used polymorphically with tk::Driver
 class UnitTestDriver {
 
   public:
     //! Constructor
-    explicit UnitTestDriver( const UnitTestPrint&,
-                             const ctr::CmdLine& cmdline );
+    explicit UnitTestDriver( const ctr::CmdLine& cmdline );
 
     //! Execute driver
     void execute() const {}

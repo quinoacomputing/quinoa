@@ -76,24 +76,6 @@ class TestU01Suite : public CBase_TestU01Suite {
     void time( std::pair< std::string, tk::real > t );
 
  private:
-    //! Add all statistical tests to suite, return suite name
-    //! \return Test suite name
-    template< class Suite >
-    std::string addTests() {
-      const auto rngs = g_inputdeck.get< tag::selected, tag::rng >();
-      ErrChk( !rngs.empty(), "No RNGs selected" );
-      Suite suite;
-      for (const auto& r : rngs) suite.addTests( m_ctrs, r, thisProxy );
-      return suite.name();
-    }
-
-    //! Return number of statistical tests
-    std::size_t ntest() const;
-
-    //! Output final assessment
-    void assess();
-
-    RNGTestPrint m_print;              //!< Pretty printer
     std::vector< std::function< StatTest() > > m_ctrs; //! Tests constructors
     std::vector< StatTest > m_tests;   //!< Constructed statistical tests
     std::string m_name;                //!< Test suite name
@@ -113,6 +95,31 @@ class TestU01Suite : public CBase_TestU01Suite {
         test( std::move(t) ), rng( std::move(r) ), pval( std::move(p) ) {}
     };
     std::vector< Failed > m_failed;    //!< Details of failed tests
+
+    //! Add all statistical tests to suite, return suite name
+    //! \return Test suite name
+    template< class Suite >
+    std::string addTests() {
+      const auto rngs = g_inputdeck.get< tag::selected, tag::rng >();
+      ErrChk( !rngs.empty(), "No RNGs selected" );
+      Suite suite;
+      for (const auto& r : rngs) suite.addTests( m_ctrs, r, thisProxy );
+      return suite.name();
+    }
+
+    //! Return number of statistical tests
+    std::size_t ntest() const;
+
+    //! Output final assessment
+    void assess();
+
+    //! Create pretty printer specialized to RNGTest
+    //! \return Pretty printer
+    RNGTestPrint printer() const { return
+      RNGTestPrint( g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
+        g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
+        std::ios_base::app );
+    }
 };
 
 } // rngtest::

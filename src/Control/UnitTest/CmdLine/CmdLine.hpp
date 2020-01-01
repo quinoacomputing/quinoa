@@ -30,14 +30,14 @@ namespace ctr {
 
 //! Member data for tagged tuple
 using CmdLineMembers = brigand::list<
-    tag::verbose,    bool
+    tag::io,         ios
+  , tag::verbose,    bool
   , tag::chare,      bool
   , tag::help,       bool
   , tag::quiescence, bool
   , tag::trace,      bool
   , tag::version,    bool
   , tag::license,    bool
-  , tag::screen,     std::string
   , tag::cmdinfo,    tk::ctr::HelpFactory
   , tag::ctrinfo,    tk::ctr::HelpFactory
   , tag::helpkw,     tk::ctr::HelpKw
@@ -60,6 +60,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::helpkw
                                      , kw::group
                                      , kw::quiescence
+                                     , kw::screen
                                      , kw::trace
                                      , kw::version
                                      , kw::license
@@ -72,7 +73,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //!   control file parser.
     //! \see walker::ctr::CmdLine
     CmdLine() {
-      get< tag::screen >() = "screen.log"; // Screen output filename
+      get< tag::io, tag::screen >() = "screen.log"; // Screen output filename
       get< tag::verbose >() = false; // Use quiet output by default
       get< tag::chare >() = false; // No chare state output by default
       get< tag::trace >() = true; // Output call and stack trace by default

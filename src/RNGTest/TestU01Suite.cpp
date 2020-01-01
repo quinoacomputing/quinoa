@@ -18,7 +18,6 @@
 
 #include "NoWarning/format.hpp"
 
-#include "Print.hpp"
 #include "TestU01Suite.hpp"
 #include "TestStack.hpp"
 #include "SmallCrush.hpp"
@@ -40,10 +39,6 @@ extern TestStack g_testStack;
 using rngtest::TestU01Suite;
 
 TestU01Suite::TestU01Suite( ctr::BatteryType suite ) :
-  m_print( rngtest::g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
-            rngtest::g_inputdeck.get< tag::cmd, tag::verbose >() ?
-              std::cout : std::clog,
-            std::ios_base::app ),
   m_ctrs(),
   m_tests(),
   m_name(),
@@ -84,7 +79,7 @@ TestU01Suite::npval( std::size_t n )
   m_npval += n;
 
   if ( ++m_ntest == ntest() ) {
-    m_print.battery( ntest(), m_npval );
+    printer().battery( ntest(), m_npval );
     // Collect test names from all tests (one per RNG)
     m_ntest = 0;
     for (std::size_t i=0; i<ntest(); ++i) m_tests[i].names();
@@ -98,24 +93,26 @@ TestU01Suite::names( std::vector< std::string > n )
 //! \param[in] n Vector of test names (there can be more than one from one test)
 // *****************************************************************************
 {
-  m_print.names( n );
+  auto print = printer();
+
+  print.names( n );
 
   if ( ++m_ntest == ntest() ) {
     const auto& rngs = g_inputdeck.get< tag::selected, tag::rng >();
     std::stringstream ss;
     ss << "RNGs tested (" << rngs.size() << ")";
-    m_print.section( ss.str() );
+    print.section( ss.str() );
     #ifdef HAS_MKL
-    m_print.MKLParams( rngs, g_inputdeck.get< tag::param, tag::rngmkl >() );
+    print.MKLParams( rngs, g_inputdeck.get< tag::param, tag::rngmkl >() );
     #endif
-    m_print.RNGSSEParams( rngs, g_inputdeck.get< tag::param, tag::rngsse >() );
-    m_print.Random123Params( rngs,
-                             g_inputdeck.get< tag::param, tag::rng123 >() );
-    m_print.endpart();
-    m_print.part( m_name );
-    m_print.statshead( "Statistics computed",
-                       m_npval*rngs.size(),
-                       m_ctrs.size() );
+    print.RNGSSEParams( rngs, g_inputdeck.get< tag::param, tag::rngsse >() );
+    print.Random123Params( rngs,
+                           g_inputdeck.get< tag::param, tag::rng123 >() );
+    print.endpart();
+    print.part( m_name );
+    print.statshead( "Statistics computed",
+                     m_npval*rngs.size(),
+                     m_ctrs.size() );
 
     // Run battery of RNG tests
     for (const auto& t : m_tests) t.run();
@@ -143,7 +140,7 @@ TestU01Suite::evaluate( std::vector< std::vector< std::string > > status )
 //! \param[in] status Status vectors of strings for a test
 // *****************************************************************************
 {
-  m_print.test( ++m_ncomplete, m_ctrs.size(), m_nfail, status );
+  printer().test( ++m_ncomplete, m_ctrs.size(), m_nfail, status );
 
   // Store information on failed test for final assessment
   for (std::size_t p=0; p<status[1].size(); ++p)
@@ -175,22 +172,24 @@ TestU01Suite::assess()
 // Output final assessment
 // *****************************************************************************
 {
+  auto print = printer();
+
   // Output summary of failed tests for all RNGs tested
   if ( !m_failed.empty() ) {
     const auto& rngs = g_inputdeck.get< tag::selected, tag::rng >();
-    m_print.failed( "Failed statistics", m_npval*rngs.size(), m_failed );
-  } else m_print.note< tk::QUIET >( "All tests passed" );
+    print.failed( "Failed statistics", m_npval*rngs.size(), m_failed );
+  } else print.note< tk::QUIET >( "All tests passed" );
 
   // Cost and quality assessment only for more than one RNG
   if (m_time.size() > 1) {
     // Output measured times per RNG in order of computational cost
-    m_print.cost( "Generator cost",
-                  "Measured times in seconds in increasing order (low is good)",
-                  m_time );
+    print.cost( "Generator cost",
+                "Measured times in seconds in increasing order (low is good)",
+                m_time );
     // Output number of failed tests per RNG in order of decreasing quality
-    m_print.rank( "Generator quality",
-                  "Number of failed tests in increasing order (low is good)",
-                  m_nfail );
+    print.rank( "Generator quality",
+                "Number of failed tests in increasing order (low is good)",
+                m_nfail );
   }
 
   // Quit

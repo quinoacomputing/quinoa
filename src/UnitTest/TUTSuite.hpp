@@ -41,9 +41,10 @@ class TUTSuite : public CBase_TUTSuite {
     void evaluate( std::vector< std::string > status );
 
   private:
+    std::string m_screen;          //!< Screen output log filename
+    bool m_verbose;                //1< True if verbose screen output
     //! MPI unit test runner nodegroup proxy
     CProxy_MPIRunner< CProxy_TUTSuite > m_mpirunner;
-    UnitTestPrint m_print;         //!< Pretty printer
     std::size_t m_nrun;            //!< Number of tests ran (including dummies)
     std::size_t m_ngroup;          //!< Number of test groups
     std::size_t m_ncomplete;       //!< Number of completed tests
@@ -82,6 +83,14 @@ class TUTSuite : public CBase_TUTSuite {
 
     //! Fire up all tests in a test group
     void spawngrp( const std::string& g );
+
+    //! Create pretty printer specialized to UnitTest
+    //! \return Pretty printer
+    UnitTestPrint printer() const { return
+      UnitTestPrint( m_screen,
+                     m_verbose ? std::cout : std::clog,
+                     std::ios_base::app );
+    }
 };
 
 } // unittest::

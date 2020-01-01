@@ -146,16 +146,12 @@ class Main : public CBase_Main {
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline, m_helped ),
-      // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tag::screen >(),
-               m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create UnitTest driver
       m_driver( tk::Main< unittest::UnitTestDriver >
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::UNITTEST,
-                          tk::unittest_executable(),
-                          m_print ) ),
+                          tk::unittest_executable() ) ),
       m_timer(1), // Start new timer measuring the serial+Charm++ runtime
       m_timestamp()
     {
@@ -190,7 +186,7 @@ class Main : public CBase_Main {
 
     //! Towards normal exit but collect chare state first (if any)
     void finalize( bool pass ) {
-      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
+      tk::finalize( m_cmdline, m_timer, stateProxy, m_timestamp,
                     CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ),
                     pass );
     }
@@ -205,7 +201,7 @@ class Main : public CBase_Main {
 
     //! Dump chare state
     void dumpstate( CkReductionMsg* msg ) {
-      tk::dumpstate( m_cmdline, m_print, msg );
+      tk::dumpstate( m_cmdline, msg );
     }
 
   private:
@@ -213,7 +209,6 @@ class Main : public CBase_Main {
     bool m_helped;      //!< Indicates if help was requested on the command line
     unittest::ctr::CmdLine m_cmdline;                   //!< Command line
     unittest::CmdLineParser m_cmdParser;                //!< Command line parser
-    unittest::UnitTestPrint m_print;                    //!< Pretty printer
     unittest::UnitTestDriver m_driver;                  //!< Driver
     std::vector< tk::Timer > m_timer;                   //!< Timers
 

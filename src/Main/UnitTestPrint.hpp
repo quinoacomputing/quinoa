@@ -75,7 +75,7 @@ class UnitTestPrint : public tk::Print {
         std::stringstream ss;
         ss << "[" << ncomplete << "/" << nfail << "] " << status[0] << ":"
            << status[1];
-        (status[2] == "0" ? m_stream : m_qstream) <<
+        m_stream <<
           m_item_widename_value_fmt % m_item_indent % ss.str()
                                     % result( status[2], status[3], status[4] )
           << std::flush;

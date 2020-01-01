@@ -29,17 +29,19 @@ extern ctr::InputDeck g_inputdeck_defaults;
 
 using inciter::InciterDriver;
 
-InciterDriver::InciterDriver( const InciterPrint& print,
-                              const ctr::CmdLine& cmdline ) :
-  m_print( print )
+InciterDriver::InciterDriver( const ctr::CmdLine& cmdline )
 // *****************************************************************************
 //  Constructor
-//! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 // *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
+
+  // Create pretty printer
+  InciterPrint print( cmdline.get< tag::io, tag::screen >(),
+                      cmdline.get< tag::verbose >() ? std::cout : std::clog,
+                      std::ios_base::app );
 
   print.item( "Non-blocking migration, -" + *kw::nonblocking::alias(),
                cmdline.get< tag::nonblocking >() ? "on" : "off" );
@@ -63,11 +65,11 @@ InciterDriver::InciterDriver( const InciterPrint& print,
                std::to_string(cmdline.get< tag::rsfreq >()) );
 
   // Parse input deck into g_inputdeck
-  m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );
+  print.item( "Control file", cmdline.get< tag::io, tag::control >() );
   g_inputdeck = g_inputdeck_defaults;   // overwrite with defaults if restarted
-  InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
-  m_print.item( "Parsed control file", "success" );  
-  m_print.endpart();
+  InputDeckParser inputdeckParser( print, cmdline, g_inputdeck );
+  print.item( "Parsed control file", "success" );
+  print.endpart();
 }
 
 void

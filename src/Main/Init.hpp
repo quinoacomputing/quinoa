@@ -65,16 +65,19 @@ void echoRunEnv( const Print& print, int argc, char** argv,
 //! \param[in] header Header type enum indicating which executable header to
 //!   print
 //! \param[in] executable Name of the executable
-//! \param[in] print Pretty printer to use
 //! \return Instantiated driver object which can then be used to execute()
 //!   whatever it is intended to drive
-template< class Driver, class Printer, class CmdLine >
+template< class Driver, class CmdLine >
 Driver Main( int argc, char* argv[],
              const CmdLine& cmdline,
              HeaderType header,
-             const std::string& executable,
-             const Printer& print )
+             const std::string& executable )
 {
+  // Create pretty printer
+  tk::Print
+    print( cmdline.template get< tag::io, tag::screen >(),
+           cmdline.template get< tag::verbose >() ? std::cout : std::clog );
+
   // Echo program header
   echoHeader( print, header );
 
@@ -89,7 +92,7 @@ Driver Main( int argc, char* argv[],
               cmdline.template get< tag::trace >() );
 
   // Create and return driver
-  return Driver( print, cmdline );
+  return Driver( cmdline );
 }
 
 //! Generic Main Charm++ module constructor for all executables
@@ -125,14 +128,10 @@ void MainCtor( MainProxy& mp,
 //! \tparam CmdLine Executable-specific tagged tuple storing the rusult of the
 //!    command line parser
 //! \param[in] cmdline Command line grammar stack for the executable
-//! \param[in] print Pretty printer
 //! \param[in] msg Charm++ reduction message containing the chare state
 //!   aggregated from all PEs
 template< class CmdLine >
-void dumpstate( const CmdLine& cmdline,
-                const tk::Print& print,
-                CkReductionMsg* msg )
-{
+void dumpstate( const CmdLine& cmdline, CkReductionMsg* msg ) {
   try {
 
     // unpack chare state
@@ -148,8 +147,12 @@ void dumpstate( const CmdLine& cmdline,
 
     // pretty-print collected chare state (only if user requested it or
     // quiescence was detected which is and indication of a logic error)
-    if (cmdline.template get< tag::chare >() || error)
+    if (cmdline.template get< tag::chare >() || error) {
+      tk::Print print( cmdline.template get< tag::io, tag::screen >(),
+        cmdline.template get< tag::verbose >() ? std::cout : std::clog,
+        std::ios_base::app );
       print.charestate( state );
+    }
 
     // exit differently depending on how we were called
     if (error)
@@ -163,7 +166,6 @@ void dumpstate( const CmdLine& cmdline,
 //! Generic finalize function for different executables
 //! \param[in] cmdline Command line grammar stack for the executable
 //! \param[in] timer Vector of timers, held by the main chare
-//! \param[in] print Pretty printer
 //! \param[in,out] state Chare state collector proxy
 //! \param[in,out] timestamp Vector of time stamps in h:m:s with labels
 //! \param[in] dumpstateTarget Pre-created Charm++ callback to use as the
@@ -173,7 +175,6 @@ void dumpstate( const CmdLine& cmdline,
 template< class CmdLine >
 void finalize( const CmdLine& cmdline,
                const std::vector< tk::Timer >& timer,
-               const tk::Print& print,
                tk::CProxy_ChareStateCollector& state,
                std::vector< std::pair< std::string,
                                        tk::Timer::Watch > >& timestamp,
@@ -184,6 +185,9 @@ void finalize( const CmdLine& cmdline,
 
    if (!timer.empty()) {
      timestamp.emplace_back( "Total runtime", timer[0].hms() );
+     tk::Print print( cmdline.template get< tag::io, tag::screen >(),
+       cmdline.template get< tag::verbose >() ? std::cout : std::clog,
+       std::ios_base::app );
      print.time( "Timers (h:m:s)", timestamp );
      print.endpart();
      // if quiescence detection is on or user requested it, collect chare state

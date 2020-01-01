@@ -131,28 +131,28 @@ class Transporter : public CBase_Transporter {
     void responded();
 
     //! Non-reduction target for receiving progress report on partitioning mesh
-    void pepartitioned() { m_progMesh.inc< PART >(); }
+    void pepartitioned() { m_progMesh.inc< PART >( printer() ); }
     //! Non-reduction target for receiving progress report on distributing mesh
-    void pedistributed() { m_progMesh.inc< DIST >(); }
+    void pedistributed() { m_progMesh.inc< DIST >( printer() ); }
     //! Non-reduction target for receiving progress report on finding bnd nodes
-    void chbnd() { m_progMesh.inc< BND >(); }
+    void chbnd() { m_progMesh.inc< BND >( printer() ); }
     //! Non-reduction target for receiving progress report on node ID comm map
-    void chcomm() { m_progMesh.inc< COMM >(); }
+    void chcomm() { m_progMesh.inc< COMM >( printer() ); }
     //! Non-reduction target for receiving progress report on node ID mask
-    void chmask() { m_progMesh.inc< MASK >(); }
+    void chmask() { m_progMesh.inc< MASK >( printer() ); }
     //! Non-reduction target for receiving progress report on reordering mesh
-    void chreordered() { m_progMesh.inc< REORD >(); }
+    void chreordered() { m_progMesh.inc< REORD >( printer() ); }
 
     //! Non-reduction target for receiving progress report on creating workers
-    void chcreated() { m_progWork.inc< CREATE >(); }
+    void chcreated() { m_progWork.inc< CREATE >( printer() ); }
     //! Non-reduction target for receiving progress report on finding bnd faces
-    void chbndface() { m_progWork.inc< BNDFACE >(); }
+    void chbndface() { m_progWork.inc< BNDFACE >( printer() ); }
     //! Non-reduction target for receiving progress report on face communication
-    void chcomfac() { m_progWork.inc< COMFAC >(); }
+    void chcomfac() { m_progWork.inc< COMFAC >( printer() ); }
     //! Non-reduction target for receiving progress report on sending ghost data
-    void chghost() { m_progWork.inc< GHOST >(); }
+    void chghost() { m_progWork.inc< GHOST >( printer() ); }
     //! Non-reduction target for receiving progress report on face adjacency
-    void chadj() { m_progWork.inc< ADJ >(); }
+    void chadj() { m_progWork.inc< ADJ >( printer() ); }
 
     //! Reduction target indicating that the communication maps have been setup
     void comfinal( int initial );
@@ -224,7 +224,6 @@ class Transporter : public CBase_Transporter {
     //@}
 
   private:
-    InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
     std::size_t m_ncit;                  //!< Number of mesh ref corr iter
     std::size_t m_nt0refit;              //!< Number of (t<0) mesh ref iters
@@ -262,10 +261,10 @@ class Transporter : public CBase_Transporter {
     void diagHeader();
 
     //! Echo configuration to screen
-    void info();
+    void info( const InciterPrint& print );
 
     //! Print out time integration header to screen
-    void inthead();
+    void inthead( const InciterPrint& print );
 
     //! Echo diagnostics on mesh statistics
     void stat();
@@ -279,6 +278,14 @@ class Transporter : public CBase_Transporter {
     void varnames( const Eq& eq, std::vector< std::string >& var ) {
       auto o = eq.names();
       var.insert( end(var), begin(o), end(o) );
+    }
+
+    //! Create pretty printer specialized to Inciter
+    //! \return Pretty printer
+    InciterPrint printer() const { return
+      InciterPrint( g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
+        g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
+        std::ios_base::app );
     }
 
     //! Verify boundary condition (BC) side sets used exist in mesh file

@@ -23,6 +23,11 @@ namespace ctr {
 
 using namespace tao;
 
+//! IO parameters storage
+using ios = tk::TaggedTuple< brigand::list<
+    tag::screen, std::string   //!< Screen output filename
+> >;
+
 //! PEGTL location/position type to use throughout all of UnitTest's parsers
 using Location = pegtl::position;
 

@@ -3791,7 +3791,7 @@ struct screen_info {
     R"(This option is used to define the screen output (log) file name.
     Everything that goes to the screen will be written to this (log) file.)";
   }
-  using alias = Alias< g >;
+  using alias = Alias< k >;
   struct expect {
     using type = std::string;
     static std::string description() { return "string"; }

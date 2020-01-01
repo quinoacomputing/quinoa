@@ -23,12 +23,13 @@ using meshconv::MeshConvDriver;
 
 extern CProxy_Main mainProxy;
 
-MeshConvDriver::MeshConvDriver( const tk::Print& print,
-                                const ctr::CmdLine& cmdline )
-  : m_print( print ),
-    m_reorder( cmdline.get< tag::reorder >() ),
-    m_input(),
-    m_output()
+MeshConvDriver::MeshConvDriver( const ctr::CmdLine& cmdline ) :
+  m_print( cmdline.get< tag::io, tag::screen >(),
+           cmdline.get< tag::verbose >() ? std::cout : std::clog,
+           std::ios_base::app ),
+  m_reorder( cmdline.get< tag::reorder >() ),
+  m_input(),
+  m_output()
 // *****************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
