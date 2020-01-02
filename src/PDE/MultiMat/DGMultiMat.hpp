@@ -87,7 +87,7 @@ class MultiMat {
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_riemann( tk::cref_find( multimatRiemannSolvers(),
-                   g_inputdeck.get< tag::discr, tag::flux >() ) ),
+        g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) )

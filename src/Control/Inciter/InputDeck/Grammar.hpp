@@ -157,6 +157,11 @@ namespace grm {
       if (sysfct.empty() || sysfct.size() != neq.get< eq >())
         sysfct.push_back( 1 );
 
+      // Set default flux to HLLC if not specified
+      auto& flux = stack.template get< tag::param, eq, tag::flux >();
+      if (flux.empty() || flux.size() != neq.get< eq >())
+        flux.push_back( inciter::ctr::FluxType::HLLC );
+
       // Verify that sysfctvar variables are within bounds (if specified) and
       // defaults if not
       auto& sysfctvar = stack.template get< tag::param, eq, tag::sysfctvar >();
@@ -289,10 +294,10 @@ namespace grm {
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::VELEQ );
 
-      // Use default flux type as 'ausm'
-      auto& flux = stack.template get< tag::discr, tag::flux >();
-      flux = inciter::ctr::FluxType::AUSM;
-      //flux = inciter::ctr::FluxType::HLL;
+      // Set default flux to AUSM if not specified
+      auto& flux = stack.template get< tag::param, eq, tag::flux >();
+      if (flux.empty() || flux.size() != neq.get< eq >())
+        flux.push_back( inciter::ctr::FluxType::AUSM );
 
       // Set number of scalar components based on number of materials
       auto& nmat = stack.template get< tag::param, eq, tag::nmat >();
@@ -616,7 +621,6 @@ namespace deck {
                              pegtl::alpha >,
            tk::grm::interval< use< kw::ttyi >, tag::tty >,
            discroption< use, kw::scheme, inciter::ctr::Scheme, tag::scheme >,
-           discroption< use, kw::flux, inciter::ctr::Flux, tag::flux >,
            discroption< use, kw::limiter, inciter::ctr::Limiter, tag::limiter >,
            tk::grm::discrparam< use, kw::cweight, tag::cweight >
          > {};
@@ -790,6 +794,14 @@ namespace deck {
                            tk::grm::depvar< use,
                                             tag::compflow,
                                             tag::depvar >,
+                           tk::grm::process<
+                             use< kw::flux >,
+                               tk::grm::store_back_option< use,
+                                                           ctr::Flux,
+                                                           tag::param,
+                                                           tag::compflow,
+                                                           tag::flux >,
+                             pegtl::alpha >,
                            //ic_compflow< tag::compflow, tag::ic > >,
                            material_properties< tag::compflow >,
                            pde_parameter_vector< kw::sysfctvar,
@@ -840,6 +852,14 @@ namespace deck {
                            parameter< tag::multimat,
                                       kw::nmat,
                                       tag::nmat >,
+                           tk::grm::process<
+                             use< kw::flux >,
+                               tk::grm::store_back_option< use,
+                                                           ctr::Flux,
+                                                           tag::param,
+                                                           tag::multimat,
+                                                           tag::flux >,
+                             pegtl::alpha >,
                            material_properties< tag::multimat >,
                            parameter< tag::multimat,
                                       kw::pde_alpha,

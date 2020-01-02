@@ -86,7 +86,7 @@ class CompFlow {
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_riemann( tk::cref_find( compflowRiemannSolvers(),
-                   g_inputdeck.get< tag::discr, tag::flux >() ) ),
+        g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system) ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
       m_bcsubsonicoutlet( config< tag::bcsubsonicoutlet >( c ) ),

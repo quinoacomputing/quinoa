@@ -222,7 +222,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
         std::numeric_limits< tk::real >::epsilon();
       get< tag::discr, tag::reorder >() = false;
       get< tag::discr, tag::scheme >() = SchemeType::DiagCG;
-      get< tag::discr, tag::flux >() = FluxType::HLLC;
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::limiter >() = LimiterType::NOLIMITER;
       get< tag::discr, tag::cweight >() = 1.0;
