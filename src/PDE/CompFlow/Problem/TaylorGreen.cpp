@@ -76,21 +76,6 @@ CompFlowProblemTaylorGreen::src( ncomp_t, ncomp_t, tk::real x,
                    cos(3.0*M_PI*y)*cos(M_PI*x) ) }};
 }
 
-void
-CompFlowProblemTaylorGreen::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param; using tag::bcdir;
-
-  for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-}
-
 std::vector< std::string >
 CompFlowProblemTaylorGreen::fieldNames( ncomp_t ) const
 // *****************************************************************************

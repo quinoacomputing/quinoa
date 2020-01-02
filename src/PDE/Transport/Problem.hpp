@@ -27,9 +27,6 @@
       analytic solution (if defined) and for initialization of the computed
       fields at time _t_.
 
-    - Must define the function _side()_,  used to query all side set IDs
-      the user has configured for all components.
-  
     - Must define the static function _prescribedVelocity()_, used to query the
       prescribed velocity at a point.
 */

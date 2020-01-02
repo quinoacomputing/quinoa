@@ -41,10 +41,6 @@ class TransportProblemGaussHump {
     //! Do error checking on PDE parameters
     void errchk( ncomp_t, ncomp_t ) const {}
 
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    void side( std::unordered_set< int >& conf ) const;
-
     //! Assign prescribed velocity at a point
     static std::vector< std::array< tk::real, 3 > >
     prescribedVelocity( ncomp_t,
