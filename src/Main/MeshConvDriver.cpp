@@ -24,7 +24,7 @@ using meshconv::MeshConvDriver;
 extern CProxy_Main mainProxy;
 
 MeshConvDriver::MeshConvDriver( const ctr::CmdLine& cmdline ) :
-  m_print( cmdline.get< tag::io, tag::screen >(),
+  m_print( tk::meshconv_executable() + "_screen.log",
            cmdline.get< tag::verbose >() ? std::cout : std::clog,
            std::ios_base::app ),
   m_reorder( cmdline.get< tag::reorder >() ),

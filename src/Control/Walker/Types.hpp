@@ -79,7 +79,6 @@ using ios = tk::TaggedTuple< brigand::list<
     tag::control,   kw::control::info::expect::type //!< Control filename
   , tag::input,     std::string                     //!< Input filename
   , tag::output,    std::string                     //!< Output filename
-  , tag::screen,    std::string                     //!< Screen output filename
   , tag::pdf,       kw::pdf::info::expect::type     //!< PDF filename
   , tag::stat,      kw::stat::info::expect::type    //!< Statistics filename
   , tag::pdfnames,  std::vector< std::string >      //!< PDF identifiers

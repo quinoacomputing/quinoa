@@ -121,10 +121,10 @@ using intervals = tk::TaggedTuple< brigand::list<
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
     tag::control,   kw::control::info::expect::type //!< Control filename
-  , tag::input,     std::string                     //!< Input filename
-  , tag::output,    std::string                     //!< Output filename
-  , tag::screen,    std::string                     //!< Screen output filename
-  , tag::diag,      std::string                     //!< Diagnostics filename
+  , tag::input,     kw::input::info::expect::type   //!< Input filename
+  , tag::output,    kw::output::info::expect::type  //!< Output filename
+    //! Diagnostics filename
+  , tag::diag,      kw::diagnostics_cmd::info::expect::type
   , tag::part,      std::string                     //!< Particles filename
   , tag::restart,   std::string                     //!< Restart dirname
 > >;

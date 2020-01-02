@@ -39,7 +39,7 @@ InciterDriver::InciterDriver( const ctr::CmdLine& cmdline )
   // All global-scope data to be migrated to all PEs initialized here (if any)
 
   // Create pretty printer
-  InciterPrint print( cmdline.get< tag::io, tag::screen >(),
+  InciterPrint print( tk::inciter_executable() + "_screen.log",
                       cmdline.get< tag::verbose >() ? std::cout : std::clog,
                       std::ios_base::app );
 

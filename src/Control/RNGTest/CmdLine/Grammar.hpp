@@ -96,8 +96,7 @@ namespace cmd {
                      trace,
                      version,
                      license,
-                     io< kw::control, tag::control >,
-                     io< kw::screen, tag::screen > > {};
+                     io< kw::control, tag::control > > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :

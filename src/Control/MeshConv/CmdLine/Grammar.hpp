@@ -95,9 +95,7 @@ namespace cmd {
                      version,
                      license,
                      io< kw::input, tag::input >,
-                     io< kw::output, tag::output >,
-                     io< kw::screen, tag::screen >
-                   > {};
+                     io< kw::output, tag::output > > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :

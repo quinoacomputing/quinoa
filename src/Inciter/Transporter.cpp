@@ -273,8 +273,6 @@ Transporter::info( const InciterPrint& print )
     ".e-s.<meshid>.<numchares>.<chareid>" );
   print.item( "Diagnostics file",
               g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
-  print.item( "Screen output file",
-              g_inputdeck.get< tag::cmd, tag::io, tag::screen >() );
   print.item( "Checkpoint/restart directory",
               g_inputdeck.get< tag::cmd, tag::io, tag::restart >() + '/' );
 
