@@ -22,6 +22,8 @@
 #include <limits>
 #include <cmath>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "Macro.hpp"
 #include "Transporter.hpp"
 #include "Fields.hpp"
@@ -31,11 +33,13 @@
 #include "ContainerUtil.hpp"
 #include "LoadDistributor.hpp"
 #include "MeshReader.hpp"
+#include "Inciter/Types.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "NodeDiagnostics.hpp"
 #include "ElemDiagnostics.hpp"
 #include "DiagWriter.hpp"
 #include "Callback.hpp"
+#include "CartesianProduct.hpp"
 
 #include "NoWarning/inciter.decl.h"
 #include "NoWarning/partitioner.decl.h"
@@ -293,6 +297,47 @@ Transporter::info()
   m_print.endsubsection();
 }
 
+bool
+Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
+// *****************************************************************************
+ // Verify boundary condition (BC) side sets used exist in mesh file
+ //! \details This function does two things: (1) it verifies that the side
+ //!   sets to which boundary conditions (BC) are assigned by the user in the
+ //!   input file all exist among the side sets read from the input mesh
+ //!   file and errors out if at least one does not, and (2) it matches the
+ //!   side set ids at which the user has configured BCs to side set ids read
+ //!   from the mesh file and removes those face and node lists associated
+ //!   to side sets that the user did not set BCs on (as they will not need
+ //!   processing further since they will not be used).
+ //! \param[in,out] bnd Node or face lists mapped to side set ids
+ //! \return True if BCs have been set on sidesets found
+// *****************************************************************************
+ {
+   // Query side set ids at which BCs assigned for all BC types for all PDEs
+   using PDEsBCs =
+     tk::cartesian_product< ctr::parameters::Keys, ctr::bc::Keys >;
+   std::unordered_set< int > userbc;
+   brigand::for_each< PDEsBCs >( UserBC( g_inputdeck, userbc ) );
+
+   // Find user-configured side set ids among side sets read from mesh file
+   std::unordered_set< int > sidesets_as_bc;
+   for (auto i : userbc) {   // for all side sets at which BCs are assigned
+     if (bnd.find(i) != end(bnd))  // user BC found among side sets in file
+       sidesets_as_bc.insert( i );  // store side set id configured as BC
+     else {
+       Throw( "Boundary conditions specified on side set " +
+         std::to_string(i) + " which does not exist in mesh file" );
+     }
+   }
+
+   // Remove sidesets not configured as BCs (will not process those further)
+   tk::erase_if( bnd, [&]( auto& item ) {
+     return sidesets_as_bc.find( item.first ) == end(sidesets_as_bc);
+   });
+
+   return !bnd.empty();
+ }
+
 void
 Transporter::createPartitioner()
 // *****************************************************************************
@@ -320,15 +365,15 @@ Transporter::createPartitioner()
   if (centering == tk::Centering::ELEM) {
 
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    bcs_set = matchBCs( g_dgpde, bface );
+    bcs_set = matchBCs( bface );
 
   } else if (centering == tk::Centering::NODE) {
 
     // Read node lists on side sets
     bnode = mr.readSidesetNodes();
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    bcs_set = matchBCs( g_cgpde, bnode );
-    bcs_set = bcs_set || matchBCs( g_cgpde, bface );
+    bcs_set = matchBCs( bnode );
+    bcs_set = bcs_set || matchBCs( bface );
   }
 
   // Warn on no BCs

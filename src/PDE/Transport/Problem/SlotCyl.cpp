@@ -110,21 +110,6 @@ TransportProblemSlotCyl::solution( ncomp_t, ncomp_t ncomp,
   return s;
 }
 
-void
-TransportProblemSlotCyl::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param; using tag::bcdir;
-
-  for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-}
-
 std::vector< std::array< tk::real, 3 > >
 TransportProblemSlotCyl::prescribedVelocity( ncomp_t, ncomp_t ncomp,
                                              tk::real x, tk::real y, tk::real )
