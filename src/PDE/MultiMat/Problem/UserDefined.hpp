@@ -79,15 +79,6 @@ class MultiMatProblemUserDefined {
       return n;
     }
 
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    static void side( std::unordered_set< int >& conf ) {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
-        conf.insert( std::stoi(s[0]) );
-    }
-
     //! Return field output going to file
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems

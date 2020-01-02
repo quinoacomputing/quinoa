@@ -132,6 +132,24 @@ using diagnostics = tk::TaggedTuple< brigand::list<
   tag::error,       std::vector< tk::ctr::ErrorType > //!< Errors to compute
 > >;
 
+//! Boundary condition configuration
+using bc = tk::TaggedTuple< brigand::list<
+    tag::bcdir,             std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcsym,             std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcinlet,           std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcoutlet,          std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcextrapolate,     std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcsubsonicoutlet,  std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcextrapolate,     std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+> >;
+
 //! Transport equation parameters storage
 using TransportPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
@@ -143,16 +161,7 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
                         kw::pde_lambda::info::expect::type > >
   , tag::u0,            std::vector< std::vector<
                         kw::pde_u0::info::expect::type > >
-  , tag::bcdir,         std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
-  , tag::bcsym,         std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
-  , tag::bcinlet,       std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
-  , tag::bcoutlet,      std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
-  , tag::bcextrapolate, std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
+  , tag::bc,            bc
 > >;
 
 //! Compressible flow equation parameters storage
@@ -160,19 +169,9 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
-  , tag::bcdir,         std::vector< std::vector<
-                          kw::sideset::info::expect::type > >
-  , tag::bcsym,         std::vector< std::vector<
-                          kw::sideset::info::expect::type > >
-  , tag::bcinlet,       std::vector< std::vector<
-                          kw::sideset::info::expect::type > >
-  , tag::bcsubsonicoutlet,
-                        std::vector< std::vector<
-                          kw::sideset::info::expect::type > >
-  , tag::farfield_pressure,
-                        std::vector< kw::farfield_pressure::info::expect::type >
-  , tag::bcextrapolate, std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
+  , tag::bc,            bc
+  , tag::farfield_pressure, std::vector<
+                              kw::farfield_pressure::info::expect::type >
   //! System FCT character
   , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system
@@ -222,16 +221,7 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
-  , tag::bcdir,         std::vector< std::vector<
-                       kw::sideset::info::expect::type > >
-  , tag::bcsym,         std::vector< std::vector<
-                       kw::sideset::info::expect::type > >
-  , tag::bcinlet,       std::vector< std::vector<
-                        kw::sideset::info::expect::type > >
-  , tag::bcoutlet,      std::vector< std::vector<
-                        kw::sideset::info::expect::type > >
-  , tag::bcextrapolate, std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
+  , tag::bc,            bc
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)

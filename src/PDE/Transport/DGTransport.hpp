@@ -69,7 +69,7 @@ class Transport {
     std::vector< bcconf_t >
     config( ncomp_t c ) {
       std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, eq, bctag >();
+      const auto& v = g_inputdeck.get< tag::param, eq, tag::bc, bctag >();
       if (v.size() > c) bc = v[c];
       return bc;
     }
@@ -315,12 +315,6 @@ class Transport {
       tk::real mindt = std::numeric_limits< tk::real >::max();
       return mindt;
     }
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { m_problem.side( conf ); }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
