@@ -157,10 +157,6 @@ class DGPDE {
                  const std::size_t nielem ) const
     { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U, P, nielem ); }
 
-    //! \brief Public interface for collecting all side set IDs the user has
-    //!   configured for all components of a PDE system
-    void side( std::unordered_set< int >& conf ) const { self->side( conf ); }
-
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
 
@@ -252,7 +248,6 @@ class DGPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::size_t ) const = 0;
-      virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
@@ -335,8 +330,6 @@ class DGPDE {
                    const tk::Fields& P,
                    const std::size_t nielem ) const override
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U, P, nielem ); }
-      void side( std::unordered_set< int >& conf ) const override
-      { data.side( conf ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
       std::vector< std::string > names() const override

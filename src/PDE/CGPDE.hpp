@@ -191,10 +191,6 @@ class CGPDE {
                  const tk::Fields& U ) const
     { return self->dt( coord, inpoel, U ); }
 
-    //! \brief Public interface for collecting all side set IDs the user has
-    //!   configured for all components of a PDE system
-    void side( std::unordered_set< int >& conf ) const { self->side( conf ); }
-
     //! \brief Public interface for querying Dirichlet boundary condition values
     //!  set by the user on a given side set for all components in a PDE system
     std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
@@ -292,7 +288,6 @@ class CGPDE {
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
-      virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual
       std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
       dirbc( tk::real,
@@ -367,8 +362,6 @@ class CGPDE {
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
       { return data.dt( coord, inpoel, U ); }
-      void side( std::unordered_set< int >& conf ) const override
-      { data.side( conf ); }
       std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
       dirbc( tk::real t,
              tk::real deltat,

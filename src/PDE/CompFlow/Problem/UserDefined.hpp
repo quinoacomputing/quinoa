@@ -45,10 +45,6 @@ class CompFlowProblemUserDefined {
     //! Return field names to be output to file
     std::vector< std::string > fieldNames( ncomp_t ) const;
 
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    void side( std::unordered_set< int >& conf ) const;
-
     //! Return field output going to file
     std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t,

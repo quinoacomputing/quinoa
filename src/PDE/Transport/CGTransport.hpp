@@ -453,12 +453,6 @@ class Transport {
       return mindt;
     }
 
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { m_problem.side( conf ); }
-
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
     //! \param[in] t Physical time
@@ -479,7 +473,7 @@ class Transport {
       using tag::param; using tag::transport; using tag::bcdir;
       using NodeBC = std::vector< std::pair< bool, tk::real > >;
       std::map< std::size_t, NodeBC > bc;
-      const auto& ubc = g_inputdeck.get< param, transport, bcdir >();
+      const auto& ubc = g_inputdeck.get< param, transport, tag::bc, bcdir >();
       if (!ubc.empty()) {
         Assert( ubc.size() > m_system, "Indexing out of Dirichlet BC eq-vector" );
         const auto& x = coord[0];
@@ -515,7 +509,7 @@ class Transport {
                 std::unordered_set< std::size_t >& nodes ) const
     {
       using tag::param; using tag::transport; using tag::bcsym;
-      const auto& bc = g_inputdeck.get< param, transport, bcsym >();
+      const auto& bc = g_inputdeck.get< param, transport, tag::bc, bcsym >();
       if (!bc.empty() && bc.size() > m_system) {
         const auto& ss = bc[ m_system ];// side sets with sym bcs specified
         for (const auto& s : ss) {

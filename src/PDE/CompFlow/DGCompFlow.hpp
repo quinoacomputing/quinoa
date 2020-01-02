@@ -71,7 +71,7 @@ class CompFlow {
     std::vector< bcconf_t >
     config( ncomp_t c ) {
       std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, eq, bctag >();
+      const auto& v = g_inputdeck.get< tag::param, eq, tag::bc, bctag >();
       if (v.size() > c) bc = v[c];
       return bc;
     }
@@ -563,12 +563,6 @@ class CompFlow {
       return v;
     }
 
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { m_problem.side( conf ); }
-
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const
@@ -838,8 +832,8 @@ class CompFlow {
                     tk::real, tk::real, tk::real, tk::real,
                     const std::array< tk::real, 3 >& )
     {
-      auto fp =
-        g_inputdeck.get< tag::param, eq, tag::farfield_pressure >()[ system ];
+      using tag::param; using tag::bc; using tag::farfield_pressure;
+      auto fp = g_inputdeck.get< param, eq, farfield_pressure >()[ system ];
 
       auto ur = ul;
       auto u_l = ul[1] / ul[0];

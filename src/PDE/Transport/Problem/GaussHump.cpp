@@ -49,41 +49,9 @@ TransportProblemGaussHump::solution( ncomp_t system, ncomp_t ncomp,
     auto y0 = 0.25 + vel[c][1]*t;
 
     // hump
-    s[c] = 1.0 * exp( -((x-x0)*(x-x0)
-                 + (y-y0)*(y-y0))/(2.0 * 0.005) );
+    s[c] = 1.0 * exp( -((x-x0)*(x-x0) + (y-y0)*(y-y0))/(2.0 * 0.005) );
   }
   return s;
-}
-
-void
-TransportProblemGaussHump::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param;
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcinlet >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcoutlet >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcextrapolate >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcdir >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcsym >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
 }
 
 std::vector< std::array< tk::real, 3 > >

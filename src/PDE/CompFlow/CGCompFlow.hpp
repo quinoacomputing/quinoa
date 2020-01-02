@@ -665,12 +665,6 @@ class CompFlow {
       return v;
     }
 
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { m_problem.side( conf ); }
-
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
     //! \param[in] t Physical time
@@ -691,7 +685,7 @@ class CompFlow {
       using tag::param; using tag::compflow; using tag::bcdir;
       using NodeBC = std::vector< std::pair< bool, tk::real > >;
       std::map< std::size_t, NodeBC > bc;
-      const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
+      const auto& ubc = g_inputdeck.get< param, compflow, tag::bc, bcdir >();
       if (!ubc.empty()) {
         Assert( ubc.size() > 0, "Indexing out of Dirichlet BC eq-vector" );
         const auto& x = coord[0];
@@ -739,7 +733,7 @@ class CompFlow {
                 std::unordered_set< std::size_t >& nodes ) const
     {
       using tag::param; using tag::compflow; using tag::bcsym;
-      const auto& bc = g_inputdeck.get< param, compflow, bcsym >();
+      const auto& bc = g_inputdeck.get< param, compflow, tag::bc, bcsym >();
       if (!bc.empty() && bc.size() > m_system) {
         const auto& ss = bc[ m_system ];// side sets with sym bcs specified
         for (const auto& s : ss) {

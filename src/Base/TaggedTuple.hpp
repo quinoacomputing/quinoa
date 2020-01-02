@@ -57,9 +57,11 @@ class TaggedTuple{
     //! List of member types
     using Data = typename Pair::first_type;
 
+  public:
     //! List of keys
     using Keys = typename Pair::second_type;
 
+  private:
     //! Tuple of member types
     using Tuple = brigand::as_tuple< Data >;
 
