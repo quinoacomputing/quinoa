@@ -70,8 +70,7 @@ assess( const tk::Print& print,
 // *****************************************************************************
 {
   if (!nfail && !nwarn && !nskip && !nexcp) {
-    print.note< tk::QUIET >
-              ( "All " + std::to_string(ncomplete) + " tests passed" );
+    print.note( "All " + std::to_string(ncomplete) + " tests passed" );
   } else {
     std::string skip, warn, fail, excp;
     if (nwarn) warn = "finished with a warning: " + std::to_string(nwarn);
@@ -81,8 +80,7 @@ assess( const tk::Print& print,
                       "threw exception: " + std::to_string(nexcp);
     if (nfail) fail = std::string(nexcp || nskip || nwarn ?
                       ", " : "") + "failed: " + std::to_string(nfail);
-    print.note< tk::QUIET >
-              ( "Of " + std::to_string(ncomplete) + " tests total: "
+    print.note( "Of " + std::to_string(ncomplete) + " tests total: "
                 + warn + skip + excp + fail );
   }
 

@@ -28,7 +28,6 @@ using namespace tao;
 using ios = tk::TaggedTuple< brigand::list<
     tag::input,  std::string   //!< Input filename
   , tag::output, std::string   //!< Output filename
-  , tag::screen, std::string   //!< Screen output filename
 > >;
 
 //! PEGTL location/position type to use throughout all of MeshConv's parsers

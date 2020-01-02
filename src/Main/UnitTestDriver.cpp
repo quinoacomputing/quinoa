@@ -10,7 +10,6 @@
 */
 // *****************************************************************************
 
-#include "UnitTestPrint.hpp"
 #include "UnitTestDriver.hpp"
 #include "UnitTest/CmdLine/CmdLine.hpp"
 #include "QuinoaConfig.hpp"
@@ -26,8 +25,7 @@ extern CProxy_TUTSuite g_suiteProxy;
 
 } // unittest::
 
-UnitTestDriver::UnitTestDriver( const UnitTestPrint&,
-                                const ctr::CmdLine& cmdline )
+UnitTestDriver::UnitTestDriver( const ctr::CmdLine& cmdline )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cmdline Command line object storing data parsed from the command

@@ -214,16 +214,12 @@ class Main : public CBase_Main {
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
-      // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tag::io, tag::screen >(),
-               m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create RNGTest driver
       m_driver( tk::Main< rngtest::RNGTestDriver >
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::RNGTEST,
-                          tk::rngtest_executable(),
-                          m_print ) ),
+                          tk::rngtest_executable() ) ),
       m_timer(1),       // Start new timer measuring the total runtime
       m_timestamp()
     {
@@ -251,7 +247,8 @@ class Main : public CBase_Main {
 
     //! Towards normal exit but collect chare state first (if any)
     void finalize() {
-      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
+      tk::finalize( m_cmdline, m_timer, stateProxy, m_timestamp,
+                    tk::rngtest_executable(),
                     CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
     }
 
@@ -265,14 +262,13 @@ class Main : public CBase_Main {
 
     //! Dump chare state
     void dumpstate( CkReductionMsg* msg ) {
-      tk::dumpstate( m_cmdline, m_print, msg );
+      tk::dumpstate( m_cmdline, tk::rngtest_executable(), msg );
     }
 
   private:
     int m_signal;                               //!< Used to set signal handlers
     rngtest::ctr::CmdLine m_cmdline;            //!< Command line
     rngtest::CmdLineParser m_cmdParser;         //!< Command line parser
-    rngtest::RNGTestPrint m_print;              //!< Pretty printer
     rngtest::RNGTestDriver m_driver;            //!< Driver
     std::vector< tk::Timer > m_timer;           //!< Timers
 

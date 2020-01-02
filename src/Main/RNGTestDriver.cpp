@@ -30,12 +30,12 @@ extern ctr::InputDeck g_inputdeck;
 
 using rngtest::RNGTestDriver;
 
-RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
-                              const ctr::CmdLine& cmdline ) :
-  m_print( print )
+RNGTestDriver::RNGTestDriver( const ctr::CmdLine& cmdline ) :
+  m_print( tk::rngtest_executable() + "_screen.log",
+           cmdline.get< tag::verbose >() ? std::cout : std::clog,
+           std::ios_base::app )
 // *****************************************************************************
 //  Constructor
-//! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 // *****************************************************************************

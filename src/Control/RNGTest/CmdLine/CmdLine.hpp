@@ -60,7 +60,6 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::trace
                                      , kw::version
                                      , kw::license
-                                     , kw::screen
                                      >;
 
     //! Set of tags to ignore when printing this CmdLine
@@ -102,7 +101,6 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //!   otherwise it would be a mutual dependency.
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
-      get< tag::io, tag::screen >() = "screen.log"; // Screen output filename
       get< tag::verbose >() = false; // Use quiet output by default
       get< tag::chare >() = false; // No chare state output by default
       get< tag::trace >() = true; // Output call and stack trace by default

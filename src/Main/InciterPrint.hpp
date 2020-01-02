@@ -99,7 +99,7 @@ class InciterPrint : public tk::Print {
     };
 
     //! Print PDE factory legend
-    void eqlegend();
+    void eqlegend() const;
 
     //! Print equation list with policies
     //! \param[in] t Section title
@@ -140,10 +140,10 @@ class InciterPrint : public tk::Print {
 
     //! Print mesh refinement variables and their indices in the unknown vector
     void refvar( const std::vector< std::string >& rvar,
-                 const std::vector< std::size_t >& refidx );
+                 const std::vector< std::size_t >& refidx ) const;
 
     //! Print initial mesh refinement edge-node pairs
-    void edgeref( const std::vector< std::size_t >& edgenodes );
+    void edgeref( const std::vector< std::size_t >& edgenodes ) const;
 
   private:
     //! Return partial differential equation name

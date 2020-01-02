@@ -341,7 +341,8 @@ class Print {
     void diagend( const std::string& msg ) const
     { stream<s>() << m_diag_end_fmt % msg << std::flush; }
 
-    //! ...
+    //! Print chare state collected
+    //! \param[in] state State map to print
     template< Style s = VERBOSE >
     void charestate( const std::unordered_map< int,
                         std::vector< ChareState > >& state ) const

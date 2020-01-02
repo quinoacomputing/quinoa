@@ -23,14 +23,10 @@ class InciterDriver {
 
   public:
     //! Constructor
-    explicit InciterDriver( const InciterPrint& print,
-                            const ctr::CmdLine& cmdline );
+    explicit InciterDriver( const ctr::CmdLine& cmdline );
 
     //! Execute driver
     void execute() const;
-
-  private:
-    const InciterPrint& m_print;        //!< Pretty printer
 };
 
 } // inciter::

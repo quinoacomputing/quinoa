@@ -37,7 +37,6 @@ using CmdLineMembers = brigand::list<
   , tag::trace,      bool
   , tag::version,    bool
   , tag::license,    bool
-  , tag::screen,     std::string
   , tag::cmdinfo,    tk::ctr::HelpFactory
   , tag::ctrinfo,    tk::ctr::HelpFactory
   , tag::helpkw,     tk::ctr::HelpKw
@@ -79,7 +78,6 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //!   control file parser.
     //! \see walker::ctr::CmdLine
     CmdLine() {
-      get< tag::screen >() = "screen.log"; // Screen output filename
       get< tag::verbose >() = false; // Use quiet output by default
       get< tag::chare >() = false; // No chare state output by default
       get< tag::trace >() = true; // Output call and stack trace by default
