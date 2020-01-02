@@ -113,23 +113,6 @@ MultiMatProblemWaterAirShocktube::src( ncomp_t, ncomp_t ncomp, tk::real,
   return s;
 }
 
-void
-MultiMatProblemWaterAirShocktube::side( std::unordered_set< int >& conf )
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param;
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcextrapolate >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcsym >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
-}
-
 std::vector< std::string >
 MultiMatProblemWaterAirShocktube::fieldNames( ncomp_t )
 // *****************************************************************************

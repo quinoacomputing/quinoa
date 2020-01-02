@@ -288,42 +288,26 @@ class Transporter : public CBase_Transporter {
         std::ios_base::app );
     }
 
-    //! Verify boundary condition (BC) side sets used exist in mesh file
-    //! \details This function does two things: (1) it verifies that the side
-    //!   sets to which boundary conditions (BC) are assigned by the user in the
-    //!   input file all exist among the side sets read from the input mesh
-    //!   file and errors out if at least one does not, and (2) it matches the
-    //!   side set ids at which the user has configured BCs to side set ids read
-    //!   from the mesh file and removes those face and node lists associated
-    //!   to side sets that the user did not set BCs on (as they will not need
-    //!   processing further since they will not be used).
-    //! \tparam Eq Equation type, e.g., CG, DG, used to solve PDEs
-    //! \param[in] pde List of PDE system solved
-    //! \param[in,out] bnd Node or face lists mapped to side set ids
-    //! \return True if BCs have been set on sidesets found
-    template< class Eq >
-    bool matchBCs( const std::vector< Eq >& pde,
-                   std::map< int, std::vector< std::size_t > >& bnd )
-    {
-      // Query side set ids at which BCs assigned for all PDEs
-      std::unordered_set< int > userbc;
-      for (const auto& eq : pde) eq.side( userbc );
-      // Find user-configured side set ids among side sets read from mesh file
-      std::unordered_set< int > sidesets_as_bc;
-      for (auto i : userbc) {   // for all side sets at which BCs are assigned
-        if (bnd.find(i) != end(bnd))  // user BC found among side sets in file
-          sidesets_as_bc.insert( i );  // store side set id configured as BC
-        else {
-          Throw( "Boundary conditions specified on side set " +
-            std::to_string(i) + " which does not exist in mesh file" );
-        }
+    //! Function object for querying the side set ids the user configured
+    //! \details Used to query and collect the side set ids the user has
+    //!   configured for all PDE types querying all BC types. Used on a
+    //!   Carteisan product of 2 type lists: PDE types and BC types.
+    struct UserBC {
+      const ctr::InputDeck& inputdeck;
+      std::unordered_set< int >& userbc;
+      explicit UserBC( const ctr::InputDeck& i, std::unordered_set< int >& u )
+        : inputdeck(i), userbc(u) {}
+      template< typename U > void operator()( brigand::type_<U> ) {
+        using tag::param;
+        using eq = typename brigand::front< U >;
+        using bc = typename brigand::back< U >;
+        for (const auto& s : inputdeck.get< param, eq, tag::bc, bc >())
+          for (const auto& i : s) userbc.insert( std::stoi(i) );
       }
-      // Remove sidesets not configured as BCs (will not process those further)
-      tk::erase_if( bnd, [&]( auto& item ) {
-        return sidesets_as_bc.find( item.first ) == end(sidesets_as_bc);
-      });
-      return !bnd.empty();
-    }
+    };
+
+    //! Verify boundary condition (BC) side sets used exist in mesh file
+    bool matchBCs( std::map< int, std::vector< std::size_t > >& bnd );
 };
 
 } // inciter::

@@ -102,21 +102,6 @@ CompFlowProblemVorticalFlow::src( ncomp_t system, ncomp_t ncomp, tk::real x,
   return r;
 }
 
-void
-CompFlowProblemVorticalFlow::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param; using tag::compflow; using tag::bcdir;
-
-  for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-}
-
 std::vector< std::string >
 CompFlowProblemVorticalFlow::fieldNames( ncomp_t ) const
 // *****************************************************************************
