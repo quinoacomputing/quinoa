@@ -26,7 +26,6 @@ enum class FluxType : uint8_t { LaxFriedrichs
                               , HLLC
                               , UPWIND
                               , AUSM
-                              , Rusanov
                               , HLL
                               };
 
@@ -42,7 +41,6 @@ class Flux : public tk::Toggle< FluxType > {
                                   , kw::hllc
                                   , kw::upwind
                                   , kw::ausm
-                                  , kw::rusanov
                                   , kw::hll
                                   >;
 
@@ -58,7 +56,6 @@ class Flux : public tk::Toggle< FluxType > {
         , { FluxType::HLLC, kw::hllc::name() }
         , { FluxType::UPWIND, kw::upwind::name() }
         , { FluxType::AUSM, kw::ausm::name() }
-        , { FluxType::Rusanov, kw::rusanov::name() }
         , { FluxType::HLL, kw::hll::name() }
         },
         //! keywords -> Enums
@@ -66,7 +63,6 @@ class Flux : public tk::Toggle< FluxType > {
         , { kw::hllc::string(), FluxType::HLLC }
         , { kw::upwind::string(), FluxType::UPWIND }
         , { kw::ausm::string(), FluxType::AUSM }
-        , { kw::rusanov::string(), FluxType::Rusanov }
         , { kw::hll::string(), FluxType::HLL }
         } )
     {}

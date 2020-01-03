@@ -178,7 +178,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::hllc,
                                    kw::upwind,
                                    kw::ausm,
-                                   kw::rusanov,
                                    kw::hll,
                                    kw::limiter,
                                    kw::cweight,
