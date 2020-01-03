@@ -96,7 +96,6 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::scheme, inciter::ctr::SchemeType       //!< Spatial discretization type
   , tag::limiter,inciter::ctr::LimiterType      //!< Limiter type
   , tag::cweight,kw::cweight::info::expect::type//!< WENO central stencil weight
-  , tag::flux,   inciter::ctr::FluxType         //!< Flux function type
   , tag::rdof,   std::size_t          //!< Number of reconstructed solution DOFs
   , tag::ndof,   std::size_t                   //!< Number of solution DOFs
 > >;
@@ -214,6 +213,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
                           std::vector< kw::mat_k::info::expect::type > >
     //! total number of optional passive tracker particles for visualization
   , tag::npar,          std::vector< kw::npar::info::expect::type >
+    //! Flux function type
+  , tag::flux,          std::vector< FluxType >
 > >;
 
 //! Compressible flow equation parameters storage
@@ -262,6 +263,8 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   //! pressure relaxation time scale
   , tag::prelax_timescale,
                       std::vector< kw::prelax_timescale::info::expect::type >
+    //! Flux function type
+  , tag::flux,          std::vector< FluxType >
 > >;
 
 //! Parameters storage

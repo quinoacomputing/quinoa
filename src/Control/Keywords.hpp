@@ -5759,6 +5759,19 @@ struct ausm_info {
 };
 using ausm = keyword< ausm_info, TAOCPP_PEGTL_STRING("ausm") >;
 
+struct hll_info {
+  static std::string name() { return "HLL"; }
+  static std::string shortDescription() { return
+    "Select the Harten-Lax-vanLeer (HLL) flux function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the HLL flux
+    function used for discontinuous Galerkin (DG) spatial discretization
+    used in inciter. It is only used for for multi-material hydro, it is thus
+    not selectable for anything else, and for multi-material hydro it is the
+    hardcoded flux type.)"; }
+};
+using hll = keyword< hll_info, TAOCPP_PEGTL_STRING("hll") >;
+
 struct flux_info {
   static std::string name() { return "Flux function"; }
   static std::string shortDescription() { return
@@ -5773,7 +5786,8 @@ struct flux_info {
       return '\'' + laxfriedrichs::string() + "\' | \'"
                   + hllc::string() + "\' | \'"
                   + upwind::string() + "\' | \'"
-                  + ausm::string() + '\'';
+                  + ausm::string() + "\' | \'"
+                  + hll::string() + '\'';
     }
   };
 };
