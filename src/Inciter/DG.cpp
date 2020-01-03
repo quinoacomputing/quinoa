@@ -1494,8 +1494,6 @@ DG::dt()
       }
 
       mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
-
-      if (d->It()<=10) mindt *= static_cast<double>(d->It()+1) * 0.01;
     }
   }
   else
