@@ -284,9 +284,9 @@ class MultiMat {
             screenout();
           }
         }
-
-        if (neg_density) Throw("Negative partial density.");
       }
+
+      if (neg_density) Throw("Negative partial density.");
     }
 
     //! Reconstruct second-order solution from first-order
