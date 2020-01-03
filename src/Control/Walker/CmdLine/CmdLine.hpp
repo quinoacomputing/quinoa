@@ -71,8 +71,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
       brigand::set< tag::cmdinfo
                   , tag::ctrinfo
                   , tag::helpkw
-                  , tag::pdfnames  // printed with InputDeck instead
-                  , tag::error >;
+                  , tag::pdfnames >;  // printed with InputDeck instead
 
     //! \brief Constructor: set all defaults.
     //! \param[in] ctrinfo std::map of control file keywords and their info

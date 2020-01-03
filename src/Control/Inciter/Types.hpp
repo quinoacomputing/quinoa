@@ -103,7 +103,8 @@ using discretization = tk::TaggedTuple< brigand::list<
 
 //! ASCII output floating-point precision in digits
 using precision = tk::TaggedTuple< brigand::list<
-    tag::diag, kw::precision::info::expect::type //!< Diagnostics output precision
+    //! Diagnostics output precision
+    tag::diag, kw::precision::info::expect::type
 > >;
 
 //! ASCII output floating-point format

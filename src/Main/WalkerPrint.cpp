@@ -100,7 +100,7 @@ WalkerPrint::stats( const std::string& msg ) const
 
   if (!c.empty() && c != g_inputdeck_defaults.get< tag::stat >()) {
     m_stream << m_item_name_fmt % m_item_indent % msg;
-    for (auto& v : c) m_stream << v;
+    for (const auto& v : c) m_stream << v << ' ';
     m_stream << '\n';
   }
 

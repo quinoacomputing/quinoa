@@ -16,6 +16,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <map>
+
+#include "Has.hpp"
 
 namespace tk {
 
@@ -27,12 +30,12 @@ template< typename Enum, typename Ch, typename Tr,
           typename std::enable_if_t< std::is_enum_v<Enum>, int > = 0 >
 inline std::basic_ostream< Ch, Tr >&
 operator<< ( std::basic_ostream< Ch, Tr >& os, const Enum& e ) {
-  os << static_cast< std::underlying_type_t< Enum> >( e );
+  os << static_cast< unsigned int >( e );
   return os;
 }
 
 //! Operator << for writing a std::vector to an output stream
-//! \param[in] os Output stream into which t is written
+//! \param[in] os Output stream to write to
 //! \param[in] v Vector to write to stream
 //! \return Updated output stream for chain-use of the operator
 template< class T, typename Ch, typename Tr >
@@ -42,6 +45,23 @@ operator<< ( std::basic_ostream< Ch, Tr >& os, const std::vector< T >& v ) {
   os << "[ ";
   for (const auto& p : v) os << p << ' ';
   os << ']';
+  return os;
+}
+
+//! Operator << for writing an std::map to an output stream
+//! \param[in] os Output stream to write to
+//! \param[in] m Map to write to stream
+//! \return Updated output stream for chain-use of the operator
+template< typename Ch, typename Tr,
+          class Key, class Value, class Compare = std::less< Key > >
+inline std::basic_ostream< Ch, Tr >&
+operator<< ( std::basic_ostream< Ch, Tr >& os,
+             const std::map< Key, Value, Compare >& m )
+{
+  if constexpr( tk::HasTypedef_i_am_tagged_tuple_v< Value > )
+    for (const auto& [k,v] : m) os << '(' << k << ") : { " << v << "} ";
+  else
+    for (const auto& [k,v] : m) os << '(' << k << ") " << v << ' ';
   return os;
 }
 

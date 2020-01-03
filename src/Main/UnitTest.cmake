@@ -29,6 +29,7 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Base/TestPrintUtil.cpp
                ../../tests/unit/Base/TestTaggedTuple.cpp
                ../../tests/unit/Base/TestTaggedTuplePrint.cpp
+               ../../tests/unit/Base/TestTaggedTupleDeepPrint.cpp
                ../../tests/unit/Base/TestTimer.cpp
                ../../tests/unit/Base/TestVector.cpp
                ../../tests/unit/Base/TestWriter.cpp
@@ -41,7 +42,6 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Control/TestStringParser.cpp
                ../../tests/unit/Control/TestSystemComponents.cpp
                ../../tests/unit/Control/TestToggle.cpp
-               ../../tests/unit/Control/TestCmdLinePrint.cpp
                ../../tests/unit/${TestScheme}
                ../../tests/unit/${TestError}
                ../../tests/unit/IO/TestExodusIIMeshReader.cpp

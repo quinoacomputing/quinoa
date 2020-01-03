@@ -14,7 +14,7 @@
 #include "Tags.hpp"
 #include "FileConvDriver.hpp"
 #include "FileConvWriter.hpp"
-#include "CmdLinePrint.hpp"
+#include "TaggedTupleDeepPrint.hpp"
 #include "Writer.hpp"
 
 #include "NoWarning/fileconv.decl.h"
@@ -39,7 +39,7 @@ FileConvDriver::FileConvDriver( const ctr::CmdLine& cmdline )
   // Output command line object to file
   auto logfilename = tk::fileconv_executable() + "_input.log";
   tk::Writer log( logfilename );
-  tk::print( log.stream(), cmdline );
+  tk::print( log.stream(), "cmdline", cmdline );
 }
 
 void

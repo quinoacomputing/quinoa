@@ -40,6 +40,19 @@ template < typename T >
 inline constexpr bool HasTypedef_code_v = HasTypedef_code< T >::value;
 
 
+//! Detect if a type defines type 'i_am_tagged_tuple'
+template< typename, typename = std::void_t<> >
+struct HasTypedef_i_am_tagged_tuple : std::false_type {};
+
+template< typename T >
+struct HasTypedef_i_am_tagged_tuple< T,
+  std::void_t< typename T::i_am_tagged_tuple > > : std::true_type {};
+
+template < typename T >
+inline constexpr bool HasTypedef_i_am_tagged_tuple_v =
+  HasTypedef_i_am_tagged_tuple< T >::value;
+
+
 //! Detect if a type defines function 'expect::description()'
 template< typename, typename = std::void_t<> >
 struct HasFunction_expect_description : std::false_type {};

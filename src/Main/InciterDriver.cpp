@@ -15,7 +15,7 @@
 #include "Inciter/InputDeck/Parser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "CmdLinePrint.hpp"
+#include "TaggedTupleDeepPrint.hpp"
 #include "Writer.hpp"
 
 #include "NoWarning/transporter.decl.h"
@@ -64,17 +64,17 @@ InciterDriver::InciterDriver( const ctr::CmdLine& cmdline )
   print.item( "Checkpoint/restart frequency, -" + *kw::rsfreq::alias(),
                std::to_string(cmdline.get< tag::rsfreq >()) );
 
-  // Output command line object to file
-  auto logfilename = tk::inciter_executable() + "_input.log";
-  tk::Writer log( logfilename );
-  tk::print( log.stream(), cmdline );
-
   // Parse input deck into g_inputdeck
   print.item( "Control file", cmdline.get< tag::io, tag::control >() );
   g_inputdeck = g_inputdeck_defaults;   // overwrite with defaults if restarted
   InputDeckParser inputdeckParser( print, cmdline, g_inputdeck );
   print.item( "Parsed control file", "success" );
   print.endpart();
+
+  // Output command line object to file
+  auto logfilename = tk::inciter_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), "inputdeck", g_inputdeck );
 }
 
 void

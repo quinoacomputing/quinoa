@@ -84,8 +84,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     using ignore =
       brigand::set< tag::cmdinfo
                   , tag::ctrinfo
-                  , tag::helpkw
-                  , tag::error >;
+                  , tag::helpkw >;
 
     //! \brief Constructor: set all defaults.
     //! \param[in] ctrinfo std::map of control file keywords and their info

@@ -14,7 +14,7 @@
 #include "Tags.hpp"
 #include "MeshConvDriver.hpp"
 #include "MeshFactory.hpp"
-#include "CmdLinePrint.hpp"
+#include "TaggedTupleDeepPrint.hpp"
 #include "Writer.hpp"
 
 #include "NoWarning/meshconv.decl.h"
@@ -46,7 +46,7 @@ MeshConvDriver::MeshConvDriver( const ctr::CmdLine& cmdline ) :
   // Output command line object to file
   auto logfilename = tk::meshconv_executable() + "_input.log";
   tk::Writer log( logfilename );
-  tk::print( log.stream(), cmdline );
+  tk::print( log.stream(), "cmdline", cmdline );
 }
 
 void

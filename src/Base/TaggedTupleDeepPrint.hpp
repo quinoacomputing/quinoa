@@ -1,16 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/Control/CmdLinePrint.hpp
+  \file      src/Base/TaggedTupleDeepPrint.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     CmdLine-specific pretty printer functionality
-  \details   CmdLine-specific pretty printer functionality.
+  \brief     Structured TaggedTuple printer with depth/indentation
+  \details   Structured TaggedTuple printer with depth/indentation.
 */
 // *****************************************************************************
-#ifndef CmdLinePrint_h
-#define CmdLinePrint_h
+#ifndef TaggedTupleDeepPrint_h
+#define TaggedTupleDeepPrint_h
 
 #include <ostream>
 
@@ -20,8 +20,16 @@
 #include "NoWarning/format.hpp"
 #include "NoWarning/set.hpp"
 
-#include "TaggedTuple.hpp"
+#include "Has.hpp"
+
+// The include order here is important: it populates the overloads of
+// operator<< for various types, followed by TaggedTuple, the (simple)
+// TaggedTuplePrint (which will be accessible by the upstream, simpler
+// operator<< for vector, map, etc.) and finally, the most complex TaggedTuple
+// printer with depth, defined below.
 #include "PrintUtil.hpp"
+#include "TaggedTuple.hpp"
+#include "TaggedTuplePrint.hpp"
 
 namespace tk {
 
@@ -54,11 +62,11 @@ struct DeepTuplePrinter {
         using ilist = typename ituple::PairList;
         brigand::for_each< ikeys >(
           DeepTuplePrinter< ilist, Ignore >( os, value, ++depth ) );
-        os << " }";
+        os << '\n' << indent << '}';
         --depth;
       } else {
         std::string indent( depth * 2, ' ' );
-        os << boost::format("\n%s%-10s : ") % indent % key;
+        os << boost::format("\n%s%-15s : ") % indent % key;
         os << std::boolalpha << value;
       }
     }
@@ -66,25 +74,28 @@ struct DeepTuplePrinter {
 };
 
 //! Output command line object (a TaggedTuple) to file
-//! \tparam CmdLine Command line object type
+//! \tparam Tuple Tuple object type
 //! \param[in,out] os Output stream to print to
+//! \param[in] name Name of (root) Tuple
 //! \param[in] c Command line object to output to file
-template< class CmdLine >
-void print( std::ostream& os, const CmdLine& c ) {
-  using Keys = typename CmdLine::Keys;
-  using Ignore = typename CmdLine::ignore;
-  using List = typename CmdLine::PairList;
+template< class Tuple >
+void print( std::ostream& os, const std::string& name, const Tuple& c ) {
+  static_assert( tk::HasTypedef_i_am_tagged_tuple_v< Tuple > );
+  using Keys = typename Tuple::Keys;
+  using Ignore = typename Tuple::ignore;
+  using List = typename Tuple::PairList;
   os << "# vim: filetype=sh:\n#\n"
         "# Contents of a tagged tuple.\n#\n"
         "# A string in single quotes denotes the name/tag of a (nested)\n"
-        "# tagged tuple. The contents of tuples are enclosed within braces,\n"
-        "# indented, and aligned compared to the parent tuple.\n\n";
-  os << "'cmdline' {";
+        "# tagged tuple. The contents of tuples are enclosed within braces.\n"
+        "# Vectors are enclosed within square brackets. Keys of associative\n"
+        "# containers are in paretheses.\n\n";
+  os << '\'' << name << "' {";
   std::size_t depth = 1;
   brigand::for_each< Keys >( DeepTuplePrinter< List, Ignore >( os, c, depth ) );
-  os << " }";
+  os << "\n}";
 }
 
 } // tk::
 
-#endif // CmdLinePrint_h
+#endif // TaggedTupleDeepPrint_h

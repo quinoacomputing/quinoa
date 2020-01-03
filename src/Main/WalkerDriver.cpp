@@ -16,7 +16,7 @@
 #include "Walker/InputDeck/Parser.hpp"
 #include "Walker/CmdLine/CmdLine.hpp"
 #include "Walker/InputDeck/InputDeck.hpp"
-#include "CmdLinePrint.hpp"
+#include "TaggedTupleDeepPrint.hpp"
 #include "Writer.hpp"
 
 #include "NoWarning/distributor.decl.h"
@@ -53,7 +53,7 @@ WalkerDriver::WalkerDriver( const ctr::CmdLine& cmdline )
   // Output command line object to file
   auto logfilename = tk::walker_executable() + "_input.log";
   tk::Writer log( logfilename );
-  tk::print( log.stream(), cmdline );
+  tk::print( log.stream(), "inputdeck", g_inputdeck );
 
   // Instantiate Distributor chare on PE 0 which drives the time-integration of
   // differential equations via several integrator chares. We only support a
