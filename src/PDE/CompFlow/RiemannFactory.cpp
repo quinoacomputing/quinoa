@@ -19,7 +19,7 @@
 #include "Riemann/HLLC.hpp"
 #include "Riemann/LaxFriedrichs.hpp"
 
-inciter::compflowRiemannFactory
+inciter::CompFlowRiemannFactory
 inciter::compflowRiemannSolvers()
 // *****************************************************************************
 // \brief Register available Riemann solvers for compressible hydrodynamics into
@@ -28,7 +28,7 @@ inciter::compflowRiemannSolvers()
 // *****************************************************************************
 {
   using RiemannSolverList = brigand::list< HLLC, LaxFriedrichs >;
-  compflowRiemannFactory r;
+  CompFlowRiemannFactory r;
   brigand::for_each< RiemannSolverList >( registerRiemannSolver( r ) );
   return r;
 }

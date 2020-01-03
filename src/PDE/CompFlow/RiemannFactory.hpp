@@ -33,16 +33,16 @@ namespace inciter {
 //!   object stored in std::function is a generic (base) class constructor,
 //!   which provides a polymorphyic interface (overridable functions) that
 //!   specific (child) Riemann solvers override, yielding runtime polymorphism.
-using compflowRiemannFactory =
+using CompFlowRiemannFactory =
   std::map< ctr::FluxType, std::function< RiemannSolver() > >;
 
 //! Functor to register a Riemann solver into the Riemann solver factory
 struct registerRiemannSolver {
   //! Factory to which to register the Riemann solver
-  compflowRiemannFactory& factory;
+  CompFlowRiemannFactory& factory;
   //! Constructor
   //! \param[in] f Factory
-  explicit registerRiemannSolver( compflowRiemannFactory& f ) : factory( f ) {}
+  explicit registerRiemannSolver( CompFlowRiemannFactory& f ) : factory( f ) {}
   //! \brief Function call operator templated on the type that implements
   //!   a specific Riemann solver
   template< typename U > void operator()( brigand::type_<U> ) {
@@ -58,7 +58,7 @@ struct registerRiemannSolver {
 };
 
 //! Register available Riemann solvers into a factory
-compflowRiemannFactory compflowRiemannSolvers();
+CompFlowRiemannFactory compflowRiemannSolvers();
 
 } // inciter::
 

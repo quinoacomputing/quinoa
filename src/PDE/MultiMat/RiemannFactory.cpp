@@ -19,7 +19,7 @@
 #include "Riemann/HLL.hpp"
 #include "Riemann/AUSM.hpp"
 
-inciter::multimatRiemannFactory
+inciter::MultiMatRiemannFactory
 inciter::multimatRiemannSolvers()
 // *****************************************************************************
 // \brief Register available Riemann solvers for multimaterial compressible
@@ -28,7 +28,7 @@ inciter::multimatRiemannSolvers()
 // *****************************************************************************
 {
   using RiemannSolverList = brigand::list< AUSM, HLL >;
-  multimatRiemannFactory r;
+  MultiMatRiemannFactory r;
   brigand::for_each< RiemannSolverList >( registerRiemannSolver( r ) );
   return r;
 }
