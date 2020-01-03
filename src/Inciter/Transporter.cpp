@@ -22,6 +22,8 @@
 #include <limits>
 #include <cmath>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "Macro.hpp"
 #include "Transporter.hpp"
 #include "Fields.hpp"
@@ -31,11 +33,13 @@
 #include "ContainerUtil.hpp"
 #include "LoadDistributor.hpp"
 #include "MeshReader.hpp"
+#include "Inciter/Types.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "NodeDiagnostics.hpp"
 #include "ElemDiagnostics.hpp"
 #include "DiagWriter.hpp"
 #include "Callback.hpp"
+#include "CartesianProduct.hpp"
 
 #include "NoWarning/inciter.decl.h"
 #include "NoWarning/partitioner.decl.h"
@@ -65,7 +69,7 @@ Transporter::Transporter() :
   m_meshwriter(),
   m_sorter(),
   m_nelem( 0 ),
-  m_npoin_larger( 0 ),
+  m_npoin( 0 ),
   m_meshvol( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
@@ -154,9 +158,6 @@ Transporter::info()
   if ( !g_inputdeck.get< tag::title >().empty() )
     m_print.title( g_inputdeck.get< tag::title >() );
 
-  // Print out info on settings of selected partial differential equations
-  m_print.pdes( "Partial differential equations integrated", stack.info() );
-
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
@@ -171,14 +172,18 @@ Transporter::info()
   if (scheme == ctr::SchemeType::DiagCG) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
     m_print.item( "Flux-corrected transport (FCT)", fct );
-    if (fct)
+    if (fct) {
       m_print.item( "FCT mass diffusion coeff",
                     g_inputdeck.get< tag::discr, tag::ctau >() );
+      m_print.item( "FCT small number",
+                    g_inputdeck.get< tag::discr, tag::fcteps >() );
+      m_print.item( "Clipping FCT",
+                    g_inputdeck.get< tag::discr, tag::fctclip >() );
+    }
   } else if (scheme == ctr::SchemeType::DG ||
              scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
              scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
   {
-    m_print.Item< ctr::Flux, tag::discr, tag::flux >();
     m_print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
   m_print.item( "PE-locality mesh reordering",
@@ -193,6 +198,9 @@ Transporter::info()
   else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
              std::numeric_limits< tk::real >::epsilon())
     m_print.item( "CFL coefficient", cfl );
+
+  // Print out info on settings of selected partial differential equations
+  m_print.pdes( "Partial differential equations integrated", stack.info() );
 
   // Print out adaptive polynomial refinement configuration
   if (scheme == ctr::SchemeType::PDG) {
@@ -282,6 +290,47 @@ Transporter::info()
   m_print.endsubsection();
 }
 
+bool
+Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
+// *****************************************************************************
+ // Verify boundary condition (BC) side sets used exist in mesh file
+ //! \details This function does two things: (1) it verifies that the side
+ //!   sets to which boundary conditions (BC) are assigned by the user in the
+ //!   input file all exist among the side sets read from the input mesh
+ //!   file and errors out if at least one does not, and (2) it matches the
+ //!   side set ids at which the user has configured BCs to side set ids read
+ //!   from the mesh file and removes those face and node lists associated
+ //!   to side sets that the user did not set BCs on (as they will not need
+ //!   processing further since they will not be used).
+ //! \param[in,out] bnd Node or face lists mapped to side set ids
+ //! \return True if BCs have been set on sidesets found
+// *****************************************************************************
+ {
+   // Query side set ids at which BCs assigned for all BC types for all PDEs
+   using PDEsBCs =
+     tk::cartesian_product< ctr::parameters::Keys, ctr::bc::Keys >;
+   std::unordered_set< int > userbc;
+   brigand::for_each< PDEsBCs >( UserBC( g_inputdeck, userbc ) );
+
+   // Find user-configured side set ids among side sets read from mesh file
+   std::unordered_set< int > sidesets_as_bc;
+   for (auto i : userbc) {   // for all side sets at which BCs are assigned
+     if (bnd.find(i) != end(bnd))  // user BC found among side sets in file
+       sidesets_as_bc.insert( i );  // store side set id configured as BC
+     else {
+       Throw( "Boundary conditions specified on side set " +
+         std::to_string(i) + " which does not exist in mesh file" );
+     }
+   }
+
+   // Remove sidesets not configured as BCs (will not process those further)
+   tk::erase_if( bnd, [&]( auto& item ) {
+     return sidesets_as_bc.find( item.first ) == end(sidesets_as_bc);
+   });
+
+   return !bnd.empty();
+ }
+
 void
 Transporter::createPartitioner()
 // *****************************************************************************
@@ -291,6 +340,9 @@ Transporter::createPartitioner()
   // Create mesh reader for reading side sets from file
   tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
+  // Read out total number of mesh points from mesh file
+  m_npoin = mr.npoin();
+
   std::map< int, std::vector< std::size_t > > bface;
   std::map< int, std::vector< std::size_t > > faces;
   std::map< int, std::vector< std::size_t > > bnode;
@@ -298,17 +350,27 @@ Transporter::createPartitioner()
   // Read boundary (side set) data from input file
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
+
+  // Read boundary-face connectivity on side sets
+  mr.readSidesetFaces( bface, faces );
+
+  bool bcs_set = false;
   if (centering == tk::Centering::ELEM) {
-    // Read boundary-face connectivity on side sets
-    mr.readSidesetFaces( bface, faces );
+
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    matchBCs( g_dgpde, bface );
+    bcs_set = matchBCs( bface );
+
   } else if (centering == tk::Centering::NODE) {
+
     // Read node lists on side sets
     bnode = mr.readSidesetNodes();
     // Verify boundarty condition (BC) side sets used exist in mesh file
-    matchBCs( g_cgpde, bnode );
+    bcs_set = matchBCs( bnode );
+    bcs_set = bcs_set || matchBCs( bface );
   }
+
+  // Warn on no BCs
+  if (!bcs_set) m_print << "\n>>> WARNING: No boundary conditions set\n\n";
 
   // Create partitioner callbacks (order matters)
   tk::PartitionerCallback cbp {{
@@ -320,7 +382,8 @@ Transporter::createPartitioner()
 
   // Create refiner callbacks (order matters)
   tk::RefinerCallback cbr {{
-      CkCallback( CkReductionTarget(Transporter,edges), thisProxy )
+      CkCallback( CkReductionTarget(Transporter,queriedRef), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,respondedRef), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,compatibility), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,bndint), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,matched), thisProxy )
@@ -360,17 +423,12 @@ Transporter::createPartitioner()
 }
 
 void
-Transporter::load( std::size_t nelem, std::size_t npoin )
+Transporter::load( std::size_t nelem )
 // *****************************************************************************
 // Reduction target: the mesh has been read from file on all PEs
 //! \param[in] nelem Total number of mesh elements (summed across all PEs)
-//! \param[in] npoin Total number of mesh nodes (summed across all PEs). Note
-//!    that in parallel this is larger than the total number of points in the
-//!    mesh, because the boundary nodes are double-counted.
 // *****************************************************************************
 {
-  m_npoin_larger = npoin;
-
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
   uint64_t chunksize, remainder;
@@ -383,10 +441,6 @@ Transporter::load( std::size_t nelem, std::size_t npoin )
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
   m_print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
 
-  // Print out mesh graph stats
-  m_print.section( "Input mesh graph statistics" );
-  m_print.item( "Number of tetrahedra", nelem );
-
   // Print out mesh partitioning configuration
   m_print.section( "Mesh partitioning" );
   m_print.Item< tk::ctr::PartitioningAlgorithm,
@@ -397,6 +451,7 @@ Transporter::load( std::size_t nelem, std::size_t npoin )
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
   m_print.item( "Number of tetrahedra", nelem );
+  m_print.item( "Number of points", m_npoin );
   m_print.item( "Number of work units", m_nchare );
 
   m_print.endsubsection();
@@ -456,7 +511,16 @@ Transporter::refinserted( int error )
 }
 
 void
-Transporter::edges()
+Transporter::queriedRef()
+// *****************************************************************************
+// Reduction target: all Sorter chares have queried their boundary nodes
+// *****************************************************************************
+{
+  m_refiner.response();
+}
+
+void
+Transporter::respondedRef()
 // *****************************************************************************
 // Reduction target: all mesh refiner chares have setup their boundary edges
 // *****************************************************************************
@@ -581,9 +645,8 @@ Transporter::refined( std::size_t nelem, std::size_t npoin )
   m_sorter.doneInserting();
 
   m_nelem = nelem;
-  m_npoin_larger = npoin;
 
-  m_sorter.setup( m_npoin_larger );
+  m_sorter.setup( npoin );
 }
 
 void
@@ -966,9 +1029,15 @@ Transporter::checkpoint( tk::real it, tk::real t )
   m_it = static_cast< uint64_t >( it );
   m_t = t;
 
-  const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
-  CkCallback res( CkIndex_Transporter::resume(), thisProxy );
-  CkStartCheckpoint( restart.c_str(), res );
+  const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
+
+  if (!benchmark) {
+    const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
+    CkCallback res( CkIndex_Transporter::resume(), thisProxy );
+    CkStartCheckpoint( restart.c_str(), res );
+  } else {
+    resume();
+  }
 }
 
 void

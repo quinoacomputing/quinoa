@@ -20,13 +20,14 @@ module transporter {
 
     chare [migratable] Transporter {
       entry Transporter();
-      entry [reductiontarget] void load( std::size_t nelem, std::size_t npoin );
+      entry [reductiontarget] void load( std::size_t nelem );
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void refinserted( int error );
       entry [reductiontarget] void discinserted();
       entry [reductiontarget] void disccreated();
       entry [reductiontarget] void workinserted();
-      entry [reductiontarget] void edges();
+      entry [reductiontarget] void queriedRef();
+      entry [reductiontarget] void respondedRef();
       entry [reductiontarget] void compatibility( int modified );
       entry [reductiontarget] void matched( std::size_t nextra,
                                             std::size_t nref,

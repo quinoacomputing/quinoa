@@ -72,18 +72,8 @@ class TransportProblemShearDiff {
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
               tk::real t );
 
-    //! \brief Evaluate the increment from t to t+dt of the analytical solution
-    //!   at (x,y,z) for all components
-    std::vector< tk::real >
-    solinc( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-            tk::real t, tk::real dt ) const;
-
     //! Do error checking on PDE parameters
     void errchk( ncomp_t system, ncomp_t ncomp ) const;
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    void side( std::unordered_set< int >& conf ) const;
 
     //! Assign prescribed shear velocity at a point
     static std::vector< std::array< tk::real, 3 > >

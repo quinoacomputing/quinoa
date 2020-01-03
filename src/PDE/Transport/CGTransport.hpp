@@ -24,6 +24,7 @@
 #include "Exception.hpp"
 #include "Vector.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "ProblemCommon.hpp"
 
 namespace inciter {
 
@@ -292,12 +293,6 @@ class Transport {
       return mindt;
     }
 
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { m_problem.side( conf ); }
-
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
     //! \param[in] t Physical time
@@ -318,7 +313,7 @@ class Transport {
       using tag::param; using tag::transport; using tag::bcdir;
       using NodeBC = std::vector< std::pair< bool, tk::real > >;
       std::map< std::size_t, NodeBC > bc;
-      const auto& ubc = g_inputdeck.get< param, transport, bcdir >();
+      const auto& ubc = g_inputdeck.get< param, transport, tag::bc, bcdir >();
       if (!ubc.empty()) {
         Assert( ubc.size() > m_system, "Indexing out of Dirichlet BC eq-vector" );
         const auto& x = coord[0];
@@ -328,8 +323,8 @@ class Transport {
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
-              const auto s = m_problem.solinc( m_system, m_ncomp,
-                                               x[n], y[n], z[n], t, deltat );
+              const auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
+                                     t, deltat, Problem::solution );
               auto& nbc = bc[n] = NodeBC( m_ncomp );
               for (ncomp_t c=0; c<m_ncomp; ++c)
                 nbc[c] = { true, s[c] };
@@ -337,6 +332,18 @@ class Transport {
       }
       return bc;
     }
+
+    //! Set symmetry boundary conditions at nodes
+    void
+    symbc( tk::Fields&,
+           const std::unordered_map<std::size_t,std::array<tk::real,4>>& )
+    const {}
+
+    //! Query nodes at which symmetry boundary conditions are set
+    void
+    symbcnodes( const std::map< int, std::vector< std::size_t > >&,
+                const std::vector< std::size_t >&,
+                std::unordered_set< std::size_t >& ) const {}
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file

@@ -34,7 +34,7 @@
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
 #include "Integrate/Source.hpp"
-#include "Integrate/Riemann/RiemannFactory.hpp"
+#include "RiemannFactory.hpp"
 #include "EoS/EoS.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -71,7 +71,7 @@ class CompFlow {
     std::vector< bcconf_t >
     config( ncomp_t c ) {
       std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, eq, bctag >();
+      const auto& v = g_inputdeck.get< tag::param, eq, tag::bc, bctag >();
       if (v.size() > c) bc = v[c];
       return bc;
     }
@@ -85,8 +85,8 @@ class CompFlow {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_riemann( tk::cref_find( RiemannSolvers(),
-                   g_inputdeck.get< tag::discr, tag::flux >() ) ),
+      m_riemann( tk::cref_find( compflowRiemannSolvers(),
+        g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system) ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
       m_bcsubsonicoutlet( config< tag::bcsubsonicoutlet >( c ) ),
@@ -524,11 +524,24 @@ class CompFlow {
       }
 
       tk::real mindt = std::numeric_limits< tk::real >::max();
+      tk::real dgp = 0.0;
 
       // compute allowable dt
       for (std::size_t e=0; e<U.nunk(); ++e)
       {
-        mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
+        dgp = 0.0;
+        if (ndofel[e] == 4)
+        {
+          dgp = 1.0;
+        }
+        else if (ndofel[e] == 10)
+        {
+          dgp = 2.0;
+        }
+
+        // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
+        // where p is the order of the DG polynomial by linear stability theory.
+        mindt = std::min( mindt, geoElem(e,0,0)/ (delt[e] * (2.0*dgp + 1.0)) );
       }
 
       return mindt;
@@ -556,12 +569,6 @@ class CompFlow {
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       return v;
     }
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { m_problem.side( conf ); }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
@@ -833,8 +840,8 @@ class CompFlow {
                     tk::real, tk::real, tk::real, tk::real,
                     const std::array< tk::real, 3 >& )
     {
-      auto fp =
-        g_inputdeck.get< tag::param, eq, tag::farfield_pressure >()[ system ];
+      using tag::param; using tag::bc; using tag::farfield_pressure;
+      auto fp = g_inputdeck.get< param, eq, farfield_pressure >()[ system ];
 
       auto ur = ul;
       auto u_l = ul[1] / ul[0];

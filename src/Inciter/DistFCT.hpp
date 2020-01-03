@@ -121,11 +121,13 @@ class DistFCT : public CBase_DistFCT {
                  const std::vector< std::vector< tk::real > >& A );
 
     //! Compute and sum antidiffusive element contributions (AEC) to mesh nodes
-    void aec( const Discretization& d,
-              const tk::Fields& dUh,
-              const tk::Fields& Un,
-              const std::unordered_map< std::size_t,
-                      std::vector< std::pair< bool, tk::real > > >& bc );
+    void aec(
+      const Discretization& d,
+      const tk::Fields& dUh,
+      const tk::Fields& Un,
+      const std::unordered_map< std::size_t,
+              std::vector< std::pair< bool, tk::real > > >& bcdir,
+      const std::unordered_map< std::size_t, std::array<tk::real,4> >& bnorm );
 
     //! \brief Compute the maximum and minimum unknowns of all elements
     //!   surrounding nodes
@@ -141,6 +143,13 @@ class DistFCT : public CBase_DistFCT {
                  const std::unordered_map< std::size_t, std::size_t >& bid,
                  const std::unordered_map< std::size_t, std::size_t >& lid,
                  const std::vector< std::size_t >& inpoel );
+
+    //! Collect mesh output fields from FCT
+    std::tuple< std::vector< std::string >,
+            std::vector< std::vector< tk::real > >,
+            std::vector< std::string >,
+            std::vector< std::vector< tk::real > > >
+    fields() const;
 
     /** @name Pack/unpack (Charm++ serialization) routines */
     ///@{
@@ -220,7 +229,8 @@ class DistFCT : public CBase_DistFCT {
     void resizeComm();
 
     //! Compute the limited antidiffusive element contributions
-    void lim();
+    void lim( const std::unordered_map< std::size_t,
+                std::vector< std::pair< bool, tk::real > > >& bcdir );
 
     //! Apply limited antidiffusive element contributions
     void apply();

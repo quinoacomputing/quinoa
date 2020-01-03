@@ -95,32 +95,6 @@ MultiMatProblemSodShocktube::solution( ncomp_t system,
   return s;
 }
 
-std::vector< tk::real >
-MultiMatProblemSodShocktube::solinc( ncomp_t system, ncomp_t ncomp, tk::real x,
-  tk::real y, tk::real z, tk::real t, tk::real dt )
-// *****************************************************************************
-// Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-// for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in] t Time where to evaluate the solution increment starting from
-//! \param[in] dt Time increment at which evaluate the solution increment to
-//! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-// *****************************************************************************
-{
-  auto st1 = solution( system, ncomp, x, y, z, t );
-  auto st2 = solution( system, ncomp, x, y, z, t+dt );
-
-  std::transform( begin(st1), end(st1), begin(st2), begin(st2),
-                  []( tk::real s, tk::real& d ){ return d -= s; } );
-
-  return st2;
-}
-
 tk::SrcFn::result_type
 MultiMatProblemSodShocktube::src( ncomp_t, ncomp_t ncomp, tk::real,
                                   tk::real, tk::real, tk::real )
@@ -134,23 +108,6 @@ MultiMatProblemSodShocktube::src( ncomp_t, ncomp_t ncomp, tk::real,
   std::vector< tk::real > s( ncomp, 0.0 );
 
   return s;
-}
-
-void
-MultiMatProblemSodShocktube::side( std::unordered_set< int >& conf )
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param;
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcextrapolate >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcsym >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
 }
 
 std::vector< std::string >

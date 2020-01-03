@@ -158,14 +158,11 @@ DistFCT::next()
 // Prepare for next time step stage
 // *****************************************************************************
 {
-  thisProxy[ thisIndex ].wait4fct();
-  thisProxy[ thisIndex ].wait4app();
-
   // Initialize FCT data structures for new time step
   m_p.fill( 0.0 );
   m_a.fill( 0.0 );
-  for (std::size_t p=0; p<m_a.nunk(); ++p)
-    for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
+  for (std::size_t p=0; p<m_q.nunk(); ++p)
+    for (ncomp_t c=0; c<m_q.nprop()/2; ++c) {
       m_q(p,c*2+0,0) = -std::numeric_limits< tk::real >::max();
       m_q(p,c*2+1,0) = std::numeric_limits< tk::real >::max();
     }
@@ -173,27 +170,34 @@ DistFCT::next()
   for (auto& b : m_pc) std::fill( begin(b), end(b), 0.0 );
   for (auto& b : m_ac) std::fill( begin(b), end(b), 0.0 );
   for (auto& b : m_qc)
-    for (ncomp_t c=0; c<m_a.nprop(); ++c) {
+    for (ncomp_t c=0; c<m_q.nprop()/2; ++c) {
       b[c*2+0] = -std::numeric_limits< tk::real >::max();
       b[c*2+1] = std::numeric_limits< tk::real >::max();
     }
+
+  thisProxy[ thisIndex ].wait4fct();
+  thisProxy[ thisIndex ].wait4app();
 }
 
 void
-DistFCT::aec( const Discretization& d,
-              const tk::Fields& dUh,
-              const tk::Fields& Un,
-              const std::unordered_map< std::size_t,
-                      std::vector< std::pair< bool, tk::real > > >& bc )
+DistFCT::aec(
+  const Discretization& d,
+  const tk::Fields& dUh,
+  const tk::Fields& Un,
+  const std::unordered_map< std::size_t,
+          std::vector< std::pair< bool, tk::real > > >& bcdir,
+  const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& bnorm )
 // *****************************************************************************
 //  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
 //! \param[in] d Discretization proxy to read mesh data from
 //! \param[in] dUh Increment of the high order solution
 //! \param[in] Un Solution at the previous time step
-//! \param[in] bc Vector of pairs of bool and boundary condition value
+//! \param[in] bcdir Vector of pairs of bool and boundary condition value
 //!   associated to mesh node IDs at which to set Dirichlet boundary conditions.
 //!   Note that this BC data structure must include boundary conditions set
 //!   across all PEs, not just the ones need to be set on this PE.
+//! \param[in] bnorm Face normals in boundary points: key global node id,
+//!   value: unit normal
 //! \details This function computes and starts communicating m_p, which stores
 //!    the sum of all positive (negative) antidiffusive element contributions to
 //!    nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec().
@@ -205,7 +209,7 @@ DistFCT::aec( const Discretization& d,
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
-  m_fluxcorrector.aec(d.Coord(), m_inpoel, d.Vol(), bc, d.Gid(), dUh, Un, m_p);
+  m_fluxcorrector.aec( d.Coord(), m_inpoel, d.Vol(), bcdir, bnorm, Un, m_p );
 
   if (d.Msum().empty())
     comaec_complete();
@@ -217,7 +221,7 @@ DistFCT::aec( const Discretization& d,
       thisProxy[ n.first ].comaec( n.second, p );
     }
 
-  ownaec_complete();
+  ownaec_complete( bcdir );
 }
 
 void
@@ -318,7 +322,7 @@ DistFCT::comalw( const std::vector< std::size_t >& gid,
     Assert( bid < m_qc.size(), "Indexing out of bounds" );
     auto& o = m_qc[ bid ];
     const auto& q = Q[i];
-    for (ncomp_t c=0; c<m_a.nprop(); ++c) {
+    for (ncomp_t c=0; c<m_q.nprop()/2; ++c) {
       if (q[c*2+0] > o[c*2+0]) o[c*2+0] = q[c*2+0];
       if (q[c*2+1] < o[c*2+1]) o[c*2+1] = q[c*2+1];
     }
@@ -331,9 +335,14 @@ DistFCT::comalw( const std::vector< std::size_t >& gid,
 }
 
 void
-DistFCT::lim()
+DistFCT::lim( const std::unordered_map< std::size_t,
+                std::vector< std::pair< bool, tk::real > > >& bcdir )
 // *****************************************************************************
 //  Compute the limited antidiffusive element contributions
+//! \param[in] bcdir Vector of pairs of bool and boundary condition value
+//!   associated to mesh node IDs at which to set Dirichlet boundary conditions.
+//!   Note that this BC data structure must include boundary conditions set
+//!   across all PEs, not just the ones need to be set on this PE.
 //! \details This function computes and starts communicating m_a, which stores
 //!   the limited antidiffusive element contributions assembled to nodes
 //!   (Lohner: AEC^c), see also FluxCorrector::limit().
@@ -354,7 +363,7 @@ DistFCT::lim()
     }
   }
 
-  m_fluxcorrector.lim( m_inpoel, m_p, m_ul, m_q, m_a );
+  m_fluxcorrector.lim( m_inpoel, bcdir, m_p, m_ul, m_q, m_a );
 
   if (m_msum.empty())
     comlim_complete();
@@ -417,6 +426,28 @@ DistFCT::apply()
 
   // Update solution in host
   m_host[ thisIndex ].ckLocal()->update( m_a, std::move(m_dul) );
+}
+
+std::tuple< std::vector< std::string >,
+            std::vector< std::vector< tk::real > >,
+            std::vector< std::string >,
+            std::vector< std::vector< tk::real > > >
+DistFCT::fields() const
+// *****************************************************************************
+//  Collect mesh output fields from FCT
+//! \return Names and fields in mesh cells and nodes
+// *****************************************************************************
+{
+  auto fct_elemfields = m_fluxcorrector.fields( m_inpoel );
+
+  using tuple_t = std::tuple< std::vector< std::string >,
+                              std::vector< std::vector< tk::real > >,
+                              std::vector< std::string >,
+                              std::vector< std::vector< tk::real > > >;
+
+  return tuple_t{ std::get< 0 >( fct_elemfields ),
+                  std::get< 1 >( fct_elemfields ),
+                  {}, {} };
 }
 
 #include "NoWarning/distfct.def.h"

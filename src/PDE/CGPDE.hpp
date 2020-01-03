@@ -101,10 +101,6 @@ class CGPDE {
                  const tk::Fields& U ) const
     { return self->dt( coord, inpoel, U ); }
 
-    //! \brief Public interface for collecting all side set IDs the user has
-    //!   configured for all components of a PDE system
-    void side( std::unordered_set< int >& conf ) const { self->side( conf ); }
-
     //! \brief Public interface for querying Dirichlet boundary condition values
     //!  set by the user on a given side set for all components in a PDE system
     std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
@@ -113,6 +109,19 @@ class CGPDE {
            const std::pair< const int, std::vector< std::size_t > >& sides,
            const std::array< std::vector< tk::real >, 3 >& coord ) const
     { return self->dirbc( t, deltat, sides, coord ); }
+
+    //! Public interface to set symmetry boundary conditions at nodes
+    void
+    symbc( tk::Fields& U,
+           const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm )
+    const { self->symbc( U, bnorm ); }
+
+    //! Public interface to querying symmetry boundary nodes
+    void
+    symbcnodes( const std::map< int, std::vector< std::size_t > >& bface,
+                const std::vector< std::size_t >& triinpoel,
+                std::unordered_set< std::size_t >& nodes ) const
+    { self->symbcnodes( bface, triinpoel, nodes ); }
 
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
@@ -165,13 +174,19 @@ class CGPDE {
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
-      virtual void side( std::unordered_set< int >& conf ) const = 0;
       virtual
       std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
       dirbc( tk::real,
              tk::real,
              const std::pair< const int, std::vector< std::size_t > >&,
              const std::array< std::vector< tk::real >, 3 >& ) const = 0;
+      virtual void symbc( tk::Fields& U,
+         const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& )
+         const = 0;
+      virtual void symbcnodes(
+         const std::map< int, std::vector< std::size_t > >&,
+         const std::vector< std::size_t >&,
+         std::unordered_set< std::size_t >& ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
@@ -206,14 +221,20 @@ class CGPDE {
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
       { return data.dt( coord, inpoel, U ); }
-      void side( std::unordered_set< int >& conf ) const override
-      { data.side( conf ); }
       std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
       dirbc( tk::real t,
              tk::real deltat,
              const std::pair< const int, std::vector< std::size_t > >& sides,
              const std::array< std::vector< tk::real >, 3 >& coord ) const
         override { return data.dirbc( t, deltat, sides, coord ); }
+      void symbc( tk::Fields& U,
+        const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm )
+        const override { data.symbc( U, bnorm ); }
+      void symbcnodes(
+         const std::map< int, std::vector< std::size_t > >& bface,
+         const std::vector< std::size_t >& triinpoel,
+         std::unordered_set< std::size_t >& nodes ) const override
+      { data.symbcnodes( bface, triinpoel, nodes ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
       std::vector< std::string > names() const override

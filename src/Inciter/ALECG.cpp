@@ -476,26 +476,34 @@ ALECG::writeFields( CkCallback c ) const
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  auto d = Disc();
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
 
-  // Query and collect field names from PDEs integrated
-  std::vector< std::string > nodefieldnames;
-  for (const auto& eq : g_cgpde) {
-    auto n = eq.fieldNames();
-    nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
+    c.send();
+
+  } else {
+
+    auto d = Disc();
+
+    // Query and collect field names from PDEs integrated
+    std::vector< std::string > nodefieldnames;
+    for (const auto& eq : g_cgpde) {
+      auto n = eq.fieldNames();
+      nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
+    }
+
+    // Collect node field solution
+    auto u = m_u;
+    std::vector< std::vector< tk::real > > nodefields;
+    for (const auto& eq : g_cgpde) {
+      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
+      nodefields.insert( end(nodefields), begin(o), end(o) );
+    }
+
+    // Send mesh and fields data (solution dump) for output to file
+    d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {}, {},
+              nodefieldnames, {}, nodefields, c );
+
   }
-
-  // Collect node field solution
-  auto u = m_u;
-  std::vector< std::vector< tk::real > > nodefields;
-  for (const auto& eq : g_cgpde) {
-    auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
-    nodefields.insert( end(nodefields), begin(o), end(o) );
-  }
-
-  // Send mesh and fields data (solution dump) for output to file
-  d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {}, {},
-            nodefieldnames, {}, nodefields, c );
 }
 
 void
@@ -569,8 +577,9 @@ ALECG::evalRestart()
   auto d = Disc();
 
   const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
+  const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
 
-  if ( (d->It()) % rsfreq == 0 ) {
+  if ( !benchmark && (d->It()) % rsfreq == 0 ) {
 
     std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
     d->contribute( t, CkReduction::nop,

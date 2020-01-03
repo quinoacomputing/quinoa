@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 
 #include "NoWarning/charm++.hpp"
@@ -52,36 +53,50 @@ serialize( const std::unordered_map< Key, T, Hash, Eq >& m ) {
 
 //! Concatenate vectors of T
 //! \tparam T Vector value type
-//! \param[in] src Source vector
+//! \param[in,out] src Source vector (moved from)
 //! \param[in,out] dst Destination vector
 template< class T >
-void concat( const std::vector< T >& src, std::vector< T >& dst ) {
-  dst.insert( end(dst), begin(src), end(src) );
+void concat( std::vector< T >&& src, std::vector< T >& dst )
+{
+  if (dst.empty())
+    dst = std::move(src);
+  else {
+    dst.reserve( dst.size() + src.size() );
+    std::move( std::begin(src), std::end(src), std::back_inserter(dst) );
+    src.clear();
+  }
 }
 
 //! Overwrite vectors of pair< bool, tk::real >
 //! \tparam T Vector value type
-//! \param[in] src Source vector
+//! \param[in,out] src Source vector (moved from)
 //! \param[in,out] dst Destination vector
 template< class T >
-void concat( const std::vector< std::pair< bool, T > >& src,
-             std::vector< std::pair< bool, T > >& dst ) {
-  dst = src;
+void concat( std::vector< std::pair< bool, T > >&& src,
+             std::vector< std::pair< bool, T > >& dst )
+{
+  dst = std::move(src);
 }
 
 //! Concatenate unordered sets
 //! \tparam Key Set key
 //! \tparam Hash Set hasher
 //! \tparam Eq Set equality operator
-//! \param[in] src Source set
+//! \param[in,out] src Source set (moved from)
 //! \param[in,out] dst Destination set
 template< class Key,
           class Hash = std::hash< Key >,
           class Eq = std::equal_to< Key > >
-void concat( const std::unordered_set< Key, Hash,Eq >& src,
+void concat( std::unordered_set< Key, Hash,Eq >&& src,
              std::unordered_set< Key, Hash, Eq >& dst )
 {
-  dst.insert( begin(src), end(src) );
+  if (dst.empty())
+    dst = std::move(src);
+  else {
+    dst.reserve( dst.size() + src.size() );
+    std::move( std::begin(src), std::end(src), std::inserter(dst,end(dst)) );
+    src.clear();
+  }
 }
 
 //! \brief Charm++ custom reducer for merging std::unordered_maps during
@@ -120,7 +135,7 @@ mergeHashMap( int nmsg, CkReductionMsg **msgs ) {
     PUP::fromMem curCreator( msgs[m]->getData() );
     curCreator | u;
     // Concatenate maps
-    for (const auto& c : u) concat( c.second, p[c.first] );
+    for (auto&& c : u) concat( std::move(c.second), p[c.first] );
   }
 
   // Serialize concatenated maps to raw stream

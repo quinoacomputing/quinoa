@@ -57,9 +57,11 @@ class TaggedTuple{
     //! List of member types
     using Data = typename Pair::first_type;
 
+  public:
     //! List of keys
     using Keys = typename Pair::second_type;
 
+  private:
     //! Tuple of member types
     using Tuple = brigand::as_tuple< Data >;
 
@@ -143,6 +145,19 @@ class TaggedTuple{
         using T = typename std::remove_reference_t<
                     decltype( get<Tag>() ) >::value_type;
         get< Tag >().push_back( convert< T >( value ) );
+      }
+    }
+
+    //! Convert bool and push back, converting from string, to vector of ints
+    //! \param[in] value Value to convert and store
+    template< typename Tag, typename... Tags >
+    void store_back_bool( const std::string& value ) noexcept {
+      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
+                    sizeof...(Tags) != 0 )
+      {
+        get< Tag, Tags... >().push_back( convert_bool( value ) );
+      } else {
+        get< Tag >().push_back( convert_bool( value ) );
       }
     }
 
@@ -242,14 +257,35 @@ class TaggedTuple{
     friend void operator|( PUP::er& p, TaggedTuple<List>& t ) { t.pup(p); }
     //@}
 
-    //! \brief Convert string to a type given by the template argument using
-    //!   std::stringstream
+    //! Convert/parse string to and return as type given by template argument
     //! \param[in] str String to convert
     //! \return A value of type given by the template argument
     template< typename type >
     type convert( const std::string& str ) {
       std::stringstream ss( str );
       type num;
+      ss >> std::boolalpha >> num;
+      if (ss.fail())
+        Throw( "Failed to convert '" + str +
+               "' to typeid " + typeid(num).name() );
+      return num;
+    }
+
+    //! Convert/parse string to bool and return as int
+    //! \param[in] str String to convert
+    //! \return Bool parsed from str returned as an int
+    //! \details Parsing a bool from a string, e.g., "true" or "false" is
+    //!   special compared to the above convert template, because the type into
+    //!   which we parse to (from stringstream) must be bool, but its value must
+    //!   be returned as an int. Input data stored this way ensures that the
+    //!   data is stored as an int and not a bool, which could be problematic if
+    //!   stored in a std::vector. Using this function via store_back_bool is a
+    //!   better way to achieve type-safety of the user input and ensures data
+    //!   does not get corrupted during Charm++ serialization as distributed to
+    //!   multiple PEs.
+    int convert_bool( const std::string& str ) {
+      std::stringstream ss( str );
+      bool num;
       ss >> std::boolalpha >> num;
       if (ss.fail())
         Throw( "Failed to convert '" + str +

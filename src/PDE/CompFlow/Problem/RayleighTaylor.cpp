@@ -14,7 +14,7 @@
 
 #include "RayleighTaylor.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
+#include "FieldOutput.hpp"
 
 namespace inciter {
 
@@ -71,30 +71,6 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
   const tk::real rE = eos_totalenergy< eq >( system, r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
-}
-
-std::vector< tk::real >
-CompFlowProblemRayleighTaylor::solinc( ncomp_t system, ncomp_t ncomp,
-  tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt ) const
-// *****************************************************************************
-// Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-// for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in] t Time where to evaluate the solution increment starting from
-//! \param[in] dt Time increment at which evaluate the solution increment to
-//! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-// *****************************************************************************
-{
-  auto st1 = solution( system, ncomp, x, y, z, t );
-  auto st2 = solution( system, ncomp, x, y, z, t+dt );
-  std::transform( begin(st1), end(st1), begin(st2), begin(st2),
-                  []( tk::real s, tk::real& d ){ return d -= s; } );
-  return st2;
 }
 
 tk::SrcFn::result_type
@@ -177,21 +153,6 @@ CompFlowProblemRayleighTaylor::src( ncomp_t system, ncomp_t ncomp, tk::real x,
   return r;
 }
 
-void
-CompFlowProblemRayleighTaylor::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param; using tag::bcdir;
-
-  for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-}
-
 std::vector< std::string >
 CompFlowProblemRayleighTaylor::fieldNames( ncomp_t ) const
 // *****************************************************************************
@@ -199,14 +160,8 @@ CompFlowProblemRayleighTaylor::fieldNames( ncomp_t ) const
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
-  std::vector< std::string > n;
+  auto n = CompFlowFieldNames();
 
-  n.push_back( "density_numerical" );
-  n.push_back( "x-velocity_numerical" );
-  n.push_back( "y-velocity_numerical" );
-  n.push_back( "z-velocity_numerical" );
-  n.push_back( "specific_total_energy_numerical" );
-  n.push_back( "pressure_numerical" );
   n.push_back( "density_analytical" );
   n.push_back( "x-velocity_analytical" );
   n.push_back( "y-velocity_analytical" );
@@ -248,7 +203,8 @@ CompFlowProblemRayleighTaylor::fieldOutput(
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  std::vector< std::vector< tk::real > > out;
+  auto out = CompFlowFieldOutput(system, offset, U);
+
   auto r = U.extract( 0, offset );
   auto u = U.extract( 1, offset );
   auto v = U.extract( 2, offset );
@@ -260,26 +216,7 @@ CompFlowProblemRayleighTaylor::fieldOutput(
   const auto& y = coord[1];
   const auto& z = coord[2];
 
-  out.push_back( r );
-  std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( u );
-  std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( v );
-  std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( w );
-  std::transform( r.begin(), r.end(), E.begin(), E.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( E );
-
-  auto p = r;
-  for (std::size_t i=0; i<r.size(); ++i)
-    p[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
-  out.push_back( p );
-
-  auto er = r, ee = r, ep = r, eu = r, ev = r, ew = r;
+  auto er = r, ee = r, ep = r, eu = r, ev = r, ew = r, p = r;
   for (std::size_t i=0; i<r.size(); ++i) {
     auto s = solution( system, ncomp, x[i], y[i], z[i], t );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;

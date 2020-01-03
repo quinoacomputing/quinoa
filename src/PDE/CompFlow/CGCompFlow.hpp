@@ -22,6 +22,7 @@
 #include "Exception.hpp"
 #include "Vector.hpp"
 #include "EoS/EoS.hpp"
+#include "ProblemCommon.hpp"
 
 namespace inciter {
 
@@ -343,12 +344,6 @@ class CompFlow {
       return v;
     }
 
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { m_problem.side( conf ); }
-
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
     //! \param[in] t Physical time
@@ -369,7 +364,7 @@ class CompFlow {
       using tag::param; using tag::compflow; using tag::bcdir;
       using NodeBC = std::vector< std::pair< bool, tk::real > >;
       std::map< std::size_t, NodeBC > bc;
-      const auto& ubc = g_inputdeck.get< param, compflow, bcdir >();
+      const auto& ubc = g_inputdeck.get< param, compflow, tag::bc, bcdir >();
       if (!ubc.empty()) {
         Assert( ubc.size() > 0, "Indexing out of Dirichlet BC eq-vector" );
         const auto& x = coord[0];
@@ -379,13 +374,58 @@ class CompFlow {
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
-              auto s = m_problem.solinc( m_system, m_ncomp, x[n], y[n], z[n],
-                                         t, deltat );
+              auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
+                               t, deltat, Problem::solution );
               bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
                          {true,s[4]} }};
             }
       }
       return bc;
+    }
+
+    //! Set symmetry boundary conditions at nodes
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] bnorm Face normals in boundary points: key global node id,
+    //!    value: unit normal
+    void
+    symbc( tk::Fields& U,
+           const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm )
+    const {
+      for (const auto& [ i, nr ] : bnorm ) {
+        std::array< tk::real, 3 >
+          n{ nr[0], nr[1], nr[2] },
+          v{ U(i,1,m_offset), U(i,2,m_offset), U(i,3,m_offset) };
+        auto v_dot_n = tk::dot( v, n );
+        U(i,1,m_offset) -= v_dot_n * n[0];
+        U(i,2,m_offset) -= v_dot_n * n[1];
+        U(i,3,m_offset) -= v_dot_n * n[2];
+      }
+    }
+
+    //! Query nodes at which symmetry boundary conditions are set
+    //! \param[in] bface Boundary-faces mapped to side set ids
+    //! \param[in] triinpoel Boundary-face connectivity
+    //! \param[in,out] nodes Node ids at which symmetry BCs are set
+    void
+    symbcnodes( const std::map< int, std::vector< std::size_t > >& bface,
+                const std::vector< std::size_t >& triinpoel,
+                std::unordered_set< std::size_t >& nodes ) const
+    {
+      using tag::param; using tag::compflow; using tag::bcsym;
+      const auto& bc = g_inputdeck.get< param, compflow, tag::bc, bcsym >();
+      if (!bc.empty() && bc.size() > m_system) {
+        const auto& ss = bc[ m_system ];// side sets with sym bcs specified
+        for (const auto& s : ss) {
+          auto k = bface.find( std::stoi(s) );
+          if (k != end(bface)) {
+            for (auto f : k->second) {  // face ids on symbc side set
+              nodes.insert( triinpoel[f*3+0] );
+              nodes.insert( triinpoel[f*3+1] );
+              nodes.insert( triinpoel[f*3+2] );
+            }
+          }
+        }
+      }
     }
 
     //! Return field names to be output to file

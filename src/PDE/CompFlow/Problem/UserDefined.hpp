@@ -38,22 +38,12 @@ class CompFlowProblemUserDefined {
     static tk::SolutionFn::result_type
     solution( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real );
 
-    //! \brief Evaluate the increment from t to t+dt of the analytical solution
-    //!   at (x,y,z) for all components
-    std::array< tk::real, 5 >
-    solinc( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real )
-    const;
-
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     static tk::SrcFn::result_type
     src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
 
     //! Return field names to be output to file
     std::vector< std::string > fieldNames( ncomp_t ) const;
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    void side( std::unordered_set< int >& conf ) const;
 
     //! Return field output going to file
     std::vector< std::vector< tk::real > >

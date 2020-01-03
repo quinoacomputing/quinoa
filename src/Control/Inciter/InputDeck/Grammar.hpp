@@ -83,9 +83,10 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
+      using tag::param;
 
       // Error out if no dependent variable has been selected
-      auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
+      auto& depvar = stack.template get< param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
 
@@ -95,32 +96,32 @@ namespace grm {
         ncomp.push_back( 1 );
 
       // If physics type is not given, default to 'advection'
-      auto& physics = stack.template get< tag::param, eq, tag::physics >();
+      auto& physics = stack.template get< param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::ADVECTION );
 
       // If physics type is advection-diffusion, check for correct number of
       // advection velocity, shear, and diffusion coefficients
       if (physics.back() == inciter::ctr::PhysicsType::ADVDIFF) {
-        auto& u0 = stack.template get< tag::param, eq, tag::u0 >();
+        auto& u0 = stack.template get< param, eq, tag::u0 >();
         if (u0.back().size() != ncomp.back())  // must define 1 component
           Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
-        auto& diff = stack.template get< tag::param, eq, tag::diffusivity >();
+        auto& diff = stack.template get< param, eq, tag::diffusivity >();
         if (diff.back().size() != 3*ncomp.back())  // must define 3 components
           Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
-        auto& lambda = stack.template get< tag::param, eq, tag::lambda >();
+        auto& lambda = stack.template get< param, eq, tag::lambda >();
         if (lambda.back().size() != 2*ncomp.back()) // must define 2 shear comps
           Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
       }
       // If problem type is not given, error out
-      auto& problem = stack.template get< tag::param, eq, tag::problem >();
+      auto& problem = stack.template get< param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NOPROBLEM >( stack, in );
       // Error check Dirichlet boundary condition block for all transport eq
       // configurations
-      for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
-        if (s.empty())
-          Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+      const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
+      for (const auto& s : bc)
+        if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
     }
   };
 
@@ -137,14 +138,15 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
+      using tag::param;
 
       // Error out if no dependent variable has been selected
-      auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
+      auto& depvar = stack.template get< param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
 
       // If physics type is not given, default to 'euler'
-      auto& physics = stack.template get< tag::param, eq, tag::physics >();
+      auto& physics = stack.template get< param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >()) {
         physics.push_back( inciter::ctr::PhysicsType::EULER );
       }
@@ -152,16 +154,42 @@ namespace grm {
       // Set number of components to 5 (mass, 3 x mom, energy)
       stack.template get< tag::component, eq >().push_back( 5 );
 
+      // Set default to sysfct (on/off) if not specified
+      auto& sysfct = stack.template get< param, eq, tag::sysfct >();
+      if (sysfct.empty() || sysfct.size() != neq.get< eq >())
+        sysfct.push_back( 1 );
+
+      // Set default flux to HLLC if not specified
+      auto& flux = stack.template get< tag::param, eq, tag::flux >();
+      if (flux.empty() || flux.size() != neq.get< eq >())
+        flux.push_back( inciter::ctr::FluxType::HLLC );
+
+      // Verify that sysfctvar variables are within bounds (if specified) and
+      // defaults if not
+      auto& sysfctvar = stack.template get< param, eq, tag::sysfctvar >();
+      // If sysfctvar is not specified, use all variables for system FCT
+      if (sysfctvar.empty() || sysfctvar.back().empty()) {
+        sysfctvar.push_back( {0,1,2,3,4} );
+      } else {  // if specified, do error checking on variables
+        auto& vars = sysfctvar.back();
+        if (vars.size() > 5) {
+          Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
+        }
+        for (const auto& i : vars) {
+          if (i > 4) Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
+        }
+      }
+
       // Verify correct number of multi-material properties configured
-      const auto& gamma = stack.template get< tag::param, eq, tag::gamma >();
+      const auto& gamma = stack.template get< param, eq, tag::gamma >();
       if (gamma.empty() || gamma.back().size() != 1)
         Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
 
       // If specific heat is not given, set defaults
       using cv_t = kw::mat_cv::info::expect::type;
-      auto& cv = stack.template get< tag::param, eq, tag::cv >();
+      auto& cv = stack.template get< param, eq, tag::cv >();
       // As a default, the specific heat of air (717.5 J/Kg-K) is used
-      if (cv.empty())
+      if (cv.empty() || cv.size() != neq.get< eq >())
         cv.push_back( std::vector< cv_t >( 1, 717.5 ) );
       // If specific heat vector is wrong size, error out
       if (cv.back().size() != 1)
@@ -169,34 +197,34 @@ namespace grm {
 
       // If stiffness coefficient is not given, set defaults
       using pstiff_t = kw::mat_pstiff::info::expect::type;
-      auto& pstiff = stack.template get< tag::param, eq, tag::pstiff >();
-      if (pstiff.empty())
+      auto& pstiff = stack.template get< param, eq, tag::pstiff >();
+      if (pstiff.empty() || pstiff.size() != neq.get< eq >())
         pstiff.push_back( std::vector< pstiff_t >( 1, 0.0 ) );
       // If stiffness coefficient vector is wrong size, error out
       if (pstiff.back().size() != 1)
         Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
 
       // If problem type is not given, default to 'user_defined'
-      auto& problem = stack.template get< tag::param, eq, tag::problem >();
+      auto& problem = stack.template get< param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
         problem.push_back( inciter::ctr::ProblemType::USER_DEFINED );
       else if (problem.back() == inciter::ctr::ProblemType::VORTICAL_FLOW) {
-        const auto& alpha = stack.template get< tag::param, eq, tag::alpha >();
-        const auto& beta = stack.template get< tag::param, eq, tag::beta >();
-        const auto& p0 = stack.template get< tag::param, eq, tag::p0 >();
+        const auto& alpha = stack.template get< param, eq, tag::alpha >();
+        const auto& beta = stack.template get< param, eq, tag::beta >();
+        const auto& p0 = stack.template get< param, eq, tag::p0 >();
         if ( alpha.size() != problem.size() ||
              beta.size() != problem.size() ||
              p0.size() != problem.size() )
           Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
       }
       else if (problem.back() == inciter::ctr::ProblemType::NL_ENERGY_GROWTH) {
-        const auto& alpha = stack.template get< tag::param, eq, tag::alpha >();
-        const auto& betax = stack.template get< tag::param, eq, tag::betax >();
-        const auto& betay = stack.template get< tag::param, eq, tag::betay >();
-        const auto& betaz = stack.template get< tag::param, eq, tag::betaz >();
-        const auto& kappa = stack.template get< tag::param, eq, tag::kappa >();
-        const auto& r0 = stack.template get< tag::param, eq, tag::r0 >();
-        const auto& ce = stack.template get< tag::param, eq, tag::ce >();
+        const auto& alpha = stack.template get< param, eq, tag::alpha >();
+        const auto& betax = stack.template get< param, eq, tag::betax >();
+        const auto& betay = stack.template get< param, eq, tag::betay >();
+        const auto& betaz = stack.template get< param, eq, tag::betaz >();
+        const auto& kappa = stack.template get< param, eq, tag::kappa >();
+        const auto& r0 = stack.template get< param, eq, tag::r0 >();
+        const auto& ce = stack.template get< param, eq, tag::ce >();
         if ( alpha.size() != problem.size() ||
              betax.size() != problem.size() ||
              betay.size() != problem.size() ||
@@ -207,13 +235,13 @@ namespace grm {
           Message< Stack, ERROR, MsgKey::ENERGY_UNFINISHED >( stack, in);
       }
       else if (problem.back() == inciter::ctr::ProblemType::RAYLEIGH_TAYLOR) {
-        const auto& alpha = stack.template get< tag::param, eq, tag::alpha >();
-        const auto& betax = stack.template get< tag::param, eq, tag::betax >();
-        const auto& betay = stack.template get< tag::param, eq, tag::betay >();
-        const auto& betaz = stack.template get< tag::param, eq, tag::betaz >();
-        const auto& kappa = stack.template get< tag::param, eq, tag::kappa >();
-        const auto& p0 = stack.template get< tag::param, eq, tag::p0 >();
-        const auto& r0 = stack.template get< tag::param, eq, tag::r0 >();
+        const auto& alpha = stack.template get< param, eq, tag::alpha >();
+        const auto& betax = stack.template get< param, eq, tag::betax >();
+        const auto& betay = stack.template get< param, eq, tag::betay >();
+        const auto& betaz = stack.template get< param, eq, tag::betaz >();
+        const auto& kappa = stack.template get< param, eq, tag::kappa >();
+        const auto& p0 = stack.template get< param, eq, tag::p0 >();
+        const auto& r0 = stack.template get< param, eq, tag::r0 >();
         if ( alpha.size() != problem.size() ||
              betax.size() != problem.size() ||
              betay.size() != problem.size() ||
@@ -226,17 +254,19 @@ namespace grm {
 
       // Error check Dirichlet boundary condition block for all compflow
       // configurations
-      for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
-        if (s.empty())
-          Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+      const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
+      for (const auto& s : bc)
+        if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
 
       // Put in default farfield pressure if not specified by user
       // if outlet BC is configured for this compflow system
       auto& bcsubsonicoutlet =
-          stack.template get< tag::param, eq, tag::bcsubsonicoutlet >();
-      if (!bcsubsonicoutlet.empty() || bcsubsonicoutlet.size() != neq.get< eq >()) {
+          stack.template get< param, eq, tag::bc, tag::bcsubsonicoutlet >();
+      if (!bcsubsonicoutlet.empty() ||
+          bcsubsonicoutlet.size() != neq.get< eq >())
+      {
         auto& fp =
-          stack.template get< tag::param, eq, tag::farfield_pressure >();
+          stack.template get< param, eq, tag::farfield_pressure >();
         if (fp.size() != bcsubsonicoutlet.size()) fp.push_back( 1.0 );
       }
     }
@@ -255,23 +285,25 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
+      using tag::param;
 
       // Error out if no dependent variable has been selected
-      auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
+      auto& depvar = stack.template get< param, eq, tag::depvar >();
       if (depvar.empty() || depvar.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
 
       // If physics type is not given, default to 'veleq'
-      auto& physics = stack.template get< tag::param, eq, tag::physics >();
+      auto& physics = stack.template get< param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::VELEQ );
 
-      // Use default flux type as 'ausm'
-      auto& flux = stack.template get< tag::discr, tag::flux >();
-      flux = inciter::ctr::FluxType::AUSM;
+      // Set default flux to AUSM if not specified
+      auto& flux = stack.template get< tag::param, eq, tag::flux >();
+      if (flux.empty() || flux.size() != neq.get< eq >())
+        flux.push_back( inciter::ctr::FluxType::AUSM );
 
       // Set number of scalar components based on number of materials
-      auto& nmat = stack.template get< tag::param, eq, tag::nmat >();
+      auto& nmat = stack.template get< param, eq, tag::nmat >();
       auto& ncomp = stack.template get< tag::component, eq >();
       if (physics.back() == inciter::ctr::PhysicsType::VELEQ) {
         // physics = veleq: m-material compressible flow
@@ -287,24 +319,24 @@ namespace grm {
       }
 
       // Verify correct number of multi-material properties configured
-      auto& gamma = stack.template get< tag::param, eq, tag::gamma >();
+      auto& gamma = stack.template get< param, eq, tag::gamma >();
       if (gamma.empty() || gamma.back().size() != nmat.back())
         Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
 
       // If pressure relaxation is not specified, default to 'false'
-      auto& prelax = stack.template get< tag::param, eq, tag::prelax >();
+      auto& prelax = stack.template get< param, eq, tag::prelax >();
       if (prelax.empty() || prelax.size() != neq.get< eq >())
         prelax.push_back( 0 );
 
       // If pressure relaxation time-scale is not specified, default to 1.0
-      auto& prelax_ts = stack.template get< tag::param, eq,
+      auto& prelax_ts = stack.template get< param, eq,
                                             tag::prelax_timescale >();
       if (prelax_ts.empty() || prelax_ts.size() != neq.get< eq >())
         prelax_ts.push_back( 1.0 );
 
       // If specific heats are not given, set defaults
       using cv_t = kw::mat_cv::info::expect::type;
-      auto& cv = stack.template get< tag::param, eq, tag::cv >();
+      auto& cv = stack.template get< param, eq, tag::cv >();
       // As a default, the specific heat of air (717.5 J/Kg-K) is used
       if (cv.empty())
         cv.push_back( std::vector< cv_t >( nmat.back(), 717.5 ) );
@@ -314,7 +346,7 @@ namespace grm {
 
       // If stiffness coefficients are not given, set defaults
       using pstiff_t = kw::mat_pstiff::info::expect::type;
-      auto& pstiff = stack.template get< tag::param, eq, tag::pstiff >();
+      auto& pstiff = stack.template get< param, eq, tag::pstiff >();
       if (pstiff.empty())
         pstiff.push_back( std::vector< pstiff_t >( nmat.back(), 0.0 ) );
       // If stiffness coefficient vector is wrong size, error out
@@ -322,13 +354,13 @@ namespace grm {
         Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
 
       // If problem type is not given, default to 'user_defined'
-      auto& problem = stack.template get< tag::param, eq, tag::problem >();
+      auto& problem = stack.template get< param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
         problem.push_back( inciter::ctr::ProblemType::USER_DEFINED );
       else if (problem.back() == inciter::ctr::ProblemType::VORTICAL_FLOW) {
-        const auto& alpha = stack.template get< tag::param, eq, tag::alpha >();
-        const auto& beta = stack.template get< tag::param, eq, tag::beta >();
-        const auto& p0 = stack.template get< tag::param, eq, tag::p0 >();
+        const auto& alpha = stack.template get< param, eq, tag::alpha >();
+        const auto& beta = stack.template get< param, eq, tag::beta >();
+        const auto& p0 = stack.template get< param, eq, tag::p0 >();
         if ( alpha.size() != problem.size() ||
              beta.size() != problem.size() ||
              p0.size() != problem.size() )
@@ -337,9 +369,9 @@ namespace grm {
 
       // Error check Dirichlet boundary condition block for all multimat
       // configurations
-      for (const auto& s : stack.template get< tag::param, eq, tag::bcdir >())
-        if (s.empty())
-          Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+      const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
+      for (const auto& s : bc)
+        if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
     }
   };
 
@@ -577,16 +609,21 @@ namespace deck {
            tk::grm::discrparam< use, kw::t0, tag::t0 >,
            tk::grm::discrparam< use, kw::dt, tag::dt >,
            tk::grm::discrparam< use, kw::cfl, tag::cfl >,
-           tk::grm::discrparam< use, kw::ctau, tag::ctau >,
-           tk::grm::process< use< kw::fct >, 
+           tk::grm::process< use< kw::fcteps >,
+                             tk::grm::Store< tag::discr, tag::fcteps > >,
+           tk::grm::process< use< kw::fctclip >,
+                             tk::grm::Store< tag::discr, tag::fctclip >,
+                             pegtl::alpha >,
+           tk::grm::process< use< kw::fct >,
                              tk::grm::Store< tag::discr, tag::fct >,
                              pegtl::alpha >,
+           tk::grm::process< use< kw::ctau >,
+                             tk::grm::Store< tag::discr, tag::ctau > >,
            tk::grm::process< use< kw::reorder >,
                              tk::grm::Store< tag::discr, tag::reorder >,
                              pegtl::alpha >,
            tk::grm::interval< use< kw::ttyi >, tag::tty >,
            discroption< use, kw::scheme, inciter::ctr::Scheme, tag::scheme >,
-           discroption< use, kw::flux, inciter::ctr::Flux, tag::flux >,
            discroption< use, kw::limiter, inciter::ctr::Limiter, tag::limiter >,
            tk::grm::discrparam< use, kw::cweight, tag::cweight >
          > {};
@@ -603,12 +640,19 @@ namespace deck {
                                     param > {};
 
   //! put in PDE parameter for equation matching keyword
-  template< typename eq, typename keyword, typename p,
+  template< typename eq, typename keyword, typename param,
             class kw_type = tk::grm::number >
   struct parameter :
          tk::grm::process< use< keyword >,
-                           tk::grm::Store_back< tag::param, eq, p >,
+                           tk::grm::Store_back< tag::param, eq, param >,
                            kw_type > {};
+
+  //! put in PDE bool parameter for equation matching keyword into vector< int >
+  template< typename eq, typename keyword, typename p >
+  struct parameter_bool :
+         tk::grm::process< use< keyword >,
+                           tk::grm::Store_back_bool< tag::param, eq, p >,
+                           pegtl::alpha > {};
 
   //! Boundary conditions block
   template< class keyword, class eq, class param >
@@ -623,6 +667,7 @@ namespace deck {
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
                                         eq,
+                                        tag::bc,
                                         param > > > {};
 
   //! Farfield boundary conditions block
@@ -639,6 +684,7 @@ namespace deck {
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
                                         eq,
+                                        tag::bc,
                                         param > > > {};
 
   //! edgelist ... end block
@@ -753,19 +799,42 @@ namespace deck {
                            tk::grm::depvar< use,
                                             tag::compflow,
                                             tag::depvar >,
+                           tk::grm::process<
+                             use< kw::flux >,
+                               tk::grm::store_back_option< use,
+                                                           ctr::Flux,
+                                                           tag::param,
+                                                           tag::compflow,
+                                                           tag::flux >,
+                             pegtl::alpha >,
                            //ic_compflow< tag::compflow, tag::ic > >,
                            material_properties< tag::compflow >,
-                           parameter< tag::compflow, kw::npar, tag::npar,
-                                      pegtl::digit >,
-                           parameter< tag::compflow, kw::pde_alpha, tag::alpha >,
-                           parameter< tag::compflow, kw::pde_p0, tag::p0 >,
-                           parameter< tag::compflow, kw::pde_betax, tag::betax >,
-                           parameter< tag::compflow, kw::pde_betay, tag::betay >,
-                           parameter< tag::compflow, kw::pde_betaz, tag::betaz >,
-                           parameter< tag::compflow, kw::pde_beta, tag::beta >,
-                           parameter< tag::compflow, kw::pde_r0, tag::r0 >,
-                           parameter< tag::compflow, kw::pde_ce, tag::ce >,
-                           parameter< tag::compflow, kw::pde_kappa, tag::kappa >,
+                           pde_parameter_vector< kw::sysfctvar,
+                                                 tag::compflow,
+                                                 tag::sysfctvar >,
+                           parameter_bool< tag::compflow,
+                                           kw::sysfct,
+                                           tag::sysfct >,
+                           parameter< tag::compflow, kw::npar,
+                                      tag::npar, pegtl::digit >,
+                           parameter< tag::compflow, kw::pde_alpha,
+                                      tag::alpha >,
+                           parameter< tag::compflow, kw::pde_p0,
+                                      tag::p0 >,
+                           parameter< tag::compflow, kw::pde_betax,
+                                      tag::betax >,
+                           parameter< tag::compflow, kw::pde_betay,
+                                      tag::betay >,
+                           parameter< tag::compflow, kw::pde_betaz,
+                                      tag::betaz >,
+                           parameter< tag::compflow, kw::pde_beta,
+                                      tag::beta >,
+                           parameter< tag::compflow, kw::pde_r0,
+                                      tag::r0 >,
+                           parameter< tag::compflow, kw::pde_ce,
+                                      tag::ce >,
+                           parameter< tag::compflow, kw::pde_kappa,
+                                      tag::kappa >,
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
@@ -797,6 +866,14 @@ namespace deck {
                            parameter< tag::multimat,
                                       kw::nmat,
                                       tag::nmat >,
+                           tk::grm::process<
+                             use< kw::flux >,
+                               tk::grm::store_back_option< use,
+                                                           ctr::Flux,
+                                                           tag::param,
+                                                           tag::multimat,
+                                                           tag::flux >,
+                             pegtl::alpha >,
                            material_properties< tag::multimat >,
                            parameter< tag::multimat,
                                       kw::pde_alpha,

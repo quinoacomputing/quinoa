@@ -434,7 +434,9 @@ namespace grm {
         // we solve for particle momentum, coupled to mass fractions. This is
         // to allocate storage for particle velocity as variables derived from
         // momentum.
-        if (!solve.empty() && solve.back() == walker::ctr::DepvarType::PRODUCT)
+        if ( !solve.empty() &&
+             ( solve.back() == walker::ctr::DepvarType::PRODUCT ||
+               solve.back() == walker::ctr::DepvarType::FLUCTUATING_MOMENTUM ) )
         {
           //! Error out if not coupled to mixmassfracbeta
           if (!coupled< tag::velocity, tag::mixmassfracbeta >( stack )) {
