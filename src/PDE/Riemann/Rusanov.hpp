@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Integrate/Riemann/Rusanov.hpp
+  \file      src/PDE/Riemann/Rusanov.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -35,7 +35,7 @@ struct Rusanov {
   static tk::RiemannFluxFn::result_type
   flux( const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
-        const std::array< std::vector< tk::real >, 2 >& )
+        const std::array< std::vector< tk::real >, 2 >& = {} )
   {
     std::vector< tk::real > flx( u[0].size(), 0 );
 

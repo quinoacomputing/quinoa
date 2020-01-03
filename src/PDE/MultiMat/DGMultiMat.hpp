@@ -35,7 +35,7 @@
 #include "Integrate/Volume.hpp"
 #include "Integrate/MultiMatTerms.hpp"
 #include "Integrate/Source.hpp"
-#include "Integrate/Riemann/AUSM.hpp"
+#include "RiemannFactory.hpp"
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
@@ -86,8 +86,8 @@ class MultiMat {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      //m_riemann( tk::cref_find( RiemannSolvers(),
-      //             g_inputdeck.get< tag::discr, tag::flux >() ) ),
+      m_riemann( tk::cref_find( multimatRiemannSolvers(),
+        g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) )
@@ -368,6 +368,13 @@ class MultiMat {
       std::vector< std::vector< tk::real > >
         riemannDeriv( 3*nmat+1, std::vector<tk::real>(U.nunk(),0.0) );
 
+      // configure Riemann flux function
+      auto rieflxfn =
+        [this]( const std::array< tk::real, 3 >& fn,
+                const std::array< std::vector< tk::real >, 2 >& u,
+                const std::vector< std::array< tk::real, 3 > >& v )
+              { return m_riemann.flux( fn, u, v ); };
+
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
@@ -380,7 +387,7 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, nmat, m_offset, ndof, rdof, inpoel, coord,
-                   fd, geoFace, AUSM::flux, velfn, U, P, ndofel, R,
+                   fd, geoFace, rieflxfn, velfn, U, P, ndofel, R,
                    riemannDeriv );
 
       // compute source term integrals
@@ -395,7 +402,7 @@ class MultiMat {
       // compute boundary surface flux integrals
       for (const auto& b : bctypes)
         tk::bndSurfInt( m_system, nmat, m_offset, ndof, rdof, b.first,
-                        fd, geoFace, inpoel, coord, t, AUSM::flux, velfn,
+                        fd, geoFace, inpoel, coord, t, rieflxfn, velfn,
                         b.second, U, P, ndofel, R, riemannDeriv );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
@@ -741,8 +748,8 @@ class MultiMat {
     const ncomp_t m_ncomp;
     //! Offset PDE system operates from
     const ncomp_t m_offset;
-    ////! Riemann solver
-    //RiemannSolver m_riemann;
+    //! Riemann solver
+    RiemannSolver m_riemann;
     //! Dirichlet BC configuration
     const std::vector< bcconf_t > m_bcdir;
     //! Symmetric BC configuration

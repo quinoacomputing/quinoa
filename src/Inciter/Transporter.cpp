@@ -184,7 +184,6 @@ Transporter::info()
              scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
              scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
   {
-    m_print.Item< ctr::Flux, tag::discr, tag::flux >();
     m_print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
   m_print.item( "PE-locality mesh reordering",
