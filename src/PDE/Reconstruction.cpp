@@ -263,6 +263,7 @@ tk::bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
   real t,
   const StateFn& state,
   const Fields& P,
+  const Fields& U,
   std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
   std::size_t ncomp )
 // *****************************************************************************
@@ -280,6 +281,7 @@ tk::bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
 //! \param[in] P Primitive vector to be reconstructed at recent time step
+//! \param[in] U Conserved vector at recent time step
 //! \param[in,out] rhs_ls RHS reconstruction vector
 //! \param[in] ncomp This is the number of conserved quantities stored for this
 //!   system. This is necessary to extend the state vector to the right size,
@@ -316,10 +318,10 @@ tk::bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
         auto ul = eval_state( nprim, offset, rdof, 1, el, P, B );
-        std::vector< real >ucomp(ncomp,0.0);
+        auto ucons = eval_state(ncomp, offset, rdof, 1, el, U, B );
 
         // consolidate conserved quantities into state vector
-        ul.insert(ul.begin(), ucomp.begin(), ucomp.end());
+        ul.insert(ul.begin(), ucons.begin(), ucons.end());
 
         Assert( ul.size() == ncomp+nprim, "Incorrect size for "
                 "appended state vector" );

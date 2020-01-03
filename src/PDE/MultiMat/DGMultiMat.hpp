@@ -90,6 +90,7 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
+      m_bcsubsonicoutlet( config< tag::bcsubsonicoutlet >( c ) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) )
     {}
 
@@ -216,6 +217,7 @@ class MultiMat {
               "discretizations not set up for multimat cleanTraceMaterial()" );
 
       auto al_eps = 1.0e-14;
+      auto neg_density = false;
 
       for (std::size_t e=0; e<nielem; ++e)
       {
@@ -271,16 +273,19 @@ class MultiMat {
             std::cout << "Volume-fraction:  " << alpha << std::endl;
             std::cout << "Partial density:  " << arho << std::endl;
             std::cout << "Partial pressure: " << apr << std::endl;
+            std::cout << "Major pressure:   " << pmax << std::endl;
             std::cout << "Velocity:         " << u << ", " << v << ", " << w
               << std::endl;
           };
 
           if (arho < 0.0)
           {
+            neg_density = true;
             screenout();
-            Throw("Negative partial density.");
           }
         }
+
+        if (neg_density) Throw("Negative partial density.");
       }
     }
 
@@ -317,6 +322,7 @@ class MultiMat {
         bctypes{{
           { m_bcdir, Dirichlet },
           { m_bcsym, Symmetry },
+          { m_bcsubsonicoutlet, SubsonicOutlet },
           { m_bcextrapolate, Extrapolate } }};
 
       // allocate and initialize matrix and vector for reconstruction:
@@ -362,7 +368,7 @@ class MultiMat {
         tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
           b.first, fd, geoFace, geoElem, t, b.second, U, rhsu_ls, nprim() );
         tk::bndLeastSqPrimitiveVar_P0P1( m_system, nprim(), m_offset, rdof,
-          b.first, fd, geoFace, geoElem, t, b.second, P, rhsp_ls, m_ncomp );
+          b.first, fd, geoFace, geoElem, t, b.second, P, U, rhsp_ls, m_ncomp );
       }
 
       // 3. solve 3x3 least-squares system
@@ -478,6 +484,7 @@ class MultiMat {
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
         { m_bcdir, Dirichlet },
         { m_bcsym, Symmetry },
+        { m_bcsubsonicoutlet, SubsonicOutlet },
         { m_bcextrapolate, Extrapolate } }};
 
       // compute internal surface flux integrals
@@ -766,6 +773,8 @@ class MultiMat {
     const std::vector< bcconf_t > m_bcdir;
     //! Symmetric BC configuration
     const std::vector< bcconf_t > m_bcsym;
+    //! Subsonic outlet BC configuration
+    const std::vector< bcconf_t > m_bcsubsonicoutlet;
     //! Extrapolation BC configuration
     const std::vector< bcconf_t > m_bcextrapolate;
 
@@ -958,6 +967,64 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
         ur[ncomp+pressureIdx(nmat, k)] = ul[ncomp+pressureIdx(nmat, k)];
+
+      Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended boundary "
+              "state vector" );
+
+      return {{ std::move(ul), std::move(ur) }};
+    }
+
+    //! \brief Boundary state function providing the left and right state of a
+    //!   face at subsonic outlet boundaries
+    //! \param[in] ul Left (domain-internal) state
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \details The subsonic outlet boudary calculation, implemented here, is
+    //!   based on the characteristic theory of hyperbolic systems. For subsonic
+    //!   outlet flow, there is 1 incoming characteristic per material.
+    //!   Therefore, we calculate the ghost cell state by taking material
+    //!   pressure from the outside and other quantities from the internal cell.
+    //! \note The function signature must follow tk::StateFn
+    static tk::StateFn::result_type
+    SubsonicOutlet( ncomp_t system, ncomp_t ncomp,
+                    const std::vector< tk::real >& ul,
+                    tk::real, tk::real, tk::real, tk::real,
+                    const std::array< tk::real, 3 >& )
+    {
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+
+      auto fp =
+        g_inputdeck.get< tag::param, eq, tag::farfield_pressure >()[ system ];
+
+      Assert( ul.size() == ncomp+nmat+3, "Incorrect size for appended internal "
+              "state vector" );
+
+      auto ur = ul;
+
+      // Internal cell velocity components
+      auto v1l = ul[ncomp+velocityIdx(nmat, 0)];
+      auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
+      auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
+      // Boundary condition
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * eos_totalenergy< eq >
+          (system, ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l,
+          v3l, fp, k);
+      }
+
+      // Internal cell primitive quantities using the separately reconstructed
+      // primitive quantities. This is used to get ghost state for primitive
+      // quantities
+
+      // velocity
+      ur[ncomp+velocityIdx(nmat, 0)] = v1l;
+      ur[ncomp+velocityIdx(nmat, 1)] = v2l;
+      ur[ncomp+velocityIdx(nmat, 2)] = v3l;
+      // material pressures
+      for (std::size_t k=0; k<nmat; ++k)
+        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended boundary "
               "state vector" );

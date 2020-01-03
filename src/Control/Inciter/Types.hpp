@@ -222,6 +222,8 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
+  , tag::farfield_pressure, std::vector<
+                              kw::farfield_pressure::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)
