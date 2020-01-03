@@ -88,6 +88,9 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
+  nfo.emplace_back( "flux", ctr::Flux().name(
+    g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
+
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
 

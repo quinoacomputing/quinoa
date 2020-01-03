@@ -1,12 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Integrate/Riemann/RiemannFactory.hpp
+  \file      src/PDE/CompFlow/RiemannFactory.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Register available Riemann solvers into a factory
-  \details   Register available Riemann solvers into a factory.
+  \brief     Register available Riemann solvers for single material compressible
+             hydrodynamics into a factory
+  \details   Register available Riemann solvers for single material compressible
+             hydrodynamics into a factory.
 */
 // *****************************************************************************
 #ifndef RiemannSolverFactory_h
@@ -17,7 +19,7 @@
 
 #include "NoWarning/value_factory.hpp"
 
-#include "RiemannSolver.hpp"
+#include "Riemann/RiemannSolver.hpp"
 #include "Inciter/Options/Flux.hpp"
 
 namespace inciter {
@@ -31,16 +33,16 @@ namespace inciter {
 //!   object stored in std::function is a generic (base) class constructor,
 //!   which provides a polymorphyic interface (overridable functions) that
 //!   specific (child) Riemann solvers override, yielding runtime polymorphism.
-using RiemannFactory =
+using CompFlowRiemannFactory =
   std::map< ctr::FluxType, std::function< RiemannSolver() > >;
 
 //! Functor to register a Riemann solver into the Riemann solver factory
 struct registerRiemannSolver {
   //! Factory to which to register the Riemann solver
-  RiemannFactory& factory;
+  CompFlowRiemannFactory& factory;
   //! Constructor
   //! \param[in] f Factory
-  explicit registerRiemannSolver( RiemannFactory& f ) : factory( f ) {}
+  explicit registerRiemannSolver( CompFlowRiemannFactory& f ) : factory( f ) {}
   //! \brief Function call operator templated on the type that implements
   //!   a specific Riemann solver
   template< typename U > void operator()( brigand::type_<U> ) {
@@ -56,7 +58,7 @@ struct registerRiemannSolver {
 };
 
 //! Register available Riemann solvers into a factory
-RiemannFactory RiemannSolvers();
+CompFlowRiemannFactory compflowRiemannSolvers();
 
 } // inciter::
 
