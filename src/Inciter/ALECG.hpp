@@ -173,9 +173,10 @@ class ALECG : public CBase_ALECG {
       p | m_nlhs;
       p | m_ngrad;
       p | m_nrhs;
-      p | m_nnorm;
+      p | m_nbnorm;
       p | m_ndfnorm;
       p | m_bnode;
+      p | m_bface;
       p | m_triinpoel;
       p | m_bndel;
       p | m_dfnorm;
@@ -216,13 +217,14 @@ class ALECG : public CBase_ALECG {
     //! Counter for right-hand side vector nodes updated
     std::size_t m_nrhs;
     //! Counter for receiving boundary point normals
-    std::size_t m_nnorm;
+    std::size_t m_nbnorm;
     //! Counter for receiving dual-face normals on chare-boundary edges
     std::size_t m_ndfnorm;
     //! Boundary node lists mapped to side set ids where BCs are set by user
     std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Boundary facee lists mapped to side set ids where BCs are set by user
+    std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary triangle face connecitivity where BCs are set by user
-    //! \details Local node ids
     std::vector< std::size_t > m_triinpoel;
     //! Elements along mesh boundary
     std::vector< std::size_t > m_bndel;
@@ -285,14 +287,15 @@ class ALECG : public CBase_ALECG {
     //! Compute chare-boundary edges
     void bndEdges();
 
+    //! Start (re-)computing boundare point-, and dual-face normals
+    void norm();
+
     //! Compute dual-face normals associated to edges
     void dfnorm();
 
     //! Compute boundary point normals
     void
-    bnorm( const std::map< int, std::vector< std::size_t > >& bface,
-           const std::vector< std::size_t >& triinpoel,
-           std::unordered_set< std::size_t >&& symbcnodes );
+    bnorm( std::unordered_set< std::size_t >&& symbcnodes );
 
     //! Finish setting up communication maps (norms, etc.)
     void normfinal();

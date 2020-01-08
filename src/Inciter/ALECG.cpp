@@ -61,10 +61,11 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_nlhs( 0 ),
   m_ngrad( 0 ),
   m_nrhs( 0 ),
-  m_nnorm( 0 ),
+  m_nbnorm( 0 ),
   m_ndfnorm( 0 ),
   m_bnode( bnode ),
-  m_triinpoel( tk::remap(triinpoel,Disc()->Lid()) ),
+  m_bface( bface ),
+  m_triinpoel( triinpoel ),
   m_bndel( bndel() ),
   m_dfnorm(),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
@@ -94,15 +95,27 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   usesAtSync = true;    // enable migration at AtSync
 
   // Activate SDAG wait for initially computing the left-hand side and normals
-  thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4lhs();
 
+  // Signal the runtime system that the workers have been created
+  contribute( sizeof(int), &m_initial, CkReduction::sum_int,
+    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
+}
+//! [Constructor]
+
+void
+ALECG::norm()
+// *****************************************************************************
+// Start (re-)computing boundare point-, and dual-face normals
+// *****************************************************************************
+{
   // Query nodes at which symmetry BCs are specified
   std::unordered_set< std::size_t > symbcnodes;
-  for (const auto& eq : g_cgpde) eq.symbcnodes( bface, triinpoel, symbcnodes );
+  for (const auto& eq : g_cgpde)
+    eq.symbcnodes( m_bface, m_triinpoel, symbcnodes );
 
   // Compute boundary point normals
-  bnorm( bface, triinpoel, std::move(symbcnodes) );
+  bnorm( std::move(symbcnodes) );
 
   // Compute dual-face normals associated to edges
   dfnorm();
@@ -147,18 +160,14 @@ ALECG::dfnorm()
 
   // compute derived data structures
   auto esup = tk::genEsup( inpoel, 4 );
+  auto psup = tk::genPsup( inpoel, 4, esup );
   auto esued = tk::genEsued( inpoel, 4, esup );
 
-  // generate unique edges of chare-boundary
-  tk::UnsMesh::EdgeSet chbed;
-  for (const auto& [c,edges] : d->EdgeCommMap())
-    for (const auto& e : edges)
-      chbed.insert( { tk::cref_find( d->Lid(), e[0] ),
-                      tk::cref_find( d->Lid(), e[1] ) } );
-
-  // compute dual-face normals on chare boundary
-  for (const auto& [p,q] : chbed)
-    m_dfnorm[{gid[p],gid[q]}] = cg::edfnorm( {p,q}, coord, inpoel, esued );
+  // Compute dual-face normals for domain edges
+  for (std::size_t p=0; p<gid.size(); ++p)    // for each point p
+    for (auto q : tk::Around(psup,p))         // for each edge p-q
+      if (gid[p] < gid[q])
+        m_dfnorm[{gid[p],gid[q]}] = cg::edfnorm( {p,q}, coord, inpoel, esued );
 
   // Send our dual-face normal contributions to neighbor chares
   if (d->EdgeCommMap().empty())
@@ -198,19 +207,16 @@ ALECG::comdfnorm( const std::unordered_map< tk::UnsMesh::Edge,
 }
 
 void
-ALECG::bnorm( const std::map< int, std::vector< std::size_t > >& bface,
-              const std::vector< std::size_t >& triinpoel,
-              std::unordered_set< std::size_t >&& symbcnodes )
+ALECG::bnorm( std::unordered_set< std::size_t >&& symbcnodes )
 // *****************************************************************************
 //  Compute boundary point normals
-//! \param[in] bface Boundary faces side-set information
-//! \param[in] triinpoel Boundary triangle face connecitivity
 //! \param[in] Node ids at which symmetry BCs are set
 // *****************************************************************************
 {
   auto d = Disc();
 
   const auto& coord = d->Coord();
+  const auto& lid = d->Lid();
   const auto& x = coord[0];
   const auto& y = coord[1];
   const auto& z = coord[2];
@@ -227,14 +233,13 @@ ALECG::bnorm( const std::map< int, std::vector< std::size_t > >& bface,
   // Compute boundary point normals on all side sets summing inverse distance
   // weighted face normals to points. This is only a partial sum at shared
   // boundary points in parallel.
-  const auto& lid = d->Lid();
   const auto& gid = d->Gid();
-  for (const auto& [ setid, faceids ] : bface) {
+  for (const auto& [ setid, faceids ] : m_bface) {
     for (auto f : faceids) {
       tk::UnsMesh::Face
-        face{ tk::cref_find( lid, triinpoel[f*3+0] ),
-              tk::cref_find( lid, triinpoel[f*3+1] ),
-              tk::cref_find( lid, triinpoel[f*3+2] ) };
+        face{ tk::cref_find( lid, m_triinpoel[f*3+0] ),
+              tk::cref_find( lid, m_triinpoel[f*3+1] ),
+              tk::cref_find( lid, m_triinpoel[f*3+2] ) };
       std::array< tk::real, 3 > fx{ x[face[0]], x[face[1]], x[face[2]] };
       std::array< tk::real, 3 > fy{ y[face[0]], y[face[1]], y[face[2]] };
       std::array< tk::real, 3 > fz{ z[face[0]], z[face[1]], z[face[2]] };
@@ -288,59 +293,10 @@ ALECG::comnorm(
     bnorm[3] += n[3];
   }
 
-  if (++m_nnorm == Disc()->NodeCommMap().size()) {
-    m_nnorm = 0;
+  if (++m_nbnorm == Disc()->NodeCommMap().size()) {
+    m_nbnorm = 0;
     comnorm_complete();
   }
-}
-
-void
-ALECG::normfinal()
-// *****************************************************************************
-//  Finish computing dual-face and boundary point normals
-// *****************************************************************************
-{
-  const auto& lid = Disc()->Lid();
-
-  // Combine own and communicated contributions to boundary point normals
-  for (auto& [ p, n ] : m_bnormc) {
-    auto j = m_bnorm.find(p);
-    if (j != end(m_bnorm)) {
-      auto& norm = j->second;
-      norm[0] += n[0];
-      norm[1] += n[1];
-      norm[2] += n[2];
-      norm[3] += n[3];
-    }
-  }
-  tk::destroy( m_bnormc );
-
-  // Divie summed point normals by the sum of inverse distance squared
-  for (auto& [ p, n ] : m_bnorm) {
-    n[0] /= n[3];
-    n[1] /= n[3];
-    n[2] /= n[3];
-    Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
-            std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
-  }
-
-  // Replace global->local ids associated to boundary normals of symbc nodes
-  decltype(m_bnorm) bnorm;
-  for (auto&& [g,n] : m_bnorm) bnorm[ tk::cref_find(lid,g) ] = std::move(n);
-  m_bnorm = std::move(bnorm);
-
-  // Combine own and communicated contributions to dual-face normals
-  for (const auto& [e,n] : m_dfnormc) {
-    auto& dfn = tk::ref_find( m_dfnorm, e );
-    dfn[0] += n[0];
-    dfn[1] += n[1];
-    dfn[2] += n[2];
-  }
-  tk::destroy( m_dfnormc );
-
-  // Signal the runtime system that the workers have been created
-  contribute( sizeof(int), &m_initial, CkReduction::sum_int,
-    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
 
 void
@@ -419,6 +375,7 @@ void
 ALECG::lhs()
 // *****************************************************************************
 // Compute the left-hand side of transport equations
+//! \details Also (re-)compute all data structures if the mesh changed.
 // *****************************************************************************
 {
   auto d = Disc();
@@ -437,6 +394,9 @@ ALECG::lhs()
     }
 
   ownlhs_complete();
+
+  // (Re-)compute boundary point-, and dual-face normals
+  norm();
 }
 //! [Compute own and send lhs on chare-boundary]
 
@@ -493,10 +453,66 @@ ALECG::lhsmerge()
   // Clear receive buffer
   tk::destroy(m_lhsc);
 
+  // Combine own and communicated contributions of normals
+  normfinal();
+
   // Continue after lhs is complete
   if (m_initial) start(); else lhs_complete();
 }
 //! [Merge lhs and continue]
+
+void
+ALECG::normfinal()
+// *****************************************************************************
+//  Finish computing dual-face and boundary point normals
+// *****************************************************************************
+{
+  const auto& lid = Disc()->Lid();
+
+  // Combine own and communicated contributions to boundary point normals
+  for (auto& [ p, n ] : m_bnormc) {
+    auto j = m_bnorm.find(p);
+    if (j != end(m_bnorm)) {
+      auto& norm = j->second;
+      norm[0] += n[0];
+      norm[1] += n[1];
+      norm[2] += n[2];
+      norm[3] += n[3];
+    }
+  }
+  tk::destroy( m_bnormc );
+
+  // Divie summed point normals by the sum of inverse distance squared
+  for (auto& [ p, n ] : m_bnorm) {
+    n[0] /= n[3];
+    n[1] /= n[3];
+    n[2] /= n[3];
+    Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
+            std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
+  }
+
+  // Replace global->local ids associated to boundary normals of symbc nodes
+  decltype(m_bnorm) bnorm;
+  for (auto&& [g,n] : m_bnorm) bnorm[ tk::cref_find(lid,g) ] = std::move(n);
+  m_bnorm = std::move(bnorm);
+
+  // Combine own and communicated contributions to dual-face normals
+  for (const auto& [e,n] : m_dfnormc) {
+    auto& dfn = tk::ref_find( m_dfnorm, e );
+    dfn[0] += n[0];
+    dfn[1] += n[1];
+    dfn[2] += n[2];
+  }
+  tk::destroy( m_dfnormc );
+
+  // Normalize dual-face normals
+  for (auto& [e,n] : m_dfnorm) {
+    Assert( std::abs(tk::dot(n,n)) >
+              std::numeric_limits< tk::real >::epsilon(),
+                "Dual-face normal zero length" );
+    tk::unit(n);
+  }
+}
 
 void
 ALECG::next()
@@ -786,9 +802,9 @@ ALECG::resizePostAMR(
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
   const tk::NodeCommMap& nodeCommMap,
-  const std::map< int, std::vector< std::size_t > >& /*bface*/,
+  const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
-  const std::vector< std::size_t >& /* triinpoel */ )
+  const std::vector< std::size_t >& triinpoel )
 // *****************************************************************************
 //  Receive new mesh from Refiner
 //! \param[in] ginpoel Mesh connectivity with global node ids
@@ -797,7 +813,9 @@ ALECG::resizePostAMR(
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 //! \param[in] nodeCommMap New node communication map
+//! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
   auto d = Disc();
@@ -828,8 +846,10 @@ ALECG::resizePostAMR(
     for (std::size_t c=0; c<nprop; ++c)
       m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
 
-  // Update physical-boundary node lists
+  // Update physical-boundary node-, face-, and element lists
   m_bnode = bnode;
+  m_bface = bface;
+  m_triinpoel = triinpoel;
 
   contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
 }

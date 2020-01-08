@@ -186,49 +186,5 @@ edfnorm( const tk::UnsMesh::Edge& edge,
   return n;
 }
 
-std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
-                    tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >
-intdfnorm( const std::vector< std::size_t >& gid,
-           const std::vector< std::size_t >& inpoel,
-           const std::pair< std::vector< std::size_t >,
-                            std::vector< std::size_t > >& psup,
-           const std::unordered_map< tk::UnsMesh::Edge,
-                    std::vector< std::size_t >,
-                    tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued,
-           const std::array< std::vector< tk::real >, 3 >&  coord,
-           const std::unordered_map< tk::UnsMesh::Edge,
-                    std::array< tk::real, 3 >,
-                    tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfn )
-// *****************************************************************************
-// Augment dual-face normals with those of the internal edges
-//! \param[in] gid Local->global node id map
-//! \param[in] inpoel Mesh element connectivity
-//! \param[in] psup Points surrounding points
-//! \param[in] esued Elements surrounding edges
-//! \param[in] coord Mesh node coordinates
-//! \param[in] dfn Dual-face normals on the chare boundary only
-//! \return Dual-face normals in all edges
-// *****************************************************************************
-{
-  // copy in chare-boundary dual-face normals
-  auto dfnorm = dfn;
-
-  // Compute dual-face normals for domain edges
-  for (std::size_t p=0; p<gid.size(); ++p)    // for each point p
-    for (auto q : tk::Around(psup,p))         // for each edge p-q
-      if (gid[p] < gid[q] && dfn.find({gid[p],gid[q]}) == end(dfn))
-        dfnorm[{gid[p],gid[q]}] = edfnorm( {p,q}, coord, inpoel, esued );
-
-  // Normalize dual-face normals
-  for (auto& [e,n] : dfnorm) {
-    Assert( std::abs(tk::dot(n,n)) >
-              std::numeric_limits< tk::real >::epsilon(),
-                "Dual-face normal zero length" );
-    tk::unit(n);
-  }
-
-  return dfnorm;
-}
-
 } // cg::
 } // inciter::

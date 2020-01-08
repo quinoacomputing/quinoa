@@ -176,14 +176,11 @@ class Transport {
       auto psup = tk::genPsup( inpoel, 4, esup );
       auto esued = tk::genEsued( inpoel, 4, esup );
 
-      // augment dual-face normals with those of the domain-edges
-      auto dfnorm = intdfnorm( gid, inpoel, psup, esued, coord, dfn );
-
       // domain-edge integral
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
         for (auto q : tk::Around(psup,p)) {     // for each edge p-q
           // access and orient dual-face normals for edge p-q
-          auto n = tk::cref_find( dfnorm, {gid[p],gid[q]} );
+          auto n = tk::cref_find( dfn, {gid[p],gid[q]} );
           if (gid[p] > gid[q]) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
           // compute primitive variables at edge-end points (for Transport,
           // these are the same as the conserved variables)
@@ -224,7 +221,9 @@ class Transport {
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
         // access node IDs
         const std::array< std::size_t, 3 >
-          N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+          N{ tk::cref_find( lid, triinpoel[e*3+0] ),
+             tk::cref_find( lid, triinpoel[e*3+1] ),
+             tk::cref_find( lid, triinpoel[e*3+2] ) };
         // apply symmetry BCs
         if (bnorm.find(N[0]) != end(bnorm)) continue;
         // node coordinates
