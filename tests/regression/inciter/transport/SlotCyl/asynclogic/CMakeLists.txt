@@ -34,7 +34,7 @@ function(add_async_test scheme virt npes ppn migr)
     TEXT_RESULT diag
     TEXT_DIFF_PROG_ARGS --trunc
     TEXT_DIFF_PROG_CONF noop.ndiff.cfg
-    LABELS ${migr_label})
+    LABELS ${scheme} ${migr_label})
 endfunction()
 
 foreach(scheme diagcg dg alecg)
