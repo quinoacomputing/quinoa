@@ -3,7 +3,7 @@
   \file      src/PDE/DGPDE.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Partial differential equation base for discontinuous Galerkin PDEs
   \details   This file defines a generic partial differential equation (PDE)
