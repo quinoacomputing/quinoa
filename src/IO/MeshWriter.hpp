@@ -3,7 +3,7 @@
   \file      src/IO/MeshWriter.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ group for outputing mesh data to file
   \details   Charm++ group declaration used to output data associated to
