@@ -317,6 +317,9 @@ DiagCG::start()
   // Start timer measuring time stepping wall clock time
   Disc()->Timer().zero();
 
+  // Perform the gather step for the rhs
+  gather();
+
   // Start time stepping by computing the size of the next time step)
   next();
 }
@@ -462,6 +465,24 @@ DiagCG::advance( tk::real newdt )
 }
 
 void
+DiagCG::gather()
+// *****************************************************************************
+// Perform the gather step for the rhs
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto& coord = d->Coord();
+  const auto& inpoel = d->Inpoel();
+  const auto& bid = d->Bid();
+
+  m_ue.fill( 0.0 );
+  for (const auto& eq : g_cgpde) {
+    eq.gather( coord, inpoel, m_bndel, bid, m_u, m_ue );
+    eq.gatherdt( d->T(), coord, inpoel, m_bndel, bid, m_u, m_ue );
+  }
+}
+
+void
 DiagCG::rhs()
 // *****************************************************************************
 // Compute right-hand side of transport equations
@@ -475,11 +496,6 @@ DiagCG::rhs()
   auto deltat = d->Dt();
 
   // Gather the right-hand side
-  m_ue.fill( 0.0 );
-  for (const auto& eq : g_cgpde) {
-    eq.gather( coord, inpoel, m_bndel, bid, m_u, m_ue );
-    eq.gatherdt( t, coord, inpoel, m_bndel, bid, m_u, m_ue );
-  }
   for (auto& u : m_ue.data()) u *= deltat;
   for (std::size_t e=0; e<inpoel.size()/4; ++e)
     for (ncomp_t c=0; c<m_u.nprop(); ++c)
@@ -717,6 +733,8 @@ DiagCG::update( const tk::Fields& a, [[maybe_unused]] tk::Fields&& dul )
   else
     m_u = m_u + m_du;
 
+  // Set flag that indicates that we are during time stepping
+  m_initial = 0;
   // Compute diagnostics, e.g., residuals
   auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
@@ -779,9 +797,6 @@ DiagCG::resizePostAMR(
 {
   auto d = Disc();
 
-  // Set flag that indicates that we are during time stepping
-  m_initial = 0;
-
   // Zero field output iteration count between two mesh refinement steps
   d->Itf() = 0;
 
@@ -825,6 +840,9 @@ DiagCG::resized()
 // *****************************************************************************
 {
   resize_complete();
+
+  // Speculatively start the next step: gather the right-hand side
+  gather();
 }
 
 void

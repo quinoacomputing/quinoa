@@ -286,6 +286,9 @@ class DiagCG : public CBase_DiagCG {
     //! Compute righ-hand side vector of transport equations
     void rhs();
 
+    //! Perform the gather step for the rhs
+    void gather();
+
     //! Start time stepping
     void start();
 
