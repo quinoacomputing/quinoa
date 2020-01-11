@@ -183,15 +183,12 @@ class CompFlow {
     //! \param[in] bndel List of elements contributing to chare-boundary nodes
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
-    //! \param[in,out] Ue Element-centered solution vector at intermediate step
-    //!    (used here internally as a scratch array)
     //! \param[in,out] R Right-hand side vector to contribute to
     void scatterdt( tk::real t,
                     const std::array< std::vector< tk::real >, 3 >& coord,
                     const std::vector< std::size_t >& inpoel,
                     const std::vector< std::size_t >& bndel,
                     const std::unordered_map< std::size_t, std::size_t >& bid,
-                    const tk::Fields& Ue,
                     tk::Fields& R ) const
     {
       Assert( R.nunk() == coord[0].size(),
@@ -200,10 +197,10 @@ class CompFlow {
 
       // 2nd stage: contribute to chare-boundary only
       //for (auto e : bndel)
-      //  scatter_src( e, t, coord, inpoel, bid, Ue, R );
+      //  scatter_src( e, t, coord, inpoel, bid, R );
       // 2nd stage: internal nodes only
       for (std::size_t e=0; e<inpoel.size()/4; ++e)
-        scatter_src( e, t, coord, inpoel, bid, Ue, R );
+        scatter_src( e, t, coord, inpoel, bid, R );
     }
 
     //! Compute the minimum time step size
@@ -598,15 +595,12 @@ class CompFlow {
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
-    //! \param[in,out] Ue Element-centered solution vector at intermediate step
-    //!    (used here internally as a scratch array)
     //! \param[in,out] R Right-hand side vector computed
     void scatter_src( std::size_t e,
                       tk::real t,
                       const std::array< std::vector< tk::real >, 3 >& coord,
                       const std::vector< std::size_t >& inpoel,
                       const std::unordered_map< std::size_t, std::size_t >& bid,
-                      const tk::Fields& Ue,
                       tk::Fields& R ) const
     {
       const std::array< std::size_t, 4 >

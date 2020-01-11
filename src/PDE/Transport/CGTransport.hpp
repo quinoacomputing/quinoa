@@ -258,7 +258,6 @@ class Transport {
                     const std::vector< std::size_t >&,
                     const std::vector< std::size_t >&,
                     const std::unordered_map< std::size_t, std::size_t >&,
-                    const tk::Fields&,
                     tk::Fields& ) const {}
 
     //! Compute the minimum time step size

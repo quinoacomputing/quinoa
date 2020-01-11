@@ -489,7 +489,7 @@ DiagCG::rhs()
   // Scatter the right-hand side
   for (const auto& eq : g_cgpde) {
     eq.scatter( coord, inpoel, m_bndel, bid, m_u, m_ue, m_rhs );
-    eq.scatterdt( t + deltat/2.0, coord, inpoel, m_bndel, bid, m_ue, m_rhs );
+    eq.scatterdt( t + deltat/2.0, coord, inpoel, m_bndel, bid, m_rhs );
   }
 
   // Compute mass diffusion rhs contribution required for the low order solution
