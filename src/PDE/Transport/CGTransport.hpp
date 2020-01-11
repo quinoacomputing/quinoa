@@ -93,33 +93,29 @@ class Transport {
       return std::vector< tk::real >( begin(s), end(s) );
     }
 
-    //! Compute right hand side
-    //! \param[in] deltat Size of time step
+    //! Gather terms not dependent on dt
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] bndel List of elements contributing to chare-boundary nodes
+    //! \param[in] bid Local chare-boundary node ids (value) associated to
+    //!    global node ids (key)
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] Ue Element-centered solution vector at intermediate step
     //!    (used here internally as a scratch array)
-    //! \param[in,out] R Right-hand side vector computed
-    void rhs( tk::real,
-              tk::real deltat,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
-              const tk::Fields& U,
-              tk::Fields& Ue,
-              tk::Fields& R ) const
+    void gather( const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< std::size_t >& inpoel,
+                 const std::vector< std::size_t >& bndel,
+                 const std::unordered_map< std::size_t, std::size_t >& bid,
+                 const tk::Fields& U,
+                 tk::Fields& Ue ) const
     {
-      using tag::transport;
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
-      Assert( R.nunk() == coord[0].size(),
-              "Number of unknowns in right-hand side vector incorrect" );
 
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      // 1st stage: update element values from node values (gather-add)
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
 
         // access node IDs
@@ -148,13 +144,6 @@ class Transport {
         std::vector< const tk::real* > ue( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue.cptr( c, m_offset );
 
-        // sum nodal averages to element
-        for (ncomp_t c=0; c<m_ncomp; ++c) {
-          Ue.var(ue[c],e) = 0.0;
-          for (std::size_t a=0; a<4; ++a)
-            Ue.var(ue[c],e) += u[c][a]/4.0;
-        }
-
         // get prescribed velocity
         const std::array< std::vector<std::array<tk::real,3>>, 4 > vel{{
           Problem::prescribedVelocity( m_system, m_ncomp,
@@ -167,14 +156,38 @@ class Transport {
                                        x[N[3]], y[N[3]], z[N[3]] ) }};
 
         // sum flux (advection) contributions to element
-        tk::real d = deltat/2.0;
         for (std::size_t c=0; c<m_ncomp; ++c)
           for (std::size_t j=0; j<3; ++j)
             for (std::size_t a=0; a<4; ++a)
-              Ue.var(ue[c],e) -= d * grad[a][j] * vel[a][c][j]*u[c][a];
+              Ue.var(ue[c],e) -= 0.5 * grad[a][j] * vel[a][c][j]*u[c][a];
 
       }
+    }
 
+    //! Scatter terms not dependent on dt
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] bndel List of elements contributing to chare-boundary nodes
+    //! \param[in] bid Local chare-boundary node ids (value) associated to
+    //!    global node ids (key)
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] Ue Element-centered solution vector at intermediate step
+    //!    (used here internally as a scratch array)
+    //! \param[in,out] R Right-hand side vector computed
+    void scatter( const std::array< std::vector< tk::real >, 3 >& coord,
+                  const std::vector< std::size_t >& inpoel,
+                  const std::vector< std::size_t >& bndel,
+                  const std::unordered_map< std::size_t, std::size_t >& bid,
+                  const tk::Fields& U,
+                  const tk::Fields& Ue,
+                  tk::Fields& R ) const
+    {
+      Assert( R.nunk() == coord[0].size(),
+              "Number of unknowns in right-hand side vector incorrect" );
+
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
 
       // zero right hand side for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
@@ -219,18 +232,34 @@ class Transport {
           Problem::prescribedVelocity( m_system, m_ncomp, xc, yc, zc );
 
         // scatter-add flux contributions to rhs at nodes
-        tk::real d = deltat * J/6.0;
+        tk::real d = J/6.0;
         for (std::size_t c=0; c<m_ncomp; ++c)
           for (std::size_t j=0; j<3; ++j)
             for (std::size_t a=0; a<4; ++a)
               R.var(r[c],N[a]) += d * grad[a][j] * vel[c][j]*ue[c];
 
         // add (optional) diffusion contribution to right hand side
-        m_physics.diffusionRhs( m_system, m_ncomp, deltat, J, grad,
-                                N, u, r, R );
-
+        m_physics.diffusionRhs( m_system, m_ncomp, J, grad, N, u, r, R );
       }
     }
+
+    //! Gather terms dependent on dt
+    void gatherdt( tk::real,
+                   const std::array< std::vector< tk::real >, 3 >&,
+                   const std::vector< std::size_t >&,
+                   const std::vector< std::size_t >&,
+                   const std::unordered_map< std::size_t, std::size_t >&,
+                   const tk::Fields&,
+                   tk::Fields& ) const {}
+
+    //! Scatter terms dependent on dt
+    void scatterdt( tk::real,
+                    const std::array< std::vector< tk::real >, 3 >&,
+                    const std::vector< std::size_t >&,
+                    const std::vector< std::size_t >&,
+                    const std::unordered_map< std::size_t, std::size_t >&,
+                    const tk::Fields&,
+                    tk::Fields& ) const {}
 
     //! Compute the minimum time step size
     //! \param[in] U Solution vector at recent time step

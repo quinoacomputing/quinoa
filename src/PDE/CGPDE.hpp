@@ -85,15 +85,48 @@ class CGPDE {
                      tk::real t ) const
     { self->initialize( coord, unk, t ); }
 
-    //! Public interface to computing the right-hand side vector for the diff eq
-    void rhs( tk::real t,
-              tk::real deltat,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
-              const tk::Fields& U,
-              tk::Fields& Ue,
-              tk::Fields& R ) const
-    { self->rhs( t, deltat, coord, inpoel, U, Ue, R ); }
+    //! Public interface to gathering terms not dependent on dt
+    void gather(
+      const std::array< std::vector< tk::real >, 3 >& coord,
+      const std::vector< std::size_t >& inpoel,
+      const std::vector< std::size_t >& bndel,
+      const std::unordered_map< std::size_t, std::size_t >& bid,
+      const tk::Fields& U,
+      tk::Fields& Ue ) const
+    { self->gather( coord, inpoel, bndel, bid, U, Ue ); }
+
+    //! Public interface to scattering terms not dependnt on dt
+    void scatter(
+      const std::array< std::vector< tk::real >, 3 >& coord,
+      const std::vector< std::size_t >& inpoel,
+      const std::vector< std::size_t >& bndel,
+      const std::unordered_map< std::size_t, std::size_t >& bid,
+      const tk::Fields& U,
+      const tk::Fields& Ue,
+      tk::Fields& R ) const
+    { self->scatter( coord, inpoel, bndel, bid, U, Ue, R ); }
+
+    //! Public interface to gatherting terms dependent on dt
+    void gatherdt(
+      tk::real t,
+      const std::array< std::vector< tk::real >, 3 >& coord,
+      const std::vector< std::size_t >& inpoel,
+      const std::vector< std::size_t >& bndel,
+      const std::unordered_map< std::size_t, std::size_t >& bid,
+      const tk::Fields& U,
+      tk::Fields& Ue ) const
+    { self->gatherdt( t, coord, inpoel, bndel, bid, U, Ue ); }
+
+    //! Public interface to scattering terms dependent on dt
+    void scatterdt(
+      tk::real t,
+      const std::array< std::vector< tk::real >, 3 >& coord,
+      const std::vector< std::size_t >& inpoel,
+      const std::vector< std::size_t >& bndel,
+      const std::unordered_map< std::size_t, std::size_t >& bid,
+      tk::Fields& Ue,
+      tk::Fields& R ) const
+    { self->scatterdt( t, coord, inpoel, bndel, bid, Ue, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -164,13 +197,37 @@ class CGPDE {
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
                                tk::Fields&,
                                tk::real ) const = 0;
-      virtual void rhs( tk::real,
-                        tk::real,
-                        const std::array< std::vector< tk::real >, 3 >&,
-                        const std::vector< std::size_t >&,
-                        const tk::Fields&,
-                        tk::Fields&,
-                        tk::Fields& ) const = 0;
+      virtual void gather(
+        const std::array< std::vector< tk::real >, 3 >&,
+        const std::vector< std::size_t >&,
+        const std::vector< std::size_t >&,
+        const std::unordered_map< std::size_t, std::size_t >&,
+        const tk::Fields&,
+        tk::Fields& ) const = 0;
+      virtual void scatter(
+        const std::array< std::vector< tk::real >, 3 >&,
+        const std::vector< std::size_t >&,
+        const std::vector< std::size_t >&,
+        const std::unordered_map< std::size_t, std::size_t >&,
+        const tk::Fields&,
+        const tk::Fields&,
+        tk::Fields& ) const = 0;
+      virtual void gatherdt(
+        tk::real,
+        const std::array< std::vector< tk::real >, 3 >&,
+        const std::vector< std::size_t >&,
+        const std::vector< std::size_t >&,
+        const std::unordered_map< std::size_t, std::size_t >&,
+        const tk::Fields&,
+        tk::Fields& ) const = 0;
+      virtual void scatterdt(
+        tk::real,
+        const std::array< std::vector< tk::real >, 3 >&,
+        const std::vector< std::size_t >&,
+        const std::vector< std::size_t >&,
+        const std::unordered_map< std::size_t, std::size_t >&,
+        const tk::Fields&,
+        tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
@@ -209,14 +266,41 @@ class CGPDE {
                        tk::Fields& unk,
                        tk::real t )
       const override { data.initialize( coord, unk, t ); }
-      void rhs( tk::real t,
-                tk::real deltat,
-                const std::array< std::vector< tk::real >, 3 >& coord,
-                const std::vector< std::size_t >& inpoel,
-                const tk::Fields& U,
-                tk::Fields& Ue,
-                tk::Fields& R ) const override
-      { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
+      void gather(
+        const std::array< std::vector< tk::real >, 3 >& coord,
+        const std::vector< std::size_t >& inpoel,
+        const std::vector< std::size_t >& bndel,
+        const std::unordered_map< std::size_t, std::size_t >& bid,
+        const tk::Fields& U,
+        tk::Fields& Ue ) const override
+      { data.gather( coord, inpoel, bndel, bid, U, Ue ); }
+      void scatter(
+        const std::array< std::vector< tk::real >, 3 >& coord,
+        const std::vector< std::size_t >& inpoel,
+        const std::vector< std::size_t >& bndel,
+        const std::unordered_map< std::size_t, std::size_t >& bid,
+        const tk::Fields& U,
+        const tk::Fields& Ue,
+        tk::Fields& R ) const override
+      { data.scatter( coord, inpoel, bndel, bid, U, Ue, R ); }
+      void gatherdt(
+        tk::real t,
+        const std::array< std::vector< tk::real >, 3 >& coord,
+        const std::vector< std::size_t >& inpoel,
+        const std::vector< std::size_t >& bndel,
+        const std::unordered_map< std::size_t, std::size_t >& bid,
+        const tk::Fields& U,
+        tk::Fields& Ue ) const override
+      { data.gatherdt( t, coord, inpoel, bndel, bid, U, Ue ); }
+      void scatterdt(
+        tk::real t,
+        const std::array< std::vector< tk::real >, 3 >& coord,
+        const std::vector< std::size_t >& inpoel,
+        const std::vector< std::size_t >& bndel,
+        const std::unordered_map< std::size_t, std::size_t >& bid,
+        const tk::Fields& Ue,
+        tk::Fields& R ) const override
+      { data.scatterdt( t, coord, inpoel, bndel, bid, Ue, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override

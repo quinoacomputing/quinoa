@@ -30,7 +30,6 @@ void
 TransportPhysicsAdvDiff::diffusionRhs(
   ncomp_t e,
   ncomp_t ncomp,
-  tk::real deltat,
   tk::real J,
   const std::array< std::array< tk::real, 3 >, 4 >& grad,
   const std::array< std::size_t, 4 >& N,
@@ -42,7 +41,6 @@ TransportPhysicsAdvDiff::diffusionRhs(
 //! \param[in] e Equation system index, i.e., which transport equation
 //!   system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of components in this PDE
-//! \param[in] deltat Size of time step
 //! \param[in] J Element Jacobi determinant
 //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
 //! \param[in] N Element node indices
@@ -55,7 +53,7 @@ TransportPhysicsAdvDiff::diffusionRhs(
   const auto& diff = g_inputdeck.get< tag::param, eq, tag::diffusivity >()[e];
 
   // add diffusion contribution to right hand side
-  const auto d = deltat * J/6.0;
+  const auto d = J/6.0;
   for (ncomp_t c=0; c<ncomp; ++c)
     for (std::size_t k=0; k<3; ++k) {
       const auto D = diff[ 3*c+k ];

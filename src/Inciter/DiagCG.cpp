@@ -68,7 +68,8 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_vol(),
   m_bnorm(),
   m_bnormc(),
-  m_diag()
+  m_diag(),
+  m_bndel( bndel() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -89,6 +90,32 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 
   // Compute boundary point normals
   bnorm( bface, triinpoel, std::move(symbcnodes) );
+}
+
+std::vector< std::size_t >
+DiagCG::bndel() const
+// *****************************************************************************
+// Find elements along our mesh chunk boundary
+//! \return List of local element ids that have at least a single node
+//!   contributing to a chare boundary
+// *****************************************************************************
+{
+  // Lambda to find out if a mesh node is shared with another chare
+  auto shared = [this]( std::size_t i ){
+    for (const auto& [c,n] : Disc()->msumset())
+      if (n.find(i) != end(n)) return true;
+    return false;
+  };
+
+  // Find elements along our mesh chunk boundary
+  std::vector< std::size_t > e;
+  const auto& inpoel = Disc()->Inpoel();
+  const auto gid = Disc()->Gid();
+  for (std::size_t n=0; n<inpoel.size(); ++n)
+    if (shared( gid[ inpoel[n] ] )) e.push_back( n/4 );
+  tk::unique( e );
+
+  return e;
 }
 
 void
@@ -441,17 +468,35 @@ DiagCG::rhs()
 // *****************************************************************************
 {
   auto d = Disc();
+  const auto& coord = d->Coord();
+  const auto& inpoel = d->Inpoel();
+  const auto& bid = d->Bid();
+  auto t = d->T();
+  auto deltat = d->Dt();
 
-  // Compute right-hand side and query Dirichlet BCs for all equations
-  for (const auto& eq : g_cgpde)
-    eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
+  // Gather the right-hand side
+  m_ue.fill( 0.0 );
+  for (const auto& eq : g_cgpde) {
+    eq.gather( coord, inpoel, m_bndel, bid, m_u, m_ue );
+    eq.gatherdt( t, coord, inpoel, m_bndel, bid, m_u, m_ue );
+  }
+  for (auto& u : m_ue.data()) u *= deltat;
+  for (std::size_t e=0; e<inpoel.size()/4; ++e)
+    for (ncomp_t c=0; c<m_u.nprop(); ++c)
+      for (std::size_t a=0; a<4; ++a)
+        m_ue(e,c,0) += m_u(inpoel[e*4+a],c,0)/4.0;
+
+  // Scatter the right-hand side
+  for (const auto& eq : g_cgpde) {
+    eq.scatter( coord, inpoel, m_bndel, bid, m_u, m_ue, m_rhs );
+    eq.scatterdt( t + deltat/2.0, coord, inpoel, m_bndel, bid, m_ue, m_rhs );
+  }
 
   // Compute mass diffusion rhs contribution required for the low order solution
   auto dif = d->FCT()->diff( *d, m_u );
 
   // Query and match user-specified boundary conditions to side sets
-  m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(),
-                   d->Lid(), m_bnode );
+  m_bcdir = match( m_u.nprop(), t, deltat, coord, d->Lid(), m_bnode );
 
   if (d->Msum().empty())
     comrhs_complete();
@@ -521,6 +566,8 @@ DiagCG::solve( tk::Fields& dif )
     auto lid = tk::cref_find( d->Lid(), b.first );
     for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += b.second[c];
   }
+
+  for (auto& r : m_rhs.data()) r *= d->Dt();
 
   // Combine own and communicated contributions to mass diffusion
   for (const auto& b : m_difc) {
