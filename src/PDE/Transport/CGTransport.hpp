@@ -93,19 +93,15 @@ class Transport {
       return std::vector< tk::real >( begin(s), end(s) );
     }
 
-    //! Gather terms not dependent on dt
+    //! Gather
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] bndel List of elements contributing to chare-boundary nodes
-    //! \param[in] bid Local chare-boundary node ids (value) associated to
-    //!    global node ids (key)
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] Ue Element-centered solution vector at intermediate step
     //!    (used here internally as a scratch array)
-    void gather( const std::array< std::vector< tk::real >, 3 >& coord,
+    void gather( tk::real,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
-                 const std::vector< std::size_t >& bndel,
-                 const std::unordered_map< std::size_t, std::size_t >& bid,
                  const tk::Fields& U,
                  tk::Fields& Ue ) const
     {
@@ -242,15 +238,6 @@ class Transport {
         m_physics.diffusionRhs( m_system, m_ncomp, J, grad, N, u, r, R );
       }
     }
-
-    //! Gather terms dependent on dt
-    void gatherdt( tk::real,
-                   const std::array< std::vector< tk::real >, 3 >&,
-                   const std::vector< std::size_t >&,
-                   const std::vector< std::size_t >&,
-                   const std::unordered_map< std::size_t, std::size_t >&,
-                   const tk::Fields&,
-                   tk::Fields& ) const {}
 
     //! Scatter terms dependent on dt
     void scatterdt( tk::real,

@@ -476,15 +476,10 @@ DiagCG::gather()
 // *****************************************************************************
 {
   auto d = Disc();
-  const auto& coord = d->Coord();
-  const auto& inpoel = d->Inpoel();
-  const auto& bid = d->Bid();
 
   m_ue.fill( 0.0 );
-  for (const auto& eq : g_cgpde) {
-    eq.gather( coord, inpoel, m_bndel, bid, m_u, m_ue );
-    eq.gatherdt( d->T(), coord, inpoel, m_bndel, bid, m_u, m_ue );
-  }
+  for (const auto& eq : g_cgpde)
+    eq.gather( d->T(), d->Coord(), d->Inpoel(), m_u, m_ue );
 }
 
 void
@@ -758,7 +753,7 @@ DiagCG::refine()
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
 
   // if t>0 refinement enabled and we hit the dtref frequency
-  if (dtref && !(d->It() % dtfreq)) {   // refine
+  if (dtref && !(d->It() % dtfreq)) {   // h-refine
 
     // Activate SDAG waits for re-computing the left-hand side
     thisProxy[ thisIndex ].wait4lhs();
@@ -767,7 +762,7 @@ DiagCG::refine()
     d->Ref()->dtref( {}, m_bnode, {} );
     d->refined() = 1;
 
-  } else {      // do not refine
+  } else {      // do not h-refine
 
     d->refined() = 0;
     lhs_complete();
@@ -824,11 +819,9 @@ DiagCG::resizePostAMR(
   m_rhs.resize( npoin, nprop );
 
   // Update solution on new mesh
-  for (const auto& n : addedNodes) {
-    for (std::size_t c=0; c<nprop; ++c) {
+  for (const auto& n : addedNodes)
+    for (std::size_t c=0; c<nprop; ++c)
       m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
-    }
-  }
 
   // Update physical-boundary node lists
   m_bnode = bnode;
