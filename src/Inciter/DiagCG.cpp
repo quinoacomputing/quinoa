@@ -322,7 +322,7 @@ DiagCG::start()
   // Zero grind-timer
   Disc()->grindZero();
 
-  // Perform the gather step for the rhs
+  // Perform the gather step for the rhs for the first time step
   gather();
 
   // Start time stepping by computing the size of the next time step)
@@ -738,8 +738,6 @@ DiagCG::update( const tk::Fields& a, [[maybe_unused]] tk::Fields&& dul )
   else
     m_u = m_u + m_du;
 
-  // Set flag that indicates that we are during time stepping
-  m_initial = 0;
   // Compute diagnostics, e.g., residuals
   auto diag_computed = m_diag.compute( *d, m_u );
   // Increase number of iterations and physical time
@@ -801,6 +799,9 @@ DiagCG::resizePostAMR(
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Set flag that indicates that we are during time stepping
+  m_initial = 0;
 
   // Zero field output iteration count between two mesh refinement steps
   d->Itf() = 0;
