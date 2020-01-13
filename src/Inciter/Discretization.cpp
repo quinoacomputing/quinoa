@@ -498,6 +498,21 @@ Discretization::next()
 }
 
 void
+Discretization::grindZero()
+// *****************************************************************************
+//  Zero grind-time
+// *****************************************************************************
+{
+  m_prevstatus = std::chrono::high_resolution_clock::now();
+
+  if (thisIndex == 0) {
+    const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
+    tk::Print print( verbose ? std::cout : std::clog );
+    print.diag( "Starting time stepping" );
+  }
+}
+
+void
 Discretization::status()
 // *****************************************************************************
 // Output one-liner status report
@@ -505,6 +520,13 @@ Discretization::status()
 {
   // Query after how many time steps user wants TTY dump
   const auto tty = g_inputdeck.get< tag::interval, tag::tty >();
+
+  // estimate grind time (taken between this and the previous time step)
+  using std::chrono::duration_cast;
+  using ms = std::chrono::milliseconds;
+  using clock = std::chrono::high_resolution_clock;
+  auto grind_time = duration_cast< ms >(clock::now() - m_prevstatus).count();
+  m_prevstatus = clock::now();
 
   if (thisIndex==0 && !(m_it%tty)) {
 
@@ -523,14 +545,6 @@ Discretization::status()
     tk::Timer::Watch ete, eta;
     m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
  
-    // estimate grind time (taken between this and the previous status line
-    // measurement) in milliseconds
-    using std::chrono::duration_cast;
-    using ms = std::chrono::milliseconds;
-    using clock = std::chrono::high_resolution_clock;
-    auto grind_time = duration_cast< ms >( clock::now() - m_prevstatus ).count();
-    m_prevstatus = clock::now();
-
     tk::Print print( verbose ? std::cout : std::clog );
  
     // Output one-liner

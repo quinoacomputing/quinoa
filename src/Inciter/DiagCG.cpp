@@ -317,6 +317,9 @@ DiagCG::start()
   // Start timer measuring time stepping wall clock time
   Disc()->Timer().zero();
 
+  // Zero grind-timer
+  Disc()->grindZero();
+
   // Perform the gather step for the rhs
   gather();
 

@@ -929,7 +929,7 @@ Transporter::inthead()
   "        dt - time step size\n"
   "       ETE - estimated time elapsed (h:m:s)\n"
   "       ETA - estimated time for accomplishment (h:m:s)\n"
-  "       EGT - estimated grind time (ms/status)\n"
+  "       EGT - estimated grind time (ms/timestep)\n"
   "       flg - status flags, legend:\n"
   "             f - field\n"
   "             d - diagnostics\n"

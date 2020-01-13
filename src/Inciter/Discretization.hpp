@@ -227,6 +227,9 @@ class Discretization : public CBase_Discretization {
     std::unordered_map< int, std::unordered_set< std::size_t > >
     msumset() const;
 
+    //! Zero grind-timer
+    void grindZero();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
