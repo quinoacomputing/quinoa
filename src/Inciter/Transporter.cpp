@@ -913,6 +913,7 @@ Transporter::stat()
 
   m_progWork.start( "Preparing workers",
                     {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
+
   // Create "derived-class" workers
   m_sorter.createWorkers();
 }

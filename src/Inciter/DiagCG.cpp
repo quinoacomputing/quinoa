@@ -100,9 +100,11 @@ DiagCG::bndel() const
 //!   contributing to a chare boundary
 // *****************************************************************************
 {
+  const auto& sumset = Disc()->msumset();
+
   // Lambda to find out if a mesh node is shared with another chare
-  auto shared = [this]( std::size_t i ){
-    for (const auto& [c,n] : Disc()->msumset())
+  auto shared = [&]( std::size_t i ){
+    for (const auto& [c,n] : sumset)
       if (n.find(i) != end(n)) return true;
     return false;
   };
