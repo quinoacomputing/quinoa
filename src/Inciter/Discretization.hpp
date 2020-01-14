@@ -349,7 +349,7 @@ class Discretization : public CBase_Discretization {
     //!   chare-boundaries.
     std::unordered_map< std::size_t, tk::real > m_volc;
     //! \brief Local chare-boundary mesh node IDs at which we receive
-    //!   contributions associated to global mesh node IDs of mesh elements we
+    //!   contributions associated to global mesh node IDs of elements we
     //!   contribute to
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Timer measuring a time step

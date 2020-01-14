@@ -22,6 +22,7 @@
 
 #include "Keywords.hpp"
 #include "Fields.hpp"
+#include "Vector.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
@@ -129,9 +130,13 @@ class FluxCorrector {
                      const std::vector< std::size_t >& inpoel ) const;
 
     //! Compute mass diffusion contribution to the rhs of the low order system
-    tk::Fields diff( const std::array< std::vector< tk::real >, 3 >& coord,
-                     const std::vector< std::size_t >& inpoel,
-                     const tk::Fields& Un ) const;
+    void diff( const std::array< std::vector< tk::real >, 3 >& coord,
+               const std::vector< std::size_t >& inpoel,
+               const std::vector< std::size_t >& bndel,
+               const std::vector< std::size_t >& gid,
+               const std::unordered_map< std::size_t, std::size_t >& bid,
+               const tk::Fields& Un,
+               tk::Fields& D ) const;
 
     //! \brief Compute the maximum and minimum unknowns of all elements
     //!   surrounding nodes
@@ -176,6 +181,66 @@ class FluxCorrector {
    std::vector< std::vector< ncomp_t > > m_sys;
    //! Component indices to treat as a velocity vector for multiple systems
    std::vector< std::array< ncomp_t, 3 > > m_vel;
+
+   //! Compute mass diffusion contribution to the RHS of the low order system
+   //! \tparam Op Operation to specify boundary vs internal nodes contribution
+   //! \param[in] coord Mesh node coordinates
+   //! \param[in] inpoel Mesh element connectivity
+   //! \param[in] gid Local->global node id map
+   //! \param[in] bid Local chare-boundary node ids (value) associated to
+   //!    global node ids (key)
+   //! \param[in] Un Solution at the previous time step
+   template< class Op >
+   void diffusion( std::size_t e,
+                   const std::array< std::vector< tk::real >, 3 >& coord,
+                   const std::vector< std::size_t >& inpoel,
+                   const std::vector< std::size_t >& gid,
+                   const std::unordered_map< std::size_t, std::size_t >& bid,
+                   const tk::Fields& Un,
+                   tk::Fields& D,
+                   Op op ) const
+   {
+     const std::array< std::size_t, 4 >
+       N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
+
+     const auto& x = coord[0];
+     const auto& y = coord[1];
+     const auto& z = coord[2];
+
+     auto ncomp = g_inputdeck.get< tag::component >().nprop();
+     auto ctau = g_inputdeck.get< tag::discr, tag::ctau >();
+
+     // compute element Jacobi determinant
+     const std::array< tk::real, 3 >
+       ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+       ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+       da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+     const auto J = tk::triple( ba, ca, da );   // J = 6V
+     Assert( J > 0, "Element Jacobian non-positive" );
+
+     // lumped - consistent mass
+     std::array< std::array< tk::real, 4 >, 4 > m;       // nnode*nnode [4][4]
+     m[0][0] = m[1][1] = m[2][2] = m[3][3] = 3.0*J/120.0;// diagonal
+     m[0][1] = m[0][2] = m[0][3] =                       // off-diagonal
+     m[1][0] = m[1][2] = m[1][3] =
+     m[2][0] = m[2][1] = m[2][3] =
+     m[3][0] = m[3][1] = m[3][2] = -J/120.0;
+
+     // access solution at element nodes at time n
+     std::vector< std::array< tk::real, 4 > > un( ncomp );
+     for (ncomp_t c=0; c<ncomp; ++c) un[c] = Un.extract( c, 0, N );
+     // access pointer to mass diffusion right hand side at element nodes
+     std::vector< const tk::real* > d( ncomp );
+     for (ncomp_t c=0; c<ncomp; ++c) d[c] = D.cptr( c, 0 );
+
+     // scatter-add mass diffusion element contributions to rhs nodes
+     for (std::size_t a=0; a<4; ++a) {
+       if (op( bid.find(gid[N[a]]), end(bid) ))
+         for (ncomp_t c=0; c<ncomp; ++c)
+           for (std::size_t b=0; b<4; ++b)
+             D.var(d[c],N[a]) -= ctau * m[a][b] * un[c][b];
+     }
+   }
 };
 
 } // inciter::

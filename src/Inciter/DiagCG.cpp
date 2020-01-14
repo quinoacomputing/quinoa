@@ -491,44 +491,59 @@ DiagCG::rhs()
   auto d = Disc();
   const auto& coord = d->Coord();
   const auto& inpoel = d->Inpoel();
+  const auto& gid = d->Gid();
+  const auto& lid = d->Lid();
   const auto& bid = d->Bid();
   auto t = d->T();
   auto deltat = d->Dt();
 
-  // Gather the right-hand side
+  // Finish gathering the right-hand side (for all cells)
   for (auto& u : m_ue.data()) u *= deltat;
   for (std::size_t e=0; e<inpoel.size()/4; ++e)
     for (ncomp_t c=0; c<m_u.nprop(); ++c)
       for (std::size_t a=0; a<4; ++a)
         m_ue(e,c,0) += m_u(inpoel[e*4+a],c,0)/4.0;
 
-  // Scatter the right-hand side
+  // Scatter the right-hand side (in serial for all cells, in parallel for
+  // chare-boundary nodes only)
+  m_rhs.fill( 0.0 );
   for (const auto& eq : g_cgpde) {
-    eq.scatter( coord, inpoel, m_bndel, bid, m_u, m_ue, m_rhs );
-    eq.scatterdt( t + deltat/2.0, coord, inpoel, m_bndel, bid, m_rhs );
+    eq.scatter( coord, inpoel, m_bndel, gid, bid, m_u, m_ue, m_rhs );
+    eq.scatterdt( t + deltat/2.0, coord, inpoel, m_bndel, gid, bid, m_rhs );
   }
 
-  // Compute mass diffusion rhs contribution required for the low order solution
-  auto dif = d->FCT()->diff( *d, m_u );
+  // Compute mass diffusion (in serial for all cells, in parallel for
+  // chare-boundary nodes only)
+  tk::Fields dif( m_u.nunk(), m_u.nprop() );
+  dif.fill( 0.0 );
+  d->FCT()->diff( *d, m_bndel, m_u, dif );
 
   // Query and match user-specified boundary conditions to side sets
-  m_bcdir = match( m_u.nprop(), t, deltat, coord, d->Lid(), m_bnode );
+  m_bcdir = match( m_u.nprop(), t, deltat, coord, lid, m_bnode );
 
   if (d->Msum().empty())
     comrhs_complete();
-  else // send contributions of rhs to chare-boundary nodes to fellow chares
+  else { // send contributions of rhs to chare-boundary nodes to fellow chares
     for (const auto& n : d->Msum()) {
       std::vector< std::vector< tk::real > > r( n.second.size() );
       std::vector< std::vector< tk::real > > D( n.second.size() );
       std::size_t j = 0;
       for (auto i : n.second) {
-        auto lid = tk::cref_find( d->Lid(), i );
-        r[ j ] = m_rhs[ lid ];
-        D[ j ] = dif[ lid ];
+        auto k = tk::cref_find( lid, i );
+        r[j] = m_rhs[k];
+        D[j] = dif[k];
         ++j;
       }
       thisProxy[ n.first ].comrhs( n.second, r, D );
     }
+    // Scatter the right-hand side (in parallel for internal nodes only)
+    for (const auto& eq : g_cgpde) {
+      eq.scatter( coord, inpoel, {}, gid, bid, m_u, m_ue, m_rhs );
+      eq.scatterdt( t + deltat/2.0, coord, inpoel, {}, gid, bid, m_rhs );
+    }
+    // Compute mass diffusion (in parallel for internal nodes only)
+    d->FCT()->diff( *d, {}, m_u, dif );
+  }
 
   ownrhs_complete( dif );
 }
@@ -583,6 +598,7 @@ DiagCG::solve( tk::Fields& dif )
     for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += b.second[c];
   }
 
+  // Multiply the rhs with deltat
   for (auto& r : m_rhs.data()) r *= d->Dt();
 
   // Combine own and communicated contributions to mass diffusion
@@ -817,6 +833,9 @@ DiagCG::resizePostAMR(
   m_ue.resize( nelem, nprop );
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
+
+  // Recompute chare-boundary element list
+  m_bndel = bndel();
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)

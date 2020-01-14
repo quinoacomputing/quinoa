@@ -29,27 +29,32 @@ namespace cg {
 //!   to make the basic implementation in Transport the advection equation.
 class TransportPhysicsAdvection {
 
-  public:
+  private:
+    using ncomp_t = tk::ctr::ncomp_t;
 
-    //! Add diffusion contribution to rhs at 2nd step stage (no-op)
-    static void
-    diffusionRhs( tk::ctr::ncomp_t,
-                  tk::ctr::ncomp_t,
+  public:
+    //! Add diffusion contribution to rhs (no-op for advection only)
+    template< class Op >
+    void
+    diffusionRhs( ncomp_t,
+                  ncomp_t,
                   tk::real,
+                  const std::vector< std::size_t >&,
+                  const std::unordered_map< std::size_t, std::size_t >&,
                   const std::array< std::array< tk::real, 3 >, 4 >&,
                   const std::array< std::size_t, 4 >&,
                   const std::vector< std::array< tk::real, 4 > >&,
                   const std::vector< const tk::real* >&,
-                  tk::Fields& )
-    {}
+                  tk::Fields&,
+                  Op ) const {}
 
     //! Compute the minimum time step size based on the diffusion
     //! \return A large time step size, i.e., ignore
-    static tk::real
+    tk::real
     diffusion_dt( tk::ctr::ncomp_t,
                   tk::ctr::ncomp_t,
                   tk::real,
-                  const std::vector< std::array< tk::real, 4 > >& )
+                  const std::vector< std::array< tk::real, 4 > >& ) const
     { return std::numeric_limits< tk::real >::max(); }
 
     static ctr::PhysicsType type() noexcept
