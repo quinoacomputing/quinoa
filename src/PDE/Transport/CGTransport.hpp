@@ -161,18 +161,14 @@ class Transport {
     //! Scatter terms not dependent on dt
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] bndel List of elements contributing to chare-boundary nodes
-    //! \param[in] bid Local chare-boundary node ids (value) associated to
-    //!    global node ids (key)
+    //! \param[in] elist List of elements to scatter
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] Ue Element-centered solution vector at intermediate step
     //!    (used here internally as a scratch array)
     //! \param[in,out] R Right-hand side vector computed
     void scatter( const std::array< std::vector< tk::real >, 3 >& coord,
                   const std::vector< std::size_t >& inpoel,
-                  const std::vector< std::size_t >& bndel,
-                  const std::vector< std::size_t >& gid,
-                  const std::unordered_map< std::size_t, std::size_t >& bid,
+                  const std::vector< std::size_t >& elist,
                   const tk::Fields& U,
                   const tk::Fields& Ue,
                   tk::Fields& R ) const
@@ -180,12 +176,59 @@ class Transport {
       Assert( R.nunk() == coord[0].size(),
               "Number of unknowns in right-hand side vector incorrect" );
 
-      if (bndel.empty())
-        for (std::size_t e=0; e<inpoel.size()/4; ++e)
-          scatter( e, coord, inpoel, gid, bid, U, Ue, R, std::equal_to{} );
-      else
-        for (auto e : bndel)
-          scatter( e, coord, inpoel, gid, bid, U, Ue, R, std::not_equal_to{} );
+      for (auto e : elist) {
+        // access node IDs
+        const std::array< std::size_t, 4 >
+          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
+        // access node coordinates
+        const auto& x = coord[0];
+        const auto& y = coord[1];
+        const auto& z = coord[2];
+
+        // compute element Jacobi determinant
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+        const auto J = tk::triple( ba, ca, da );        // J = 6V
+        Assert( J > 0, "Element Jacobian non-positive" );
+
+        // shape function derivatives, nnode*ndim [4][3]
+        std::array< std::array< tk::real, 3 >, 4 > grad;
+        grad[1] = tk::crossdiv( ca, da, J );
+        grad[2] = tk::crossdiv( da, ba, J );
+        grad[3] = tk::crossdiv( ba, ca, J );
+        for (std::size_t i=0; i<3; ++i)
+          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+
+        // access solution at elements
+        std::vector< tk::real > ue( m_ncomp );
+        for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue( e, c, m_offset );
+        // access pointer to right hand side at component and offset
+        std::vector< const tk::real* > r( m_ncomp );
+        for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+        // access solution at nodes of element
+        std::vector< std::array< tk::real, 4 > > u( m_ncomp );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+
+        // get prescribed velocity
+        auto xc = (x[N[0]] + x[N[1]] + x[N[2]] + x[N[3]]) / 4.0;
+        auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
+        auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
+        const auto vel =
+          Problem::prescribedVelocity( m_system, m_ncomp, xc, yc, zc );
+
+        // scatter-add flux contributions to rhs at nodes
+        tk::real d = J/6.0;
+        for (std::size_t a=0; a<4; ++a) {
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            for (std::size_t j=0; j<3; ++j)
+              R.var(r[c],N[a]) += d * grad[a][j] * vel[c][j]*ue[c];
+        }
+
+        // add (optional) diffusion contribution to right hand side
+        m_physics.diffusionRhs( m_system, m_ncomp, J, grad, N, u, r, R );
+      }
     }
 
     //! Scatter terms dependent on dt
@@ -193,8 +236,6 @@ class Transport {
                     const std::array< std::vector< tk::real >, 3 >&,
                     const std::vector< std::size_t >&,
                     const std::vector< std::size_t >&,
-                    const std::vector< std::size_t >&,
-                    const std::unordered_map< std::size_t, std::size_t >&,
                     tk::Fields& ) const {}
 
     //! Compute the minimum time step size
@@ -390,85 +431,6 @@ class Transport {
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
-
-    //! Scatter for an element
-    //! \details Form rhs from element values (scatter-add)
-    //! \tparam Op Operation to specify boundary vs internal nodes contribution
-    //! \param[in] e Element to compute
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] gid Local->global node id map
-    //! \param[in] bid Local chare-boundary node ids (value) associated to
-    //!    global node ids (key)
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] Ue Element-centered solution vector at intermediate step
-    //!    (used here internally as a scratch array)
-    //! \param[in,out] R Right-hand side vector computed
-    template< class Op >
-    void scatter( std::size_t e,
-                  const std::array< std::vector< tk::real >, 3 >& coord,
-                  const std::vector< std::size_t >& inpoel,
-                  const std::vector< std::size_t >& gid,
-                  const std::unordered_map< std::size_t, std::size_t >& bid,
-                  const tk::Fields& U,
-                  const tk::Fields& Ue,
-                  tk::Fields& R,
-                  Op op ) const
-    {
-      // access node IDs
-      const std::array< std::size_t, 4 >
-        N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
-
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-
-      // compute element Jacobi determinant
-      const std::array< tk::real, 3 >
-        ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-        ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-        da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-      const auto J = tk::triple( ba, ca, da );        // J = 6V
-      Assert( J > 0, "Element Jacobian non-positive" );
-
-      // shape function derivatives, nnode*ndim [4][3]
-      std::array< std::array< tk::real, 3 >, 4 > grad;
-      grad[1] = tk::crossdiv( ca, da, J );
-      grad[2] = tk::crossdiv( da, ba, J );
-      grad[3] = tk::crossdiv( ba, ca, J );
-      for (std::size_t i=0; i<3; ++i)
-        grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-
-      // access solution at elements
-      std::vector< tk::real > ue( m_ncomp );
-      for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue( e, c, m_offset );
-      // access pointer to right hand side at component and offset
-      std::vector< const tk::real* > r( m_ncomp );
-      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
-      // access solution at nodes of element
-      std::vector< std::array< tk::real, 4 > > u( m_ncomp );
-      for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
-
-      // get prescribed velocity
-      auto xc = (x[N[0]] + x[N[1]] + x[N[2]] + x[N[3]]) / 4.0;
-      auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
-      auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
-      const auto vel =
-        Problem::prescribedVelocity( m_system, m_ncomp, xc, yc, zc );
-
-      // scatter-add flux contributions to rhs at nodes
-      tk::real d = J/6.0;
-      for (std::size_t a=0; a<4; ++a) {
-        if (op( bid.find(gid[N[a]]), end(bid) ))
-          for (std::size_t c=0; c<m_ncomp; ++c)
-            for (std::size_t j=0; j<3; ++j)
-              R.var(r[c],N[a]) += d * grad[a][j] * vel[c][j]*ue[c];
-      }
-
-      // add (optional) diffusion contribution to right hand side
-      m_physics.
-        diffusionRhs( m_system, m_ncomp, J, gid, bid, grad, N, u, r, R, op );
-    }
 };
 
 } // cg::

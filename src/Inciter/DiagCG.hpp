@@ -184,7 +184,7 @@ class DiagCG : public CBase_DiagCG {
       p | m_bnorm;
       p | m_bnormc;
       p | m_diag;
-      p | m_bndel;
+      p | m_elems;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -250,8 +250,14 @@ class DiagCG : public CBase_DiagCG {
     std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnormc;
     //! Diagnostics object
     NodeDiagnostics m_diag;
-    //! Elements along mesh boundary
-    std::vector< std::size_t > m_bndel;
+
+    struct internal {};
+    struct boundary {};
+    using ElemLists = tk::TaggedTuple< brigand::list<
+      boundary, std::vector< std::size_t >,
+      internal, std::vector< std::size_t > > >;
+    //! Chare-boundary and internal element lists
+    ElemLists m_elems;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -259,8 +265,9 @@ class DiagCG : public CBase_DiagCG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
-    //! Find elements along our mesh chunk boundary
-    std::vector< std::size_t > bndel() const;
+    //! \brief Partition elements into those that contribute to chare-boundary
+    //!   nodes and those that contribute to internal ones
+    ElemLists bndel() const;
 
     //! Compute boundary point normals
     void

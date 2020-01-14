@@ -142,20 +142,20 @@ DistFCT::lump( const Discretization& d )
 
 void
 DistFCT::diff( const Discretization& d,
-               const std::vector< std::size_t >& bndel,
+               const std::vector< std::size_t >& elist,
                const tk::Fields& Un,
                tk::Fields& D )
 // *****************************************************************************
 //  Compute mass diffusion rhs contribution required for the low order solution
 //! \param[in] d Discretization proxy to read mesh data from
-//! \param[in] bndel List of elements contributing to chare-boundary nodes
+//! \param[in] elist List of elements to compute diffusion for
 //! \param[in] Un Solution at the previous time step
 //! \param[in,out] D Mass diffusion contribution to the RHS of the low order
 //!   system
 //! \return Lumped mass matrix
 // *****************************************************************************
 {
-  m_fluxcorrector.diff( d.Coord(), m_inpoel, bndel, d.Gid(), d.Bid(), Un, D );
+  m_fluxcorrector.diff( d.Coord(), m_inpoel, elist, Un, D );
 }
 
 void

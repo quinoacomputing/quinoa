@@ -98,24 +98,20 @@ class CGPDE {
     void scatter(
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
-      const std::vector< std::size_t >& bndel,
-      const std::vector< std::size_t >& gid,
-      const std::unordered_map< std::size_t, std::size_t >& bid,
+      const std::vector< std::size_t >& elist,
       const tk::Fields& U,
       const tk::Fields& Ue,
       tk::Fields& R ) const
-    { self->scatter( coord, inpoel, bndel, gid, bid, U, Ue, R ); }
+    { self->scatter( coord, inpoel, elist, U, Ue, R ); }
 
     //! Public interface to scattering terms dependent on dt
     void scatterdt(
       tk::real t,
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
-      const std::vector< std::size_t >& bndel,
-      const std::vector< std::size_t >& gid,
-      const std::unordered_map< std::size_t, std::size_t >& bid,
+      const std::vector< std::size_t >& elist,
       tk::Fields& R ) const
-    { self->scatterdt( t, coord, inpoel, bndel, gid, bid, R ); }
+    { self->scatterdt( t, coord, inpoel, elist, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -196,8 +192,6 @@ class CGPDE {
         const std::array< std::vector< tk::real >, 3 >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
-        const std::vector< std::size_t >&,
-        const std::unordered_map< std::size_t, std::size_t >&,
         const tk::Fields&,
         const tk::Fields&,
         tk::Fields& ) const = 0;
@@ -206,8 +200,6 @@ class CGPDE {
         const std::array< std::vector< tk::real >, 3 >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
-        const std::vector< std::size_t >&,
-        const std::unordered_map< std::size_t, std::size_t >&,
         tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
@@ -257,22 +249,18 @@ class CGPDE {
       void scatter(
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::vector< std::size_t >& inpoel,
-        const std::vector< std::size_t >& bndel,
-        const std::vector< std::size_t >& gid,
-        const std::unordered_map< std::size_t, std::size_t >& bid,
+        const std::vector< std::size_t >& elist,
         const tk::Fields& U,
         const tk::Fields& Ue,
         tk::Fields& R ) const override
-      { data.scatter( coord, inpoel, bndel, gid, bid, U, Ue, R ); }
+      { data.scatter( coord, inpoel, elist, U, Ue, R ); }
       void scatterdt(
         tk::real t,
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::vector< std::size_t >& inpoel,
-        const std::vector< std::size_t >& bndel,
-        const std::vector< std::size_t >& gid,
-        const std::unordered_map< std::size_t, std::size_t >& bid,
+        const std::vector< std::size_t >& elist,
         tk::Fields& R ) const override
-      { data.scatterdt( t, coord, inpoel, bndel, gid, bid, R ); }
+      { data.scatterdt( t, coord, inpoel, elist, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override

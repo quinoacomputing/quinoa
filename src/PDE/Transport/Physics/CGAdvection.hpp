@@ -34,19 +34,15 @@ class TransportPhysicsAdvection {
 
   public:
     //! Add diffusion contribution to rhs (no-op for advection only)
-    template< class Op >
     void
     diffusionRhs( ncomp_t,
                   ncomp_t,
                   tk::real,
-                  const std::vector< std::size_t >&,
-                  const std::unordered_map< std::size_t, std::size_t >&,
                   const std::array< std::array< tk::real, 3 >, 4 >&,
                   const std::array< std::size_t, 4 >&,
                   const std::vector< std::array< tk::real, 4 > >&,
                   const std::vector< const tk::real* >&,
-                  tk::Fields&,
-                  Op ) const {}
+                  tk::Fields& ) const {}
 
     //! Compute the minimum time step size based on the diffusion
     //! \return A large time step size, i.e., ignore

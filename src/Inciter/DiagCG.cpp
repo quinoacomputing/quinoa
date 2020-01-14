@@ -69,7 +69,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_bnorm(),
   m_bnormc(),
   m_diag(),
-  m_bndel( bndel() )
+  m_elems( bndel() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -92,12 +92,12 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   bnorm( bface, triinpoel, std::move(symbcnodes) );
 }
 
-std::vector< std::size_t >
+DiagCG::ElemLists
 DiagCG::bndel() const
 // *****************************************************************************
-// Find elements along our mesh chunk boundary
-//! \return List of local element ids that have at least a single node
-//!   contributing to a chare boundary
+// Partition elements into those that contribute to chare-boundary nodes and
+// those that contribute to internal ones
+//! \return Lists of chare-boundary and internal element lists using local id
 // *****************************************************************************
 {
   const auto& sumset = Disc()->msumset();
@@ -109,15 +109,22 @@ DiagCG::bndel() const
     return false;
   };
 
-  // Find elements along our mesh chunk boundary
-  std::vector< std::size_t > e;
+  std::unordered_set< std::size_t > bnd;
   const auto& inpoel = Disc()->Inpoel();
   const auto gid = Disc()->Gid();
-  for (std::size_t n=0; n<inpoel.size(); ++n)
-    if (shared( gid[ inpoel[n] ] )) e.push_back( n/4 );
-  tk::unique( e );
 
-  return e;
+  // Find elements along our mesh chunk boundary
+  for (std::size_t n=0; n<inpoel.size(); ++n)
+    if (shared( gid[inpoel[n]] )) bnd.insert( n/4 );
+
+  // Find internal elements
+  std::vector< std::size_t > intel;
+  for (std::size_t e=0; e<inpoel.size()/4; ++e)
+    if (bnd.find(e) == end(bnd)) intel.push_back( e );
+
+  std::vector< std::size_t > bndel( begin(bnd), end(bnd) );
+
+  return ElemLists{{ std::move(bndel), std::move(intel) }};
 }
 
 void
@@ -491,9 +498,7 @@ DiagCG::rhs()
   auto d = Disc();
   const auto& coord = d->Coord();
   const auto& inpoel = d->Inpoel();
-  const auto& gid = d->Gid();
   const auto& lid = d->Lid();
-  const auto& bid = d->Bid();
   auto t = d->T();
   auto deltat = d->Dt();
 
@@ -504,26 +509,28 @@ DiagCG::rhs()
       for (std::size_t a=0; a<4; ++a)
         m_ue(e,c,0) += m_u(inpoel[e*4+a],c,0)/4.0;
 
-  // Scatter the right-hand side (in serial for all cells, in parallel for
-  // chare-boundary nodes only)
+  // Access chare-boundary element list
+  const auto& bndel = m_elems.get< boundary >();
+
+  // Scatter the right-hand side for chare-boundary cells only
   m_rhs.fill( 0.0 );
   for (const auto& eq : g_cgpde) {
-    eq.scatter( coord, inpoel, m_bndel, gid, bid, m_u, m_ue, m_rhs );
-    eq.scatterdt( t + deltat/2.0, coord, inpoel, m_bndel, gid, bid, m_rhs );
+    eq.scatter( coord, inpoel, bndel, m_u, m_ue, m_rhs );
+    eq.scatterdt( t + deltat/2.0, coord, inpoel, bndel, m_rhs );
   }
 
-  // Compute mass diffusion (in serial for all cells, in parallel for
-  // chare-boundary nodes only)
+  // Compute mass diffusion for chare-boundary cells only
   tk::Fields dif( m_u.nunk(), m_u.nprop() );
   dif.fill( 0.0 );
-  d->FCT()->diff( *d, m_bndel, m_u, dif );
+  d->FCT()->diff( *d, bndel, m_u, dif );
 
   // Query and match user-specified boundary conditions to side sets
   m_bcdir = match( m_u.nprop(), t, deltat, coord, lid, m_bnode );
 
+  // Send rhs data on chare-boundary nodes to fellow chares
   if (d->Msum().empty())
     comrhs_complete();
-  else { // send contributions of rhs to chare-boundary nodes to fellow chares
+  else  // send contributions of rhs to chare-boundary nodes to fellow chares
     for (const auto& n : d->Msum()) {
       std::vector< std::vector< tk::real > > r( n.second.size() );
       std::vector< std::vector< tk::real > > D( n.second.size() );
@@ -536,14 +543,17 @@ DiagCG::rhs()
       }
       thisProxy[ n.first ].comrhs( n.second, r, D );
     }
-    // Scatter the right-hand side (in parallel for internal nodes only)
-    for (const auto& eq : g_cgpde) {
-      eq.scatter( coord, inpoel, {}, gid, bid, m_u, m_ue, m_rhs );
-      eq.scatterdt( t + deltat/2.0, coord, inpoel, {}, gid, bid, m_rhs );
-    }
-    // Compute mass diffusion (in parallel for internal nodes only)
-    d->FCT()->diff( *d, {}, m_u, dif );
+
+  // Access internal element list
+  const auto& intel = m_elems.get< internal >();
+
+  // Scatter the right-hand side for internal nodes only
+  for (const auto& eq : g_cgpde) {
+    eq.scatter( coord, inpoel, intel, m_u, m_ue, m_rhs );
+    eq.scatterdt( t + deltat/2.0, coord, inpoel, intel, m_rhs );
   }
+  // Compute mass diffusion for internal nodes only
+  d->FCT()->diff( *d, intel, m_u, dif );
 
   ownrhs_complete( dif );
 }
@@ -835,7 +845,7 @@ DiagCG::resizePostAMR(
   m_rhs.resize( npoin, nprop );
 
   // Recompute chare-boundary element list
-  m_bndel = bndel();
+  m_elems = bndel();
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)
