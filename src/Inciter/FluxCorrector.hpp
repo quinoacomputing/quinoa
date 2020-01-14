@@ -22,7 +22,6 @@
 
 #include "Keywords.hpp"
 #include "Fields.hpp"
-#include "Vector.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
