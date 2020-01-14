@@ -514,10 +514,8 @@ DiagCG::rhs()
 
   // Scatter the right-hand side for chare-boundary cells only
   m_rhs.fill( 0.0 );
-  for (const auto& eq : g_cgpde) {
-    eq.scatter( coord, inpoel, bndel, m_u, m_ue, m_rhs );
-    eq.scatterdt( t + deltat/2.0, coord, inpoel, bndel, m_rhs );
-  }
+  for (const auto& eq : g_cgpde)
+    eq.scatter( t+deltat/2.0, coord, inpoel, bndel, m_u, m_ue, m_rhs );
 
   // Compute mass diffusion for chare-boundary cells only
   tk::Fields dif( m_u.nunk(), m_u.nprop() );
@@ -548,10 +546,9 @@ DiagCG::rhs()
   const auto& intel = m_elems.get< internal >();
 
   // Scatter the right-hand side for internal nodes only
-  for (const auto& eq : g_cgpde) {
-    eq.scatter( coord, inpoel, intel, m_u, m_ue, m_rhs );
-    eq.scatterdt( t + deltat/2.0, coord, inpoel, intel, m_rhs );
-  }
+  for (const auto& eq : g_cgpde)
+    eq.scatter( t+deltat/2.0, coord, inpoel, intel, m_u, m_ue, m_rhs );
+
   // Compute mass diffusion for internal nodes only
   d->FCT()->diff( *d, intel, m_u, dif );
 

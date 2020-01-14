@@ -166,7 +166,8 @@ class Transport {
     //! \param[in,out] Ue Element-centered solution vector at intermediate step
     //!    (used here internally as a scratch array)
     //! \param[in,out] R Right-hand side vector computed
-    void scatter( const std::array< std::vector< tk::real >, 3 >& coord,
+    void scatter( tk::real,
+                  const std::array< std::vector< tk::real >, 3 >& coord,
                   const std::vector< std::size_t >& inpoel,
                   const std::vector< std::size_t >& elist,
                   const tk::Fields& U,
@@ -230,13 +231,6 @@ class Transport {
         m_physics.diffusionRhs( m_system, m_ncomp, J, grad, N, u, r, R );
       }
     }
-
-    //! Scatter terms dependent on dt
-    void scatterdt( tk::real,
-                    const std::array< std::vector< tk::real >, 3 >&,
-                    const std::vector< std::size_t >&,
-                    const std::vector< std::size_t >&,
-                    tk::Fields& ) const {}
 
     //! Compute the minimum time step size
     //! \param[in] U Solution vector at recent time step
