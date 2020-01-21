@@ -52,7 +52,6 @@ Discretization::Discretization(
   m_meshwriter( meshwriter ),
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
-  m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
   m_meshvol( 0.0 ),
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
@@ -78,8 +77,6 @@ Discretization::Discretization(
           "Jacobian in input mesh to Discretization non-positive" );
   Assert( tk::conforming( m_inpoel, m_coord ),
           "Input mesh to Discretization not conforming" );
-  Assert( m_psup.second.size()-1 == m_gid.size(),
-          "Number of mesh points and number of global IDs unequal" );
 
   // Convert neighbor nodes to vectors from sets
   for (const auto& [ neighborchare, sharednodes ] : msum) {
@@ -91,7 +88,7 @@ Discretization::Discretization(
   startvol();
 
   // Count the number of mesh nodes at which we receive data from other chares
-  // and compute map associating boundary-chare node ID associated to global ID
+  // and compute map associating boundary-chare node ID to global node ID
   std::vector< std::size_t > c( tk::sumvalsize( m_msum ) );
   std::size_t j = 0;
   for (const auto& n : m_msum) for (auto i : n.second) c[j++] = i;
@@ -342,8 +339,9 @@ Discretization::stat( tk::real mesh_volume )
   // statistics are intended as simple average diagnostics, we ignore these
   // small differences. For reproducible average edge lengths and edge length
   // PDFs, run the mesh in serial.
+  auto psup = tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) );
   for (std::size_t p=0; p<m_gid.size(); ++p)
-    for (auto i : tk::Around(m_psup,p)) {
+    for (auto i : tk::Around(psup,p)) {
        const auto dx = x[ i ] - x[ p ];
        const auto dy = y[ i ] - y[ p ];
        const auto dz = z[ i ] - z[ p ];
