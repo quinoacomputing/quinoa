@@ -484,9 +484,14 @@ DiagCG::gather()
 {
   auto d = Disc();
 
+  const auto& bndel = m_elems.get< boundary >();
+  const auto& intel = m_elems.get< internal >();
+
   m_ue.fill( 0.0 );
   for (const auto& eq : g_cgpde)
-    eq.gather( d->T(), d->Coord(), d->Inpoel(), m_u, m_ue );
+    eq.gather( d->T(), d->Coord(), d->Inpoel(), bndel, m_u, m_ue );
+  for (const auto& eq : g_cgpde)
+    eq.gather( d->T(), d->Coord(), d->Inpoel(), intel, m_u, m_ue );
 }
 
 void

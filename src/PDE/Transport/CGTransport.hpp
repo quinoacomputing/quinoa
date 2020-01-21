@@ -96,23 +96,26 @@ class Transport {
     //! Gather
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] elist List of elements to scatter
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] Ue Element-centered solution vector at intermediate step
     //!    (used here internally as a scratch array)
     void gather( tk::real,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
+                 const std::vector< std::size_t >& elist,
                  const tk::Fields& U,
                  tk::Fields& Ue ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
 
+      // access node coordinates
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+      for (auto e : elist) {
         // access node IDs
         const std::array< std::size_t, 4 >
           N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
@@ -177,14 +180,15 @@ class Transport {
       Assert( R.nunk() == coord[0].size(),
               "Number of unknowns in right-hand side vector incorrect" );
 
+      // access node coordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
       for (auto e : elist) {
         // access node IDs
         const std::array< std::size_t, 4 >
           N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
-        // access node coordinates
-        const auto& x = coord[0];
-        const auto& y = coord[1];
-        const auto& z = coord[2];
 
         // compute element Jacobi determinant
         const std::array< tk::real, 3 >

@@ -90,9 +90,10 @@ class CGPDE {
       tk::real t,
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
+      const std::vector< std::size_t >& elist,
       const tk::Fields& U,
       tk::Fields& Ue ) const
-    { self->gather( t, coord, inpoel, U, Ue ); }
+    { self->gather( t, coord, inpoel, elist, U, Ue ); }
 
     //! Public interface to scattering terms not dependnt on dt
     void scatter(
@@ -178,6 +179,7 @@ class CGPDE {
         tk::real,
         const std::array< std::vector< tk::real >, 3 >&,
         const std::vector< std::size_t >&,
+        const std::vector< std::size_t >&,
         const tk::Fields&,
         tk::Fields& ) const = 0;
       virtual void scatter(
@@ -230,9 +232,10 @@ class CGPDE {
         tk::real t,
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::vector< std::size_t >& inpoel,
+        const std::vector< std::size_t >& elist,
         const tk::Fields& U,
         tk::Fields& Ue ) const override
-      { data.gather( t, coord, inpoel, U, Ue ); }
+      { data.gather( t, coord, inpoel, elist, U, Ue ); }
       void scatter(
         tk::real t,
         const std::array< std::vector< tk::real >, 3 >& coord,

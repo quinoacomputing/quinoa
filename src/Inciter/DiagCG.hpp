@@ -251,8 +251,8 @@ class DiagCG : public CBase_DiagCG {
     //! Diagnostics object
     NodeDiagnostics m_diag;
 
-    struct internal {};
     struct boundary {};
+    struct internal {};
     using ElemLists = tk::TaggedTuple< brigand::list<
       boundary, std::vector< std::size_t >,
       internal, std::vector< std::size_t > > >;
