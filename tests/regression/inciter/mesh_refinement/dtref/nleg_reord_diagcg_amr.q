@@ -13,7 +13,7 @@ inciter
   cfl 0.25
 
   scheme diagcg
-  reorder true
+  pelocal_reorder true
 
   partitioning
     algorithm mj

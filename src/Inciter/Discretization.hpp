@@ -223,6 +223,9 @@ class Discretization : public CBase_Discretization {
     //! Zero grind-timer
     void grindZero();
 
+    //! Remap mesh data due to new local ids
+    void remap( const std::unordered_map< std::size_t, std::size_t >& map );
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

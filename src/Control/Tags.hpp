@@ -52,6 +52,8 @@ struct benchmark {};
 struct lboff {};
 struct feedback {};
 struct reorder {};
+struct pelocal_reorder {};
+struct operator_reorder {};
 struct error {};
 struct lbfreq {};
 struct rsfreq {};

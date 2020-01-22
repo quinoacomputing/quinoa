@@ -187,7 +187,9 @@ Transporter::info()
     m_print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
   m_print.item( "PE-locality mesh reordering",
-                g_inputdeck.get< tag::discr, tag::reorder >() );
+                g_inputdeck.get< tag::discr, tag::pelocal_reorder >() );
+  m_print.item( "Operator-access mesh reordering",
+                g_inputdeck.get< tag::discr, tag::operator_reorder >() );
   m_print.item( "Number of time steps", nstep );
   m_print.item( "Start time", t0 );
   m_print.item( "Terminate time", term );

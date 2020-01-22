@@ -80,6 +80,39 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
+  // Perform optional operator-access-pattern mesh node reordering
+  if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
+
+    auto d = Disc();
+    auto& inpoel = d->Inpoel();
+    const auto& bndel = m_elems.get< boundary >();
+    const auto& intel = m_elems.get< internal >();
+
+    // Create new local ids based on access pattern of PDE operators
+    std::unordered_map< std::size_t, std::size_t > map;
+    std::size_t n = 0;
+
+    for (auto e : bndel)
+      for (std::size_t i=0; i<4; ++i) {
+        std::size_t o = inpoel[e*4+i];
+        if (map.find(o) == end(map)) map[o] = n++;
+      }
+    for (auto e : intel)
+      for (std::size_t i=0; i<4; ++i) {
+        std::size_t o = inpoel[e*4+i];
+        if (map.find(o) == end(map)) map[o] = n++;
+      }
+
+    Assert( map.size() == d->Gid().size(), "Map size mismatch" );
+
+    // Remap data in bound Discretization object
+    d->remap( map );
+
+    // Remap local ids in DistFCT
+    d->FCT()->remap( *d );
+
+  }
+
   // Activate SDAG wait
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4lhs();

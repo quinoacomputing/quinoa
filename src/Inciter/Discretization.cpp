@@ -192,6 +192,54 @@ Discretization::setCoord( const tk::UnsMesh::CoordMap& coordmap )
 }
 
 void
+Discretization::remap(
+  const std::unordered_map< std::size_t, std::size_t >& map )
+// *****************************************************************************
+//  Remap mesh data based on new local ids
+//! \param[in] map Mapping of old->new local ids
+// *****************************************************************************
+{
+  // Remap connectivity containing local IDs
+  for (auto& l : m_inpoel) l = tk::cref_find(map,l);
+
+  // Remap global->local id map
+  for (auto& [g,l] : m_lid) l = tk::cref_find(map,l);
+
+  // Remap global->local id map
+  auto maxid = std::numeric_limits< std::size_t >::max();
+  std::vector< std::size_t > newgid( m_gid.size(), maxid );
+  for (const auto& [o,n] : map) newgid[n] = m_gid[o];
+  m_gid = std::move( newgid );
+
+  Assert( std::all_of( m_gid.cbegin(), m_gid.cend(),
+            [=](std::size_t i){ return i < maxid; } ),
+          "Not all gid have been remapped" );
+
+  // Remap nodal volumes (with contributions along chare-boundaries)
+  std::vector< tk::real > newvol( m_vol.size(), 0.0 );
+  for (const auto& [o,n] : map) newvol[n] = m_vol[o];
+  m_vol = std::move( newvol );
+
+  // Remap nodal volumes (without contributions along chare-boundaries)
+  std::vector< tk::real > newv( m_v.size(), 0.0 );
+  for (const auto& [o,n] : map) newv[n] = m_v[o];
+  m_v = std::move( newv );
+
+  // Remap locations of node coordinates
+  tk::UnsMesh::Coords newcoord;
+  auto npoin = m_coord[0].size();
+  newcoord[0].resize( npoin );
+  newcoord[1].resize( npoin );
+  newcoord[2].resize( npoin );
+  for (const auto& [o,n] : map) {
+    newcoord[0][n] = m_coord[0][o];
+    newcoord[1][n] = m_coord[1][o];
+    newcoord[2][n] = m_coord[2][o];
+  }
+  m_coord = std::move( newcoord );
+}
+
+void
 Discretization::setRefiner( const CProxy_Refiner& ref )
 // *****************************************************************************
 //  Set Refiner Charm++ proxy

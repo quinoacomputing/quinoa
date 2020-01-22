@@ -75,7 +75,6 @@ DistFCT::DistFCT( int nchare,
   resizeComm();         // Size communication buffers
 }
 
-
 void
 DistFCT::resizeComm()
 // *****************************************************************************
@@ -93,6 +92,17 @@ DistFCT::resizeComm()
   for (auto& b : m_qc) b.resize( np*2 );
   m_ac.resize( bs );
   for (auto& b : m_ac) b.resize( np );
+}
+
+void
+DistFCT::remap( const Discretization& d )
+// *****************************************************************************
+// Remap local ids after a mesh node reorder
+//! \param[in] d Discretization proxy to read mesh data from
+// *****************************************************************************
+{
+  m_lid = d.Lid();
+  m_inpoel = d.Inpoel();
 }
 
 void
