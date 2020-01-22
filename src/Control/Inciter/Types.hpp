@@ -132,6 +132,13 @@ using diagnostics = tk::TaggedTuple< brigand::list<
   tag::error,       std::vector< tk::ctr::ErrorType > //!< Errors to compute
 > >;
 
+//! Initial condition configuration
+using ic = tk::TaggedTuple< brigand::list<
+    tag::densityic,         std::vector< kw::densityic::info::expect::type >
+  , tag::velocityic,        std::vector< kw::velocityic::info::expect::type >
+  , tag::pressureic,        std::vector< kw::pressureic::info::expect::type >
+> >;
+
 //! Boundary condition configuration
 using bc = tk::TaggedTuple< brigand::list<
     tag::bcdir,             std::vector< std::vector<
@@ -176,6 +183,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::bcextrapolate, std::vector< std::vector<
                          kw::sideset::info::expect::type > >
   , tag::bc,            bc
+  , tag::ic,            ic
   //! System FCT character
   , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system
