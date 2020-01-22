@@ -701,6 +701,7 @@ namespace deck {
                          half_world< kw::amr_zminus, tag::zminus >,
                          half_world< kw::amr_zplus, tag::zplus > > > {};
 
+
   //! initial conditions block for compressible flow
   template< class eq, class param >
   struct ic_compflow :
@@ -708,10 +709,13 @@ namespace deck {
              tk::grm::readkw< use< kw::ic >::pegtl_string >,
              tk::grm::block<
                use< kw::end >,
-               parameter< eq, kw::pressureic, tag::pressureic >,
-               parameter< eq, kw::densityic, tag::densityic >,
-               pde_parameter_vector< kw::velocityic, eq, tag::velocityic >
-             > > {};
+               tk::grm::parameter_vector< use,
+                                          use< kw::velocity >,
+                                          tk::grm::Store_back_back,
+                                          tk::grm::start_vector,
+                                          tk::grm::check_vector,
+                                          eq,
+                                          param > > > {};
 
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
@@ -825,7 +829,7 @@ namespace deck {
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           characteristic_bc< kw::bc_outlet, 
+                           characteristic_bc< kw::bc_outlet,
                                               tag::compflow,
                                               tag::bccharacteristic >,
                            bc< kw::bc_extrapolate, tag::compflow,

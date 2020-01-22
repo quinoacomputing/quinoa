@@ -142,9 +142,7 @@ using bc = tk::TaggedTuple< brigand::list<
                               kw::sideset::info::expect::type > >
   , tag::bcoutlet,          std::vector< std::vector<
                               kw::sideset::info::expect::type > >
-  , tag::bcextrapolate,     std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcsubsonicoutlet,  std::vector< std::vector<
+  , tag::bccharacteristic,  std::vector< std::vector<
                               kw::sideset::info::expect::type > >
   , tag::bcextrapolate,     std::vector< std::vector<
                               kw::sideset::info::expect::type > >

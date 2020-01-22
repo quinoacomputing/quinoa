@@ -45,17 +45,16 @@ CompFlowProblemSheddingFlow::solution( ncomp_t system,
                           std::to_string(ncomp) );
   using tag::param;
 
-  tk::real r, p, u, v, w, rE;
+  // Assign uniform initial condition according to the farfield state
+  auto r = g_inputdeck.get< tag::param, eq,
+                            tag::farfield_density >()[ system ];
+  auto p = g_inputdeck.get< tag::param, eq,
+                            tag::farfield_pressure >()[ system ];
+  auto u = g_inputdeck.get< tag::param, eq,
+                            tag::farfield_velocity >()[ system ];
+  auto rE = eos_totalenergy< eq >( system, r, u[0], u[1], u[2], p );
 
-  // The following configuration shows the Mach number of freestream flow is 0.2
-  r = 1.0;
-  p = 3.75;
-  u = 0.5;
-  v = 0.0;
-  w = 0.0;
-  rE = eos_totalenergy< eq >( system, r, u, v, w, p );
-
-  return {{ r, r*u, r*v, r*w, rE }};
+  return {{ r, r*u[0], r*u[1], r*u[2], rE }};
 }
 
 std::vector< tk::real >
@@ -94,23 +93,6 @@ CompFlowProblemSheddingFlow::src( ncomp_t, ncomp_t, tk::real,
 // *****************************************************************************
 {
   return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-}
-
-void
-CompFlowProblemSheddingFlow::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param;
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bccharacteristic >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcsym >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
 }
 
 std::vector< std::string >
