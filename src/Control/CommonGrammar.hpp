@@ -3,7 +3,7 @@
   \file      src/Control/CommonGrammar.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the Parsing Expression Grammar
@@ -1628,11 +1628,6 @@ namespace grm {
   template< template< class > class use, typename keyword, typename Tag >
   struct discrparam :
            control< use< keyword >, pegtl::digit, tag::discr, Tag > {};
-
-  //! Match boundary control parameter
-  template< template< class > class use, typename keyword, typename Tag >
-  struct bcparam :
-           control< use< keyword >, pegtl::digit, tag::bc, Tag > {};
 
   //! Match component control parameter
   template< typename keyword, typename Tag >

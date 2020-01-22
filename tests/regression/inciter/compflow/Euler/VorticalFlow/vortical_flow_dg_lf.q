@@ -10,13 +10,14 @@ inciter
   dt   1.0e-4 # Time step size
   ttyi 5      # TTY output interval
   scheme dg
-  flux laxfriedrichs
 
   compflow
 
     physics euler
     problem vortical_flow
     depvar u
+
+    flux laxfriedrichs
 
     alpha 0.1
     beta 1.0

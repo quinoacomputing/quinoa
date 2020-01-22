@@ -3,7 +3,7 @@
   \file      src/PDE/Transport/DGTransport.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Scalar transport using disccontinous Galerkin discretization
   \details   This file implements the physics operators governing transported
@@ -32,7 +32,7 @@
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
-#include "Integrate/Riemann/Upwind.hpp"
+#include "Riemann/Upwind.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 
@@ -69,7 +69,7 @@ class Transport {
     std::vector< bcconf_t >
     config( ncomp_t c ) {
       std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, eq, bctag >();
+      const auto& v = g_inputdeck.get< tag::param, eq, tag::bc, bctag >();
       if (v.size() > c) bc = v[c];
       return bc;
     }
@@ -315,12 +315,6 @@ class Transport {
       tk::real mindt = std::numeric_limits< tk::real >::max();
       return mindt;
     }
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { m_problem.side( conf ); }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file

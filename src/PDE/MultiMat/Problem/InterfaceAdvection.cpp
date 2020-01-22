@@ -3,7 +3,7 @@
   \file      src/PDE/MultiMat/Problem/InterfaceAdvection.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a Problem policy class for the compressible flow
@@ -119,26 +119,6 @@ MultiMatProblemInterfaceAdvection::src( ncomp_t, ncomp_t ncomp, tk::real,
   std::vector< tk::real > s( ncomp, 0.0 );
 
   return s;
-}
-
-void
-MultiMatProblemInterfaceAdvection::side( std::unordered_set< int >& conf )
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param;
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcdir >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcextrapolate >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcsym >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
 }
 
 std::vector< std::string >

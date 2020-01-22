@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/Problem/NLEnergyGrowth.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the compressible flow equations
   \details   This file declares a problem policy class for the compressible flow
@@ -53,10 +53,6 @@ class CompFlowProblemNLEnergyGrowth {
     static tk::SrcFn::result_type
     src( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
          tk::real t );
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    void side( std::unordered_set< int >& conf ) const;
 
     //! Return field names to be output to file
     std::vector< std::string > fieldNames( ncomp_t ) const;

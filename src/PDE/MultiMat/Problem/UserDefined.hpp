@@ -3,7 +3,7 @@
   \file      src/PDE/MultiMat/Problem/UserDefined.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the multi-material compressible flow
     equations
@@ -77,15 +77,6 @@ class MultiMatProblemUserDefined {
       n.push_back( "pressure" );
       n.push_back( "temperature" );
       return n;
-    }
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    static void side( std::unordered_set< int >& conf ) {
-      using tag::param; using tag::compflow; using tag::bcdir;
-      for (const auto& s : g_inputdeck.get< param, compflow, bcdir >())
-        conf.insert( std::stoi(s[0]) );
     }
 
     //! Return field output going to file

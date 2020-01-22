@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/Problem/SodShocktube.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for Sod's shock-tube
   \details   This file defines a policy class for the compressible flow
@@ -43,10 +43,6 @@ class CompFlowProblemSodShocktube {
     //! Compute and return source term for this problem
     static tk::SrcFn::result_type
     src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    void side( std::unordered_set< int >& conf ) const;
 
     //! Return field names to be output to file
     std::vector< std::string > fieldNames( ncomp_t ) const;

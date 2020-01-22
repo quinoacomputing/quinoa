@@ -3,7 +3,7 @@
   \file      src/PDE/ConfigureMultiMat.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Register and compile configuration for multi-material compressible
      flow PDE
@@ -72,6 +72,9 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, eq, tag::problem >()[c] ) );
+
+  nfo.emplace_back( "flux", ctr::Flux().name(
+    g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
 
   auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[c];
   nfo.emplace_back( "number of materials", std::to_string( nmat ) );

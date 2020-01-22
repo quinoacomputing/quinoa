@@ -3,7 +3,7 @@
   \file      src/PDE/Transport/Problem/ShearDiff.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for transport equations
   \details   This file defines a Problem policy class for the transport
@@ -88,21 +88,6 @@ TransportProblemShearDiff::errchk( ncomp_t system, ncomp_t ncomp ) const
   const auto& d = g_inputdeck.get< param, eq, tag::diffusivity >()[system];
   ErrChk( 3*ncomp == d.size(),
     "Wrong number of advection-diffusion PDE parameters 'diffusivity'" );
-}
-
-void
-TransportProblemShearDiff::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param; using tag::bcdir;
-
-  for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
 }
 
 std::vector< std::array< tk::real, 3 > >

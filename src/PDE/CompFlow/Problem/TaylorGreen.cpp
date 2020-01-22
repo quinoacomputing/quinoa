@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/Problem/TaylorGreen.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a Problem policy class for the compressible flow
@@ -74,21 +74,6 @@ CompFlowProblemTaylorGreen::src( ncomp_t, ncomp_t, tk::real x,
   return {{ 0.0, 0.0, 0.0, 0.0,
     3.0*M_PI/8.0*( cos(3.0*M_PI*x)*cos(M_PI*y) -
                    cos(3.0*M_PI*y)*cos(M_PI*x) ) }};
-}
-
-void
-CompFlowProblemTaylorGreen::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param; using tag::bcdir;
-
-  for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
 }
 
 std::vector< std::string >

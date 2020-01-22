@@ -3,7 +3,7 @@
   \file      src/PDE/Transport/Problem/GaussHump.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for transport equations
   \details   This file declares a Problem policy class for the transport
@@ -40,10 +40,6 @@ class TransportProblemGaussHump {
 
     //! Do error checking on PDE parameters
     void errchk( ncomp_t, ncomp_t ) const {}
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    void side( std::unordered_set< int >& conf ) const;
 
     //! Assign prescribed velocity at a point
     static std::vector< std::array< tk::real, 3 > >

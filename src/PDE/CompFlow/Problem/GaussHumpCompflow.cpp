@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/Problem/GaussHumpCompflow.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a Problem policy class for the compressible flow
@@ -82,6 +82,7 @@ CompFlowProblemGaussHump::src( ncomp_t, ncomp_t, tk::real,
   return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
 }
 
+<<<<<<< HEAD
 void
 CompFlowProblemGaussHump::side( std::unordered_set< int >& conf ) const
 // *****************************************************************************
@@ -113,6 +114,8 @@ CompFlowProblemGaussHump::side( std::unordered_set< int >& conf ) const
       conf.insert( std::stoi(i) );
 }
 
+=======
+>>>>>>> develop
 std::vector< std::string >
 CompFlowProblemGaussHump::fieldNames( ncomp_t ) const
 // *****************************************************************************

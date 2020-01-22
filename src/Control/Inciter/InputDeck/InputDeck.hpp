@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/InputDeck/InputDeck.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -178,6 +178,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::hllc,
                                    kw::upwind,
                                    kw::ausm,
+                                   kw::hll,
                                    kw::limiter,
                                    kw::cweight,
                                    kw::nolimiter,
@@ -228,7 +229,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
         std::numeric_limits< tk::real >::epsilon();
       get< tag::discr, tag::reorder >() = false;
       get< tag::discr, tag::scheme >() = SchemeType::DiagCG;
-      get< tag::discr, tag::flux >() = FluxType::HLLC;
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::limiter >() = LimiterType::NOLIMITER;
       get< tag::discr, tag::cweight >() = 1.0;

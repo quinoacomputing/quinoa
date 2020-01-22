@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/DGCompFlow.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Compressible single-material flow using discontinuous Galerkin
      finite elements
@@ -34,7 +34,7 @@
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
 #include "Integrate/Source.hpp"
-#include "Integrate/Riemann/RiemannFactory.hpp"
+#include "RiemannFactory.hpp"
 #include "EoS/EoS.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -71,7 +71,7 @@ class CompFlow {
     std::vector< bcconf_t >
     config( ncomp_t c ) {
       std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, eq, bctag >();
+      const auto& v = g_inputdeck.get< tag::param, eq, tag::bc, bctag >();
       if (v.size() > c) bc = v[c];
       return bc;
     }
@@ -85,8 +85,8 @@ class CompFlow {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_riemann( tk::cref_find( RiemannSolvers(),
-                   g_inputdeck.get< tag::discr, tag::flux >() ) ),
+      m_riemann( tk::cref_find( compflowRiemannSolvers(),
+        g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system) ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
       m_bccharacteristic( config< tag::bccharacteristic >( c ) ),
@@ -562,12 +562,6 @@ class CompFlow {
       return v;
     }
 
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { m_problem.side( conf ); }
-
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const
@@ -835,12 +829,14 @@ class CompFlow {
                     tk::real, tk::real, tk::real, tk::real,
                     const std::array< tk::real, 3 >& fn )
     {
+      using tag::param; using tag::bc;
+
       // Primitive variables from farfield
-      auto frho = g_inputdeck.get< tag::param, eq,
+      auto frho = g_inputdeck.get< param, eq,
                                    tag::farfield_density >()[ system ];
-      auto fp   = g_inputdeck.get< tag::param, eq,
+      auto fp   = g_inputdeck.get< param, eq,
                                    tag::farfield_pressure >()[ system ];
-      auto fu   = g_inputdeck.get< tag::param, eq,
+      auto fu   = g_inputdeck.get< param, eq,
                                    tag::farfield_velocity >()[ system ];
 
       // Speed of sound from farfield

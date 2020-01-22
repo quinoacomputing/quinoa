@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/Types.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -96,7 +96,6 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::scheme, inciter::ctr::SchemeType       //!< Spatial discretization type
   , tag::limiter,inciter::ctr::LimiterType      //!< Limiter type
   , tag::cweight,kw::cweight::info::expect::type//!< WENO central stencil weight
-  , tag::flux,   inciter::ctr::FluxType         //!< Flux function type
   , tag::rdof,   std::size_t          //!< Number of reconstructed solution DOFs
   , tag::ndof,   std::size_t                   //!< Number of solution DOFs
 > >;
@@ -133,6 +132,24 @@ using diagnostics = tk::TaggedTuple< brigand::list<
   tag::error,       std::vector< tk::ctr::ErrorType > //!< Errors to compute
 > >;
 
+//! Boundary condition configuration
+using bc = tk::TaggedTuple< brigand::list<
+    tag::bcdir,             std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcsym,             std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcinlet,           std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcoutlet,          std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcextrapolate,     std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcsubsonicoutlet,  std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+  , tag::bcextrapolate,     std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
+> >;
+
 //! Transport equation parameters storage
 using TransportPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
@@ -144,16 +161,7 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
                         kw::pde_lambda::info::expect::type > >
   , tag::u0,            std::vector< std::vector<
                         kw::pde_u0::info::expect::type > >
-  , tag::bcdir,         std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
-  , tag::bcsym,         std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
-  , tag::bcinlet,       std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
-  , tag::bcoutlet,      std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
-  , tag::bcextrapolate, std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
+  , tag::bc,            bc
 > >;
 
 //! Compressible flow equation parameters storage
@@ -161,19 +169,6 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
-  , tag::bcdir,         std::vector< std::vector<
-                          kw::sideset::info::expect::type > >
-  , tag::bcsym,         std::vector< std::vector<
-                          kw::sideset::info::expect::type > >
-  , tag::bcinlet,       std::vector< std::vector<
-                          kw::sideset::info::expect::type > >
-  , tag::bccharacteristic,
-                        std::vector< std::vector<
-                          kw::sideset::info::expect::type > >
-  , tag::densityic,    std::vector< kw::densityic::info::expect::type >
-  , tag::velocityic,   std::vector< std::vector<
-                          kw::velocityic::info::expect::type > >
-  , tag::pressureic,   std::vector< kw::pressureic::info::expect::type >
   , tag::farfield_pressure,
                         std::vector< kw::farfield_pressure::info::expect::type >
   , tag::farfield_density,
@@ -182,6 +177,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
                               kw::farfield_velocity::info::expect::type > >
   , tag::bcextrapolate, std::vector< std::vector<
                          kw::sideset::info::expect::type > >
+  , tag::bc,            bc
   //! System FCT character
   , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system
@@ -222,6 +218,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
                           std::vector< kw::mat_k::info::expect::type > >
     //! total number of optional passive tracker particles for visualization
   , tag::npar,          std::vector< kw::npar::info::expect::type >
+    //! Flux function type
+  , tag::flux,          std::vector< FluxType >
 > >;
 
 //! Compressible flow equation parameters storage
@@ -229,16 +227,7 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
-  , tag::bcdir,         std::vector< std::vector<
-                       kw::sideset::info::expect::type > >
-  , tag::bcsym,         std::vector< std::vector<
-                       kw::sideset::info::expect::type > >
-  , tag::bcinlet,       std::vector< std::vector<
-                        kw::sideset::info::expect::type > >
-  , tag::bcoutlet,      std::vector< std::vector<
-                        kw::sideset::info::expect::type > >
-  , tag::bcextrapolate, std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
+  , tag::bc,            bc
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)
@@ -279,6 +268,8 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   //! pressure relaxation time scale
   , tag::prelax_timescale,
                       std::vector< kw::prelax_timescale::info::expect::type >
+    //! Flux function type
+  , tag::flux,          std::vector< FluxType >
 > >;
 
 //! Parameters storage
