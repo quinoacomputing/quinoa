@@ -201,6 +201,10 @@ struct discr { static std::string name() { return "discr"; } };
 struct bc { static std::string name() { return "bc"; } };
 struct farfield_pressure {
   static std::string name() { return "farfield_pressure"; } };
+struct farfield_density {
+  static std::string name() { return "farfield_density"; } };
+struct farfield_velocity {
+  static std::string name() { return "farfield_velocity"; } };
 struct component { static std::string name() { return "component"; } };
 struct interval { static std::string name() { return "interval"; } };
 struct cmd { static std::string name() { return "cmd"; } };
@@ -230,9 +234,9 @@ struct bcdir { static std::string name() { return "bcdir"; } };
 struct bcsym { static std::string name() { return "bcsym"; } };
 struct bcinlet { static std::string name() { return "bcinlet"; } };
 struct bcoutlet { static std::string name() { return "bcoutlet"; } };
+struct bccharacteristic {
+  static std::string name() { return "bccharacteristic"; } };
 struct bcextrapolate { static std::string name() { return "bcextrapolate"; } };
-struct bcsubsonicoutlet {
-  static std::string name() { return "bcsubsonicoutlet"; } };
 struct material {};
 struct id { static std::string name() { return "id"; } };
 struct position_id { static std::string name() { return "position_id"; } };
@@ -269,6 +273,10 @@ struct pe {};
 struct it {};
 struct fn {};
 struct time {};
+struct ic { static std::string name() { return "ic"; } };
+struct velocityic { static std::string name() { return "velocityic"; } };
+struct densityic { static std::string name() { return "densityic"; } };
+struct pressureic { static std::string name() { return "pressureic"; } };
 
 struct BirthdaySpacings {};
 struct Collision {};
