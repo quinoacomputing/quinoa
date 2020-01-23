@@ -132,6 +132,13 @@ using diagnostics = tk::TaggedTuple< brigand::list<
   tag::error,       std::vector< tk::ctr::ErrorType > //!< Errors to compute
 > >;
 
+//! Initial condition configuration
+using ic = tk::TaggedTuple< brigand::list<
+    tag::densityic,         std::vector< kw::densityic::info::expect::type >
+  , tag::velocityic,        std::vector< kw::velocityic::info::expect::type >
+  , tag::pressureic,        std::vector< kw::pressureic::info::expect::type >
+> >;
+
 //! Boundary condition configuration
 using bc = tk::TaggedTuple< brigand::list<
     tag::bcdir,             std::vector< std::vector<
@@ -142,9 +149,7 @@ using bc = tk::TaggedTuple< brigand::list<
                               kw::sideset::info::expect::type > >
   , tag::bcoutlet,          std::vector< std::vector<
                               kw::sideset::info::expect::type > >
-  , tag::bcextrapolate,     std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcsubsonicoutlet,  std::vector< std::vector<
+  , tag::bccharacteristic,  std::vector< std::vector<
                               kw::sideset::info::expect::type > >
   , tag::bcextrapolate,     std::vector< std::vector<
                               kw::sideset::info::expect::type > >
@@ -169,9 +174,16 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
+  , tag::farfield_pressure,
+                        std::vector< kw::farfield_pressure::info::expect::type >
+  , tag::farfield_density,
+                        std::vector< kw::farfield_density::info::expect::type >
+  , tag::farfield_velocity, std::vector< std::vector<
+                              kw::farfield_velocity::info::expect::type > >
+  , tag::bcextrapolate, std::vector< std::vector<
+                         kw::sideset::info::expect::type > >
   , tag::bc,            bc
-  , tag::farfield_pressure, std::vector<
-                              kw::farfield_pressure::info::expect::type >
+  , tag::ic,            ic
   //! System FCT character
   , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system
