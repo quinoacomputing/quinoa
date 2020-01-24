@@ -13,7 +13,8 @@ add_regression_test(gauss_hump_p0p1 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(gauss_hump_dgp2 ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -25,7 +26,8 @@ add_regression_test(gauss_hump_dgp2 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dgp2.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(gauss_hump_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -43,7 +45,8 @@ add_regression_test(gauss_hump_p0p1 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(gauss_hump_dgp2 ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -61,7 +64,8 @@ add_regression_test(gauss_hump_dgp2 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_dgp2.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + virtualization
 
@@ -89,7 +93,8 @@ add_regression_test(gauss_hump_dg_u0.5 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(gauss_hump_dg_u0.9 ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -97,7 +102,8 @@ add_regression_test(gauss_hump_dg_u0.9 ${INCITER_EXECUTABLE}
                     ARGS -c gauss_hump_cube.q -i unitcube_1k.exo -v -u 0.9
                     TEXT_BASELINE diag_cube.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(gauss_hump_p0p1_u0.9 ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -187,8 +193,8 @@ add_regression_test(gauss_hump_p0p1_u0.9 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
-
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + virtualization + migration
 
@@ -282,4 +288,4 @@ add_regression_test(gauss_hump_dg_u0.9_migr ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS migration)
+                    LABELS dg migration)
