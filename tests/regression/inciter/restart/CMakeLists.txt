@@ -13,7 +13,7 @@ add_regression_test(trans_diagcg_checkpoint ${INCITER_EXECUTABLE}
                     TEXT_BASELINE slot_cyl_checkpoint.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diag.ndiff.cfg
-                    LABELS restart)
+                    LABELS diagcg restart)
 
 add_regression_test(trans_diagcg_restart ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -27,7 +27,7 @@ add_regression_test(trans_diagcg_restart ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diag.ndiff.cfg
                     CHECKPOINT trans_diagcg_checkpoint
-                    LABELS restart)
+                    LABELS diagcg restart)
 
 # Parallel, checkpoint on 4 PEs, restart on 4 PEs
 
@@ -48,7 +48,7 @@ add_regression_test(trans_diagcg_checkpoint ${INCITER_EXECUTABLE}
                     TEXT_BASELINE slot_cyl_checkpoint.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diag.ndiff.cfg
-                    LABELS restart)
+                    LABELS diagcg restart)
 
 add_regression_test(trans_diagcg_restart ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -69,4 +69,4 @@ add_regression_test(trans_diagcg_restart ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diag.ndiff.cfg
                     CHECKPOINT trans_diagcg_checkpoint
-                    LABELS restart)
+                    LABELS diagcg restart)

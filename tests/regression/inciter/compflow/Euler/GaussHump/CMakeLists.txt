@@ -13,7 +13,8 @@ add_regression_test(compflow_euler_gauss_hump_pdg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + no virtualization
 
@@ -33,7 +34,8 @@ add_regression_test(compflow_euler_gauss_hump_pdg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + virtualization
 
@@ -85,8 +87,8 @@ add_regression_test(compflow_euler_gauss_hump_pdg_u0.8 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg)
-
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + virtualization + migration
 
@@ -140,4 +142,4 @@ add_regression_test(compflow_euler_gauss_hump_pdg_u0.8_migr ${INCITER_EXECUTABLE
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS migration)
+                    LABELS dg migration)

@@ -12,7 +12,8 @@ add_regression_test(shear_centered_diffonly ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE shear_centered_diffonly.diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg
+                    LABELS diagcg)
 
 add_regression_test(shear_centered_diffonly_nofct ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -23,7 +24,8 @@ add_regression_test(shear_centered_diffonly_nofct ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE shear_centered_diffonly_nofct.diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg
+                    LABELS diagcg)
 
 add_regression_test(shear_centered_advdiff ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -31,7 +33,8 @@ add_regression_test(shear_centered_advdiff ${INCITER_EXECUTABLE}
                     ARGS -c shear_advdiff.q -i shear_centered_12k.exo -v
                     BIN_BASELINE shear_centered_advdiff.std.exo
                     BIN_RESULT out.e-s.0.1.0
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS diagcg)
 
 add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -42,7 +45,8 @@ add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE shear_centered_advdiffshear.diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg
+                    LABELS diagcg)
 
 add_regression_test(shear_centered_advdiffshear_c2 ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -53,8 +57,8 @@ add_regression_test(shear_centered_advdiffshear_c2 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff_c2.cfg
                     TEXT_BASELINE shear_centered_advdiffshear_c2.diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)
-
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg
+                    LABELS diagcg)
 
 # Parallel + no virtualization
 
@@ -74,7 +78,8 @@ add_regression_test(shear_centered_advdiffshear ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff_par.cfg
                     TEXT_BASELINE shear_centered_advdiffshear.diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg
+                    LABELS diagcg)
 
 # Parallel + virtualization
 
@@ -103,4 +108,5 @@ add_regression_test(shear_centered_advdiffshear_u0.5 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff_par.cfg
                     TEXT_BASELINE shear_centered_advdiffshear.diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF shear.ndiff.cfg
+                    LABELS diagcg)

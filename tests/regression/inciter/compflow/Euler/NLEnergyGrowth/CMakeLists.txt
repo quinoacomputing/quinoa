@@ -12,7 +12,8 @@ add_regression_test(compflow_euler_nleg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg
+                    LABELS diagcg)
 
 add_regression_test(compflow_euler_nleg_dgp2 ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -24,7 +25,8 @@ add_regression_test(compflow_euler_nleg_dgp2 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dgp2.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + no virtualization
 
@@ -44,7 +46,8 @@ add_regression_test(compflow_euler_nleg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg
+                    LABELS diagcg)
 
 add_regression_test(compflow_euler_nleg_dgp2 ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -62,7 +65,8 @@ add_regression_test(compflow_euler_nleg_dgp2 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     TEXT_BASELINE diag_dgp2.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + virtualization
 
@@ -90,4 +94,5 @@ add_regression_test(compflow_euler_nleg_u0.5 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg
+                    LABELS diagcg)
