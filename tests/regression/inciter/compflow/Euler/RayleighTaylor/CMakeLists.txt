@@ -12,7 +12,8 @@ add_regression_test(compflow_euler_rayleigh_taylor_st ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_st.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF rayleigh_taylor_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF rayleigh_taylor_diag.ndiff.cfg
+                    LABELS diagcg)
 
 # Parallel + no virtualization, stationary
 
@@ -32,7 +33,8 @@ add_regression_test(compflow_euler_rayleigh_taylor_st ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_st.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF rayleigh_taylor_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF rayleigh_taylor_diag.ndiff.cfg
+                    LABELS diagcg)
 
 # Serial, non-stationary
 
@@ -45,7 +47,8 @@ add_regression_test(compflow_euler_rayleigh_taylor ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF rayleigh_taylor_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF rayleigh_taylor_diag.ndiff.cfg
+                    LABELS diagcg)
 
 # Parallel + no virtualization, non-stationary
 
@@ -66,4 +69,5 @@ add_regression_test(compflow_euler_rayleigh_taylor ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF rayleigh_taylor_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF rayleigh_taylor_diag.ndiff.cfg
+                    LABELS diagcg)

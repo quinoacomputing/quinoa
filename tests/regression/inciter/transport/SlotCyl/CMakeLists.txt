@@ -13,7 +13,8 @@ add_regression_test(slotted_cylinder_dg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF slo_cyl_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF slo_cyl_diag.ndiff.cfg
+                    LABELS dg)
 
 #add_regression_test(slotted_cylinder_dgp1 ${INCITER_EXECUTABLE}
 #                    NUMPES 1
@@ -25,7 +26,8 @@ add_regression_test(slotted_cylinder_dg ${INCITER_EXECUTABLE}
 #                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
 #                    TEXT_BASELINE diag_dgp1.std
 #                    TEXT_RESULT diag
-#                    TEXT_DIFF_PROG_CONF slo_cly_diag.ndiff.cfg)
+#                    TEXT_DIFF_PROG_CONF slo_cly_diag.ndiff.cfg
+#                    LABELS dg)
 
 # Parallel
 
@@ -45,7 +47,8 @@ add_regression_test(slotted_cylinder_dg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF slo_cyl_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF slo_cyl_diag.ndiff.cfg
+                    LABELS dg)
 
 #add_regression_test(slotted_cylinder_dgp1 ${INCITER_EXECUTABLE}
 #                    NUMPES 4
@@ -63,4 +66,5 @@ add_regression_test(slotted_cylinder_dg ${INCITER_EXECUTABLE}
 #                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
 #                    TEXT_BASELINE diag_dgp1.std
 #                    TEXT_RESULT diag
-#                    TEXT_DIFF_PROG_CONF slo_cyl_diag.ndiff.cfg)
+#                    TEXT_DIFF_PROG_CONF slo_cyl_diag.ndiff.cfg
+#                    LABELS dg)
