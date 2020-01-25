@@ -58,7 +58,6 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Transporter;
 
 Transporter::Transporter() :
-  m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
   m_nchare( 0 ),
   m_ncit( 0 ),
   m_nt0refit( 0 ),
@@ -75,16 +74,16 @@ Transporter::Transporter() :
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
   m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
   m_timer(),
-  m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+  m_progMesh( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgMeshPrefix, ProgMeshLegend ),
-  m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+  m_progWork( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgWorkPrefix, ProgWorkLegend )
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
 {
   // Echo configuration to screen
-  info();
+  info( printer() );
 
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
@@ -113,50 +112,51 @@ Transporter::Transporter() :
 
 Transporter::Transporter( CkMigrateMessage* m ) :
   CBase_Transporter( m ),
-  m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
-  m_progMesh( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+  m_progMesh( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgMeshPrefix, ProgMeshLegend ),
-    m_progWork( m_print, g_inputdeck.get< tag::cmd, tag::feedback >(),
+  m_progWork( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgWorkPrefix, ProgWorkLegend )
 // *****************************************************************************
 //  Migrate constructor: returning from a checkpoint
 //! \param[in] m Charm++ migrate message
 // *****************************************************************************
 {
-   m_print.diag( "Restarted from checkpoint" );
-   info();
-   inthead();
+   auto print = printer();
+   print.diag( "Restarted from checkpoint" );
+   info( print );
+   inthead( print );
 }
 
 void
-Transporter::info()
+Transporter::info( const InciterPrint& print )
 // *****************************************************************************
 // Echo configuration to screen
+//! \param[in] print Pretty printer object to use for printing
 // *****************************************************************************
 {
-  m_print.part( "Factory" );
+  print.part( "Factory" );
 
   // Print out info data layout
-  m_print.list( "Unknowns data layout (CMake: FIELD_DATA_LAYOUT)",
-                std::list< std::string >{ tk::Fields::layout() } );
+  print.list( "Unknowns data layout (CMake: FIELD_DATA_LAYOUT)",
+              std::list< std::string >{ tk::Fields::layout() } );
 
   // Re-create partial differential equations stack for output
   PDEStack stack;
 
   // Print out information on PDE factories
-  m_print.eqlegend();
-  m_print.eqlist( "Registered PDEs using continuous Galerkin (CG) methods",
-                  stack.cgfactory(), stack.cgntypes() );
-  m_print.eqlist( "Registered PDEs using discontinuous Galerkin (DG) methods",
-                  stack.dgfactory(), stack.dgntypes() );
-  m_print.endpart();
+  print.eqlegend();
+  print.eqlist( "Registered PDEs using continuous Galerkin (CG) methods",
+                stack.cgfactory(), stack.cgntypes() );
+  print.eqlist( "Registered PDEs using discontinuous Galerkin (DG) methods",
+                stack.dgfactory(), stack.dgntypes() );
+  print.endpart();
 
   // Print out information on problem
-  m_print.part( "Problem" );
+  print.part( "Problem" );
 
   // Print out info on problem title
   if ( !g_inputdeck.get< tag::title >().empty() )
-    m_print.title( g_inputdeck.get< tag::title >() );
+    print.title( g_inputdeck.get< tag::title >() );
 
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
@@ -166,68 +166,68 @@ Transporter::info()
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
 
   // Print discretization parameters
-  m_print.section( "Discretization parameters" );
-  m_print.Item< ctr::Scheme, tag::discr, tag::scheme >();
+  print.section( "Discretization parameters" );
+  print.Item< ctr::Scheme, tag::discr, tag::scheme >();
 
   if (scheme == ctr::SchemeType::DiagCG) {
     auto fct = g_inputdeck.get< tag::discr, tag::fct >();
-    m_print.item( "Flux-corrected transport (FCT)", fct );
+    print.item( "Flux-corrected transport (FCT)", fct );
     if (fct) {
-      m_print.item( "FCT mass diffusion coeff",
-                    g_inputdeck.get< tag::discr, tag::ctau >() );
-      m_print.item( "FCT small number",
-                    g_inputdeck.get< tag::discr, tag::fcteps >() );
-      m_print.item( "Clipping FCT",
-                    g_inputdeck.get< tag::discr, tag::fctclip >() );
+      print.item( "FCT mass diffusion coeff",
+                  g_inputdeck.get< tag::discr, tag::ctau >() );
+      print.item( "FCT small number",
+                  g_inputdeck.get< tag::discr, tag::fcteps >() );
+      print.item( "Clipping FCT",
+                  g_inputdeck.get< tag::discr, tag::fctclip >() );
     }
   } else if (scheme == ctr::SchemeType::DG ||
              scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
              scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
   {
-    m_print.Item< ctr::Limiter, tag::discr, tag::limiter >();
+    print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
-  m_print.item( "PE-locality mesh reordering",
+  print.item( "PE-locality mesh reordering",
                 g_inputdeck.get< tag::discr, tag::reorder >() );
-  m_print.item( "Number of time steps", nstep );
-  m_print.item( "Start time", t0 );
-  m_print.item( "Terminate time", term );
+  print.item( "Number of time steps", nstep );
+  print.item( "Start time", t0 );
+  print.item( "Terminate time", term );
 
   if (std::abs(constdt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) >
         std::numeric_limits< tk::real >::epsilon())
-    m_print.item( "Constant time step size", constdt );
+    print.item( "Constant time step size", constdt );
   else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
              std::numeric_limits< tk::real >::epsilon())
-    m_print.item( "CFL coefficient", cfl );
+    print.item( "CFL coefficient", cfl );
 
   // Print out info on settings of selected partial differential equations
-  m_print.pdes( "Partial differential equations integrated", stack.info() );
+  print.pdes( "Partial differential equations integrated", stack.info() );
 
   // Print out adaptive polynomial refinement configuration
   if (scheme == ctr::SchemeType::PDG) {
-    m_print.section( "Polynomial refinement (p-ref)" );
-    m_print.item( "p-refinement",
-                  g_inputdeck.get< tag::pref, tag::pref >() );
-    m_print.Item< ctr::PrefIndicator, tag::pref, tag::indicator >();
-    m_print.item( "Max degrees of freedom",
-                  g_inputdeck.get< tag::pref, tag::ndofmax >() );
-    m_print.item( "Tolerance",
-                  g_inputdeck.get< tag::pref, tag::tolref >() );
+    print.section( "Polynomial refinement (p-ref)" );
+    print.item( "p-refinement",
+                g_inputdeck.get< tag::pref, tag::pref >() );
+    print.Item< ctr::PrefIndicator, tag::pref, tag::indicator >();
+    print.item( "Max degrees of freedom",
+                g_inputdeck.get< tag::pref, tag::ndofmax >() );
+    print.item( "Tolerance",
+                g_inputdeck.get< tag::pref, tag::tolref >() );
   }
 
   // Print out adaptive mesh refinement configuration
   const auto amr = g_inputdeck.get< tag::amr, tag::amr >();
   if (amr) {
-    m_print.section( "Mesh refinement (h-ref)" );
-    m_print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
-                    g_inputdeck.get< tag::amr, tag::id >() );
-    m_print.Item< ctr::AMRError, tag::amr, tag::error >();
+    print.section( "Mesh refinement (h-ref)" );
+    print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
+                  g_inputdeck.get< tag::amr, tag::id >() );
+    print.Item< ctr::AMRError, tag::amr, tag::error >();
     auto t0ref = g_inputdeck.get< tag::amr, tag::t0ref >();
-    m_print.item( "Refinement at t<0 (t0ref)", t0ref );
+    print.item( "Refinement at t<0 (t0ref)", t0ref );
     if (t0ref) {
       const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
-      m_print.item( "Initial refinement steps", initref.size() );
-      m_print.ItemVec< ctr::AMRInitial >( initref );
-      m_print.edgeref( g_inputdeck.get< tag::amr, tag::edge >() );
+      print.item( "Initial refinement steps", initref.size() );
+      print.ItemVec< ctr::AMRInitial >( initref );
+      print.edgeref( g_inputdeck.get< tag::amr, tag::edge >() );
 
       auto rmax =
         std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
@@ -236,58 +236,58 @@ Transporter::info()
      
       auto xminus = g_inputdeck.get< tag::amr, tag::xminus >();
       if (std::abs( xminus - rmax ) > eps)
-        m_print.item( "Initial refinement x-", xminus );
+        print.item( "Initial refinement x-", xminus );
       auto xplus = g_inputdeck.get< tag::amr, tag::xplus >();
       if (std::abs( xplus - rmax ) > eps)
-        m_print.item( "Initial refinement x+", xplus );
+        print.item( "Initial refinement x+", xplus );
 
       auto yminus = g_inputdeck.get< tag::amr, tag::yminus >();
       if (std::abs( yminus - rmax ) > eps)
-        m_print.item( "Initial refinement y-", yminus );
+        print.item( "Initial refinement y-", yminus );
       auto yplus = g_inputdeck.get< tag::amr, tag::yplus >();
       if (std::abs( yplus - rmax ) > eps)
-        m_print.item( "Initial refinement y+", yplus );
+        print.item( "Initial refinement y+", yplus );
 
       auto zminus = g_inputdeck.get< tag::amr, tag::zminus >();
       if (std::abs( zminus - rmax ) > eps)
-        m_print.item( "Initial refinement z-", zminus );
+        print.item( "Initial refinement z-", zminus );
       auto zplus = g_inputdeck.get< tag::amr, tag::zplus >();
       if (std::abs( zplus - rmax ) > eps)
-        m_print.item( "Initial refinement z+", zplus );
+        print.item( "Initial refinement z+", zplus );
     }
     auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-    m_print.item( "Refinement at t>0 (dtref)", dtref );
+    print.item( "Refinement at t>0 (dtref)", dtref );
     if (dtref) {
       auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
-      m_print.item( "Mesh refinement frequency, t>0", dtfreq );
-      m_print.item( "Uniform-only mesh refinement, t>0",
-                    g_inputdeck.get< tag::amr, tag::dtref_uniform >() );
+      print.item( "Mesh refinement frequency, t>0", dtfreq );
+      print.item( "Uniform-only mesh refinement, t>0",
+                  g_inputdeck.get< tag::amr, tag::dtref_uniform >() );
     }
-    m_print.item( "Refinement tolerance",
-                  g_inputdeck.get< tag::amr, tag::tolref >() );
-    m_print.item( "De-refinement tolerance",
-                  g_inputdeck.get< tag::amr, tag::tolderef >() );
+    print.item( "Refinement tolerance",
+                g_inputdeck.get< tag::amr, tag::tolref >() );
+    print.item( "De-refinement tolerance",
+                g_inputdeck.get< tag::amr, tag::tolderef >() );
   }
 
   // Print I/O filenames
-  m_print.section( "Output filenames and directories" );
-  m_print.item( "Field output file(s)",
+  print.section( "Output filenames and directories" );
+  print.item( "Field output file(s)",
     g_inputdeck.get< tag::cmd, tag::io, tag::output >() +
     ".e-s.<meshid>.<numchares>.<chareid>" );
-  m_print.item( "Diagnostics file",
-                g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
-  m_print.item( "Checkpoint/restart directory",
-                g_inputdeck.get< tag::cmd, tag::io, tag::restart >() + '/' );
+  print.item( "Diagnostics file",
+              g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
+  print.item( "Checkpoint/restart directory",
+              g_inputdeck.get< tag::cmd, tag::io, tag::restart >() + '/' );
 
   // Print output intervals
-  m_print.section( "Output intervals" );
-  m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
-  m_print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
-  m_print.item( "Diagnostics",
-                g_inputdeck.get< tag::interval, tag::diag >() );
-  m_print.item( "Checkpoint/restart",
-                g_inputdeck.get< tag::cmd, tag::rsfreq >() );
-  m_print.endsubsection();
+  print.section( "Output intervals" );
+  print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
+  print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
+  print.item( "Diagnostics",
+              g_inputdeck.get< tag::interval, tag::diag >() );
+  print.item( "Checkpoint/restart",
+              g_inputdeck.get< tag::cmd, tag::rsfreq >() );
+  print.endsubsection();
 }
 
 bool
@@ -369,8 +369,10 @@ Transporter::createPartitioner()
     bcs_set = bcs_set || matchBCs( bface );
   }
 
+  auto print = printer();
+
   // Warn on no BCs
-  if (!bcs_set) m_print << "\n>>> WARNING: No boundary conditions set\n\n";
+  if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";
 
   // Create partitioner callbacks (order matters)
   tk::PartitionerCallback cbp {{
@@ -402,7 +404,7 @@ Transporter::createPartitioner()
   m_timer[ TimerTag::MESH_READ ];
 
   // Create mesh partitioner Charm++ chare group and start preparing mesh
-  m_print.diag( "Reading mesh" );
+  print.diag( "Reading mesh" );
 
   // Create empty mesh sorter Charm++ chare array (bound to workers)
   m_sorter = CProxy_Sorter::ckNew( m_scheme.arrayoptions() );
@@ -437,24 +439,26 @@ Transporter::load( std::size_t nelem )
                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
                  nelem, CkNumPes(), chunksize, remainder ) );
 
+  auto print = printer();
+
   // Start timer measuring preparation of the mesh for partitioning
   const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
-  m_print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
+  print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
 
   // Print out mesh partitioning configuration
-  m_print.section( "Mesh partitioning" );
-  m_print.Item< tk::ctr::PartitioningAlgorithm,
-                tag::selected, tag::partitioner >();
+  print.section( "Mesh partitioning" );
+  print.Item< tk::ctr::PartitioningAlgorithm,
+              tag::selected, tag::partitioner >();
 
   // Print out info on load distribution
-  m_print.section( "Initial load distribution" );
-  m_print.item( "Virtualization [0.0...1.0]",
-                g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  m_print.item( "Number of tetrahedra", nelem );
-  m_print.item( "Number of points", m_npoin );
-  m_print.item( "Number of work units", m_nchare );
+  print.section( "Initial load distribution" );
+  print.item( "Virtualization [0.0...1.0]",
+              g_inputdeck.get< tag::cmd, tag::virtualization >() );
+  print.item( "Number of tetrahedra", nelem );
+  print.item( "Number of points", m_npoin );
+  print.item( "Number of work units", m_nchare );
 
-  m_print.endsubsection();
+  print.endsubsection();
 
   // Tell meshwriter the total number of chares
   m_meshwriter.nchare( m_nchare );
@@ -464,7 +468,7 @@ Transporter::load( std::size_t nelem )
   if (g_inputdeck.get< tag::amr, tag::t0ref >())
     nref = static_cast<int>( g_inputdeck.get< tag::amr, tag::init >().size() );
 
-  m_progMesh.start( "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
+  m_progMesh.start( print, "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
     m_nchare, m_nchare, m_nchare, m_nchare }} );
 
   // Partition the mesh
@@ -489,17 +493,17 @@ Transporter::refinserted( int error )
 {
   if (error) {
 
-    m_print << "\n>>> ERROR: A worker chare was not assigned any mesh "
-               "elements. This can happen in SMP-mode with a large +ppn "
-               "parameter (number of worker threads per logical node) and is "
-               "most likely the fault of the mesh partitioning algorithm not "
-               "tolerating the case when it is asked to divide the "
-               "computational domain into a number of partitions different "
-               "than the number of ranks it is called on, i.e., in case of "
-               "overdecomposition and/or calling the partitioner in SMP mode "
-               "with +ppn larger than 1. Solution 1: Try a different "
-               "partitioning algorithm (e.g., rcb instead of mj). Solution 2: "
-               "Decrease +ppn.";
+    printer() << "\n>>> ERROR: A worker chare was not assigned any mesh "
+              "elements. This can happen in SMP-mode with a large +ppn "
+              "parameter (number of worker threads per logical node) and is "
+              "most likely the fault of the mesh partitioning algorithm not "
+              "tolerating the case when it is asked to divide the "
+              "computational domain into a number of partitions different "
+              "than the number of ranks it is called on, i.e., in case of "
+              "overdecomposition and/or calling the partitioner in SMP mode "
+              "with +ppn larger than 1. Solution 1: Try a different "
+              "partitioning algorithm (e.g., rcb instead of mj). Solution 2: "
+              "Decrease +ppn.";
 
     finish( 0, g_inputdeck.get< tag::discr, tag::t0 >() );
 
@@ -573,18 +577,20 @@ Transporter::matched( std::size_t nextra,
 
   } else {
 
+    auto print = printer();
+
     if (initial > 0) {
 
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
-        m_print.diag( { "t0ref", "nref", "nderef", "ncorr" },
-                      { ++m_nt0refit, nref, nderef, m_ncit } );
+        print.diag( { "t0ref", "nref", "nderef", "ncorr" },
+                    { ++m_nt0refit, nref, nderef, m_ncit } );
       }
-      m_progMesh.inc< REFINE >();
+      m_progMesh.inc< REFINE >( print );
 
     } else {
 
-      m_print.diag( { "dtref", "nref", "nderef", "ncorr" },
-                    { ++m_ndtrefit, nref, nderef, m_ncit }, false );
+      print.diag( { "dtref", "nref", "nderef", "ncorr" },
+                  { ++m_ndtrefit, nref, nderef, m_ncit }, false );
 
     }
 
@@ -694,12 +700,15 @@ Transporter::disccreated()
 // Reduction target: all Discretization constructors have been called
 // *****************************************************************************
 {
-  m_progMesh.end();
+  auto print = printer();
+
+  m_progMesh.end( print );
 
   if (g_inputdeck.get< tag::amr, tag::t0ref >()) {
-    m_print.section( "Initially (t<0) refined mesh graph statistics" );
-    m_print.item( "Number of tetrahedra", m_nelem );
-    m_print.endsubsection();
+
+    print.section( "Initially (t<0) refined mesh graph statistics" );
+    print.item( "Number of tetrahedra", m_nelem );
+    print.endsubsection();
   }
 
   m_refiner.sendProxy();
@@ -774,10 +783,12 @@ Transporter::comfinal( int initial )
 // [Discretization-specific communication maps]
 {
   if (initial > 0) {
-    m_progWork.end();
+    auto print = printer();
+    m_progWork.end( print );
     m_scheme.bcast< Scheme::setup >();
     // Turn on automatic load balancing
-    tk::CProxy_LBSwitch::ckNew( g_inputdeck.get<tag::cmd,tag::verbose>() );
+    tk::CProxy_LBSwitch::ckNew();
+    print.diag( "Load balancing on (if enabled in Charm++)" );
   } else {
     m_scheme.bcast< Scheme::lhs >();
   }
@@ -895,35 +906,38 @@ Transporter::stat()
 // Echo diagnostics on mesh statistics
 // *****************************************************************************
 {
-  m_print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
-                std::to_string( m_minstat[0] ) + " / " +
-                std::to_string( m_maxstat[0] ) + " / " +
-                std::to_string( m_avgstat[0] ) );
-  m_print.diag( "Mesh statistics: min/max/avg(V^{1/3}) = " +
-                std::to_string( m_minstat[1] ) + " / " +
-                std::to_string( m_maxstat[1] ) + " / " +
-                std::to_string( m_avgstat[1] ) );
-  m_print.diag( "Mesh statistics: min/max/avg(ntets) = " +
+  auto print = printer();
+
+  print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
+              std::to_string( m_minstat[0] ) + " / " +
+              std::to_string( m_maxstat[0] ) + " / " +
+              std::to_string( m_avgstat[0] ) );
+  print.diag( "Mesh statistics: min/max/avg(V^{1/3}) = " +
+              std::to_string( m_minstat[1] ) + " / " +
+              std::to_string( m_maxstat[1] ) + " / " +
+              std::to_string( m_avgstat[1] ) );
+  print.diag( "Mesh statistics: min/max/avg(ntets) = " +
               std::to_string( static_cast<std::size_t>(m_minstat[2]) ) + " / " +
               std::to_string( static_cast<std::size_t>(m_maxstat[2]) ) + " / " +
               std::to_string( static_cast<std::size_t>(m_avgstat[2]) ) );
 
   // Print out time integration header to screen
-  inthead();
+  inthead( print );
 
-  m_progWork.start( "Preparing workers",
+  m_progWork.start( print, "Preparing workers",
                     {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
   // Create "derived-class" workers
   m_sorter.createWorkers();
 }
 
 void
-Transporter::inthead()
+Transporter::inthead( const InciterPrint& print )
 // *****************************************************************************
 // Print out time integration header to screen
+//! \param[in] print Pretty printer object to use for printing
 // *****************************************************************************
 {
-  m_print.inthead( "Time integration", "Navier-Stokes solver",
+  print.inthead( "Time integration", "Navier-Stokes solver",
   "Legend: it - iteration count\n"
   "         t - time\n"
   "        dt - time step size\n"

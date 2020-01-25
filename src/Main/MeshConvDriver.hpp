@@ -14,9 +14,8 @@
 
 #include <iosfwd>
 
+#include "Print.hpp"
 #include "MeshConv/CmdLine/CmdLine.hpp"
-
-namespace tk { class Print; }
 
 //! Mesh converter declarations and definitions
 namespace meshconv {
@@ -26,14 +25,13 @@ class MeshConvDriver {
 
   public:
     //! Constructor
-    explicit MeshConvDriver( const tk::Print& print,
-                             const ctr::CmdLine& cmdline );
+    explicit MeshConvDriver( const ctr::CmdLine& cmdline );
 
     //! Execute
     void execute() const;
 
   private:
-    const tk::Print& m_print;           //!< Pretty printer
+    const tk::Print m_print;            //!< Pretty printer
     const bool m_reorder;               //!< Whether to also reorder mesh nodes
     std::string m_input;                //!< Input file name
     std::string m_output;               //!< Output file name

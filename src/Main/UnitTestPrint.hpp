@@ -25,12 +25,17 @@ class UnitTestPrint : public tk::Print {
 
   public:
     //! Constructor
+    //! \param[in] screen Screen output filename
     //! \param[in,out] str Verbose stream
+    //! \param[in] mode Open mode for screen output file, see
+    //!   http://en.cppreference.com/w/cpp/io/ios_base/openmode
     //! \param[in,out] qstr Quiet stream
     //! \see tk::Print::Print
-    explicit UnitTestPrint( std::ostream& str = std::clog,
+    explicit UnitTestPrint( const std::string& screen = {},
+                            std::ostream& str = std::clog,
+                            std::ios_base::openmode mode = std::ios_base::out,
                             std::ostream& qstr = std::cout ) :
-      Print( str, qstr ) {}
+      Print( screen, str, mode, qstr ) {}
 
     //! Print unit tests header (with legend)
     //! \param[in] t Section title
@@ -70,7 +75,7 @@ class UnitTestPrint : public tk::Print {
         std::stringstream ss;
         ss << "[" << ncomplete << "/" << nfail << "] " << status[0] << ":"
            << status[1];
-        (status[2] == "0" ? m_stream : m_qstream) <<
+        m_stream <<
           m_item_widename_value_fmt % m_item_indent % ss.str()
                                     % result( status[2], status[3], status[4] )
           << std::flush;

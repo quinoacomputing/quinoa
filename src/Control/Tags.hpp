@@ -12,20 +12,22 @@
 #ifndef Tags_h
 #define Tags_h
 
+#include <string>
+
 //! Tags used as unique-type labels for compile-time code-generation
 namespace tag {
 
 struct low {};
 struct high {};
-struct io {};
-struct quiescence {};
-struct trace {};
-struct version {};
-struct license {};
-struct input {};
-struct output {};
-struct restart {};
-struct diag {};
+struct io { static std::string name() { return "io"; } };
+struct quiescence { static std::string name() { return "quiescence"; } };
+struct trace { static std::string name() { return "trace"; } };
+struct version { static std::string name() { return "version"; } };
+struct license { static std::string name() { return "license"; } };
+struct input { static std::string name() { return "input"; } };
+struct output { static std::string name() { return "output"; } };
+struct restart { static std::string name() { return "restart"; } };
+struct diag { static std::string name() { return "diag"; } };
 struct evalLB {};
 struct seed {};
 struct uniform_method {};
