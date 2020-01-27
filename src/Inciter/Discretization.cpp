@@ -553,7 +553,9 @@ Discretization::grindZero()
 
   if (thisIndex == 0) {
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
-    tk::Print print( verbose ? std::cout : std::clog );
+    tk::Print print( tk::inciter_executable() + "_screen.log",
+                     verbose ? std::cout : std::clog,
+                     std::ios_base::app );
     print.diag( "Starting time stepping" );
   }
 }

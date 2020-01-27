@@ -186,13 +186,13 @@ Transporter::info( const InciterPrint& print )
   {
     print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
-  m_print.item( "PE-locality mesh reordering",
+  print.item( "PE-locality mesh reordering",
                 g_inputdeck.get< tag::discr, tag::pelocal_reorder >() );
-  m_print.item( "Operator-access mesh reordering",
+  print.item( "Operator-access mesh reordering",
                 g_inputdeck.get< tag::discr, tag::operator_reorder >() );
-  m_print.item( "Number of time steps", nstep );
-  m_print.item( "Start time", t0 );
-  m_print.item( "Terminate time", term );
+  print.item( "Number of time steps", nstep );
+  print.item( "Start time", t0 );
+  print.item( "Terminate time", term );
 
   if (std::abs(constdt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) >
         std::numeric_limits< tk::real >::epsilon())
