@@ -90,7 +90,7 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) ),
       m_bcdir( config< tag::bcdir >( c ) ),
       m_bcsym( config< tag::bcsym >( c ) ),
-      m_bcsubsonicoutlet( config< tag::bcsubsonicoutlet >( c ) ),
+      m_bcsubsonicoutlet( config< tag::bcoutlet >( c ) ),
       m_bcextrapolate( config< tag::bcextrapolate >( c ) )
     {}
 
