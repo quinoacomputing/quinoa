@@ -13,7 +13,8 @@ add_regression_test(compflow_euler_sedovblastwave_dgp1 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dgp1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sedov_blastwave_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sedov_blastwave_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(compflow_euler_sedovblastwave_pdg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -25,7 +26,8 @@ add_regression_test(compflow_euler_sedovblastwave_pdg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sedov_blastwave_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sedov_blastwave_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel
 
@@ -45,7 +47,8 @@ add_regression_test(compflow_euler_sedovblastwave_dgp1 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dgp1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sedov_blastwave_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sedov_blastwave_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(compflow_euler_sedovblastwave_pdg ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -63,7 +66,8 @@ add_regression_test(compflow_euler_sedovblastwave_pdg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sedov_blastwave_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sedov_blastwave_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + Virtualization + Migration
 
@@ -157,4 +161,4 @@ add_regression_test(compflow_euler_sedovblastwave_pdg_u0.9_migr ${INCITER_EXECUT
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sedov_blastwave_diag.ndiff.cfg
-                    LABELS migration)
+                    LABELS dg migration)

@@ -3,7 +3,7 @@
   \file      src/Main/RNGTestDriver.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
@@ -33,14 +33,13 @@ class RNGTestDriver {
 
   public:
     //! Constructor
-    explicit RNGTestDriver( const RNGTestPrint& print,
-                            const ctr::CmdLine& cmdline );
+    explicit RNGTestDriver( const ctr::CmdLine& cmdline );
 
     //! Execute driver
     void execute() const;
 
   private:
-    const RNGTestPrint& m_print;
+    const RNGTestPrint m_print;
 };
 
 } // rngtest::

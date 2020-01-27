@@ -3,7 +3,7 @@
   \file      src/Control/Walker/Types.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -76,12 +76,12 @@ using intervals = tk::TaggedTuple< brigand::list<
 
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
-    tag::control,   kw::control::info::expect::type   //!< Control filename
-  , tag::input,     std::string                       //!< Input filename
-  , tag::output,    std::string                       //!< Output filename
-  , tag::pdf,       kw::pdf::info::expect::type       //!< PDF filename
-  , tag::stat,      kw::stat::info::expect::type      //!< Statistics filename
-  , tag::pdfnames,  std::vector< std::string >        //!< PDF identifiers
+    tag::control,   kw::control::info::expect::type //!< Control filename
+  , tag::input,     std::string                     //!< Input filename
+  , tag::output,    std::string                     //!< Output filename
+  , tag::pdf,       kw::pdf::info::expect::type     //!< PDF filename
+  , tag::stat,      kw::stat::info::expect::type    //!< Statistics filename
+  , tag::pdfnames,  std::vector< std::string >      //!< PDF identifiers
 > >;
 
 //! Data for initialization (SDE initial conditions)

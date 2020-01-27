@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/Options/BC.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Boundary condition options for inciter
   \details   Boundary condition options for inciter
@@ -25,7 +25,8 @@ namespace ctr {
 enum class BCType : uint8_t { SYM,
                               INLET,
                               OUTLET,
-                              EXTRAPOLATE };
+                              EXTRAPOLATE,
+                              CHARACTERISTIC };
 
 //! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, BCType& e ) { PUP::pup( p, e ); }
@@ -39,6 +40,7 @@ class BC : public tk::Toggle< BCType > {
                                   , kw::bc_inlet
                                   , kw::bc_outlet
                                   , kw::bc_extrapolate
+                                  , kw::bc_characteristic
                                   >;
 
     //! Constructor: pass associations references to base, which will handle
@@ -49,12 +51,14 @@ class BC : public tk::Toggle< BCType > {
         { { BCType::SYM, kw::bc_sym::name() },
           { BCType::INLET, kw::bc_inlet::name() },
           { BCType::OUTLET, kw::bc_outlet::name() },
-          { BCType::EXTRAPOLATE, kw::bc_extrapolate::name() } },
+          { BCType::EXTRAPOLATE, kw::bc_extrapolate::name() },
+          { BCType::CHARACTERISTIC, kw::bc_characteristic::name() } },
         //! keywords -> Enums
         { { kw::bc_sym::string(), BCType::SYM },
           { kw::bc_inlet::string(), BCType::INLET },
           { kw::bc_outlet::string(), BCType::OUTLET },
-          { kw::bc_extrapolate::string(), BCType::EXTRAPOLATE } } ) {}
+          { kw::bc_extrapolate::string(), BCType::EXTRAPOLATE },
+          { kw::bc_characteristic::string(), BCType::CHARACTERISTIC } } ) {}
 };
 
 } // ctr::

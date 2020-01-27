@@ -3,7 +3,7 @@
   \file      src/Control/Keywords.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1773,9 +1773,9 @@ struct farfield_pressure_info {
   static std::string shortDescription() { return
     "Select the far-field pressure"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field pressure when subsonic
-    outlet boundary condition is used.  This parameter is set up in boundary
-    condition block. Example specification: 'farfield_pressure 1.0')";
+    R"(This keyword is used to specify the far-field pressure when
+    characteristic boundary condition is used. This parameter is set up in
+    boundary condition block. Example specification: 'farfield_pressure 1.0')";
   }
   struct expect {
     using type = tk::real;
@@ -1785,6 +1785,43 @@ struct farfield_pressure_info {
 };
 using farfield_pressure = keyword< farfield_pressure_info,
                             TAOCPP_PEGTL_STRING("farfield_pressure") >;
+
+struct farfield_density_info {
+  static std::string name() { return "farfield_density"; }
+  static std::string shortDescription() { return
+    "Select the far-field density"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the far-field density when characteristic
+    boundary condition is used. This parameter is set up in boundary condition
+    block. Example specification: 'farfield_density 1.0')";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using farfield_density = keyword< farfield_density_info,
+                            TAOCPP_PEGTL_STRING("farfield_density") >;
+
+struct farfield_velocity_info {
+  static std::string name() { return "farfield_velocity"; }
+  static std::string shortDescription() { return
+    "Select the far-field velocity vector"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the far-field velocity vector when
+    characteristic boundary condition is used. This parameter is set up in
+    boundary condition block.
+    Example specification: 'farfield_velocity 1.0 0.0 0.0 end')";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using farfield_velocity = keyword< farfield_velocity_info,
+                             TAOCPP_PEGTL_STRING("farfield_velocity") >;
 
 struct nmat_info {
   static std::string name() { return "nmat"; }
@@ -4106,6 +4143,25 @@ struct taylor_green_info {
 using taylor_green =
   keyword< taylor_green_info, TAOCPP_PEGTL_STRING("taylor_green") >;
 
+struct shedding_flow_info {
+  using code = Code< F >;
+  static std::string name() { return "Shedding flow over triangular wedge"; }
+  static std::string shortDescription() { return
+    "Select the Shedding flow test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Shedding flow test problem. It
+    describe a quasi-2D inviscid flow over a triangular wedge in tetrahedron
+    grid. The purpose of this test problem is to test the capability of DG
+    scheme for retaining the shape of vortices and also different error
+    indicator behavior for this external flow problem when p-adaptive DG scheme
+    is applied. Example: "problem shedding_flow".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using shedding_flow =
+  keyword< shedding_flow_info, TAOCPP_PEGTL_STRING("shedding_flow") >;
+
 struct sod_shocktube_info {
   using code = Code< H >;
   static std::string name() { return "Sod shock-tube"; }
@@ -4746,6 +4802,23 @@ struct transport_info {
 };
 using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
 
+struct bc_characteristic_info {
+  static std::string name() { return "Characteristic boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing Characteristic boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a bc_characteristic ... end block, used
+    to specify the configuration for setting characteristic boundary conditions
+    for a partial differential equation. Keywords allowed in a bc_characteristic
+    ... end block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_characteristic ... end block, see
+      doc/html/inciter_example_gausshump.html.)";
+  }
+};
+using bc_characteristic =
+  keyword< bc_characteristic_info, TAOCPP_PEGTL_STRING("bc_characteristic") >;
+
 struct bc_extrapolate_info {
   static std::string name() { return "Extrapolation boundary condition"; }
   static std::string shortDescription() { return
@@ -4925,6 +4998,36 @@ struct velocityic_info {
 };
 using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
 
+struct densityic_info {
+  static std::string name() { return "velocity"; }
+  static std::string shortDescription() { return
+    "Specify density initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the density field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using densityic = keyword< densityic_info, TAOCPP_PEGTL_STRING("density") >;
+
+struct pressureic_info {
+  static std::string name() { return "pressure"; }
+  static std::string shortDescription() { return
+    "Specify pressure initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the pressure field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pressureic = keyword< pressureic_info, TAOCPP_PEGTL_STRING("pressure") >;
+
 struct compflow_info {
   static std::string name() { return "Compressible single-material flow"; }
   static std::string shortDescription() { return
@@ -4952,6 +5055,7 @@ struct compflow_info {
     + bc_sym::string() + "\', \'"
     + bc_inlet::string() + "\', \'"
     + bc_outlet::string() + "\', \'"
+    + bc_characteristic::string() + "\', \'"
     + bc_extrapolate::string() + "\'."
     + R"(For an example compflow ... end block, see
       doc/html/inicter_example_compflow.html.)";

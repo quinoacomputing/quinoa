@@ -13,7 +13,8 @@ add_regression_test(multimat_sod_shocktube_dg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -25,7 +26,8 @@ add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel
 
@@ -45,7 +47,8 @@ add_regression_test(multimat_sod_shocktube_dg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -63,7 +66,8 @@ add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + Virtualization
 
@@ -153,4 +157,5 @@ add_regression_test(multimat_sod_shocktube_p0p1_u0.9 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS dg)

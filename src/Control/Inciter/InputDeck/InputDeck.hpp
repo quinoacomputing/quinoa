@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/InputDeck/InputDeck.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -189,11 +189,15 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::bc_sym,
                                    kw::bc_inlet,
                                    kw::bc_outlet,
+                                   kw::bc_characteristic,
                                    kw::bc_extrapolate,
                                    kw::farfield_pressure,
+                                   kw::farfield_density,
+                                   kw::farfield_velocity,
                                    kw::gauss_hump,
                                    kw::rotated_sod_shocktube,
                                    kw::cyl_advect,
+                                   kw::shedding_flow,
                                    kw::sod_shocktube,
                                    kw::sedov_blastwave,
                                    kw::interface_advection,

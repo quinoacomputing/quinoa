@@ -3,7 +3,7 @@
   \file      src/Main/LBSwitch.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ chare group for switching on/off load balancing
   \details   Charm++ chare group for switching on/off load balancing.
@@ -17,17 +17,12 @@
 
 using tk::LBSwitch;
 
-LBSwitch::LBSwitch( bool verbose )
+LBSwitch::LBSwitch()
 // *****************************************************************************
 //  Constructor: turn on automatic load balancing
-//! \param[in] verbose True if user selected verbose mode
 // *****************************************************************************
 {
   TurnManualLBOff();
-
-  if (CkMyPe() == 0)
-    Print( verbose ? std::cout : std::clog ).
-      diag( "Load balancing on (if enabled in Charm++)" );
 }
 
 void
@@ -43,8 +38,7 @@ LBSwitch::off()
 {
   TurnManualLBOn();
 
-  if (CkMyPe() == 0)
-    Print( std::cout ).diag( "Load balancing off" );
+  if (CkMyPe() == 0) Print( "", std::cout ).diag( "Load balancing off" );
 }
 
 #include "NoWarning/lbswitch.def.h"

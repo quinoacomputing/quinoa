@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/InputDeck/Grammar.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -257,18 +257,6 @@ namespace grm {
       const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
       for (const auto& s : bc)
         if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
-
-      // Put in default farfield pressure if not specified by user
-      // if outlet BC is configured for this compflow system
-      auto& bcsubsonicoutlet =
-          stack.template get< param, eq, tag::bc, tag::bcsubsonicoutlet >();
-      if (!bcsubsonicoutlet.empty() ||
-          bcsubsonicoutlet.size() != neq.get< eq >())
-      {
-        auto& fp =
-          stack.template get< param, eq, tag::farfield_pressure >();
-        if (fp.size() != bcsubsonicoutlet.size()) fp.push_back( 1.0 );
-      }
     }
   };
 
@@ -670,14 +658,16 @@ namespace deck {
                                         tag::bc,
                                         param > > > {};
 
-  //! Farfield boundary conditions block
+  //! Characteristic boundary conditions block
   template< class keyword, class eq, class param >
-  struct subsonic_bc :
+  struct characteristic_bc :
          pegtl::if_must<
            tk::grm::readkw< typename use< keyword >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
              parameter< eq, kw::farfield_pressure, tag::farfield_pressure >,
+             parameter< eq, kw::farfield_density, tag::farfield_density >,
+             pde_parameter_vector< kw::farfield_velocity, eq, tag::farfield_velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,
@@ -710,6 +700,7 @@ namespace deck {
                          half_world< kw::amr_yplus, tag::yplus >,
                          half_world< kw::amr_zminus, tag::zminus >,
                          half_world< kw::amr_zplus, tag::zplus > > > {};
+
 
   //! initial conditions block for compressible flow
   template< class eq, class param >
@@ -838,9 +829,9 @@ namespace deck {
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           subsonic_bc< kw::bc_outlet,
-                                        tag::compflow,
-                                        tag::bcsubsonicoutlet >,
+                           characteristic_bc< kw::bc_outlet,
+                                              tag::compflow,
+                                              tag::bccharacteristic >,
                            bc< kw::bc_extrapolate, tag::compflow,
                                tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};

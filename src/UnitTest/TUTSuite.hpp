@@ -3,7 +3,7 @@
   \file      src/UnitTest/TUTSuite.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Template Unit Test suite class declaration
   \details   Template Unit Test suite class declaration. In principle there can
@@ -41,9 +41,10 @@ class TUTSuite : public CBase_TUTSuite {
     void evaluate( std::vector< std::string > status );
 
   private:
+    std::string m_screen;          //!< Screen output log filename
+    bool m_verbose;                //1< True if verbose screen output
     //! MPI unit test runner nodegroup proxy
     CProxy_MPIRunner< CProxy_TUTSuite > m_mpirunner;
-    UnitTestPrint m_print;         //!< Pretty printer
     std::size_t m_nrun;            //!< Number of tests ran (including dummies)
     std::size_t m_ngroup;          //!< Number of test groups
     std::size_t m_ncomplete;       //!< Number of completed tests
@@ -82,6 +83,14 @@ class TUTSuite : public CBase_TUTSuite {
 
     //! Fire up all tests in a test group
     void spawngrp( const std::string& g );
+
+    //! Create pretty printer specialized to UnitTest
+    //! \return Pretty printer
+    UnitTestPrint printer() const { return
+      UnitTestPrint( m_screen,
+                     m_verbose ? std::cout : std::clog,
+                     std::ios_base::app );
+    }
 };
 
 } // unittest::

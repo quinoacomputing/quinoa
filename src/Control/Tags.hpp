@@ -3,7 +3,7 @@
   \file      src/Control/Tags.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -12,20 +12,22 @@
 #ifndef Tags_h
 #define Tags_h
 
+#include <string>
+
 //! Tags used as unique-type labels for compile-time code-generation
 namespace tag {
 
 struct low {};
 struct high {};
-struct io {};
-struct quiescence {};
-struct trace {};
-struct version {};
-struct license {};
-struct input {};
-struct output {};
-struct restart {};
-struct diag {};
+struct io { static std::string name() { return "io"; } };
+struct quiescence { static std::string name() { return "quiescence"; } };
+struct trace { static std::string name() { return "trace"; } };
+struct version { static std::string name() { return "version"; } };
+struct license { static std::string name() { return "license"; } };
+struct input { static std::string name() { return "input"; } };
+struct output { static std::string name() { return "output"; } };
+struct restart { static std::string name() { return "restart"; } };
+struct diag { static std::string name() { return "diag"; } };
 struct evalLB {};
 struct seed {};
 struct uniform_method {};
@@ -191,6 +193,8 @@ struct selected {};
 struct discr {};
 struct bc {};
 struct farfield_pressure {};
+struct farfield_density {};
+struct farfield_velocity {};
 struct component {};
 struct interval {};
 struct cmd {};
@@ -222,7 +226,7 @@ struct bcsym {};
 struct bcinlet {};
 struct bcoutlet {};
 struct bcextrapolate {};
-struct bcsubsonicoutlet {};
+struct bccharacteristic {};
 struct material {};
 struct id {};
 struct position_id {};
@@ -257,6 +261,10 @@ struct pe {};
 struct it {};
 struct fn {};
 struct time {};
+struct ic {};
+struct velocityic {};
+struct densityic {};
+struct pressureic {};
 
 struct BirthdaySpacings {};
 struct Collision {};
