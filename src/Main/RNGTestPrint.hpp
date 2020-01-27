@@ -27,12 +27,17 @@ class RNGTestPrint : public tk::RNGPrint {
 
   public:
     //! Constructor
+    //! \param[in] screen Screen output filename
     //! \param[in,out] str Verbose stream
+    //! \param[in] mode Open mode for screen output file, see
+    //!   http://en.cppreference.com/w/cpp/io/ios_base/openmode
     //! \param[in,out] qstr Quiet stream
     //! \see tk::RNGPrint::RNGPrint and tk::Print::Print
-    explicit RNGTestPrint( std::ostream& str = std::clog,
+    explicit RNGTestPrint( const std::string& screen,
+                           std::ostream& str = std::clog,
+                           std::ios_base::openmode mode = std::ios_base::out,
                            std::ostream& qstr = std::cout ) :
-      RNGPrint( str, qstr ) {}
+      RNGPrint( screen, str, mode, qstr ) {}
 
     //! Bring vanilla overloads from base into scope in case local overloads fail
     using Print::section;

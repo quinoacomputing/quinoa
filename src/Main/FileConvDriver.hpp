@@ -16,8 +16,6 @@
 
 #include "FileConv/CmdLine/CmdLine.hpp"
 
-namespace tk { class Print; }
-
 //! File converter declarations and definitions
 namespace fileconv {
 
@@ -26,14 +24,12 @@ class FileConvDriver {
 
   public:
     //! Constructor
-    explicit FileConvDriver( const tk::Print&,
-                             const ctr::CmdLine& cmdline );
+    explicit FileConvDriver( const ctr::CmdLine& cmdline );
 
     //! Execute
     void execute() const;
 
   private:
-
     std::string m_input;                //!< Input file name
     std::string m_output;               //!< Output file name
 };

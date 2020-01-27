@@ -591,7 +591,9 @@ Discretization::status()
     tk::Timer::Watch ete, eta;
     m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
  
-    tk::Print print( verbose ? std::cout : std::clog );
+    tk::Print print( tk::inciter_executable() + "_screen.log",
+                     verbose ? std::cout : std::clog,
+                     std::ios_base::app );
  
     // Output one-liner
     print << std::setfill(' ') << std::setw(8) << m_it << "  "

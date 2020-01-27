@@ -33,14 +33,13 @@ class RNGTestDriver {
 
   public:
     //! Constructor
-    explicit RNGTestDriver( const RNGTestPrint& print,
-                            const ctr::CmdLine& cmdline );
+    explicit RNGTestDriver( const ctr::CmdLine& cmdline );
 
     //! Execute driver
     void execute() const;
 
   private:
-    const RNGTestPrint& m_print;
+    const RNGTestPrint m_print;
 };
 
 } // rngtest::
