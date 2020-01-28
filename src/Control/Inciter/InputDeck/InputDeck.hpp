@@ -30,7 +30,8 @@ namespace ctr {
 
 //! Member data for tagged tuple
 using InputDeckMembers = brigand::list<
-    tag::title,      kw::title::info::expect::type
+    tag::cmd,        CmdLine
+  , tag::title,      kw::title::info::expect::type
   , tag::selected,   selects
   , tag::amr,        amr
   , tag::pref,       pref
@@ -39,7 +40,6 @@ using InputDeckMembers = brigand::list<
   , tag::flformat,   floatformat
   , tag::component,  ncomps
   , tag::interval,   intervals
-  , tag::cmd,        CmdLine
   , tag::param,      parameters
   , tag::diag,       diagnostics
   , tag::error,      std::vector< std::string >
@@ -203,6 +203,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::interface_advection,
                                    kw::gauss_hump_compflow,
                                    kw::waterair_shocktube >;
+
+    //! Set of tags to ignore when printing this InputDeck
+    using ignore = CmdLine::ignore;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
