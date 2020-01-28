@@ -103,7 +103,8 @@ using discretization = tk::TaggedTuple< brigand::list<
 
 //! ASCII output floating-point precision in digits
 using precision = tk::TaggedTuple< brigand::list<
-    tag::diag, kw::precision::info::expect::type //!< Diagnostics output precision
+    //! Diagnostics output precision
+    tag::diag, kw::precision::info::expect::type
 > >;
 
 //! ASCII output floating-point format
@@ -126,7 +127,7 @@ using ios = tk::TaggedTuple< brigand::list<
     //! Diagnostics filename
   , tag::diag,      kw::diagnostics_cmd::info::expect::type
   , tag::part,      std::string                     //!< Particles filename
-  , tag::restart,   std::string                     //!< Restart dirname
+  , tag::restart,   kw::restart::info::expect::type //!< Restart dirname
 > >;
 
 //! Error/diagnostics output configuration

@@ -536,11 +536,16 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
 
 
 # Decide if the Exception class will write to std::cerr. This may not always be
-# thread-safe, so it can be disabled here by setting this to false. The default
-# is true, because it works most of the time.
-if (NOT EXCEPTIONS_WRITE_TO_CERR)     # set default
+# thread-safe, e.g., in Charm++'s SMP mode, so it can be disabled here. The
+# default is set based on whether Charm++ is built in SMP or non-SMP mode.
+if (NOT EXCEPTIONS_WRITE_TO_CERR)     # set default if not set
+  if (CHARM_SMP)
+    set(cerr false)
+  else()
+    set(cerr true)
+  endif()
   # will become compiler define in Main/QuinoaConfig.h
-  set(EXCEPTIONS_WRITE_TO_CERR true CACHE BOOL "Exceptions will write std::cerr.")
+  set(EXCEPTIONS_WRITE_TO_CERR ${cerr} CACHE BOOL "Exceptions write std::cerr.")
 endif()
 message(STATUS "Exceptions write to cerr: ${EXCEPTIONS_WRITE_TO_CERR}")
 

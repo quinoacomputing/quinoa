@@ -37,6 +37,9 @@ class Writer {
     void write( const char* data, std::streamsize count )
     { m_outFile.write( data, count ); }
 
+    //! Write access to underlying output file stream
+    std::ofstream& stream() { return m_outFile; }
+
   protected:
     const std::string m_filename;          //!< File name
     mutable std::ofstream m_outFile;       //!< File output stream
