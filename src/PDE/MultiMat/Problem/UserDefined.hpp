@@ -20,18 +20,22 @@
 #include <unordered_set>
 
 #include "Types.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Problem.hpp"
-#include "EoS/EoS.hpp"
+#include "FieldOutput.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
 
 //! MultiMat system of PDEs problem: user defined
 class MultiMatProblemUserDefined {
 
   private:
     using ncomp_t = tk::ctr::ncomp_t;
-    using eq = tag::compflow;
+    using eq = tag::multimat;
 
   public:
     //! Evaluate initial condition solution at (x,y,z,t) for all components
@@ -68,25 +72,21 @@ class MultiMatProblemUserDefined {
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     static std::vector< std::string > fieldNames( ncomp_t ) {
-      std::vector< std::string > n;
-      n.push_back( "density" );
-      n.push_back( "x-velocity" );
-      n.push_back( "y-velocity" );
-      n.push_back( "z-velocity" );
-      n.push_back( "specific total energy" );
-      n.push_back( "pressure" );
-      n.push_back( "temperature" );
-      return n;
+      auto nmat =
+        g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
+      return MultiMatFieldNames(nmat);
     }
 
     //! Return field output going to file
+    //! \param[in] system Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] offset System offset specifying the position of the system of
     //!   PDEs among other systems
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive variables at recent time step
     //! \return Vector of vectors to be output to file
     static std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t,
+    fieldOutput( ncomp_t system,
                  ncomp_t,
                  ncomp_t offset,
                  tk::real,
@@ -94,41 +94,17 @@ class MultiMatProblemUserDefined {
                  const std::vector< tk::real >&,
                  const std::array< std::vector< tk::real >, 3 >&,
                  tk::Fields& U,
-                 const tk::Fields& )
+                 const tk::Fields& P )
     {
-      std::vector< std::vector< tk::real > > out;
-      const auto r = U.extract( 0, offset );
-      const auto ru = U.extract( 1, offset );
-      const auto rv = U.extract( 2, offset );
-      const auto rw = U.extract( 3, offset );
-      const auto re = U.extract( 4, offset );
-      out.push_back( r );
-      std::vector< tk::real > u = ru;
-      std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      out.push_back( u );
-      std::vector< tk::real > v = rv;
-      std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      out.push_back( v );
-      std::vector< tk::real > w = rw;
-      std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      out.push_back( w );
-      std::vector< tk::real > E = re;
-      std::transform( r.begin(), r.end(), E.begin(), E.begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      out.push_back( E );
-      std::vector< tk::real > p = r;
-      for (std::size_t i=0; i<p.size(); ++i)
-        p[i] = eos_pressure< eq >( 0, r[i], u[i], v[i], w[i], re[i], 0 );
-      out.push_back( p );
-      std::vector< tk::real > T = r;
-      tk::real cv = g_inputdeck.get< tag::param, tag::compflow, tag::cv >()[0][0];
-      for (std::size_t i=0; i<T.size(); ++i)
-        T[i] = cv*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
-      out.push_back( T );
-      return out;
+      // number of degrees of freedom
+      const std::size_t rdof =
+        g_inputdeck.get< tag::discr, tag::rdof >();
+
+      // number of materials
+      auto nmat =
+        g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
+
+      return MultiMatFieldOutput(system, nmat, offset, rdof, U, P);
     }
 
     //! Return names of integral variables to be output to diagnostics file

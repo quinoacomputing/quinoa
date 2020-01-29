@@ -40,16 +40,14 @@ MultiMatFieldNames( std::size_t nmat )
 
 std::vector< std::vector< tk::real > >
 MultiMatFieldOutput(
-  ncomp_t system,
+  ncomp_t,
   std::size_t nmat,
   ncomp_t offset,
   std::size_t rdof,
   tk::Fields& U,
-  const tk::Fields& )
+  const tk::Fields& P )
 // *****************************************************************************
 //  Return field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] nmat Number of materials in systen
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
@@ -109,8 +107,7 @@ MultiMatFieldOutput(
   std::vector< tk::real > pr( r.size(), 0.0 );
   for (std::size_t i=0; i<pr.size(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)
-      pr[i] += eos_pressure< tag::multimat >( system, ar[k][i], u[i], v[i], w[i],
-        ae[k][i], al[k][i], k );
+      pr[i] += P(i, pressureDofIdx(nmat, k, rdof, 0), offset);
   }
   out.push_back( pr );
 
