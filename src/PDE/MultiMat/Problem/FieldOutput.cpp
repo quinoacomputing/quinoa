@@ -28,10 +28,14 @@ MultiMatFieldNames( std::size_t nmat )
 
   for (std::size_t k=0; k<nmat; ++k)
     n.push_back( "volfrac"+std::to_string(k+1)+"_numerical" );
+  for (std::size_t k=0; k<nmat; ++k)
+    n.push_back( "density"+std::to_string(k+1)+"_numerical" );
   n.push_back( "density_numerical" );
   n.push_back( "x-velocity_numerical" );
   n.push_back( "y-velocity_numerical" );
   n.push_back( "z-velocity_numerical" );
+  for (std::size_t k=0; k<nmat; ++k)
+    n.push_back( "pressure"+std::to_string(k+1)+"_numerical" );
   n.push_back( "pressure_numerical" );
   n.push_back( "total_energy_density_numerical" );
 
@@ -57,18 +61,17 @@ MultiMatFieldOutput(
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  std::vector< std::vector< tk::real > > out;
-  std::vector< std::vector< tk::real > > al, ar, ae;
-
-  for (std::size_t k=0; k<nmat; ++k)
-  {
-    al.push_back( U.extract( volfracDofIdx(nmat, k, rdof, 0), offset ) );
-    ar.push_back( U.extract( densityDofIdx(nmat, k, rdof, 0), offset ) );
-    ae.push_back( U.extract( energyDofIdx(nmat, k, rdof, 0), offset ) );
-  }
-  const auto ru  = U.extract( momentumDofIdx(nmat, 0, rdof, 0), offset );
-  const auto rv  = U.extract( momentumDofIdx(nmat, 1, rdof, 0), offset );
-  const auto rw  = U.extract( momentumDofIdx(nmat, 2, rdof, 0), offset );
+  // field-output vector with:
+  // - nmat volume fractions
+  // - nmat material densities
+  // - 1 bulk density
+  // - 3 velocity components
+  // - nmat material pressures
+  // - 1 bulk pressure
+  // - 1 bulk total energy density
+  // leading to a size of 3*nmat+6
+  std::vector< std::vector< tk::real > >
+    out( 3*nmat+6, std::vector< tk::real >( U.nunk(), 0.0 ) );
 
   //// mesh node coordinates
   //const auto& x = coord[0];
@@ -76,48 +79,51 @@ MultiMatFieldOutput(
   //const auto& z = coord[2];
 
   // material volume-fractions
-  for (std::size_t k=0; k<nmat; ++k)
-    out.push_back( al[k] );
+  for (std::size_t k=0; k<nmat; ++k) {
+    for (std::size_t i=0; i<U.nunk(); ++i)
+      out[k][i] = U(i, volfracDofIdx(nmat, k, rdof, 0), offset);
+  }
+
+  // material densities
+  for (std::size_t k=0; k<nmat; ++k) {
+    for (std::size_t i=0; i<U.nunk(); ++i) {
+      out[nmat+k][i] = U(i, densityDofIdx(nmat, k, rdof, 0), offset)
+        /U(i, volfracDofIdx(nmat, k, rdof, 0), offset);
+    }
+  }
 
   // bulk density
-  std::vector< tk::real > r( ru.size(), 0.0 );
-  for (std::size_t i=0; i<r.size(); ++i) {
+  for (std::size_t i=0; i<U.nunk(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)
-      r[i] += ar[k][i];
+      out[2*nmat][i] += U(i, densityDofIdx(nmat, k, rdof, 0), offset);
   }
-  out.push_back( r );
 
   // velocity components
-  std::vector< tk::real > u = ru;
-  std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( u );
+  for (std::size_t i=0; i<U.nunk(); ++i) {
+    out[2*nmat+1][i] = P(i, velocityDofIdx(nmat, 0, rdof, 0), offset);
+    out[2*nmat+2][i] = P(i, velocityDofIdx(nmat, 1, rdof, 0), offset);
+    out[2*nmat+3][i] = P(i, velocityDofIdx(nmat, 2, rdof, 0), offset);
+  }
 
-  std::vector< tk::real > v = rv;
-  std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( v );
-
-  std::vector< tk::real > w = rw;
-  std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( w );
+  // material pressures
+  for (std::size_t k=0; k<nmat; ++k) {
+    for (std::size_t i=0; i<U.nunk(); ++i) {
+      out[2*nmat+4+k][i] = P(i, pressureDofIdx(nmat, k, rdof, 0), offset)
+        /U(i, volfracDofIdx(nmat, k, rdof, 0), offset);
+    }
+  }
 
   // bulk pressure
-  std::vector< tk::real > pr( r.size(), 0.0 );
-  for (std::size_t i=0; i<pr.size(); ++i) {
+  for (std::size_t i=0; i<U.nunk(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)
-      pr[i] += P(i, pressureDofIdx(nmat, k, rdof, 0), offset);
+      out[3*nmat+4][i] += P(i, pressureDofIdx(nmat, k, rdof, 0), offset);
   }
-  out.push_back( pr );
 
   // bulk total energy density
-  std::vector< tk::real > E( r.size(), 0.0 );
-  for (std::size_t i=0; i<E.size(); ++i) {
+  for (std::size_t i=0; i<U.nunk(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)
-      E[i] += ae[k][i];
+      out[3*nmat+5][i] += U(i, energyDofIdx(nmat, k, rdof, 0), offset );
   }
-  out.push_back( E );
 
   return out;
 }
