@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Base/StrConvUtil.hpp
+  \file      src/Base/PrintUtil.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
@@ -9,25 +9,59 @@
   \details   Various string conversion utilities.
 */
 // *****************************************************************************
-#ifndef StrConvUtil_h
-#define StrConvUtil_h
+#ifndef PrintUtil_h
+#define PrintUtil_h
 
+#include <ostream>
 #include <sstream>
 #include <string>
+#include <vector>
+#include <map>
+
+#include "Has.hpp"
 
 namespace tk {
 
-//! Delegate operator << to default for writing non-enums to output streams.
-//! \param[in] os Output stream into which t is written
-//! \param[in] e  Value of arbitrary non-enum-class type to write to stream
+//! Operator << for writing an enum class to an output stream
+//! \param[in] os Output stream into to write to
+//! \param[in] e Value of enum-class type to write to stream
 //! \return Updated output stream for chain-use of the operator
-template< typename T, typename Ch, typename Tr >
+template< typename Enum, typename Ch, typename Tr,
+          typename std::enable_if_t< std::is_enum_v<Enum>, int > = 0 >
 inline std::basic_ostream< Ch, Tr >&
-operator<< ( std::basic_ostream< Ch, Tr >& os, const T& e ) {
-  if constexpr( std::is_enum_v<T> )
-    os << static_cast< unsigned int >( e );
+operator<< ( std::basic_ostream< Ch, Tr >& os, const Enum& e ) {
+  os << static_cast< unsigned int >( e );
+  return os;
+}
+
+//! Operator << for writing a std::vector to an output stream
+//! \param[in] os Output stream to write to
+//! \param[in] v Vector to write to stream
+//! \return Updated output stream for chain-use of the operator
+template< class T, typename Ch, typename Tr >
+inline std::basic_ostream< Ch, Tr >&
+operator<< ( std::basic_ostream< Ch, Tr >& os, const std::vector< T >& v ) {
+  os << std::boolalpha;
+  os << "[ ";
+  for (const auto& p : v) os << p << ' ';
+  os << ']';
+  return os;
+}
+
+//! Operator << for writing an std::map to an output stream
+//! \param[in] os Output stream to write to
+//! \param[in] m Map to write to stream
+//! \return Updated output stream for chain-use of the operator
+template< typename Ch, typename Tr,
+          class Key, class Value, class Compare = std::less< Key > >
+inline std::basic_ostream< Ch, Tr >&
+operator<< ( std::basic_ostream< Ch, Tr >& os,
+             const std::map< Key, Value, Compare >& m )
+{
+  if constexpr( tk::HasTypedef_i_am_tagged_tuple_v< Value > )
+    for (const auto& [k,v] : m) os << '(' << k << ") : { " << v << "} ";
   else
-    os << e;
+    for (const auto& [k,v] : m) os << '(' << k << ") " << v << ' ';
   return os;
 }
 
@@ -63,4 +97,4 @@ splitLines( std::string str,
 
 } // tk::
 
-#endif // StrConvUtil_h
+#endif // PrintUtil_h

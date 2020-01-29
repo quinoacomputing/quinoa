@@ -10,13 +10,13 @@
 */
 // *****************************************************************************
 
-#include <unordered_map>
-
 #include "InciterPrint.hpp"
 #include "InciterDriver.hpp"
 #include "Inciter/InputDeck/Parser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "TaggedTupleDeepPrint.hpp"
+#include "Writer.hpp"
 
 #include "NoWarning/transporter.decl.h"
 
@@ -70,6 +70,11 @@ InciterDriver::InciterDriver( const ctr::CmdLine& cmdline )
   InputDeckParser inputdeckParser( print, cmdline, g_inputdeck );
   print.item( "Parsed control file", "success" );
   print.endpart();
+
+  // Output command line object to file
+  auto logfilename = tk::inciter_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), "inputdeck", g_inputdeck );
 }
 
 void
