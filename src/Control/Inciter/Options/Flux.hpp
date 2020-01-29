@@ -27,6 +27,7 @@ enum class FluxType : uint8_t { LaxFriedrichs
                               , UPWIND
                               , AUSM
                               , HLL
+                              , Rusanov
                               };
 
 //! Pack/Unpack FluxType: forward overload to generic enum class packer

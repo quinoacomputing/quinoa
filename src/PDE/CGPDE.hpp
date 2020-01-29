@@ -31,6 +31,7 @@
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
+#include "Mesh/CommMap.hpp"
 
 namespace inciter {
 
@@ -152,14 +153,17 @@ class CGPDE {
               const std::unordered_map< tk::UnsMesh::Edge,
                       std::array< tk::real, 3 >,
                       tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                      std::array< tk::real, 3 >,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnormc,
               const std::unordered_map< std::size_t,
                       std::array< tk::real, 4 > >& bnorm,
               const std::vector< tk::real >& vol,
               const tk::Fields& G,
               const tk::Fields& U,
-              tk::Fields& R ) const
+              tk::Fields& R) const
     { self->rhs( t, deltat, coord, inpoel, triinpoel, gid, bid, lid,
-                 dfnorm, bnorm, vol, G, U, R ); }
+                 dfnorm, dfnormc, bnorm, vol, G, U, R ); }
 
     //! Public interface to computing the right-hand side vector for DiagCG
     void rhs( tk::real t,
@@ -258,12 +262,15 @@ class CGPDE {
                         const std::unordered_map< tk::UnsMesh::Edge,
                                 std::array< tk::real, 3 >,
                                 tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >&,
+                        const std::unordered_map< tk::UnsMesh::Edge,
+                                std::array< tk::real, 3 >,
+                                tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >&,
                         const std::unordered_map< std::size_t,
                                                   std::array< tk::real, 4 > >&,
                         const std::vector< tk::real >&,
                         const tk::Fields&,
                         const tk::Fields&,
-                        tk::Fields& ) const = 0;
+                        tk::Fields&) const = 0;
       virtual void rhs( tk::real,
                         tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
@@ -328,14 +335,17 @@ class CGPDE {
                 const std::unordered_map< tk::UnsMesh::Edge,
                         std::array< tk::real, 3 >,
                         tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm,
+                const std::unordered_map< tk::UnsMesh::Edge,
+                        std::array< tk::real, 3 >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnormc,
                 const std::unordered_map< std::size_t,
                         std::array< tk::real, 4 > >& bnorm,
                 const std::vector< tk::real >& vol,
                 const tk::Fields& G,
                 const tk::Fields& U,
-                tk::Fields& R ) const override
+                tk::Fields& R) const override
       { data.rhs( t, deltat, coord, inpoel, triinpoel, gid, bid, lid,
-                 dfnorm, bnorm, vol, G, U, R ); }
+                 dfnorm, dfnormc, bnorm, vol, G, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,

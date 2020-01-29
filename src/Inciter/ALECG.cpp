@@ -172,12 +172,14 @@ ALECG::dfnorm()
   // Send our dual-face normal contributions to neighbor chares
   if (d->EdgeCommMap().empty())
     comdfnorm_complete();
-  else
+  else {
+    tk::destroy( m_dfnormc );
     for (const auto& [c,edges] : d->EdgeCommMap()) {
       decltype(m_dfnorm) exp;
       for (const auto& e : edges) exp[e] = tk::cref_find(m_dfnorm,e);
       thisProxy[c].comdfnorm( exp );
     }
+  }
 
   owndfnorm_complete();
 }
@@ -497,21 +499,27 @@ ALECG::normfinal()
   m_bnorm = std::move(bnorm);
 
   // Combine own and communicated contributions to dual-face normals
-  for (const auto& [e,n] : m_dfnormc) {
-    auto& dfn = tk::ref_find( m_dfnorm, e );
-    dfn[0] += n[0];
-    dfn[1] += n[1];
-    dfn[2] += n[2];
-  }
-  tk::destroy( m_dfnormc );
+  std::map<tk::UnsMesh::Edge, std::size_t> edge_node_count;
 
-  // Normalize dual-face normals
-  for (auto& [e,n] : m_dfnorm) {
-    Assert( std::abs(tk::dot(n,n)) >
-              std::numeric_limits< tk::real >::epsilon(),
-                "Dual-face normal zero length" );
-    tk::unit(n);
+  for (const auto& [c,edges] : Disc()->EdgeCommMap()) {
+    for ( auto e : edges ) {
+      auto it = edge_node_count.find(e);
+      if ( it != edge_node_count.end() )
+        it->second++;
+      else
+        edge_node_count[e] = 1;
+    }
   }
+
+  for (auto& [e,n] : m_dfnormc) {
+    const auto& dfn = tk::cref_find( m_dfnorm, e );
+    n[0] += dfn[0];
+    n[1] += dfn[1];
+    n[2] += dfn[2];
+    auto factor = static_cast<tk::real>(1)/(edge_node_count[e] + 1);
+    for ( auto & x : n ) x *= factor; 
+  }
+
 }
 
 void
@@ -656,8 +664,8 @@ ALECG::rhs()
   // Compute own portion of right-hand side for all equations
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T(), rkcoef[m_stage] * d->Dt(), d->Coord(), d->Inpoel(),
-            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfnorm, m_bnorm,
-            d->Vol(), m_grad, m_u, m_rhs );
+            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfnorm, m_dfnormc,
+            m_bnorm, d->Vol(), m_grad, m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
