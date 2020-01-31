@@ -302,18 +302,18 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
 //!   system
 // *****************************************************************************
 {
+  auto ncomp = g_inputdeck.get< tag::component >().nprop();
+  auto ctau = g_inputdeck.get< tag::discr, tag::ctau >();
+
+  // access node coordinates
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
   for (auto e : elist) {
     // access node IDs
     const std::array< std::size_t, 4 >
        N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
-     // access node coordinates
-     const auto& x = coord[0];
-     const auto& y = coord[1];
-     const auto& z = coord[2];
-
-     auto ncomp = g_inputdeck.get< tag::component >().nprop();
-     auto ctau = g_inputdeck.get< tag::discr, tag::ctau >();
-
      // compute element Jacobi determinant
      const std::array< tk::real, 3 >
        ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
