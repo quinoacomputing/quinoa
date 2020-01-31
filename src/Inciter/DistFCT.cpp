@@ -162,7 +162,6 @@ DistFCT::diff( const Discretization& d,
 //! \param[in] Un Solution at the previous time step
 //! \param[in,out] D Mass diffusion contribution to the RHS of the low order
 //!   system
-//! \return Lumped mass matrix
 // *****************************************************************************
 {
   m_fluxcorrector.diff( d.Coord(), m_inpoel, elist, Un, D );
