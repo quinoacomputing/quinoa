@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "Vector.hpp"
+#include "Base/HashMapReducer.hpp"
 #include "Reconstruction.hpp"
 
 void
@@ -321,13 +322,13 @@ tk::bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
         auto ucons = eval_state(ncomp, offset, rdof, 1, el, U, B );
 
         // consolidate conserved quantities into state vector
-        ul.insert(ul.begin(), ucons.begin(), ucons.end());
+        tk::concat< tk::real >(std::move(ul), ucons);
 
-        Assert( ul.size() == ncomp+nprim, "Incorrect size for "
+        Assert( ucons.size() == ncomp+nprim, "Incorrect size for "
                 "appended state vector" );
 
         // Compute the state at the face-center using BC
-        auto ustate = state( system, ncomp, ul, fc[0], fc[1], fc[2], t, fn );
+        auto ustate = state( system, ncomp, ucons, fc[0], fc[1], fc[2], t, fn );
 
         std::array< real, 3 > wdeltax{{ fc[0]-geoElem(el,1,0),
                                         fc[1]-geoElem(el,2,0),

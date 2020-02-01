@@ -16,7 +16,6 @@
 #define MultiMatProblemSodShocktube_h
 
 #include <string>
-#include <unordered_set>
 
 #include "Types.hpp"
 #include "Fields.hpp"

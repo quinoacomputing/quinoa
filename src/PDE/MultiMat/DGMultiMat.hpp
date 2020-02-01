@@ -197,7 +197,11 @@ class MultiMat {
     //! \details This function cleans up the state of materials present in trace
     //!   quantities in each cell. Specifically, the state of materials with
     //!   very low volume-fractions in a cell is replaced by the state of the
-    //!   material which is present in the largest quantity in that cell.
+    //!   material which is present in the largest quantity in that cell. This
+    //!   becomes necessary when shocks pass through cells which contain a very
+    //!   small amount of material. The state of that tiny material might
+    //!   become unphysical and cause solution to diverge; thus requiring such
+    //!   a ``reset''.
     void cleanTraceMaterial( const tk::Fields& geoElem,
                              tk::Fields& unk,
                              tk::Fields& prim,
@@ -545,6 +549,11 @@ class MultiMat {
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \param[in] nielem Number of internal elements
     //! \return Minimum time step size
+    //! \details The allowable dt is calculated by looking at the maximum
+    //!   wave-speed in elements surrounding each face, times the area of that
+    //!   face. Once the maximum of this quantity over the mesh is determined,
+    //!   the volume of each cell is divided by this quantity. A minimum of this
+    //!   ratio is found over the entire mesh, which gives the allowable dt.
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
                  const inciter::FaceData& fd,

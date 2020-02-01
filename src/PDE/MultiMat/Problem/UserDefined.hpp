@@ -17,7 +17,6 @@
 #define MultiMatProblemUserDefined_h
 
 #include <string>
-#include <unordered_set>
 
 #include "Types.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
