@@ -482,31 +482,43 @@ tk::muscl( const UnsMesh::Edge& edge,
   // edge vector
   std::array< tk::real, 3 > vw{ x[q]-x[p], y[q]-y[p], z[q]-z[p] };
 
+  std::vector< tk::real > delta1( ncomp, 0.0 ),
+                          delta2( ncomp, 0.0 ),
+                          delta3( ncomp, 0.0 );
+  std::array< std::vector< tk::real >, 2 > ur = u;
+
+
   // MUSCL reconstruction of edge-end-point primitive variables
   for (std::size_t c=0; c<ncomp; ++c) {
-
     // gradients
     std::array< tk::real, 3 >
       g1{ G(p,c*3+0,0), G(p,c*3+1,0), G(p,c*3+2,0) },
       g2{ G(q,c*3+0,0), G(q,c*3+1,0), G(q,c*3+2,0) };
 
-    auto delta_2 = u[1][c] - u[0][c];
-    auto delta_1 = 2.0 * tk::dot(g1,vw) - delta_2;
-    auto delta_3 = 2.0 * tk::dot(g2,vw) - delta_2;
+    delta2[c] = u[1][c] - u[0][c];
+    delta1[c] = 2.0 * tk::dot(g1,vw) - delta2[c];
+    delta3[c] = 2.0 * tk::dot(g2,vw) - delta2[c];
 
     // form limiters
-    auto rL = (delta_2 + muscl_eps) / (delta_1 + muscl_eps);
-    auto rR = (delta_2 + muscl_eps) / (delta_3 + muscl_eps);
-    auto rLinv = (delta_1 + muscl_eps) / (delta_2 + muscl_eps);
-    auto rRinv = (delta_3 + muscl_eps) / (delta_2 + muscl_eps);
+    auto rL = (delta2[c] + muscl_eps) / (delta1[c] + muscl_eps);
+    auto rR = (delta2[c] + muscl_eps) / (delta3[c] + muscl_eps);
+    auto rLinv = (delta1[c] + muscl_eps) / (delta2[c] + muscl_eps);
+    auto rRinv = (delta3[c] + muscl_eps) / (delta2[c] + muscl_eps);
+
     auto phiL = (std::abs(rL) + rL) / (std::abs(rL) + 1.0);
     auto phiR = (std::abs(rR) + rR) / (std::abs(rR) + 1.0);
     auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
     auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
 
     // update unknowns with reconstructed unknowns
-    u[0][c] += 0.25*(delta_1*muscl_m1*phiL + delta_2*muscl_p1*phi_L_inv);
-    u[1][c] -= 0.25*(delta_3*muscl_m1*phiR + delta_2*muscl_p1*phi_R_inv);
-
+    ur[0][c] += 0.25*(delta1[c]*muscl_m1*phiL + delta2[c]*muscl_p1*phi_L_inv);
+    ur[1][c] -= 0.25*(delta3[c]*muscl_m1*phiR + delta2[c]*muscl_p1*phi_R_inv);
   }
+
+  // force first order if the reconstructions for density or internal energy
+  // would have allowed negative values
+  if (u[0][0] < delta1[0] || u[0][4] < delta1[4]) ur[0] = u[0];
+  if (u[1][0] < -delta3[0] || u[1][4] < -delta3[4]) ur[1] = u[1];
+
+  u = ur;
 }
