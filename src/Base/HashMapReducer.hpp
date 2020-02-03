@@ -51,54 +51,6 @@ serialize( const std::unordered_map< Key, T, Hash, Eq >& m ) {
   return { sizer.size(), std::move(flatData) };
 }
 
-//! Concatenate vectors of T
-//! \tparam T Vector value type
-//! \param[in,out] src Source vector (moved from)
-//! \param[in,out] dst Destination vector
-template< class T >
-void concat( std::vector< T >&& src, std::vector< T >& dst )
-{
-  if (dst.empty())
-    dst = std::move(src);
-  else {
-    dst.reserve( dst.size() + src.size() );
-    std::move( std::begin(src), std::end(src), std::back_inserter(dst) );
-    src.clear();
-  }
-}
-
-//! Overwrite vectors of pair< bool, tk::real >
-//! \tparam T Vector value type
-//! \param[in,out] src Source vector (moved from)
-//! \param[in,out] dst Destination vector
-template< class T >
-void concat( std::vector< std::pair< bool, T > >&& src,
-             std::vector< std::pair< bool, T > >& dst )
-{
-  dst = std::move(src);
-}
-
-//! Concatenate unordered sets
-//! \tparam Key Set key
-//! \tparam Hash Set hasher
-//! \tparam Eq Set equality operator
-//! \param[in,out] src Source set (moved from)
-//! \param[in,out] dst Destination set
-template< class Key,
-          class Hash = std::hash< Key >,
-          class Eq = std::equal_to< Key > >
-void concat( std::unordered_set< Key, Hash,Eq >&& src,
-             std::unordered_set< Key, Hash, Eq >& dst )
-{
-  if (dst.empty())
-    dst = std::move(src);
-  else {
-    dst.reserve( dst.size() + src.size() );
-    std::move( std::begin(src), std::end(src), std::inserter(dst,end(dst)) );
-    src.clear();
-  }
-}
-
 //! \brief Charm++ custom reducer for merging std::unordered_maps during
 //!   reduction across PEs
 //! \tparam Key Map key

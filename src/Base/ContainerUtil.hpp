@@ -24,13 +24,11 @@
 
 namespace tk {
 
+//! Make elements of container unique (in-place, overwriting source container)
+//! \param[inout] c Container
 template< class Container >
 void
 unique( Container& c )
-// *****************************************************************************
-//! Make elements of container unique (in-place, overwriting source container)
-//! \param[inout] c Container
-// *****************************************************************************
 {
   std::sort( begin(c), end(c) );
   auto it = std::unique( begin(c), end(c) );
@@ -39,76 +37,66 @@ unique( Container& c )
   c.resize( static_cast< std::size_t >( d ) );
 }
 
-template< class Container >
-Container
-uniquecopy( const Container& src )
-// *****************************************************************************
 //! Make elements of container unique (on a copy, leaving the source as is)
 //! \param[in] src Container
 //! \return Container containing only unique elements compared to src
-// *****************************************************************************
+template< class Container >
+Container
+uniquecopy( const Container& src )
 {
   auto c = src;
   unique( c );
   return c;
 }
 
-template< typename Container >
-auto cref_find( const Container& map, const typename Container::key_type& key )
-  -> const typename Container::mapped_type&
-// *****************************************************************************
 //! \brief Find and return a constant reference to value for key in container
 //!   that provides a find() member function with error handling
 //! \param[in] map Map associating values to keys
 //! \param[in] key Key to search for
 //! \return A constant reference to the value associated to the key in map
 //! \note If key is not found an exception is thrown.
-// *****************************************************************************
+template< typename Container >
+auto cref_find( const Container& map, const typename Container::key_type& key )
+  -> const typename Container::mapped_type&
 {
   const auto it = map.find( key );
   if (it != end(map)) return it->second; else Throw( "Can't find key" );
 }
 
-template< typename Container >
-auto ref_find( const Container& map, const typename Container::key_type& key )
-  -> typename Container::mapped_type&
-// *****************************************************************************
 //! \brief Find and return a reference to value for key in a container that
 //!   provides a find() member function with error handling
 //! \param[in] map Map associating values to keys
 //! \param[in] key Key to search for
 //! \return A reference to the value associated to the key in map
 //! \note If key is not found an exception is thrown.
-// *****************************************************************************
+template< typename Container >
+auto ref_find( const Container& map, const typename Container::key_type& key )
+  -> typename Container::mapped_type&
 {
   return const_cast< typename Container::mapped_type& >( cref_find(map,key) );
 }
 
-template< typename T >
-std::array< T, 2 >
-extents( const std::vector< T >& vec )
-// *****************************************************************************
 //! \brief Return minimum and maximum values of a vector
 //! \param[in] vec Vector whose extents to compute
 //! \return Array of two values with the minimum and maximum values
 //! \note This function should not be called with heavy T types, as the a copy
 //!   of a std::array< T, 2 > is created and returned.
-// *****************************************************************************
+template< typename T >
+std::array< T, 2 >
+extents( const std::vector< T >& vec )
 {
   auto x = std::minmax_element( begin(vec), end(vec) );
   return {{ *x.first, *x.second }};
 }
 
-template< typename Container >
-auto extents( const Container& map )
-  -> std::array< typename Container::mapped_type, 2 >
-// *****************************************************************************
 //! \brief Find and return minimum and maximum values in associative container
 //! \param[in] map Map whose extents of values to find 
 //! \return Array of two values with the minimum and maximum values in the map
 //! \Note This function should not be called with heavy Value types, as the a
 //!   copy of a std::array< Value, 2 > is created and returned.
-// *****************************************************************************
+template< typename Container >
+auto extents( const Container& map )
+  -> std::array< typename Container::mapped_type, 2 >
 {
   auto x = std::minmax_element( begin(map), end(map),
              []( const auto& a, const auto& b )
@@ -116,11 +104,6 @@ auto extents( const Container& map )
   return {{ x.first->second, x.second->second }};
 }
 
-template< class T, class Allocator >
-std::vector< T, Allocator >&
-operator+=( std::vector< T, Allocator >& dst,
-            const std::vector< T, Allocator >& src )
-// *****************************************************************************
 //! \brief Add all elements of a vector to another one
 //! \param[inout] dst Destination vector, i.e., left-hand side of v1 += v2
 //! \param[in] src Source vector, i.e., righ-hand side of v1 += v2
@@ -129,7 +112,10 @@ operator+=( std::vector< T, Allocator >& dst,
 //!   padding with zeros.
 //! \note Will throw exception in DEBUG if src is empty (to warn on no-op), and
 //!   if src.size() < dst.size() (to warn on loosing data).
-// *****************************************************************************
+template< class T, class Allocator >
+std::vector< T, Allocator >&
+operator+=( std::vector< T, Allocator >& dst,
+            const std::vector< T, Allocator >& src )
 {
   Assert( !src.empty(), "src empty in std::vector<T,Allocator>::operator+=()" );
   Assert( src.size() >= dst.size(), "src.size() < dst.size() would loose data "
@@ -140,7 +126,6 @@ operator+=( std::vector< T, Allocator >& dst,
   return dst;
 }
 
-// *****************************************************************************
 //! Test if all keys of two associative containers are equal
 //! \param[in] a 1st container to compare
 //! \param[in] b 2nd container to compare
@@ -149,7 +134,6 @@ operator+=( std::vector< T, Allocator >& dst,
 //! \note It is an error to call this function with unequal-size containers,
 //!   triggering an exception in DEBUG mode.
 //! \note Operator != is used to compare the container keys.
-// *****************************************************************************
 template< class C1, class C2 >
 bool keyEqual( const C1& a, const C2& b ) {
   Assert( a.size() == b.size(), "Size mismatch comparing containers" );
@@ -160,11 +144,9 @@ bool keyEqual( const C1& a, const C2& b ) {
   return sorted_keys_of_a == sorted_keys_of_b;
 }
 
-// *****************************************************************************
 //! Compute the sum of the sizes of a container of containers
 //! \param[in] c Container of containers
 //! \return Sum of the sizes of the containers of the container
-// *****************************************************************************
 template< class Container >
 std::size_t sumsize( const Container& c ) {
   std::size_t sum = 0;
@@ -173,11 +155,9 @@ std::size_t sumsize( const Container& c ) {
   return sum;
 }
 
-// *****************************************************************************
 //! Compute the number of unique values in a container of containers
 //! \param[in] c Container of containers
 //! \return Number of unique values in a container of containers
-// *****************************************************************************
 template< class Container >
 std::size_t numunique( const Container& c ) {
   using value_type = typename Container::value_type::value_type;
@@ -188,12 +168,10 @@ std::size_t numunique( const Container& c ) {
   return u.size();
 }
 
-// *****************************************************************************
 //! Compute the sum of the sizes of the values of an associative container
 //! \tparam Map Container of containers type
 //! \param[in] c Container of containers
 //! \return Sum of the sizes of the values of the associative container
-// *****************************************************************************
 template< class Map >
 std::size_t sumvalsize( const Map& c ) {
   std::size_t sum = 0;
@@ -202,31 +180,75 @@ std::size_t sumvalsize( const Map& c ) {
   return sum;
 }
 
-// *****************************************************************************
 //! Free memory of a container
 //! \param[in] c Container defining a swap() member function
 //! \details See http://stackoverflow.com/a/10465032 as to why this is done with
 //!   the swap() member function of the container.
 //! \see Specializations of std::swap are documented at
 //!   http://en.cppreference.com/w/cpp/algorithm/swap
-// *****************************************************************************
 template< class Container >
 void destroy( Container& c ) {
   typename std::remove_reference< decltype(c) >::type().swap( c );
 }
 
-// *****************************************************************************
 //! Remove items from container based on predicate
 //! \tparam Container Type of container to remove from
 //! \tparam Predicate Type for functor defining the predicate
 //! \param items Container object to remove from
 //! \param predicate Predicate object instance to use
-// *****************************************************************************
 template< typename Container, typename Predicate >
 void erase_if( Container& items, const Predicate& predicate ) {
   for ( auto it = items.begin(); it != items.end(); ) {
     if ( predicate(*it) ) it = items.erase(it);
     else ++it;
+  }
+}
+
+//! Concatenate vectors of T
+//! \tparam T Vector value type
+//! \param[in,out] src Source vector (moved from)
+//! \param[in,out] dst Destination vector
+template< class T >
+void concat( std::vector< T >&& src, std::vector< T >& dst )
+{
+  if (dst.empty())
+    dst = std::move(src);
+  else {
+    dst.reserve( dst.size() + src.size() );
+    std::move( std::begin(src), std::end(src), std::back_inserter(dst) );
+    src.clear();
+  }
+}
+
+//! Overwrite vectors of pair< bool, tk::real >
+//! \tparam T Vector value type
+//! \param[in,out] src Source vector (moved from)
+//! \param[in,out] dst Destination vector
+template< class T >
+void concat( std::vector< std::pair< bool, T > >&& src,
+             std::vector< std::pair< bool, T > >& dst )
+{
+  dst = std::move(src);
+}
+
+//! Concatenate unordered sets
+//! \tparam Key Set key
+//! \tparam Hash Set hasher
+//! \tparam Eq Set equality operator
+//! \param[in,out] src Source set (moved from)
+//! \param[in,out] dst Destination set
+template< class Key,
+          class Hash = std::hash< Key >,
+          class Eq = std::equal_to< Key > >
+void concat( std::unordered_set< Key, Hash,Eq >&& src,
+             std::unordered_set< Key, Hash, Eq >& dst )
+{
+  if (dst.empty())
+    dst = std::move(src);
+  else {
+    dst.reserve( dst.size() + src.size() );
+    std::move( std::begin(src), std::end(src), std::inserter(dst,end(dst)) );
+    src.clear();
   }
 }
 
