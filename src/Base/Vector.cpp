@@ -59,13 +59,13 @@ tk::dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
   return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
 
+tk::real
+tk::length( const std::array< real, 3 >& v )
 // *****************************************************************************
 //  Compute length of a vector
 //! \param[in] v vector
 //! \return length
 // *****************************************************************************
-tk::real
-tk::length( const std::array< real, 3 >& v )
 {
   return std::sqrt( v[0]*v[0] + v[1]*v[1] + v[2]*v[2] );
 }
