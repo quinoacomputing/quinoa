@@ -195,7 +195,7 @@ class CompFlow {
           auto n2 = ( nit != dfnc.end() ) ? nit->second : n;
           // orient correctly
           if (gid[p] > gid[q]) {
-            for (int i=0; i<3; ++i) {
+            for (std::size_t i=0; i<3; ++i) {
               n[i] = -n[i];
               n2[i] = -n2[i];
             }
