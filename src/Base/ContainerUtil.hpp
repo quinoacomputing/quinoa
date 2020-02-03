@@ -25,7 +25,7 @@
 namespace tk {
 
 //! Make elements of container unique (in-place, overwriting source container)
-//! \param[inout] c Container
+//! \param[in,out] c Container
 template< class Container >
 void
 unique( Container& c )
@@ -92,7 +92,7 @@ extents( const std::vector< T >& vec )
 //! \brief Find and return minimum and maximum values in associative container
 //! \param[in] map Map whose extents of values to find 
 //! \return Array of two values with the minimum and maximum values in the map
-//! \Note This function should not be called with heavy Value types, as the a
+//! \note This function should not be called with heavy Value types, as the a
 //!   copy of a std::array< Value, 2 > is created and returned.
 template< typename Container >
 auto extents( const Container& map )
@@ -105,7 +105,7 @@ auto extents( const Container& map )
 }
 
 //! \brief Add all elements of a vector to another one
-//! \param[inout] dst Destination vector, i.e., left-hand side of v1 += v2
+//! \param[in,out] dst Destination vector, i.e., left-hand side of v1 += v2
 //! \param[in] src Source vector, i.e., righ-hand side of v1 += v2
 //! \return Destination containing v1[0] += v2[0], v1[1] += v2[1], ...
 //! \details If src.size() > dst.size() will grow dst to that of src.size()
