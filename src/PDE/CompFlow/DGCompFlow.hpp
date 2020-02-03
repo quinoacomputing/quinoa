@@ -20,6 +20,8 @@
 #include <unordered_set>
 #include <map>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "Macro.hpp"
 #include "Exception.hpp"
 #include "Vector.hpp"
@@ -58,23 +60,34 @@ class CompFlow {
     using ncomp_t = kw::ncomp::info::expect::type;
     using bcconf_t = kw::sideset::info::expect::type;
     using eq = tag::compflow;
+    using BCStateFn =
+      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >;
 
-    //! Extract BC configuration ignoring if BC not specified
-    //! \param[in] c Equation system index (among multiple systems configured)
-    //! \return Vector of BC config of type bcconf_t used to apply BCs for all
-    //!   scalar components this Euler eq system is configured for
-    //! \note A more preferable way of catching errors such as this function
-    //!   hides is during parsing, so that we don't even get here if BCs are not
-    //!   correctly specified. For now we simply ignore if BCs are not
-    //!   specified by allowing empty BC vectors from the user input.
-    template< typename bctag >
-    std::vector< bcconf_t >
-    config( ncomp_t c ) {
-      std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, eq, tag::bc, bctag >();
-      if (v.size() > c) bc = v[c];
-      return bc;
-    }
+
+     //! Extract BC configuration ignoring if BC not specified
+     //! \note A more preferable way of catching errors such as this function
+     //!   hides is during parsing, so that we don't even get here if BCs are
+     //!   not correctly specified. For now we simply ignore if BCs are not
+     //!   specified by allowing empty BC vectors from the user input.
+     struct ConfigBC {
+       std::size_t system;  //! Compflow system id
+       BCStateFn& state;    //!< BC state config: sidesets + statefn
+       const std::vector< tk::StateFn >& fn;    //!< BC state functions
+       std::size_t c;       //!< Counts BC types configured
+       //! Constructor
+       ConfigBC( std::size_t sys,
+                 BCStateFn& s,
+                 const std::vector< tk::StateFn >& f ) :
+         system(sys), state(s), fn(f), c(0) {}
+       //! Function to call for each BC type
+       template< typename U > void operator()( brigand::type_<U> ) {
+         std::vector< bcconf_t > cfg;
+         const auto& v = g_inputdeck.get< tag::param, eq, tag::bc, U >();
+         if (v.size() > system) cfg = v[system];
+         Assert( fn.size() > c, "StateFn missing for BC type" );
+         state.push_back( { cfg, fn[c++] } );
+       }
+     };
 
   public:
     //! Constructor
@@ -85,15 +98,18 @@ class CompFlow {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_riemann( tk::cref_find( compflowRiemannSolvers(),
-        g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system) ) ),
-      m_bcdir( config< tag::bcdir >( c ) ),
-      m_bcsym( config< tag::bcsym >( c ) ),
-      m_bccharacteristic( config< tag::bccharacteristic >( c ) ),
-      m_bcextrapolate( config< tag::bcextrapolate >( c ) )
-      //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
-      //        "Boundary conditions not set in control file for DG CompFlow" );
-    {}
+      m_riemann(tk::cref_find(compflowRiemannSolvers(),
+        g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system)))
+    {
+      // associate boundary condition configurations with state functions
+      brigand::for_each< ctr::bc::Keys >( ConfigBC( m_system, m_bc,
+        { Dirichlet
+        , Symmetry
+        , tk::StateFn()         // Not implemented!
+        , tk::StateFn()         // Not implemented!
+        , Characteristic
+        , Extrapolate } ) );
+    }
 
     //! Find the number of primitive quantities required for this PDE system
     //! \return The number of primitive quantities required to be stored for
@@ -173,13 +189,6 @@ class CompFlow {
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
-      // supported boundary condition types and associated state functions
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >
-        bctypes{{
-          { m_bcdir, Dirichlet },
-          { m_bcsym, Symmetry },
-          { m_bcextrapolate, Extrapolate } }};
-
       // allocate and initialize matrix and vector for reconstruction
       std::vector< std::array< std::array< tk::real, 3 >, 3 > >
         lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
@@ -198,7 +207,7 @@ class CompFlow {
       tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U, rhs_ls );
 
       // 2. boundary face contributions
-      for (const auto& b : bctypes)
+      for (const auto& b : m_bc)
         tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
           b.first, fd, geoFace, geoElem, t, b.second, U, rhs_ls );
 
@@ -294,13 +303,6 @@ class CompFlow {
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
-      // supported boundary condition types and associated state functions
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
-        { m_bcdir, Dirichlet },
-        { m_bcsym, Symmetry },
-        { m_bccharacteristic, Characteristic },
-        { m_bcextrapolate, Extrapolate } }};
-
       // compute internal surface flux integrals
       tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, riemannDeriv );
@@ -315,7 +317,7 @@ class CompFlow {
                     flux, velfn, U, ndofel, R );
 
       // compute boundary surface flux integrals
-      for (const auto& b : bctypes)
+      for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
                         geoFace, inpoel, coord, t, rieflxfn, velfn, b.second, U,
                         P, ndofel, R, riemannDeriv );
@@ -719,14 +721,8 @@ class CompFlow {
     const ncomp_t m_offset;
     //! Riemann solver
     RiemannSolver m_riemann;
-    //! Dirichlet BC configuration
-    const std::vector< bcconf_t > m_bcdir;
-    //! Symmetric BC configuration
-    const std::vector< bcconf_t > m_bcsym;
-    //! Characteristic BC configuration
-    const std::vector< bcconf_t > m_bccharacteristic;
-    //! Extrapolation BC configuration
-    const std::vector< bcconf_t > m_bcextrapolate;
+    //! BC configuration
+    BCStateFn m_bc;
 
     //! Evaluate physical flux function for this PDE system
     //! \param[in] system Equation system index
