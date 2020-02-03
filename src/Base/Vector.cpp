@@ -67,7 +67,7 @@ tk::length( const std::array< real, 3 >& v )
 //! \return length
 // *****************************************************************************
 {
-  return std::sqrt( v[0]*v[0] + v[1]*v[1] + v[2]*v[2] );
+  return std::sqrt( dot(v,v) );
 }
 
 void
@@ -77,11 +77,11 @@ tk::unit( std::array< real, 3 >& v )
 //! \param[in,out] v Vector to normalize
 // *****************************************************************************
 {
-  tk::real length = std::sqrt( v[0]*v[0] + v[1]*v[1] + v[2]*v[2] );
-  Assert( length > std::numeric_limits< tk::real >::epsilon(), "div by zero" );
-  v[0] /= length;
-  v[1] /= length;
-  v[2] /= length;
+  auto len = length( v );
+  Assert( len > std::numeric_limits< tk::real >::epsilon(), "div by zero" );
+  v[0] /= len;
+  v[1] /= len;
+  v[2] /= len;
 }
 
 tk::real
