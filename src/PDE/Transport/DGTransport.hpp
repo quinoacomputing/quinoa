@@ -56,23 +56,33 @@ class Transport {
     using ncomp_t = kw::ncomp::info::expect::type;
     using bcconf_t = kw::sideset::info::expect::type;
     using eq = tag::transport;
+    using BCStateFn =
+      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >;
 
     //! Extract BC configuration ignoring if BC not specified
-    //! \param[in] c Equation system index (among multiple systems configured)
-    //! \return Vector of BC config of type bcconf_t used to apply BCs for all
-    //!   scalar components this Transport eq system is configured for
     //! \note A more preferable way of catching errors such as this function
     //!   hides is during parsing, so that we don't even get here if BCs are not
     //!   correctly specified. For now we simply ignore if BCs are not
     //!   specified by allowing empty BC vectors from the user input.
-    template< typename bctag >
-    std::vector< bcconf_t >
-    config( ncomp_t c ) {
-      std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, eq, tag::bc, bctag >();
-      if (v.size() > c) bc = v[c];
-      return bc;
-    }
+    struct ConfigBC {
+      std::size_t system;  //! Transport system id
+      BCStateFn& state;    //!< BC state config: sidesets + statefn
+      const std::vector< tk::StateFn >& fn;    //!< BC state functions
+      std::size_t c;       //!< Counts BC types configured
+      //! Constructor
+      ConfigBC( std::size_t sys,
+                BCStateFn& s,
+                const std::vector< tk::StateFn >& f ) :
+        system(sys), state(s), fn(f), c(0) {}
+      //! Function to call for each BC type
+      template< typename U > void operator()( brigand::type_<U> ) {
+        std::vector< bcconf_t > cfg;
+        const auto& v = g_inputdeck.get< tag::param, eq, tag::bc, U >();
+        if (v.size() > system) cfg = v[system];
+        Assert( fn.size() > c, "StateFn missing for BC type" );
+        state.push_back( { cfg, fn[c++] } );
+      }
+    };
 
   public:
     //! Constructor
@@ -84,12 +94,16 @@ class Transport {
       m_ncomp(
         g_inputdeck.get< tag::component >().get< eq >().at(c) ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
-      m_bcinlet( config< tag::bcinlet >( c ) ),
-      m_bcoutlet( config< tag::bcoutlet >( c ) ),
-      m_bcdir( config< tag::bcdir >( c ) )
+        g_inputdeck.get< tag::component >().offset< eq >(c) )
     {
+      // associate boundary condition configurations with state functions
+      brigand::for_each< ctr::bc::Keys >( ConfigBC( m_system, m_bc,
+        { Dirichlet
+        , tk::StateFn()  // Not implemented!
+        , Inlet
+        , Outlet
+        , tk::StateFn()  // Not implemented!
+        , Extrapolate } ) );
       m_problem.errchk( m_system, m_ncomp );
     }
 
@@ -169,14 +183,6 @@ class Transport {
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
-      // supported boundary condition types and associated state functions
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >
-        bctypes{{
-          { m_bcextrapolate, Extrapolate },
-          { m_bcinlet, Inlet },
-          { m_bcoutlet, Outlet },
-          { m_bcdir, Dirichlet } }};
-
       // allocate and initialize matrix and vector for reconstruction
       std::vector< std::array< std::array< tk::real, 3 >, 3 > >
         lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
@@ -195,7 +201,7 @@ class Transport {
       tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U, rhs_ls );
 
       // 2. boundary face contributions
-      for (const auto& b : bctypes)
+      for (const auto& b : m_bc)
         tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
           b.first, fd, geoFace, geoElem, t, b.second, U, rhs_ls );
 
@@ -281,13 +287,6 @@ class Transport {
       // system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
-      // supported boundary condition types and associated state functions
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
-        { m_bcextrapolate, Extrapolate },
-        { m_bcinlet, Inlet },
-        { m_bcoutlet, Outlet },
-        { m_bcdir, Dirichlet } }};
-
       // compute internal surface flux integrals
       tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, Upwind::flux, Problem::prescribedVelocity, U, P,
@@ -299,7 +298,7 @@ class Transport {
                     flux, Problem::prescribedVelocity, U, ndofel, R );
 
       // compute boundary surface flux integrals
-      for (const auto& b : bctypes)
+      for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
           geoFace, inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
           b.second, U, P, ndofel, R, riemannDeriv );
@@ -430,14 +429,8 @@ class Transport {
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
-    //! Extrapolation BC configuration
-    const std::vector< bcconf_t > m_bcextrapolate;
-    //! Inlet BC configuration
-    const std::vector< bcconf_t > m_bcinlet;
-    //! Outlet BC configuration
-    const std::vector< bcconf_t > m_bcoutlet;
-    //! Dirichlet BC configuration
-    const std::vector< bcconf_t > m_bcdir;
+    //! BC configuration
+    BCStateFn m_bc;
 
     //! Evaluate physical flux function for this PDE system
     //! \param[in] ncomp Number of scalar components in this PDE system
