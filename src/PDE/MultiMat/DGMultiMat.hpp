@@ -539,8 +539,6 @@ class MultiMat {
     }
 
     //! Compute the minimum time step size
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] inpoel Mesh element connectivity
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
@@ -554,8 +552,8 @@ class MultiMat {
     //!   face. Once the maximum of this quantity over the mesh is determined,
     //!   the volume of each cell is divided by this quantity. A minimum of this
     //!   ratio is found over the entire mesh, which gives the allowable dt.
-    tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< std::size_t >& inpoel,
+    tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
+                 const std::vector< std::size_t >&,
                  const inciter::FaceData& fd,
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
@@ -570,29 +568,10 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       const auto& esuf = fd.Esuf();
-      const auto& inpofa = fd.Inpofa();
-
-      // Number of quadrature points for face integration
-      auto ng = tk::NGfa(ndof);
-
-      // arrays for quadrature points
-      std::array< std::vector< tk::real >, 2 > coordgp;
-      std::vector< tk::real > wgp;
-
-      coordgp[0].resize( ng );
-      coordgp[1].resize( ng );
-      wgp.resize( ng );
 
       tk::real u, v, w, a, vn, dSV_l, dSV_r;
       std::vector< tk::real > delt(U.nunk(), 0.0);
       std::vector< tk::real > ugp(m_ncomp, 0.0), pgp(nprim(), 0.0);
-
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
-
-      // get quadrature point weights and coordinates for triangle
-      tk::GaussQuadratureTri( ng, coordgp, wgp );
 
       // compute maximum characteristic speed at all internal element faces
       for (std::size_t f=0; f<esuf.size()/2; ++f)
@@ -600,45 +579,49 @@ class MultiMat {
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         auto er = esuf[2*f+1];
 
-        // Extract the left element coordinates
-        std::array< std::array< tk::real, 3>, 4 > coordel_l {{
-          {{ cx[inpoel[4*el  ]], cy[inpoel[4*el  ]], cz[inpoel[4*el  ]] }},
-          {{ cx[inpoel[4*el+1]], cy[inpoel[4*el+1]], cz[inpoel[4*el+1]] }},
-          {{ cx[inpoel[4*el+2]], cy[inpoel[4*el+2]], cz[inpoel[4*el+2]] }},
-          {{ cx[inpoel[4*el+3]], cy[inpoel[4*el+3]], cz[inpoel[4*el+3]] }} }};
+        // left element
 
-        // Compute the determinant of Jacobian matrix
-        auto detT_l =
-          tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3]);
+        // Compute the basis function for the left element
+        std::vector< tk::real > B_l(rdof, 0.0);
+        B_l[0] = 1.0;
 
-        // Extract the face coordinates
-        std::array< std::array< tk::real, 3>, 3 > coordfa {{
-          {{ cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] }},
-          {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
-          {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }}
-        }};
+        // get conserved quantities
+        ugp = eval_state( m_ncomp, m_offset, rdof, ndof, el, U, B_l);
+        // get primitive quantities
+        pgp = eval_state( nprim(), m_offset, rdof, ndof, el, P, B_l);
 
-        dSV_l = 0.0;
-        dSV_r = 0.0;
+        // advection velocity
+        u = pgp[velocityIdx(nmat, 0)];
+        v = pgp[velocityIdx(nmat, 1)];
+        w = pgp[velocityIdx(nmat, 2)];
 
-        // Gaussian quadrature
-        for (std::size_t igp=0; igp<ng; ++igp)
+        vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+
+        // acoustic speed
+        a = 0.0;
+        for (std::size_t k=0; k<nmat; ++k)
         {
-          // Compute the coordinates of quadrature point at physical domain
-          auto gp = tk::eval_gp( igp, coordfa, coordgp );
+          if (ugp[volfracIdx(nmat, k)] > 1.0e-08) {
+            a = std::max( a, eos_soundspeed< tag::multimat >( 0,
+              ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+              ugp[volfracIdx(nmat, k)], k ) );
+          }
+        }
 
-          // Compute the basis function for the left element
-          auto B_l = tk::eval_basis( ndof,
-            tk::Jacobian(coordel_l[0], gp, coordel_l[2], coordel_l[3])/detT_l,
-            tk::Jacobian(coordel_l[0], coordel_l[1], gp, coordel_l[3])/detT_l,
-            tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], gp)/detT_l );
+        dSV_l = geoFace(f,0,0) * (std::fabs(vn) + a);
 
-          auto wt = wgp[igp] * geoFace(f,0,0);
+        // right element
+        if (er > -1) {
+          std::size_t eR = static_cast< std::size_t >( er );
+
+          // Compute the basis function for the right element
+          std::vector< tk::real > B_r(rdof, 0.0);
+          B_r[0] = 1.0;
 
           // get conserved quantities
-          ugp = eval_state( m_ncomp, m_offset, rdof, ndof, el, U, B_l);
+          ugp = eval_state( m_ncomp, m_offset, rdof, ndof, eR, U, B_r);
           // get primitive quantities
-          pgp = eval_state( nprim(), m_offset, rdof, ndof, el, P, B_l);
+          pgp = eval_state( nprim(), m_offset, rdof, ndof, eR, P, B_r);
 
           // advection velocity
           u = pgp[velocityIdx(nmat, 0)];
@@ -658,65 +641,14 @@ class MultiMat {
             }
           }
 
-          dSV_l = wt * (std::fabs(vn) + a);
+          dSV_r = geoFace(f,0,0) * (std::fabs(vn) + a);
 
-          // right element
-          if (er > -1) {
-
-            std::size_t eR = static_cast< std::size_t >( er );
-
-            // Extract the right element coordinates
-            std::array< std::array< tk::real, 3>, 4 > coordel_r {{
-              {{ cx[inpoel[4*eR  ]], cy[inpoel[4*eR  ]], cz[inpoel[4*eR  ]] }},
-              {{ cx[inpoel[4*eR+1]], cy[inpoel[4*eR+1]], cz[inpoel[4*eR+1]] }},
-              {{ cx[inpoel[4*eR+2]], cy[inpoel[4*eR+2]], cz[inpoel[4*eR+2]] }},
-              {{ cx[inpoel[4*eR+3]], cy[inpoel[4*eR+3]], cz[inpoel[4*eR+3]] }}
-            }};
-
-            // Compute the determinant of Jacobian matrix
-            auto detT_r =
-              tk::Jacobian(coordel_r[0],coordel_r[1],coordel_r[2],coordel_r[3]);
-
-            // Compute the coordinates of quadrature point at physical domain
-            gp = tk::eval_gp( igp, coordfa, coordgp );
-
-            // Compute the basis function for the right element
-            auto B_r = tk::eval_basis( ndof,
-             tk::Jacobian(coordel_r[0], gp, coordel_r[2], coordel_r[3])/detT_r,
-             tk::Jacobian(coordel_r[0], coordel_r[1], gp, coordel_r[3])/detT_r,
-             tk::Jacobian(coordel_r[0], coordel_r[1], coordel_r[2], gp)/detT_r);
-
-            // get conserved quantities
-            ugp = eval_state( m_ncomp, m_offset, rdof, ndof, eR, U, B_r);
-            // get primitive quantities
-            pgp = eval_state( nprim(), m_offset, rdof, ndof, eR, P, B_r);
-
-            // advection velocity
-            u = pgp[velocityIdx(nmat, 0)];
-            v = pgp[velocityIdx(nmat, 1)];
-            w = pgp[velocityIdx(nmat, 2)];
-
-            vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
-
-            // acoustic speed
-            a = 0.0;
-            for (std::size_t k=0; k<nmat; ++k)
-            {
-              if (ugp[volfracIdx(nmat, k)] > 1.0e-08) {
-                a = std::max( a, eos_soundspeed< tag::multimat >( 0,
-                  ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-                  ugp[volfracIdx(nmat, k)], k ) );
-              }
-            }
-
-            dSV_r = wt * (std::fabs(vn) + a);
-
-            dSV_r = wt * (std::fabs(vn) + a);
-            delt[eR] += std::max( dSV_l, dSV_r );
-          }
-
-          delt[el] += std::max( dSV_l, dSV_r );
+          delt[eR] += std::max( dSV_l, dSV_r );
+        } else {
+          dSV_r = dSV_l;
         }
+
+        delt[el] += std::max( dSV_l, dSV_r );
       }
 
       tk::real mindt = std::numeric_limits< tk::real >::max();
