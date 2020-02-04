@@ -59,31 +59,6 @@ class Transport {
     using BCStateFn =
       std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >;
 
-    //! Extract BC configuration ignoring if BC not specified
-    //! \note A more preferable way of catching errors such as this function
-    //!   hides is during parsing, so that we don't even get here if BCs are not
-    //!   correctly specified. For now we simply ignore if BCs are not
-    //!   specified by allowing empty BC vectors from the user input.
-    struct ConfigBC {
-      std::size_t system;  //! Transport system id
-      BCStateFn& state;    //!< BC state config: sidesets + statefn
-      const std::vector< tk::StateFn >& fn;    //!< BC state functions
-      std::size_t c;       //!< Counts BC types configured
-      //! Constructor
-      ConfigBC( std::size_t sys,
-                BCStateFn& s,
-                const std::vector< tk::StateFn >& f ) :
-        system(sys), state(s), fn(f), c(0) {}
-      //! Function to call for each BC type
-      template< typename U > void operator()( brigand::type_<U> ) {
-        std::vector< bcconf_t > cfg;
-        const auto& v = g_inputdeck.get< tag::param, eq, tag::bc, U >();
-        if (v.size() > system) cfg = v[system];
-        Assert( fn.size() > c, "StateFn missing for BC type" );
-        state.push_back( { cfg, fn[c++] } );
-      }
-    };
-
   public:
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
@@ -97,7 +72,7 @@ class Transport {
         g_inputdeck.get< tag::component >().offset< eq >(c) )
     {
       // associate boundary condition configurations with state functions
-      brigand::for_each< ctr::bc::Keys >( ConfigBC( m_system, m_bc,
+      brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
         { Dirichlet
         , tk::StateFn()  // Not implemented!
         , Inlet
