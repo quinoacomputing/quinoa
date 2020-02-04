@@ -74,10 +74,10 @@ class Transport {
       // associate boundary condition configurations with state functions
       brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
         { Dirichlet
-        , tk::StateFn()  // Not implemented!
+        , InvalidBC  // Not implemented!
         , Inlet
         , Outlet
-        , tk::StateFn()  // Not implemented!
+        , InvalidBC  // Not implemented!
         , Extrapolate } ) );
       m_problem.errchk( m_system, m_ncomp );
     }
@@ -494,6 +494,20 @@ class Transport {
                const std::array< tk::real, 3 >& )
     {
       return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
+    }
+
+    //! \brief State function for invalid/un-configured boundary conditions
+    //! \param[in] ul Left (domain-internal) state
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \note The function signature must follow tk::StateFn
+    static tk::StateFn::result_type
+    InvalidBC( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+               tk::real, tk::real, tk::real, tk::real,
+               const std::array< tk::real, 3> & )
+    {
+      Throw("Invalid boundary condition set up in input file");
+      return {{ ul, ul }};
     }
 };
 
