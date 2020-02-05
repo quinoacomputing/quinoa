@@ -173,7 +173,6 @@ ALECG::dfnorm()
   if (d->EdgeCommMap().empty())
     comdfnorm_complete();
   else {
-    tk::destroy( m_dfnormc );
     for (const auto& [c,edges] : d->EdgeCommMap()) {
       decltype(m_dfnorm) exp;
       for (const auto& e : edges) exp[e] = tk::cref_find(m_dfnorm,e);
@@ -858,6 +857,8 @@ ALECG::resizePostAMR(
   m_bnode = bnode;
   m_bface = bface;
   m_triinpoel = triinpoel;
+
+  tk::destroy( m_dfnormc );
 
   contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
 }
