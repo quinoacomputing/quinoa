@@ -33,7 +33,7 @@ real
 dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 );
 
 //! Compute length of a vector
-tk::real
+real
 length( const std::array< real, 3 >& v );
 
 //! Scale vector to unit length

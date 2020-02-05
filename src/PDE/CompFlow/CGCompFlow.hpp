@@ -25,6 +25,7 @@
 #include "Mesh/Around.hpp"
 #include "Reconstruction.hpp"
 #include "ProblemCommon.hpp"
+#include "Riemann/Rusanov.hpp"
 
 namespace inciter {
 
@@ -143,12 +144,15 @@ class CompFlow {
               const std::unordered_map< tk::UnsMesh::Edge,
                         std::array< tk::real, 3 >,
                         tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfn,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                        std::array< tk::real, 3 >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnc,
               const std::unordered_map< std::size_t,
                       std::array< tk::real, 4 > >& bnorm,
               const std::vector< tk::real >& vol,
               const tk::Fields& G,
               const tk::Fields& U,
-              tk::Fields& R ) const
+              tk::Fields& R) const
     {
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
@@ -161,7 +165,7 @@ class CompFlow {
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
-      
+
       // zero right hand side for all components
       for (ncomp_t c=0; c<5; ++c) R.fill( c, m_offset, 0.0 );
 
@@ -180,10 +184,22 @@ class CompFlow {
 
       // domain-edge integral
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
+
         for (auto q : tk::Around(psup,p)) {     // for each edge p-q
+          // the edge
+          auto e = std::array<size_t, 2>{ gid[p], gid[q] };
           // access and orient dual-face normals for edge p-q
-          auto n = tk::cref_find( dfn, {gid[p],gid[q]} );
-          if (gid[p] > gid[q]) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
+          auto n = tk::cref_find( dfn, e );
+          // figure out if this is an edge on the parallel boundary
+          auto nit = dfnc.find(e);
+          auto n2 = ( nit != dfnc.end() ) ? nit->second : n;
+          // orient correctly
+          if (gid[p] > gid[q]) {
+            for (std::size_t i=0; i<3; ++i) {
+              n[i] = -n[i];
+              n2[i] = -n2[i];
+            }
+          }
           // Access primitive variables at edge-end points
           std::array< std::vector< tk::real >, 2 >
             ru{ std::vector< tk::real >( m_ncomp, 0.0 ),
@@ -225,11 +241,17 @@ class CompFlow {
          }
 #endif
 
+#if 1
+          // Compute Riemann flux using edge-end point states
+          auto f = Rusanov::flux( n, ru, {n2} );
+          for (std::size_t c=0; c<m_ncomp; ++c) R.var(r[c],p) -= 2*f[c];
+#else
+          std::array< tk::real, 3 > ntmp{0,0,0};
           // evaluate flux at edge-end points
           auto fp = flux( m_system, m_ncomp, ru[0] );
           auto fq = flux( m_system, m_ncomp, ru[1] );
           // compute wave speed at edge-end points
-          auto lambda = std::max( swave(n,ru[0]), swave(n,ru[1]) );
+          auto lambda = std::max( swave(fn,ru[0]), swave(fn,ru[1]) );
           // sum domain-edge contributions
           for (auto e : tk::cref_find(esued,{p,q})) {
             const auto [ N, grad, u, J ] =
@@ -238,18 +260,21 @@ class CompFlow {
             for (const auto& [a,b] : tk::lpoed) {
               auto s = tk::orient( {N[a],N[b]}, {p,q} );
               for (std::size_t j=0; j<3; ++j) {
+                ntmp[j] += J48 * s * (grad[a][j] - grad[b][j]);
                 for (std::size_t c=0; c<m_ncomp; ++c) {
                   R.var(r[c],p) -= J48 * s * (grad[a][j] - grad[b][j])
-                                   * (fp[c][j] + fq[c][j])
+                                 *  (fp[c][j] + fq[c][j]) /* 
                     - J48 * std::abs(s * (grad[a][j] - grad[b][j]))
-                          * lambda * (ru[1][c] - ru[0][c]);
+                          * lambda * (ru[1][c] - ru[0][c])*/;
                 }
               }
             }
           }
+#endif
+
         }
       }
-
+      
       // boundary integrals
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
         // access node IDs
