@@ -469,7 +469,7 @@ tk::muscl( const UnsMesh::Edge& edge,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] G Gradient of all unknowns in mesh points
 //! \param[in,out] u Primitive variables at edge-end points, size ncomp x 2
-//! \param[in] enforce_realizability True if enforce positivity of density and
+//! \param[in] enforce_realizability True to enforce positivity of density and
 //!   internal energy, assuming 5 scalar components in u.
 // *****************************************************************************
 {
