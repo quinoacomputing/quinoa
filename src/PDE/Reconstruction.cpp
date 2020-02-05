@@ -460,7 +460,8 @@ void
 tk::muscl( const UnsMesh::Edge& edge,
            const UnsMesh::Coords& coord,
            const Fields& G,
-           std::array< std::vector< tk::real >, 2 >& u )
+           std::array< std::vector< tk::real >, 2 >& u,
+           bool enforce_realizability )
 // *****************************************************************************
 // Compute MUSCL reconstruction in edge-end points using a MUSCL procedure with
 // Van Leer limiting
@@ -468,6 +469,8 @@ tk::muscl( const UnsMesh::Edge& edge,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] G Gradient of all unknowns in mesh points
 //! \param[in,out] u Primitive variables at edge-end points, size ncomp x 2
+//! \param[in] enforce_realizability True if enforce positivity of density and
+//!   internal energy, assuming 5 scalar components in u.
 // *****************************************************************************
 {
   const auto ncomp = G.nprop()/3;
@@ -520,8 +523,10 @@ tk::muscl( const UnsMesh::Edge& edge,
 
   // force first order if the reconstructions for density or internal energy
   // would have allowed negative values
-  if (u[0][0] < delta1[0] || u[0][4] < delta1[4]) ur[0] = u[0];
-  if (u[1][0] < -delta3[0] || u[1][4] < -delta3[4]) ur[1] = u[1];
+  if (enforce_realizability) {
+    if (u[0][0] < delta1[0] || u[0][4] < delta1[4]) ur[0] = u[0];
+    if (u[1][0] < -delta3[0] || u[1][4] < -delta3[4]) ur[1] = u[1];
+  }
 
   u = ur;
 }

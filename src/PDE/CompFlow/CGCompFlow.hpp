@@ -211,7 +211,7 @@ class CompFlow {
             ru[1][4] -= 0.5*ru[1][1+d]*ru[1][1+d];
           }
           // compute MUSCL reconstruction in edge-end points
-          tk::muscl( {p,q}, coord, Grad, ru );
+          tk::muscl( {p,q}, coord, Grad, ru, true );
           // convert back to conserved
           // convert to internal energy
           for (std::size_t d=0; d<3; ++d) {

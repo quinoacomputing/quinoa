@@ -106,7 +106,8 @@ void
 muscl( const UnsMesh::Edge& edge,
        const UnsMesh::Coords& coord,
        const Fields& G,
-       std::array< std::vector< tk::real >, 2 >& u );
+       std::array< std::vector< tk::real >, 2 >& u,
+       bool enforce_realizability = false );
 
 } // tk::
 
