@@ -468,7 +468,8 @@ ALECG::normfinal()
 //  Finish computing dual-face and boundary point normals
 // *****************************************************************************
 {
-  const auto& lid = Disc()->Lid();
+  auto d = Disc();
+  const auto& lid = d->Lid();
 
   // Combine own and communicated contributions to boundary point normals
   for (auto& [ p, n ] : m_bnormc) {
@@ -484,7 +485,7 @@ ALECG::normfinal()
   tk::destroy( m_bnormc );
 
   // Divie summed point normals by the sum of inverse distance squared
-  for (auto& [ p, n ] : m_bnorm) {
+  for (auto& [p,n] : m_bnorm) {
     n[0] /= n[3];
     n[1] /= n[3];
     n[2] /= n[3];
@@ -497,28 +498,23 @@ ALECG::normfinal()
   for (auto&& [g,n] : m_bnorm) bnorm[ tk::cref_find(lid,g) ] = std::move(n);
   m_bnorm = std::move(bnorm);
 
-  // Combine own and communicated contributions to dual-face normals
-  std::map<tk::UnsMesh::Edge, std::size_t> edge_node_count;
+  // Count contributions to chare-boundary edges
+  std::unordered_map< tk::UnsMesh::Edge, std::size_t,
+    tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > edge_node_count;
+  for (const auto& [c,edges] : d->EdgeCommMap())
+    for (const auto& e : edges)
+      ++edge_node_count[e];
 
-  for (const auto& [c,edges] : Disc()->EdgeCommMap()) {
-    for ( auto e : edges ) {
-      auto it = edge_node_count.find(e);
-      if ( it != edge_node_count.end() )
-        it->second++;
-      else
-        edge_node_count[e] = 1;
-    }
-  }
-
+  // Combine and weigh communicated contributions to dual-face normals
   for (auto& [e,n] : m_dfnormc) {
     const auto& dfn = tk::cref_find( m_dfnorm, e );
     n[0] += dfn[0];
     n[1] += dfn[1];
     n[2] += dfn[2];
-    auto factor = static_cast<tk::real>(1)/(edge_node_count[e] + 1);
-    for ( auto & x : n ) x *= factor; 
+    auto count = static_cast< tk::real >( tk::cref_find( edge_node_count, e ) );
+    auto factor = 1.0/(count + 1.0);
+    for (auto & x : n) x *= factor;
   }
-
 }
 
 void
