@@ -57,11 +57,7 @@ template< class Physics, class Problem >
 class CompFlow {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
-    using bcconf_t = kw::sideset::info::expect::type;
     using eq = tag::compflow;
-    using BCStateFn =
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >;
 
   public:
     //! Constructor
@@ -75,14 +71,15 @@ class CompFlow {
       m_riemann(tk::cref_find(compflowRiemannSolvers(),
         g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system)))
     {
-      // associate boundary condition configurations with state functions
+      // associate boundary condition configurations with state functions, the
+      // order in which the state functions listed matters, see ctr::bc::Keys
       brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
-        { Dirichlet
-        , Symmetry
-        , InvalidBC         // Not implemented!
-        , InvalidBC         // Not implemented!
-        , Characteristic
-        , Extrapolate } ) );
+        { dirichlet
+        , symmetry
+        , invalidBC         // Inlet BC not implemented
+        , invalidBC         // Outlet BC not implemented
+        , characteristic
+        , extrapolate } ) );
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -755,7 +752,7 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+    dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
@@ -770,7 +767,7 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Symmetry( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    symmetry( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
               const std::array< tk::real, 3 >& fn )
     {
@@ -804,7 +801,7 @@ class CompFlow {
     //!   based on the characteristic theory of hyperbolic systems.
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Characteristic( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
+    characteristic( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
                     tk::real, tk::real, tk::real, tk::real,
                     const std::array< tk::real, 3 >& fn )
     {
@@ -882,24 +879,10 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
                  const std::array< tk::real, 3 >& )
     {
-      return {{ ul, ul }};
-    }
-
-    //! \brief State function for invalid/un-configured boundary conditions
-    //! \param[in] ul Left (domain-internal) state
-    //! \return Left and right states for all scalar components in this PDE
-    //!   system
-    //! \note The function signature must follow tk::StateFn
-    static tk::StateFn::result_type
-    InvalidBC( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
-               tk::real, tk::real, tk::real, tk::real,
-               const std::array< tk::real, 3> & )
-    {
-      Throw("Invalid boundary condition set up in input file");
       return {{ ul, ul }};
     }
 };

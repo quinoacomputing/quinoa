@@ -58,11 +58,7 @@ template< class Physics, class Problem >
 class MultiMat {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
-    using bcconf_t = kw::sideset::info::expect::type;
     using eq = tag::multimat;
-    using BCStateFn =
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >;
 
   public:
     //! Constructor
@@ -76,12 +72,12 @@ class MultiMat {
     {
       // associate boundary condition configurations with state functions
       brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
-        { Dirichlet
-        , Symmetry
-        , InvalidBC         // Not implemented!
-        , InvalidBC         // Not implemented!
-        , SubsonicOutlet
-        , Extrapolate } ) );
+        { dirichlet
+        , symmetry
+        , invalidBC         // Inlet BC not implemented
+        , invalidBC         // Outlet BC not implemented
+        , subsonicOutlet
+        , extrapolate } ) );
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -822,7 +818,7 @@ class MultiMat {
     const ncomp_t m_offset;
     //! Riemann solver
     RiemannSolver m_riemann;
-    //! Dirichlet BC configuration
+    //! BC configuration
     BCStateFn m_bc;
 
     //! Evaluate conservative part of physical flux function for this PDE system
@@ -913,7 +909,7 @@ class MultiMat {
     //!   left or right state is the vector of conserved quantities, followed by
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
-    Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+    dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
@@ -966,7 +962,7 @@ class MultiMat {
     //!   left or right state is the vector of conserved quantities, followed by
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
-    Symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+    symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
               const std::array< tk::real, 3 >& fn )
     {
@@ -1033,7 +1029,7 @@ class MultiMat {
     //!   pressure from the outside and other quantities from the internal cell.
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    SubsonicOutlet( ncomp_t system, ncomp_t ncomp,
+    subsonicOutlet( ncomp_t system, ncomp_t ncomp,
                     const std::vector< tk::real >& ul,
                     tk::real, tk::real, tk::real, tk::real,
                     const std::array< tk::real, 3 >& )
@@ -1088,24 +1084,10 @@ class MultiMat {
     //!   left or right state is the vector of conserved quantities, followed by
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
-    Extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
                  const std::array< tk::real, 3 >& )
     {
-      return {{ ul, ul }};
-    }
-
-    //! \brief State function for invalid/un-configured boundary conditions
-    //! \param[in] ul Left (domain-internal) state
-    //! \return Left and right states for all scalar components in this PDE
-    //!   system
-    //! \note The function signature must follow tk::StateFn
-    static tk::StateFn::result_type
-    InvalidBC( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
-               tk::real, tk::real, tk::real, tk::real,
-               const std::array< tk::real, 3> & )
-    {
-      Throw("Invalid boundary condition set up in input file");
       return {{ ul, ul }};
     }
 };

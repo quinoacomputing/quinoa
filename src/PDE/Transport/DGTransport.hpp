@@ -53,11 +53,7 @@ template< class Physics, class Problem >
 class Transport {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
-    using bcconf_t = kw::sideset::info::expect::type;
     using eq = tag::transport;
-    using BCStateFn =
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >;
 
   public:
     //! Constructor
@@ -71,14 +67,15 @@ class Transport {
       m_offset(
         g_inputdeck.get< tag::component >().offset< eq >(c) )
     {
-      // associate boundary condition configurations with state functions
+      // associate boundary condition configurations with state functions, the
+      // order in which the state functions listed matters, see ctr::bc::Keys
       brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
-        { Dirichlet
-        , InvalidBC  // Not implemented!
-        , Inlet
-        , Outlet
-        , InvalidBC  // Not implemented!
-        , Extrapolate } ) );
+        { dirichlet
+        , invalidBC  // Symmetry BC not implemented
+        , inlet
+        , outlet
+        , invalidBC  // Characteristic BC not implemented
+        , extrapolate } ) );
       m_problem.errchk( m_system, m_ncomp );
     }
 
@@ -439,7 +436,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
                  const std::array< tk::real, 3 >& )
     {
@@ -453,7 +450,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Inlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    inlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
            tk::real, tk::real, tk::real, tk::real,
            const std::array< tk::real, 3 >& )
     {
@@ -469,7 +466,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Outlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    outlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
             const std::array< tk::real, 3 >& )
     {
@@ -489,25 +486,11 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+    dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
       return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
-    }
-
-    //! \brief State function for invalid/un-configured boundary conditions
-    //! \param[in] ul Left (domain-internal) state
-    //! \return Left and right states for all scalar components in this PDE
-    //!   system
-    //! \note The function signature must follow tk::StateFn
-    static tk::StateFn::result_type
-    InvalidBC( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
-               tk::real, tk::real, tk::real, tk::real,
-               const std::array< tk::real, 3> & )
-    {
-      Throw("Invalid boundary condition set up in input file");
-      return {{ ul, ul }};
     }
 };
 
