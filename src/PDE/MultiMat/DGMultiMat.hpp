@@ -58,26 +58,7 @@ template< class Physics, class Problem >
 class MultiMat {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
-    using bcconf_t = kw::sideset::info::expect::type;
     using eq = tag::multimat;
-
-    //! Extract BC configuration ignoring if BC not specified
-    //! \param[in] c Equation system index (among multiple systems configured)
-    //! \return Vector of BC config of type bcconf_t used to apply BCs for all
-    //!   scalar components this Euler eq system is configured for
-    //! \note A more preferable way of catching errors such as this function
-    //!   hides is during parsing, so that we don't even get here if BCs are not
-    //!   correctly specified. For now we simply ignore if BCs are not
-    //!   specified by allowing empty BC vectors from the user input.
-    template< typename bctag >
-    std::vector< bcconf_t >
-    config( ncomp_t c ) {
-      std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, eq, tag::bc, bctag >();
-      if (v.size() > c) bc = v[c];
-      return bc;
-    }
 
   public:
     //! Constructor
@@ -87,12 +68,17 @@ class MultiMat {
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_riemann( tk::cref_find( multimatRiemannSolvers(),
-        g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) ),
-      m_bcdir( config< tag::bcdir >( c ) ),
-      m_bcsym( config< tag::bcsym >( c ) ),
-      m_bcsubsonicoutlet( config< tag::bcoutlet >( c ) ),
-      m_bcextrapolate( config< tag::bcextrapolate >( c ) )
-    {}
+        g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) )
+    {
+      // associate boundary condition configurations with state functions
+      brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
+        { dirichlet
+        , symmetry
+        , invalidBC         // Inlet BC not implemented
+        , invalidBC         // Outlet BC not implemented
+        , subsonicOutlet
+        , extrapolate } ) );
+    }
 
     //! Find the number of primitive quantities required for this PDE system
     //! \return The number of primitive quantities required to be stored for
@@ -321,14 +307,6 @@ class MultiMat {
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
-      // supported boundary condition types and associated state functions
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >
-        bctypes{{
-          { m_bcdir, Dirichlet },
-          { m_bcsym, Symmetry },
-          { m_bcsubsonicoutlet, SubsonicOutlet },
-          { m_bcextrapolate, Extrapolate } }};
-
       // allocate and initialize matrix and vector for reconstruction:
       // lhs_ls is the left-hand side matrix for solving the least-squares
       // system using the normal equation approach, for each mesh element.
@@ -367,7 +345,7 @@ class MultiMat {
       tk::intLeastSq_P0P1( nprim(), m_offset, rdof, fd, geoElem, P, rhsp_ls );
 
       // 2. boundary face contributions
-      for (const auto& b : bctypes)
+      for (const auto& b : m_bc)
       {
         tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
           b.first, fd, geoFace, geoElem, t, b.second, U, rhsu_ls, nprim() );
@@ -484,13 +462,6 @@ class MultiMat {
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
-      // supported boundary condition types and associated state functions
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
-        { m_bcdir, Dirichlet },
-        { m_bcsym, Symmetry },
-        { m_bcsubsonicoutlet, SubsonicOutlet },
-        { m_bcextrapolate, Extrapolate } }};
-
       // compute internal surface flux integrals
       tk::surfInt( m_system, nmat, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R,
@@ -506,7 +477,7 @@ class MultiMat {
                     flux, velfn, U, ndofel, R );
 
       // compute boundary surface flux integrals
-      for (const auto& b : bctypes)
+      for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, nmat, m_offset, ndof, rdof, b.first,
                         fd, geoFace, inpoel, coord, t, rieflxfn, velfn,
                         b.second, U, P, ndofel, R, riemannDeriv );
@@ -847,14 +818,8 @@ class MultiMat {
     const ncomp_t m_offset;
     //! Riemann solver
     RiemannSolver m_riemann;
-    //! Dirichlet BC configuration
-    const std::vector< bcconf_t > m_bcdir;
-    //! Symmetric BC configuration
-    const std::vector< bcconf_t > m_bcsym;
-    //! Subsonic outlet BC configuration
-    const std::vector< bcconf_t > m_bcsubsonicoutlet;
-    //! Extrapolation BC configuration
-    const std::vector< bcconf_t > m_bcextrapolate;
+    //! BC configuration
+    BCStateFn m_bc;
 
     //! Evaluate conservative part of physical flux function for this PDE system
     //! \param[in] system Equation system index
@@ -944,7 +909,7 @@ class MultiMat {
     //!   left or right state is the vector of conserved quantities, followed by
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
-    Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+    dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
@@ -997,7 +962,7 @@ class MultiMat {
     //!   left or right state is the vector of conserved quantities, followed by
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
-    Symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+    symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
               const std::array< tk::real, 3 >& fn )
     {
@@ -1064,7 +1029,7 @@ class MultiMat {
     //!   pressure from the outside and other quantities from the internal cell.
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    SubsonicOutlet( ncomp_t system, ncomp_t ncomp,
+    subsonicOutlet( ncomp_t system, ncomp_t ncomp,
                     const std::vector< tk::real >& ul,
                     tk::real, tk::real, tk::real, tk::real,
                     const std::array< tk::real, 3 >& )
@@ -1119,7 +1084,7 @@ class MultiMat {
     //!   left or right state is the vector of conserved quantities, followed by
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
-    Extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
                  const std::array< tk::real, 3 >& )
     {
