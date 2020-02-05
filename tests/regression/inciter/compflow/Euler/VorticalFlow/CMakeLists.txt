@@ -24,7 +24,8 @@ add_regression_test(compflow_euler_vorticalflow_alecg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_alecg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
+                    LABELS alecg)
 
 add_regression_test(compflow_euler_vorticalflow_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -192,7 +193,8 @@ add_regression_test(compflow_euler_vorticalflow_alecg_u0.5 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_alecg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
+                    LABELS alecg)
 
 add_regression_test(compflow_euler_vorticalflow_dgp1_u0.90 ${INCITER_EXECUTABLE}
                     NUMPES 4
