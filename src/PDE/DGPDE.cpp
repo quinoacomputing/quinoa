@@ -12,7 +12,7 @@
 
 #include "DGPDE.hpp"
 
-tk::StateFn::result_type
+[[noreturn]] tk::StateFn::result_type
 inciter::invalidBC( ncomp_t, ncomp_t, const std::vector< tk::real >&,
            tk::real, tk::real, tk::real, tk::real,
            const std::array< tk::real, 3> & )
