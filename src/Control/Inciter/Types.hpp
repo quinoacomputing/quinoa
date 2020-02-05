@@ -182,8 +182,6 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
                         std::vector< kw::farfield_density::info::expect::type >
   , tag::farfield_velocity, std::vector< std::vector<
                               kw::farfield_velocity::info::expect::type > >
-  , tag::bcextrapolate, std::vector< std::vector<
-                         kw::sideset::info::expect::type > >
   , tag::bc,            bc
   , tag::ic,            ic
   //! System FCT character
