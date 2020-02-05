@@ -127,7 +127,8 @@ class CompFlow {
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] lid Global->local node ids
-    //! \param[in] dfn Dual-face normals along chare-boundary edges
+    //! \param[in] dfn Dual-face normals in internal edges
+    //! \param[in] dfnc Dual-face normals along chare-boundary edges
     //! \param[in] bnorm Face normals in boundary points
     //! \param[in] vol Nodal volumes
     //! \param[in] G Nodal gradients
@@ -184,7 +185,6 @@ class CompFlow {
 
       // domain-edge integral
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
-
         for (auto q : tk::Around(psup,p)) {     // for each edge p-q
           // the edge
           auto e = std::array<size_t, 2>{ gid[p], gid[q] };
@@ -200,26 +200,18 @@ class CompFlow {
               n2[i] = -n2[i];
             }
           }
+
           // Access primitive variables at edge-end points
           std::array< std::vector< tk::real >, 2 >
             ru{ std::vector< tk::real >( m_ncomp, 0.0 ),
                 std::vector< tk::real >( m_ncomp, 0.0 ) };
-
-#if 0
-          // First order
-          for (std::size_t c=0; c<5; ++c) {
-            ru[0][c] = U(p, c, m_offset);
-            ru[1][c] = U(q, c, m_offset);
-          }
-#else
-          // second order
           // density
           ru[0][0] = U(p, 0, m_offset);
           ru[1][0] = U(q, 0, m_offset);
           // divide out density
           for (std::size_t c=1; c<5; ++c) {
-            ru[0][c] =  U(p, c, m_offset)/ ru[0][0];
-            ru[1][c] =  U(q, c, m_offset)/ ru[1][0];
+            ru[0][c] =  U(p, c, m_offset) / ru[0][0];
+            ru[1][c] =  U(q, c, m_offset) / ru[1][0];
           }
           // convert to internal energy
           for (std::size_t d=0; d<3; ++d) {
@@ -238,40 +230,11 @@ class CompFlow {
           for (std::size_t c=1; c<5; ++c) {
             ru[0][c] *= ru[0][0];
             ru[1][c] *= ru[1][0];
-         }
-#endif
+          }
 
-#if 1
           // Compute Riemann flux using edge-end point states
           auto f = Rusanov::flux( n, ru, {n2} );
           for (std::size_t c=0; c<m_ncomp; ++c) R.var(r[c],p) -= 2*f[c];
-#else
-          std::array< tk::real, 3 > ntmp{0,0,0};
-          // evaluate flux at edge-end points
-          auto fp = flux( m_system, m_ncomp, ru[0] );
-          auto fq = flux( m_system, m_ncomp, ru[1] );
-          // compute wave speed at edge-end points
-          auto lambda = std::max( swave(fn,ru[0]), swave(fn,ru[1]) );
-          // sum domain-edge contributions
-          for (auto e : tk::cref_find(esued,{p,q})) {
-            const auto [ N, grad, u, J ] =
-              egrad( m_ncomp, m_offset, e, coord, inpoel, U );
-            auto J48 = J/48.0;
-            for (const auto& [a,b] : tk::lpoed) {
-              auto s = tk::orient( {N[a],N[b]}, {p,q} );
-              for (std::size_t j=0; j<3; ++j) {
-                ntmp[j] += J48 * s * (grad[a][j] - grad[b][j]);
-                for (std::size_t c=0; c<m_ncomp; ++c) {
-                  R.var(r[c],p) -= J48 * s * (grad[a][j] - grad[b][j])
-                                 *  (fp[c][j] + fq[c][j]) /* 
-                    - J48 * std::abs(s * (grad[a][j] - grad[b][j]))
-                          * lambda * (ru[1][c] - ru[0][c])*/;
-                }
-              }
-            }
-          }
-#endif
-
         }
       }
       
@@ -346,47 +309,6 @@ class CompFlow {
       auto p = eos_pressure< tag::compflow >( 0, u[0], v[0], v[1], v[2], u[4] );
       auto c = eos_soundspeed< tag::compflow >( 0, u[0], p );
       return std::abs(tk::dot(v,n)) + c;
-    }
-
-    //! Evaluate physical flux function for this PDE system
-    //! \param[in] system Equation system index
-    //! \param[in] ncomp Number of scalar components in this PDE system
-    //! \param[in] ugp Numerical solution at which to evaluate the flux
-    //! \return Flux vectors for all components in this PDE system
-    //! \note The function signature must follow tk::FluxFn
-    static tk::FluxFn::result_type
-    flux( ncomp_t system,
-          [[maybe_unused]] ncomp_t ncomp,
-          const std::vector< tk::real >& ugp )
-    {
-      Assert( ugp.size() == ncomp, "Size mismatch" );
-
-      auto u = ugp[1] / ugp[0];
-      auto v = ugp[2] / ugp[0];
-      auto w = ugp[3] / ugp[0];
-      auto p = eos_pressure< tag::compflow >( system, ugp[0], u, v, w, ugp[4] );
-
-      std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
-
-      fl[0][0] = ugp[1];
-      fl[1][0] = ugp[1] * u + p;
-      fl[2][0] = ugp[1] * v;
-      fl[3][0] = ugp[1] * w;
-      fl[4][0] = u * (ugp[4] + p);
-
-      fl[0][1] = ugp[2];
-      fl[1][1] = ugp[2] * u;
-      fl[2][1] = ugp[2] * v + p;
-      fl[3][1] = ugp[2] * w;
-      fl[4][1] = v * (ugp[4] + p);
-
-      fl[0][2] = ugp[3];
-      fl[1][2] = ugp[3] * u;
-      fl[2][2] = ugp[3] * v;
-      fl[3][2] = ugp[3] * w + p;
-      fl[4][2] = w * (ugp[4] + p);
-
-      return fl;
     }
 
     //! Compute boundary flux on triangle face
