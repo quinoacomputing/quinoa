@@ -13,7 +13,8 @@ add_regression_test(cyl_advect_dg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF cyl_advect_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF cyl_advect_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(cyl_advect_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -25,7 +26,8 @@ add_regression_test(cyl_advect_dgp1 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dgp1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF cyl_advect_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF cyl_advect_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(cyl_advect_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -43,7 +45,8 @@ add_regression_test(cyl_advect_dgp1 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_dgp1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF cyl_advect_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF cyl_advect_diag.ndiff.cfg
+                    LABELS dg)
 
 # Virtualization = 0.90
 
@@ -135,7 +138,8 @@ add_regression_test(cyl_advect_dgp1_u0.90 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_dgp1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF cyl_advect_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF cyl_advect_diag.ndiff.cfg
+                    LABELS dg)
 
 # Migration + Virtualization(0.90)
 
@@ -229,7 +233,7 @@ add_regression_test(cyl_advect_dgp1_u0.90_lbfreq5_migr ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_dgp1.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF cyl_advect_diag.ndiff.cfg
-                    LABELS migration)
+                    LABELS dg migration)
 
 add_regression_test(cyl_advect_dgp1_weno_u0.90_lbfreq5_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -321,4 +325,4 @@ add_regression_test(cyl_advect_dgp1_weno_u0.90_lbfreq5_migr ${INCITER_EXECUTABLE
                     TEXT_BASELINE diag_dgp1_weno.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF cyl_advect_diag.ndiff.cfg
-                    LABELS migration)
+                    LABELS dg migration)

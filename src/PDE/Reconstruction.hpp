@@ -76,6 +76,7 @@ bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
   real t,
   const StateFn& state,
   const Fields& P,
+  const Fields& U,
   std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
   std::size_t ncomp );
 

@@ -1,39 +1,39 @@
 // *****************************************************************************
 /*!
-  \file      tests/unit/Base/TestStrConvUtil.cpp
+  \file      tests/unit/Base/TestPrintUtil.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Unit tests for Base/StrConvUtil.hpp
-  \details   Unit tests for Base/StrConvUtil.hpp
+  \brief     Unit tests for Base/PrintUtil.hpp
+  \details   Unit tests for Base/PrintUtil.hpp
 */
 // *****************************************************************************
 
 #include "NoWarning/tut.hpp"
 
 #include "TUTConfig.hpp"
-#include "StrConvUtil.hpp"
+#include "PrintUtil.hpp"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 
 namespace tut {
 
 //! All tests in group inherited from this base
-struct StrConvUtil_common {};
+struct PrintUtil_common {};
 
 //! Test group shortcuts
-using StrConvUtil_group = test_group< StrConvUtil_common, MAX_TESTS_IN_GROUP >;
-using StrConvUtil_object = StrConvUtil_group::object;
+using PrintUtil_group = test_group< PrintUtil_common, MAX_TESTS_IN_GROUP >;
+using PrintUtil_object = PrintUtil_group::object;
 
 //! Define test group
-static StrConvUtil_group StrConvUtil( "Base/StrConvUtil" );
+static PrintUtil_group PrintUtil( "Base/PrintUtil" );
 
 //! Test definitions for group
 
 //! Test tk::operator<< used for writing enum class value to output stream
 template<> template<>
-void StrConvUtil_object::test< 1 >() {
+void PrintUtil_object::test< 1 >() {
   set_test_name( "tk::operator<<( enum class )" );
 
   enum class Enum { FIRST=3, SECOND, THIRD };
@@ -51,7 +51,7 @@ void StrConvUtil_object::test< 1 >() {
 
 //! Test tk::operator<< used for writing non-enum-class to output stream
 template<> template<>
-void StrConvUtil_object::test< 2 >() {
+void PrintUtil_object::test< 2 >() {
   set_test_name( "tk::operator<<( non-enum-class )" );
 
   using tk::operator<<;
@@ -62,7 +62,7 @@ void StrConvUtil_object::test< 2 >() {
 
 //! Test tk::operator<< used for concatenating to std::basic_string for lvalues
 template<> template<>
-void StrConvUtil_object::test< 3 >() {
+void PrintUtil_object::test< 3 >() {
   set_test_name( "tk::operator<<( std::basic_string& )" );
 
   using tk::operator<<;
@@ -82,7 +82,7 @@ void StrConvUtil_object::test< 3 >() {
 
 //! Test tk::operator<< used for concatenating to std::basic_string for rvalues
 template<> template<>
-void StrConvUtil_object::test< 4 >() {
+void PrintUtil_object::test< 4 >() {
   set_test_name( "tk::operator<<( std::basic_string&& )" );
 
   using tk::operator<<;

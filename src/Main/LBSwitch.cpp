@@ -17,17 +17,12 @@
 
 using tk::LBSwitch;
 
-LBSwitch::LBSwitch( bool verbose )
+LBSwitch::LBSwitch()
 // *****************************************************************************
 //  Constructor: turn on automatic load balancing
-//! \param[in] verbose True if user selected verbose mode
 // *****************************************************************************
 {
   TurnManualLBOff();
-
-  if (CkMyPe() == 0)
-    Print( verbose ? std::cout : std::clog ).
-      diag( "Load balancing on (if enabled in Charm++)" );
 }
 
 void
@@ -43,8 +38,7 @@ LBSwitch::off()
 {
   TurnManualLBOn();
 
-  if (CkMyPe() == 0)
-    Print( std::cout ).diag( "Load balancing off" );
+  if (CkMyPe() == 0) Print( "", std::cout ).diag( "Load balancing off" );
 }
 
 #include "NoWarning/lbswitch.def.h"

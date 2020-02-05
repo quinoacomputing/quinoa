@@ -46,17 +46,17 @@ using selects = tk::TaggedTuple< brigand::list<
 
 //! Adaptive-mesh refinement options
 using amr = tk::TaggedTuple< brigand::list<
-    tag::amr,     bool                             //!< AMR on/off
-  , tag::t0ref,   bool                             //!< AMR before t<0 on/off
-  , tag::dtref,   bool                             //!< AMR during t>0 on/off
-  , tag::dtref_uniform, bool                       //!< Force dtref uniform-only
+    tag::amr,     bool                            //!< AMR on/off
+  , tag::t0ref,   bool                            //!< AMR before t<0 on/off
+  , tag::dtref,   bool                            //!< AMR during t>0 on/off
+  , tag::dtref_uniform, bool                      //!< Force dtref uniform-only
   , tag::dtfreq,  kw::amr_dtfreq::info::expect::type //!< Refinement frequency
-  , tag::init,    std::vector< AMRInitialType >    //!< List of initial AMR types
-  , tag::refvar,  std::vector< std::string >       //!< List of refinement vars
-  , tag::id,      std::vector< std::size_t >       //!< List of refvar indices
-  , tag::error,   AMRErrorType                     //!< Error estimator for AMR
-  , tag::tolref,  tk::real                         //!< Refine tolerance
-  , tag::tolderef, tk::real                        //!< De-refine tolerance
+  , tag::init,    std::vector< AMRInitialType >   //!< List of initial AMR types
+  , tag::refvar,  std::vector< std::string >      //!< List of refinement vars
+  , tag::id,      std::vector< std::size_t >      //!< List of refvar indices
+  , tag::error,   AMRErrorType                    //!< Error estimator for AMR
+  , tag::tolref,  tk::real                        //!< Refine tolerance
+  , tag::tolderef, tk::real                       //!< De-refine tolerance
   //! List of edges-node pairs
   , tag::edge,    std::vector< kw::amr_edgelist::info::expect::type >
   //! Refinement tagging edges with end-point coordinates lower than x coord
@@ -102,7 +102,8 @@ using discretization = tk::TaggedTuple< brigand::list<
 
 //! ASCII output floating-point precision in digits
 using precision = tk::TaggedTuple< brigand::list<
-    tag::diag, kw::precision::info::expect::type //!< Diagnostics output precision
+    //! Diagnostics output precision
+    tag::diag, kw::precision::info::expect::type
 > >;
 
 //! ASCII output floating-point format
@@ -119,17 +120,25 @@ using intervals = tk::TaggedTuple< brigand::list<
 
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
-    tag::control,     kw::control::info::expect::type //!< Control filename
-  , tag::input,       std::string                     //!< Input filename
-  , tag::output,      std::string                     //!< Output filename
-  , tag::diag,        std::string                     //!< Diagnostics filename
-  , tag::part,        std::string                     //!< Particles filename
-  , tag::restart,     std::string                     //!< Restart dirname
+    tag::control,   kw::control::info::expect::type //!< Control filename
+  , tag::input,     kw::input::info::expect::type   //!< Input filename
+  , tag::output,    kw::output::info::expect::type  //!< Output filename
+    //! Diagnostics filename
+  , tag::diag,      kw::diagnostics_cmd::info::expect::type
+  , tag::part,      std::string                     //!< Particles filename
+  , tag::restart,   kw::restart::info::expect::type //!< Restart dirname
 > >;
 
 //! Error/diagnostics output configuration
 using diagnostics = tk::TaggedTuple< brigand::list<
   tag::error,       std::vector< tk::ctr::ErrorType > //!< Errors to compute
+> >;
+
+//! Initial condition configuration
+using ic = tk::TaggedTuple< brigand::list<
+    tag::densityic,         std::vector< kw::densityic::info::expect::type >
+  , tag::velocityic,        std::vector< kw::velocityic::info::expect::type >
+  , tag::pressureic,        std::vector< kw::pressureic::info::expect::type >
 > >;
 
 //! Boundary condition configuration
@@ -142,9 +151,7 @@ using bc = tk::TaggedTuple< brigand::list<
                               kw::sideset::info::expect::type > >
   , tag::bcoutlet,          std::vector< std::vector<
                               kw::sideset::info::expect::type > >
-  , tag::bcextrapolate,     std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcsubsonicoutlet,  std::vector< std::vector<
+  , tag::bccharacteristic,  std::vector< std::vector<
                               kw::sideset::info::expect::type > >
   , tag::bcextrapolate,     std::vector< std::vector<
                               kw::sideset::info::expect::type > >
@@ -169,9 +176,14 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
+  , tag::farfield_pressure,
+                        std::vector< kw::farfield_pressure::info::expect::type >
+  , tag::farfield_density,
+                        std::vector< kw::farfield_density::info::expect::type >
+  , tag::farfield_velocity, std::vector< std::vector<
+                              kw::farfield_velocity::info::expect::type > >
   , tag::bc,            bc
-  , tag::farfield_pressure, std::vector<
-                              kw::farfield_pressure::info::expect::type >
+  , tag::ic,            ic
   //! System FCT character
   , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system
@@ -222,6 +234,8 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
+  , tag::farfield_pressure, std::vector<
+                              kw::farfield_pressure::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)

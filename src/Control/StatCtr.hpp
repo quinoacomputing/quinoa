@@ -149,9 +149,9 @@ static std::string operator+ ( const std::string& lhs, const Product& p ) {
   std::stringstream ss;
   ss << lhs;
   if (!p.empty()) {
-    ss << "<";
+    ss << '<';
     for (const auto& w : p) ss << w;
-    ss << ">";
+    ss << '>';
   }
   std::string rhs = ss.str();
   return rhs;
@@ -164,9 +164,9 @@ static std::string operator+ ( const std::string& lhs, const Product& p ) {
 static
 std::ostream& operator<< ( std::ostream& os, const Product& p ) {
   if (!p.empty()) {
-    os << "<";
+    os << '<';
     for (const auto& w : p) os << w;
-    os << "> ";
+    os << '>';
   }
   return os;
 }

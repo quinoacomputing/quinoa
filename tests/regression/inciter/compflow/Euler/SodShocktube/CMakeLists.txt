@@ -12,7 +12,8 @@ add_regression_test(compflow_euler_sodshocktube ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS diagcg)
 
 add_regression_test(compflow_euler_sodshocktube_alecg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -23,7 +24,8 @@ add_regression_test(compflow_euler_sodshocktube_alecg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_alecg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS alecg)
 
 add_regression_test(compflow_euler_sodshocktube_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -35,7 +37,8 @@ add_regression_test(compflow_euler_sodshocktube_dg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(compflow_euler_sodshocktube_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -47,7 +50,8 @@ add_regression_test(compflow_euler_sodshocktube_p0p1 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(compflow_euler_rotated_sodshocktube_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -63,7 +67,8 @@ add_regression_test(compflow_euler_rotated_sodshocktube_dg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_rotated_dg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS dg)
 
 add_regression_test(compflow_euler_sodshocktube_pdg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -75,7 +80,8 @@ add_regression_test(compflow_euler_sodshocktube_pdg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel
 
@@ -95,7 +101,8 @@ add_regression_test(compflow_euler_sodshocktube_pdg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + virtualization
 
@@ -146,7 +153,8 @@ add_regression_test(compflow_euler_sodshocktube_pdg_u0.8 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg)
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + virtualization + migration
 
@@ -198,7 +206,7 @@ add_regression_test(compflow_euler_sodshocktube_pdg_u0.8_migr ${INCITER_EXECUTAB
                     TEXT_BASELINE diag_pdg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
-                    LABELS migration)
+                    LABELS dg migration)
 
 add_regression_test(compflow_euler_sodshocktube_u0.8_migr ${INCITER_EXECUTABLE}
                     NUMPES 2 PPN 1
@@ -227,7 +235,7 @@ add_regression_test(compflow_euler_sodshocktube_u0.8_migr ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_pe2.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
-                    LABELS migration)
+                    LABELS diagcg migration)
 
 add_regression_test(compflow_euler_sodshocktube_alecg_u0.8_migr
                     ${INCITER_EXECUTABLE}
@@ -278,4 +286,4 @@ add_regression_test(compflow_euler_sodshocktube_alecg_u0.8_migr
                     TEXT_BASELINE diag_alecg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
-                    LABELS migration)
+                    LABELS alecg migration)

@@ -20,7 +20,7 @@ module distributor {
   namespace walker {
 
     chare Distributor {
-      entry Distributor( const ctr::CmdLine& cmdline );
+      entry Distributor();
       entry [reductiontarget] void registered();
       entry [reductiontarget] void nostat();
       entry [reductiontarget] void estimateOrd( tk::real ord[n], int n );

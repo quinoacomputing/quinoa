@@ -10,13 +10,12 @@
 */
 // *****************************************************************************
 
-#include <utility>
-#include <memory>
-
 #include "Types.hpp"
 #include "Tags.hpp"
 #include "FileConvDriver.hpp"
 #include "FileConvWriter.hpp"
+#include "TaggedTupleDeepPrint.hpp"
+#include "Writer.hpp"
 
 #include "NoWarning/fileconv.decl.h"
 
@@ -24,8 +23,7 @@ using fileconv::FileConvDriver;
 
 extern CProxy_Main mainProxy;
 
-FileConvDriver::FileConvDriver( const tk::Print&,
-                                const ctr::CmdLine& cmdline )
+FileConvDriver::FileConvDriver( const ctr::CmdLine& cmdline )
   : m_input(), m_output()
 // *****************************************************************************
 //  Constructor
@@ -37,6 +35,11 @@ FileConvDriver::FileConvDriver( const tk::Print&,
   m_input = cmdline.get< tag::io, tag::input >();
   // Save output file name
   m_output = cmdline.get< tag::io, tag::output >();
+
+  // Output command line object to file
+  auto logfilename = tk::fileconv_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), "cmdline", cmdline );
 }
 
 void

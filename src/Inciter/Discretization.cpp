@@ -517,7 +517,9 @@ Discretization::status()
     auto grind_time = duration_cast< ms >( clock::now() - m_prevstatus ).count();
     m_prevstatus = clock::now();
 
-    tk::Print print( verbose ? std::cout : std::clog );
+    tk::Print print( tk::inciter_executable() + "_screen.log",
+                     verbose ? std::cout : std::clog,
+                     std::ios_base::app );
  
     // Output one-liner
     print << std::setfill(' ') << std::setw(8) << m_it << "  "

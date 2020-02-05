@@ -1150,7 +1150,7 @@ DG::writeFields( CkCallback c ) const
     std::vector< std::vector< tk::real > > elemfields;
     auto u = m_u;
     for (const auto& eq : g_dgpde) {
-      auto o = eq.fieldOutput( d->T(), m_geoElem, u );
+      auto o = eq.fieldOutput( d->T(), m_geoElem, u, m_p );
 
       // cut off ghost elements
       for (auto& f : o) f.resize( esuel.size()/4 );
@@ -1577,7 +1577,10 @@ DG::solve( tk::real newdt )
 
   // Update primitives based on the evolved solution
   for (const auto& eq : g_dgpde)
+  {
     eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
+    eq.cleanTraceMaterial( m_geoElem, m_u, m_p, m_fd.Esuel().size()/4 );
+  }
 
   if (m_stage < 2) {
 

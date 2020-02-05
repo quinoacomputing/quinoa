@@ -26,7 +26,7 @@ using namespace tao;
 
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
-    tag::input, std::string    //!< Input filename
+    tag::input,  std::string   //!< Input filename
   , tag::output, std::string   //!< Output filename
 > >;
 

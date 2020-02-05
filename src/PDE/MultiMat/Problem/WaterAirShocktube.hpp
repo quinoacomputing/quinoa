@@ -16,7 +16,6 @@
 #define MultiMatProblemWaterAirShocktube_h
 
 #include <string>
-#include <unordered_set>
 
 #include "Types.hpp"
 #include "Fields.hpp"
@@ -58,7 +57,8 @@ class MultiMatProblemWaterAirShocktube {
                  tk::real /*V*/,
                  const std::vector< tk::real >& /*vol*/,
                  const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-                 tk::Fields& U );
+                 tk::Fields& U,
+                 const tk::Fields& P );
 
     //! Return names of integral variables to be output to diagnostics file
     static std::vector< std::string > names( ncomp_t );

@@ -149,6 +149,38 @@ tk::real eos_totalenergy( ncomp_t system,
   return rhoE;
 }
 
+//! \brief Calculate material temperature from the material density, and
+//!   material specific total energy
+//! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
+//! \param[in] system Equation system index
+//! \param[in] rho Material density
+//! \param[in] u X-velocity
+//! \param[in] v Y-velocity
+//! \param[in] w Z-velocity
+//! \param[in] rhoE Material specific total energy
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \return Material temperature using the stiffened-gas EoS
+template< class Eq >
+tk::real eos_temperature( ncomp_t system,
+                          tk::real rho,
+                          tk::real u,
+                          tk::real v,
+                          tk::real w,
+                          tk::real rhoE,
+                          std::size_t imat=0 )
+{
+  // query input deck to get gamma, p_c, cv
+  auto p_c =
+    g_inputdeck.get< tag::param, Eq, tag::pstiff >()[ system ][imat];
+  auto cv =
+    g_inputdeck.get< tag::param, Eq, tag::cv >()[ system ][imat];
+
+  tk::real t = (rhoE - 0.5 * rho * (u*u + v*v + w*w) - p_c) / (rho*cv);
+  return t;
+}
+
 } //inciter::
 
 #endif // EoS_h
