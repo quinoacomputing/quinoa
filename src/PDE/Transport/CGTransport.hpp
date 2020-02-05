@@ -141,15 +141,12 @@ class Transport {
               const std::unordered_map< tk::UnsMesh::Edge,
                         std::array< tk::real, 3 >,
                         tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfn,
-              const std::unordered_map< tk::UnsMesh::Edge,
-                        std::array< tk::real, 3 >,
-                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& /*dfnc*/,
               const std::unordered_map< std::size_t,
                       std::array< tk::real, 4 > >& bnorm,
               const std::vector< tk::real >& vol,
               const tk::Fields& G,
               const tk::Fields& U,
-              tk::Fields& R) const
+              tk::Fields& R ) const
     {
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
