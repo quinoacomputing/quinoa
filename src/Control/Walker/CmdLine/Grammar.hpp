@@ -104,7 +104,8 @@ namespace cmd {
                      license,
                      io< kw::control, tag::control >,
                      io< kw::pdf, tag::pdf >,
-                     io< kw::stat, tag::stat > > {};
+                     io< kw::stat, tag::stat >,
+                     io< kw::particles, tag::particles > > {};
 
   //! entry point: parse keywords and until end of string
   struct read_string :

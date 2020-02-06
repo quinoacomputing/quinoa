@@ -14,23 +14,26 @@ module integrator {
 
   extern module distributor;
   extern module collector;
+  extern module particlewriter;
 
   namespace walker {
 
     array [1D] Integrator {
       entry Integrator( CProxy_Distributor hostproxy,
                         CProxy_Collector collproxy,
+                        tk::CProxy_ParticleWriter particlewriterproxy,
                         uint64_t npar );
       entry void setup( tk::real dt,
                         tk::real t,
                         uint64_t it,
                         const std::map< tk::ctr::Product, tk::real >& moments );
-      entry void advance( tk::real dt,
-                          tk::real t,
-                          uint64_t it,
-                          const std::map< tk::ctr::Product, tk::real >& moments
-      );
-      entry void accumulateOrd( uint64_t it, tk::real t, tk::real dt );
+      entry
+        void advance( tk::real dt,
+                      tk::real t,
+                      uint64_t it,
+                      const std::map< tk::ctr::Product, tk::real >& moments );
+      entry void out();
+      entry void accumulate();
       entry void accumulateCen( uint64_t it,
                                 tk::real t,
                                 tk::real dt,
