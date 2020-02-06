@@ -1855,6 +1855,22 @@ struct ttyi_info {
 };
 using ttyi = keyword< ttyi_info, TAOCPP_PEGTL_STRING("ttyi") >;
 
+struct pari_info {
+  static std::string name() { return "pari"; }
+  static std::string shortDescription() { return
+    "Set particles output  interval"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the interval in time steps for particles
+    output during a simulation.)";
+  }
+  struct expect {
+    using type = uint32_t;
+    static constexpr type lower = 1;
+    static std::string description() { return "uint"; }
+  };
+};
+using pari = keyword< pari_info, TAOCPP_PEGTL_STRING("pari") >;
+
 struct interval_info {
   static std::string name() { return "interval"; }
   static std::string shortDescription() { return
@@ -3783,6 +3799,22 @@ struct stat_info {
   };
 };
 using stat = keyword< stat_info, TAOCPP_PEGTL_STRING("stat") >;
+
+struct particles_info {
+  static std::string name() { return "particles"; }
+  static std::string shortDescription() { return
+    "Specify the name of the particles position output file"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the name of the output file in which to
+    store particles positions during a simulation.)";
+  }
+  using alias = Alias< x >;
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using particles = keyword< particles_info, TAOCPP_PEGTL_STRING("particles") >;
 
 struct input_info {
   static std::string name() { return "input"; }

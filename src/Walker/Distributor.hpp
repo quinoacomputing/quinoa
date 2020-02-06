@@ -96,8 +96,8 @@ class Distributor : public CBase_Distributor {
   private:
     //! Type alias for output indicators
     using OutputIndicators = tk::TaggedTuple< brigand::list<
-                                 tag::stat, bool
-                               , tag::pdf,  bool
+                                 tag::stat,      bool
+                               , tag::pdf,       bool
                              > >;
 
     OutputIndicators m_output;                  //!< Output indicators

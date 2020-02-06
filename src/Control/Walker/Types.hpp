@@ -69,9 +69,14 @@ using floatformat = tk::TaggedTuple< brigand::list<
 
 //! Output intervals storage
 using intervals = tk::TaggedTuple< brigand::list<
-    tag::tty,  kw::ttyi::info::expect::type      //!< TTY output interval
-  , tag::stat, kw::interval::info::expect::type  //!< Statistics output interval
-  , tag::pdf,  kw::interval::info::expect::type  //!< PDF output interval
+    //! TTY output interval
+    tag::tty,  kw::ttyi::info::expect::type
+    //! Statistics output interval
+  , tag::stat, kw::interval::info::expect::type
+    //! Particles output interval
+  , tag::particles, kw::interval::info::expect::type
+    //! PDF output interval
+  , tag::pdf,  kw::interval::info::expect::type
 > >;
 
 //! IO parameters storage
@@ -81,6 +86,7 @@ using ios = tk::TaggedTuple< brigand::list<
   , tag::output,    std::string                     //!< Output filename
   , tag::pdf,       kw::pdf::info::expect::type     //!< PDF filename
   , tag::stat,      kw::stat::info::expect::type    //!< Statistics filename
+  , tag::particles, std::string                     //!< Particles filename
   , tag::pdfnames,  std::vector< std::string >      //!< PDF identifiers
 > >;
 

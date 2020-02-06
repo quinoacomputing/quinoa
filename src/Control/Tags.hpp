@@ -139,6 +139,7 @@ struct matched {};
 struct compatibility {};
 struct bndint {};
 struct part { static std::string name() { return "part"; } };
+struct particles { static std::string name() { return "particles"; } };
 struct centroid {};
 struct ncomp { static std::string name() { return "ncomp"; } };
 struct nmat { static std::string name() { return "nmat"; } };

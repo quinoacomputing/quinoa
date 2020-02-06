@@ -9,11 +9,10 @@
              warnings.
 */
 // *****************************************************************************
+#ifndef nowarning_particlewriter_def_h
+#define nowarning_particlewriter_def_h
 
-// Note the absence of include guards. This is because the Charm++ definition
-// file included below may need to be included multiple times in a single
-// translation unit: one guarded by CK_TEMPLATES_ONLY and one without, where
-// each inclusion will generate different code.
+#include "Macro.hpp"
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -27,6 +26,7 @@
   #pragma clang diagnostic ignored "-Wunused-variable"
   #pragma clang diagnostic ignored "-Wcast-qual"
   #pragma clang diagnostic ignored "-Wmissing-noreturn"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
@@ -34,6 +34,7 @@
   #pragma GCC diagnostic ignored "-Wreorder"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wunused-variable"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif
 
 #include "../IO/particlewriter.def.h"
@@ -43,3 +44,5 @@
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif
+
+#endif // nowarning_charestatecollector_def_h

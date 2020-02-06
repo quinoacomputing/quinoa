@@ -126,7 +126,7 @@ using ios = tk::TaggedTuple< brigand::list<
   , tag::output,    kw::output::info::expect::type  //!< Output filename
     //! Diagnostics filename
   , tag::diag,      kw::diagnostics_cmd::info::expect::type
-  , tag::part,      std::string                     //!< Particles filename
+  , tag::particles, std::string                     //!< Particles filename
   , tag::restart,   kw::restart::info::expect::type //!< Restart dirname
 > >;
 
