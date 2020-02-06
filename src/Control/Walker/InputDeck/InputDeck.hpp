@@ -255,6 +255,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       // Default intervals
       get< tag::interval, tag::tty >() = 1;
       get< tag::interval, tag::stat >() = 1;
+      get< tag::interval, tag::particles >() = 1;
       get< tag::interval, tag::pdf >() = 1;
       // Default requested statistics
       get< tag::stat >() = std::vector< tk::ctr::Product >();

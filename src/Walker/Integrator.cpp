@@ -28,15 +28,18 @@ using walker::Integrator;
 
 Integrator::Integrator( CProxy_Distributor hostproxy,
                         CProxy_Collector collproxy,
+                        tk::CProxy_ParticleWriter particlewriterproxy,
                         uint64_t npar ) :
-  m_hostproxy( hostproxy ),
-  m_collproxy( collproxy ),
+  m_host( hostproxy ),
+  m_coll( collproxy ),
+  m_particlewriter( particlewriterproxy ),
   m_particles( npar, g_inputdeck.get< tag::component >().nprop() ),
   m_stat( m_particles,
           g_inputdeck.get< tag::component >().offsetmap( g_inputdeck ),
           g_inputdeck.get< tag::stat >(),
           g_inputdeck.get< tag::pdf >(),
-          g_inputdeck.get< tag::discr, tag::binsize >() )
+          g_inputdeck.get< tag::discr, tag::binsize >() ),
+  m_itp( 0 )
 // *****************************************************************************
 // Constructor
 //! \param[in] hostproxy Host proxy to call back to
@@ -45,16 +48,15 @@ Integrator::Integrator( CProxy_Distributor hostproxy,
 // *****************************************************************************
 {
   // register with the local branch of the statistics collector
-  m_collproxy.ckLocalBranch()->checkin();
+  m_coll.ckLocalBranch()->checkin();
   // Tell the Charm++ runtime system to call back to
   // Distributor::registered() once all Integrator chares have registered
   // themselves, i.e., checked in, with their local branch of the statistics
   // merger group, Collector. The reduction is done via creating a callback
-  // that invokes the typed reduction client, where m_hostproxy is the proxy
+  // that invokes the typed reduction client, where m_host is the proxy
   // on which the reduction target method, registered(), is called upon
   // completion of the reduction.
-  contribute(
-    CkCallback(CkReductionTarget( Distributor, registered ), m_hostproxy) );
+  contribute( CkCallback(CkReductionTarget(Distributor, registered), m_host) );
 }
 
 void
@@ -103,9 +105,25 @@ Integrator::advance( tk::real dt,
     for (const auto& e : g_diffeqs)
       e.advance( m_particles, CkMyPe(), dt, t, moments );
 
+  // Output particles data to file if we hit the particles output frequency
+  const auto parfreq = g_inputdeck.get< tag::interval, tag::particles >();
+  const auto nposeq =
+    g_inputdeck.get< tag::param, tag::position, tag::depvar >().size();
+  auto c = CkCallback(CkReductionTarget(Distributor, particlesOut), m_host);
+  if (nposeq > 0 && !(it % parfreq)) {
+    // query position eq offset in particle array (0: only write first particle
+    // position eq)
+    auto po = g_inputdeck.get< tag::component >().offset< tag::position >( 0 );
+    // extract particle positions
+    m_particlewriter[ CkNodeFirst( CkMyNode() ) ].
+      writeCoords( m_itp++, m_particles.extract(0,po),
+                   m_particles.extract(1,po), m_particles.extract(2,po), c );
+  } else {
+    c.send();
+  }
+
   if (!g_inputdeck.stat()) {// if no stats to estimate, skip to end of time step
-    contribute(
-      CkCallback(CkReductionTarget( Distributor, nostat ), m_hostproxy) );
+    contribute( CkCallback(CkReductionTarget(Distributor, nostat), m_host) );
   } else {
     // Accumulate sums for ordinary moments (every time step)
     accumulateOrd( it, t, dt );
@@ -138,10 +156,10 @@ Integrator::accumulateOrd( uint64_t it, tk::real t, tk::real dt )
 
   // Send accumulated ordinary moments and ordinary PDFs to collector for
   // estimation
-  m_collproxy.ckLocalBranch()->chareOrd( m_stat.ord(),
-                                         m_stat.oupdf(),
-                                         m_stat.obpdf(),
-                                         m_stat.otpdf() );
+  m_coll.ckLocalBranch()->chareOrd( m_stat.ord(),
+                                    m_stat.oupdf(),
+                                    m_stat.obpdf(),
+                                    m_stat.otpdf() );
 }
 
 void
@@ -173,10 +191,10 @@ Integrator::accumulateCen( uint64_t it,
     m_stat.accumulateCenPDF( ord );
 
   // Send accumulated central moments to host for estimation
-  m_collproxy.ckLocalBranch()->chareCen( m_stat.ctr(),
-                                         m_stat.cupdf(),
-                                         m_stat.cbpdf(),
-                                         m_stat.ctpdf() );
+  m_coll.ckLocalBranch()->chareCen( m_stat.ctr(),
+                                    m_stat.cupdf(),
+                                    m_stat.cbpdf(),
+                                    m_stat.ctpdf() );
 }
 
 #include "NoWarning/integrator.def.h"

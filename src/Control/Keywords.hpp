@@ -3784,6 +3784,22 @@ struct stat_info {
 };
 using stat = keyword< stat_info, TAOCPP_PEGTL_STRING("stat") >;
 
+struct particles_info {
+  static std::string name() { return "particles"; }
+  static std::string shortDescription() { return
+    "Specify the name of the particles output file"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the name of the output file in which to
+    store particles during a simulation.)";
+  }
+  using alias = Alias< P >;
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using particles = keyword< particles_info, TAOCPP_PEGTL_STRING("particles") >;
+
 struct input_info {
   static std::string name() { return "input"; }
   static std::string shortDescription() { return "Specify the input file"; }

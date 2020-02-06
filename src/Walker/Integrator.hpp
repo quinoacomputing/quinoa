@@ -48,6 +48,7 @@ class Integrator : public CBase_Integrator {
     //! Constructor
     explicit Integrator( CProxy_Distributor hostproxy,
                          CProxy_Collector collproxy,
+                         tk::CProxy_ParticleWriter particlewriterproxy,
                          uint64_t npar );
 
     //! Migrate constructor
@@ -55,10 +56,10 @@ class Integrator : public CBase_Integrator {
     explicit Integrator( CkMigrateMessage* ) :
       m_particles( 0, g_inputdeck.get< tag::component >().nprop() ),
       m_stat( m_particles,
-                g_inputdeck.get< tag::component >().offsetmap( g_inputdeck ),
-                g_inputdeck.get< tag::stat >(),
-                g_inputdeck.get< tag::pdf >(),
-                g_inputdeck.get< tag::discr, tag::binsize >() ) {}
+              g_inputdeck.get< tag::component >().offsetmap( g_inputdeck ),
+              g_inputdeck.get< tag::stat >(),
+              g_inputdeck.get< tag::pdf >(),
+              g_inputdeck.get< tag::discr, tag::binsize >() ) {}
 
     //! Perform setup: set initial conditions and advance a time step
     void setup( tk::real dt,
@@ -85,10 +86,12 @@ class Integrator : public CBase_Integrator {
                         const std::vector< tk::real >& ord );
 
   private:
-    CProxy_Distributor m_hostproxy;     //!< Host proxy
-    CProxy_Collector m_collproxy;       //!< Collector proxy
-    tk::Particles m_particles;          //!< Particle properties
-    tk::Statistics m_stat;              //!< Statistics
+    CProxy_Distributor m_host;     //!< Host proxy
+    CProxy_Collector m_coll;       //!< Collector proxy
+    tk::CProxy_ParticleWriter m_particlewriter;  //!< Particle writer proxy
+    tk::Particles m_particles;     //!< Particle properties
+    tk::Statistics m_stat;         //!< Statistics
+    uint64_t m_itp;                //!< Particle position output iteration count
 };
 
 #if defined(__clang__)

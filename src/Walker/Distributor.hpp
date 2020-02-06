@@ -93,11 +93,15 @@ class Distributor : public CBase_Distributor {
     //! Charm++ reduction target enabling shortcutting sync points if no stats
     void nostat();
 
+    //! \brief Charm++ reduction target signaling that all particles positions
+    //!    have been output
+    void particlesOut();
+
   private:
     //! Type alias for output indicators
     using OutputIndicators = tk::TaggedTuple< brigand::list<
-                                 tag::stat, bool
-                               , tag::pdf,  bool
+                                 tag::stat,      bool
+                               , tag::pdf,       bool
                              > >;
 
     OutputIndicators m_output;                  //!< Output indicators

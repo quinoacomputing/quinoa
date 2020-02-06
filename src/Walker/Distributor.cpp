@@ -74,11 +74,14 @@ Distributor::Distributor() :
 // Constructor
 // *****************************************************************************
 {
+  // Get command line object reference
+  const auto& cmd = g_inputdeck.get< tag::cmd >();
+
   // Compute load distribution given total work (= number of particles) and
   // user-specified virtualization
   uint64_t chunksize = 0, remainder = 0;
   auto nchare = tk::linearLoadDistributor(
-                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
+                  cmd.get< tag::virtualization >(),
                   g_inputdeck.get< tag::discr, tag::npar >(),
                   CkNumPes(),
                   chunksize,
@@ -99,7 +102,7 @@ Distributor::Distributor() :
 
   // Output header for statistics output file
   tk::TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
-                        g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
+                        cmd.get< tag::io, tag::stat >() :
                         std::string(),
                         g_inputdeck.get< tag::flformat, tag::stat >(),
                         g_inputdeck.get< tag::prec, tag::stat >() );
@@ -125,9 +128,13 @@ Distributor::Distributor() :
   // Create statistics merger chare group collecting chare contributions
   CProxy_Collector collproxy = CProxy_Collector::ckNew( thisProxy );
 
+  // Create partcle writer Charm++ chare group
+  tk::CProxy_ParticleWriter particlewriter =
+    tk::CProxy_ParticleWriter::ckNew( cmd.get< tag::io, tag::particles >() );
+
   // Fire up asynchronous differential equation integrators
   m_intproxy =
-    CProxy_Integrator::ckNew( thisProxy, collproxy, chunksize,
+    CProxy_Integrator::ckNew( thisProxy, collproxy, particlewriter, chunksize,
                               static_cast<int>( nchare ) );
 }
 
@@ -142,6 +149,9 @@ Distributor::info( const WalkerPrint& print,
 //! \param[in] nchare Total number of Charem++ Integrator chares doing work
 // *****************************************************************************
 {
+  // Get command line object reference
+  const auto& cmd = g_inputdeck.get< tag::cmd >();
+
   print.part( "Factory" );
 
   // Print out info data layout
@@ -175,9 +185,11 @@ Distributor::info( const WalkerPrint& print,
   // Print I/O filenames
   print.section( "Output filenames" );
   if (!g_inputdeck.get< tag::stat >().empty())
-    print.item( "Statistics", g_inputdeck.get< tag::cmd, tag::io, tag::stat >() );
+    print.item( "Statistics", cmd.get< tag::io, tag::stat >() );
   if (!g_inputdeck.get< tag::pdf >().empty())
-    print.item( "PDF", g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() );
+    print.item( "PDF", cmd.get< tag::io, tag::pdf >() );
+  if (!g_inputdeck.get< tag::param, tag::position, tag::depvar >().empty())
+    print.item( "Particle positions", cmd.get< tag::io, tag::particles >() );
 
   // Print discretization parameters
   print.section( "Discretization parameters" );
@@ -190,11 +202,14 @@ Distributor::info( const WalkerPrint& print,
 
   // Print output intervals
   print.section( "Output intervals" );
-  print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
+  const auto& interval = g_inputdeck.get< tag::interval >();
+  print.item( "TTY", interval.get< tag::tty>() );
   if (!g_inputdeck.get< tag::stat >().empty())
-    print.item( "Statistics", g_inputdeck.get< tag::interval, tag::stat >() );
+    print.item( "Statistics", interval.get< tag::stat >() );
   if (!g_inputdeck.get< tag::pdf >().empty())
-    print.item( "PDF", g_inputdeck.get< tag::interval, tag::pdf >() );
+    print.item( "PDF", interval.get< tag::pdf >() );
+  if (!g_inputdeck.get< tag::param, tag::position, tag::depvar >().empty())
+    print.item( "Particle positions", interval.get< tag::particles >() );
 
   // Print out statistics estimated
   print.statistics( "Statistical moments and distributions" );
@@ -223,6 +238,16 @@ Distributor::computedt()
 {
   // Simply return a constant user-defined dt for now
   return g_inputdeck.get< tag::discr, tag::dt >();
+}
+
+void
+Distributor::particlesOut()
+// *****************************************************************************
+// Charm++ reduction target signaling that all particles positions have been
+// output
+// *****************************************************************************
+{
+  particlesOutputDone();
 }
 
 void
@@ -698,7 +723,10 @@ Distributor::header( const WalkerPrint& print ) const
     "        dt - time step size\n"
     "       ETE - estimated time elapsed (h:m:s)\n"
     "       ETA - estimated time for accomplishment (h:m:s)\n"
-    "       out - output-saved flags (S: statistics, P: PDFs)\n",
+    "       out - status flags, legend:\n"
+    "             s - statistics\n"
+    "             p - PDFs\n"
+    "             x - particle positions\n",
     "\n      it             t            dt        ETE        ETA   out\n"
       " ---------------------------------------------------------------\n" );
 }
@@ -710,6 +738,10 @@ Distributor::report()
 // *****************************************************************************
 {
   if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
+
+  const auto parfreq = g_inputdeck.get< tag::interval, tag::particles >();
+  const auto nposeq =
+    g_inputdeck.get< tag::param, tag::position, tag::depvar >().size();
 
     // estimated time elapsed and for accomplishment
     tk::Timer::Watch ete, eta;
@@ -733,8 +765,9 @@ Distributor::report()
           << std::setw(2) << eta.sec.count() << "  ";
 
     // Augment one-liner with output indicators
-    if (m_output.get< tag::stat >()) print << 'S';
-    if (m_output.get< tag::pdf >()) print << 'P';
+    if (m_output.get< tag::stat >()) print << 's';
+    if (m_output.get< tag::pdf >()) print << 'p';
+    if (nposeq > 0 && !(m_it % parfreq)) print << 'x';
 
     // Reset output indicators
     m_output.get< tag::stat >() = false;

@@ -20,6 +20,7 @@ target_include_directories(Walker PUBLIC
                            ${QUINOA_SOURCE_DIR}/Statistics
                            ${PROJECT_BINARY_DIR}/../Base
                            ${PROJECT_BINARY_DIR}/../Main
+                           ${PROJECT_BINARY_DIR}/../IO
                            ${PROJECT_BINARY_DIR}/../Walker
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
@@ -34,6 +35,11 @@ addCharmModule( "integrator" "Walker" )
 # Walker refers to the main Charm++ proxy defined in the Charm++ module
 # walker (in Main/Walker.cpp).
 add_dependencies( "Walker" "walkerCharmModule" )
+
+# Add extra dependency of Integrator charm module on ParticleWriter charm
+# module. This is required so that particlewriter.decl.h and
+# particlewriter.def.h are generated before Distributor including those.
+add_dependencies( "integratorCharmModule" "particlewriterCharmModule" )
 
 set_target_properties(Walker PROPERTIES LIBRARY_OUTPUT_NAME quinoa_walker)
 
