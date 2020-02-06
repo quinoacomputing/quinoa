@@ -209,7 +209,7 @@ Distributor::info( const WalkerPrint& print,
   if (!g_inputdeck.get< tag::pdf >().empty())
     print.item( "PDF", interval.get< tag::pdf >() );
   if (!g_inputdeck.get< tag::param, tag::position, tag::depvar >().empty())
-    print.item( "Particle positions", interval.get< tag::particles >() );
+    print.item( "Particles", interval.get< tag::particles >() );
 
   // Print out statistics estimated
   print.statistics( "Statistical moments and distributions" );
@@ -238,16 +238,6 @@ Distributor::computedt()
 {
   // Simply return a constant user-defined dt for now
   return g_inputdeck.get< tag::discr, tag::dt >();
-}
-
-void
-Distributor::particlesOut()
-// *****************************************************************************
-// Charm++ reduction target signaling that all particles positions have been
-// output
-// *****************************************************************************
-{
-  particlesOutputDone();
 }
 
 void
@@ -724,9 +714,9 @@ Distributor::header( const WalkerPrint& print ) const
     "       ETE - estimated time elapsed (h:m:s)\n"
     "       ETA - estimated time for accomplishment (h:m:s)\n"
     "       out - status flags, legend:\n"
-    "             s - statistics\n"
-    "             p - PDFs\n"
-    "             x - particle positions\n",
+    "             s - statistics output\n"
+    "             p - PDFs output\n"
+    "             x - particle positions output\n",
     "\n      it             t            dt        ETE        ETA   out\n"
       " ---------------------------------------------------------------\n" );
 }
@@ -740,8 +730,8 @@ Distributor::report()
   if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
 
   const auto parfreq = g_inputdeck.get< tag::interval, tag::particles >();
-  const auto nposeq =
-    g_inputdeck.get< tag::param, tag::position, tag::depvar >().size();
+  const auto poseq =
+    !g_inputdeck.get< tag::param, tag::position, tag::depvar >().empty();
 
     // estimated time elapsed and for accomplishment
     tk::Timer::Watch ete, eta;
@@ -767,7 +757,7 @@ Distributor::report()
     // Augment one-liner with output indicators
     if (m_output.get< tag::stat >()) print << 's';
     if (m_output.get< tag::pdf >()) print << 'p';
-    if (nposeq > 0 && !(m_it % parfreq)) print << 'x';
+    if (poseq && !(m_it % parfreq)) print << 'x';
 
     // Reset output indicators
     m_output.get< tag::stat >() = false;

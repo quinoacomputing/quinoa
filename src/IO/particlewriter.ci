@@ -16,11 +16,12 @@ module particlewriter {
 
     nodegroup ParticleWriter {
       entry ParticleWriter( const std::string& filename );
+      entry [exclusive] void npar( std::size_t n, CkCallback c );
       entry [exclusive] void writeCoords( uint64_t it,
-                              const std::vector< tk::real >& x,
-                              const std::vector< tk::real >& y,
-                              const std::vector< tk::real >& z,
-                              CkCallback c );
+                                          const std::vector< tk::real >& x,
+                                          const std::vector< tk::real >& y,
+                                          const std::vector< tk::real >& z,
+                                          CkCallback c );
     };
 
   } // tk::

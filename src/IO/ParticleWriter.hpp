@@ -30,7 +30,14 @@ class ParticleWriter : public CBase_ParticleWriter {
     //! Constructor
     //! \param[in] filename Filename of particle output file
     explicit ParticleWriter( const std::string& filename ) :
-      m_writer( filename ) {}
+      m_writer( filename ),
+      m_npar( 0 ),
+      m_x(),
+      m_y(),
+      m_z() {}
+
+    //! Chares contribute their number of particles they will output on my node
+    void npar( std::size_t n, CkCallback c );
 
     //! Write particle coordinates to file
     void writeCoords( uint64_t it,
@@ -41,6 +48,10 @@ class ParticleWriter : public CBase_ParticleWriter {
 
   private:
     tk::H5PartWriter m_writer;     //!< Particle file format writer
+    std::size_t m_npar;            //!< Number of particles to be written
+    std::vector< tk::real > m_x;   //!< Buffer collecting x coordinates
+    std::vector< tk::real > m_y;   //!< Buffer collecting y coordinates
+    std::vector< tk::real > m_z;   //!< Buffer collecting z coordinates
 };
 
 } // tk::

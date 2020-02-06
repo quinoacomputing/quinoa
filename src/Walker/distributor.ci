@@ -29,7 +29,6 @@ module distributor {
       entry [reductiontarget] void estimateCen( tk::real cen[n], int n );
       entry [reductiontarget] void estimateOrdPDF( CkReductionMsg* msg );
       entry [reductiontarget] void estimateCenPDF( CkReductionMsg* msg );
-      entry [reductiontarget] void particlesOut();
 
       entry void wait4ord() {
         when estimateOrdDone() serial "accumulateCen" {
@@ -40,8 +39,7 @@ module distributor {
       entry void wait4pdf() {
         when estimateCenDone(),
              estimateOrdPDFDone(),
-             estimateCenPDFDone(),
-             particlesOutputDone() serial "outPDF"
+             estimateCenPDFDone() serial "outPDF"
         {
           outStat();            // Output statistics to file
           outPDF();             // output PDFs to file
@@ -57,8 +55,6 @@ module distributor {
       entry void estimateOrdPDFDone();
       // SDAG trigger signaling that central PDFs have been estimated
       entry void estimateCenPDFDone();
-      // SDAG trigger signaling that particle positions have been output to file
-      entry void particlesOutputDone();
     }
 
   } // walker::

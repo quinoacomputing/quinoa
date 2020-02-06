@@ -76,8 +76,11 @@ class Integrator : public CBase_Integrator {
                   uint64_t it,
                   const std::map< tk::ctr::Product, tk::real >& moments );
 
-    // Accumulate sums for ordinary moments and ordinary PDFs
-    void accumulateOrd( uint64_t it, tk::real t, tk::real dt );
+    //! Output particle positions to file
+    void out();
+
+    //! Start collecting statistics
+    void accumulate();
 
     // Accumulate sums for central moments and central PDFs
     void accumulateCen( uint64_t it,
@@ -91,7 +94,13 @@ class Integrator : public CBase_Integrator {
     tk::CProxy_ParticleWriter m_particlewriter;  //!< Particle writer proxy
     tk::Particles m_particles;     //!< Particle properties
     tk::Statistics m_stat;         //!< Statistics
+    tk::real m_dt;                 //!< Time step size
+    tk::real m_t;                  //!< Physical time
+    uint64_t m_it;                 //!< Iteration count
     uint64_t m_itp;                //!< Particle position output iteration count
+
+    // Accumulate sums for ordinary moments and ordinary PDFs
+    void accumulateOrd( uint64_t it, tk::real t, tk::real dt );
 };
 
 #if defined(__clang__)

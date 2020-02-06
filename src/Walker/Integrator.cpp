@@ -39,6 +39,9 @@ Integrator::Integrator( CProxy_Distributor hostproxy,
           g_inputdeck.get< tag::stat >(),
           g_inputdeck.get< tag::pdf >(),
           g_inputdeck.get< tag::discr, tag::binsize >() ),
+  m_dt( 0.0 ),
+  m_t( 0.0 ),
+  m_it( 0 ),
   m_itp( 0 )
 // *****************************************************************************
 // Constructor
@@ -105,28 +108,60 @@ Integrator::advance( tk::real dt,
     for (const auto& e : g_diffeqs)
       e.advance( m_particles, CkMyPe(), dt, t, moments );
 
-  // Output particles data to file if we hit the particles output frequency
+  // Save time stepping data
+  m_dt = dt;
+  m_t = t;
+  m_it = it;
+
+  // Contribute number of particles we hit the particles output frequency
+  auto poseq =
+    !g_inputdeck.get< tag::param, tag::position, tag::depvar >().empty();
   const auto parfreq = g_inputdeck.get< tag::interval, tag::particles >();
-  const auto nposeq =
-    g_inputdeck.get< tag::param, tag::position, tag::depvar >().size();
-  auto c = CkCallback(CkReductionTarget(Distributor, particlesOut), m_host);
-  if (nposeq > 0 && !(it % parfreq)) {
-    // query position eq offset in particle array (0: only write first particle
-    // position eq)
+
+  CkCallback c( CkIndex_Integrator::out(), thisProxy[thisIndex] );
+
+  if (poseq && !((m_it+1) % parfreq))
+    m_particlewriter[ CkMyNode() ].npar( m_particles.nunk(), c );
+  else
+    c.send();
+}
+
+void
+Integrator::out()
+// *****************************************************************************
+// Output particle positions to file
+// *****************************************************************************
+{
+  auto poseq =
+    !g_inputdeck.get< tag::param, tag::position, tag::depvar >().empty();
+  const auto parfreq = g_inputdeck.get< tag::interval, tag::particles >();
+
+  CkCallback c( CkIndex_Integrator::accumulate(), thisProxy[thisIndex] );
+
+  // Output particles data to file if we hit the particles output frequency
+  if (poseq && !((m_it+1) % parfreq)) {
+    // query position eq offset in particle array (0: only first particle pos)
     auto po = g_inputdeck.get< tag::component >().offset< tag::position >( 0 );
-    // extract particle positions
+    // output particle positions to file
     m_particlewriter[ CkMyNode() ].
       writeCoords( m_itp++, m_particles.extract(0,po),
-                   m_particles.extract(1,po), m_particles.extract(2,po), c );
+        m_particles.extract(1,po), m_particles.extract(2,po), c );
   } else {
     c.send();
   }
+}
 
+void
+Integrator::accumulate()
+// *****************************************************************************
+// Start collecting statistics
+// *****************************************************************************
+{
   if (!g_inputdeck.stat()) {// if no stats to estimate, skip to end of time step
     contribute( CkCallback(CkReductionTarget(Distributor, nostat), m_host) );
   } else {
     // Accumulate sums for ordinary moments (every time step)
-    accumulateOrd( it, t, dt );
+    accumulateOrd( m_it, m_t, m_dt );
   }
 }
 

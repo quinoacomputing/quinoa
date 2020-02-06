@@ -66,6 +66,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::term
                                  , kw::dt
                                  , kw::ttyi
+                                 , kw::pari
                                  , kw::rngs
                                  , kw::ncomp
                                  , kw::rng

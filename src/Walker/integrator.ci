@@ -27,12 +27,13 @@ module integrator {
                         tk::real t,
                         uint64_t it,
                         const std::map< tk::ctr::Product, tk::real >& moments );
-      entry void advance( tk::real dt,
-                          tk::real t,
-                          uint64_t it,
-                          const std::map< tk::ctr::Product, tk::real >& moments
-      );
-      entry void accumulateOrd( uint64_t it, tk::real t, tk::real dt );
+      entry
+        void advance( tk::real dt,
+                      tk::real t,
+                      uint64_t it,
+                      const std::map< tk::ctr::Product, tk::real >& moments );
+      entry void out();
+      entry void accumulate();
       entry void accumulateCen( uint64_t it,
                                 tk::real t,
                                 tk::real dt,
