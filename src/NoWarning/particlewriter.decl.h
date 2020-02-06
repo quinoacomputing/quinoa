@@ -60,6 +60,7 @@
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wpedantic"
   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+  #pragma GCC diagnostic ignored "-Wdeprecated-copy"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 181 )
