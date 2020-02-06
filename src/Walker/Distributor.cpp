@@ -128,7 +128,7 @@ Distributor::Distributor() :
   // Create statistics merger chare group collecting chare contributions
   CProxy_Collector collproxy = CProxy_Collector::ckNew( thisProxy );
 
-  // Create partcle writer Charm++ chare group
+  // Create partcle writer Charm++ chare nodegroup
   tk::CProxy_ParticleWriter particlewriter =
     tk::CProxy_ParticleWriter::ckNew( cmd.get< tag::io, tag::particles >() );
 

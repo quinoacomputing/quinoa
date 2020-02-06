@@ -14,9 +14,9 @@ module particlewriter {
 
   namespace tk {
 
-    group ParticleWriter {
+    nodegroup ParticleWriter {
       entry ParticleWriter( const std::string& filename );
-      entry void writeCoords( uint64_t it,
+      entry [exclusive] void writeCoords( uint64_t it,
                               const std::vector< tk::real >& x,
                               const std::vector< tk::real >& y,
                               const std::vector< tk::real >& z,

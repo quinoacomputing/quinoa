@@ -115,7 +115,7 @@ Integrator::advance( tk::real dt,
     // position eq)
     auto po = g_inputdeck.get< tag::component >().offset< tag::position >( 0 );
     // extract particle positions
-    m_particlewriter[ CkNodeFirst( CkMyNode() ) ].
+    m_particlewriter[ CkMyNode() ].
       writeCoords( m_itp++, m_particles.extract(0,po),
                    m_particles.extract(1,po), m_particles.extract(2,po), c );
   } else {
