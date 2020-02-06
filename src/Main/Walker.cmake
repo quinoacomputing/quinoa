@@ -26,6 +26,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       Base
                       Config
                       Init
+                      ParticleWriter
                       ${SEACASExodus_LIBRARIES}
                       ${LAPACKE_LIBRARIES}      # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
@@ -34,6 +35,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE2_LIBRARIES}
+                      ${H5PART_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}

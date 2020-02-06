@@ -120,7 +120,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       get< tag::io, tag::output >() = "out";
       get< tag::io, tag::diag >() = "diag";
-      get< tag::io, tag::part >() = "track.h5part";
+      get< tag::io, tag::particles >() = "track.h5part";
       get< tag::io, tag::restart >() = "restart";
       get< tag::virtualization >() = 0.0;
       get< tag::verbose >() = false; // Quiet output by default

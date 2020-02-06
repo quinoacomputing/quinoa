@@ -14,20 +14,14 @@ module particlewriter {
 
   namespace tk {
 
-    // List all possible specializations of templated chare to instantiate
-    // registration and delivery of code for the individual specializations
-
-    // Will specialize particle writer for Transporter
-    chare ParticleWriter< inciter::CProxy_Transporter >;
-
-    // ParticleWriter is templated so that the same code (parameterized by the
-    // type given by the template argument, HostProxy) can be generated for
-    // different types of proxies. Howver, all possible specializations must be
-    // listed above to ensure that Charm++ generates correct code.
-    template< class HostProxy >
-    group ParticleWriter {
-      entry ParticleWriter( const HostProxy& host,
-                            const std::string& filename );
+    nodegroup ParticleWriter {
+      entry ParticleWriter( const std::string& filename );
+      entry [exclusive] void npar( std::size_t n, CkCallback c );
+      entry [exclusive] void writeCoords( uint64_t it,
+                                          const std::vector< tk::real >& x,
+                                          const std::vector< tk::real >& y,
+                                          const std::vector< tk::real >& z,
+                                          CkCallback c );
     };
 
   } // tk::

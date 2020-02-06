@@ -57,6 +57,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::control
                                      , kw::pdf
                                      , kw::stat
+                                     , kw::particles
                                      , kw::quiescence
                                      , kw::trace
                                      , kw::version
@@ -108,6 +109,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
       get< tag::io, tag::output >() = "out";
       get< tag::io, tag::pdf >() = "pdf";
       get< tag::io, tag::stat >() = "stat.txt";
+      get< tag::io, tag::particles >() = "particles.h5part";
       get< tag::virtualization >() = 0.0;
       get< tag::verbose >() = false; // Quiet output by default
       get< tag::chare >() = false; // No chare state output by default
