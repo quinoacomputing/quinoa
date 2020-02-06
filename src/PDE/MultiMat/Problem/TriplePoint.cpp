@@ -1,9 +1,9 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMat/Problem/WaterAirShocktube.cpp
+  \file      src/PDE/MultiMat/Problem/TriplePoint.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the multi-material flow equations
   \details   This file defines a Problem policy class for the multi-material
@@ -13,7 +13,7 @@
 */
 // *****************************************************************************
 
-#include "WaterAirShocktube.hpp"
+#include "TriplePoint.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
@@ -25,13 +25,13 @@ extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
-using inciter::MultiMatProblemWaterAirShocktube;
+using inciter::MultiMatProblemTriplePoint;
 
 tk::SolutionFn::result_type
-MultiMatProblemWaterAirShocktube::solution( ncomp_t system,
+MultiMatProblemTriplePoint::solution( ncomp_t system,
                                             ncomp_t ncomp,
                                             tk::real x,
-                                            tk::real,
+                                            tk::real y,
                                             tk::real,
                                             tk::real )
 // *****************************************************************************
@@ -40,12 +40,11 @@ MultiMatProblemWaterAirShocktube::solution( ncomp_t system,
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn
-//! \details This function only initializes the Water-Air shock tube problem,
+//! \details This function only initializes the triple point problem,
 //!   but does not actually give the analytical solution at time greater than 0.
-//!   The analytical solution would require an exact Riemann solver for
-//!   stiffened gas EoS, which has not been implemented yet.
 // *****************************************************************************
 {
   // see also Control/Inciter/InputDeck/Grammar.hpp
@@ -58,34 +57,44 @@ MultiMatProblemWaterAirShocktube::solution( ncomp_t system,
   tk::real p, u, v, w;
   auto alphamin = 1.0e-12;
 
-  if (x<0.75) {
+  // velocity
+  u = 0.0;
+  v = 0.0;
+  w = 0.0;
+
+  if (x<1.0) {
     // volume-fraction
     s[volfracIdx(nmat, 0)] = 1.0-alphamin;
     s[volfracIdx(nmat, 1)] = alphamin;
     // pressure
-    p = 1.0e9;
+    p = 1.0;
     // densities
     for (std::size_t k=0; k<nmat; ++k)
-      r[k] = eos_density< eq >( system, p, 494.646, k );
-    // velocity
-    u = 0.0;
-    v = 0.0;
-    w = 0.0;
+      r[k] = eos_density< eq >( system, p, 4.3554007e-4, k );
   }
   else {
-    // volume-fraction
-    s[volfracIdx(nmat, 0)] = alphamin;
-    s[volfracIdx(nmat, 1)] = 1.0-alphamin;
-    // pressure
-    p = 1.0e5;
-    // densities
-    for (std::size_t k=0; k<nmat; ++k)
-      r[k] = eos_density< eq >( system, p, 34.844, k );
-    // velocity
-    u = 0.0;
-    v = 0.0;
-    w = 0.0;
+    if (y<1.5) {
+      // volume-fraction
+      s[volfracIdx(nmat, 0)] = alphamin;
+      s[volfracIdx(nmat, 1)] = 1.0-alphamin;
+      // pressure
+      p = 0.1;
+      // densities
+      for (std::size_t k=0; k<nmat; ++k)
+        r[k] = eos_density< eq >( system, p, 3.4843206e-4, k );
+    }
+    else {
+      // volume-fraction
+      s[volfracIdx(nmat, 0)] = 1.0-alphamin;
+      s[volfracIdx(nmat, 1)] = alphamin;
+      // pressure
+      p = 0.1;
+      // densities
+      for (std::size_t k=0; k<nmat; ++k)
+        r[k] = eos_density< eq >( system, p, 3.4843206e-4, k );
+    }
   }
+
   for (std::size_t k=0; k<nmat; ++k)
   {
     // partial density
@@ -98,8 +107,33 @@ MultiMatProblemWaterAirShocktube::solution( ncomp_t system,
   return s;
 }
 
+std::vector< tk::real >
+MultiMatProblemTriplePoint::solinc( ncomp_t system, ncomp_t ncomp,
+  tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt )
+// *****************************************************************************
+// Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
+// for all components
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
+//! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
+//! \param[in] z Z coordinate where to evaluate the solution
+//! \param[in] t Time where to evaluate the solution increment starting from
+//! \param[in] dt Time increment at which evaluate the solution increment to
+//! \return Increment in values of all components evaluated at (x,y,z,t+dt)
+// *****************************************************************************
+{
+  auto st1 = solution( system, ncomp, x, y, z, t );
+  auto st2 = solution( system, ncomp, x, y, z, t+dt );
+
+  std::transform( begin(st1), end(st1), begin(st2), begin(st2),
+                  []( tk::real s, tk::real& d ){ return d -= s; } );
+
+  return st2;
+}
+
 tk::SrcFn::result_type
-MultiMatProblemWaterAirShocktube::src( ncomp_t, ncomp_t ncomp, tk::real,
+MultiMatProblemTriplePoint::src( ncomp_t, ncomp_t ncomp, tk::real,
                                        tk::real, tk::real, tk::real )
 // *****************************************************************************
 //  Compute and return source term for manufactured solution
@@ -114,7 +148,7 @@ MultiMatProblemWaterAirShocktube::src( ncomp_t, ncomp_t ncomp, tk::real,
 }
 
 std::vector< std::string >
-MultiMatProblemWaterAirShocktube::fieldNames( ncomp_t )
+MultiMatProblemTriplePoint::fieldNames( ncomp_t )
 // *****************************************************************************
 // Return field names to be output to file
 //! \return Vector of strings labelling fields output in file
@@ -127,7 +161,7 @@ MultiMatProblemWaterAirShocktube::fieldNames( ncomp_t )
 }
 
 std::vector< std::vector< tk::real > >
-MultiMatProblemWaterAirShocktube::fieldOutput(
+MultiMatProblemTriplePoint::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
@@ -160,7 +194,7 @@ MultiMatProblemWaterAirShocktube::fieldOutput(
 }
 
 std::vector< std::string >
-MultiMatProblemWaterAirShocktube::names( ncomp_t )
+MultiMatProblemTriplePoint::names( ncomp_t )
 // *****************************************************************************
 //  Return names of integral variables to be output to diagnostics file
 //! \return Vector of strings labelling integral variables output

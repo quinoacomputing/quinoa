@@ -1,19 +1,19 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMat/Problem/SodShocktube.hpp
+  \file      src/PDE/MultiMat/Problem/TriplePoint.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Problem configuration for Sod's shock-tube
+  \brief     Problem configuration for triple point
   \details   This file defines a policy class for the multi-material
     compressible flow equations, defined in PDE/MultiMat/MultiMat.hpp.
     See PDE/MultiMat/Problem.hpp for general requirements on Problem policy
     classes for MultiMat.
 */
 // *****************************************************************************
-#ifndef MultiMatProblemSodShocktube_h
-#define MultiMatProblemSodShocktube_h
+#ifndef MultiMatProblemTriplePoint_h
+#define MultiMatProblemTriplePoint_h
 
 #include <string>
 
@@ -25,10 +25,11 @@
 
 namespace inciter {
 
-//! MultiMat system of PDEs problem: Sod shock-tube
-//! \see G. A. Sod. A Survey of Several Finite Difference Methods for Systems of
-//!   Nonlinear Hyperbolic Conservation Laws. J. Comput. Phys., 27:1–31, 1978.
-class MultiMatProblemSodShocktube {
+//! MultiMat system of PDEs problem: Triple point problem
+//! \see Galera, S., Maire, P. H., & Breil, J. (2010). A two-dimensional
+//!   unstructured cell-centered multi-material ALE scheme using VOF interface
+//!   reconstruction. Journal of Computational Physics, 229(16), 5755-5787.
+class MultiMatProblemTriplePoint {
 
   protected:
     using ncomp_t = tk::ctr::ncomp_t;
@@ -37,12 +38,18 @@ class MultiMatProblemSodShocktube {
   public:
     //! Evaluate analytical solution at (x,y,0) for all components
     static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
+    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real,
               tk::real );
+
+    //! \brief Evaluate the increment from t to t+dt of the analytical solution
+    //!   at (x,y,z) for all components
+    static std::vector< tk::real >
+    solinc( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
+      tk::real t, tk::real dt );
 
     //! Compute and return source term for this problem
     static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real );
+    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
 
     //! Return field names to be output to file
     static std::vector< std::string > fieldNames( ncomp_t );
@@ -50,7 +57,7 @@ class MultiMatProblemSodShocktube {
     //! Return field output going to file
     static std::vector< std::vector< tk::real > >
     fieldOutput( ncomp_t system,
-                 ncomp_t /*ncomp*/,
+                 ncomp_t ncomp,
                  ncomp_t offset,
                  tk::real,
                  tk::real /*V*/,
@@ -64,9 +71,9 @@ class MultiMatProblemSodShocktube {
 
     //! Return problem type
     static ctr::ProblemType type() noexcept
-    { return ctr::ProblemType::SOD_SHOCKTUBE; }
+    { return ctr::ProblemType::TRIPLE_POINT; }
 };
 
 } // inciter::
 
-#endif // MultiMatProblemSodShocktube_h
+#endif // MultiMatProblemTriplePoint_h

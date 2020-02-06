@@ -566,12 +566,6 @@ void consistentMultiMatLimiting_P1(
 //! \param[in,out] phip Vector of limiter functions for the primitive quantities
 // *****************************************************************************
 {
-  using inciter::volfracIdx;
-  using inciter::densityIdx;
-  using inciter::momentumIdx;
-  using inciter::energyIdx;
-  using inciter::volfracDofIdx;
-
   Assert(phic.size() == U.nprop()/rdof, "Number of unknowns in vector of "
     "conserved quantities incorrect");
   Assert(phip.size() == P.nprop()/rdof, "Number of unknowns in vector of "
