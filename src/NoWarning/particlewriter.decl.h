@@ -28,6 +28,7 @@
   #pragma clang diagnostic ignored "-Wundef"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wmismatched-tags"
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wdocumentation"
@@ -59,6 +60,7 @@
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wpedantic"
   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+  #pragma GCC diagnostic ignored "-Wdeprecated-copy"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 181 )
