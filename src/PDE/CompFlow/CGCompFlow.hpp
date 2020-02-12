@@ -715,7 +715,7 @@ class CompFlow {
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset PDE operates from
-    
+
     //! Compute element contribution to nodal gradient
     //! \param[in] e Element whose contribution to compute
     //! \param[in] coord Mesh node coordinates
@@ -764,11 +764,7 @@ class CompFlow {
         for (std::size_t j=0; j<4; ++j )
           u[4][j] -= 0.5*u[1+d][j]*u[1+d][j];
       // return data needed to scatter add element contribution to gradient
-      return std::tuple< std::array< std::size_t, 4 >,
-                         std::array< std::array< tk::real, 3 >, 4 >,
-                         std::vector< std::array< tk::real, 4 > >,
-                         tk::real >
-               { std::move(N), std::move(grad), std::move(u), std::move(J) };
+      return { std::move(N), std::move(grad), std::move(u), std::move(J) };
     }
 };
 

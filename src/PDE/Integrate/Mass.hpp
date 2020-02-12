@@ -5,11 +5,10 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Functions for computing the mass matrix for a system of PDEs in DG
-     methods
+  \brief     Functions for computing the mass matrix for a system of PDEs
   \details   This file contains functionality for computing the mass matrix for
-     a system of PDEs used in discontinuous Galerkin methods for various orders
-     of numerical representation.
+     a system of PDEs used in discontinuous and continuous Galerkin methods for
+     various orders of numerical representation.
 */
 // *****************************************************************************
 #ifndef Mass_h
