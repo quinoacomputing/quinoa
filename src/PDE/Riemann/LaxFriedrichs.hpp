@@ -34,7 +34,7 @@ struct LaxFriedrichs {
   static tk::RiemannFluxFn::result_type
   flux( const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
-        const std::vector< std::array< tk::real, 3 > >& )
+        const std::vector< std::array< tk::real, 3 > >& = {} )
   {
     std::vector< tk::real >  flx( u[0].size(), 0.0 ),
                             fluxl( u[0].size(), 0.0 ),
@@ -59,8 +59,8 @@ struct LaxFriedrichs {
     auto ar = eos_soundspeed< tag::compflow >( 0, rhor, pr );
 
     // Face-normal velocities
-    tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
-    tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
+    auto vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
+    auto vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
 
     // Flux functions
     fluxl[0] = u[0][0] * vnl;
@@ -75,14 +75,11 @@ struct LaxFriedrichs {
     fluxr[3] = u[1][3] * vnr + pr*fn[2];
     fluxr[4] = ( u[1][4] + pr ) * vnr;
 
-    auto lambda = fmax(al,ar) + fmax(fabs(vnl),fabs(vnr));
+    auto lambda = std::max(al,ar) + std::max( std::abs(vnl), std::abs(vnr) );
 
     // Numerical flux function
     for(std::size_t c=0; c<5; ++c)
-    {
-      flx[c] = 0.5 * ( fluxl[c] + fluxr[c]
-                       - lambda * (u[1][c] - u[0][c]) );
-    }
+      flx[c] = 0.5 * (fluxl[c] + fluxr[c] - lambda*(u[1][c] - u[0][c]));
 
     return flx;
   }

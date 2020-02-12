@@ -49,8 +49,7 @@ TransportProblemGaussHump::solution( ncomp_t system, ncomp_t ncomp,
     auto y0 = 0.25 + vel[c][1]*t;
 
     // hump
-    s[c] = 1.0 * exp( -((x-x0)*(x-x0)
-                 + (y-y0)*(y-y0))/(2.0 * 0.005) );
+    s[c] = 1.0 * exp( -((x-x0)*(x-x0) + (y-y0)*(y-y0))/(2.0 * 0.005) );
   }
   return s;
 }

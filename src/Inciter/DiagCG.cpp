@@ -32,6 +32,7 @@
 #include "NodeBC.hpp"
 #include "Refiner.hpp"
 #include "Reorder.hpp"
+#include "Integrate/Mass.hpp"
 
 namespace inciter {
 
@@ -133,11 +134,9 @@ DiagCG::bndel() const
 //! \return Lists of chare-boundary and internal element lists using local id
 // *****************************************************************************
 {
-  const auto& sumset = Disc()->msumset();
-
   // Lambda to find out if a mesh node is shared with another chare
   auto shared = [&]( std::size_t i ){
-    for (const auto& [c,n] : sumset)
+    for (const auto& [c,n] : Disc()->NodeCommMap())
       if (n.find(i) != end(n)) return true;
     return false;
   };
@@ -166,6 +165,9 @@ DiagCG::bnorm( const std::map< int, std::vector< std::size_t > >& bface,
                std::unordered_set< std::size_t >&& symbcnodes )
 // *****************************************************************************
 //  Compute boundary point normals
+//! \param[in] bface Boundary faces side-set information
+//! \param[in] triinpoel Boundary triangle face connecitivity
+//! \param[in] Node ids at which symmetry BCs are set
 // *****************************************************************************
 {
   auto d = Disc();
@@ -214,10 +216,10 @@ DiagCG::bnorm( const std::map< int, std::vector< std::size_t > >& bface,
   }
 
   // Send our nodal normal contributions to neighbor chares
-  if (d->Msum().empty())
+  if (d->NodeCommMap().empty())
    comnorm_complete();
   else
-    for (const auto& [ neighborchare, sharednodes ] : d->Msum()) {
+    for (const auto& [ neighborchare, sharednodes ] : d->NodeCommMap()) {
       std::unordered_map< std::size_t, std::array< tk::real, 4 > > exp;
       for (auto i : sharednodes) {      // symmetry BCs may be specified on only
         auto j = m_bnorm.find(i);       // a subset of chare boundary nodes
@@ -248,7 +250,7 @@ DiagCG::comnorm(
     bnorm[3] += n[3];
   }
 
-  if (++m_nnorm == Disc()->Msum().size()) {
+  if (++m_nnorm == Disc()->NodeCommMap().size()) {
     m_nnorm = 0;
     comnorm_complete();
   }
@@ -387,16 +389,16 @@ DiagCG::lhs()
   auto d = Disc();
 
   // Compute lumped mass lhs required for both high and low order solutions
-  m_lhs = d->FCT()->lump( *d );
+  m_lhs = tk::lump( m_u.nprop(), d->Coord(), d->Inpoel() );
 
-  if (d->Msum().empty())
+  if (d->NodeCommMap().empty())
     comlhs_complete();
   else // send contributions of lhs to chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > l( n.second.size() );
+    for (const auto& [c,n] : d->NodeCommMap()) {
+      std::vector< std::vector< tk::real > > l( n.size() );
       std::size_t j = 0;
-      for (auto i : n.second) l[ j++ ] = m_lhs[ tk::cref_find(d->Lid(),i) ];
-      thisProxy[ n.first ].comlhs( n.second, l );
+      for (auto i : n) l[ j++ ] = m_lhs[ tk::cref_find(d->Lid(),i) ];
+      thisProxy[c].comlhs( std::vector<std::size_t>(begin(n),end(n)), l );
     }
 
   ownlhs_complete();
@@ -423,7 +425,7 @@ DiagCG::comlhs( const std::vector< std::size_t >& gid,
   for (std::size_t i=0; i<gid.size(); ++i)
     m_lhsc[ gid[i] ] += L[i];
 
-  if (++m_nlhs == Disc()->Msum().size()) {
+  if (++m_nlhs == Disc()->NodeCommMap().size()) {
     m_nlhs = 0;
     comlhs_complete();
   }
@@ -564,20 +566,20 @@ DiagCG::rhs()
   m_bcdir = match( m_u.nprop(), t, deltat, coord, lid, m_bnode );
 
   // Send rhs data on chare-boundary nodes to fellow chares
-  if (d->Msum().empty())
+  if (d->NodeCommMap().empty())
     comrhs_complete();
   else  // send contributions of rhs to chare-boundary nodes to fellow chares
-    for (const auto& n : d->Msum()) {
-      std::vector< std::vector< tk::real > > r( n.second.size() );
-      std::vector< std::vector< tk::real > > D( n.second.size() );
+    for (const auto& [c,n] : d->NodeCommMap()) {
+      std::vector< std::vector< tk::real > > r( n.size() );
+      std::vector< std::vector< tk::real > > D( n.size() );
       std::size_t j = 0;
-      for (auto i : n.second) {
+      for (auto i : n) {
         auto k = tk::cref_find( lid, i );
         r[j] = m_rhs[k];
         D[j] = dif[k];
         ++j;
       }
-      thisProxy[ n.first ].comrhs( n.second, r, D );
+      thisProxy[c].comrhs( std::vector<std::size_t>(begin(n),end(n)), r, D );
     }
 
   // Access internal element list
@@ -620,7 +622,7 @@ DiagCG::comrhs( const std::vector< std::size_t >& gid,
     m_difc[ gid[i] ] += D[i];
   }
 
-  if (++m_nrhs == Disc()->Msum().size()) {
+  if (++m_nrhs == Disc()->NodeCommMap().size()) {
     m_nrhs = 0;
     comrhs_complete();
   }
@@ -839,7 +841,7 @@ DiagCG::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
-  const std::unordered_map< int, std::vector< std::size_t > >& msum,
+  const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& /*bface*/,
   const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& /*triinpoel*/ )
@@ -850,7 +852,7 @@ DiagCG::resizePostAMR(
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
-//! \param[in] msum New node communication map
+//! \param[in] nodeCommMap New node communication map
 //! \param[in] bnode Boundary-node lists mapped to side set ids
 // *****************************************************************************
 {
@@ -866,7 +868,7 @@ DiagCG::resizePostAMR(
   ++d->Itr();
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, msum );
+  d->resizePostAMR( chunk, coord, nodeCommMap );
 
   // Resize auxiliary solution vectors
   auto nelem = d->Inpoel().size()/4;
@@ -891,7 +893,7 @@ DiagCG::resizePostAMR(
   m_bnode = bnode;
 
   // Resize FCT data structures
-  d->FCT()->resize( npoin, msum, d->Bid(), d->Lid(), d->Inpoel() );
+  d->FCT()->resize( npoin, nodeCommMap, d->Bid(), d->Lid(), d->Inpoel() );
 
   contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
 }

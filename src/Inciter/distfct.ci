@@ -15,6 +15,7 @@
 module distfct {
 
   include "unordered_map";
+  include "CommMap.hpp";
 
   namespace inciter {
 
@@ -23,7 +24,7 @@ module distfct {
         int nchare,
         std::size_t nu,
         std::size_t np,
-        const std::unordered_map< int, std::vector< std::size_t > >& msum,
+        const tk::NodeCommMap& nodeCommMap,
         const std::unordered_map< std::size_t, std::size_t >& bid,
         const std::unordered_map< std::size_t, std::size_t >& lid,
         const std::vector< std::size_t >& inpoel );

@@ -264,6 +264,41 @@ class Data {
       return extract( component, offset, N[0], N[1], N[2], N[3] );
     }
 
+    //! Extract (a copy of) three values of unknowns
+    //! \details Requirement: offset + component < nprop, [A,B,C] < nunk,
+    //!   enforced with an assert in DEBUG mode, see also the constructor.
+    //! \param[in] component Component index, i.e., position of a scalar within
+    //!   a system
+    //! \param[in] offset System offset specifying the position of the system of
+    //!   equations among other systems
+    //! \param[in] A Index of 1st unknown
+    //! \param[in] B Index of 2nd unknown
+    //! \param[in] C Index of 3rd unknown
+    //! \return Array of the four values of component at offset
+    std::array< tk::real, 3 >
+    extract( ncomp_t component, ncomp_t offset,
+             ncomp_t A, ncomp_t B, ncomp_t C ) const
+    {
+      auto p = cptr( component, offset );
+      return {{ var(p,A), var(p,B), var(p,C) }};
+    }
+
+    //! Extract (a copy of) three values of unknowns
+    //! \details Requirement: offset + component < nprop, for all N[i] < nunk,
+    //!   enforced with an assert in DEBUG mode, see also the constructor.
+    //! \param[in] component Component index, i.e., position of a scalar within
+    //!   a system
+    //! \param[in] offset System offset specifying the position of the system of
+    //!   equations among other systems
+    //! \param[in] N Indices of the 3 unknowns
+    //! \return Array of the three values of component at offset
+    std::array< tk::real, 3 >
+    extract( ncomp_t component, ncomp_t offset,
+             const std::array< ncomp_t, 3 >& N ) const
+    {
+      return extract( component, offset, N[0], N[1], N[2] );
+    }
+
     //! Const-ref accessor to underlying raw data
     //! \return Constant reference to underlying raw data
     const std::vector< tk::real >& data() const { return m_vec; }

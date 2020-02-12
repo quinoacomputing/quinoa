@@ -25,6 +25,7 @@
 #include "UnsMesh.hpp"
 #include "UnsMesh.hpp"
 #include "Scheme.hpp"
+#include "CommMap.hpp"
 
 #include "NoWarning/transporter.decl.h"
 #include "NoWarning/sorter.decl.h"
@@ -88,15 +89,14 @@ class Sorter : public CBase_Sorter {
     //! Setup chare mesh boundary node communication map
     void setup( std::size_t npoin );
     //! \brief Incoming query for a list mesh nodes for which this chare
-    //!   compiles node communication maps
-    void query( int fromch, const std::vector< std::size_t >& nodes );
+    //!   compiles communication maps
+    void query( int fromch, const tk::AllCommMaps& bnd );
     //! Report receipt of boundary node lists
     void recvquery();
     //! Respond to boundary node list queries
     void response();
     //! Receive boundary node communication maps for our mesh chunk
-    void bnd( int fromch, const std::map< int,
-                            std::unordered_set< std::size_t > >& msum );
+    void bnd( int fromch, const tk::CommMaps& msum );
     //! Receive receipt of boundary node communication map
     void recvbnd();
 
@@ -147,6 +147,8 @@ class Sorter : public CBase_Sorter {
       p | m_noffset;
       p | m_nodech;
       p | m_chnode;
+      p | m_edgech;
+      p | m_chedge;
       p | m_msum;
       p | m_reordcomm;
       p | m_start;
@@ -195,10 +197,14 @@ class Sorter : public CBase_Sorter {
     //! Node->chare map used to build boundary node communication maps
     std::unordered_map< std::size_t, std::vector< int > > m_nodech;
     //! Chare->node map used to build boundary node communication maps
-    std::unordered_map< int, std::vector< std::size_t > > m_chnode;
-    //! \brief Symmetric communication map associating global mesh node IDs to
-    //!    chare IDs this chare shares the node IDs with
-    std::map< int, std::unordered_set< std::size_t > > m_msum;
+    tk::NodeCommMap m_chnode;
+    //! Edge->chare map used to build boundary edge communication maps
+    std::unordered_map< tk::UnsMesh::Edge, std::vector< int >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_edgech;
+    //! Chare->edge map used to build boundary edge communication maps
+    tk::EdgeCommMap m_chedge;
+    //! Communication maps associated to chare IDs
+    tk::CommMaps m_msum;
     //! \brief Communication map used for distributed mesh node reordering
     //! \details This map associates the list of global mesh point
     //!   indices to fellow chare IDs from which this chare receives new node
