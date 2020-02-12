@@ -654,14 +654,6 @@ Data< Layout > max( const Data< Layout >& a, const Data< Layout >& b ) {
   return r;
 }
 
-//! Compute the maximum absolute value in a Data object
-//! \param[in] d Data object
-//! \return Maximum absolute value
-template< uint8_t Layout >
-tk::real maxabs( const Data< Layout >& d ) {
-  return std::abs( *std::max_element( d.data().cbegin(), d.data().cend(),
-          []( tk::real a, tk::real b ){ return std::abs(a) < std::abs(b); } ) );
-}
 //! Operator == between two Data objects
 //! \param[in] lhs Data object to compare
 //! \param[in] rhs Data object to compare
