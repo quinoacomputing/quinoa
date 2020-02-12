@@ -36,6 +36,7 @@ class TransportPhysicsAdvDiff {
     void
     diffusionRhs( ncomp_t e,
                   ncomp_t ncomp,
+                  tk::real deltat,
                   tk::real J,
                   const std::array< std::array< tk::real, 3 >, 4 >& grad,
                   const std::array< std::size_t, 4 >& N,

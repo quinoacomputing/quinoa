@@ -137,21 +137,16 @@ DistFCT::resize( std::size_t nu,
   m_fluxcorrector.resize( m_inpoel.size() );
 }
 
-void
-DistFCT::diff( const Discretization& d,
-               const std::vector< std::size_t >& elist,
-               const tk::Fields& Un,
-               tk::Fields& D )
+tk::Fields
+DistFCT::diff( const Discretization& d, const tk::Fields& Un )
 // *****************************************************************************
 //  Compute mass diffusion rhs contribution required for the low order solution
 //! \param[in] d Discretization proxy to read mesh data from
-//! \param[in] elist List of elements to compute diffusion for
 //! \param[in] Un Solution at the previous time step
-//! \param[in,out] D Mass diffusion contribution to the RHS of the low order
-//!   system
+//! \return Mass diffusion contribution to the RHS of the low order system
 // *****************************************************************************
 {
-  m_fluxcorrector.diff( d.Coord(), m_inpoel, elist, Un, D );
+  return m_fluxcorrector.diff( d.Coord(), m_inpoel, Un );
 }
 
 void

@@ -257,29 +257,34 @@ class Transport {
       }
     }
 
-    //! Gather for DiagCG (CG-FCT)
+    //! Compute right hand side for DiagCG (CG+FCT)
+    //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] elist List of elements to scatter
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] Ue Element-centered solution vector at intermediate step
     //!    (used here internally as a scratch array)
-    void gather( tk::real,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< std::size_t >& inpoel,
-                 const std::vector< std::size_t >& elist,
-                 const tk::Fields& U,
-                 tk::Fields& Ue ) const
+    //! \param[in,out] R Right-hand side vector computed
+    void rhs( tk::real,
+              tk::real deltat,
+              const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const tk::Fields& U,
+              tk::Fields& Ue,
+              tk::Fields& R ) const
     {
+      using tag::transport;
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
+      Assert( R.nunk() == coord[0].size(),
+              "Number of unknowns in right-hand side vector incorrect" );
 
-      // access node coordinates
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      for (auto e : elist) {
+      // 1st stage: update element values from node values (gather-add)
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
         // access node IDs
         const std::array< std::size_t, 4 >
           N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
@@ -318,42 +323,19 @@ class Transport {
                                        x[N[3]], y[N[3]], z[N[3]] ) }};
 
         // sum flux (advection) contributions to element
+        auto d = deltat/2.0;
         for (std::size_t c=0; c<m_ncomp; ++c)
           for (std::size_t j=0; j<3; ++j)
             for (std::size_t a=0; a<4; ++a)
-              Ue.var(ue[c],e) -= 0.5 * grad[a][j] * vel[a][c][j]*u[c][a];
+              Ue.var(ue[c],e) -= d * grad[a][j] * vel[a][c][j]*u[c][a];
       }
-    }
 
-    //! Scatter terms not dependent on dt for DiagCG (CG-FCT)
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] elist List of elements to scatter
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] Ue Element-centered solution vector at intermediate step
-    //!    (used here internally as a scratch array)
-    //! \param[in,out] R Right-hand side vector computed
-    void scatter( tk::real,
-                  const std::array< std::vector< tk::real >, 3 >& coord,
-                  const std::vector< std::size_t >& inpoel,
-                  const std::vector< std::size_t >& elist,
-                  const tk::Fields& U,
-                  const tk::Fields& Ue,
-                  tk::Fields& R ) const
-    {
-      Assert( R.nunk() == coord[0].size(),
-              "Number of unknowns in right-hand side vector incorrect" );
 
-      // access node coordinates
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-
-      for (auto e : elist) {
+      // 2nd stage: form rhs from element values (scatter-add)
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
         // access node IDs
         const std::array< std::size_t, 4 >
           N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
-
         // compute element Jacobi determinant
         const std::array< tk::real, 3 >
           ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
@@ -388,15 +370,14 @@ class Transport {
           Problem::prescribedVelocity( m_system, m_ncomp, xc, yc, zc );
 
         // scatter-add flux contributions to rhs at nodes
-        tk::real d = J/6.0;
-        for (std::size_t a=0; a<4; ++a) {
-          for (std::size_t c=0; c<m_ncomp; ++c)
-            for (std::size_t j=0; j<3; ++j)
+        tk::real d = deltat * J/6.0;
+        for (std::size_t c=0; c<m_ncomp; ++c)
+          for (std::size_t j=0; j<3; ++j)
+            for (std::size_t a=0; a<4; ++a)
               R.var(r[c],N[a]) += d * grad[a][j] * vel[c][j]*ue[c];
-        }
 
         // add (optional) diffusion contribution to right hand side
-        m_physics.diffusionRhs( m_system, m_ncomp, J, grad, N, u, r, R );
+        m_physics.diffusionRhs(m_system, m_ncomp, deltat, J, grad, N, u, r, R);
       }
     }
 

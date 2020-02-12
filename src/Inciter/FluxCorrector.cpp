@@ -243,20 +243,16 @@ FluxCorrector::verify( std::size_t nchare,
   return false;
 }
 
-void
+tk::Fields
 FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
                      const std::vector< std::size_t >& inpoel,
-                     const std::vector< std::size_t >& elist,
-                     const tk::Fields& Un,
-                     tk::Fields& D ) const
+                     const tk::Fields& Un ) const
 // *****************************************************************************
 //  Compute mass diffusion contribution to the RHS of the low order system
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
-//! \param[in] elist List of elements to compute diffusion for
 //! \param[in] Un Solution at the previous time step
-//! \param[in,out] Mass diffusion contribution to the RHS of the low order
-//!   system
+//! \return Mass diffusion contribution to the RHS of the low order system
 // *****************************************************************************
 {
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
@@ -267,7 +263,10 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
   const auto& y = coord[1];
   const auto& z = coord[2];
 
-  for (auto e : elist) {
+  tk::Fields D( Un.nunk(), Un.nprop() );
+  D.fill( 0.0 );
+
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
     // access node IDs
     const std::array< std::size_t, 4 >
        N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
@@ -301,6 +300,8 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
            D.var(d[c],N[a]) -= ctau * m[a][b] * un[c][b];
      }
   }
+
+  return D;
 }
 
 void

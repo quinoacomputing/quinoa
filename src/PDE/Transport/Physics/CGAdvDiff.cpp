@@ -30,6 +30,7 @@ void
 TransportPhysicsAdvDiff::diffusionRhs(
   ncomp_t system,
   ncomp_t ncomp,
+  tk::real deltat,
   tk::real J,
   const std::array< std::array< tk::real, 3 >, 4 >& grad,
   const std::array< std::size_t, 4 >& N,
@@ -41,6 +42,7 @@ TransportPhysicsAdvDiff::diffusionRhs(
 //! \param[in] system Equation system index, i.e., which transport equation
 //!   system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of components in this PDE
+//! \param[in] deltat Size of time step
 //! \param[in] J Element Jacobi determinant
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to global
@@ -57,7 +59,7 @@ TransportPhysicsAdvDiff::diffusionRhs(
     g_inputdeck.get< tag::param, eq, tag::diffusivity >()[ system ];
 
   // add diffusion contribution to right hand side
-  const auto d = J/6.0;
+  const auto d = deltat * J/6.0;
   for (std::size_t a=0; a<4; ++a)
     for (ncomp_t c=0; c<ncomp; ++c)
       for (std::size_t k=0; k<3; ++k) {

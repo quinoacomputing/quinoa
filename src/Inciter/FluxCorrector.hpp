@@ -125,11 +125,9 @@ class FluxCorrector {
                  const tk::Fields& dUl ) const;
 
     //! Compute mass diffusion contribution to the rhs of the low order system
-    void diff( const std::array< std::vector< tk::real >, 3 >& coord,
-               const std::vector< std::size_t >& inpoel,
-               const std::vector< std::size_t >& elist,
-               const tk::Fields& Un,
-               tk::Fields& D ) const;
+    tk::Fields diff( const std::array< std::vector< tk::real >, 3 >& coord,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::Fields& Un ) const;
 
     //! \brief Compute the maximum and minimum unknowns of all elements
     //!   surrounding nodes

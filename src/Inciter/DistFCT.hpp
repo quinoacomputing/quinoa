@@ -98,10 +98,7 @@ class DistFCT : public CBase_DistFCT {
 
     //! \brief Compute mass diffusion rhs contribution required for the low
     //!   order solution
-    void diff( const Discretization& d,
-               const std::vector< std::size_t >& elist,
-               const tk::Fields& Un,
-               tk::Fields& D );
+    tk::Fields diff( const Discretization& d, const tk::Fields& Un );
 
     //! Prepare for next time step stage
     void next();

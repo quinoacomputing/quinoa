@@ -38,6 +38,7 @@ class TransportPhysicsAdvection {
     diffusionRhs( ncomp_t,
                   ncomp_t,
                   tk::real,
+                  tk::real,
                   const std::array< std::array< tk::real, 3 >, 4 >&,
                   const std::array< std::size_t, 4 >&,
                   const std::vector< std::array< tk::real, 4 > >&,

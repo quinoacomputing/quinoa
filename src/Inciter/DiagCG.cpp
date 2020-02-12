@@ -69,8 +69,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_vol(),
   m_bnorm(),
   m_bnormc(),
-  m_diag(),
-  m_elems( bndel() )
+  m_diag()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -86,19 +85,12 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 
     auto d = Disc();
     auto& inpoel = d->Inpoel();
-    const auto& bndel = m_elems.get< boundary >();
-    const auto& intel = m_elems.get< internal >();
 
     // Create new local ids based on access pattern of PDE operators
     std::unordered_map< std::size_t, std::size_t > map;
     std::size_t n = 0;
 
-    for (auto e : bndel)
-      for (std::size_t i=0; i<4; ++i) {
-        std::size_t o = inpoel[e*4+i];
-        if (map.find(o) == end(map)) map[o] = n++;
-      }
-    for (auto e : intel)
+    for (std::size_t e=0; e<inpoel.size()/4; ++e)
       for (std::size_t i=0; i<4; ++i) {
         std::size_t o = inpoel[e*4+i];
         if (map.find(o) == end(map)) map[o] = n++;
@@ -124,39 +116,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 
   // Compute boundary point normals
   bnorm( bface, triinpoel, std::move(symbcnodes) );
-}
-
-DiagCG::ElemLists
-DiagCG::bndel() const
-// *****************************************************************************
-// Partition elements into those that contribute to chare-boundary nodes and
-// those that contribute to internal ones
-//! \return Lists of chare-boundary and internal element lists using local id
-// *****************************************************************************
-{
-  // Lambda to find out if a mesh node is shared with another chare
-  auto shared = [&]( std::size_t i ){
-    for (const auto& [c,n] : Disc()->NodeCommMap())
-      if (n.find(i) != end(n)) return true;
-    return false;
-  };
-
-  std::unordered_set< std::size_t > bnd;
-  const auto& inpoel = Disc()->Inpoel();
-  const auto gid = Disc()->Gid();
-
-  // Find elements along our mesh chunk boundary
-  for (std::size_t n=0; n<inpoel.size(); ++n)
-    if (shared( gid[inpoel[n]] )) bnd.insert( n/4 );
-
-  // Find internal elements
-  std::vector< std::size_t > intel;
-  for (std::size_t e=0; e<inpoel.size()/4; ++e)
-    if (bnd.find(e) == end(bnd)) intel.push_back( e );
-
-  std::vector< std::size_t > bndel( begin(bnd), end(bnd) );
-
-  return ElemLists{{ std::move(bndel), std::move(intel) }};
 }
 
 void
@@ -364,9 +323,6 @@ DiagCG::start()
   // Zero grind-timer
   Disc()->grindZero();
 
-  // Perform the gather step for the rhs for the first time step
-  gather();
-
   // Start time stepping by computing the size of the next time step)
   next();
 }
@@ -512,58 +468,32 @@ DiagCG::advance( tk::real newdt )
 }
 
 void
-DiagCG::gather()
-// *****************************************************************************
-// Perform the gather step for the rhs
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  const auto& bndel = m_elems.get< boundary >();
-  const auto& intel = m_elems.get< internal >();
-
-  m_ue.fill( 0.0 );
-  for (const auto& eq : g_cgpde)
-    eq.gather( d->T(), d->Coord(), d->Inpoel(), bndel, m_u, m_ue );
-  for (const auto& eq : g_cgpde)
-    eq.gather( d->T(), d->Coord(), d->Inpoel(), intel, m_u, m_ue );
-}
-
-void
 DiagCG::rhs()
 // *****************************************************************************
 // Compute right-hand side of transport equations
 // *****************************************************************************
 {
   auto d = Disc();
-  const auto& coord = d->Coord();
-  const auto& inpoel = d->Inpoel();
   const auto& lid = d->Lid();
-  auto t = d->T();
-  auto deltat = d->Dt();
+  const auto& inpoel = d->Inpoel();
 
-  // Finish gathering the right-hand side (for all cells)
-  for (auto& u : m_ue.data()) u *= deltat;
+  // Sum nodal averages to elements (1st term of gather)
+  m_ue.fill( 0.0 );
   for (std::size_t e=0; e<inpoel.size()/4; ++e)
     for (ncomp_t c=0; c<m_u.nprop(); ++c)
       for (std::size_t a=0; a<4; ++a)
         m_ue(e,c,0) += m_u(inpoel[e*4+a],c,0)/4.0;
 
-  // Access chare-boundary element list
-  const auto& bndel = m_elems.get< boundary >();
-
   // Scatter the right-hand side for chare-boundary cells only
   m_rhs.fill( 0.0 );
   for (const auto& eq : g_cgpde)
-    eq.scatter( t+deltat/2.0, coord, inpoel, bndel, m_u, m_ue, m_rhs );
+   eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
 
-  // Compute mass diffusion for chare-boundary cells only
-  tk::Fields dif( m_u.nunk(), m_u.nprop() );
-  dif.fill( 0.0 );
-  d->FCT()->diff( *d, bndel, m_u, dif );
+  // Compute mass diffusion
+  auto dif = d->FCT()->diff( *d, m_u );
 
   // Query and match user-specified boundary conditions to side sets
-  m_bcdir = match( m_u.nprop(), t, deltat, coord, lid, m_bnode );
+  m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), lid, m_bnode );
 
   // Send rhs data on chare-boundary nodes to fellow chares
   if (d->NodeCommMap().empty())
@@ -581,16 +511,6 @@ DiagCG::rhs()
       }
       thisProxy[c].comrhs( std::vector<std::size_t>(begin(n),end(n)), r, D );
     }
-
-  // Access internal element list
-  const auto& intel = m_elems.get< internal >();
-
-  // Scatter the right-hand side for internal nodes only
-  for (const auto& eq : g_cgpde)
-    eq.scatter( t+deltat/2.0, coord, inpoel, intel, m_u, m_ue, m_rhs );
-
-  // Compute mass diffusion for internal nodes only
-  d->FCT()->diff( *d, intel, m_u, dif );
 
   ownrhs_complete( dif );
 }
@@ -644,9 +564,6 @@ DiagCG::solve( tk::Fields& dif )
     auto lid = tk::cref_find( d->Lid(), b.first );
     for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += b.second[c];
   }
-
-  // Multiply the rhs with deltat
-  for (auto& r : m_rhs.data()) r *= d->Dt();
 
   // Combine own and communicated contributions to mass diffusion
   for (const auto& b : m_difc) {
@@ -881,9 +798,6 @@ DiagCG::resizePostAMR(
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
 
-  // Recompute chare-boundary element list
-  m_elems = bndel();
-
   // Update solution on new mesh
   for (const auto& n : addedNodes)
     for (std::size_t c=0; c<nprop; ++c)
@@ -905,9 +819,6 @@ DiagCG::resized()
 // *****************************************************************************
 {
   resize_complete();
-
-  // Speculatively start the next step: gather the right-hand side
-  gather();
 }
 
 void

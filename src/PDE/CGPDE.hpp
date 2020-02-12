@@ -131,26 +131,7 @@ class CGPDE {
                      tk::real t ) const
     { self->initialize( coord, unk, t ); }
 
-    //! Public interface to gathering terms not dependent on dt for DiagCG
-    void gather(
-      tk::real t,
-      const std::array< std::vector< tk::real >, 3 >& coord,
-      const std::vector< std::size_t >& inpoel,
-      const std::vector< std::size_t >& elist,
-      const tk::Fields& U,
-      tk::Fields& Ue ) const
-    { self->gather( t, coord, inpoel, elist, U, Ue ); }
 
-    //! Public interface to scattering terms not dependnt on dt for DiagCG
-    void scatter(
-      tk::real t,
-      const std::array< std::vector< tk::real >, 3 >& coord,
-      const std::vector< std::size_t >& inpoel,
-      const std::vector< std::size_t >& elist,
-      const tk::Fields& U,
-      const tk::Fields& Ue,
-      tk::Fields& R ) const
-    { self->scatter( t, coord, inpoel, elist, U, Ue, R ); }
 
     //! Public interface to computing the nodal gradients for ALECG
     void grad( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -161,6 +142,16 @@ class CGPDE {
                const tk::Fields& U,
                tk::Fields& G ) const
     { self->grad( coord, inpoel, bndel, gid, bid, U, G ); }
+
+    //! Public interface to computing the right-hand side vector for DiagCG
+    void rhs( tk::real t,
+              tk::real deltat,
+              const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const tk::Fields& U,
+              tk::Fields& Ue,
+              tk::Fields& R ) const
+    { self->rhs( t, deltat, coord, inpoel, U, Ue, R ); }
 
     //! Public interface to computing the right-hand side vector for ALECG
     void rhs( tk::real t,
@@ -255,21 +246,6 @@ class CGPDE {
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
                                tk::Fields&,
                                tk::real ) const = 0;
-      virtual void gather(
-        tk::real,
-        const std::array< std::vector< tk::real >, 3 >&,
-        const std::vector< std::size_t >&,
-        const std::vector< std::size_t >&,
-        const tk::Fields&,
-        tk::Fields& ) const = 0;
-      virtual void scatter(
-        tk::real,
-        const std::array< std::vector< tk::real >, 3 >&,
-        const std::vector< std::size_t >&,
-        const std::vector< std::size_t >&,
-        const tk::Fields&,
-        const tk::Fields&,
-        tk::Fields& ) const = 0;
       virtual void grad( const std::array< std::vector< tk::real >, 3 >&,
                          const std::vector< std::size_t >&,
                          const std::vector< std::size_t >&,
@@ -277,6 +253,13 @@ class CGPDE {
                          const std::unordered_map< std::size_t, std::size_t >&,
                          const tk::Fields&,
                          tk::Fields& ) const = 0;
+      virtual void rhs( tk::real,
+                        tk::real,
+                        const std::array< std::vector< tk::real >, 3 >&,
+                        const std::vector< std::size_t >&,
+                        const tk::Fields&,
+                        tk::Fields&,
+                        tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
                         tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
@@ -335,23 +318,6 @@ class CGPDE {
                        tk::Fields& unk,
                        tk::real t )
       const override { data.initialize( coord, unk, t ); }
-      void gather(
-        tk::real t,
-        const std::array< std::vector< tk::real >, 3 >& coord,
-        const std::vector< std::size_t >& inpoel,
-        const std::vector< std::size_t >& elist,
-        const tk::Fields& U,
-        tk::Fields& Ue ) const override
-      { data.gather( t, coord, inpoel, elist, U, Ue ); }
-      void scatter(
-        tk::real t,
-        const std::array< std::vector< tk::real >, 3 >& coord,
-        const std::vector< std::size_t >& inpoel,
-        const std::vector< std::size_t >& elist,
-        const tk::Fields& U,
-        const tk::Fields& Ue,
-        tk::Fields& R ) const override
-      { data.scatter( t, coord, inpoel, elist, U, Ue, R ); }
       void grad( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
                  const std::vector< std::size_t >& bndel,
@@ -360,6 +326,14 @@ class CGPDE {
                  const tk::Fields& U,
                  tk::Fields& G ) const override
       { data.grad( coord, inpoel, bndel, gid, bid, U, G ); }
+      void rhs( tk::real t,
+                tk::real deltat,
+                const std::array< std::vector< tk::real >, 3 >& coord,
+                const std::vector< std::size_t >& inpoel,
+                const tk::Fields& U,
+                tk::Fields& Ue,
+                tk::Fields& R ) const override
+      { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,
