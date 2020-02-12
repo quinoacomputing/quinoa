@@ -464,7 +464,7 @@ tk::muscl( const UnsMesh::Edge& edge,
            bool enforce_realizability )
 // *****************************************************************************
 // Compute MUSCL reconstruction in edge-end points using a MUSCL procedure with
-// Van Leer limiting
+// van Leer limiting
 //! \param[in] edge Node ids of edge-end points
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] G Gradient of all unknowns in mesh points
