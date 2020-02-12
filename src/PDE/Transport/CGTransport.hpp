@@ -440,7 +440,7 @@ class Transport {
         tk::real maxvel = 0.0;
         for (ncomp_t c=0; c<m_ncomp; ++c)
           for (std::size_t i=0; i<4; ++i) {
-            auto v = std::sqrt( tk::dot( vel[i][c], vel[i][c] ) );
+            auto v = tk::length( vel[i][c] );
             if (v > maxvel) maxvel = v;
           }
         // compute element dt for the advection

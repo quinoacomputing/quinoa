@@ -39,7 +39,7 @@ struct Upwind {
           const std::vector< std::array< tk::real, 3 > >& v )
     {
       std::vector< tk::real > flx( u[0].size(), 0 );
-  
+
       for(std::size_t c=0; c<v.size(); ++c)
       {
         // wave speed based on prescribed velocity
