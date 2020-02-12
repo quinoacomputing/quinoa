@@ -173,7 +173,7 @@ class CompFlow {
       // access pointer to right hand side at component and offset
       std::array< const tk::real*, 5 > r;
       for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
-      
+
       // compute/assemble gradients in points
       auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, gid, lid, bid,
                             vol, U, G, egrad );
@@ -237,7 +237,7 @@ class CompFlow {
           for (std::size_t c=0; c<m_ncomp; ++c) R.var(r[c],p) -= 2*f[c];
         }
       }
-      
+
       // boundary integrals
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
         // access node IDs
@@ -295,20 +295,6 @@ class CompFlow {
           for (std::size_t a=0; a<4; ++a)
             R.var(r[c],N[a]) += J24 * s[a][c];
       }
-    }
-
-    //! Compute wave speed at a point
-    //! \param[in] n Unit dual-face normal
-    //! \param[in] u Conserved variable unknowns at a point
-    //! \return Wave speed
-    static tk::real
-    swave( const std::array< tk::real, 3 >& n,
-           const std::vector< tk::real >& u )
-    {
-      std::array< tk::real, 3 > v{ u[1]/u[0], u[2]/u[0], u[3]/u[0] };
-      auto p = eos_pressure< tag::compflow >( 0, u[0], v[0], v[1], v[2], u[4] );
-      auto c = eos_soundspeed< tag::compflow >( 0, u[0], p );
-      return std::abs(tk::dot(v,n)) + c;
     }
 
     //! Compute boundary flux on triangle face
