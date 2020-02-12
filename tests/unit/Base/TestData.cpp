@@ -1886,6 +1886,154 @@ void Data_object::test< 41 >() {
          std::vector< tk::real >{ 3.0, 4.0 }, r[0] );
 }
 
+//! Test that tk::Data's extract() returns correct array of three reals
+template<> template<>
+void Data_object::test< 42 >() {
+  set_test_name( "extract() array of three reals for A,B,C" );
+
+  tk::Data< tk::UnkEqComp > pp( 8, 2 );
+  tk::Data< tk::EqCompUnk > pe( 8, 2 );
+
+  pp( 0, 0, 0 ) = 0.1;
+  pp( 1, 0, 0 ) = 0.2;
+  pp( 2, 0, 0 ) = 0.3;
+  pp( 3, 0, 0 ) = 0.4;
+  pp( 4, 0, 0 ) = 0.5;
+  pp( 5, 0, 0 ) = 0.6;
+  pp( 6, 0, 0 ) = 0.7;
+  pp( 7, 0, 0 ) = 0.8;
+
+  pp( 0, 1, 0 ) = 1.1;
+  pp( 1, 1, 0 ) = 1.2;
+  pp( 2, 1, 0 ) = 1.3;
+  pp( 3, 1, 0 ) = 1.4;
+  pp( 4, 1, 0 ) = 1.5;
+  pp( 5, 1, 0 ) = 1.6;
+  pp( 6, 1, 0 ) = 1.7;
+  pp( 7, 1, 0 ) = 1.8;
+
+  pe( 0, 0, 0 ) = 0.1;
+  pe( 1, 0, 0 ) = 0.2;
+  pe( 2, 0, 0 ) = 0.3;
+  pe( 3, 0, 0 ) = 0.4;
+  pe( 4, 0, 0 ) = 0.5;
+  pe( 5, 0, 0 ) = 0.6;
+  pe( 6, 0, 0 ) = 0.7;
+  pe( 7, 0, 0 ) = 0.8;
+
+  pe( 0, 1, 0 ) = 1.1;
+  pe( 1, 1, 0 ) = 1.2;
+  pe( 2, 1, 0 ) = 1.3;
+  pe( 3, 1, 0 ) = 1.4;
+  pe( 4, 1, 0 ) = 1.5;
+  pe( 5, 1, 0 ) = 1.6;
+  pe( 6, 1, 0 ) = 1.7;
+  pe( 7, 1, 0 ) = 1.8;
+
+  using unittest::veceq;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::extract() array of three reals at 0,0:3,2,1 incorrect",
+         std::array< tk::real, 3 >{{ 0.4, 0.3, 0.2 }},
+           pp.extract( 0, 0, 3, 2, 1 ) );
+  veceq( "<UnkEqComp>::extract() array of three reals at 0,0:1,3,5 incorrect",
+         std::array< tk::real, 3 >{{ 0.2, 0.4, 0.6 }},
+           pp.extract( 0, 0, 1, 3, 5 ) );
+  veceq( "<UnkEqComp>::extract() array of three reals at 0,1:3,1,0 incorrect",
+         std::array< tk::real, 3 >{{ 1.4, 1.2, 1.1 }},
+           pp.extract( 0, 1, 3, 1, 0 ) );
+  veceq( "<UnkEqComp>::extract() array of three reals at 0,1:3,5,7 incorrect",
+         std::array< tk::real, 3 >{{ 1.4, 1.6, 1.8 }},
+           pp.extract( 0, 1, 3, 5, 7 ) );
+
+  veceq( "<EqCompUnk>::extract() array of three reals at 0,0:3,2,1 incorrect",
+         std::array< tk::real, 3 >{{ 0.4, 0.3, 0.2 }},
+           pe.extract( 0, 0, 3, 2, 1 ) );
+  veceq( "<EqCompUnk>::extract() array of three reals at 0,0:1,3,5 incorrect",
+         std::array< tk::real, 3 >{{ 0.2, 0.4, 0.6 }},
+           pe.extract( 0, 0, 1, 3, 5 ) );
+  veceq( "<EqCompUnk>::extract() array of three reals at 0,1:3,1,0 incorrect",
+         std::array< tk::real, 3 >{{ 1.4, 1.2, 1.1 }},
+           pe.extract( 0, 1, 3, 1, 0 ) );
+  veceq( "<kEqCompUnk>::extract() array of three reals 0,1:3,5,7 incorrect",
+         std::array< tk::real, 3 >{{ 1.4, 1.6, 1.8 }},
+           pe.extract( 0, 1, 3, 5, 7 ) );
+}
+
+//! Test that tk::Data's extract() returns correct array of three reals
+template<> template<>
+void Data_object::test< 43 >() {
+  set_test_name( "extract() array of three reals for N[3]" );
+
+  tk::Data< tk::UnkEqComp > pp( 8, 2 );
+  tk::Data< tk::EqCompUnk > pe( 8, 2 );
+
+  pp( 0, 0, 0 ) = 0.1;
+  pp( 1, 0, 0 ) = 0.2;
+  pp( 2, 0, 0 ) = 0.3;
+  pp( 3, 0, 0 ) = 0.4;
+  pp( 4, 0, 0 ) = 0.5;
+  pp( 5, 0, 0 ) = 0.6;
+  pp( 6, 0, 0 ) = 0.7;
+  pp( 7, 0, 0 ) = 0.8;
+
+  pp( 0, 1, 0 ) = 1.1;
+  pp( 1, 1, 0 ) = 1.2;
+  pp( 2, 1, 0 ) = 1.3;
+  pp( 3, 1, 0 ) = 1.4;
+  pp( 4, 1, 0 ) = 1.5;
+  pp( 5, 1, 0 ) = 1.6;
+  pp( 6, 1, 0 ) = 1.7;
+  pp( 7, 1, 0 ) = 1.8;
+
+  pe( 0, 0, 0 ) = 0.1;
+  pe( 1, 0, 0 ) = 0.2;
+  pe( 2, 0, 0 ) = 0.3;
+  pe( 3, 0, 0 ) = 0.4;
+  pe( 4, 0, 0 ) = 0.5;
+  pe( 5, 0, 0 ) = 0.6;
+  pe( 6, 0, 0 ) = 0.7;
+  pe( 7, 0, 0 ) = 0.8;
+
+  pe( 0, 1, 0 ) = 1.1;
+  pe( 1, 1, 0 ) = 1.2;
+  pe( 2, 1, 0 ) = 1.3;
+  pe( 3, 1, 0 ) = 1.4;
+  pe( 4, 1, 0 ) = 1.5;
+  pe( 5, 1, 0 ) = 1.6;
+  pe( 6, 1, 0 ) = 1.7;
+  pe( 7, 1, 0 ) = 1.8;
+
+  using unittest::veceq;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::extract() array of three reals at 0,0:3,2,1 incorrect",
+          std::array< tk::real, 3 >{{ 0.4, 0.3, 0.2 }},
+            pp.extract( 0, 0, std::array<std::size_t,3>{{3,2,1}} ) );
+  veceq( "<UnkEqComp>::extract() array of three reals at 0,0:1,3,5 incorrect",
+          std::array< tk::real, 3 >{{ 0.2, 0.4, 0.6 }},
+            pp.extract( 0, 0, std::array<std::size_t,3>{{1,3,5}} ) );
+  veceq( "<UnkEqComp>::extract() array of three reals at 0,1:3,1,0 incorrect",
+          std::array< tk::real, 3 >{{ 1.4, 1.2, 1.1 }},
+            pp.extract( 0, 1, std::array<std::size_t,3>{{3,1,0}} ) );
+  veceq( "<UnkEqComp>::extract() array of three reals at 0,1:3,5,7 incorrect",
+          std::array< tk::real, 3 >{{ 1.4, 1.6, 1.8 }},
+            pp.extract( 0, 1, std::array<std::size_t,3>{{3,5,7}} ) );
+
+  veceq( "<EqCompUnk>::extract() array of three reals at 0,0:3,2,1 incorrect",
+          std::array< tk::real, 3 >{{ 0.4, 0.3, 0.2 }},
+            pe.extract( 0, 0, std::array<std::size_t,3>{{3,2,1}} ) );
+  veceq( "<EqCompUnk>::extract() array of three reals at 0,0:1,3,5 incorrect",
+          std::array< tk::real, 3 >{{ 0.2, 0.4, 0.6 }},
+            pe.extract( 0, 0, std::array<std::size_t,3>{{1,3,5}} ) );
+  veceq( "<EqCompUnk>::extract() array of three reals at 0,1:3,1,0 incorrect",
+          std::array< tk::real, 3 >{{ 1.4, 1.2, 1.1 }},
+            pe.extract( 0, 1, std::array<std::size_t,3>{{3,1,0}} ) );
+  veceq( "<kEqCompUnk>::extract() array of three reals 0,1:3,5,7 incorrect",
+          std::array< tk::real, 3 >{{ 1.4, 1.6, 1.8 }},
+            pe.extract( 0, 1, std::array<std::size_t,3>{{3,5,7}} ) );
+}
+
 } // tut::
 
 #endif  // DOXYGEN_GENERATING_OUTPUT
