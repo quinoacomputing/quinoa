@@ -98,7 +98,7 @@ class Transporter : public CBase_Transporter {
     void discinserted();
 
     //! Reduction target: all Discretization constructors have been called
-    void disccreated();
+    void disccreated( std::size_t npoin );
 
     //! \brief Reduction target: all worker (derived discretization) chares have
     //!   been inserted

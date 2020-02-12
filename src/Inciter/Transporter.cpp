@@ -645,9 +645,9 @@ Transporter::refined( std::size_t nelem, std::size_t npoin )
 // *****************************************************************************
 // Reduction target: all PEs have refined their mesh
 //! \param[in] nelem Total number of elements in mesh across the whole problem
-//! \param[in] npoin Total number of mesh nodes (summed across all PEs). Note
+//! \param[in] npoin Total number of mesh points (summed across all PEs). Note
 //!    that in parallel this is larger than the total number of points in the
-//!    mesh, because the boundary nodes are double-counted.
+//!    mesh, because the boundary nodes are multi-counted.
 // *****************************************************************************
 {
   m_sorter.doneInserting();
@@ -697,19 +697,24 @@ Transporter::discinserted()
 }
 
 void
-Transporter::disccreated()
+Transporter::disccreated( std::size_t npoin )
 // *****************************************************************************
 // Reduction target: all Discretization constructors have been called
+//! \param[in] npoin Total number of mesh points (summed across all PEs). Note
+//!  that as opposed to npoin in refined(), this npoin is not multi-counted, and
+//!  thus should be correct in parallel.
 // *****************************************************************************
 {
+  m_npoin = npoin;
+
   auto print = printer();
 
   m_progMesh.end( print );
 
   if (g_inputdeck.get< tag::amr, tag::t0ref >()) {
-
     print.section( "Initially (t<0) refined mesh graph statistics" );
     print.item( "Number of tetrahedra", m_nelem );
+    print.item( "Number of points", m_npoin );
     print.endsubsection();
   }
 
