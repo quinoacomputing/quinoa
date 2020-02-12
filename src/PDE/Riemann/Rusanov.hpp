@@ -6,7 +6,7 @@
              2019 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Rusanov Riemann flux function
-  \details   This file implements the Rusanov Riemann solver.
+  \details   This file implements the Rusanov Riemann solver, specific to ALECG.
 */
 // *****************************************************************************
 #ifndef Rusanov_h
