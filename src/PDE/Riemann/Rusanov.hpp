@@ -30,6 +30,8 @@ struct Rusanov {
   //! Rusanov approximate Riemann solver flux function
   //! \param[in] fn Face/Surface normal
   //! \param[in] u Left and right unknown/state vector
+  //! \param[in] aux Auxiliary vector, used here to pass in normal vectors
+  //!    weighted by the number of contributions to the edge
   //! \return Riemann solution according to Rusanov
   //! \note The function signature must follow tk::RiemannFluxFn
   static tk::RiemannFluxFn::result_type
