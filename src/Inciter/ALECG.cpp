@@ -657,8 +657,9 @@ ALECG::rhs()
   tk::destroy(m_gradc);
 
   // Compute own portion of right-hand side for all equations
+  auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   for (const auto& eq : g_cgpde)
-    eq.rhs( d->T(), rkcoef[m_stage] * d->Dt(), d->Coord(), d->Inpoel(),
+    eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
             m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfnorm, m_dfnormc,
             m_bnorm, d->Vol(), m_grad, m_u, m_rhs );
 

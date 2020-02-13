@@ -143,7 +143,6 @@ class CGPDE {
 
     //! Public interface to computing the right-hand side vector for ALECG
     void rhs( tk::real t,
-              tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::size_t >& triinpoel,
@@ -162,7 +161,7 @@ class CGPDE {
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R) const
-    { self->rhs( t, deltat, coord, inpoel, triinpoel, gid, bid, lid,
+    { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid,
                  dfnorm, dfnormc, bnorm, vol, G, U, R ); }
 
     //! Public interface to computing the right-hand side vector for DiagCG
@@ -252,7 +251,6 @@ class CGPDE {
                          const tk::Fields&,
                          tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
-                        tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::vector< std::size_t >&,
@@ -325,7 +323,6 @@ class CGPDE {
                  tk::Fields& G ) const override
       { data.grad( coord, inpoel, bndel, gid, bid, U, G ); }
       void rhs( tk::real t,
-                tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::vector< std::size_t >& triinpoel,
@@ -344,7 +341,7 @@ class CGPDE {
                 const tk::Fields& G,
                 const tk::Fields& U,
                 tk::Fields& R) const override
-      { data.rhs( t, deltat, coord, inpoel, triinpoel, gid, bid, lid,
+      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid,
                  dfnorm, dfnormc, bnorm, vol, G, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,

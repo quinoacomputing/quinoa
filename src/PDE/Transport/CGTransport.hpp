@@ -131,7 +131,6 @@ class Transport {
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real,
-              tk::real,
               const std::array< std::vector< tk::real >, 3 >&  coord,
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::size_t >& triinpoel,
@@ -257,7 +256,7 @@ class Transport {
       }
     }
 
-    //! Compute right hand side for DiagCG (CG-FCT)
+    //! Compute right hand side for DiagCG (CG+FCT)
     //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
