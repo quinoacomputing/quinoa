@@ -14,6 +14,7 @@
 #include <cmath>
 
 #include "Vector.hpp"
+#include "Exception.hpp"
 
 std::array< tk::real, 3 >
 tk::cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
@@ -56,6 +57,31 @@ tk::dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
 // *****************************************************************************
 {
   return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+}
+
+tk::real
+tk::length( const std::array< real, 3 >& v )
+// *****************************************************************************
+//  Compute length of a vector
+//! \param[in] v vector
+//! \return length
+// *****************************************************************************
+{
+  return std::sqrt( dot(v,v) );
+}
+
+void
+tk::unit( std::array< real, 3 >& v )
+// *****************************************************************************
+// Scale vector to unit length
+//! \param[in,out] v Vector to normalize
+// *****************************************************************************
+{
+  auto len = length( v );
+  Assert( len > std::numeric_limits< tk::real >::epsilon(), "div by zero" );
+  v[0] /= len;
+  v[1] /= len;
+  v[2] /= len;
 }
 
 tk::real

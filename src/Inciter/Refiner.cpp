@@ -75,7 +75,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_chedge(),
   m_localEdgeData(),
   m_remoteEdgeData(),
-  m_msumset(),
+  m_nodeCommMap(),
   m_oldTets(),
   m_addedNodes(),
   m_addedTets(),
@@ -837,7 +837,7 @@ Refiner::next()
 
     // Augment node communication map with newly added nodes on chare-boundary
     for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
-      auto& nodes = tk::ref_find( m_msumset, neighborchare );
+      auto& nodes = tk::ref_find( m_nodeCommMap, neighborchare );
       for (const auto& e : edges) {
         // If parent nodes were part of the node communication map for chare
         if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes)) {
@@ -848,16 +848,10 @@ Refiner::next()
       }
     }
 
-    // Convert to node communication map to vectors
-    std::unordered_map< int, std::vector< std::size_t > > msum;
-    for (const auto& [ neighborchare, sharednodes ] : m_msumset) {
-      auto& n = msum[ neighborchare ];
-      n.insert( end(n), begin(sharednodes), end(sharednodes) );
-    }
-
     // Send new mesh, solution, and communication data back to PDE worker
     m_scheme.ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel, m_el,
-      m_coord, m_addedNodes, m_addedTets, msum, m_bface, m_bnode, m_triinpoel );
+      m_coord, m_addedNodes, m_addedTets, m_nodeCommMap, m_bface, m_bnode,
+      m_triinpoel );
   }
 }
 
@@ -898,7 +892,7 @@ Refiner::endt0ref()
     tk::destroy( m_remoteEdgeData );
     tk::destroy( m_remoteEdges );
     tk::destroy( m_intermediates );
-    tk::destroy( m_msumset );
+    tk::destroy( m_nodeCommMap );
     tk::destroy( m_oldTets );
     tk::destroy( m_addedNodes );
     tk::destroy( m_addedTets );
@@ -1268,7 +1262,8 @@ Refiner::updateMesh()
   for (auto r : ref) if (old.find(r) == end(old)) m_lref[r] = l++;
 
   // Get nodal communication map from Discretization worker
-  if (!m_initial) m_msumset = m_scheme.disc()[thisIndex].ckLocal()->msumset();
+  if (!m_initial)
+    m_nodeCommMap = m_scheme.disc()[thisIndex].ckLocal()->NodeCommMap();
 
   // Update mesh and solution after refinement
   newVolMesh( old, ref );

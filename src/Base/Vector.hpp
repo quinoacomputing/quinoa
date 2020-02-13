@@ -32,6 +32,14 @@ crossdiv( const std::array< real, 3 >& v1,
 real
 dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 );
 
+//! Compute length of a vector
+real
+length( const std::array< real, 3 >& v );
+
+//! Scale vector to unit length
+void
+unit( std::array< real, 3 >& v );
+
 //! Compute the triple-product of three vectors
 real
 triple( const std::array< real, 3 >& v1,

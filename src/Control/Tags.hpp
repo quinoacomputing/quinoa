@@ -274,6 +274,7 @@ struct pe {};
 struct it {};
 struct fn {};
 struct time {};
+struct node {};
 struct ic { static std::string name() { return "ic"; } };
 struct velocityic { static std::string name() { return "velocityic"; } };
 struct densityic { static std::string name() { return "densityic"; } };

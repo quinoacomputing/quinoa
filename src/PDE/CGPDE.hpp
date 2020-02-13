@@ -29,8 +29,54 @@
 
 #include "Types.hpp"
 #include "Fields.hpp"
+#include "UnsMesh.hpp"
+#include "FunctionPrototypes.hpp"
+#include "Mesh/CommMap.hpp"
 
 namespace inciter {
+
+namespace cg {
+
+using ncomp_t = kw::ncomp::info::expect::type;
+
+//! Compute nodal gradients of primitive variables for ALECG on chare boundary
+void
+chbgrad( ncomp_t ncomp,
+         ncomp_t offset,
+         const std::array< std::vector< tk::real >, 3 >& coord,
+         const std::vector< std::size_t >& inpoel,
+         const std::vector< std::size_t >& bndel,
+         const std::vector< std::size_t >& gid,
+         const std::unordered_map< std::size_t, std::size_t >& bid,
+         const tk::Fields& U,
+         tk::ElemGradFn egrad,
+         tk::Fields& G );
+
+//! \brief Compute/assemble nodal gradients of primitive variables for ALECG in
+//!   all points
+tk::Fields
+nodegrad( ncomp_t ncomp,
+          ncomp_t offset,
+          const std::array< std::vector< tk::real >, 3 >& coord,
+          const std::vector< std::size_t >& inpoel,
+          const std::vector< std::size_t >& gid,
+          const std::unordered_map< std::size_t, std::size_t >& lid,
+          const std::unordered_map< std::size_t, std::size_t >& bid,
+          const std::vector< tk::real >& vol,
+          const tk::Fields& U,
+          const tk::Fields& G,
+          tk::ElemGradFn egrad );
+
+//! Compute normal of dual-mesh associated to edge
+std::array< tk::real, 3 >
+edfnorm( const tk::UnsMesh::Edge& edge,
+         const std::array< std::vector< tk::real >, 3 >&  coord,
+         const std::vector< std::size_t >& inpoel,
+         const std::unordered_map< tk::UnsMesh::Edge,
+                  std::vector< std::size_t >,
+                  tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
+
+} // cg::
 
 //! \brief Partial differential equation base for continuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side
@@ -85,7 +131,41 @@ class CGPDE {
                      tk::real t ) const
     { self->initialize( coord, unk, t ); }
 
-    //! Public interface to computing the right-hand side vector for the diff eq
+    //! Public interface to computing the nodal gradients for ALECG
+    void grad( const std::array< std::vector< tk::real >, 3 >& coord,
+               const std::vector< std::size_t >& inpoel,
+               const std::vector< std::size_t >& bndel,
+               const std::vector< std::size_t >& gid,
+               const std::unordered_map< std::size_t, std::size_t >& bid,
+               const tk::Fields& U,
+               tk::Fields& G ) const
+    { self->grad( coord, inpoel, bndel, gid, bid, U, G ); }
+
+    //! Public interface to computing the right-hand side vector for ALECG
+    void rhs( tk::real t,
+              tk::real deltat,
+              const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const std::vector< std::size_t >& triinpoel,
+              const std::vector< std::size_t >& gid,
+              const std::unordered_map< std::size_t, std::size_t >& bid,
+              const std::unordered_map< std::size_t, std::size_t >& lid,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                      std::array< tk::real, 3 >,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm,
+              const std::unordered_map< tk::UnsMesh::Edge,
+                      std::array< tk::real, 3 >,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnormc,
+              const std::unordered_map< std::size_t,
+                      std::array< tk::real, 4 > >& bnorm,
+              const std::vector< tk::real >& vol,
+              const tk::Fields& G,
+              const tk::Fields& U,
+              tk::Fields& R) const
+    { self->rhs( t, deltat, coord, inpoel, triinpoel, gid, bid, lid,
+                 dfnorm, dfnormc, bnorm, vol, G, U, R ); }
+
+    //! Public interface to computing the right-hand side vector for DiagCG
     void rhs( tk::real t,
               tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
@@ -164,6 +244,33 @@ class CGPDE {
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
                                tk::Fields&,
                                tk::real ) const = 0;
+      virtual void grad( const std::array< std::vector< tk::real >, 3 >&,
+                         const std::vector< std::size_t >&,
+                         const std::vector< std::size_t >&,
+                         const std::vector< std::size_t >&,
+                         const std::unordered_map< std::size_t, std::size_t >&,
+                         const tk::Fields&,
+                         tk::Fields& ) const = 0;
+      virtual void rhs( tk::real,
+                        tk::real,
+                        const std::array< std::vector< tk::real >, 3 >&,
+                        const std::vector< std::size_t >&,
+                        const std::vector< std::size_t >&,
+                        const std::vector< std::size_t >&,
+                        const std::unordered_map< std::size_t, std::size_t >&,
+                        const std::unordered_map< std::size_t, std::size_t >&,
+                        const std::unordered_map< tk::UnsMesh::Edge,
+                                std::array< tk::real, 3 >,
+                                tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >&,
+                        const std::unordered_map< tk::UnsMesh::Edge,
+                                std::array< tk::real, 3 >,
+                                tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >&,
+                        const std::unordered_map< std::size_t,
+                                                  std::array< tk::real, 4 > >&,
+                        const std::vector< tk::real >&,
+                        const tk::Fields&,
+                        const tk::Fields&,
+                        tk::Fields&) const = 0;
       virtual void rhs( tk::real,
                         tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
@@ -209,6 +316,36 @@ class CGPDE {
                        tk::Fields& unk,
                        tk::real t )
       const override { data.initialize( coord, unk, t ); }
+      void grad( const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< std::size_t >& inpoel,
+                 const std::vector< std::size_t >& bndel,
+                 const std::vector< std::size_t >& gid,
+                 const std::unordered_map< std::size_t, std::size_t >& bid,
+                 const tk::Fields& U,
+                 tk::Fields& G ) const override
+      { data.grad( coord, inpoel, bndel, gid, bid, U, G ); }
+      void rhs( tk::real t,
+                tk::real deltat,
+                const std::array< std::vector< tk::real >, 3 >& coord,
+                const std::vector< std::size_t >& inpoel,
+                const std::vector< std::size_t >& triinpoel,
+                const std::vector< std::size_t >& gid,
+                const std::unordered_map< std::size_t, std::size_t >& bid,
+                const std::unordered_map< std::size_t, std::size_t >& lid,
+                const std::unordered_map< tk::UnsMesh::Edge,
+                        std::array< tk::real, 3 >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm,
+                const std::unordered_map< tk::UnsMesh::Edge,
+                        std::array< tk::real, 3 >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnormc,
+                const std::unordered_map< std::size_t,
+                        std::array< tk::real, 4 > >& bnorm,
+                const std::vector< tk::real >& vol,
+                const tk::Fields& G,
+                const tk::Fields& U,
+                tk::Fields& R) const override
+      { data.rhs( t, deltat, coord, inpoel, triinpoel, gid, bid, lid,
+                 dfnorm, dfnormc, bnorm, vol, G, U, R ); }
       void rhs( tk::real t,
                 tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,

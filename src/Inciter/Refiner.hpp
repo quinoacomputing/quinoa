@@ -33,6 +33,7 @@
 #include "DiagCG.hpp"
 #include "ALECG.hpp"
 #include "DG.hpp"
+#include "CommMap.hpp"
 
 #include "NoWarning/transporter.decl.h"
 #include "NoWarning/refiner.decl.h"
@@ -179,7 +180,7 @@ class Refiner : public CBase_Refiner {
       p | m_remoteEdgeData;
       p | m_remoteEdges;
       p | m_intermediates;
-      p | m_msumset;
+      p | m_nodeCommMap;
       p | m_oldTets;
       p | m_addedNodes;
       p | m_addedTets;
@@ -268,10 +269,7 @@ class Refiner : public CBase_Refiner {
     std::unordered_set< size_t> m_intermediates;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs for the coarse mesh
-    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
-    //!   points. This is the same data as in Discretization::m_msum, but the
-    //!   nodelist is stored as a hash-set for faster searches.
-    std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
+    tk::NodeCommMap m_nodeCommMap;
     //! Tetrahedra before refinement/derefinement step
     TetSet m_oldTets;
     //! Newly added mesh nodes (local id) and their parents (local ids)

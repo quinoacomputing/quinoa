@@ -38,6 +38,7 @@
 #include "DerivedData.hpp"
 #include "FluxCorrector.hpp"
 #include "NodeDiagnostics.hpp"
+#include "CommMap.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
 #include "NoWarning/diagcg.decl.h"
@@ -137,7 +138,7 @@ class DiagCG : public CBase_DiagCG {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
       const std::unordered_map< std::size_t, std::size_t >& addedTets,
-      const std::unordered_map< int, std::vector< std::size_t > >& msum,
+      const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& /* bface */,
       const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& /* triinpoel */ );

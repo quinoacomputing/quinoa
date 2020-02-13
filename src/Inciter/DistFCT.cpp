@@ -33,8 +33,7 @@ using inciter::DistFCT;
 DistFCT::DistFCT( int nchare,
                   std::size_t nu,
                   std::size_t np,
-                  const std::unordered_map< int,
-                    std::vector< std::size_t > >& msum,
+                  const tk::NodeCommMap& nodeCommMap,
                   const std::unordered_map< std::size_t, std::size_t >& bid,
                   const std::unordered_map< std::size_t, std::size_t >& lid,
                   const std::vector< std::size_t >& inpoel ) :
@@ -42,7 +41,7 @@ DistFCT::DistFCT( int nchare,
   m_nalw( 0 ),
   m_nlim( 0 ),
   m_nchare( static_cast< std::size_t >( nchare ) ),
-  m_msum( msum ),
+  m_nodeCommMap( nodeCommMap ),
   m_bid( bid ),
   m_lid( lid ),
   m_inpoel( inpoel ),
@@ -62,8 +61,8 @@ DistFCT::DistFCT( int nchare,
 //! \param[in] nu Number of unknowns in solution vector
 //! \param[in] np Total number of properties, i.e., scalar variables or
 //!   components, per unknown in solution vector
-//! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
-//!   mesh chunk we operate on
+//! \param[in] nodeCommMap Global mesh node IDs associated to chare IDs
+//!   bordering the mesh chunk we operate on
 //! \param[in] bid Local chare-boundary mesh node IDs at which we receive
 //!   contributions associated to global mesh node IDs of mesh elements we
 //!   contribute to
@@ -97,16 +96,15 @@ DistFCT::resizeComm()
 
 void
 DistFCT::resize( std::size_t nu,
-                 const std::unordered_map< int,
-                   std::vector< std::size_t > >& msum,
+                 const tk::NodeCommMap& nodeCommMap,
                  const std::unordered_map< std::size_t, std::size_t >& bid,
                  const std::unordered_map< std::size_t, std::size_t >& lid,
                  const std::vector< std::size_t >& inpoel )
 // *****************************************************************************
 //  Resize FCT data structures (e.g., after mesh refinement)
 //! \param[in] nu New number of unknowns in solution vector
-//! \param[in] msum New global mesh node IDs associated to chare IDs bordering
-//!   the mesh chunk we operate on
+//! \param[in] nodeCommMap New global mesh node IDs associated to chare IDs
+//!   bordering the mesh chunk we operate on
 //! \param[in] bid New local chare-boundary mesh node IDs at which we receive
 //!   contributions associated to global mesh node IDs of mesh elements we
 //!   contribute to
@@ -115,7 +113,7 @@ DistFCT::resize( std::size_t nu,
 //! \param[in] inpoel Mesh connectivity of our chunk of the mesh
 // *****************************************************************************
 {
-  m_msum = msum;
+  m_nodeCommMap = nodeCommMap;
   m_bid = bid;
   m_lid = lid;
   m_inpoel = inpoel;
@@ -127,17 +125,6 @@ DistFCT::resize( std::size_t nu,
   resizeComm();
 
   m_fluxcorrector.resize( m_inpoel.size() );
-}
-
-tk::Fields
-DistFCT::lump( const Discretization& d )
-// *****************************************************************************
-//  Compute lumped mass lhs required for the low order solution
-//! \param[in] d Discretization proxy to read mesh data from
-//! \return Lumped mass matrix
-// *****************************************************************************
-{
-  return m_fluxcorrector.lump( d.Coord(), m_inpoel );
 }
 
 tk::Fields
@@ -211,14 +198,14 @@ DistFCT::aec(
   // and only partial sums on chare-boundary nodes.
   m_fluxcorrector.aec( d.Coord(), m_inpoel, d.Vol(), bcdir, bnorm, Un, m_p );
 
-  if (d.Msum().empty())
+  if (d.NodeCommMap().empty())
     comaec_complete();
   else // send contributions to chare-boundary nodes to fellow chares
-    for (const auto& n : d.Msum()) {
-      std::vector< std::vector< tk::real > > p( n.second.size() );
+    for (const auto& [c,n] : d.NodeCommMap()) {
+      std::vector< std::vector< tk::real > > p( n.size() );
       std::size_t j = 0;
-      for (auto i : n.second) p[ j++ ] = m_p[ tk::cref_find(m_lid,i) ];
-      thisProxy[ n.first ].comaec( n.second, p );
+      for (auto i : n) p[ j++ ] = m_p[ tk::cref_find(m_lid,i) ];
+      thisProxy[ c ].comaec( std::vector<std::size_t>(begin(n),end(n)), p );
     }
 
   ownaec_complete( bcdir );
@@ -250,7 +237,7 @@ DistFCT::comaec( const std::vector< std::size_t >& gid,
     m_pc[ bid ] += P[i];
   }
 
-  if (++m_naec == m_msum.size()) {
+  if (++m_naec == m_nodeCommMap.size()) {
     m_naec = 0;
     comaec_complete();
   }
@@ -285,14 +272,14 @@ DistFCT::alw( const tk::Fields& Un,
   // nodes.
   m_fluxcorrector.alw( m_inpoel, Un, Ul, m_q );
 
-  if (m_msum.empty())
+  if (m_nodeCommMap.empty())
     comalw_complete();
   else // send contributions at chare-boundary nodes to fellow chares
-    for (const auto& n : m_msum) {
-      std::vector< std::vector< tk::real > > q( n.second.size() );
+    for (const auto& [c,n] : m_nodeCommMap) {
+      std::vector< std::vector< tk::real > > q( n.size() );
       std::size_t j = 0;
-      for (auto i : n.second) q[ j++ ] = m_q[ tk::cref_find(m_lid,i) ];
-      thisProxy[ n.first ].comalw( n.second, q );
+      for (auto i : n) q[ j++ ] = m_q[ tk::cref_find(m_lid,i) ];
+      thisProxy[ c ].comalw( std::vector<std::size_t>(begin(n),end(n)), q );
     }
 
   ownalw_complete();
@@ -328,7 +315,7 @@ DistFCT::comalw( const std::vector< std::size_t >& gid,
     }
   }
 
-  if (++m_nalw == m_msum.size()) {
+  if (++m_nalw == m_nodeCommMap.size()) {
     m_nalw = 0;
     comalw_complete();
   }
@@ -365,14 +352,14 @@ DistFCT::lim( const std::unordered_map< std::size_t,
 
   m_fluxcorrector.lim( m_inpoel, bcdir, m_p, m_ul, m_q, m_a );
 
-  if (m_msum.empty())
+  if (m_nodeCommMap.empty())
     comlim_complete();
   else // send contributions to chare-boundary nodes to fellow chares
-    for (const auto& n : m_msum) {
-      std::vector< std::vector< tk::real > > a( n.second.size() );
+    for (const auto& [c,n] : m_nodeCommMap) {
+      std::vector< std::vector< tk::real > > a( n.size() );
       std::size_t j = 0;
-      for (auto i : n.second) a[ j++ ] = m_a[ tk::cref_find(m_lid,i) ];
-      thisProxy[ n.first ].comlim( n.second, a );
+      for (auto i : n) a[ j++ ] = m_a[ tk::cref_find(m_lid,i) ];
+      thisProxy[ c ].comlim( std::vector<std::size_t>(begin(n),end(n)), a );
     }
 
   ownlim_complete();
@@ -405,7 +392,7 @@ DistFCT::comlim( const std::vector< std::size_t >& gid,
     m_ac[ bid ] += A[i];
   }
  
-  if (++m_nlim == m_msum.size()) {
+  if (++m_nlim == m_nodeCommMap.size()) {
     m_nlim = 0;
     comlim_complete();
   }

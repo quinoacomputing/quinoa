@@ -80,7 +80,7 @@ class DistFCT : public CBase_DistFCT {
     DistFCT( int nchare,
              std::size_t nu,
              std::size_t np,
-             const std::unordered_map< int, std::vector< std::size_t > >& msum,
+             const tk::NodeCommMap& nodeCommMap,
              const std::unordered_map< std::size_t, std::size_t >& bid,
              const std::unordered_map< std::size_t, std::size_t >& lid,
              const std::vector< std::size_t >& inpoel );
@@ -95,9 +95,6 @@ class DistFCT : public CBase_DistFCT {
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
-
-    //! Compute lumped mass lhs required for the low order solution
-    tk::Fields lump( const Discretization& d );
 
     //! \brief Compute mass diffusion rhs contribution required for the low
     //!   order solution
@@ -138,8 +135,7 @@ class DistFCT : public CBase_DistFCT {
 
     //! Resize FCT data structures (e.g., after mesh refinement)
     void resize( std::size_t nu,
-                 const std::unordered_map< int,
-                   std::vector< std::size_t > >& msum,
+                 const tk::NodeCommMap& nodeCommMap,
                  const std::unordered_map< std::size_t, std::size_t >& bid,
                  const std::unordered_map< std::size_t, std::size_t >& lid,
                  const std::vector< std::size_t >& inpoel );
@@ -160,7 +156,7 @@ class DistFCT : public CBase_DistFCT {
       p | m_nalw;
       p | m_nlim;
       p | m_nchare;
-      p | m_msum;
+      p | m_nodeCommMap;
       p | m_bid;
       p | m_lid;
       p | m_inpoel;
@@ -198,10 +194,8 @@ class DistFCT : public CBase_DistFCT {
     std::size_t m_nchare;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!   chares associated to their chare IDs
-    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
-    //!   points
     //! \note This is a copy. Original in (bound) Discretization
-    std::unordered_map< int, std::vector< std::size_t > > m_msum;
+    tk::NodeCommMap m_nodeCommMap;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of mesh elements we
     //!   contribute to

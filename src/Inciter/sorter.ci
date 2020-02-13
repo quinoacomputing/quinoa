@@ -14,6 +14,7 @@
 module sorter {
 
   include "Callback.hpp";
+  include "CommMap.hpp";
 
   extern module meshwriter;
 
@@ -32,13 +33,10 @@ module sorter {
                     const std::map< int, std::vector< std::size_t > >& bnode,
                     int nchare );
       entry void setup( std::size_t npoin );
-      entry void query( int fromch,
-                        const std::vector< std::size_t >& nodes );
+      entry void query( int fromch, const tk::AllCommMaps& bnd );
       entry void recvquery();
       entry void response();
-      entry void bnd( int fromch,
-                      const std::map< int,
-                              std::unordered_set< std::size_t > >& msum );
+      entry void bnd( int fromch, tk::CommMaps& msum );
       entry void recvbnd();
       entry void start();
       entry void offset( int c, std::size_t u );
