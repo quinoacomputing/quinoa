@@ -578,6 +578,9 @@ class Data {
       for (ncomp_t i=0; i<m_nprop; ++i) operator()( u, i, 0 ) = prop[i];
     }
 
+    void push_back( const std::vector< tk::real >&, int2type< EqCompUnk > )
+    { Throw( "Not implented. It would be inefficient" ); }
+
     //! Resize data store to contain 'count' elements
     //! \param[in] count Resize store to contain 'count' elements
     //! \param[in] value Value to initialize new data with
@@ -588,6 +591,10 @@ class Data {
     void resize( std::size_t count, tk::real value, int2type< UnkEqComp > ) {
       m_vec.resize( count * m_nprop, value );
       m_nunk = count;
+    }
+
+    void resize( std::size_t, tk::real, int2type< EqCompUnk > ) {
+      Throw( "Not implented. It would be inefficient" );
     }
 
     // Overloads for the name-queries of data lauouts

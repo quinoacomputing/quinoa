@@ -32,7 +32,7 @@ class TransportPhysicsAdvDiff {
     using eq = tag::transport;
 
   public:
-    //! Add diffusion contribution to rhs at 2nd time step stage
+    //! Add diffusion contribution to rhs
     void
     diffusionRhs( ncomp_t e,
                   ncomp_t ncomp,

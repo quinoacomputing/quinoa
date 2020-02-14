@@ -3961,15 +3961,16 @@ struct reorder_cmd_info {
 };
 using reorder_cmd = keyword< reorder_cmd_info, TAOCPP_PEGTL_STRING("reorder") >;
 
-struct reorder_info {
-  static std::string name() { return "reorder"; }
-  static std::string shortDescription() { return "Reorder mesh nodes"; }
+struct pelocal_reorder_info {
+  static std::string name() { return "PE-local reorder"; }
+  static std::string shortDescription() { return "PE-local reorder"; }
   static std::string longDescription() { return
     R"(This keyword is used in inciter as a keyword in the inciter...end block
-    as "reorder on" (or off) to do (or not do) a global distributed mesh
+    as "pelocal_reorder true" (or false) to do (or not do) a global distributed
+    mesh
     reordering across all PEs that yields an approximately continous mesh node
     ID order as mesh partitions are assigned to PEs after mesh partitioning.
-    Reordering is optional.)";
+    This reordering is optional.)";
   }
   struct expect {
     using type = bool;
@@ -3977,7 +3978,26 @@ struct reorder_info {
     static std::string description() { return "string"; }
   };
 };
-using reorder = keyword< reorder_info, TAOCPP_PEGTL_STRING("reorder") >;
+using pelocal_reorder =
+  keyword< pelocal_reorder_info, TAOCPP_PEGTL_STRING("pelocal_reorder") >;
+
+struct operator_reorder_info {
+  static std::string name() { return "operator_reorder"; }
+  static std::string shortDescription() { return "Operator-access reorder"; }
+  static std::string longDescription() { return
+    R"(This keyword is used in inciter as a keyword in the inciter...end block
+    as "operator_reorder on" (or off) to do (or not do) a local mesh node
+    reordering based on the PDE operator access pattern. This rReordering is
+    optional.)";
+  }
+  struct expect {
+    using type = bool;
+    static std::string choices() { return "true | false"; }
+    static std::string description() { return "string"; }
+  };
+};
+using operator_reorder =
+  keyword< operator_reorder_info, TAOCPP_PEGTL_STRING("operator_reorder") >;
 
 struct group_info {
   static std::string name() { return "group"; }

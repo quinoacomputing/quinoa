@@ -88,7 +88,8 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::t0,     kw::t0::info::expect::type     //!< Starting time
   , tag::dt,     kw::dt::info::expect::type     //!< Size of time step
   , tag::cfl,    kw::cfl::info::expect::type    //!< CFL coefficient
-  , tag::reorder,bool                           //!< reordering on/off
+  , tag::pelocal_reorder, bool                  //!< PE-locality reordering
+  , tag::operator_reorder, bool                 //!< Operator-access reordering
   , tag::fct,    bool                           //!< FCT on/off
   , tag::fctclip,bool                           //!< FCT clipping limiter on/off
   , tag::fcteps, kw::fcteps::info::expect::type //!< FCT small number

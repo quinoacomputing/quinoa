@@ -2,35 +2,30 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Euler equations computing nonlinear energy growth"
+title "Euler equations computing vortical flow"
 
 inciter
 
   term 1.0
-  nstep 10
   ttyi 1       # TTY output interval
-  #dt 0.001
-  cfl 0.25
-
+  cfl 0.8
   scheme diagcg
-  pelocal_reorder true
+  operator_reorder true
 
   partitioning
-    algorithm mj
+   algorithm mj
   end
 
   compflow
-    depvar u
+
+    depvar c
     physics euler
-    problem nl_energy_growth
-    alpha 0.25
-    betax 1.0
-    betay 0.75
-    betaz 0.5
-    r0 2.0
-    ce -1.0
-    kappa 0.8
+    problem vortical_flow
     sysfct false
+
+    alpha 0.1
+    beta 1.0
+    p0 10.0
 
     material
       gamma 1.66666666666667 end # =5/3 ratio of specific heats
@@ -39,18 +34,11 @@ inciter
     bc_dirichlet
       sideset 1 2 3 4 5 6 end
     end
-  end
 
-  amr
-   dtref true
-   dtref_uniform true
-   dtfreq 5
-   refvar u end
-   error jump
   end
 
   plotvar
-    interval 1
+    interval 10
   end
 
   diagnostics

@@ -16,7 +16,7 @@ inciter
     algorithm mj
   end
 
-  reorder true
+  pelocal_reorder true
 
   compflow
 
