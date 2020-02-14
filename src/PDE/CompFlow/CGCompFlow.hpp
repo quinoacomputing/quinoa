@@ -271,7 +271,6 @@ class CompFlow {
 
     //! Compute right hand side for ALECG
     //! \param[in] t Physical time
-    //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] triinpoel Boundary triangle face connecitivity
@@ -287,7 +286,6 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
-              tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::size_t >& triinpoel,
@@ -437,10 +435,10 @@ class CompFlow {
         auto J24 = J/24.0;
         // evaluate source in vertices
         std::array< std::vector< tk::real >, 4 > s{{
-          Problem::src(m_system, m_ncomp, x[N[0]], y[N[0]], z[N[0]], t+deltat),
-          Problem::src(m_system, m_ncomp, x[N[1]], y[N[1]], z[N[1]], t+deltat),
-          Problem::src(m_system, m_ncomp, x[N[2]], y[N[2]], z[N[2]], t+deltat),
-          Problem::src(m_system, m_ncomp, x[N[3]], y[N[3]], z[N[3]], t+deltat)
+          Problem::src( m_system, m_ncomp, x[N[0]], y[N[0]], z[N[0]], t ),
+          Problem::src( m_system, m_ncomp, x[N[1]], y[N[1]], z[N[1]], t ),
+          Problem::src( m_system, m_ncomp, x[N[2]], y[N[2]], z[N[2]], t ),
+          Problem::src( m_system, m_ncomp, x[N[3]], y[N[3]], z[N[3]], t )
         }};
         // sum source contributions to nodes
         for (std::size_t c=0; c<5; ++c)

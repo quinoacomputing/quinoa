@@ -155,7 +155,6 @@ class CGPDE {
 
     //! Public interface to computing the right-hand side vector for ALECG
     void rhs( tk::real t,
-              tk::real deltat,
               const std::array< std::vector< tk::real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::size_t >& triinpoel,
@@ -174,7 +173,7 @@ class CGPDE {
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R) const
-    { self->rhs( t, deltat, coord, inpoel, triinpoel, gid, bid, lid,
+    { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid,
                  dfnorm, dfnormc, bnorm, vol, G, U, R ); }
 
     //! Public interface for computing the minimum time step size
@@ -261,7 +260,6 @@ class CGPDE {
                         tk::Fields&,
                         tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
-                        tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::vector< std::size_t >&,
@@ -335,7 +333,6 @@ class CGPDE {
                 tk::Fields& R ) const override
       { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
       void rhs( tk::real t,
-                tk::real deltat,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::vector< std::size_t >& triinpoel,
@@ -354,7 +351,7 @@ class CGPDE {
                 const tk::Fields& G,
                 const tk::Fields& U,
                 tk::Fields& R) const override
-      { data.rhs( t, deltat, coord, inpoel, triinpoel, gid, bid, lid,
+      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid,
                  dfnorm, dfnormc, bnorm, vol, G, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
