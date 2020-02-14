@@ -97,6 +97,158 @@ class CompFlow {
       return std::vector< tk::real >( begin(s), end(s) );
     }
 
+    //! Compute right hand side for DiagCG (CG+FCT)
+    //! \param[in] t Physical time
+    //! \param[in] deltat Size of time step
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] Ue Element-centered solution vector at intermediate step
+    //!    (used here internally as a scratch array)
+    //! \param[in,out] R Right-hand side vector computed
+    void rhs( tk::real t,
+              tk::real deltat,
+              const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const tk::Fields& U,
+              tk::Fields& Ue,
+              tk::Fields& R ) const
+    {
+      Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
+              "vector at recent time step incorrect" );
+      Assert( R.nunk() == coord[0].size(),
+              "Number of unknowns and/or number of components in right-hand "
+              "side vector incorrect" );
+
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      // 1st stage: update element values from node values (gather-add)
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+        // access node IDs
+        const std::array< std::size_t, 4 >
+          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
+        // compute element Jacobi determinant
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+        const auto J = tk::triple( ba, ca, da );        // J = 6V
+        Assert( J > 0, "Element Jacobian non-positive" );
+
+        // shape function derivatives, nnode*ndim [4][3]
+        std::array< std::array< tk::real, 3 >, 4 > grad;
+        grad[1] = tk::crossdiv( ca, da, J );
+        grad[2] = tk::crossdiv( da, ba, J );
+        grad[3] = tk::crossdiv( ba, ca, J );
+        for (std::size_t i=0; i<3; ++i)
+          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+
+        // access solution at element nodes
+        std::array< std::array< tk::real, 4 >, 5 > u;
+        for (ncomp_t c=0; c<5; ++c) u[c] = U.extract( c, m_offset, N );
+        // access solution at elements
+        std::array< const tk::real*, 5 > ue;
+        for (ncomp_t c=0; c<5; ++c) ue[c] = Ue.cptr( c, m_offset );
+
+        // pressure
+        std::array< tk::real, 4 > p;
+        for (std::size_t a=0; a<4; ++a)
+          p[a] = eos_pressure< tag::compflow >
+                   ( m_system, u[0][a], u[1][a]/u[0][a], u[2][a]/u[0][a],
+                     u[3][a]/u[0][a], u[4][a] );
+
+        // sum flux contributions to element
+        tk::real d = deltat/2.0;
+        for (std::size_t j=0; j<3; ++j)
+          for (std::size_t a=0; a<4; ++a) {
+            // mass: advection
+            Ue.var(ue[0],e) -= d * grad[a][j] * u[j+1][a];
+            // momentum: advection
+            for (std::size_t i=0; i<3; ++i)
+              Ue.var(ue[i+1],e) -= d * grad[a][j] * u[j+1][a]*u[i+1][a]/u[0][a];
+            // momentum: pressure
+            Ue.var(ue[j+1],e) -= d * grad[a][j] * p[a];
+            // energy: advection and pressure
+            Ue.var(ue[4],e) -= d * grad[a][j] *
+                              (u[4][a] + p[a]) * u[j+1][a]/u[0][a];
+          }
+
+        // add (optional) source to all equations
+        std::array< std::vector< tk::real >, 4 > s{{
+          Problem::src( m_system, m_ncomp, x[N[0]], y[N[0]], z[N[0]], t ),
+          Problem::src( m_system, m_ncomp, x[N[1]], y[N[1]], z[N[1]], t ),
+          Problem::src( m_system, m_ncomp, x[N[2]], y[N[2]], z[N[2]], t ),
+          Problem::src( m_system, m_ncomp, x[N[3]], y[N[3]], z[N[3]], t ) }};
+        for (std::size_t c=0; c<5; ++c)
+          for (std::size_t a=0; a<4; ++a)
+            Ue.var(ue[c],e) += d/4.0 * s[a][c];
+      }
+
+      // 2nd stage: form rhs from element values (scatter-add)
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+        // access node IDs
+        const std::array< std::size_t, 4 >
+          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
+        // compute element Jacobi determinant
+        const std::array< tk::real, 3 >
+          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+        const auto J = tk::triple( ba, ca, da );        // J = 6V
+        Assert( J > 0, "Element Jacobian non-positive" );
+
+        // shape function derivatives, nnode*ndim [4][3]
+        std::array< std::array< tk::real, 3 >, 4 > grad;
+        grad[1] = tk::crossdiv( ca, da, J );
+        grad[2] = tk::crossdiv( da, ba, J );
+        grad[3] = tk::crossdiv( ba, ca, J );
+        for (std::size_t i=0; i<3; ++i)
+          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+
+        // access solution at elements
+        std::array< tk::real, 5 > ue;
+        for (ncomp_t c=0; c<5; ++c) ue[c] = Ue( e, c, m_offset );
+        // access pointer to right hand side at component and offset
+        std::array< const tk::real*, 5 > r;
+        for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
+
+        // pressure
+        auto p = eos_pressure< tag::compflow >
+                   ( m_system, ue[0], ue[1]/ue[0], ue[2]/ue[0], ue[3]/ue[0],
+                     ue[4] );
+
+        // scatter-add flux contributions to rhs at nodes
+        tk::real d = deltat * J/6.0;
+        for (std::size_t j=0; j<3; ++j)
+          for (std::size_t a=0; a<4; ++a) {
+            // mass: advection
+            R.var(r[0],N[a]) += d * grad[a][j] * ue[j+1];
+            // momentum: advection
+            for (std::size_t i=0; i<3; ++i)
+              R.var(r[i+1],N[a]) += d * grad[a][j] * ue[j+1]*ue[i+1]/ue[0];
+            // momentum: pressure
+            R.var(r[j+1],N[a]) += d * grad[a][j] * p;
+            // energy: advection and pressure
+            R.var(r[4],N[a]) += d * grad[a][j] * (ue[4] + p) * ue[j+1]/ue[0];
+          }
+
+        // add (optional) source to all equations
+        auto xc = (x[N[0]] + x[N[1]] + x[N[2]] + x[N[3]]) / 4.0;
+        auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
+        auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
+        auto s = Problem::src( m_system, m_ncomp, xc, yc, zc, t+deltat/2 );
+        for (std::size_t c=0; c<5; ++c)
+          for (std::size_t a=0; a<4; ++a)
+            R.var(r[c],N[a]) += d/4.0 * s[c];
+      }
+//         // add viscous stress contribution to momentum and energy rhs
+//         m_physics.viscousRhs( deltat, J, N, grad, u, r, R );
+//         // add heat conduction contribution to energy rhs
+//         m_physics.conductRhs( deltat, J, N, grad, u, r, R );
+    }
+
     //! Compute nodal gradients of primitive variables for ALECG
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
@@ -345,172 +497,6 @@ class CompFlow {
       return f;
     }
   
-    //! Compute right hand side for DiagCG (CG+FCT)
-    //! \param[in] t Physical time
-    //! \param[in] deltat Size of time step
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] Ue Element-centered solution vector at intermediate step
-    //!    (used here internally as a scratch array)
-    //! \param[in,out] R Right-hand side vector computed
-    void rhs( tk::real t,
-              tk::real deltat,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
-              const tk::Fields& U,
-              tk::Fields& Ue,
-              tk::Fields& R ) const
-    {
-      Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
-              "vector at recent time step incorrect" );
-      Assert( R.nunk() == coord[0].size(),
-              "Number of unknowns and/or number of components in right-hand "
-              "side vector incorrect" );
-
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-
-      // 1st stage: update element values from node values (gather-add)
-      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-
-        // access node IDs
-        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
-                                               inpoel[e*4+2], inpoel[e*4+3] }};
-        // compute element Jacobi determinant
-        const std::array< tk::real, 3 >
-          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-        const auto J = tk::triple( ba, ca, da );        // J = 6V
-        Assert( J > 0, "Element Jacobian non-positive" );
-
-        // shape function derivatives, nnode*ndim [4][3]
-        std::array< std::array< tk::real, 3 >, 4 > grad;
-        grad[1] = tk::crossdiv( ca, da, J );
-        grad[2] = tk::crossdiv( da, ba, J );
-        grad[3] = tk::crossdiv( ba, ca, J );
-        for (std::size_t i=0; i<3; ++i)
-          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-
-        // access solution at element nodes
-        std::array< std::array< tk::real, 4 >, 5 > u;
-        for (ncomp_t c=0; c<5; ++c) u[c] = U.extract( c, m_offset, N );
-        // access solution at elements
-        std::array< const tk::real*, 5 > ue;
-        for (ncomp_t c=0; c<5; ++c) ue[c] = Ue.cptr( c, m_offset );
-
-        // pressure
-        std::array< tk::real, 4 > p;
-        for (std::size_t a=0; a<4; ++a)
-          p[a] = eos_pressure< tag::compflow >
-                   ( m_system, u[0][a], u[1][a]/u[0][a], u[2][a]/u[0][a],
-                     u[3][a]/u[0][a], u[4][a] );
-
-        // sum nodal averages to element
-        for (ncomp_t c=0; c<5; ++c) {
-          Ue.var(ue[c],e) = 0.0;
-          for (std::size_t a=0; a<4; ++a)
-            Ue.var(ue[c],e) += u[c][a]/4.0;
-        }
-
-        // sum flux contributions to element
-        tk::real d = deltat/2.0;
-        for (std::size_t j=0; j<3; ++j)
-          for (std::size_t a=0; a<4; ++a) {
-            // mass: advection
-            Ue.var(ue[0],e) -= d * grad[a][j] * u[j+1][a];
-            // momentum: advection
-            for (std::size_t i=0; i<3; ++i)
-              Ue.var(ue[i+1],e) -= d * grad[a][j] * u[j+1][a]*u[i+1][a]/u[0][a];
-            // momentum: pressure
-            Ue.var(ue[j+1],e) -= d * grad[a][j] * p[a];
-            // energy: advection and pressure
-            Ue.var(ue[4],e) -= d * grad[a][j] *
-                              (u[4][a] + p[a]) * u[j+1][a]/u[0][a];
-          }
-
-        // add (optional) source to all equations
-        std::array< std::vector< tk::real >, 4 > s{{
-          Problem::src( m_system, m_ncomp, x[N[0]], y[N[0]], z[N[0]], t ),
-          Problem::src( m_system, m_ncomp, x[N[1]], y[N[1]], z[N[1]], t ),
-          Problem::src( m_system, m_ncomp, x[N[2]], y[N[2]], z[N[2]], t ),
-          Problem::src( m_system, m_ncomp, x[N[3]], y[N[3]], z[N[3]], t ) }};
-        for (std::size_t c=0; c<5; ++c)
-          for (std::size_t a=0; a<4; ++a)
-            Ue.var(ue[c],e) += d/4.0 * s[a][c];
-
-      }
-
-      // zero right hand side for all components
-      for (ncomp_t c=0; c<5; ++c) R.fill( c, m_offset, 0.0 );
-
-      // 2nd stage: form rhs from element values (scatter-add)
-      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-
-        // access node IDs
-        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
-                                               inpoel[e*4+2], inpoel[e*4+3] }};
-        // compute element Jacobi determinant
-        const std::array< tk::real, 3 >
-          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-        const auto J = tk::triple( ba, ca, da );        // J = 6V
-        Assert( J > 0, "Element Jacobian non-positive" );
-
-        // shape function derivatives, nnode*ndim [4][3]
-        std::array< std::array< tk::real, 3 >, 4 > grad;
-        grad[1] = tk::crossdiv( ca, da, J );
-        grad[2] = tk::crossdiv( da, ba, J );
-        grad[3] = tk::crossdiv( ba, ca, J );
-        for (std::size_t i=0; i<3; ++i)
-          grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-
-        // access solution at elements
-        std::array< tk::real, 5 > ue;
-        for (ncomp_t c=0; c<5; ++c) ue[c] = Ue( e, c, m_offset );
-        // access pointer to right hand side at component and offset
-        std::array< const tk::real*, 5 > r;
-        for (ncomp_t c=0; c<5; ++c) r[c] = R.cptr( c, m_offset );
-
-        // pressure
-        auto p = eos_pressure< tag::compflow >
-                   ( m_system, ue[0], ue[1]/ue[0], ue[2]/ue[0], ue[3]/ue[0],
-                     ue[4] );
-
-        // scatter-add flux contributions to rhs at nodes
-        tk::real d = deltat*J/6.0;
-        for (std::size_t j=0; j<3; ++j)
-          for (std::size_t a=0; a<4; ++a) {
-            // mass: advection
-            R.var(r[0],N[a]) += d * grad[a][j] * ue[j+1];
-            // momentum: advection
-            for (std::size_t i=0; i<3; ++i)
-              R.var(r[i+1],N[a]) += d * grad[a][j] * ue[j+1]*ue[i+1]/ue[0];
-            // momentum: pressure
-            R.var(r[j+1],N[a]) += d * grad[a][j] * p;
-            // energy: advection and pressure
-            R.var(r[4],N[a]) += d * grad[a][j] * (ue[4] + p) * ue[j+1]/ue[0];
-          }
-
-        // add (optional) source to all equations
-        auto xc = (x[N[0]] + x[N[1]] + x[N[2]] + x[N[3]]) / 4.0;
-        auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
-        auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
-        auto s = Problem::src( m_system, m_ncomp, xc, yc, zc, t+deltat/2 );
-        for (std::size_t c=0; c<5; ++c)
-          for (std::size_t a=0; a<4; ++a)
-            R.var(r[c],N[a]) += d/4.0 * s[c];
-
-      }
-//         // add viscous stress contribution to momentum and energy rhs
-//         m_physics.viscousRhs( deltat, J, N, grad, u, r, R );
-//         // add heat conduction contribution to energy rhs
-//         m_physics.conductRhs( deltat, J, N, grad, u, r, R );
-    }
-
     //! Compute the minimum time step size
     //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates

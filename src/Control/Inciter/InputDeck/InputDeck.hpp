@@ -134,7 +134,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::fcteps,
                                    kw::sysfct,
                                    kw::sysfctvar,
-                                   kw::reorder,
+                                   kw::pelocal_reorder,
+                                   kw::operator_reorder,
                                    kw::amr,
                                    kw::amr_t0ref,
                                    kw::amr_dtref,
@@ -228,7 +229,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::ctau >() = 1.0;
       get< tag::discr, tag::fcteps >() =
         std::numeric_limits< tk::real >::epsilon();
-      get< tag::discr, tag::reorder >() = false;
+      get< tag::discr, tag::pelocal_reorder >() = false;
+      get< tag::discr, tag::operator_reorder >() = false;
       get< tag::discr, tag::scheme >() = SchemeType::DiagCG;
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::limiter >() = LimiterType::NOLIMITER;

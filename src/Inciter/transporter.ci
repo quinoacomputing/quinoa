@@ -24,7 +24,7 @@ module transporter {
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void refinserted( int error );
       entry [reductiontarget] void discinserted();
-      entry [reductiontarget] void disccreated();
+      entry [reductiontarget] void disccreated( std::size_t npoin );
       entry [reductiontarget] void workinserted();
       entry [reductiontarget] void queriedRef();
       entry [reductiontarget] void respondedRef();

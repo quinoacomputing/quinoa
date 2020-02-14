@@ -131,6 +131,8 @@ class CGPDE {
                      tk::real t ) const
     { self->initialize( coord, unk, t ); }
 
+
+
     //! Public interface to computing the nodal gradients for ALECG
     void grad( const std::array< std::vector< tk::real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
@@ -140,6 +142,16 @@ class CGPDE {
                const tk::Fields& U,
                tk::Fields& G ) const
     { self->grad( coord, inpoel, bndel, gid, bid, U, G ); }
+
+    //! Public interface to computing the right-hand side vector for DiagCG
+    void rhs( tk::real t,
+              tk::real deltat,
+              const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const tk::Fields& U,
+              tk::Fields& Ue,
+              tk::Fields& R ) const
+    { self->rhs( t, deltat, coord, inpoel, U, Ue, R ); }
 
     //! Public interface to computing the right-hand side vector for ALECG
     void rhs( tk::real t,
@@ -163,16 +175,6 @@ class CGPDE {
               tk::Fields& R) const
     { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid,
                  dfnorm, dfnormc, bnorm, vol, G, U, R ); }
-
-    //! Public interface to computing the right-hand side vector for DiagCG
-    void rhs( tk::real t,
-              tk::real deltat,
-              const std::array< std::vector< tk::real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
-              const tk::Fields& U,
-              tk::Fields& Ue,
-              tk::Fields& R ) const
-    { self->rhs( t, deltat, coord, inpoel, U, Ue, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -251,6 +253,13 @@ class CGPDE {
                          const tk::Fields&,
                          tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
+                        tk::real,
+                        const std::array< std::vector< tk::real >, 3 >&,
+                        const std::vector< std::size_t >&,
+                        const tk::Fields&,
+                        tk::Fields&,
+                        tk::Fields& ) const = 0;
+      virtual void rhs( tk::real,
                         const std::array< std::vector< tk::real >, 3 >&,
                         const std::vector< std::size_t >&,
                         const std::vector< std::size_t >&,
@@ -269,13 +278,6 @@ class CGPDE {
                         const tk::Fields&,
                         const tk::Fields&,
                         tk::Fields&) const = 0;
-      virtual void rhs( tk::real,
-                        tk::real,
-                        const std::array< std::vector< tk::real >, 3 >&,
-                        const std::vector< std::size_t >&,
-                        const tk::Fields&,
-                        tk::Fields&,
-                        tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
@@ -323,6 +325,14 @@ class CGPDE {
                  tk::Fields& G ) const override
       { data.grad( coord, inpoel, bndel, gid, bid, U, G ); }
       void rhs( tk::real t,
+                tk::real deltat,
+                const std::array< std::vector< tk::real >, 3 >& coord,
+                const std::vector< std::size_t >& inpoel,
+                const tk::Fields& U,
+                tk::Fields& Ue,
+                tk::Fields& R ) const override
+      { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
+      void rhs( tk::real t,
                 const std::array< std::vector< tk::real >, 3 >& coord,
                 const std::vector< std::size_t >& inpoel,
                 const std::vector< std::size_t >& triinpoel,
@@ -343,14 +353,6 @@ class CGPDE {
                 tk::Fields& R) const override
       { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid,
                  dfnorm, dfnormc, bnorm, vol, G, U, R ); }
-      void rhs( tk::real t,
-                tk::real deltat,
-                const std::array< std::vector< tk::real >, 3 >& coord,
-                const std::vector< std::size_t >& inpoel,
-                const tk::Fields& U,
-                tk::Fields& Ue,
-                tk::Fields& R ) const override
-      { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override

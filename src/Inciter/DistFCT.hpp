@@ -133,6 +133,9 @@ class DistFCT : public CBase_DistFCT {
               tk::Fields&& dUl,
               const CProxy_DiagCG& host );
 
+    //! Remap local ids after a mesh node reorder
+    void remap( const Discretization& d );
+
     //! Resize FCT data structures (e.g., after mesh refinement)
     void resize( std::size_t nu,
                  const tk::NodeCommMap& nodeCommMap,

@@ -187,7 +187,9 @@ Transporter::info( const InciterPrint& print )
     print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
   print.item( "PE-locality mesh reordering",
-                g_inputdeck.get< tag::discr, tag::reorder >() );
+                g_inputdeck.get< tag::discr, tag::pelocal_reorder >() );
+  print.item( "Operator-access mesh reordering",
+                g_inputdeck.get< tag::discr, tag::operator_reorder >() );
   print.item( "Number of time steps", nstep );
   print.item( "Start time", t0 );
   print.item( "Terminate time", term );
@@ -643,9 +645,9 @@ Transporter::refined( std::size_t nelem, std::size_t npoin )
 // *****************************************************************************
 // Reduction target: all PEs have refined their mesh
 //! \param[in] nelem Total number of elements in mesh across the whole problem
-//! \param[in] npoin Total number of mesh nodes (summed across all PEs). Note
+//! \param[in] npoin Total number of mesh points (summed across all PEs). Note
 //!    that in parallel this is larger than the total number of points in the
-//!    mesh, because the boundary nodes are double-counted.
+//!    mesh, because the boundary nodes are multi-counted.
 // *****************************************************************************
 {
   m_sorter.doneInserting();
@@ -695,19 +697,24 @@ Transporter::discinserted()
 }
 
 void
-Transporter::disccreated()
+Transporter::disccreated( std::size_t npoin )
 // *****************************************************************************
 // Reduction target: all Discretization constructors have been called
+//! \param[in] npoin Total number of mesh points (summed across all PEs). Note
+//!  that as opposed to npoin in refined(), this npoin is not multi-counted, and
+//!  thus should be correct in parallel.
 // *****************************************************************************
 {
+  m_npoin = npoin;
+
   auto print = printer();
 
   m_progMesh.end( print );
 
   if (g_inputdeck.get< tag::amr, tag::t0ref >()) {
-
     print.section( "Initially (t<0) refined mesh graph statistics" );
     print.item( "Number of tetrahedra", m_nelem );
+    print.item( "Number of points", m_npoin );
     print.endsubsection();
   }
 
@@ -926,6 +933,7 @@ Transporter::stat()
 
   m_progWork.start( print, "Preparing workers",
                     {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
+
   // Create "derived-class" workers
   m_sorter.createWorkers();
 }
@@ -943,7 +951,7 @@ Transporter::inthead( const InciterPrint& print )
   "        dt - time step size\n"
   "       ETE - estimated time elapsed (h:m:s)\n"
   "       ETA - estimated time for accomplishment (h:m:s)\n"
-  "       EGT - estimated grind time (ms/status)\n"
+  "       EGT - estimated grind time (ms/timestep)\n"
   "       flg - status flags, legend:\n"
   "             f - field\n"
   "             d - diagnostics\n"

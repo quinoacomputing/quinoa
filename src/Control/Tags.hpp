@@ -57,6 +57,10 @@ struct benchmark { static std::string name() { return "benchmark"; } };
 struct lboff {};
 struct feedback { static std::string name() { return "feedback"; } };
 struct reorder { static std::string name() { return "reorder"; } };
+struct pelocal_reorder {
+  static std::string name() { return "pelocal_reorder"; } };
+struct operator_reorder {
+  static std::string name() { return "operator_reorder"; } };
 struct error { static std::string name() { return "error"; } };
 struct lbfreq { static std::string name() { return "lbfreq"; } };
 struct rsfreq { static std::string name() { return "rsfreq"; } };

@@ -11,7 +11,7 @@ inciter
   ttyi 5      # TTY output interval
   scheme dg
 
-  reorder true
+  pelocal_reorder true
 
   compflow
 

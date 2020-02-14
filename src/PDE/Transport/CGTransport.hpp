@@ -284,10 +284,9 @@ class Transport {
 
       // 1st stage: update element values from node values (gather-add)
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-
         // access node IDs
-        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
-                                               inpoel[e*4+2], inpoel[e*4+3] }};
+        const std::array< std::size_t, 4 >
+          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
         // compute element Jacobi determinant
         const std::array< tk::real, 3 >
           ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
@@ -311,13 +310,6 @@ class Transport {
         std::vector< const tk::real* > ue( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue.cptr( c, m_offset );
 
-        // sum nodal averages to element
-        for (ncomp_t c=0; c<m_ncomp; ++c) {
-          Ue.var(ue[c],e) = 0.0;
-          for (std::size_t a=0; a<4; ++a)
-            Ue.var(ue[c],e) += u[c][a]/4.0;
-        }
-
         // get prescribed velocity
         const std::array< std::vector<std::array<tk::real,3>>, 4 > vel{{
           Problem::prescribedVelocity( m_system, m_ncomp,
@@ -330,24 +322,19 @@ class Transport {
                                        x[N[3]], y[N[3]], z[N[3]] ) }};
 
         // sum flux (advection) contributions to element
-        tk::real d = deltat/2.0;
+        auto d = deltat/2.0;
         for (std::size_t c=0; c<m_ncomp; ++c)
           for (std::size_t j=0; j<3; ++j)
             for (std::size_t a=0; a<4; ++a)
               Ue.var(ue[c],e) -= d * grad[a][j] * vel[a][c][j]*u[c][a];
-
       }
 
 
-      // zero right hand side for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
-
       // 2nd stage: form rhs from element values (scatter-add)
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-
         // access node IDs
-        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
-                                               inpoel[e*4+2], inpoel[e*4+3] }};
+        const std::array< std::size_t, 4 >
+          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
         // compute element Jacobi determinant
         const std::array< tk::real, 3 >
           ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
@@ -389,9 +376,7 @@ class Transport {
               R.var(r[c],N[a]) += d * grad[a][j] * vel[c][j]*ue[c];
 
         // add (optional) diffusion contribution to right hand side
-        m_physics.diffusionRhs( m_system, m_ncomp, deltat, J, grad,
-                                N, u, r, R );
-
+        m_physics.diffusionRhs(m_system, m_ncomp, deltat, J, grad, N, u, r, R);
       }
     }
 

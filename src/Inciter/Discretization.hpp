@@ -219,6 +219,12 @@ class Discretization : public CBase_Discretization {
                 const std::vector< std::vector< tk::real > >& nodefields,
                 CkCallback c );
 
+    //! Zero grind-timer
+    void grindZero();
+
+    //! Remap mesh data due to new local ids
+    void remap( const std::unordered_map< std::size_t, std::size_t >& map );
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -337,7 +343,7 @@ class Discretization : public CBase_Discretization {
     //!   chare-boundaries.
     std::unordered_map< std::size_t, tk::real > m_volc;
     //! \brief Local chare-boundary mesh node IDs at which we receive
-    //!   contributions associated to global mesh node IDs of mesh elements we
+    //!   contributions associated to global mesh node IDs of elements we
     //!   contribute to
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Timer measuring a time step

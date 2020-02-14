@@ -80,6 +80,32 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
+  // Perform optional operator-access-pattern mesh node reordering
+  if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
+
+    auto d = Disc();
+    auto& inpoel = d->Inpoel();
+
+    // Create new local ids based on access pattern of PDE operators
+    std::unordered_map< std::size_t, std::size_t > map;
+    std::size_t n = 0;
+
+    for (std::size_t e=0; e<inpoel.size()/4; ++e)
+      for (std::size_t i=0; i<4; ++i) {
+        std::size_t o = inpoel[e*4+i];
+        if (map.find(o) == end(map)) map[o] = n++;
+      }
+
+    Assert( map.size() == d->Gid().size(), "Map size mismatch" );
+
+    // Remap data in bound Discretization object
+    d->remap( map );
+
+    // Remap local ids in DistFCT
+    d->FCT()->remap( *d );
+
+  }
+
   // Activate SDAG wait
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4lhs();
@@ -294,6 +320,9 @@ DiagCG::start()
   // Start timer measuring time stepping wall clock time
   Disc()->Timer().zero();
 
+  // Zero grind-timer
+  Disc()->grindZero();
+
   // Start time stepping by computing the size of the next time step)
   next();
 }
@@ -445,29 +474,39 @@ DiagCG::rhs()
 // *****************************************************************************
 {
   auto d = Disc();
+  const auto& lid = d->Lid();
+  const auto& inpoel = d->Inpoel();
 
-  // Compute right-hand side for all equations
+  // Sum nodal averages to elements (1st term of gather)
+  m_ue.fill( 0.0 );
+  for (std::size_t e=0; e<inpoel.size()/4; ++e)
+    for (ncomp_t c=0; c<m_u.nprop(); ++c)
+      for (std::size_t a=0; a<4; ++a)
+        m_ue(e,c,0) += m_u(inpoel[e*4+a],c,0)/4.0;
+
+  // Scatter the right-hand side for chare-boundary cells only
+  m_rhs.fill( 0.0 );
   for (const auto& eq : g_cgpde)
-    eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
+   eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
 
-  // Compute mass diffusion rhs contribution required for the low order solution
+  // Compute mass diffusion
   auto dif = d->FCT()->diff( *d, m_u );
 
   // Query and match user-specified boundary conditions to side sets
-  m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(),
-                   d->Lid(), m_bnode );
+  m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), lid, m_bnode );
 
+  // Send rhs data on chare-boundary nodes to fellow chares
   if (d->NodeCommMap().empty())
     comrhs_complete();
-  else // send contributions of rhs to chare-boundary nodes to fellow chares
+  else  // send contributions of rhs to chare-boundary nodes to fellow chares
     for (const auto& [c,n] : d->NodeCommMap()) {
       std::vector< std::vector< tk::real > > r( n.size() );
       std::vector< std::vector< tk::real > > D( n.size() );
       std::size_t j = 0;
       for (auto i : n) {
-        auto lid = tk::cref_find( d->Lid(), i );
-        r[ j ] = m_rhs[ lid ];
-        D[ j ] = dif[ lid ];
+        auto k = tk::cref_find( lid, i );
+        r[j] = m_rhs[k];
+        D[j] = dif[k];
         ++j;
       }
       thisProxy[c].comrhs( std::vector<std::size_t>(begin(n),end(n)), r, D );
@@ -694,7 +733,7 @@ DiagCG::refine()
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
 
   // if t>0 refinement enabled and we hit the dtref frequency
-  if (dtref && !(d->It() % dtfreq)) {   // refine
+  if (dtref && !(d->It() % dtfreq)) {   // h-refine
 
     // Activate SDAG waits for re-computing the left-hand side
     thisProxy[ thisIndex ].wait4lhs();
@@ -703,7 +742,7 @@ DiagCG::refine()
     d->Ref()->dtref( {}, m_bnode, {} );
     d->refined() = 1;
 
-  } else {      // do not refine
+  } else {      // do not h-refine
 
     d->refined() = 0;
     lhs_complete();
@@ -760,11 +799,9 @@ DiagCG::resizePostAMR(
   m_rhs.resize( npoin, nprop );
 
   // Update solution on new mesh
-  for (const auto& n : addedNodes) {
-    for (std::size_t c=0; c<nprop; ++c) {
+  for (const auto& n : addedNodes)
+    for (std::size_t c=0; c<nprop; ++c)
       m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
-    }
-  }
 
   // Update physical-boundary node lists
   m_bnode = bnode;

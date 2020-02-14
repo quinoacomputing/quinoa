@@ -90,12 +90,28 @@ Discretization::Discretization(
   startvol();
 
   // Count the number of mesh nodes at which we receive data from other chares
+  // and compute map associating boundary-chare node ID to global node ID
   std::vector< std::size_t > c( tk::sumvalsize( m_nodeCommMap ) );
-  // Compute map associating boundary-chare node ID associated to global ID
   std::size_t j = 0;
   for (const auto& [ch,n] : m_nodeCommMap) for (auto i : n) c[j++] = i;
   tk::unique( c );
   m_bid = tk::assignLid( c );
+
+  // Lambda to decide if a node is not counted by this chare. If a node is
+  // found in the node communication map and is associated to a lower chare id
+  // than thisIndex, it is counted by another chare (and not thisIndex), hence
+  // a "slave" (for the purpose of this count).
+  auto slave = [ this ]( std::size_t p ) {
+    return
+      std::any_of( m_nodeCommMap.cbegin(), m_nodeCommMap.cend(),
+        [&](const auto& s) {
+          return s.second.find(p) != s.second.cend() && s.first > thisIndex;
+        } );
+  };
+
+  // Compute number of mesh points owned
+  std::size_t npoin = m_gid.size();
+  for (auto g : m_gid) if (slave(g)) --npoin;
 
   // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
   // is configured false in the input deck, at this point, we still need the FCT
@@ -106,8 +122,10 @@ Discretization::Discretization(
     m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
-  contribute( CkCallback(CkReductionTarget(Transporter,disccreated),
-              m_transporter) );
+  // Tell the RTS that the Discretization chares have been created and compute
+  // the total number of mesh points across whole problem
+  contribute( sizeof(std::size_t), &npoin, CkReduction::sum_ulong,
+    CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
 }
 
 void
@@ -190,6 +208,54 @@ Discretization::setCoord( const tk::UnsMesh::CoordMap& coordmap )
   }
 
   return coord;
+}
+
+void
+Discretization::remap(
+  const std::unordered_map< std::size_t, std::size_t >& map )
+// *****************************************************************************
+//  Remap mesh data based on new local ids
+//! \param[in] map Mapping of old->new local ids
+// *****************************************************************************
+{
+  // Remap connectivity containing local IDs
+  for (auto& l : m_inpoel) l = tk::cref_find(map,l);
+
+  // Remap global->local id map
+  for (auto& [g,l] : m_lid) l = tk::cref_find(map,l);
+
+  // Remap global->local id map
+  auto maxid = std::numeric_limits< std::size_t >::max();
+  std::vector< std::size_t > newgid( m_gid.size(), maxid );
+  for (const auto& [o,n] : map) newgid[n] = m_gid[o];
+  m_gid = std::move( newgid );
+
+  Assert( std::all_of( m_gid.cbegin(), m_gid.cend(),
+            [=](std::size_t i){ return i < maxid; } ),
+          "Not all gid have been remapped" );
+
+  // Remap nodal volumes (with contributions along chare-boundaries)
+  std::vector< tk::real > newvol( m_vol.size(), 0.0 );
+  for (const auto& [o,n] : map) newvol[n] = m_vol[o];
+  m_vol = std::move( newvol );
+
+  // Remap nodal volumes (without contributions along chare-boundaries)
+  std::vector< tk::real > newv( m_v.size(), 0.0 );
+  for (const auto& [o,n] : map) newv[n] = m_v[o];
+  m_v = std::move( newv );
+
+  // Remap locations of node coordinates
+  tk::UnsMesh::Coords newcoord;
+  auto npoin = m_coord[0].size();
+  newcoord[0].resize( npoin );
+  newcoord[1].resize( npoin );
+  newcoord[2].resize( npoin );
+  for (const auto& [o,n] : map) {
+    newcoord[0][n] = m_coord[0][o];
+    newcoord[1][n] = m_coord[1][o];
+    newcoord[2][n] = m_coord[2][o];
+  }
+  m_coord = std::move( newcoord );
 }
 
 void
@@ -484,6 +550,23 @@ Discretization::next()
 }
 
 void
+Discretization::grindZero()
+// *****************************************************************************
+//  Zero grind-time
+// *****************************************************************************
+{
+  m_prevstatus = std::chrono::high_resolution_clock::now();
+
+  if (thisIndex == 0) {
+    const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
+    tk::Print print( tk::inciter_executable() + "_screen.log",
+                     verbose ? std::cout : std::clog,
+                     std::ios_base::app );
+    print.diag( "Starting time stepping" );
+  }
+}
+
+void
 Discretization::status()
 // *****************************************************************************
 // Output one-liner status report
@@ -491,6 +574,13 @@ Discretization::status()
 {
   // Query after how many time steps user wants TTY dump
   const auto tty = g_inputdeck.get< tag::interval, tag::tty >();
+
+  // estimate grind time (taken between this and the previous time step)
+  using std::chrono::duration_cast;
+  using ms = std::chrono::milliseconds;
+  using clock = std::chrono::high_resolution_clock;
+  auto grind_time = duration_cast< ms >(clock::now() - m_prevstatus).count();
+  m_prevstatus = clock::now();
 
   if (thisIndex==0 && !(m_it%tty)) {
 
@@ -509,14 +599,6 @@ Discretization::status()
     tk::Timer::Watch ete, eta;
     m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
  
-    // estimate grind time (taken between this and the previous status line
-    // measurement) in milliseconds
-    using std::chrono::duration_cast;
-    using ms = std::chrono::milliseconds;
-    using clock = std::chrono::high_resolution_clock;
-    auto grind_time = duration_cast< ms >( clock::now() - m_prevstatus ).count();
-    m_prevstatus = clock::now();
-
     tk::Print print( tk::inciter_executable() + "_screen.log",
                      verbose ? std::cout : std::clog,
                      std::ios_base::app );

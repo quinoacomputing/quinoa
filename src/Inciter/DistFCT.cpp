@@ -74,7 +74,6 @@ DistFCT::DistFCT( int nchare,
   resizeComm();         // Size communication buffers
 }
 
-
 void
 DistFCT::resizeComm()
 // *****************************************************************************
@@ -92,6 +91,17 @@ DistFCT::resizeComm()
   for (auto& b : m_qc) b.resize( np*2 );
   m_ac.resize( bs );
   for (auto& b : m_ac) b.resize( np );
+}
+
+void
+DistFCT::remap( const Discretization& d )
+// *****************************************************************************
+// Remap local ids after a mesh node reorder
+//! \param[in] d Discretization proxy to read mesh data from
+// *****************************************************************************
+{
+  m_lid = d.Lid();
+  m_inpoel = d.Inpoel();
 }
 
 void
@@ -133,7 +143,7 @@ DistFCT::diff( const Discretization& d, const tk::Fields& Un )
 //  Compute mass diffusion rhs contribution required for the low order solution
 //! \param[in] d Discretization proxy to read mesh data from
 //! \param[in] Un Solution at the previous time step
-//! \return Lumped mass matrix
+//! \return Mass diffusion contribution to the RHS of the low order system
 // *****************************************************************************
 {
   return m_fluxcorrector.diff( d.Coord(), m_inpoel, Un );
