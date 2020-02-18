@@ -14,6 +14,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <limits>
 
 #include <brigand/algorithms/for_each.hpp>
 
@@ -149,20 +150,46 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   const auto& p0 = g_inputdeck.get< tag::param, eq, tag::p0 >();
   if (!p0.empty()) nfo.emplace_back( "coeff p0", parameters( p0 ) );
 
-  const auto& densityic =
-    g_inputdeck.get< tag::param, eq, tag::ic, tag::densityic >();
-  if (densityic.size() > c)
-    nfo.emplace_back( "density IC", std::to_string(densityic[c]) );
+  const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
 
-  const auto& velocityic =
-    g_inputdeck.get< tag::param, eq, tag::ic, tag::velocityic >();
-  if (velocityic.size() > c)
-    nfo.emplace_back( "velocity IC", std::to_string(velocityic[c]) );
+  const auto& bgdensityic = ic.get< tag::density >();
+  if (bgdensityic.size() > c)
+    nfo.emplace_back( "IC background density",
+                      std::to_string( bgdensityic[c][0] ) );
+  const auto& bgvelocityic = ic.get< tag::velocity >();
+  if (bgvelocityic.size() > c)
+    nfo.emplace_back( "IC background velocity",
+                      parameters( bgvelocityic[c] ) );
+  const auto& bgpressureic = ic.get< tag::pressure >();
+  if (bgpressureic.size() > c)
+    nfo.emplace_back( "IC background pressure",
+                      std::to_string( bgpressureic[c][0] ) );
 
-  const auto& pressureic =
-    g_inputdeck.get< tag::param, eq, tag::ic, tag::pressureic >();
-  if (pressureic.size() > c)
-    nfo.emplace_back( "pressure IC", std::to_string(pressureic[c]) );
+  const auto& icbox = ic.get< tag::box >();
+  std::vector< tk::real > box{ icbox.get< tag::xmin >(),
+                               icbox.get< tag::xmax >(),
+                               icbox.get< tag::ymin >(),
+                               icbox.get< tag::ymax >(),
+                               icbox.get< tag::zmin >(),
+                               icbox.get< tag::zmax >() };
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  if (std::any_of( begin(box), end(box),
+        [=]( tk::real p ){ return std::abs(p) > eps; })) {
+    nfo.emplace_back( "IC box", parameters( box ) );
+  }
+
+  const auto& boxdensityic = icbox.get< tag::density >();
+  if (boxdensityic.size() > c)
+    nfo.emplace_back( "IC box density",
+                      std::to_string( boxdensityic[c][0] ) );
+  const auto& boxvelocityic = icbox.get< tag::velocity >();
+  if (boxvelocityic.size() > c)
+    nfo.emplace_back( "IC box velocity",
+                      parameters( boxvelocityic[c] ) );
+  const auto& boxpressureic = icbox.get< tag::pressure >();
+  if (boxpressureic.size() > c)
+    nfo.emplace_back( "IC box pressure",
+                      std::to_string( boxpressureic[c][0] ) );
 
   auto bool_to_string = [](bool b) -> std::string {
     return b ? "true" : "false";

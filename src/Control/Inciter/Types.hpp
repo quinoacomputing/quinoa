@@ -135,11 +135,31 @@ using diagnostics = tk::TaggedTuple< brigand::list<
   tag::error,       std::vector< tk::ctr::ErrorType > //!< Errors to compute
 > >;
 
+//! Box, given by coordinates, specifying physics variables
+using box = tk::TaggedTuple< brigand::list<
+    tag::xmin,            kw::xmin::info::expect::type
+  , tag::xmax,            kw::xmax::info::expect::type
+  , tag::ymin,            kw::ymin::info::expect::type
+  , tag::ymax,            kw::ymax::info::expect::type
+  , tag::zmin,            kw::zmin::info::expect::type
+  , tag::zmax,            kw::zmax::info::expect::type
+  , tag::density,         std::vector<
+                            std::vector< kw::densityic::info::expect::type > >
+  , tag::velocity,        std::vector<
+                            std::vector< kw::velocityic::info::expect::type > >
+  , tag::pressure,        std::vector<
+                            std::vector< kw::pressureic::info::expect::type > >
+> >;
+
 //! Initial condition configuration
 using ic = tk::TaggedTuple< brigand::list<
-    tag::densityic,         std::vector< kw::densityic::info::expect::type >
-  , tag::velocityic,        std::vector< kw::velocityic::info::expect::type >
-  , tag::pressureic,        std::vector< kw::pressureic::info::expect::type >
+    tag::density,         std::vector<
+                            std::vector< kw::densityic::info::expect::type > >
+  , tag::velocity,        std::vector<
+                            std::vector< kw::velocityic::info::expect::type > >
+  , tag::pressure,        std::vector<
+                            std::vector< kw::pressureic::info::expect::type > >
+  , tag::box,             box
 > >;
 
 //! Boundary condition configuration
