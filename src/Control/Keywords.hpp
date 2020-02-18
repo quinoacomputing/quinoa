@@ -2541,6 +2541,36 @@ struct pressureic_info {
 };
 using pressureic = keyword< pressureic_info, TAOCPP_PEGTL_STRING("pressure") >;
 
+struct energyic_info {
+  static std::string name() { return "energyic"; }
+  static std::string shortDescription() { return
+    "Specify energy per unit mass as initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the energy per unit mass as initial
+    conditions.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using energyic = keyword< energyic_info, TAOCPP_PEGTL_STRING("energy") >;
+
+struct temperatureic_info {
+  static std::string name() { return "temperatureic"; }
+  static std::string shortDescription() { return
+    "Specify temperature as initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the temperature as initial conditions.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using temperatureic =
+  keyword< temperatureic_info, TAOCPP_PEGTL_STRING("temperature") >;
+
 struct xmin_info {
   static std::string name() { return "xmin"; }
   static std::string shortDescription() { return "Minimum x coordinate"; }
@@ -2633,6 +2663,8 @@ struct box_info {
     allowed in a box ... end block:)" + std::string("\'")
     + densityic::string()+ "\', \'"
     + velocityic::string() + "\', \'"
+    + energyic::string() + "\', \'"
+    + temperatureic::string() + "\', \'"
     + pressureic::string() + "\'."; }
 };
 using box = keyword< box_info, TAOCPP_PEGTL_STRING("box") >;
@@ -2647,6 +2679,8 @@ struct ic_info {
     + densityic::string()+ "\', \'"
     + velocityic::string() + "\', \'"
     + pressureic::string() + "\', \'"
+    + energyic::string() + "\', \'"
+    + temperatureic::string() + "\', \'"
     + box::string() + "\'.";
   }
 };

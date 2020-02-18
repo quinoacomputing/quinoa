@@ -257,11 +257,14 @@ namespace grm {
       auto& bgdensityic = ic.template get< tag::density >();
       auto& bgvelocityic = ic.template get< tag::velocity >();
       auto& bgpressureic = ic.template get< tag::pressure >();
+      auto& bgenergyic = ic.template get< tag::energy >();
+      auto& bgtemperatureic = ic.template get< tag::temperature >();
       if (problem.back() == inciter::ctr::ProblemType::USER_DEFINED) {
         // must have defined background ICs for user-defined ICs
-        if ( bgdensityic.size() != neq.get< eq >() ||
-             bgvelocityic.size() != neq.get< eq >() ||
-             bgpressureic.size() != neq.get< eq >() )
+        auto n = neq.get< eq >();
+        if ( bgdensityic.size() != n || bgvelocityic.size() != n ||
+             ( bgpressureic.size() != n && bgenergyic.size() != n &&
+               bgtemperatureic.size() != n ) )
         {
           Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
         }
@@ -271,6 +274,8 @@ namespace grm {
         bgdensityic.push_back( {} );
         bgvelocityic.push_back( {} );
         bgpressureic.push_back( {} );
+        bgenergyic.push_back( {} );
+        bgtemperatureic.push_back( {} );
       }
 
       // Error check Dirichlet boundary condition block for all compflow
@@ -736,7 +741,11 @@ namespace deck {
            pde_parameter_vector< kw::velocityic,
                                  eq, Tag, Tags..., tag::velocity >,
            pde_parameter_vector< kw::pressureic,
-                                 eq, Tag, Tags..., tag::pressure > > {};
+                                 eq, Tag, Tags..., tag::pressure >,
+           pde_parameter_vector< kw::temperatureic,
+                                 eq, Tag, Tags..., tag::temperature >,
+           pde_parameter_vector< kw::energyic,
+                                 eq, Tag, Tags..., tag::energy > > {};
 
   //! initial conditins box block
   template< class eq >

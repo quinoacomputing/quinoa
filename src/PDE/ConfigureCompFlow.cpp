@@ -190,6 +190,14 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   if (boxpressureic.size() > c)
     nfo.emplace_back( "IC box pressure",
                       std::to_string( boxpressureic[c][0] ) );
+  const auto& boxenergyic = icbox.get< tag::energy >();
+  if (boxenergyic.size() > c)
+    nfo.emplace_back( "IC box internal energy",
+                      std::to_string( boxenergyic[c][0] ) );
+  const auto& boxtemperatureic = icbox.get< tag::temperature >();
+  if (boxtemperatureic.size() > c)
+    nfo.emplace_back( "IC box temperature",
+                      std::to_string( boxtemperatureic[c][0] ) );
 
   auto bool_to_string = [](bool b) -> std::string {
     return b ? "true" : "false";

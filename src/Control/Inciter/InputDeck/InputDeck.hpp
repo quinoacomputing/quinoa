@@ -89,6 +89,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::densityic,
                                    kw::velocityic,
                                    kw::pressureic,
+                                   kw::energyic,
+                                   kw::temperatureic,
                                    kw::xmin,
                                    kw::xmax,
                                    kw::ymin,

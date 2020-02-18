@@ -82,9 +82,10 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
     const auto& boxdensityic = icbox.get< tag::density >();
     const auto& boxvelocityic = icbox.get< tag::velocity >();
     const auto& boxpressureic = icbox.get< tag::pressure >();
+    const auto& boxenergyic = icbox.get< tag::energy >();
 
     if (x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5]) {
-      if (boxdensityic.size() > system && boxdensityic[system].size() > 0) {
+      if (boxdensityic.size() > system && !boxdensityic[system].empty()) {
         u[0] = boxdensityic[system][0];
       }
       if (boxvelocityic.size() > system && boxvelocityic[system].size() > 2) {
@@ -92,9 +93,12 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
         u[2] = u[0] * boxvelocityic[system][1];
         u[3] = u[0] * boxvelocityic[system][2];
       }
-      if (boxpressureic.size() > system && boxpressureic[system].size() > 0) {
+      if (boxpressureic.size() > system && !boxpressureic[system].empty()) {
         u[4] = eos_totalenergy< eq >( system, u[0], u[1], u[2], u[3],
                                       boxpressureic[system][0] );
+      }
+      if (boxenergyic.size() > system && !boxenergyic[system].empty()) {
+        u[4] = u[0] * boxenergyic[system][0];
       }
     }
   }
