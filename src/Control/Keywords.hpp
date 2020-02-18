@@ -2541,23 +2541,6 @@ struct pressureic_info {
 };
 using pressureic = keyword< pressureic_info, TAOCPP_PEGTL_STRING("pressure") >;
 
-struct background_info {
-  static std::string name() { return "background"; }
-  static std::string shortDescription() { return
-    R"(Introduce an background ... end block used to configure background
-    initial conditions)"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce a background ... end block used to set
-    background initial conditions. Keywords allowed in background ... end
-    block: )" + std::string("\'")
-    + densityic::string()+ "\', \'"
-    + velocityic::string() + "\', \'"
-    + pressureic::string() + "\'.";
-  }
-};
-using background =
-  keyword< background_info, TAOCPP_PEGTL_STRING("background") >;
-
 struct xmin_info {
   static std::string name() { return "xmin"; }
   static std::string shortDescription() { return "Minimum x coordinate"; }
@@ -2661,7 +2644,9 @@ struct ic_info {
   static std::string longDescription() { return
     R"(This keyword is used to introduce an ic...end block used to set initial
     conditions. Keywords allowed in a ic ... end block: )" + std::string("\'")
-    + background::string()+ "\', \'"
+    + densityic::string()+ "\', \'"
+    + velocityic::string() + "\', \'"
+    + pressureic::string() + "\', \'"
     + box::string() + "\'.";
   }
 };
