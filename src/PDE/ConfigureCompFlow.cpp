@@ -153,15 +153,15 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
 
   const auto& bgdensityic = ic.get< tag::density >();
-  if (bgdensityic.size() > c)
+  if (bgdensityic.size() > c && !bgdensityic[c].empty())
     nfo.emplace_back( "IC background density",
                       std::to_string( bgdensityic[c][0] ) );
   const auto& bgvelocityic = ic.get< tag::velocity >();
-  if (bgvelocityic.size() > c)
+  if (bgvelocityic.size() > c && !bgvelocityic[c].empty())
     nfo.emplace_back( "IC background velocity",
                       parameters( bgvelocityic[c] ) );
   const auto& bgpressureic = ic.get< tag::pressure >();
-  if (bgpressureic.size() > c)
+  if (bgpressureic.size() > c && !bgpressureic[c].empty())
     nfo.emplace_back( "IC background pressure",
                       std::to_string( bgpressureic[c][0] ) );
 
