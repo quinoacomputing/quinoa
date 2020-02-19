@@ -60,12 +60,12 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
   Assert( bgvelocityic.size() > 3*system, "No background velocity IC" );
   Assert( bgpressureic.size() > system, "No background pressure IC" );
 
-  u[0] = bgdensityic[system][0];
-  u[1] = u[0] * bgvelocityic[system][0];
-  u[2] = u[0] * bgvelocityic[system][1];
-  u[3] = u[0] * bgvelocityic[system][2];
+  u[0] = bgdensityic.at(system).at(0);
+  u[1] = u[0] * bgvelocityic.at(system).at(0);
+  u[2] = u[0] * bgvelocityic.at(system).at(1);
+  u[3] = u[0] * bgvelocityic.at(system).at(2);
   u[4] = eos_totalenergy< eq >( system, u[0], u[1], u[2], u[3],
-                                  bgpressureic[system][0] );
+                                bgpressureic.at(system).at(0) );
 
   // Set optional box ICs
   const auto& icbox = ic.get< tag::box >();
