@@ -83,6 +83,7 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
     const auto& boxvelocityic = icbox.get< tag::velocity >();
     const auto& boxpressureic = icbox.get< tag::pressure >();
     const auto& boxenergyic = icbox.get< tag::energy >();
+    const auto& boxtemperatureic = icbox.get< tag::temperature >();
 
     if (x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5]) {
       if (boxdensityic.size() > system && !boxdensityic[system].empty()) {
@@ -99,6 +100,12 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
       }
       if (boxenergyic.size() > system && !boxenergyic[system].empty()) {
         u[4] = u[0] * boxenergyic[system][0];
+      }
+      if (boxtemperatureic.size() > system &&
+         !boxtemperatureic[system].empty())
+      {
+        const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
+        u[4] = u[0] * boxtemperatureic[system][0] * cv.at(system).at(0);
       }
     }
   }
