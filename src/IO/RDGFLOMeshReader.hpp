@@ -7,7 +7,7 @@
              All rights reserved. See the LICENSE file for details.
   \brief     RDGFLO mesh reader class declaration
   \details   RDGFLO mesh reader class declaration. Mesh reader facilitating
-             readinga mesh from a simple text file used by Prof. Hong Luo at
+             reading a mesh from a simple text file used by Prof. Hong Luo at
              North Carolina State University.
 */
 // *****************************************************************************
