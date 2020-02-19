@@ -2586,7 +2586,7 @@ using xmin = keyword< xmin_info, TAOCPP_PEGTL_STRING("xmin") >;
 
 struct xmax_info {
   static std::string name() { return "xmax"; }
-  static std::string shortDescription() { return "Minimum x coordinate"; }
+  static std::string shortDescription() { return "Maximum x coordinate"; }
   static std::string longDescription() { return
     R"(This keyword used to configure a maximum x coordinate, e.g., to specify
     a box.)"; }
@@ -2612,7 +2612,7 @@ using ymin = keyword< ymin_info, TAOCPP_PEGTL_STRING("ymin") >;
 
 struct ymax_info {
   static std::string name() { return "ymax"; }
-  static std::string shortDescription() { return "Minimum y coordinate"; }
+  static std::string shortDescription() { return "Maximum y coordinate"; }
   static std::string longDescription() { return
     R"(This keyword used to configure a maximum y coordinate, e.g., to specify
     a box.)"; }
@@ -2638,7 +2638,7 @@ using zmin = keyword< zmin_info, TAOCPP_PEGTL_STRING("zmin") >;
 
 struct zmax_info {
   static std::string name() { return "zmax"; }
-  static std::string shortDescription() { return "Minimum z coordinate"; }
+  static std::string shortDescription() { return "Maximum z coordinate"; }
   static std::string longDescription() { return
     R"(This keyword used to configure a maximum z coordinate, e.g., to specify
     a box.)"; }
@@ -2659,8 +2659,9 @@ struct box_info {
     initial conditions within a box given by spatial coordinates. Example:
     box x- 0.5 x+ 1.5 y- -0.5 y+ 0.5 z- -0.5 z+ 0.5 density 1.2 end pressure
     1.4 end end", which specifies a box with extends within which the density
-    will be set to 1.2 and the pressure to be 1.4. Physics keywords are also
-    allowed in a box ... end block:)" + std::string("\'")
+    will be set to 1.2 and the pressure to be 1.4. Besides the box dimensions,
+    the following physics keywords are allowed in a box ... end block:)"
+    + std::string("\'")
     + densityic::string()+ "\', \'"
     + velocityic::string() + "\', \'"
     + energyic::string() + "\', \'"
