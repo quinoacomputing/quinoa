@@ -203,8 +203,9 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     return b ? "true" : "false";
   };
 
-  auto fct = g_inputdeck.get< tag::discr, tag::fct >();
-  if (fct) {
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  const auto fct = g_inputdeck.get< tag::discr, tag::fct >();
+  if (scheme == ctr::SchemeType::DiagCG && fct) {
 
     const auto& sys = g_inputdeck.get< tag::param, eq, tag::sysfct >();
     if (sys.size() > c) {
