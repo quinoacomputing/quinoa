@@ -20,6 +20,7 @@
 #include "NetgenMeshReader.hpp"
 #include "ExodusIIMeshReader.hpp"
 #include "HyperMeshReader.hpp"
+#include "UGRIDMeshReader.hpp"
 #include "ASCMeshReader.hpp"
 #include "NetgenMeshWriter.hpp"
 #include "GmshMeshWriter.hpp"
@@ -65,6 +66,8 @@ readUnsMesh( const tk::Print& print,
     ExodusIIMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReaderType::ASC)
     ASCMeshReader( filename ).readMesh( mesh );
+  else if (meshtype == MeshReaderType::UGRID)
+    UGRIDMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReaderType::HYPER)
     HyperMeshReader( filename ).readMesh( mesh );
 
