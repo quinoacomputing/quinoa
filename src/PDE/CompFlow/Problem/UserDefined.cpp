@@ -55,19 +55,30 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
   const auto& bgdensityic = ic.get< tag::density >();
   const auto& bgvelocityic = ic.get< tag::velocity >();
   const auto& bgpressureic = ic.get< tag::pressure >();
+  const auto& bgenergyic = ic.get< tag::energy >();
+  const auto& bgtemperatureic = ic.get< tag::temperature >();
 
   Assert( bgdensityic.size() > system, "No background density IC" );
   Assert( bgvelocityic.size() > 3*system, "No background velocity IC" );
-  Assert( bgpressureic.size() > system, "No background pressure IC" );
 
   u[0] = bgdensityic.at(system).at(0);
   u[1] = u[0] * bgvelocityic.at(system).at(0);
   u[2] = u[0] * bgvelocityic.at(system).at(1);
   u[3] = u[0] * bgvelocityic.at(system).at(2);
-  u[4] = eos_totalenergy< eq >( system, u[0], u[1], u[2], u[3],
-                                bgpressureic.at(system).at(0) );
 
-  // Set optional box ICs
+  if (bgpressureic.size() > system && !bgpressureic[system].empty()) {
+    u[4] = eos_totalenergy< eq >( system, u[0], u[1], u[2], u[3],
+                                  bgpressureic.at(system).at(0) );
+  } else if (bgenergyic.size() > system && !bgenergyic[system].empty()) {
+    u[4] = u[0] * bgenergyic[system][0];
+  } else
+    if (bgtemperatureic.size() > system && !bgtemperatureic[system].empty())
+  {
+    const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
+    u[4] = u[0] * bgtemperatureic[system][0] * cv.at(system).at(0);
+  }
+
+  // Apply optional box ICs on top of background ICs
   const auto& icbox = ic.get< tag::box >();
   std::vector< tk::real > box{ icbox.get< tag::xmin >(),
                                icbox.get< tag::xmax >(),
