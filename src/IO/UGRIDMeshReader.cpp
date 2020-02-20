@@ -108,10 +108,12 @@ UGRIDMeshReader::readElements( UnsMesh& mesh )
     mesh.triinpoel().push_back( n[2] );
   }
 
-  // Read and ignore side sets of triangle elements
+  // Read side sets of triangle elements
   for (std::size_t i=0; i<m_ntri; ++i) {
     int setid;
     m_inFile >> setid;
+    mesh.bface()[ setid ].push_back( m_ntet + i );
+    mesh.faceid()[ setid ].push_back( 0 );
   }
 
   // Read in tetrahedra element connectivity
