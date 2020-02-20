@@ -95,12 +95,10 @@ CompFlowProblemSodShocktube::fieldNames( ncomp_t ) const
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
-
   auto n = CompFlowFieldNames();
 
-  if(pref)
-    n.push_back( "number of degree of freedom" );
+  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  if (pref) n.push_back( "number of degrees of freedom" );
 
   return n;
 }
@@ -125,7 +123,7 @@ CompFlowProblemSodShocktube::fieldOutput(
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  return CompFlowFieldOutput(system, offset, U);
+  return CompFlowFieldOutput( system, offset, U );
 }
 
 std::vector< std::string >

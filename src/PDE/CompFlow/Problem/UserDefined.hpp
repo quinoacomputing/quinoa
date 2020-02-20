@@ -31,7 +31,6 @@ class CompFlowProblemUserDefined {
   private:
     using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
-    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
     //! Evaluate initial condition solution at (x,y,z,t) for all components

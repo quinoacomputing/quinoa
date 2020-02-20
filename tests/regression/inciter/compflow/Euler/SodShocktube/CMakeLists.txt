@@ -27,6 +27,21 @@ add_regression_test(compflow_euler_sodshocktube_alecg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
                     LABELS alecg)
 
+add_regression_test(compflow_euler_sodshocktube_alecg_userdef
+                    ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES sod_shocktube_alecg_userdef.q
+                               rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_alecg_userdef.q
+                         -i rectangle_01_1.5k.exo -v
+                    BIN_BASELINE sod_shocktube_alecg.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_alecg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS alecg)
+
 add_regression_test(compflow_euler_sodshocktube_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES sod_shocktube_dg.q rectangle_01_1.5k.exo

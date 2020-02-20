@@ -2496,14 +2496,194 @@ struct icdirichlet_info {
 using icdirichlet =
   keyword< icdirichlet_info, TAOCPP_PEGTL_STRING("icdirichlet") >;
 
+struct velocityic_info {
+  static std::string name() { return "velocityic"; }
+  static std::string shortDescription() { return
+    "Specify velocity initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the velocity field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
+
+struct densityic_info {
+  static std::string name() { return "densityic"; }
+  static std::string shortDescription() { return
+    "Specify density initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the density field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using densityic = keyword< densityic_info, TAOCPP_PEGTL_STRING("density") >;
+
+struct pressureic_info {
+  static std::string name() { return "pressureic"; }
+  static std::string shortDescription() { return
+    "Specify pressure initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the pressure field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pressureic = keyword< pressureic_info, TAOCPP_PEGTL_STRING("pressure") >;
+
+struct energyic_info {
+  static std::string name() { return "energyic"; }
+  static std::string shortDescription() { return
+    "Specify energy per unit mass as initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the energy per unit mass as initial
+    conditions.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using energyic = keyword< energyic_info, TAOCPP_PEGTL_STRING("energy") >;
+
+struct temperatureic_info {
+  static std::string name() { return "temperatureic"; }
+  static std::string shortDescription() { return
+    "Specify temperature as initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the temperature as initial conditions.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using temperatureic =
+  keyword< temperatureic_info, TAOCPP_PEGTL_STRING("temperature") >;
+
+struct xmin_info {
+  static std::string name() { return "xmin"; }
+  static std::string shortDescription() { return "Minimum x coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a minimum x coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using xmin = keyword< xmin_info, TAOCPP_PEGTL_STRING("xmin") >;
+
+struct xmax_info {
+  static std::string name() { return "xmax"; }
+  static std::string shortDescription() { return "Maximum x coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a maximum x coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using xmax = keyword< xmax_info, TAOCPP_PEGTL_STRING("xmax") >;
+
+struct ymin_info {
+  static std::string name() { return "ymin"; }
+  static std::string shortDescription() { return "Minimum y coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a minimum y coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using ymin = keyword< ymin_info, TAOCPP_PEGTL_STRING("ymin") >;
+
+struct ymax_info {
+  static std::string name() { return "ymax"; }
+  static std::string shortDescription() { return "Maximum y coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a maximum y coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using ymax = keyword< ymax_info, TAOCPP_PEGTL_STRING("ymax") >;
+
+struct zmin_info {
+  static std::string name() { return "zmin"; }
+  static std::string shortDescription() { return "Minimum z coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a minimum z coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using zmin = keyword< zmin_info, TAOCPP_PEGTL_STRING("zmin") >;
+
+struct zmax_info {
+  static std::string name() { return "zmax"; }
+  static std::string shortDescription() { return "Maximum z coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a maximum z coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using zmax = keyword< zmax_info, TAOCPP_PEGTL_STRING("zmax") >;
+
+struct box_info {
+  static std::string name() { return "box"; }
+  static std::string shortDescription() { return
+    R"(Introduce an box ... end block used to assign initial conditions within
+    a box given by coordinates)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a box ... end block used to assign
+    initial conditions within a box given by spatial coordinates. Example:
+    box x- 0.5 x+ 1.5 y- -0.5 y+ 0.5 z- -0.5 z+ 0.5 density 1.2 end pressure
+    1.4 end end", which specifies a box with extends within which the density
+    will be set to 1.2 and the pressure to be 1.4. Besides the box dimensions,
+    the following physics keywords are allowed in a box ... end block:)"
+    + std::string("\'")
+    + densityic::string()+ "\', \'"
+    + velocityic::string() + "\', \'"
+    + energyic::string() + "\', \'"
+    + temperatureic::string() + "\', \'"
+    + pressureic::string() + "\'."; }
+};
+using box = keyword< box_info, TAOCPP_PEGTL_STRING("box") >;
+
 struct ic_info {
   static std::string name() { return "ic"; }
   static std::string shortDescription() { return
     R"(Introduce an ic...end block used to configure initial conditions)"; }
   static std::string longDescription() { return
     R"(This keyword is used to introduce an ic...end block used to set initial
-    conditions. Example: "ic density 1.0 end" - set the initial density field to
-    1.0 across the whole domain.)"; }
+    conditions. Keywords allowed in a ic ... end block: )" + std::string("\'")
+    + densityic::string()+ "\', \'"
+    + velocityic::string() + "\', \'"
+    + pressureic::string() + "\', \'"
+    + energyic::string() + "\', \'"
+    + temperatureic::string() + "\', \'"
+    + box::string() + "\'.";
+  }
 };
 using ic = keyword< ic_info, TAOCPP_PEGTL_STRING("ic") >;
 
@@ -5034,51 +5214,6 @@ struct material_info {
   }
 };
 using material = keyword< material_info, TAOCPP_PEGTL_STRING("material") >;
-
-struct velocityic_info {
-  static std::string name() { return "velocity"; }
-  static std::string shortDescription() { return
-    "Specify velocity initial conditions";
-  }
-  static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions for the velocity field.)";
-  }
-  struct expect {
-    using type = tk::real;
-    static std::string description() { return "real(s)"; }
-  };
-};
-using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
-
-struct densityic_info {
-  static std::string name() { return "velocity"; }
-  static std::string shortDescription() { return
-    "Specify density initial conditions";
-  }
-  static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions for the density field.)";
-  }
-  struct expect {
-    using type = tk::real;
-    static std::string description() { return "real"; }
-  };
-};
-using densityic = keyword< densityic_info, TAOCPP_PEGTL_STRING("density") >;
-
-struct pressureic_info {
-  static std::string name() { return "pressure"; }
-  static std::string shortDescription() { return
-    "Specify pressure initial conditions";
-  }
-  static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions for the pressure field.)";
-  }
-  struct expect {
-    using type = tk::real;
-    static std::string description() { return "real"; }
-  };
-};
-using pressureic = keyword< pressureic_info, TAOCPP_PEGTL_STRING("pressure") >;
 
 struct compflow_info {
   static std::string name() { return "Compressible single-material flow"; }

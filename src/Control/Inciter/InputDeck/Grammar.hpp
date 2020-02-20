@@ -252,6 +252,32 @@ namespace grm {
           Message< Stack, ERROR, MsgKey::RT_UNFINISHED >( stack, in);
       }
 
+      // Error check on user-defined problem type
+      auto& ic = stack.template get< param, eq, tag::ic >();
+      auto& bgdensityic = ic.template get< tag::density >();
+      auto& bgvelocityic = ic.template get< tag::velocity >();
+      auto& bgpressureic = ic.template get< tag::pressure >();
+      auto& bgenergyic = ic.template get< tag::energy >();
+      auto& bgtemperatureic = ic.template get< tag::temperature >();
+      if (problem.back() == inciter::ctr::ProblemType::USER_DEFINED) {
+        // must have defined background ICs for user-defined ICs
+        auto n = neq.get< eq >();
+        if ( bgdensityic.size() != n || bgvelocityic.size() != n ||
+             ( bgpressureic.size() != n && bgenergyic.size() != n &&
+               bgtemperatureic.size() != n ) )
+        {
+          Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
+        }
+      } else {
+        // put in empty vectors for non-user-defined ICs so client code can
+        // directly index into these vectors using the eq system id
+        bgdensityic.push_back( {} );
+        bgvelocityic.push_back( {} );
+        bgpressureic.push_back( {} );
+        bgenergyic.push_back( {} );
+        bgtemperatureic.push_back( {} );
+      }
+
       // Error check Dirichlet boundary condition block for all compflow
       // configurations
       const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
@@ -620,7 +646,7 @@ namespace deck {
          > {};
 
   //! PDE parameter vector
-  template< class keyword, class eq, class param >
+  template< class keyword, class eq, class param, class... xparams >
   struct pde_parameter_vector :
          tk::grm::parameter_vector< use,
                                     use< keyword >,
@@ -628,7 +654,7 @@ namespace deck {
                                     tk::grm::start_vector,
                                     tk::grm::check_vector,
                                     eq,
-                                    param > {};
+                                    param, xparams... > {};
 
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename param,
@@ -670,7 +696,9 @@ namespace deck {
              use< kw::end >,
              parameter< eq, kw::farfield_pressure, tag::farfield_pressure >,
              parameter< eq, kw::farfield_density, tag::farfield_density >,
-             pde_parameter_vector< kw::farfield_velocity, eq, tag::farfield_velocity >,
+             pde_parameter_vector< kw::farfield_velocity,
+                                   eq,
+                                   tag::farfield_velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,
@@ -704,21 +732,50 @@ namespace deck {
                          half_world< kw::amr_zminus, tag::zminus >,
                          half_world< kw::amr_zplus, tag::zplus > > > {};
 
+  //! physics variables block (for ICs)
+  template< class eq, class Tag, class... Tags >
+  struct physvar :
+         pegtl::sor<
+           pde_parameter_vector< kw::densityic,
+                                 eq, Tag, Tags..., tag::density >,
+           pde_parameter_vector< kw::velocityic,
+                                 eq, Tag, Tags..., tag::velocity >,
+           pde_parameter_vector< kw::pressureic,
+                                 eq, Tag, Tags..., tag::pressure >,
+           pde_parameter_vector< kw::temperatureic,
+                                 eq, Tag, Tags..., tag::temperature >,
+           pde_parameter_vector< kw::energyic,
+                                 eq, Tag, Tags..., tag::energy > > {};
+
+  //! initial conditins box block
+  template< class eq >
+  struct box :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::box >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+             tk::grm::control< use< kw::xmin >, tk::grm::number,
+                               tag::param, eq, tag::ic, tag::box, tag::xmin >,
+             tk::grm::control< use< kw::xmax >, tk::grm::number,
+                               tag::param, eq, tag::ic, tag::box, tag::xmax >,
+             tk::grm::control< use< kw::ymin >, tk::grm::number,
+                               tag::param, eq, tag::ic, tag::box, tag::ymin >,
+             tk::grm::control< use< kw::ymax >, tk::grm::number,
+                               tag::param, eq, tag::ic, tag::box, tag::ymax >,
+             tk::grm::control< use< kw::zmin >, tk::grm::number,
+                               tag::param, eq, tag::ic, tag::box, tag::zmin >,
+             tk::grm::control< use< kw::zmax >, tk::grm::number,
+                               tag::param, eq, tag::ic, tag::box, tag::zmax >,
+             physvar< eq, tag::ic, tag::box > > > {};
 
   //! initial conditions block for compressible flow
-  template< class eq, class param >
-  struct ic_compflow :
-           pegtl::if_must<
-             tk::grm::readkw< use< kw::ic >::pegtl_string >,
-             tk::grm::block<
-               use< kw::end >,
-               tk::grm::parameter_vector< use,
-                                          use< kw::velocity >,
-                                          tk::grm::Store_back_back,
-                                          tk::grm::start_vector,
-                                          tk::grm::check_vector,
-                                          eq,
-                                          param > > > {};
+  template< class eq >
+  struct ic :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::ic >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+                           physvar< eq, tag::ic >,
+                           pegtl::seq< box< eq > >
+                         > > {};
 
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
@@ -728,15 +785,15 @@ namespace deck {
   //! Material properties block for compressible flow
   template< class eq >
   struct material_properties :
-           pegtl::if_must<
-             tk::grm::readkw< use< kw::material >::pegtl_string >,
-             tk::grm::block<
-               use< kw::end >,
-               material_property< eq, kw::mat_gamma, tag::gamma >,
-               material_property< eq, kw::mat_pstiff, tag::pstiff >,
-               material_property< eq, kw::mat_mu, tag::mu >,
-               material_property< eq, kw::mat_cv, tag::cv >,
-               material_property< eq, kw::mat_k, tag::k > > > {};
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::material >::pegtl_string >,
+           tk::grm::block<
+             use< kw::end >,
+             material_property< eq, kw::mat_gamma, tag::gamma >,
+             material_property< eq, kw::mat_pstiff, tag::pstiff >,
+             material_property< eq, kw::mat_mu, tag::mu >,
+             material_property< eq, kw::mat_cv, tag::cv >,
+             material_property< eq, kw::mat_k, tag::k > > > {};
 
   //! transport equation for scalars
   struct transport :
@@ -801,7 +858,7 @@ namespace deck {
                                                            tag::compflow,
                                                            tag::flux >,
                              pegtl::alpha >,
-                           //ic_compflow< tag::compflow, tag::ic > >,
+                           ic< tag::compflow >,
                            material_properties< tag::compflow >,
                            pde_parameter_vector< kw::sysfctvar,
                                                  tag::compflow,
