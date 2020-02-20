@@ -23,8 +23,8 @@ namespace tk {
 class UnsMesh;
 
 //! \brief UGRIDMeshReader : tk::Reader
-//! \details Mesh reader class facilitating reading a mesh from a simple test
-//!   file used by Jacob Waltz's Chicoma code.
+//! \details Mesh reader class facilitating reading a mesh from a simple text
+//!    file used by NASA.
 class UGRIDMeshReader : public Reader {
 
   public:
