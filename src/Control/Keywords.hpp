@@ -2652,8 +2652,7 @@ using zmax = keyword< zmax_info, TAOCPP_PEGTL_STRING("zmax") >;
 struct box_info {
   static std::string name() { return "box"; }
   static std::string shortDescription() { return
-    R"(Introduce an box ... end block used to assign initial conditions within
-    a box given by coordinates)"; }
+    R"(Introduce a box ... end block used to assign initial conditions)"; }
   static std::string longDescription() { return
     R"(This keyword is used to introduce a box ... end block used to assign
     initial conditions within a box given by spatial coordinates. Example:
