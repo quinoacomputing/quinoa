@@ -1314,6 +1314,18 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  template< typename Tag, typename... Tags >
+  struct store_lua : pegtl::success {};
+  //! Append character parsed in a lua ... end block to a string
+  template< typename Tag, typename... Tags >
+  struct action< store_lua< Tag, Tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template get< Tag, Tags..., tag::lua >() += in.string();
+    }
+  };
+
   // Common grammar (grammar that is reused by multiple grammars)
 
   //! Read 'token' until 'erased' trimming, i.e., not consuming, 'erased'
@@ -1685,6 +1697,14 @@ namespace grm {
                                          pegtl::alpha >,
                                 precision< use, tag::diag > > > {};
 
+  //! Parse lua ... end block and store it behind Tag, Tags..., tag::lua
+  template< template< class > class use, typename Tag, typename... Tags >
+  struct lua :
+         pegtl::if_must<
+           readkw< typename use< kw::lua >::pegtl_string >,
+           pegtl::until< readkw< typename use< kw::end >::pegtl_string >,
+                          act< pegtl::any, store_lua< Tag, Tags... > > > > {};
+
   //! Match model parameter
   template< typename keyword, typename kw_type, typename model, typename Tag >
   struct parameter :
@@ -1707,7 +1727,6 @@ namespace grm {
   struct rngblock :
          pegtl::if_must< readkw< typename use< kw::rngs >::pegtl_string >,
                          block< use< kw::end >, rngs > > {};
-
 
   //! Match equation/model parameter vector
   //! \details This structure is used to match a keyword ... end block that

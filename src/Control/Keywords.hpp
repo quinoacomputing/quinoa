@@ -2571,6 +2571,17 @@ struct temperatureic_info {
 using temperatureic =
   keyword< temperatureic_info, TAOCPP_PEGTL_STRING("temperature") >;
 
+struct lua_info {
+  static std::string name() { return "lua"; }
+  static std::string shortDescription() { return R"(Introduce a lua ... end
+    block used inject lua code into control files)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a lua ... end block which can be used
+    to  inject arbitrary Lua code into control files. For more info on the lua
+    language, see https://www.lua.org.)"; }
+};
+using lua = keyword< lua_info, TAOCPP_PEGTL_STRING("lua") >;
+
 struct xmin_info {
   static std::string name() { return "xmin"; }
   static std::string shortDescription() { return "Minimum x coordinate"; }

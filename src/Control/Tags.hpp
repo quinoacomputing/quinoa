@@ -291,6 +291,7 @@ struct ymin { static std::string name() { return "ymin"; } };
 struct ymax { static std::string name() { return "ymax"; } };
 struct zmin { static std::string name() { return "zmin"; } };
 struct zmax { static std::string name() { return "zmax"; } };
+struct lua { static std::string name() { return "lua"; } };
 
 struct BirthdaySpacings {};
 struct Collision {};
