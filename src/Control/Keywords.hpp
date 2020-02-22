@@ -2573,8 +2573,8 @@ using temperatureic =
 
 struct lua_info {
   static std::string name() { return "lua"; }
-  static std::string shortDescription() { return R"(Introduce a lua ... end
-    block used inject lua code into control files)"; }
+  static std::string shortDescription() { return
+    R"(Introduce a lua ... end block to inject lua code in control files)"; }
   static std::string longDescription() { return
     R"(This keyword is used to introduce a lua ... end block which can be used
     to  inject arbitrary Lua code into control files. For more info on the lua
