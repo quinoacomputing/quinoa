@@ -36,6 +36,7 @@ add_library(NativeMeshIO
             STLTxtMeshReader.cpp
             NetgenMeshReader.cpp
             ASCMeshReader.cpp
+            UGRIDMeshReader.cpp
             GmshMeshWriter.cpp
             NetgenMeshWriter.cpp
             #SiloWriter.cpp

@@ -17,17 +17,20 @@
 namespace tk {
 
 //! Supported mesh readers
-enum class MeshReaderType : uint8_t { GMSH=0,
-                                      NETGEN,
-                                      EXODUSII,
-                                      HYPER,
-                                      ASC,
-                                      OMEGA_H };
+enum class MeshReaderType : uint8_t { GMSH = 0
+                                    , NETGEN
+                                    , EXODUSII
+                                    , HYPER
+                                    , ASC
+                                    , OMEGA_H
+                                    , UGRID
+                                    };
 
 //! Supported mesh writers
-enum class MeshWriterType : uint8_t { GMSH=0,
-                                      NETGEN,
-                                      EXODUSII };
+enum class MeshWriterType : uint8_t { GMSH = 0
+                                    , NETGEN
+                                    , EXODUSII
+                                    };
 
 //! Detect input mesh file type
 MeshReaderType

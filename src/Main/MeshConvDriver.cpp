@@ -60,10 +60,7 @@ MeshConvDriver::execute() const
   std::vector< std::pair< std::string, tk::real > > times( 1 );
 
   auto mesh = tk::readUnsMesh( m_print, m_input, times[0] );
-  auto wtimes = tk::writeUnsMesh( m_print,
-                                  m_output,
-                                  mesh,
-                                  m_reorder );
+  auto wtimes = tk::writeUnsMesh( m_print, m_output, mesh, m_reorder );
 
   times.insert( end(times), begin(wtimes), end(wtimes) );
   mainProxy.timestamp( times );
