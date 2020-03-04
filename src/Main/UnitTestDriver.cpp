@@ -3,18 +3,19 @@
   \file      src/Main/UnitTestDriver.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Unit test driver
   \details   Unit test driver.
 */
 // *****************************************************************************
 
-#include "UnitTestPrint.hpp"
 #include "UnitTestDriver.hpp"
 #include "UnitTest/CmdLine/CmdLine.hpp"
 #include "QuinoaConfig.hpp"
 #include "NoWarning/tutsuite.decl.h"
+#include "TaggedTupleDeepPrint.hpp"
+#include "Writer.hpp"
 
 using unittest::UnitTestDriver;
 
@@ -24,14 +25,18 @@ extern CProxy_TUTSuite g_suiteProxy;
 
 } // unittest::
 
-UnitTestDriver::UnitTestDriver( const UnitTestPrint&,
-                                const ctr::CmdLine& cmdline )
+UnitTestDriver::UnitTestDriver( const ctr::CmdLine& cmdline )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 // *****************************************************************************
 {
+  // Output command line object to file
+  auto logfilename = tk::unittest_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), "cmdline", cmdline );
+
   // Instantiate (on PE 0 ) and run unit test suite. We only support Template
   // Unit Test suites at this point, so no factory instantiation, simply fire up
   // a Charm++ chare TUTSuite, which fires up and evaluates all unit tests

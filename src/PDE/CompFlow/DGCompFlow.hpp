@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/DGCompFlow.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Compressible single-material flow using discontinuous Galerkin
      finite elements
@@ -20,6 +20,8 @@
 #include <unordered_set>
 #include <map>
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "Macro.hpp"
 #include "Exception.hpp"
 #include "Vector.hpp"
@@ -34,7 +36,7 @@
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
 #include "Integrate/Source.hpp"
-#include "Integrate/Riemann/RiemannFactory.hpp"
+#include "RiemannFactory.hpp"
 #include "EoS/EoS.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -55,26 +57,7 @@ template< class Physics, class Problem >
 class CompFlow {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
-    using bcconf_t = kw::sideset::info::expect::type;
     using eq = tag::compflow;
-
-    //! Extract BC configuration ignoring if BC not specified
-    //! \param[in] c Equation system index (among multiple systems configured)
-    //! \return Vector of BC config of type bcconf_t used to apply BCs for all
-    //!   scalar components this Euler eq system is configured for
-    //! \note A more preferable way of catching errors such as this function
-    //!   hides is during parsing, so that we don't even get here if BCs are not
-    //!   correctly specified. For now we simply ignore if BCs are not
-    //!   specified by allowing empty BC vectors from the user input.
-    template< typename bctag >
-    std::vector< bcconf_t >
-    config( ncomp_t c ) {
-      std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, eq, bctag >();
-      if (v.size() > c) bc = v[c];
-      return bc;
-    }
 
   public:
     //! Constructor
@@ -85,15 +68,19 @@ class CompFlow {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_riemann( tk::cref_find( RiemannSolvers(),
-                   g_inputdeck.get< tag::discr, tag::flux >() ) ),
-      m_bcdir( config< tag::bcdir >( c ) ),
-      m_bcsym( config< tag::bcsym >( c ) ),
-      m_bcsubsonicoutlet( config< tag::bcsubsonicoutlet >( c ) ),
-      m_bcextrapolate( config< tag::bcextrapolate >( c ) )
-      //ErrChk( !m_bcdir.empty() || !m_bcsym.empty() || !m_bcextrapolate.empty(),
-      //        "Boundary conditions not set in control file for DG CompFlow" );
-    {}
+      m_riemann(tk::cref_find(compflowRiemannSolvers(),
+        g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system)))
+    {
+      // associate boundary condition configurations with state functions, the
+      // order in which the state functions listed matters, see ctr::bc::Keys
+      brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
+        { dirichlet
+        , symmetry
+        , invalidBC         // Inlet BC not implemented
+        , invalidBC         // Outlet BC not implemented
+        , characteristic
+        , extrapolate } ) );
+    }
 
     //! Find the number of primitive quantities required for this PDE system
     //! \return The number of primitive quantities required to be stored for
@@ -126,7 +113,8 @@ class CompFlow {
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      tk::mass( m_ncomp, m_offset, geoElem, l );
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
     }
 
     //! Update the primitives for this PDE system
@@ -137,6 +125,14 @@ class CompFlow {
     void updatePrimitives( const tk::Fields&,
                            tk::Fields&,
                            std::size_t ) const {}
+
+    //! Clean up the state of trace materials for this PDE system
+    //! \details This function cleans up the state of materials present in trace
+    //!   quantities in each cell. This is unused for compflow.
+    void cleanTraceMaterial( const tk::Fields&,
+                             tk::Fields&,
+                             tk::Fields&,
+                             std::size_t ) const {}
 
     //! Reconstruct second-order solution from first-order using least-squares
     //! \param[in] t Physical time
@@ -156,6 +152,7 @@ class CompFlow {
                       tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nelem = fd.Esuel().size()/4;
 
       Assert( U.nprop() == rdof*5, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*5) );
@@ -164,39 +161,33 @@ class CompFlow {
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
-      // supported boundary condition types and associated state functions
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >
-        bctypes{{
-          { m_bcdir, Dirichlet },
-          { m_bcsym, Symmetry },
-          { m_bcextrapolate, Extrapolate } }};
-
       // allocate and initialize matrix and vector for reconstruction
       std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-        lhs_ls( U.nunk(), {{ {{0.0, 0.0, 0.0}},
-                             {{0.0, 0.0, 0.0}},
-                             {{0.0, 0.0, 0.0}} }} );
+        lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
+                          {{0.0, 0.0, 0.0}},
+                          {{0.0, 0.0, 0.0}} }} );
       std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhs_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
+        rhs_ls( nelem, std::vector< std::array< tk::real, 3 > >
           ( m_ncomp,
             {{ 0.0, 0.0, 0.0 }} ) );
 
       // reconstruct x,y,z-derivatives of unknowns
-      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,
-                           lhs_ls, rhs_ls );
+      // 0. get lhs matrix, which is only geometry dependent
+      tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
-      // compute boundary surface flux integrals
-      for (const auto& b : bctypes)
-        tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                             fd, geoFace, geoElem, t, b.second, U, lhs_ls,
-                             rhs_ls );
+      // 1. internal face contributions
+      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U, rhs_ls );
 
-      // solve 3x3 least-squares system
+      // 2. boundary face contributions
+      for (const auto& b : m_bc)
+        tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
+          b.first, fd, geoFace, geoElem, t, b.second, U, rhs_ls );
+
+      // 3. solve 3x3 least-squares system
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
 
-      // transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4,
-                          inpoel, coord, U );
+      // 4. transform reconstructed derivatives to Dubiner dofs
+      tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
     }
 
     //! Limit second-order solution
@@ -284,15 +275,8 @@ class CompFlow {
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
-      // supported boundary condition types and associated state functions
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
-        { m_bcdir, Dirichlet },
-        { m_bcsym, Symmetry },
-        { m_bcsubsonicoutlet, SubsonicOutlet },
-        { m_bcextrapolate, Extrapolate } }};
-
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, inpoel, coord,
+      tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, riemannDeriv );
 
       // compute source term intehrals
@@ -305,8 +289,8 @@ class CompFlow {
                     flux, velfn, U, ndofel, R );
 
       // compute boundary surface flux integrals
-      for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, b.first, fd,
+      for (const auto& b : m_bc)
+        tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
                         geoFace, inpoel, coord, t, rieflxfn, velfn, b.second, U,
                         P, ndofel, R, riemannDeriv );
     }
@@ -326,7 +310,9 @@ class CompFlow {
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
                  const std::vector< std::size_t >& ndofel,
-                 const tk::Fields& U ) const
+                 const tk::Fields& U,
+                 const tk::Fields&,
+                 const std::size_t /*nielem*/ ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
@@ -512,11 +498,24 @@ class CompFlow {
       }
 
       tk::real mindt = std::numeric_limits< tk::real >::max();
+      tk::real dgp = 0.0;
 
       // compute allowable dt
       for (std::size_t e=0; e<U.nunk(); ++e)
       {
-        mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
+        dgp = 0.0;
+        if (ndofel[e] == 4)
+        {
+          dgp = 1.0;
+        }
+        else if (ndofel[e] == 10)
+        {
+          dgp = 2.0;
+        }
+
+        // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
+        // where p is the order of the DG polynomial by linear stability theory.
+        mindt = std::min( mindt, geoElem(e,0,0)/ (delt[e] * (2.0*dgp + 1.0)) );
       }
 
       return mindt;
@@ -545,12 +544,6 @@ class CompFlow {
       return v;
     }
 
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { m_problem.side( conf ); }
-
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const
@@ -564,7 +557,8 @@ class CompFlow {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  const tk::Fields& geoElem,
-                 tk::Fields& U ) const
+                 tk::Fields& U,
+                 const tk::Fields& ) const
     {
       std::array< std::vector< tk::real >, 3 > coord;
       std::vector< tk::real > v;
@@ -699,14 +693,8 @@ class CompFlow {
     const ncomp_t m_offset;
     //! Riemann solver
     RiemannSolver m_riemann;
-    //! Dirichlet BC configuration
-    const std::vector< bcconf_t > m_bcdir;
-    //! Symmetric BC configuration
-    const std::vector< bcconf_t > m_bcsym;
-    //! SubsonicOutlet BC configuration
-    const std::vector< bcconf_t > m_bcsubsonicoutlet;
-    //! Extrapolation BC configuration
-    const std::vector< bcconf_t > m_bcextrapolate;
+    //! BC configuration
+    BCStateFn m_bc;
 
     //! Evaluate physical flux function for this PDE system
     //! \param[in] system Equation system index
@@ -765,7 +753,7 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+    dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
@@ -780,7 +768,7 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Symmetry( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    symmetry( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
               const std::array< tk::real, 3 >& fn )
     {
@@ -805,29 +793,83 @@ class CompFlow {
     }
 
     //! \brief Boundary state function providing the left and right state of a
-    //!   face at subsonic outlet boundaries
+    //!   face at characteristic boundaries
     //! \param[in] ul Left (domain-internal) state
+    //! \param[in] fn Unit face normal
     //! \return Left and right states for all scalar components in this PDE
     //!   system
-    //! \details The subsonic outlet boudary calculation, implemented here, is
-    //!   based on the characteristic theory of hyperbolic systems. For subsonic
-    //!   outlet flow, there are 3 outgoing characteristcs and 1 incoming
-    //!   characteristic. Therefore, we calculate the ghost cell state by taking
-    //!   pressure from the outside and other quantities from the internal cell.
+    //! \details The characteristic boudary calculation, implemented here, is
+    //!   based on the characteristic theory of hyperbolic systems.
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    SubsonicOutlet( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
+    characteristic( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
                     tk::real, tk::real, tk::real, tk::real,
-                    const std::array< tk::real, 3 >& )
+                    const std::array< tk::real, 3 >& fn )
     {
-      auto fp =
-        g_inputdeck.get< tag::param, eq, tag::farfield_pressure >()[ system ];
+      using tag::param; using tag::bc;
+
+      // Primitive variables from farfield
+      auto frho = g_inputdeck.get< param, eq,
+                                   tag::farfield_density >()[ system ];
+      auto fp   = g_inputdeck.get< param, eq,
+                                   tag::farfield_pressure >()[ system ];
+      auto fu   = g_inputdeck.get< param, eq,
+                                   tag::farfield_velocity >()[ system ];
+
+      // Speed of sound from farfield
+      auto fa = eos_soundspeed< eq >( system, frho, fp );
+
+      // Normal component from farfield
+      auto fvn = fu[0]*fn[0] + fu[1]*fn[1] + fu[2]*fn[2];
+
+      // Mach number from farfield
+      auto fM = fvn / fa;
+
+      // Specific total energy from farfield
+      auto frhoE =
+        eos_totalenergy< eq >( system, frho, fu[0], fu[1], fu[2], fp );
+
+      // Pressure from internal cell
+      auto p = eos_pressure< eq >( system, ul[0], ul[1]/ul[0], ul[2]/ul[0],
+                                   ul[3]/ul[0], ul[4] );
 
       auto ur = ul;
-      auto u_l = ul[1] / ul[0];
-      auto v_l = ul[2] / ul[0];
-      auto w_l = ul[3] / ul[0];
-      ur[4] = eos_totalenergy< eq >( system, ul[0], u_l, v_l, w_l, fp );
+
+      if(fM <= -1)                         // Supersonic inflow
+      {
+        // For supersonic inflow, all the characteristics are from outside.
+        // Therefore, we calculate the ghost cell state using the primitive
+        // variables from outside.
+        ur[0] = frho;
+        ur[1] = frho * fu[0];
+        ur[2] = frho * fu[1];
+        ur[3] = frho * fu[2];
+        ur[4] = frhoE;
+      } else if(fM > -1 && fM < 0)       // Subsonic inflow
+      {
+        // For subsonic inflow, there are 1 outgoing characteristcs and 4
+        // incoming characteristic. Therefore, we calculate the ghost cell state
+        // by taking pressure from the internal cell and other quantities from
+        // the outside.
+        ur[0] = frho;
+        ur[1] = frho * fu[0];
+        ur[2] = frho * fu[1];
+        ur[3] = frho * fu[2];
+        ur[4] =
+          eos_totalenergy< eq >( system, frho, fu[0], fu[1], fu[2], p );
+      } else if(fM >= 0 && fM < 1)       // Subsonic outflow
+      {
+        // For subsonic outflow, there are 1 incoming characteristcs and 4
+        // outgoing characteristic. Therefore, we calculate the ghost cell state
+        // by taking pressure from the outside and other quantities from the
+        // internal cell.
+        ur[4] = eos_totalenergy< eq >( system, ul[0], ul[1]/ul[0], ul[2]/ul[0],
+                                       ul[3]/ul[0], fp );
+      }
+      // Otherwise, for supersonic outflow, all the characteristics are from
+      // internal cell. Therefore, we calculate the ghost cell state using the
+      // conservative variables from outside.
+
       return {{ ul, ur }};
     }
 
@@ -838,7 +880,7 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
                  const std::array< tk::real, 3 >& )
     {

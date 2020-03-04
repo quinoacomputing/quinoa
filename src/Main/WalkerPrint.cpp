@@ -3,7 +3,7 @@
   \file      src/Main/WalkerPrint.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -100,7 +100,7 @@ WalkerPrint::stats( const std::string& msg ) const
 
   if (!c.empty() && c != g_inputdeck_defaults.get< tag::stat >()) {
     m_stream << m_item_name_fmt % m_item_indent % msg;
-    for (auto& v : c) m_stream << v;
+    for (const auto& v : c) m_stream << v << ' ';
     m_stream << '\n';
   }
 

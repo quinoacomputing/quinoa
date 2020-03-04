@@ -3,7 +3,7 @@
   \file      src/Base/Print.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -18,14 +18,11 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <list>
 #include <cmath>
 #include <array>
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
-
-#include <brigand/algorithms/for_each.hpp>
 
 #include "NoWarning/format.hpp"
 
@@ -33,7 +30,8 @@
 #include "Exception.hpp"
 #include "Has.hpp"
 #include "ChareState.hpp"
-#include "StrConvUtil.hpp"
+#include "PrintUtil.hpp"
+#include "TeeBuf.hpp"
 
 namespace tk {
 
@@ -48,25 +46,35 @@ class Print {
 
   public:
     //! Constructor: Quiet output by default, only stuff written to qstr shown.
-    //! Instantiate with str = std::cout for verbose output. Any member function
-    //! can be called by overriding the default stream via the template
-    //! argument, Style, a C-style enum. Note: By default, str == std::clog.
-    //! This is used to initialize str to a local stringstream into which all
-    //! verbose output goes by default, i.e., it will not be shown. This
-    //! solution is chosen instead of trickery with null-streams, as
-    //! boost:formatted output into null-streams caused invalid reads in
-    //! valgrind. This way quiet output (formatted or not) simply goes into a
-    //! local stringstream. In other words, the default argument to str,
-    //! std::clog, is only used to detect whether client code passed a default
-    //! argument or not: if it did not, the string stream is used for verbose
-    //! output, if it did, the specified stream is used for the verbose output.
+    //! \details Instantiate with str = std::cout for verbose output. Any
+    //  member function can be called by overriding the default stream via the
+    //  template argument, Style, a C-style enum. Note: By default, str ==
+    //  std::clog.  This is used to initialize str to a local stringstream into
+    //  which all verbose output goes by default, i.e., it will not be shown.
+    //  This solution is chosen instead of trickery with null-streams, as
+    //  boost:formatted output into null-streams caused invalid reads in
+    //  valgrind. This way quiet output (formatted or not) simply goes into a
+    //  local stringstream. In other words, the default argument to str,
+    //  std::clog, is only used to detect whether client code passed a default
+    //  argument or not: if it did not, the string stream is used for verbose
+    //  output, if it did, the specified stream is used for the verbose output.
+    //! \param[in] screen Screen output filename. If an empty string is passed,
+    //!   it is assumed that client code does not want to save the stream into
+    //!   a file.
     //! \param[in,out] str Verbose stream
+    //! \param[in] mode Open mode for screen output file, see
+    //!   http://en.cppreference.com/w/cpp/io/ios_base/openmode
     //! \param[in,out] qstr Quiet stream
-    explicit Print( std::ostream& str = std::clog,
+    explicit Print( const std::string& screen = {},
+                    std::ostream& str = std::clog,
+                    std::ios_base::openmode mode = std::ios_base::out,
                     std::ostream& qstr = std::cout ) :
       m_null(),
       m_stream( str.rdbuf() == std::clog.rdbuf() ? m_null : str ),
-      m_qstream( qstr ) {}
+      m_qstream( qstr ),
+      m_file( screen, mode ),
+      m_tee(m_file.rdbuf(), screen.empty() ? m_file.rdbuf() : m_stream.rdbuf()),
+      m_ssa( screen.empty() ? m_file : m_stream, &m_tee ) {}
 
     //! Save pointer to stream. This function, used in conjunction with reset(),
     //! can be used to pass streams around. This is not possible in general,
@@ -333,7 +341,8 @@ class Print {
     void diagend( const std::string& msg ) const
     { stream<s>() << m_diag_end_fmt % msg << std::flush; }
 
-    //! ...
+    //! Print chare state collected
+    //! \param[in] state State map to print
     template< Style s = VERBOSE >
     void charestate( const std::unordered_map< int,
                         std::vector< ChareState > >& state ) const
@@ -480,7 +489,7 @@ class Print {
     }
 
     //! \brief Formatted print of verbose help on a single command-line
-    //!   parameter or control file keywords
+    //!   parameter or control file keyword
     //! \param[in] executable Name of executable to output help for
     //! \param[in] kw Keyword help struct on which help is to be printed
     template< Style s = VERBOSE, class HelpKw >
@@ -800,6 +809,11 @@ class Print {
     std::stringstream m_null;   //!< Default verbose stream
     std::ostream& m_stream;     //!< Verbose stream
     std::ostream& m_qstream;    //!< Quiet stream
+
+  private:
+    std::ofstream m_file;       //!< File stream to save verbose stream in
+    tk::teebuf m_tee;           //!< Used to tie m_stream and m_file
+    tk::scoped_streambuf_assignment m_ssa;
 };
 
 } // tk::

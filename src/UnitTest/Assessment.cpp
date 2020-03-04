@@ -3,7 +3,7 @@
   \file      src/UnitTest/Assessment.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
@@ -70,8 +70,7 @@ assess( const tk::Print& print,
 // *****************************************************************************
 {
   if (!nfail && !nwarn && !nskip && !nexcp) {
-    print.note< tk::QUIET >
-              ( "All " + std::to_string(ncomplete) + " tests passed" );
+    print.note( "All " + std::to_string(ncomplete) + " tests passed" );
   } else {
     std::string skip, warn, fail, excp;
     if (nwarn) warn = "finished with a warning: " + std::to_string(nwarn);
@@ -81,8 +80,7 @@ assess( const tk::Print& print,
                       "threw exception: " + std::to_string(nexcp);
     if (nfail) fail = std::string(nexcp || nskip || nwarn ?
                       ", " : "") + "failed: " + std::to_string(nfail);
-    print.note< tk::QUIET >
-              ( "Of " + std::to_string(ncomplete) + " tests total: "
+    print.note( "Of " + std::to_string(ncomplete) + " tests total: "
                 + warn + skip + excp + fail );
   }
 

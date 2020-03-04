@@ -3,7 +3,7 @@
   \file      src/PDE/FunctionPrototypes.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Function prototypes used in PDE classes
   \details   This file defines prototypes used in PDE classes. Examples include
@@ -20,6 +20,7 @@
 
 #include "Types.hpp"
 #include "Keywords.hpp"
+#include "Fields.hpp"
 
 namespace tk {
 
@@ -76,6 +77,19 @@ using StateFn = std::function<
 //! \see e.g., CompFlowProblemRayleighTaylor::src
 using SrcFn = std::function<
   std::vector< tk::real >( ncomp_t, ncomp_t, real, real, real, real ) >;
+
+//! \brief Function prototype for computing the element gradient contribution to a
+//!    nodal gradient in ALECG
+using ElemGradFn = std::function<
+  std::tuple< std::array< std::size_t, 4 >,
+              std::array< std::array< tk::real, 3 >, 4 >,
+              std::vector< std::array< tk::real, 4 > >,
+              tk::real >( ncomp_t,
+                          ncomp_t,
+                          std::size_t,
+                          const std::array< std::vector< tk::real >, 3 >&,
+                          const std::vector< std::size_t >&,
+                          const tk::Fields& ) >;
 
 } // tk::
 

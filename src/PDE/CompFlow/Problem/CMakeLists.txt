@@ -1,7 +1,9 @@
 add_library(CompFlowProblem
+            FieldOutput.cpp
             NLEnergyGrowth.cpp
             RayleighTaylor.cpp
             SodShocktube.cpp
+            SheddingFlow.cpp
             RotatedSodShocktube.cpp
             SedovBlastwave.cpp
             TaylorGreen.cpp

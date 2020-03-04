@@ -3,7 +3,7 @@
   \file      src/NoWarning/distfct.def.h
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Include distfct.def.h with turning off specific compiler warnings
 */
@@ -29,6 +29,7 @@
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-variable"
+  #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
 #include "../Inciter/distfct.def.h"

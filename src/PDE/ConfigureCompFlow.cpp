@@ -3,7 +3,7 @@
   \file      src/PDE/ConfigureCompFlow.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Register and compile configuration for compressible flow PDE
   \details   Register and compile configuration for compressible flow PDE.
@@ -14,6 +14,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <limits>
 
 #include <brigand/algorithms/for_each.hpp>
 
@@ -88,6 +89,9 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
+  nfo.emplace_back( "flux", ctr::Flux().name(
+    g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
+
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
 
@@ -145,6 +149,77 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   const auto& p0 = g_inputdeck.get< tag::param, eq, tag::p0 >();
   if (!p0.empty()) nfo.emplace_back( "coeff p0", parameters( p0 ) );
+
+  const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+
+  const auto& bgdensityic = ic.get< tag::density >();
+  if (bgdensityic.size() > c && !bgdensityic[c].empty())
+    nfo.emplace_back( "IC background density",
+                      std::to_string( bgdensityic[c][0] ) );
+  const auto& bgvelocityic = ic.get< tag::velocity >();
+  if (bgvelocityic.size() > c && !bgvelocityic[c].empty())
+    nfo.emplace_back( "IC background velocity",
+                      parameters( bgvelocityic[c] ) );
+  const auto& bgpressureic = ic.get< tag::pressure >();
+  if (bgpressureic.size() > c && !bgpressureic[c].empty())
+    nfo.emplace_back( "IC background pressure",
+                      std::to_string( bgpressureic[c][0] ) );
+
+  const auto& icbox = ic.get< tag::box >();
+  std::vector< tk::real > box{ icbox.get< tag::xmin >(),
+                               icbox.get< tag::xmax >(),
+                               icbox.get< tag::ymin >(),
+                               icbox.get< tag::ymax >(),
+                               icbox.get< tag::zmin >(),
+                               icbox.get< tag::zmax >() };
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  if (std::any_of( begin(box), end(box),
+        [=]( tk::real p ){ return std::abs(p) > eps; })) {
+    nfo.emplace_back( "IC box", parameters( box ) );
+  }
+
+  const auto& boxdensityic = icbox.get< tag::density >();
+  if (boxdensityic.size() > c)
+    nfo.emplace_back( "IC box density",
+                      std::to_string( boxdensityic[c][0] ) );
+  const auto& boxvelocityic = icbox.get< tag::velocity >();
+  if (boxvelocityic.size() > c)
+    nfo.emplace_back( "IC box velocity",
+                      parameters( boxvelocityic[c] ) );
+  const auto& boxpressureic = icbox.get< tag::pressure >();
+  if (boxpressureic.size() > c)
+    nfo.emplace_back( "IC box pressure",
+                      std::to_string( boxpressureic[c][0] ) );
+  const auto& boxenergyic = icbox.get< tag::energy >();
+  if (boxenergyic.size() > c)
+    nfo.emplace_back( "IC box internal energy",
+                      std::to_string( boxenergyic[c][0] ) );
+  const auto& boxtemperatureic = icbox.get< tag::temperature >();
+  if (boxtemperatureic.size() > c)
+    nfo.emplace_back( "IC box temperature",
+                      std::to_string( boxtemperatureic[c][0] ) );
+
+  auto bool_to_string = [](bool b) -> std::string {
+    return b ? "true" : "false";
+  };
+
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  const auto fct = g_inputdeck.get< tag::discr, tag::fct >();
+  if (scheme == ctr::SchemeType::DiagCG && fct) {
+
+    const auto& sys = g_inputdeck.get< tag::param, eq, tag::sysfct >();
+    if (sys.size() > c) {
+      nfo.emplace_back( "FCT system character", bool_to_string( sys[c] ) );
+
+      if (sys[c]) {     // if system FCT is enabled for this system
+        const auto& sv = g_inputdeck.get< tag::param, eq, tag::sysfctvar >();
+        if (sv.size() > c) {
+          nfo.emplace_back( "System-FCT variables", parameters( sv[c] ) );
+        }
+      }
+    }
+
+  }
 
   return nfo;
 }

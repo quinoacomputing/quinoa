@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/Problem/UserDefined.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a Problem policy class for the compressible flow
@@ -12,9 +12,11 @@
 */
 // *****************************************************************************
 
+#include <limits>
+
 #include "UserDefined.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
+#include "FieldOutput.hpp"
 
 namespace inciter {
 
@@ -25,34 +27,101 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::CompFlowProblemUserDefined;
 
 tk::SolutionFn::result_type
-CompFlowProblemUserDefined::solution( ncomp_t,
+CompFlowProblemUserDefined::solution( ncomp_t system,
                                       [[maybe_unused]] ncomp_t ncomp,
-                                      tk::real,
-                                      tk::real,
-                                      tk::real,
-                                      tk::real )
+                                      [[maybe_unused]] tk::real x,
+                                      [[maybe_unused]] tk::real y,
+                                      [[maybe_unused]] tk::real z,
+                                      [[maybe_unused]] tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
+//! \param[in] z Z coordinate where to evaluate the solution
 //! \return Values of all components
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
   Assert( ncomp == ncomp, "Number of scalar components must be " +
                           std::to_string(ncomp) );
-  return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
-}
 
-std::array< tk::real, 5 >
-CompFlowProblemUserDefined::solinc( ncomp_t, ncomp_t, tk::real, tk::real,
-                                    tk::real, tk::real, tk::real ) const
-// *****************************************************************************
-// Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-// for all components
-//! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
+  tk::SolutionFn::result_type u( ncomp, 0.0 );
+
+  // Set background ICs
+  const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+  const auto& bgdensityic = ic.get< tag::density >();
+  const auto& bgvelocityic = ic.get< tag::velocity >();
+  const auto& bgpressureic = ic.get< tag::pressure >();
+  const auto& bgenergyic = ic.get< tag::energy >();
+  const auto& bgtemperatureic = ic.get< tag::temperature >();
+
+  Assert( bgdensityic.size() > system, "No background density IC" );
+  Assert( bgvelocityic.size() > 3*system, "No background velocity IC" );
+
+  u[0] = bgdensityic.at(system).at(0);
+  u[1] = u[0] * bgvelocityic.at(system).at(0);
+  u[2] = u[0] * bgvelocityic.at(system).at(1);
+  u[3] = u[0] * bgvelocityic.at(system).at(2);
+
+  if (bgpressureic.size() > system && !bgpressureic[system].empty()) {
+    u[4] = eos_totalenergy< eq >( system, u[0], u[1], u[2], u[3],
+                                  bgpressureic.at(system).at(0) );
+  } else if (bgenergyic.size() > system && !bgenergyic[system].empty()) {
+    u[4] = u[0] * bgenergyic[system][0];
+  } else
+    if (bgtemperatureic.size() > system && !bgtemperatureic[system].empty())
+  {
+    const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
+    u[4] = u[0] * bgtemperatureic[system][0] * cv.at(system).at(0);
+  }
+
+  // Apply optional box ICs on top of background ICs
+  const auto& icbox = ic.get< tag::box >();
+  std::vector< tk::real > box{ icbox.get< tag::xmin >(),
+                               icbox.get< tag::xmax >(),
+                               icbox.get< tag::ymin >(),
+                               icbox.get< tag::ymax >(),
+                               icbox.get< tag::zmin >(),
+                               icbox.get< tag::zmax >() };
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  if (std::any_of( begin(box), end(box),
+        [=]( tk::real p ){ return std::abs(p) > eps; }))
+  {
+    const auto& boxdensityic = icbox.get< tag::density >();
+    const auto& boxvelocityic = icbox.get< tag::velocity >();
+    const auto& boxpressureic = icbox.get< tag::pressure >();
+    const auto& boxenergyic = icbox.get< tag::energy >();
+    const auto& boxtemperatureic = icbox.get< tag::temperature >();
+
+    if (x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5]) {
+      if (boxdensityic.size() > system && !boxdensityic[system].empty()) {
+        u[0] = boxdensityic[system][0];
+      }
+      if (boxvelocityic.size() > system && boxvelocityic[system].size() > 2) {
+        u[1] = u[0] * boxvelocityic[system][0];
+        u[2] = u[0] * boxvelocityic[system][1];
+        u[3] = u[0] * boxvelocityic[system][2];
+      }
+      if (boxpressureic.size() > system && !boxpressureic[system].empty()) {
+        u[4] = eos_totalenergy< eq >( system, u[0], u[1], u[2], u[3],
+                                      boxpressureic[system][0] );
+      }
+      if (boxenergyic.size() > system && !boxenergyic[system].empty()) {
+        u[4] = u[0] * boxenergyic[system][0];
+      }
+      if (boxtemperatureic.size() > system &&
+         !boxtemperatureic[system].empty())
+      {
+        const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
+        u[4] = u[0] * boxtemperatureic[system][0] * cv.at(system).at(0);
+      }
+    }
+  }
+
+  return u;
 }
 
 tk::SrcFn::result_type
@@ -68,20 +137,6 @@ CompFlowProblemUserDefined::src( ncomp_t, ncomp_t, tk::real,
   return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
 }
 
-void
-CompFlowProblemUserDefined::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param; using tag::bcdir;
-
-  for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
-    conf.insert( std::stoi(s[0]) );
-}
-
 std::vector< std::string >
 CompFlowProblemUserDefined::fieldNames( ncomp_t ) const
 // *****************************************************************************
@@ -89,22 +144,12 @@ CompFlowProblemUserDefined::fieldNames( ncomp_t ) const
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
-  std::vector< std::string > n;
-
-  n.push_back( "density" );
-  n.push_back( "x-velocity" );
-  n.push_back( "y-velocity" );
-  n.push_back( "z-velocity" );
-  n.push_back( "specific total energy" );
-  n.push_back( "pressure" );
-  n.push_back( "temperature" );
-
-  return n;
+  return CompFlowFieldNames();
 }
 
 std::vector< std::vector< tk::real > >
 CompFlowProblemUserDefined::fieldOutput(
-  ncomp_t,
+  ncomp_t system,
   ncomp_t,
   ncomp_t offset,
   tk::real,
@@ -114,57 +159,15 @@ CompFlowProblemUserDefined::fieldOutput(
   tk::Fields& U ) const
 // *****************************************************************************
 //  Return field output going to file
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  // number of degrees of freedom
-  const std::size_t rdof =
-    g_inputdeck.get< tag::discr, tag::rdof >();
-  std::vector< std::vector< tk::real > > out;
-
-  const auto r = U.extract( 0*rdof, offset );
-  const auto ru = U.extract( 1*rdof, offset );
-  const auto rv = U.extract( 2*rdof, offset );
-  const auto rw = U.extract( 3*rdof, offset );
-  const auto re = U.extract( 4*rdof, offset );
-
-  out.push_back( r );
-
-  std::vector< tk::real > u = ru;
-  std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( u );
-
-  std::vector< tk::real > v = rv;
-  std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( v );
-
-  std::vector< tk::real > w = rw;
-  std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( w );
-
-  std::vector< tk::real > E = re;
-  std::transform( r.begin(), r.end(), E.begin(), E.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( E );
-
-  std::vector< tk::real > p = r;
-  for (std::size_t i=0; i<p.size(); ++i)
-    p[i] = eos_pressure< eq >( 0, r[i], u[i], v[i], w[i], r[i]*E[i] );
-  out.push_back( p );
-
-  std::vector< tk::real > T = r;
-  tk::real cv = g_inputdeck.get< tag::param, eq, tag::cv >()[0][0];
-  for (std::size_t i=0; i<T.size(); ++i)
-    T[i] = cv*(E[i] - (u[i]*u[i] + v[i]*v[i] + w[i]*w[i])/2.0);
-  out.push_back( T );
-
-  return out;
+  return CompFlowFieldOutput( system, offset, U );
 }
 
 std::vector< std::string >

@@ -3,7 +3,7 @@
   \file      src/DiffEq/Velocity/ConfigureVelocity.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Register and compile configuration on the velocity SDE
   \details   Register and compile configuration on the velocity SDE.
@@ -124,6 +124,10 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
     g_inputdeck.get< tag::param, eq, tag::rng >()[c] ) );
   nfo.emplace_back( "coeff C0", std::to_string(
     g_inputdeck.get< tag::param, eq, tag::c0 >().at(c) ) );
+
+  const auto& gravity =
+    g_inputdeck.get< tag::param, tag::velocity, tag::gravity >().at(c);
+  if (!gravity.empty()) nfo.emplace_back( "gravity [3]", parameters(gravity) );
 
   return nfo;
 }

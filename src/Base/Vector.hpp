@@ -3,7 +3,7 @@
   \file      src/Base/Vector.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Vector algebra
   \details   Vector algebra.
@@ -31,6 +31,14 @@ crossdiv( const std::array< real, 3 >& v1,
 //! Compute the dot-product of two vectors
 real
 dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 );
+
+//! Compute length of a vector
+real
+length( const std::array< real, 3 >& v );
+
+//! Scale vector to unit length
+void
+unit( std::array< real, 3 >& v );
 
 //! Compute the triple-product of three vectors
 real

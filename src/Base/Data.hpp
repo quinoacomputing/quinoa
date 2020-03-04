@@ -3,7 +3,7 @@
   \file      src/Base/Data.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Generic data storage with different memory layouts
   \details   Generic data storage with different memory layouts. See also the
@@ -262,6 +262,41 @@ class Data {
              const std::array< ncomp_t, 4 >& N ) const
     {
       return extract( component, offset, N[0], N[1], N[2], N[3] );
+    }
+
+    //! Extract (a copy of) three values of unknowns
+    //! \details Requirement: offset + component < nprop, [A,B,C] < nunk,
+    //!   enforced with an assert in DEBUG mode, see also the constructor.
+    //! \param[in] component Component index, i.e., position of a scalar within
+    //!   a system
+    //! \param[in] offset System offset specifying the position of the system of
+    //!   equations among other systems
+    //! \param[in] A Index of 1st unknown
+    //! \param[in] B Index of 2nd unknown
+    //! \param[in] C Index of 3rd unknown
+    //! \return Array of the four values of component at offset
+    std::array< tk::real, 3 >
+    extract( ncomp_t component, ncomp_t offset,
+             ncomp_t A, ncomp_t B, ncomp_t C ) const
+    {
+      auto p = cptr( component, offset );
+      return {{ var(p,A), var(p,B), var(p,C) }};
+    }
+
+    //! Extract (a copy of) three values of unknowns
+    //! \details Requirement: offset + component < nprop, for all N[i] < nunk,
+    //!   enforced with an assert in DEBUG mode, see also the constructor.
+    //! \param[in] component Component index, i.e., position of a scalar within
+    //!   a system
+    //! \param[in] offset System offset specifying the position of the system of
+    //!   equations among other systems
+    //! \param[in] N Indices of the 3 unknowns
+    //! \return Array of the three values of component at offset
+    std::array< tk::real, 3 >
+    extract( ncomp_t component, ncomp_t offset,
+             const std::array< ncomp_t, 3 >& N ) const
+    {
+      return extract( component, offset, N[0], N[1], N[2] );
     }
 
     //! Const-ref accessor to underlying raw data
@@ -543,6 +578,9 @@ class Data {
       for (ncomp_t i=0; i<m_nprop; ++i) operator()( u, i, 0 ) = prop[i];
     }
 
+    void push_back( const std::vector< tk::real >&, int2type< EqCompUnk > )
+    { Throw( "Not implented. It would be inefficient" ); }
+
     //! Resize data store to contain 'count' elements
     //! \param[in] count Resize store to contain 'count' elements
     //! \param[in] value Value to initialize new data with
@@ -553,6 +591,10 @@ class Data {
     void resize( std::size_t count, tk::real value, int2type< UnkEqComp > ) {
       m_vec.resize( count * m_nprop, value );
       m_nunk = count;
+    }
+
+    void resize( std::size_t, tk::real, int2type< EqCompUnk > ) {
+      Throw( "Not implented. It would be inefficient" );
     }
 
     // Overloads for the name-queries of data lauouts

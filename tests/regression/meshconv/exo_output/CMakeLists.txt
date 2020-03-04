@@ -9,6 +9,14 @@ add_regression_test(asc2exo ${MESHCONV_EXECUTABLE}
                     BIN_RESULT cube_coarse.exo
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
+add_regression_test(ugrid2exo ${MESHCONV_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES sphere_tetra.1.ugrid
+                    ARGS -i sphere_tetra.1.ugrid -o sphere_tetra.exo -v
+                    BIN_BASELINE sphere_tetra.exo.std
+                    BIN_RESULT sphere_tetra.exo
+                    BIN_DIFF_PROG_CONF exodiff.cfg)
+
 add_regression_test(netgen2exo ${MESHCONV_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES box_24.mesh

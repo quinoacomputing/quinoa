@@ -53,7 +53,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
 
 # Add custom dependencies for Inciter's main Charm++ module
 addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
-addCharmModule( "lbswitch" "${INCITER_EXECUTABLE}" )
+addCharmModule( "lbswitch" "inciterCharmModule" )
 
 add_dependencies( "inciterCharmModule" "charestatecollectorCharmModule" )
 add_dependencies( "inciterCharmModule" "meshwriterCharmModule" )

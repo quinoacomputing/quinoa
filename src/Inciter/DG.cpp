@@ -3,7 +3,7 @@
   \file      src/Inciter/DG.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
@@ -54,6 +54,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
+  m_nreco( 0 ),
   m_fd( Disc()->Inpoel(), bface, tk::remap(triinpoel,Disc()->Lid()) ),
   m_u( Disc()->Inpoel().size()/4,
        g_inputdeck.get< tag::discr, tag::rdof >()*
@@ -72,7 +73,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_ncoord( Disc()->Coord()[0].size() ),
-  m_msumset( Disc()->msumset() ),
   m_bndFace(),
   m_ghostData(),
   m_ghostReq( 0 ),
@@ -162,6 +162,7 @@ DG::resizeComm()
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
+    thisProxy[ thisIndex ].wait4reco();
     thisProxy[ thisIndex ].wait4lim();
   }
 
@@ -200,10 +201,10 @@ DG::resizeComm()
 
   // In the following we assume that the size of the (potential) boundary-face
   // adjacency map above does not necessarily equal to that of the node
-  // adjacency map (m_msumset). This is because while a node can be shared at a
-  // single corner or along an edge, that does not necessarily share a face as
-  // well (in other words, shared nodes or edges can exist that are not part of
-  // a shared face). So the chares we communicate with across faces are not
+  // adjacency map. This is because while a node can be shared at a single
+  // corner or along an edge, that does not necessarily share a face as well
+  // (in other words, shared nodes or edges can exist that are not part of a
+  // shared face). So the chares we communicate with across faces are not
   // necessarily the same as the chares we would communicate nodes with.
   //
   // Since the sizes of the node and face adjacency maps are not the same, while
@@ -222,10 +223,11 @@ DG::resizeComm()
   // communication pattern and code.
 
   // Send sets of faces adjacent to chare boundaries to fellow workers (if any)
-  if (m_msumset.empty())        // in serial, skip setting up ghosts altogether
+  if (d->NodeCommMap().empty())  // in serial, skip setting up ghosts altogether
     adj();
   else
-    for (const auto& c : m_msumset) {   // for all chares we share nodes with
+    // for all chares we share nodes with
+    for (const auto& c : d->NodeCommMap()) {
       thisProxy[ c.first ].comfac( thisIndex, potbndface );
     }
 
@@ -329,7 +331,7 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 
   // if we have heard from all fellow chares that we share at least a single
   // node, edge, or face with
-  if (++m_ncomfac == m_msumset.size()) {
+  if (++m_ncomfac == Disc()->NodeCommMap().size()) {
     m_ncomfac = 0;
     comfac_complete();
   }
@@ -419,12 +421,12 @@ DG::bndFaces()
   setupGhost();
   // Besides setting up our own ghost data, we also issue requests (for ghost
   // data) to those chares which we share faces with. Note that similar to
-  // comfac() we are calling reqGhost() by going through msumset instead,
-  // which may send requests to those chare we do not share faces with. This
-  // is so that we can test for completing by querying the size of the already
-  // complete msumset in reqGhost. Requests in sendGhost will only be
-  // fullfilled based on m_ghostData.
-  for (const auto& c : m_msumset)     // for all chares we share nodes with
+  // comfac() we are calling reqGhost() by going through the node communication
+  // map instead, which may send requests to those chare we do not share faces
+  // with. This is so that we can test for completing by querying the size of
+  // the already complete node commincation map in reqGhost. Requests in
+  // sendGhost will only be fullfilled based on m_ghostData.
+  for (const auto& c : d->NodeCommMap())  // for all chares we share nodes with
     thisProxy[ c.first ].reqGhost();
 }
 
@@ -578,7 +580,7 @@ DG::reqGhost()
 {
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
-  if (++m_ghostReq == m_msumset.size()) {
+  if (++m_ghostReq == Disc()->NodeCommMap().size()) {
     m_ghostReq = 0;
     reqghost_complete();
   }
@@ -628,7 +630,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
   auto ncoord = coord[0].size();
 
   // nodelist with fromch, currently only used for an assert
-  [[maybe_unused]] const auto& nl = tk::cref_find( m_msumset, fromch );
+  [[maybe_unused]] const auto& nl = tk::cref_find( d->NodeCommMap(), fromch );
 
   auto& ghostelem = m_ghost[ fromch ];  // will associate to sender chare
 
@@ -993,8 +995,6 @@ DG::setup()
 // Set initial conditions, generate lhs, output mesh
 // *****************************************************************************
 {
-  tk::destroy(m_msumset);
-
   auto d = Disc();
 
   // Basic error checking on sizes of element geometry data and connectivity
@@ -1044,13 +1044,13 @@ DG::next()
   if (m_ghostData.empty())
     comsol_complete();
   else
-    for(const auto& n : m_ghostData) {
-      std::vector< std::size_t > tetid( n.second.size() );
-      std::vector< std::vector< tk::real > > u( n.second.size() ),
-                                             prim( n.second.size() );
+    for(const auto& [tet, ghostdata] : m_ghostData) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::vector< tk::real > > u( ghostdata.size() ),
+                                             prim( ghostdata.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
-      for(const auto& i : n.second) {
+      for(const auto& i : ghostdata) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
         tetid[j] = i.first;
         u[j] = m_u[i.first];
@@ -1058,7 +1058,7 @@ DG::next()
         if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         ++j;
       }
-      thisProxy[ n.first ].comsol( thisIndex, m_stage, tetid, u, prim, ndof );
+      thisProxy[ tet ].comsol( thisIndex, m_stage, tetid, u, prim, ndof );
     }
 
   ownsol_complete();
@@ -1107,8 +1107,9 @@ DG::comsol( int fromch,
     }
   }
 
-  // if we have received all solution ghost contributions from those chares we
-  // communicate along chare-boundary faces with, solve the system
+  // if we have received all solution ghost contributions from neighboring
+  // chares (chares we communicate along chare-boundary faces with), and
+  // contributed our solution to these neighbors, proceed to reconstructions
   if (++m_nsol == m_ghostData.size()) {
     m_nsol = 0;
     comsol_complete();
@@ -1122,50 +1123,58 @@ DG::writeFields( CkCallback c ) const
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  auto d = Disc();
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
 
-  const auto& esuel = m_fd.Esuel();
+    c.send();
 
-  // Copy mesh form Discretization object and chop off ghosts for dump
-  auto inpoel = d->Inpoel();
-  inpoel.resize( esuel.size() );
-  auto coord = d->Coord();
-  for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
+  } else {
 
-  // Query fields names from all PDEs integrated
-  std::vector< std::string > elemfieldnames;
-  for (const auto& eq : g_dgpde) {
-    auto n = eq.fieldNames();
-    elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
+    auto d = Disc();
+
+    const auto& esuel = m_fd.Esuel();
+
+    // Copy mesh form Discretization object and chop off ghosts for dump
+    auto inpoel = d->Inpoel();
+    inpoel.resize( esuel.size() );
+    auto coord = d->Coord();
+    for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
+
+    // Query fields names from all PDEs integrated
+    std::vector< std::string > elemfieldnames;
+    for (const auto& eq : g_dgpde) {
+      auto n = eq.fieldNames();
+      elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
+    }
+
+    // Collect element field solution
+    std::vector< std::vector< tk::real > > elemfields;
+    auto u = m_u;
+    for (const auto& eq : g_dgpde) {
+      auto o = eq.fieldOutput( d->T(), m_geoElem, u, m_p );
+
+      // cut off ghost elements
+      for (auto& f : o) f.resize( esuel.size()/4 );
+      elemfields.insert( end(elemfields), begin(o), end(o) );
+    }
+
+    // Add adaptive indicator array to element-centered field output
+    std::vector<tk::real> ndof( begin(m_ndof), end(m_ndof) );
+    ndof.resize( esuel.size()/4 );  // cut off ghosts
+    elemfields.push_back( ndof );
+
+    // // Collect node field solution
+    // std::vector< std::vector< tk::real > > nodefields;
+    // for (const auto& eq : g_dgpde) {
+    //   auto fields =
+    //     eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_u );
+    //   nodefields.insert( end(nodefields), begin(fields), end(fields) );
+    // }
+
+    // Output chare mesh and fields metadata to file
+    d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), elemfieldnames,
+              {}, elemfields, {}, c );
+
   }
-
-  // Collect element field solution
-  std::vector< std::vector< tk::real > > elemfields;
-  auto u = m_u;
-  for (const auto& eq : g_dgpde) {
-    auto o = eq.fieldOutput( d->T(), m_geoElem, u );
-
-    // cut off ghost elements
-    for (auto& f : o) f.resize( esuel.size()/4 );
-    elemfields.insert( end(elemfields), begin(o), end(o) );
-  }
-
-  // Add adaptive indicator array to element-centered field output
-  std::vector<tk::real> ndof( begin(m_ndof), end(m_ndof) );
-  ndof.resize( esuel.size()/4 );  // cut off ghosts
-  elemfields.push_back( ndof );
-
-  // // Collect node field solution
-  // std::vector< std::vector< tk::real > > nodefields;
-  // for (const auto& eq : g_dgpde) {
-  //   auto fields =
-  //     eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_u );
-  //   nodefields.insert( end(nodefields), begin(fields), end(fields) );
-  // }
-
-  // Output chare mesh and fields metadata to file
-  d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), elemfieldnames,
-            {}, elemfields, {}, c );
 }
 
 void
@@ -1180,15 +1189,15 @@ DG::lhs()
 }
 
 void
-DG::lim()
+DG::reco()
 // *****************************************************************************
-// Compute limiter function
+// Compute reconstructions
 // *****************************************************************************
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
-  // Combine own and communicated contributions of unlimited solution and
+  // Combine own and communicated contributions of unreconstructed solution and
   // degrees of freedom in cells (if p-adaptive)
   for (const auto& b : m_bid) {
     Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
@@ -1207,7 +1216,6 @@ DG::lim()
   if (pref && m_stage==0) propagate_ndof();
 
   if (rdof > 1) {
-
     auto d = Disc();
 
     // Reconstruct second-order solution and primitive quantities
@@ -1216,23 +1224,129 @@ DG::lim()
       for (const auto& eq : g_dgpde)
         eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
                         d->Coord(), m_u, m_p );
+  }
+
+  // Send reconstructed solution to neighboring chares
+  if (m_ghostData.empty())
+    comreco_complete();
+  else
+    for(const auto& [tet, ghostdata] : m_ghostData) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::vector< tk::real > > u( ghostdata.size() ),
+                                             prim( ghostdata.size() );
+      std::vector< std::size_t > ndof;
+      std::size_t j = 0;
+      for(const auto& i : ghostdata) {
+        Assert( i.first < m_fd.Esuel().size()/4, "Sending reconstructed ghost "
+          "data" );
+        tetid[j] = i.first;
+        u[j] = m_u[i.first];
+        prim[j] = m_p[i.first];
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
+        ++j;
+      }
+      thisProxy[ tet ].comreco( thisIndex, tetid, u, prim, ndof );
+    }
+
+  ownreco_complete();
+}
+
+void
+DG::comreco( int fromch,
+             const std::vector< std::size_t >& tetid,
+             const std::vector< std::vector< tk::real > >& u,
+             const std::vector< std::vector< tk::real > >& prim,
+             const std::vector< std::size_t >& ndof )
+// *****************************************************************************
+//  Receive chare-boundary reconstructed ghost data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive solution data for
+//! \param[in] u Reconstructed high-order solution
+//! \param[in] prim Limited high-order primitive quantities
+//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
+//! \details This function receives contributions to the reconstructed solution
+//!   from fellow chares.
+// *****************************************************************************
+{
+  Assert( u.size() == tetid.size(), "Size mismatch in DG::comreco()" );
+  Assert( prim.size() == tetid.size(), "Size mismatch in DG::comreco()" );
+
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  if (pref && m_stage == 0)
+    Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comreco()" );
+
+  // Find local-to-ghost tet id map for sender chare
+  const auto& n = tk::cref_find( m_ghost, fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( n, tetid[i] );
+    Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
+    auto b = tk::cref_find( m_bid, j );
+    Assert( b < m_uc[1].size(), "Indexing out of bounds" );
+    Assert( b < m_pc[1].size(), "Indexing out of bounds" );
+    m_uc[1][b] = u[i];
+    m_pc[1][b] = prim[i];
+    if (pref && m_stage == 0) {
+      Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
+      m_ndofc[1][b] = ndof[i];
+    }
+  }
+
+  // if we have received all solution ghost contributions from neighboring
+  // chares (chares we communicate along chare-boundary faces with), and
+  // contributed our solution to these neighbors, proceed to limiting
+  if (++m_nreco == m_ghostData.size()) {
+    m_nreco = 0;
+    comreco_complete();
+  }
+}
+
+void
+DG::lim()
+// *****************************************************************************
+// Compute limiter function
+// *****************************************************************************
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+
+  // Combine own and communicated contributions of unlimited solution, and
+  // if a p-adaptive algorithm is used, degrees of freedom in cells
+  for (const auto& [boundary, localtet] : m_bid) {
+    Assert( m_uc[1][localtet].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[1][localtet].size() == m_p.nprop(), "ncomp size mismatch" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c) {
+      m_u(boundary,c,0) = m_uc[1][localtet][c];
+    }
+    for (std::size_t c=0; c<m_p.nprop(); ++c) {
+      m_p(boundary,c,0) = m_pc[1][localtet][c];
+    }
+    if (pref && m_stage == 0) {
+      m_ndof[ boundary ] = m_ndofc[1][ localtet ];
+    }
+  }
+
+  if (rdof > 1) {
+    auto d = Disc();
 
     for (const auto& eq : g_dgpde)
       eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
                 m_ndof, m_u, m_p );
   }
 
+
   // Send limited solution to neighboring chares
   if (m_ghostData.empty())
     comlim_complete();
   else
-    for(const auto& n : m_ghostData) {
-      std::vector< std::size_t > tetid( n.second.size() );
-      std::vector< std::vector< tk::real > > u( n.second.size() ),
-                                             prim( n.second.size() );
+    for(const auto& [tet, ghostdata] : m_ghostData) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::vector< tk::real > > u( ghostdata.size() ),
+                                             prim( ghostdata.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
-      for(const auto& i : n.second) {
+      for(const auto& i : ghostdata) {
         Assert( i.first < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
         tetid[j] = i.first;
         u[j] = m_u[i.first];
@@ -1240,7 +1354,7 @@ DG::lim()
         if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
         ++j;
       }
-      thisProxy[ n.first ].comlim( thisIndex, tetid, u, prim, ndof );
+      thisProxy[ tet ].comlim( thisIndex, tetid, u, prim, ndof );
     }
 
   ownlim_complete();
@@ -1309,18 +1423,19 @@ DG::comlim( int fromch,
     auto j = tk::cref_find( n, tetid[i] );
     Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
     auto b = tk::cref_find( m_bid, j );
-    Assert( b < m_uc[1].size(), "Indexing out of bounds" );
-    Assert( b < m_pc[1].size(), "Indexing out of bounds" );
-    m_uc[1][b] = u[i];
-    m_pc[1][b] = prim[i];
+    Assert( b < m_uc[2].size(), "Indexing out of bounds" );
+    Assert( b < m_pc[2].size(), "Indexing out of bounds" );
+    m_uc[2][b] = u[i];
+    m_pc[2][b] = prim[i];
     if (pref && m_stage == 0) {
-      Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
-      m_ndofc[1][b] = ndof[i];
+      Assert( b < m_ndofc[2].size(), "Indexing out of bounds" );
+      m_ndofc[2][b] = ndof[i];
     }
   }
 
-  // if we have received all solution ghost contributions from those chares we
-  // communicate along chare-boundary faces with, solve the system
+  // if we have received all solution ghost contributions from neighboring
+  // chares (chares we communicate along chare-boundary faces with), and
+  // contributed our solution to these neighbors, proceed to limiting
   if (++m_nlim == m_ghostData.size()) {
     m_nlim = 0;
     comlim_complete();
@@ -1340,16 +1455,16 @@ DG::dt()
   // Combine own and communicated contributions of limited solution and degrees
   // of freedom in cells (if p-adaptive)
   for (const auto& b : m_bid) {
-    Assert( m_uc[1][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
-    Assert( m_pc[1][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+    Assert( m_uc[2][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[2][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c,0) = m_uc[1][b.second][c];
+      m_u(b.first,c,0) = m_uc[2][b.second][c];
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(b.first,c,0) = m_pc[1][b.second][c];
+      m_p(b.first,c,0) = m_pc[2][b.second][c];
     }
     if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[1][ b.second ];
+      m_ndof[ b.first ] = m_ndofc[2][ b.second ];
     }
   }
 
@@ -1371,26 +1486,12 @@ DG::dt()
       // find the minimum dt across all PDEs integrated
       for (const auto& eq : g_dgpde) {
         auto eqdt =
-          eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem, m_ndof, m_u );
+          eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem, m_ndof,
+            m_u, m_p, m_fd.Esuel().size()/4 );
         if (eqdt < mindt) mindt = eqdt;
       }
 
-      auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      tk::real dgp = 0.0;
-
-      if (ndof == 4)
-      {
-        dgp = 1.0;
-      }
-      else if (ndof == 10)
-      {
-        dgp = 2.0;
-      }
-
-      // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
-      // where p is the order of the DG polynomial by linear stability theory.
-      mindt *= g_inputdeck.get< tag::discr, tag::cfl >() / (2.0*dgp + 1.0);
-
+      mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
     }
   }
   else
@@ -1412,6 +1513,7 @@ DG::solve( tk::real newdt )
 {
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
+  thisProxy[ thisIndex ].wait4reco();
   thisProxy[ thisIndex ].wait4lim();
 
   auto d = Disc();
@@ -1475,11 +1577,14 @@ DG::solve( tk::real newdt )
 
   // Update primitives based on the evolved solution
   for (const auto& eq : g_dgpde)
+  {
     eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
+    eq.cleanTraceMaterial( m_geoElem, m_u, m_p, m_fd.Esuel().size()/4 );
+  }
 
   if (m_stage < 2) {
 
-    // continue with next tims step stage
+    // continue with next time step stage
     stage();
 
   } else {
@@ -1530,7 +1635,7 @@ DG::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
   const std::unordered_map< std::size_t, std::size_t >& addedTets,
-  const std::unordered_map< int, std::vector< std::size_t > >& msum,
+  const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
   const std::vector< std::size_t >& triinpoel )
@@ -1539,7 +1644,7 @@ DG::resizePostAMR(
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
-//! \param[in] msum New node communication map
+//! \param[in] nodeCommMap New node communication map
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
@@ -1559,7 +1664,7 @@ DG::resizePostAMR(
   [[maybe_unused]] auto old_nelem = d->Inpoel().size()/4;
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, msum );
+  d->resizePostAMR( chunk, coord, nodeCommMap );
 
   // Update state
   auto nelem = d->Inpoel().size()/4;
@@ -1580,7 +1685,6 @@ DG::resizePostAMR(
   m_nfac = m_fd.Inpofa().size()/3;
   m_nunk = nelem;
   m_ncoord = coord[0].size();
-  m_msumset = d->msumset();
   m_bndFace.clear();
   m_ghostData.clear();
   m_ghost.clear();
@@ -1674,8 +1778,9 @@ DG::evalRestart()
   auto d = Disc();
 
   const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
+  const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
 
-  if ( (d->It()) % rsfreq == 0 ) {
+  if ( !benchmark && (d->It()) % rsfreq == 0 ) {
 
     std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
     d->contribute( t, CkReduction::nop,

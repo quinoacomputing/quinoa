@@ -3,7 +3,7 @@
   \file      src/NoWarning/charm++.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Include charm++.h with turning off specific compiler warnings
 */
@@ -60,6 +60,7 @@
   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
   #pragma GCC diagnostic ignored "-Wparentheses"
   #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+  #pragma GCC diagnostic ignored "-Warray-bounds"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 181 )

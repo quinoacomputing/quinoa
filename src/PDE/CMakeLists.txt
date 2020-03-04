@@ -3,13 +3,18 @@ cmake_minimum_required(VERSION 2.8.5)
 project(PDE CXX)
 
 add_library(PDE
+            ProblemCommon.cpp
             PDEStack.cpp
             Limiter.cpp
             PrefIndicator.cpp
             Reconstruction.cpp
             ConfigureTransport.cpp
             ConfigureCompFlow.cpp
-            ConfigureMultiMat.cpp)
+            ConfigureMultiMat.cpp
+            CGPDE.cpp
+            DGPDE.cpp
+            CompFlow/RiemannFactory.cpp
+            MultiMat/RiemannFactory.cpp)
 
 target_include_directories(PDE PUBLIC
                            ${QUINOA_SOURCE_DIR}

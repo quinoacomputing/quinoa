@@ -3,7 +3,7 @@
   \file      src/PDE/Transport/Physics/CGAdvDiff.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Physics policy for advection-diffusion using continuous Galerkin
   \details   This file declares a Physics policy class for the transport
@@ -32,7 +32,7 @@ class TransportPhysicsAdvDiff {
     using eq = tag::transport;
 
   public:
-    //! Add diffusion contribution to rhs at 2nd time step stage
+    //! Add diffusion contribution to rhs
     void
     diffusionRhs( ncomp_t e,
                   ncomp_t ncomp,

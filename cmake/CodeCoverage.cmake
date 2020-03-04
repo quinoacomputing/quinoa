@@ -3,7 +3,7 @@
 # \file      CodeCoverage.cmake
 # \copyright 2012-2015 J. Bakosi,
 #            2016-2018 Los Alamos National Security, LLC.,
-#            2019 Triad National Security, LLC.
+#            2019-2020 Triad National Security, LLC.
 #            All rights reserved. See the LICENSE file for details.
 # \brief     Setup target for code coverage analysis
 #
@@ -169,7 +169,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
     COMMAND ${FASTCOV} --zerocounters
     # Run all test suites
     COMMAND ${unittestrunner} ${unittestrunner_ncpus_arg} ${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
-    COMMAND ${CMAKE_CTEST_COMMAND} -j${PROCESSOR_COUNT} -LE insane
+    COMMAND ${CMAKE_CTEST_COMMAND} -j${PROCESSOR_COUNT} #-LE insane
     # Process gcov output for genhtml
     COMMAND ${FASTCOV} --branch-coverage --exceptional-branch-coverage --lcov -o ${OUTPUT}.info --exclude tests/ c++/ include/ boost/ charm/ decl.h def.h openmpi pstreams Random123 pegtl tut/ highwayhash/ moduleinit
     # Copy over report customization files for genhtml

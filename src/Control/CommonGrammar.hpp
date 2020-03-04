@@ -3,7 +3,7 @@
   \file      src/Control/CommonGrammar.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the Parsing Expression Grammar
@@ -132,6 +132,9 @@ namespace grm {
     ENERGY_UNFINISHED,  //!< Nonlinear energy growth problem config unfinished
     RT_UNFINISHED,      //!< Reyleigh-Taylor unstable configuration unfinished
     BC_EMPTY,           //!< Empty boundary condition block
+    SYSFCTVAR,          //!< System-FCT variable index incorrect
+    BGICMISSING,        //!< Background IC unspecified
+    BOXIC,              //!< Box IC incorrect
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
@@ -344,6 +347,15 @@ namespace grm {
       "above."},
     { MsgKey::BC_EMPTY, "Error in the preceding block. Empty boundary "
       "condition specifications, e.g., 'sideset end', are not allowed." },
+    { MsgKey::SYSFCTVAR, "Error in the system-FCT variable definition block. "
+      "The block must list integers between 1 and 5 both inclusive." },
+    { MsgKey::BGICMISSING, "Background initial conditions not specified or "
+      "incomplete. If a articular test problem is NOT configured, the default "
+      "problem type is user-defined. A user-defined problem requires an ic ... "
+      "end block in the input file, specifying at least the background ICs for "
+      "physics variables. Both the background density and velocity must be "
+      "specified as well as either the background pressure, internal energy, "
+      "or temperature must also be specified." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
     { MsgKey::HYDROTIMESCALES, "Error in the preceding line or block. "
@@ -612,6 +624,22 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       stack.template store_back< tag, tags... >( in.string() );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename tag, typename... tags >
+  struct Store_back_bool : pegtl::success {};
+  //! \brief Convert and push back a bool to vector of ints in state at position
+  //!    given by tags
+  //! \details This struct and its apply function are used as a functor-like
+  //!    wrapper for calling the store_back member function of the underlying
+  //!    grammar stack, tk::Control::store_back.
+  template< typename tag, typename...tags >
+  struct action< Store_back_bool< tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template store_back_bool< tag, tags... >( in.string() );
     }
   };
 
@@ -1609,11 +1637,6 @@ namespace grm {
   template< template< class > class use, typename keyword, typename Tag >
   struct discrparam :
            control< use< keyword >, pegtl::digit, tag::discr, Tag > {};
-
-  //! Match boundary control parameter
-  template< template< class > class use, typename keyword, typename Tag >
-  struct bcparam :
-           control< use< keyword >, pegtl::digit, tag::bc, Tag > {};
 
   //! Match component control parameter
   template< typename keyword, typename Tag >

@@ -3,7 +3,7 @@
   \file      src/DiffEq/Position/Position.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     A position model for Lagrangian particles
   \details   This file implements the time integration of a system of
@@ -41,11 +41,11 @@ class Position {
 
   public:
     //! \brief Constructor
-    //! \param[in] c Index specifying which system of beta SDEs to construct.
-    //!   There can be multiple beta ... end blocks in a control file. This
-    //!   index specifies which beta SDE system to instantiate. The index
-    //!   corresponds to the order in which the beta ... end blocks are given
-    //!   the control file.
+    //! \param[in] c Index specifying which system of position SDEs to construct
+    //!   There can be multiple position ... end blocks in a control file. This
+    //!   index specifies which position SDE system to instantiate. The index
+    //!   corresponds to the order in which the position ... end blocks are
+    //!   given the control file.
     explicit Position( ncomp_t c ) :
       m_c( c ),
       m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
@@ -76,7 +76,7 @@ class Position {
         ( g_inputdeck, m_rng, stream, particles, m_c, m_ncomp, m_offset );
     }
 
-    //! \brief Advance particles according to the system of beta SDEs
+    //! \brief Advance particles according to the system of position SDEs
     //! \param[in,out] particles Array of particle properties
     //! \param[in] dt Time step size
     void advance( tk::Particles& particles,

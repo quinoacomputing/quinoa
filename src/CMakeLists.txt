@@ -3,7 +3,7 @@
 # \file      src/CMakeLists.txt
 # \copyright 2012-2015 J. Bakosi,
 #            2016-2018 Los Alamos National Security, LLC.,
-#            2019 Triad National Security, LLC.
+#            2019-2020 Triad National Security, LLC.
 #            All rights reserved See the LICENSE file for details.
 # \brief     Build Quinoa
 #
@@ -536,11 +536,16 @@ set(EXECUTABLES ${INCITER_EXECUTABLE}
 
 
 # Decide if the Exception class will write to std::cerr. This may not always be
-# thread-safe, so it can be disabled here by setting this to false. The default
-# is true, because it works most of the time.
-if (NOT EXCEPTIONS_WRITE_TO_CERR)     # set default
+# thread-safe, e.g., in Charm++'s SMP mode, so it can be disabled here. The
+# default is set based on whether Charm++ is built in SMP or non-SMP mode.
+if (NOT EXCEPTIONS_WRITE_TO_CERR)     # set default if not set
+  if (CHARM_SMP)
+    set(cerr false)
+  else()
+    set(cerr true)
+  endif()
   # will become compiler define in Main/QuinoaConfig.h
-  set(EXCEPTIONS_WRITE_TO_CERR true CACHE BOOL "Exceptions will write std::cerr.")
+  set(EXCEPTIONS_WRITE_TO_CERR ${cerr} CACHE BOOL "Exceptions write std::cerr.")
 endif()
 message(STATUS "Exceptions write to cerr: ${EXCEPTIONS_WRITE_TO_CERR}")
 
@@ -746,7 +751,7 @@ if(CODE_COVERAGE AND ENABLE_TESTS)
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
                             TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
-                                            ${REGRESSION_COVERAGE_ARGS} -LE insane
+                                            ${REGRESSION_COVERAGE_ARGS} #-LE insane
                             DEPENDS ${NONTEST_EXECUTABLES})
   if (REGRESSION_COVERAGE_ARGS)
     message(STATUS "Regression coverage test-runner arguments: '${REGRESSION_COVERAGE_ARGS}'")

@@ -3,7 +3,7 @@
   \file      src/Control/Walker/CmdLine/CmdLine.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Walker's command line
   \details   Walker's command line
@@ -57,11 +57,22 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::control
                                      , kw::pdf
                                      , kw::stat
+                                     , kw::particles
                                      , kw::quiescence
                                      , kw::trace
                                      , kw::version
                                      , kw::license
                                      >;
+
+    //! Set of tags to ignore when printing this CmdLine
+    //! \note It would be misleading to print the data behind 'pdfnames' with
+    //!   the command line object, since only InputDeck parser populates this
+    //!   (after the CmdLine parser) into its copy of CmdLine.
+    using ignore =
+      brigand::set< tag::cmdinfo
+                  , tag::ctrinfo
+                  , tag::helpkw
+                  , tag::pdfnames >;  // printed with InputDeck instead
 
     //! \brief Constructor: set all defaults.
     //! \param[in] ctrinfo std::map of control file keywords and their info
@@ -98,6 +109,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
       get< tag::io, tag::output >() = "out";
       get< tag::io, tag::pdf >() = "pdf";
       get< tag::io, tag::stat >() = "stat.txt";
+      get< tag::io, tag::particles >() = "particles.h5part";
       get< tag::virtualization >() = 0.0;
       get< tag::verbose >() = false; // Quiet output by default
       get< tag::chare >() = false; // No chare state output by default

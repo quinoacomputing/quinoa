@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/Problem/UserDefined.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a policy class for the compressible flow
@@ -31,18 +31,11 @@ class CompFlowProblemUserDefined {
   private:
     using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::compflow;
-    static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
     //! Evaluate initial condition solution at (x,y,z,t) for all components
     static tk::SolutionFn::result_type
     solution( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real );
-
-    //! \brief Evaluate the increment from t to t+dt of the analytical solution
-    //!   at (x,y,z) for all components
-    std::array< tk::real, 5 >
-    solinc( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real )
-    const;
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     static tk::SrcFn::result_type
@@ -50,10 +43,6 @@ class CompFlowProblemUserDefined {
 
     //! Return field names to be output to file
     std::vector< std::string > fieldNames( ncomp_t ) const;
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    void side( std::unordered_set< int >& conf ) const;
 
     //! Return field output going to file
     std::vector< std::vector< tk::real > >

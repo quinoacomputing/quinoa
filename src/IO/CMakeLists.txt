@@ -36,6 +36,7 @@ add_library(NativeMeshIO
             STLTxtMeshReader.cpp
             NetgenMeshReader.cpp
             ASCMeshReader.cpp
+            UGRIDMeshReader.cpp
             GmshMeshWriter.cpp
             NetgenMeshWriter.cpp
             #SiloWriter.cpp
@@ -203,24 +204,29 @@ INSTALL(TARGETS MeshWriter
 
 addCharmModule( "meshwriter" "MeshWriter" )
 
-# The following lines are commented out so that meshconv can be cuilt without
-# h5part. Once ParticleIO is hooked in again, these lines will be uncommented.
-#add_library(ParticleIO
-#            H5PartWriter.cpp)
-#
-#target_include_directories(ParticleIO PUBLIC
-#                           ${QUINOA_SOURCE_DIR}
-#                           ${QUINOA_SOURCE_DIR}/Base
-#                           ${H5PART_INCLUDE_DIRS}
-#                           ${HDF5_INCLUDE_DIRS}
-#                           ${MPI_CXX_INCLUDE_DIRS}
-#                           ${MPI_CXX_INCLUDE_PATH})
-#
-#set_target_properties(ParticleIO PROPERTIES LIBRARY_OUTPUT_NAME
-#                      quinoa_particleio)
-#
-#INSTALL(TARGETS ParticleIO
-#        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-#        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-#        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-#)
+if (ENABLE_WALKER)
+  add_library(ParticleWriter
+              H5PartWriter.cpp
+              ParticleWriter.cpp)
+
+  target_include_directories(ParticleWriter PUBLIC
+                             ${QUINOA_SOURCE_DIR}
+                             ${QUINOA_SOURCE_DIR}/Base
+                             ${PROJECT_BINARY_DIR}/../IO
+                             ${H5PART_INCLUDE_DIRS}
+                             ${HDF5_INCLUDE_DIRS}
+                             ${CHARM_INCLUDE_DIRS}
+                             ${MPI_CXX_INCLUDE_DIRS}
+                             ${MPI_CXX_INCLUDE_PATH})
+
+  set_target_properties(ParticleWriter PROPERTIES LIBRARY_OUTPUT_NAME
+                        quinoa_particlewriter)
+
+  INSTALL(TARGETS ParticleWriter
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+  )
+
+  addCharmModule( "particlewriter" "ParticleWriter" )
+endif()

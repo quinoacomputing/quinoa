@@ -3,7 +3,7 @@
   \file      src/UnitTest/TUTSuite.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can
@@ -40,8 +40,9 @@ extern int g_maxTestsInGroup;
 using unittest::TUTSuite;
 
 TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
+  m_screen( tk::unittest_executable() + "_screen.log" ),
+  m_verbose( cmdline.get< tag::verbose >() ),
   m_mpirunner(),
-  m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
   m_nrun( 0 ),
   m_ngroup( 0 ),
   m_ncomplete( 0 ),
@@ -55,11 +56,13 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
 //! \param[in] cmdline Data structure storing data from the command-line parser
 // *****************************************************************************
 {
-  m_print.part( "Factory" );
-
-  // Output registered test groups
   const auto& groups = g_runner.get().list_groups();
-  m_print.list( "Registered test groups", groups );
+
+  { auto print = printer();
+    print.part( "Factory" );
+    // Output registered test groups
+    print.list( "Registered test groups", groups );
+  } // ensure print is destructed (cannot collide with that of evaluate)
 
   // Get group name string passed in by -g
   const auto grp = cmdline.get< tag::group >();
@@ -75,15 +78,17 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
   // Quit if there is no work to be done
   if (!work) {
 
-    m_print.note( "\nNo test groups to be executed because no test group "
-                  "names match '" + grp + "'.\n" );
+    printer().note( "\nNo test groups to be executed because no test group "
+                    "names match '" + grp + "'.\n" );
     mainProxy.finalize( true );
 
   } else {
 
-    m_print.endpart();
-    m_print.part( "Serial, Charm++, and MPI unit test suites" );
-    m_print.unithead( "Unit tests computed", grp );
+    { auto print = printer();
+      print.endpart();
+      print.part( "Serial, Charm++, and MPI unit test suites" );
+      print.unithead( "Unit tests computed", grp );
+    } // ensure print is destructed (cannot collied with that of evaluate)
 
     // Create MPI unit test runner nodegroup
     m_mpirunner = CProxy_MPIRunner< CProxy_TUTSuite >::ckNew( thisProxy );
@@ -146,15 +151,15 @@ TUTSuite::evaluate( std::vector< std::string > status )
   // Evaluate test
   unittest::evaluate( status, m_ncomplete, m_nwarn, m_nskip, m_nexcp, m_nfail );
 
+  auto print = printer();
+
   // Echo one-liner info on result of test
-  m_print.test( m_ncomplete, m_nfail, status );
+  print.test( m_ncomplete, m_nfail, status );
 
   // Wait for all tests to finish, then quit
   if (m_nrun == m_ngroup*static_cast<std::size_t>(g_maxTestsInGroup) + m_nmigr)
   {
-    auto pass =
-      assess( m_print, m_nfail, m_nwarn, m_nskip, m_nexcp, m_ncomplete );
-    // Quit
+    auto pass = assess(print, m_nfail, m_nwarn, m_nskip, m_nexcp, m_ncomplete);
     mainProxy.finalize( pass );
   }
 }

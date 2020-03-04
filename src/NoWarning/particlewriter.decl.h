@@ -3,7 +3,7 @@
   \file      src/NoWarning/particlewriter.decl.h
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Include particlewriter.decl.h with turning off specific compiler
              warnings.
@@ -24,9 +24,11 @@
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wcast-align"
   #pragma clang diagnostic ignored "-Wshadow"
+  #pragma clang diagnostic ignored "-Wshadow-field"
   #pragma clang diagnostic ignored "-Wundef"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wmismatched-tags"
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wdocumentation"
@@ -40,6 +42,10 @@
   #pragma clang diagnostic ignored "-Wfloat-equal"
   #pragma clang diagnostic ignored "-Wnon-virtual-dtor"
   #pragma clang diagnostic ignored "-Wzero-length-array"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+  #pragma clang diagnostic ignored "-Woverloaded-virtual"
+  #pragma clang diagnostic ignored "-Wmissing-noreturn"
+  #pragma clang diagnostic ignored "-Wcast-qual"
   #pragma clang diagnostic ignored "-Wcomma"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
@@ -54,10 +60,13 @@
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wpedantic"
   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+  #pragma GCC diagnostic ignored "-Wdeprecated-copy"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 181 )
   #pragma warning( disable: 1720 )
+  #pragma warning( disable: 1125 )
+  #pragma warning( disable: 2282 )
 #endif
 
 #include "../IO/particlewriter.decl.h"

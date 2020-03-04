@@ -3,7 +3,7 @@
   \file      src/PDE/Integrate/Boundary.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing physical boundary surface integrals of a
      system of PDEs in DG methods
@@ -31,7 +31,6 @@ using bcconf_t = kw::sideset::info::expect::type;
 //! Compute boundary surface flux integrals for a given boundary type for DG
 void
 bndSurfInt( ncomp_t system,
-            ncomp_t ncomp,
             std::size_t nmat,
             ncomp_t offset,
             const std::size_t ndof,

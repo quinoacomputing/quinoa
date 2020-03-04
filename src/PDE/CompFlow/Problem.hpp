@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/Problem.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     All problem configurations for the compressible flow equations
   \details   This file collects all Problem policy classes for the compressible
@@ -28,14 +28,8 @@
       the computed fields and/or sampling the analytical solution (if exist) at
       time t.
 
-    - Must define the function _solinc()_, used to evaluate the increment
-      from t to t+dt of the analytic solution (if defined).
-
     - Must define the static function _src()_, used for adding source terms to
       the righ hand side.
-
-    - Must define the function _side()_,  used to query all side set IDs
-      the user has configured for all components.
 
     - Must define the function _dirbc()_,  used to query Dirichlet
       boundary condition value on a given side set for all components in the PDE
@@ -59,6 +53,7 @@
 #include "Problem/RayleighTaylor.hpp"
 #include "Problem/TaylorGreen.hpp"
 #include "Problem/SodShocktube.hpp"
+#include "Problem/SheddingFlow.hpp"
 #include "Problem/RotatedSodShocktube.hpp"
 #include "Problem/SedovBlastwave.hpp"
 #include "Problem/GaussHumpCompflow.hpp"
@@ -72,6 +67,7 @@ using CompFlowProblems = brigand::list< CompFlowProblemUserDefined
                                       , CompFlowProblemRayleighTaylor
                                       , CompFlowProblemTaylorGreen
                                       , CompFlowProblemSodShocktube
+                                      , CompFlowProblemSheddingFlow
                                       , CompFlowProblemRotatedSodShocktube
                                       , CompFlowProblemSedovBlastwave
                                       , CompFlowProblemGaussHump

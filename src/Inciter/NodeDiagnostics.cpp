@@ -3,7 +3,7 @@
   \file      src/Inciter/NodeDiagnostics.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     NodeDiagnostics class for collecting nodal diagnostics
   \details   NodeDiagnostics class for collecting nodal diagnostics, e.g.,
@@ -78,7 +78,7 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u ) const
     // chare ID than any other chare that also contributes to the node.
     std::unordered_set< std::size_t > slave;
 
-    for (const auto& c : d.Msum())      // for all chares that neighbor our mesh
+    for (const auto& c : d.NodeCommMap())// for all neighbor chares
       if (d.thisIndex > c.first)        // if our chare ID is larger than theirs
         for (auto i : c.second)         // store local ID in set
           slave.insert( tk::cref_find( d.Lid(), i ) );
@@ -132,7 +132,7 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u ) const
 
     // Contribute to diagnostics
     auto stream = serialize( diag );
-    d.Ref()->contribute( stream.first, stream.second.get(), DiagMerger,
+    d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 
     return true;        // diagnostics have been computed

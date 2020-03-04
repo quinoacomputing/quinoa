@@ -3,7 +3,7 @@
   \file      src/Mesh/DerivedData.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -23,7 +23,7 @@
 
 namespace tk {
 
-//! Const array defining the node ordering convention for a tetrahedron cell
+//! Const array defining the node ordering convention for tetrahedron faces
 //! \details This two-dimensional array stores the naming/ordering convention of
 //!   the node indices of a tetrahedron (tet) element. The dimensions are 4x3 as
 //!   a tetrahedron has a total of 4 nodes and each (triangle) face has 3 nodes.
@@ -35,6 +35,17 @@ namespace tk {
 const std::array< UnsMesh::Face, 4 >
   lpofa{{ {{1,2,3}}, {{2,0,3}}, {{3,0,1}}, {{0,2,1}} }};
 
+//! Const array defining the node ordering convention for tetrahedron edges
+const std::array< UnsMesh::Edge, 6 >
+  lpoed{{ {{0,1}}, {{1,2}}, {{0,2}}, {{0,3}}, {{1,3}}, {{2,3}} }};
+
+//! Const array defining the node ordering convention for triangle edges
+const std::array< UnsMesh::Edge, 3 > lpoet{{ {{0,1}}, {{1,2}}, {{2,0}} }};
+
+//! Determine edge orientation
+int
+orient( const UnsMesh::Edge& t, const UnsMesh::Edge& e );
+
 //! Compute number of points (nodes) in mesh from connectivity
 std::size_t
 npoin_in_graph( const std::vector< std::size_t >& inpoel );
@@ -44,6 +55,12 @@ std::array< tk::real, 3 >
 normal( const std::array< tk::real, 3 >& x,
         const std::array< tk::real, 3 >& y,
         const std::array< tk::real, 3 >& z );
+
+//! Compute the area of a triangle
+tk::real
+area( const std::array< tk::real, 3 >& x,
+      const std::array< tk::real, 3 >& y,
+      const std::array< tk::real, 3 >& z );
 
 //! Generate derived data structure, elements surrounding points
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
@@ -99,7 +116,8 @@ genInedel( const std::vector< std::size_t >& inpoel,
            const std::vector< std::size_t >& inpoed );
 
 //! Generate derived data structure, elements surrounding edges
-std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+std::unordered_map< UnsMesh::Edge, std::vector< std::size_t >,
+                    UnsMesh::Hash<2>, UnsMesh::Eq<2> >
 genEsued( const std::vector< std::size_t >& inpoel,
           std::size_t nnpe,
           const std::pair< std::vector< std::size_t >,

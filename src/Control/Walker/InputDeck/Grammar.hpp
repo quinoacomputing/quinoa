@@ -3,7 +3,7 @@
   \file      src/Control/Walker/InputDeck/Grammar.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the Parsing
@@ -162,6 +162,21 @@ namespace grm {
   //! Do error checking for a vector of prescribed mean gradient
   template< class eq, class vec  >
   struct action< check_mean_gradient< eq, vec > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      auto& vv = stack.template get< tag::param, eq, vec >();
+      Assert( !vv.empty(), "Vector of vectors checked must not be empty" );
+      if (vv.back().size() != 3)
+        Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< class eq, class vec >
+  struct check_gravity : pegtl::success {};
+  //! Do error checking for a vector of prescribed mean gradient
+  template< class eq, class vec  >
+  struct action< check_gravity< eq, vec > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       auto& vv = stack.template get< tag::param, eq, vec >();
@@ -419,7 +434,9 @@ namespace grm {
         // we solve for particle momentum, coupled to mass fractions. This is
         // to allocate storage for particle velocity as variables derived from
         // momentum.
-        if (!solve.empty() && solve.back() == walker::ctr::DepvarType::PRODUCT)
+        if ( !solve.empty() &&
+             ( solve.back() == walker::ctr::DepvarType::PRODUCT ||
+               solve.back() == walker::ctr::DepvarType::FLUCTUATING_MOMENTUM ) )
         {
           //! Error out if not coupled to mixmassfracbeta
           if (!coupled< tag::velocity, tag::mixmassfracbeta >( stack )) {
@@ -447,6 +464,12 @@ namespace grm {
           stack.template get< tag::param, tag::velocity, tag::variant >();
         if (variant.size() != neq.get< tag::velocity >())
           variant.push_back( walker::ctr::VelocityVariantType::SLM );
+
+        // Set gravity to {0,0,0} if unspecified
+        auto& gravity =
+          stack.template get< tag::param, tag::velocity, tag::gravity >();
+        if (gravity.size() != neq.get< tag::velocity >())
+          gravity.push_back( { 0.0, 0.0, 0.0 } );
       }
     }
   };
@@ -683,7 +706,9 @@ namespace deck {
                      tk::grm::discrparam< use, kw::nstep, tag::nstep >,
                      tk::grm::discrparam< use, kw::term, tag::term >,
                      tk::grm::discrparam< use, kw::dt, tag::dt >,
-                     tk::grm::interval< use< kw::ttyi >, tag::tty > > {};
+                     tk::grm::interval< use< kw::ttyi >, tag::tty >,
+                     tk::grm::interval< use< kw::pari >, tag::particles >
+                   > {};
 
   //! rngs
   struct rngs :
@@ -1531,6 +1556,10 @@ namespace deck {
                                             ctr::VelocityVariant,
                                             tag::velocity,
                                             tag::variant >,
+                           sde_parameter_vector< kw::gravity,
+                                                 tk::grm::check_gravity,
+                                                 tag::velocity,
+                                                 tag::gravity >,
                            icdelta< tag::velocity >,
                            icbeta< tag::velocity >,
                            icgamma< tag::velocity >,

@@ -3,7 +3,7 @@
   \file      src/Inciter/DG.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
@@ -118,6 +118,13 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
+    //! Receive chare-boundary reconstructed data from neighboring chares
+    void comreco( int fromch,
+                  const std::vector< std::size_t >& tetid,
+                  const std::vector< std::vector< tk::real > >& u,
+                  const std::vector< std::vector< tk::real > >& prim,
+                  const std::vector< std::size_t >& ndof );
+
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
                  std::size_t fromstage,
@@ -136,7 +143,7 @@ class DG : public CBase_DG {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /* addedNodes */,
       const std::unordered_map< std::size_t, std::size_t >& addedTets,
-      const std::unordered_map< int, std::vector< std::size_t > >& msum,
+      const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::map< int, std::vector< std::size_t > >& /* bnode */,
       const std::vector< std::size_t >& triinpoel );
@@ -147,9 +154,6 @@ class DG : public CBase_DG {
 
     //! Compute left hand side
     void lhs();
-
-    //! Compute limiter function
-    void lim();
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
@@ -175,6 +179,7 @@ class DG : public CBase_DG {
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
+      p | m_nreco;
       p | m_fd;
       p | m_u;
       p | m_un;
@@ -186,7 +191,6 @@ class DG : public CBase_DG {
       p | m_nfac;
       p | m_nunk;
       p | m_ncoord;
-      p | m_msumset;
       p | m_ipface;
       p | m_bndFace;
       p | m_ghostData;
@@ -235,6 +239,8 @@ class DG : public CBase_DG {
     std::size_t m_ninitsol;
     //! Counter signaling that we have received all our limiter function ghost data
     std::size_t m_nlim;
+    //! Counter signaling that we have received all our reconstructed ghost data
+    std::size_t m_nreco;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
@@ -257,12 +263,6 @@ class DG : public CBase_DG {
     std::size_t m_nunk;
     //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_ncoord;
-    //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
-    //!    worker chares associated to their chare IDs
-    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
-    //!   points. This is the same data as in Discretization::m_msum, but the
-    //!   nodelist is stored as a set.
-    std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
     //! Internal + physical boundary faces (inverse of inpofa)
     tk::UnsMesh::FaceSet m_ipface;
     //! Face & tet IDs associated to global node IDs of the face for each chare
@@ -293,12 +293,12 @@ class DG : public CBase_DG {
     //! Map local ghost tet ids (value) and zero-based boundary ids (key)
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Solution receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 2 > m_uc;
+    std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 2 > m_pc;
+    std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
-    std::array< std::vector< std::size_t >, 2 > m_ndofc;
+    std::array< std::vector< std::size_t >, 3 > m_ndofc;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
@@ -358,6 +358,12 @@ class DG : public CBase_DG {
 
     //! Output mesh-based fields to file
     void writeFields( CkCallback c ) const;
+
+    //! Compute solution reconstructions
+    void reco();
+
+    //! Compute limiter function
+    void lim();
 
     //! Compute time step size
     void dt();

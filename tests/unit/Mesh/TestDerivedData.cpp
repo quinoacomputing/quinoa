@@ -3,7 +3,7 @@
   \file      tests/unit/Mesh/TestDerivedData.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple
@@ -2228,9 +2228,6 @@ void DerivedData_object::test< 56 >() {
   auto esup = tk::genEsup( inpoel, 4 );
   auto esued = tk::genEsued( inpoel, 4, esup );
 
-  auto& esued1 = esued.first;
-  auto& esued2 = esued.second;
-
   // Generate correct solution for elements surrounding edges
   std::set< std::vector< std::size_t > > correct_esued {
     { 4, 9, 23 },
@@ -2284,18 +2281,12 @@ void DerivedData_object::test< 56 >() {
     { 1, 2, 12, 19, 22 }
   };
 
-  // find out number of edges in mesh
-  auto nedge = tk::genInpoed(inpoel,4,esup).size()/2;
-
   // this is more of a test on this test
   ensure_equals( "number of edges in esued incorrect",
-                 nedge, correct_esued.size() );
+                 esued.size(), correct_esued.size() );
 
   // Test generated derived data structure, elements surrounding edges
-  for (std::size_t e=0; e<nedge; ++e) {
-    // extract element list generated for edge e
-    std::vector< std::size_t > elements;
-    for (auto i=esued2[e]+1; i<=esued2[e+1]; ++i) elements.push_back(esued1[i]);
+  for (const auto& [edge,elements] : esued) {
     // store element list as string to output it in case test fails
     std::stringstream ss;
     for (auto i : elements) ss << i << " ";
@@ -2303,13 +2294,26 @@ void DerivedData_object::test< 56 >() {
     auto it = correct_esued.find( elements );
     // test if element list can be found among the correct ones
     ensure( "element list { " + ss.str() + "} surrounding edge '" +
-            std::to_string(e) + "' generated into esued but not in correct "
-            "esued",
+            std::to_string(edge[0]) + '-' + std::to_string(edge[1]) +
+            "' generated into esued but not in correct esued",
             it != correct_esued.end() );
     // remove element list just tested from correct esued, this ensures that the
     // generated esued does not contain edges whose element lists would be
     // exactly the same, as later tests in this loop would fail in that case
     correct_esued.erase( elements );
+  }
+
+  // Test if both nodes of edges exist in surrounding elements
+  for (const auto& [edge,elements] : esued) {
+    for (auto e : elements) {
+      std::unordered_set< std::size_t > N;
+      N.insert( inpoel[e*4+0] );
+      N.insert( inpoel[e*4+1] );
+      N.insert( inpoel[e*4+2] );
+      N.insert( inpoel[e*4+3] );
+      ensure( "edge not in surrounding tetrahedron element nodes",
+              N.find(edge[0]) != end(N) && N.find(edge[1]) != end(N) );
+    }
   }
 }
 
@@ -2351,9 +2355,6 @@ void DerivedData_object::test< 57 >() {
   auto esup = tk::genEsup( inpoel, 3 );
   auto esued = tk::genEsued( inpoel, 3, esup );
 
-  auto& esued1 = esued.first;
-  auto& esued2 = esued.second;
-
   // Generate correct solution for elements surrounding edges
   std::set< std::vector< std::size_t > > correct_esued {
     { 0, 1 },
@@ -2394,32 +2395,38 @@ void DerivedData_object::test< 57 >() {
     { 22, 23 }
   };
 
-  // find out number of edges in mesh
-  auto nedge = tk::genInpoed(inpoel,3,esup).size()/2;
-
   // this is more of a test on this test
   ensure_equals( "number of edges in esued incorrect",
-                 nedge, correct_esued.size() );
+                 esued.size(), correct_esued.size() );
 
   // Test generated derived data structure, elements surrounding edges
-  for (std::size_t e=0; e<nedge; ++e) {
-    // extract element list generated for edge e
-    std::vector< std::size_t > elements;
-    for (auto i=esued2[e]+1; i<=esued2[e+1]; ++i) elements.push_back(esued1[i]);
+  for (const auto& [edge,elements] : esued) {
     // store element list as string to output it in case test fails
     std::stringstream ss;
     for (auto i : elements) ss << i << " ";
     // attempt to find element list in correct esued
     auto it = correct_esued.find( elements );
     // test if element list can be found among the correct ones
-    ensure( "element list { " + ss.str() + "} surrounding edge '" +
-            std::to_string(e) + "' generated into esued but not in correct "
-            "esued",
+   ensure( "element list { " + ss.str() + "} surrounding edge '" +
+            std::to_string(edge[0]) + '-' + std::to_string(edge[1]) +
+            "' generated into esued but not in correct esued",
             it != correct_esued.end() );
     // remove element list just tested from correct esued, this ensures that the
     // generated esued does not contain edges whose element lists would be
     // exactly the same, as later tests in this loop would fail in that case
     correct_esued.erase( elements );
+  }
+
+  // Test if both nodes of edges exist in surrounding elements
+  for (const auto& [edge,elements] : esued) {
+    for (auto e : elements) {
+      std::unordered_set< std::size_t > N;
+      N.insert( inpoel[e*3+0] );
+      N.insert( inpoel[e*3+1] );
+      N.insert( inpoel[e*3+2] );
+      ensure( "edge not in surrounding triangle element nodes",
+              N.find(edge[0]) != end(N) && N.find(edge[1]) != end(N) );
+    }
   }
 }
 

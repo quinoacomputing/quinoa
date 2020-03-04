@@ -12,7 +12,7 @@ inciter
 
   scheme diagcg
 
-  reorder true
+  pelocal_reorder true
 
   partitioning
     algorithm mj

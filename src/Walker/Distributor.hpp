@@ -3,7 +3,7 @@
   \file      src/Walker/Distributor.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -68,7 +68,7 @@ class Distributor : public CBase_Distributor {
 
   public:
     //! Constructor
-    explicit Distributor( const ctr::CmdLine& cmdline );
+    explicit Distributor();
 
     //! \brief Reduction target indicating that all Integrator chares have
     //!   registered with the statistics merger (collector)
@@ -96,18 +96,43 @@ class Distributor : public CBase_Distributor {
   private:
     //! Type alias for output indicators
     using OutputIndicators = tk::TaggedTuple< brigand::list<
-                                 tag::stat, bool
-                               , tag::pdf,  bool
+                                 tag::stat,      bool
+                               , tag::pdf,       bool
                              > >;
 
+    OutputIndicators m_output;                  //!< Output indicators
+    uint64_t m_it;                              //!< Iteration count
+    tk::real m_npar;                            //!< Total number of particles
+    tk::real m_t;                               //!< Physical time
+    tk::real m_dt;                              //!< Physical time step size
+    CProxy_Integrator m_intproxy;               //!< Integrator array proxy
+    std::vector< tk::Timer > m_timer;           //!< Timers
+    std::vector< std::string > m_nameOrdinary;  //!< Ordinary moment names
+    std::vector< std::string > m_nameCentral;   //!< Central moment names
+    std::vector< tk::real > m_ordinary;         //!< Ordinary moments
+    std::vector< tk::real > m_central;          //!< Central moments
+    std::vector< tk::UniPDF > m_ordupdf;        //!< Ordinary univariate PDFs
+    std::vector< tk::BiPDF > m_ordbpdf;         //!< Ordinary bivariate PDFs
+    std::vector< tk::TriPDF > m_ordtpdf;        //!< Ordinary trivariate PDFs
+    std::vector< tk::UniPDF > m_cenupdf;        //!< Central univariate PDFs
+    std::vector< tk::BiPDF > m_cenbpdf;         //!< Central bivariate PDFs
+    std::vector< tk::TriPDF > m_centpdf;        //!< Central trivariate PDFs
+    //! Names of and tables to sample and output to statistics file
+    std::pair< std::vector< std::string >,
+               std::vector< tk::Table > > m_tables;
+    //! Map used to lookup moments
+    std::map< tk::ctr::Product, tk::real > m_moments;
+
     //! Print information at startup
-    void info( uint64_t chunksize, std::size_t nchare );
+    void info( const WalkerPrint& print,
+               uint64_t chunksize,
+               std::size_t nchare );
 
     //! Compute size of next time step
     tk::real computedt();
 
     //! Print out time integration header
-    void header() const;
+    void header( const WalkerPrint& print ) const;
 
     //! Print out one-liner report on time step
     void report();
@@ -150,31 +175,13 @@ class Distributor : public CBase_Distributor {
     //! Evaluate time step, compute new time step size
     void evaluateTime();
 
-    WalkerPrint m_print;                        //! Pretty printer
-    OutputIndicators m_output;                  //!< Output indicators
-    uint64_t m_it;                              //!< Iteration count
-    tk::real m_npar;                            //!< Total number of particles
-    tk::real m_t;                               //!< Physical time
-    tk::real m_dt;                              //!< Physical time step size
-    CProxy_Integrator m_intproxy;               //!< Integrator array proxy
-    std::vector< tk::Timer > m_timer;           //!< Timers
-    std::vector< std::string > m_nameOrdinary;  //!< Ordinary moment names
-    std::vector< std::string > m_nameCentral;   //!< Central moment names
-    std::vector< tk::real > m_ordinary;         //!< Ordinary moments
-    std::vector< tk::real > m_central;          //!< Central moments
-    std::vector< tk::UniPDF > m_ordupdf;        //!< Ordinary univariate PDFs
-    std::vector< tk::BiPDF > m_ordbpdf;         //!< Ordinary bivariate PDFs
-    std::vector< tk::TriPDF > m_ordtpdf;        //!< Ordinary trivariate PDFs
-    std::vector< tk::UniPDF > m_cenupdf;        //!< Central univariate PDFs
-    std::vector< tk::BiPDF > m_cenbpdf;         //!< Central bivariate PDFs
-    std::vector< tk::TriPDF > m_centpdf;        //!< Central trivariate PDFs
-
-    //! Names of and tables to sample and output to statistics file
-    std::pair< std::vector< std::string >,
-               std::vector< tk::Table > > m_tables;
-
-    //! Map used to lookup moments
-    std::map< tk::ctr::Product, tk::real > m_moments;
+    //! Create pretty printer specialized to Walker
+    //! \return Pretty printer
+    WalkerPrint printer() const { return
+      WalkerPrint( tk::walker_executable() + "_screen.log",
+        g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
+        std::ios_base::app );
+    }
 
     //! Normal finish of time stepping
     void finish();

@@ -3,7 +3,7 @@
   \file      src/Main/Walker.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -193,15 +193,12 @@ class Main : public CBase_Main {
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
-      // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create Walker driver
       m_driver( tk::Main< walker::WalkerDriver >
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::WALKER,
-                          tk::walker_executable(),
-                          m_print ) ),
+                          tk::walker_executable() ) ),
       m_timer(1),       // start new timer measuring the total runtime
       m_timestamp()
     {
@@ -230,7 +227,8 @@ class Main : public CBase_Main {
 
     //! Towards normal exit but collect chare state first (if any)
     void finalize() {
-      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
+      tk::finalize( m_cmdline, m_timer, stateProxy, m_timestamp,
+                    tk::walker_executable(),
                     CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
     }
 
@@ -244,7 +242,7 @@ class Main : public CBase_Main {
 
     //! Dump chare state
     void dumpstate( CkReductionMsg* msg ) {
-      tk::dumpstate( m_cmdline, m_print, msg );
+      tk::dumpstate( m_cmdline, tk::walker_executable(), msg );
     }
 
     //! Add time stamp contributing to final timers output
@@ -258,7 +256,6 @@ class Main : public CBase_Main {
     int m_signal;                               //!< Used to set signal handlers
     walker::ctr::CmdLine m_cmdline;             //!< Command line
     walker::CmdLineParser m_cmdParser;          //!< Command line parser
-    walker::WalkerPrint m_print;                //!< Pretty printer
     walker::WalkerDriver m_driver;              //!< Driver
     std::vector< tk::Timer > m_timer;           //!< Timers
 

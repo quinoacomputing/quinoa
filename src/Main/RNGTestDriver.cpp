@@ -3,16 +3,12 @@
   \file      src/Main/RNGTestDriver.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
 */
 // *****************************************************************************
-
-#include <string>
-#include <utility>
-#include <iterator>
 
 #include "Tags.hpp"
 #include "Exception.hpp"
@@ -23,6 +19,8 @@
 #include "RNGTestDriver.hpp"
 #include "RNGTest/InputDeck/InputDeck.hpp"
 #include "RNGTest/InputDeck/Parser.hpp"
+#include "TaggedTupleDeepPrint.hpp"
+#include "Writer.hpp"
 
 namespace rngtest {
 
@@ -32,24 +30,29 @@ extern ctr::InputDeck g_inputdeck;
 
 using rngtest::RNGTestDriver;
 
-RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
-                              const ctr::CmdLine& cmdline ) :
-  m_print( print )
+RNGTestDriver::RNGTestDriver( const ctr::CmdLine& cmdline ) :
+  m_print( tk::rngtest_executable() + "_screen.log",
+           cmdline.get< tag::verbose >() ? std::cout : std::clog,
+           std::ios_base::app )
 // *****************************************************************************
 //  Constructor
-//! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 // *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here
 
-  // Parse input deck into g_inputdeck, transfer cmdline (no longer needed)
+  // Parse input deck into g_inputdeck
   m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
   m_print.item( "Parsed control file", "success" );  
 
   m_print.endpart();
+
+  // Output input deck object to file
+  auto logfilename = tk::rngtest_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), "inputdeck", g_inputdeck );
 }
 
 void

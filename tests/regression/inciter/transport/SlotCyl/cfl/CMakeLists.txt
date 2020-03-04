@@ -9,7 +9,8 @@ add_regression_test(cfl ${INCITER_EXECUTABLE}
                     ARGS -c slot_cyl_cfl.q -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE slot_cyl_cfl_pe1_u0.0.std.exo
                     BIN_RESULT out.e-s.0.1.0
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS diagcg)
 
 if (HAS_OMEGA_H)
   add_regression_test(cfl_osh ${INCITER_EXECUTABLE}
@@ -18,7 +19,8 @@ if (HAS_OMEGA_H)
                       ARGS -c slot_cyl_cfl.q -i box10.osh -v
                       BIN_BASELINE slot_cyl_cfl_osh10_pe1.std.exo
                       BIN_RESULT out.e-s.0.1.0
-                      BIN_DIFF_PROG_CONF exodiff.cfg)
+                      BIN_DIFF_PROG_CONF exodiff.cfg
+                      LABELS diagcg)
 
   # parallel with nranks = nparts
   add_regression_test(cfl_osh ${INCITER_EXECUTABLE}
@@ -28,7 +30,8 @@ if (HAS_OMEGA_H)
                       BIN_BASELINE slot_cyl_cfl_osh10_pe2.std.exo.0
                                    slot_cyl_cfl_osh10_pe2.std.exo.1
                       BIN_RESULT out.e-s.0.2.0 out.e-s.0.2.1
-                      BIN_DIFF_PROG_CONF exodiff.cfg)
+                      BIN_DIFF_PROG_CONF exodiff.cfg
+                      LABELS diagcg)
 
 #  # parallel with nranks > nparts
 #  add_regression_test(cfl_osh ${INCITER_EXECUTABLE}
@@ -44,7 +47,8 @@ if (HAS_OMEGA_H)
 #                                 out.e-s.0.4.1
 #                                 out.e-s.0.4.2
 #                                 out.e-s.0.4.3
-#                      BIN_DIFF_PROG_CONF exodiff.cfg)
+#                      BIN_DIFF_PROG_CONF exodiff.cfg
+#                      LABELS diagcg)
 endif()
 
 # Virtualization = 0.7
@@ -60,7 +64,8 @@ add_regression_test(cfl_u0.7 ${INCITER_EXECUTABLE}
                                out.e-s.0.3.1
                                out.e-s.0.3.2
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS diagcg)
 
 # Parallel + Virtualization
 
@@ -86,7 +91,8 @@ add_regression_test(cfl_u0.5 ${INCITER_EXECUTABLE}
                                out.e-s.0.8.6
                                out.e-s.0.8.7
                     BIN_DIFF_PROG_ARGS -m
-                    BIN_DIFF_PROG_CONF exodiff.cfg)
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS diagcg)
 
 # Parallel + Virtualization + Migration
 
@@ -94,7 +100,7 @@ add_regression_test(cfl_u0.9_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES slot_cyl_cfl_diagcg.q unitsquare_01_3.6k.exo
                     ARGS -c slot_cyl_cfl_diagcg.q -i unitsquare_01_3.6k.exo
-                         -v -u 0.9 +balancer RandCentLB +LBDebug 1 +cs
+                         -v -l 10 -u 0.9 +balancer RandCentLB +LBDebug 1 +cs
                     BIN_BASELINE slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.0
                                  slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.1
                                  slot_cyl_cfl_diagcg_pe4_u0.9.std.exo.2
@@ -177,8 +183,7 @@ add_regression_test(cfl_u0.9_migr ${INCITER_EXECUTABLE}
                                out.e-s.0.40.39
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
-                    LABELS migration)
-
+                    LABELS diagcg migration)
 
 if (HAS_ROOT)
 
@@ -191,7 +196,8 @@ if (HAS_ROOT)
 		      FILECONV_RESULT out.e-s.0.1.0.exo
 	              BIN_BASELINE slot_cyl_cfl_pe1_u0.0.std.exo
 		      BIN_RESULT out.e-s.0.1.0.exo
-		      BIN_DIFF_PROG_CONF exodiff.cfg)
+		      BIN_DIFF_PROG_CONF exodiff.cfg
+                      LABELS diagcg)
 
   # Virtualization = 0, Multiprocessor check
   add_regression_test(cfl_root ${INCITER_EXECUTABLE}
@@ -215,6 +221,7 @@ if (HAS_ROOT)
 			         out.e-s.0.4.2.exo
 			         out.e-s.0.4.3.exo
                       BIN_DIFF_PROG_ARGS -m
-                      BIN_DIFF_PROG_CONF exodiff.cfg)
+                      BIN_DIFF_PROG_CONF exodiff.cfg
+                      LABELS diagcg)
 
 endif()

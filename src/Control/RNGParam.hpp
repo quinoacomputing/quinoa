@@ -3,7 +3,7 @@
   \file      src/Control/RNGParam.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Types for storing parameters of random number generators
   \details   Types for storing parameters of random number generators.
@@ -50,10 +50,10 @@ using RNGMKLParam = tk::TaggedTuple< brigand::list<
     tag::seed,              kw::seed::info::expect::type //!< seed
   , tag::uniform_method,    MKLUniformMethodType         //!< uniform method type
   , tag::gaussian_method,   MKLGaussianMethodType        //!< Gaussian method type
-  //! multi-variate Gaussian method type
+    //! multi-variate Gaussian method type
   , tag::gaussianmv_method, MKLGaussianMVMethodType
   , tag::beta_method,       MKLBetaMethodType            //!< beta method type
-  , tag::gamma_method,      MKLGammaMethodType            //!< gamma method type
+  , tag::gamma_method,      MKLGammaMethodType           //!< gamma method type
 > >;
 //! MKL RNG parameters bundle associating RNG types and their parameters
 using RNGMKLParameters = std::map< RNGType, RNGMKLParam >;

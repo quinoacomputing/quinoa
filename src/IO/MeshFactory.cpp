@@ -3,7 +3,7 @@
   \file      src/IO/MeshFactory.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
@@ -20,6 +20,7 @@
 #include "NetgenMeshReader.hpp"
 #include "ExodusIIMeshReader.hpp"
 #include "HyperMeshReader.hpp"
+#include "UGRIDMeshReader.hpp"
 #include "ASCMeshReader.hpp"
 #include "NetgenMeshWriter.hpp"
 #include "GmshMeshWriter.hpp"
@@ -65,6 +66,8 @@ readUnsMesh( const tk::Print& print,
     ExodusIIMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReaderType::ASC)
     ASCMeshReader( filename ).readMesh( mesh );
+  else if (meshtype == MeshReaderType::UGRID)
+    UGRIDMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReaderType::HYPER)
     HyperMeshReader( filename ).readMesh( mesh );
 

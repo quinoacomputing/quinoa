@@ -3,7 +3,7 @@
   \file      src/IO/ExodusIIMeshReader.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration.
@@ -61,6 +61,9 @@ class ExodusIIMeshReader {
 
     //! Read only connectivity graph from file
     void readGraph( UnsMesh& mesh );
+
+    //! Return total number of mesh points in mesh file
+    std::size_t npoin() { return readHeader(); }
 
     //! Read part of the mesh (graph and coords) from file
     //! \details Total number of PEs defaults to 1 for a single-CPU read, this

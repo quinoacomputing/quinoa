@@ -3,7 +3,7 @@
   \file      src/Inciter/refiner.ci
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface file for mesh refiner
   \details   Charm++ module interface file for mesh refiner.
@@ -34,12 +34,15 @@ module refiner {
                      const std::vector< std::size_t >& triinpoel,
                      const std::map< int, std::vector< std::size_t > >& bnode,
                      int nchare );
-      initnode void registerReducers();
       entry void start();
       entry void reorder();
       entry void correctref();
       entry void next();
-      entry [reductiontarget] void addBndEdges( CkReductionMsg* msg );
+      entry void query( int fromch, const tk::UnsMesh::EdgeSet& edges );
+      entry void recvquery();
+      entry void response();
+      entry void bnd( int fromch, const std::vector< int >& chares );
+      entry void recvbnd();
       entry void addRefBndEdges(
         int fromch,
         const AMR::EdgeData& en,

@@ -3,7 +3,7 @@
   \file      src/Base/Writer.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Writer base class declaration
   \details   Writer base class declaration. Writer base serves as a base class
@@ -36,6 +36,9 @@ class Writer {
     //! \param[in] count Number of characters to write
     void write( const char* data, std::streamsize count )
     { m_outFile.write( data, count ); }
+
+    //! Write access to underlying output file stream
+    std::ofstream& stream() { return m_outFile; }
 
   protected:
     const std::string m_filename;          //!< File name

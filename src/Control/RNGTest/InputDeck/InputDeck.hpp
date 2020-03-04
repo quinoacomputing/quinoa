@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/InputDeck/InputDeck.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Random number generator test suite input deck
   \details   This file defines the heterogeneous stack that is used for storing
@@ -27,10 +27,9 @@ namespace ctr {
 
 //! Member data for tagged tuple
 using InputDeckMembers = brigand::list<
-    tag::title,      kw::title::info::expect::type
+    tag::cmd,        CmdLine
+  , tag::title,      kw::title::info::expect::type
   , tag::selected,   selects
-  , tag::io,         ios
-  , tag::cmd,        CmdLine
   , tag::param,      parameters
   , tag::error,      std::vector< std::string >
 >;
@@ -96,6 +95,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::gnorm_accurate
                                  >;
 
+    //! Set of tags to ignore when printing this InputDeck
+    using ignore = CmdLine::ignore;
 
     //! \brief Constructor: set all defaults
     //! \param[in] cl Previously parsed and store command line

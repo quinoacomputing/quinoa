@@ -15,7 +15,7 @@ add_regression_test(amr_t0ref_u_trans_diagcg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_diagcg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
-                    LABELS amr)
+                    LABELS diagcg amr)
 
 add_regression_test(amr_t0ref_u_trans_reord_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -28,7 +28,7 @@ add_regression_test(amr_t0ref_u_trans_reord_diagcg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_diagcg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
-                    LABELS amr)
+                    LABELS diagcg amr)
 
 add_regression_test(amr_t0ref_u_compflow_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -41,7 +41,7 @@ add_regression_test(amr_t0ref_u_compflow_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_t0ref_u_compflow_reord_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -54,7 +54,7 @@ add_regression_test(amr_t0ref_u_compflow_reord_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_t0ref_cc_trans_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -64,7 +64,7 @@ add_regression_test(amr_t0ref_cc_trans_diagcg ${INCITER_EXECUTABLE}
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
-                    LABELS amr)
+                    LABELS diagcg amr)
 
 add_regression_test(amr_t0ref_u_trans_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -83,7 +83,7 @@ add_regression_test(amr_t0ref_u_trans_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_t0ref_u_trans_reord_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -103,7 +103,7 @@ add_regression_test(amr_t0ref_u_trans_reord_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_t0ref_udu_trans_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -130,7 +130,7 @@ add_regression_test(amr_t0ref_udu_trans_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_t0ref_ududu_trans_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -163,7 +163,7 @@ add_regression_test(amr_t0ref_ududu_trans_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_t0ref_idiu_trans ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -201,7 +201,7 @@ add_regression_test(amr_t0ref_u_trans_diagcg ${INCITER_EXECUTABLE}
                                out.e-s.0.4.3
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
-                    LABELS amr)
+                    LABELS diagcg amr)
 
 add_regression_test(amr_t0ref_ii ${INCITER_EXECUTABLE}
                     NUMPES 2
@@ -225,7 +225,7 @@ add_regression_test(amr_t0ref_ii ${INCITER_EXECUTABLE}
                                out.e-s.0.2.1
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
-                    LABELS amr)
+                    LABELS diagcg amr)
 
 add_regression_test(amr_t0ref_iu_trans ${INCITER_EXECUTABLE}
                     NUMPES 2
@@ -237,7 +237,7 @@ add_regression_test(amr_t0ref_iu_trans ${INCITER_EXECUTABLE}
                                 out.e-s.0.2.1
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
-                    LABELS amr)
+                    LABELS diagcg amr)
 
 add_regression_test(amr_t0ref_idiu_trans ${INCITER_EXECUTABLE}
                     NUMPES 2
@@ -348,7 +348,7 @@ add_regression_test(amr_t0ref_u_trans_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_t0ref_udu_trans_dg ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -420,7 +420,7 @@ add_regression_test(amr_t0ref_udu_trans_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_t0ref_ududu_trans_dg ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -516,7 +516,7 @@ add_regression_test(amr_t0ref_ududu_trans_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 # Parallel, virtualization
 
@@ -543,4 +543,4 @@ add_regression_test(amr_t0ref_u_trans_diagcg_u0.5 ${INCITER_EXECUTABLE}
                                out.e-s.0.8.7
                     BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
-                    LABELS amr)
+                    LABELS diagcg amr)

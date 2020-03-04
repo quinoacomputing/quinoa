@@ -3,7 +3,7 @@
   \file      src/PDE/MultiMat/Problem/InterfaceAdvection.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a Problem policy class for the compressible flow
@@ -16,6 +16,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "FieldOutput.hpp"
 
 //namespace inciter {
 //
@@ -47,6 +48,7 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
+  // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 3*nmat+3, "Incorrect number of components in multi-material "
           "system" );
 
@@ -104,37 +106,6 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
   return s;
 }
 
-std::vector< tk::real >
-MultiMatProblemInterfaceAdvection::solinc( ncomp_t system,
-                                           ncomp_t ncomp,
-                                           tk::real x,
-                                           tk::real y,
-                                           tk::real z,
-                                           tk::real t,
-                                           tk::real dt )
-// *****************************************************************************
-// Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-// for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in] t Time where to evaluate the solution increment starting from
-//! \param[in] dt Time increment at which evaluate the solution increment to
-//! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-// *****************************************************************************
-{
-  auto st1 = solution( system, ncomp, x, y, z, t );
-  auto st2 = solution( system, ncomp, x, y, z, t+dt );
-
-  std::transform( begin(st1), end(st1), begin(st2), begin(st2),
-                  []( tk::real s, tk::real& d ){ return d -= s; } );
-
-  return st2;
-}
-
 tk::SrcFn::result_type
 MultiMatProblemInterfaceAdvection::src( ncomp_t, ncomp_t ncomp, tk::real,
                                         tk::real, tk::real, tk::real )
@@ -150,26 +121,6 @@ MultiMatProblemInterfaceAdvection::src( ncomp_t, ncomp_t ncomp, tk::real,
   return s;
 }
 
-void
-MultiMatProblemInterfaceAdvection::side( std::unordered_set< int >& conf )
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param;
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcdir >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcextrapolate >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
-
-  for (const auto& s : g_inputdeck.get< param, eq, tag::bcsym >())
-    for (const auto& i : s) conf.insert( std::stoi(i) );
-}
-
 std::vector< std::string >
 MultiMatProblemInterfaceAdvection::fieldNames( ncomp_t )
 // *****************************************************************************
@@ -180,22 +131,7 @@ MultiMatProblemInterfaceAdvection::fieldNames( ncomp_t )
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
 
-  std::vector< std::string > n;
-
-  for (std::size_t k=0; k<nmat; ++k)
-    n.push_back( "volfrac"+std::to_string(k+1)+"_numerical" );
-  n.push_back( "density_numerical" );
-  n.push_back( "x-velocity_numerical" );
-  n.push_back( "y-velocity_numerical" );
-  n.push_back( "z-velocity_numerical" );
-  n.push_back( "pressure_numerical" );
-  n.push_back( "total_energy_density_numerical" );
-  //n.push_back( "volfrac1_analytical" );
-  //n.push_back( "volfrac2_analytical" );
-  //n.push_back( "pressure_analytical" );
-  //n.push_back( "total_energy_density_analytical" );
-
-  return n;
+  return MultiMatFieldNames(nmat);
 }
 
 std::vector< std::vector< tk::real > >
@@ -207,7 +143,8 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
   tk::real,
   const std::vector< tk::real >&,
   const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-  tk::Fields& U )
+  tk::Fields& U,
+  const tk::Fields& P )
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
@@ -217,85 +154,19 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
 //! \param[in] t Physical time
 //! \param[in] coord Mesh node coordinates
 //! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitive quantities at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  // number of degree of freedom
+  // number of degrees of freedom
   const std::size_t rdof =
     g_inputdeck.get< tag::discr, tag::rdof >();
 
-  //// ratio of specific heats
-  //tk::real g =
-  //  g_inputdeck.get< tag::param, eq, tag::gamma >()[system];
-
+  // number of materials
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
-  std::vector< std::vector< tk::real > > out;
-  std::vector< std::vector< tk::real > > al, ar, ae;
-
-  for (std::size_t k=0; k<nmat; ++k)
-  {
-    al.push_back( U.extract( volfracIdx(nmat, k)*rdof, offset ) );
-    ar.push_back( U.extract( densityIdx(nmat, k)*rdof, offset ) );
-    ae.push_back( U.extract( energyIdx(nmat, k)*rdof, offset ) );
-  }
-  const auto ru  = U.extract( momentumIdx(nmat, 0)*rdof, offset );
-  const auto rv  = U.extract( momentumIdx(nmat, 1)*rdof, offset );
-  const auto rw  = U.extract( momentumIdx(nmat, 2)*rdof, offset );
-
-  //// mesh node coordinates
-  //const auto& x = coord[0];
-  //const auto& y = coord[1];
-  //const auto& z = coord[2];
-
-  // material volume-fractions
-  for (std::size_t k=0; k<nmat; ++k)
-    out.push_back( al[k] );
-
-  // bulk density
-  std::vector< tk::real > r( ru.size(), 0.0 );
-  for (std::size_t i=0; i<r.size(); ++i) {
-    for (std::size_t k=0; k<nmat; ++k)
-      r[i] += ar[k][i];
-  }
-  out.push_back( r );
-
-  // velocity components
-  std::vector< tk::real > u = ru;
-  std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( u );
-
-  std::vector< tk::real > v = rv;
-  std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( v );
-
-  std::vector< tk::real > w = rw;
-  std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( w );
-
-  // bulk pressure
-  std::vector< tk::real > P( r.size(), 0.0 );
-  for (std::size_t i=0; i<P.size(); ++i) {
-    for (std::size_t k=0; k<nmat; ++k)
-      P[i] += al[k][i] * eos_pressure< eq >( system, ar[k][i]/al[k][i],
-                                             u[i], v[i], w[i],
-                                             ae[k][i]/al[k][i], k );
-  }
-  out.push_back( P );
-
-  // bulk total energy density
-  std::vector< tk::real > E( r.size(), 0.0 );
-  for (std::size_t i=0; i<E.size(); ++i) {
-    for (std::size_t k=0; k<nmat; ++k)
-      E[i] += ae[k][i];
-  }
-  out.push_back( E );
-
-  return out;
+  return MultiMatFieldOutput(system, nmat, offset, rdof, U, P);
 }
 
 std::vector< std::string >

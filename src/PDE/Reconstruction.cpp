@@ -3,7 +3,7 @@
   \file      src/PDE/Reconstruction.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Reconstruction for reconstructed discontinuous Galerkin methods
   \details   This file contains functions that reconstruct an "n"th order
@@ -16,7 +16,89 @@
 #include <vector>
 
 #include "Vector.hpp"
+#include "Base/HashMapReducer.hpp"
 #include "Reconstruction.hpp"
+
+void
+tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
+  const Fields& geoElem,
+  const Fields& geoFace,
+  std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls )
+// *****************************************************************************
+//  Compute lhs matrix for the least-squares reconstruction
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoElem Element geometry array
+//! \param[in] geoFace Face geometry array
+//! \param[in,out] lhs_ls LHS reconstruction matrix
+//! \details This function computing the lhs matrix for reconstruction, is
+//!   common for primitive and conserved quantities.
+// *****************************************************************************
+{
+  const auto& esuf = fd.Esuf();
+  const auto nelem = fd.Esuel().size()/4;
+
+  // Compute internal and boundary face contributions
+  for (std::size_t f=0; f<esuf.size()/2; ++f)
+  {
+    Assert( esuf[2*f] > -1, "Left-side element detected as -1" );
+
+    auto el = static_cast< std::size_t >(esuf[2*f]);
+    auto er = esuf[2*f+1];
+
+    std::array< real, 3 > geoElemR;
+    std::size_t eR(0);
+
+    // A second-order (piecewise linear) solution polynomial can be obtained
+    // from the first-order (piecewise constant) FV solutions by using a
+    // least-squares (LS) reconstruction process. LS uses the first-order
+    // solutions from the cell being processed, and the cells surrounding it.
+    // The LS system is obtaining by requiring the following to hold:
+    // 'Taylor expansions of solution from cell-i to the centroids of each of
+    // its neighboring cells should be equal to the cell average solution on
+    // that neighbor cell.'
+    // This gives a system of equations for the three second-order DOFs that are
+    // to be determined. In 3D tetrahedral meshes, this would give four
+    // equations (one for each neighbor )for the three unknown DOFs. This
+    // overdetermined system is solved in the least-squares sense using the
+    // normal equations approach. The normal equations approach involves
+    // pre-multiplying the overdetermined system by the transpose of the system
+    // matrix to obtain a square matrix (3x3 in this case).
+
+    // get a 3x3 system by applying the normal equation approach to the
+    // least-squares overdetermined system
+
+    if (er > -1) {
+    // internal face contribution
+      eR = static_cast< std::size_t >(er);
+      // Put in cell-centroid coordinates
+      geoElemR = {{ geoElem(eR,1,0), geoElem(eR,2,0), geoElem(eR,3,0) }};
+    }
+    else {
+    // boundary face contribution
+      // Put in face-centroid coordinates
+      geoElemR = {{ geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0) }};
+    }
+
+    std::array< real, 3 > wdeltax{{ geoElemR[0]-geoElem(el,1,0),
+                                    geoElemR[1]-geoElem(el,2,0),
+                                    geoElemR[2]-geoElem(el,3,0) }};
+
+    // define a lambda for contributing to lhs matrix
+    auto lhs = [&]( std::size_t e ){
+    for (std::size_t idir=0; idir<3; ++idir)
+      for (std::size_t jdir=0; jdir<3; ++jdir)
+        lhs_ls[e][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
+    };
+
+    // always add left element contribution (at a boundary face, the internal
+    // element is always the left element)
+    lhs(el);
+    // add right element contribution for internal faces only
+    if (er > -1)
+      if (eR < nelem) lhs(eR);
+
+  }
+}
 
 void
 tk::intLeastSq_P0P1( ncomp_t ncomp,
@@ -24,22 +106,27 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
                      const std::size_t rdof,
                      const inciter::FaceData& fd,
                      const Fields& geoElem,
-                     const Fields& U,
-                     std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
+                     const Fields& W,
                      std::vector< std::vector< std::array< real, 3 > > >& rhs_ls )
 // *****************************************************************************
-//  Compute internal surface contributions to the least-squares reconstruction
+//  \brief Compute internal surface contributions to rhs vector of the
+//    least-squares reconstruction
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoElem Element geometry array
-//! \param[in] U Solution vector at recent time step
-//! \param[in,out] lhs_ls LHS reconstruction matrix
+//! \param[in] W Solution vector to be reconstructed at recent time step
 //! \param[in,out] rhs_ls RHS reconstruction vector
+//! \details This function computing the internal face contributions to the rhs
+//!   vector for reconstruction, is common for primitive and conserved
+//!   quantities. If `W` == `U`, compute internal face contributions for the
+//!   conserved variables. If `W` == `P`, compute internal face contributions
+//!   for the primitive variables.
 // *****************************************************************************
 {
   const auto& esuf = fd.Esuf();
+  const auto nelem = fd.Esuel().size()/4;
 
   // Compute internal face contributions
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -52,6 +139,9 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
 
     // get a 3x3 system by applying the normal equation approach to the
     // least-squares overdetermined system
+
+    // 'wdeltax' is the distance vector between the centroids of this element
+    // and its neighbor
     std::array< real, 3 > wdeltax{{ geoElem(er,1,0)-geoElem(el,1,0),
                                     geoElem(er,2,0)-geoElem(el,2,0),
                                     geoElem(er,3,0)-geoElem(el,3,0) }};
@@ -63,38 +153,32 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
       {
         auto mark = c*rdof;
         rhs_ls[el][c][idir] +=
-          wdeltax[idir] * (U(er,mark,offset)-U(el,mark,offset));
-        rhs_ls[er][c][idir] +=
-          wdeltax[idir] * (U(er,mark,offset)-U(el,mark,offset));
-      }
-
-      // lhs matrix
-      for (std::size_t jdir=0; jdir<3; ++jdir)
-      {
-        lhs_ls[el][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
-        lhs_ls[er][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
+          wdeltax[idir] * (W(er,mark,offset)-W(el,mark,offset));
+        if (er < nelem)
+          rhs_ls[er][c][idir] +=
+            wdeltax[idir] * (W(er,mark,offset)-W(el,mark,offset));
       }
     }
   }
 }
 
 void
-tk::bndLeastSq_P0P1( ncomp_t system,
-                     ncomp_t ncomp,
-                     ncomp_t offset,
-                     std::size_t rdof,
-                     const std::vector< bcconf_t >& bcconfig,
-                     const inciter::FaceData& fd,
-                     const Fields& geoFace,
-                     const Fields& geoElem,
-                     real t,
-                     const StateFn& state,
-                     const Fields& U,
-                     std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls,
-                     std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-                     std::size_t nprim )
+tk::bndLeastSqConservedVar_P0P1( ncomp_t system,
+  ncomp_t ncomp,
+  ncomp_t offset,
+  std::size_t rdof,
+  const std::vector< bcconf_t >& bcconfig,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  real t,
+  const StateFn& state,
+  const Fields& U,
+  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
+  std::size_t nprim )
 // *****************************************************************************
-//  Compute boundary face contributions to the least-squares reconstruction
+//  \brief Compute boundary surface contributions to rhs vector of the
+//    least-squares reconstruction of conserved quantities of the PDE system
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
@@ -106,12 +190,16 @@ tk::bndLeastSq_P0P1( ncomp_t system,
 //! \param[in] t Physical time
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
-//! \param[in] U Solution vector at recent time step
-//! \param[in,out] lhs_ls LHS reconstruction matrix
+//! \param[in] U Solution vector to be reconstructed at recent time step
 //! \param[in,out] rhs_ls RHS reconstruction vector
-//! \param[in] nprim Number of primitive quantities stored for this PDE system.
+//! \param[in] nprim This is the number of primitive quantities stored for this
+//!   PDE system. This is necessary to extend the state vector to the right
+//!   size, so that correct boundary conditions are obtained.
 //!   A default is set to 0, so that calling code for systems that do not store
 //!   primitive quantities does not need to specify this argument.
+//! \details This function computing the boundary face contributions to the rhs
+//!   vector for reconstruction, is specialized for conserved quantities. Also
+//!   see the version for primitve quantities bndLeastSqPrimitiveVar_P0P1().
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
@@ -130,20 +218,20 @@ tk::bndLeastSq_P0P1( ncomp_t system,
 
         // arrays for quadrature points
         std::array< real, 3 >
-          fc{{ geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0)  }};
+          fc{{ geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0) }};
         std::array< real, 3 >
           fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
 
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
         auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B );
-        std::vector< real >fvel(nprim,0.0);
+        std::vector< real >uprim(nprim,0.0);
 
         // consolidate primitives into state vector
-        ul.insert(ul.end(), fvel.begin(), fvel.end());
+        ul.insert(ul.end(), uprim.begin(), uprim.end());
 
-        Assert( ul.size() == ncomp+fvel.size(), "Incorrect size for "
-                "appended boundary state vector" );
+        Assert( ul.size() == ncomp+nprim, "Incorrect size for "
+                "appended state vector" );
 
         // Compute the state at the face-center using BC
         auto ustate = state( system, ncomp, ul, fc[0], fc[1], fc[2], t, fn );
@@ -155,13 +243,106 @@ tk::bndLeastSq_P0P1( ncomp_t system,
         for (std::size_t idir=0; idir<3; ++idir)
         {
           // rhs vector
-          for (ncomp_t c=0; c<ncomp; ++c) 
+          for (ncomp_t c=0; c<ncomp; ++c)
             rhs_ls[el][c][idir] +=
               wdeltax[idir] * (ustate[1][c]-ustate[0][c]);
+        }
+      }
+    }
+  }
+}
 
-          // lhs matrix
-          for (std::size_t jdir=0; jdir<3; ++jdir)
-            lhs_ls[el][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
+void
+tk::bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
+  ncomp_t nprim,
+  ncomp_t offset,
+  std::size_t rdof,
+  const std::vector< bcconf_t >& bcconfig,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  real t,
+  const StateFn& state,
+  const Fields& P,
+  const Fields& U,
+  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
+  std::size_t ncomp )
+// *****************************************************************************
+//  \brief Compute boundary surface contributions to rhs vector of the
+//    least-squares reconstruction of primitive quantities of the PDE system
+//! \param[in] system Equation system index
+//! \param[in] nprim Number of primitive quantities stored for this PDE system
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] bcconfig BC configuration vector for multiple side sets
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] t Physical time
+//! \param[in] state Function to evaluate the left and right solution state at
+//!   boundaries
+//! \param[in] P Primitive vector to be reconstructed at recent time step
+//! \param[in] U Conserved vector at recent time step
+//! \param[in,out] rhs_ls RHS reconstruction vector
+//! \param[in] ncomp This is the number of conserved quantities stored for this
+//!   system. This is necessary to extend the state vector to the right size,
+//!   so that correct boundary conditions are obtained.
+//! \details Since this function computes rhs contributions of boundary faces
+//!   for the reconstruction of primitive quantities only, it should not be
+//!   called for systems of PDEs that do not store primitive quantities. Also
+//!   see the version for conserved quantities bndLeastSqConservedVar_P0P1().
+// *****************************************************************************
+{
+  const auto& bface = fd.Bface();
+  const auto& esuf = fd.Esuf();
+
+  Assert( nprim != 0, "Primitive variables reconstruction should not be called "
+          "for PDE systems not storing primitive quantities");
+
+  for (const auto& s : bcconfig) {       // for all bc sidesets
+    auto bc = bface.find( std::stoi(s) );// faces for side set
+    if (bc != end(bface))
+    {
+      // Compute boundary face contributions
+      for (const auto& f : bc->second)
+      {
+        Assert( esuf[2*f+1] == -1, "physical boundary element not -1" );
+
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+        // arrays for quadrature points
+        std::array< real, 3 >
+          fc{{ geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0) }};
+        std::array< real, 3 >
+          fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+
+        // Compute the state variables at the left element
+        std::vector< real >B(1,1.0);
+        auto ul = eval_state( nprim, offset, rdof, 1, el, P, B );
+        auto ucons = eval_state(ncomp, offset, rdof, 1, el, U, B );
+
+        // consolidate conserved quantities into state vector
+        tk::concat< tk::real >(std::move(ul), ucons);
+
+        Assert( ucons.size() == ncomp+nprim, "Incorrect size for "
+                "appended state vector" );
+
+        // Compute the state at the face-center using BC
+        auto ustate = state( system, ncomp, ucons, fc[0], fc[1], fc[2], t, fn );
+
+        std::array< real, 3 > wdeltax{{ fc[0]-geoElem(el,1,0),
+                                        fc[1]-geoElem(el,2,0),
+                                        fc[2]-geoElem(el,3,0) }};
+
+        for (std::size_t idir=0; idir<3; ++idir)
+        {
+          // rhs vector
+          for (ncomp_t c=0; c<nprim; ++c)
+          {
+            auto cp = ustate[0].size()-nprim+c;
+            rhs_ls[el][c][idir] +=
+              wdeltax[idir] * (ustate[1][cp]-ustate[0][cp]);
+          }
         }
       }
     }
@@ -174,18 +355,24 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
   const std::size_t rdof,
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
-  Fields& U )
+  Fields& W )
 // *****************************************************************************
-//  Solve 3x3 system for least-squares reconstruction
+//  Solve the 3x3 linear system for least-squares reconstruction
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] lhs LHS reconstruction matrix
 //! \param[in] rhs RHS reconstruction vector
-//! \param[in,out] U Solution vector at recent time step
+//! \param[in,out] W Solution vector to be reconstructed at recent time step
+//! \details Solves the 3x3 linear system for each element, individually. For
+//!   systems that require reconstructions of primitive quantities, this should
+//!   be called twice, once with the argument 'W' as U (conserved), and again
+//!   with 'W' as P (primitive).
 // *****************************************************************************
 {
-  for (std::size_t e=0; e<lhs.size(); ++e)
+  auto nelem = lhs.size();
+
+  for (std::size_t e=0; e<nelem; ++e)
   {
     for (ncomp_t c=0; c<ncomp; ++c)
     {
@@ -194,9 +381,9 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
       // solve system using Cramer's rule
       auto ux = tk::cramer( lhs[e], rhs[e][c] );
 
-      U(e,mark+1,offset) = ux[0];
-      U(e,mark+2,offset) = ux[1];
-      U(e,mark+3,offset) = ux[2];
+      W(e,mark+1,offset) = ux[0];
+      W(e,mark+2,offset) = ux[1];
+      W(e,mark+3,offset) = ux[2];
     }
   }
 }
@@ -208,7 +395,7 @@ tk::transform_P0P1( ncomp_t ncomp,
                     std::size_t nelem,
                     const std::vector< std::size_t >& inpoel,
                     const UnsMesh::Coords& coord,
-                    Fields& U )
+                    Fields& W )
 // *****************************************************************************
 //  Transform the reconstructed P1-derivatives to the Dubiner dofs
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -217,8 +404,11 @@ tk::transform_P0P1( ncomp_t ncomp,
 //! \param[in] nelem Total number of elements
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
-//! \param[in,out] U Second-order solution vector which gets transformed to
+//! \param[in,out] W Second-order reconstructed vector which gets transformed to
 //!   the Dubiner reference space
+//! \details Since the DG solution (and the primitive quantities) are assumed to
+//!   be stored in the Dubiner space, this transformation from Taylor
+//!   coefficients to Dubiner coefficients is necessary.
 // *****************************************************************************
 {
   const auto& cx = coord[0];
@@ -249,68 +439,94 @@ tk::transform_P0P1( ncomp_t ncomp,
       auto ux = tk::cramer( {{ {{dBdx[0][1], dBdx[0][2], dBdx[0][3]}},
                                {{dBdx[1][1], dBdx[1][2], dBdx[1][3]}},
                                {{dBdx[2][1], dBdx[2][2], dBdx[2][3]}} }},
-                            {{ U(e,mark+1,offset),
-                               U(e,mark+2,offset),
-                               U(e,mark+3,offset) }} );
+                            {{ W(e,mark+1,offset),
+                               W(e,mark+2,offset),
+                               W(e,mark+3,offset) }} );
 
       // replace physical derivatives with transformed dofs
-      U(e,mark+1,offset) = ux[0];
-      U(e,mark+2,offset) = ux[1];
-      U(e,mark+3,offset) = ux[2];
+      W(e,mark+1,offset) = ux[0];
+      W(e,mark+2,offset) = ux[1];
+      W(e,mark+3,offset) = ux[2];
     }
   }
 }
 
+constexpr tk::real muscl_eps = 1.0e-9;
+constexpr tk::real muscl_const = 1.0/3.0;
+constexpr tk::real muscl_m1 = 1.0 - muscl_const;
+constexpr tk::real muscl_p1 = 1.0 + muscl_const;
+
 void
-tk::getMultiMatPrimitives_P0P1( ncomp_t offset,
-                                std::size_t nmat,
-                                std::size_t rdof,
-                                std::size_t nelem,
-                                const Fields& U,
-                                Fields& P )
+tk::muscl( const UnsMesh::Edge& edge,
+           const UnsMesh::Coords& coord,
+           const Fields& G,
+           std::array< std::vector< tk::real >, 2 >& u,
+           bool enforce_realizability )
 // *****************************************************************************
-//  Reconstruct the vector of high-order primitives
-//! \param[in] offset Index for equation systems
-//! \param[in] nmat Number of materials in this equation system
-//! \param[in] rdof Total number of reconstructed dofs
-//! \param[in] nelem Total number of elements
-//! \param[in] U Second-order solution vector
-//! \param[in,out] P Second-order vector of primitives which gets computed from
-//!   the second-order solution vector
+// Compute MUSCL reconstruction in edge-end points using a MUSCL procedure with
+// van Leer limiting
+//! \param[in] edge Node ids of edge-end points
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] G Gradient of all unknowns in mesh points
+//! \param[in,out] u Primitive variables at edge-end points, size ncomp x 2
+//! \param[in] enforce_realizability True to enforce positivity of density and
+//!   internal energy, assuming 5 scalar components in u.
 // *****************************************************************************
 {
-  using inciter::densityIdx;
-  using inciter::momentumIdx;
-  using inciter::velocityIdx;
+  const auto ncomp = G.nprop()/3;
 
-  Assert( P.nprop() == 3*rdof, "Number of components in vector of primitives "
-          "must equal "+ std::to_string(rdof*3) );
+  Assert( u[0].size() == ncomp && u[1].size() == ncomp, "Size mismatch" );
 
-  for (std::size_t e=0; e<nelem; ++e)
-  {
-    // cell-average and high-order dofs of bulk density
-    std::vector< real > rhob(rdof, 0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      for (std::size_t j=0; j<rdof; ++j)
-        rhob[j] += U(e, densityIdx(nmat, k)*rdof+j, offset);
-    }
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
 
-    // cell-average velocity
-    std::array< real, 3 >
-      vel{{ U(e, momentumIdx(nmat, 0)*rdof, offset)/rhob[0],
-            U(e, momentumIdx(nmat, 1)*rdof, offset)/rhob[0],
-            U(e, momentumIdx(nmat, 2)*rdof, offset)/rhob[0] }};
+  // edge-end points
+  auto p = edge[0];
+  auto q = edge[1];
 
-    // fill up high-order part of vector of primitives
-    for (std::size_t idir=0; idir<3; ++idir)
-    {
-      for (std::size_t j=1; j<rdof; ++j)
-      {
-        P(e, velocityIdx(nmat, idir)*rdof+j, offset) =
-          ( U(e, momentumIdx(nmat, idir)*rdof+j, offset)
-          - vel[idir]*rhob[j] )/rhob[0];
-      }
-    }
+  // edge vector
+  std::array< tk::real, 3 > vw{ x[q]-x[p], y[q]-y[p], z[q]-z[p] };
+
+  std::vector< tk::real > delta1( ncomp, 0.0 ),
+                          delta2( ncomp, 0.0 ),
+                          delta3( ncomp, 0.0 );
+  std::array< std::vector< tk::real >, 2 > ur = u;
+
+
+  // MUSCL reconstruction of edge-end-point primitive variables
+  for (std::size_t c=0; c<ncomp; ++c) {
+    // gradients
+    std::array< tk::real, 3 >
+      g1{ G(p,c*3+0,0), G(p,c*3+1,0), G(p,c*3+2,0) },
+      g2{ G(q,c*3+0,0), G(q,c*3+1,0), G(q,c*3+2,0) };
+
+    delta2[c] = u[1][c] - u[0][c];
+    delta1[c] = 2.0 * tk::dot(g1,vw) - delta2[c];
+    delta3[c] = 2.0 * tk::dot(g2,vw) - delta2[c];
+
+    // form limiters
+    auto rL = (delta2[c] + muscl_eps) / (delta1[c] + muscl_eps);
+    auto rR = (delta2[c] + muscl_eps) / (delta3[c] + muscl_eps);
+    auto rLinv = (delta1[c] + muscl_eps) / (delta2[c] + muscl_eps);
+    auto rRinv = (delta3[c] + muscl_eps) / (delta2[c] + muscl_eps);
+
+    auto phiL = (std::abs(rL) + rL) / (std::abs(rL) + 1.0);
+    auto phiR = (std::abs(rR) + rR) / (std::abs(rR) + 1.0);
+    auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
+    auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
+
+    // update unknowns with reconstructed unknowns
+    ur[0][c] += 0.25*(delta1[c]*muscl_m1*phiL + delta2[c]*muscl_p1*phi_L_inv);
+    ur[1][c] -= 0.25*(delta3[c]*muscl_m1*phiR + delta2[c]*muscl_p1*phi_R_inv);
   }
+
+  // force first order if the reconstructions for density or internal energy
+  // would have allowed negative values
+  if (enforce_realizability) {
+    if (u[0][0] < delta1[0] || u[0][4] < delta1[4]) ur[0] = u[0];
+    if (u[1][0] < -delta3[0] || u[1][4] < -delta3[4]) ur[1] = u[1];
+  }
+
+  u = ur;
 }

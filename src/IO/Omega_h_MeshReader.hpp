@@ -3,7 +3,7 @@
   \file      src/IO/Omega_h_MeshReader.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Omega_h mesh reader
   \details   Omega_h mesh reader class declaration.
@@ -33,6 +33,9 @@ class Omega_h_MeshReader {
     //! Constructor
     explicit Omega_h_MeshReader( const std::string& filename )
       : m_filename( filename ) {}
+
+    //! Return total number of mesh points in mesh file
+    std::size_t npoin() { return 0; }
 
     //! Read part of the mesh (graph and coords) from Omega_h file
     //! \details Total number of PEs defaults to 1 for a single-CPU read, this

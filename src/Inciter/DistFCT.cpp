@@ -3,7 +3,7 @@
   \file      src/Inciter/DistFCT.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface for distributed flux-corrected transport
   \details   Charm++ module interface file for asynchronous distributed
@@ -33,8 +33,7 @@ using inciter::DistFCT;
 DistFCT::DistFCT( int nchare,
                   std::size_t nu,
                   std::size_t np,
-                  const std::unordered_map< int,
-                    std::vector< std::size_t > >& msum,
+                  const tk::NodeCommMap& nodeCommMap,
                   const std::unordered_map< std::size_t, std::size_t >& bid,
                   const std::unordered_map< std::size_t, std::size_t >& lid,
                   const std::vector< std::size_t >& inpoel ) :
@@ -42,7 +41,7 @@ DistFCT::DistFCT( int nchare,
   m_nalw( 0 ),
   m_nlim( 0 ),
   m_nchare( static_cast< std::size_t >( nchare ) ),
-  m_msum( msum ),
+  m_nodeCommMap( nodeCommMap ),
   m_bid( bid ),
   m_lid( lid ),
   m_inpoel( inpoel ),
@@ -62,8 +61,8 @@ DistFCT::DistFCT( int nchare,
 //! \param[in] nu Number of unknowns in solution vector
 //! \param[in] np Total number of properties, i.e., scalar variables or
 //!   components, per unknown in solution vector
-//! \param[in] msum Global mesh node IDs associated to chare IDs bordering the
-//!   mesh chunk we operate on
+//! \param[in] nodeCommMap Global mesh node IDs associated to chare IDs
+//!   bordering the mesh chunk we operate on
 //! \param[in] bid Local chare-boundary mesh node IDs at which we receive
 //!   contributions associated to global mesh node IDs of mesh elements we
 //!   contribute to
@@ -74,7 +73,6 @@ DistFCT::DistFCT( int nchare,
 {
   resizeComm();         // Size communication buffers
 }
-
 
 void
 DistFCT::resizeComm()
@@ -96,17 +94,27 @@ DistFCT::resizeComm()
 }
 
 void
+DistFCT::remap( const Discretization& d )
+// *****************************************************************************
+// Remap local ids after a mesh node reorder
+//! \param[in] d Discretization proxy to read mesh data from
+// *****************************************************************************
+{
+  m_lid = d.Lid();
+  m_inpoel = d.Inpoel();
+}
+
+void
 DistFCT::resize( std::size_t nu,
-                 const std::unordered_map< int,
-                   std::vector< std::size_t > >& msum,
+                 const tk::NodeCommMap& nodeCommMap,
                  const std::unordered_map< std::size_t, std::size_t >& bid,
                  const std::unordered_map< std::size_t, std::size_t >& lid,
                  const std::vector< std::size_t >& inpoel )
 // *****************************************************************************
 //  Resize FCT data structures (e.g., after mesh refinement)
 //! \param[in] nu New number of unknowns in solution vector
-//! \param[in] msum New global mesh node IDs associated to chare IDs bordering
-//!   the mesh chunk we operate on
+//! \param[in] nodeCommMap New global mesh node IDs associated to chare IDs
+//!   bordering the mesh chunk we operate on
 //! \param[in] bid New local chare-boundary mesh node IDs at which we receive
 //!   contributions associated to global mesh node IDs of mesh elements we
 //!   contribute to
@@ -115,7 +123,7 @@ DistFCT::resize( std::size_t nu,
 //! \param[in] inpoel Mesh connectivity of our chunk of the mesh
 // *****************************************************************************
 {
-  m_msum = msum;
+  m_nodeCommMap = nodeCommMap;
   m_bid = bid;
   m_lid = lid;
   m_inpoel = inpoel;
@@ -130,23 +138,12 @@ DistFCT::resize( std::size_t nu,
 }
 
 tk::Fields
-DistFCT::lump( const Discretization& d )
-// *****************************************************************************
-//  Compute lumped mass lhs required for the low order solution
-//! \param[in] d Discretization proxy to read mesh data from
-//! \return Lumped mass matrix
-// *****************************************************************************
-{
-  return m_fluxcorrector.lump( d.Coord(), m_inpoel );
-}
-
-tk::Fields
 DistFCT::diff( const Discretization& d, const tk::Fields& Un )
 // *****************************************************************************
 //  Compute mass diffusion rhs contribution required for the low order solution
 //! \param[in] d Discretization proxy to read mesh data from
 //! \param[in] Un Solution at the previous time step
-//! \return Lumped mass matrix
+//! \return Mass diffusion contribution to the RHS of the low order system
 // *****************************************************************************
 {
   return m_fluxcorrector.diff( d.Coord(), m_inpoel, Un );
@@ -158,14 +155,11 @@ DistFCT::next()
 // Prepare for next time step stage
 // *****************************************************************************
 {
-  thisProxy[ thisIndex ].wait4fct();
-  thisProxy[ thisIndex ].wait4app();
-
   // Initialize FCT data structures for new time step
   m_p.fill( 0.0 );
   m_a.fill( 0.0 );
-  for (std::size_t p=0; p<m_a.nunk(); ++p)
-    for (ncomp_t c=0; c<g_inputdeck.get<tag::component>().nprop(); ++c) {
+  for (std::size_t p=0; p<m_q.nunk(); ++p)
+    for (ncomp_t c=0; c<m_q.nprop()/2; ++c) {
       m_q(p,c*2+0,0) = -std::numeric_limits< tk::real >::max();
       m_q(p,c*2+1,0) = std::numeric_limits< tk::real >::max();
     }
@@ -173,27 +167,34 @@ DistFCT::next()
   for (auto& b : m_pc) std::fill( begin(b), end(b), 0.0 );
   for (auto& b : m_ac) std::fill( begin(b), end(b), 0.0 );
   for (auto& b : m_qc)
-    for (ncomp_t c=0; c<m_a.nprop(); ++c) {
+    for (ncomp_t c=0; c<m_q.nprop()/2; ++c) {
       b[c*2+0] = -std::numeric_limits< tk::real >::max();
       b[c*2+1] = std::numeric_limits< tk::real >::max();
     }
+
+  thisProxy[ thisIndex ].wait4fct();
+  thisProxy[ thisIndex ].wait4app();
 }
 
 void
-DistFCT::aec( const Discretization& d,
-              const tk::Fields& dUh,
-              const tk::Fields& Un,
-              const std::unordered_map< std::size_t,
-                      std::vector< std::pair< bool, tk::real > > >& bc )
+DistFCT::aec(
+  const Discretization& d,
+  const tk::Fields& dUh,
+  const tk::Fields& Un,
+  const std::unordered_map< std::size_t,
+          std::vector< std::pair< bool, tk::real > > >& bcdir,
+  const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& bnorm )
 // *****************************************************************************
 //  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
 //! \param[in] d Discretization proxy to read mesh data from
 //! \param[in] dUh Increment of the high order solution
 //! \param[in] Un Solution at the previous time step
-//! \param[in] bc Vector of pairs of bool and boundary condition value
+//! \param[in] bcdir Vector of pairs of bool and boundary condition value
 //!   associated to mesh node IDs at which to set Dirichlet boundary conditions.
 //!   Note that this BC data structure must include boundary conditions set
 //!   across all PEs, not just the ones need to be set on this PE.
+//! \param[in] bnorm Face normals in boundary points: key global node id,
+//!   value: unit normal
 //! \details This function computes and starts communicating m_p, which stores
 //!    the sum of all positive (negative) antidiffusive element contributions to
 //!    nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec().
@@ -205,19 +206,19 @@ DistFCT::aec( const Discretization& d,
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
-  m_fluxcorrector.aec(d.Coord(), m_inpoel, d.Vol(), bc, d.Gid(), dUh, Un, m_p);
+  m_fluxcorrector.aec( d.Coord(), m_inpoel, d.Vol(), bcdir, bnorm, Un, m_p );
 
-  if (d.Msum().empty())
+  if (d.NodeCommMap().empty())
     comaec_complete();
   else // send contributions to chare-boundary nodes to fellow chares
-    for (const auto& n : d.Msum()) {
-      std::vector< std::vector< tk::real > > p( n.second.size() );
+    for (const auto& [c,n] : d.NodeCommMap()) {
+      std::vector< std::vector< tk::real > > p( n.size() );
       std::size_t j = 0;
-      for (auto i : n.second) p[ j++ ] = m_p[ tk::cref_find(m_lid,i) ];
-      thisProxy[ n.first ].comaec( n.second, p );
+      for (auto i : n) p[ j++ ] = m_p[ tk::cref_find(m_lid,i) ];
+      thisProxy[ c ].comaec( std::vector<std::size_t>(begin(n),end(n)), p );
     }
 
-  ownaec_complete();
+  ownaec_complete( bcdir );
 }
 
 void
@@ -246,7 +247,7 @@ DistFCT::comaec( const std::vector< std::size_t >& gid,
     m_pc[ bid ] += P[i];
   }
 
-  if (++m_naec == m_msum.size()) {
+  if (++m_naec == m_nodeCommMap.size()) {
     m_naec = 0;
     comaec_complete();
   }
@@ -281,14 +282,14 @@ DistFCT::alw( const tk::Fields& Un,
   // nodes.
   m_fluxcorrector.alw( m_inpoel, Un, Ul, m_q );
 
-  if (m_msum.empty())
+  if (m_nodeCommMap.empty())
     comalw_complete();
   else // send contributions at chare-boundary nodes to fellow chares
-    for (const auto& n : m_msum) {
-      std::vector< std::vector< tk::real > > q( n.second.size() );
+    for (const auto& [c,n] : m_nodeCommMap) {
+      std::vector< std::vector< tk::real > > q( n.size() );
       std::size_t j = 0;
-      for (auto i : n.second) q[ j++ ] = m_q[ tk::cref_find(m_lid,i) ];
-      thisProxy[ n.first ].comalw( n.second, q );
+      for (auto i : n) q[ j++ ] = m_q[ tk::cref_find(m_lid,i) ];
+      thisProxy[ c ].comalw( std::vector<std::size_t>(begin(n),end(n)), q );
     }
 
   ownalw_complete();
@@ -318,22 +319,27 @@ DistFCT::comalw( const std::vector< std::size_t >& gid,
     Assert( bid < m_qc.size(), "Indexing out of bounds" );
     auto& o = m_qc[ bid ];
     const auto& q = Q[i];
-    for (ncomp_t c=0; c<m_a.nprop(); ++c) {
+    for (ncomp_t c=0; c<m_q.nprop()/2; ++c) {
       if (q[c*2+0] > o[c*2+0]) o[c*2+0] = q[c*2+0];
       if (q[c*2+1] < o[c*2+1]) o[c*2+1] = q[c*2+1];
     }
   }
 
-  if (++m_nalw == m_msum.size()) {
+  if (++m_nalw == m_nodeCommMap.size()) {
     m_nalw = 0;
     comalw_complete();
   }
 }
 
 void
-DistFCT::lim()
+DistFCT::lim( const std::unordered_map< std::size_t,
+                std::vector< std::pair< bool, tk::real > > >& bcdir )
 // *****************************************************************************
 //  Compute the limited antidiffusive element contributions
+//! \param[in] bcdir Vector of pairs of bool and boundary condition value
+//!   associated to mesh node IDs at which to set Dirichlet boundary conditions.
+//!   Note that this BC data structure must include boundary conditions set
+//!   across all PEs, not just the ones need to be set on this PE.
 //! \details This function computes and starts communicating m_a, which stores
 //!   the limited antidiffusive element contributions assembled to nodes
 //!   (Lohner: AEC^c), see also FluxCorrector::limit().
@@ -354,16 +360,16 @@ DistFCT::lim()
     }
   }
 
-  m_fluxcorrector.lim( m_inpoel, m_p, m_ul, m_q, m_a );
+  m_fluxcorrector.lim( m_inpoel, bcdir, m_p, m_ul, m_q, m_a );
 
-  if (m_msum.empty())
+  if (m_nodeCommMap.empty())
     comlim_complete();
   else // send contributions to chare-boundary nodes to fellow chares
-    for (const auto& n : m_msum) {
-      std::vector< std::vector< tk::real > > a( n.second.size() );
+    for (const auto& [c,n] : m_nodeCommMap) {
+      std::vector< std::vector< tk::real > > a( n.size() );
       std::size_t j = 0;
-      for (auto i : n.second) a[ j++ ] = m_a[ tk::cref_find(m_lid,i) ];
-      thisProxy[ n.first ].comlim( n.second, a );
+      for (auto i : n) a[ j++ ] = m_a[ tk::cref_find(m_lid,i) ];
+      thisProxy[ c ].comlim( std::vector<std::size_t>(begin(n),end(n)), a );
     }
 
   ownlim_complete();
@@ -396,7 +402,7 @@ DistFCT::comlim( const std::vector< std::size_t >& gid,
     m_ac[ bid ] += A[i];
   }
  
-  if (++m_nlim == m_msum.size()) {
+  if (++m_nlim == m_nodeCommMap.size()) {
     m_nlim = 0;
     comlim_complete();
   }
@@ -417,6 +423,28 @@ DistFCT::apply()
 
   // Update solution in host
   m_host[ thisIndex ].ckLocal()->update( m_a, std::move(m_dul) );
+}
+
+std::tuple< std::vector< std::string >,
+            std::vector< std::vector< tk::real > >,
+            std::vector< std::string >,
+            std::vector< std::vector< tk::real > > >
+DistFCT::fields() const
+// *****************************************************************************
+//  Collect mesh output fields from FCT
+//! \return Names and fields in mesh cells and nodes
+// *****************************************************************************
+{
+  auto fct_elemfields = m_fluxcorrector.fields( m_inpoel );
+
+  using tuple_t = std::tuple< std::vector< std::string >,
+                              std::vector< std::vector< tk::real > >,
+                              std::vector< std::string >,
+                              std::vector< std::vector< tk::real > > >;
+
+  return tuple_t{ std::get< 0 >( fct_elemfields ),
+                  std::get< 1 >( fct_elemfields ),
+                  {}, {} };
 }
 
 #include "NoWarning/distfct.def.h"

@@ -3,7 +3,7 @@
   \file      src/Control/MeshConv/CmdLine/CmdLine.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     MeshConv's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -66,6 +66,12 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::version
                                      , kw::license
                                      >;
+
+    //! Set of tags to ignore when printing this CmdLine
+    using ignore =
+      brigand::set< tag::cmdinfo
+                  , tag::ctrinfo
+                  , tag::helpkw >;
 
     //! \brief Constructor: set defaults.
     //! \details Anything not set here is initialized by the compiler using the

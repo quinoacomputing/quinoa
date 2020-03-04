@@ -3,7 +3,7 @@
   \file      src/PDE/DGPDE.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Partial differential equation base for discontinuous Galerkin PDEs
   \details   This file defines a generic partial differential equation (PDE)
@@ -30,8 +30,48 @@
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+#include "FunctionPrototypes.hpp"
 
 namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
+
+using ncomp_t = kw::ncomp::info::expect::type;
+using bcconf_t = kw::sideset::info::expect::type;
+using BCStateFn =
+  std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >;
+
+//! Extract BC configuration ignoring if BC not specified
+//! \note A more preferable way of catching errors such as this function
+//!   hides is during parsing, so that we don't even get here if BCs are
+//!   not correctly specified. For now we simply ignore if BCs are not
+//!   specified by allowing empty BC vectors from the user input.
+template< class Eq > struct ConfigBC {
+  std::size_t system;  //! Compflow system id
+  BCStateFn& state;    //!< BC state config: sidesets + statefn
+  const std::vector< tk::StateFn >& fn;    //!< BC state functions
+  std::size_t c;       //!< Counts BC types configured
+  //! Constructor
+  ConfigBC( std::size_t sys,
+            BCStateFn& s,
+            const std::vector< tk::StateFn >& f ) :
+    system(sys), state(s), fn(f), c(0) {}
+  //! Function to call for each BC type
+  template< typename U > void operator()( brigand::type_<U> ) {
+    std::vector< bcconf_t > cfg;
+    const auto& v = g_inputdeck.get< tag::param, Eq, tag::bc, U >();
+    if (v.size() > system) cfg = v[system];
+    Assert( fn.size() > c, "StateFn missing for BC type" );
+    state.push_back( { cfg, fn[c++] } );
+  }
+};
+
+//! State function for invalid/un-configured boundary conditions
+[[noreturn]] tk::StateFn::result_type
+invalidBC( ncomp_t, ncomp_t, const std::vector< tk::real >&,
+           tk::real, tk::real, tk::real, tk::real,
+           const std::array< tk::real, 3> & );
 
 //! \brief Partial differential equation base for discontinuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side
@@ -103,6 +143,13 @@ class DGPDE {
                            std::size_t nielem ) const
     { self->updatePrimitives( unk, prim, nielem ); }
 
+    //! Public interface to cleaning up trace materials for the diff eq
+    void cleanTraceMaterial( const tk::Fields& geoElem,
+                             tk::Fields& unk,
+                             tk::Fields& prim,
+                             std::size_t nielem ) const
+    { self->cleanTraceMaterial( geoElem, unk, prim, nielem ); }
+
     //! Public interface to reconstructing the second-order solution
     void reconstruct( tk::real t,
                       const tk::Fields& geoFace,
@@ -152,12 +199,10 @@ class DGPDE {
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
                  const std::vector< std::size_t >& ndofel,
-                 const tk::Fields& U ) const
-    { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U ); }
-
-    //! \brief Public interface for collecting all side set IDs the user has
-    //!   configured for all components of a PDE system
-    void side( std::unordered_set< int >& conf ) const { self->side( conf ); }
+                 const tk::Fields& U,
+                 const tk::Fields& P,
+                 const std::size_t nielem ) const
+    { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U, P, nielem ); }
 
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
@@ -169,8 +214,9 @@ class DGPDE {
     std::vector< std::vector< tk::real > > fieldOutput(
       tk::real t,
       const tk::Fields& geoElem,
-      tk::Fields& U ) const
-    { return self->fieldOutput( t, geoElem, U ); }
+      tk::Fields& U,
+      const tk::Fields& P ) const
+    { return self->fieldOutput( t, geoElem, U, P ); }
 
     //! Public interface to returning nodal field output
     std::vector< std::vector< tk::real > > avgElemToNode(
@@ -214,6 +260,10 @@ class DGPDE {
       virtual void updatePrimitives( const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t ) const = 0;
+      virtual void cleanTraceMaterial( const tk::Fields&,
+                                       tk::Fields&,
+                                       tk::Fields&,
+                                       std::size_t ) const = 0;
       virtual void reconstruct( tk::real,
                                 const tk::Fields&,
                                 const tk::Fields&,
@@ -247,14 +297,16 @@ class DGPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::vector< std::size_t >&,
-                           const tk::Fields& ) const = 0;
-      virtual void side( std::unordered_set< int >& conf ) const = 0;
+                           const tk::Fields&,
+                           const tk::Fields&,
+                           const std::size_t ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
         const tk::Fields&,
-        tk::Fields& ) const = 0;
+        tk::Fields&,
+        const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > > avgElemToNode(
         const std::vector< std::size_t >&,
         const tk::UnsMesh::Coords&,
@@ -285,6 +337,11 @@ class DGPDE {
                              tk::Fields& prim,
                              std::size_t nielem )
       const override { data.updatePrimitives( unk, prim, nielem ); }
+      void cleanTraceMaterial( const tk::Fields& geoElem,
+                               tk::Fields& unk,
+                               tk::Fields& prim,
+                               std::size_t nielem )
+      const override { data.cleanTraceMaterial( geoElem, unk, prim, nielem ); }
       void reconstruct( tk::real t,
                         const tk::Fields& geoFace,
                         const tk::Fields& geoElem,
@@ -327,10 +384,10 @@ class DGPDE {
                    const tk::Fields& geoFace,
                    const tk::Fields& geoElem,
                    const std::vector< std::size_t >& ndofel,
-                   const tk::Fields& U ) const override
-      { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U ); }
-      void side( std::unordered_set< int >& conf ) const override
-      { data.side( conf ); }
+                   const tk::Fields& U,
+                   const tk::Fields& P,
+                   const std::size_t nielem ) const override
+      { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U, P, nielem ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
       std::vector< std::string > names() const override
@@ -338,8 +395,9 @@ class DGPDE {
       std::vector< std::vector< tk::real > > fieldOutput(
         tk::real t,
         const tk::Fields& geoElem,
-        tk::Fields& U ) const override
-      { return data.fieldOutput( t, geoElem, U ); }
+        tk::Fields& U,
+        const tk::Fields& P ) const override
+      { return data.fieldOutput( t, geoElem, U, P ); }
       std::vector< std::vector< tk::real > > avgElemToNode(
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,

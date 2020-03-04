@@ -103,7 +103,7 @@ other ways to build, see the page on @ref build "building Quinoa".
 - Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
 
        apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
-       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libnetcdf-mpi-dev libbackward-dcpp-dev tao-pegtl-dev intel-mkl binutils-dev flex bison python3-pygments python3-jinja2 texlive-latex-base libdw-dev
+       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libnetcdf-mpi-dev libbackward-cpp-dev tao-pegtl-dev intel-mkl binutils-dev flex bison python3-pygments python3-jinja2 texlive-latex-base libdw-dev
 
 - Install prerequisites: _Mac OS X_ (line 1: required, line 2: recommended)
 

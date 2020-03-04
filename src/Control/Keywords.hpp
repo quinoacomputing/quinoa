@@ -3,7 +3,7 @@
   \file      src/Control/Keywords.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1773,9 +1773,9 @@ struct farfield_pressure_info {
   static std::string shortDescription() { return
     "Select the far-field pressure"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field pressure when subsonic
-    outlet boundary condition is used.  This parameter is set up in boundary
-    condition block. Example specification: 'farfield_pressure 1.0')";
+    R"(This keyword is used to specify the far-field pressure when
+    characteristic boundary condition is used. This parameter is set up in
+    boundary condition block. Example specification: 'farfield_pressure 1.0')";
   }
   struct expect {
     using type = tk::real;
@@ -1785,6 +1785,43 @@ struct farfield_pressure_info {
 };
 using farfield_pressure = keyword< farfield_pressure_info,
                             TAOCPP_PEGTL_STRING("farfield_pressure") >;
+
+struct farfield_density_info {
+  static std::string name() { return "farfield_density"; }
+  static std::string shortDescription() { return
+    "Select the far-field density"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the far-field density when characteristic
+    boundary condition is used. This parameter is set up in boundary condition
+    block. Example specification: 'farfield_density 1.0')";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using farfield_density = keyword< farfield_density_info,
+                            TAOCPP_PEGTL_STRING("farfield_density") >;
+
+struct farfield_velocity_info {
+  static std::string name() { return "farfield_velocity"; }
+  static std::string shortDescription() { return
+    "Select the far-field velocity vector"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the far-field velocity vector when
+    characteristic boundary condition is used. This parameter is set up in
+    boundary condition block.
+    Example specification: 'farfield_velocity 1.0 0.0 0.0 end')";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using farfield_velocity = keyword< farfield_velocity_info,
+                             TAOCPP_PEGTL_STRING("farfield_velocity") >;
 
 struct nmat_info {
   static std::string name() { return "nmat"; }
@@ -1817,6 +1854,22 @@ struct ttyi_info {
   };
 };
 using ttyi = keyword< ttyi_info, TAOCPP_PEGTL_STRING("ttyi") >;
+
+struct pari_info {
+  static std::string name() { return "pari"; }
+  static std::string shortDescription() { return
+    "Set particles output  interval"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the interval in time steps for particles
+    output during a simulation.)";
+  }
+  struct expect {
+    using type = uint32_t;
+    static constexpr type lower = 1;
+    static std::string description() { return "uint"; }
+  };
+};
+using pari = keyword< pari_info, TAOCPP_PEGTL_STRING("pari") >;
 
 struct interval_info {
   static std::string name() { return "interval"; }
@@ -1959,6 +2012,22 @@ struct sde_c0_info {
   };
 };
 using sde_c0 = keyword< sde_c0_info,  TAOCPP_PEGTL_STRING("C0") >;
+
+struct gravity_info {
+  static std::string name() { return "gravity"; }
+  static std::string shortDescription() { return
+    R"(Set Langevin SDE parameter gravity)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of 3 real numbers used to
+    parameterize the Langevin model for the fluctuating velocity in homogeneous
+    variable-density turbulence, prescribing a gravy body force in the three
+    coordinate directions, x, y, z. Example: "gravity 0.0 0.2 1.0 end".)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "3 reals"; }
+  };
+};
+using gravity = keyword< gravity_info, TAOCPP_PEGTL_STRING("gravity") >;
 
 struct sde_c3_info {
   static std::string name() { return "C3"; }
@@ -2427,14 +2496,193 @@ struct icdirichlet_info {
 using icdirichlet =
   keyword< icdirichlet_info, TAOCPP_PEGTL_STRING("icdirichlet") >;
 
+struct velocityic_info {
+  static std::string name() { return "velocityic"; }
+  static std::string shortDescription() { return
+    "Specify velocity initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the velocity field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
+
+struct densityic_info {
+  static std::string name() { return "densityic"; }
+  static std::string shortDescription() { return
+    "Specify density initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the density field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using densityic = keyword< densityic_info, TAOCPP_PEGTL_STRING("density") >;
+
+struct pressureic_info {
+  static std::string name() { return "pressureic"; }
+  static std::string shortDescription() { return
+    "Specify pressure initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions for the pressure field.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using pressureic = keyword< pressureic_info, TAOCPP_PEGTL_STRING("pressure") >;
+
+struct energyic_info {
+  static std::string name() { return "energyic"; }
+  static std::string shortDescription() { return
+    "Specify energy per unit mass as initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the energy per unit mass as initial
+    conditions.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using energyic = keyword< energyic_info, TAOCPP_PEGTL_STRING("energy") >;
+
+struct temperatureic_info {
+  static std::string name() { return "temperatureic"; }
+  static std::string shortDescription() { return
+    "Specify temperature as initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the temperature as initial conditions.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using temperatureic =
+  keyword< temperatureic_info, TAOCPP_PEGTL_STRING("temperature") >;
+
+struct xmin_info {
+  static std::string name() { return "xmin"; }
+  static std::string shortDescription() { return "Minimum x coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a minimum x coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using xmin = keyword< xmin_info, TAOCPP_PEGTL_STRING("xmin") >;
+
+struct xmax_info {
+  static std::string name() { return "xmax"; }
+  static std::string shortDescription() { return "Maximum x coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a maximum x coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using xmax = keyword< xmax_info, TAOCPP_PEGTL_STRING("xmax") >;
+
+struct ymin_info {
+  static std::string name() { return "ymin"; }
+  static std::string shortDescription() { return "Minimum y coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a minimum y coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using ymin = keyword< ymin_info, TAOCPP_PEGTL_STRING("ymin") >;
+
+struct ymax_info {
+  static std::string name() { return "ymax"; }
+  static std::string shortDescription() { return "Maximum y coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a maximum y coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using ymax = keyword< ymax_info, TAOCPP_PEGTL_STRING("ymax") >;
+
+struct zmin_info {
+  static std::string name() { return "zmin"; }
+  static std::string shortDescription() { return "Minimum z coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a minimum z coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using zmin = keyword< zmin_info, TAOCPP_PEGTL_STRING("zmin") >;
+
+struct zmax_info {
+  static std::string name() { return "zmax"; }
+  static std::string shortDescription() { return "Maximum z coordinate"; }
+  static std::string longDescription() { return
+    R"(This keyword used to configure a maximum z coordinate, e.g., to specify
+    a box.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using zmax = keyword< zmax_info, TAOCPP_PEGTL_STRING("zmax") >;
+
+struct box_info {
+  static std::string name() { return "box"; }
+  static std::string shortDescription() { return
+    R"(Introduce a box ... end block used to assign initial conditions)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a box ... end block used to assign
+    initial conditions within a box given by spatial coordinates. Example:
+    box x- 0.5 x+ 1.5 y- -0.5 y+ 0.5 z- -0.5 z+ 0.5 density 1.2 end pressure
+    1.4 end end", which specifies a box with extends within which the density
+    will be set to 1.2 and the pressure to be 1.4. Besides the box dimensions,
+    the following physics keywords are allowed in a box ... end block:)"
+    + std::string("\'")
+    + densityic::string()+ "\', \'"
+    + velocityic::string() + "\', \'"
+    + energyic::string() + "\', \'"
+    + temperatureic::string() + "\', \'"
+    + pressureic::string() + "\'."; }
+};
+using box = keyword< box_info, TAOCPP_PEGTL_STRING("box") >;
+
 struct ic_info {
   static std::string name() { return "ic"; }
   static std::string shortDescription() { return
     R"(Introduce an ic...end block used to configure initial conditions)"; }
   static std::string longDescription() { return
     R"(This keyword is used to introduce an ic...end block used to set initial
-    conditions. Example: "ic density 1.0 end" - set the initial density field to
-    1.0 across the whole domain.)"; }
+    conditions. Keywords allowed in a ic ... end block: )" + std::string("\'")
+    + densityic::string()+ "\', \'"
+    + velocityic::string() + "\', \'"
+    + pressureic::string() + "\', \'"
+    + energyic::string() + "\', \'"
+    + temperatureic::string() + "\', \'"
+    + box::string() + "\'.";
+  }
 };
 using ic = keyword< ic_info, TAOCPP_PEGTL_STRING("ic") >;
 
@@ -3149,15 +3397,35 @@ struct product_info {
   static std::string longDescription() { return
     R"(This keyword is used to select the product of multiple random variables
     as what quantity to solve for, i.e., use as the dependent variable, e.g., in
-    a velocity model, solve for the product of the density and velocity, i.e.,
-    the momentum, for a stochastic particle. This configures how
-    statistics must be interpreted.)"; }
+    a velocity model, solve for the product of the full density and the full
+    velocity, i.e., the full momentum, for a stochastic particle. This
+    configures how statistics must be interpreted.)"; }
   struct expect {
     static std::string description() { return "string"; }
   };
 };
 using product =
   keyword< product_info, TAOCPP_PEGTL_STRING("product") >;
+
+struct fluctuating_momentum_info {
+  static std::string name() { return "fluctuating momentum"; }
+  static std::string shortDescription() { return
+    "Select fluctuating moment (as the dependent variable) to solve for"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select fluctuating moment as the dependent
+    variable. This is a very specific quantity and used in conjunction with the
+    Langevin equation for the velocity/momentum. The dependent variable is
+    phi_i^* = rho^* u_i - <rho^* u_i^*>, where the star superscript means a full
+    (i.e., not only a fluctuation about some mean) random variable, u_i is the
+    fluctuating velocity, u_i = u^*_i - <u_i^*>, and angle brackets denote the
+    ensemble average. This also configures how statistics must be
+    interpreted.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using fluctuating_momentum = keyword< fluctuating_momentum_info,
+                               TAOCPP_PEGTL_STRING("fluctuating_momentum") >;
 
 struct solve_info {
   static std::string name() { return "solve for"; }
@@ -3172,7 +3440,8 @@ struct solve_info {
     static std::string choices() {
       return '\'' + fullvar::string() + "\' | \'"
                   + fluctuation::string() + "\' | \'"
-                  + product::string() + '\'';
+                  + product::string() + "\' | \'"
+                  + fluctuating_momentum::string() + '\'';
     }
   };
 };
@@ -3565,8 +3834,8 @@ struct rsfreq_info {
   { return "Set checkpoint/restart frequency during time stepping"; }
   static std::string longDescription() { return
     R"(This keyword is used to set the frequency of dumping checkpoint/restart
-       files during time stepping. The default is 100, which means that
-       checkpoint/restart files are dumped at every 100th time step.)";
+       files during time stepping. The default is 1000, which means that
+       checkpoint/restart files are dumped at every 1000th time step.)";
   }
   using alias = Alias< r >;
   struct expect {
@@ -3709,6 +3978,22 @@ struct stat_info {
   };
 };
 using stat = keyword< stat_info, TAOCPP_PEGTL_STRING("stat") >;
+
+struct particles_info {
+  static std::string name() { return "particles"; }
+  static std::string shortDescription() { return
+    "Specify the name of the particles position output file"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the name of the output file in which to
+    store particles positions during a simulation.)";
+  }
+  using alias = Alias< x >;
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using particles = keyword< particles_info, TAOCPP_PEGTL_STRING("particles") >;
 
 struct input_info {
   static std::string name() { return "input"; }
@@ -3855,15 +4140,16 @@ struct reorder_cmd_info {
 };
 using reorder_cmd = keyword< reorder_cmd_info, TAOCPP_PEGTL_STRING("reorder") >;
 
-struct reorder_info {
-  static std::string name() { return "reorder"; }
-  static std::string shortDescription() { return "Reorder mesh nodes"; }
+struct pelocal_reorder_info {
+  static std::string name() { return "PE-local reorder"; }
+  static std::string shortDescription() { return "PE-local reorder"; }
   static std::string longDescription() { return
     R"(This keyword is used in inciter as a keyword in the inciter...end block
-    as "reorder on" (or off) to do (or not do) a global distributed mesh
+    as "pelocal_reorder true" (or false) to do (or not do) a global distributed
+    mesh
     reordering across all PEs that yields an approximately continous mesh node
     ID order as mesh partitions are assigned to PEs after mesh partitioning.
-    Reordering is optional.)";
+    This reordering is optional.)";
   }
   struct expect {
     using type = bool;
@@ -3871,7 +4157,26 @@ struct reorder_info {
     static std::string description() { return "string"; }
   };
 };
-using reorder = keyword< reorder_info, TAOCPP_PEGTL_STRING("reorder") >;
+using pelocal_reorder =
+  keyword< pelocal_reorder_info, TAOCPP_PEGTL_STRING("pelocal_reorder") >;
+
+struct operator_reorder_info {
+  static std::string name() { return "operator_reorder"; }
+  static std::string shortDescription() { return "Operator-access reorder"; }
+  static std::string longDescription() { return
+    R"(This keyword is used in inciter as a keyword in the inciter...end block
+    as "operator_reorder on" (or off) to do (or not do) a local mesh node
+    reordering based on the PDE operator access pattern. This rReordering is
+    optional.)";
+  }
+  struct expect {
+    using type = bool;
+    static std::string choices() { return "true | false"; }
+    static std::string description() { return "string"; }
+  };
+};
+using operator_reorder =
+  keyword< operator_reorder_info, TAOCPP_PEGTL_STRING("operator_reorder") >;
 
 struct group_info {
   static std::string name() { return "group"; }
@@ -4069,6 +4374,25 @@ struct taylor_green_info {
 using taylor_green =
   keyword< taylor_green_info, TAOCPP_PEGTL_STRING("taylor_green") >;
 
+struct shedding_flow_info {
+  using code = Code< F >;
+  static std::string name() { return "Shedding flow over triangular wedge"; }
+  static std::string shortDescription() { return
+    "Select the Shedding flow test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Shedding flow test problem. It
+    describe a quasi-2D inviscid flow over a triangular wedge in tetrahedron
+    grid. The purpose of this test problem is to test the capability of DG
+    scheme for retaining the shape of vortices and also different error
+    indicator behavior for this external flow problem when p-adaptive DG scheme
+    is applied. Example: "problem shedding_flow".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using shedding_flow =
+  keyword< shedding_flow_info, TAOCPP_PEGTL_STRING("shedding_flow") >;
+
 struct sod_shocktube_info {
   using code = Code< H >;
   static std::string name() { return "Sod shock-tube"; }
@@ -4168,6 +4492,46 @@ struct gauss_hump_compflow_info {
 };
 using gauss_hump_compflow = keyword< gauss_hump_compflow_info,
                             TAOCPP_PEGTL_STRING("gauss_hump_compflow") >;
+
+struct waterair_shocktube_info {
+  using code = Code< W >;
+  static std::string name() { return "Water-air shock-tube"; }
+  static std::string shortDescription() { return
+    "Select the water-air shock-tube test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Water-air shock-tube test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material pressure relaxation procedure and its interface capturing
+    capabilities. Example: "problem waterair_shocktube". For more details, see
+    Chiapolino, A., Saurel, R., & Nkonga, B. (2017). Sharpening diffuse
+    interfaces with compressible fluids on unstructured meshes. Journal of
+    Computational Physics, 340, 389-417.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using waterair_shocktube =
+  keyword< waterair_shocktube_info, TAOCPP_PEGTL_STRING("waterair_shocktube") >;
+
+struct triple_point_info {
+  using code = Code< T >;
+  static std::string name() { return "Triple point problem"; }
+  static std::string shortDescription() { return
+    "Select the triple point test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the triple point test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material algorithm and its interface capturing
+    capabilities. Example: "problem triple_point". For more details, see
+    Galera, S., Maire, P. H., & Breil, J. (2010). A two-dimensional unstructured
+    cell-centered multi-material ALE scheme using VOF interface reconstruction.
+    Journal of Computational Physics, 229(16), 5755-5787.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using triple_point =
+  keyword< triple_point_info, TAOCPP_PEGTL_STRING("triple_point") >;
 
 struct problem_info {
   using code = Code< t >;
@@ -4513,6 +4877,28 @@ struct ctau_info {
 };
 using ctau = keyword< ctau_info, TAOCPP_PEGTL_STRING("ctau") >;
 
+struct fcteps_info {
+  static std::string name() { return "Small number for FCT"; }
+  static std::string shortDescription() { return
+    R"(A number that is considered small enough for FCT)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the epsilon (a small number) below which FCT
+    quantities are considered small enough to be treated as zero. Setting this
+    number to be somewhat larger than the machine zero, e.g., 1.0e-15, helps
+    ignoring some noise that otherwise could contaminate the solution.)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
+    static std::string description() { return "real"; }
+    static std::string choices() {
+      return "real between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "]";
+    }
+  };
+};
+using fcteps = keyword< fcteps_info, TAOCPP_PEGTL_STRING("fcteps") >;
+
 struct cweight_info {
   static std::string name() { return "cweight"; }
   static std::string shortDescription() { return
@@ -4557,9 +4943,12 @@ struct bc_dirichlet_info {
     "Start configuration block describing Dirichlet boundary conditions"; }
   static std::string longDescription() { return
     R"(This keyword is used to introduce an bc_dirichlet ... end block, used to
-    specify the configuration for setting Dirichlet boundary conditions for a
-    partial differential equation. Keywords allowed in a bc_dirichlet ... end
-    block: )" + std::string("\'")
+    specify the configuration for setting Dirichlet boundary conditions (BC) for
+    a partial differential equation. This keyword is used to list multiple side
+    sets on which a prescribed Dirichlet BC is then applied. Such prescribed BCs
+    at each point in space and time are evaluated using a built-in function,
+    e.g., using the method of manufactured solutions.
+    Keywords allowed in a bc_dirichlet ... end block: )" + std::string("\'")
     + sideset::string() + "\'. "
     + R"(For an example bc_dirichlet ... end block, see
       doc/html/inicter_example_shear.html.)";
@@ -4644,6 +5033,23 @@ struct transport_info {
 };
 using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
 
+struct bc_characteristic_info {
+  static std::string name() { return "Characteristic boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing Characteristic boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a bc_characteristic ... end block, used
+    to specify the configuration for setting characteristic boundary conditions
+    for a partial differential equation. Keywords allowed in a bc_characteristic
+    ... end block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_characteristic ... end block, see
+      doc/html/inciter_example_gausshump.html.)";
+  }
+};
+using bc_characteristic =
+  keyword< bc_characteristic_info, TAOCPP_PEGTL_STRING("bc_characteristic") >;
+
 struct bc_extrapolate_info {
   static std::string name() { return "Extrapolation boundary condition"; }
   static std::string shortDescription() { return
@@ -4674,6 +5080,43 @@ struct id_info {
   };
 };
 using id = keyword< id_info, TAOCPP_PEGTL_STRING("id") >;
+
+struct prelax_info {
+  static std::string name() { return "Pressure relaxation"; }
+  static std::string shortDescription() { return
+    "Turn multi-material finite pressure relaxation on/off"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to turn finite pressure relaxation between multiple
+       materials on/off. It is used only for the multi-material solver, and has
+       no effect when used for the other PDE types.)";
+  }
+  struct expect {
+    using type = int;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "1 | 0"; }
+  };
+};
+using prelax = keyword< prelax_info, TAOCPP_PEGTL_STRING("prelax") >;
+
+struct prelax_timescale_info {
+  static std::string name() { return "Pressure relaxation time-scale"; }
+  static std::string shortDescription() { return
+    "Time-scale for multi-material finite pressure relaxation"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the time-scale at which finite pressure
+       relaxation between multiple materials occurs. The default value of 1.0
+       corresponds to a relaxation time of the order of time required for a
+       sound wave to pass through a computational element. It is used only for
+       multimat, and has no effect for the other PDE types.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.001;
+    static std::string description() { return "real"; }
+  };
+};
+using prelax_timescale = keyword< prelax_timescale_info,
+                                  TAOCPP_PEGTL_STRING("prelax_timescale") >;
 
 struct mat_gamma_info {
   static std::string name() { return "gamma"; }
@@ -4771,21 +5214,6 @@ struct material_info {
 };
 using material = keyword< material_info, TAOCPP_PEGTL_STRING("material") >;
 
-struct velocityic_info {
-  static std::string name() { return "velocity"; }
-  static std::string shortDescription() { return
-    "Specify velocity initial conditions";
-  }
-  static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions for the velocity field.)";
-  }
-  struct expect {
-    using type = tk::real;
-    static std::string description() { return "real(s)"; }
-  };
-};
-using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
-
 struct compflow_info {
   static std::string name() { return "Compressible single-material flow"; }
   static std::string shortDescription() { return
@@ -4813,6 +5241,7 @@ struct compflow_info {
     + bc_sym::string() + "\', \'"
     + bc_inlet::string() + "\', \'"
     + bc_outlet::string() + "\', \'"
+    + bc_characteristic::string() + "\', \'"
     + bc_extrapolate::string() + "\'."
     + R"(For an example compflow ... end block, see
       doc/html/inicter_example_compflow.html.)";
@@ -4834,6 +5263,8 @@ struct multimat_info {
     + problem::string() + "\', \'"
     + material::string() + "\', \'"
     + nmat::string() + "\', \'"
+    + prelax::string() + "\', \'"
+    + prelax_timescale::string() + "\', \'"
     + pde_alpha::string() + "\', \'"
     + pde_p0::string() + "\', \'"
     + pde_betax::string() + "\', \'"
@@ -5476,7 +5907,7 @@ struct pref_info {
 using pref = keyword< pref_info, TAOCPP_PEGTL_STRING("pref") >;
 
 struct diagcg_info {
-  static std::string name() { return "CG + LW"; }
+  static std::string name() { return "CG+LW"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
     "+ Lax Wendroff with a lumped-mass matrix LHS"; }
   static std::string longDescription() { return
@@ -5491,7 +5922,7 @@ struct diagcg_info {
 using diagcg = keyword< diagcg_info, TAOCPP_PEGTL_STRING("diagcg") >;
 
 struct alecg_info {
-  static std::string name() { return "ALE-CG + RK"; }
+  static std::string name() { return "ALECG+RK"; }
   static std::string shortDescription() { return "Select continuous Galerkin "
     "with ALE + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5503,7 +5934,7 @@ struct alecg_info {
 using alecg = keyword< alecg_info, TAOCPP_PEGTL_STRING("alecg") >;
 
 struct dg_info {
-  static std::string name() { return "DG(P0) + RK"; }
+  static std::string name() { return "DG(P0)+RK"; }
   static std::string shortDescription() { return
     "Select 1st-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5517,7 +5948,7 @@ struct dg_info {
 using dg = keyword< dg_info, TAOCPP_PEGTL_STRING("dg") >;
 
 struct p0p1_info {
-  static std::string name() { return "P0P1 + RK"; }
+  static std::string name() { return "P0P1+RK"; }
   static std::string shortDescription() { return
     "Select 2nd-order finite volume discretization + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5531,7 +5962,7 @@ struct p0p1_info {
 using p0p1 = keyword< p0p1_info, TAOCPP_PEGTL_STRING("p0p1") >;
 
 struct dgp1_info {
-  static std::string name() { return "DG(P1) + RK"; }
+  static std::string name() { return "DG(P1)+RK"; }
   static std::string shortDescription() { return
     "Select 2nd-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5544,7 +5975,7 @@ struct dgp1_info {
 using dgp1 = keyword< dgp1_info, TAOCPP_PEGTL_STRING("dgp1") >;
 
 struct dgp2_info {
-  static std::string name() { return "DG(P2) + RK"; }
+  static std::string name() { return "DG(P2)+RK"; }
   static std::string shortDescription() { return
     "Select 3nd-order discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5557,7 +5988,7 @@ struct dgp2_info {
 using dgp2 = keyword< dgp2_info, TAOCPP_PEGTL_STRING("dgp2") >;
 
 struct pdg_info {
-  static std::string name() { return "p-adaptive DG + RK"; }
+  static std::string name() { return "pDG+RK"; }
   static std::string shortDescription() { return
     "Select adaptive discontinuous Galerkin discretization + Runge-Kutta"; }
   static std::string longDescription() { return
@@ -5638,6 +6069,19 @@ struct ausm_info {
 };
 using ausm = keyword< ausm_info, TAOCPP_PEGTL_STRING("ausm") >;
 
+struct hll_info {
+  static std::string name() { return "HLL"; }
+  static std::string shortDescription() { return
+    "Select the Harten-Lax-vanLeer (HLL) flux function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the HLL flux
+    function used for discontinuous Galerkin (DG) spatial discretization
+    used in inciter. It is only used for for multi-material hydro, it is thus
+    not selectable for anything else, and for multi-material hydro it is the
+    hardcoded flux type.)"; }
+};
+using hll = keyword< hll_info, TAOCPP_PEGTL_STRING("hll") >;
+
 struct flux_info {
   static std::string name() { return "Flux function"; }
   static std::string shortDescription() { return
@@ -5652,7 +6096,8 @@ struct flux_info {
       return '\'' + laxfriedrichs::string() + "\' | \'"
                   + hllc::string() + "\' | \'"
                   + upwind::string() + "\' | \'"
-                  + ausm::string() + '\'';
+                  + ausm::string() + "\' | \'"
+                  + hll::string() + '\'';
     }
   };
 };
@@ -5730,6 +6175,66 @@ struct fct_info {
   };
 };
 using fct = keyword< fct_info, TAOCPP_PEGTL_STRING("fct") >;
+
+struct fctclip_info {
+  static std::string name() { return "Clipping Flux-corrected transport"; }
+  static std::string shortDescription() { return
+    "Turn on clipping flux-corrected transport on/off"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to turn on/off the clipping limiter used for
+    flux-corrected transport (FCT). The clipping limiter only looks at the
+    current low order solution to determine the allowed solution minima and
+    maxima, instead of the minimum and maximum of the low order solution and
+    the previous solution.)"; }
+  struct expect {
+    using type = bool;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using fctclip = keyword< fctclip_info, TAOCPP_PEGTL_STRING("fctclip") >;
+
+struct sysfct_info {
+  static std::string name() { return "Flux-corrected transport for systems"; }
+  static std::string shortDescription() { return
+    "Turn on system nature of flux-corrected transport"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to enable a system-nature for flux-corrected
+    transport (FCT). Note that FCT is only used in conjunction with continuous
+    Galerkin finite element discretization, configured by scheme diagcg and it
+    has no effect when the discontinuous Galerkin (DG) scheme is used,
+    configured by 'scheme dg'. Enabling the system-nature for FCT will choose
+    the limiter coefficients for a system of equations, e.g., compressible flow,
+    in way that takes the system-nature of the equations into account. An
+    example is assinging the minimum of the limit coefficient to all variables
+    limited in a computational cell, e.g., density, momentum, and specitic total
+    energy. This yields better, more monotonic, results.)"; }
+  struct expect {
+    using type = bool;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using sysfct = keyword< sysfct_info, TAOCPP_PEGTL_STRING("sysfct") >;
+
+struct sysfctvar_info {
+  static std::string name() { return "Variables considered for system FCT"; }
+  static std::string shortDescription() { return
+    "Specify a list of scalar component indices that considered for system FCT";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a list of integers that are considered
+    for computing the system-nature of flux-corrected transport. Example:
+    'sysfctvar 0 1 2 3 end', which means ignoring the energy (by not listing 4)
+    when computing the coupled limit coefficient for a system of mass, momentum,
+    and energy for single-material compressible flow.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static std::string description() { return "integers"; }
+  };
+};
+using sysfctvar = keyword< sysfctvar_info, TAOCPP_PEGTL_STRING("sysfctvar") >;
 
 ////////// NOT YET FULLY DOCUMENTED //////////
 

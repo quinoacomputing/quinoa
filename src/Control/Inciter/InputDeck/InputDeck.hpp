@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/InputDeck/InputDeck.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -30,7 +30,8 @@ namespace ctr {
 
 //! Member data for tagged tuple
 using InputDeckMembers = brigand::list<
-    tag::title,      kw::title::info::expect::type
+    tag::cmd,        CmdLine
+  , tag::title,      kw::title::info::expect::type
   , tag::selected,   selects
   , tag::amr,        amr
   , tag::pref,       pref
@@ -39,7 +40,6 @@ using InputDeckMembers = brigand::list<
   , tag::flformat,   floatformat
   , tag::component,  ncomps
   , tag::interval,   intervals
-  , tag::cmd,        CmdLine
   , tag::param,      parameters
   , tag::diag,       diagnostics
   , tag::error,      std::vector< std::string >
@@ -85,6 +85,18 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::compflow,
                                    kw::multimat,
                                    kw::ic,
+                                   kw::box,
+                                   kw::densityic,
+                                   kw::velocityic,
+                                   kw::pressureic,
+                                   kw::energyic,
+                                   kw::temperatureic,
+                                   kw::xmin,
+                                   kw::xmax,
+                                   kw::ymin,
+                                   kw::ymax,
+                                   kw::zmin,
+                                   kw::zmax,
                                    kw::txt_float_format,
                                    kw::txt_float_default,
                                    kw::txt_float_fixed,
@@ -130,7 +142,12 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::l2,
                                    kw::linf,
                                    kw::fct,
-                                   kw::reorder,
+                                   kw::fctclip,
+                                   kw::fcteps,
+                                   kw::sysfct,
+                                   kw::sysfctvar,
+                                   kw::pelocal_reorder,
+                                   kw::operator_reorder,
                                    kw::amr,
                                    kw::amr_t0ref,
                                    kw::amr_dtref,
@@ -174,23 +191,35 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::hllc,
                                    kw::upwind,
                                    kw::ausm,
+                                   kw::hll,
                                    kw::limiter,
                                    kw::cweight,
                                    kw::nolimiter,
                                    kw::wenop1,
                                    kw::superbeep1,
+                                   kw::prelax,
+                                   kw::prelax_timescale,
                                    kw::bc_sym,
                                    kw::bc_inlet,
                                    kw::bc_outlet,
+                                   kw::bc_characteristic,
                                    kw::bc_extrapolate,
                                    kw::farfield_pressure,
+                                   kw::farfield_density,
+                                   kw::farfield_velocity,
                                    kw::gauss_hump,
                                    kw::rotated_sod_shocktube,
                                    kw::cyl_advect,
+                                   kw::shedding_flow,
                                    kw::sod_shocktube,
                                    kw::sedov_blastwave,
                                    kw::interface_advection,
-                                   kw::gauss_hump_compflow >;
+                                   kw::gauss_hump_compflow,
+                                   kw::waterair_shocktube,
+                                   kw::triple_point >;
+
+    //! Set of tags to ignore when printing this InputDeck
+    using ignore = CmdLine::ignore;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -208,10 +237,13 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::dt >() = 0.0;
       get< tag::discr, tag::cfl >() = 0.0;
       get< tag::discr, tag::fct >() = true;
-      get< tag::discr, tag::reorder >() = false;
+      get< tag::discr, tag::fctclip >() = false;
       get< tag::discr, tag::ctau >() = 1.0;
+      get< tag::discr, tag::fcteps >() =
+        std::numeric_limits< tk::real >::epsilon();
+      get< tag::discr, tag::pelocal_reorder >() = false;
+      get< tag::discr, tag::operator_reorder >() = false;
       get< tag::discr, tag::scheme >() = SchemeType::DiagCG;
-      get< tag::discr, tag::flux >() = FluxType::HLLC;
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::limiter >() = LimiterType::NOLIMITER;
       get< tag::discr, tag::cweight >() = 1.0;

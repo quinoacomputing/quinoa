@@ -3,7 +3,7 @@
   \file      src/PDE/Transport/DGTransport.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Scalar transport using disccontinous Galerkin discretization
   \details   This file implements the physics operators governing transported
@@ -32,7 +32,7 @@
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
-#include "Integrate/Riemann/Upwind.hpp"
+#include "Riemann/Upwind.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 
@@ -53,26 +53,7 @@ template< class Physics, class Problem >
 class Transport {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
-    using bcconf_t = kw::sideset::info::expect::type;
     using eq = tag::transport;
-
-    //! Extract BC configuration ignoring if BC not specified
-    //! \param[in] c Equation system index (among multiple systems configured)
-    //! \return Vector of BC config of type bcconf_t used to apply BCs for all
-    //!   scalar components this Transport eq system is configured for
-    //! \note A more preferable way of catching errors such as this function
-    //!   hides is during parsing, so that we don't even get here if BCs are not
-    //!   correctly specified. For now we simply ignore if BCs are not
-    //!   specified by allowing empty BC vectors from the user input.
-    template< typename bctag >
-    std::vector< bcconf_t >
-    config( ncomp_t c ) {
-      std::vector< bcconf_t > bc;
-      const auto& v = g_inputdeck.get< tag::param, eq, bctag >();
-      if (v.size() > c) bc = v[c];
-      return bc;
-    }
 
   public:
     //! Constructor
@@ -84,12 +65,17 @@ class Transport {
       m_ncomp(
         g_inputdeck.get< tag::component >().get< eq >().at(c) ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_bcextrapolate( config< tag::bcextrapolate >( c ) ),
-      m_bcinlet( config< tag::bcinlet >( c ) ),
-      m_bcoutlet( config< tag::bcoutlet >( c ) ),
-      m_bcdir( config< tag::bcdir >( c ) )
+        g_inputdeck.get< tag::component >().offset< eq >(c) )
     {
+      // associate boundary condition configurations with state functions, the
+      // order in which the state functions listed matters, see ctr::bc::Keys
+      brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
+        { dirichlet
+        , invalidBC  // Symmetry BC not implemented
+        , inlet
+        , outlet
+        , invalidBC  // Characteristic BC not implemented
+        , extrapolate } ) );
       m_problem.errchk( m_system, m_ncomp );
     }
 
@@ -124,7 +110,8 @@ class Transport {
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      tk::mass( m_ncomp, m_offset, geoElem, l );
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
     }
 
     //! Update the primitives for this PDE system
@@ -133,6 +120,14 @@ class Transport {
     void updatePrimitives( const tk::Fields&,
                            tk::Fields&,
                            std::size_t ) const {}
+
+    //! Clean up the state of trace materials for this PDE system
+    //! \details This function cleans up the state of materials present in trace
+    //!   quantities in each cell. This is currently unused for transport.
+    void cleanTraceMaterial( const tk::Fields&,
+                             tk::Fields&,
+                             tk::Fields&,
+                             std::size_t ) const {}
 
     //! Reconstruct second-order solution from first-order
     //! \param[in] t Physical time
@@ -152,6 +147,7 @@ class Transport {
                       tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nelem = fd.Esuel().size()/4;
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -160,40 +156,33 @@ class Transport {
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
-      // supported boundary condition types and associated state functions
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >
-        bctypes{{
-          { m_bcextrapolate, Extrapolate },
-          { m_bcinlet, Inlet },
-          { m_bcoutlet, Outlet },
-          { m_bcdir, Dirichlet } }};
-
       // allocate and initialize matrix and vector for reconstruction
       std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-        lhs_ls( U.nunk(), {{ {{0.0, 0.0, 0.0}},
-                             {{0.0, 0.0, 0.0}},
-                             {{0.0, 0.0, 0.0}} }} );
+        lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
+                          {{0.0, 0.0, 0.0}},
+                          {{0.0, 0.0, 0.0}} }} );
       std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhs_ls( U.nunk(), std::vector< std::array< tk::real, 3 > >
+        rhs_ls( nelem, std::vector< std::array< tk::real, 3 > >
           ( m_ncomp,
             {{ 0.0, 0.0, 0.0 }} ) );
 
       // reconstruct x,y,z-derivatives of unknowns
-      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U,
-                           lhs_ls, rhs_ls );
+      // 0. get lhs matrix, which is only geometry dependent
+      tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
-      // compute boundary surface flux integrals
-      for (const auto& b : bctypes)
-        tk::bndLeastSq_P0P1( m_system, m_ncomp, m_offset, rdof, b.first,
-                             fd, geoFace, geoElem, t, b.second, U, lhs_ls,
-                             rhs_ls );
+      // 1. internal face contributions
+      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U, rhs_ls );
 
-      // solve 3x3 least-squares system
+      // 2. boundary face contributions
+      for (const auto& b : m_bc)
+        tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
+          b.first, fd, geoFace, geoElem, t, b.second, U, rhs_ls );
+
+      // 3. solve 3x3 least-squares system
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
 
-      // transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1( m_ncomp, m_offset, rdof, fd.Esuel().size()/4,
-                          inpoel, coord, U );
+      // 4. transform reconstructed derivatives to Dubiner dofs
+      tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
     }
 
     //! Limit second-order solution
@@ -271,15 +260,8 @@ class Transport {
       // system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
-      // supported boundary condition types and associated state functions
-      std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > > bctypes{{
-        { m_bcextrapolate, Extrapolate },
-        { m_bcinlet, Inlet },
-        { m_bcoutlet, Outlet },
-        { m_bcdir, Dirichlet } }};
-
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, inpoel, coord,
+      tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, Upwind::flux, Problem::prescribedVelocity, U, P,
                    ndofel, R, riemannDeriv );
 
@@ -289,8 +271,8 @@ class Transport {
                     flux, Problem::prescribedVelocity, U, ndofel, R );
 
       // compute boundary surface flux integrals
-      for (const auto& b : bctypes)
-        tk::bndSurfInt( m_system, m_ncomp, 1, m_offset, ndof, rdof, b.first, fd,
+      for (const auto& b : m_bc)
+        tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
           geoFace, inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
           b.second, U, P, ndofel, R, riemannDeriv );
     }
@@ -306,17 +288,13 @@ class Transport {
                  const tk::Fields& /*geoFace*/,
                  const tk::Fields& /*geoElem*/,
                  const std::vector< std::size_t >& /*ndofel*/,
-                 const tk::Fields& /*U*/ ) const
+                 const tk::Fields& /*U*/,
+                 const tk::Fields&,
+                 const std::size_t /*nielem*/ ) const
     {
       tk::real mindt = std::numeric_limits< tk::real >::max();
       return mindt;
     }
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    //! \param[in,out] conf Set of unique side set IDs to add to
-    void side( std::unordered_set< int >& conf ) const
-    { m_problem.side( conf ); }
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
@@ -363,7 +341,8 @@ class Transport {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  const tk::Fields& geoElem,
-                 tk::Fields& U ) const
+                 tk::Fields& U,
+                 const tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
@@ -423,14 +402,8 @@ class Transport {
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     const ncomp_t m_offset;             //!< Offset this PDE operates from
-    //! Extrapolation BC configuration
-    const std::vector< bcconf_t > m_bcextrapolate;
-    //! Inlet BC configuration
-    const std::vector< bcconf_t > m_bcinlet;
-    //! Outlet BC configuration
-    const std::vector< bcconf_t > m_bcoutlet;
-    //! Dirichlet BC configuration
-    const std::vector< bcconf_t > m_bcdir;
+    //! BC configuration
+    BCStateFn m_bc;
 
     //! Evaluate physical flux function for this PDE system
     //! \param[in] ncomp Number of scalar components in this PDE system
@@ -464,7 +437,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
                  const std::array< tk::real, 3 >& )
     {
@@ -478,7 +451,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Inlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    inlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
            tk::real, tk::real, tk::real, tk::real,
            const std::array< tk::real, 3 >& )
     {
@@ -494,7 +467,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Outlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+    outlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
             const std::array< tk::real, 3 >& )
     {
@@ -514,7 +487,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    Dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+    dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
