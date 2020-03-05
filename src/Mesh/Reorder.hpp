@@ -77,6 +77,11 @@ bool
 positiveJacobians( const std::vector< std::size_t >& inpoel,
                    const std::array< std::vector< real >, 3 >& coord );
 
+//! Generate nodes of side set faces
+std::map< int, std::vector< std::size_t > >
+bfacenodes( const std::map< int, std::vector< std::size_t > >& bface,
+            const std::vector< std::size_t >& triinpoel );
+
 } // ::tk
 
 #endif // Reorder_h

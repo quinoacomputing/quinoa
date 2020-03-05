@@ -86,8 +86,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] bface Boundary-faces mapped to side set ids where BCs set
-//! \param[in] bnode Boundary-node lists mapped to side set ids where BCs set
+//! \param[in] bface Boundary-faces mapped to side sets used in the input file
+//! \param[in] bnode Boundary-node lists mapped to side sets used in input file
 //! \param[in] triinpoel Boundary-face connectivity where BCs set (global ids)
 // *****************************************************************************
 //! [Constructor]
@@ -899,24 +899,36 @@ ALECG::writeFields( CkCallback c ) const
 
     auto d = Disc();
 
-    // Query and collect field names from PDEs integrated
+    // Query and collect block and surface field names from PDEs integrated
     std::vector< std::string > nodefieldnames;
+    std::vector< std::string > nodesurfnames;
     for (const auto& eq : g_cgpde) {
       auto n = eq.fieldNames();
       nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
+      auto s = eq.surfNames();
+      nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
     }
 
-    // Collect node field solution
+    // Generate side set triangle connectivity with local node ids
+    auto ltriinp = tk::remap( m_triinpoel, d->Lid() );
+
+    // Collect node block and surface field solution
     auto u = m_u;
     std::vector< std::vector< tk::real > > nodefields;
+    std::vector< std::vector< tk::real > > nodesurfs;
     for (const auto& eq : g_cgpde) {
       auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
       nodefields.insert( end(nodefields), begin(o), end(o) );
+      auto s = eq.surfOutput( tk::bfacenodes(m_bface,ltriinp), u );
+      nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
 
+    Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
+
     // Send mesh and fields data (solution dump) for output to file
-    d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {}, {},
-              nodefieldnames, {}, nodefields, c );
+    d->write( d->Inpoel(), d->Coord(), m_bface, tk::remap(m_bnode,d->Lid()),
+              ltriinp, {}, nodefieldnames, nodesurfnames, {}, nodefields,
+              nodesurfs, c );
 
   }
 }

@@ -105,18 +105,6 @@ struct registerDG : registerPDE< Eq, DGFactory, DGPDE > {
     registerPDE< Eq, DGFactory, DGPDE >( f, t, eqtypes ) {}
 };
 
-//! \brief Convert and return values from vector as string
-//! \param[in] v Vector whose components to return as a string
-//! \return Concatenated string of values read from a vector
-template< typename V >
-std::string parameters( const V& v ) {
-  std::stringstream s;
-  s << "{ ";
-  for (auto p : v) s << p << ' ';
-  s << "}";
-  return s.str();
-}
-
 } // inciter::
 
 #endif // PDEFactory_h

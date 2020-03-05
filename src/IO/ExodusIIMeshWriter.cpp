@@ -36,7 +36,7 @@ ExodusIIMeshWriter::ExodusIIMeshWriter( const std::string& filename,
 // *****************************************************************************
 {
   // Increase verbosity from ExodusII library in debug mode
-  #ifdef NDEBUG
+  #ifndef NDEBUG
   ex_opts( EX_DEBUG | EX_VERBOSE );
   #endif
 
@@ -83,18 +83,6 @@ ExodusIIMeshWriter::writeMesh( const UnsMesh& mesh ) const
   writeElements( mesh );
   writeSidesets( mesh );
   writeNodesets( mesh );
-}
-
-void
-ExodusIIMeshWriter::writeMesh( const std::vector< std::size_t >& tetinp,
-                               const UnsMesh::Coords& coord ) const
-// *****************************************************************************
-//  Write ExodusII mesh file taking inputs to a tk::UnsMesh object
-//! \param[in] tetinp Tetrahedron element connectivity
-//! \param[in] coord Node coordinates
-// *****************************************************************************
-{
-  writeMesh( tk::UnsMesh( tetinp, coord ) );
 }
 
 void

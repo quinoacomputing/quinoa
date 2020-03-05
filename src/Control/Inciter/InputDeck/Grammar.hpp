@@ -1057,15 +1057,20 @@ namespace deck {
   struct plotvar :
          pegtl::if_must<
            tk::grm::readkw< use< kw::plotvar >::pegtl_string >,
-           tk::grm::block< use< kw::end >,
-                           tk::grm::process< use< kw::filetype >,
-                                             tk::grm::store_inciter_option<
-                                               tk::ctr::FieldFile,
-                                               tag::selected,
-                                               tag::filetype >,
-                                             pegtl::alpha >,
-                           tk::grm::interval< use< kw::interval >,
-                                              tag::field > > > {};
+           tk::grm::block<
+             use< kw::end >,
+             tk::grm::process< use< kw::filetype >,
+                               tk::grm::store_inciter_option<
+                                 tk::ctr::FieldFile,
+                                 tag::selected,
+                                 tag::filetype >,
+                               pegtl::alpha >,
+             tk::grm::interval< use< kw::interval >, tag::field >,
+             pegtl::if_must<
+               tk::grm::vector<
+                 kw::sideset,
+                 tk::grm::Store_back< tag::cmd, tag::io, tag::surface >,
+                 use< kw::end > > > > > {};
 
   //! 'inciter' block
   struct inciter :

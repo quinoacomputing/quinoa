@@ -171,6 +171,8 @@ class DiagCG : public CBase_DiagCG {
       p | m_nrhs;
       p | m_nnorm;
       p | m_bnode;
+      p | m_bface;
+      p | m_triinpoel;
       p | m_u;
       p | m_ul;
       p | m_du;
@@ -209,6 +211,10 @@ class DiagCG : public CBase_DiagCG {
     std::size_t m_nnorm;
     //! Boundary node lists mapped to side set ids
     std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Boundary faces side-set information
+    std::map< int, std::vector< std::size_t > > m_bface;
+    //! Triangle face connecitivity
+    std::vector< std::size_t > m_triinpoel;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes (low orderd)
