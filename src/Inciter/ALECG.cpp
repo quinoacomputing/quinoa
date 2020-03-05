@@ -923,6 +923,15 @@ ALECG::writeFields( CkCallback c ) const
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
 
+    // Create volume node field assigning 1 where symmetry BC is set
+    // std::unordered_set< std::size_t > symbcnodes;
+    // for (const auto& eq : g_cgpde)
+    //   eq.symbcnodes( m_bface, m_triinpoel, symbcnodes );
+    // nodefieldnames.push_back( "bc_type" );
+    // nodefields.push_back( std::vector<tk::real>(d->Coord()[0].size(),0.0) );
+    // for (auto i : symbcnodes)
+    //   nodefields.back()[ tk::cref_find(d->Lid(),i) ] = 1.0;
+
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
     // Send mesh and fields data (solution dump) for output to file
