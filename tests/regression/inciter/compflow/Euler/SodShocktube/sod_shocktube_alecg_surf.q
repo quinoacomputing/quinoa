@@ -33,7 +33,7 @@ inciter
 
   plotvar
     interval 10000
-    sideset 1 2 3 4 5 6 end
+    sideset 2 4 5 6 end
   end
 
   diagnostics
