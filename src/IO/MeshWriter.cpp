@@ -13,8 +13,6 @@
 */
 // *****************************************************************************
 
-#include <iostream>     // NOT NEEDED
-
 #include "QuinoaConfig.hpp"
 #include "MeshWriter.hpp"
 #include "Reorder.hpp"
