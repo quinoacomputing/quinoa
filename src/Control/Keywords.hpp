@@ -4974,6 +4974,52 @@ struct bc_sym_info {
 using bc_sym =
   keyword< bc_sym_info, TAOCPP_PEGTL_STRING("bc_sym") >;
 
+struct point_info {
+  static std::string name() { return "point"; }
+  static std::string shortDescription() { return "Specify a point"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a point, used, e.g., in specifying a
+    point in 3D space for setting a stagnation (velocity vector = 0).  Example
+    specification: 'point 0.0 0.1 0.2 end')";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "3 reals"; }
+  };
+};
+using point = keyword< point_info, TAOCPP_PEGTL_STRING("point") >;
+
+struct radius_info {
+  static std::string name() { return "radius"; }
+  static std::string shortDescription() { return "Specify a radius"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a radius, used, e.g., in specifying a
+    point in 3D space for setting a stagnation (velocity vector = 0).  Example
+    specification: 'radius 1.0e-5')";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using radius = keyword< radius_info, TAOCPP_PEGTL_STRING("radius") >;
+
+struct bc_stag_info {
+  static std::string name() { return "Stagnation boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing stagnation boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_stag ... end block, used to
+    specify the configuration for setting stagnation boundary conditions for a
+    partial differential equation. Keywords allowed in a bc_stag ... end
+    block: )" + std::string("\'")
+    + point::string() + "\', \'"
+    + radius::string() + "\'. ";
+  }
+};
+using bc_stag = keyword< bc_stag_info, TAOCPP_PEGTL_STRING("bc_stag") >;
+
 struct bc_inlet_info {
   static std::string name() { return "Inlet boundary condition"; }
   static std::string shortDescription() { return
@@ -5016,7 +5062,7 @@ struct transport_info {
     R"(This keyword is used to introduce an transport ... end block, used to
     specify the configuration for a transport equation type. Keywords allowed
     in an transport ... end block: )" + std::string("\'")
-    + depvar::string()+ "\', \'"
+    + depvar::string() + "\', \'"
     + ncomp::string() + "\', \'"
     + problem::string() + "\', \'"
     + physics::string() + "\', \'"

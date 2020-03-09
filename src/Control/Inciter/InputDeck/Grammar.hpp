@@ -283,6 +283,25 @@ namespace grm {
       const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
       for (const auto& s : bc)
         if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+
+      // Error check stagnation BC block
+      const auto& bcstag = stack.template get< tag::param, eq, tag::bcstag >();
+      const auto& point = bcstag.template get< tag::point >();
+      const auto& radius = bcstag.template get< tag::radius >();
+      if ( (!point.empty() && !point.back().empty() &&
+            !radius.empty() && !radius.back().empty() &&
+            point.back().size() != 3*radius.back().size()) ||
+           (!radius.empty() && !radius.back().empty() &&
+            !point.empty() && !point.back().empty() &&
+            point.back().size() != 3*radius.back().size()) ||
+           (!point.empty() && !point.back().empty() &&
+            (radius.empty() || (!radius.empty() && radius.back().empty()))) ||
+           (!radius.empty() && !radius.back().empty() &&
+            (point.empty() || (!point.empty() && point.back().empty())))
+         )
+      {
+        Message< Stack, ERROR, MsgKey::STAGBCWRONG >( stack, in );
+      }
     }
   };
 
@@ -687,6 +706,30 @@ namespace deck {
                                         tag::bc,
                                         param > > > {};
 
+  //! Stagnation boundary conditions block
+  template< class eq, class param >
+  struct bc_stag :
+         pegtl::if_must<
+           tk::grm::readkw< kw::bc_stag::pegtl_string >,
+           tk::grm::block<
+             use< kw::end >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::radius >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq,
+                                        tag::bcstag,
+                                        tag::radius >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::point >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq,
+                                        tag::bcstag,
+                                        tag::point > > > {};
+
   //! Characteristic boundary conditions block
   template< class keyword, class eq, class param >
   struct characteristic_bc :
@@ -888,6 +931,7 @@ namespace deck {
                                       tag::kappa >,
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
+                           bc_stag< tag::compflow, tag::bcstag >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
                            characteristic_bc< kw::bc_outlet,
                                               tag::compflow,
