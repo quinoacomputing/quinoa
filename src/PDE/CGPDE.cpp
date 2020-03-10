@@ -33,6 +33,8 @@ chbgrad( ncomp_t ncomp,
          const std::vector< std::size_t >& bndel,
          const std::vector< std::size_t >& gid,
          const std::unordered_map< std::size_t, std::size_t >& bid,
+         const std::tuple< std::vector< tk::real >,
+                           std::vector< tk::real > >& stag,
          const tk::Fields& U,
          tk::ElemGradFn egrad,
          tk::Fields& G )
@@ -46,6 +48,7 @@ chbgrad( ncomp_t ncomp,
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!    global node ids (key)
+//! \param[in] stag Stagnation point BC configuration
 //! \param[in] U Solution vector at recent time step
 //! \param[in] egrad Function to compute element contribution to nodal gradients
 //! \param[in,out] G Nodal gradients of primitive variables
@@ -58,7 +61,7 @@ chbgrad( ncomp_t ncomp,
   G.fill( 0.0 );
 
   for (auto e : bndel) {  // for elements contributing to chare boundary
-    const auto [N,g,u,J] = egrad( ncomp, offset, e, coord, inpoel, U );
+    const auto [N,g,u,J] = egrad( ncomp, offset, e, coord, inpoel, stag, U );
     auto J24 = J/24.0;
     for (std::size_t a=0; a<4; ++a) {
       auto i = bid.find( gid[N[a]] );
@@ -80,6 +83,8 @@ nodegrad( ncomp_t ncomp,
           const std::unordered_map< std::size_t, std::size_t >& lid,
           const std::unordered_map< std::size_t, std::size_t >& bid,
           const std::vector< tk::real >& vol,
+         const std::tuple< std::vector< tk::real >,
+                           std::vector< tk::real > >& stag,
           const tk::Fields& U,
           const tk::Fields& G,
           tk::ElemGradFn egrad )
@@ -95,6 +100,7 @@ nodegrad( ncomp_t ncomp,
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!    global node ids (key)
 //! \param[in] vol Nodal volumes
+//! \param[in] stag Stagnation point BC configuration
 //! \param[in] U Solution vector at recent time step
 //! \param[in] G Nodal gradients of primitive variables in chare-boundary nodes
 //! \param[in] egrad Function to compute element contribution to nodal gradients
@@ -114,7 +120,7 @@ nodegrad( ncomp_t ncomp,
 
   // compute gradients of primitive variables in internal points
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-    const auto [N,g,u,J] = egrad( ncomp, offset, e, coord, inpoel, U );
+    const auto [N,g,u,J] = egrad( ncomp, offset, e, coord, inpoel, stag, U );
     auto J24 = J/24.0;
     for (std::size_t a=0; a<4; ++a) {
       auto i = bid.find( gid[N[a]] );

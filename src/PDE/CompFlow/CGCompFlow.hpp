@@ -281,7 +281,8 @@ class CompFlow {
                const tk::Fields& U,
                tk::Fields& G ) const
     {
-      chbgrad( m_ncomp, m_offset, coord, inpoel, bndel, gid, bid, U, egrad, G );
+      chbgrad( m_ncomp, m_offset, coord, inpoel, bndel, gid, bid, m_stag,
+               U, egrad, G );
     }
 
     //! Compute right hand side for ALECG
@@ -341,7 +342,7 @@ class CompFlow {
 
       // compute/assemble gradients in points
       auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, gid, lid, bid,
-                            vol, U, G, egrad );
+                            vol, m_stag, U, G, egrad );
 
       // compute derived data structures
       auto esup = tk::genEsup( inpoel, 4 );
@@ -383,6 +384,13 @@ class CompFlow {
             ru[0][4] -= 0.5*ru[0][1+d]*ru[0][1+d];
             ru[1][4] -= 0.5*ru[1][1+d]*ru[1][1+d];
           }
+
+          // apply stagnation BCs to primitive variables
+          if (stagPoint( {x[p],y[p],z[p]}, m_stag ))
+            ru[0][1] = ru[0][2] = ru[0][3] = 0.0;
+          if (stagPoint( {x[q],y[q],z[q]}, m_stag ))
+            ru[1][1] = ru[1][2] = ru[1][3] = 0.0;
+
           // compute MUSCL reconstruction in edge-end points
           tk::muscl( {p,q}, coord, Grad, ru, /*enforce_realizability=*/ true );
           // convert back to conserved
@@ -423,6 +431,10 @@ class CompFlow {
         // access solution at element nodes
         std::vector< std::array< tk::real, 3 > > u( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        // apply stagnation BCs
+        for (std::size_t a=0; a<3; ++a)
+          if (stagPoint( {x[N[a]],y[N[a]],z[N[a]]}, m_stag ))
+            u[1][a] = u[2][a] = u[3][a] = 0.0;
         // compute boundary fluxes
         auto f = bnorm.find(N[0]) != bnorm.end() ? symbflux(n,u) : bflux(n,u);
         // sum boundary integral contributions
@@ -731,6 +743,7 @@ class CompFlow {
     //! \param[in] e Element whose contribution to compute
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] stag Stagnation point BC configuration
     //! \param[in] U Solution vector at recent time step
     //! \return Tuple of element contribution
     //! \note The function signature must follow tk::ElemGradFn
@@ -740,6 +753,8 @@ class CompFlow {
            std::size_t e,
            const std::array< std::vector< tk::real >, 3 >& coord,
            const std::vector< std::size_t >& inpoel,
+           const std::tuple< std::vector< tk::real >,
+                             std::vector< tk::real > >& stag,
            const tk::Fields& U )
     {
       // access node cooordinates
@@ -766,6 +781,10 @@ class CompFlow {
       // access solution at element nodes
       std::vector< std::array< tk::real, 4 > > u( ncomp );
       for (ncomp_t c=0; c<ncomp; ++c) u[c] = U.extract( c, offset, N );
+      // apply stagnation BCs
+      for (std::size_t a=0; a<4; ++a)
+        if (stagPoint( {x[N[a]],y[N[a]],z[N[a]]}, stag ))
+          u[1][N[a]] = u[2][N[a]] = u[3][N[a]] = 0.0;
       // divide out density
       for (std::size_t c=1; c<5; ++c)
         for (std::size_t j=0; j<4; ++j )

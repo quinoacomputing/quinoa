@@ -89,6 +89,8 @@ using ElemGradFn = std::function<
                           std::size_t,
                           const std::array< std::vector< tk::real >, 3 >&,
                           const std::vector< std::size_t >&,
+                          const std::tuple< std::vector< tk::real >,
+                                            std::vector< tk::real > >&,
                           const tk::Fields& ) >;
 
 } // tk::
