@@ -294,6 +294,22 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
     //! \param[in,out] i InputDeck object reference
     friend void operator|( PUP::er& p, InputDeck& i ) { i.pup(p); }
     //@}
+
+    //! Extract surface side set ids along which user wants to save solution
+    //! \return Unique set of surface side set ids along which user wants to
+    //!   save solution field variables
+    //! \note This returns an ordered set so the order of the set ids are
+    //!   always the same.
+    std::set< int > outsets() {
+      std::set< int > ids;
+      for (const auto& s : get< tag::cmd, tag::io, tag::surface >()) {
+        std::stringstream conv( s );
+        int num;
+        conv >> num;
+        ids.insert( num );
+      }
+      return ids;
+    }
 };
 
 } // ctr::

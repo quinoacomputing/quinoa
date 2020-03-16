@@ -19,6 +19,7 @@
 #include <iterator>
 #include <unordered_set>
 #include <type_traits>
+#include <sstream>
 
 #include "Exception.hpp"
 
@@ -250,6 +251,19 @@ void concat( std::unordered_set< Key, Hash,Eq >&& src,
     std::move( std::begin(src), std::end(src), std::inserter(dst,end(dst)) );
     src.clear();
   }
+}
+
+//! \brief Convert and return values from container as string
+//! \tparam V Container range for works on
+//! \param[in] v Container whose components to return as a string
+//! \return Concatenated string of values read from a container
+template< typename V >
+std::string parameters( const V& v ) {
+  std::stringstream s;
+  s << "{ ";
+  for (auto p : v) s << p << ' ';
+  s << "}";
+  return s.str();
 }
 
 } // tk::

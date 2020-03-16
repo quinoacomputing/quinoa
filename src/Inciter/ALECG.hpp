@@ -220,9 +220,9 @@ class ALECG : public CBase_ALECG {
     std::size_t m_nbnorm;
     //! Counter for receiving dual-face normals on chare-boundary edges
     std::size_t m_ndfnorm;
-    //! Boundary node lists mapped to side set ids where BCs are set by user
+    //! Boundary node lists mapped to side set ids used in the input file
     std::map< int, std::vector< std::size_t > > m_bnode;
-    //! Boundary facee lists mapped to side set ids where BCs are set by user
+    //! Boundary face lists mapped to side set ids used in the input file
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary triangle face connecitivity where BCs are set by user
     std::vector< std::size_t > m_triinpoel;

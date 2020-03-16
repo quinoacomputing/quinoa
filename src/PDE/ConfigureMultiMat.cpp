@@ -23,7 +23,7 @@
 #include "CartesianProduct.hpp"
 #include "PDEFactory.hpp"
 #include "Inciter/Options/PDE.hpp"
-
+#include "ContainerUtil.hpp"
 #include "ConfigureMultiMat.hpp"
 #include "MultiMat/Physics/DG.hpp"
 #include "MultiMat/DGMultiMat.hpp"
@@ -56,6 +56,7 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 {
   using eq = tag::multimat;
+  using tk::parameters;
 
   auto c = ++cnt[ ctr::PDEType::MULTIMAT ];       // count eqs
   --c;  // used to index vectors starting with 0

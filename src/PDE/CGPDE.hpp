@@ -207,6 +207,9 @@ class CGPDE {
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
 
+    //! Public interface to returning surface field output labels
+    std::vector< std::string > surfNames() const { return self->surfNames(); }
+
     //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
 
@@ -218,6 +221,12 @@ class CGPDE {
       const std::vector< tk::real >& v,
       tk::Fields& U ) const
     { return self->fieldOutput( t, V, coord, v, U ); }
+
+    //! Public interface to returning surface field output
+    std::vector< std::vector< tk::real > >
+    surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
+                tk::Fields& U ) const
+    { return self->surfOutput( bnd, U ); }
 
     //! Public interface to returning analytic solution
     std::vector< tk::real >
@@ -295,6 +304,7 @@ class CGPDE {
          const std::vector< std::size_t >&,
          std::unordered_set< std::size_t >& ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
+      virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
@@ -302,6 +312,10 @@ class CGPDE {
         const std::array< std::vector< tk::real >, 3 >&,
         const std::vector< tk::real >&,
         tk::Fields& ) const = 0;
+      virtual std::vector< std::vector< tk::real > > surfOutput(
+        const std::map< int, std::vector< std::size_t > >&,
+        tk::Fields& ) const = 0;
+
       virtual std::vector< tk::real > analyticSolution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
@@ -373,6 +387,8 @@ class CGPDE {
       { data.symbcnodes( bface, triinpoel, nodes ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
+      std::vector< std::string > surfNames() const override
+      { return data.surfNames(); }
       std::vector< std::string > names() const override
       { return data.names(); }
       std::vector< std::vector< tk::real > > fieldOutput(
@@ -382,6 +398,10 @@ class CGPDE {
         const std::vector< tk::real >& v,
         tk::Fields& U ) const override
       { return data.fieldOutput( t, V, coord, v, U ); }
+      std::vector< std::vector< tk::real > > surfOutput(
+        const std::map< int, std::vector< std::size_t > >& bnd,
+        tk::Fields& U ) const override
+      { return data.surfOutput( bnd, U ); }
       std::vector< tk::real >
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }
