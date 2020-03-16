@@ -52,6 +52,7 @@ module transporter {
                                             tk::real d2, tk::real d3,
                                             tk::real d4, tk::real d5 );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
+      entry [reductiontarget] void boxvol( tk::real v );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry void resume();
       entry [reductiontarget] void checkpoint( tk::real it, tk::real t );

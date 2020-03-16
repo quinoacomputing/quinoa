@@ -2511,6 +2511,22 @@ struct velocityic_info {
 };
 using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
 
+struct massic_info {
+  static std::string name() { return "massic"; }
+  static std::string shortDescription() { return
+    "Specify mass initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions by specifying the mass
+       and associated volume within a box.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using massic = keyword< massic_info, TAOCPP_PEGTL_STRING("mass") >;
+
 struct densityic_info {
   static std::string name() { return "densityic"; }
   static std::string shortDescription() { return
@@ -2555,6 +2571,22 @@ struct energyic_info {
   };
 };
 using energyic = keyword< energyic_info, TAOCPP_PEGTL_STRING("energy") >;
+
+struct energy_content_ic_info {
+  static std::string name() { return "energy_content_ic"; }
+  static std::string shortDescription() { return
+    "Specify energy per unit volume as initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the energy per unit volume as initial
+    conditions.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using energy_content_ic =
+  keyword< energy_content_ic_info, TAOCPP_PEGTL_STRING("energy_content") >;
 
 struct temperatureic_info {
   static std::string name() { return "temperatureic"; }
@@ -2661,9 +2693,11 @@ struct box_info {
     will be set to 1.2 and the pressure to be 1.4. Besides the box dimensions,
     the following physics keywords are allowed in a box ... end block:)"
     + std::string("\'")
+    + massic::string()+ "\', \'"
     + densityic::string()+ "\', \'"
     + velocityic::string() + "\', \'"
     + energyic::string() + "\', \'"
+    + energy_content_ic::string() + "\', \'"
     + temperatureic::string() + "\', \'"
     + pressureic::string() + "\'."; }
 };
@@ -2676,6 +2710,7 @@ struct ic_info {
   static std::string longDescription() { return
     R"(This keyword is used to introduce an ic...end block used to set initial
     conditions. Keywords allowed in a ic ... end block: )" + std::string("\'")
+    + massic::string()+ "\', \'"
     + densityic::string()+ "\', \'"
     + velocityic::string() + "\', \'"
     + pressureic::string() + "\', \'"

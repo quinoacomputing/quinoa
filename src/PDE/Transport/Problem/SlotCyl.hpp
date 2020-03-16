@@ -41,7 +41,7 @@ class TransportProblemSlotCyl {
     //! Evaluate analytical solution at (x,y,t) for all components
     static std::vector< tk::real >
     solution( ncomp_t, ncomp_t ncomp,
-              tk::real x, tk::real y, tk::real, tk::real t );
+              tk::real x, tk::real y, tk::real, tk::real t, int& );
 
     //! Do error checking on PDE parameters
     void errchk( ncomp_t, ncomp_t ) const {}

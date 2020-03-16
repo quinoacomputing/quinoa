@@ -47,7 +47,7 @@ class CompFlowProblemNLEnergyGrowth {
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::SolutionFn::result_type
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real t );
+              tk::real t, int& );
 
     //! Compute and return source term for NLEG manufactured solution
     static tk::SrcFn::result_type

@@ -24,7 +24,6 @@
 #include "EoS/EoS.hpp"
 #include "Mesh/Around.hpp"
 #include "Reconstruction.hpp"
-#include "ProblemCommon.hpp"
 #include "Problem/FieldOutput.hpp"
 #include "Riemann/Rusanov.hpp"
 #include "NodeBC.hpp"
@@ -68,9 +67,11 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
+    //! \param[in,out] inbox List of nodes at which box user ICs are set
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real t ) const
+                     tk::real t,
+                     std::vector< std::size_t >& inbox ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
@@ -79,8 +80,10 @@ class CompFlow {
 
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
+        int boxed = 0;
         const auto s =
-          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t );
+          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t, boxed );
+        if (boxed) inbox.push_back( i );
         unk(i,0,m_offset) = s[0]; // rho
         if (stagPoint( {x[i],y[i],z[i]}, m_stag )) {
           unk(i,1,m_offset) = unk(i,2,m_offset) = unk(i,3,m_offset) = 0.0;
@@ -93,6 +96,47 @@ class CompFlow {
       }
     }
 
+    //! Set initial condition in user-defined box IC nodes
+    //! \param[in] V Total box volume
+    //! \details If the user is specified a box where mass is specified, we also
+    //!   assume that internal energy content (energy per unit volume) is also
+    //!   specified. Specific internal energy (energy per unit mass) is then
+    //!   computed here (and added to the kinetic energy) from the internal
+    //!   energy per unit volume by multiplying it with the total box volume
+    //!   and dividing it by the total mass of the material in the box.
+    //!   Example (SI) units of the quantities involved:
+    //!    * internal energy content (energy per unit volume): J/m^3
+    //!    * specific energy (internal energy per unit mass): J/kg
+    void box( tk::real V,
+              const std::vector< std::size_t >& boxnodes,
+              tk::Fields& unk ) const
+    {
+      const auto& boxmassic =
+        g_inputdeck.get< tag::param, eq, tag::ic, tag::box, tag::mass >();
+      const auto& boxenergy_content_ic = g_inputdeck.get<
+        tag::param, eq, tag::ic, tag::box, tag::energy_content >();
+      if (boxmassic.size() > m_system && !boxmassic[m_system].empty()) {
+        Assert( boxenergy_content_ic.size() > m_system &&
+                !boxenergy_content_ic[m_system].empty(),
+          "Box energy content unspecified in input file" );
+        auto mass = boxmassic[m_system][0];
+        auto rho = mass / V;
+        auto spi = boxenergy_content_ic[m_system][0] * V / mass;
+        for (auto i : boxnodes) {
+          // extract velocity IC dividing by previously set box density
+          const auto u = unk(i,1,m_offset) / unk(i,0,m_offset),
+                     v = unk(i,2,m_offset) / unk(i,0,m_offset),
+                     w = unk(i,3,m_offset) / unk(i,0,m_offset);
+          const auto ke = 0.5*(u*u + v*v + w*w);
+          unk(i,0,m_offset) = rho;
+          unk(i,1,m_offset) = rho * u;
+          unk(i,2,m_offset) = rho * v;
+          unk(i,3,m_offset) = rho * w;
+          unk(i,4,m_offset) = rho * (spi + ke);
+        }
+      }
+    }
+
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate
@@ -102,7 +146,8 @@ class CompFlow {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
+      int inbox = 0;
+      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
       return std::vector< tk::real >( begin(s), end(s) );
     }
 

@@ -70,7 +70,7 @@ class TransportProblemShearDiff {
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static std::vector< tk::real >
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real t );
+              tk::real t, int& );
 
     //! Do error checking on PDE parameters
     void errchk( ncomp_t system, ncomp_t ncomp ) const;

@@ -775,21 +775,6 @@ namespace deck {
                          half_world< kw::amr_zminus, tag::zminus >,
                          half_world< kw::amr_zplus, tag::zplus > > > {};
 
-  //! physics variables block (for ICs)
-  template< class eq, class Tag, class... Tags >
-  struct physvar :
-         pegtl::sor<
-           pde_parameter_vector< kw::densityic,
-                                 eq, Tag, Tags..., tag::density >,
-           pde_parameter_vector< kw::velocityic,
-                                 eq, Tag, Tags..., tag::velocity >,
-           pde_parameter_vector< kw::pressureic,
-                                 eq, Tag, Tags..., tag::pressure >,
-           pde_parameter_vector< kw::temperatureic,
-                                 eq, Tag, Tags..., tag::temperature >,
-           pde_parameter_vector< kw::energyic,
-                                 eq, Tag, Tags..., tag::energy > > {};
-
   //! initial conditins box block
   template< class eq >
   struct box :
@@ -808,7 +793,21 @@ namespace deck {
                                tag::param, eq, tag::ic, tag::box, tag::zmin >,
              tk::grm::control< use< kw::zmax >, tk::grm::number,
                                tag::param, eq, tag::ic, tag::box, tag::zmax >,
-             physvar< eq, tag::ic, tag::box > > > {};
+             pegtl::sor<
+               pde_parameter_vector< kw::massic,
+                                     eq, tag::ic, tag::box, tag::mass >,
+               pde_parameter_vector< kw::densityic,
+                                     eq, tag::ic, tag::box, tag::density >,
+               pde_parameter_vector< kw::velocityic,
+                                     eq, tag::ic, tag::box, tag::velocity >,
+               pde_parameter_vector< kw::pressureic,
+                                     eq, tag::ic, tag::box, tag::pressure >,
+               pde_parameter_vector< kw::temperatureic,
+                                     eq, tag::ic, tag::box, tag::temperature >,
+               pde_parameter_vector< kw::energy_content_ic,
+                 eq, tag::ic, tag::box, tag::energy_content >,
+               pde_parameter_vector< kw::energyic,
+                  eq, tag::ic, tag::box, tag::energy > > > > {};
 
   //! initial conditions block for compressible flow
   template< class eq >
@@ -816,9 +815,18 @@ namespace deck {
          pegtl::if_must<
            tk::grm::readkw< use< kw::ic >::pegtl_string >,
            tk::grm::block< use< kw::end >,
-                           physvar< eq, tag::ic >,
-                           pegtl::seq< box< eq > >
-                         > > {};
+             pegtl::sor<
+               pde_parameter_vector< kw::densityic,
+                                     eq, tag::ic, tag::density >,
+               pde_parameter_vector< kw::velocityic,
+                                     eq, tag::ic, tag::velocity >,
+               pde_parameter_vector< kw::pressureic,
+                                     eq, tag::ic, tag::pressure >,
+               pde_parameter_vector< kw::temperatureic,
+                                     eq, tag::ic, tag::temperature >,
+               pde_parameter_vector< kw::energyic,
+                                     eq, tag::ic, tag::energy > >,
+               pegtl::seq< box< eq > > > > {};
 
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >

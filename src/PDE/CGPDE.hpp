@@ -80,6 +80,12 @@ edfnorm( const tk::UnsMesh::Edge& edge,
                   std::vector< std::size_t >,
                   tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
 
+//! \brief Evaluate the increment from t to t+dt of an analytical solution at
+//!   (x,y,z) for all components
+std::vector< tk::real >
+solinc( tk::ncomp_t system, tk::ncomp_t ncomp, tk::real x, tk::real y,
+        tk::real z, tk::real t, tk::real dt, tk::SolutionFn solution );
+
 } // cg::
 
 //! \brief Partial differential equation base for continuous Galerkin PDEs
@@ -132,10 +138,13 @@ class CGPDE {
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real t ) const
-    { self->initialize( coord, unk, t ); }
+                     tk::real t,
+                     std::vector< std::size_t >& inbox ) const
+    { self->initialize( coord, unk, t, inbox ); }
 
-
+    //! Public interface to updating the initial conditions in box ICs
+    void box( tk::real v, const std::vector< std::size_t >& boxnodes,
+              tk::Fields& unk ) const { self->box( v, boxnodes, unk ); }
 
     //! Public interface to computing the nodal gradients for ALECG
     void grad( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -257,7 +266,10 @@ class CGPDE {
       virtual Concept* copy() const = 0;
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
                                tk::Fields&,
-                               tk::real ) const = 0;
+                               tk::real,
+                               std::vector< std::size_t >& inbox ) const = 0;
+      virtual void box( tk::real, const std::vector< std::size_t >&,
+                        tk::Fields& unk ) const = 0;
       virtual void grad( const std::array< std::vector< tk::real >, 3 >&,
                          const std::vector< std::size_t >&,
                          const std::vector< std::size_t >&,
@@ -332,8 +344,12 @@ class CGPDE {
       Concept* copy() const override { return new Model( *this ); }
       void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                        tk::Fields& unk,
-                       tk::real t )
-      const override { data.initialize( coord, unk, t ); }
+                       tk::real t,
+                       std::vector< std::size_t >& inbox )
+      const override { data.initialize( coord, unk, t, inbox ); }
+      void box( tk::real v, const std::vector< std::size_t >& boxnodes,
+                tk::Fields& unk ) const override
+      { data.box( v, boxnodes, unk ); }
       void grad( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
                  const std::vector< std::size_t >& bndel,

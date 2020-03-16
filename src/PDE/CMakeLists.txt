@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 2.8.5)
 project(PDE CXX)
 
 add_library(PDE
-            ProblemCommon.cpp
             PDEStack.cpp
             Limiter.cpp
             PrefIndicator.cpp

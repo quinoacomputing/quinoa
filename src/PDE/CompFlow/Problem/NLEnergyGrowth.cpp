@@ -63,7 +63,8 @@ CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
                                          tk::real x,
                                          tk::real y,
                                          tk::real z,
-                                         tk::real t )
+                                         tk::real t,
+                                         int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -236,7 +237,8 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
 
   auto er = r, ee = r, p = r;
   for (std::size_t i=0; i<r.size(); ++i) {
-    auto s = solution( system, ncomp, x[i], y[i], z[i], t );
+    int inbox = 0;
+    auto s = solution( system, ncomp, x[i], y[i], z[i], t, inbox );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
     ee[i] = std::pow( E[i] - s[4]/s[0], 2.0 ) * vol[i] / V;
     r[i] = s[0];

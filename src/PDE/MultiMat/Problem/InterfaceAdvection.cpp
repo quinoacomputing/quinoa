@@ -32,7 +32,8 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
                                              tk::real x,
                                              tk::real y,
                                              tk::real /*z*/,
-                                             tk::real t )
+                                             tk::real t,
+                                             int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible

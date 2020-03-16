@@ -104,6 +104,9 @@ class Discretization : public CBase_Discretization {
     //! Compute mesh cell statistics
     void stat( tk::real mesh_volume );
 
+    //! Compute total box IC volume
+    void boxvol( const std::vector< std::size_t >& boxnodes );
+
     /** @name Accessors */
     ///@{
     //! Coordinates accessors as const-ref
@@ -140,6 +143,9 @@ class Discretization : public CBase_Discretization {
     const std::vector< tk::real >& Vol() const { return m_vol; }
     //! Nodal mesh volumes accessors as non-const-ref
     std::vector< tk::real >& Vol() { return m_vol; }
+
+    //! Box volume accessor
+    tk::real& Boxvol() { return m_boxvol; }
 
     //! Time step size accessor
     tk::real Dt() const { return m_dt; }
@@ -258,6 +264,7 @@ class Discretization : public CBase_Discretization {
       p | m_v;
       p | m_vol;
       p | m_volc;
+      p | m_boxvol;
       p | m_bid;
       p | m_timer;
       p | m_refined;
@@ -344,6 +351,8 @@ class Discretization : public CBase_Discretization {
     //!   cell volumes / 4) with contributions from other chares on
     //!   chare-boundaries.
     std::unordered_map< std::size_t, tk::real > m_volc;
+    //! Volume of user-defined box IC
+    tk::real m_boxvol;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of elements we
     //!   contribute to

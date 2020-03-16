@@ -747,7 +747,8 @@ class MultiMat {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
+      int inbox = 0;
+      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
       return std::vector< tk::real >( begin(s), end(s) );
     }
 
@@ -858,7 +859,8 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      auto ur = Problem::solution( system, ncomp, x, y, z, t );
+      int inbox = 0;
+      auto ur = Problem::solution( system, ncomp, x, y, z, t, inbox );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );
 
       ur.resize(ul.size());

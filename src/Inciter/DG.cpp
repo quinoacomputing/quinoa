@@ -1013,10 +1013,24 @@ DG::setup()
     eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
   }
 
+  // Compute volume of user-defined box IC
+  d->boxvol( {} );      // punt for now
+
   m_un = m_u;
 
   // Start timer measuring time stepping wall clock time
   d->Timer().zero();
+}
+
+void
+DG::boxvol( tk::real v )
+// *****************************************************************************
+// Receive total box IC volume
+//! \param[in] v Total volume within user-specified box
+// *****************************************************************************
+{
+  // Store user-defined box IC volume
+  Disc()->Boxvol() = v;
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields( CkCallback(CkIndex_DG::next(), thisProxy[thisIndex]) );

@@ -145,6 +145,8 @@ using box = tk::TaggedTuple< brigand::list<
   , tag::ymax,          kw::ymax::info::expect::type
   , tag::zmin,          kw::zmin::info::expect::type
   , tag::zmax,          kw::zmax::info::expect::type
+  , tag::mass,         std::vector<
+                          std::vector< kw::massic::info::expect::type > >
   , tag::density,       std::vector<
                           std::vector< kw::densityic::info::expect::type > >
   , tag::velocity,      std::vector<
@@ -152,7 +154,9 @@ using box = tk::TaggedTuple< brigand::list<
   , tag::pressure,      std::vector<
                           std::vector< kw::pressureic::info::expect::type > >
   , tag::energy,        std::vector<
-                            std::vector< kw::energyic::info::expect::type > >
+                          std::vector< kw::energyic::info::expect::type > >
+  , tag::energy_content,std::vector< std::vector<
+                          kw::energy_content_ic::info::expect::type > >
   , tag::temperature,   std::vector<
                           std::vector< kw::temperatureic::info::expect::type > >
 > >;
