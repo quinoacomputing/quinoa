@@ -41,18 +41,22 @@ RDGFLOMeshReader::readHeader()
 
   // number of tetrahedra
   m_inFile >> m_ntet;
+  if (m_ntet == 0) Throw( "No tetrahedra in input mesh" );
 
   // number of pyramids
   std::size_t npyra;
   m_inFile >> npyra;
+  if (npyra > 0) Throw( "Pyramids not supported. Need a mesh with only tetrahedra." );
 
   // number of prisms
   std::size_t npris;
   m_inFile >> npris;
+  if (npris > 0) Throw( "Prisms not supported. Need a mesh with only tetrahedra." );
 
   // number of hexahedra
   std::size_t nhexa;
   m_inFile >> nhexa;
+  if (nhexa > 0) Throw( "Hexahedra not supported. Need a mesh with only tetrahedra." );
 
   // number of triangles
   m_inFile >> m_ntri;
@@ -60,6 +64,7 @@ RDGFLOMeshReader::readHeader()
   // number of quads
   std::size_t nquad;
   m_inFile >> nquad;
+  if (nquad > 0) Throw( "Quads not supported. Need a mesh with only tetrahedra." );
 
   // time
   tk::real time;
