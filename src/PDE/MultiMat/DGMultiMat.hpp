@@ -231,7 +231,7 @@ class MultiMat {
         auto pmax = prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset)/almax;
         auto tmax = eos_temperature< tag::multimat >(m_system,
           unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
-          unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset), kmax);
+          unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset), almax, kmax);
 
         for (std::size_t k=0; k<nmat; ++k)
         {
