@@ -55,11 +55,12 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_nrhs( 0 ),
   m_nnorm( 0 ),
   m_bnode( bnode ),
-  m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
-       g_inputdeck.get< tag::component >().nprop() ),
+  m_bface( bface ),
+  m_triinpoel( tk::remap(triinpoel,Disc()->Lid()) ),
+  m_u( Disc()->Gid().size(), g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_u.nunk(), m_u.nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
-  m_ue( m_disc[thisIndex].ckLocal()->Inpoel().size()/4, m_u.nprop() ),
+  m_ue( Disc()->Inpoel().size()/4, m_u.nprop() ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_bcdir(),
@@ -626,20 +627,28 @@ DiagCG::writeFields( CkCallback c ) const
 
     auto d = Disc();
 
-    // Query and collect field names from PDEs integrated
+    // Query and collect block and surface field names from PDEs integrated
     std::vector< std::string > nodefieldnames;
+    std::vector< std::string > nodesurfnames;
     for (const auto& eq : g_cgpde) {
       auto n = eq.fieldNames();
       nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
+      auto s = eq.surfNames();
+      nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
     }
 
     // Collect node field solution
     auto u = m_u;
     std::vector< std::vector< tk::real > > nodefields;
+    std::vector< std::vector< tk::real > > nodesurfs;
     for (const auto& eq : g_cgpde) {
       auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
       nodefields.insert( end(nodefields), begin(o), end(o) );
+      auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
+      nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
+
+    Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
     std::vector< std::string > elemfieldnames;
     std::vector< std::vector< tk::real > > elemfields;
@@ -687,8 +696,9 @@ DiagCG::writeFields( CkCallback c ) const
       begin(fct_elemfields), end(fct_elemfields) );
 
     // Send mesh and fields data (solution dump) for output to file
-    d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {},
-              elemfieldnames, nodefieldnames, elemfields, nodefields, c );
+    d->write( d->Inpoel(), d->Coord(), m_bface, tk::remap( m_bnode,d->Lid() ),
+              m_triinpoel, elemfieldnames, nodefieldnames, nodesurfnames,
+              elemfields, nodefields, nodesurfs, c );
 
   }
 }

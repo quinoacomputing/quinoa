@@ -22,7 +22,7 @@
 #include "CartesianProduct.hpp"
 #include "PDEFactory.hpp"
 #include "Inciter/Options/PDE.hpp"
-
+#include "ContainerUtil.hpp"
 #include "ConfigureCompFlow.hpp"
 #include "CompFlow/Physics/CG.hpp"
 #include "CompFlow/Physics/DG.hpp"
@@ -69,6 +69,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 {
   using eq = tag::compflow;
+  using tk::parameters;
 
   auto c = ++cnt[ ctr::PDEType::COMPFLOW ];       // count eqs
   --c;  // used to index vectors starting with 0

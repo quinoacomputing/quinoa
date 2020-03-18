@@ -571,6 +571,15 @@ class CompFlow {
                                     coord, U );
     }
 
+    //! Return surface field output going to file
+    std::vector< std::vector< tk::real > >
+    surfOutput( const std::map< int, std::vector< std::size_t > >&,
+                tk::Fields& ) const
+    {
+      std::vector< std::vector< tk::real > > s; // punt for now
+      return s;
+    }
+
     //! Return nodal field output going to file
     std::vector< std::vector< tk::real > >
     avgElemToNode( const std::vector< std::size_t >& inpoel,

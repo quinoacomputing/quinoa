@@ -21,7 +21,7 @@
 #include "CartesianProduct.hpp"
 #include "PDEFactory.hpp"
 #include "Inciter/Options/PDE.hpp"
-
+#include "ContainerUtil.hpp"
 #include "ConfigureTransport.hpp"
 #include "Transport/Physics/CG.hpp"
 #include "Transport/Physics/DG.hpp"
@@ -69,6 +69,7 @@ infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 {
   using tag::param;
   using tag::transport;
+  using tk::parameters;
 
   auto c = ++cnt[ ctr::PDEType::TRANSPORT ];       // count eqs
   --c;  // used to index vectors starting with 0

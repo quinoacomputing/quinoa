@@ -177,6 +177,22 @@ class UnsMesh {
               "Size of tetinpoel must be divisible by 4" );
     }
 
+    //! \brief Constructor copying over triangle element connectivity and array
+    //!    of point coordinates
+    explicit UnsMesh( const Coords& coord, 
+                      const std::vector< std::size_t >& triinp  ) :
+      m_graphsize( graphsize( triinp ) ),
+      m_lininpoel(),
+      m_triinpoel( triinp ),
+      m_tetinpoel(),
+      m_x( coord[0] ),
+      m_y( coord[1] ),
+      m_z( coord[2] )
+    {
+      Assert( m_triinpoel.size()%3 == 0,
+              "Size of triinpoel must be divisible by 3" );
+    }
+
     //! Constructor swallowing element connectivity and point coordinates
     explicit UnsMesh( std::vector< std::size_t >&& tetinp,
                       std::vector< real >&& X,

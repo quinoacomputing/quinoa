@@ -115,7 +115,7 @@ if (HAS_OMEGA_H)
   )
 endif()
 
-if (HAS_ROOT)
+if (HAS_ROOT AND ENABLE_FILECONV)
   add_library(RootMeshIO
               FileConvWriter.cpp
               RootMeshWriter.cpp)

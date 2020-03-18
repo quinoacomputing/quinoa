@@ -330,6 +330,15 @@ class Transport {
       return out;
     }
 
+    //! Return surface field output going to file
+    std::vector< std::vector< tk::real > >
+    surfOutput( const std::map< int, std::vector< std::size_t > >&,
+                tk::Fields& ) const
+    {
+      std::vector< std::vector< tk::real > > s; // punt for now
+      return s;
+    }
+
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] geoElem Element geometry array

@@ -1125,6 +1125,15 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  struct noop : pegtl::success {};
+  //! Action that does nothing
+  template<>
+  struct action< noop > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& ) {}
+  };
+
+  //! Rule used to trigger action
   template< class eq, class param, class... xparam >
   struct check_spikes : pegtl::success {};
   //! Check if the spikes parameter vector specifications are correct
@@ -1438,7 +1447,7 @@ namespace grm {
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
   //!   between values
   template< class key, class insert, class endkeyword,
-            class starter, class value = number >
+            class starter = noop, class value = number >
   // cppcheck-suppress syntaxError
   struct vector :
          pegtl::seq<

@@ -164,7 +164,7 @@ CompFlowProblemUserDefined::fieldOutput(
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
 //! \param[in] U Solution vector at recent time step
-//! \return Vector of vectors to be output to file
+//! \return Vector of vectors of solution fields to be output to file
 // *****************************************************************************
 {
   return CompFlowFieldOutput( system, offset, U );

@@ -1172,7 +1172,7 @@ DG::writeFields( CkCallback c ) const
 
     // Output chare mesh and fields metadata to file
     d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), elemfieldnames,
-              {}, elemfields, {}, c );
+              {}, {}, elemfields, {}, {}, c );
 
   }
 }

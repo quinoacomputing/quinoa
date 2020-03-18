@@ -25,6 +25,7 @@
 #include "Mesh/Around.hpp"
 #include "Reconstruction.hpp"
 #include "ProblemCommon.hpp"
+#include "Problem/FieldOutput.hpp"
 #include "Riemann/Rusanov.hpp"
 
 namespace inciter {
@@ -669,6 +670,11 @@ class CompFlow {
     std::vector< std::string > fieldNames() const
     { return m_problem.fieldNames( m_ncomp ); }
 
+    //! Return surface field names to be output to file
+    //! \return Vector of strings labelling surface fields output in file
+    std::vector< std::string > surfNames() const
+    { return CompFlowSurfNames(); }
+
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
@@ -686,6 +692,12 @@ class CompFlow {
       return
         m_problem.fieldOutput( m_system, m_ncomp, m_offset, t, V, v, coord, U );
     }
+
+    //! Return surface field output going to file
+    std::vector< std::vector< tk::real > >
+    surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
+                tk::Fields& U ) const
+    { return CompFlowSurfOutput( m_system, bnd, U ); }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
