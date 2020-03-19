@@ -1,18 +1,18 @@
 // *****************************************************************************
 /*!
-  \file      src/IO/UGRIDMeshReader.hpp
+  \file      src/IO/RDGFLOMeshReader.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     UGRID mesh reader class declaration
-  \details   UGRID mesh reader class declaration. Mesh reader facilitating
-             reading a mesh from a simple text file used by NASA.
-  \see       http://www.simcenter.msstate.edu/software/downloads/doc/ug_io/3d_grid_file_type_ugrid.html, http://www.simcenter.msstate.edu/software/downloads/doc/aflr3/aflr3_io_summary.html
+  \brief     RDGFLO mesh reader class declaration
+  \details   RDGFLO mesh reader class declaration. Mesh reader facilitating
+             reading a mesh from a simple text file used by Prof. Hong Luo at
+             North Carolina State University.
 */
 // *****************************************************************************
-#ifndef UGRIDMeshReader_h
-#define UGRIDMeshReader_h
+#ifndef RDGFLOMeshReader_h
+#define RDGFLOMeshReader_h
 
 #include <iosfwd>
 
@@ -22,17 +22,17 @@ namespace tk {
 
 class UnsMesh;
 
-//! \brief UGRIDMeshReader : tk::Reader
+//! \brief RDGFLOMeshReader : tk::Reader
 //! \details Mesh reader class facilitating reading a mesh from a simple text
-//!    file used by NASA.
-class UGRIDMeshReader : public Reader {
+//!    file used by Prof. Hong Luo at North Carolina State University.
+class RDGFLOMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit UGRIDMeshReader( const std::string& filename ) :
+    explicit RDGFLOMeshReader( const std::string& filename ) :
       Reader( filename ), m_nnode(0), m_ntet(0), m_ntri(0) {}
 
-    //! Read UGRID mesh
+    //! Read RDGFLO mesh
     void readMesh( UnsMesh& mesh );
 
   private:
@@ -52,4 +52,4 @@ class UGRIDMeshReader : public Reader {
 
 } // tk::
 
-#endif // UGRIDMeshReader_h
+#endif // RDGFLOMeshReader_h
