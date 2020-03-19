@@ -127,7 +127,7 @@ class Main : public CBase_Main {
 
     //! Dump chare state
     void dumpstate( CkReductionMsg* msg ) {
-      tk::dumpstate( m_cmdline, tk::fileconv_executable(), msg );
+      tk::dumpstate( m_cmdline, msg );
     }
 
     //! Add a time stamp contributing to final timers output
