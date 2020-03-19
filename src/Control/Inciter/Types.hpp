@@ -124,6 +124,7 @@ using ios = tk::TaggedTuple< brigand::list<
     tag::control,   kw::control::info::expect::type //!< Control filename
   , tag::input,     kw::input::info::expect::type   //!< Input filename
   , tag::output,    kw::output::info::expect::type  //!< Output filename
+  , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
     //! List of side sets to save as field output
   , tag::surface,   std::vector< kw::sideset::info::expect::type >
     //! Diagnostics filename

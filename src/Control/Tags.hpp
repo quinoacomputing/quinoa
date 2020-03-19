@@ -26,6 +26,7 @@ struct version { static std::string name() { return "version"; } };
 struct license { static std::string name() { return "license"; } };
 struct input { static std::string name() { return "input"; } };
 struct output { static std::string name() { return "output"; } };
+struct screen { static std::string name() { return "screen"; } };
 struct restart { static std::string name() { return "restart"; } };
 struct diag { static std::string name() { return "diag"; } };
 struct evalLB {};

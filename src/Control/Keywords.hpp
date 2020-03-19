@@ -4031,6 +4031,22 @@ struct output_info {
 };
 using output = keyword< output_info, TAOCPP_PEGTL_STRING("output") >;
 
+struct screen_info {
+  static std::string name() { return "screen"; }
+  static std::string shortDescription() {
+    return "Specify the screen output file"; }
+  static std::string longDescription() { return
+    R"(This option is used to set the screen output file name. The default is
+    "<executable>_screen.log".)";
+  }
+  using alias = Alias< O >;
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using screen = keyword< screen_info, TAOCPP_PEGTL_STRING("screen") >;
+
 struct restart_info {
   static std::string name() { return "checkpoint/restart directory name"; }
   static std::string shortDescription()

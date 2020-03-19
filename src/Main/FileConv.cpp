@@ -114,7 +114,6 @@ class Main : public CBase_Main {
     //! Towards normal exit but collect chare state first (if any)
     void finalize() {
       tk::finalize( m_cmdline, m_timer, stateProxy, m_timestamp,
-                    tk::fileconv_executable(),
                     CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
     }
 

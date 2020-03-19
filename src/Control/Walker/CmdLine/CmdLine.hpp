@@ -55,6 +55,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::helpctr
                                      , kw::helpkw
                                      , kw::control
+                                     , kw::screen
                                      , kw::pdf
                                      , kw::stat
                                      , kw::particles
@@ -106,6 +107,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //!   otherwise it would be a mutual dependency.
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
+      get< tag::io, tag::screen >() = "walker_screen.log";
       get< tag::io, tag::output >() = "out";
       get< tag::io, tag::pdf >() = "pdf";
       get< tag::io, tag::stat >() = "stat.txt";
