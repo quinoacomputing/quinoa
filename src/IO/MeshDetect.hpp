@@ -24,6 +24,7 @@ enum class MeshReaderType : uint8_t { GMSH = 0
                                     , ASC
                                     , OMEGA_H
                                     , UGRID
+                                    , RDGFLO
                                     };
 
 //! Supported mesh writers

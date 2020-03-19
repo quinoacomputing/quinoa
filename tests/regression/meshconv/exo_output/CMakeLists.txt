@@ -17,6 +17,14 @@ add_regression_test(ugrid2exo ${MESHCONV_EXECUTABLE}
                     BIN_RESULT sphere_tetra.exo
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
+add_regression_test(rdgflo2exo ${MESHCONV_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES rdgflo.domn.bump
+                    ARGS -i rdgflo.domn.bump -o bump.exo -v
+                    BIN_BASELINE bump.exo.std
+                    BIN_RESULT bump.exo
+                    BIN_DIFF_PROG_CONF exodiff.cfg)
+
 add_regression_test(netgen2exo ${MESHCONV_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES box_24.mesh
