@@ -1015,11 +1015,22 @@ DG::setup()
 
   m_un = m_u;
 
-  // Start timer measuring time stepping wall clock time
-  d->Timer().zero();
-
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields( CkCallback(CkIndex_DG::next(), thisProxy[thisIndex]) );
+  writeFields( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
+}
+
+void
+DG::start()
+// *****************************************************************************
+//  Start time stepping
+// *****************************************************************************
+{
+  // Start timer measuring time stepping wall clock time
+  Disc()->Timer().zero();
+  // Zero grind-timer
+  Disc()->grindZero();
+  // Start time stepping by computing the size of the next time step)
+  next();
 }
 
 void
@@ -1746,12 +1757,16 @@ DG::stage()
 }
 
 void
-DG::evalLB()
+DG::evalLB( int nrestart )
 // *****************************************************************************
 // Evaluate whether to do load balancing
+//! \param[in] nrestart Number of times restarted
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Detect if just returned from a checkpoint and if so, zero timers
+  d->restarted( nrestart );
 
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
@@ -1788,7 +1803,7 @@ DG::evalRestart()
 
   } else {
 
-    evalLB();
+    evalLB( /* nrestart = */ -1 );
 
   }
 }

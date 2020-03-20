@@ -154,7 +154,7 @@ class DiagCG : public CBase_DiagCG {
     void step();
 
     // Evaluate whether to do load balancing
-    void evalLB();
+    void evalLB( int nrestart );
 
     //! Continue to next time step
     void next();

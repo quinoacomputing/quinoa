@@ -55,7 +55,7 @@ module alecg {
       entry void lhs();
       entry void step();
       entry void next();
-      entry void evalLB();
+      entry void evalLB( int nrestart );
       //! [Entry methods]
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/

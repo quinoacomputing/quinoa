@@ -74,6 +74,7 @@ Transporter::Transporter() :
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
   m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
   m_timer(),
+  m_nrestart( g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >() ),
   m_progMesh( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgMeshPrefix, ProgMeshLegend ),
   m_progWork( g_inputdeck.get< tag::cmd, tag::feedback >(),
@@ -1054,9 +1055,12 @@ Transporter::resume()
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(m_t-term) > eps && m_it < nstep)
-    m_scheme.bcast< Scheme::evalLB >();
-  else
+  if (std::fabs(m_t-term) > eps && m_it < nstep) {
+    // If just restarted from a checkpoint, Main( CkMigrateMessage* msg ) has
+    // increased nrestart in g_inputdeck, but only on PE 0, so broadcast.
+    auto nrestart = g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
+    m_scheme.bcast< Scheme::evalLB >( nrestart );
+  } else
     mainProxy.finalize();
 }
 

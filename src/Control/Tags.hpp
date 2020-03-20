@@ -28,6 +28,7 @@ struct input { static std::string name() { return "input"; } };
 struct output { static std::string name() { return "output"; } };
 struct screen { static std::string name() { return "screen"; } };
 struct restart { static std::string name() { return "restart"; } };
+struct nrestart { static std::string name() { return "nrestart"; } };
 struct diag { static std::string name() { return "diag"; } };
 struct evalLB {};
 struct seed { static std::string name() { return "seed"; } };
