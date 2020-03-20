@@ -23,8 +23,9 @@ using meshconv::MeshConvDriver;
 
 extern CProxy_Main mainProxy;
 
-MeshConvDriver::MeshConvDriver( const ctr::CmdLine& cmdline ) :
-  m_print( cmdline.get< tag::io, tag::screen >(),
+MeshConvDriver::MeshConvDriver( const ctr::CmdLine& cmdline, int ) :
+  m_print( cmdline.logname( cmdline.get< tag::io, tag::screen >(),
+                             cmdline.get< tag::io, tag::nrestart >() ),
            cmdline.get< tag::verbose >() ? std::cout : std::clog,
            std::ios_base::app ),
   m_reorder( cmdline.get< tag::reorder >() ),
@@ -32,7 +33,6 @@ MeshConvDriver::MeshConvDriver( const ctr::CmdLine& cmdline ) :
   m_output()
 // *****************************************************************************
 //  Constructor
-//! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
 // *****************************************************************************
@@ -41,7 +41,6 @@ MeshConvDriver::MeshConvDriver( const ctr::CmdLine& cmdline ) :
   m_input = cmdline.get< tag::io, tag::input >();
   // Save output file name
   m_output = cmdline.get< tag::io, tag::output >();
-
 
   // Output command line object to file
   auto logfilename = tk::meshconv_executable() + "_input.log";

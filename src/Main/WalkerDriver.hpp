@@ -22,7 +22,7 @@ class WalkerDriver {
 
   public:
     //! Constructor
-    explicit WalkerDriver( const ctr::CmdLine& cmdline );
+    explicit WalkerDriver( const ctr::CmdLine& cmdline, int nrestart );
 
     //! Execute driver
     void execute() const {}

@@ -81,7 +81,8 @@ using intervals = tk::TaggedTuple< brigand::list<
 
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
-    tag::control,   kw::control::info::expect::type //!< Control filename
+    tag::nrestart,  int                             //!< Number of restarts
+  , tag::control,   kw::control::info::expect::type //!< Control filename
   , tag::input,     std::string                     //!< Input filename
   , tag::output,    std::string                     //!< Output filename
   , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename

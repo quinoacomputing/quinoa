@@ -25,6 +25,7 @@ namespace inciter {
 
 static CkReduction::reducerType PDFMerger;
 extern ctr::InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
 
 } // inciter::
 
@@ -61,7 +62,8 @@ Discretization::Discretization(
   m_bid(),
   m_timer(),
   m_refined( 0 ),
-  m_prevstatus( std::chrono::high_resolution_clock::now() )
+  m_prevstatus( std::chrono::high_resolution_clock::now() ),
+  m_nrestart( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] fctproxy Distributed FCT proxy
@@ -564,7 +566,9 @@ Discretization::grindZero()
 
   if (thisIndex == 0) {
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
-    tk::Print print( g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
+    const auto& def =
+      g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+    tk::Print print( g_inputdeck.get< tag::cmd >().logname( def, m_nrestart ),
                      verbose ? std::cout : std::clog,
                      std::ios_base::app );
     print.diag( "Starting time stepping" );
@@ -628,7 +632,9 @@ Discretization::status()
     tk::Timer::Watch ete, eta;
     m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
  
-    tk::Print print( g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
+    const auto& def =
+      g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+    tk::Print print( g_inputdeck.get< tag::cmd >().logname( def, m_nrestart ),
                      verbose ? std::cout : std::clog,
                      std::ios_base::app );
  

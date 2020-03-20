@@ -28,7 +28,8 @@ using Location = pegtl::position;
 
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
-    tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
+    tag::nrestart,  int                             //!< Number of restarts
+  , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
 > >;
 
 
