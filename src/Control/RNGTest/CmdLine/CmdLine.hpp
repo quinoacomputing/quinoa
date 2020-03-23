@@ -56,6 +56,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::help
                                      , kw::helpctr
                                      , kw::helpkw
+                                     , kw::screen
                                      , kw::quiescence
                                      , kw::trace
                                      , kw::version
@@ -100,6 +101,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //!   otherwise it would be a mutual dependency.
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
+      get< tag::io, tag::screen >() = "rngtest_screen.log";
       get< tag::verbose >() = false; // Use quiet output by default
       get< tag::chare >() = false; // No chare state output by default
       get< tag::trace >() = true; // Output call and stack trace by default

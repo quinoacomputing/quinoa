@@ -564,7 +564,7 @@ Discretization::grindZero()
 
   if (thisIndex == 0) {
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
-    tk::Print print( tk::inciter_executable() + "_screen.log",
+    tk::Print print( g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
                      verbose ? std::cout : std::clog,
                      std::ios_base::app );
     print.diag( "Starting time stepping" );
@@ -604,7 +604,7 @@ Discretization::status()
     tk::Timer::Watch ete, eta;
     m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
  
-    tk::Print print( tk::inciter_executable() + "_screen.log",
+    tk::Print print( g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
                      verbose ? std::cout : std::clog,
                      std::ios_base::app );
  

@@ -84,6 +84,7 @@ using ios = tk::TaggedTuple< brigand::list<
     tag::control,   kw::control::info::expect::type //!< Control filename
   , tag::input,     std::string                     //!< Input filename
   , tag::output,    std::string                     //!< Output filename
+  , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
   , tag::pdf,       kw::pdf::info::expect::type     //!< PDF filename
   , tag::stat,      kw::stat::info::expect::type    //!< Statistics filename
   , tag::particles, std::string                     //!< Particles filename

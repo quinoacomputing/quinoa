@@ -30,7 +30,8 @@ namespace ctr {
 
 //! Member data for tagged tuple
 using CmdLineMembers = brigand::list<
-    tag::verbose,    bool
+    tag::io,         ios
+  , tag::verbose,    bool
   , tag::chare,      bool
   , tag::help,       bool
   , tag::quiescence, bool
@@ -58,6 +59,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::help
                                      , kw::helpkw
                                      , kw::group
+                                     , kw::screen
                                      , kw::quiescence
                                      , kw::trace
                                      , kw::version
@@ -77,6 +79,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //!   control file parser.
     //! \see walker::ctr::CmdLine
     CmdLine() {
+      get< tag::io, tag::screen >() = "unittest_screen.log";
       get< tag::verbose >() = false; // Use quiet output by default
       get< tag::chare >() = false; // No chare state output by default
       get< tag::trace >() = true; // Output call and stack trace by default
