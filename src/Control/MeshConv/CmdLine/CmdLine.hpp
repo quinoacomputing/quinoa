@@ -60,6 +60,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::helpkw
                                      , kw::input
                                      , kw::output
+                                     , kw::screen
                                      , kw::reorder_cmd
                                      , kw::quiescence
                                      , kw::trace
@@ -80,6 +81,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //!   control file parser.
     //! \see walker::ctr::CmdLine
     CmdLine() {
+      get< tag::io, tag::screen >() = "meshconv_screen.log";
       get< tag::verbose >() = false; // Use quiet output by default
       get< tag::chare >() = false; // No chare state output by default
       get< tag::reorder >() = false; // Do not reorder by default

@@ -70,6 +70,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::control
                                      , kw::input
                                      , kw::output
+                                     , kw::screen
                                      , kw::restart
                                      , kw::diagnostics_cmd
                                      , kw::quiescence
@@ -119,6 +120,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       get< tag::io, tag::output >() = "out";
+      get< tag::io, tag::screen >() = "inciter_screen.log";
       get< tag::io, tag::diag >() = "diag";
       get< tag::io, tag::particles >() = "track.h5part";
       get< tag::io, tag::restart >() = "restart";
