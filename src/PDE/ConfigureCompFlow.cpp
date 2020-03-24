@@ -151,6 +151,8 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   const auto& p0 = g_inputdeck.get< tag::param, eq, tag::p0 >();
   if (!p0.empty()) nfo.emplace_back( "coeff p0", parameters( p0 ) );
 
+  // ICs
+
   const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
 
   const auto& bgdensityic = ic.get< tag::density >();
@@ -199,6 +201,18 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   if (boxtemperatureic.size() > c)
     nfo.emplace_back( "IC box temperature",
                       std::to_string( boxtemperatureic[c][0] ) );
+
+  // BCs
+
+  const auto& bcstag = g_inputdeck.get< tag::param, eq, tag::bcstag >();
+  const auto& point = bcstag.get< tag::point >();
+  if (point.size() > c)
+    nfo.emplace_back( "Stagnation BC point(s)", parameters( point[c] ) );
+  const auto& radius = bcstag.get< tag::radius >();
+  if (radius.size() > c)
+    nfo.emplace_back( "Stagnation BC radii", parameters( radius[c] ) );
+
+  // FCT
 
   auto bool_to_string = [](bool b) -> std::string {
     return b ? "true" : "false";

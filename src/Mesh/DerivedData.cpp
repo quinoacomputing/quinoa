@@ -1557,7 +1557,7 @@ leakyPartition( const std::vector< int >& esueltet,
       }
   }
 
-  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+  auto eps = 1.0e-9;
   return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
 }
 

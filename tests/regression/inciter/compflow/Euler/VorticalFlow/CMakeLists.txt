@@ -129,6 +129,22 @@ add_regression_test(compflow_euler_vorticalflow ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
                     LABELS diagcg)
 
+add_regression_test(compflow_euler_vorticalflow_stag ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES vortical_flow_stag.q unitcube_1k.exo
+                    ARGS -c vortical_flow_stag.q -i unitcube_1k.exo -v
+                    BIN_BASELINE vortical_flow_stag_pe4.std.exo.0
+                                 vortical_flow_stag_pe4.std.exo.1
+                                 vortical_flow_stag_pe4.std.exo.2
+                                 vortical_flow_stag_pe4.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                    BIN_DIFF_PROG_ARGS -m
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    LABELS diagcg)
+
 # Parallel + virtualization
 
 add_regression_test(compflow_euler_vorticalflow_u0.5 ${INCITER_EXECUTABLE}
@@ -241,6 +257,32 @@ add_regression_test(compflow_euler_vorticalflow_alecg_u0.5 ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_alecg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
+                    LABELS alecg)
+
+add_regression_test(compflow_euler_vorticalflow_alecg_stag_u0.5
+                    ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES vortical_flow_alecg_stag.q unitcube_1k.exo
+                    ARGS -c vortical_flow_alecg_stag.q -i unitcube_1k.exo -v
+                         -u 0.5
+                    BIN_BASELINE vortical_flow_alecg_stag_pe4_u0.5.std.exo.0
+                                 vortical_flow_alecg_stag_pe4_u0.5.std.exo.1
+                                 vortical_flow_alecg_stag_pe4_u0.5.std.exo.2
+                                 vortical_flow_alecg_stag_pe4_u0.5.std.exo.3
+                                 vortical_flow_alecg_stag_pe4_u0.5.std.exo.4
+                                 vortical_flow_alecg_stag_pe4_u0.5.std.exo.5
+                                 vortical_flow_alecg_stag_pe4_u0.5.std.exo.6
+                                 vortical_flow_alecg_stag_pe4_u0.5.std.exo.7
+                    BIN_RESULT out.e-s.0.8.0
+                               out.e-s.0.8.1
+                               out.e-s.0.8.2
+                               out.e-s.0.8.3
+                               out.e-s.0.8.4
+                               out.e-s.0.8.5
+                               out.e-s.0.8.6
+                               out.e-s.0.8.7
+                    BIN_DIFF_PROG_ARGS -m
+                    BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS alecg)
 
 add_regression_test(compflow_euler_vorticalflow_dgp1_u0.90 ${INCITER_EXECUTABLE}

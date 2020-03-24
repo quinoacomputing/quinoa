@@ -113,7 +113,8 @@ class Transport {
                const tk::Fields& U,
                tk::Fields& G ) const
     {
-      chbgrad( m_ncomp, m_offset, coord, inpoel, bndel, gid, bid, U, egrad, G );
+      chbgrad( m_ncomp, m_offset, coord, inpoel, bndel, gid, bid, {},
+               U, egrad, G );
     }
 
     //! Compute right hand side for ALECG
@@ -171,7 +172,7 @@ class Transport {
 
       // compute/assemble gradients in points
       auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, gid, lid, bid,
-                            vol, U, G, egrad );
+                            vol, {}, U, G, egrad );
 
       // compute derived data structures
       auto esup = tk::genEsup( inpoel, 4 );
@@ -201,7 +202,7 @@ class Transport {
           // sum donain-edge contributions
           for (auto e : tk::cref_find(esued,{p,q})) {
             const auto [ N, grad, u, J ] =
-              egrad( m_ncomp, m_offset, e, coord, inpoel, U );
+              egrad( m_ncomp, m_offset, e, coord, inpoel, {}, U );
             auto J48 = J/48.0;
             for (const auto& [a,b] : tk::lpoed) {
               auto s = tk::orient( {N[a],N[b]}, {p,q} );
@@ -623,6 +624,8 @@ class Transport {
            std::size_t e,
            const std::array< std::vector< tk::real >, 3 >& coord,
            const std::vector< std::size_t >& inpoel,
+           const std::tuple< std::vector< tk::real >,
+                             std::vector< tk::real > >&,
            const tk::Fields& U )
     {
       // access node cooordinates
