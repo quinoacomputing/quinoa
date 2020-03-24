@@ -237,6 +237,9 @@ struct diffusivity { static std::string name() { return "diffusivity"; } };
 struct u0 { static std::string name() { return "u0"; } };
 struct bcdir { static std::string name() { return "bcdir"; } };
 struct bcsym { static std::string name() { return "bcsym"; } };
+struct bcstag { static std::string name() { return "bcstag"; } };
+struct point { static std::string name() { return "point"; } };
+struct radius { static std::string name() { return "radius"; } };
 struct bcinlet { static std::string name() { return "bcinlet"; } };
 struct bcoutlet { static std::string name() { return "bcoutlet"; } };
 struct bccharacteristic {

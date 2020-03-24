@@ -203,6 +203,14 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::bc,            bc
 > >;
 
+//! Stagnation boundary conditions parameters storage
+using StagnationBCParameters = tk::TaggedTuple< brigand::list<
+    tag::point,         std::vector<
+                          std::vector< kw::point::info::expect::type > >
+  , tag::radius,        std::vector<
+                          std::vector< kw::radius::info::expect::type > >
+> >;
+
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
@@ -216,6 +224,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
                               kw::farfield_velocity::info::expect::type > >
   , tag::bc,            bc
   , tag::ic,            ic
+  //! Stagnation boundary condition configuration storage
+  , tag::bcstag,        StagnationBCParameters
   //! System FCT character
   , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system

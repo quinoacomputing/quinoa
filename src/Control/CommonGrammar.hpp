@@ -134,7 +134,7 @@ namespace grm {
     BC_EMPTY,           //!< Empty boundary condition block
     SYSFCTVAR,          //!< System-FCT variable index incorrect
     BGICMISSING,        //!< Background IC unspecified
-    BOXIC,              //!< Box IC incorrect
+    STAGBCWRONG,        //!< Stagnation BC incorrectly configured
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
@@ -349,13 +349,11 @@ namespace grm {
       "condition specifications, e.g., 'sideset end', are not allowed." },
     { MsgKey::SYSFCTVAR, "Error in the system-FCT variable definition block. "
       "The block must list integers between 1 and 5 both inclusive." },
-    { MsgKey::BGICMISSING, "Background initial conditions not specified or "
-      "incomplete. If a articular test problem is NOT configured, the default "
-      "problem type is user-defined. A user-defined problem requires an ic ... "
-      "end block in the input file, specifying at least the background ICs for "
-      "physics variables. Both the background density and velocity must be "
-      "specified as well as either the background pressure, internal energy, "
-      "or temperature must also be specified." },
+    { MsgKey::STAGBCWRONG, "Stagnation boundary conditions incorrectly "
+      "configured. Within a bc_stag ... end block there must be a point ... "
+      "end block and a radius ... end block. Both point and radius blocks must "
+      "contain floating-point numbers, and the number of items in the point "
+      "block must be exactly 3x that of radii." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
     { MsgKey::HYDROTIMESCALES, "Error in the preceding line or block. "
