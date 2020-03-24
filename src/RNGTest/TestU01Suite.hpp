@@ -116,7 +116,7 @@ class TestU01Suite : public CBase_TestU01Suite {
     //! Create pretty printer specialized to RNGTest
     //! \return Pretty printer
     RNGTestPrint printer() const { return
-      RNGTestPrint( tk::rngtest_executable() + "_screen.log",
+      RNGTestPrint( g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
         g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
         std::ios_base::app );
     }

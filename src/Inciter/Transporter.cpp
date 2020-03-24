@@ -292,10 +292,11 @@ Transporter::info( const InciterPrint& print )
   print.item( "Checkpoint/restart",
               g_inputdeck.get< tag::cmd, tag::rsfreq >() );
 
-  print.section( "Output fields" );
   const auto outsets = g_inputdeck.outsets();
-  if (!outsets.empty())
+  if (!outsets.empty()) {
+    print.section( "Output fields" );
     print.item( "Surface side set(s)", tk::parameters( outsets ) );
+  }
 
   print.endsubsection();
 }

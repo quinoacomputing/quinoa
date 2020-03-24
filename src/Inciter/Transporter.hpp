@@ -286,7 +286,7 @@ class Transporter : public CBase_Transporter {
     //! Create pretty printer specialized to Inciter
     //! \return Pretty printer
     InciterPrint printer() const { return
-      InciterPrint( tk::inciter_executable() + "_screen.log",
+      InciterPrint( g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
         g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
         std::ios_base::app );
     }

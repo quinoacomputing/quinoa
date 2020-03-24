@@ -31,7 +31,7 @@ extern ctr::InputDeck g_inputdeck;
 using rngtest::RNGTestDriver;
 
 RNGTestDriver::RNGTestDriver( const ctr::CmdLine& cmdline ) :
-  m_print( tk::rngtest_executable() + "_screen.log",
+  m_print( cmdline.get< tag::io, tag::screen >(),
            cmdline.get< tag::verbose >() ? std::cout : std::clog,
            std::ios_base::app )
 // *****************************************************************************

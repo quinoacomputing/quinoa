@@ -119,7 +119,8 @@ void echoBuildEnv( const Print& print, const std::string& executable )
 }
 
 void echoRunEnv( const Print& print, int argc, char** argv,
-                 bool verbose, bool quiescence, bool charestate, bool trace )
+                 bool verbose, bool quiescence, bool charestate, bool trace,
+                 const std::string& screen_log, const std::string& input_log )
 // *****************************************************************************
 //  Echo runtime environment
 //! \param[in] print Pretty printer
@@ -129,6 +130,8 @@ void echoRunEnv( const Print& print, int argc, char** argv,
 //! \param[in] quiescence True if quiescence detection is enabled
 //! \param[in] charestate True if chare state collection is enabled
 //! \param[in] trace True if call and stack trace output is enabled
+//! \param[in] screen_log Screen output log file name
+//! \param[in] input_log Input log file name
 // *****************************************************************************
 {
   print.section( "Run-time environment" );
@@ -149,6 +152,8 @@ void echoRunEnv( const Print& print, int argc, char** argv,
 
   print.item( "Screen output, -" + *kw::verbose::alias(),
               verbose ? "verbose" : "quiet" );
+  print.item( "Screen output log file, -" + *kw::screen::alias(), screen_log );
+  print.item( "Input log file", input_log );
   print.item( "Number of processing elements",
               std::to_string( CkNumPes() ) + " (" +
               std::to_string( CkNumNodes() ) + 'x' +
