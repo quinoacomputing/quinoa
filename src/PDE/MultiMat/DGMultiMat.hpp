@@ -240,11 +240,16 @@ class MultiMat {
             auto rhomat = eos_density< tag::multimat >(m_system, pmax, tmax, k);
             auto rhoEmat = eos_totalenergy< tag::multimat >(m_system, rhomat,
               u, v, w, pmax, k);
+            auto almod = al_eps
+              - unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
 
             // clean conserved quantities
             unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) = al_eps;
             unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) = al_eps*rhomat;
             unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = al_eps*rhoEmat;
+
+            // correct major material state
+            unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset) -= almod;
 
             // clean primitive quantities
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = al_eps*pmax;
