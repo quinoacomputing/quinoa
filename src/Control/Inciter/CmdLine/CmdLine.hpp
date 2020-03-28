@@ -119,6 +119,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //!   otherwise it would be a mutual dependency.
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
+      get< tag::io, tag::nrestart >() = 0;
       get< tag::io, tag::output >() = "out";
       get< tag::io, tag::screen >() = "inciter_screen.log";
       get< tag::io, tag::diag >() = "diag";

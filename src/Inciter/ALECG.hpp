@@ -160,7 +160,7 @@ class ALECG : public CBase_ALECG {
     void step();
 
     // Evaluate whether to do load balancing
-    void evalLB();
+    void evalLB( int nrestart );
 
     //! Continue to next time step
     void next();
@@ -320,9 +320,6 @@ class ALECG : public CBase_ALECG {
 
     //! Compute righ-hand side vector of transport equations
     void rhs();
-
-    //! Start time stepping
-    void start();
 
     //! Solve low and high order diagonal systems
     void solve();

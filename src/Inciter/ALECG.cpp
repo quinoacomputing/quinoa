@@ -378,19 +378,6 @@ ALECG::init()
 }
 //! [init and lhs]
 
-void
-ALECG::start()
-// *****************************************************************************
-//  Start time stepping
-// *****************************************************************************
-{
-  // Start timer measuring time stepping wall clock time
-  Disc()->Timer().zero();
-
-  // Start time stepping by computing the size of the next time step)
-  next();
-}
-
 //! [Compute own and send lhs on chare-boundary]
 void
 ALECG::lhs()
@@ -478,7 +465,16 @@ ALECG::lhsmerge()
   normfinal();
 
   // Continue after lhs is complete
-  if (m_initial) start(); else lhs_complete();
+  if (m_initial) {
+    // Start timer measuring time stepping wall clock time
+    Disc()->Timer().zero();
+    // Zero grind-timer
+    Disc()->grindZero();
+    // Continue to next time step
+    next();
+  } else {
+    lhs_complete();
+  }
 }
 //! [Merge lhs and continue]
 
@@ -985,12 +981,16 @@ ALECG::out()
 }
 
 void
-ALECG::evalLB()
+ALECG::evalLB( int nrestart )
 // *****************************************************************************
 // Evaluate whether to do load balancing
+//! \param[in] nrestart Number of times restarted
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Detect if just returned from a checkpoint and if so, zero timers
+  d->restarted( nrestart );
 
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
@@ -1027,7 +1027,7 @@ ALECG::evalRestart()
 
   } else {
 
-    evalLB();
+    evalLB( /* nrestart = */ -1 );
 
   }
 }
