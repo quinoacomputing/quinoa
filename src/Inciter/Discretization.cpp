@@ -591,6 +591,30 @@ Discretization::grindZero()
 }
 
 void
+Discretization::restarted( int nrestart )
+// *****************************************************************************
+//  Detect if just returned from a checkpoint and if so, zero timers
+//! \param[in] nrestart Number of times restarted
+// *****************************************************************************
+{
+  // Detect if just restarted from checkpoint:
+  //   nrestart == -1 if there was no checkpoint this step
+  //   d->Nrestart() == nrestart if there was a checkpoint this step
+  //   if both false, just restarted from a checkpoint
+  bool restarted = nrestart != -1 && m_nrestart != nrestart;
+
+   // If just restarted from checkpoint
+  if (restarted) {
+    // Update number of restarts
+    m_nrestart = nrestart;
+    // Start timer measuring time stepping wall clock time
+    m_timer.zero();
+    // Zero grind-timer
+    grindZero();
+  }
+}
+
+void
 Discretization::status()
 // *****************************************************************************
 // Output one-liner status report

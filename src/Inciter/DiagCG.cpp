@@ -333,22 +333,6 @@ DiagCG::init()
 }
 
 void
-DiagCG::start()
-// *****************************************************************************
-//  Start time stepping
-// *****************************************************************************
-{
-  // Start timer measuring time stepping wall clock time
-  Disc()->Timer().zero();
-
-  // Zero grind-timer
-  Disc()->grindZero();
-
-  // Start time stepping by computing the size of the next time step)
-  next();
-}
-
-void
 DiagCG::next()
 // *****************************************************************************
 // Continue to next time step
@@ -425,7 +409,16 @@ DiagCG::lhsmerge()
   tk::destroy(m_lhsc);
 
   // Continue after lhs is complete
-  if (m_initial) start(); else lhs_complete();
+  if (m_initial) {
+    // Start timer measuring time stepping wall clock time
+    Disc()->Timer().zero();
+    // Zero grind-timer
+    Disc()->grindZero();
+    // Continue to next time step
+    next();
+  } else {
+    lhs_complete();
+  }
 }
 
 void
@@ -874,12 +867,16 @@ DiagCG::out()
 }
 
 void
-DiagCG::evalLB()
+DiagCG::evalLB( int nrestart )
 // *****************************************************************************
 // Evaluate whether to do load balancing
+//! \param[in] nrestart Number of times restarted
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Detect if just returned from a checkpoint and if so, zero timers
+  d->restarted( nrestart );
 
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
@@ -916,7 +913,7 @@ DiagCG::evalRestart()
 
   } else {
 
-    evalLB();
+    evalLB( /* nrestart = */ -1 );
 
   }
 }

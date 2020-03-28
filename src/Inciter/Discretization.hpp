@@ -159,6 +159,9 @@ class Discretization : public CBase_Discretization {
     //! Non-const-ref field-output iteration count accessor
     uint64_t& Itf() { return m_itf; }
 
+    //! Non-const-ref number of restarts accessor
+    int& Nrestart() { return m_nrestart; }
+
     //! Timer accessor as const-ref
     const tk::Timer& Timer() const { return m_timer; }
     //! Timer accessor as non-const-ref
@@ -230,6 +233,9 @@ class Discretization : public CBase_Discretization {
     //! Zero grind-timer
     void grindZero();
 
+    //! Detect if just returned from a checkpoint and if so, zero timers
+    void restarted( int nrestart );
+
     //! Remap mesh data due to new local ids
     void remap( const std::unordered_map< std::size_t, std::size_t >& map );
 
@@ -269,6 +275,7 @@ class Discretization : public CBase_Discretization {
       p | m_timer;
       p | m_refined;
       p( reinterpret_cast<char*>(&m_prevstatus), sizeof(Clock::time_point) );
+      p | m_nrestart;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -363,6 +370,8 @@ class Discretization : public CBase_Discretization {
     int m_refined;
     //! Time point storing clock state at status()
     Clock::time_point m_prevstatus;
+    //! Number of times restarted
+    int m_nrestart;
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );

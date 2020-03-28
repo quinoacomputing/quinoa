@@ -109,7 +109,10 @@ class DG : public CBase_DG {
     void boxvol( tk::real v );
 
     // Evaluate whether to do load balancing
-    void evalLB();
+    void evalLB( int nrestart );
+
+    //! Start time stepping
+    void start();
 
     //! Continue to next time step
     void next();

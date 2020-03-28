@@ -46,7 +46,7 @@ module diagcg {
       entry void lhs();
       entry void step();
       entry void next();
-      entry void evalLB();
+      entry void evalLB( int nrestart );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
