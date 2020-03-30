@@ -75,11 +75,19 @@ class ExodusIIMeshWriter {
     //!  Write time stamp to ExodusII file
     void writeTimeStamp( uint64_t it, tk::real time ) const;
 
+    //! Write time values to ExodusII file
+    void writeTimeValues( const std::vector< tk::real >& tv ) const;
+
     //! Write the names of nodal output variables to ExodusII file
     void writeNodeVarNames( const std::vector< std::string >& nv ) const;
 
     //! Write the names of element output variables to ExodusII file
     void writeElemVarNames( const std::vector< std::string >& ev ) const;
+
+    //! \brief Write multiple node scalar fields to ExodusII file at multiple
+    //!   time steps
+    void writeNodeScalars(
+      const std::vector< std::vector< std::vector< tk::real > > >& var ) const;
 
     //!  Write node scalar field to ExodusII file
     void writeNodeScalar( uint64_t it,

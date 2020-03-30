@@ -122,6 +122,18 @@ class ExodusIIMeshReader {
       const std::vector< std::size_t >& ginpoel,
       const std::vector< std::size_t >& triinp ) const;
 
+    //! Read the names of nodal output variables from ExodusII file
+    void readNodeVarNames( std::vector< std::string >& nv ) const;
+
+    //! Read time values from ExodusII file
+    void readTimeValues( std::vector< tk::real >& tv ) const;
+
+    //! Read node scalar fields from ExodusII file
+    void readNodeScalars(
+      std::size_t ntime,
+      std::size_t nvar,
+      std::vector< std::vector< std::vector< tk::real > > >& var ) const;
+
     //!  Return number of elements in a mesh block in the ExodusII file
     std::size_t nelem( tk::ExoElemType elemtype ) const;
 
