@@ -226,6 +226,8 @@ class Main : public CBase_Main {
       m_timer(1),
       m_timestamp()
     {
+      // increase number of restarts (available for Transporter on PE 0)
+      ++inciter::g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
       g_trace = m_cmdline.get< tag::trace >();
       tk::MainCtor( mainProxy, thisProxy, m_timer, m_cmdline,
                     CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
