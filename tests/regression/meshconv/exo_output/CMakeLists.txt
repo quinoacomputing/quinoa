@@ -57,6 +57,43 @@ add_regression_test(multiblockexo2exo ${MESHCONV_EXECUTABLE}
                     BIN_RESULT shear.exo
                     BIN_DIFF_PROG_CONF exodiff.cfg)
 
+add_regression_test(stitchexo2exo ${MESHCONV_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES out-surf.1.e-s.0.30.0
+                               out-surf.1.e-s.0.30.1
+                               out-surf.1.e-s.0.30.2
+                               out-surf.1.e-s.0.30.3
+                               out-surf.1.e-s.0.30.4
+                               out-surf.1.e-s.0.30.5
+                               out-surf.1.e-s.0.30.6
+                               out-surf.1.e-s.0.30.7
+                               out-surf.1.e-s.0.30.8
+                               out-surf.1.e-s.0.30.9
+                               out-surf.1.e-s.0.30.10
+                               out-surf.1.e-s.0.30.11
+                               out-surf.1.e-s.0.30.12
+                               out-surf.1.e-s.0.30.13
+                               out-surf.1.e-s.0.30.14
+                               out-surf.1.e-s.0.30.15
+                               out-surf.1.e-s.0.30.16
+                               out-surf.1.e-s.0.30.17
+                               out-surf.1.e-s.0.30.18
+                               out-surf.1.e-s.0.30.19
+                               out-surf.1.e-s.0.30.20
+                               out-surf.1.e-s.0.30.21
+                               out-surf.1.e-s.0.30.22
+                               out-surf.1.e-s.0.30.23
+                               out-surf.1.e-s.0.30.24
+                               out-surf.1.e-s.0.30.25
+                               out-surf.1.e-s.0.30.26
+                               out-surf.1.e-s.0.30.27
+                               out-surf.1.e-s.0.30.28
+                               out-surf.1.e-s.0.30.29
+                    ARGS -i out-surf.1.e-s.0.30.% -o out.exo -v
+                    BIN_BASELINE out-surf.1.exo
+                    BIN_RESULT out.exo
+                    BIN_DIFF_PROG_CONF exodiff_stitch.cfg)
+
 # With reordering
 
 add_regression_test(asc2reordexo ${MESHCONV_EXECUTABLE}
