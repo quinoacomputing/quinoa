@@ -896,10 +896,11 @@ ExodusIIMeshReader::readTimeValues( std::vector< tk::real >& tv ) const
   auto num_time_steps =
     static_cast< std::size_t >( ex_inquire_int( m_inFile, EX_INQ_TIME ) );
 
-  tv.resize( num_time_steps, 0.0 );
-
-  ErrChk( ex_get_all_times( m_inFile, tv.data() ) == 0,
-           "Failed to read time values from ExodusII file: " + m_filename );
+  if (num_time_steps) {
+    tv.resize( num_time_steps, 0.0 );
+    ErrChk( ex_get_all_times( m_inFile, tv.data() ) == 0,
+             "Failed to read time values from ExodusII file: " + m_filename );
+  }
 }
 
 void
