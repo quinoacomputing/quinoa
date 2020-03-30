@@ -860,20 +860,25 @@ ExodusIIMeshReader::readNodeVarNames( std::vector< std::string >& nv ) const
     "Failed to read nodal output variable parameters from ExodusII file: " +
     m_filename );
 
-  char* names[ static_cast< std::size_t >( numvars ) ];
-  for (int i=0; i<numvars; ++i)
-    names[i] = static_cast<char*>( calloc((MAX_STR_LENGTH+1), sizeof(char)) );
+  if (numvars) {
 
-  ErrChk( ex_get_variable_names( m_inFile,
-                                 EX_NODAL,
-                                 numvars,
-                                 names ) == 0,
-          "Failed to read nodal variable names from ExodusII file: " +
-          m_filename );
+    char* names[ static_cast< std::size_t >( numvars ) ];
+    for (int i=0; i<numvars; ++i)
+      names[i] = static_cast<char*>( calloc((MAX_STR_LENGTH+1), sizeof(char)) );
 
-  nv.resize( static_cast< std::size_t >( numvars ) );
-  std::size_t i = 0;
-  for (auto& n : nv) n = names[ i++ ];
+    ErrChk( ex_get_variable_names( m_inFile,
+                                   EX_NODAL,
+                                   numvars,
+                                   names ) == 0,
+            "Failed to read nodal variable names from ExodusII file: " +
+            m_filename );
+
+    nv.resize( static_cast< std::size_t >( numvars ) );
+    std::size_t i = 0;
+    for (auto& n : nv) n = names[ i++ ];
+
+  }
+
   #if defined(__clang__)
     #pragma clang diagnostic pop
   #elif defined(STRICT_GNUC)
