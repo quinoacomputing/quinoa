@@ -25,7 +25,7 @@ extern CProxy_TUTSuite g_suiteProxy;
 
 } // unittest::
 
-UnitTestDriver::UnitTestDriver( const ctr::CmdLine& cmdline )
+UnitTestDriver::UnitTestDriver( const ctr::CmdLine& cmdline, int )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cmdline Command line object storing data parsed from the command

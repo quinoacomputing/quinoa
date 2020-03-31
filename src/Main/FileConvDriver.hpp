@@ -24,7 +24,7 @@ class FileConvDriver {
 
   public:
     //! Constructor
-    explicit FileConvDriver( const ctr::CmdLine& cmdline );
+    explicit FileConvDriver( const ctr::CmdLine& cmdline, int );
 
     //! Execute
     void execute() const;

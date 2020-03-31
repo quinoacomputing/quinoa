@@ -219,7 +219,6 @@ class Transporter : public CBase_Transporter {
       p | m_maxstat;
       p | m_avgstat;
       p | m_timer;
-      p | m_nrestart;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -253,8 +252,6 @@ class Transporter : public CBase_Transporter {
     enum class TimerTag { MESH_READ=0 };
     //! Timers
     std::map< TimerTag, tk::Timer > m_timer;
-    //! Number of times restarted
-    int m_nrestart;
     //! Progress object for preparing mesh
     tk::Progress< 7 > m_progMesh;
     //! Progress object for preparing workers
@@ -288,8 +285,12 @@ class Transporter : public CBase_Transporter {
 
     //! Create pretty printer specialized to Inciter
     //! \return Pretty printer
-    InciterPrint printer() const { return
-      InciterPrint( g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
+    InciterPrint printer() const {
+      const auto& def =
+        g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+      auto nrestart = g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
+      return InciterPrint(
+        g_inputdeck.get< tag::cmd >().logname( def, nrestart ),
         g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
         std::ios_base::app );
     }

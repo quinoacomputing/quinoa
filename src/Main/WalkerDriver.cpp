@@ -30,17 +30,20 @@ extern CProxy_Distributor g_DistributorProxy;
 
 using walker::WalkerDriver;
 
-WalkerDriver::WalkerDriver( const ctr::CmdLine& cmdline )
+WalkerDriver::WalkerDriver( const ctr::CmdLine& cmdline, int nrestart )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
+//! \param[in] nrestart Number of times restarted
 // *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
 
   // Create pretty printer
-  WalkerPrint print( cmdline.get< tag::io, tag::screen >(),
+  const auto& def =
+    g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+  WalkerPrint print( cmdline.logname( def, nrestart ),
                      cmdline.get< tag::verbose >() ? std::cout : std::clog,
                      std::ios_base::app );
 

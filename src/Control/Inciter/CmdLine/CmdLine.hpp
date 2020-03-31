@@ -121,7 +121,8 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       get< tag::io, tag::nrestart >() = 0;
       get< tag::io, tag::output >() = "out";
-      get< tag::io, tag::screen >() = "inciter_screen.log";
+      get< tag::io, tag::screen >() =
+        tk::baselogname( tk::inciter_executable() );
       get< tag::io, tag::diag >() = "diag";
       get< tag::io, tag::particles >() = "track.h5part";
       get< tag::io, tag::restart >() = "restart";
@@ -151,6 +152,17 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //! \param[in,out] c CmdLine object reference
     friend void operator|( PUP::er& p, CmdLine& c ) { c.pup(p); }
     //@}
+
+    //! Compute and return log file name
+    //! \param[in] def Default log file name (so we don't mess with user's)
+    //! \param[in] nrestart Number of times restarted
+    //! \return Log file name
+    std::string logname( const std::string& def, int nrestart ) const {
+      if (get< tag::io, tag::screen >() != def)
+        return get< tag::io, tag::screen >();
+      else
+        return tk::logname( tk::inciter_executable(), nrestart );
+    }
 };
 
 } // ctr::
