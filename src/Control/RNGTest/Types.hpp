@@ -38,7 +38,8 @@ using selects = tk::TaggedTuple< brigand::list<
 
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
-    tag::control,  std::string                      //!< Control filename
+    tag::nrestart,  int                             //!< Number of restarts
+  , tag::control,  std::string                      //!< Control filename
   , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
 > >;
 

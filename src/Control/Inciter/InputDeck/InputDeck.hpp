@@ -303,7 +303,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
     //!   save solution field variables
     //! \note This returns an ordered set so the order of the set ids are
     //!   always the same.
-    std::set< int > outsets() {
+    std::set< int > outsets() const {
       std::set< int > ids;
       for (const auto& s : get< tag::cmd, tag::io, tag::surface >()) {
         std::stringstream conv( s );

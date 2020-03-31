@@ -95,6 +95,14 @@ splitLines( std::string str,
             const std::string& name = "",
             std::size_t width = 80 );
 
+// Calculate base log file name
+std::string
+baselogname( const std::string& executable );
+
+//! Construct log file name
+std::string
+logname( const std::string& executable, int numrestart = 0 );
+
 } // tk::
 
 #endif // PrintUtil_h

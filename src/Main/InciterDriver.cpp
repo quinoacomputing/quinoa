@@ -29,17 +29,20 @@ extern ctr::InputDeck g_inputdeck_defaults;
 
 using inciter::InciterDriver;
 
-InciterDriver::InciterDriver( const ctr::CmdLine& cmdline )
+InciterDriver::InciterDriver( const ctr::CmdLine& cmdline, int nrestart )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
+//! \param[in] nrestart Number of times restarted
 // *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
 
   // Create pretty printer
-  InciterPrint print( cmdline.get< tag::io, tag::screen >(),
+  const auto& def =
+    g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+  InciterPrint print( cmdline.logname( def, nrestart ),
                       cmdline.get< tag::verbose >() ? std::cout : std::clog,
                       std::ios_base::app );
 

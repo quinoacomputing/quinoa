@@ -33,7 +33,7 @@ class RNGTestDriver {
 
   public:
     //! Constructor
-    explicit RNGTestDriver( const ctr::CmdLine& cmdline );
+    explicit RNGTestDriver( const ctr::CmdLine& cmdline, int nrestart );
 
     //! Execute driver
     void execute() const;

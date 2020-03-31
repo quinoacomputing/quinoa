@@ -64,3 +64,27 @@ tk::splitLines( std::string str,
 
   return os.str();
 }
+
+std::string
+tk::baselogname( const std::string& executable )
+// *****************************************************************************
+// Calculate base log file name
+//! \param[in] executable Name of the executable
+//! \return Base log file name
+// *****************************************************************************
+{
+  return executable + "_screen.log";
+}
+
+std::string
+tk::logname( const std::string& executable, int numrestart )
+// *****************************************************************************
+// Construct log file name
+//! \param[in] executable Name of the executable
+//! \param[in] numrestart Number of times restarted
+//! \return The name of the log file to use
+// *****************************************************************************
+{
+  return baselogname( executable ) +
+         (numrestart ? '.' + std::to_string(numrestart) : "" );
+}

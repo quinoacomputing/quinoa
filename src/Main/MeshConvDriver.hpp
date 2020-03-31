@@ -25,7 +25,7 @@ class MeshConvDriver {
 
   public:
     //! Constructor
-    explicit MeshConvDriver( const ctr::CmdLine& cmdline );
+    explicit MeshConvDriver( const ctr::CmdLine& cmdline, int );
 
     //! Execute
     void execute() const;

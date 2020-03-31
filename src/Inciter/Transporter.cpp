@@ -74,7 +74,6 @@ Transporter::Transporter() :
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
   m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
   m_timer(),
-  m_nrestart( g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >() ),
   m_progMesh( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgMeshPrefix, ProgMeshLegend ),
   m_progWork( g_inputdeck.get< tag::cmd, tag::feedback >(),
