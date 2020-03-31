@@ -39,6 +39,7 @@ extern "C" {
 namespace rngtest {
 
 extern ctr::InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
 
 //! \brief TestU01 random number generator test suite used polymorphically with
 //!   Battery
@@ -115,8 +116,11 @@ class TestU01Suite : public CBase_TestU01Suite {
 
     //! Create pretty printer specialized to RNGTest
     //! \return Pretty printer
-    RNGTestPrint printer() const { return
-      RNGTestPrint( g_inputdeck.get< tag::cmd, tag::io, tag::screen >(),
+    RNGTestPrint printer() const {
+      const auto& def =
+        g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+      auto nrestart = g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
+      return RNGTestPrint( g_inputdeck.get< tag::cmd >().logname( def, nrestart ),
         g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
         std::ios_base::app );
     }

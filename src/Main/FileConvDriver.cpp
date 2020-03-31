@@ -23,7 +23,7 @@ using fileconv::FileConvDriver;
 
 extern CProxy_Main mainProxy;
 
-FileConvDriver::FileConvDriver( const ctr::CmdLine& cmdline )
+FileConvDriver::FileConvDriver( const ctr::CmdLine& cmdline, int )
   : m_input(), m_output()
 // *****************************************************************************
 //  Constructor
