@@ -276,6 +276,7 @@ class Discretization : public CBase_Discretization {
       p | m_refined;
       p( reinterpret_cast<char*>(&m_prevstatus), sizeof(Clock::time_point) );
       p | m_nrestart;
+      p | m_N;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -372,6 +373,8 @@ class Discretization : public CBase_Discretization {
     Clock::time_point m_prevstatus;
     //! Number of times restarted
     int m_nrestart;
+    //! Shapefunctions evaluated at history point locations in host elements
+    std::vector< std::array< tk::real, 4 > > m_N;
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );

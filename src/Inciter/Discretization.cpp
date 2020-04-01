@@ -63,7 +63,8 @@ Discretization::Discretization(
   m_timer(),
   m_refined( 0 ),
   m_prevstatus( std::chrono::high_resolution_clock::now() ),
-  m_nrestart( 0 )
+  m_nrestart( 0 ),
+  m_N()
 // *****************************************************************************
 //  Constructor
 //! \param[in] fctproxy Distributed FCT proxy
@@ -114,6 +115,21 @@ Discretization::Discretization(
   // Compute number of mesh points owned
   std::size_t npoin = m_gid.size();
   for (auto g : m_gid) if (slave(g)) --npoin;
+
+  // Find host elements of user-specified points where time histories are
+  // saved, and save the shape functions evaluated at the point locations
+  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+  if (!hist_points.empty()) {
+    for (const auto& p : hist_points) {
+      std::array< tk::real, 4 > N;
+      for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+        if (tk::intet( m_coord, m_inpoel, p, e, N )) {
+          m_N.push_back( N );
+          break;
+        }
+      }
+    }
+  }
 
   // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
   // is configured false in the input deck, at this point, we still need the FCT

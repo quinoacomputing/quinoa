@@ -191,6 +191,14 @@ conforming( const std::vector< std::size_t >& inpoel,
             const tk::UnsMesh::Coords& coord,
             bool cerr = true );
 
+//! Determine if a point is in a tetrahedron
+bool
+intet( const std::array< std::vector< tk::real >, 3 >& coord,
+       const std::vector< std::size_t >& inpoel,
+       const std::vector< tk::real >& p,
+       std::size_t e,
+       std::array< tk::real, 4 >& N );
+
 } // tk::
 
 #endif // DerivedData_h
