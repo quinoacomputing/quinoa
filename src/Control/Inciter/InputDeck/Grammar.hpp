@@ -493,6 +493,14 @@ namespace grm {
         stack.template get< tag::discr, tag::rdof >() = 10;
         stack.template get< tag::pref, tag::pref >() = true;
       }
+
+      // Do error checking on time history points
+      const auto& hist = stack.template get< tag::history, tag::point >();
+      if (std::any_of( begin(hist), end(hist),
+           [](const auto& p){ return p.size() != 3; } ) )
+      {
+        Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+      }
     }
   };
 
