@@ -139,10 +139,10 @@ CompFlowSurfOutput( ncomp_t system,
       const auto u = U.extract( n );
       Assert( u.size() == 5, "Size mismatch" );
       out[i+0][j] = u[0];
-      out[i+1][j] = u[1];
-      out[i+2][j] = u[2];
-      out[i+3][j] = u[3];
-      out[i+4][j] = u[4];
+      out[i+1][j] = u[1]/u[0];
+      out[i+2][j] = u[2]/u[0];
+      out[i+3][j] = u[3]/u[0];
+      out[i+4][j] = u[4]/u[0];
       out[i+5][j] = eos_pressure< tag::compflow >
                       ( system, u[0], u[1], u[2], u[3], u[4] );
       ++j;
