@@ -21,6 +21,7 @@
 #include "PDFReducer.hpp"
 #include "UnsMesh.hpp"
 #include "CommMap.hpp"
+#include "History.hpp"
 
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
@@ -144,6 +145,9 @@ class Discretization : public CBase_Discretization {
     //! Nodal mesh volumes accessors as non-const-ref
     std::vector< tk::real >& Vol() { return m_vol; }
 
+    //! History points data accessor as const-ref
+    const std::vector< HistData >& Hist() const { return m_histdata; }
+
     //! Box volume accessor
     tk::real& Boxvol() { return m_boxvol; }
 
@@ -216,6 +220,16 @@ class Discretization : public CBase_Discretization {
     //! Otput one-liner status report
     void status();
 
+    //! Construct history output filename
+    std::string histfilename( const std::array< tk::real, 3 >& p,
+                              kw::precision::info::expect::type precision );
+
+    //! Output headers for time history files (one for each point)
+    void histheader( std::vector< std::string >&& names );
+
+    //! Output time history for a time step
+    void history( std::vector< std::vector< tk::real > >&& data );
+
     //! Output mesh and fields data (solution dump) to file(s)
     void write( const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
@@ -276,7 +290,7 @@ class Discretization : public CBase_Discretization {
       p | m_refined;
       p( reinterpret_cast<char*>(&m_prevstatus), sizeof(Clock::time_point) );
       p | m_nrestart;
-      p | m_N;
+      p | m_histdata;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -373,8 +387,8 @@ class Discretization : public CBase_Discretization {
     Clock::time_point m_prevstatus;
     //! Number of times restarted
     int m_nrestart;
-    //! Shapefunctions evaluated at history point locations in host elements
-    std::vector< std::array< tk::real, 4 > > m_N;
+    //! Data at history point locations
+    std::vector< HistData > m_histdata;
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
