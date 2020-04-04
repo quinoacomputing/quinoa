@@ -53,7 +53,8 @@ class MultiMatProblemUserDefined {
               [[maybe_unused]] tk::real x,
               [[maybe_unused]] tk::real y,
               [[maybe_unused]] tk::real z,
-              [[maybe_unused]] tk::real t )
+              [[maybe_unused]] tk::real t,
+              int& )
     {
       Assert( ncomp == ncomp, "Number of scalar components must be " +
                               std::to_string(ncomp) );

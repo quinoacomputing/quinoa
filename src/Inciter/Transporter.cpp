@@ -828,7 +828,7 @@ Transporter::totalvol( tk::real v, tk::real initial )
 // Reduction target summing total mesh volume across all workers
 //! \param[in] v Mesh volume summed across the whole problem
 //! \param[in] initial Sum of contributions from all chares. If larger than
-//!    zero, we are during time stepping and if zero we are during setup.
+//!    zero, we are during setup, if zero, during time stepping.
 // *****************************************************************************
 {
   m_meshvol = v;
@@ -956,6 +956,17 @@ Transporter::stat()
 
   // Create "derived-class" workers
   m_sorter.createWorkers();
+}
+
+void
+Transporter::boxvol( tk::real v )
+// *****************************************************************************
+// Reduction target computing total volume of IC box
+//! \param[in] v Total volume within user-specified box IC
+// *****************************************************************************
+{
+  if (v > 0.0) printer().diag( "Box IC volume: " + std::to_string(v) );
+  m_scheme.bcast< Scheme::boxvol >( v );
 }
 
 void

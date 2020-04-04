@@ -685,7 +685,8 @@ class CompFlow {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
+      int inbox = 0;
+      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
       return std::vector< tk::real >( begin(s), end(s) );
     }
 
@@ -766,7 +767,8 @@ class CompFlow {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
+      int inbox = 0;
+      return {{ ul, Problem::solution( system, ncomp, x, y, z, t, inbox ) }};
     }
 
     //! \brief Boundary state function providing the left and right state of a

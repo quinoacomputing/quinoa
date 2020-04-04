@@ -35,7 +35,8 @@ class CompFlowProblemUserDefined {
   public:
     //! Evaluate initial condition solution at (x,y,z,t) for all components
     static tk::SolutionFn::result_type
-    solution( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real );
+    solution( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real,
+              int& inbox );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     static tk::SrcFn::result_type

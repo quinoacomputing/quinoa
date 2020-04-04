@@ -47,7 +47,8 @@ class MultiMatProblemInterfaceAdvection {
               tk::real x,
               tk::real y,
               tk::real /*z*/,
-              tk::real t );
+              tk::real t,
+              int& );
 
     //! Compute and return source term for interface advection
     static tk::SrcFn::result_type

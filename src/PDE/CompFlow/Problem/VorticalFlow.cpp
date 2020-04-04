@@ -30,7 +30,8 @@ CompFlowProblemVorticalFlow::solution( ncomp_t system,
                                        tk::real x,
                                        tk::real y,
                                        tk::real z,
-                                       tk::real )
+                                       tk::real,
+                                       int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -88,7 +89,8 @@ CompFlowProblemVorticalFlow::src( ncomp_t system, ncomp_t ncomp, tk::real x,
   // ratio of specific heats
   tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
   // evaluate solution at x,y,z
-  auto s = solution( system, ncomp, x, y, z, 0.0 );
+  int inbox = 0;
+  auto s = solution( system, ncomp, x, y, z, 0.0, inbox );
   std::vector< tk::real > r( ncomp );
   // density source
   r[0] = 0.0;

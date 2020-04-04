@@ -97,6 +97,9 @@ class ALECG : public CBase_ALECG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
+    //! Receive total box IC volume
+    void boxvol( tk::real v );
+
     // Initially compute left hand side diagonal matrix
     void init();
 
@@ -194,6 +197,7 @@ class ALECG : public CBase_ALECG {
       p | m_bnormc;
       p | m_dfnormc;
       p | m_stage;
+      p | m_boxnodes;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -274,6 +278,8 @@ class ALECG : public CBase_ALECG {
                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnormc;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
+    //! Mesh node ids at which user-defined box ICs are defined
+    std::vector< std::size_t > m_boxnodes;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

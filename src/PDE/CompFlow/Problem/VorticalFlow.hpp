@@ -41,7 +41,7 @@ class CompFlowProblemVorticalFlow {
     //! Evaluate analytical solution at (x,y,z) for all components
     static tk::SolutionFn::result_type
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real );
+              tk::real, int& );
 
     //! Compute and return source term for vortical flow manufactured solution
     static tk::SrcFn::result_type

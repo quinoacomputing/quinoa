@@ -27,7 +27,6 @@
 #include "Reconstruction.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "CGPDE.hpp"
-#include "ProblemCommon.hpp"
 
 namespace inciter {
 
@@ -69,19 +68,25 @@ class Transport {
     //! \param[in] t Physical time
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real t ) const
+                     tk::real t,
+                     std::vector< std::size_t >& ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
       for (ncomp_t i=0; i<x.size(); ++i) {
+        int inbox = 0;
         const auto s =
-          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t );
+          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t, inbox );
         for (ncomp_t c=0; c<m_ncomp; ++c)
           unk( i, c, m_offset ) = s[c];
       }
     }
+
+    //! Set initial condition in user-defined box IC nodes (no-op for Transport)
+    void box( tk::real, const std::vector< std::size_t >&, tk::Fields& )
+    const {}
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
@@ -92,7 +97,8 @@ class Transport {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
+      int inbox = 0;
+      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
       return std::vector< tk::real >( begin(s), end(s) );
     }
 
@@ -574,7 +580,8 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
-      initialize( coord, U, t );
+      std::vector< std::size_t > inbox;
+      initialize( coord, U, t, inbox );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );

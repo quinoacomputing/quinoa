@@ -36,13 +36,7 @@ class CompFlowProblemSheddingFlow {
     //! Evaluate analytical solution at (x,y,0) for all components
     static tk::SolutionFn::result_type
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
-              tk::real );
-
-    //! \brief Evaluate the increment from t to t+dt of the analytical solution
-    //!   at (x,y,z) for all components
-    std::vector< tk::real >
-    solinc( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-      tk::real t, tk::real dt ) const;
+              tk::real, int& );
 
     //! Compute and return source term for this problem
     static tk::SrcFn::result_type

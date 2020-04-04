@@ -294,10 +294,30 @@ DiagCG::setup()
   auto d = Disc();
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
+  for (const auto& eq : g_cgpde)
+    eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
+
+  // Compute volume of user-defined box IC
+  d->boxvol( m_boxnodes );
 
   // Apply symmetry boundary conditions on initial conditions
   for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
+}
+
+void
+DiagCG::boxvol( tk::real v )
+// *****************************************************************************
+// Receive total box IC volume
+//! \param[in] v Total volume within user-specified box
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Store user-defined box IC volume
+  d->Boxvol() = v;
+
+  // Update density in user-defined IC box based on box volume
+  for (const auto& eq : g_cgpde) eq.box( d->Boxvol(), m_boxnodes, m_u );
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields( CkCallback(CkIndex_DiagCG::init(), thisProxy[thisIndex]) );

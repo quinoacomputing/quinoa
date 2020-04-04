@@ -30,7 +30,8 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
                                          tk::real x,
                                          tk::real y,
                                          tk::real z,
-                                         tk::real t )
+                                         tk::real t,
+                                         int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -102,7 +103,8 @@ CompFlowProblemRayleighTaylor::src( ncomp_t system, ncomp_t ncomp, tk::real x,
   tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system][0];
 
   // evaluate solution at x,y,z,t
-  auto s = solution( system, ncomp, x, y, z, t );
+  int inbox = 0;
+  auto s = solution( system, ncomp, x, y, z, t, inbox );
 
   // density, velocity, energy, pressure
   auto rho = s[0];
@@ -218,7 +220,8 @@ CompFlowProblemRayleighTaylor::fieldOutput(
 
   auto er = r, ee = r, ep = r, eu = r, ev = r, ew = r, p = r;
   for (std::size_t i=0; i<r.size(); ++i) {
-    auto s = solution( system, ncomp, x[i], y[i], z[i], t );
+    int inbox = 0;
+    auto s = solution( system, ncomp, x[i], y[i], z[i], t, inbox );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
     ee[i] = std::pow( E[i] - s[4]/s[0], 2.0 ) * vol[i] / V;
     eu[i] = std::pow( u[i] - s[1]/s[0], 2.0 ) * vol[i] / V;

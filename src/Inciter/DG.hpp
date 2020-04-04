@@ -105,6 +105,9 @@ class DG : public CBase_DG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
+    //! Receive total box IC volume
+    void boxvol( tk::real v );
+
     // Evaluate whether to do load balancing
     void evalLB( int nrestart );
 

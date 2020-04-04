@@ -363,8 +363,9 @@ class Transport {
       auto E = U;
       for (std::size_t e=0; e<U.nunk(); ++e)
       {
+        int inbox = 0;
         auto s = Problem::solution( m_system, m_ncomp, geoElem(e,1,0),
-                                    geoElem(e,2,0), geoElem(e,3,0), t );
+                                    geoElem(e,2,0), geoElem(e,3,0), t, inbox );
         for (ncomp_t c=0; c<m_ncomp; ++c)
           E( e, c*rdof, m_offset ) = s[c];
       }
@@ -403,7 +404,10 @@ class Transport {
     //! \return Vector of analytic solution at given spatial location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::solution( m_system, m_ncomp, xi, yi, zi, t ); }
+    {
+      int inbox = 0;
+      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
+    }
 
   private:
     const Physics m_physics;            //!< Physics policy
@@ -500,7 +504,8 @@ class Transport {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
+      int inbox = 0;
+      return {{ ul, Problem::solution( system, ncomp, x, y, z, t, inbox ) }};
     }
 };
 

@@ -316,6 +316,9 @@ Discretization::vol()
   // chare-boundaries
   m_v = m_vol;
 
+  // Compute volume in user-defined IC box
+  
+
   // Send our nodal volume contributions to neighbor chares
   if (m_nodeCommMap.empty())
    totalvol();
@@ -462,6 +465,22 @@ Discretization::stat( tk::real mesh_volume )
   CkCallback cb( CkIndex_Transporter::pdfstat(nullptr), m_transporter );
   // Contribute serialized PDF of partial sums to host via Charm++ reduction
   contribute( stream.first, stream.second.get(), PDFMerger, cb );
+}
+
+void
+Discretization::boxvol( const std::vector< std::size_t >& nodes )
+// *****************************************************************************
+// Compute total box IC volume
+//! \param[in] nodes Node list contributing to box IC volume
+// *****************************************************************************
+{
+  // Compute partial box IC volume
+  tk::real boxvol = 0.0;
+  for (auto i : nodes) boxvol += m_v[i];
+
+  // Sum up box IC volume across all chares
+  contribute( sizeof(tk::real), &boxvol, CkReduction::sum_double,
+    CkCallback(CkReductionTarget(Transporter,boxvol), m_transporter) );
 }
 
 void
