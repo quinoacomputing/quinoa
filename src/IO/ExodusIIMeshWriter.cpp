@@ -83,6 +83,9 @@ ExodusIIMeshWriter::writeMesh( const UnsMesh& mesh ) const
   writeElements( mesh );
   writeSidesets( mesh );
   writeNodesets( mesh );
+  writeTimeValues( mesh.vartimes() );
+  writeNodeVarNames( mesh.nodevarnames() );
+  writeNodeScalars( mesh.nodevars() );
 }
 
 void
@@ -364,6 +367,21 @@ ExodusIIMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
 }
 
 void
+ExodusIIMeshWriter::writeTimeValues( const std::vector< tk::real >& tv ) const
+// *****************************************************************************
+//  Write time values to ExodusII file
+//! \param[in] tv Time values for all time steps
+// *****************************************************************************
+{
+   int i = 0;
+   for (const auto& v : tv) {
+     ErrChk( ex_put_time( m_outFile, ++i, &v ) == 0,
+             "Failed to write time value for a time step to ExodusII file: " +
+             m_filename );
+   }
+}
+
+void
 ExodusIIMeshWriter::writeNodeVarNames( const std::vector< std::string >& nv )
 const
 // *****************************************************************************
@@ -448,6 +466,27 @@ const
     #elif defined(STRICT_GNUC)
       #pragma GCC diagnostic pop
     #endif
+  }
+}
+
+void
+ExodusIIMeshWriter::writeNodeScalars(
+  const std::vector< std::vector< std::vector< tk::real > > >& var ) const
+// *****************************************************************************
+//  Write multiple node scalar fields to ExodusII file at multiple time steps
+//! \param[in] var Vector of nodal variables to read to: inner vector: nodes,
+//!   middle vector: (physics) variable, outer vector: time step
+// *****************************************************************************
+{
+  uint64_t time = 0;
+  int varid = 0;
+
+  for (const auto& t : var) {    // for all times
+    ++time;
+    for (const auto& v : t) {    // for all variables
+      writeNodeScalar( time, ++varid, v );
+    }
+    varid = 0;
   }
 }
 
