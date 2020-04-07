@@ -278,6 +278,7 @@ Transporter::info( const InciterPrint& print )
               of + ".e-s.<meshid>.<numchares>.<chareid>" );
   print.item( "Surface field output file(s)",
               of + "-surf.<surfid>.e-s.<meshid>.<numchares>.<chareid>" );
+  print.item( "History output file(s)", of + ".hist.{<px>_<py>_<pz>}" );
   print.item( "Diagnostics file",
               g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
   print.item( "Checkpoint/restart directory",
@@ -296,6 +297,18 @@ Transporter::info( const InciterPrint& print )
   if (!outsets.empty()) {
     print.section( "Output fields" );
     print.item( "Surface side set(s)", tk::parameters( outsets ) );
+  }
+
+  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+  if (!hist_points.empty()) {
+    print.section( "Output time history" );
+    for (const auto& p : hist_points) {
+      std::stringstream ss;
+      auto prec = g_inputdeck.get< tag::prec, tag::history >();
+      ss << std::setprecision( static_cast<int>(prec) );
+      ss << of << ".hist.{" << p[0] << '_' << p[1] << '_' << p[2] << '}';
+      print.item( "At point " + tk::parameters(p), ss.str() );
+    }
   }
 
   print.endsubsection();
@@ -986,6 +999,7 @@ Transporter::inthead( const InciterPrint& print )
   "       flg - status flags, legend:\n"
   "             f - field (volume and surface)\n"
   "             d - diagnostics\n"
+  "             t - time history\n"
   "             h - h-refinement\n"
   "             l - load balancing\n"
   "             r - checkpoint\n",

@@ -27,6 +27,7 @@
 #include "Reconstruction.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "CGPDE.hpp"
+#include "History.hpp"
 
 namespace inciter {
 
@@ -552,6 +553,23 @@ class Transport {
     std::vector< std::vector< tk::real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >&,
                 tk::Fields& ) const
+    {
+      std::vector< std::vector< tk::real > > s; // punt for now
+      return s;
+    }
+
+    //! Return time history field names to be output to file
+    //! \return Vector of strings labelling time history fields output in file
+    std::vector< std::string > histNames() const {
+      std::vector< std::string > s; // punt for now
+      return s;
+    }
+
+    //! Return time history field output evaluated at time history points
+    std::vector< std::vector< tk::real > >
+    histOutput( const std::vector< HistData >&,
+                const std::vector< std::size_t >&,
+                const tk::Fields& ) const
     {
       std::vector< std::vector< tk::real > > s; // punt for now
       return s;

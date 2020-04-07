@@ -105,18 +105,27 @@ using discretization = tk::TaggedTuple< brigand::list<
 using precision = tk::TaggedTuple< brigand::list<
     //! Diagnostics output precision
     tag::diag, kw::precision::info::expect::type
+    //! History output precision
+  , tag::history, kw::precision::info::expect::type
 > >;
 
 //! ASCII output floating-point format
 using floatformat = tk::TaggedTuple< brigand::list<
-    tag::diag, tk::ctr::TxtFloatFormatType  //!< Diagnostics output format
+    tag::diag,    tk::ctr::TxtFloatFormatType  //!< Diagnostics output format
+  , tag::history, tk::ctr::TxtFloatFormatType  //!< History output format
 > >;
 
 //! Output intervals storage
 using intervals = tk::TaggedTuple< brigand::list<
-    tag::tty,   kw::ttyi::info::expect::type      //!< TTY output interval
-  , tag::field, kw::interval::info::expect::type  //!< Field output interval
-  , tag::diag,  kw::interval::info::expect::type  //!< Diags output interval
+    tag::tty,     kw::ttyi::info::expect::type      //!< TTY output interval
+  , tag::field,   kw::interval::info::expect::type  //!< Field output interval
+  , tag::history, kw::interval::info::expect::type  //!< History output interval
+  , tag::diag,    kw::interval::info::expect::type  //!< Diags output interval
+> >;
+
+//! History output parameters storage
+using history = tk::TaggedTuple< brigand::list<
+    tag::point,   std::vector< std::vector< kw::point::info::expect::type > >
 > >;
 
 //! IO parameters storage
@@ -329,9 +338,9 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
 
 //! Parameters storage
 using parameters = tk::TaggedTuple< brigand::list<
-    tag::transport,     TransportPDEParameters
-  , tag::compflow,      CompFlowPDEParameters
-  , tag::multimat,      MultiMatPDEParameters
+    tag::transport, TransportPDEParameters
+  , tag::compflow,  CompFlowPDEParameters
+  , tag::multimat,  MultiMatPDEParameters
 > >;
 
 //! PEGTL location/position type to use throughout all of Inciter's parsers

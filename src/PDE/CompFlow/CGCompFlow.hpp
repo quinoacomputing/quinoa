@@ -27,6 +27,7 @@
 #include "Problem/FieldOutput.hpp"
 #include "Riemann/Rusanov.hpp"
 #include "NodeBC.hpp"
+#include "History.hpp"
 
 namespace inciter {
 
@@ -745,6 +746,11 @@ class CompFlow {
     std::vector< std::string > surfNames() const
     { return CompFlowSurfNames(); }
 
+    //! Return time history field names to be output to file
+    //! \return Vector of strings labelling time history fields output in file
+    std::vector< std::string > histNames() const
+    { return CompFlowHistNames(); }
+
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
@@ -768,6 +774,13 @@ class CompFlow {
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
                 tk::Fields& U ) const
     { return CompFlowSurfOutput( m_system, bnd, U ); }
+
+    //! Return time history field output evaluated at time history points
+    std::vector< std::vector< tk::real > >
+    histOutput( const std::vector< HistData >& h,
+                const std::vector< std::size_t >& inpoel,
+                const tk::Fields& U ) const
+    { return CompFlowHistOutput( m_system, h, inpoel, U ); }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output

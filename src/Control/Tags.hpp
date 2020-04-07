@@ -30,6 +30,7 @@ struct screen { static std::string name() { return "screen"; } };
 struct restart { static std::string name() { return "restart"; } };
 struct nrestart { static std::string name() { return "nrestart"; } };
 struct diag { static std::string name() { return "diag"; } };
+struct history { static std::string name() { return "history"; } };
 struct evalLB {};
 struct seed { static std::string name() { return "seed"; } };
 struct uniform_method {

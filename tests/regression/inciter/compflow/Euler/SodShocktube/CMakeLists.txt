@@ -47,8 +47,14 @@ add_regression_test(compflow_euler_sodshocktube_alecg ${INCITER_EXECUTABLE}
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_alecg.std
+                                  sod_shocktube_alecg_hist.{0.9_0.05_0.025}.std
+                                  sod_shocktube_alecg_hist.{0.1_0.05_0.025}.std
                     TEXT_RESULT diag
+                                out.hist.{0.9_0.05_0.025}
+                                out.hist.{0.1_0.05_0.025}
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
                     LABELS alecg)
 
 add_regression_test(compflow_euler_sodshocktube_alecg_surf ${INCITER_EXECUTABLE}
@@ -428,6 +434,12 @@ add_regression_test(compflow_euler_sodshocktube_alecg_u0.8_migr
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_alecg.std
+                                  sod_shocktube_alecg_hist.{0.9_0.05_0.025}.std
+                                  sod_shocktube_alecg_hist.{0.1_0.05_0.025}.std
                     TEXT_RESULT diag
+                                out.hist.{0.9_0.05_0.025}
+                                out.hist.{0.1_0.05_0.025}
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
                     LABELS alecg migration)

@@ -43,6 +43,7 @@ using InputDeckMembers = brigand::list<
   , tag::param,      parameters
   , tag::diag,       diagnostics
   , tag::error,      std::vector< std::string >
+  , tag::history,    history
 >;
 
 //! \brief InputDeck : Control< specialized to Inciter >, see Types.h,
@@ -105,6 +106,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::txt_float_scientific,
                                    kw::precision,
                                    kw::diagnostics,
+                                   kw::history,
                                    kw::material,
                                    kw::id,
                                    kw::mat_gamma,
@@ -280,10 +282,12 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::pref, tag::tolref >() = 0.5;
       // Default txt floating-point output precision in digits
       get< tag::prec, tag::diag >() = std::cout.precision();
+      get< tag::prec, tag::history >() = std::cout.precision();
       // Default intervals
       get< tag::interval, tag::tty >() = 1;
       get< tag::interval, tag::field >() = 1;
       get< tag::interval, tag::diag >() = 1;
+      get< tag::interval, tag::history >() = 1;
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       brigand::for_each< keywords >( ctrinfoFill );
