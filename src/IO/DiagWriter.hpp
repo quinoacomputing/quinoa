@@ -46,6 +46,9 @@ class DiagWriter : public tk::Writer {
                       tk::real dt,
                       const std::vector< tk::real >& diagnostics );
 
+    //! Precision accessor
+    int prec() const { return m_precision; }
+
   private:
     int m_precision;    //!< Floating-point precision in digits
     int m_width;        //!< Floating-point number width

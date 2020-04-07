@@ -1684,4 +1684,97 @@ conforming( const std::vector< std::size_t >& inpoel,
   return true;
 }
 
+bool
+intet( const std::array< std::vector< tk::real >, 3 >& coord,
+       const std::vector< std::size_t >& inpoel,
+       const std::vector< tk::real >& p,
+       std::size_t e,
+       std::array< tk::real, 4 >& N )
+// *****************************************************************************
+//  Determine if a point is in a tetrahedron
+//! \param[in] coord Mesh node coordinates
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] p Point coordinates
+//! \param[in] e Mesh cell index
+//! \param[in,out] N Shapefunctions evaluated at the point
+//! \return True if ppoint is in mesh cell
+//! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
+// *****************************************************************************
+{
+  Assert( p.size() == 3, "Size mismatch" );
+
+  // Tetrahedron node indices
+  const auto A = inpoel[e*4+0];
+  const auto B = inpoel[e*4+1];
+  const auto C = inpoel[e*4+2];
+  const auto D = inpoel[e*4+3];
+
+  // Tetrahedron node coordinates
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // Point coordinates
+  const auto& xp = p[0];
+  const auto& yp = p[1];
+  const auto& zp = p[2];
+
+  // Evaluate linear shapefunctions at point locations using Cramer's Rule
+  //    | xp |   | x1 x2 x3 x4 |   | N1 |
+  //    | yp | = | y1 y2 y3 y4 | • | N2 |
+  //    | zp |   | z1 z2 z3 z4 |   | N3 |
+  //    | 1  |   | 1  1  1  1  |   | N4 |
+
+  tk::real DetX = (y[B]*z[C] - y[C]*z[B] - y[B]*z[D] + y[D]*z[B] +
+    y[C]*z[D] - y[D]*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
+    x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
+    x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[C]*y[A]*z[D] + x[C]*y[D]*z[A] +
+    x[D]*y[A]*z[C] - x[D]*y[C]*z[A] - x[B]*y[C]*z[D] + x[B]*y[D]*z[C] +
+    x[C]*y[B]*z[D] - x[C]*y[D]*z[B] - x[D]*y[B]*z[C] + x[D]*y[C]*z[B];
+
+  tk::real DetX1 = (y[D]*z[C] - y[C]*z[D] + y[C]*zp - yp*z[C] -
+    y[D]*zp + yp*z[D])*x[B] + x[C]*y[B]*z[D] - x[C]*y[D]*z[B] -
+    x[D]*y[B]*z[C] + x[D]*y[C]*z[B] - x[C]*y[B]*zp + x[C]*yp*z[B] +
+    xp*y[B]*z[C] - xp*y[C]*z[B] + x[D]*y[B]*zp - x[D]*yp*z[B] -
+    xp*y[B]*z[D] + xp*y[D]*z[B] + x[C]*y[D]*zp - x[C]*yp*z[D] -
+    x[D]*y[C]*zp + x[D]*yp*z[C] + xp*y[C]*z[D] - xp*y[D]*z[C];
+
+  tk::real DetX2 = (y[C]*z[D] - y[D]*z[C] - y[C]*zp + yp*z[C] +
+    y[D]*zp - yp*z[D])*x[A] + x[C]*y[D]*z[A] - x[C]*y[A]*z[D] +
+    x[D]*y[A]*z[C] - x[D]*y[C]*z[A] + x[C]*y[A]*zp - x[C]*yp*z[A] -
+    xp*y[A]*z[C] + xp*y[C]*z[A] - x[D]*y[A]*zp + x[D]*yp*z[A] +
+    xp*y[A]*z[D] - xp*y[D]*z[A] - x[C]*y[D]*zp + x[C]*yp*z[D] +
+    x[D]*y[C]*zp - x[D]*yp*z[C] - xp*y[C]*z[D] + xp*y[D]*z[C];
+
+  tk::real DetX3 = (y[D]*z[B] - y[B]*z[D] + y[B]*zp - yp*z[B] -
+    y[D]*zp + yp*z[D])*x[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
+    x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[B]*y[A]*zp + x[B]*yp*z[A] +
+    xp*y[A]*z[B] - xp*y[B]*z[A] + x[D]*y[A]*zp - x[D]*yp*z[A] -
+    xp*y[A]*z[D] + xp*y[D]*z[A] + x[B]*y[D]*zp - x[B]*yp*z[D] -
+    x[D]*y[B]*zp + x[D]*yp*z[B] + xp*y[B]*z[D] - xp*y[D]*z[B];
+
+  tk::real DetX4 = (y[B]*z[C] - y[C]*z[B] - y[B]*zp + yp*z[B] +
+    y[C]*zp - yp*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
+    x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*zp - x[B]*yp*z[A] -
+    xp*y[A]*z[B] + xp*y[B]*z[A] - x[C]*y[A]*zp + x[C]*yp*z[A] +
+    xp*y[A]*z[C] - xp*y[C]*z[A] - x[B]*y[C]*zp + x[B]*yp*z[C] +
+    x[C]*y[B]*zp - x[C]*yp*z[B] - xp*y[B]*z[C] + xp*y[C]*z[B];
+
+  // Shape functions evaluated at point
+  N[0] = DetX1/DetX;
+  N[1] = DetX2/DetX;
+  N[2] = DetX3/DetX;
+  N[3] = DetX4/DetX;
+
+  // if min( N^i, 1-N^i ) > 0 for all i, point is in cell
+  if ( std::min(N[0],1.0-N[0]) > 0 && std::min(N[1],1.0-N[1]) > 0 &&
+       std::min(N[2],1.0-N[2]) > 0 && std::min(N[3],1.0-N[3]) > 0 )
+  {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
 } // tk::

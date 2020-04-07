@@ -16,6 +16,7 @@
 #include "DerivedData.hpp"
 #include "Discretization.hpp"
 #include "MeshWriter.hpp"
+#include "DiagWriter.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/Options/Scheme.hpp"
 #include "Print.hpp"
@@ -63,7 +64,8 @@ Discretization::Discretization(
   m_timer(),
   m_refined( 0 ),
   m_prevstatus( std::chrono::high_resolution_clock::now() ),
-  m_nrestart( 0 )
+  m_nrestart( 0 ),
+  m_histdata()
 // *****************************************************************************
 //  Constructor
 //! \param[in] fctproxy Distributed FCT proxy
@@ -114,6 +116,21 @@ Discretization::Discretization(
   // Compute number of mesh points owned
   std::size_t npoin = m_gid.size();
   for (auto g : m_gid) if (slave(g)) --npoin;
+
+  // Find host elements of user-specified points where time histories are
+  // saved, and save the shape functions evaluated at the point locations
+  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+  if (!hist_points.empty()) {
+    for (const auto& p : hist_points) {
+      std::array< tk::real, 4 > N;
+      for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+        if (tk::intet( m_coord, m_inpoel, p, e, N )) {
+          m_histdata.push_back( HistData{{ e, {p[0],p[1],p[2]}, N }} );
+          break;
+        }
+      }
+    }
+  }
 
   // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
   // is configured false in the input deck, at this point, we still need the FCT
@@ -618,6 +635,60 @@ Discretization::restarted( int nrestart )
   }
 }
 
+std::string
+Discretization::histfilename( const std::array< tk::real, 3 >& p,
+                              kw::precision::info::expect::type precision )
+// *****************************************************************************
+//  Construct history output filename
+//! \return History file name
+// *****************************************************************************
+{
+  auto of = g_inputdeck.get< tag::cmd, tag::io, tag::output >();
+  std::stringstream ss;
+
+  ss << std::setprecision( static_cast<int>(precision) )
+     << of << ".hist.{" << p[0] << '_' << p[1] << '_' << p[2] << '}';
+
+  return ss.str();
+}
+
+void
+Discretization::histheader( std::vector< std::string >&& names )
+// *****************************************************************************
+//  Output headers for time history files (one for each point)
+//! \param[in] names History output variable names
+// *****************************************************************************
+{
+  for (const auto& h : m_histdata) {
+    auto prec = g_inputdeck.get< tag::prec, tag::history >();
+    tk::DiagWriter hw( histfilename( h.get< tag::coord >(), prec ),
+                       g_inputdeck.get< tag::flformat, tag::history >(),
+                       prec );
+    hw.header( names );
+  }
+}
+
+void
+Discretization::history( std::vector< std::vector< tk::real > >&& data )
+// *****************************************************************************
+//  Output time history for a time step
+//! \param[in] data Time history data for all variables and equations integrated
+// *****************************************************************************
+{
+  Assert( data.size() == m_histdata.size(), "Size mismatch" );
+
+  std::size_t i = 0;
+  for (const auto& h : m_histdata) {
+    auto prec = g_inputdeck.get< tag::prec, tag::history >();
+    tk::DiagWriter hw( histfilename( h.get< tag::coord >(), prec ),
+                       g_inputdeck.get< tag::flformat, tag::history >(),
+                       prec,
+                       std::ios_base::app );
+    hw.diag( m_it, m_t, m_dt, data[i] );
+    ++i;
+  }
+}
+
 void
 Discretization::status()
 // *****************************************************************************
@@ -642,6 +713,7 @@ Discretization::status()
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
     const auto field = g_inputdeck.get< tag::interval,tag::field >();
     const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
+    const auto hist = g_inputdeck.get< tag::interval, tag::history >();
     const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
     const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
@@ -678,6 +750,7 @@ Discretization::status()
     // Augment one-liner status with output indicators
     if (!benchmark && !(m_it % field)) print << 'f';
     if (!(m_it % diag)) print << 'd';
+    if (!(m_it % hist)) print << 't';
     if (m_refined) print << 'h';
     if (!(m_it % lbfreq) && !finish) print << 'l';
     if (!benchmark && (!(m_it % rsfreq) || finish)) print << 'r';

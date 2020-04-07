@@ -14,6 +14,7 @@
 #include "FieldOutput.hpp"
 #include "EoS/EoS.hpp"
 #include "ContainerUtil.hpp"
+#include "History.hpp"
 
 namespace inciter {
 
@@ -139,14 +140,73 @@ CompFlowSurfOutput( ncomp_t system,
       const auto u = U.extract( n );
       Assert( u.size() == 5, "Size mismatch" );
       out[i+0][j] = u[0];
-      out[i+1][j] = u[1];
-      out[i+2][j] = u[2];
-      out[i+3][j] = u[3];
-      out[i+4][j] = u[4];
+      out[i+1][j] = u[1]/u[0];
+      out[i+2][j] = u[2]/u[0];
+      out[i+3][j] = u[3]/u[0];
+      out[i+4][j] = u[4]/u[0];
       out[i+5][j] = eos_pressure< tag::compflow >
                       ( system, u[0], u[1], u[2], u[3], u[4] );
       ++j;
     }
+  }
+
+  return out;
+}
+
+std::vector< std::string > CompFlowHistNames()
+// *****************************************************************************
+// Return time history field names to be output to file
+//! \note Every time history point will output these fields.
+//! \return Vector of strings labelling time history fields output in file
+// *****************************************************************************
+{
+  std::vector< std::string > n;
+
+  n.push_back( "density" );
+  n.push_back( "x-velocity" );
+  n.push_back( "y-velocity" );
+  n.push_back( "z-velocity" );
+  n.push_back( "energy" );
+  n.push_back( "pressure" );
+
+  return n;
+}
+
+std::vector< std::vector< tk::real > >
+CompFlowHistOutput( ncomp_t system,
+                    const std::vector< HistData >& h,
+                    const std::vector< std::size_t >& inpoel,
+                    const tk::Fields& U )
+// *****************************************************************************
+//  Return time history field output evaluated at time history points
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
+//! \param[in] h History point data
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] U Solution vector at recent time step
+//! \return Vector of vectors of solution variables evaluated in all history
+//!   points. Inner vector: variables, outer vector: points.
+// *****************************************************************************
+{
+  std::vector< std::vector< tk::real > > out( h.size() );
+
+  std::size_t j = 0;
+  for (const auto& p : h) {
+    auto e = p.get< tag::elem >();        // host element id
+    const auto& n = p.get< tag::fn >();   // shapefunctions evaluated at point
+    out[j].resize( 6, 0.0 );
+    for (std::size_t i=0; i<4; ++i) {
+      const auto u = U.extract( inpoel[e*4+i] );
+      Assert( u.size() == 5, "Size mismatch" );
+      out[j][0] += n[i] * u[0];
+      out[j][1] += n[i] * u[1]/u[0];
+      out[j][2] += n[i] * u[2]/u[0];
+      out[j][3] += n[i] * u[3]/u[0];
+      out[j][4] += n[i] * u[4]/u[0];
+      out[j][5] += n[i] * eos_pressure< tag::compflow >
+                            ( system, u[0], u[1], u[2], u[3], u[4] );
+    }
+    ++j;
   }
 
   return out;

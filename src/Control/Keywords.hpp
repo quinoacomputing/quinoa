@@ -1901,6 +1901,17 @@ struct statistics_info {
 };
 using statistics = keyword< statistics_info, TAOCPP_PEGTL_STRING("statistics") >;
 
+struct history_info {
+  static std::string name() { return "history"; }
+  static std::string shortDescription() { return
+    "Start of history input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to start a block in the input file containing the
+    descriptions and settings of requested history output.)";
+  }
+};
+using history = keyword< history_info, TAOCPP_PEGTL_STRING("history") >;
+
 struct plotvar_info {
   static std::string name() { return "plotvar"; }
   static std::string shortDescription() { return

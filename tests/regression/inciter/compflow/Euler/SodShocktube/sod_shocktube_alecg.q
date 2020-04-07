@@ -41,4 +41,9 @@ inciter
     error l2
   end
 
+  history
+    point 0.1 0.05 0.025 end
+    point 0.9 0.05 0.025 end
+  end
+
 end
