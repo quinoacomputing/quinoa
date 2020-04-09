@@ -173,6 +173,7 @@ tk::bndLeastSqConservedVar_P0P1( ncomp_t system,
   const Fields& geoElem,
   real t,
   const StateFn& state,
+  const Fields& P,
   const Fields& U,
   std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
   std::size_t nprim )
@@ -190,6 +191,7 @@ tk::bndLeastSqConservedVar_P0P1( ncomp_t system,
 //! \param[in] t Physical time
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
+//! \param[in] P Primitive vector to be reconstructed at recent time step
 //! \param[in] U Solution vector to be reconstructed at recent time step
 //! \param[in,out] rhs_ls RHS reconstruction vector
 //! \param[in] nprim This is the number of primitive quantities stored for this
@@ -225,7 +227,7 @@ tk::bndLeastSqConservedVar_P0P1( ncomp_t system,
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
         auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B );
-        std::vector< real >uprim(nprim,0.0);
+        auto uprim = eval_state( nprim, offset, rdof, 1, el, P, B );
 
         // consolidate primitives into state vector
         ul.insert(ul.end(), uprim.begin(), uprim.end());

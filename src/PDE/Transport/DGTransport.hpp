@@ -137,6 +137,7 @@ class Transport {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
+    //! \param[in,out] P Primitive vector at recent time step
     void reconstruct( tk::real t,
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
@@ -144,7 +145,7 @@ class Transport {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& ) const
+                      tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
@@ -176,7 +177,7 @@ class Transport {
       // 2. boundary face contributions
       for (const auto& b : m_bc)
         tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
-          b.first, fd, geoFace, geoElem, t, b.second, U, rhs_ls );
+          b.first, fd, geoFace, geoElem, t, b.second, P, U, rhs_ls );
 
       // 3. solve 3x3 least-squares system
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );

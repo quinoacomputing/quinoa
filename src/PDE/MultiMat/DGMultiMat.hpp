@@ -354,7 +354,7 @@ class MultiMat {
       for (const auto& b : m_bc)
       {
         tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
-          b.first, fd, geoFace, geoElem, t, b.second, U, rhsu_ls, nprim() );
+          b.first, fd, geoFace, geoElem, t, b.second, P, U, rhsu_ls, nprim() );
         tk::bndLeastSqPrimitiveVar_P0P1( m_system, nprim(), m_offset, rdof,
           b.first, fd, geoFace, geoElem, t, b.second, P, U, rhsp_ls, m_ncomp );
       }
