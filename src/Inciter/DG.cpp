@@ -29,6 +29,7 @@
 #include "PrefIndicator.hpp"
 #include "Reorder.hpp"
 #include "Vector.hpp"
+#include "Around.hpp"
 
 namespace inciter {
 
@@ -51,6 +52,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_disc( disc ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
+  m_ncomEsup( 0 ),
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
@@ -75,6 +77,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_ncoord( Disc()->Coord()[0].size() ),
   m_bndFace(),
   m_ghostData(),
+  m_sendGhost(),
   m_ghostReq( 0 ),
   m_ghost(),
   m_exptGhost(),
@@ -158,6 +161,7 @@ DG::resizeComm()
 
   // Activate SDAG waits for face adjacency map (ghost data) calculation
   thisProxy[ thisIndex ].wait4ghost();
+  //thisProxy[ thisIndex ].wait4esup();
 
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
@@ -715,7 +719,8 @@ DG::comGhost( int fromch, const GhostData& ghost )
     }
   }
 
-  // Signal the runtime system that all workers have received their adjacency
+  // Signal the runtime system that all workers have received their
+  // face-adjacency
   if (++m_nadj == m_ghostData.size()) adj();
 }
 
@@ -957,9 +962,138 @@ DG::adj()
       Assert( m_exptGhost.insert( g.second ).second,
               "Failed to store local tetid as exptected ghost id" );
 
+  // Create new map of elements along chare boundary which are ghosts for
+  // that chare, associated with that chare ID
+  if (!m_ghostData.empty())
+  {
+    for (const auto& [cid, cgd] : m_ghostData)
+    {
+      auto& sg = m_sendGhost[cid];
+      for (const auto& e : cgd)
+      {
+        Assert(sg.find(e.first) == sg.end(), "Repeating element found in "
+          "ghost data");
+        sg.insert(e.first);
+      }
+      Assert(sg.size() == cgd.size(), "Incorrect size for sendGhost");
+    }
+  }
+  Assert(m_sendGhost.size() == m_ghostData.size(), "Incorrect number of chares "
+    "in sendGhost");
+
+  // Generate and store Esup data-structure in a map
+  auto esup = tk::genEsup(Disc()->Inpoel(), 4);
+  const auto npoin = Disc()->Gid().size();
+  for (std::size_t p=0; p<npoin; ++p)
+  {
+    for (auto e : tk::Around(esup, p))
+      m_esup[p].push_back(e);
+  }
+
+  contribute( CkCallback(CkReductionTarget(Transporter,startEsup),
+    Disc()->Tr()) );
+}
+
+void
+DG::nodeNeighSetup()
+// *****************************************************************************
+// Setup node-neighborhood (esup)
+//! \details At this point the face-ghost communication map has been established
+//!    on this chare. This function begins generating the node-ghost comm map.
+// *****************************************************************************
+{
+  tk::destroy(m_ghostData);
+
+  //if (!Disc()->NodeCommMap().empty())
+  //// in serial, skip setting up node-neighborhood
+  //{
+  //  // Sync before communicating node-neighborhood map
+  //  contribute();
+
+  //  const auto& nodeCommMap = Disc()->NodeCommMap();
+  //  std::map< std::size_t, std::vector< std::size_t > > bndryEsup;
+  //  std::vector< std::size_t > nodeBndryCells;
+
+  //  // send out node-neighborhood map
+  //  for (const auto& ch : nodeCommMap)
+  //  {
+  //    for (const auto& p : ch.second)
+  //    {
+  //      auto pl = tk::cref_find(Disc()->Lid(), p);
+  //      Assert(m_esup.find(pl) != m_esup.end(), "Local node-id not found in "
+  //        "esup data-structure");
+  //      // fill in the esup for the chare-boundary
+  //      bndryEsup[p] = m_esup[pl];
+  //      // fill a vector with the element ids from esup
+  //      nodeBndryCells.insert(nodeBndryCells.end(), bndryEsup[p].begin(),
+  //        bndryEsup[p].end());
+  //    }
+
+  //    // make vector with esup-element-ids unique
+  //    tk::unique(nodeBndryCells);
+  //    // add these esup-elements into map of elements along chare boundary
+  //    for (auto e : nodeBndryCells)
+  //    {
+  //      auto& sg = m_sendGhost[ch.first];
+  //      if (sg.find(e) == sg.end()) sg.insert(e);
+  //    }
+
+  //    thisProxy[ch.first].comEsup(thisIndex, bndryEsup, nodeBndryCells);
+  //  }
+
+  //  ownesup_complete();
+  //}
+
   // Signal the runtime system that all workers have received their adjacency
   contribute( sizeof(int), &m_initial, CkReduction::sum_int,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
+}
+
+void
+DG::comEsup( int fromch,
+  const std::map< std::size_t, std::vector< std::size_t > >& bndryEsup,
+  const std::vector< std::size_t >& nodeBndryCells )
+// *****************************************************************************
+//! \brief Receive elements-surrounding-points data-structure for points on
+//    common boundary between receiving and sending neighbor chare
+//! \param[in] fromch Sender chare id
+//! \param[in] bndryEsup Elements-surrounding-points data-structure from fromch
+//! \param[in] nodeBndryEsup Unique element-ids from this esup
+// *****************************************************************************
+{
+  // Extend remote-local element id map
+  for (auto e : nodeBndryCells)
+  {
+    // need to check following, because 'e' could have been added previously in
+    // remote-local element id map as a part of face-communication, i.e. as a
+    // face-ghost element
+    if (m_ghost[fromch].find(e) == m_ghost[fromch].end())
+    {
+      m_ghost[fromch][e] = m_nunk;
+      ++m_nunk;
+    }
+  }
+
+  // Store incoming data in comm-map for Esup
+  m_commEsup[fromch] = bndryEsup;
+
+  // if we have heard from all fellow chares that we share at least a single
+  // node, edge, or face with
+  if (++m_ncomEsup == Disc()->NodeCommMap().size()) {
+    m_ncomEsup = 0;
+    comesup_complete();
+  }
+}
+
+void
+DG::addEsup()
+// *****************************************************************************
+// Fill elements surrounding point along chare boundary
+//! \details This function updates the elements surrounding point (esup) data
+//    structure for the points on the chare-boundaries. It fills esup of this
+//    point with newly assigned local tet-ids for the the outer tets.
+// *****************************************************************************
+{
 }
 
 void
@@ -1066,24 +1200,24 @@ DG::next()
                m_ndof );
 
   // communicate solution ghost data (if any)
-  if (m_ghostData.empty())
+  if (m_sendGhost.empty())
     comsol_complete();
   else
-    for(const auto& [tet, ghostdata] : m_ghostData) {
+    for(const auto& [cid, ghostdata] : m_sendGhost) {
       std::vector< std::size_t > tetid( ghostdata.size() );
       std::vector< std::vector< tk::real > > u( ghostdata.size() ),
                                              prim( ghostdata.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : ghostdata) {
-        Assert( i.first < m_fd.Esuel().size()/4, "Sending solution ghost data" );
-        tetid[j] = i.first;
-        u[j] = m_u[i.first];
-        prim[j] = m_p[i.first];
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
+        Assert( i < m_fd.Esuel().size()/4, "Sending solution ghost data" );
+        tetid[j] = i;
+        u[j] = m_u[i];
+        prim[j] = m_p[i];
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
         ++j;
       }
-      thisProxy[ tet ].comsol( thisIndex, m_stage, tetid, u, prim, ndof );
+      thisProxy[ cid ].comsol( thisIndex, m_stage, tetid, u, prim, ndof );
     }
 
   ownsol_complete();
@@ -1135,7 +1269,7 @@ DG::comsol( int fromch,
   // if we have received all solution ghost contributions from neighboring
   // chares (chares we communicate along chare-boundary faces with), and
   // contributed our solution to these neighbors, proceed to reconstructions
-  if (++m_nsol == m_ghostData.size()) {
+  if (++m_nsol == m_sendGhost.size()) {
     m_nsol = 0;
     comsol_complete();
   }
@@ -1252,25 +1386,25 @@ DG::reco()
   }
 
   // Send reconstructed solution to neighboring chares
-  if (m_ghostData.empty())
+  if (m_sendGhost.empty())
     comreco_complete();
   else
-    for(const auto& [tet, ghostdata] : m_ghostData) {
+    for(const auto& [cid, ghostdata] : m_sendGhost) {
       std::vector< std::size_t > tetid( ghostdata.size() );
       std::vector< std::vector< tk::real > > u( ghostdata.size() ),
                                              prim( ghostdata.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : ghostdata) {
-        Assert( i.first < m_fd.Esuel().size()/4, "Sending reconstructed ghost "
+        Assert( i < m_fd.Esuel().size()/4, "Sending reconstructed ghost "
           "data" );
-        tetid[j] = i.first;
-        u[j] = m_u[i.first];
-        prim[j] = m_p[i.first];
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
+        tetid[j] = i;
+        u[j] = m_u[i];
+        prim[j] = m_p[i];
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
         ++j;
       }
-      thisProxy[ tet ].comreco( thisIndex, tetid, u, prim, ndof );
+      thisProxy[ cid ].comreco( thisIndex, tetid, u, prim, ndof );
     }
 
   ownreco_complete();
@@ -1321,7 +1455,7 @@ DG::comreco( int fromch,
   // if we have received all solution ghost contributions from neighboring
   // chares (chares we communicate along chare-boundary faces with), and
   // contributed our solution to these neighbors, proceed to limiting
-  if (++m_nreco == m_ghostData.size()) {
+  if (++m_nreco == m_sendGhost.size()) {
     m_nreco = 0;
     comreco_complete();
   }
@@ -1362,24 +1496,24 @@ DG::lim()
 
 
   // Send limited solution to neighboring chares
-  if (m_ghostData.empty())
+  if (m_sendGhost.empty())
     comlim_complete();
   else
-    for(const auto& [tet, ghostdata] : m_ghostData) {
+    for(const auto& [cid, ghostdata] : m_sendGhost) {
       std::vector< std::size_t > tetid( ghostdata.size() );
       std::vector< std::vector< tk::real > > u( ghostdata.size() ),
                                              prim( ghostdata.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : ghostdata) {
-        Assert( i.first < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
-        tetid[j] = i.first;
-        u[j] = m_u[i.first];
-        prim[j] = m_p[i.first];
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i.first] );
+        Assert( i < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
+        tetid[j] = i;
+        u[j] = m_u[i];
+        prim[j] = m_p[i];
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
         ++j;
       }
-      thisProxy[ tet ].comlim( thisIndex, tetid, u, prim, ndof );
+      thisProxy[ cid ].comlim( thisIndex, tetid, u, prim, ndof );
     }
 
   ownlim_complete();
@@ -1461,7 +1595,7 @@ DG::comlim( int fromch,
   // if we have received all solution ghost contributions from neighboring
   // chares (chares we communicate along chare-boundary faces with), and
   // contributed our solution to these neighbors, proceed to limiting
-  if (++m_nlim == m_ghostData.size()) {
+  if (++m_nlim == m_sendGhost.size()) {
     m_nlim = 0;
     comlim_complete();
   }
@@ -1711,7 +1845,7 @@ DG::resizePostAMR(
   m_nunk = nelem;
   m_ncoord = coord[0].size();
   m_bndFace.clear();
-  m_ghostData.clear();
+  m_sendGhost.clear();
   m_ghost.clear();
 
   // Update solution on new mesh, P0 (cell center value) only for now
