@@ -16,6 +16,18 @@
 #include "Vector.hpp"
 #include "Exception.hpp"
 
+void
+tk::flip( std::array< real, 3 >& v ) noexcept
+// *****************************************************************************
+//  Flip sign of vector components
+//! \param[in] v Vector whose components to multiply by -1.0
+// *****************************************************************************
+{
+  v[0] = -v[0];
+  v[1] = -v[1];
+  v[2] = -v[2];
+}
+
 std::array< tk::real, 3 >
 tk::cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
 // *****************************************************************************
@@ -49,6 +61,7 @@ tk::crossdiv( const std::array< real, 3 >& v1,
 
 tk::real
 tk::dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
+noexcept
 // *****************************************************************************
 //  Compute the dot-product of two vectors
 //! \param[in] v1 1st vector
@@ -60,7 +73,7 @@ tk::dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
 }
 
 tk::real
-tk::length( const std::array< real, 3 >& v )
+tk::length( const std::array< real, 3 >& v ) noexcept
 // *****************************************************************************
 //  Compute length of a vector
 //! \param[in] v vector

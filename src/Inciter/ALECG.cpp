@@ -68,6 +68,10 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_triinpoel( triinpoel ),
   m_bndel( bndel() ),
   m_dfnorm(),
+  m_dfnormc(),
+  m_dfn(),
+  m_psup( tk::genPsup( Disc()->Inpoel(), 4,
+          tk::genEsup( Disc()->Inpoel(), 4 ) ) ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
@@ -81,7 +85,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_diag(),
   m_bnorm(),
   m_bnormc(),
-  m_dfnormc(),
   m_stage( 0 ),
   m_boxnodes()
 // *****************************************************************************
@@ -99,16 +102,14 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
 
     auto d = Disc();
-    auto& inpoel = d->Inpoel();
 
     // Create new local ids based on access pattern of PDE operators
     std::unordered_map< std::size_t, std::size_t > map;
     std::size_t n = 0;
 
-    auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
     for (std::size_t p=0; p<m_u.nunk(); ++p) {  // for each point p
       if (map.find(p) == end(map)) map[p] = n++;
-      for (auto q : tk::Around(psup,p)) {       // for each edge p-q
+      for (auto q : tk::Around(m_psup,p)) {     // for each edge p-q
         if (map.find(q) == end(map)) map[q] = n++;
       }
     }
@@ -117,6 +118,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 
     // Remap data in bound Discretization object
     d->remap( map );
+    // Recompute points surrounding points
+    //tk::remap( m_psup.first, map );
+    m_psup = tk::genPsup( d->Inpoel(), 4, tk::genEsup( d->Inpoel(), 4 ) );
 
   }
 
@@ -185,13 +189,11 @@ ALECG::dfnorm()
   const auto& gid = d->Gid();
 
   // compute derived data structures
-  auto esup = tk::genEsup( inpoel, 4 );
-  auto psup = tk::genPsup( inpoel, 4, esup );
-  auto esued = tk::genEsued( inpoel, 4, esup );
+  auto esued = tk::genEsued( inpoel, 4, tk::genEsup( inpoel, 4 ) );
 
   // Compute dual-face normals for domain edges
   for (std::size_t p=0; p<gid.size(); ++p)    // for each point p
-    for (auto q : tk::Around(psup,p))         // for each edge p-q
+    for (auto q : tk::Around(m_psup,p))       // for each edge p-q
       if (gid[p] < gid[q])
         m_dfnorm[{gid[p],gid[q]}] = cg::edfnorm( {p,q}, coord, inpoel, esued );
 
@@ -567,6 +569,30 @@ ALECG::normfinal()
     auto factor = 1.0/(count + 1.0);
     for (auto & x : n) x *= factor;
   }
+
+  // Convert dual-face normals to streamable (and vectorizable) data structure
+  m_dfn.resize( m_psup.first.size() * 6 );      // 2 vectors per access
+  const auto& gid = d->Gid();
+  for (std::size_t p=0,k=0; p<m_u.nunk(); ++p)
+    for (auto q : tk::Around(m_psup,p)) {
+      std::array< std::size_t, 2 > e{ gid[p], gid[q] };
+      auto n = tk::cref_find( m_dfnorm, e );
+      // figure out if this is an edge on the parallel boundary
+      auto nit = m_dfnormc.find( e );
+      auto m = ( nit != m_dfnormc.end() ) ? nit->second : n;
+      // orient normals
+      if (gid[p] > gid[q]) { tk::flip(n); tk::flip(m); }
+      m_dfn[k*6+0] = n[0];
+      m_dfn[k*6+1] = n[1];
+      m_dfn[k*6+2] = n[2];
+      m_dfn[k*6+3] = m[0];
+      m_dfn[k*6+4] = m[1];
+      m_dfn[k*6+5] = m[2];
+      ++k;
+    }
+
+  tk::destroy( m_dfnorm );
+  tk::destroy( m_dfnormc );
 }
 
 void
@@ -712,8 +738,8 @@ ALECG::rhs()
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
-            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfnorm, m_dfnormc,
-            m_bnorm, d->Vol(), m_grad, m_u, m_rhs );
+            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_bnorm,
+            d->Vol(), m_grad, m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
@@ -906,8 +932,6 @@ ALECG::resizePostAMR(
   m_bnode = bnode;
   m_bface = bface;
   m_triinpoel = triinpoel;
-
-  tk::destroy( m_dfnormc );
 
   contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
 }
