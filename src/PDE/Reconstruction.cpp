@@ -464,7 +464,7 @@ tk::muscl( const UnsMesh::Edge& edge,
            const Fields& G,
            std::vector< tk::real >& uL,
            std::vector< tk::real >& uR,
-           bool enforce_realizability ) noexcept
+           bool enforce_realizability )
 // *****************************************************************************
 // Compute MUSCL reconstruction in edge-end points using a MUSCL procedure with
 // van Leer limiting

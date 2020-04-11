@@ -109,7 +109,7 @@ muscl( const UnsMesh::Edge& edge,
        const Fields& G,
        std::vector< tk::real >& uL,
        std::vector< tk::real >& uR,
-       bool enforce_realizability = false ) noexcept;
+       bool enforce_realizability = false );
 
 } // tk::
 
