@@ -135,7 +135,7 @@ nodegrad( ncomp_t ncomp,
   // divide weak result in gradients by nodal volume
   for (std::size_t p=0; p<Grad.nunk(); ++p)
     for (std::size_t c=0; c<Grad.nprop(); ++c)
-       Grad(p,c,0) /= vol[p];
+      Grad(p,c,0) /= vol[p];
 
   return Grad;
 }

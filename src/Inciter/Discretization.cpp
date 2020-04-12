@@ -607,7 +607,7 @@ Discretization::grindZero()
     tk::Print print( g_inputdeck.get< tag::cmd >().logname( def, m_nrestart ),
                      verbose ? std::cout : std::clog,
                      std::ios_base::app );
-    print.diag( "Starting time stepping" );
+    print.diag( "Starting time stepping ..." );
   }
 }
 
