@@ -184,10 +184,10 @@ class Transport {
 
       // domain-edge integral
       for (std::size_t p=0,k=0; p<U.nunk(); ++p) {  // for each point p
-        for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i,++k) {
-          auto q = psup.first[i];
+        for (auto q : tk::Around(psup,p)) {
           // access dual-face normals for edge p-q
           std::array< tk::real, 3 > n{ dfn[k*6+0], dfn[k*6+1], dfn[k*6+2] };
+          k += 6;
           // compute primitive variables at edge-end points (for Transport,
           // these are the same as the conserved variables)
           std::vector< tk::real > uL( m_ncomp, 0.0 );
