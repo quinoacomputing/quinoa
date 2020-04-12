@@ -186,7 +186,7 @@ class Transport {
       for (std::size_t p=0,k=0; p<U.nunk(); ++p) {  // for each point p
         for (auto q : tk::Around(psup,p)) {
           // access dual-face normals for edge p-q
-          std::array< tk::real, 3 > n{ dfn[k*6+0], dfn[k*6+1], dfn[k*6+2] };
+          std::array< tk::real, 3 > n{ dfn[k+0], dfn[k+1], dfn[k+2] };
           k += 6;
           // compute primitive variables at edge-end points (for Transport,
           // these are the same as the conserved variables)
