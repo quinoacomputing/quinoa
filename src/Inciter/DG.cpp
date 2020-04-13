@@ -911,7 +911,7 @@ DG::faceAdj()
          "not match" );
 
   // Create new map of elements along chare boundary which are ghosts for
-  // that chare, associated with that chare ID
+  // neighboring chare, associated with that chare ID
   if (!m_ghostData.empty())
   {
     for (const auto& [cid, cgd] : m_ghostData)
@@ -981,26 +981,19 @@ DG::nodeNeighSetup()
       for (const auto& p : ch.second)
       {
         auto pl = tk::cref_find(Disc()->Lid(), p);
-        Assert(m_esup.find(pl) != m_esup.end(), "Local node-id not found in "
-          "esup data-structure");
         // fill in the esup for the chare-boundary
-        bndryEsup[p] = m_esup[pl];
+        const auto& pesup = tk::cref_find(m_esup, pl);
+        bndryEsup[p] = pesup;
 
         // fill a map with the element ids from esup as keys and geoElem as
         // values, and another map containing these elements associated with
         // the chare id with which they are node-neighbors.
-        for (const auto& e : bndryEsup[p])
+        for (const auto& e : pesup)
         {
-          // ensure that map with esup-element-ids and their geometries is
-          // unique
-          if (nodeBndryCells.find(e) == nodeBndryCells.end())
-          {
-            nodeBndryCells[e] = m_geoElem[e];
-          }
+          nodeBndryCells[e] = m_geoElem[e];
 
           // add these esup-elements into map of elements along chare boundary
-          auto& sg = m_sendGhost[ch.first];
-          if (sg.find(e) == sg.end()) sg.insert(e);
+          m_sendGhost[ch.first].insert(e);
         }
       }
 
@@ -1027,29 +1020,31 @@ DG::comEsup( int fromch,
 // *****************************************************************************
 {
   // Extend remote-local element id map and element geometry array
-  for (auto e : nodeBndryCells)
+  for (const auto& e : nodeBndryCells)
   {
+    auto& chghost = m_ghost[fromch];
+
     // need to check following, because 'e' could have been added previously in
     // remote-local element id map as a part of face-communication, i.e. as a
     // face-ghost element
-    if (m_ghost[fromch].find(e.first) == m_ghost[fromch].end())
+    if (chghost.find(e.first) == chghost.end())
     {
-      m_ghost[fromch][e.first] = m_nunk;
+      chghost[e.first] = m_nunk;
       m_geoElem.push_back(e.second);
       ++m_nunk;
     }
   }
 
   // Store incoming data in comm-map for Esup
-  for (auto p : bndryEsup)
+  for (const auto& p : bndryEsup)
   {
     auto pl = tk::cref_find(Disc()->Lid(), p.first);
-    Assert(m_esup.find(pl) != m_esup.end(), "Node, for which esup was "
-      "received, not found");
+    auto& pesup = tk::ref_find(m_esup, pl);
     for (auto e : p.second)
     {
-      auto el = tk::cref_find(m_ghost[fromch], e);
-      m_esup[pl].push_back(el);
+      const auto& chghost = tk::cref_find(m_ghost, fromch);
+      auto el = tk::cref_find(chghost, e);
+      pesup.push_back(el);
     }
   }
 
