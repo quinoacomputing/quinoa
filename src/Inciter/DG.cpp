@@ -1880,8 +1880,10 @@ DG::resizePostAMR(
   m_nunk = nelem;
   m_ncoord = coord[0].size();
   m_bndFace.clear();
+  m_exptGhost.clear();
   m_sendGhost.clear();
   m_ghost.clear();
+  m_esup.clear();
 
   // Update solution on new mesh, P0 (cell center value) only for now
   m_un = m_u;
