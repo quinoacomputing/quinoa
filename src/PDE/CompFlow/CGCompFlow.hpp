@@ -778,7 +778,7 @@ class CompFlow {
     //! \return Tuple of element contribution
     //! \note The function signature must follow tk::ElemGradFn
     static tk::ElemGradFn::result_type
-    egrad( ncomp_t ncomp,
+    egrad( ncomp_t,
            ncomp_t offset,
            std::size_t e,
            const std::array< std::vector< tk::real >, 3 >& coord,
@@ -809,8 +809,8 @@ class CompFlow {
       for (std::size_t i=0; i<3; ++i)
         grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
       // access solution at element nodes
-      std::vector< std::array< tk::real, 4 > > u( ncomp );
-      for (ncomp_t c=0; c<ncomp; ++c) u[c] = U.extract( c, offset, N );
+      std::vector< std::array< tk::real, 4 > > u( m_ncomp );
+      for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, offset, N );
       // apply stagnation BCs
       for (std::size_t a=0; a<4; ++a)
         if (stagPoint( {x[N[a]],y[N[a]],z[N[a]]}, stag ))
