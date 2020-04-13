@@ -336,7 +336,6 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] triinpoel Boundary triangle face connecitivity
-    //! \param[in] gid Local->global node id map
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] lid Global->local node ids
@@ -352,7 +351,6 @@ class CompFlow {
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& triinpoel,
-      const std::vector< std::size_t >& gid,
       const std::unordered_map< std::size_t, std::size_t >& bid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const std::vector< tk::real >& dfn,
@@ -384,7 +382,7 @@ class CompFlow {
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
       // compute/assemble gradients in points
-      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, gid, lid, bid,
+      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, lid, bid,
                             vol, m_stag, U, G, egrad );
 
       // domain-edge integral

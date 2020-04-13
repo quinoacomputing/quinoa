@@ -738,7 +738,7 @@ ALECG::rhs()
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
-            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_bnorm,
+            m_triinpoel, d->Bid(), d->Lid(), m_dfn, m_psup, m_bnorm,
             d->Vol(), m_grad, m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
