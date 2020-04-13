@@ -35,7 +35,8 @@ module dg {
       entry void nodeNeighSetup();
       entry void comEsup( int fromch,
         const std::map< std::size_t, std::vector< std::size_t > >& bndryEsup,
-        const std::vector< std::size_t >& nodeBndryCells );
+        const std::unordered_map< std::size_t, std::vector< tk::real > >&
+          nodeBoundaryCells );
       initnode void registerReducers();      
       entry void setup();
       entry void boxvol( tk::real v );

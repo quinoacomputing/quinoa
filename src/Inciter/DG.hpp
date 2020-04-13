@@ -105,7 +105,8 @@ class DG : public CBase_DG {
     //! Receive element-surr-points data on chare boundaries from fellow chare
     void comEsup( int fromch,
       const std::map< std::size_t, std::vector< std::size_t > >& bndryEsup,
-      const std::vector< std::size_t >& nodeBoundaryCells );
+      const std::unordered_map< std::size_t, std::vector< tk::real > >&
+        nodeBoundaryCells );
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
@@ -328,14 +329,6 @@ class DG : public CBase_DG {
     std::unordered_map< int, tk::UnsMesh::FaceSet > m_infaces;
     //! Elements (value) surrounding point (key) data-structure
     std::map< std::size_t, std::vector< std::size_t > > m_esup;
-    //! \brief Elements (value) surrounding point (inner-key) communication
-    //!   data-structure associated with the neighbor-chare (outer-key)
-    std::unordered_map< int,
-      std::map< std::size_t, std::vector< std::size_t > > > m_commEsup;
-    ////! \brief Elements (value) surrounding point (inner-key) communication
-    ////!   data-structure associated with the neighbor-chare (outer-key)
-    //std::unordered_map< int, std::unordered_map< std::size_t, std::size_t > >
-    //  m_esupMap
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

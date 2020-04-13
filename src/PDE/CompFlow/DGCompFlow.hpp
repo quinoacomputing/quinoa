@@ -157,8 +157,6 @@ class CompFlow {
 
       Assert( U.nprop() == rdof*5, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*5) );
-      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
-              "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
@@ -253,8 +251,6 @@ class CompFlow {
               "vector must equal "+ std::to_string(0) );
       Assert( R.nprop() == ndof*5, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*5) );
-      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
-              "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
@@ -281,13 +277,13 @@ class CompFlow {
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, riemannDeriv );
 
       // compute source term intehrals
-      tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
-                  Problem::src, ndofel, R );
+      tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, fd.Esuel().size()/4,
+                  inpoel, coord, geoElem, Problem::src, ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, geoElem,
-                    flux, velfn, U, ndofel, R );
+        tk::volInt( m_system, m_ncomp, m_offset, ndof, fd.Esuel().size()/4,
+                    inpoel, coord, geoElem, flux, velfn, U, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
@@ -502,7 +498,7 @@ class CompFlow {
       tk::real dgp = 0.0;
 
       // compute allowable dt
-      for (std::size_t e=0; e<U.nunk(); ++e)
+      for (std::size_t e=0; e<fd.Esuel().size()/4; ++e)
       {
         dgp = 0.0;
         if (ndofel[e] == 4)
