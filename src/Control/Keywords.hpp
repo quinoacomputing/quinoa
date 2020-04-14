@@ -4208,10 +4208,9 @@ struct pelocal_reorder_info {
   static std::string longDescription() { return
     R"(This keyword is used in inciter as a keyword in the inciter...end block
     as "pelocal_reorder true" (or false) to do (or not do) a global distributed
-    mesh
-    reordering across all PEs that yields an approximately continous mesh node
-    ID order as mesh partitions are assigned to PEs after mesh partitioning.
-    This reordering is optional.)";
+    mesh reordering across all PEs that yields an approximately continous mesh
+    node ID order as mesh partitions are assigned to PEs after mesh
+    partitioning. This reordering is optional.)";
   }
   struct expect {
     using type = bool;
@@ -4228,7 +4227,7 @@ struct operator_reorder_info {
   static std::string longDescription() { return
     R"(This keyword is used in inciter as a keyword in the inciter...end block
     as "operator_reorder on" (or off) to do (or not do) a local mesh node
-    reordering based on the PDE operator access pattern. This rReordering is
+    reordering based on the PDE operator access pattern. This reordering is
     optional.)";
   }
   struct expect {
