@@ -989,6 +989,7 @@ DG::nodeNeighSetup()
           nodeBndCells[e] = m_geoElem[e];
 
           // add these esup-elements into map of elements along chare boundary
+          Assert( e < m_fd.Esuel().size()/4, "Sender contains ghost tet id." );
           m_sendGhost[cid].insert(e);
         }
       }
@@ -1031,11 +1032,11 @@ DG::comEsup( int fromch,
     }
   }
 
-  // Store incoming data in comm-map for Esup
+  // Store incoming data in comm-map buffer for Esup
   for (const auto& [node, elist] : bndEsup)
   {
     auto pl = tk::cref_find(Disc()->Lid(), node);
-    auto& pesup = tk::ref_find(m_esup, pl);
+    auto& pesup = m_esupc[pl];
     for (auto e : elist)
     {
       auto el = tk::cref_find(chghost, e);
@@ -1060,7 +1061,19 @@ DG::adj()
 //    for problem setup.
 // *****************************************************************************
 {
+  for (const auto& [p, elist] : m_esupc)
+  {
+    auto& pesup = tk::ref_find(m_esup, p);
+    for (auto e : elist)
+    {
+      Assert( e >= m_fd.Esuel().size()/4, "Non-ghost element received from "
+        "esup buffer." );
+      pesup.push_back(e);
+    }
+  }
+
   tk::destroy(m_ghostData);
+  tk::destroy(m_esupc);
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) Disc()->Tr().chadj();
 

@@ -330,6 +330,8 @@ class DG : public CBase_DG {
     std::unordered_map< int, tk::UnsMesh::FaceSet > m_infaces;
     //! Elements (value) surrounding point (key) data-structure
     std::map< std::size_t, std::vector< std::size_t > > m_esup;
+    //! Communication buffer for esup data-structure
+    std::map< std::size_t, std::vector< std::size_t > > m_esupc;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
