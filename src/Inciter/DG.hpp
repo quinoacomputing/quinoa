@@ -104,7 +104,8 @@ class DG : public CBase_DG {
 
     //! Receive element-surr-points data on chare boundaries from fellow chare
     void comEsup( int fromch,
-      const std::map< std::size_t, std::vector< std::size_t > >& bndryEsup,
+      const std::unordered_map< std::size_t, std::vector< std::size_t > >&
+        bndEsup,
       const std::unordered_map< std::size_t, std::vector< tk::real > >&
         nodeBoundaryCells );
 

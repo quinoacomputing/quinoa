@@ -34,7 +34,8 @@ module dg {
       entry void reqGhost();
       entry void nodeNeighSetup();
       entry void comEsup( int fromch,
-        const std::map< std::size_t, std::vector< std::size_t > >& bndryEsup,
+        const std::unordered_map< std::size_t, std::vector< std::size_t > >&
+          bndEsup,
         const std::unordered_map< std::size_t, std::vector< tk::real > >&
           nodeBoundaryCells );
       initnode void registerReducers();      

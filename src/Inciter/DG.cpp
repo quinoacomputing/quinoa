@@ -912,22 +912,19 @@ DG::faceAdj()
 
   // Create new map of elements along chare boundary which are ghosts for
   // neighboring chare, associated with that chare ID
-  if (!m_ghostData.empty())
+  for (const auto& [cid, cgd] : m_ghostData)
   {
-    for (const auto& [cid, cgd] : m_ghostData)
+    auto& sg = m_sendGhost[cid];
+    for (const auto& e : cgd)
     {
-      auto& sg = m_sendGhost[cid];
-      for (const auto& e : cgd)
-      {
-        Assert(sg.find(e.first) == sg.end(), "Repeating element found in "
-          "ghost data");
-        sg.insert(e.first);
-      }
-      Assert(sg.size() == cgd.size(), "Incorrect size for sendGhost");
+      Assert(sg.find(e.first) == sg.end(), "Repeating element found in "
+        "ghost data");
+      sg.insert(e.first);
     }
-    Assert(m_sendGhost.size() == m_ghostData.size(), "Incorrect number of "
-      "chares in sendGhost");
+    Assert(sg.size() == cgd.size(), "Incorrect size for sendGhost");
   }
+  Assert(m_sendGhost.size() == m_ghostData.size(), "Incorrect number of "
+    "chares in sendGhost");
 
   // Error checking on ghost data
   for(const auto& n : m_sendGhost)
@@ -936,8 +933,7 @@ DG::faceAdj()
 
   // Generate and store Esup data-structure in a map
   auto esup = tk::genEsup(Disc()->Inpoel(), 4);
-  const auto npoin = Disc()->Gid().size();
-  for (std::size_t p=0; p<npoin; ++p)
+  for (std::size_t p=0; p<Disc()->Gid().size(); ++p)
   {
     for (auto e : tk::Around(esup, p))
     {
@@ -974,16 +970,16 @@ DG::nodeNeighSetup()
     const auto& nodeCommMap = Disc()->NodeCommMap();
 
     // send out node-neighborhood map
-    for (const auto& ch : nodeCommMap)
+    for (const auto& [cid, nlist] : nodeCommMap)
     {
-      std::map< std::size_t, std::vector< std::size_t > > bndryEsup;
+      std::unordered_map< std::size_t, std::vector< std::size_t > > bndEsup;
       std::unordered_map< std::size_t, std::vector< tk::real > > nodeBndryCells;
-      for (const auto& p : ch.second)
+      for (const auto& p : nlist)
       {
         auto pl = tk::cref_find(Disc()->Lid(), p);
         // fill in the esup for the chare-boundary
         const auto& pesup = tk::cref_find(m_esup, pl);
-        bndryEsup[p] = pesup;
+        bndEsup[p] = pesup;
 
         // fill a map with the element ids from esup as keys and geoElem as
         // values, and another map containing these elements associated with
@@ -993,11 +989,11 @@ DG::nodeNeighSetup()
           nodeBndryCells[e] = m_geoElem[e];
 
           // add these esup-elements into map of elements along chare boundary
-          m_sendGhost[ch.first].insert(e);
+          m_sendGhost[cid].insert(e);
         }
       }
 
-      thisProxy[ch.first].comEsup(thisIndex, bndryEsup, nodeBndryCells);
+      thisProxy[cid].comEsup(thisIndex, bndEsup, nodeBndryCells);
     }
   }
 
@@ -1006,7 +1002,7 @@ DG::nodeNeighSetup()
 
 void
 DG::comEsup( int fromch,
-  const std::map< std::size_t, std::vector< std::size_t > >& bndryEsup,
+  const std::unordered_map< std::size_t, std::vector< std::size_t > >& bndEsup,
   const std::unordered_map< std::size_t, std::vector< tk::real > >&
     nodeBndryCells )
 // *****************************************************************************
@@ -1014,16 +1010,16 @@ DG::comEsup( int fromch,
 //    common boundary between receiving and sending neighbor chare, and the
 //    element geometries for these new elements
 //! \param[in] fromch Sender chare id
-//! \param[in] bndryEsup Elements-surrounding-points data-structure from fromch
+//! \param[in] bndEsup Elements-surrounding-points data-structure from fromch
 //! \param[in] nodeBndryEsup Map containing element geometries associated with
 //!   remote element IDs in the esup
 // *****************************************************************************
 {
+  auto& chghost = m_ghost[fromch];
+
   // Extend remote-local element id map and element geometry array
   for (const auto& e : nodeBndryCells)
   {
-    auto& chghost = m_ghost[fromch];
-
     // need to check following, because 'e' could have been added previously in
     // remote-local element id map as a part of face-communication, i.e. as a
     // face-ghost element
@@ -1036,13 +1032,12 @@ DG::comEsup( int fromch,
   }
 
   // Store incoming data in comm-map for Esup
-  for (const auto& p : bndryEsup)
+  for (const auto& [node, elist] : bndEsup)
   {
-    auto pl = tk::cref_find(Disc()->Lid(), p.first);
+    auto pl = tk::cref_find(Disc()->Lid(), node);
     auto& pesup = tk::ref_find(m_esup, pl);
-    for (auto e : p.second)
+    for (auto e : elist)
     {
-      const auto& chghost = tk::cref_find(m_ghost, fromch);
       auto el = tk::cref_find(chghost, e);
       pesup.push_back(el);
     }
