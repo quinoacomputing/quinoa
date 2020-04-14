@@ -95,6 +95,31 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
+  // Perform optional operator-access-pattern mesh node reordering
+  if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
+
+    auto d = Disc();
+    auto& inpoel = d->Inpoel();
+
+    // Create new local ids based on access pattern of PDE operators
+    std::unordered_map< std::size_t, std::size_t > map;
+    std::size_t n = 0;
+
+    auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
+    for (std::size_t p=0; p<m_u.nunk(); ++p) {  // for each point p
+      if (map.find(p) == end(map)) map[p] = n++;
+      for (auto q : tk::Around(psup,p)) {       // for each edge p-q
+        if (map.find(q) == end(map)) map[q] = n++;
+      }
+    }
+
+    Assert( map.size() == d->Gid().size(), "Map size mismatch" );
+
+    // Remap data in bound Discretization object
+    d->remap( map );
+
+  }
+
   // Activate SDAG wait for initially computing the left-hand side and normals
   thisProxy[ thisIndex ].wait4lhs();
 

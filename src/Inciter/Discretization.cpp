@@ -718,6 +718,7 @@ Discretization::status()
     const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
     const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
+    const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
 
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
@@ -750,7 +751,7 @@ Discretization::status()
     // Augment one-liner status with output indicators
     if (!benchmark && !(m_it % field)) print << 'f';
     if (!(m_it % diag)) print << 'd';
-    if (!(m_it % hist)) print << 't';
+    if (!(m_it % hist) && !hist_points.empty()) print << 't';
     if (m_refined) print << 'h';
     if (!(m_it % lbfreq) && !finish) print << 'l';
     if (!benchmark && (!(m_it % rsfreq) || finish)) print << 'r';

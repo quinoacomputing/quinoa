@@ -391,9 +391,7 @@ class CompFlow {
                             vol, m_stag, U, G, egrad );
 
       // compute derived data structures
-      auto esup = tk::genEsup( inpoel, 4 );
-      auto psup = tk::genPsup( inpoel, 4, esup );
-      auto esued = tk::genEsued( inpoel, 4, esup );
+      auto psup = tk::genPsup( inpoel, 4, tk::genEsup( inpoel, 4 ) );
 
       // domain-edge integral
       for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
