@@ -107,7 +107,7 @@ class DG : public CBase_DG {
       const std::unordered_map< std::size_t, std::vector< std::size_t > >&
         bndEsup,
       const std::unordered_map< std::size_t, std::vector< tk::real > >&
-        nodeBoundaryCells );
+        nodeBndyCells );
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();

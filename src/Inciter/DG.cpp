@@ -973,7 +973,7 @@ DG::nodeNeighSetup()
     for (const auto& [cid, nlist] : nodeCommMap)
     {
       std::unordered_map< std::size_t, std::vector< std::size_t > > bndEsup;
-      std::unordered_map< std::size_t, std::vector< tk::real > > nodeBndryCells;
+      std::unordered_map< std::size_t, std::vector< tk::real > > nodeBndCells;
       for (const auto& p : nlist)
       {
         auto pl = tk::cref_find(Disc()->Lid(), p);
@@ -986,14 +986,14 @@ DG::nodeNeighSetup()
         // the chare id with which they are node-neighbors.
         for (const auto& e : pesup)
         {
-          nodeBndryCells[e] = m_geoElem[e];
+          nodeBndCells[e] = m_geoElem[e];
 
           // add these esup-elements into map of elements along chare boundary
           m_sendGhost[cid].insert(e);
         }
       }
 
-      thisProxy[cid].comEsup(thisIndex, bndEsup, nodeBndryCells);
+      thisProxy[cid].comEsup(thisIndex, bndEsup, nodeBndCells);
     }
   }
 
@@ -1004,21 +1004,21 @@ void
 DG::comEsup( int fromch,
   const std::unordered_map< std::size_t, std::vector< std::size_t > >& bndEsup,
   const std::unordered_map< std::size_t, std::vector< tk::real > >&
-    nodeBndryCells )
+    nodeBndCells )
 // *****************************************************************************
 //! \brief Receive elements-surrounding-points data-structure for points on
 //    common boundary between receiving and sending neighbor chare, and the
 //    element geometries for these new elements
 //! \param[in] fromch Sender chare id
 //! \param[in] bndEsup Elements-surrounding-points data-structure from fromch
-//! \param[in] nodeBndryEsup Map containing element geometries associated with
+//! \param[in] nodeBndCells Map containing element geometries associated with
 //!   remote element IDs in the esup
 // *****************************************************************************
 {
   auto& chghost = m_ghost[fromch];
 
   // Extend remote-local element id map and element geometry array
-  for (const auto& e : nodeBndryCells)
+  for (const auto& e : nodeBndCells)
   {
     // need to check following, because 'e' could have been added previously in
     // remote-local element id map as a part of face-communication, i.e. as a
