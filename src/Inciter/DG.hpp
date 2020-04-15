@@ -107,7 +107,7 @@ class DG : public CBase_DG {
       const std::unordered_map< std::size_t, std::vector< std::size_t > >&
         bndEsup,
       const std::unordered_map< std::size_t, std::vector< tk::real > >&
-        nodeBndyCells );
+        nodeBndCells );
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
@@ -227,6 +227,7 @@ class DG : public CBase_DG {
       p | m_expChBndFace;
       p | m_infaces;
       p | m_esup;
+      p | m_esupc;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
