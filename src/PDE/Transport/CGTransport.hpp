@@ -70,7 +70,7 @@ class Transport {
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
                      tk::real t,
-                     std::vector< std::size_t >& ) const
+                     std::vector< std::size_t >& )
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
@@ -143,6 +143,7 @@ class Transport {
       const std::array< std::vector< tk::real >, 3 >&  coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& triinpoel,
+      const std::vector< std::size_t >&,
       const std::unordered_map< std::size_t, std::size_t >& bid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const std::vector< tk::real >& dfn,
@@ -150,9 +151,11 @@ class Transport {
                        std::vector< std::size_t > >& psup,
       const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& bnorm,
       const std::vector< tk::real >& vol,
+      const std::vector< std::size_t >&,
+      const std::vector< std::size_t >&,
       const tk::Fields& G,
       const tk::Fields& U,
-      tk::Fields& R) const
+      tk::Fields& R ) const
     {
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
@@ -194,8 +197,17 @@ class Transport {
             uL[c] = U(p,c,m_offset);
             uR[c] = U(q,c,m_offset);
           }
+
           // compute MUSCL reconstruction in edge-end points
-          tk::muscl( {p,q}, coord, Grad, uL, uR );
+          // WIP: Until now the function tk::muscl() was reused between
+          // Transport and CompFlow. However, this is now not really possible,
+          // since tk::muscl currently has been rewritten to make it
+          // vectorizable.  That was possible because not std::vector's are
+          // pased in. However, Transport will need something like that, so we
+          // will likely no longer be able to do code-reuse between Transport
+          // and CompFlow for the reconstruction.
+          //tk::muscl( {p,q}, coord, Grad, uL, uR );
+
           // evaluate prescribed velocity
           auto v =
             Problem::prescribedVelocity( m_system, m_ncomp, x[p], y[p], z[p] );
@@ -582,7 +594,7 @@ class Transport {
                  tk::real V,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< tk::real >& v,
-                 tk::Fields& U ) const
+                 tk::Fields& U )
     {
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components

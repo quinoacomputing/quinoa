@@ -206,7 +206,7 @@ stagPoint( const std::array< tk::real, 3 >& p,
   const auto& rad = std::get< 1 >( stag );
 
   // Lambda to decide if node is a stagnation point
-  for (std::size_t i=0; i< rad.size(); ++i) {
+  for (std::size_t i=0; i<rad.size(); ++i) {
     std::array< tk::real, 3 >
       d{ p[0]-pnt[i*3+0], p[1]-pnt[i*3+1], p[2]-pnt[i*3+2] };
     if (tk::length(d) < rad[i]) return true;

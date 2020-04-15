@@ -56,8 +56,7 @@ class CompFlow {
       m_physics(),
       m_problem(),
       m_system( c ),
-      m_offset(
-        g_inputdeck.get< tag::component >().offset< eq >(c) ),
+      m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_stag( g_inputdeck.stagnationBC< eq >( c ) )
     {
        Assert( g_inputdeck.get< tag::component >().get< eq >().at(c) == m_ncomp,
@@ -72,12 +71,17 @@ class CompFlow {
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
                      tk::real t,
-                     std::vector< std::size_t >& inbox ) const
+                     std::vector< std::size_t >& inbox )
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
+
+      // Save stagnation point local node ids
+      m_stagnode.clear();
+      for (ncomp_t i=0; i<x.size(); ++i)
+        if (stagPoint( {x[i],y[i],z[i]}, m_stag )) m_stagnode.push_back( i );
 
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
@@ -86,7 +90,7 @@ class CompFlow {
           Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t, boxed );
         if (boxed) inbox.push_back( i );
         unk(i,0,m_offset) = s[0]; // rho
-        if (stagPoint( {x[i],y[i],z[i]}, m_stag )) {
+        if (stagNode(i)) {
           unk(i,1,m_offset) = unk(i,2,m_offset) = unk(i,3,m_offset) = 0.0;
         } else {
           unk(i,1,m_offset) = s[1]; // rho * u
@@ -95,6 +99,17 @@ class CompFlow {
         }
         unk(i,4,m_offset) = s[4]; // rho * e, e: total = kinetic + internal
       }
+    }
+
+    //! Decide if node is a stagnation point
+    //! \return True if node i is a stagnation point
+    #pragma omp declare simd
+    bool stagNode( std::size_t i ) const {
+      if (std::any_of( begin(m_stagnode), end(m_stagnode),
+                       [=](auto n){ return n == i; } ))
+        return true;
+      else
+        return false;
     }
 
     //! Set initial condition in user-defined box IC nodes
@@ -206,8 +221,7 @@ class CompFlow {
 
         // apply stagnation BCs
         for (std::size_t a=0; a<4; ++a)
-          if (stagPoint( {x[N[a]],y[N[a]],z[N[a]]}, m_stag ))
-            u[1][N[a]] = u[2][N[a]] = u[3][N[a]] = 0.0;
+          if (stagNode(N[a])) u[1][N[a]] = u[2][N[a]] = u[3][N[a]] = 0.0;
 
         // access solution at elements
         std::array< const tk::real*, m_ncomp > ue;
@@ -338,11 +352,14 @@ class CompFlow {
     //! \param[in] triinpoel Boundary triangle face connecitivity
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
+    //! \param[in] gid Local->glocal node ids
     //! \param[in] lid Global->local node ids
     //! \param[in] dfn Dual-face normals
     //! \param[in] psup Points surrounding points
     //! \param[in] bnorm Face normals in boundary points
     //! \param[in] vol Nodal volumes
+    //! \param[in] edgenode Local node ids of edges
+    //! \param[in] edgeid Local node id pair -> edge id map
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
@@ -351,6 +368,7 @@ class CompFlow {
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& triinpoel,
+      const std::vector< std::size_t >& gid,
       const std::unordered_map< std::size_t, std::size_t >& bid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const std::vector< tk::real >& dfn,
@@ -358,6 +376,8 @@ class CompFlow {
                        std::vector< std::size_t > >& psup,
       const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& bnorm,
       const std::vector< tk::real >& vol,
+      const std::vector< std::size_t >& edgenode,
+      const std::vector< std::size_t >& edgeid,
       const tk::Fields& G,
       const tk::Fields& U,
       tk::Fields& R ) const
@@ -370,9 +390,63 @@ class CompFlow {
               "Number of unknowns and/or number of components in right-hand "
               "side vector incorrect" );
 
+      // compute/assemble gradients in points
+      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, lid, bid,
+                            vol, m_stag, U, G, egrad );
+
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
+
+      // domain-edge integral: compute fluxes in edges
+      std::vector< tk::real > flux( edgenode.size()/2 * m_ncomp );
+      #pragma omp simd
+      for (std::size_t e=0; e<edgenode.size()/2; ++e) {
+        auto p = edgenode[e*2+0];
+        auto q = edgenode[e*2+1];
+
+        // compute primitive variables at edge-end points
+        tk::real rL  = U(p,0,m_offset);
+        tk::real ruL = U(p,1,m_offset) / rL;
+        tk::real rvL = U(p,2,m_offset) / rL;
+        tk::real rwL = U(p,3,m_offset) / rL;
+        tk::real reL = U(p,4,m_offset) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
+        tk::real rR  = U(q,0,m_offset);
+        tk::real ruR = U(q,1,m_offset) / rR;
+        tk::real rvR = U(q,2,m_offset) / rR;
+        tk::real rwR = U(q,3,m_offset) / rR;
+        tk::real reR = U(q,4,m_offset) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
+
+        // apply stagnation BCs to primitive variables
+        if (stagNode(p)) ruL = rvL = rwL = 0.0;
+        if (stagNode(q)) ruR = rvR = rwR = 0.0;
+
+        // compute MUSCL reconstruction in edge-end points
+        tk::muscl( {p,q}, coord, Grad,
+                   rL, ruL, rvL, rwL, reL,
+                   rR, ruR, rvR, rwR, reR,
+                   /*realizability=*/ true );
+
+        // convert back to conserved variables
+        reL = (reL + 0.5*(ruL*ruL + rvL*rvL + rwL*rwL)) * rL;
+        ruL *= rL;
+        rvL *= rL;
+        rwL *= rL;
+        reR = (reR + 0.5*(ruR*ruR + rvR*rvR + rwR*rwR)) * rR;
+        ruR *= rR;
+        rvR *= rR;
+        rwR *= rR;
+
+        // compute Riemann flux using edge-end point states
+        tk::real f[5];
+        Rusanov::flux( dfn[e*6+0], dfn[e*6+1], dfn[e*6+2],
+                       dfn[e*6+3], dfn[e*6+4], dfn[e*6+5],
+                       rL, ruL, rvL, rwL, reL,
+                       rR, ruR, rvR, rwR, reR,
+                       f[0], f[1], f[2], f[3], f[4] );
+        // store flux in edges
+        for (std::size_t c=0; c<m_ncomp; ++c) flux[e*m_ncomp+c] = f[c];
+      }
 
       // zero right hand side for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
@@ -381,54 +455,16 @@ class CompFlow {
       std::array< const tk::real*, m_ncomp > r;
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
-      // compute/assemble gradients in points
-      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, lid, bid,
-                            vol, m_stag, U, G, egrad );
-
-      // domain-edge integral
-      for (std::size_t p=0,k=0; p<U.nunk(); ++p) {  // for each point p
+      // domain-edge integral: sum flux contributions to points
+      auto npoin = U.nunk();
+      //#pragma omp simd  // <- enabling this currently generates incorrect code
+      for (std::size_t p=0,k=0; p<npoin; ++p)
         for (auto q : tk::Around(psup,p)) {
-          // access dual-face normals for edge p-q
-          std::array< tk::real, 3 > n{ dfn[k+0], dfn[k+1], dfn[k+2] };
-          std::array< tk::real, 3 > m{ dfn[k+3], dfn[k+4], dfn[k+5] };
-          k += 6;
-
-          // access primitive variables at edge-end points
-          std::vector< tk::real > uL( m_ncomp, 0.0 );
-          std::vector< tk::real > uR( m_ncomp, 0.0 );
-          uL[0] = U(p,0,m_offset);
-          uR[0] = U(q,0,m_offset);
-          for (std::size_t c=1; c<m_ncomp; ++c) {
-            uL[c] = U(p,c,m_offset) / uL[0];
-            uR[c] = U(q,c,m_offset) / uR[0];
-          }
-          for (std::size_t d=0; d<3; ++d) {
-            uL[4] -= 0.5*uL[1+d]*uL[1+d];
-            uR[4] -= 0.5*uR[1+d]*uR[1+d];
-          }
-
-          // apply stagnation BCs to primitive variables
-          if (stagPoint({x[p],y[p],z[p]}, m_stag)) uL[1] = uL[2] = uL[3] = 0.0;
-          if (stagPoint({x[q],y[q],z[q]}, m_stag)) uR[1] = uR[2] = uR[3] = 0.0;
-
-          // compute MUSCL reconstruction in edge-end points
-          tk::muscl( {p,q}, coord, Grad, uL, uR, /*realizability=*/ true );
-
-          // convert back to conserved
-          for (std::size_t d=0; d<3; ++d) {
-            uL[4] += 0.5*uL[1+d]*uL[1+d];
-            uR[4] += 0.5*uR[1+d]*uR[1+d];
-          }
-          for (std::size_t c=1; c<m_ncomp; ++c) {
-            uL[c] *= uL[0];
-            uR[c] *= uR[0];
-          }
-
-          // Compute Riemann flux using edge-end point states
-          auto f = Rusanov::flux( n, uL, uR, m );
-          for (std::size_t c=0; c<m_ncomp; ++c) R.var(r[c],p) -= 2*f[c];
+          auto s = gid[p] > gid[q] ? -1.0 : 1.0;
+          auto e = edgeid[k++];
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            R.var(r[c],p) -= 2.0*s*flux[e*m_ncomp+c];
         }
-      }
 
       // boundary integrals
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
@@ -452,8 +488,7 @@ class CompFlow {
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
         // apply stagnation BCs
         for (std::size_t a=0; a<3; ++a)
-          if (stagPoint( {x[N[a]],y[N[a]],z[N[a]]}, m_stag ))
-            u[1][a] = u[2][a] = u[3][a] = 0.0;
+          if (stagNode(N[a])) u[1][a] = u[2][a] = u[3][a] = 0.0;
         // compute boundary fluxes
         auto f = bnorm.find(N[0]) != bnorm.end() ? symbflux(n,u) : bflux(n,u);
         // sum boundary integral contributions
@@ -736,7 +771,7 @@ class CompFlow {
                  tk::real V,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< tk::real >& v,
-                 tk::Fields& U ) const
+                 tk::Fields& U )
     {
       return
         m_problem.fieldOutput( m_system, m_ncomp, m_offset, t, V, v, coord, U );
@@ -765,9 +800,11 @@ class CompFlow {
     const Problem m_problem;            //!< Problem policy
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_offset;             //!< Offset PDE operates from
-    //! Stagnation point BC configuration
+    //! Stagnation point BC user configuration: point coordinates and radii
     const std::tuple< std::vector< tk::real >, std::vector< tk::real > >
       m_stag;
+    //! Stagnation point local node ids
+    std::vector< std::size_t > m_stagnode;
 
     //! Compute element contribution to nodal gradient
     //! \param[in] e Element whose contribution to compute
@@ -811,11 +848,19 @@ class CompFlow {
       // access solution at element nodes
       std::vector< std::array< tk::real, 4 > > u( m_ncomp );
       for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, offset, N );
+
       // apply stagnation BCs
-      for (std::size_t a=0; a<4; ++a)
-        if (stagPoint( {x[N[a]],y[N[a]],z[N[a]]}, stag ))
-          u[1][N[a]] = u[2][N[a]] = u[3][N[a]] = 0.0;
+      // WIP: This is commented for now, because egrad() is passed as a
+      // std::function() without an object, hence it is static. However,
+      // stagNode() reads from m_stagnode, so it will not compile. This
+      // (std::function) will also not fly if the caller loop is to be
+      // vectorizable, so we have to invent something here to (1) still somehow
+      // do code-reuse, as this is called from both chbgrad() as well as
+      // nodegrad(), and (2) make it callable from a vectorized loop.
+      //for (std::size_t a=0; a<4; ++a)
+      //  if (stagNode(N[a])) u[1][N[a]] = u[2][N[a]] = u[3][N[a]] = 0.0;
       // divide out density
+
       for (std::size_t c=1; c<m_ncomp; ++c)
         for (std::size_t j=0; j<4; ++j )
           u[c][j] /= u[0][j];

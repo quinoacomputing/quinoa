@@ -86,7 +86,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_bnorm(),
   m_bnormc(),
   m_stage( 0 ),
-  m_boxnodes()
+  m_boxnodes(),
+  m_edgenode(),
+  m_edgeid()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -364,8 +366,7 @@ ALECG::setup()
   auto d = Disc();
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_cgpde)
-    eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
+  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
 
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );
@@ -570,29 +571,54 @@ ALECG::normfinal()
     for (auto & x : n) x *= factor;
   }
 
-  // Convert dual-face normals to streamable (and vectorizable) data structure
-  m_dfn.resize( m_psup.first.size() * 6 );      // 2 vectors per access
-  const auto& gid = d->Gid();
-  for (std::size_t p=0,k=0; p<m_u.nunk(); ++p)
-    for (auto q : tk::Around(m_psup,p)) {
-      std::array< std::size_t, 2 > e{ gid[p], gid[q] };
-      auto n = tk::cref_find( m_dfnorm, e );
-      // figure out if this is an edge on the parallel boundary
-      auto nit = m_dfnormc.find( e );
-      auto m = ( nit != m_dfnormc.end() ) ? nit->second : n;
-      // orient normals
-      if (gid[p] > gid[q]) { tk::flip(n); tk::flip(m); }
-      m_dfn[k+0] = n[0];
-      m_dfn[k+1] = n[1];
-      m_dfn[k+2] = n[2];
-      m_dfn[k+3] = m[0];
-      m_dfn[k+4] = m[1];
-      m_dfn[k+5] = m[2];
-      k += 6;
-    }
+  // Generate list of unique edges
+  tk::UnsMesh::EdgeSet uedge;
+  for (std::size_t p=0; p<m_u.nunk(); ++p)
+    for (auto q : tk::Around(m_psup,p))
+      uedge.insert( {p,q} );
 
+  // Flatten edge list
+  m_edgenode.resize( uedge.size() * 2 );
+  std::size_t f = 0;
+  for (auto&& [p,q] : uedge) {
+    m_edgenode[f+0] = std::move(p);
+    m_edgenode[f+1] = std::move(q);
+    f += 2;
+  }
+  tk::destroy(uedge);
+
+  // Convert dual-face normals to streamable (and vectorizable) data structure
+  // and setup edge data structures
+  m_dfn.resize( m_edgenode.size() * 3 );      // 2 vectors per access
+  std::unordered_map< tk::UnsMesh::Edge, std::size_t,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > eid;
+  const auto& gid = d->Gid();
+  for (std::size_t e=0; e<m_edgenode.size()/2; ++e) {
+    auto p = m_edgenode[e*2+0];
+    auto q = m_edgenode[e*2+1];
+    eid[{p,q}] = e;
+    std::array< std::size_t, 2 > g{ gid[p], gid[q] };
+    auto n = tk::cref_find( m_dfnorm, g );
+    // figure out if this is an edge on the parallel boundary
+    auto nit = m_dfnormc.find( g );
+    auto m = ( nit != m_dfnormc.end() ) ? nit->second : n;
+    // orient normals
+    //if (gid[p] > gid[q]) { tk::flip(n); tk::flip(m); }
+    m_dfn[e*6+0] = n[0];
+    m_dfn[e*6+1] = n[1];
+    m_dfn[e*6+2] = n[2];
+    m_dfn[e*6+3] = m[0];
+    m_dfn[e*6+4] = m[1];
+    m_dfn[e*6+5] = m[2];
+  }
   tk::destroy( m_dfnorm );
   tk::destroy( m_dfnormc );
+
+  // Flatten edge id data structure
+  m_edgeid.resize( m_psup.first.size() );
+  for (std::size_t p=0,k=0; p<m_u.nunk(); ++p)
+    for (auto q : tk::Around(m_psup,p))
+      m_edgeid[k++] = tk::cref_find( eid, {p,q} );
 }
 
 void
@@ -738,8 +764,8 @@ ALECG::rhs()
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
-            m_triinpoel, d->Bid(), d->Lid(), m_dfn, m_psup, m_bnorm,
-            d->Vol(), m_grad, m_u, m_rhs );
+            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_bnorm,
+            d->Vol(), m_edgenode, m_edgeid, m_grad, m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
@@ -992,7 +1018,7 @@ ALECG::writeFields( CkCallback c ) const
     auto u = m_u;
     std::vector< std::vector< tk::real > > nodefields;
     std::vector< std::vector< tk::real > > nodesurfs;
-    for (const auto& eq : g_cgpde) {
+    for (auto& eq : g_cgpde) {
       auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
       nodefields.insert( end(nodefields), begin(o), end(o) );
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,ltriinp), u );

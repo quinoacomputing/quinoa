@@ -458,29 +458,36 @@ constexpr tk::real muscl_const = 1.0/3.0;
 constexpr tk::real muscl_m1 = 1.0 - muscl_const;
 constexpr tk::real muscl_p1 = 1.0 + muscl_const;
 
+#pragma omp declare simd
 void
-tk::muscl( const UnsMesh::Edge& edge,
-           const UnsMesh::Coords& coord,
-           const Fields& G,
-           std::vector< tk::real >& uL,
-           std::vector< tk::real >& uR,
-           bool enforce_realizability )
+tk::muscl(
+  const UnsMesh::Edge& edge,
+  const UnsMesh::Coords& coord,
+  const Fields& G,
+  tk::real& rL, tk::real& uL, tk::real& vL, tk::real& wL, tk::real& eL,
+  tk::real& rR, tk::real& uR, tk::real& vR, tk::real& wR, tk::real& eR,
+  bool realizability )
 // *****************************************************************************
 // Compute MUSCL reconstruction in edge-end points using a MUSCL procedure with
 // van Leer limiting
 //! \param[in] edge Node ids of edge-end points
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] G Gradient of all unknowns in mesh points
-//! \param[in,out] uL Primitive variables at left edge-end point
-//! \param[in,out] uR Primitive variables at right edge-end point
-//! \param[in] enforce_realizability True to enforce positivity of density and
-//!   internal energy, assuming 5 scalar components in uL and uR.
+//! \param[in] rL Left density
+//! \param[in] ruL Left X velocity
+//! \param[in] rvL Left Y velocity
+//! \param[in] rwL Left Z velocity
+//! \param[in] reL Left internal energy
+//! \param[in] rL Left density
+//! \param[in] ruL Left X velocity
+//! \param[in] rvL Left Y velocity
+//! \param[in] rwL Left Z velocity
+//! \param[in] reL Left internal energy
+//! \param[in] realizability True to enforce positivity of density and
+//!   internal energy.
 // *****************************************************************************
 {
-  const auto ncomp = G.nprop()/3;
-
-  Assert( uL.size() == ncomp && uR.size() == ncomp, "Size mismatch" );
-
+  // access node coordinates
   const auto& x = coord[0];
   const auto& y = coord[1];
   const auto& z = coord[2];
@@ -492,19 +499,20 @@ tk::muscl( const UnsMesh::Edge& edge,
   // edge vector
   std::array< tk::real, 3 > vw{ x[q]-x[p], y[q]-y[p], z[q]-z[p] };
 
-  std::vector< tk::real >
-    delta1( ncomp, 0.0 ), delta2( ncomp, 0.0 ), delta3( ncomp, 0.0 );
-  auto url = uL;
-  auto urr = uR;
+  tk::real delta1[5], delta2[5], delta3[5];
+  std::array< tk::real, 5 > ls{ rL, uL, vL, wL, eL };
+  std::array< tk::real, 5 > rs{ rR, uR, vR, wR, eR };
+  auto url = ls;
+  auto urr = rs;
 
   // MUSCL reconstruction of edge-end-point primitive variables
-  for (std::size_t c=0; c<ncomp; ++c) {
+  for (std::size_t c=0; c<5; ++c) {
     // gradients
     std::array< tk::real, 3 >
       g1{ G(p,c*3+0,0), G(p,c*3+1,0), G(p,c*3+2,0) },
       g2{ G(q,c*3+0,0), G(q,c*3+1,0), G(q,c*3+2,0) };
 
-    delta2[c] = uR[c] - uL[c];
+    delta2[c] = rs[c] - ls[c];
     delta1[c] = 2.0 * tk::dot(g1,vw) - delta2[c];
     delta3[c] = 2.0 * tk::dot(g2,vw) - delta2[c];
 
@@ -526,11 +534,20 @@ tk::muscl( const UnsMesh::Edge& edge,
 
   // force first order if the reconstructions for density or internal energy
   // would have allowed negative values
-  if (enforce_realizability) {
-    if (uL[0] < delta1[0] || uL[4] < delta1[4]) url = uL;
-    if (uR[0] < -delta3[0] || uR[4] < -delta3[4]) urr = uR;
+  if (realizability) {
+    if (ls[0] < delta1[0] || ls[4] < delta1[4]) url = ls;
+    if (rs[0] < -delta3[0] || rs[4] < -delta3[4]) urr = rs;
   }
 
-  uL = std::move(url);
-  uR = std::move(urr);
+  rL = url[0];
+  uL = url[1];
+  vL = url[2];
+  wL = url[3];
+  eL = url[4];
+
+  rR = urr[0];
+  uR = urr[1];
+  vR = urr[2];
+  wR = urr[3];
+  eR = urr[4];
 }

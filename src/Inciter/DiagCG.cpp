@@ -294,8 +294,7 @@ DiagCG::setup()
   auto d = Disc();
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_cgpde)
-    eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
+  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
 
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );
@@ -665,7 +664,7 @@ DiagCG::writeFields( CkCallback c ) const
     auto u = m_u;
     std::vector< std::vector< tk::real > > nodefields;
     std::vector< std::vector< tk::real > > nodesurfs;
-    for (const auto& eq : g_cgpde) {
+    for (auto& eq : g_cgpde) {
       auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
       nodefields.insert( end(nodefields), begin(o), end(o) );
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
