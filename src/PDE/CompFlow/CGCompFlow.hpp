@@ -149,7 +149,7 @@ class CompFlow {
     {
       int inbox = 0;
       auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
-      return std::vector< tk::real >( begin(s), end(s) );
+      return std::vector< tk::real >( std::begin(s), std::end(s) );
     }
 
     //! Compute right hand side for DiagCG (CG+FCT)
