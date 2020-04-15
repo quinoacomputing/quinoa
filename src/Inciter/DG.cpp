@@ -1064,7 +1064,7 @@ DG::adj()
   for (auto& [p, elist] : m_esupc)
   {
     auto& pesup = tk::ref_find(m_esup, p);
-    for (auto e : elist)
+    for ([[maybe_unused]] auto e : elist)
     {
       Assert( e >= m_fd.Esuel().size()/4, "Non-ghost element received from "
         "esup buffer." );
