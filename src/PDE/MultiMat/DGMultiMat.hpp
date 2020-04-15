@@ -371,6 +371,7 @@ class MultiMat {
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
@@ -380,6 +381,7 @@ class MultiMat {
                 [[maybe_unused]] const tk::Fields& geoFace,
                 [[maybe_unused]] const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
+                const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
@@ -398,6 +400,11 @@ class MultiMat {
       {
         SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U, P,
           nmat );
+      }
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
+      {
+        VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
+          m_offset, coord, U, P, nmat );
       }
       else if (limiter == ctr::LimiterType::WENOP1)
       {

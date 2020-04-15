@@ -201,6 +201,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::nolimiter,
                                    kw::wenop1,
                                    kw::superbeep1,
+                                   kw::vertexbasedp1,
                                    kw::prelax,
                                    kw::prelax_timescale,
                                    kw::bc_sym,

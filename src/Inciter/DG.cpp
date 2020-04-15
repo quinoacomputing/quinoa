@@ -1528,8 +1528,8 @@ DG::lim()
     auto d = Disc();
 
     for (const auto& eq : g_dgpde)
-      eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(),
-                m_ndof, m_u, m_p );
+      eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, d->Inpoel(),
+                d->Coord(), m_ndof, m_u, m_p );
   }
 
 
