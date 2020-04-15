@@ -1061,15 +1061,15 @@ DG::adj()
 //    for problem setup.
 // *****************************************************************************
 {
-  for (const auto& [p, elist] : m_esupc)
+  for (auto& [p, elist] : m_esupc)
   {
     auto& pesup = tk::ref_find(m_esup, p);
     for (auto e : elist)
     {
       Assert( e >= m_fd.Esuel().size()/4, "Non-ghost element received from "
         "esup buffer." );
-      pesup.push_back(e);
     }
+    tk::concat< std::size_t >(std::move(elist), pesup);
   }
 
   tk::destroy(m_ghostData);
