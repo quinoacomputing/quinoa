@@ -6,10 +6,11 @@
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing integrals of an arbitrary source term of a
-     system of PDEs in DG methods
+     for single-material compressible flow, CompFlow using DG methods
   \details   This file contains functionality for computing integrals of an
-     arbitrary source term of a system of PDEs used in discontinuous Galerkin
-     methods for various orders of numerical representation.
+     arbitrary source term for single-material compressible flow, CompFlow with
+     discontinuous Galerkin methods for various orders of numerical
+     representation.
 */
 // *****************************************************************************
 #ifndef Source_h
@@ -28,27 +29,25 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! Compute source term integrals for DG
 void
 srcInt( ncomp_t system,
-        ncomp_t ncomp,
         ncomp_t offset,
         real t,
         const std::size_t ndof,
         const std::vector< std::size_t >& inpoel,
         const UnsMesh::Coords& coord,
         const Fields& geoElem,
-        const SrcFn& src,
+        const CompFlowSrcFn& src,
         const std::vector< std::size_t >& ndofel,
         Fields& R );
 
 //! Update the rhs by adding the source term integrals
 void
-update_rhs( ncomp_t ncomp,
-            ncomp_t offset,
+update_rhs( ncomp_t offset,
             const std::size_t ndof,
             const std::size_t ndof_el,
             const tk::real wt,
             const std::size_t e,
             const std::vector< tk::real >& B,
-            const std::vector< tk::real >& s,
+            const std::array< tk::real, 5 >& s,
             Fields& R );
 
 } // tk::

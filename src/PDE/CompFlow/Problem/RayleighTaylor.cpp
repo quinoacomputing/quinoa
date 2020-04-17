@@ -37,7 +37,6 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
@@ -45,8 +44,6 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == ncomp, "Number of scalar components must be " +
-                          std::to_string(ncomp) );
   using tag::param; using std::sin; using std::cos;
 
   // manufactured solution parameters
@@ -74,14 +71,14 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-tk::SrcFn::result_type
-CompFlowProblemRayleighTaylor::src( ncomp_t system, ncomp_t ncomp, tk::real x,
-                                    tk::real y, tk::real z, tk::real t )
+tk::CompFlowSrcFn::result_type
+CompFlowProblemRayleighTaylor::src(
+  ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real t,
+  tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
 // *****************************************************************************
 //  Compute and return source term for manufactured solution
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -104,7 +101,7 @@ CompFlowProblemRayleighTaylor::src( ncomp_t system, ncomp_t ncomp, tk::real x,
 
   // evaluate solution at x,y,z,t
   int inbox = 0;
-  auto s = solution( system, ncomp, x, y, z, t, inbox );
+  auto s = solution( system, 5, x, y, z, t, inbox );
 
   // density, velocity, energy, pressure
   auto rho = s[0];
@@ -141,18 +138,15 @@ CompFlowProblemRayleighTaylor::src( ncomp_t system, ncomp_t ncomp, tk::real x,
   auto dwdt =  k*M_PI*sin(k*M_PI*t)/2*M_PI*z*z*(cos(M_PI*x) - sin(M_PI*y));
   auto dedt = u*dudt + v*dvdt + w*dwdt;
 
-  std::vector< tk::real > r( ncomp );
   // density source
-  r[0] = u*drdx[0] + v*drdx[1] + w*drdx[2];
+  r = u*drdx[0] + v*drdx[1] + w*drdx[2];
   // momentum source
-  r[1] = rho*dudt+u*r[0]+dpdx[0] + s[1]*dudx[0]+s[2]*dudx[1]+s[3]*dudx[2];
-  r[2] = rho*dvdt+v*r[0]+dpdx[1] + s[1]*dvdx[0]+s[2]*dvdx[1]+s[3]*dvdx[2];
-  r[3] = rho*dwdt+w*r[0]+dpdx[2] + s[1]*dwdx[0]+s[2]*dwdx[1]+s[3]*dwdx[2];
+  ru = rho*dudt+u*r+dpdx[0] + s[1]*dudx[0]+s[2]*dudx[1]+s[3]*dudx[2];
+  rv = rho*dvdt+v*r+dpdx[1] + s[1]*dvdx[0]+s[2]*dvdx[1]+s[3]*dvdx[2];
+  rw = rho*dwdt+w*r+dpdx[2] + s[1]*dwdx[0]+s[2]*dwdx[1]+s[3]*dwdx[2];
   // energy source
-  r[4] = rho*dedt + E*r[0] + s[1]*dedx[0]+s[2]*dedx[1]+s[3]*dedx[2]
-         + u*dpdx[0]+v*dpdx[1]+w*dpdx[2];
-
-  return r;
+  re = rho*dedt + E*r + s[1]*dedx[0]+s[2]*dedx[1]+s[3]*dedx[2]
+       + u*dpdx[0]+v*dpdx[1]+w*dpdx[2];
 }
 
 std::vector< std::string >

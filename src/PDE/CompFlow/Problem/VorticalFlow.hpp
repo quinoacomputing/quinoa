@@ -44,9 +44,9 @@ class CompFlowProblemVorticalFlow {
               tk::real, int& );
 
     //! Compute and return source term for vortical flow manufactured solution
-    static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-         tk::real );
+    static tk::CompFlowSrcFn::result_type
+    src( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real,
+         tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re );
 
     //! Return field names to be output to file
     std::vector< std::string > fieldNames( ncomp_t ) const;

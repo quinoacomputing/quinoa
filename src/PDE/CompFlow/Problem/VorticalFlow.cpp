@@ -65,9 +65,10 @@ CompFlowProblemVorticalFlow::solution( ncomp_t system,
   return {{ 1.0, ru, rv, rw, rE }};
 }
 
-tk::SrcFn::result_type
-CompFlowProblemVorticalFlow::src( ncomp_t system, ncomp_t ncomp, tk::real x,
-                                  tk::real y, tk::real z, tk::real )
+tk::CompFlowSrcFn::result_type
+CompFlowProblemVorticalFlow::src(
+  ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real,
+  tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
 // *****************************************************************************
 //  Compute and return source term for manufactured solution
 //! \param[in] system Equation system index, i.e., which compressible
@@ -90,18 +91,16 @@ CompFlowProblemVorticalFlow::src( ncomp_t system, ncomp_t ncomp, tk::real x,
   tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
   // evaluate solution at x,y,z
   int inbox = 0;
-  auto s = solution( system, ncomp, x, y, z, 0.0, inbox );
-  std::vector< tk::real > r( ncomp );
-  // density source
-  r[0] = 0.0;
-  // momentum source
-  r[1] = a*s[1]/s[0] - b*s[2]/s[0];
-  r[2] = b*s[1]/s[0] + a*s[2]/s[0];
-  r[3] = 0.0;
-  // energy source
-  r[4] = (r[1]*s[1] + r[2]*s[2])/s[0] + 8.0*a*a*a*z*z/(g-1.0);
+  auto s = solution( system, 5, x, y, z, 0.0, inbox );
 
-  return r;
+  // density source
+  r = 0.0;
+  // momentum source
+  ru = a*s[1]/s[0] - b*s[2]/s[0];
+  rv = b*s[1]/s[0] + a*s[2]/s[0];
+  rw = 0.0;
+  // energy source
+  re = (ru*s[1] + rv*s[2])/s[0] + 8.0*a*a*a*z*z/(g-1.0);
 }
 
 std::vector< std::string >

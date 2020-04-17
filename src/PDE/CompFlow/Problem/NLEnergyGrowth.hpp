@@ -50,9 +50,10 @@ class CompFlowProblemNLEnergyGrowth {
               tk::real t, int& );
 
     //! Compute and return source term for NLEG manufactured solution
-    static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-         tk::real t );
+    static tk::CompFlowSrcFn::result_type
+    src( ncomp_t system, tk::real x, tk::real y, tk::real z,
+         tk::real t, tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw,
+         tk::real& re );
 
     //! Return field names to be output to file
     std::vector< std::string > fieldNames( ncomp_t ) const;

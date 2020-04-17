@@ -232,7 +232,6 @@ class Transport {
       }
 
       // boundary-edge integrals
-      auto eps = std::numeric_limits< tk::real >::epsilon();
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
         // access node IDs
         const std::array< std::size_t, 3 >

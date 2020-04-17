@@ -252,14 +252,13 @@ class CompFlow {
           }
 
         // add (optional) source to all equations
-        std::array< std::vector< real >, 4 > s{{
-          Problem::src( m_system, m_ncomp, x[N[0]], y[N[0]], z[N[0]], t ),
-          Problem::src( m_system, m_ncomp, x[N[1]], y[N[1]], z[N[1]], t ),
-          Problem::src( m_system, m_ncomp, x[N[2]], y[N[2]], z[N[2]], t ),
-          Problem::src( m_system, m_ncomp, x[N[3]], y[N[3]], z[N[3]], t ) }};
-        for (std::size_t c=0; c<m_ncomp; ++c)
-          for (std::size_t a=0; a<4; ++a)
-            Ue.var(ue[c],e) += d/4.0 * s[a][c];
+        for (std::size_t a=0; a<4; ++a) {
+          real s[m_ncomp];
+          Problem::src( m_system, x[N[a]], y[N[a]], z[N[a]], t,
+                        s[0], s[1], s[2], s[3], s[4] );
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            Ue.var(ue[c],e) += d/4.0 * s[c];
+        }
       }
 
       // 2nd stage: form rhs from element values (scatter-add)
@@ -314,7 +313,9 @@ class CompFlow {
         auto xc = (x[N[0]] + x[N[1]] + x[N[2]] + x[N[3]]) / 4.0;
         auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
         auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
-        auto s = Problem::src( m_system, m_ncomp, xc, yc, zc, t+deltat/2 );
+        real s[m_ncomp];
+        Problem::src( m_system, xc, yc, zc, t+deltat/2,
+                      s[0], s[1], s[2], s[3], s[4] );
         for (std::size_t c=0; c<m_ncomp; ++c)
           for (std::size_t a=0; a<4; ++a)
             R.var(r[c],N[a]) += d/4.0 * s[c];
@@ -546,7 +547,6 @@ class CompFlow {
 
       // boundary integrals: sum flux contributions to points
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
-        // access node IDs
         std::size_t N[3] =
           { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
         for (std::size_t c=0; c<m_ncomp; ++c) {
@@ -558,30 +558,23 @@ class CompFlow {
       }
       tk::destroy(bflux);
 
-      // add optional source
+      // source integral
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-        // access node IDs
-        const std::array< std::size_t, 4 >
-          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
-        // compute element Jacobi determinant
-        const std::array< real, 3 >
-          ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-          ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-          da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-        const auto J = tk::triple( ba, ca, da );        // J = 6V
-        Assert( J > 0, "Element Jacobian non-positive" );
-        auto J24 = J/24.0;
-        // evaluate source in vertices
-        std::array< std::vector< real >, 4 > s{{
-          Problem::src( m_system, m_ncomp, x[N[0]], y[N[0]], z[N[0]], t ),
-          Problem::src( m_system, m_ncomp, x[N[1]], y[N[1]], z[N[1]], t ),
-          Problem::src( m_system, m_ncomp, x[N[2]], y[N[2]], z[N[2]], t ),
-          Problem::src( m_system, m_ncomp, x[N[3]], y[N[3]], z[N[3]], t )
-        }};
+        std::size_t N[4] =
+          { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+        // compute element Jacobi determinant, J = 6V
+        auto J24 = tk::triple(
+          x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]],
+          x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]],
+          x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] ) / 24.0;
         // sum source contributions to nodes
-        for (std::size_t c=0; c<m_ncomp; ++c)
-          for (std::size_t a=0; a<4; ++a)
-            R.var(r[c],N[a]) += J24 * s[a][c];
+        for (std::size_t a=0; a<4; ++a) {
+          real s[m_ncomp];
+          Problem::src( m_system, x[N[a]], y[N[a]], z[N[a]], t,
+                        s[0], s[1], s[2], s[3], s[4] );
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            R.var(r[c],inpoel[e*4+a]) += J24 * s[c];
+        }
       }
     }
 

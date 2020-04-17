@@ -317,7 +317,7 @@ add_regression_test(gauss_hump_alecg_u0.9 ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff_cg.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS dg)
+                    LABELS alecg)
 
 # Parallel + virtualization + migration
 

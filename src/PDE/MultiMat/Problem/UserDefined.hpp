@@ -61,19 +61,10 @@ class MultiMatProblemUserDefined {
       return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
     }
 
-    //! Compute and return source term for Rayleigh-Taylor manufactured solution
-    //! \details No-op for user-deefined problems.
-    //! \return Array of reals containing the source for all components
-    //! \note The function signature must follow tk::SrcFn
-    static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real )
-    { return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }}; }
-
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     static std::vector< std::string > fieldNames( ncomp_t ) {
-      auto nmat =
-        g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
+      auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
       return MultiMatFieldNames(nmat);
     }
 
