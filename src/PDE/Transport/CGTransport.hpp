@@ -128,7 +128,6 @@ class Transport {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] triinpoel Boundary triangle face connecitivity
-    //! \param[in] gid Local->global node id map
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] lid Global->local node ids
@@ -144,7 +143,6 @@ class Transport {
       const std::array< std::vector< tk::real >, 3 >&  coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& triinpoel,
-      const std::vector< std::size_t >& gid,
       const std::unordered_map< std::size_t, std::size_t >& bid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const std::vector< tk::real >& dfn,
@@ -176,7 +174,7 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
       // compute/assemble gradients in points
-      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, gid, lid, bid,
+      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, lid, bid,
                             vol, {}, U, G, egrad );
 
       // compute derived data structures
@@ -184,10 +182,10 @@ class Transport {
 
       // domain-edge integral
       for (std::size_t p=0,k=0; p<U.nunk(); ++p) {  // for each point p
-        for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i,++k) {
-          auto q = psup.first[i];
+        for (auto q : tk::Around(psup,p)) {
           // access dual-face normals for edge p-q
-          std::array< tk::real, 3 > n{ dfn[k*6+0], dfn[k*6+1], dfn[k*6+2] };
+          std::array< tk::real, 3 > n{ dfn[k+0], dfn[k+1], dfn[k+2] };
+          k += 6;
           // compute primitive variables at edge-end points (for Transport,
           // these are the same as the conserved variables)
           std::vector< tk::real > uL( m_ncomp, 0.0 );

@@ -582,13 +582,13 @@ ALECG::normfinal()
       auto m = ( nit != m_dfnormc.end() ) ? nit->second : n;
       // orient normals
       if (gid[p] > gid[q]) { tk::flip(n); tk::flip(m); }
-      m_dfn[k*6+0] = n[0];
-      m_dfn[k*6+1] = n[1];
-      m_dfn[k*6+2] = n[2];
-      m_dfn[k*6+3] = m[0];
-      m_dfn[k*6+4] = m[1];
-      m_dfn[k*6+5] = m[2];
-      ++k;
+      m_dfn[k+0] = n[0];
+      m_dfn[k+1] = n[1];
+      m_dfn[k+2] = n[2];
+      m_dfn[k+3] = m[0];
+      m_dfn[k+4] = m[1];
+      m_dfn[k+5] = m[2];
+      k += 6;
     }
 
   tk::destroy( m_dfnorm );
@@ -738,7 +738,7 @@ ALECG::rhs()
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
-            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_bnorm,
+            m_triinpoel, d->Bid(), d->Lid(), m_dfn, m_psup, m_bnorm,
             d->Vol(), m_grad, m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets

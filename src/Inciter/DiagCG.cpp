@@ -85,7 +85,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
 
     auto d = Disc();
-    auto& inpoel = d->Inpoel();
+    const auto& inpoel = d->Inpoel();
 
     // Create new local ids based on access pattern of PDE operators
     std::unordered_map< std::size_t, std::size_t > map;

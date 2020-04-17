@@ -59,11 +59,15 @@ class Progress {
    //!   is usually a list of multiple sub-tasks happening at the same time.
    //!   Appending to msg we also output the legend of subtasks in parentheses.
    void start( const Print& print, const std::string& msg ) {
-     std::string legend( " (" );
-     for (const auto& l : m_legend) legend.append( l + ", " );
-     legend.pop_back();
-     legend.pop_back();
-     legend.append( ") ... " );
+     std::string legend;
+     if (m_feedback) {
+       legend.append( " (" );
+       for (const auto& l : m_legend) legend.append( l + ", " );
+       legend.pop_back();
+       legend.pop_back();
+       legend.append( ")" );
+     }
+     legend.append( " ..." );
      print.diagstart( msg + legend );
      m_progress_size = 0;
    }

@@ -336,7 +336,6 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] triinpoel Boundary triangle face connecitivity
-    //! \param[in] gid Local->global node id map
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] lid Global->local node ids
@@ -352,7 +351,6 @@ class CompFlow {
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& triinpoel,
-      const std::vector< std::size_t >& gid,
       const std::unordered_map< std::size_t, std::size_t >& bid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const std::vector< tk::real >& dfn,
@@ -384,54 +382,43 @@ class CompFlow {
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
       // compute/assemble gradients in points
-      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, gid, lid, bid,
+      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, lid, bid,
                             vol, m_stag, U, G, egrad );
 
       // domain-edge integral
-      auto nunk = U.nunk();
-      //#pragma omp simd 
-      for (std::size_t p=0,k=0; p<nunk; ++p) {  // for each point p
-        for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i,++k) {
-          auto q = psup.first[i];
+      for (std::size_t p=0,k=0; p<U.nunk(); ++p) {  // for each point p
+        for (auto q : tk::Around(psup,p)) {
           // access dual-face normals for edge p-q
-          std::array< tk::real, 3 > n{ dfn[k*6+0], dfn[k*6+1], dfn[k*6+2] };
-          std::array< tk::real, 3 > m{ dfn[k*6+3], dfn[k*6+4], dfn[k*6+5] };
+          std::array< tk::real, 3 > n{ dfn[k+0], dfn[k+1], dfn[k+2] };
+          std::array< tk::real, 3 > m{ dfn[k+3], dfn[k+4], dfn[k+5] };
+          k += 6;
 
-          // Access primitive variables at edge-end points
-          // density
+          // access primitive variables at edge-end points
           std::vector< tk::real > uL( m_ncomp, 0.0 );
           std::vector< tk::real > uR( m_ncomp, 0.0 );
           uL[0] = U(p,0,m_offset);
           uR[0] = U(q,0,m_offset);
-          // divide out density
           for (std::size_t c=1; c<m_ncomp; ++c) {
             uL[c] = U(p,c,m_offset) / uL[0];
             uR[c] = U(q,c,m_offset) / uR[0];
           }
-          // convert to internal energy
           for (std::size_t d=0; d<3; ++d) {
             uL[4] -= 0.5*uL[1+d]*uL[1+d];
             uR[4] -= 0.5*uR[1+d]*uR[1+d];
           }
 
           // apply stagnation BCs to primitive variables
-          if (stagPoint( {x[p],y[p],z[p]}, m_stag ))
-            uL[1] = uL[2] = uL[3] = 0.0;
-          if (stagPoint( {x[q],y[q],z[q]}, m_stag ))
-            uR[1] = uR[2] = uR[3] = 0.0;
+          if (stagPoint({x[p],y[p],z[p]}, m_stag)) uL[1] = uL[2] = uL[3] = 0.0;
+          if (stagPoint({x[q],y[q],z[q]}, m_stag)) uR[1] = uR[2] = uR[3] = 0.0;
 
           // compute MUSCL reconstruction in edge-end points
-          tk::UnsMesh::Edge e;
-          e[0] = p;
-          e[1] = q;
-          tk::muscl( e, coord, Grad, uL, uR, /*realizability=*/ true );
+          tk::muscl( {p,q}, coord, Grad, uL, uR, /*realizability=*/ true );
+
           // convert back to conserved
-          // convert to internal energy
           for (std::size_t d=0; d<3; ++d) {
             uL[4] += 0.5*uL[1+d]*uL[1+d];
             uR[4] += 0.5*uR[1+d]*uR[1+d];
           }
-          // multiply by density
           for (std::size_t c=1; c<m_ncomp; ++c) {
             uL[c] *= uL[0];
             uR[c] *= uR[0];
@@ -791,7 +778,7 @@ class CompFlow {
     //! \return Tuple of element contribution
     //! \note The function signature must follow tk::ElemGradFn
     static tk::ElemGradFn::result_type
-    egrad( ncomp_t ncomp,
+    egrad( ncomp_t,
            ncomp_t offset,
            std::size_t e,
            const std::array< std::vector< tk::real >, 3 >& coord,
@@ -822,8 +809,8 @@ class CompFlow {
       for (std::size_t i=0; i<3; ++i)
         grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
       // access solution at element nodes
-      std::vector< std::array< tk::real, 4 > > u( ncomp );
-      for (ncomp_t c=0; c<ncomp; ++c) u[c] = U.extract( c, offset, N );
+      std::vector< std::array< tk::real, 4 > > u( m_ncomp );
+      for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, offset, N );
       // apply stagnation BCs
       for (std::size_t a=0; a<4; ++a)
         if (stagPoint( {x[N[a]],y[N[a]],z[N[a]]}, stag ))
