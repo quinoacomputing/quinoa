@@ -264,6 +264,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-disabled-macro-expansion")
   add_compiler_flag("-Wno-reserved-id-macro")
   add_compiler_flag("-Wno-unknown-warning-option")
+  add_compiler_flag("-Wno-unknown-pragmas")
+  add_compiler_flag("-Wno-source-uses-openmp")
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
@@ -324,9 +326,11 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-format-overflow")
   add_compiler_flag("-Wno-pragmas")
 
-  # Have not played with vectorizing with GNU compilers, but that's next, and
-  # these options are a start.
-  #add_compiler_flag("-march=native")
+  # For vectorization:
+  #add_compiler_flag("-march=native")   # will change baselines
+  #add_compiler_flag("-ftree-vectorize")
+  #add_compiler_flag("-ftree-vectorizer-verbose=5")
+  #add_compiler_flag("-fopt-info-vec-missed")
   #add_compiler_flag("-fopenmp-simd")
   #add_compiler_flag("-Wopenmp-simd")
 
