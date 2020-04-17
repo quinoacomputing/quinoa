@@ -233,12 +233,91 @@ class MultiMat {
           unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
           unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset), almax, kmax);
 
+        auto pb(0.0);
+        for (std::size_t k=0; k<nmat; ++k)
+          pb += prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset);
+
+        // isentropic expansion/compression
+        tk::real d_arE(0.0), d_al(0.0), p_target(pmax), rhoEmat(0.0);
+
+        // 1. Correct minority materials and store volume/energy changes
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          auto alk = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
+          auto pk = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) / alk;
+          if (alk < 1e-02 && std::fabs((pk-pmax)/pmax) > 1e-08)
+          {
+            //auto gk =
+            //  g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][k];
+
+            tk::real alk_new(0.0);
+            //// volume change based on polytropic expansion/isentropic compression
+            //if (pk > p_target)
+            //{
+            //  alk_new = std::pow((pk/p_target), (1.0/gk)) * alk;
+            //}
+            //else
+            //{
+            //  auto arhok = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset);
+            //  auto ck = eos_soundspeed< eq >(m_system, arhok, alk*pk, alk, k);
+            //  auto kk = arhok * ck * ck;
+            //  alk_new = alk - (alk*alk/kk) * (p_target-pk);
+            //}
+            alk_new = alk;
+
+            // energy change
+            auto rhomat = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset)
+              / alk_new;
+            rhoEmat = eos_totalenergy< eq >(m_system, rhomat, u, v, w,
+              p_target, k);
+
+            // volume-fraction and total energy flux into majority material
+            d_al += (alk - alk_new);
+            d_arE += (unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset)
+              - alk_new * rhoEmat);
+
+            // update state of trace material
+            unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) = alk_new;
+            unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = alk_new*rhoEmat;
+            prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk_new*p_target;
+          }
+        }
+
+        //// 2. Based on volume change in majority material, compute energy change
+        //auto gmax =
+        //  g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][kmax];
+        //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
+        //auto rhomax_new = unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset)
+        //  / (almax+d_al);
+        //auto rhoEmax_new = eos_totalenergy< eq >(m_system, rhomax_new, u, v, w,
+        //  pmax_new, kmax);
+        //auto d_arEmax_new = (almax+d_al) * rhoEmax_new
+        //  - unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset);
+
+        //unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset) += d_al;
+        //unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset) += d_arEmax_new;
+
+        // 2. Flux energy change into majority material
+        unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset) += d_arE;
+
+        // correct pressure of majority material
+        prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset) =
+          eos_pressure< eq >(m_system,
+          unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
+          unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset),
+          unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset), kmax);
+
+        // replace state of tiny materials with that of majority material
+        pmax = prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset)/almax;
+        tmax = eos_temperature< tag::multimat >(m_system,
+          unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
+          unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset), almax, kmax);
         for (std::size_t k=0; k<nmat; ++k)
         {
           if (unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) < al_eps)
           {
             auto rhomat = eos_density< tag::multimat >(m_system, pmax, tmax, k);
-            auto rhoEmat = eos_totalenergy< tag::multimat >(m_system, rhomat,
+            rhoEmat = eos_totalenergy< tag::multimat >(m_system, rhomat,
               u, v, w, pmax, k);
             auto almod = al_eps
               - unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
@@ -576,7 +655,7 @@ class MultiMat {
         a = 0.0;
         for (std::size_t k=0; k<nmat; ++k)
         {
-          if (ugp[volfracIdx(nmat, k)] > 1.0e-08) {
+          if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
             a = std::max( a, eos_soundspeed< tag::multimat >( 0,
               ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
               ugp[volfracIdx(nmat, k)], k ) );
@@ -609,7 +688,7 @@ class MultiMat {
           a = 0.0;
           for (std::size_t k=0; k<nmat; ++k)
           {
-            if (ugp[volfracIdx(nmat, k)] > 1.0e-08) {
+            if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
               a = std::max( a, eos_soundspeed< tag::multimat >( 0,
                 ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
                 ugp[volfracIdx(nmat, k)], k ) );
