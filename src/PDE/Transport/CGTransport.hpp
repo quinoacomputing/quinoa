@@ -128,35 +128,31 @@ class Transport {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] triinpoel Boundary triangle face connecitivity
-    //! \param[in] gid Local->global node id map
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] lid Global->local node ids
-    //! \param[in] dfn Dual-face normals along chare-boundary edges
+    //! \param[in] dfn Dual-face normals
+    //! \param[in] psup Points surrounding points
     //! \param[in] bnorm Face normals in boundary points
     //! \param[in] vol Nodal volumes
     //! \param[in] G Nodal gradients in chare-boundary nodes
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    void rhs( tk::real,
-              const std::array< std::vector< tk::real >, 3 >&  coord,
-              const std::vector< std::size_t >& inpoel,
-              const std::vector< std::size_t >& triinpoel,
-              const std::vector< std::size_t >& gid,
-              const std::unordered_map< std::size_t, std::size_t >& bid,
-              const std::unordered_map< std::size_t, std::size_t >& lid,
-              const std::unordered_map< tk::UnsMesh::Edge,
-                        std::array< tk::real, 3 >,
-                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfn,
-              const std::unordered_map< tk::UnsMesh::Edge,
-                        std::array< tk::real, 3 >,
-                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& /*dfnc*/,
-              const std::unordered_map< std::size_t,
-                      std::array< tk::real, 4 > >& bnorm,
-              const std::vector< tk::real >& vol,
-              const tk::Fields& G,
-              const tk::Fields& U,
-              tk::Fields& R) const
+    void rhs(
+      tk::real,
+      const std::array< std::vector< tk::real >, 3 >&  coord,
+      const std::vector< std::size_t >& inpoel,
+      const std::vector< std::size_t >& triinpoel,
+      const std::unordered_map< std::size_t, std::size_t >& bid,
+      const std::unordered_map< std::size_t, std::size_t >& lid,
+      const std::vector< tk::real >& dfn,
+      const std::pair< std::vector< std::size_t >,
+                       std::vector< std::size_t > >& psup,
+      const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& bnorm,
+      const std::vector< tk::real >& vol,
+      const tk::Fields& G,
+      const tk::Fields& U,
+      tk::Fields& R) const
     {
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
@@ -178,31 +174,28 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
       // compute/assemble gradients in points
-      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, gid, lid, bid,
+      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, lid, bid,
                             vol, {}, U, G, egrad );
 
       // compute derived data structures
-      auto esup = tk::genEsup( inpoel, 4 );
-      auto psup = tk::genPsup( inpoel, 4, esup );
-      auto esued = tk::genEsued( inpoel, 4, esup );
+      auto esued = tk::genEsued( inpoel, 4, tk::genEsup( inpoel, 4 ) );
 
       // domain-edge integral
-      for (std::size_t p=0; p<U.nunk(); ++p) {  // for each point p
-        for (auto q : tk::Around(psup,p)) {     // for each edge p-q
-          // access and orient dual-face normals for edge p-q
-          auto n = tk::cref_find( dfn, {gid[p],gid[q]} );
-          if (gid[p] > gid[q]) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
+      for (std::size_t p=0,k=0; p<U.nunk(); ++p) {  // for each point p
+        for (auto q : tk::Around(psup,p)) {
+          // access dual-face normals for edge p-q
+          std::array< tk::real, 3 > n{ dfn[k+0], dfn[k+1], dfn[k+2] };
+          k += 6;
           // compute primitive variables at edge-end points (for Transport,
           // these are the same as the conserved variables)
-          std::array< std::vector< tk::real >, 2 >
-            ru{ std::vector<tk::real>(m_ncomp,0.0),
-                std::vector<tk::real>(m_ncomp,0.0) };
+          std::vector< tk::real > uL( m_ncomp, 0.0 );
+          std::vector< tk::real > uR( m_ncomp, 0.0 );
           for (std::size_t c=0; c<m_ncomp; ++c) {
-            ru[0][c] = U(p,c,m_offset);
-            ru[1][c] = U(q,c,m_offset);
+            uL[c] = U(p,c,m_offset);
+            uR[c] = U(q,c,m_offset);
           }
           // compute MUSCL reconstruction in edge-end points
-          tk::muscl( {p,q}, coord, Grad, ru );
+          tk::muscl( {p,q}, coord, Grad, uL, uR );
           // evaluate prescribed velocity
           auto v =
             Problem::prescribedVelocity( m_system, m_ncomp, x[p], y[p], z[p] );
@@ -216,10 +209,9 @@ class Transport {
               for (std::size_t j=0; j<3; ++j) {
                 for (std::size_t c=0; c<m_ncomp; ++c) {
                   R.var(r[c],p) -= J48 * s * (grad[a][j] - grad[b][j])
-                                   * v[c][j]*(ru[0][c] + ru[1][c])
+                                   * v[c][j]*(uL[c] + uR[c])
                     - J48 * std::abs(s * (grad[a][j] - grad[b][j]))
-                          * std::abs(tk::dot(v[c],n))
-                          * (ru[1][c] - ru[0][c]);
+                          * std::abs(tk::dot(v[c],n)) * (uR[c] - uL[c]);
                 }
               }
             }

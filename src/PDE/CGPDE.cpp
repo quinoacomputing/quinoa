@@ -79,12 +79,11 @@ nodegrad( ncomp_t ncomp,
           ncomp_t offset,
           const std::array< std::vector< tk::real >, 3 >& coord,
           const std::vector< std::size_t >& inpoel,
-          const std::vector< std::size_t >& gid,
           const std::unordered_map< std::size_t, std::size_t >& lid,
           const std::unordered_map< std::size_t, std::size_t >& bid,
           const std::vector< tk::real >& vol,
-         const std::tuple< std::vector< tk::real >,
-                           std::vector< tk::real > >& stag,
+          const std::tuple< std::vector< tk::real >,
+                            std::vector< tk::real > >& stag,
           const tk::Fields& U,
           const tk::Fields& G,
           tk::ElemGradFn egrad )
@@ -95,7 +94,6 @@ nodegrad( ncomp_t ncomp,
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
-//! \param[in] gid Local->global node id map
 //! \param[in] lid Global->local node ids
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!    global node ids (key)
@@ -111,31 +109,28 @@ nodegrad( ncomp_t ncomp,
   tk::Fields Grad( U.nunk(), ncomp*3 );
   Grad.fill( 0.0 );
 
-  // copy in nodal gradients of chare-boundary points
+  // compute gradients of primitive variables in internal points
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+    const auto [N,g,u,J] = egrad( ncomp, offset, e, coord, inpoel, stag, U );
+    auto J24 = J/24.0;
+    for (std::size_t a=0; a<4; ++a)
+      for (std::size_t b=0; b<4; ++b)
+        for (std::size_t j=0; j<3; ++j)
+          for (std::size_t c=0; c<ncomp; ++c)
+            Grad(N[a],c*3+j,0) += J24 * g[b][j] * u[c][b];
+  }
+
+  // put in nodal gradients of chare-boundary points
   for (const auto& [g,b] : bid) {
     auto i = tk::cref_find( lid, g );
     for (ncomp_t c=0; c<Grad.nprop(); ++c)
       Grad(i,c,0) = G(b,c,0);
   }
 
-  // compute gradients of primitive variables in internal points
-  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-    const auto [N,g,u,J] = egrad( ncomp, offset, e, coord, inpoel, stag, U );
-    auto J24 = J/24.0;
-    for (std::size_t a=0; a<4; ++a) {
-      auto i = bid.find( gid[N[a]] );
-      if (i == end(bid))    // only contribute to internal nodes
-        for (std::size_t b=0; b<4; ++b)
-          for (std::size_t j=0; j<3; ++j)
-            for (std::size_t c=0; c<ncomp; ++c)
-              Grad(N[a],c*3+j,0) += J24 * g[b][j] * u[c][b];
-    }
-  }
-
   // divide weak result in gradients by nodal volume
   for (std::size_t p=0; p<Grad.nunk(); ++p)
     for (std::size_t c=0; c<Grad.nprop(); ++c)
-       Grad(p,c,0) /= vol[p];
+      Grad(p,c,0) /= vol[p];
 
   return Grad;
 }

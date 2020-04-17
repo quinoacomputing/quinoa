@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Integrate/Riemann/Rusanov.hpp
+  \file      src/PDE/Riemann/Rusanov.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -29,35 +29,35 @@ struct Rusanov {
 
   //! Rusanov approximate Riemann solver flux function
   //! \param[in] fn Face/Surface normal
-  //! \param[in] u Left and right unknown/state vector
+  //! \param[in] uL Left unknown/state vector
+  //! \param[in] uR right unknown/state vector
   //! \param[in] aux Auxiliary vector, used here to pass in normal vectors
   //!    weighted by the number of contributions to the edge
   //! \return Riemann solution according to Rusanov
-  //! \note The function signature must follow tk::RiemannFluxFn
-  static tk::RiemannFluxFn::result_type
+  static std::array< tk::real, 5 >
   flux( const std::array< tk::real, 3 >& fn,
-        const std::array< std::vector< tk::real >, 2 >& u,
-        const std::vector< std::array< tk::real, 3 > >& aux )
+        const std::vector< tk::real >& uL,
+        const std::vector< tk::real >& uR,
+        const std::array< tk::real, 3 > & aux )
   {
-    std::vector< tk::real > flx( u[0].size(), 0 );
+    Assert( uL.size() == 5 && uR.size() == 5, "Size mismatch" );
 
-    const auto & UL = u[0];
-    const auto & UR = u[1];
+    std::array< tk::real, 5 > flx;
 
     // Primitive variables
-    auto rhol = UL[0];
-    auto rhor = UR[0];
+    auto rhol = uL[0];
+    auto rhor = uR[0];
 
-    auto ul = UL[1]/rhol;
-    auto vl = UL[2]/rhol;
-    auto wl = UL[3]/rhol;
+    auto ul = uL[1]/rhol;
+    auto vl = uL[2]/rhol;
+    auto wl = uL[3]/rhol;
 
-    auto ur = UR[1]/rhor;
-    auto vr = UR[2]/rhor;
-    auto wr = UR[3]/rhor;
+    auto ur = uR[1]/rhor;
+    auto vr = uR[2]/rhor;
+    auto wr = uR[3]/rhor;
 
-    auto pl = eos_pressure< tag::compflow >( 0, rhol, ul, vl, wl, UL[4] );
-    auto pr = eos_pressure< tag::compflow >( 0, rhor, ur, vr, wr, UR[4] );
+    auto pl = eos_pressure< tag::compflow >( 0, rhol, ul, vl, wl, uL[4] );
+    auto pr = eos_pressure< tag::compflow >( 0, rhor, ur, vr, wr, uR[4] );
 
     auto al = eos_soundspeed< tag::compflow >( 0, rhol, pl );
     auto ar = eos_soundspeed< tag::compflow >( 0, rhor, pr );
@@ -66,22 +66,21 @@ struct Rusanov {
     tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
     tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
 
-
     // Numerical fluxes
-    flx[0]  = 0.5 * ( UL[0] * vnl );
-    flx[1]  = 0.5 * ( UL[1] * vnl + pl*fn[0] );
-    flx[2]  = 0.5 * ( UL[2] * vnl + pl*fn[1] );
-    flx[3]  = 0.5 * ( UL[3] * vnl + pl*fn[2] );
-    flx[4]  = 0.5 * ( ( UL[4] + pl ) * vnl );
+    flx[0]  = 0.5 * ( uL[0] * vnl );
+    flx[1]  = 0.5 * ( uL[1] * vnl + pl*fn[0] );
+    flx[2]  = 0.5 * ( uL[2] * vnl + pl*fn[1] );
+    flx[3]  = 0.5 * ( uL[3] * vnl + pl*fn[2] );
+    flx[4]  = 0.5 * ( ( uL[4] + pl ) * vnl );
     
-    flx[0] += 0.5 * ( UR[0] * vnr );
-    flx[1] += 0.5 * ( UR[1] * vnr + pr*fn[0] );
-    flx[2] += 0.5 * ( UR[2] * vnr + pr*fn[1] );
-    flx[3] += 0.5 * ( UR[3] * vnr + pr*fn[2] );
-    flx[4] += 0.5 * ( ( UR[4] + pr ) * vnr );
+    flx[0] += 0.5 * ( uR[0] * vnr );
+    flx[1] += 0.5 * ( uR[1] * vnr + pr*fn[0] );
+    flx[2] += 0.5 * ( uR[2] * vnr + pr*fn[1] );
+    flx[3] += 0.5 * ( uR[3] * vnr + pr*fn[2] );
+    flx[4] += 0.5 * ( ( uR[4] + pr ) * vnr );
     
     // dissipation term
-    const auto & n2 = aux[0];
+    const auto& n2 = aux;
     auto len = tk::length(n2);
     vnl = ( ul*n2[0] + vl*n2[1] + wl*n2[2] );
     vnr = ( ur*n2[0] + vr*n2[1] + wr*n2[2] );
@@ -89,11 +88,11 @@ struct Rusanov {
     auto sr = std::abs(vnr) + ar*len;
     auto smax = std::max( sl, sr );
 
-    flx[0] -= 0.5 * smax * ( UR[0] - UL[0] ); 
-    flx[1] -= 0.5 * smax * ( UR[1] - UL[1] ); 
-    flx[2] -= 0.5 * smax * ( UR[2] - UL[2] ); 
-    flx[3] -= 0.5 * smax * ( UR[3] - UL[3] ); 
-    flx[4] -= 0.5 * smax * ( UR[4] - UL[4] ); 
+    flx[0] -= 0.5 * smax * ( uR[0] - uL[0] );
+    flx[1] -= 0.5 * smax * ( uR[1] - uL[1] );
+    flx[2] -= 0.5 * smax * ( uR[2] - uL[2] );
+    flx[3] -= 0.5 * smax * ( uR[3] - uL[3] );
+    flx[4] -= 0.5 * smax * ( uR[4] - uL[4] );
 
     return flx;
   }

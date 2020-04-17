@@ -185,7 +185,8 @@ class ALECG : public CBase_ALECG {
       p | m_bface;
       p | m_triinpoel;
       p | m_bndel;
-      p | m_dfnorm;
+      p | m_dfn;
+      p | m_psup;
       p | m_u;
       p | m_un;
       p | m_lhs;
@@ -198,7 +199,6 @@ class ALECG : public CBase_ALECG {
       p | m_diag;
       p | m_bnorm;
       p | m_bnormc;
-      p | m_dfnormc;
       p | m_stage;
       p | m_boxnodes;
     }
@@ -238,6 +238,13 @@ class ALECG : public CBase_ALECG {
     //! Dual-face normals along edges
     std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
                         tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnorm;
+    //! Receive buffer for dual-face normals along chare-boundary edges
+    std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
+                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnormc;
+    //! Streamable dual-face normals
+    std::vector< tk::real > m_dfn;
+    //! Points surrounding points
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes at previous time
@@ -276,9 +283,6 @@ class ALECG : public CBase_ALECG {
     //! \details Key: global node id, value: normals (first 3 components),
     //!   inverse distance squared (4th component)
     std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnormc;
-    //! Receive buffer for dual-face normals along chare-boundary edges
-    std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
-                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnormc;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Mesh node ids at which user-defined box ICs are defined

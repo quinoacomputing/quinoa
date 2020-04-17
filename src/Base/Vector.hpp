@@ -18,6 +18,10 @@
 
 namespace tk {
 
+//! Flip sign of vector components
+void
+flip( std::array< real, 3 >& v ) noexcept;
+
 //! Compute the cross-product of two vectors
 std::array< real, 3 >
 cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 );
@@ -30,11 +34,12 @@ crossdiv( const std::array< real, 3 >& v1,
 
 //! Compute the dot-product of two vectors
 real
-dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 );
+dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
+noexcept;
 
 //! Compute length of a vector
 real
-length( const std::array< real, 3 >& v );
+length( const std::array< real, 3 >& v ) noexcept;
 
 //! Scale vector to unit length
 void
