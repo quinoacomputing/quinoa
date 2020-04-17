@@ -223,7 +223,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::interface_advection,
                                    kw::gauss_hump_compflow,
                                    kw::waterair_shocktube,
-                                   kw::triple_point >;
+                                   kw::triple_point,
+                                   kw::gas_impact >;
 
     //! Set of tags to ignore when printing this InputDeck
     using ignore = CmdLine::ignore;

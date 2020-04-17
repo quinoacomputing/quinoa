@@ -4594,6 +4594,27 @@ struct triple_point_info {
 using triple_point =
   keyword< triple_point_info, TAOCPP_PEGTL_STRING("triple_point") >;
 
+struct gas_impact_info {
+  using code = Code< T >;
+  static std::string name() { return "Gas impact problem"; }
+  static std::string shortDescription() { return
+    "Select the gas impact test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the gas impact test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material algorithm and its interface capturing
+    capabilities. Example: "problem gas_impact". For more details, see
+    Barlow, A., Hill, R., & Shashkov, M. (2014). Constrained optimization
+    framework for interface-aware sub-scale dynamics closure model for
+    multimaterial cells in Lagrangian and arbitrary Lagrangian–Eulerian
+    hydrodynamics. Journal of Computational Physics, 276, 92-135.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using gas_impact =
+  keyword< gas_impact_info, TAOCPP_PEGTL_STRING("gas_impact") >;
+
 struct problem_info {
   using code = Code< t >;
   static std::string name() { return "Test problem"; }
