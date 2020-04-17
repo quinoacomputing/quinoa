@@ -376,6 +376,8 @@ class CompFlow {
       const std::vector< real >& dfn,
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& psup,
+      const std::pair< std::vector< std::size_t >,
+                       std::vector< std::size_t > >& esup,
       const std::vector< int >& symbcnode,
       const std::vector< real >& vol,
       const std::vector< std::size_t >& edgenode,
@@ -393,8 +395,8 @@ class CompFlow {
               "side vector incorrect" );
 
       // compute/assemble gradients in points
-      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, lid, bid,
-                            vol, m_stag, U, G, egrad );
+      auto Grad = nodegrad( m_offset, coord, inpoel, lid, bid,
+                            vol, m_stag, esup, U, G, egrad );
 
       // domain-edge integral: compute fluxes in edges
       std::vector< real > dflux( edgenode.size()/2 * m_ncomp );

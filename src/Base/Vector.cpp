@@ -59,6 +59,26 @@ tk::cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
   return { std::move(rx), std::move(ry), std::move(rz) };
 }
 
+#pragma omp declare simd
+void
+tk::crossdiv( real v1x, real v1y, real v1z,
+              real v2x, real v2y, real v2z,
+              real j,
+              real& rx, real& ry, real& rz )
+// *****************************************************************************
+//  Compute the cross-product of two vectors divided by a scalar
+//! \param[in] v1 1st vector
+//! \param[in] v2 2nd vector
+//! \param[in] j Scalar to divide each component by
+//! \return Cross-product divided by scalar
+// *****************************************************************************
+{
+  cross( v1x, v1y, v1z, v2x, v2y, v2z, rx, ry, rz );
+  rx /= j;
+  ry /= j;
+  rz /= j;
+}
+
 std::array< tk::real, 3 >
 tk::crossdiv( const std::array< real, 3 >& v1,
               const std::array< real, 3 >& v2,

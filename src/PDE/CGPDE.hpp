@@ -58,8 +58,7 @@ chbgrad( ncomp_t ncomp,
 //! \brief Compute/assemble nodal gradients of primitive variables for ALECG in
 //!   all points
 tk::Fields
-nodegrad( ncomp_t ncomp,
-          ncomp_t offset,
+nodegrad( ncomp_t offset,
           const std::array< std::vector< tk::real >, 3 >& coord,
           const std::vector< std::size_t >& inpoel,
           const std::unordered_map< std::size_t, std::size_t >& lid,
@@ -67,6 +66,8 @@ nodegrad( ncomp_t ncomp,
           const std::vector< tk::real >& vol,
           const std::tuple< std::vector< tk::real >,
                             std::vector< tk::real > >& stag,
+          const std::pair< std::vector< std::size_t >,
+                           std::vector< std::size_t > >& esup,
           const tk::Fields& U,
           const tk::Fields& G,
           tk::ElemGradFn egrad );
@@ -178,6 +179,8 @@ class CGPDE {
       const std::vector< tk::real >& dfn,
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& psup,
+      const std::pair< std::vector< std::size_t >,
+                       std::vector< std::size_t > >& esup,
       const std::vector< int >& symbcnode,
       const std::vector< tk::real >& vol,
       const std::vector< std::size_t >& edgenode,
@@ -185,7 +188,7 @@ class CGPDE {
       const tk::Fields& G,
       const tk::Fields& U,
       tk::Fields& R ) const
-    { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
+    { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
                  symbcnode, vol, edgenode, edgeid, G, U, R ); }
 
     //! Public interface for computing the minimum time step size
@@ -304,6 +307,8 @@ class CGPDE {
         const std::vector< tk::real >&,
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >&,
+        const std::pair< std::vector< std::size_t >,
+                         std::vector< std::size_t > >&,
         const std::vector< int >&,
         const std::vector< tk::real >&,
         const std::vector< std::size_t >&,
@@ -389,6 +394,8 @@ class CGPDE {
         const std::vector< tk::real >& dfn,
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >& psup,
+        const std::pair< std::vector< std::size_t >,
+                         std::vector< std::size_t > >& esup,
         const std::vector< int >& symbcnode,
         const std::vector< tk::real >& vol,
         const std::vector< std::size_t >& edgenode,
@@ -396,7 +403,7 @@ class CGPDE {
         const tk::Fields& G,
         const tk::Fields& U,
         tk::Fields& R ) const override
-      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
+      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
                   symbcnode, vol, edgenode, edgeid, G, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,

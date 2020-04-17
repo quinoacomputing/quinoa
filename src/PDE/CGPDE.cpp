@@ -74,77 +74,8 @@ chbgrad( ncomp_t ncomp,
   }
 }
 
-using temp_type = std::tuple<
-    std::array< std::size_t, 4 >,
-    std::array< std::array< tk::real, 3 >, 4 >,
-    std::vector< std::array< tk::real, 4 > >,
-    tk::real >;
-
-
-#pragma omp declare simd
-void
-new_egrad( ncomp_t ncomp,
-       ncomp_t offset,
-       std::size_t e,
-       const std::array< std::vector< tk::real >, 3 >& coord,
-       const std::vector< std::size_t >& inpoel,
-       const std::tuple< std::vector< tk::real >,
-                         std::vector< tk::real > >& stag,
-       const tk::Fields& U,
-       temp_type & res
-       )
-{
-
-  // access node cooordinates
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
-  // access node IDs
-  const std::array< std::size_t, 4 >
-    N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
-  // compute element Jacobi determinant
-  const std::array< tk::real, 3 >
-    ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
-    ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
-    da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
-  const auto J = tk::triple( ba, ca, da );        // J = 6V
-  Assert( J > 0, "Element Jacobian non-positive" );
-  // shape function derivatives, nnode*ndim [4][3]
-  std::array< std::array< tk::real, 3 >, 4 > grad;
-  grad[1] = tk::crossdiv( ca, da, J );
-  grad[2] = tk::crossdiv( da, ba, J );
-  grad[3] = tk::crossdiv( ba, ca, J );
-  for (std::size_t i=0; i<3; ++i)
-    grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-  // access solution at element nodes
-  std::vector< std::array< tk::real, 4 > > u( ncomp );
-  for (ncomp_t c=0; c<ncomp; ++c) u[c] = U.extract( c, offset, N );
-  // apply stagnation BCs
-  // WIP: This is commented for now, because egrad() is passed as a
-  // std::function() without an object, hence it is static. However,
-  // stagNode() reads from m_stagnode, so it will not compile. This
-  // (std::function) will also not fly if the caller loop is to be
-  // vectorizable, so we have to invent something here to (1) still somehow
-  // do code-reuse, as this is called from both chbgrad() as well as
-  // nodegrad(), and (2) make it callable from a vectorized loop.
-  //for (std::size_t a=0; a<4; ++a)
-  //  if (stagNode(N[a])) u[1][N[a]] = u[2][N[a]] = u[3][N[a]] = 0.0;
-  // divide out density
-
-  for (std::size_t c=1; c<ncomp; ++c)
-    for (std::size_t j=0; j<4; ++j )
-      u[c][j] /= u[0][j];
-  // convert to internal energy
-  for (std::size_t d=0; d<3; ++d)
-    for (std::size_t j=0; j<4; ++j )
-      u[4][j] -= 0.5*u[1+d][j]*u[1+d][j];
-  // return data needed to scatter add element contribution to gradient
-  res = { std::move(N), std::move(grad), std::move(u), std::move(J) };
-}
-
 tk::Fields
-nodegrad( ncomp_t ncomp,
-          ncomp_t offset,
+nodegrad( ncomp_t offset,
           const std::array< std::vector< tk::real >, 3 >& coord,
           const std::vector< std::size_t >& inpoel,
           const std::unordered_map< std::size_t, std::size_t >& lid,
@@ -152,13 +83,14 @@ nodegrad( ncomp_t ncomp,
           const std::vector< tk::real >& vol,
           const std::tuple< std::vector< tk::real >,
                             std::vector< tk::real > >& stag,
+          const std::pair< std::vector< std::size_t >,
+                           std::vector< std::size_t > >& esup,
           const tk::Fields& U,
           const tk::Fields& G,
           tk::ElemGradFn egrad )
 // *****************************************************************************
 //  Compute/assemble nodal gradients of primitive variables for ALECG in all
 //  points
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
@@ -174,26 +106,57 @@ nodegrad( ncomp_t ncomp,
 // *****************************************************************************
 {
   // allocate storage for nodal gradients of primitive variables
-  tk::Fields Grad( U.nunk(), ncomp*3 );
+  tk::Fields Grad( U.nunk(), 15 );
   Grad.fill( 0.0 );
 
-  auto nelem = inpoel.size()/4;
-  std::vector<temp_type> elem_res(nelem);
+  // access node cooordinates
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
 
-  // compute gradients of primitive variables in internal points
+  // compute gradients of primitive variables in points
+  auto npoin = U.nunk();
   #pragma omp simd
-  for (std::size_t e=0; e<nelem; ++e) {
-    new_egrad( ncomp, offset, e, coord, inpoel, stag, U, elem_res[e]  );
-  }
-  //const auto  [N,g,u,J]  = egrad( ncomp, offset, e, coord, inpoel, stag, U );
-  for (const auto & [N,g,u,J] : elem_res) {
-    auto J24 = J/24.0;
-    for (std::size_t a=0; a<4; ++a)
-      for (std::size_t b=0; b<4; ++b)
-        for (std::size_t j=0; j<3; ++j)
-          for (std::size_t c=0; c<ncomp; ++c)
-            Grad(N[a],c*3+j,0) += J24 * g[b][j] * u[c][b];
-  }
+  for (std::size_t p=0; p<npoin; ++p)
+    for (auto e : tk::Around(esup,p)) {
+      // access node IDs
+      std::size_t N[4] =
+        { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+      // compute element Jacobi determinant, J = 6V
+      tk::real bax = x[N[1]]-x[N[0]];
+      tk::real bay = y[N[1]]-y[N[0]];
+      tk::real baz = z[N[1]]-z[N[0]];
+      tk::real cax = x[N[2]]-x[N[0]];
+      tk::real cay = y[N[2]]-y[N[0]];
+      tk::real caz = z[N[2]]-z[N[0]];
+      tk::real dax = x[N[3]]-x[N[0]];
+      tk::real day = y[N[3]]-y[N[0]];
+      tk::real daz = z[N[3]]-z[N[0]];
+      auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+      auto J24 = J/24.0;
+      // shape function derivatives, nnode*ndim [4][3]
+      tk::real g[4][3];
+      tk::crossdiv( cax, cay, caz, dax, day, daz, J,
+                    g[1][0], g[1][1], g[1][2] );
+      tk::crossdiv( dax, day, daz, bax, bay, baz, J,
+                    g[2][0], g[2][1], g[2][2] );
+      tk::crossdiv( bax, bay, baz, cax, cay, caz, J,
+                    g[3][0], g[3][1], g[3][2] );
+      for (std::size_t i=0; i<3; ++i)
+        g[0][i] = -g[1][i] - g[2][i] - g[3][i];
+      // compute primitive variables at nodes
+      tk::real u[5];
+      for (std::size_t b=0; b<4; ++b) {
+        u[0] = U(N[b],0,offset);
+        u[1] = U(N[b],1,offset)/u[0];
+        u[2] = U(N[b],2,offset)/u[0];
+        u[3] = U(N[b],3,offset)/u[0];
+        u[4] = U(N[b],4,offset)/u[0] - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
+        for (std::size_t c=0; c<5; ++c)
+          for (std::size_t i=0; i<3; ++i)
+            Grad(p,c*3+i,0) += J24 * g[b][i] * u[c];
+      }
+    }
 
   // put in nodal gradients of chare-boundary points
   for (const auto& [g,b] : bid) {
@@ -203,8 +166,8 @@ nodegrad( ncomp_t ncomp,
   }
 
   // divide weak result in gradients by nodal volume
-  for (std::size_t p=0; p<Grad.nunk(); ++p)
-    for (std::size_t c=0; c<Grad.nprop(); ++c)
+  for (std::size_t p=0; p<npoin; ++p)
+    for (std::size_t c=0; c<15; ++c)
       Grad(p,c,0) /= vol[p];
 
   return Grad;

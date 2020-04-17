@@ -149,6 +149,8 @@ class Transport {
       const std::vector< tk::real >& dfn,
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& psup,
+      const std::pair< std::vector< std::size_t >,
+                       std::vector< std::size_t > >& esup,
       const std::vector< int >& symbcnode,
       const std::vector< tk::real >& vol,
       const std::vector< std::size_t >&,
@@ -177,8 +179,10 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
       // compute/assemble gradients in points
-      auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, lid, bid,
-                            vol, {}, U, G, egrad );
+      // Need to write a nodegrad for transport because the existing,
+      // previously-reused one, got specialized to compflow.
+      //auto Grad = nodegrad( m_offset, coord, inpoel, lid, bid,
+      //                      vol, {}, esup, U, G, egrad );
 
       // compute derived data structures
       auto esued = tk::genEsued( inpoel, 4, tk::genEsup( inpoel, 4 ) );

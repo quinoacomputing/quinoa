@@ -70,6 +70,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_dfnorm(),
   m_dfnormc(),
   m_dfn(),
+  m_esup(),
   m_psup( tk::genPsup( Disc()->Inpoel(), 4,
           tk::genEsup( Disc()->Inpoel(), 4 ) ) ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
@@ -122,7 +123,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
     // Remap data in bound Discretization object
     d->remap( map );
     // Recompute points surrounding points
-    //tk::remap( m_psup.first, map );
     m_psup = tk::genPsup( d->Inpoel(), 4, tk::genEsup( d->Inpoel(), 4 ) );
 
   }
@@ -623,6 +623,9 @@ ALECG::normfinal()
   for (std::size_t p=0,k=0; p<m_u.nunk(); ++p)
     for (auto q : tk::Around(m_psup,p))
       m_edgeid[k++] = tk::cref_find( eid, {p,q} );
+
+  // Generate elements surrounding points
+  m_esup = tk::genEsup( d->Inpoel(), 4 );
 }
 
 void
@@ -768,7 +771,7 @@ ALECG::rhs()
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
-            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup,
+            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
             m_symbcnode, d->Vol(), m_edgenode, m_edgeid, m_grad, m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets

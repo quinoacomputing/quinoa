@@ -185,6 +185,7 @@ class ALECG : public CBase_ALECG {
       p | m_dfnorm;
       p | m_dfnormc;
       p | m_dfn;
+      p | m_esup;
       p | m_psup;
       p | m_u;
       p | m_un;
@@ -245,6 +246,8 @@ class ALECG : public CBase_ALECG {
                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnormc;
     //! Streamable dual-face normals
     std::vector< tk::real > m_dfn;
+    //! El;ements surrounding points
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_esup;
     //! Points surrounding points
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector at mesh nodes

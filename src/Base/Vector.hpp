@@ -34,6 +34,14 @@ std::array< real, 3 >
 cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 );
 
 //! Compute the cross-product of two vectors divided by a scalar
+#pragma omp declare simd
+void
+crossdiv( real v1x, real v1y, real v1z,
+          real v2x, real v2y, real v2z,
+          real j,
+          real& rx, real& ry, real& rz );
+
+//! Compute the cross-product of two vectors divided by a scalar
 std::array< real, 3 >
 crossdiv( const std::array< real, 3 >& v1,
           const std::array< real, 3 >& v2,

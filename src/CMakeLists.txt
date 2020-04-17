@@ -381,22 +381,23 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # 2415: variable of static storage duration was declared but never referenced
   # 2547: non-system include dir will be ignored when both a system and non-system include directory were specified
   # 2557: comparison between signed and unsigned operands
+  # 3180: unrecognized OpenMP #pragma
   # 3280: declaration hides member
   # 3346: dynamic exception specifications are deprecated
   # 3656: variable may be used before its value is set
   # 10120: overriding '-O3' with '-O2'
   # 10397: optimization reports are generated in *.optrpt files in the output location
   # 15518: Structure assignment was serialized
-  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,688,869,981,1011,1292,1418,1419,1572,1599,2259,2407,2415,2547,2557,3280,3346,3656,10120,10397,15518")
+  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,688,869,981,1011,1292,1418,1419,1572,1599,2259,2407,2415,2547,2557,3180,3280,3346,3656,10120,10397,15518")
 
-  # default: no simd
-  add_compiler_flag("-no-simd")
+  # default: no openmp simd
+  #add_compiler_flag("-qno-openmp-simd")
   # For vectorization: disable above and enable some below
-  #add_compiler_flag("-march=native")
+  add_compiler_flag("-march=native")
   #add_compiler_flag("-qopt-zmm-usage=high")
-  #add_compiler_flag("-vecabi=cmdtarget")
+  add_compiler_flag("-vecabi=cmdtarget")
   #add_compiler_flag("-vec-threshold0")
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=5 -qopt-report-phase=loop,vec")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=5 -qopt-report-phase=loop,vec")
 
   # No limit on inlining. This can increase the build time.
   if(CMAKE_BUILD_TYPE MATCHES "REL") # Release | RelWithDebInfo | MinSizeRel
