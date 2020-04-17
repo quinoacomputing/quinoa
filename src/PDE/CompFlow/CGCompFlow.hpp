@@ -585,45 +585,6 @@ class CompFlow {
       }
     }
 
-    //! Compute boundary flux on triangle face
-    //! \param[in] n Boundary face normal
-    //! \param[in] u Solution for all components in the 3 vertices
-    //! \param[in] sym 1 if to apply symmetry BC
-    //! \return Boundary (normal) flux for 5 components in 3 vertices
-    #pragma omp declare simd
-    void
-    bndflux( real nx, real ny, real nz, real rA, real rB, real rC,
-             real ruA, real ruB, real ruC, real rvA, real rvB, real rvC,
-             real rwA, real rwB, real rwC, real reA, real reB, real reC,
-             int sym, real f[m_ncomp][3] ) const
-    {
-      real p, vn;
-
-      p = eos_pressure< eq >( m_system, rA, ruA/rA, rvA/rA, rwA/rA, reA );
-      vn = sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA) / rA;
-      f[0][0] = rA*vn;
-      f[1][0] = ruA*vn + p*nx;
-      f[2][0] = rvA*vn + p*ny;
-      f[3][0] = rwA*vn + p*nz;
-      f[4][0] = (reA + p)*vn;
-
-      p = eos_pressure< eq >( m_system, rB, ruB/rB, rvB/rB, rwB/rB, reB );
-      vn = sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB) / rB;
-      f[0][1] = rB*vn;
-      f[1][1] = ruB*vn + p*nx;
-      f[2][1] = rvB*vn + p*ny;
-      f[3][1] = rwB*vn + p*nz;
-      f[4][1] = (reB + p)*vn;
-
-      p = eos_pressure< eq >( m_system, rC, ruC/rC, rvC/rC, rwC/rC, reC );
-      vn = sym ? 0.0 : (nx*ruC + ny*rvC + nz*rwC) / rC;
-      f[0][2] = rC*vn;
-      f[1][2] = ruC*vn + p*nx;
-      f[2][2] = rvC*vn + p*ny;
-      f[3][2] = rwC*vn + p*nz;
-      f[4][2] = (reC + p)*vn;
-    }
-
     //! Compute the minimum time step size
     //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
