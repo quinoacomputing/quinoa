@@ -49,13 +49,13 @@ MultiMatProblemTriplePoint::solution( ncomp_t system,
 // *****************************************************************************
 {
   // see also Control/Inciter/InputDeck/Grammar.hpp
-  Assert( ncomp == 9, "Number of scalar components must be 9" );
+  Assert( ncomp == 12, "Number of scalar components must be 12" );
 
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
   std::vector< tk::real > s(ncomp, 0.0), r(nmat, 0.0);
-  tk::real p, u, v, w;
+  tk::real p, u, v, w, temp;
   auto alphamin = 1.0e-12;
 
   // velocity
@@ -65,39 +65,41 @@ MultiMatProblemTriplePoint::solution( ncomp_t system,
 
   if (x<1.0) {
     // volume-fraction
-    s[volfracIdx(nmat, 0)] = 1.0-alphamin;
+    s[volfracIdx(nmat, 0)] = 1.0-2.0*alphamin;
     s[volfracIdx(nmat, 1)] = alphamin;
+    s[volfracIdx(nmat, 2)] = alphamin;
     // pressure
     p = 1.0;
-    // densities
-    for (std::size_t k=0; k<nmat; ++k)
-      r[k] = eos_density< eq >( system, p, 4.3554007e-4, k );
+    // temperature
+    temp = 4.3554007e-4;
   }
   else {
     if (y<1.5) {
       // volume-fraction
       s[volfracIdx(nmat, 0)] = alphamin;
-      s[volfracIdx(nmat, 1)] = 1.0-alphamin;
+      s[volfracIdx(nmat, 1)] = 1.0-2.0*alphamin;
+      s[volfracIdx(nmat, 2)] = alphamin;
       // pressure
       p = 0.1;
-      // densities
-      for (std::size_t k=0; k<nmat; ++k)
-        r[k] = eos_density< eq >( system, p, 3.4843206e-4, k );
+      // temperature
+      temp = 3.4843206e-4;
     }
     else {
       // volume-fraction
-      s[volfracIdx(nmat, 0)] = 1.0-alphamin;
+      s[volfracIdx(nmat, 0)] = alphamin;
       s[volfracIdx(nmat, 1)] = alphamin;
+      s[volfracIdx(nmat, 2)] = 1.0-2.0*alphamin;
       // pressure
       p = 0.1;
-      // densities
-      for (std::size_t k=0; k<nmat; ++k)
-        r[k] = eos_density< eq >( system, p, 3.4843206e-4, k );
+      // temperature
+      temp = 3.4843206e-4;
     }
   }
 
   for (std::size_t k=0; k<nmat; ++k)
   {
+    // density
+    r[k] = eos_density< eq >( system, p, temp, k );
     // partial density
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)]*r[k];
     // total specific energy
