@@ -387,9 +387,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # 15518: Structure assignment was serialized
   add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1011,1292,1418,1419,1572,1599,2259,2407,2415,2547,2557,3280,3346,3656,10120,10397,15518")
 
-  add_compiler_flag("-march=native")
-  add_compiler_flag("-qopt-zmm-usage=high")
-  add_compiler_flag("-vecabi=cmdtarget")
+  # For vectorization:
+  #add_compiler_flag("-march=native")
+  #add_compiler_flag("-qopt-zmm-usage=high")
+  #add_compiler_flag("-vecabi=cmdtarget")
   #add_compiler_flag("-vec-threshold0")
 
   # Compiler flags for optimization report (should be commented for production)
