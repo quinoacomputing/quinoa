@@ -77,18 +77,6 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-tk::SrcFn::result_type
-CompFlowProblemSodShocktube::src( ncomp_t, ncomp_t, tk::real,
-                                  tk::real, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-}
-
 std::vector< std::string >
 CompFlowProblemSodShocktube::fieldNames( ncomp_t ) const
 // *****************************************************************************

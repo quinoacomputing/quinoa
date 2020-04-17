@@ -65,7 +65,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_ndfnorm( 0 ),
   m_bnode( bnode ),
   m_bface( bface ),
-  m_triinpoel( triinpoel ),
+  m_triinpoel( tk::remap( triinpoel, Disc()->Lid() ) ),
   m_bndel( bndel() ),
   m_dfnorm(),
   m_dfnormc(),
@@ -85,6 +85,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_diag(),
   m_bnorm(),
   m_bnormc(),
+  m_symbcnode(),
   m_stage( 0 ),
   m_boxnodes(),
   m_edgenode(),
@@ -241,13 +242,12 @@ void
 ALECG::bnorm( std::unordered_set< std::size_t >&& symbcnodes )
 // *****************************************************************************
 //  Compute boundary point normals
-//! \param[in] Node ids at which symmetry BCs are set
+//! \param[in] Local node ids at which symmetry BCs are set
 // *****************************************************************************
 {
   auto d = Disc();
 
   const auto& coord = d->Coord();
-  const auto& lid = d->Lid();
   const auto& x = coord[0];
   const auto& y = coord[1];
   const auto& z = coord[2];
@@ -268,15 +268,13 @@ ALECG::bnorm( std::unordered_set< std::size_t >&& symbcnodes )
   for (const auto& [ setid, faceids ] : m_bface) {
     for (auto f : faceids) {
       tk::UnsMesh::Face
-        face{ tk::cref_find( lid, m_triinpoel[f*3+0] ),
-              tk::cref_find( lid, m_triinpoel[f*3+1] ),
-              tk::cref_find( lid, m_triinpoel[f*3+2] ) };
+        face{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] };
       std::array< tk::real, 3 > fx{ x[face[0]], x[face[1]], x[face[2]] };
       std::array< tk::real, 3 > fy{ y[face[0]], y[face[1]], y[face[2]] };
       std::array< tk::real, 3 > fz{ z[face[0]], z[face[1]], z[face[2]] };
       auto g = tk::geoFaceTri( fx, fy, fz );
       for (auto p : face) {
-        auto i = symbcnodes.find( gid[p] );
+        auto i = symbcnodes.find( p );
         if (i != end(symbcnodes)) {     // only if user set symbc on node
           tk::real r = invdistsq( g, p );
           auto& n = m_bnorm[ gid[p] ];  // associate global node id
@@ -553,6 +551,12 @@ ALECG::normfinal()
   for (auto&& [g,n] : m_bnorm) bnorm[ tk::cref_find(lid,g) ] = std::move(n);
   m_bnorm = std::move(bnorm);
 
+  // Flatten boundary normal data structure
+  m_symbcnode.resize( m_triinpoel.size()/3, 0 );
+  for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
+    if (m_bnorm.find(m_triinpoel[e*3+0]) != end(m_bnorm))
+      m_symbcnode[e] = 1;
+
   // Count contributions to chare-boundary edges
   std::unordered_map< tk::UnsMesh::Edge, std::size_t,
     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > edge_node_count;
@@ -764,8 +768,8 @@ ALECG::rhs()
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
-            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_bnorm,
-            d->Vol(), m_edgenode, m_edgeid, m_grad, m_u, m_rhs );
+            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup,
+            m_symbcnode, d->Vol(), m_edgenode, m_edgeid, m_grad, m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
@@ -957,7 +961,7 @@ ALECG::resizePostAMR(
   // Update physical-boundary node-, face-, and element lists
   m_bnode = bnode;
   m_bface = bface;
-  m_triinpoel = triinpoel;
+  m_triinpoel = tk::remap( triinpoel, d->Lid() );
 
   contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
 }
@@ -1011,9 +1015,6 @@ ALECG::writeFields( CkCallback c ) const
       nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
     }
 
-    // Generate side set triangle connectivity with local node ids
-    auto ltriinp = tk::remap( m_triinpoel, d->Lid() );
-
     // Collect node block and surface field solution
     auto u = m_u;
     std::vector< std::vector< tk::real > > nodefields;
@@ -1021,7 +1022,7 @@ ALECG::writeFields( CkCallback c ) const
     for (auto& eq : g_cgpde) {
       auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
       nodefields.insert( end(nodefields), begin(o), end(o) );
-      auto s = eq.surfOutput( tk::bfacenodes(m_bface,ltriinp), u );
+      auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
 
@@ -1038,7 +1039,7 @@ ALECG::writeFields( CkCallback c ) const
 
     // Send mesh and fields data (solution dump) for output to file
     d->write( d->Inpoel(), d->Coord(), m_bface, tk::remap(m_bnode,d->Lid()),
-              ltriinp, {}, nodefieldnames, nodesurfnames, {}, nodefields,
+              m_triinpoel, {}, nodefieldnames, nodesurfnames, {}, nodefields,
               nodesurfs, c );
 
   }

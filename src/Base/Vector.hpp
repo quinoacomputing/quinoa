@@ -23,6 +23,13 @@ void
 flip( std::array< real, 3 >& v ) noexcept;
 
 //! Compute the cross-product of two vectors
+#pragma omp declare simd
+void
+cross( real v1x, real v1y, real v1z,
+       real v2x, real v2y, real v2z,
+       real& rx, real& ry, real& rz );
+
+//! Compute the cross-product of two vectors
 std::array< real, 3 >
 cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 );
 
@@ -44,6 +51,13 @@ length( const std::array< real, 3 >& v ) noexcept;
 //! Scale vector to unit length
 void
 unit( std::array< real, 3 >& v );
+
+//! Compute the triple-product of three vectors
+#pragma omp declare simd
+tk::real
+triple( real v1x, real v1y, real v1z,
+        real v2x, real v2y, real v2z,
+        real v3x, real v3y, real v3z );
 
 //! Compute the triple-product of three vectors
 real

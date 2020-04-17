@@ -517,13 +517,13 @@ tk::muscl(
     delta3[c] = 2.0 * tk::dot(g2,vw) - delta2[c];
 
     // form limiters
-    auto rL = (delta2[c] + muscl_eps) / (delta1[c] + muscl_eps);
-    auto rR = (delta2[c] + muscl_eps) / (delta3[c] + muscl_eps);
+    auto rcL = (delta2[c] + muscl_eps) / (delta1[c] + muscl_eps);
+    auto rcR = (delta2[c] + muscl_eps) / (delta3[c] + muscl_eps);
     auto rLinv = (delta1[c] + muscl_eps) / (delta2[c] + muscl_eps);
     auto rRinv = (delta3[c] + muscl_eps) / (delta2[c] + muscl_eps);
 
-    auto phiL = (std::abs(rL) + rL) / (std::abs(rL) + 1.0);
-    auto phiR = (std::abs(rR) + rR) / (std::abs(rR) + 1.0);
+    auto phiL = (std::abs(rcL) + rcL) / (std::abs(rcL) + 1.0);
+    auto phiR = (std::abs(rcR) + rcR) / (std::abs(rcR) + 1.0);
     auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
     auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
 

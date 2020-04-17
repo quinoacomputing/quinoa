@@ -281,7 +281,7 @@ class CompFlow {
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, riemannDeriv );
 
       // compute source term intehrals
-      tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
+      tk::srcInt( m_system, m_offset, t, ndof, inpoel, coord, geoElem,
                   Problem::src, ndofel, R );
 
       if(ndof > 1)

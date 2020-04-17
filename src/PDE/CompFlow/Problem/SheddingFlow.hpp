@@ -39,8 +39,10 @@ class CompFlowProblemSheddingFlow {
               tk::real, int& );
 
     //! Compute and return source term for this problem
-    static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
+    static tk::CompFlowSrcFn::result_type
+    src( ncomp_t, tk::real, tk::real, tk::real, tk::real,
+         tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
+    { r = ru = rv = rw = re = 0.0; }
 
     //! \brief Query all side set IDs the user has configured for all components
     //!   in this PDE system

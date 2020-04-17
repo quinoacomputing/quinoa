@@ -30,6 +30,11 @@ extern CProxy_TUTSuite g_suiteProxy;
 
 namespace tut {
 
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
+
 //! All tests in group inherited from this base
 struct Timer_common {
   // cppcheck-suppress unusedStructMember
@@ -224,6 +229,9 @@ template<> template<>
 void Timer_object::test< 8 >() {
   set_test_name( "query throws with non-existent key" );
 
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
   try {
     std::map< std::string, tk::Timer > timer;
     timer[ "some timer" ];// start timing, assign to label
@@ -233,7 +241,12 @@ void Timer_object::test< 8 >() {
   catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
+  #endif
 }
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
+#endif
 
 } // tut::
 

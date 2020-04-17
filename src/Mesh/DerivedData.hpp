@@ -51,16 +51,31 @@ std::size_t
 npoin_in_graph( const std::vector< std::size_t >& inpoel );
 
 //! Compute the unit normal vector of a triangle
-std::array< tk::real, 3 >
-normal( const std::array< tk::real, 3 >& x,
-        const std::array< tk::real, 3 >& y,
-        const std::array< tk::real, 3 >& z );
+#pragma omp declare simd
+void
+normal( real x1, real x2, real x3,
+        real y1, real y2, real y3,
+        real z1, real z2, real z3,
+        real& nx, real& ny, real& nz );
+
+//! Compute the unit normal vector of a triangle
+std::array< real, 3 >
+normal( const std::array< real, 3 >& x,
+        const std::array< real, 3 >& y,
+        const std::array< real, 3 >& z );
+
+//! Compute the are of a triangle
+#pragma omp declare simd
+real
+area( real x1, real x2, real x3,
+      real y1, real y2, real y3,
+      real z1, real z2, real z3 );
 
 //! Compute the area of a triangle
-tk::real
-area( const std::array< tk::real, 3 >& x,
-      const std::array< tk::real, 3 >& y,
-      const std::array< tk::real, 3 >& z );
+real
+area( const std::array< real, 3 >& x,
+      const std::array< real, 3 >& y,
+      const std::array< real, 3 >& z );
 
 //! Generate derived data structure, elements surrounding points
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
@@ -163,41 +178,41 @@ genBelemTet( std::size_t nbfac,
                                std::vector< std::size_t > >& esup );
 
 //! Generate derived data structure, face geometry
-tk::Fields
+Fields
 genGeoFaceTri( std::size_t nipfac,
                const std::vector< std::size_t >& inpofa,
-               const tk::UnsMesh::Coords& coord );
+               const UnsMesh::Coords& coord );
 
 //! Compute geometry of the face given by three vertices
-tk::Fields
-geoFaceTri( const std::array< tk::real, 3 >& x,
-            const std::array< tk::real, 3 >& y,
-            const std::array< tk::real, 3 >& z );
+Fields
+geoFaceTri( const std::array< real, 3 >& x,
+            const std::array< real, 3 >& y,
+            const std::array< real, 3 >& z );
 
 //! Generate derived data structure, element geometry
-tk::Fields
+Fields
 genGeoElemTet( const std::vector< std::size_t >& inpoel,
-               const tk::UnsMesh::Coords& coord );
+               const UnsMesh::Coords& coord );
 
 //! Perform leak-test on mesh (partition)
 bool
 leakyPartition( const std::vector< int >& esueltet,
                 const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord );
+                const UnsMesh::Coords& coord );
 
 //! Check if mesh (partition) is conforming
 bool
 conforming( const std::vector< std::size_t >& inpoel,
-            const tk::UnsMesh::Coords& coord,
+            const UnsMesh::Coords& coord,
             bool cerr = true );
 
 //! Determine if a point is in a tetrahedron
 bool
-intet( const std::array< std::vector< tk::real >, 3 >& coord,
+intet( const std::array< std::vector< real >, 3 >& coord,
        const std::vector< std::size_t >& inpoel,
-       const std::vector< tk::real >& p,
+       const std::vector< real >& p,
        std::size_t e,
-       std::array< tk::real, 4 >& N );
+       std::array< real, 4 >& N );
 
 } // tk::
 

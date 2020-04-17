@@ -102,14 +102,15 @@ CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
   return {{ r, 0.0, 0.0, 0.0, r*ec(ce,k,t,h,-1.0/3.0) }};
 }
 
-tk::SrcFn::result_type
-CompFlowProblemNLEnergyGrowth::src( ncomp_t system, ncomp_t ncomp, tk::real x,
-                                    tk::real y, tk::real z, tk::real t )
+tk::CompFlowSrcFn::result_type
+CompFlowProblemNLEnergyGrowth::src(
+  ncomp_t system,
+  tk::real x, tk::real y, tk::real z, tk::real t,
+  tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
 // *****************************************************************************
 //  Compute and return source term for NLEG manufactured solution
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -154,17 +155,14 @@ CompFlowProblemNLEnergyGrowth::src( ncomp_t system, ncomp_t ncomp, tk::real x,
     2.0*std::pow(ie,4.0)*kappa*h*dh[1]*t,
     2.0*std::pow(ie,4.0)*kappa*h*dh[2]*t }};
   const auto dedt = kappa*h*h*std::pow(ie,4.0);
-  // sources
-  std::vector< tk::real > r( ncomp );
   // density source
-  r[0] = drdt;
+  r = drdt;
   // momentum source
-  r[1] = (g-1.0)*(rho*dedx[0] + ie*drdx[0]);
-  r[2] = (g-1.0)*(rho*dedx[1] + ie*drdx[1]);
-  r[3] = (g-1.0)*(rho*dedx[2] + ie*drdx[2]);
+  ru = (g-1.0)*(rho*dedx[0] + ie*drdx[0]);
+  rv = (g-1.0)*(rho*dedx[1] + ie*drdx[1]);
+  rw = (g-1.0)*(rho*dedx[2] + ie*drdx[2]);
   // energy source
-  r[4] = rho*dedt + ie*drdt;
-  return r;
+  re = rho*dedt + ie*drdt;
 }
 
 std::vector< std::string >

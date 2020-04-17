@@ -264,6 +264,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-disabled-macro-expansion")
   add_compiler_flag("-Wno-reserved-id-macro")
   add_compiler_flag("-Wno-unknown-warning-option")
+  add_compiler_flag("-Wno-unknown-pragmas")
+  add_compiler_flag("-Wno-source-uses-openmp")
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags
@@ -323,10 +325,13 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-cast-function-type")
   add_compiler_flag("-Wno-format-overflow")
   add_compiler_flag("-Wno-pragmas")
+  add_compiler_flag("-Wno-unknown-pragmas")
 
-  # Have not played with vectorizing with GNU compilers, but that's next, and
-  # these options are a start.
-  #add_compiler_flag("-march=native")
+  # For vectorization:
+  #add_compiler_flag("-march=native")   # will change baselines
+  #add_compiler_flag("-ftree-vectorize")
+  #add_compiler_flag("-ftree-vectorizer-verbose=5")
+  #add_compiler_flag("-fopt-info-vec-missed")
   #add_compiler_flag("-fopenmp-simd")
   #add_compiler_flag("-Wopenmp-simd")
 
@@ -362,6 +367,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # 411: defines no constructor for initializer_list<>
   # 444: destructor for base class is not virtual
   # 593: parameter was set but never used
+  # 688: "simd" is an unrecognized __declspec attribute
   # 869: parameter was never referenced
   # 981: operands are evaluated in unspecified order
   # 1011: missing return statement at end of non-void function (constexpr)
@@ -381,15 +387,16 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # 10120: overriding '-O3' with '-O2'
   # 10397: optimization reports are generated in *.optrpt files in the output location
   # 15518: Structure assignment was serialized
-  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,869,981,1011,1292,1418,1419,1572,1599,2259,2407,2415,2547,2557,3280,3346,3656,10120,10397,15518")
+  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,688,869,981,1011,1292,1418,1419,1572,1599,2259,2407,2415,2547,2557,3280,3346,3656,10120,10397,15518")
 
-  add_compiler_flag("-march=native")
-  add_compiler_flag("-qopt-zmm-usage=high")
-  add_compiler_flag("-vecabi=cmdtarget")
+  # default: no simd
+  add_compiler_flag("-no-simd")
+  # For vectorization: disable above and enable some below
+  #add_compiler_flag("-march=native")
+  #add_compiler_flag("-qopt-zmm-usage=high")
+  #add_compiler_flag("-vecabi=cmdtarget")
   #add_compiler_flag("-vec-threshold0")
-
-  # Compiler flags for optimization report (should be commented for production)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=5 -qopt-report-phase=loop,vec")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qopt-report=5 -qopt-report-phase=loop,vec")
 
   # No limit on inlining. This can increase the build time.
   if(CMAKE_BUILD_TYPE MATCHES "REL") # Release | RelWithDebInfo | MinSizeRel

@@ -41,10 +41,6 @@ class MultiMatProblemTriplePoint {
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real,
               tk::real, int& );
 
-    //! Compute and return source term for this problem
-    static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
-
     //! Return field names to be output to file
     static std::vector< std::string > fieldNames( ncomp_t );
 

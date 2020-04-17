@@ -881,8 +881,8 @@ genNbfacTet( std::size_t tnbfac,
   auto nptet = inpoel;
   auto nptri = triinpoel_complete;
 
-  tk::unique( nptet );
-  tk::unique( nptri );
+  unique( nptet );
+  unique( nptri );
 
   std::unordered_set< std::size_t > snptet;
 
@@ -921,7 +921,7 @@ genNbfacTet( std::size_t tnbfac,
           auto ip = triinpoel_complete[icoun+i];
 
           // find local renumbered node-id to store in triinpoel
-          triinpoel.push_back( tk::cref_find(lid,ip) );
+          triinpoel.push_back( cref_find(lid,ip) );
         }
 
         bface[ss.first].push_back(nbfac);
@@ -1290,10 +1290,10 @@ genBelemTet( std::size_t nbfac,
   return belem;
 }
         
-tk::Fields
+Fields
 genGeoFaceTri( std::size_t nipfac,
                const std::vector< std::size_t >& inpofa,
-               const tk::UnsMesh::Coords& coord )
+               const UnsMesh::Coords& coord )
 // *****************************************************************************
 //  Generate derived data, which stores the geometry details both internal and
 //   boundary triangular faces in the mesh.
@@ -1314,7 +1314,7 @@ genGeoFaceTri( std::size_t nipfac,
 //!            z-coordinate: geoFace(f,6,0).
 // *****************************************************************************
 {
-  tk::Fields geoFace( nipfac, 7 );
+  Fields geoFace( nipfac, 7 );
 
   // set triangle geometry
   std::size_t nnpf(3);
@@ -1325,7 +1325,7 @@ genGeoFaceTri( std::size_t nipfac,
   for(std::size_t f=0; f<nipfac; ++f)
   {
     std::size_t ip1, ip2, ip3;
-    tk::real xp1, yp1, zp1,
+    real xp1, yp1, zp1,
              xp2, yp2, zp2,
              xp3, yp3, zp3;
 
@@ -1357,10 +1357,43 @@ genGeoFaceTri( std::size_t nipfac,
   return geoFace;
 }
 
-std::array< tk::real, 3 >
-normal( const std::array< tk::real, 3 >& x,
-        const std::array< tk::real, 3 >& y,
-        const std::array< tk::real, 3 >& z )
+#pragma omp declare simd
+void
+normal( real x1, real x2, real x3,
+        real y1, real y2, real y3,
+        real z1, real z2, real z3,
+        real& nx, real& ny, real& nz )
+// *****************************************************************************
+//! Compute the unit normal vector of a triangle
+//! \param[in] x x-coordinates of the three vertices of the triangle
+//! \param[in] y y-coordinates of the three vertices of the triangle
+//! \param[in] z z-coordinates of the three vertices of the triangle
+//! \param[in,out] Unit normal
+// *****************************************************************************
+{
+  real ax = x2 - x1;
+  real ay = y2 - y1;
+  real az = z2 - z1;
+
+  real bx = x3 - x1;
+  real by = y3 - y1;
+  real bz = z3 - z1;
+
+  real n1 =   ay*bz - az*by;
+  real n2 = -(ax*bz - az*bx);
+  real n3 =   ax*by - ay*bx;
+
+  auto farea = std::sqrt( n1*n1 + n2*n2 + n3*n3 );
+
+  nx = n1/farea;
+  ny = n2/farea;
+  nz = n3/farea;
+}
+
+std::array< real, 3 >
+normal( const std::array< real, 3 >& x,
+        const std::array< real, 3 >& y,
+        const std::array< real, 3 >& z )
 // *****************************************************************************
 //! Compute the unit normal vector of a triangle
 //! \param[in] x x-coordinates of the three vertices of the triangle
@@ -1369,27 +1402,16 @@ normal( const std::array< tk::real, 3 >& x,
 //! \return Unit normal
 // *****************************************************************************
 {
-  tk::real ax = x[1] - x[0];
-  tk::real ay = y[1] - y[0];
-  tk::real az = z[1] - z[0];
-
-  tk::real bx = x[2] - x[0];
-  tk::real by = y[2] - y[0];
-  tk::real bz = z[2] - z[0];
-
-  tk::real nx =   ay*bz - az*by;
-  tk::real ny = -(ax*bz - az*bx);
-  tk::real nz =   ax*by - ay*bx;
-
-  auto farea = std::sqrt( nx*nx + ny*ny + nz*nz );
-
-  return {{ nx/farea, ny/farea, nz/farea }};
+  real nx, ny, nz;
+  normal( x[0],x[1],x[2], y[0],y[1],y[2], z[0],z[1],z[2], nx, ny, nz );
+  return { std::move(nx), std::move(ny), std::move(nz) };
 }
 
-tk::real
-area( const std::array< tk::real, 3 >& x,
-      const std::array< tk::real, 3 >& y,
-      const std::array< tk::real, 3 >& z )
+#pragma omp declare simd
+real
+area( real x1, real x2, real x3,
+      real y1, real y2, real y3,
+      real z1, real z2, real z3 )
 // *****************************************************************************
 //! Compute the are of a triangle
 //! \param[in] x x-coordinates of the three vertices of the triangle
@@ -1398,27 +1420,34 @@ area( const std::array< tk::real, 3 >& x,
 //! \return Area
 // *****************************************************************************
 {
-  auto sidea = std::sqrt( (x[1]-x[0])*(x[1]-x[0])
-                        + (y[1]-y[0])*(y[1]-y[0])
-                        + (z[1]-z[0])*(z[1]-z[0]) );
-
-  auto sideb = std::sqrt( (x[2]-x[1])*(x[2]-x[1])
-                        + (y[2]-y[1])*(y[2]-y[1])
-                        + (z[2]-z[1])*(z[2]-z[1]) );
-
-  auto sidec = std::sqrt( (x[0]-x[2])*(x[0]-x[2])
-                        + (y[0]-y[2])*(y[0]-y[2])
-                        + (z[0]-z[2])*(z[0]-z[2]) );
+  auto sidea = sqrt( (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1) );
+  auto sideb = sqrt( (x3-x2)*(x3-x2) + (y3-y2)*(y3-y2) + (z3-z2)*(z3-z2) );
+  auto sidec = sqrt( (x1-x3)*(x1-x3) + (y1-y3)*(y1-y3) + (z1-z3)*(z1-z3) );
 
   auto semip = 0.5 * (sidea + sideb + sidec);
 
-  return std::sqrt( semip * (semip-sidea) * (semip-sideb) * (semip-sidec) );
+  return sqrt( semip * (semip-sidea) * (semip-sideb) * (semip-sidec) );
 }
 
-tk::Fields
-geoFaceTri( const std::array< tk::real, 3 >& x,
-            const std::array< tk::real, 3 >& y,
-            const std::array< tk::real, 3 >& z )
+real
+area( const std::array< real, 3 >& x,
+      const std::array< real, 3 >& y,
+      const std::array< real, 3 >& z )
+// *****************************************************************************
+//! Compute the are of a triangle
+//! \param[in] x x-coordinates of the three vertices of the triangle
+//! \param[in] y y-coordinates of the three vertices of the triangle
+//! \param[in] z z-coordinates of the three vertices of the triangle
+//! \return Area
+// *****************************************************************************
+{
+  return area( x[0],x[1],x[2], y[0],y[1],y[2], z[0],z[1],z[2] );
+}
+
+Fields
+geoFaceTri( const std::array< real, 3 >& x,
+            const std::array< real, 3 >& y,
+            const std::array< real, 3 >& z )
 // *****************************************************************************
 //! Compute geometry of the face given by three vertices
 //! \param[in] x x-coordinates of the three vertices of the triangular face.
@@ -1437,7 +1466,7 @@ geoFaceTri( const std::array< tk::real, 3 >& x,
 //!            z-coordinate: geoFace(f,6,0).
 // *****************************************************************************
 {
-  tk::Fields geoiFace( 1, 7 );
+  Fields geoiFace( 1, 7 );
 
   // compute area
   geoiFace(0,0,0) = area( x, y, z );
@@ -1456,9 +1485,9 @@ geoFaceTri( const std::array< tk::real, 3 >& x,
   return geoiFace;
 }
         
-tk::Fields
+Fields
 genGeoElemTet( const std::vector< std::size_t >& inpoel,
-               const tk::UnsMesh::Coords& coord )
+               const UnsMesh::Coords& coord )
 // *****************************************************************************
 //  Generate derived data, which stores the geometry details of tetrahedral
 //   elements.
@@ -1481,7 +1510,7 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
 
   auto nelem = inpoel.size()/nnpe;
 
-  tk::Fields geoElem( nelem, 4 );
+  Fields geoElem( nelem, 4 );
 
   const auto& x = coord[0];
   const auto& y = coord[1];
@@ -1494,11 +1523,11 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
     const auto B = inpoel[nnpe*e+1];
     const auto C = inpoel[nnpe*e+2];
     const auto D = inpoel[nnpe*e+3];
-    std::array< tk::real, 3 > ba{{ x[B]-x[A], y[B]-y[A], z[B]-z[A] }},
+    std::array< real, 3 > ba{{ x[B]-x[A], y[B]-y[A], z[B]-z[A] }},
                               ca{{ x[C]-x[A], y[C]-y[A], z[C]-z[A] }},
                               da{{ x[D]-x[A], y[D]-y[A], z[D]-z[A] }};
 
-    const auto vole = tk::triple( ba, ca, da ) / 6.0;
+    const auto vole = triple( ba, ca, da ) / 6.0;
 
     Assert( vole > 0, "Element Jacobian non-positive" );
 
@@ -1516,7 +1545,7 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
 bool
 leakyPartition( const std::vector< int >& esueltet,
                 const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord )
+                const UnsMesh::Coords& coord )
 // *****************************************************************************
 // Perform leak-test on mesh (partition)
 //! \param[in] esueltet Elements surrounding elements for tetrahedra, see
@@ -1536,20 +1565,20 @@ leakyPartition( const std::vector< int >& esueltet,
   const auto& z = coord[2];
 
   // Storage for surface integral over our mesh partition
-  std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0}};
+  std::array< real, 3 > s{{ 0.0, 0.0, 0.0}};
 
   for (std::size_t e=0; e<esueltet.size()/4; ++e) {   // for all our tets
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f)     // for all tet faces
       if (esueltet[mark+f] == -1) {     // if face has no outside-neighbor tet
         // 3 local node IDs of face
-        auto A = inpoel[ mark + tk::lpofa[f][0] ];
-        auto B = inpoel[ mark + tk::lpofa[f][1] ];
-        auto C = inpoel[ mark + tk::lpofa[f][2] ];
+        auto A = inpoel[ mark + lpofa[f][0] ];
+        auto B = inpoel[ mark + lpofa[f][1] ];
+        auto C = inpoel[ mark + lpofa[f][2] ];
         // Compute geometry data for face
-        auto geoface = tk::geoFaceTri( {{x[A], x[B], x[C]}},
-                                       {{y[A], y[B], y[C]}},
-                                       {{z[A], z[B], z[C]}} );
+        auto geoface = geoFaceTri( {{x[A], x[B], x[C]}},
+                                   {{y[A], y[B], y[C]}},
+                                   {{z[A], z[B], z[C]}} );
         // Sum up face area * face unit-normal
         s[0] += geoface(0,0,0) * geoface(0,1,0);
         s[1] += geoface(0,0,0) * geoface(0,2,0);
@@ -1563,7 +1592,7 @@ leakyPartition( const std::vector< int >& esueltet,
 
 bool
 conforming( const std::vector< std::size_t >& inpoel,
-            const tk::UnsMesh::Coords& coord,
+            const UnsMesh::Coords& coord,
             bool cerr )
 // *****************************************************************************
 // Check if mesh (partition) is conforming
@@ -1606,7 +1635,7 @@ conforming( const std::vector< std::size_t >& inpoel,
   // Compare operator to be used as less-than for std::array< tk::real, 3 >,
   // implemented as a lexicographic ordering.
   struct CoordLess {
-    const tk::real eps = std::numeric_limits< tk::real >::epsilon();
+    const real eps = std::numeric_limits< real >::epsilon();
     bool operator() ( const Coord& lhs, const Coord& rhs ) const {
       if (lhs[0] < rhs[0])
         return true;
@@ -1685,11 +1714,11 @@ conforming( const std::vector< std::size_t >& inpoel,
 }
 
 bool
-intet( const std::array< std::vector< tk::real >, 3 >& coord,
+intet( const std::array< std::vector< real >, 3 >& coord,
        const std::vector< std::size_t >& inpoel,
-       const std::vector< tk::real >& p,
+       const std::vector< real >& p,
        std::size_t e,
-       std::array< tk::real, 4 >& N )
+       std::array< real, 4 >& N )
 // *****************************************************************************
 //  Determine if a point is in a tetrahedron
 //! \param[in] coord Mesh node coordinates
@@ -1725,35 +1754,35 @@ intet( const std::array< std::vector< tk::real >, 3 >& coord,
   //    | zp |   | z1 z2 z3 z4 |   | N3 |
   //    | 1  |   | 1  1  1  1  |   | N4 |
 
-  tk::real DetX = (y[B]*z[C] - y[C]*z[B] - y[B]*z[D] + y[D]*z[B] +
+  real DetX = (y[B]*z[C] - y[C]*z[B] - y[B]*z[D] + y[D]*z[B] +
     y[C]*z[D] - y[D]*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
     x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
     x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[C]*y[A]*z[D] + x[C]*y[D]*z[A] +
     x[D]*y[A]*z[C] - x[D]*y[C]*z[A] - x[B]*y[C]*z[D] + x[B]*y[D]*z[C] +
     x[C]*y[B]*z[D] - x[C]*y[D]*z[B] - x[D]*y[B]*z[C] + x[D]*y[C]*z[B];
 
-  tk::real DetX1 = (y[D]*z[C] - y[C]*z[D] + y[C]*zp - yp*z[C] -
+  real DetX1 = (y[D]*z[C] - y[C]*z[D] + y[C]*zp - yp*z[C] -
     y[D]*zp + yp*z[D])*x[B] + x[C]*y[B]*z[D] - x[C]*y[D]*z[B] -
     x[D]*y[B]*z[C] + x[D]*y[C]*z[B] - x[C]*y[B]*zp + x[C]*yp*z[B] +
     xp*y[B]*z[C] - xp*y[C]*z[B] + x[D]*y[B]*zp - x[D]*yp*z[B] -
     xp*y[B]*z[D] + xp*y[D]*z[B] + x[C]*y[D]*zp - x[C]*yp*z[D] -
     x[D]*y[C]*zp + x[D]*yp*z[C] + xp*y[C]*z[D] - xp*y[D]*z[C];
 
-  tk::real DetX2 = (y[C]*z[D] - y[D]*z[C] - y[C]*zp + yp*z[C] +
+  real DetX2 = (y[C]*z[D] - y[D]*z[C] - y[C]*zp + yp*z[C] +
     y[D]*zp - yp*z[D])*x[A] + x[C]*y[D]*z[A] - x[C]*y[A]*z[D] +
     x[D]*y[A]*z[C] - x[D]*y[C]*z[A] + x[C]*y[A]*zp - x[C]*yp*z[A] -
     xp*y[A]*z[C] + xp*y[C]*z[A] - x[D]*y[A]*zp + x[D]*yp*z[A] +
     xp*y[A]*z[D] - xp*y[D]*z[A] - x[C]*y[D]*zp + x[C]*yp*z[D] +
     x[D]*y[C]*zp - x[D]*yp*z[C] - xp*y[C]*z[D] + xp*y[D]*z[C];
 
-  tk::real DetX3 = (y[D]*z[B] - y[B]*z[D] + y[B]*zp - yp*z[B] -
+  real DetX3 = (y[D]*z[B] - y[B]*z[D] + y[B]*zp - yp*z[B] -
     y[D]*zp + yp*z[D])*x[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
     x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[B]*y[A]*zp + x[B]*yp*z[A] +
     xp*y[A]*z[B] - xp*y[B]*z[A] + x[D]*y[A]*zp - x[D]*yp*z[A] -
     xp*y[A]*z[D] + xp*y[D]*z[A] + x[B]*y[D]*zp - x[B]*yp*z[D] -
     x[D]*y[B]*zp + x[D]*yp*z[B] + xp*y[B]*z[D] - xp*y[D]*z[B];
 
-  tk::real DetX4 = (y[B]*z[C] - y[C]*z[B] - y[B]*zp + yp*z[B] +
+  real DetX4 = (y[B]*z[C] - y[C]*z[B] - y[B]*zp + yp*z[B] +
     y[C]*zp - yp*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
     x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*zp - x[B]*yp*z[A] -
     xp*y[A]*z[B] + xp*y[B]*z[A] - x[C]*y[A]*zp + x[C]*yp*z[A] +
