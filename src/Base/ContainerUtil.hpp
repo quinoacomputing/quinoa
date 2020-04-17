@@ -58,10 +58,12 @@ uniquecopy( const Container& src )
 //! \note If key is not found an exception is thrown.
 template< typename Container >
 auto cref_find( const Container& map, const typename Container::key_type& key )
+noexcept(ndebug)
   -> const typename Container::mapped_type&
 {
   const auto it = map.find( key );
-  if (it != end(map)) return it->second; else Throw( "Can't find key" );
+  Assert( it != end(map), "Can't find key" );
+  return it->second;
 }
 
 //! \brief Find and return a reference to value for key in a container that
@@ -72,6 +74,7 @@ auto cref_find( const Container& map, const typename Container::key_type& key )
 //! \note If key is not found an exception is thrown.
 template< typename Container >
 auto ref_find( const Container& map, const typename Container::key_type& key )
+noexcept(ndebug)
   -> typename Container::mapped_type&
 {
   return const_cast< typename Container::mapped_type& >( cref_find(map,key) );
