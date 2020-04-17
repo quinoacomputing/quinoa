@@ -178,8 +178,7 @@ class CGPDE {
       const std::vector< tk::real >& dfn,
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& psup,
-      const std::unordered_map< std::size_t,
-              std::array< tk::real, 4 > >& bnorm,
+      const std::vector< int >& symbcnode,
       const std::vector< tk::real >& vol,
       const std::vector< std::size_t >& edgenode,
       const std::vector< std::size_t >& edgeid,
@@ -187,7 +186,7 @@ class CGPDE {
       const tk::Fields& U,
       tk::Fields& R ) const
     { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
-                 bnorm, vol, edgenode, edgeid, G, U, R ); }
+                 symbcnode, vol, edgenode, edgeid, G, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -305,8 +304,7 @@ class CGPDE {
         const std::vector< tk::real >&,
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >&,
-        const std::unordered_map< std::size_t,
-                                  std::array< tk::real, 4 > >&,
+        const std::vector< int >&,
         const std::vector< tk::real >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
@@ -391,16 +389,15 @@ class CGPDE {
         const std::vector< tk::real >& dfn,
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >& psup,
-        const std::unordered_map< std::size_t,
-                std::array< tk::real, 4 > >& bnorm,
+        const std::vector< int >& symbcnode,
         const std::vector< tk::real >& vol,
         const std::vector< std::size_t >& edgenode,
         const std::vector< std::size_t >& edgeid,
         const tk::Fields& G,
         const tk::Fields& U,
         tk::Fields& R ) const override
-      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, bnorm,
-                  vol, edgenode, edgeid, G, U, R ); }
+      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
+                  symbcnode, vol, edgenode, edgeid, G, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override

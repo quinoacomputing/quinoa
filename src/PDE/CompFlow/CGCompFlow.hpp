@@ -47,6 +47,7 @@ class CompFlow {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
     using eq = tag::compflow;
+    using real = tk::real;
     static constexpr std::size_t m_ncomp = 5;
 
   public:
@@ -68,9 +69,9 @@ class CompFlow {
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in,out] inbox List of nodes at which box user ICs are set
-    void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
+    void initialize( const std::array< std::vector< real >, 3 >& coord,
                      tk::Fields& unk,
-                     tk::real t,
+                     real t,
                      std::vector< std::size_t >& inbox )
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
@@ -123,7 +124,7 @@ class CompFlow {
     //!   Example (SI) units of the quantities involved:
     //!    * internal energy content (energy per unit volume): J/m^3
     //!    * specific energy (internal energy per unit mass): J/kg
-    void box( tk::real V,
+    void box( real V,
               const std::vector< std::size_t >& boxnodes,
               tk::Fields& unk ) const
     {
@@ -159,12 +160,12 @@ class CompFlow {
     //! \param[in] zi Z-coordinate
     //! \param[in] t Physical time
     //! \return Vector of analytic solution at given location and time
-    std::vector< tk::real >
-    analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    std::vector< real >
+    analyticSolution( real xi, real yi, real zi, real t ) const
     {
       int inbox = 0;
       auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
-      return std::vector< tk::real >( std::begin(s), std::end(s) );
+      return std::vector< real >( std::begin(s), std::end(s) );
     }
 
     //! Compute right hand side for DiagCG (CG+FCT)
@@ -176,9 +177,9 @@ class CompFlow {
     //! \param[in,out] Ue Element-centered solution vector at intermediate step
     //!    (used here internally as a scratch array)
     //! \param[in,out] R Right-hand side vector computed
-    void rhs( tk::real t,
-              tk::real deltat,
-              const std::array< std::vector< tk::real >, 3 >& coord,
+    void rhs( real t,
+              real deltat,
+              const std::array< std::vector< real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const tk::Fields& U,
               tk::Fields& Ue,
@@ -200,7 +201,7 @@ class CompFlow {
         const std::array< std::size_t, 4 >
           N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
         // compute element Jacobi determinant
-        const std::array< tk::real, 3 >
+        const std::array< real, 3 >
           ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
           ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
           da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
@@ -208,7 +209,7 @@ class CompFlow {
         Assert( J > 0, "Element Jacobian non-positive" );
 
         // shape function derivatives, nnode*ndim [4][3]
-        std::array< std::array< tk::real, 3 >, 4 > grad;
+        std::array< std::array< real, 3 >, 4 > grad;
         grad[1] = tk::crossdiv( ca, da, J );
         grad[2] = tk::crossdiv( da, ba, J );
         grad[3] = tk::crossdiv( ba, ca, J );
@@ -216,7 +217,7 @@ class CompFlow {
           grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
         // access solution at element nodes
-        std::array< std::array< tk::real, 4 >, m_ncomp > u;
+        std::array< std::array< real, 4 >, m_ncomp > u;
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
 
         // apply stagnation BCs
@@ -224,18 +225,18 @@ class CompFlow {
           if (stagNode(N[a])) u[1][N[a]] = u[2][N[a]] = u[3][N[a]] = 0.0;
 
         // access solution at elements
-        std::array< const tk::real*, m_ncomp > ue;
+        std::array< const real*, m_ncomp > ue;
         for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue.cptr( c, m_offset );
 
         // pressure
-        std::array< tk::real, 4 > p;
+        std::array< real, 4 > p;
         for (std::size_t a=0; a<4; ++a)
           p[a] = eos_pressure< eq >
                    ( m_system, u[0][a], u[1][a]/u[0][a], u[2][a]/u[0][a],
                      u[3][a]/u[0][a], u[4][a] );
 
         // sum flux contributions to element
-        tk::real d = deltat/2.0;
+        real d = deltat/2.0;
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t a=0; a<4; ++a) {
             // mass: advection
@@ -251,7 +252,7 @@ class CompFlow {
           }
 
         // add (optional) source to all equations
-        std::array< std::vector< tk::real >, 4 > s{{
+        std::array< std::vector< real >, 4 > s{{
           Problem::src( m_system, m_ncomp, x[N[0]], y[N[0]], z[N[0]], t ),
           Problem::src( m_system, m_ncomp, x[N[1]], y[N[1]], z[N[1]], t ),
           Problem::src( m_system, m_ncomp, x[N[2]], y[N[2]], z[N[2]], t ),
@@ -267,7 +268,7 @@ class CompFlow {
         const std::array< std::size_t, 4 >
           N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
         // compute element Jacobi determinant
-        const std::array< tk::real, 3 >
+        const std::array< real, 3 >
           ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
           ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
           da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
@@ -275,7 +276,7 @@ class CompFlow {
         Assert( J > 0, "Element Jacobian non-positive" );
 
         // shape function derivatives, nnode*ndim [4][3]
-        std::array< std::array< tk::real, 3 >, 4 > grad;
+        std::array< std::array< real, 3 >, 4 > grad;
         grad[1] = tk::crossdiv( ca, da, J );
         grad[2] = tk::crossdiv( da, ba, J );
         grad[3] = tk::crossdiv( ba, ca, J );
@@ -283,10 +284,10 @@ class CompFlow {
           grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
         // access solution at elements
-        std::array< tk::real, m_ncomp > ue;
+        std::array< real, m_ncomp > ue;
         for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue( e, c, m_offset );
         // access pointer to right hand side at component and offset
-        std::array< const tk::real*, m_ncomp > r;
+        std::array< const real*, m_ncomp > r;
         for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
         // pressure
@@ -295,7 +296,7 @@ class CompFlow {
                      ue[4] );
 
         // scatter-add flux contributions to rhs at nodes
-        tk::real d = deltat * J/6.0;
+        real d = deltat * J/6.0;
         for (std::size_t j=0; j<3; ++j)
           for (std::size_t a=0; a<4; ++a) {
             // mass: advection
@@ -333,7 +334,7 @@ class CompFlow {
     //!    global node ids (key)
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] G Nodal gradients of primitive variables
-    void grad( const std::array< std::vector< tk::real >, 3 >& coord,
+    void grad( const std::array< std::vector< real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
                const std::vector< std::size_t >& bndel,
                const std::vector< std::size_t >& gid,
@@ -349,14 +350,14 @@ class CompFlow {
     //! \param[in] t Physical time
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] triinpoel Boundary triangle face connecitivity
+    //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] gid Local->glocal node ids
     //! \param[in] lid Global->local node ids
     //! \param[in] dfn Dual-face normals
     //! \param[in] psup Points surrounding points
-    //! \param[in] bnorm Face normals in boundary points
+    //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
     //! \param[in] vol Nodal volumes
     //! \param[in] edgenode Local node ids of edges
     //! \param[in] edgeid Local node id pair -> edge id map
@@ -364,18 +365,18 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     void rhs(
-      tk::real t,
-      const std::array< std::vector< tk::real >, 3 >& coord,
+      real t,
+      const std::array< std::vector< real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& triinpoel,
       const std::vector< std::size_t >& gid,
       const std::unordered_map< std::size_t, std::size_t >& bid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
-      const std::vector< tk::real >& dfn,
+      const std::vector< real >& dfn,
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& psup,
-      const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& bnorm,
-      const std::vector< tk::real >& vol,
+      const std::vector< int >& symbcnode,
+      const std::vector< real >& vol,
       const std::vector< std::size_t >& edgenode,
       const std::vector< std::size_t >& edgeid,
       const tk::Fields& G,
@@ -394,28 +395,24 @@ class CompFlow {
       auto Grad = nodegrad( m_ncomp, m_offset, coord, inpoel, lid, bid,
                             vol, m_stag, U, G, egrad );
 
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-
       // domain-edge integral: compute fluxes in edges
-      std::vector< tk::real > flux( edgenode.size()/2 * m_ncomp );
+      std::vector< real > dflux( edgenode.size()/2 * m_ncomp );
       #pragma omp simd
       for (std::size_t e=0; e<edgenode.size()/2; ++e) {
         auto p = edgenode[e*2+0];
         auto q = edgenode[e*2+1];
 
         // compute primitive variables at edge-end points
-        tk::real rL  = U(p,0,m_offset);
-        tk::real ruL = U(p,1,m_offset) / rL;
-        tk::real rvL = U(p,2,m_offset) / rL;
-        tk::real rwL = U(p,3,m_offset) / rL;
-        tk::real reL = U(p,4,m_offset) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
-        tk::real rR  = U(q,0,m_offset);
-        tk::real ruR = U(q,1,m_offset) / rR;
-        tk::real rvR = U(q,2,m_offset) / rR;
-        tk::real rwR = U(q,3,m_offset) / rR;
-        tk::real reR = U(q,4,m_offset) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
+        real rL  = U(p,0,m_offset);
+        real ruL = U(p,1,m_offset) / rL;
+        real rvL = U(p,2,m_offset) / rL;
+        real rwL = U(p,3,m_offset) / rL;
+        real reL = U(p,4,m_offset) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
+        real rR  = U(q,0,m_offset);
+        real ruR = U(q,1,m_offset) / rR;
+        real rvR = U(q,2,m_offset) / rR;
+        real rwR = U(q,3,m_offset) / rR;
+        real reR = U(q,4,m_offset) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
 
         // apply stagnation BCs to primitive variables
         if (stagNode(p)) ruL = rvL = rwL = 0.0;
@@ -438,68 +435,128 @@ class CompFlow {
         rwR *= rR;
 
         // compute Riemann flux using edge-end point states
-        tk::real f[5];
+        real f[5];
         Rusanov::flux( dfn[e*6+0], dfn[e*6+1], dfn[e*6+2],
                        dfn[e*6+3], dfn[e*6+4], dfn[e*6+5],
                        rL, ruL, rvL, rwL, reL,
                        rR, ruR, rvR, rwR, reR,
                        f[0], f[1], f[2], f[3], f[4] );
         // store flux in edges
-        for (std::size_t c=0; c<m_ncomp; ++c) flux[e*m_ncomp+c] = f[c];
+        for (std::size_t c=0; c<m_ncomp; ++c) dflux[e*m_ncomp+c] = f[c];
       }
 
       // zero right hand side for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
 
       // access pointer to right hand side at component and offset
-      std::array< const tk::real*, m_ncomp > r;
+      std::array< const real*, m_ncomp > r;
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
       // domain-edge integral: sum flux contributions to points
-      auto npoin = U.nunk();
-      //#pragma omp simd  // <- enabling this currently generates incorrect code
-      for (std::size_t p=0,k=0; p<npoin; ++p)
+      for (std::size_t p=0,k=0; p<U.nunk(); ++p)
         for (auto q : tk::Around(psup,p)) {
           auto s = gid[p] > gid[q] ? -1.0 : 1.0;
           auto e = edgeid[k++];
           for (std::size_t c=0; c<m_ncomp; ++c)
-            R.var(r[c],p) -= 2.0*s*flux[e*m_ncomp+c];
+            R.var(r[c],p) -= 2.0*s*dflux[e*m_ncomp+c];
         }
+      tk::destroy(dflux);
 
-      // boundary integrals
+      // access node coordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      // boundary integrals: compute fluxes in edges
+      std::vector< real > bflux( triinpoel.size() * m_ncomp * 2 );
+      #pragma omp simd
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
         // access node IDs
-        const std::array< std::size_t, 3 >
-          N{ tk::cref_find( lid, triinpoel[e*3+0] ),
-             tk::cref_find( lid, triinpoel[e*3+1] ),
-             tk::cref_find( lid, triinpoel[e*3+2] ) };
-        // node coordinates
-        std::array< tk::real, 3 > xp{ x[N[0]], x[N[1]], x[N[2]] },
-                                  yp{ y[N[0]], y[N[1]], y[N[2]] },
-                                  zp{ z[N[0]], z[N[1]], z[N[2]] };
-        // compute face area
-        auto A = tk::area( xp, yp, zp );
-        auto A24 = A / 24.0;
-        auto A6 = A / 6.;
-        // compute face normal
-        auto n = tk::normal( xp, yp, zp );
+        std::size_t N[3] =
+          { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
         // access solution at element nodes
-        std::vector< std::array< tk::real, 3 > > u( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        real rA  = U(N[0],0,m_offset);
+        real rB  = U(N[1],0,m_offset);
+        real rC  = U(N[2],0,m_offset);
+        real ruA = U(N[0],1,m_offset);
+        real ruB = U(N[1],1,m_offset);
+        real ruC = U(N[2],1,m_offset);
+        real rvA = U(N[0],2,m_offset);
+        real rvB = U(N[1],2,m_offset);
+        real rvC = U(N[2],2,m_offset);
+        real rwA = U(N[0],3,m_offset);
+        real rwB = U(N[1],3,m_offset);
+        real rwC = U(N[2],3,m_offset);
+        real reA = U(N[0],4,m_offset);
+        real reB = U(N[1],4,m_offset);
+        real reC = U(N[2],4,m_offset);
         // apply stagnation BCs
-        for (std::size_t a=0; a<3; ++a)
-          if (stagNode(N[a])) u[1][a] = u[2][a] = u[3][a] = 0.0;
-        // compute boundary fluxes
-        auto f = bnorm.find(N[0]) != bnorm.end() ? symbflux(n,u) : bflux(n,u);
-        // sum boundary integral contributions
-        for (const auto& [a,b] : tk::lpoet) {
-          for (std::size_t c=0; c<m_ncomp; ++c) {
-            auto Bab = A24 * (f[c][a] + f[c][b]);
-            R.var(r[c],N[a]) -= Bab + A6 * f[c][a];
-            R.var(r[c],N[b]) -= Bab;
-          }
+        if (stagNode(N[0])) ruA = rvA = rwA = 0.0;
+        if (stagNode(N[1])) ruB = rvB = rwB = 0.0;
+        if (stagNode(N[2])) ruC = rvC = rwC = 0.0;
+        // compute face normal
+        real nx, ny, nz;
+        tk::normal( x[N[0]], x[N[1]], x[N[2]],
+                    y[N[0]], y[N[1]], y[N[2]],
+                    z[N[0]], z[N[1]], z[N[2]],
+                    nx, ny, nz );
+        // compute boundary flux
+        real f[m_ncomp][3];
+        real p, vn;
+        int sym = symbcnode[e];
+        p = eos_pressure< eq >( m_system, rA, ruA/rA, rvA/rA, rwA/rA, reA );
+        vn = sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA) / rA;
+        f[0][0] = rA*vn;
+        f[1][0] = ruA*vn + p*nx;
+        f[2][0] = rvA*vn + p*ny;
+        f[3][0] = rwA*vn + p*nz;
+        f[4][0] = (reA + p)*vn;
+        p = eos_pressure< eq >( m_system, rB, ruB/rB, rvB/rB, rwB/rB, reB );
+        vn = sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB) / rB;
+        f[0][1] = rB*vn;
+        f[1][1] = ruB*vn + p*nx;
+        f[2][1] = rvB*vn + p*ny;
+        f[3][1] = rwB*vn + p*nz;
+        f[4][1] = (reB + p)*vn;
+        p = eos_pressure< eq >( m_system, rC, ruC/rC, rvC/rC, rwC/rC, reC );
+        vn = sym ? 0.0 : (nx*ruC + ny*rvC + nz*rwC) / rC;
+        f[0][2] = rC*vn;
+        f[1][2] = ruC*vn + p*nx;
+        f[2][2] = rvC*vn + p*ny;
+        f[3][2] = rwC*vn + p*nz;
+        f[4][2] = (reC + p)*vn;
+        // compute face area
+        auto A = tk::area( x[N[0]], x[N[1]], x[N[2]],
+                           y[N[0]], y[N[1]], y[N[2]],
+                           z[N[0]], z[N[1]], z[N[2]] );
+        // store flux in boundary elements
+        for (std::size_t c=0; c<m_ncomp; ++c) {
+          auto eb = (e*m_ncomp+c)*6;
+          auto Bab = A/24.0 * (f[c][0] + f[c][1]);
+          bflux[eb+0] = Bab + A/6.0 * f[c][0];
+          bflux[eb+1] = Bab;
+          Bab = A/24.0 * (f[c][1] + f[c][2]);
+          bflux[eb+2] = Bab + A/6.0 * f[c][1];
+          bflux[eb+3] = Bab;
+          Bab = A/24.0 * (f[c][2] + f[c][0]);
+          bflux[eb+4] = Bab + A/6.0 * f[c][2];
+          bflux[eb+5] = Bab;
         }
       }
+
+      // boundary integrals: sum flux contributions to points
+      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
+        // access node IDs
+        std::size_t N[3] =
+          { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+        for (std::size_t c=0; c<m_ncomp; ++c) {
+          auto eb = (e*m_ncomp+c)*6;
+          R.var(r[c],N[0]) -= bflux[eb+0] + bflux[eb+5];
+          R.var(r[c],N[1]) -= bflux[eb+1] + bflux[eb+2];
+          R.var(r[c],N[2]) -= bflux[eb+3] + bflux[eb+4];
+        }
+      }
+      tk::destroy(bflux);
 
       // add optional source
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
@@ -507,7 +564,7 @@ class CompFlow {
         const std::array< std::size_t, 4 >
           N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
         // compute element Jacobi determinant
-        const std::array< tk::real, 3 >
+        const std::array< real, 3 >
           ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
           ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
           da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
@@ -515,7 +572,7 @@ class CompFlow {
         Assert( J > 0, "Element Jacobian non-positive" );
         auto J24 = J/24.0;
         // evaluate source in vertices
-        std::array< std::vector< tk::real >, 4 > s{{
+        std::array< std::vector< real >, 4 > s{{
           Problem::src( m_system, m_ncomp, x[N[0]], y[N[0]], z[N[0]], t ),
           Problem::src( m_system, m_ncomp, x[N[1]], y[N[1]], z[N[1]], t ),
           Problem::src( m_system, m_ncomp, x[N[2]], y[N[2]], z[N[2]], t ),
@@ -529,61 +586,50 @@ class CompFlow {
     }
 
     //! Compute boundary flux on triangle face
-    //! \param[in] fn Boundary face normal
+    //! \param[in] n Boundary face normal
     //! \param[in] u Solution for all components in the 3 vertices
+    //! \param[in] sym 1 if to apply symmetry BC
     //! \return Boundary (normal) flux for 5 components in 3 vertices
-    static std::array< std::array< tk::real, 3 >, m_ncomp >
-    bflux( const std::array< tk::real, 3 >& fn,
-           const std::vector< std::array< tk::real, 3 > >& u )
+    #pragma omp declare simd
+    void
+    bndflux( real nx, real ny, real nz, real rA, real rB, real rC,
+             real ruA, real ruB, real ruC, real rvA, real rvB, real rvC,
+             real rwA, real rwB, real rwC, real reA, real reB, real reC,
+             int sym, real f[m_ncomp][3] ) const
     {
-      std::array< std::array< tk::real, 3 >, m_ncomp > f;
+      real p, vn;
 
-      for (std::size_t i=0; i<3; ++i) {
-        auto r = u[0][i];
-        auto p = eos_pressure< eq >( 0,
-           u[0][i], u[1][i]/r, u[2][i]/r, u[3][i]/r, u[4][i] );
+      p = eos_pressure< eq >( m_system, rA, ruA/rA, rvA/rA, rwA/rA, reA );
+      vn = sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA) / rA;
+      f[0][0] = rA*vn;
+      f[1][0] = ruA*vn + p*nx;
+      f[2][0] = rvA*vn + p*ny;
+      f[3][0] = rwA*vn + p*nz;
+      f[4][0] = (reA + p)*vn;
 
-        tk::real vn = 0;
-        for (std::size_t d=0; d<3; ++d) vn += fn[d] * u[1+d][i];
-        vn /= r;
+      p = eos_pressure< eq >( m_system, rB, ruB/rB, rvB/rB, rwB/rB, reB );
+      vn = sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB) / rB;
+      f[0][1] = rB*vn;
+      f[1][1] = ruB*vn + p*nx;
+      f[2][1] = rvB*vn + p*ny;
+      f[3][1] = rwB*vn + p*nz;
+      f[4][1] = (reB + p)*vn;
 
-        f[0][i] = u[0][i] * vn;
-        for (std::size_t d=0; d<3; ++d) f[1+d][i] = u[1+d][i]*vn + p*fn[d];
-        f[4][i] = (u[4][i] + p) * vn;
-      }
-
-      return f;
+      p = eos_pressure< eq >( m_system, rC, ruC/rC, rvC/rC, rwC/rC, reC );
+      vn = sym ? 0.0 : (nx*ruC + ny*rvC + nz*rwC) / rC;
+      f[0][2] = rC*vn;
+      f[1][2] = ruC*vn + p*nx;
+      f[2][2] = rvC*vn + p*ny;
+      f[3][2] = rwC*vn + p*nz;
+      f[4][2] = (reC + p)*vn;
     }
 
-    //! Compute boundary flux on triangle face applying symmetry condition
-    //! \param[in] fn Boundary face normal
-    //! \param[in] u Solution for all components in the 3 vertices
-    //! \return Boundary (normal) flux for 5 components in 3 vertices
-    static std::array< std::array< tk::real, 3 >, m_ncomp >
-    symbflux( const std::array< tk::real, 3 >& fn,
-              const std::vector< std::array< tk::real, 3 > >& u )
-    {
-      std::array< std::array< tk::real, 3 >, m_ncomp > f;
-
-      for (std::size_t i=0; i<3; ++i) {
-        auto r = u[0][i];
-        auto p = eos_pressure< eq >( 0,
-           u[0][i], u[1][i]/r, u[2][i]/r, u[3][i]/r, u[4][i] );
-      
-        f[0][i] = 0;
-        for (std::size_t d=0; d<3; ++d) f[1+d][i] = p*fn[d];
-        f[4][i] = 0;
-      }
-
-      return f;
-    }
-  
     //! Compute the minimum time step size
     //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \return Minimum time step size
-    tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
+    real dt( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
                  const tk::Fields& U ) const
     {
@@ -595,22 +641,22 @@ class CompFlow {
       // ratio of specific heats
       auto g = g_inputdeck.get< tag::param, eq, tag::gamma >()[0][0];
       // compute the minimum dt across all elements we own
-      tk::real mindt = std::numeric_limits< tk::real >::max();
+      real mindt = std::numeric_limits< real >::max();
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
         const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
                                                inpoel[e*4+2], inpoel[e*4+3] }};
         // compute cubic root of element volume as the characteristic length
-        const std::array< tk::real, 3 >
+        const std::array< real, 3 >
           ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
           ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
           da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
         const auto L = std::cbrt( tk::triple( ba, ca, da ) / 6.0 );
         // access solution at element nodes at recent time step
-        std::array< std::array< tk::real, 4 >, m_ncomp > u;
+        std::array< std::array< real, 4 >, m_ncomp > u;
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
         // compute the maximum length of the characteristic velocity (fluid
         // velocity + sound velocity) across the four element nodes
-        tk::real maxvel = 0.0;
+        real maxvel = 0.0;
         for (std::size_t j=0; j<4; ++j) {
           auto& r  = u[0][j];    // rho
           auto& ru = u[1][j];    // rho * u
@@ -641,22 +687,22 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] N Element node indices    
     //! \return Array of the four values of the velocity field
-    std::array< std::array< tk::real, 4 >, 3 >
+    std::array< std::array< real, 4 >, 3 >
     velocity( const tk::Fields& U,
-              const std::array< std::vector< tk::real >, 3 >&,
+              const std::array< std::vector< real >, 3 >&,
               const std::array< std::size_t, 4 >& N ) const
     {
-      std::array< std::array< tk::real, 4 >, 3 > v;
+      std::array< std::array< real, 4 >, 3 > v;
       v[0] = U.extract( 1, m_offset, N );
       v[1] = U.extract( 2, m_offset, N );
       v[2] = U.extract( 3, m_offset, N );
       auto r = U.extract( 0, m_offset, N );
       std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
+                      []( real s, real& d ){ return d /= s; } );
       std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
+                      []( real s, real& d ){ return d /= s; } );
       std::transform( r.begin(), r.end(), v[2].begin(), v[2].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
+                      []( real s, real& d ){ return d /= s; } );
       return v;
     }
 
@@ -671,14 +717,14 @@ class CompFlow {
     //!   that instead of the actual boundary condition value, we return the
     //!   increment between t+deltat and t, since that is what the solution requires
     //!   as we solve for the soution increments and not the solution itself.
-    std::map< std::size_t, std::vector< std::pair<bool,tk::real> > >
-    dirbc( tk::real t,
-           tk::real deltat,
+    std::map< std::size_t, std::vector< std::pair<bool,real> > >
+    dirbc( real t,
+           real deltat,
            const std::pair< const int, std::vector< std::size_t > >& ss,
-           const std::array< std::vector< tk::real >, 3 >& coord ) const
+           const std::array< std::vector< real >, 3 >& coord ) const
     {
       using tag::param; using tag::bcdir;
-      using NodeBC = std::vector< std::pair< bool, tk::real > >;
+      using NodeBC = std::vector< std::pair< bool, real > >;
       std::map< std::size_t, NodeBC > bc;
       const auto& ubc = g_inputdeck.get< param, eq, tag::bc, bcdir >();
       if (!ubc.empty()) {
@@ -705,10 +751,10 @@ class CompFlow {
     //!    value: unit normal
     void
     symbc( tk::Fields& U,
-           const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm )
+           const std::unordered_map<std::size_t,std::array<real,4>>& bnorm )
     const {
       for (const auto& [ i, nr ] : bnorm ) {
-        std::array< tk::real, 3 >
+        std::array< real, 3 >
           n{ nr[0], nr[1], nr[2] },
           v{ U(i,1,m_offset), U(i,2,m_offset), U(i,3,m_offset) };
         auto v_dot_n = tk::dot( v, n );
@@ -766,11 +812,11 @@ class CompFlow {
     //! \param[in] v Nodal mesh volumes
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< tk::real >& v,
+    std::vector< std::vector< real > >
+    fieldOutput( real t,
+                 real V,
+                 const std::array< std::vector< real >, 3 >& coord,
+                 const std::vector< real >& v,
                  tk::Fields& U )
     {
       return
@@ -778,13 +824,13 @@ class CompFlow {
     }
 
     //! Return surface field output going to file
-    std::vector< std::vector< tk::real > >
+    std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
                 tk::Fields& U ) const
     { return CompFlowSurfOutput( m_system, bnd, U ); }
 
     //! Return time history field output evaluated at time history points
-    std::vector< std::vector< tk::real > >
+    std::vector< std::vector< real > >
     histOutput( const std::vector< HistData >& h,
                 const std::vector< std::size_t >& inpoel,
                 const tk::Fields& U ) const
@@ -801,7 +847,7 @@ class CompFlow {
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_offset;             //!< Offset PDE operates from
     //! Stagnation point BC user configuration: point coordinates and radii
-    const std::tuple< std::vector< tk::real >, std::vector< tk::real > >
+    const std::tuple< std::vector< real >, std::vector< real > >
       m_stag;
     //! Stagnation point local node ids
     std::vector< std::size_t > m_stagnode;
@@ -818,10 +864,10 @@ class CompFlow {
     egrad( ncomp_t,
            ncomp_t offset,
            std::size_t e,
-           const std::array< std::vector< tk::real >, 3 >& coord,
+           const std::array< std::vector< real >, 3 >& coord,
            const std::vector< std::size_t >& inpoel,
-           const std::tuple< std::vector< tk::real >,
-                             std::vector< tk::real > >& stag,
+           const std::tuple< std::vector< real >,
+                             std::vector< real > >& stag,
            const tk::Fields& U )
     {
       // access node cooordinates
@@ -832,21 +878,21 @@ class CompFlow {
       const std::array< std::size_t, 4 >
         N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
       // compute element Jacobi determinant
-      const std::array< tk::real, 3 >
+      const std::array< real, 3 >
         ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
         ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
         da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
       const auto J = tk::triple( ba, ca, da );        // J = 6V
       Assert( J > 0, "Element Jacobian non-positive" );
       // shape function derivatives, nnode*ndim [4][3]
-      std::array< std::array< tk::real, 3 >, 4 > grad;
+      std::array< std::array< real, 3 >, 4 > grad;
       grad[1] = tk::crossdiv( ca, da, J );
       grad[2] = tk::crossdiv( da, ba, J );
       grad[3] = tk::crossdiv( ba, ca, J );
       for (std::size_t i=0; i<3; ++i)
         grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
       // access solution at element nodes
-      std::vector< std::array< tk::real, 4 > > u( m_ncomp );
+      std::vector< std::array< real, 4 > > u( m_ncomp );
       for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, offset, N );
 
       // apply stagnation BCs

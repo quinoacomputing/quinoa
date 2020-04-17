@@ -133,7 +133,7 @@ class Transport {
     //! \param[in] lid Global->local node ids
     //! \param[in] dfn Dual-face normals
     //! \param[in] psup Points surrounding points
-    //! \param[in] bnorm Face normals in boundary points
+    //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
     //! \param[in] vol Nodal volumes
     //! \param[in] G Nodal gradients in chare-boundary nodes
     //! \param[in] U Solution vector at recent time step
@@ -149,7 +149,7 @@ class Transport {
       const std::vector< tk::real >& dfn,
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& psup,
-      const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& bnorm,
+      const std::vector< int >& symbcnode,
       const std::vector< tk::real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >&,
@@ -232,6 +232,7 @@ class Transport {
       }
 
       // boundary-edge integrals
+      auto eps = std::numeric_limits< tk::real >::epsilon();
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
         // access node IDs
         const std::array< std::size_t, 3 >
@@ -239,7 +240,7 @@ class Transport {
              tk::cref_find( lid, triinpoel[e*3+1] ),
              tk::cref_find( lid, triinpoel[e*3+2] ) };
         // apply symmetry BCs
-        if (bnorm.find(N[0]) != end(bnorm)) continue;
+        if (symbcnode[e]) continue;
         // node coordinates
         std::array< tk::real, 3 > xp{ x[N[0]], x[N[1]], x[N[2]] },
                                   yp{ y[N[0]], y[N[1]], y[N[2]] },
