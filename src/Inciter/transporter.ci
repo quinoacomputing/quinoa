@@ -40,6 +40,7 @@ module transporter {
       entry [reductiontarget] void refined( std::size_t nelem,
                                             std::size_t npoin );
       entry [reductiontarget] void resized();
+      entry [reductiontarget] void startEsup();
       entry [reductiontarget] void queried();
       entry [reductiontarget] void responded();
       entry [reductiontarget] void comfinal( int initial );

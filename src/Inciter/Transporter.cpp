@@ -721,6 +721,16 @@ Transporter::resized()
 }
 
 void
+Transporter::startEsup()
+// *****************************************************************************
+// Reduction target: all worker chares have generated their own esup
+//! \note Only used for cell-centered schemes
+// *****************************************************************************
+{
+  m_scheme.bcast< Scheme::nodeNeighSetup >();
+}
+
+void
 Transporter::discinserted()
 // *****************************************************************************
 // Reduction target: all Discretization chares have been inserted

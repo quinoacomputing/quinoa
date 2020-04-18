@@ -100,6 +100,9 @@ class DiagCG : public CBase_DiagCG {
     //! Size communication buffers (no-op)
     void resizeComm() {}
 
+    //! Setup node-neighborhood (no-op)
+    void nodeNeighSetup() {}
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
