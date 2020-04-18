@@ -99,6 +99,16 @@ class DG : public CBase_DG {
     //! Send all of our ghost data to fellow chares
     void sendGhost();
 
+    //! Setup node-neighborhood (esup)
+    void nodeNeighSetup();
+
+    //! Receive element-surr-points data on chare boundaries from fellow chare
+    void comEsup( int fromch,
+      const std::unordered_map< std::size_t, std::vector< std::size_t > >&
+        bndEsup,
+      const std::unordered_map< std::size_t, std::vector< tk::real > >&
+        nodeBndCells );
+
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
 
@@ -182,6 +192,7 @@ class DG : public CBase_DG {
       p | m_disc;
       p | m_ncomfac;
       p | m_nadj;
+      p | m_ncomEsup;
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
@@ -200,6 +211,7 @@ class DG : public CBase_DG {
       p | m_ipface;
       p | m_bndFace;
       p | m_ghostData;
+      p | m_sendGhost;
       p | m_ghostReq;
       p | m_ghost;
       p | m_exptGhost;
@@ -214,6 +226,8 @@ class DG : public CBase_DG {
       p | m_initial;
       p | m_expChBndFace;
       p | m_infaces;
+      p | m_esup;
+      p | m_esupc;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -238,6 +252,8 @@ class DG : public CBase_DG {
     std::size_t m_ncomfac;
     //! Counter signaling that all ghost data have been received
     std::size_t m_nadj;
+    //! Counter for element-surr-node adjacency communication map
+    std::size_t m_ncomEsup;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
     //! \brief Counter signaling that we have received all our solution ghost
@@ -278,6 +294,8 @@ class DG : public CBase_DG {
     std::unordered_map< int, FaceMap > m_bndFace;
     //! Ghost data associated to chare IDs we communicate with
     std::unordered_map< int, GhostData > m_ghostData;
+    //! Elements which are ghosts for other chares associated to those chare IDs
+    std::unordered_map< int, std::unordered_set< std::size_t > > m_sendGhost;
     //! Number of chares requesting ghost data
     std::size_t m_ghostReq;
     //! Local element id associated to ghost remote id charewise
@@ -311,6 +329,10 @@ class DG : public CBase_DG {
     tk::UnsMesh::FaceSet m_expChBndFace;
     //! Incoming communication buffer during chare-boundary face communication
     std::unordered_map< int, tk::UnsMesh::FaceSet > m_infaces;
+    //! Elements (value) surrounding point (key) data-structure
+    std::map< std::size_t, std::vector< std::size_t > > m_esup;
+    //! Communication buffer for esup data-structure
+    std::map< std::size_t, std::vector< std::size_t > > m_esupc;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -345,6 +367,9 @@ class DG : public CBase_DG {
     void setupGhost();
 
     //! Continue after face adjacency communication map completed on this chare
+    void faceAdj();
+
+    //! Continue after node adjacency communication map completed on this chare
     void adj();
 
     //! Fill elements surrounding a face along chare boundary
@@ -354,6 +379,8 @@ class DG : public CBase_DG {
     void addEsuel( const std::array< std::size_t, 2 >& id,
                    std::size_t ghostid,
                    const tk::UnsMesh::Face& t );
+
+    void addEsup();
 
     //! Fill face geometry data along chare boundary
     void addGeoFace( const tk::UnsMesh::Face& t,

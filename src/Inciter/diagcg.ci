@@ -32,6 +32,7 @@ module diagcg {
       entry void setup();
       entry void boxvol( tk::real v );
       entry void resizeComm();
+      entry void nodeNeighSetup();
       entry void init();
       entry void refine();
       entry [reductiontarget] void advance( tk::real newdt );

@@ -124,6 +124,9 @@ class Transporter : public CBase_Transporter {
     //!   after mesh refinement
     void resized();
 
+    //! Reduction target: all worker chares have generated their own esup
+    void startEsup();
+
     //! Reduction target: all Sorter chares have queried their boundary nodes
     void queried();
     //! \brief Reduction target: all Sorter chares have responded with their

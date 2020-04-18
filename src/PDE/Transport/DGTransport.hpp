@@ -152,8 +152,6 @@ class Transport {
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
-              "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
@@ -248,8 +246,6 @@ class Transport {
               "vector must equal "+ std::to_string(0) );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
-      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
-              "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
@@ -268,8 +264,9 @@ class Transport {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, geoElem,
-                    flux, Problem::prescribedVelocity, U, ndofel, R );
+        tk::volInt( m_system, m_ncomp, m_offset, ndof, fd.Esuel().size()/4,
+                    inpoel, coord, geoElem, flux, Problem::prescribedVelocity,
+                    U, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)

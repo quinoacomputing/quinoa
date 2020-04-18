@@ -308,8 +308,6 @@ class MultiMat {
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
-              "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
@@ -434,6 +432,8 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
+      const auto nelem = fd.Esuel().size()/4;
+
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
@@ -444,8 +444,6 @@ class MultiMat {
               "vector must equal "+ std::to_string(rdof*nprim()) );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
-      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
-              "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
       Assert( ndof == 1, "DGP1/2 not set up for multi-material" );
@@ -475,8 +473,8 @@ class MultiMat {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, geoElem,
-                    flux, velfn, U, ndofel, R );
+        tk::volInt( m_system, m_ncomp, m_offset, ndof, nelem, inpoel, coord,
+                    geoElem, flux, velfn, U, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
@@ -497,16 +495,16 @@ class MultiMat {
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, inpoel,
-                              coord, geoElem, U, P, riemannDeriv, ndofel,
-                              R );
+      tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, nelem,
+                              inpoel, coord, geoElem, U, P, riemannDeriv,
+                              ndofel, R );
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
       {
         const auto ct = g_inputdeck.get< tag::param, tag::multimat,
                                          tag::prelax_timescale >()[m_system];
-        tk::pressureRelaxationInt( m_system, nmat, m_offset, ndof, rdof,
+        tk::pressureRelaxationInt( m_system, nmat, m_offset, ndof, rdof, nelem,
                                    geoElem, U, P, ndofel, ct, R );
       }
     }
