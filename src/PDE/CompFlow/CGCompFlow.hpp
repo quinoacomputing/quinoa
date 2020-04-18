@@ -396,7 +396,7 @@ class CompFlow {
 
       // compute/assemble gradients in points
       auto Grad = nodegrad( m_offset, coord, inpoel, lid, bid,
-                            vol, m_stag, esup, U, G, egrad );
+                            vol, m_stag, esup, U, G );
 
       // domain-edge integral: compute fluxes in edges
       std::vector< real > dflux( edgenode.size()/2 * m_ncomp );

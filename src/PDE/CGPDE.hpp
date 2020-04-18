@@ -69,8 +69,7 @@ nodegrad( ncomp_t offset,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esup,
           const tk::Fields& U,
-          const tk::Fields& G,
-          tk::ElemGradFn egrad );
+          const tk::Fields& G );
 
 //! Compute normal of dual-mesh associated to edge
 std::array< tk::real, 3 >
