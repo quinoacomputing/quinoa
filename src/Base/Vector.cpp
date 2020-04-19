@@ -28,23 +28,6 @@ tk::flip( std::array< real, 3 >& v ) noexcept
   v[2] = -v[2];
 }
 
-#pragma omp declare simd
-void
-tk::cross( real v1x, real v1y, real v1z,
-           real v2x, real v2y, real v2z,
-           real& rx, real& ry, real& rz )
-// *****************************************************************************
-//  Compute the cross-product of two vectors
-//! \param[in] v1 1st vector
-//! \param[in] v2 2nd vector
-//! \return Cross-product
-// *****************************************************************************
-{
-  rx = v1y*v2z - v2y*v1z;
-  ry = v1z*v2x - v2z*v1x;
-  rz = v1x*v2y - v2x*v1y;
-}
-
 std::array< tk::real, 3 >
 tk::cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
 // *****************************************************************************
@@ -57,26 +40,6 @@ tk::cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
   real rx, ry, rz;
   cross( v1[0], v1[1], v1[2], v2[0], v2[1], v2[2], rx, ry, rz );
   return { std::move(rx), std::move(ry), std::move(rz) };
-}
-
-#pragma omp declare simd
-void
-tk::crossdiv( real v1x, real v1y, real v1z,
-              real v2x, real v2y, real v2z,
-              real j,
-              real& rx, real& ry, real& rz )
-// *****************************************************************************
-//  Compute the cross-product of two vectors divided by a scalar
-//! \param[in] v1 1st vector
-//! \param[in] v2 2nd vector
-//! \param[in] j Scalar to divide each component by
-//! \return Cross-product divided by scalar
-// *****************************************************************************
-{
-  cross( v1x, v1y, v1z, v2x, v2y, v2z, rx, ry, rz );
-  rx /= j;
-  ry /= j;
-  rz /= j;
 }
 
 std::array< tk::real, 3 >
@@ -132,24 +95,6 @@ tk::unit( std::array< real, 3 >& v )
   v[0] /= len;
   v[1] /= len;
   v[2] /= len;
-}
-
-#pragma omp declare simd
-tk::real
-tk::triple( real v1x, real v1y, real v1z,
-            real v2x, real v2y, real v2z,
-            real v3x, real v3y, real v3z )
-// *****************************************************************************
-//  Compute the triple-product of three vectors
-//! \param[in] v1 1st vector
-//! \param[in] v2 2nd vector
-//! \param[in] v3 3rd vector
-//! \return Triple-product
-// *****************************************************************************
-{
-  real cx, cy, cz;
-  cross( v2x, v2y, v2z, v3x, v3y, v3z, cx, cy, cz );
-  return v1x*cx + v1y*cy + v1z*cz;
 }
 
 tk::real

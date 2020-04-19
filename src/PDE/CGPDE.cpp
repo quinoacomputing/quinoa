@@ -130,22 +130,19 @@ nodegrad( ncomp_t offset,
       tk::real dax = x[N[3]]-x[N[0]];
       tk::real day = y[N[3]]-y[N[0]];
       tk::real daz = z[N[3]]-z[N[0]];
-      auto J = bax*(cay*daz - day*caz)
-             + bay*(caz*dax - daz*cax)
-             + baz*(cax*day - dax*cay);
+      auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+      auto J24 = J/24.0;
       // shape function derivatives, nnode*ndim [4][3]
       tk::real g[4][3];
-      g[1][0] = (cay*daz - day*caz)/J;
-      g[1][1] = (caz*dax - daz*cax)/J;
-      g[1][2] = (cax*day - dax*cay)/J;
-      g[2][0] = (day*baz - bay*daz)/J;
-      g[2][1] = (daz*bax - baz*dax)/J;
-      g[2][2] = (dax*bay - bax*day)/J;
-      g[3][0] = (bay*caz - cay*baz)/J;
-      g[3][1] = (baz*cax - caz*bax)/J;
-      g[3][2] = (bax*cay - cax*bay)/J;
-      for (std::size_t i=0; i<3; ++i) g[0][i] = -g[1][i] - g[2][i] - g[3][i];
-      // compute primitive variable gradients at nodes
+      tk::crossdiv( cax, cay, caz, dax, day, daz, J,
+                    g[1][0], g[1][1], g[1][2] );
+      tk::crossdiv( dax, day, daz, bax, bay, baz, J,
+                    g[2][0], g[2][1], g[2][2] );
+      tk::crossdiv( bax, bay, baz, cax, cay, caz, J,
+                    g[3][0], g[3][1], g[3][2] );
+      for (std::size_t i=0; i<3; ++i)
+        g[0][i] = -g[1][i] - g[2][i] - g[3][i];
+      // compute primitive variables at nodes
       tk::real u[5];
       for (std::size_t b=0; b<4; ++b) {
         u[0] = U(N[b],0,offset);
@@ -155,7 +152,7 @@ nodegrad( ncomp_t offset,
         u[4] = U(N[b],4,offset)/u[0] - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
         for (std::size_t c=0; c<5; ++c)
           for (std::size_t i=0; i<3; ++i)
-            Grad(p,c*3+i,0) += J/24.0 * g[b][i] * u[c];
+            Grad(p,c*3+i,0) += J24 * g[b][i] * u[c];
       }
     }
 
