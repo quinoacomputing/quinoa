@@ -39,6 +39,12 @@ class CompFlowProblemUserDefined {
               int& inbox );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
+    //! \param[in,out] r Density source
+    //! \param[in,out] ru X momentum source
+    //! \param[in,out] rv Y momentum source
+    //! \param[in,out] rw Z momentum source
+    //! \param[in,out] re Specific total energy source
+    //! \note The function signature must follow tk::SrcFn
     static tk::CompFlowSrcFn::result_type
     src( ncomp_t, tk::real, tk::real, tk::real, tk::real,
          tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )

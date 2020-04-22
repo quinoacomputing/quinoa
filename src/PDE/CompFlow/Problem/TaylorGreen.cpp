@@ -61,22 +61,6 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-tk::CompFlowSrcFn::result_type
-CompFlowProblemTaylorGreen::src(
-  ncomp_t, tk::real x, tk::real y, tk::real, tk::real,
-  tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \param[in] x X coordinate where to evaluate the source
-//! \param[in] y Y coordinate where to evaluate the source
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  r = ru = rv = rw = 0.0;
-  re = 3.0*M_PI/8.0*(cos(3.0*M_PI*x)*cos(M_PI*y) - cos(3.0*M_PI*y)*cos(M_PI*x));
-}
-
 std::vector< std::string >
 CompFlowProblemTaylorGreen::fieldNames( ncomp_t ) const
 // *****************************************************************************
