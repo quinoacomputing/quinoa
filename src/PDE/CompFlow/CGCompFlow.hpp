@@ -84,11 +84,6 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      // Save stagnation point local node ids
-      m_stag.clear();
-      for (ncomp_t i=0; i<x.size(); ++i)
-        if (stagPoint( {x[i],y[i],z[i]}, m_stagCnf )) m_stag.push_back( i );
-
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
         int boxed = 0;
@@ -96,7 +91,7 @@ class CompFlow {
           Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t, boxed );
         if (boxed) inbox.push_back( i );
         unk(i,0,m_offset) = s[0]; // rho
-        if (stagNode(i)) {
+        if (stagPoint(x[i],y[i],z[i])) {
           unk(i,1,m_offset) = unk(i,2,m_offset) = unk(i,3,m_offset) = 0.0;
         } else {
           unk(i,1,m_offset) = s[1]; // rho * u
@@ -217,7 +212,8 @@ class CompFlow {
 
         // apply stagnation BCs
         for (std::size_t a=0; a<4; ++a)
-          if (stagNode(N[a])) u[1][N[a]] = u[2][N[a]] = u[3][N[a]] = 0.0;
+          if (stagPoint(x[N[a]],y[N[a]],z[N[a]]))
+            u[1][a] = u[2][a] = u[3][a] = 0.0;
 
         // access solution at elements
         std::array< const real*, m_ncomp > ue;
@@ -387,7 +383,8 @@ class CompFlow {
               u[3] = U(N[b],3,m_offset)/u[0];
               u[4] = U(N[b],4,m_offset)/u[0]
                      - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
-              if (stagNode(N[b])) u[1] = u[2] = u[3] = 0.0;
+              if (stagPoint(x[N[b]],y[N[b]],z[N[b]]))
+                u[1] = u[2] = u[3] = 0.0;
               for (std::size_t c=0; c<5; ++c)
                 for (std::size_t j=0; j<3; ++j)
                   G(i->second,c*3+j,0) += J24 * g[b][j] * u[c];
@@ -683,13 +680,21 @@ class CompFlow {
     const ncomp_t m_offset;             //!< Offset PDE operates from
     //! Stagnation point BC user configuration: point coordinates and radii
     const std::tuple< std::vector< real >, std::vector< real > > m_stagCnf;
-    std::vector< std::size_t > m_stag;  //!< Stagnation point local node ids
 
-    //! Decide if node is a stagnation point
-    //! \return True if node i is a stagnation point
+    //! Decide if point is a stagnation point
+    //! \param[in] x X mesh point coordinates to query
+    //! \param[in] y Y mesh point coordinates to query
+    //! \param[in] z Z mesh point coordinates to query
+    //! \return True if point is configured as a stagnation point by the user
     #pragma omp declare simd
-    bool stagNode( std::size_t i ) const {
-      for (auto j : m_stag) if (i == j) return true;
+    bool
+    stagPoint( real x, real y, real z ) const {
+      const auto& pnt = std::get< 0 >( m_stagCnf );
+      const auto& rad = std::get< 1 >( m_stagCnf );
+      for (std::size_t i=0; i<rad.size(); ++i) {
+        if (tk::length( x-pnt[i*3+0], y-pnt[i*3+1], z-pnt[i*3+2] ) < rad[i])
+          return true;
+      }
       return false;
     }
 
@@ -763,7 +768,7 @@ class CompFlow {
             u[3] = U(N[b],3,m_offset)/u[0];
             u[4] = U(N[b],4,m_offset)/u[0]
                    - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
-            if (stagNode(N[b])) u[1] = u[2] = u[3] = 0.0;
+            if (stagPoint(x[N[b]],y[N[b]],z[N[b]])) u[1] = u[2] = u[3] = 0.0;
             for (std::size_t c=0; c<m_ncomp; ++c)
               for (std::size_t i=0; i<3; ++i)
                 Grad(p,c*3+i,0) += J24 * g[b][i] * u[c];
@@ -809,6 +814,11 @@ class CompFlow {
       // domain-edge integral: compute fluxes in edges
       std::vector< real > dflux( edgenode.size()/2 * m_ncomp );
 
+      // access node coordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
       #pragma omp simd
       for (std::size_t e=0; e<edgenode.size()/2; ++e) {
         auto p = edgenode[e*2+0];
@@ -827,8 +837,8 @@ class CompFlow {
         real reR = U(q,4,m_offset) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
 
         // apply stagnation BCs to primitive variables
-        if (stagNode(p)) ruL = rvL = rwL = 0.0;
-        if (stagNode(q)) ruR = rvR = rwR = 0.0;
+        if (stagPoint(x[p],y[p],z[p])) ruL = rvL = rwL = 0.0;
+        if (stagPoint(x[q],y[q],z[q])) ruR = rvR = rwR = 0.0;
 
         // compute MUSCL reconstruction in edge-end points
         muscl( p, q, coord, G, rL, ruL, rvL, rwL, reL,
@@ -996,9 +1006,9 @@ class CompFlow {
         real reB = U(N[1],4,m_offset);
         real reC = U(N[2],4,m_offset);
         // apply stagnation BCs
-        if (stagNode(N[0])) ruA = rvA = rwA = 0.0;
-        if (stagNode(N[1])) ruB = rvB = rwB = 0.0;
-        if (stagNode(N[2])) ruC = rvC = rwC = 0.0;
+        if (stagPoint(x[N[0]],y[N[0]],z[N[0]])) ruA = rvA = rwA = 0.0;
+        if (stagPoint(x[N[1]],y[N[1]],z[N[1]])) ruB = rvB = rwB = 0.0;
+        if (stagPoint(x[N[2]],y[N[2]],z[N[2]])) ruC = rvC = rwC = 0.0;
         // compute face normal
         real nx, ny, nz;
         tk::normal( x[N[0]], x[N[1]], x[N[2]],

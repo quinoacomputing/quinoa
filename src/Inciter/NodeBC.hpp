@@ -41,12 +41,6 @@ correctBC( const tk::Fields& a,
            const std::unordered_map< std::size_t,
                    std::vector< std::pair< bool, tk::real > > >& bc );
 
-//! Decide if node is a stagnation point
-bool
-stagPoint( const std::array< tk::real, 3 >& p,
-           const std::tuple< std::vector< tk::real >,
-                             std::vector< tk::real > >& stag );
-
 } // inciter::
 
 #endif // NodeBC_h

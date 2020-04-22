@@ -113,6 +113,18 @@ dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
 }
 
 //! Compute length of a vector
+//! \param[in] x X coordinate of vector
+//! \param[in] y Y coordinate of vector
+//! \param[in] z Z coordinate of vector
+//! \return length
+#pragma omp declare simd
+inline real
+length( real x, real y, real z )
+{
+  return std::sqrt( x*x + y*y + z*z );
+}
+
+//! Compute length of a vector
 //! \param[in] v vector
 //! \return length
 inline real
