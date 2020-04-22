@@ -48,7 +48,12 @@ class CompFlow {
     using ncomp_t = kw::ncomp::info::expect::type;
     using eq = tag::compflow;
     using real = tk::real;
+
     static constexpr std::size_t m_ncomp = 5;
+    static constexpr real muscl_eps = 1.0e-9;
+    static constexpr real muscl_const = 1.0/3.0;
+    static constexpr real muscl_m1 = 1.0 - muscl_const;
+    static constexpr real muscl_p1 = 1.0 + muscl_const;
 
   public:
     //! \brief Constructor
@@ -349,19 +354,19 @@ class CompFlow {
         std::size_t N[4] =
           { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
         // compute element Jacobi determinant, J = 6V
-        tk::real bax = x[N[1]]-x[N[0]];
-        tk::real bay = y[N[1]]-y[N[0]];
-        tk::real baz = z[N[1]]-z[N[0]];
-        tk::real cax = x[N[2]]-x[N[0]];
-        tk::real cay = y[N[2]]-y[N[0]];
-        tk::real caz = z[N[2]]-z[N[0]];
-        tk::real dax = x[N[3]]-x[N[0]];
-        tk::real day = y[N[3]]-y[N[0]];
-        tk::real daz = z[N[3]]-z[N[0]];
+        real bax = x[N[1]]-x[N[0]];
+        real bay = y[N[1]]-y[N[0]];
+        real baz = z[N[1]]-z[N[0]];
+        real cax = x[N[2]]-x[N[0]];
+        real cay = y[N[2]]-y[N[0]];
+        real caz = z[N[2]]-z[N[0]];
+        real dax = x[N[3]]-x[N[0]];
+        real day = y[N[3]]-y[N[0]];
+        real daz = z[N[3]]-z[N[0]];
         auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
         auto J24 = J/24.0;
         // shape function derivatives, nnode*ndim [4][3]
-        tk::real g[4][3];
+        real g[4][3];
         tk::crossdiv( cax, cay, caz, dax, day, daz, J,
                       g[1][0], g[1][1], g[1][2] );
         tk::crossdiv( dax, day, daz, bax, bay, baz, J,
@@ -370,12 +375,11 @@ class CompFlow {
                       g[3][0], g[3][1], g[3][2] );
         for (std::size_t i=0; i<3; ++i)
           g[0][i] = -g[1][i] - g[2][i] - g[3][i];
-
         // scatter-add gradient contributions to boundary nodes
         for (std::size_t a=0; a<4; ++a) {
           auto i = bid.find( gid[N[a]] );
           if (i != end(bid)) {
-            tk::real u[5];
+            real u[5];
             for (std::size_t b=0; b<4; ++b) {
               u[0] = U(N[b],0,m_offset);
               u[1] = U(N[b],1,m_offset)/u[0];
@@ -685,10 +689,9 @@ class CompFlow {
     //! \return True if node i is a stagnation point
     #pragma omp declare simd
     bool stagNode( std::size_t i ) const {
-      if (std::any_of(begin(m_stag), end(m_stag), [=](auto n){return n == i;}))
-        return true;
-      else
-        return false;
+      for (std::size_t j=0; j<m_stag.size(); ++j)
+        if (i == j) return true;
+      return false;
     }
 
     //! \brief Compute/assemble nodal gradients of primitive variables for
@@ -703,11 +706,11 @@ class CompFlow {
     //! \param[in] G Nodal gradients of primitive variables in chare-boundary nodes
     //! \return Gradients of primitive variables in all mesh points
     tk::Fields
-    nodegrad( const std::array< std::vector< tk::real >, 3 >& coord,
+    nodegrad( const std::array< std::vector< real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::unordered_map< std::size_t, std::size_t >& lid,
               const std::unordered_map< std::size_t, std::size_t >& bid,
-              const std::vector< tk::real >& vol,
+              const std::vector< real >& vol,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup,
               const tk::Fields& U,
@@ -731,19 +734,19 @@ class CompFlow {
           std::size_t N[4] =
             { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
           // compute element Jacobi determinant, J = 6V
-          tk::real bax = x[N[1]]-x[N[0]];
-          tk::real bay = y[N[1]]-y[N[0]];
-          tk::real baz = z[N[1]]-z[N[0]];
-          tk::real cax = x[N[2]]-x[N[0]];
-          tk::real cay = y[N[2]]-y[N[0]];
-          tk::real caz = z[N[2]]-z[N[0]];
-          tk::real dax = x[N[3]]-x[N[0]];
-          tk::real day = y[N[3]]-y[N[0]];
-          tk::real daz = z[N[3]]-z[N[0]];
+          real bax = x[N[1]]-x[N[0]];
+          real bay = y[N[1]]-y[N[0]];
+          real baz = z[N[1]]-z[N[0]];
+          real cax = x[N[2]]-x[N[0]];
+          real cay = y[N[2]]-y[N[0]];
+          real caz = z[N[2]]-z[N[0]];
+          real dax = x[N[3]]-x[N[0]];
+          real day = y[N[3]]-y[N[0]];
+          real daz = z[N[3]]-z[N[0]];
           auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
           auto J24 = J/24.0;
           // shape function derivatives, nnode*ndim [4][3]
-          tk::real g[4][3];
+          real g[4][3];
           tk::crossdiv( cax, cay, caz, dax, day, daz, J,
                         g[1][0], g[1][1], g[1][2] );
           tk::crossdiv( dax, day, daz, bax, bay, baz, J,
@@ -753,7 +756,7 @@ class CompFlow {
           for (std::size_t i=0; i<3; ++i)
             g[0][i] = -g[1][i] - g[2][i] - g[3][i];
           // scatter-add gradient contributions to boundary nodes
-          tk::real u[m_ncomp];
+          real u[m_ncomp];
           for (std::size_t b=0; b<4; ++b) {
             u[0] = U(N[b],0,m_offset);
             u[1] = U(N[b],1,m_offset)/u[0];
@@ -829,10 +832,8 @@ class CompFlow {
         if (stagNode(q)) ruR = rvR = rwR = 0.0;
 
         // compute MUSCL reconstruction in edge-end points
-        tk::muscl( p, q, coord, G,
-                   rL, ruL, rvL, rwL, reL,
-                   rR, ruR, rvR, rwR, reR,
-                   /*realizability=*/ true );
+        muscl( p, q, coord, G, rL, ruL, rvL, rwL, reL,
+               rR, ruR, rvR, rwR, reR );
 
         // convert back to conserved variables
         reL = (reL + 0.5*(ruL*ruL + rvL*rvL + rwL*rwL)) * rL;
@@ -869,6 +870,88 @@ class CompFlow {
         }
 
       tk::destroy(dflux);
+    }
+
+    //! \brief Compute MUSCL reconstruction in edge-end points using a MUSCL
+    //!    procedure with van Leer limiting
+    //! \param[in] p Left node id of edge-end
+    //! \param[in] q Right node id of edge-end
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] G Gradient of all unknowns in mesh points
+    //! \param[in] rL Left density
+    //! \param[in] ruL Left X velocity
+    //! \param[in] rvL Left Y velocity
+    //! \param[in] rwL Left Z velocity
+    //! \param[in] reL Left internal energy
+    //! \param[in] rL Left density
+    //! \param[in] ruL Left X velocity
+    //! \param[in] rvL Left Y velocity
+    //! \param[in] rwL Left Z velocity
+    //! \param[in] reL Left internal energy
+    #pragma omp declare simd
+    void muscl( std::size_t p,
+                std::size_t q,
+                const tk::UnsMesh::Coords& coord,
+                const tk::Fields& G,
+                real& rL, real& uL, real& vL, real& wL, real& eL,
+                real& rR, real& uR, real& vR, real& wR, real& eR ) const
+    {
+      // access node coordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      // edge vector
+      std::array< real, 3 > vw{ x[q]-x[p], y[q]-y[p], z[q]-z[p] };
+
+      real delta1[5], delta2[5], delta3[5];
+      std::array< real, 5 > ls{ rL, uL, vL, wL, eL };
+      std::array< real, 5 > rs{ rR, uR, vR, wR, eR };
+      auto url = ls;
+      auto urr = rs;
+
+      // MUSCL reconstruction of edge-end-point primitive variables
+      for (std::size_t c=0; c<5; ++c) {
+        // gradients
+        std::array< real, 3 > g1{ G(p,c*3+0,0), G(p,c*3+1,0), G(p,c*3+2,0) },
+                              g2{ G(q,c*3+0,0), G(q,c*3+1,0), G(q,c*3+2,0) };
+
+        delta2[c] = rs[c] - ls[c];
+        delta1[c] = 2.0 * tk::dot(g1,vw) - delta2[c];
+        delta3[c] = 2.0 * tk::dot(g2,vw) - delta2[c];
+
+        // form limiters
+        auto rcL = (delta2[c] + muscl_eps) / (delta1[c] + muscl_eps);
+        auto rcR = (delta2[c] + muscl_eps) / (delta3[c] + muscl_eps);
+        auto rLinv = (delta1[c] + muscl_eps) / (delta2[c] + muscl_eps);
+        auto rRinv = (delta3[c] + muscl_eps) / (delta2[c] + muscl_eps);
+
+        auto phiL = (std::abs(rcL) + rcL) / (std::abs(rcL) + 1.0);
+        auto phiR = (std::abs(rcR) + rcR) / (std::abs(rcR) + 1.0);
+        auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
+        auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
+
+        // update unknowns with reconstructed unknowns
+        url[c] += 0.25*(delta1[c]*muscl_m1*phiL + delta2[c]*muscl_p1*phi_L_inv);
+        urr[c] -= 0.25*(delta3[c]*muscl_m1*phiR + delta2[c]*muscl_p1*phi_R_inv);
+      }
+
+      // force first order if the reconstructions for density or internal energy
+      // would have allowed negative values
+      if (ls[0] < delta1[0] || ls[4] < delta1[4]) url = ls;
+      if (rs[0] < -delta3[0] || rs[4] < -delta3[4]) urr = rs;
+
+      rL = url[0];
+      uL = url[1];
+      vL = url[2];
+      wL = url[3];
+      eL = url[4];
+
+      rR = urr[0];
+      uR = urr[1];
+      vR = urr[2];
+      wR = urr[3];
+      eR = urr[4];
     }
 
     //! Compute boundary integrals for ALECG
@@ -986,7 +1069,6 @@ class CompFlow {
 
       tk::destroy(bflux);
     }
-
 
     //! Compute optional source integral
     //! \param[in] coord Mesh node coordinates

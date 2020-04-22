@@ -101,18 +101,6 @@ transform_P0P1( ncomp_t ncomp,
                 const UnsMesh::Coords& coord,
                 Fields& W );
 
-//! \brief Compute MUSCL reconstruction in edge-end points using a MUSCL
-//!   procedure with Van Leer limiting
-#pragma omp declare simd
-void
-muscl( std::size_t p,
-       std::size_t q,
-       const UnsMesh::Coords& coord,
-       const Fields& G,
-       tk::real& rL, tk::real& uL, tk::real& vL, tk::real& wL, tk::real& eL,
-       tk::real& rR, tk::real& uR, tk::real& vR, tk::real& wR, tk::real& eR,
-       bool realizability = false );
-
 } // tk::
 
 #endif // Reconstruction_h
