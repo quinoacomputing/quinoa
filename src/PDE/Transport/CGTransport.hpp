@@ -120,8 +120,7 @@ class Transport {
                const tk::Fields& U,
                tk::Fields& G ) const
     {
-      //chbgrad( m_ncomp, m_offset, coord, inpoel, bndel, gid, bid, {},
-      //         U, egrad, G );
+      //chbgrad( m_offset, coord, inpoel, bndel, gid, {}, bid, U, G );
     }
 
     //! Compute right hand side for ALECG
@@ -183,6 +182,8 @@ class Transport {
       // previously-reused one, got specialized to compflow.
       //auto Grad = nodegrad( m_offset, coord, inpoel, lid, bid,
       //                      vol, {}, esup, U, G, egrad );
+      //auto Grad =
+      //  nodegrad( m_offset, coord, inpoel, {}, lid, bid, vol, esup, U, G );
 
       // compute derived data structures
       auto esued = tk::genEsued( inpoel, 4, tk::genEsup( inpoel, 4 ) );

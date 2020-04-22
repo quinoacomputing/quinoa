@@ -91,7 +91,7 @@ class CompFlow {
           Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t, boxed );
         if (boxed) inbox.push_back( i );
         unk(i,0,m_offset) = s[0]; // rho
-        if (stagNode(i,m_stag)) {
+        if (stagNode(i)) {
           unk(i,1,m_offset) = unk(i,2,m_offset) = unk(i,3,m_offset) = 0.0;
         } else {
           unk(i,1,m_offset) = s[1]; // rho * u
@@ -212,7 +212,7 @@ class CompFlow {
 
         // apply stagnation BCs
         for (std::size_t a=0; a<4; ++a)
-          if (stagNode(N[a],m_stag)) u[1][N[a]] = u[2][N[a]] = u[3][N[a]] = 0.0;
+          if (stagNode(N[a])) u[1][N[a]] = u[2][N[a]] = u[3][N[a]] = 0.0;
 
         // access solution at elements
         std::array< const real*, m_ncomp > ue;
@@ -316,7 +316,7 @@ class CompFlow {
 //         m_physics.conductRhs( deltat, J, N, grad, u, r, R );
     }
 
-    //! Compute nodal gradients of primitive variables for ALECG
+    //! Compute nodal gradients of primitive variables for ALECG along boundary
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] bndel List of elements contributing to chare-boundary nodes
@@ -333,7 +333,64 @@ class CompFlow {
                const tk::Fields& U,
                tk::Fields& G ) const
     {
-      chbgrad( m_offset, coord, inpoel, bndel, gid, m_stag, bid, U, G );
+      Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
+              "vector at recent time step incorrect" );
+
+      // compute gradients of primitive variables in points
+      G.fill( 0.0 );
+
+      // access node cooordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      for (auto e : bndel) {  // elements contributing to chare boundary nodes
+        // access node IDs
+        std::size_t N[4] =
+          { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+        // compute element Jacobi determinant, J = 6V
+        tk::real bax = x[N[1]]-x[N[0]];
+        tk::real bay = y[N[1]]-y[N[0]];
+        tk::real baz = z[N[1]]-z[N[0]];
+        tk::real cax = x[N[2]]-x[N[0]];
+        tk::real cay = y[N[2]]-y[N[0]];
+        tk::real caz = z[N[2]]-z[N[0]];
+        tk::real dax = x[N[3]]-x[N[0]];
+        tk::real day = y[N[3]]-y[N[0]];
+        tk::real daz = z[N[3]]-z[N[0]];
+        auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+        auto J24 = J/24.0;
+        // shape function derivatives, nnode*ndim [4][3]
+        tk::real g[4][3];
+        tk::crossdiv( cax, cay, caz, dax, day, daz, J,
+                      g[1][0], g[1][1], g[1][2] );
+        tk::crossdiv( dax, day, daz, bax, bay, baz, J,
+                      g[2][0], g[2][1], g[2][2] );
+        tk::crossdiv( bax, bay, baz, cax, cay, caz, J,
+                      g[3][0], g[3][1], g[3][2] );
+        for (std::size_t i=0; i<3; ++i)
+          g[0][i] = -g[1][i] - g[2][i] - g[3][i];
+
+        // scatter-add gradient contributions to boundary nodes
+        for (std::size_t a=0; a<4; ++a) {
+          auto i = bid.find( gid[N[a]] );
+          if (i != end(bid)) {
+            tk::real u[5];
+            for (std::size_t b=0; b<4; ++b) {
+              u[0] = U(N[b],0,m_offset);
+              u[1] = U(N[b],1,m_offset)/u[0];
+              u[2] = U(N[b],2,m_offset)/u[0];
+              u[3] = U(N[b],3,m_offset)/u[0];
+              u[4] = U(N[b],4,m_offset)/u[0]
+                     - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
+              if (stagNode(N[b])) u[1] = u[2] = u[3] = 0.0;
+              for (std::size_t c=0; c<5; ++c)
+                for (std::size_t j=0; j<3; ++j)
+                  G(i->second,c*3+j,0) += J24 * g[b][j] * u[c];
+            }
+          }
+        }
+      }
     }
 
     //! Compute right hand side for ALECG
@@ -354,26 +411,25 @@ class CompFlow {
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    void rhs(
-      real t,
-      const std::array< std::vector< real >, 3 >& coord,
-      const std::vector< std::size_t >& inpoel,
-      const std::vector< std::size_t >& triinpoel,
-      const std::vector< std::size_t >& gid,
-      const std::unordered_map< std::size_t, std::size_t >& bid,
-      const std::unordered_map< std::size_t, std::size_t >& lid,
-      const std::vector< real >& dfn,
-      const std::pair< std::vector< std::size_t >,
-                       std::vector< std::size_t > >& psup,
-      const std::pair< std::vector< std::size_t >,
-                       std::vector< std::size_t > >& esup,
-      const std::vector< int >& symbcnode,
-      const std::vector< real >& vol,
-      const std::vector< std::size_t >& edgenode,
-      const std::vector< std::size_t >& edgeid,
-      const tk::Fields& G,
-      const tk::Fields& U,
-      tk::Fields& R ) const
+    void rhs( real t,
+              const std::array< std::vector< real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const std::vector< std::size_t >& triinpoel,
+              const std::vector< std::size_t >& gid,
+              const std::unordered_map< std::size_t, std::size_t >& bid,
+              const std::unordered_map< std::size_t, std::size_t >& lid,
+              const std::vector< real >& dfn,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& psup,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& esup,
+              const std::vector< int >& symbcnode,
+              const std::vector< real >& vol,
+              const std::vector< std::size_t >& edgenode,
+              const std::vector< std::size_t >& edgeid,
+              const tk::Fields& G,
+              const tk::Fields& U,
+              tk::Fields& R ) const
     {
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
@@ -384,189 +440,19 @@ class CompFlow {
               "side vector incorrect" );
 
       // compute/assemble gradients in points
-      auto Grad =
-        nodegrad( m_offset, coord, inpoel, m_stag, lid, bid, vol, esup, U, G );
-
-      // domain-edge integral: compute fluxes in edges
-      std::vector< real > dflux( edgenode.size()/2 * m_ncomp );
-      #pragma omp simd
-      for (std::size_t e=0; e<edgenode.size()/2; ++e) {
-        auto p = edgenode[e*2+0];
-        auto q = edgenode[e*2+1];
-
-        // compute primitive variables at edge-end points
-        real rL  = U(p,0,m_offset);
-        real ruL = U(p,1,m_offset) / rL;
-        real rvL = U(p,2,m_offset) / rL;
-        real rwL = U(p,3,m_offset) / rL;
-        real reL = U(p,4,m_offset) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
-        real rR  = U(q,0,m_offset);
-        real ruR = U(q,1,m_offset) / rR;
-        real rvR = U(q,2,m_offset) / rR;
-        real rwR = U(q,3,m_offset) / rR;
-        real reR = U(q,4,m_offset) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
-
-        // apply stagnation BCs to primitive variables
-        if (stagNode(p,m_stag)) ruL = rvL = rwL = 0.0;
-        if (stagNode(q,m_stag)) ruR = rvR = rwR = 0.0;
-
-        // compute MUSCL reconstruction in edge-end points
-        tk::muscl( p, q, coord, Grad,
-                   rL, ruL, rvL, rwL, reL,
-                   rR, ruR, rvR, rwR, reR,
-                   /*realizability=*/ true );
-
-        // convert back to conserved variables
-        reL = (reL + 0.5*(ruL*ruL + rvL*rvL + rwL*rwL)) * rL;
-        ruL *= rL;
-        rvL *= rL;
-        rwL *= rL;
-        reR = (reR + 0.5*(ruR*ruR + rvR*rvR + rwR*rwR)) * rR;
-        ruR *= rR;
-        rvR *= rR;
-        rwR *= rR;
-
-        // compute Riemann flux using edge-end point states
-        real f[5];
-        Rusanov::flux( dfn[e*6+0], dfn[e*6+1], dfn[e*6+2],
-                       dfn[e*6+3], dfn[e*6+4], dfn[e*6+5],
-                       rL, ruL, rvL, rwL, reL,
-                       rR, ruR, rvR, rwR, reR,
-                       f[0], f[1], f[2], f[3], f[4] );
-        // store flux in edges
-        for (std::size_t c=0; c<m_ncomp; ++c) dflux[e*m_ncomp+c] = f[c];
-      }
+      auto Grad = nodegrad( coord, inpoel, lid, bid, vol, esup, U, G );
 
       // zero right hand side for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
 
-      // access pointer to right hand side at component and offset
-      std::array< const real*, m_ncomp > r;
-      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+      // compute domain-edge integral
+      domainint( coord, gid, edgenode, edgeid, psup, dfn, U, Grad, R );
 
-      // domain-edge integral: sum flux contributions to points
-      for (std::size_t p=0,k=0; p<U.nunk(); ++p)
-        for (auto q : tk::Around(psup,p)) {
-          auto s = gid[p] > gid[q] ? -1.0 : 1.0;
-          auto e = edgeid[k++];
-          for (std::size_t c=0; c<m_ncomp; ++c)
-            R.var(r[c],p) -= 2.0*s*dflux[e*m_ncomp+c];
-        }
-      tk::destroy(dflux);
+      // compute boundary integrals
+      bndint( coord, triinpoel, symbcnode, U, R );
 
-      // access node coordinates
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-
-      // boundary integrals: compute fluxes in edges
-      std::vector< real > bflux( triinpoel.size() * m_ncomp * 2 );
-      #pragma omp simd
-      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
-        // access node IDs
-        std::size_t N[3] =
-          { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
-        // access solution at element nodes
-        real rA  = U(N[0],0,m_offset);
-        real rB  = U(N[1],0,m_offset);
-        real rC  = U(N[2],0,m_offset);
-        real ruA = U(N[0],1,m_offset);
-        real ruB = U(N[1],1,m_offset);
-        real ruC = U(N[2],1,m_offset);
-        real rvA = U(N[0],2,m_offset);
-        real rvB = U(N[1],2,m_offset);
-        real rvC = U(N[2],2,m_offset);
-        real rwA = U(N[0],3,m_offset);
-        real rwB = U(N[1],3,m_offset);
-        real rwC = U(N[2],3,m_offset);
-        real reA = U(N[0],4,m_offset);
-        real reB = U(N[1],4,m_offset);
-        real reC = U(N[2],4,m_offset);
-        // apply stagnation BCs
-        if (stagNode(N[0],m_stag)) ruA = rvA = rwA = 0.0;
-        if (stagNode(N[1],m_stag)) ruB = rvB = rwB = 0.0;
-        if (stagNode(N[2],m_stag)) ruC = rvC = rwC = 0.0;
-        // compute face normal
-        real nx, ny, nz;
-        tk::normal( x[N[0]], x[N[1]], x[N[2]],
-                    y[N[0]], y[N[1]], y[N[2]],
-                    z[N[0]], z[N[1]], z[N[2]],
-                    nx, ny, nz );
-        // compute boundary flux
-        real f[m_ncomp][3];
-        real p, vn;
-        int sym = symbcnode[e];
-        p = eos_pressure< eq >( m_system, rA, ruA/rA, rvA/rA, rwA/rA, reA );
-        vn = sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA) / rA;
-        f[0][0] = rA*vn;
-        f[1][0] = ruA*vn + p*nx;
-        f[2][0] = rvA*vn + p*ny;
-        f[3][0] = rwA*vn + p*nz;
-        f[4][0] = (reA + p)*vn;
-        p = eos_pressure< eq >( m_system, rB, ruB/rB, rvB/rB, rwB/rB, reB );
-        vn = sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB) / rB;
-        f[0][1] = rB*vn;
-        f[1][1] = ruB*vn + p*nx;
-        f[2][1] = rvB*vn + p*ny;
-        f[3][1] = rwB*vn + p*nz;
-        f[4][1] = (reB + p)*vn;
-        p = eos_pressure< eq >( m_system, rC, ruC/rC, rvC/rC, rwC/rC, reC );
-        vn = sym ? 0.0 : (nx*ruC + ny*rvC + nz*rwC) / rC;
-        f[0][2] = rC*vn;
-        f[1][2] = ruC*vn + p*nx;
-        f[2][2] = rvC*vn + p*ny;
-        f[3][2] = rwC*vn + p*nz;
-        f[4][2] = (reC + p)*vn;
-        // compute face area
-        auto A = tk::area( x[N[0]], x[N[1]], x[N[2]],
-                           y[N[0]], y[N[1]], y[N[2]],
-                           z[N[0]], z[N[1]], z[N[2]] );
-        // store flux in boundary elements
-        for (std::size_t c=0; c<m_ncomp; ++c) {
-          auto eb = (e*m_ncomp+c)*6;
-          auto Bab = A/24.0 * (f[c][0] + f[c][1]);
-          bflux[eb+0] = Bab + A/6.0 * f[c][0];
-          bflux[eb+1] = Bab;
-          Bab = A/24.0 * (f[c][1] + f[c][2]);
-          bflux[eb+2] = Bab + A/6.0 * f[c][1];
-          bflux[eb+3] = Bab;
-          Bab = A/24.0 * (f[c][2] + f[c][0]);
-          bflux[eb+4] = Bab + A/6.0 * f[c][2];
-          bflux[eb+5] = Bab;
-        }
-      }
-
-      // boundary integrals: sum flux contributions to points
-      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
-        std::size_t N[3] =
-          { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
-        for (std::size_t c=0; c<m_ncomp; ++c) {
-          auto eb = (e*m_ncomp+c)*6;
-          R.var(r[c],N[0]) -= bflux[eb+0] + bflux[eb+5];
-          R.var(r[c],N[1]) -= bflux[eb+1] + bflux[eb+2];
-          R.var(r[c],N[2]) -= bflux[eb+3] + bflux[eb+4];
-        }
-      }
-      tk::destroy(bflux);
-
-      // source integral
-      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-        std::size_t N[4] =
-          { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
-        // compute element Jacobi determinant, J = 6V
-        auto J24 = tk::triple(
-          x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]],
-          x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]],
-          x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] ) / 24.0;
-        // sum source contributions to nodes
-        for (std::size_t a=0; a<4; ++a) {
-          real s[m_ncomp];
-          Problem::src( m_system, x[N[a]], y[N[a]], z[N[a]], t,
-                        s[0], s[1], s[2], s[3], s[4] );
-          for (std::size_t c=0; c<m_ncomp; ++c)
-            R.var(r[c],inpoel[e*4+a]) += J24 * s[c];
-        }
-      }
+      // compute optional source integral
+      src( coord, inpoel, t, R );
     }
 
     //! Compute the minimum time step size
@@ -794,6 +680,353 @@ class CompFlow {
     //! Stagnation point BC user configuration: point coordinates and radii
     const std::tuple< std::vector< real >, std::vector< real > > m_stagCnf;
     std::vector< std::size_t > m_stag;  //!< Stagnation point local node ids
+
+    //! Decide if node is a stagnation point
+    //! \return True if node i is a stagnation point
+    #pragma omp declare simd
+    bool stagNode( std::size_t i ) const {
+      if (std::any_of(begin(m_stag), end(m_stag), [=](auto n){return n == i;}))
+        return true;
+      else
+        return false;
+    }
+
+    //! \brief Compute/assemble nodal gradients of primitive variables for
+    //!   ALECG in all points
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] lid Global->local node ids
+    //! \param[in] bid Local chare-boundary node ids (value) associated to
+    //!    global node ids (key)
+    //! \param[in] vol Nodal volumes
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] G Nodal gradients of primitive variables in chare-boundary nodes
+    //! \return Gradients of primitive variables in all mesh points
+    tk::Fields
+    nodegrad( const std::array< std::vector< tk::real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              const std::unordered_map< std::size_t, std::size_t >& lid,
+              const std::unordered_map< std::size_t, std::size_t >& bid,
+              const std::vector< tk::real >& vol,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& esup,
+              const tk::Fields& U,
+              const tk::Fields& G ) const
+    {
+      // allocate storage for nodal gradients of primitive variables
+      tk::Fields Grad( U.nunk(), m_ncomp*3 );
+      Grad.fill( 0.0 );
+
+      // access node cooordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      // compute gradients of primitive variables in points
+      auto npoin = U.nunk();
+      #pragma omp simd
+      for (std::size_t p=0; p<npoin; ++p)
+        for (auto e : tk::Around(esup,p)) {
+          // access node IDs
+          std::size_t N[4] =
+            { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+          // compute element Jacobi determinant, J = 6V
+          tk::real bax = x[N[1]]-x[N[0]];
+          tk::real bay = y[N[1]]-y[N[0]];
+          tk::real baz = z[N[1]]-z[N[0]];
+          tk::real cax = x[N[2]]-x[N[0]];
+          tk::real cay = y[N[2]]-y[N[0]];
+          tk::real caz = z[N[2]]-z[N[0]];
+          tk::real dax = x[N[3]]-x[N[0]];
+          tk::real day = y[N[3]]-y[N[0]];
+          tk::real daz = z[N[3]]-z[N[0]];
+          auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+          auto J24 = J/24.0;
+          // shape function derivatives, nnode*ndim [4][3]
+          tk::real g[4][3];
+          tk::crossdiv( cax, cay, caz, dax, day, daz, J,
+                        g[1][0], g[1][1], g[1][2] );
+          tk::crossdiv( dax, day, daz, bax, bay, baz, J,
+                        g[2][0], g[2][1], g[2][2] );
+          tk::crossdiv( bax, bay, baz, cax, cay, caz, J,
+                        g[3][0], g[3][1], g[3][2] );
+          for (std::size_t i=0; i<3; ++i)
+            g[0][i] = -g[1][i] - g[2][i] - g[3][i];
+          // scatter-add gradient contributions to boundary nodes
+          tk::real u[m_ncomp];
+          for (std::size_t b=0; b<4; ++b) {
+            u[0] = U(N[b],0,m_offset);
+            u[1] = U(N[b],1,m_offset)/u[0];
+            u[2] = U(N[b],2,m_offset)/u[0];
+            u[3] = U(N[b],3,m_offset)/u[0];
+            u[4] = U(N[b],4,m_offset)/u[0]
+                   - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
+            if (stagNode(N[b])) u[1] = u[2] = u[3] = 0.0;
+            for (std::size_t c=0; c<m_ncomp; ++c)
+              for (std::size_t i=0; i<3; ++i)
+                Grad(p,c*3+i,0) += J24 * g[b][i] * u[c];
+          }
+        }
+
+      // put in nodal gradients of chare-boundary points
+      for (const auto& [g,b] : bid) {
+        auto i = tk::cref_find( lid, g );
+        for (ncomp_t c=0; c<Grad.nprop(); ++c)
+          Grad(i,c,0) = G(b,c,0);
+      }
+
+      // divide weak result in gradients by nodal volume
+      for (std::size_t p=0; p<npoin; ++p)
+        for (std::size_t c=0; c<m_ncomp*3; ++c)
+          Grad(p,c,0) /= vol[p];
+
+      return Grad;
+    }
+
+    //! Compute domain-edge integral for ALECG
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] gid Local->glocal node ids
+    //! \param[in] edgenode Local node ids of edges
+    //! \param[in] edgeid Local node id pair -> edge id map
+    //! \param[in] psup Points surrounding points
+    //! \param[in] dfn Dual-face normals
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] G Nodal gradients
+    //! \param[in,out] R Right-hand side vector computed
+    void domainint( const std::array< std::vector< real >, 3 >& coord,
+                    const std::vector< std::size_t >& gid,
+                    const std::vector< std::size_t >& edgenode,
+                    const std::vector< std::size_t >& edgeid,
+                    const std::pair< std::vector< std::size_t >,
+                                     std::vector< std::size_t > >& psup,
+                    const std::vector< real >& dfn,
+                    const tk::Fields& U,
+                    const tk::Fields& G,
+                    tk::Fields& R ) const
+    {
+      // domain-edge integral: compute fluxes in edges
+      std::vector< real > dflux( edgenode.size()/2 * m_ncomp );
+
+      #pragma omp simd
+      for (std::size_t e=0; e<edgenode.size()/2; ++e) {
+        auto p = edgenode[e*2+0];
+        auto q = edgenode[e*2+1];
+
+        // compute primitive variables at edge-end points
+        real rL  = U(p,0,m_offset);
+        real ruL = U(p,1,m_offset) / rL;
+        real rvL = U(p,2,m_offset) / rL;
+        real rwL = U(p,3,m_offset) / rL;
+        real reL = U(p,4,m_offset) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
+        real rR  = U(q,0,m_offset);
+        real ruR = U(q,1,m_offset) / rR;
+        real rvR = U(q,2,m_offset) / rR;
+        real rwR = U(q,3,m_offset) / rR;
+        real reR = U(q,4,m_offset) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
+
+        // apply stagnation BCs to primitive variables
+        if (stagNode(p)) ruL = rvL = rwL = 0.0;
+        if (stagNode(q)) ruR = rvR = rwR = 0.0;
+
+        // compute MUSCL reconstruction in edge-end points
+        tk::muscl( p, q, coord, G,
+                   rL, ruL, rvL, rwL, reL,
+                   rR, ruR, rvR, rwR, reR,
+                   /*realizability=*/ true );
+
+        // convert back to conserved variables
+        reL = (reL + 0.5*(ruL*ruL + rvL*rvL + rwL*rwL)) * rL;
+        ruL *= rL;
+        rvL *= rL;
+        rwL *= rL;
+        reR = (reR + 0.5*(ruR*ruR + rvR*rvR + rwR*rwR)) * rR;
+        ruR *= rR;
+        rvR *= rR;
+        rwR *= rR;
+
+        // compute Riemann flux using edge-end point states
+        real f[5];
+        Rusanov::flux( dfn[e*6+0], dfn[e*6+1], dfn[e*6+2],
+                       dfn[e*6+3], dfn[e*6+4], dfn[e*6+5],
+                       rL, ruL, rvL, rwL, reL,
+                       rR, ruR, rvR, rwR, reR,
+                       f[0], f[1], f[2], f[3], f[4] );
+        // store flux in edges
+        for (std::size_t c=0; c<m_ncomp; ++c) dflux[e*m_ncomp+c] = f[c];
+      }
+
+      // access pointer to right hand side at component and offset
+      std::array< const real*, m_ncomp > r;
+      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+
+      // domain-edge integral: sum flux contributions to points
+      for (std::size_t p=0,k=0; p<U.nunk(); ++p)
+        for (auto q : tk::Around(psup,p)) {
+          auto s = gid[p] > gid[q] ? -1.0 : 1.0;
+          auto e = edgeid[k++];
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            R.var(r[c],p) -= 2.0*s*dflux[e*m_ncomp+c];
+        }
+
+      tk::destroy(dflux);
+    }
+
+    //! Compute boundary integrals for ALECG
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
+    //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] R Right-hand side vector computed
+    void bndint( const std::array< std::vector< real >, 3 >& coord,
+                 const std::vector< std::size_t >& triinpoel,
+                 const std::vector< int >& symbcnode,
+                 const tk::Fields& U,
+                 tk::Fields& R ) const
+    {
+
+      // access node coordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      // boundary integrals: compute fluxes in edges
+      std::vector< real > bflux( triinpoel.size() * m_ncomp * 2 );
+
+      #pragma omp simd
+      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
+        // access node IDs
+        std::size_t N[3] =
+          { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+        // access solution at element nodes
+        real rA  = U(N[0],0,m_offset);
+        real rB  = U(N[1],0,m_offset);
+        real rC  = U(N[2],0,m_offset);
+        real ruA = U(N[0],1,m_offset);
+        real ruB = U(N[1],1,m_offset);
+        real ruC = U(N[2],1,m_offset);
+        real rvA = U(N[0],2,m_offset);
+        real rvB = U(N[1],2,m_offset);
+        real rvC = U(N[2],2,m_offset);
+        real rwA = U(N[0],3,m_offset);
+        real rwB = U(N[1],3,m_offset);
+        real rwC = U(N[2],3,m_offset);
+        real reA = U(N[0],4,m_offset);
+        real reB = U(N[1],4,m_offset);
+        real reC = U(N[2],4,m_offset);
+        // apply stagnation BCs
+        if (stagNode(N[0])) ruA = rvA = rwA = 0.0;
+        if (stagNode(N[1])) ruB = rvB = rwB = 0.0;
+        if (stagNode(N[2])) ruC = rvC = rwC = 0.0;
+        // compute face normal
+        real nx, ny, nz;
+        tk::normal( x[N[0]], x[N[1]], x[N[2]],
+                    y[N[0]], y[N[1]], y[N[2]],
+                    z[N[0]], z[N[1]], z[N[2]],
+                    nx, ny, nz );
+        // compute boundary flux
+        real f[m_ncomp][3];
+        real p, vn;
+        int sym = symbcnode[e];
+        p = eos_pressure< eq >( m_system, rA, ruA/rA, rvA/rA, rwA/rA, reA );
+        vn = sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA) / rA;
+        f[0][0] = rA*vn;
+        f[1][0] = ruA*vn + p*nx;
+        f[2][0] = rvA*vn + p*ny;
+        f[3][0] = rwA*vn + p*nz;
+        f[4][0] = (reA + p)*vn;
+        p = eos_pressure< eq >( m_system, rB, ruB/rB, rvB/rB, rwB/rB, reB );
+        vn = sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB) / rB;
+        f[0][1] = rB*vn;
+        f[1][1] = ruB*vn + p*nx;
+        f[2][1] = rvB*vn + p*ny;
+        f[3][1] = rwB*vn + p*nz;
+        f[4][1] = (reB + p)*vn;
+        p = eos_pressure< eq >( m_system, rC, ruC/rC, rvC/rC, rwC/rC, reC );
+        vn = sym ? 0.0 : (nx*ruC + ny*rvC + nz*rwC) / rC;
+        f[0][2] = rC*vn;
+        f[1][2] = ruC*vn + p*nx;
+        f[2][2] = rvC*vn + p*ny;
+        f[3][2] = rwC*vn + p*nz;
+        f[4][2] = (reC + p)*vn;
+        // compute face area
+        auto A6 = tk::area( x[N[0]], x[N[1]], x[N[2]],
+                            y[N[0]], y[N[1]], y[N[2]],
+                            z[N[0]], z[N[1]], z[N[2]] ) / 6.0;
+        auto A24 = A6/4.0;
+        // store flux in boundary elements
+        for (std::size_t c=0; c<m_ncomp; ++c) {
+          auto eb = (e*m_ncomp+c)*6;
+          auto Bab = A24 * (f[c][0] + f[c][1]);
+          bflux[eb+0] = Bab + A6 * f[c][0];
+          bflux[eb+1] = Bab;
+          Bab = A24 * (f[c][1] + f[c][2]);
+          bflux[eb+2] = Bab + A6 * f[c][1];
+          bflux[eb+3] = Bab;
+          Bab = A24 * (f[c][2] + f[c][0]);
+          bflux[eb+4] = Bab + A6 * f[c][2];
+          bflux[eb+5] = Bab;
+        }
+      }
+
+      // access pointer to right hand side at component and offset
+      std::array< const real*, m_ncomp > r;
+      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+
+      // boundary integrals: sum flux contributions to points
+      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
+        std::size_t N[3] =
+          { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+        for (std::size_t c=0; c<m_ncomp; ++c) {
+          auto eb = (e*m_ncomp+c)*6;
+          R.var(r[c],N[0]) -= bflux[eb+0] + bflux[eb+5];
+          R.var(r[c],N[1]) -= bflux[eb+1] + bflux[eb+2];
+          R.var(r[c],N[2]) -= bflux[eb+3] + bflux[eb+4];
+        }
+      }
+
+      tk::destroy(bflux);
+    }
+
+
+    //! Compute optional source integral
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] t Physical time
+    //! \param[in,out] R Right-hand side vector computed
+    void src( const std::array< std::vector< real >, 3 >& coord,
+              const std::vector< std::size_t >& inpoel,
+              real t,
+              tk::Fields& R ) const
+    {
+      // access node coordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      // access pointer to right hand side at component and offset
+      std::array< const real*, m_ncomp > r;
+      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+
+      // source integral
+      for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+        std::size_t N[4] =
+          { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+        // compute element Jacobi determinant, J = 6V
+        auto J24 = tk::triple(
+          x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]],
+          x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]],
+          x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] ) / 24.0;
+        // sum source contributions to nodes
+        for (std::size_t a=0; a<4; ++a) {
+          real s[m_ncomp];
+          Problem::src( m_system, x[N[a]], y[N[a]], z[N[a]], t,
+                        s[0], s[1], s[2], s[3], s[4] );
+          for (std::size_t c=0; c<m_ncomp; ++c)
+            R.var(r[c],inpoel[e*4+a]) += J24 * s[c];
+        }
+      }
+    }
+
 };
 
 } // cg::
