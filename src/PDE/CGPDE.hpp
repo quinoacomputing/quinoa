@@ -40,19 +40,28 @@ namespace cg {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
+//! Decide if node is a stagnation point
+//! \param[in] stag Stagnation point local node ids
+//! \return True if node i is a stagnation point
+#pragma omp declare simd
+inline bool
+stagNode( std::size_t i, const std::vector< std::size_t >& stag ) {
+  if (std::any_of( begin(stag), end(stag), [=](auto n){ return n == i; } ))
+    return true;
+  else
+    return false;
+}
+
 //! Compute nodal gradients of primitive variables for ALECG on chare boundary
 void
-chbgrad( ncomp_t ncomp,
-         ncomp_t offset,
+chbgrad( ncomp_t offset,
          const std::array< std::vector< tk::real >, 3 >& coord,
          const std::vector< std::size_t >& inpoel,
          const std::vector< std::size_t >& bndel,
          const std::vector< std::size_t >& gid,
+         const std::vector< std::size_t >& stag,
          const std::unordered_map< std::size_t, std::size_t >& bid,
-         const std::tuple< std::vector< tk::real >,
-                           std::vector< tk::real > >& stag,
          const tk::Fields& U,
-         tk::ElemGradFn egrad,
          tk::Fields& G );
 
 //! \brief Compute/assemble nodal gradients of primitive variables for ALECG in
@@ -61,11 +70,10 @@ tk::Fields
 nodegrad( ncomp_t offset,
           const std::array< std::vector< tk::real >, 3 >& coord,
           const std::vector< std::size_t >& inpoel,
+          const std::vector< std::size_t >& stag,
           const std::unordered_map< std::size_t, std::size_t >& lid,
           const std::unordered_map< std::size_t, std::size_t >& bid,
           const std::vector< tk::real >& vol,
-          const std::tuple< std::vector< tk::real >,
-                            std::vector< tk::real > >& stag,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esup,
           const tk::Fields& U,
