@@ -40,15 +40,6 @@ namespace cg {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! Compute normal of dual-mesh associated to edge
-std::array< tk::real, 3 >
-edfnorm( const tk::UnsMesh::Edge& edge,
-         const std::array< std::vector< tk::real >, 3 >&  coord,
-         const std::vector< std::size_t >& inpoel,
-         const std::unordered_map< tk::UnsMesh::Edge,
-                 std::vector< std::size_t >,
-                 tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
-
 //! \brief Evaluate the increment from t to t+dt of an analytical solution at
 //!   (x,y,z) for all components
 std::vector< tk::real >

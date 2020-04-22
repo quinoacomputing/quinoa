@@ -308,6 +308,13 @@ class ALECG : public CBase_ALECG {
       return m_disc[ thisIndex ].ckLocal();
     }
 
+    //! Compute normal of dual-mesh associated to edge
+    std::array< tk::real, 3 >
+    edfnorm( const tk::UnsMesh::Edge& edge,
+             const std::unordered_map< tk::UnsMesh::Edge,
+                     std::vector< std::size_t >,
+                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
+
     //! Find elements along our mesh chunk boundary
     std::vector< std::size_t > bndel() const;
 
