@@ -461,7 +461,8 @@ constexpr tk::real muscl_p1 = 1.0 + muscl_const;
 #pragma omp declare simd
 void
 tk::muscl(
-  const UnsMesh::Edge& edge,
+  std::size_t p,
+  std::size_t q,
   const UnsMesh::Coords& coord,
   const Fields& G,
   tk::real& rL, tk::real& uL, tk::real& vL, tk::real& wL, tk::real& eL,
@@ -470,7 +471,8 @@ tk::muscl(
 // *****************************************************************************
 // Compute MUSCL reconstruction in edge-end points using a MUSCL procedure with
 // van Leer limiting
-//! \param[in] edge Node ids of edge-end points
+//! \param[in] p Left node id of edge-end
+//! \param[in] q Right node id of edge-end
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] G Gradient of all unknowns in mesh points
 //! \param[in] rL Left density
@@ -491,10 +493,6 @@ tk::muscl(
   const auto& x = coord[0];
   const auto& y = coord[1];
   const auto& z = coord[2];
-
-  // edge-end points
-  auto p = edge[0];
-  auto q = edge[1];
 
   // edge vector
   std::array< tk::real, 3 > vw{ x[q]-x[p], y[q]-y[p], z[q]-z[p] };

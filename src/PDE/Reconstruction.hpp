@@ -105,7 +105,8 @@ transform_P0P1( ncomp_t ncomp,
 //!   procedure with Van Leer limiting
 #pragma omp declare simd
 void
-muscl( const UnsMesh::Edge& edge,
+muscl( std::size_t p,
+       std::size_t q,
        const UnsMesh::Coords& coord,
        const Fields& G,
        tk::real& rL, tk::real& uL, tk::real& vL, tk::real& wL, tk::real& eL,

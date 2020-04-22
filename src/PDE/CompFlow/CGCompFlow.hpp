@@ -422,7 +422,7 @@ class CompFlow {
         if (stagNode(q)) ruR = rvR = rwR = 0.0;
 
         // compute MUSCL reconstruction in edge-end points
-        tk::muscl( {p,q}, coord, Grad,
+        tk::muscl( p, q, coord, Grad,
                    rL, ruL, rvL, rwL, reL,
                    rR, ruR, rvR, rwR, reR,
                    /*realizability=*/ true );
