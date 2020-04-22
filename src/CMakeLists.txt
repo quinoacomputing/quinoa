@@ -328,12 +328,12 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-unknown-pragmas")
 
   # For vectorization:
-  #add_compiler_flag("-march=native")   # will change baselines
+  #add_compiler_flag("-march=native")
   #add_compiler_flag("-ftree-vectorize")
-  #add_compiler_flag("-ftree-vectorizer-verbose=5")
-  #add_compiler_flag("-fopt-info-vec-missed")
   #add_compiler_flag("-fopenmp-simd")
   #add_compiler_flag("-Wopenmp-simd")
+  #add_compiler_flag("-ftree-vectorizer-verbose=5")
+  #add_compiler_flag("-fopt-info-vec-missed")
 
   # Linker flags for gcc
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wno-unused-parameter")
@@ -392,6 +392,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
   # default: no openmp simd
   add_compiler_flag("-qno-openmp-simd")
+
   # For vectorization: disable above and enable some below
   #add_compiler_flag("-march=native")
   #add_compiler_flag("-qopt-zmm-usage=high")
