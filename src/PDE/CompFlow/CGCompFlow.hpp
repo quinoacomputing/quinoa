@@ -689,8 +689,7 @@ class CompFlow {
     //! \return True if node i is a stagnation point
     #pragma omp declare simd
     bool stagNode( std::size_t i ) const {
-      for (std::size_t j=0; j<m_stag.size(); ++j)
-        if (i == j) return true;
+      for (auto j : m_stag) if (i == j) return true;
       return false;
     }
 
