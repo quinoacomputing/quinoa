@@ -124,7 +124,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
     d->remap( map );
     // Recompute points surrounding points
     m_psup = tk::genPsup( d->Inpoel(), 4, tk::genEsup( d->Inpoel(), 4 ) );
-
+    // Remap boundary triangle face connectivity
+    tk::remap( m_triinpoel, map );
   }
 
   // Activate SDAG wait for initially computing the left-hand side and normals
