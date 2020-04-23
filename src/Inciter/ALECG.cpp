@@ -70,9 +70,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_dfnorm(),
   m_dfnormc(),
   m_dfn(),
-  m_esup(),
-  m_psup( tk::genPsup( Disc()->Inpoel(), 4,
-          tk::genEsup( Disc()->Inpoel(), 4 ) ) ),
+  m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
+  m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
@@ -122,8 +121,10 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 
     // Remap data in bound Discretization object
     d->remap( map );
+    // Recompute elements surrounding points
+    m_esup = tk::genEsup( d->Inpoel(), 4 );
     // Recompute points surrounding points
-    m_psup = tk::genPsup( d->Inpoel(), 4, tk::genEsup( d->Inpoel(), 4 ) );
+    m_psup = tk::genPsup( d->Inpoel(), 4, m_esup );
     // Remap boundary triangle face connectivity
     tk::remap( m_triinpoel, map );
   }
@@ -674,9 +675,6 @@ ALECG::normfinal()
   for (std::size_t p=0,k=0; p<m_u.nunk(); ++p)
     for (auto q : tk::Around(m_psup,p))
       m_edgeid[k++] = tk::cref_find( eid, {p,q} );
-
-  // Generate elements surrounding points
-  m_esup = tk::genEsup( d->Inpoel(), 4 );
 }
 
 void
@@ -1086,8 +1084,7 @@ ALECG::writeFields( CkCallback c ) const
     //   eq.symbcnodes( m_bface, m_triinpoel, symbcnodes );
     // nodefieldnames.push_back( "bc_type" );
     // nodefields.push_back( std::vector<tk::real>(d->Coord()[0].size(),0.0) );
-    // for (auto i : symbcnodes)
-    //   nodefields.back()[ tk::cref_find(d->Lid(),i) ] = 1.0;
+    // for (auto i : symbcnodes) nodefields.back()[i] = 1.0;
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 

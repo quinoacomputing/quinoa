@@ -892,11 +892,11 @@ class CompFlow {
     //! \param[in] rvL Left Y velocity
     //! \param[in] rwL Left Z velocity
     //! \param[in] reL Left internal energy
-    //! \param[in] rL Left density
-    //! \param[in] ruL Left X velocity
-    //! \param[in] rvL Left Y velocity
-    //! \param[in] rwL Left Z velocity
-    //! \param[in] reL Left internal energy
+    //! \param[in] rR Right density
+    //! \param[in] ruR Right X velocity
+    //! \param[in] rvR Right Y velocity
+    //! \param[in] rwR Right Z velocity
+    //! \param[in] reR Right internal energy
     #pragma omp declare simd
     void muscl( std::size_t p,
                 std::size_t q,

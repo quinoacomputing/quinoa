@@ -163,11 +163,11 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
   m_nodeCommMap = nodeCommMap;        // update node communication map
 
   // Generate local ids for new chare boundary global ids
-  std::size_t lid = m_bid.size();
+  std::size_t bid = m_bid.size();
   for (const auto& [ neighborchare, sharednodes ] : m_nodeCommMap)
     for (auto g : sharednodes)
       if (m_bid.find( g ) == end(m_bid))
-        m_bid[ g ] = lid++;
+        m_bid[ g ] = bid++;
 
   // Clear receive buffer that will be used for collecting nodal volumes
   m_volc.clear();
