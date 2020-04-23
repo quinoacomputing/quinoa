@@ -1113,7 +1113,7 @@ class CompFlow {
           Problem::src( m_system, x[N[a]], y[N[a]], z[N[a]], t,
                         s[0], s[1], s[2], s[3], s[4] );
           for (std::size_t c=0; c<m_ncomp; ++c)
-            R.var(r[c],inpoel[e*4+a]) += J24 * s[c];
+            R.var(r[c],N[a]) += J24 * s[c];
         }
       }
     }
