@@ -659,7 +659,6 @@ ALECG::normfinal()
     auto nit = m_dfnormc.find( g );
     auto m = ( nit != m_dfnormc.end() ) ? nit->second : n;
     // orient normals
-    //if (gid[p] > gid[q]) { tk::flip(n); tk::flip(m); }
     m_dfn[e*6+0] = n[0];
     m_dfn[e*6+1] = n[1];
     m_dfn[e*6+2] = n[2];
