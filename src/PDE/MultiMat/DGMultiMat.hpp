@@ -307,34 +307,10 @@ class MultiMat {
           unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset),
           unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset), kmax);
 
-        // replace state of tiny materials with that of majority material
+        // check for unphysical state
         pmax = prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset)/almax;
-        tmax = eos_temperature< tag::multimat >(m_system,
-          unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
-          unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset), almax, kmax);
         for (std::size_t k=0; k<nmat; ++k)
         {
-          if (unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) < al_eps)
-          {
-            auto rhomat = eos_density< tag::multimat >(m_system, pmax, tmax, k);
-            rhoEmat = eos_totalenergy< tag::multimat >(m_system, rhomat,
-              u, v, w, pmax, k);
-            auto almod = al_eps
-              - unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
-
-            // clean conserved quantities
-            unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) = al_eps;
-            unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) = al_eps*rhomat;
-            unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = al_eps*rhoEmat;
-
-            // correct major material state
-            unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset) -= almod;
-
-            // clean primitive quantities
-            prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = al_eps*pmax;
-          }
-
-          // check for unphysical state
           auto alpha = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           auto arho = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset);
           auto apr = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset);
