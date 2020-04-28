@@ -788,6 +788,8 @@ void consistentMultiMatLimiting_P1(
     dalmax = std::max( dalmax, dmax );
   }
 
+  auto al_band = 1e-4;
+
   //phi_al = phic[nmax];
 
   // determine if cell is a material-interface cell based on ad-hoc tolerances.
@@ -812,8 +814,8 @@ void consistentMultiMatLimiting_P1(
   // to be applied. This if-test says that, the fix is applied when the change
   // in volume-fraction across a cell is greater than 0.1, *and* the
   // volume-fraction is between 0.1 and 0.9.
-  if ( dalmax > 0.1 &&
-       (almax > 0.1 && almax < (1.0-0.1)) )
+  if ( dalmax > al_band &&
+       (almax > al_band && almax < (1.0-al_band)) )
   {
     // 1. consistent high-order dofs
     std::array< tk::real, 3 > drhob {{ 0.0, 0.0, 0.0 }};
