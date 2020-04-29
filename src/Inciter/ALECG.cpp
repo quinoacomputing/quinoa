@@ -422,9 +422,6 @@ ALECG::setup()
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );
 
-  // Apply symmetry boundary conditions on initial conditions
-  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
-
   // Query time history field output labels from all PDEs integrated
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
   if (!hist_points.empty()) {
@@ -452,21 +449,25 @@ ALECG::boxvol( tk::real v )
   // Update density in user-defined IC box based on box volume
   for (const auto& eq : g_cgpde) eq.box( d->Boxvol(), m_boxnodes, m_u );
 
-  // Output initial conditions to file (regardless of whether it was requested)
-  writeFields( CkCallback(CkIndex_ALECG::init(), thisProxy[thisIndex]) );
-}
-
-//! [init and lhs]
-void
-ALECG::init()
-// *****************************************************************************
-// Initially compute left hand side diagonal matrix
-// *****************************************************************************
-{
   // Compute left-hand side of PDEs
   lhs();
 }
-//! [init and lhs]
+
+//! [start]
+void
+ALECG::start()
+// *****************************************************************************
+// Start time stepping
+// *****************************************************************************
+{
+  // Start timer measuring time stepping wall clock time
+  Disc()->Timer().zero();
+  // Zero grind-timer
+  Disc()->grindZero();
+  // Continue to next time step
+  next();
+}
+//! [start]
 
 //! [Compute own and send lhs on chare-boundary]
 void
@@ -556,12 +557,8 @@ ALECG::lhsmerge()
 
   // Continue after lhs is complete
   if (m_initial) {
-    // Start timer measuring time stepping wall clock time
-    Disc()->Timer().zero();
-    // Zero grind-timer
-    Disc()->grindZero();
-    // Continue to next time step
-    next();
+    // Output initial conditions to file
+    writeFields( CkCallback(CkIndex_ALECG::start(), thisProxy[thisIndex]) );
   } else {
     lhs_complete();
   }
@@ -603,6 +600,9 @@ ALECG::normfinal()
   decltype(m_bnorm) bnorm;
   for (auto&& [g,n] : m_bnorm) bnorm[ tk::cref_find(lid,g) ] = std::move(n);
   m_bnorm = std::move(bnorm);
+
+  // Apply symmetry boundary conditions on initial conditions
+  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
 
   // Flatten boundary normal data structure
   m_symbcnode.resize( m_triinpoel.size()/3, 0 );

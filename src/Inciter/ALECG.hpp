@@ -103,8 +103,8 @@ class ALECG : public CBase_ALECG {
     //! Receive total box IC volume
     void boxvol( tk::real v );
 
-    // Initially compute left hand side diagonal matrix
-    void init();
+    // Start time stepping
+    void start();
 
     //! Advance equations to next time step
     void advance( tk::real newdt );
