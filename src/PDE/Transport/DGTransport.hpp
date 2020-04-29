@@ -142,6 +142,7 @@ class Transport {
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
                       const inciter::FaceData& fd,
+                      const std::map< std::size_t, std::vector< std::size_t > >&,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,

@@ -1419,7 +1419,7 @@ DG::reco()
     // if P0P1
     if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1)
       for (const auto& eq : g_dgpde)
-        eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(),
+        eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, d->Inpoel(),
                         d->Coord(), m_u, m_p );
   }
 
