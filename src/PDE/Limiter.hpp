@@ -58,6 +58,19 @@ SuperbeeMultiMat_P1(
   tk::Fields& P,
   std::size_t nmat );
 
+//! Kuzmin's vertex-based limiter for multi-material DGP1
+void
+VertexBasedMultiMat_P1(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  std::size_t offset,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U,
+  tk::Fields& P,
+  std::size_t nmat );
+
 //! WENO limiter function calculation for P1 dofs
 void
 WENOFunction( const tk::Fields& U,
@@ -82,6 +95,18 @@ SuperbeeFunction( const tk::Fields& U,
                   inciter::ncomp_t offset,
                   inciter:: ncomp_t ncomp,
                   tk::real beta_lim );
+
+//! Kuzmin's vertex-based limiter function calculation for P1 dofs
+std::vector< tk::real >
+VertexBasedFunction( const tk::Fields& U,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  std::size_t e,
+  std::size_t rdof,
+  std::size_t dof_el,
+  std::size_t offset,
+  std::size_t ncomp );
 
 //! Consistent limiter modifications for P1 dofs
 void consistentMultiMatLimiting_P1( std::size_t nmat,

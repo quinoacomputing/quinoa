@@ -6266,6 +6266,20 @@ struct superbeep1_info {
 };
 using superbeep1 = keyword< superbeep1_info, TAOCPP_PEGTL_STRING("superbeep1") >;
 
+struct vertexbasedp1_info {
+  static std::string name() { return "VERTEXBASEDP1"; }
+  static std::string shortDescription() { return
+    "Select the vertex-based limiter for DGP1"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the vertex-based limiter used for
+    discontinuous Galerkin (DG) P1 spatial discretization used in inciter.
+    Ref. Kuzmin, D. (2010). A vertex-based hierarchical slope limiter for
+    p-adaptive discontinuous Galerkin methods. Journal of computational and
+    applied mathematics, 233(12), 3077-3085.
+    See Control/Inciter/Options/Limiter.hpp for other valid options.)"; }
+};
+using vertexbasedp1 = keyword< vertexbasedp1_info, TAOCPP_PEGTL_STRING("vertexbasedp1") >;
+
 struct limiter_info {
   static std::string name() { return "Limiter function"; }
   static std::string shortDescription() { return
@@ -6279,7 +6293,8 @@ struct limiter_info {
     static std::string choices() {
       return '\'' + nolimiter::string() + "\' | \'"
                   + wenop1::string() + "\' | \'"
-                  + superbeep1::string() + '\'';
+                  + superbeep1::string() + "\' | \'"
+                  + vertexbasedp1::string() + '\'';
     }
   };
 };
