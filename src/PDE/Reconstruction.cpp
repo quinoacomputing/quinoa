@@ -402,6 +402,19 @@ tk::recoLeastSqExtStencil( std::size_t rdof,
 // *****************************************************************************
 //  \brief Reconstruct the second-order solution using least-squares approach
 //    from an extended stencil involving the node-neighbors
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] nelem Number of elements
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] geoElem Element geometry array
+//! \param[in,out] W Solution vector to be reconstructed at recent time step
+//! \details A second-order (piecewise linear) solution polynomial is obtained
+//!   from the first-order (piecewise constant) FV solutions by using a
+//!   least-squares (LS) reconstruction process. This LS reconstruction function
+//!   using the nodal-neighbors of a cell, to get an overdetermined system of
+//!   equations for the derivatives of the solution. This overdetermined system
+//!   is solved in the least-squares sense using the normal equations approach.
 // *****************************************************************************
 {
   const auto ncomp = W.nprop()/rdof;
