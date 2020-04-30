@@ -18,6 +18,7 @@
 #include "Vector.hpp"
 #include "Base/HashMapReducer.hpp"
 #include "Reconstruction.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 
 void
 tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
@@ -450,5 +451,88 @@ tk::transform_P0P1( ncomp_t ncomp,
       W(e,mark+2,offset) = ux[1];
       W(e,mark+3,offset) = ux[2];
     }
+  }
+}
+
+void
+tk::safeReco( std::size_t offset,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t el,
+  int er,
+  const Fields& U,
+  std::array< std::vector< real >, 2 >& state )
+// *****************************************************************************
+//  Compute safe reconstructions near material interfaces
+//! \param[in] offset Index for equation systems
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of material is PDE system
+//! \param[in] el Element on the left-side of face
+//! \param[in] er Element on the right-side of face
+//! \param[in] U Solution vector at recent time-stage
+//! \param[in,out] state Second-order reconstructed state, at cell-face, that
+//!   is being modified for safety
+//! \details When the consistent limiting is applied, there is a possibility
+//!   that the material densities and energies violate TVD bounds. This function
+//!   enforces the TVD bounds locally
+// *****************************************************************************
+{
+  using inciter::densityIdx;
+  using inciter::densityDofIdx;
+
+  // define a lambda for the safe limiting
+  auto safeLimit = [&]( std::size_t c, real ul, real ur )
+  {
+    // find min/max at the face
+    auto uMin = std::min(ul, ur);
+    auto uMax = std::max(ul, ur);
+
+    // left-state limiting
+    if ( (state[0][c] < ul) &&
+      (state[0][c] < ur) )
+    {
+      state[0][c] = uMin;
+    }
+    else if ( (state[0][c] > ul) &&
+      (state[0][c] > ur) )
+    {
+      state[0][c] = uMax;
+    }
+
+    // right-state limiting
+    if (er > -1)
+    {
+      if ( (state[1][c] < ul) &&
+        (state[1][c] < ur) )
+      {
+        state[1][c] = uMin;
+      }
+      else if ( (state[1][c] > ul) &&
+        (state[1][c] > ur) )
+      {
+        state[1][c] = uMax;
+      }
+    }
+  };
+
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    real ul(0.0), ur(0.0);
+
+    // establish left- and right-hand states
+    ul = U(el, densityDofIdx(nmat, k, rdof, 0), offset);
+    if (er <= -1)
+    {
+      ur = state[1][densityIdx(nmat, k)];
+    }
+    else
+    {
+      auto eR = static_cast< std::size_t >(er);
+      ur = U(eR, densityDofIdx(nmat, k, rdof, 0), offset);
+    }
+
+    // limit reconstructed density
+    safeLimit(densityIdx(nmat,k), ul, ur);
+
   }
 }

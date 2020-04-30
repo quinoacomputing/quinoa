@@ -168,13 +168,14 @@ class DGPDE {
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
+                const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
-      self->limit( t, geoFace, geoElem, fd, inpoel, coord, ndofel, U, P );
+      self->limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, U, P );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -282,6 +283,8 @@ class DGPDE {
                           const tk::Fields&,
                           const tk::Fields&,
                           const inciter::FaceData&,
+                          const std::map< std::size_t,
+                            std::vector< std::size_t > >&,
                           const std::vector< std::size_t >&,
                           const tk::UnsMesh::Coords&,
                           const std::vector< std::size_t >&,
@@ -366,13 +369,15 @@ class DGPDE {
                   const tk::Fields& geoFace,
                   const tk::Fields& geoElem,
                   const inciter::FaceData& fd,
+                  const std::map< std::size_t, std::vector< std::size_t > >&
+                    esup,
                   const std::vector< std::size_t >& inpoel,
                   const tk::UnsMesh::Coords& coord,
                   const std::vector< std::size_t >& ndofel,
                   tk::Fields& U,
                   tk::Fields& P ) const override
       {
-        data.limit( t, geoFace, geoElem, fd, inpoel, coord, ndofel, U, P );
+        data.limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, U, P );
       }
       void rhs( tk::real t,
                 const tk::Fields& geoFace,

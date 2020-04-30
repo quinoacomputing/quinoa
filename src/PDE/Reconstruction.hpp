@@ -101,6 +101,16 @@ transform_P0P1( ncomp_t ncomp,
                 const UnsMesh::Coords& coord,
                 Fields& W );
 
+//! Compute safe reconstructions near material interfaces
+void
+safeReco( std::size_t offset,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t el,
+  int er,
+  const Fields& U,
+  std::array< std::vector< real >, 2 >& state );
+
 } // tk::
 
 #endif // Reconstruction_h

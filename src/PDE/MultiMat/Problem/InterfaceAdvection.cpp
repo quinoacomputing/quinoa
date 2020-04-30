@@ -18,12 +18,6 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "FieldOutput.hpp"
 
-//namespace inciter {
-//
-//extern ctr::InputDeck g_inputdeck;
-//
-//} // ::inciter
-
 using inciter::MultiMatProblemInterfaceAdvection;
 
 tk::SolutionFn::result_type

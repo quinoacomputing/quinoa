@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMat/Problem/TriplePoint.cpp
+  \file      src/PDE/MultiMat/Problem/GasImpact.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -13,7 +13,7 @@
 */
 // *****************************************************************************
 
-#include "TriplePoint.hpp"
+#include "GasImpact.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
@@ -25,16 +25,16 @@ extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
-using inciter::MultiMatProblemTriplePoint;
+using inciter::MultiMatProblemGasImpact;
 
 tk::SolutionFn::result_type
-MultiMatProblemTriplePoint::solution( ncomp_t system,
-                                            ncomp_t ncomp,
-                                            tk::real x,
-                                            tk::real y,
-                                            tk::real,
-                                            tk::real,
-                                            int& )
+MultiMatProblemGasImpact::solution( ncomp_t system,
+  ncomp_t ncomp,
+  tk::real x,
+  tk::real y,
+  tk::real,
+  tk::real,
+  int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which multi-material
@@ -44,7 +44,7 @@ MultiMatProblemTriplePoint::solution( ncomp_t system,
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn
-//! \details This function only initializes the triple point problem,
+//! \details This function only initializes the gas impact problem,
 //!   but does not actually give the analytical solution at time greater than 0.
 // *****************************************************************************
 {
@@ -63,55 +63,57 @@ MultiMatProblemTriplePoint::solution( ncomp_t system,
   v = 0.0;
   w = 0.0;
 
-  if (x<1.0) {
+  // background state
+  s[volfracIdx(nmat, 0)] = alphamin;
+  s[volfracIdx(nmat, 1)] = alphamin;
+  s[volfracIdx(nmat, 2)] = 1.0-2.0*alphamin;
+
+  temp = 0.0034843206;
+  p = 1.0;
+
+  // impactor
+  if (x >= 0.25 && x <= 0.75 && y >= 0.9 && y <= 1.1) {
     // volume-fraction
     s[volfracIdx(nmat, 0)] = 1.0-2.0*alphamin;
     s[volfracIdx(nmat, 1)] = alphamin;
     s[volfracIdx(nmat, 2)] = alphamin;
     // pressure
-    p = 1.0;
+    p = 2.0;
+    // velocity
+    u = 0.2;
     // temperature
-    temp = 4.3554007e-4;
+    temp = 0.0062717771;
   }
-  else {
-    if (y<1.5) {
-      // volume-fraction
-      s[volfracIdx(nmat, 0)] = alphamin;
-      s[volfracIdx(nmat, 1)] = 1.0-2.0*alphamin;
-      s[volfracIdx(nmat, 2)] = alphamin;
-      // pressure
-      p = 0.1;
-      // temperature
-      temp = 3.4843206e-4;
-    }
-    else {
-      // volume-fraction
-      s[volfracIdx(nmat, 0)] = alphamin;
-      s[volfracIdx(nmat, 1)] = alphamin;
-      s[volfracIdx(nmat, 2)] = 1.0-2.0*alphamin;
-      // pressure
-      p = 0.1;
-      // temperature
-      temp = 3.4843206e-4;
-    }
+  // slab
+  else if (x >= 1.0 && x <= 1.1) {
+    // volume-fraction
+    s[volfracIdx(nmat, 0)] = alphamin;
+    s[volfracIdx(nmat, 1)] = 1.0-2.0*alphamin;
+    s[volfracIdx(nmat, 2)] = alphamin;
   }
 
+  auto rb(0.0);
   for (std::size_t k=0; k<nmat; ++k)
   {
-    // density
+    // densities
     r[k] = eos_density< eq >( system, p, temp, k );
     // partial density
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)]*r[k];
     // total specific energy
     s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]*
       eos_totalenergy< eq >( system, r[k], u, v, w, p, k );
+    rb += s[densityIdx(nmat, k)];
   }
+
+  s[momentumIdx(nmat, 0)] = rb * u;
+  s[momentumIdx(nmat, 1)] = rb * v;
+  s[momentumIdx(nmat, 2)] = rb * w;
 
   return s;
 }
 
 std::vector< std::string >
-MultiMatProblemTriplePoint::fieldNames( ncomp_t )
+MultiMatProblemGasImpact::fieldNames( ncomp_t )
 // *****************************************************************************
 // Return field names to be output to file
 //! \return Vector of strings labelling fields output in file
@@ -124,7 +126,7 @@ MultiMatProblemTriplePoint::fieldNames( ncomp_t )
 }
 
 std::vector< std::vector< tk::real > >
-MultiMatProblemTriplePoint::fieldOutput(
+MultiMatProblemGasImpact::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
@@ -157,7 +159,7 @@ MultiMatProblemTriplePoint::fieldOutput(
 }
 
 std::vector< std::string >
-MultiMatProblemTriplePoint::names( ncomp_t )
+MultiMatProblemGasImpact::names( ncomp_t )
 // *****************************************************************************
 //  Return names of integral variables to be output to diagnostics file
 //! \return Vector of strings labelling integral variables output

@@ -39,7 +39,8 @@ enum class ProblemType : uint8_t { USER_DEFINED,
                                    INTERFACE_ADVECTION,
                                    GAUSS_HUMP_COMPFLOW,
                                    WATERAIR_SHOCKTUBE,
-                                   TRIPLE_POINT };
+                                   TRIPLE_POINT,
+                                   GAS_IMPACT };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
@@ -66,6 +67,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                   , kw::gauss_hump_compflow
                                   , kw::waterair_shocktube
                                   , kw::triple_point
+                                  , kw::gas_impact
                                   >;
 
     //! \brief Options constructor
@@ -95,7 +97,8 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::GAUSS_HUMP_COMPFLOW,
             kw::gauss_hump_compflow::name() },
           { ProblemType::WATERAIR_SHOCKTUBE, kw::waterair_shocktube::name() },
-          { ProblemType::TRIPLE_POINT, kw::triple_point::name() } },
+          { ProblemType::TRIPLE_POINT, kw::triple_point::name() },
+          { ProblemType::GAS_IMPACT, kw::gas_impact::name() } },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
           { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
@@ -119,7 +122,9 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::waterair_shocktube::string(),
             ProblemType::WATERAIR_SHOCKTUBE },
           { kw::triple_point::string(),
-            ProblemType::TRIPLE_POINT } } )
+            ProblemType::TRIPLE_POINT },
+          { kw::gas_impact::string(),
+            ProblemType::GAS_IMPACT } } )
     {
        brigand::for_each< keywords >( assertPolicyCodes() );
     }
@@ -167,6 +172,7 @@ class Problem : public tk::Toggle< ProblemType > {
       , { ProblemType::GAUSS_HUMP_COMPFLOW, *kw::gauss_hump_compflow::code() }
       , { ProblemType::WATERAIR_SHOCKTUBE, *kw::waterair_shocktube::code() }
       , { ProblemType::TRIPLE_POINT, *kw::triple_point::code() }
+      , { ProblemType::GAS_IMPACT, *kw::gas_impact::code() }
     };
 };
 

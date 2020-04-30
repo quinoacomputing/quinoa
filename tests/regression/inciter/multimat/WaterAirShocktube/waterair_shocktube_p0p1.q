@@ -23,7 +23,7 @@ inciter
     depvar u
 
     prelax 1
-    prelax_timescale 0.0025
+    prelax_timescale 0.25
 
     nmat 2
     material
