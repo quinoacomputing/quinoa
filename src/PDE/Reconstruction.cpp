@@ -394,7 +394,7 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
 void
 tk::recoLeastSqExtStencil( std::size_t rdof,
   std::size_t offset,
-  std::size_t nelem,
+  std::size_t nielem,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   const Fields& geoElem,
@@ -404,7 +404,7 @@ tk::recoLeastSqExtStencil( std::size_t rdof,
 //    from an extended stencil involving the node-neighbors
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] nelem Number of elements
+//! \param[in] nielem Number of internal elements in this mesh chunk
 //! \param[in] esup Elements surrounding points
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] geoElem Element geometry array
@@ -419,7 +419,7 @@ tk::recoLeastSqExtStencil( std::size_t rdof,
 {
   const auto ncomp = W.nprop()/rdof;
 
-  for (std::size_t e=0; e<nelem; ++e)
+  for (std::size_t e=0; e<nielem; ++e)
   {
     // lhs matrix
     std::array< std::array< tk::real, 3 >, 3 >
@@ -467,6 +467,9 @@ tk::recoLeastSqExtStencil( std::size_t rdof,
 
       auto ux = tk::cramer( lhs_ls, rhs_ls[c] );
 
+      // Update the P1 dofs with the reconstructioned gradients.
+      // Since this reconstruction does not affect the cell-averaged solution,
+      // W(e,mark+0,offset) is unchanged.
       W(e,mark+1,offset) = ux[0];
       W(e,mark+2,offset) = ux[1];
       W(e,mark+3,offset) = ux[2];
