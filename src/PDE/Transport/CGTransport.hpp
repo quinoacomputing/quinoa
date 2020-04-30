@@ -185,7 +185,6 @@ class Transport {
     //! \param[in] psup Points surrounding points
     //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
     //! \param[in] vol Nodal volumes
-    //! \param[in] edgeid Local node id pair -> edge id map
     //! \param[in] G Nodal gradients in chare-boundary nodes
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
@@ -194,7 +193,6 @@ class Transport {
       const std::array< std::vector< real >, 3 >&  coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& triinpoel,
-      const std::vector< std::size_t >&,
       const std::unordered_map< std::size_t, std::size_t >& bid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const std::vector< real >& dfn,
@@ -204,8 +202,6 @@ class Transport {
                        std::vector< std::size_t > >& esup,
       const std::vector< int >& symbcnode,
       const std::vector< real >& vol,
-      const std::vector< std::size_t >&,
-      const std::vector< std::size_t >& edgeid,
       const tk::Fields& G,
       const tk::Fields& U,
       tk::Fields& R ) const
@@ -225,7 +221,7 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
 
       // compute domain-edge integral
-      domainint( coord, inpoel, edgeid, psup, dfn, U, Grad, R );
+      domainint( coord, inpoel, psup, dfn, U, Grad, R );
 
       // compute boundary integrals
       bndint( coord, triinpoel, symbcnode, U, R );
@@ -745,7 +741,6 @@ class Transport {
 
     //! Compute domain-edge integral for ALECG
     //! \param[in] coord Mesh node coordinates
-    //! \param[in] edgeid Local node id pair -> edge id map
     //! \param[in] psup Points surrounding points
     //! \param[in] dfn Dual-face normals
     //! \param[in] U Solution vector at recent time step
@@ -753,7 +748,6 @@ class Transport {
     //! \param[in,out] R Right-hand side vector computed
     void domainint( const std::array< std::vector< real >, 3 >& coord,
                     const std::vector< std::size_t >& inpoel,
-                    const std::vector< std::size_t >& edgeid,
                     const std::pair< std::vector< std::size_t >,
                                      std::vector< std::size_t > >& psup,
                     const std::vector< real >& dfn,
@@ -777,8 +771,8 @@ class Transport {
       for (std::size_t p=0,k=0; p<U.nunk(); ++p) {
         for (auto q : tk::Around(psup,p)) {
           // access dual-face normals for edge p-q
-          auto ed = edgeid[k++];
-          std::array< tk::real, 3 > n{ dfn[ed*6+0], dfn[ed*6+1], dfn[ed*6+2] };
+          std::array< tk::real, 3 > n{ dfn[k+0], dfn[k+1], dfn[k+2] };
+          k += 6;
 
           std::vector< tk::real > uL( m_ncomp, 0.0 );
           std::vector< tk::real > uR( m_ncomp, 0.0 );

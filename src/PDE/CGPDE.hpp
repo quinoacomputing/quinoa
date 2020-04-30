@@ -132,7 +132,6 @@ class CGPDE {
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& triinpoel,
-      const std::vector< std::size_t >& gid,
       const std::unordered_map< std::size_t, std::size_t >& bid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const std::vector< tk::real >& dfn,
@@ -142,13 +141,11 @@ class CGPDE {
                        std::vector< std::size_t > >& esup,
       const std::vector< int >& symbcnode,
       const std::vector< tk::real >& vol,
-      const std::vector< std::size_t >& edgenode,
-      const std::vector< std::size_t >& edgeid,
       const tk::Fields& G,
       const tk::Fields& U,
       tk::Fields& R ) const
-    { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
-                 symbcnode, vol, edgenode, edgeid, G, U, R ); }
+    { self->rhs( t, coord, inpoel, triinpoel, bid, lid, dfn, psup, esup,
+                 symbcnode, vol, G, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -260,7 +257,6 @@ class CGPDE {
         const std::array< std::vector< tk::real >, 3 >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
-        const std::vector< std::size_t >&,
         const std::unordered_map< std::size_t, std::size_t >&,
         const std::unordered_map< std::size_t, std::size_t >&,
         const std::vector< tk::real >&,
@@ -270,8 +266,6 @@ class CGPDE {
                          std::vector< std::size_t > >&,
         const std::vector< int >&,
         const std::vector< tk::real >&,
-        const std::vector< std::size_t >&,
-        const std::vector< std::size_t >&,
         const tk::Fields&,
         const tk::Fields&,
         tk::Fields& ) const = 0;
@@ -347,7 +341,6 @@ class CGPDE {
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::vector< std::size_t >& inpoel,
         const std::vector< std::size_t >& triinpoel,
-        const std::vector< std::size_t >& gid,
         const std::unordered_map< std::size_t, std::size_t >& bid,
         const std::unordered_map< std::size_t, std::size_t >& lid,
         const std::vector< tk::real >& dfn,
@@ -357,13 +350,11 @@ class CGPDE {
                          std::vector< std::size_t > >& esup,
         const std::vector< int >& symbcnode,
         const std::vector< tk::real >& vol,
-        const std::vector< std::size_t >& edgenode,
-        const std::vector< std::size_t >& edgeid,
         const tk::Fields& G,
         const tk::Fields& U,
         tk::Fields& R ) const override
-      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
-                  symbcnode, vol, edgenode, edgeid, G, U, R ); }
+      { data.rhs( t, coord, inpoel, triinpoel, bid, lid, dfn, psup, esup,
+                  symbcnode, vol, G, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override

@@ -401,14 +401,11 @@ class CompFlow {
     //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
-    //! \param[in] gid Local->glocal node ids
     //! \param[in] lid Global->local node ids
     //! \param[in] dfn Dual-face normals
     //! \param[in] psup Points surrounding points
     //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
     //! \param[in] vol Nodal volumes
-    //! \param[in] edgenode Local node ids of edges
-    //! \param[in] edgeid Local node id pair -> edge id map
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
@@ -416,7 +413,6 @@ class CompFlow {
               const std::array< std::vector< real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::size_t >& triinpoel,
-              const std::vector< std::size_t >& gid,
               const std::unordered_map< std::size_t, std::size_t >& bid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
               const std::vector< real >& dfn,
@@ -426,8 +422,6 @@ class CompFlow {
                                std::vector< std::size_t > >& esup,
               const std::vector< int >& symbcnode,
               const std::vector< real >& vol,
-              const std::vector< std::size_t >& edgenode,
-              const std::vector< std::size_t >& edgeid,
               const tk::Fields& G,
               const tk::Fields& U,
               tk::Fields& R ) const
@@ -447,7 +441,7 @@ class CompFlow {
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
 
       // compute domain-edge integral
-      domainint( coord, gid, edgenode, edgeid, psup, dfn, U, Grad, R );
+      domainint( coord, psup, dfn, U, Grad, R );
 
       // compute boundary integrals
       bndint( coord, triinpoel, symbcnode, U, R );
@@ -792,18 +786,12 @@ class CompFlow {
 
     //! Compute domain-edge integral for ALECG
     //! \param[in] coord Mesh node coordinates
-    //! \param[in] gid Local->glocal node ids
-    //! \param[in] edgenode Local node ids of edges
-    //! \param[in] edgeid Local node id pair -> edge id map
     //! \param[in] psup Points surrounding points
     //! \param[in] dfn Dual-face normals
     //! \param[in] U Solution vector at recent time step
     //! \param[in] G Nodal gradients
     //! \param[in,out] R Right-hand side vector computed
     void domainint( const std::array< std::vector< real >, 3 >& coord,
-                    const std::vector< std::size_t >& gid,
-                    const std::vector< std::size_t >& edgenode,
-                    const std::vector< std::size_t >& edgeid,
                     const std::pair< std::vector< std::size_t >,
                                      std::vector< std::size_t > >& psup,
                     const std::vector< real >& dfn,
@@ -811,74 +799,54 @@ class CompFlow {
                     const tk::Fields& G,
                     tk::Fields& R ) const
     {
-      // domain-edge integral: compute fluxes in edges
-      std::vector< real > dflux( edgenode.size()/2 * m_ncomp );
-
       // access node coordinates
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      #pragma omp simd
-      for (std::size_t e=0; e<edgenode.size()/2; ++e) {
-        auto p = edgenode[e*2+0];
-        auto q = edgenode[e*2+1];
-
-        // compute primitive variables at edge-end points
-        real rL  = U(p,0,m_offset);
-        real ruL = U(p,1,m_offset) / rL;
-        real rvL = U(p,2,m_offset) / rL;
-        real rwL = U(p,3,m_offset) / rL;
-        real reL = U(p,4,m_offset) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
-        real rR  = U(q,0,m_offset);
-        real ruR = U(q,1,m_offset) / rR;
-        real rvR = U(q,2,m_offset) / rR;
-        real rwR = U(q,3,m_offset) / rR;
-        real reR = U(q,4,m_offset) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
-
-        // apply stagnation BCs to primitive variables
-        if (stagPoint(x[p],y[p],z[p])) ruL = rvL = rwL = 0.0;
-        if (stagPoint(x[q],y[q],z[q])) ruR = rvR = rwR = 0.0;
-
-        // compute MUSCL reconstruction in edge-end points
-        muscl( p, q, coord, G, rL, ruL, rvL, rwL, reL,
-               rR, ruR, rvR, rwR, reR );
-
-        // convert back to conserved variables
-        reL = (reL + 0.5*(ruL*ruL + rvL*rvL + rwL*rwL)) * rL;
-        ruL *= rL;
-        rvL *= rL;
-        rwL *= rL;
-        reR = (reR + 0.5*(ruR*ruR + rvR*rvR + rwR*rwR)) * rR;
-        ruR *= rR;
-        rvR *= rR;
-        rwR *= rR;
-
-        // compute Riemann flux using edge-end point states
-        real f[5];
-        Rusanov::flux( dfn[e*6+0], dfn[e*6+1], dfn[e*6+2],
-                       dfn[e*6+3], dfn[e*6+4], dfn[e*6+5],
-                       rL, ruL, rvL, rwL, reL,
-                       rR, ruR, rvR, rwR, reR,
-                       f[0], f[1], f[2], f[3], f[4] );
-        // store flux in edges
-        for (std::size_t c=0; c<m_ncomp; ++c) dflux[e*m_ncomp+c] = f[c];
-      }
-
       // access pointer to right hand side at component and offset
       std::array< const real*, m_ncomp > r;
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
-      // domain-edge integral: sum flux contributions to points
-      for (std::size_t p=0,k=0; p<U.nunk(); ++p)
+      // domain-edge integral
+      for (std::size_t p=0,k=0; p<U.nunk(); ++p) {
         for (auto q : tk::Around(psup,p)) {
-          auto s = gid[p] > gid[q] ? -1.0 : 1.0;
-          auto e = edgeid[k++];
-          for (std::size_t c=0; c<m_ncomp; ++c)
-            R.var(r[c],p) -= 2.0*s*dflux[e*m_ncomp+c];
+          // compute primitive variables at edge-end points
+          real rL  = U(p,0,m_offset);
+          real ruL = U(p,1,m_offset) / rL;
+          real rvL = U(p,2,m_offset) / rL;
+          real rwL = U(p,3,m_offset) / rL;
+          real reL = U(p,4,m_offset) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
+          real rR  = U(q,0,m_offset);
+          real ruR = U(q,1,m_offset) / rR;
+          real rvR = U(q,2,m_offset) / rR;
+          real rwR = U(q,3,m_offset) / rR;
+          real reR = U(q,4,m_offset) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
+          // apply stagnation BCs to primitive variables
+          if (stagPoint(x[p],y[p],z[p])) ruL = rvL = rwL = 0.0;
+          if (stagPoint(x[q],y[q],z[q])) ruR = rvR = rwR = 0.0;
+          // compute MUSCL reconstruction in edge-end points
+          muscl(p, q, coord, G, rL, ruL, rvL, rwL, reL, rR, ruR, rvR, rwR, reR);
+          // convert back to conserved variables
+          reL = (reL + 0.5*(ruL*ruL + rvL*rvL + rwL*rwL)) * rL;
+          ruL *= rL;
+          rvL *= rL;
+          rwL *= rL;
+          reR = (reR + 0.5*(ruR*ruR + rvR*rvR + rwR*rwR)) * rR;
+          ruR *= rR;
+          rvR *= rR;
+          rwR *= rR;
+          // Compute Riemann flux using edge-end point states
+          real f[5];
+          Rusanov::flux( dfn[k+0], dfn[k+1], dfn[k+2],
+                         dfn[k+3], dfn[k+4], dfn[k+5],
+                         rL, ruL, rvL, rwL, reL,
+                         rR, ruR, rvR, rwR, reR,
+                         f[0], f[1], f[2], f[3], f[4] );
+          for (std::size_t c=0; c<m_ncomp; ++c) R.var(r[c],p) -= 2*f[c];
+          k += 6;
         }
-
-      tk::destroy(dflux);
+      }
     }
 
     //! \brief Compute MUSCL reconstruction in edge-end points using a MUSCL
@@ -888,16 +856,15 @@ class CompFlow {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] G Gradient of all unknowns in mesh points
     //! \param[in] rL Left density
-    //! \param[in] ruL Left X velocity
-    //! \param[in] rvL Left Y velocity
-    //! \param[in] rwL Left Z velocity
-    //! \param[in] reL Left internal energy
+    //! \param[in] uL Left X velocity
+    //! \param[in] vL Left Y velocity
+    //! \param[in] wL Left Z velocity
+    //! \param[in] eL Left internal energy
     //! \param[in] rR Right density
-    //! \param[in] ruR Right X velocity
-    //! \param[in] rvR Right Y velocity
-    //! \param[in] rwR Right Z velocity
-    //! \param[in] reR Right internal energy
-    #pragma omp declare simd
+    //! \param[in] uR Right X velocity
+    //! \param[in] vR Right Y velocity
+    //! \param[in] wR Right Z velocity
+    //! \param[in] eR Right internal energy
     void muscl( std::size_t p,
                 std::size_t q,
                 const tk::UnsMesh::Coords& coord,
