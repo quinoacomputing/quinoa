@@ -155,7 +155,11 @@ class Random123 {
                double* r ) const {
       Adaptor generator( m_rng, m_data, tid );
       boost::random::beta_distribution<> beta_dist( p, q );
+      fenv_t fe;
+      feholdexcept( &fe );
       for (ncomp_t i=0; i<num; ++i) r[i] = beta_dist( generator ) * b + a;
+      feclearexcept( FE_UNDERFLOW );
+      feupdateenv( &fe );
     }
 
     //! Gamma RNG: Generate gamma random numbers
