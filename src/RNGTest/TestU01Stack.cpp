@@ -284,8 +284,16 @@ TestU01Stack::MatrixRank( unif01_Gen* gen, sres_Chi2* res,
 // *****************************************************************************
 {
   using std::get;
+
+  fenv_t fe;
+  feholdexcept( &fe );
+
   smarsa_MatrixRank( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
                      get<3>(xargs), get<4>(xargs), get<5>(xargs) );
+
+  feclearexcept( FE_UNDERFLOW );
+  feupdateenv( &fe );
+
   return { res->pVal2[gofw_Mean] };
 }
 
