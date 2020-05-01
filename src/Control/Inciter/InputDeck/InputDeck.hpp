@@ -270,7 +270,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::tolref >() = 0.2;
       get< tag::amr, tag::tolderef >() = 0.05;
       auto rmax =
-        std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
+        std::numeric_limits< kw::amr_xminus::info::expect::type >::max() / 100;
       get< tag::amr, tag::xminus >() = rmax;
       get< tag::amr, tag::xplus >() = -rmax;
       get< tag::amr, tag::yminus >() = rmax;
