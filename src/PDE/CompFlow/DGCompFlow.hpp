@@ -549,24 +549,22 @@ class CompFlow {
 
     //! Return field output going to file
     //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
+                 tk::real V,
                  const tk::Fields& geoElem,
                  tk::Fields& U,
                  const tk::Fields& ) const
     {
-      std::array< std::vector< tk::real >, 3 > coord;
-      std::vector< tk::real > v;
-      v        = geoElem.extract(0,0);
-      coord[0] = geoElem.extract(1,0);
-      coord[1] = geoElem.extract(2,0);
-      coord[2] = geoElem.extract(3,0);
+      std::array< std::vector< tk::real >, 3 > coord{
+        geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
 
-      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, t, 0.0, v,
-                                    coord, U );
+      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, t, V,
+                                    geoElem.extract(0,0), coord, U );
     }
 
     //! Return surface field output going to file

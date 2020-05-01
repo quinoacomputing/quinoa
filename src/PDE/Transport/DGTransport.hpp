@@ -348,6 +348,7 @@ class Transport {
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
+                 tk::real,
                  const tk::Fields& geoElem,
                  tk::Fields& U,
                  const tk::Fields& ) const

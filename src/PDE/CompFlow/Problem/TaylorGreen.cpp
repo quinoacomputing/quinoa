@@ -149,8 +149,8 @@ CompFlowProblemTaylorGreen::fieldOutput(
   // error in x-velocity
   auto err = u;
   for (std::size_t i=0; i<u.size(); ++i)
-     err[i] = std::pow( ua[i] - u[i], 2.0 ) * vol[i] / V;
-   out.push_back( err );
+    err[i] = std::pow( ua[i] - u[i], 2.0 ) * vol[i] / V;
+  out.push_back( err );
 
   std::vector< tk::real > v = rv;
   std::vector< tk::real > va = rv;
