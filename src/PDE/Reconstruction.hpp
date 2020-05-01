@@ -91,6 +91,17 @@ solveLeastSq_P0P1(
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
   Fields& W );
 
+//! \brief Reconstruct the second-order solution using least-squares approach
+//!   from an extended stencil involving the node-neighbors
+void
+recoLeastSqExtStencil( std::size_t rdof,
+  std::size_t offset,
+  std::size_t nelem,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const Fields& geoElem,
+  Fields& W );
+
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
 transform_P0P1( ncomp_t ncomp,

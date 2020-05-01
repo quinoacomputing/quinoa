@@ -342,6 +342,7 @@ class MultiMat {
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
+//    //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
@@ -350,6 +351,8 @@ class MultiMat {
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
                       const inciter::FaceData& fd,
+                      const std::map< std::size_t, std::vector< std::size_t > >&
+                        /*esup*/,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
@@ -412,6 +415,12 @@ class MultiMat {
       // 3. solve 3x3 least-squares system
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhsu_ls, U );
       tk::solveLeastSq_P0P1( nprim(), m_offset, rdof, lhs_ls, rhsp_ls, P );
+
+      //// 1. Reconstruct second-order dofs in Taylor space using nodal-stencils
+      //tk::recoLeastSqExtStencil( rdof, m_offset, nelem, esup, inpoel, geoElem,
+      //  U );
+      //tk::recoLeastSqExtStencil( rdof, m_offset, nelem, esup, inpoel, geoElem,
+      //  P );
 
       // 4. transform reconstructed derivatives to Dubiner dofs
       tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
