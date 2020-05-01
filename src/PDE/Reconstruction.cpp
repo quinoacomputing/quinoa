@@ -392,6 +392,92 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
 }
 
 void
+tk::recoLeastSqExtStencil( std::size_t rdof,
+  std::size_t offset,
+  std::size_t nielem,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const Fields& geoElem,
+  Fields& W )
+// *****************************************************************************
+//  \brief Reconstruct the second-order solution using least-squares approach
+//    from an extended stencil involving the node-neighbors
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] nielem Number of internal elements in this mesh chunk
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] geoElem Element geometry array
+//! \param[in,out] W Solution vector to be reconstructed at recent time step
+//! \details A second-order (piecewise linear) solution polynomial is obtained
+//!   from the first-order (piecewise constant) FV solutions by using a
+//!   least-squares (LS) reconstruction process. This LS reconstruction function
+//!   using the nodal-neighbors of a cell, to get an overdetermined system of
+//!   equations for the derivatives of the solution. This overdetermined system
+//!   is solved in the least-squares sense using the normal equations approach.
+// *****************************************************************************
+{
+  const auto ncomp = W.nprop()/rdof;
+
+  for (std::size_t e=0; e<nielem; ++e)
+  {
+    // lhs matrix
+    std::array< std::array< tk::real, 3 >, 3 >
+      lhs_ls( {{ {{0.0, 0.0, 0.0}},
+                 {{0.0, 0.0, 0.0}},
+                 {{0.0, 0.0, 0.0}} }} );
+    // rhs matrix
+    std::vector< std::array< tk::real, 3 > >
+    rhs_ls( ncomp, {{ 0.0, 0.0, 0.0 }} );
+
+    // loop over all nodes of the element e
+    for (std::size_t lp=0; lp<4; ++lp)
+    {
+      auto p = inpoel[4*e+lp];
+      const auto& pesup = cref_find(esup, p);
+
+      // loop over all the elements surrounding this node p
+      for (auto er : pesup)
+      {
+        // centroid distance
+        std::array< real, 3 > wdeltax{{ geoElem(er,1,0)-geoElem(e,1,0),
+                                        geoElem(er,2,0)-geoElem(e,2,0),
+                                        geoElem(er,3,0)-geoElem(e,3,0) }};
+
+        // contribute to lhs matrix
+        for (std::size_t idir=0; idir<3; ++idir)
+          for (std::size_t jdir=0; jdir<3; ++jdir)
+            lhs_ls[idir][jdir] += wdeltax[idir] * wdeltax[jdir];
+
+        // compute rhs matrix
+        for (std::size_t c=0; c<ncomp; ++c)
+        {
+          auto mark = c*rdof;
+          for (std::size_t idir=0; idir<3; ++idir)
+            rhs_ls[c][idir] +=
+              wdeltax[idir] * (W(er,mark,offset)-W(e,mark,offset));
+        }
+      }
+    }
+
+    // solve least-square normal equation system using Cramer's rule
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*rdof;
+
+      auto ux = tk::cramer( lhs_ls, rhs_ls[c] );
+
+      // Update the P1 dofs with the reconstructioned gradients.
+      // Since this reconstruction does not affect the cell-averaged solution,
+      // W(e,mark+0,offset) is unchanged.
+      W(e,mark+1,offset) = ux[0];
+      W(e,mark+2,offset) = ux[1];
+      W(e,mark+3,offset) = ux[2];
+    }
+  }
+}
+
+void
 tk::transform_P0P1( ncomp_t ncomp,
                     ncomp_t offset,
                     std::size_t rdof,
