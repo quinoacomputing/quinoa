@@ -112,21 +112,6 @@ MultiMatProblemGasImpact::solution( ncomp_t system,
   return s;
 }
 
-tk::SrcFn::result_type
-MultiMatProblemGasImpact::src( ncomp_t, ncomp_t ncomp, tk::real,
-  tk::real, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  std::vector< tk::real > s( ncomp, 0.0 );
-
-  return s;
-}
-
 std::vector< std::string >
 MultiMatProblemGasImpact::fieldNames( ncomp_t )
 // *****************************************************************************
@@ -145,6 +130,7 @@ MultiMatProblemGasImpact::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,
@@ -170,7 +156,7 @@ MultiMatProblemGasImpact::fieldOutput(
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
-  return MultiMatFieldOutput(system, nmat, offset, rdof, U, P);
+  return MultiMatFieldOutput( system, nmat, offset, rdof, U, P );
 }
 
 std::vector< std::string >

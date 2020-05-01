@@ -129,6 +129,7 @@ MultiMatProblemSodShocktube::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,

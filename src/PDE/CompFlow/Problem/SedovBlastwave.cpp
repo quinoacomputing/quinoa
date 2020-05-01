@@ -110,6 +110,7 @@ CompFlowProblemSedovBlastwave::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,
@@ -121,11 +122,12 @@ CompFlowProblemSedovBlastwave::fieldOutput(
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  return CompFlowFieldOutput(system, offset, U);
+  return CompFlowFieldOutput( system, offset, nunk, U );
 }
 
 std::vector< std::string >

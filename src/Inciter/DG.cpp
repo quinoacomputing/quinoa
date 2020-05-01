@@ -1343,20 +1343,23 @@ DG::writeFields( CkCallback c ) const
       elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
     }
 
+    auto nielem = esuel.size() / 4;
+
     // Collect element field solution
     std::vector< std::vector< tk::real > > elemfields;
     auto u = m_u;
     for (const auto& eq : g_dgpde) {
-      auto o = eq.fieldOutput( d->T(), d->meshvol(), m_geoElem, u, m_p );
+      auto o =
+        eq.fieldOutput( d->T(), d->meshvol(), nielem, m_geoElem, u, m_p );
 
       // cut off ghost elements
-      for (auto& f : o) f.resize( esuel.size()/4 );
+      for (auto& f : o) f.resize( nielem );
       elemfields.insert( end(elemfields), begin(o), end(o) );
     }
 
     // Add adaptive indicator array to element-centered field output
     std::vector<tk::real> ndof( begin(m_ndof), end(m_ndof) );
-    ndof.resize( esuel.size()/4 );  // cut off ghosts
+    ndof.resize( nielem );  // cut off ghosts
     elemfields.push_back( ndof );
 
     // // Collect node field solution

@@ -582,6 +582,7 @@ class Transport {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  tk::real V,
+                 std::size_t,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< tk::real >& v,
                  tk::Fields& U ) const

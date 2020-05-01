@@ -34,6 +34,7 @@ std::vector< std::string > CompFlowHistNames();
 std::vector< std::vector< tk::real > > 
 CompFlowFieldOutput( ncomp_t system,
                      ncomp_t offset,
+                     std::size_t nunk,
                      tk::Fields& U );
 
 //! Return surface field output going to file

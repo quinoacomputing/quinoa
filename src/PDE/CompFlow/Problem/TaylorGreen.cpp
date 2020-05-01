@@ -104,6 +104,7 @@ CompFlowProblemTaylorGreen::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real,
   tk::real V,
   const std::vector< tk::real >& vol,
@@ -115,6 +116,7 @@ CompFlowProblemTaylorGreen::fieldOutput(
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] V Total mesh volume (across the whole problem)
 //! \param[in] vol Nodal mesh volumes
 //! \param[in] coord Mesh point coordinates
@@ -126,7 +128,7 @@ CompFlowProblemTaylorGreen::fieldOutput(
   const std::size_t rdof =
     g_inputdeck.get< tag::discr, tag::rdof >();
 
-  auto out = CompFlowFieldOutput(system, offset, U);
+  auto out = CompFlowFieldOutput( system, offset, nunk, U );
 
   const auto r  = U.extract( 0*rdof, offset );
   const auto ru = U.extract( 1*rdof, offset );

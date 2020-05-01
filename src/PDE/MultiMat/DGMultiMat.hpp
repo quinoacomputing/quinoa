@@ -762,6 +762,7 @@ class MultiMat {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  tk::real V,
+                 std::size_t nunk,
                  const tk::Fields& geoElem,
                  tk::Fields& U,
                  const tk::Fields& P ) const
@@ -769,7 +770,7 @@ class MultiMat {
       std::array< std::vector< tk::real >, 3 > coord{
         geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
 
-      return Problem::fieldOutput( m_system, m_ncomp, m_offset, t,
+      return Problem::fieldOutput( m_system, m_ncomp, m_offset, nunk, t,
                                    V, geoElem.extract(0,0), coord, U, P );
     }
 

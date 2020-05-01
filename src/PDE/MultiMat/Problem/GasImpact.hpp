@@ -44,7 +44,9 @@ class MultiMatProblemGasImpact {
 
     //! Compute and return source term for this problem
     static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
+    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real ) {
+      return std::vector< tk::real >( ncomp, 0.0 );
+    }
 
     //! Return field names to be output to file
     static std::vector< std::string > fieldNames( ncomp_t );
@@ -54,6 +56,7 @@ class MultiMatProblemGasImpact {
     fieldOutput( ncomp_t system,
                  ncomp_t ncomp,
                  ncomp_t offset,
+                 std::size_t nunk,
                  tk::real,
                  tk::real /*V*/,
                  const std::vector< tk::real >& /*vol*/,

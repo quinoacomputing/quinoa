@@ -734,12 +734,13 @@ class CompFlow {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  tk::real V,
+                 std::size_t nunk,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< tk::real >& v,
                  tk::Fields& U ) const
     {
-      return
-        m_problem.fieldOutput( m_system, m_ncomp, m_offset, t, V, v, coord, U );
+      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, t,
+                                    V, v, coord, U );
     }
 
     //! Return surface field output going to file
