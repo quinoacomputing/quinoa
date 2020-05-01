@@ -16,6 +16,7 @@
 #include <random>
 #include <limits>
 #include <array>
+#include <cfenv>
 
 #include "NoWarning/uniform.hpp"
 #include "NoWarning/beta_distribution.hpp"
@@ -174,7 +175,11 @@ class Random123 {
     void gamma( int tid, ncomp_t num, double a, double b, double* r ) const {
       Adaptor generator( m_rng, m_data, tid );
       boost::random::gamma_distribution<> gamma_dist( a, b );
+      fenv_t fe;
+      feholdexcept( &fe );
       for (ncomp_t i=0; i<num; ++i) r[i] = gamma_dist( generator );
+      feclearexcept( FE_UNDERFLOW );
+      feupdateenv( &fe );
     }
 
     //! Accessor to the number of threads we operate on
