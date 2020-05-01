@@ -53,6 +53,7 @@
 
 #include <vector>
 #include <cmath>
+#include <cfenv>
 
 #include "InitPolicy.hpp"
 #include "MixDirichletCoeffPolicy.hpp"
@@ -125,6 +126,9 @@ class MixDirichlet {
       Init::template init< eq >( g_inputdeck, m_rng, stream, particles, m_c,
                                  m_ncomp, m_offset );
 
+      fenv_t fe;
+      feholdexcept( &fe );
+
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Violating boundedness here is a hard error as indicates a problem
@@ -136,6 +140,9 @@ class MixDirichlet {
         // Initialize derived instantaneous variables
         derived( particles, p );
       }
+
+      feclearexcept( FE_UNDERFLOW );
+      feupdateenv( &fe );
     }
 
     //! \brief Advance particles according to the MixDirichlet SDE
@@ -152,6 +159,9 @@ class MixDirichlet {
       // Update SDE coefficients
       coeff.update( m_depvar, m_ncomp, m_norm, DENSITY_OFFSET, VOLUME_OFFSET,
                     moments, m_rho, m_r, m_kprime, m_b, m_k, m_S );
+
+      fenv_t fe;
+      feholdexcept( &fe );
 
       // Advance particles
       const auto npar = particles.nunk();
@@ -174,6 +184,9 @@ class MixDirichlet {
         // Compute derived instantaneous variables
         derived( particles, p );
       }
+
+      feclearexcept( FE_UNDERFLOW );
+      feupdateenv( &fe );
     }
 
   private:
