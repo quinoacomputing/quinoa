@@ -49,7 +49,12 @@ struct Rusanov {
   //! \param[in] rvL Left Y momentum
   //! \param[in] rwL Left Z momentum
   //! \param[in] reL Left total specific energy
-  //! \return Riemann solution according to Rusanov
+  //! \param[in,out] fr Riemann solution for density according to Rusanov
+  //! \param[in,out] fru Riemann solution for X momenutm according to Rusanov
+  //! \param[in,out] frv Riemann solution for Y momenutm according to Rusanov
+  //! \param[in,out] frw Riemann solution for Z momenutm according to Rusanov
+  //! \param[in,out] fre Riemann solution for specific total energy according
+  //!   to Rusanov
   #pragma omp declare simd
   static void
   flux( real nx, real ny, real nz,
