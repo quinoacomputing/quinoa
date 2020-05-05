@@ -107,21 +107,6 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
   return s;
 }
 
-tk::SrcFn::result_type
-MultiMatProblemInterfaceAdvection::src( ncomp_t, ncomp_t ncomp, tk::real,
-                                        tk::real, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  std::vector< tk::real > s( ncomp, 0.0 );
-
-  return s;
-}
-
 std::vector< std::string >
 MultiMatProblemInterfaceAdvection::fieldNames( ncomp_t )
 // *****************************************************************************
@@ -140,6 +125,7 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real /*t*/,
   tk::real,
   const std::vector< tk::real >&,
@@ -152,6 +138,7 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] t Physical time
 //! \param[in] coord Mesh node coordinates
 //! \param[in] U Solution vector at recent time step
@@ -167,7 +154,7 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
-  return MultiMatFieldOutput(system, nmat, offset, rdof, U, P);
+  return MultiMatFieldOutput( system, nmat, offset, nunk, rdof, U, P );
 }
 
 std::vector< std::string >

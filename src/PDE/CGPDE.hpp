@@ -230,10 +230,11 @@ class CGPDE {
     std::vector< std::vector< tk::real > > fieldOutput(
       tk::real t,
       tk::real V,
+      std::size_t nunk,
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< tk::real >& v,
       tk::Fields& U ) const
-    { return self->fieldOutput( t, V, coord, v, U ); }
+    { return self->fieldOutput( t, V, nunk, coord, v, U ); }
 
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
@@ -330,6 +331,7 @@ class CGPDE {
       virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
         tk::real,
+        std::size_t,
         const std::array< std::vector< tk::real >, 3 >&,
         const std::vector< tk::real >&,
         tk::Fields& ) const = 0;
@@ -420,10 +422,11 @@ class CGPDE {
       std::vector< std::vector< tk::real > > fieldOutput(
         tk::real t,
         tk::real V,
+        std::size_t nunk,
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::vector< tk::real >& v,
         tk::Fields& U ) const override
-      { return data.fieldOutput( t, V, coord, v, U ); }
+      { return data.fieldOutput( t, V, nunk, coord, v, U ); }
       std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
         tk::Fields& U ) const override

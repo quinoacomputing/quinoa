@@ -47,6 +47,7 @@
 #define InitPolicy_h
 
 #include <algorithm>
+#include <cfenv>
 
 #include <brigand/sequences/list.hpp>
 
@@ -342,6 +343,9 @@ struct InitDirichlet {
         rng.gamma( stream, 1, dir[c], 1.0, Y.data()+c );
       }
 
+      fenv_t fe;
+      feholdexcept( &fe );
+
       auto Ysum = std::accumulate( begin(Y), end(Y), 0.0 );
 
       // Assign N=K+1 particle values by dividing the gamma-distributed numbers
@@ -352,6 +356,9 @@ struct InitDirichlet {
         if (y < 0.0 || y > 1.0) Throw( "Dirichlet samples out of bounds" );
         particles( p, c, offset ) = y;
       }
+
+      feclearexcept( FE_UNDERFLOW );
+      feupdateenv( &fe );
     }
 
     // Verify boundedness of all ncomp+1 (=N=K+1) scalars

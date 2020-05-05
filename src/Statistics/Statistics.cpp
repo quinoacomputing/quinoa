@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <iosfwd>
 #include <cctype>
+#include <cfenv>
 
 #include "Types.hpp"
 #include "Exception.hpp"
@@ -264,6 +265,9 @@ Statistics::accumulateOrd()
 //  Accumulate (i.e., only do the sum for) ordinary moments
 // *****************************************************************************
 {
+  fenv_t fe;
+  feholdexcept( &fe );
+
   if (m_nord) {
     // Zero ordinary moment accumulators
     std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );
@@ -282,6 +286,9 @@ Statistics::accumulateOrd()
       }
     }
   }
+
+  feclearexcept( FE_UNDERFLOW );
+  feupdateenv( &fe );
 }
 
 void

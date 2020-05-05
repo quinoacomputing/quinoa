@@ -19,6 +19,7 @@
 #include <array>
 #include <unordered_map>
 #include <algorithm>
+#include <cfenv>
 
 #include "Types.hpp"
 #include "Exception.hpp"
@@ -63,7 +64,11 @@ class UniPDF {
     void add( tk::real sample ) {
       Assert( m_binsize > 0, "Bin size must be positive" );
       ++m_nsample;
+      fenv_t fe;
+      feholdexcept( &fe );
       ++m_pdf[ std::lround( sample / m_binsize ) ];
+      feclearexcept( FE_UNDERFLOW );
+      feupdateenv( &fe );
     }
 
     //! Add multiple samples from a PDF

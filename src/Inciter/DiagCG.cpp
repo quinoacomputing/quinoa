@@ -666,7 +666,8 @@ DiagCG::writeFields( CkCallback c ) const
     std::vector< std::vector< tk::real > > nodefields;
     std::vector< std::vector< tk::real > > nodesurfs;
     for (const auto& eq : g_cgpde) {
-      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
+      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord()[0].size(),
+                               d->Coord(), d->V(), u );
       nodefields.insert( end(nodefields), begin(o), end(o) );
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );

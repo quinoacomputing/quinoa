@@ -198,6 +198,7 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
   ncomp_t system,
   ncomp_t ncomp,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real t,
   tk::real V,
   const std::vector< tk::real >& vol,
@@ -210,6 +211,7 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] t Physical time
 //! \param[in] V Total mesh volume (across the whole problem)
 //! \param[in] vol Nodal mesh volumes
@@ -222,7 +224,7 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
   const std::size_t rdof =
     g_inputdeck.get< tag::discr, tag::rdof >();
 
-  auto out = CompFlowFieldOutput(system, offset, U);
+  auto out = CompFlowFieldOutput( system, offset, nunk, U );
 
   auto r = U.extract( 0*rdof, offset );
   auto u = U.extract( 1*rdof, offset );

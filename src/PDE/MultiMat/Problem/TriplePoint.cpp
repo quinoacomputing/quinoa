@@ -143,6 +143,7 @@ MultiMatProblemTriplePoint::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,
@@ -168,7 +169,7 @@ MultiMatProblemTriplePoint::fieldOutput(
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
-  return MultiMatFieldOutput(system, nmat, offset, rdof, U, P);
+  return MultiMatFieldOutput(system, nmat, offset, nunk, rdof, U, P);
 }
 
 std::vector< std::string >
