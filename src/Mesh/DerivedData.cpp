@@ -22,6 +22,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <iostream>
+#include <cfenv>
 
 #include "Exception.hpp"
 #include "DerivedData.hpp"
@@ -1608,6 +1609,9 @@ conforming( const std::vector< std::size_t >& inpoel,
   const auto& y = coord[1];
   const auto& z = coord[2];
 
+  fenv_t fe;
+  feholdexcept( &fe );
+
   // Compute coordinates of nodes of mid-points of all edges
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
     auto A = inpoel[e*4+0];
@@ -1623,6 +1627,9 @@ conforming( const std::vector< std::size_t >& inpoel,
       edgeNodes[ en ] = std::tuple<std::size_t,Tet,Edge>{ e, {{A,B,C,D}}, n };
     }
   }
+
+  feclearexcept( FE_UNDERFLOW );
+  feupdateenv( &fe );
 
   // Find hanging nodes. If the coordinates of an element vertex coincide with
   // that of a mid-point node of an edge, that is a hanging node. If we find one

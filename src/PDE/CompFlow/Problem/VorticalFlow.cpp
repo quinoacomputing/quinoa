@@ -89,6 +89,7 @@ CompFlowProblemVorticalFlow::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,
@@ -100,6 +101,7 @@ CompFlowProblemVorticalFlow::fieldOutput(
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] coord Mesh node coordinates
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
@@ -119,7 +121,7 @@ CompFlowProblemVorticalFlow::fieldOutput(
    tk::real g =
      g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system][0];
 
-   auto out = CompFlowFieldOutput(system, offset, U);   
+   auto out = CompFlowFieldOutput( system, offset, nunk, U );
 
    const auto r  = U.extract( 0*rdof, offset );
    const auto ru = U.extract( 1*rdof, offset );

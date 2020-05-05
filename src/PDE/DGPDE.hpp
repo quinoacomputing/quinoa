@@ -216,10 +216,12 @@ class DGPDE {
     //! Public interface to returning field output
     std::vector< std::vector< tk::real > > fieldOutput(
       tk::real t,
+      tk::real V,
+      std::size_t nunk,
       const tk::Fields& geoElem,
       tk::Fields& U,
       const tk::Fields& P ) const
-    { return self->fieldOutput( t, geoElem, U, P ); }
+    { return self->fieldOutput( t, V, nunk, geoElem, U, P ); }
 
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
@@ -317,6 +319,8 @@ class DGPDE {
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
+        tk::real,
+        std::size_t,
         const tk::Fields&,
         tk::Fields&,
         const tk::Fields& ) const = 0;
@@ -414,10 +418,12 @@ class DGPDE {
       { return data.names(); }
       std::vector< std::vector< tk::real > > fieldOutput(
         tk::real t,
+        tk::real V,
+        std::size_t nunk,
         const tk::Fields& geoElem,
         tk::Fields& U,
         const tk::Fields& P ) const override
-      { return data.fieldOutput( t, geoElem, U, P ); }
+      { return data.fieldOutput( t, V, nunk, geoElem, U, P ); }
       std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
         tk::Fields& U ) const override

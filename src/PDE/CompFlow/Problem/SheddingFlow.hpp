@@ -62,6 +62,7 @@ class CompFlowProblemSheddingFlow {
     fieldOutput( ncomp_t system,
                  ncomp_t /*ncomp*/,
                  ncomp_t offset,
+                 std::size_t nunk,
                  tk::real,
                  tk::real /*V*/,
                  const std::vector< tk::real >& /*vol*/,

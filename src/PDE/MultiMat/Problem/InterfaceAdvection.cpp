@@ -119,6 +119,7 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real /*t*/,
   tk::real,
   const std::vector< tk::real >&,
@@ -131,6 +132,7 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] t Physical time
 //! \param[in] coord Mesh node coordinates
 //! \param[in] U Solution vector at recent time step
@@ -146,7 +148,7 @@ MultiMatProblemInterfaceAdvection::fieldOutput(
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
-  return MultiMatFieldOutput(system, nmat, offset, rdof, U, P);
+  return MultiMatFieldOutput( system, nmat, offset, nunk, rdof, U, P );
 }
 
 std::vector< std::string >

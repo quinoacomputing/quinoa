@@ -77,7 +77,7 @@ class CompFlow {
     void initialize( const std::array< std::vector< real >, 3 >& coord,
                      tk::Fields& unk,
                      real t,
-                     std::vector< std::size_t >& inbox )
+                     std::vector< std::size_t >& inbox ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
@@ -638,15 +638,16 @@ class CompFlow {
     //! \param[in] v Nodal mesh volumes
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
-    std::vector< std::vector< real > >
-    fieldOutput( real t,
-                 real V,
-                 const std::array< std::vector< real >, 3 >& coord,
-                 const std::vector< real >& v,
-                 tk::Fields& U )
+    std::vector< std::vector< tk::real > >
+    fieldOutput( tk::real t,
+                 tk::real V,
+                 std::size_t nunk,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< tk::real >& v,
+                 tk::Fields& U ) const
     {
-      return
-        m_problem.fieldOutput( m_system, m_ncomp, m_offset, t, V, v, coord, U );
+      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, t,
+                                    V, v, coord, U );
     }
 
     //! Return surface field output going to file

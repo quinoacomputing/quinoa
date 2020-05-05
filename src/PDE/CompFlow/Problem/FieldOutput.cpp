@@ -39,6 +39,7 @@ std::vector< std::string > CompFlowFieldNames()
 std::vector< std::vector< tk::real > > 
 CompFlowFieldOutput( ncomp_t system,
                      ncomp_t offset,
+                     std::size_t nunk,
                      tk::Fields& U )
 // *****************************************************************************
 //  Return field output going to file
@@ -46,6 +47,7 @@ CompFlowFieldOutput( ncomp_t system,
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
@@ -62,28 +64,30 @@ CompFlowFieldOutput( ncomp_t system,
 
   out.push_back( r );
 
+  Assert( r.size() >= nunk, "Size mismatch" );
+
   std::vector< tk::real > u = ru;
-  std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
+  Assert( u.size() >= nunk, "Size mismatch" );
+  for (std::size_t i=0; i<nunk; ++i) u[i] /= r[i];
   out.push_back( u );
 
   std::vector< tk::real > v = rv;
-  std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
+  Assert( v.size() >= nunk, "Size mismatch" );
+  for (std::size_t i=0; i<nunk; ++i) v[i] /= r[i];
   out.push_back( v );
 
   std::vector< tk::real > w = rw;
-  std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
+  Assert( w.size() >= nunk, "Size mismatch" );
+  for (std::size_t i=0; i<nunk; ++i) w[i] /= r[i];
   out.push_back( w );
 
   std::vector< tk::real > E = re;
-  std::transform( r.begin(), r.end(), E.begin(), E.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
+  Assert( E.size() >= nunk, "Size mismatch" );
+  for (std::size_t i=0; i<nunk; ++i) E[i] /= r[i];
   out.push_back( E );
 
-  std::vector< tk::real > P( r.size(), 0.0 );
-  for (std::size_t i=0; i<P.size(); ++i) {
+  std::vector< tk::real > P( nunk, 0.0 );
+  for (std::size_t i=0; i<nunk; ++i) {
     P[i] = eos_pressure< tag::compflow >
              ( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
   }

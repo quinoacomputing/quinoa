@@ -50,6 +50,12 @@ class MultiMatProblemInterfaceAdvection {
               tk::real t,
               int& );
 
+    //! Compute and return source term for interface advection
+    static tk::MultiMatSrcFn::result_type
+    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real,
+         tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
+    { r = ru = rv = rw = re = 0.0; }
+
     //! Return field names to be output to file
     static std::vector< std::string > fieldNames( ncomp_t );
 
@@ -58,6 +64,7 @@ class MultiMatProblemInterfaceAdvection {
     fieldOutput( ncomp_t system,
                  ncomp_t /*ncomp*/,
                  ncomp_t offset,
+                 std::size_t nunk,
                  tk::real t,
                  tk::real,
                  const std::vector< tk::real >&,

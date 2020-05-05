@@ -58,6 +58,7 @@ class CompFlowProblemUserDefined {
     fieldOutput( ncomp_t,
                  ncomp_t,
                  ncomp_t offset,
+                 std::size_t nunk,
                  tk::real,
                  tk::real,
                  const std::vector< tk::real >&,

@@ -130,6 +130,7 @@ MultiMatProblemGasImpact::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,
@@ -142,6 +143,7 @@ MultiMatProblemGasImpact::fieldOutput(
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitive quantities at recent time step
 //! \return Vector of vectors to be output to file
@@ -155,7 +157,7 @@ MultiMatProblemGasImpact::fieldOutput(
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
-  return MultiMatFieldOutput(system, nmat, offset, rdof, U, P);
+  return MultiMatFieldOutput( system, nmat, offset, nunk, rdof, U, P );
 }
 
 std::vector< std::string >

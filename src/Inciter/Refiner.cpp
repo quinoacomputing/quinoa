@@ -30,6 +30,7 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
 
@@ -1125,17 +1126,22 @@ Refiner::coordRefine()
   auto zplus = g_inputdeck.get< tag::amr, tag::zplus >();
 
   // The default is the largest representable double
-  auto rmax = std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
   auto eps =
     std::numeric_limits< kw::amr_xminus::info::expect::type >::epsilon();
+  auto xminus_default = g_inputdeck_defaults.get< tag::amr, tag::xminus >();
+  auto xplus_default = g_inputdeck_defaults.get< tag::amr, tag::xplus >();
+  auto yminus_default = g_inputdeck_defaults.get< tag::amr, tag::yminus >();
+  auto yplus_default = g_inputdeck_defaults.get< tag::amr, tag::yplus >();
+  auto zminus_default = g_inputdeck_defaults.get< tag::amr, tag::zminus >();
+  auto zplus_default = g_inputdeck_defaults.get< tag::amr, tag::zplus >();
 
   // Decide if user has configured the half-world
-  bool xm = std::abs(xminus - rmax) > eps ? true : false;
-  bool xp = std::abs(xplus - rmax) > eps ? true : false;
-  bool ym = std::abs(yminus - rmax) > eps ? true : false;
-  bool yp = std::abs(yplus - rmax) > eps ? true : false;
-  bool zm = std::abs(zminus - rmax) > eps ? true : false;
-  bool zp = std::abs(zplus - rmax) > eps ? true : false;
+  bool xm = std::abs(xminus - xminus_default) > eps ? true : false;
+  bool xp = std::abs(xplus - xplus_default) > eps ? true : false;
+  bool ym = std::abs(yminus - yminus_default) > eps ? true : false;
+  bool yp = std::abs(yplus - yplus_default) > eps ? true : false;
+  bool zm = std::abs(zminus - zminus_default) > eps ? true : false;
+  bool zp = std::abs(zplus - zplus_default) > eps ? true : false;
 
   using AMR::edge_t;
   using AMR::edge_tag;
@@ -1152,8 +1158,8 @@ Refiner::coordRefine()
     const auto& z = m_coord[2];
     // Compute edges to be tagged for refinement
     std::vector< std::pair< edge_t, edge_tag > > tagged_edges;
-    for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
-      for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
+    for (std::size_t p=0; p<npoin; ++p)    // for all mesh nodes on this chare
+      for (auto q : tk::Around(psup,p)) {  // for all nodes surrounding p
         Edge e{{p,q}};
 
         bool t = true;

@@ -76,7 +76,7 @@ class Transport {
     void initialize( const std::array< std::vector< real >, 3 >& coord,
                      tk::Fields& unk,
                      real t,
-                     std::vector< std::size_t >& )
+                     std::vector< std::size_t >& ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
@@ -367,10 +367,12 @@ class Transport {
       const auto& y = coord[1];
       const auto& z = coord[2];
       // compute the minimum dt across all elements we own
-      real mindt = std::numeric_limits< real >::max();
+      auto mindt = std::numeric_limits< tk::real >::max();
+      auto eps = std::numeric_limits< tk::real >::epsilon();
+      auto large = std::numeric_limits< tk::real >::max();
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-        const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
-                                               inpoel[e*4+2], inpoel[e*4+3] }};
+        const std::array< std::size_t, 4 >
+          N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
         // compute cubic root of element volume as the characteristic length
         const std::array< real, 3 >
           ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
@@ -399,7 +401,7 @@ class Transport {
             if (v > maxvel) maxvel = v;
           }
         // compute element dt for the advection
-        auto advection_dt = L / maxvel;
+        auto advection_dt = std::abs(maxvel) > eps ? L / maxvel : large;
         // compute element dt based on diffusion
         auto diffusion_dt = m_physics.diffusion_dt( m_system, m_ncomp, L, u );
         // compute minimum element dt
@@ -548,12 +550,13 @@ class Transport {
     //! \details This functions should be written in conjunction with names(),
     //!   which provides the vector of field names
     //! \note U is overwritten
-    std::vector< std::vector< real > >
-    fieldOutput( real t,
-                 real V,
-                 const std::array< std::vector< real >, 3 >& coord,
-                 const std::vector< real >& v,
-                 tk::Fields& U )
+    std::vector< std::vector< tk::real > >
+    fieldOutput( tk::real t,
+                 tk::real V,
+                 std::size_t,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< tk::real >& v,
+                 tk::Fields& U ) const
     {
       std::vector< std::vector< real > > out;
       // will output numerical solution for all components
