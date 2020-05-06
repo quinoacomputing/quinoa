@@ -95,7 +95,9 @@ setSignalHandlers()
   signal( SIGSEGV, tk::signalHandler );
   signal( SIGTERM, tk::signalHandler );
 
+  #ifndef __APPLE__
   feenableexcept( FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW );
+  #endif
 
   return 0;
 }
