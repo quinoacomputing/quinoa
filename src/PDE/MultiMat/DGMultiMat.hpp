@@ -538,13 +538,13 @@ class MultiMat {
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
-      std::cout << "intSurfInt: " << std::endl;
-      {STARTTIME
+      //std::cout << "intSurfInt: " << std::endl;
+      //{STARTTIME
       // compute internal surface flux integrals
       tk::surfInt( pref, m_system, nmat, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R,
                    riemannDeriv );
-      ENDTIME}
+      //ENDTIME}
 
       // compute source term integrals
       tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, nelem, inpoel, coord,

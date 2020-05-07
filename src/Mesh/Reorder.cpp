@@ -209,31 +209,6 @@ remap( const std::map< int, std::vector< std::size_t > >& ids,
   return newids;
 }
 
-void
-remap( std::map< int, std::vector< std::size_t > >& ids,
-       const std::vector< std::size_t >& map )
-// *****************************************************************************
-//  Create remapped map of vector of indices using a map
-//! \param[in,out] ids Map of vector of integer IDs to create new container of
-//!   ids from
-//! \param[in] map Array of indices creating a new order
-//! \details This function applies a mapping (reordering) to the map of integer
-//!   IDs passed in using the map passed in by applying remap(vector,map) on
-//!   each vector of ids. The ids are overwritten.
-// *****************************************************************************
-{
-  if (ids.empty() || map.empty()) return;
-
-  Assert( !map.empty(), "Map must not be empty" );
-
-  Assert( *max_element( begin(ids), end(ids) ) < map.size(),
-          "Indexing out of bounds" );
-
-  std::map< int, std::vector< std::size_t > > ids_temp;
-  for (auto&& [i, v] : ids)
-    ids_temp[map[i]] = std::move(v);
-}
-
 std::vector< std::size_t >
 renumber( const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& psup )

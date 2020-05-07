@@ -278,6 +278,29 @@ Discretization::remap(
 }
 
 void
+Discretization::elemRemap(
+  const std::unordered_map< std::size_t, std::size_t >& map )
+// *****************************************************************************
+//  Remap mesh data based on new local element ids
+//! \param[in] map Mapping of old->new local element ids
+// *****************************************************************************
+{
+  auto temp_inpoel = m_inpoel;
+
+  // Remap connectivity containing local IDs
+  for (std::size_t e=0; e<temp_inpoel.size()/4; ++e)
+  {
+    auto enew = tk::cref_find(map,e);
+    m_inpoel[ 4*enew ] = temp_inpoel[4*e];
+    m_inpoel[ 4*enew+1 ] = temp_inpoel[4*e+1];
+    m_inpoel[ 4*enew+2 ] = temp_inpoel[4*e+2];
+    m_inpoel[ 4*enew+3 ] = temp_inpoel[4*e+3];
+  }
+
+  tk::destroy(temp_inpoel);
+}
+
+void
 Discretization::setRefiner( const CProxy_Refiner& ref )
 // *****************************************************************************
 //  Set Refiner Charm++ proxy

@@ -100,6 +100,71 @@ DG::DG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
+  // Perform optional operator-access-pattern mesh element reordering
+  if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
+
+    auto d = Disc();
+
+    // Create new local element ids based on access pattern of PDE operators
+    std::unordered_map< std::size_t, std::size_t > map;
+    const auto& esuf = m_fd.Esuf();
+    std::size_t n = 0;
+
+    for (auto f=m_fd.Nbfac(); f<esuf.size()/2; ++f)  // for each face f
+    {
+      if (map.find(esuf[2*f+0]) == map.end()) map[esuf[2*f+0]] = n++;
+      if (map.find(esuf[2*f+1]) == map.end()) map[esuf[2*f+1]] = n++;
+    }
+
+    Assert( map.size() == m_fd.Esuel().size()/4, "Map size mismatch" );
+
+    // Remap data in bound Discretization object
+    d->elemRemap(map);
+
+    //// Recompute element-based data structures
+    //auto esup = tk::genEsup(d->Inpoel(), 4);
+    //m_fd.Esuel() = tk::genEsuelTet(d->Inpoel(), esup);
+    //m_fd.Belem() = tk::genBelemTet(m_fd.Nbfac(), m_fd.Inpofa(), esup);
+    //m_fd.Esuf() = tk::genEsuf(4, m_fd.Nipfac(), m_fd.Nbfac(), m_fd.Belem(),
+    //  m_fd.Esuel());
+    //tk::destroy(esup);
+
+    // Remap element-based data structures
+    auto temp_esuel = m_fd.Esuel();
+    auto& esuel = m_fd.Esuel();
+    for (std::size_t e=0; e<m_fd.Esuel().size()/4; ++e)
+    {
+      auto enew = tk::cref_find(map,e);
+      for (std::size_t i=0; i<4; ++i)
+      {
+        if (temp_esuel[4*e+i] == -1)
+          esuel[4*enew+i] = -1;
+        else
+          esuel[4*enew+i] = tk::cref_find(map, temp_esuel[4*e+i]);
+      }
+    }
+    auto& belem = m_fd.Belem();
+    for (auto& e : belem) e = tk::cref_find(map,e);
+    auto temp_esuf = m_fd.Esuf();
+    auto& refesuf = m_fd.Esuf();
+    for (std::size_t f=0; f<temp_esuf.size()/2; ++f)
+    {
+      auto el = temp_esuf[2*f];
+      auto er = temp_esuf[2*f+1];
+      Assert(el > -1, "Left element detected as -1");
+      refesuf[2*f] = tk::cref_find(map,el);
+      if (er > -1) refesuf[2*f+1] = tk::cref_find(map,er);
+    }
+
+    // Remap element geometry arrays
+    auto temp_geoelem = m_geoElem;
+    for (std::size_t e=0; e<m_geoElem.nunk(); ++e)
+    {
+      auto enew = tk::cref_find(map,e);
+      m_geoElem[enew] = temp_geoelem[e];
+    }
+  }
+
   // Enable SDAG wait for setting up chare boundary faces
   thisProxy[ thisIndex ].wait4fac();
 
@@ -1397,6 +1462,9 @@ DG::reco()
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
+  //std::cout << "reco: " << std::endl;
+  //STARTTIME
+
   // Combine own and communicated contributions of unreconstructed solution and
   // degrees of freedom in cells (if p-adaptive)
   for (const auto& b : m_bid) {
@@ -1425,6 +1493,8 @@ DG::reco()
         eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, d->Inpoel(),
                         d->Coord(), m_u, m_p );
   }
+
+  //ENDTIME
 
   // Send reconstructed solution to neighboring chares
   if (m_sendGhost.empty())
@@ -1511,6 +1581,9 @@ DG::lim()
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
+  //std::cout << "lim: " << std::endl;
+  //STARTTIME
+
   // Combine own and communicated contributions of unlimited solution, and
   // if a p-adaptive algorithm is used, degrees of freedom in cells
   for (const auto& [boundary, localtet] : m_bid) {
@@ -1535,6 +1608,7 @@ DG::lim()
                 d->Coord(), m_ndof, m_u, m_p );
   }
 
+  //ENDTIME
 
   // Send limited solution to neighboring chares
   if (m_sendGhost.empty())
@@ -1652,6 +1726,9 @@ DG::dt()
 
   auto d = Disc();
 
+  //std::cout << "dt: " << std::endl;
+  //STARTTIME
+
   // Combine own and communicated contributions of limited solution and degrees
   // of freedom in cells (if p-adaptive)
   for (const auto& b : m_bid) {
@@ -1698,6 +1775,8 @@ DG::dt()
   {
     mindt = d->Dt();
   }
+
+  //ENDTIME
 
   // Contribute to minimum dt across all chares then advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -1759,9 +1838,17 @@ DG::solve( tk::real newdt )
   // Update Un
   if (m_stage == 0) m_un = m_u;
 
+  //std::cout << "rhs: " << std::endl;
+  //{STARTTIME
+
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
             m_p, m_ndof, m_rhs );
+
+  //ENDTIME}
+
+  //std::cout << "rk-update: " << std::endl;
+  //{STARTTIME
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<m_nunk; ++e)
@@ -1774,6 +1861,8 @@ DG::solve( tk::real newdt )
           + rkcoef[1][m_stage] * ( m_u(e, rmark, 0)
             + d->Dt() * m_rhs(e, mark, 0)/m_lhs(e, mark, 0) );
       }
+
+  //ENDTIME}
 
   // Update primitives based on the evolved solution
   for (const auto& eq : g_dgpde)

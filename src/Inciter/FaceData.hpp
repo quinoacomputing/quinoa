@@ -64,6 +64,7 @@ class FaceData {
     const std::vector< std::size_t >& Inpofa() const { return m_inpofa; }
     std::vector< std::size_t >& Inpofa() { return m_inpofa; }
     const std::vector< std::size_t >& Belem() const { return m_belem; }
+    std::vector< std::size_t >& Belem() { return m_belem; }
     const std::vector< int >& Esuf() const { return m_esuf; }
     std::vector< int >& Esuf() { return m_esuf; }
     //@}
