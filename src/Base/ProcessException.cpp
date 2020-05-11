@@ -95,7 +95,7 @@ setSignalHandlers()
   signal( SIGSEGV, tk::signalHandler );
   signal( SIGTERM, tk::signalHandler );
 
-  #ifndef __APPLE__
+  #if !defined(__APPLE__) && !defined(HOST_OS_ALPINE)
   feenableexcept( FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW );
   #endif
 
