@@ -145,13 +145,17 @@ ALECG::norm()
 // Start (re-)computing boundare point-, and dual-face normals
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  std::unordered_set< std::size_t > bcnodes;
+
   // Query nodes at which symmetry BCs are specified
-  std::unordered_set< std::size_t > symbcnodes;
-  for (const auto& eq : g_cgpde)
-    eq.symbcnodes( m_bface, m_triinpoel, symbcnodes );
+  d->bcnodes< tag::bcsym >( m_bface, m_triinpoel, bcnodes );
+  // Query nodes at which characteristic BCs are specified
+  d->bcnodes< tag::bcfarfield >( m_bface, m_triinpoel, bcnodes );
 
   // Compute boundary point normals
-  bnorm( std::move(symbcnodes) );
+  bnorm( std::move(bcnodes) );
 
   // Compute dual-face normals associated to edges
   dfnorm();
@@ -1122,8 +1126,7 @@ ALECG::writeFields( CkCallback c ) const
 
     // Create volume node field assigning 1 where symmetry BC is set
     // std::unordered_set< std::size_t > symbcnodes;
-    // for (const auto& eq : g_cgpde)
-    //   eq.symbcnodes( m_bface, m_triinpoel, symbcnodes );
+    // d->bcnodes< tag::bcsym >( m_bface, m_triinpoel, bcnodes );
     // nodefieldnames.push_back( "bc_type" );
     // nodefields.push_back( std::vector<tk::real>(d->Coord()[0].size(),0.0) );
     // for (auto i : symbcnodes) nodefields.back()[i] = 1.0;

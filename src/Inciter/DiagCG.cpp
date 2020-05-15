@@ -85,10 +85,11 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 {
   usesAtSync = true;    // enable migration at AtSync
 
+  auto d = Disc();
+
   // Perform optional operator-access-pattern mesh node reordering
   if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
 
-    auto d = Disc();
     const auto& inpoel = d->Inpoel();
 
     // Create new local ids based on access pattern of PDE operators
@@ -117,7 +118,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 
   // Query nodes at which symmetry BCs are specified
   std::unordered_set< std::size_t > symbcnodes;
-  for (const auto& eq : g_cgpde) eq.symbcnodes( bface, triinpoel, symbcnodes );
+  d->bcnodes< tag::bcsym >( bface, triinpoel, symbcnodes );
 
   // Compute boundary point normals
   bnorm( bface, triinpoel, std::move(symbcnodes) );

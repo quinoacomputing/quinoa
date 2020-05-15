@@ -178,13 +178,6 @@ class CGPDE {
            const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm )
     const { self->symbc( U, bnorm ); }
 
-    //! Public interface to querying symmetry boundary nodes
-    void
-    symbcnodes( const std::map< int, std::vector< std::size_t > >& bface,
-                const std::vector< std::size_t >& triinpoel,
-                std::unordered_set< std::size_t >& nodes ) const
-    { self->symbcnodes( bface, triinpoel, nodes ); }
-
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
 
@@ -298,10 +291,6 @@ class CGPDE {
       virtual void symbc( tk::Fields& U,
          const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& )
          const = 0;
-      virtual void symbcnodes(
-         const std::map< int, std::vector< std::size_t > >&,
-         const std::vector< std::size_t >&,
-         std::unordered_set< std::size_t >& ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -394,11 +383,6 @@ class CGPDE {
       void symbc( tk::Fields& U,
         const std::unordered_map<std::size_t,std::array<tk::real,4>>& bnorm )
         const override { data.symbc( U, bnorm ); }
-      void symbcnodes(
-         const std::map< int, std::vector< std::size_t > >& bface,
-         const std::vector< std::size_t >& triinpoel,
-         std::unordered_set< std::size_t >& nodes ) const override
-      { data.symbcnodes( bface, triinpoel, nodes ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
       std::vector< std::string > surfNames() const override
