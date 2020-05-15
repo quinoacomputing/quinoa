@@ -78,7 +78,7 @@ class CompFlow {
         , symmetry
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
-        , characteristic
+        , farfield
         , extrapolate } ) );
     }
 
@@ -803,18 +803,16 @@ class CompFlow {
     }
 
     //! \brief Boundary state function providing the left and right state of a
-    //!   face at characteristic boundaries
+    //!   face at farfield boundaries
     //! \param[in] ul Left (domain-internal) state
     //! \param[in] fn Unit face normal
     //! \return Left and right states for all scalar components in this PDE
     //!   system
-    //! \details The characteristic boudary calculation, implemented here, is
-    //!   based on the characteristic theory of hyperbolic systems.
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    characteristic( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
-                    tk::real, tk::real, tk::real, tk::real,
-                    const std::array< tk::real, 3 >& fn )
+    farfield( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
+              tk::real, tk::real, tk::real, tk::real,
+              const std::array< tk::real, 3 >& fn )
     {
       using tag::param; using tag::bc;
 

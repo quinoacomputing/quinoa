@@ -215,6 +215,7 @@ struct farfield_density {
   static std::string name() { return "farfield_density"; } };
 struct farfield_velocity {
   static std::string name() { return "farfield_velocity"; } };
+struct bcfarfield { static std::string name() { return "bcfarfield"; } };
 struct component { static std::string name() { return "component"; } };
 struct interval { static std::string name() { return "interval"; } };
 struct cmd { static std::string name() { return "cmd"; } };
@@ -247,8 +248,6 @@ struct point { static std::string name() { return "point"; } };
 struct radius { static std::string name() { return "radius"; } };
 struct bcinlet { static std::string name() { return "bcinlet"; } };
 struct bcoutlet { static std::string name() { return "bcoutlet"; } };
-struct bccharacteristic {
-  static std::string name() { return "bccharacteristic"; } };
 struct bcextrapolate { static std::string name() { return "bcextrapolate"; } };
 struct material {};
 struct id { static std::string name() { return "id"; } };

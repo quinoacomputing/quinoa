@@ -25,7 +25,7 @@ inciter
     bc_dirichlet
       sideset 2 end
     end
-    bc_outlet
+    bc_farfield
       farfield_pressure 1.0
       farfield_density 1.0
       farfield_velocity 0.0 0.0 0.0 end

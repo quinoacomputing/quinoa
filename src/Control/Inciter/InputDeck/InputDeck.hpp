@@ -209,7 +209,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::bc_sym,
                                    kw::bc_inlet,
                                    kw::bc_outlet,
-                                   kw::bc_characteristic,
+                                   kw::bc_farfield,
                                    kw::bc_extrapolate,
                                    kw::bc_stag,
                                    kw::point,

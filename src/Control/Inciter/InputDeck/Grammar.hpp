@@ -735,9 +735,9 @@ namespace deck {
                                         tk::grm::check_vector,
                                         eq, tag::bcstag, tag::point > > > {};
 
-  //! Characteristic boundary conditions block
+  //! Farfield boundary conditions block
   template< class keyword, class eq, class param >
-  struct characteristic_bc :
+  struct farfield_bc :
          pegtl::if_must<
            tk::grm::readkw< typename use< keyword >::pegtl_string >,
            tk::grm::block<
@@ -944,9 +944,9 @@ namespace deck {
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc_stag< tag::compflow, tag::bcstag >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           characteristic_bc< kw::bc_outlet,
-                                              tag::compflow,
-                                              tag::bccharacteristic >,
+                           farfield_bc< kw::bc_farfield,
+                                        tag::compflow,
+                                        tag::bcfarfield >,
                            bc< kw::bc_extrapolate, tag::compflow,
                                tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};

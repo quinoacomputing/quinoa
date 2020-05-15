@@ -5192,22 +5192,23 @@ struct transport_info {
 };
 using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
 
-struct bc_characteristic_info {
-  static std::string name() { return "Characteristic boundary condition"; }
+struct bc_farfield_info {
+  static std::string name() { return "Farfield boundary condition"; }
   static std::string shortDescription() { return
-    "Start configuration block describing Characteristic boundary conditions"; }
+    "Start configuration block describing farfield boundary conditions"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce a bc_characteristic ... end block, used
-    to specify the configuration for setting characteristic boundary conditions
-    for a partial differential equation. Keywords allowed in a bc_characteristic
+    R"(This keyword is used to introduce a bc_farfield ... end block, used
+    to specify the configuration for setting farfield boundary conditions
+    for the compressible flow equations. Keywords allowed in a bc_farfield
     ... end block: )" + std::string("\'")
-    + sideset::string() + "\'. "
-    + R"(For an example bc_characteristic ... end block, see
-      doc/html/inciter_example_gausshump.html.)";
+    + farfield_density::string() + "\', \'"
+    + farfield_pressure::string() + "\', \'"
+    + farfield_velocity::string() + "\', \'"
+    + sideset::string() + "\'. ";
   }
 };
-using bc_characteristic =
-  keyword< bc_characteristic_info, TAOCPP_PEGTL_STRING("bc_characteristic") >;
+using bc_farfield =
+  keyword< bc_farfield_info, TAOCPP_PEGTL_STRING("bc_farfield") >;
 
 struct bc_extrapolate_info {
   static std::string name() { return "Extrapolation boundary condition"; }
@@ -5400,7 +5401,7 @@ struct compflow_info {
     + bc_sym::string() + "\', \'"
     + bc_inlet::string() + "\', \'"
     + bc_outlet::string() + "\', \'"
-    + bc_characteristic::string() + "\', \'"
+    + bc_farfield::string() + "\', \'"
     + bc_extrapolate::string() + "\'."
     + R"(For an example compflow ... end block, see
       doc/html/inicter_example_compflow.html.)";
