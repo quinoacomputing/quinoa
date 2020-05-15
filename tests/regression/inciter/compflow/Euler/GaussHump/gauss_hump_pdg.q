@@ -26,9 +26,9 @@ inciter
       sideset 2 end
     end
     bc_farfield
-      farfield_pressure 1.0
-      farfield_density 1.0
-      farfield_velocity 0.0 0.0 0.0 end
+      pressure 1.0
+      density 1.0
+      velocity 0.0 0.0 0.0 end
       sideset 3 end
     end
   end

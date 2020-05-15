@@ -1768,61 +1768,6 @@ struct ncomp_info {
 };
 using ncomp = keyword< ncomp_info,  TAOCPP_PEGTL_STRING("ncomp") >;
 
-struct farfield_pressure_info {
-  static std::string name() { return "farfield_pressure"; }
-  static std::string shortDescription() { return
-    "Select the far-field pressure"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field pressure when
-    characteristic boundary condition is used. This parameter is set up in
-    boundary condition block. Example specification: 'farfield_pressure 1.0')";
-  }
-  struct expect {
-    using type = tk::real;
-    static constexpr type lower = 0.0;
-    static std::string description() { return "real"; }
-  };
-};
-using farfield_pressure = keyword< farfield_pressure_info,
-                            TAOCPP_PEGTL_STRING("farfield_pressure") >;
-
-struct farfield_density_info {
-  static std::string name() { return "farfield_density"; }
-  static std::string shortDescription() { return
-    "Select the far-field density"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field density when characteristic
-    boundary condition is used. This parameter is set up in boundary condition
-    block. Example specification: 'farfield_density 1.0')";
-  }
-  struct expect {
-    using type = tk::real;
-    static constexpr type lower = 0.0;
-    static std::string description() { return "real"; }
-  };
-};
-using farfield_density = keyword< farfield_density_info,
-                            TAOCPP_PEGTL_STRING("farfield_density") >;
-
-struct farfield_velocity_info {
-  static std::string name() { return "farfield_velocity"; }
-  static std::string shortDescription() { return
-    "Select the far-field velocity vector"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field velocity vector when
-    characteristic boundary condition is used. This parameter is set up in
-    boundary condition block.
-    Example specification: 'farfield_velocity 1.0 0.0 0.0 end')";
-  }
-  struct expect {
-    using type = tk::real;
-    static constexpr type lower = 0.0;
-    static std::string description() { return "real(s)"; }
-  };
-};
-using farfield_velocity = keyword< farfield_velocity_info,
-                             TAOCPP_PEGTL_STRING("farfield_velocity") >;
-
 struct nmat_info {
   static std::string name() { return "nmat"; }
   static std::string shortDescription() { return
@@ -5194,9 +5139,9 @@ struct bc_farfield_info {
     to specify the configuration for setting farfield boundary conditions
     for the compressible flow equations. Keywords allowed in a bc_farfield
     ... end block: )" + std::string("\'")
-    + farfield_density::string() + "\', \'"
-    + farfield_pressure::string() + "\', \'"
-    + farfield_velocity::string() + "\', \'"
+    + density::string() + "\', \'"
+    + pressure::string() + "\', \'"
+    + velocity::string() + "\', \'"
     + sideset::string() + "\'. ";
   }
 };
