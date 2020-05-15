@@ -56,8 +56,8 @@ module transporter {
       entry [reductiontarget] void boxvol( tk::real v );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry void resume();
-      entry [reductiontarget] void checkpoint( tk::real it, tk::real t );
-      entry [reductiontarget] void finish( tk::real it, tk::real t );
+      entry [reductiontarget] void checkpoint( int finished );
+      entry [reductiontarget] void finish();
 
       entry void pepartitioned();
       entry void pedistributed();

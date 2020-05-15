@@ -90,6 +90,8 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::cfl,    kw::cfl::info::expect::type    //!< CFL coefficient
   , tag::pelocal_reorder, bool                  //!< PE-locality reordering
   , tag::operator_reorder, bool                 //!< Operator-access reordering
+  , tag::steady_state, bool                     //!< March to steady state
+  , tag::residual, kw::residual::info::expect::type //!< Convergence residual
   , tag::fct,    bool                           //!< FCT on/off
   , tag::fctclip,bool                           //!< FCT clipping limiter on/off
   , tag::fcteps, kw::fcteps::info::expect::type //!< FCT small number
