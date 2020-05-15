@@ -404,7 +404,7 @@ class CompFlow {
     //! \param[in] lid Global->local node ids
     //! \param[in] dfn Dual-face normals
     //! \param[in] psup Points surrounding points
-    //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
+    //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] vol Nodal volumes
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
@@ -421,7 +421,7 @@ class CompFlow {
                                std::vector< std::size_t > >& psup,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup,
-              const std::vector< int >& symbcnode,
+              const std::vector< int >& symbctri,
               const std::vector< real >& vol,
               const tk::Fields& G,
               const tk::Fields& U,
@@ -446,7 +446,7 @@ class CompFlow {
       domainint( coord, psup, dfn, U, Grad, R );
 
       // compute boundary integrals
-      bndint( coord, triinpoel, symbcnode, U, R );
+      bndint( coord, triinpoel, symbctri, U, R );
 
       // compute optional source integral
       src( coord, inpoel, t, tp, R );
@@ -609,11 +609,15 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] bnorm Face normals in boundary points: key local node id,
     //!    value: unit normal
-    void
-    symbc( tk::Fields& U,
-           const std::unordered_map<std::size_t,std::array<real,4>>& bnorm )
-    const {
-      for (const auto& [ i, nr ] : bnorm ) {
+    //! \param[in] symbcnodes Unique set of local node ids at which to set
+    //!   symmetry BCs
+    void symbc(
+      tk::Fields& U,
+      const std::unordered_map< std::size_t, std::array< real, 4 > >& bnorm,
+      const std::unordered_set< std::size_t >& symbcnodes ) const
+    {
+      for (auto i : symbcnodes) {
+        auto nr = tk::cref_find( bnorm, i );
         std::array< real, 3 >
           n{ nr[0], nr[1], nr[2] },
           v{ U(i,1,m_offset), U(i,2,m_offset), U(i,3,m_offset) };
@@ -943,12 +947,12 @@ class CompFlow {
     //! Compute boundary integrals for ALECG
     //! \param[in] coord Mesh node coordinates
     //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
-    //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
+    //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     void bndint( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& triinpoel,
-                 const std::vector< int >& symbcnode,
+                 const std::vector< int >& symbctri,
                  const tk::Fields& U,
                  tk::Fields& R ) const
     {
@@ -995,7 +999,7 @@ class CompFlow {
         // compute boundary flux
         real f[m_ncomp][3];
         real p, vn;
-        int sym = symbcnode[e];
+        int sym = symbctri[e];
         p = eos_pressure< eq >( m_system, rA, ruA/rA, rvA/rA, rwA/rA, reA );
         vn = sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA) / rA;
         f[0][0] = rA*vn;

@@ -202,7 +202,9 @@ class ALECG : public CBase_ALECG {
       p | m_diag;
       p | m_bnorm;
       p | m_bnormc;
-      p | m_symbcnode;
+      p | m_symbctri;
+      p | m_symbcnodes;
+      p | m_farfieldbcnodes;
       p | m_stage;
       p | m_boxnodes;
       p | m_dtp;
@@ -292,8 +294,12 @@ class ALECG : public CBase_ALECG {
     //! \details Key: global node id, value: normals (first 3 components),
     //!   inverse distance squared (4th component)
     std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnormc;
-    //! Vector with 1 at symmetry BC nodes
-    std::vector< int > m_symbcnode;
+    //! Vector with 1 at symmetry BC boundary triangles
+    std::vector< int > m_symbctri;
+    //! Unique list of nodes at which symmetry BCs are set
+    std::unordered_set< std::size_t > m_symbcnodes;
+    //! Unique list of nodes at which farfield BCs are set
+    std::unordered_set< std::size_t > m_farfieldbcnodes;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Mesh node ids at which user-defined box ICs are defined

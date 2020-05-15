@@ -467,35 +467,10 @@ class Transport {
 
     //! Set symmetry boundary conditions at nodes
     void
-    symbc( tk::Fields&,
-           const std::unordered_map<std::size_t,std::array<real,4>>& )
-    const {}
-
-    //! Query nodes at which symmetry boundary conditions are set
-    //! \param[in] bface Boundary-faces mapped to side set ids
-    //! \param[in] triinpoel Boundary-face connectivity
-    //! \param[in,out] nodes Node ids at which symmetry BCs are set
-    void
-    symbcnodes( const std::map< int, std::vector< std::size_t > >& bface,
-                const std::vector< std::size_t >& triinpoel,
-                std::unordered_set< std::size_t >& nodes ) const
-    {
-      using tag::param; using tag::transport; using tag::bcsym;
-      const auto& bc = g_inputdeck.get< param, transport, tag::bc, bcsym >();
-      if (!bc.empty() && bc.size() > m_system) {
-        const auto& ss = bc[ m_system ];// side sets with sym bcs specified
-        for (const auto& s : ss) {
-          auto k = bface.find( std::stoi(s) );
-          if (k != end(bface)) {
-            for (auto f : k->second) {  // face ids on symbc side set
-              nodes.insert( triinpoel[f*3+0] );
-              nodes.insert( triinpoel[f*3+1] );
-              nodes.insert( triinpoel[f*3+2] );
-            }
-          }
-        }
-      }
-    }
+    symbc(
+      tk::Fields&,
+      const std::unordered_map< std::size_t, std::array< real, 4 > >&,
+      const std::unordered_set< std::size_t >& ) const {}
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file

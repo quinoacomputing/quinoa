@@ -85,7 +85,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_diag(),
   m_bnorm(),
   m_bnormc(),
-  m_symbcnode(),
+  m_symbctri(),
+  m_symbcnodes(),
+  m_farfieldbcnodes(),
   m_stage( 0 ),
   m_boxnodes(),
   m_dtp( m_u.nunk(), 0.0 ),
@@ -147,12 +149,15 @@ ALECG::norm()
 {
   auto d = Disc();
 
-  std::unordered_set< std::size_t > bcnodes;
-
   // Query nodes at which symmetry BCs are specified
-  d->bcnodes< tag::bcsym >( m_bface, m_triinpoel, bcnodes );
-  // Query nodes at which characteristic BCs are specified
-  d->bcnodes< tag::bcfarfield >( m_bface, m_triinpoel, bcnodes );
+  d->bcnodes< tag::bcsym >( m_bface, m_triinpoel, m_symbcnodes );
+  // Query nodes at which farfield BCs are specified
+  d->bcnodes< tag::bcfarfield >( m_bface, m_triinpoel, m_farfieldbcnodes );
+
+  std::unordered_set< std::size_t > bcnodes;
+  std::merge( m_symbcnodes.cbegin(), m_symbcnodes.cend(),
+              m_farfieldbcnodes.cbegin(), m_farfieldbcnodes.cend(),
+              std::inserter( bcnodes, begin(bcnodes) ) );
 
   // Compute boundary point normals
   bnorm( std::move(bcnodes) );
@@ -297,53 +302,15 @@ ALECG::comdfnorm( const std::unordered_map< tk::UnsMesh::Edge,
 }
 
 void
-ALECG::bnorm( std::unordered_set< std::size_t >&& symbcnodes )
+ALECG::bnorm( std::unordered_set< std::size_t >&& bcnodes )
 // *****************************************************************************
 //  Compute boundary point normals
-//! \param[in] Local node ids at which symmetry BCs are set
+//! \param[in] Local node ids at which BCs are set that require normals
 // *****************************************************************************
 {
   auto d = Disc();
 
-  const auto& coord = d->Coord();
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
-
-  // Lambda to compute the inverse distance squared between boundary face
-  // centroid and boundary point. Here p is the global node id and g is the
-  // geometry of the boundary face, see tk::geoFaceTri().
-  auto invdistsq = [&]( const tk::Fields& g, std::size_t p ){
-    return 1.0 / ( (g(0,4,0) - x[p])*(g(0,4,0) - x[p]) +
-                   (g(0,5,0) - y[p])*(g(0,5,0) - y[p]) +
-                   (g(0,6,0) - z[p])*(g(0,6,0) - z[p]) );
-  };
-
-  // Compute boundary point normals on all side sets summing inverse distance
-  // weighted face normals to points. This is only a partial sum at shared
-  // boundary points in parallel.
-  const auto& gid = d->Gid();
-  for (const auto& [ setid, faceids ] : m_bface) {
-    for (auto f : faceids) {
-      tk::UnsMesh::Face
-        face{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] };
-      std::array< tk::real, 3 > fx{ x[face[0]], x[face[1]], x[face[2]] };
-      std::array< tk::real, 3 > fy{ y[face[0]], y[face[1]], y[face[2]] };
-      std::array< tk::real, 3 > fz{ z[face[0]], z[face[1]], z[face[2]] };
-      auto g = tk::geoFaceTri( fx, fy, fz );
-      for (auto p : face) {
-        auto i = symbcnodes.find( p );
-        if (i != end(symbcnodes)) {     // only if user set symbc on node
-          tk::real r = invdistsq( g, p );
-          auto& n = m_bnorm[ gid[p] ];  // associate global node id
-          n[0] += r*g(0,1,0);
-          n[1] += r*g(0,2,0);
-          n[2] += r*g(0,3,0);
-          n[3] += r;
-        }
-      }
-    }
-  }
+  m_bnorm = cg::bnorm( m_bface, m_triinpoel, d->Coord(), d->Gid(), bcnodes );
 
   // Send our nodal normal contributions to neighbor chares
   if (d->NodeCommMap().empty())
@@ -601,19 +568,19 @@ ALECG::normfinal()
             std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
   }
 
-  // Replace global->local ids associated to boundary normals of symbc nodes
+  // Replace global->local ids associated to boundary point normals
   decltype(m_bnorm) bnorm;
   for (auto&& [g,n] : m_bnorm) bnorm[ tk::cref_find(lid,g) ] = std::move(n);
   m_bnorm = std::move(bnorm);
 
   // Apply symmetry boundary conditions on initial conditions
-  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
+  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm, m_symbcnodes );
 
   // Flatten boundary normal data structure
-  m_symbcnode.resize( m_triinpoel.size()/3, 0 );
+  m_symbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
     if (m_bnorm.find(m_triinpoel[e*3+0]) != end(m_bnorm))
-      m_symbcnode[e] = 1;
+      m_symbctri[e] = 1;
 
   // Count contributions to chare-boundary edges
   std::unordered_map< tk::UnsMesh::Edge, std::size_t,
@@ -816,7 +783,7 @@ ALECG::rhs()
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
             m_triinpoel, d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-            m_symbcnode, d->Vol(), m_grad, m_u, m_tp, m_rhs );
+            m_symbctri, d->Vol(), m_grad, m_u, m_tp, m_rhs );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 

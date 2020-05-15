@@ -117,68 +117,22 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4lhs();
 
   // Query nodes at which symmetry BCs are specified
-  std::unordered_set< std::size_t > symbcnodes;
-  d->bcnodes< tag::bcsym >( bface, triinpoel, symbcnodes );
+  d->bcnodes< tag::bcsym >( m_bface, m_triinpoel, m_symbcnodes );
 
   // Compute boundary point normals
-  bnorm( bface, triinpoel, std::move(symbcnodes) );
+  bnorm();
 }
 
 void
-DiagCG::bnorm( const std::map< int, std::vector< std::size_t > >& bface,
-               const std::vector< std::size_t >& triinpoel,
-               std::unordered_set< std::size_t >&& symbcnodes )
+DiagCG::bnorm()
 // *****************************************************************************
 //  Compute boundary point normals
-//! \param[in] bface Boundary faces side-set information
-//! \param[in] triinpoel Boundary triangle face connecitivity
-//! \param[in] Node ids at which symmetry BCs are set
 // *****************************************************************************
 {
   auto d = Disc();
 
-  const auto& coord = d->Coord();
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
-
-  // Lambda to compute the inverse distance squared between boundary face
-  // centroid and boundary point. Here p is the global node id and g is the
-  // geometry of the boundary face, see tk::geoFaceTri().
-  auto invdistsq = [&]( const tk::Fields& g, std::size_t p ){
-    return 1.0 / ( (g(0,4,0) - x[p])*(g(0,4,0) - x[p]) +
-                   (g(0,5,0) - y[p])*(g(0,5,0) - y[p]) +
-                   (g(0,6,0) - z[p])*(g(0,6,0) - z[p]) );
-  };
-
-  // Compute boundary point normals on all side sets summing inverse distance
-  // weighted face normals to points. This is only a partial sum at shared
-  // boundary points in parallel.
-  const auto& lid = d->Lid();
-  const auto& gid = d->Gid();
-  for (const auto& [ setid, faceids ] : bface) {
-    for (auto f : faceids) {
-      tk::UnsMesh::Face
-        face{ tk::cref_find( lid, triinpoel[f*3+0] ),
-              tk::cref_find( lid, triinpoel[f*3+1] ),
-              tk::cref_find( lid, triinpoel[f*3+2] ) };
-      std::array< tk::real, 3 > fx{ x[face[0]], x[face[1]], x[face[2]] };
-      std::array< tk::real, 3 > fy{ y[face[0]], y[face[1]], y[face[2]] };
-      std::array< tk::real, 3 > fz{ z[face[0]], z[face[1]], z[face[2]] };
-      auto g = tk::geoFaceTri( fx, fy, fz );
-      for (auto p : face) {
-        auto i = symbcnodes.find( gid[p] );
-        if (i != end(symbcnodes)) {     // only if user set symbc on node
-          tk::real r = invdistsq( g, p );
-          auto& n = m_bnorm[ gid[p] ];  // associate global node id
-          n[0] += r*g(0,1,0);
-          n[1] += r*g(0,2,0);
-          n[2] += r*g(0,3,0);
-          n[3] += r;
-        }
-      }
-    }
-  }
+  m_bnorm =
+    cg::bnorm( m_bface, m_triinpoel, d->Coord(), d->Gid(), m_symbcnodes );
 
   // Send our nodal normal contributions to neighbor chares
   if (d->NodeCommMap().empty())
@@ -251,7 +205,7 @@ DiagCG::normfinal()
             std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
   }
 
-  // Replace global->local ids associated to boundary normals of symbc nodes
+  // Replace global->local ids associated to boundary point normals
   decltype(m_bnorm) bnorm;
   for (auto&& [g,n] : m_bnorm) {
     bnorm[ tk::cref_find( Disc()->Lid(), g ) ] = std::move(n);
@@ -305,7 +259,7 @@ DiagCG::setup()
   d->boxvol( m_boxnodes );
 
   // Apply symmetry boundary conditions on initial conditions
-  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
+  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm, m_symbcnodes );
 
   // Query time history field output labels from all PDEs integrated
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
@@ -628,9 +582,9 @@ DiagCG::solve( tk::Fields& dif )
   // Apply symmetry BCs on low and high order solution increments, and low
   // order solution
   for (const auto& eq : g_cgpde) {
-    eq.symbc( dul, m_bnorm );
-    eq.symbc( m_ul, m_bnorm );
-    eq.symbc( m_du, m_bnorm );
+    eq.symbc( dul, m_bnorm, m_symbcnodes );
+    eq.symbc( m_ul, m_bnorm, m_symbcnodes );
+    eq.symbc( m_du, m_bnorm, m_symbcnodes );
   }
 
   // Continue with FCT
