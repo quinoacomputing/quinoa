@@ -159,33 +159,33 @@ using box = tk::TaggedTuple< brigand::list<
   , tag::zmin,          kw::zmin::info::expect::type
   , tag::zmax,          kw::zmax::info::expect::type
   , tag::mass,         std::vector<
-                          std::vector< kw::massic::info::expect::type > >
+                          std::vector< kw::mass::info::expect::type > >
   , tag::density,       std::vector<
-                          std::vector< kw::densityic::info::expect::type > >
+                          std::vector< kw::density::info::expect::type > >
   , tag::velocity,      std::vector<
-                          std::vector< kw::velocityic::info::expect::type > >
+                          std::vector< kw::velocity::info::expect::type > >
   , tag::pressure,      std::vector<
-                          std::vector< kw::pressureic::info::expect::type > >
+                          std::vector< kw::pressure::info::expect::type > >
   , tag::energy,        std::vector<
-                          std::vector< kw::energyic::info::expect::type > >
+                          std::vector< kw::energy::info::expect::type > >
   , tag::energy_content,std::vector< std::vector<
-                          kw::energy_content_ic::info::expect::type > >
+                          kw::energy_content::info::expect::type > >
   , tag::temperature,   std::vector<
-                          std::vector< kw::temperatureic::info::expect::type > >
+                          std::vector< kw::temperature::info::expect::type > >
 > >;
 
 //! Initial condition configuration
 using ic = tk::TaggedTuple< brigand::list<
     tag::density,       std::vector<
-                          std::vector< kw::densityic::info::expect::type > >
+                          std::vector< kw::density::info::expect::type > >
   , tag::velocity,      std::vector<
-                          std::vector< kw::velocityic::info::expect::type > >
+                          std::vector< kw::velocity::info::expect::type > >
   , tag::pressure,      std::vector<
-                          std::vector< kw::pressureic::info::expect::type > >
+                          std::vector< kw::pressure::info::expect::type > >
   , tag::energy,        std::vector<
-                          std::vector< kw::energyic::info::expect::type > >
+                          std::vector< kw::energy::info::expect::type > >
   , tag::temperature,   std::vector<
-                          std::vector< kw::temperatureic::info::expect::type > >
+                          std::vector< kw::temperature::info::expect::type > >
   , tag::box,           box
 > >;
 

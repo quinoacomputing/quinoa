@@ -797,19 +797,19 @@ namespace deck {
              tk::grm::control< use< kw::zmax >, tk::grm::number,
                                tag::param, eq, tag::ic, tag::box, tag::zmax >,
              pegtl::sor<
-               pde_parameter_vector< kw::massic,
+               pde_parameter_vector< kw::mass,
                                      eq, tag::ic, tag::box, tag::mass >,
-               pde_parameter_vector< kw::densityic,
+               pde_parameter_vector< kw::density,
                                      eq, tag::ic, tag::box, tag::density >,
-               pde_parameter_vector< kw::velocityic,
+               pde_parameter_vector< kw::velocity,
                                      eq, tag::ic, tag::box, tag::velocity >,
-               pde_parameter_vector< kw::pressureic,
+               pde_parameter_vector< kw::pressure,
                                      eq, tag::ic, tag::box, tag::pressure >,
-               pde_parameter_vector< kw::temperatureic,
+               pde_parameter_vector< kw::temperature,
                                      eq, tag::ic, tag::box, tag::temperature >,
-               pde_parameter_vector< kw::energy_content_ic,
+               pde_parameter_vector< kw::energy_content,
                  eq, tag::ic, tag::box, tag::energy_content >,
-               pde_parameter_vector< kw::energyic,
+               pde_parameter_vector< kw::energy,
                   eq, tag::ic, tag::box, tag::energy > > > > {};
 
   //! initial conditions block for compressible flow
@@ -819,15 +819,15 @@ namespace deck {
            tk::grm::readkw< use< kw::ic >::pegtl_string >,
            tk::grm::block< use< kw::end >,
              pegtl::sor<
-               pde_parameter_vector< kw::densityic,
+               pde_parameter_vector< kw::density,
                                      eq, tag::ic, tag::density >,
-               pde_parameter_vector< kw::velocityic,
+               pde_parameter_vector< kw::velocity,
                                      eq, tag::ic, tag::velocity >,
-               pde_parameter_vector< kw::pressureic,
+               pde_parameter_vector< kw::pressure,
                                      eq, tag::ic, tag::pressure >,
-               pde_parameter_vector< kw::temperatureic,
+               pde_parameter_vector< kw::temperature,
                                      eq, tag::ic, tag::temperature >,
-               pde_parameter_vector< kw::energyic,
+               pde_parameter_vector< kw::energy,
                                      eq, tag::ic, tag::energy > >,
                pegtl::seq< box< eq > > > > {};
 

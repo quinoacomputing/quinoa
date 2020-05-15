@@ -2507,28 +2507,25 @@ struct icdirichlet_info {
 using icdirichlet =
   keyword< icdirichlet_info, TAOCPP_PEGTL_STRING("icdirichlet") >;
 
-struct velocityic_info {
-  static std::string name() { return "velocityic"; }
-  static std::string shortDescription() { return
-    "Specify velocity initial conditions";
-  }
+struct velocity_info {
+  static std::string name() { return "velocity"; }
+  static std::string shortDescription() { return "Specify velocity"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions for the velocity field.)";
+    R"(This keyword is used to configure a velocity vector, used for, e.g.,
+    boundary or initial conditions.)";
   }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real(s)"; }
   };
 };
-using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
+using velocity = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
 
-struct massic_info {
-  static std::string name() { return "massic"; }
-  static std::string shortDescription() { return
-    "Specify mass initial conditions";
-  }
+struct mass_info {
+  static std::string name() { return "mass"; }
+  static std::string shortDescription() { return "Specify mass"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions by specifying the mass
+    R"(This keyword is used to configure the mass
        and associated volume within a box.)";
   }
   struct expect {
@@ -2536,83 +2533,79 @@ struct massic_info {
     static std::string description() { return "real"; }
   };
 };
-using massic = keyword< massic_info, TAOCPP_PEGTL_STRING("mass") >;
+using mass = keyword< mass_info, TAOCPP_PEGTL_STRING("mass") >;
 
-struct densityic_info {
-  static std::string name() { return "densityic"; }
-  static std::string shortDescription() { return
-    "Specify density initial conditions";
-  }
+struct density_info {
+  static std::string name() { return "density"; }
+  static std::string shortDescription() { return "Specify density"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions for the density field.)";
+    R"(This keyword is used to configure a density, used for, e.g., boundary or
+    initial conditions.)";
   }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
-using densityic = keyword< densityic_info, TAOCPP_PEGTL_STRING("density") >;
+using density = keyword< density_info, TAOCPP_PEGTL_STRING("density") >;
 
-struct pressureic_info {
-  static std::string name() { return "pressureic"; }
-  static std::string shortDescription() { return
-    "Specify pressure initial conditions";
-  }
+struct pressure_info {
+  static std::string name() { return "pressure"; }
+  static std::string shortDescription() { return "Specify pressure"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions for the pressure field.)";
+    R"(This keyword is used to configure a pressure, used for, e.g., boundary or
+    initial conditions.)";
   }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
-using pressureic = keyword< pressureic_info, TAOCPP_PEGTL_STRING("pressure") >;
+using pressure = keyword< pressure_info, TAOCPP_PEGTL_STRING("pressure") >;
 
-struct energyic_info {
-  static std::string name() { return "energyic"; }
+struct energy_info {
+  static std::string name() { return "energy"; }
   static std::string shortDescription() { return
-    "Specify energy per unit mass as initial conditions";
-  }
+    "Specify energy per unit mass"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set the energy per unit mass as initial
-    conditions.)"; }
+    R"(This keyword is used to configure energy per unit mass, used for, e.g.,
+    boundary or initial conditions.)"; }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
-using energyic = keyword< energyic_info, TAOCPP_PEGTL_STRING("energy") >;
+using energy = keyword< energy_info, TAOCPP_PEGTL_STRING("energy") >;
 
-struct energy_content_ic_info {
-  static std::string name() { return "energy_content_ic"; }
+struct energy_content_info {
+  static std::string name() { return "energy_content"; }
   static std::string shortDescription() { return
-    "Specify energy per unit volume as initial conditions";
+    "Specify energy per unit volume";
   }
   static std::string longDescription() { return
-    R"(This keyword is used to set the energy per unit volume as initial
-    conditions.)"; }
+    R"(This keyword is used to configure energy per unit volume, used for, e.g.,
+    boundary or initial conditions.)"; }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
-using energy_content_ic =
-  keyword< energy_content_ic_info, TAOCPP_PEGTL_STRING("energy_content") >;
+using energy_content =
+  keyword< energy_content_info, TAOCPP_PEGTL_STRING("energy_content") >;
 
-struct temperatureic_info {
-  static std::string name() { return "temperatureic"; }
-  static std::string shortDescription() { return
-    "Specify temperature as initial conditions";
-  }
+struct temperature_info {
+  static std::string name() { return "temperature"; }
+  static std::string shortDescription() { return "Specify temperature"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set the temperature as initial conditions.)"; }
+    R"(This keyword is used to configure temperature, used for, e.g.,
+    boundary or initial conditions.)"; }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
-using temperatureic =
-  keyword< temperatureic_info, TAOCPP_PEGTL_STRING("temperature") >;
+using temperature =
+  keyword< temperature_info, TAOCPP_PEGTL_STRING("temperature") >;
 
 struct xmin_info {
   static std::string name() { return "xmin"; }
@@ -2704,13 +2697,13 @@ struct box_info {
     will be set to 1.2 and the pressure to be 1.4. Besides the box dimensions,
     the following physics keywords are allowed in a box ... end block:)"
     + std::string("\'")
-    + massic::string()+ "\', \'"
-    + densityic::string()+ "\', \'"
-    + velocityic::string() + "\', \'"
-    + energyic::string() + "\', \'"
-    + energy_content_ic::string() + "\', \'"
-    + temperatureic::string() + "\', \'"
-    + pressureic::string() + "\'."; }
+    + mass::string()+ "\', \'"
+    + density::string()+ "\', \'"
+    + velocity::string() + "\', \'"
+    + energy::string() + "\', \'"
+    + energy_content::string() + "\', \'"
+    + temperature::string() + "\', \'"
+    + pressure::string() + "\'."; }
 };
 using box = keyword< box_info, TAOCPP_PEGTL_STRING("box") >;
 
@@ -2721,12 +2714,12 @@ struct ic_info {
   static std::string longDescription() { return
     R"(This keyword is used to introduce an ic...end block used to set initial
     conditions. Keywords allowed in a ic ... end block: )" + std::string("\'")
-    + massic::string()+ "\', \'"
-    + densityic::string()+ "\', \'"
-    + velocityic::string() + "\', \'"
-    + pressureic::string() + "\', \'"
-    + energyic::string() + "\', \'"
-    + temperatureic::string() + "\', \'"
+    + mass::string()+ "\', \'"
+    + density::string()+ "\', \'"
+    + velocity::string() + "\', \'"
+    + pressure::string() + "\', \'"
+    + energy::string() + "\', \'"
+    + temperature::string() + "\', \'"
     + box::string() + "\'.";
   }
 };
@@ -3635,7 +3628,7 @@ struct dissipation_info {
 using dissipation =
   keyword< dissipation_info, TAOCPP_PEGTL_STRING("dissipation") >;
 
-struct velocity_info {
+struct velocitysde_info {
   static std::string name() { return "velocity"; }
   static std::string shortDescription() { return
     "Introduce the velocity equation input block or coupling"; }
@@ -3665,7 +3658,7 @@ struct velocity_info {
     which the 'velocity' keyword appears) to another labeled by a 'depvar'.)";
   }
 };
-using velocity = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
+using velocitysde = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }
