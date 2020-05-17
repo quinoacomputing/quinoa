@@ -16,7 +16,6 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
-#include "FieldOutput.hpp"
 
 //namespace inciter {
 //
@@ -105,56 +104,6 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
   s[momentumIdx(nmat, 2)] = rhob * w;
 
   return s;
-}
-
-std::vector< std::string >
-MultiMatProblemInterfaceAdvection::fieldNames( ncomp_t )
-// *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
-// *****************************************************************************
-{
-  auto nmat =
-    g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
-
-  return MultiMatFieldNames(nmat);
-}
-
-std::vector< std::vector< tk::real > >
-MultiMatProblemInterfaceAdvection::fieldOutput(
-  ncomp_t system,
-  ncomp_t,
-  ncomp_t offset,
-  std::size_t nunk,
-  tk::real /*t*/,
-  tk::real,
-  const std::vector< tk::real >&,
-  const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-  tk::Fields& U,
-  const tk::Fields& P )
-// *****************************************************************************
-//  Return field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
-//! \param[in] nunk Number of unknowns to extract
-//! \param[in] t Physical time
-//! \param[in] coord Mesh node coordinates
-//! \param[in] U Solution vector at recent time step
-//! \param[in] P Vector of primitive quantities at recent time step
-//! \return Vector of vectors to be output to file
-// *****************************************************************************
-{
-  // number of degrees of freedom
-  const std::size_t rdof =
-    g_inputdeck.get< tag::discr, tag::rdof >();
-
-  // number of materials
-  auto nmat =
-    g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
-
-  return MultiMatFieldOutput( system, nmat, offset, nunk, rdof, U, P );
 }
 
 std::vector< std::string >

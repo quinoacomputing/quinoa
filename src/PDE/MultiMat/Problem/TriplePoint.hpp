@@ -45,22 +45,6 @@ class MultiMatProblemTriplePoint {
     static tk::SrcFn::result_type
     src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
 
-    //! Return field names to be output to file
-    static std::vector< std::string > fieldNames( ncomp_t );
-
-    //! Return field output going to file
-    static std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t system,
-                 ncomp_t ncomp,
-                 ncomp_t offset,
-                 std::size_t nunk,
-                 tk::real,
-                 tk::real /*V*/,
-                 const std::vector< tk::real >& /*vol*/,
-                 const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-                 tk::Fields& U,
-                 const tk::Fields& P );
-
     //! Return names of integral variables to be output to diagnostics file
     static std::vector< std::string > names( ncomp_t );
 
