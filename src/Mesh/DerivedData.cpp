@@ -1439,13 +1439,14 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
 //   elements.
 //! \param[in] inpoel Element-node connectivity.
 //! \param[in] coord Co-ordinates of nodes in this mesh-chunk.
-//! \return Element geometry information. This includes element volume and
-//!   element centroid coordinates. Use the following examples to access this
-//!   information for element-e.
+//! \return Element geometry information. This includes element volume,
+//!   element centroid coordinates, and minimum edge length. Use the following
+//!   examples to access this information for element-e.
 //!   volume: geoElem(e,0,0),
-//!   centroid x-coordinate: geoElem(f,1,0),
-//!            y-coordinate: geoElem(f,2,0),
-//!            z-coordinate: geoElem(f,3,0).
+//!   centroid x-coordinate: geoElem(e,1,0),
+//!            y-coordinate: geoElem(e,2,0),
+//!            z-coordinate: geoElem(e,3,0).
+//!   minimum edge-length: geoElem(e,4,0).
 // *****************************************************************************
 {
   // set tetrahedron geometry
@@ -1456,7 +1457,7 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
 
   auto nelem = inpoel.size()/nnpe;
 
-  Fields geoElem( nelem, 4 );
+  Fields geoElem( nelem, 5 );
 
   const auto& x = coord[0];
   const auto& y = coord[1];
@@ -1483,6 +1484,18 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
     geoElem(e,1,0) = (x[A]+x[B]+x[C]+x[D])/4.0;
     geoElem(e,2,0) = (y[A]+y[B]+y[C]+y[D])/4.0;
     geoElem(e,3,0) = (z[A]+z[B]+z[C]+z[D])/4.0;
+
+    // calculate minimum edge-length
+    tk::real edgelen = std::numeric_limits< tk::real >::max();
+    for (std::size_t i=0; i<nnpe-1; ++i)
+    {
+      for (std::size_t j=i+1; j<nnpe; ++j)
+        edgelen = std::min(edgelen,
+          std::sqrt(std::pow(x[inpoel[nnpe*e+i]]-x[inpoel[nnpe*e+j]],2)
+          + std::pow(y[inpoel[nnpe*e+i]]-y[inpoel[nnpe*e+j]],2)
+          + std::pow(z[inpoel[nnpe*e+i]]-z[inpoel[nnpe*e+j]],2)));
+    }
+    geoElem(e,4,0) = edgelen;
   }
 
   return geoElem;
