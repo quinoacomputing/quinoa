@@ -25,7 +25,7 @@ extern CProxy_Main mainProxy;
 
 MeshConvDriver::MeshConvDriver( const ctr::CmdLine& cmdline, int ) :
   m_print( cmdline.logname( cmdline.get< tag::io, tag::screen >(),
-                             cmdline.get< tag::io, tag::nrestart >() ),
+                            cmdline.get< tag::io, tag::nrestart >() ),
            cmdline.get< tag::verbose >() ? std::cout : std::clog,
            std::ios_base::app ),
   m_reorder( cmdline.get< tag::reorder >() ),

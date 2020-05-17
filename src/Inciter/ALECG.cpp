@@ -574,12 +574,16 @@ ALECG::normfinal()
   m_bnorm = std::move(bnorm);
 
   // Apply symmetry boundary conditions on initial conditions
-  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm, m_symbcnodes );
+  for (const auto& eq : g_cgpde)
+    eq.symbc( m_u, m_bnorm, m_symbcnodes );
+  // Apply farfield boundary conditions on initial conditions
+  for (const auto& eq : g_cgpde)
+    eq.farfieldbc( m_u, m_bnorm, m_farfieldbcnodes );
 
   // Flatten boundary normal data structure
   m_symbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_bnorm.find(m_triinpoel[e*3+0]) != end(m_bnorm))
+    if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
       m_symbctri[e] = 1;
 
   // Count contributions to chare-boundary edges
@@ -881,6 +885,10 @@ ALECG::solve()
     m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
 
   }
+
+  // Apply farfield boundary conditions on new solution
+  for (const auto& eq : g_cgpde)
+    eq.farfieldbc( m_u, m_bnorm, m_farfieldbcnodes );
 
   //! [Continue after solve]
   if (m_stage < 2) {

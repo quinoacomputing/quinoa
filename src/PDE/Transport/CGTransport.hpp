@@ -472,6 +472,12 @@ class Transport {
       const std::unordered_map< std::size_t, std::array< real, 4 > >&,
       const std::unordered_set< std::size_t >& ) const {}
 
+    //! Set farfield boundary conditions at nodes
+    void farfieldbc(
+      tk::Fields&,
+      const std::unordered_map< std::size_t, std::array< real, 4 > >&,
+      const std::unordered_set< std::size_t >& ) const {}
+
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     //! \details This functions should be written in conjunction with

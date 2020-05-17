@@ -219,6 +219,20 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   if (radius.size() > c)
     nfo.emplace_back( "Stagnation BC radii", parameters( radius[c] ) );
 
+  const auto& fr = g_inputdeck.get< tag::param, eq, tag::farfield_density >();
+  if (fr.size() > c)
+    nfo.emplace_back( "Farfield BC density", std::to_string(fr[c]) );
+  const auto& fu = g_inputdeck.get< tag::param, eq, tag::farfield_velocity >();
+  if (fu.size() > c)
+    nfo.emplace_back( "Farfield BC velocity", parameters( fu[c] ) );
+  const auto& fp = g_inputdeck.get< tag::param, eq, tag::farfield_pressure >();
+  if (fp.size() > c)
+    nfo.emplace_back( "Farfield BC pressure", std::to_string(fp[c]) );
+  const auto& fs =
+    g_inputdeck.get< tag::param, eq, tag::bc, tag::bcfarfield >();
+  if (fs.size() > c)
+    nfo.emplace_back( "Farfield BC sideset(s)", parameters( fs[c] ) );
+
   // FCT
 
   auto bool_to_string = [](bool b) -> std::string {

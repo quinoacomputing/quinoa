@@ -27,6 +27,7 @@
 #include "Problem/FieldOutput.hpp"
 #include "Riemann/Rusanov.hpp"
 #include "NodeBC.hpp"
+#include "EoS/EoS.hpp"
 #include "History.hpp"
 
 namespace inciter {
@@ -48,6 +49,7 @@ class CompFlow {
     using ncomp_t = kw::ncomp::info::expect::type;
     using eq = tag::compflow;
     using real = tk::real;
+    using param = tag::param;
 
     static constexpr std::size_t m_ncomp = 5;
     static constexpr real muscl_eps = 1.0e-9;
@@ -63,9 +65,17 @@ class CompFlow {
       m_problem(),
       m_system( c ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_stagCnf( g_inputdeck.stagnationBC< eq >( c ) )
+      m_stagCnf( g_inputdeck.stagnationBC< eq >( c ) ),
+      m_fr( g_inputdeck.get< param, eq, tag::farfield_density >().size() > c ?
+            g_inputdeck.get< param, eq, tag::farfield_density >()[c] : 1.0 ),
+      m_fp( g_inputdeck.get< param, eq, tag::farfield_pressure >().size() > c ?
+            g_inputdeck.get< param, eq, tag::farfield_pressure >()[c] : 1.0 ),
+      m_fu( g_inputdeck.get< param, eq, tag::farfield_velocity >().size() > c ?
+            g_inputdeck.get< param, eq, tag::farfield_velocity >()[c] :
+            std::vector< real >( 3, 0.0 ) ),
+      m_fa( eos_soundspeed< eq >( c, m_fr, m_fp ) )
     {
-       Assert( g_inputdeck.get< tag::component >().get< eq >().at(c) == m_ncomp,
+      Assert( g_inputdeck.get< tag::component >().get< eq >().at(c) == m_ncomp,
        "Number of CompFlow PDE components must be " + std::to_string(m_ncomp) );
     }
 
@@ -628,6 +638,49 @@ class CompFlow {
       }
     }
 
+    //! Set farfield boundary conditions at nodes
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] bnorm Face normals in boundary points: key local node id,
+    //!    value: unit normal
+    //! \param[in] farfieldbcnodes Unique set of local node ids at which to set
+    //!   farfield BCs
+    void farfieldbc(
+      tk::Fields& U,
+      const std::unordered_map< std::size_t, std::array< real, 4 > >& bnorm,
+      const std::unordered_set< std::size_t >& farfieldbcnodes ) const
+    {
+      for (auto i : farfieldbcnodes) {
+        auto nr = tk::cref_find( bnorm, i );
+        // Normal component at farfield
+        auto fvn = m_fu[0]*nr[0] + m_fu[1]*nr[1] + m_fu[2]*nr[2];
+        // Mach number at farfield
+        auto fM = fvn / m_fa;
+        // Specific total energy at farfield
+        auto& r  = U( i, 0, m_offset );
+        auto& ru = U( i, 1, m_offset );
+        auto& rv = U( i, 2, m_offset );
+        auto& rw = U( i, 3, m_offset );
+        auto& re = U( i, 4, m_offset );
+        if (fM <= -1.0) {                       // supersonic inflow
+          r  = m_fr;
+          ru = m_fr * m_fu[0];
+          rv = m_fr * m_fu[1];
+          rw = m_fr * m_fu[2];
+          re = eos_totalenergy< eq >
+                 ( m_system, m_fr, m_fu[0], m_fu[1], m_fu[2], m_fp );
+        } else if (fM > -1.0 && fM < 0.0) {     // subsonic inflow
+          r  = m_fr;
+          ru = m_fr * m_fu[0];
+          rv = m_fr * m_fu[1];
+          rw = m_fr * m_fu[2];
+          re = eos_totalenergy< eq >( m_system, m_fr, m_fu[0], m_fu[1], m_fu[2],
+                 eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re ) );
+        } else if (fM >= 0.0 && fM < 1.0) {     // subsonic outflow
+          re = eos_totalenergy< eq >( m_system, r, ru/r, rv/r, rw/r, m_fp );
+        }
+      }
+    }
+
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const
@@ -687,6 +740,10 @@ class CompFlow {
     const ncomp_t m_offset;             //!< Offset PDE operates from
     //! Stagnation point BC user configuration: point coordinates and radii
     const std::tuple< std::vector< real >, std::vector< real > > m_stagCnf;
+    const real m_fr;                    //!< Farfield density
+    const real m_fp;                    //!< Farfield pressure
+    const std::vector< real > m_fu;     //!< Farfield velocity
+    const real m_fa;                    //!< Farfield Mach number
 
     //! Decide if point is a stagnation point
     //! \param[in] x X mesh point coordinates to query
