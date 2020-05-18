@@ -40,21 +40,10 @@ class MultiMatProblemSodShocktube {
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
               tk::real, int& );
 
-    //! Return field names to be output to file
-    static std::vector< std::string > fieldNames( ncomp_t );
-
-    //! Return field output going to file
-    static std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t system,
-                 ncomp_t /*ncomp*/,
-                 ncomp_t offset,
-                 std::size_t nunk,
-                 tk::real,
-                 tk::real /*V*/,
-                 const std::vector< tk::real >& /*vol*/,
-                 const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-                 tk::Fields& U,
-                 const tk::Fields& P );
+    //! Compute and return source term for this problem
+    static tk::MultiMatSrcFn::result_type
+    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real )
+    { std::vector< tk::real > s( ncomp, 0.0 ); }
 
     //! Return names of integral variables to be output to diagnostics file
     static std::vector< std::string > names( ncomp_t );

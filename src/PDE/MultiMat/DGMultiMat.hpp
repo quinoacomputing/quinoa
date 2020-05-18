@@ -40,6 +40,7 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
+#include "Problem/FieldOutput.hpp"
 
 namespace inciter {
 
@@ -755,28 +756,35 @@ class MultiMat {
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const
-    { return Problem::fieldNames( m_ncomp ); }
+    {
+      auto nmat =
+        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
+
+      return MultiMatFieldNames(nmat);
+    }
 
     //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] geoElem Element geometry array
+    //! \param[in] nunk Number of unknowns
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
+    fieldOutput( tk::real,
+                 tk::real,
                  std::size_t nunk,
-                 const tk::Fields& geoElem,
+                 const tk::Fields&,
                  tk::Fields& U,
                  const tk::Fields& P ) const
     {
-      std::array< std::vector< tk::real >, 3 > coord{
-        geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
+      // number of degrees of freedom
+      const std::size_t rdof =
+        g_inputdeck.get< tag::discr, tag::rdof >();
 
-      return Problem::fieldOutput( m_system, m_ncomp, m_offset, nunk, t,
-                                   V, geoElem.extract(0,0), coord, U, P );
+      // number of materials
+      auto nmat =
+        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
+
+      return MultiMatFieldOutput(m_system, nmat, m_offset, nunk, rdof, U, P);
     }
 
     //! Return surface field output going to file

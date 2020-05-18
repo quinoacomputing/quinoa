@@ -112,7 +112,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
       if (get< tag::io, tag::screen >() != def)
         return get< tag::io, tag::screen >();
       else
-        return tk::logname( tk::unittest_executable(), nrestart );
+        return tk::logname( tk::meshconv_executable(), nrestart );
     }
 };
 

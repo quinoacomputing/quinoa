@@ -56,22 +56,6 @@ class MultiMatProblemInterfaceAdvection {
          tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
     { r = ru = rv = rw = re = 0.0; }
 
-    //! Return field names to be output to file
-    static std::vector< std::string > fieldNames( ncomp_t );
-
-    //! Return field output going to file
-    static std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t system,
-                 ncomp_t /*ncomp*/,
-                 ncomp_t offset,
-                 std::size_t nunk,
-                 tk::real t,
-                 tk::real,
-                 const std::vector< tk::real >&,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 tk::Fields& U,
-                 const tk::Fields& P );
-
     //! Return names of integral variables to be output to diagnostics file
     static std::vector< std::string > names( ncomp_t );
 
