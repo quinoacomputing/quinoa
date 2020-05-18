@@ -72,8 +72,7 @@ class CompFlow {
             g_inputdeck.get< param, eq, tag::farfield_pressure >()[c] : 1.0 ),
       m_fu( g_inputdeck.get< param, eq, tag::farfield_velocity >().size() > c ?
             g_inputdeck.get< param, eq, tag::farfield_velocity >()[c] :
-            std::vector< real >( 3, 0.0 ) ),
-      m_fa( eos_soundspeed< eq >( c, m_fr, m_fp ) )
+            std::vector< real >( 3, 0.0 ) )
     {
       Assert( g_inputdeck.get< tag::component >().get< eq >().at(c) == m_ncomp,
        "Number of CompFlow PDE components must be " + std::to_string(m_ncomp) );
@@ -657,31 +656,30 @@ class CompFlow {
     {
       for (auto i : farfieldbcnodes) {
         auto nr = tk::cref_find( bnorm, i );
-        // Normal component at farfield
-        auto fvn = m_fu[0]*nr[0] + m_fu[1]*nr[1] + m_fu[2]*nr[2];
-        // Mach number at farfield
-        auto fM = fvn / m_fa;
-        // Specific total energy at farfield
         auto& r  = U( i, 0, m_offset );
         auto& ru = U( i, 1, m_offset );
         auto& rv = U( i, 2, m_offset );
         auto& rw = U( i, 3, m_offset );
         auto& re = U( i, 4, m_offset );
-        if (fM <= -1.0) {                       // supersonic inflow
+        auto vn = (ru*nr[0] + rv*nr[1] + rw*nr[2])/r;
+        auto a = eos_soundspeed< eq >( m_system, r,
+                   eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re ) );
+        auto M = vn / a;
+        if (M <= -1.0) {                      // supersonic inflow
           r  = m_fr;
           ru = m_fr * m_fu[0];
           rv = m_fr * m_fu[1];
           rw = m_fr * m_fu[2];
           re = eos_totalenergy< eq >
                  ( m_system, m_fr, m_fu[0], m_fu[1], m_fu[2], m_fp );
-        } else if (fM > -1.0 && fM < 0.0) {     // subsonic inflow
+        } else if (M > -1.0 && M < 0.0) {     // subsonic inflow
           r  = m_fr;
           ru = m_fr * m_fu[0];
           rv = m_fr * m_fu[1];
           rw = m_fr * m_fu[2];
           re = eos_totalenergy< eq >( m_system, m_fr, m_fu[0], m_fu[1], m_fu[2],
                  eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re ) );
-        } else if (fM >= 0.0 && fM < 1.0) {     // subsonic outflow
+        } else if (M >= 0.0 && M < 1.0) {     // subsonic outflow
           re = eos_totalenergy< eq >( m_system, r, ru/r, rv/r, rw/r, m_fp );
         }
       }
@@ -749,7 +747,6 @@ class CompFlow {
     const real m_fr;                    //!< Farfield density
     const real m_fp;                    //!< Farfield pressure
     const std::vector< real > m_fu;     //!< Farfield velocity
-    const real m_fa;                    //!< Farfield Mach number
 
     //! Decide if point is a stagnation point
     //! \param[in] x X mesh point coordinates to query
