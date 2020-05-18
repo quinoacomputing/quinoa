@@ -22,7 +22,6 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Problem.hpp"
-#include "FieldOutput.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
@@ -61,43 +60,11 @@ class MultiMatProblemUserDefined {
       return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    static std::vector< std::string > fieldNames( ncomp_t ) {
-      auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
-      return MultiMatFieldNames(nmat);
-    }
-
-    //! Return field output going to file
-    //! \param[in] system Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] offset System offset specifying the position of the system of
-    //!   PDEs among other systems
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] P Vector of primitive variables at recent time step
-    //! \return Vector of vectors to be output to file
-    static std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t system,
-                 ncomp_t,
-                 ncomp_t offset,
-                 std::size_t nunk,
-                 tk::real,
-                 tk::real,
-                 const std::vector< tk::real >&,
-                 const std::array< std::vector< tk::real >, 3 >&,
-                 tk::Fields& U,
-                 const tk::Fields& P )
-    {
-      // number of degrees of freedom
-      const std::size_t rdof =
-        g_inputdeck.get< tag::discr, tag::rdof >();
-
-      // number of materials
-      auto nmat =
-        g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
-
-      return MultiMatFieldOutput( system, nmat, offset, nunk, rdof, U, P );
-    }
+    //! Compute and return source term for Rayleigh-Taylor manufactured solution
+    //! \details No-op for user-deefined problems.
+    static tk::MultiMatSrcFn::result_type
+    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real )
+    { std::vector< tk::real > s( ncomp, 0.0 ); }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
