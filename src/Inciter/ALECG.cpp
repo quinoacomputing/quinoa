@@ -88,6 +88,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_symbcnode(),
   m_stage( 0 ),
   m_boxnodes(),
+  m_edgenode(),
+  m_edgeid(),
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 )
@@ -628,29 +630,58 @@ ALECG::normfinal()
     auto factor = 1.0/(count + 1.0);
     for (auto & x : n) x *= factor;
   }
-  // Convert dual-face normals to streamable (and vectorizable) data structure
-  m_dfn.resize( m_psup.first.size() * 6 );      // 2 vectors per access
+
+  // Generate list of unique edges
+  tk::UnsMesh::EdgeSet uedge;
+  for (std::size_t p=0; p<m_u.nunk(); ++p)
+    for (auto q : tk::Around(m_psup,p))
+      uedge.insert( {p,q} );
+
+  // Flatten edge list
+  m_edgenode.resize( uedge.size() * 2 );
+  std::size_t f = 0;
   const auto& gid = d->Gid();
-  for (std::size_t p=0,k=0; p<m_u.nunk(); ++p)
-    for (auto q : tk::Around(m_psup,p)) {
-      std::array< std::size_t, 2 > e{ gid[p], gid[q] };
-      auto n = tk::cref_find( m_dfnorm, e );
-      // figure out if this is an edge on the parallel boundary
-      auto nit = m_dfnormc.find( e );
-      auto m = ( nit != m_dfnormc.end() ) ? nit->second : n;
-      // orient normals
-      if (gid[p] > gid[q]) { tk::flip(n); tk::flip(m); }
-      m_dfn[k+0] = n[0];
-      m_dfn[k+1] = n[1];
-      m_dfn[k+2] = n[2];
-      m_dfn[k+3] = m[0];
-      m_dfn[k+4] = m[1];
-      m_dfn[k+5] = m[2];
-      k += 6;
+  for (auto&& [p,q] : uedge) {
+    if (gid[p] > gid[q]) {
+      m_edgenode[f+0] = std::move(q);
+      m_edgenode[f+1] = std::move(p);
+    } else {
+      m_edgenode[f+0] = std::move(p);
+      m_edgenode[f+1] = std::move(q);
     }
+    f += 2;
+  }
+  tk::destroy(uedge);
+
+  // Convert dual-face normals to streamable (and vectorizable) data structure
+  m_dfn.resize( m_edgenode.size() * 3 );      // 2 vectors per access
+  std::unordered_map< tk::UnsMesh::Edge, std::size_t,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > eid;
+  for (std::size_t e=0; e<m_edgenode.size()/2; ++e) {
+    auto p = m_edgenode[e*2+0];
+    auto q = m_edgenode[e*2+1];
+    eid[{p,q}] = e;
+    std::array< std::size_t, 2 > g{ gid[p], gid[q] };
+    auto n = tk::cref_find( m_dfnorm, g );
+    // figure out if this is an edge on the parallel boundary
+    auto nit = m_dfnormc.find( g );
+    auto m = ( nit != m_dfnormc.end() ) ? nit->second : n;
+    m_dfn[e*6+0] = n[0];
+    m_dfn[e*6+1] = n[1];
+    m_dfn[e*6+2] = n[2];
+    m_dfn[e*6+3] = m[0];
+    m_dfn[e*6+4] = m[1];
+    m_dfn[e*6+5] = m[2];
+  }
 
   tk::destroy( m_dfnorm );
   tk::destroy( m_dfnormc );
+
+  // Flatten edge id data structure
+  m_edgeid.resize( m_psup.first.size() );
+  for (std::size_t p=0,k=0; p<m_u.nunk(); ++p)
+    for (auto q : tk::Around(m_psup,p))
+      m_edgeid[k++] = tk::cref_find( eid, {p,q} );
 }
 
 void
@@ -811,8 +842,9 @@ ALECG::rhs()
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] += prev_rkcoef * m_dtp[p];
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
-            m_triinpoel, d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-            m_symbcnode, d->Vol(), m_grad, m_u, m_tp, m_rhs );
+            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
+            m_symbcnode, d->Vol(), m_edgenode, m_edgeid, m_grad, m_u, m_tp,
+            m_rhs );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 

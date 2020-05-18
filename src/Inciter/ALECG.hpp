@@ -205,6 +205,8 @@ class ALECG : public CBase_ALECG {
       p | m_symbcnode;
       p | m_stage;
       p | m_boxnodes;
+      p | m_edgenode;
+      p | m_edgeid;
       p | m_dtp;
       p | m_tp;
       p | m_finished;
@@ -298,6 +300,10 @@ class ALECG : public CBase_ALECG {
     std::size_t m_stage;
     //! Mesh node ids at which user-defined box ICs are defined
     std::vector< std::size_t > m_boxnodes;
+    //! Local node IDs of edges
+    std::vector< std::size_t > m_edgenode;
+    //! Edge ids in the order of access
+    std::vector< std::size_t > m_edgeid;
     //! Time step size for each mesh node
     std::vector< tk::real > m_dtp;
     //! Physical time for each mesh node
