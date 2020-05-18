@@ -205,6 +205,8 @@ class ALECG : public CBase_ALECG {
       p | m_symbcnode;
       p | m_stage;
       p | m_boxnodes;
+      p | m_edgenode;
+      p | m_edgeid;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -295,6 +297,10 @@ class ALECG : public CBase_ALECG {
     std::size_t m_stage;
     //! Mesh node ids at which user-defined box ICs are defined
     std::vector< std::size_t > m_boxnodes;
+    //! Local node IDs of edges
+    std::vector< std::size_t > m_edgenode;
+    //! Edge ids in the order of access
+    std::vector< std::size_t > m_edgeid;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
