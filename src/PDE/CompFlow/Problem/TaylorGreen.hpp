@@ -46,8 +46,22 @@ class CompFlowProblemTaylorGreen {
               tk::real x, tk::real y, tk::real, tk::real, int& );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
-    static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real x, tk::real y, tk::real, tk::real );
+    //! \param[in] x X coordinate where to evaluate the source
+    //! \param[in] y Y coordinate where to evaluate the source
+    //! \param[in,out] r Density source
+    //! \param[in,out] ru X momentum source
+    //! \param[in,out] rv Y momentum source
+    //! \param[in,out] rw Z momentum source
+    //! \param[in,out] re Specific total energy source
+    //! \note The function signature must follow tk::SrcFn
+    static tk::CompFlowSrcFn::result_type
+    src( ncomp_t, tk::real x, tk::real y, tk::real, tk::real,
+         tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
+    {
+      r = ru = rv = rw = 0.0;
+      re = 3.0*M_PI/8.0*( cos(3.0*M_PI*x)*cos(M_PI*y)
+                        - cos(3.0*M_PI*y)*cos(M_PI*x) );
+    }
 
     //! Return field names to be output to file
     std::vector< std::string > fieldNames( ncomp_t ) const;

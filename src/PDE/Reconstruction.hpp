@@ -122,16 +122,6 @@ safeReco( std::size_t offset,
   const Fields& U,
   std::array< std::vector< real >, 2 >& state );
 
-//! \brief Compute MUSCL reconstruction in edge-end points using a MUSCL
-//!   procedure with Van Leer limiting
-void
-muscl( const UnsMesh::Edge& edge,
-       const UnsMesh::Coords& coord,
-       const Fields& G,
-       std::vector< tk::real >& uL,
-       std::vector< tk::real >& uR,
-       bool enforce_realizability = false );
-
 } // tk::
 
 #endif // Reconstruction_h

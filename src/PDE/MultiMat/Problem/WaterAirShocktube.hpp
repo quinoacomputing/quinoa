@@ -42,8 +42,9 @@ class MultiMatProblemWaterAirShocktube {
               tk::real, int& );
 
     //! Compute and return source term for this problem
-    static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
+    static tk::MultiMatSrcFn::result_type
+    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real )
+    { std::vector< tk::real > s( ncomp, 0.0 ); }
 
     //! Return names of integral variables to be output to diagnostics file
     static std::vector< std::string > names( ncomp_t );

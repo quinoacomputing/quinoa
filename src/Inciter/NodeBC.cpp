@@ -191,28 +191,4 @@ correctBC( const tk::Fields& a,
   return true;
 }
 
-bool
-stagPoint( const std::array< tk::real, 3 >& p,
-           const std::tuple< std::vector< tk::real >,
-                             std::vector< tk::real > >& stag )
-// *****************************************************************************
-// Decide if node is a stagnation point
-//! \param[in] p Mesh node coordinates to query
-//! \param[in] stag Stagnation point coordinates and radii
-//! \return True if p is configured as a stagnation point by the user
-// *****************************************************************************
-{
-  const auto& pnt = std::get< 0 >( stag );
-  const auto& rad = std::get< 1 >( stag );
-
-  // Lambda to decide if node is a stagnation point
-  for (std::size_t i=0; i< rad.size(); ++i) {
-    std::array< tk::real, 3 >
-      d{ p[0]-pnt[i*3+0], p[1]-pnt[i*3+1], p[2]-pnt[i*3+2] };
-    if (tk::length(d) < rad[i]) return true;
-  }
-
-  return false;
-}
-
 } // inciter::

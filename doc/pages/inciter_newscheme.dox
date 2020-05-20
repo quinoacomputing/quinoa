@@ -450,7 +450,7 @@ buffer on the receiving side, which would lead to corrupt data and errors.
 
 @subsection inciter_newscheme_class_setup ALECG::setup() -- Set initial conditions and compute the left hand side
 
-@snippet Inciter/ALECG.cpp init and lhs
+@snippet Inciter/ALECG.cpp start
 
 In the ALECG::setup() code snippet above we call ALECG::lhs() which starts by
 computing the own contribution of the lhs followed by sending out contributions

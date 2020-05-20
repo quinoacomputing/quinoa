@@ -17,12 +17,6 @@
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
-//namespace inciter {
-//
-//extern ctr::InputDeck g_inputdeck;
-//
-//} // ::inciter
-
 using inciter::MultiMatProblemInterfaceAdvection;
 
 tk::SolutionFn::result_type

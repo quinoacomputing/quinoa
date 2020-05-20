@@ -55,11 +55,11 @@ signalHandler( int signum )
   const char* name = nullptr;
   switch( signum ) {
     case SIGABRT: name = "SIGABRT";  break;
-    case SIGFPE:  name = "SIGFPE";  break;
+    case SIGFPE:  name = "SIGFPE";   break;
     case SIGILL:  name = "SIGILL";   break;
-    case SIGINT:  name = "SIGINT";  break;
+    case SIGINT:  name = "SIGINT";   break;
     case SIGSEGV: name = "SIGSEGV";  break;
-    case SIGTERM: name = "SIGTERM";   break;
+    case SIGTERM: name = "SIGTERM";  break;
   }
 
   // Echo what signal is caught

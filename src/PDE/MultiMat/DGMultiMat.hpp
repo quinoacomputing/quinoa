@@ -540,10 +540,6 @@ class MultiMat {
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R,
                    riemannDeriv );
 
-      // compute source term integrals
-      tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, nelem, inpoel, coord,
-                  geoElem, Problem::src, ndofel, R );
-
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_system, m_ncomp, m_offset, ndof, nelem, inpoel, coord,

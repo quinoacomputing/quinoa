@@ -6,10 +6,11 @@
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing integrals of an arbitrary source term of a
-     system of PDEs in DG methods
+     for single-material compressible flow, CompFlow using DG methods
   \details   This file contains functionality for computing integrals of an
-     arbitrary source term of a system of PDEs used in discontinuous Galerkin
-     methods for various orders of numerical representation.
+     arbitrary source term for single-material compressible flow, CompFlow with
+     discontinuous Galerkin methods for various orders of numerical
+     representation.
 */
 // *****************************************************************************
 
@@ -20,7 +21,6 @@
 
 void
 tk::srcInt( ncomp_t system,
-            ncomp_t ncomp,
             ncomp_t offset,
             real t,
             const std::size_t ndof,
@@ -28,13 +28,12 @@ tk::srcInt( ncomp_t system,
             const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,
             const Fields& geoElem,
-            const SrcFn& src,
+            const CompFlowSrcFn& src,
             const std::vector< std::size_t >& ndofel,
             Fields& R )
 // *****************************************************************************
 //  Compute source term integrals for DG
 //! \param[in] system Equation system index
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -83,42 +82,40 @@ tk::srcInt( ncomp_t system,
         eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
       // Compute the source term variable
-      auto s = src( system, ncomp, gp[0], gp[1], gp[2], t );
+      std::array< real, 5 > s;
+      src( system, gp[0], gp[1], gp[2], t, s[0], s[1], s[2], s[3], s[4] );
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-      update_rhs( ncomp, offset, ndof, ndofel[e], wt, e, B, s, R );
+      update_rhs( offset, ndof, ndofel[e], wt, e, B, s, R );
     }
   }
 }
 
 void
-tk::update_rhs( ncomp_t ncomp,
-                ncomp_t offset,
+tk::update_rhs( ncomp_t offset,
                 const std::size_t ndof,
                 const std::size_t ndof_el,
                 const tk::real wt,
                 const std::size_t e,
                 const std::vector< tk::real >& B,
-                const std::vector< tk::real >& s,
+                const std::array< tk::real, 5 >& s,
                 Fields& R )
 // *****************************************************************************
 //  Update the rhs by adding the source term integrals
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Number of degrees of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] e Element index
 //! \param[in] B Vector of basis functions
-//! \param[in] s Vector of source terms
+//! \param[in] s Source terms for each of the 5 components
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
   Assert( B.size() == ndof_el, "Size mismatch for basis function" );
-  Assert( s.size() == ncomp, "Size mismatch for source term" );
 
-  for (ncomp_t c=0; c<ncomp; ++c)
+  for (ncomp_t c=0; c<5; ++c)
   {
     auto mark = c*ndof;
     R(e, mark, offset)   += wt * s[c];

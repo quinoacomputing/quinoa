@@ -58,18 +58,6 @@ CompFlowProblemSheddingFlow::solution( ncomp_t system,
   return {{ r, r*u[0], r*u[1], r*u[2], rE }};
 }
 
-tk::SrcFn::result_type
-CompFlowProblemSheddingFlow::src( ncomp_t, ncomp_t, tk::real,
-                                  tk::real, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-}
-
 std::vector< std::string >
 CompFlowProblemSheddingFlow::fieldNames( ncomp_t ) const
 // *****************************************************************************

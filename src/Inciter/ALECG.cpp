@@ -65,13 +65,13 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_ndfnorm( 0 ),
   m_bnode( bnode ),
   m_bface( bface ),
-  m_triinpoel( triinpoel ),
+  m_triinpoel( tk::remap( triinpoel, Disc()->Lid() ) ),
   m_bndel( bndel() ),
   m_dfnorm(),
   m_dfnormc(),
   m_dfn(),
-  m_psup( tk::genPsup( Disc()->Inpoel(), 4,
-          tk::genEsup( Disc()->Inpoel(), 4 ) ) ),
+  m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
+  m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
@@ -85,8 +85,11 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_diag(),
   m_bnorm(),
   m_bnormc(),
+  m_symbcnode(),
   m_stage( 0 ),
-  m_boxnodes()
+  m_boxnodes(),
+  m_edgenode(),
+  m_edgeid()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -118,10 +121,12 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 
     // Remap data in bound Discretization object
     d->remap( map );
+    // Recompute elements surrounding points
+    m_esup = tk::genEsup( d->Inpoel(), 4 );
     // Recompute points surrounding points
-    //tk::remap( m_psup.first, map );
-    m_psup = tk::genPsup( d->Inpoel(), 4, tk::genEsup( d->Inpoel(), 4 ) );
-
+    m_psup = tk::genPsup( d->Inpoel(), 4, m_esup );
+    // Remap boundary triangle face connectivity
+    tk::remap( m_triinpoel, map );
   }
 
   // Activate SDAG wait for initially computing the left-hand side and normals
@@ -177,6 +182,58 @@ ALECG::bndel() const
   return e;
 }
 
+std::array< tk::real, 3 >
+ALECG::edfnorm( const tk::UnsMesh::Edge& edge,
+                const std::unordered_map< tk::UnsMesh::Edge,
+                        std::vector< std::size_t >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued )
+// *****************************************************************************
+//  Compute normal of dual-mesh associated to edge
+//! \param[in] edge Edge whose dual-face normal to compute given by local ids
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] esued Elements surrounding edges
+//! \return Dual-face normal for edge
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto& inpoel = d->Inpoel();
+  const auto& coord = d->Coord();
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  std::array< tk::real, 3 > n{ 0.0, 0.0, 0.0 };
+
+  for (auto e : tk::cref_find(esued,edge)) {
+    // access node IDs
+    const std::array< std::size_t, 4 >
+      N{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+    // compute element Jacobi determinant
+    const std::array< tk::real, 3 >
+      ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+      ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+      da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+    const auto J = tk::triple( ba, ca, da );        // J = 6V
+    Assert( J > 0, "Element Jacobian non-positive" );
+    // shape function derivatives, nnode*ndim [4][3]
+    std::array< std::array< tk::real, 3 >, 4 > grad;
+    grad[1] = tk::crossdiv( ca, da, J );
+    grad[2] = tk::crossdiv( da, ba, J );
+    grad[3] = tk::crossdiv( ba, ca, J );
+    for (std::size_t i=0; i<3; ++i)
+      grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+    // sum normal contributions
+    auto J48 = J/48.0;
+    for (const auto& [a,b] : tk::lpoed) {
+      auto s = tk::orient( {N[a],N[b]}, edge );
+      for (std::size_t j=0; j<3; ++j)
+        n[j] += J48 * s * (grad[a][j] - grad[b][j]);
+    }
+  }
+
+  return n;
+}
+
 void
 ALECG::dfnorm()
 // *****************************************************************************
@@ -185,7 +242,6 @@ ALECG::dfnorm()
 {
   auto d = Disc();
   const auto& inpoel = d->Inpoel();
-  const auto& coord = d->Coord();
   const auto& gid = d->Gid();
 
   // compute derived data structures
@@ -195,7 +251,7 @@ ALECG::dfnorm()
   for (std::size_t p=0; p<gid.size(); ++p)    // for each point p
     for (auto q : tk::Around(m_psup,p))       // for each edge p-q
       if (gid[p] < gid[q])
-        m_dfnorm[{gid[p],gid[q]}] = cg::edfnorm( {p,q}, coord, inpoel, esued );
+        m_dfnorm[{gid[p],gid[q]}] = edfnorm( {p,q}, esued );
 
   // Send our dual-face normal contributions to neighbor chares
   if (d->EdgeCommMap().empty())
@@ -239,13 +295,12 @@ void
 ALECG::bnorm( std::unordered_set< std::size_t >&& symbcnodes )
 // *****************************************************************************
 //  Compute boundary point normals
-//! \param[in] Node ids at which symmetry BCs are set
+//! \param[in] Local node ids at which symmetry BCs are set
 // *****************************************************************************
 {
   auto d = Disc();
 
   const auto& coord = d->Coord();
-  const auto& lid = d->Lid();
   const auto& x = coord[0];
   const auto& y = coord[1];
   const auto& z = coord[2];
@@ -266,15 +321,13 @@ ALECG::bnorm( std::unordered_set< std::size_t >&& symbcnodes )
   for (const auto& [ setid, faceids ] : m_bface) {
     for (auto f : faceids) {
       tk::UnsMesh::Face
-        face{ tk::cref_find( lid, m_triinpoel[f*3+0] ),
-              tk::cref_find( lid, m_triinpoel[f*3+1] ),
-              tk::cref_find( lid, m_triinpoel[f*3+2] ) };
+        face{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] };
       std::array< tk::real, 3 > fx{ x[face[0]], x[face[1]], x[face[2]] };
       std::array< tk::real, 3 > fy{ y[face[0]], y[face[1]], y[face[2]] };
       std::array< tk::real, 3 > fz{ z[face[0]], z[face[1]], z[face[2]] };
       auto g = tk::geoFaceTri( fx, fy, fz );
       for (auto p : face) {
-        auto i = symbcnodes.find( gid[p] );
+        auto i = symbcnodes.find( p );
         if (i != end(symbcnodes)) {     // only if user set symbc on node
           tk::real r = invdistsq( g, p );
           auto& n = m_bnorm[ gid[p] ];  // associate global node id
@@ -364,14 +417,10 @@ ALECG::setup()
   auto d = Disc();
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_cgpde)
-    eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
+  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
 
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );
-
-  // Apply symmetry boundary conditions on initial conditions
-  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
 
   // Query time history field output labels from all PDEs integrated
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
@@ -400,21 +449,25 @@ ALECG::boxvol( tk::real v )
   // Update density in user-defined IC box based on box volume
   for (const auto& eq : g_cgpde) eq.box( d->Boxvol(), m_boxnodes, m_u );
 
-  // Output initial conditions to file (regardless of whether it was requested)
-  writeFields( CkCallback(CkIndex_ALECG::init(), thisProxy[thisIndex]) );
-}
-
-//! [init and lhs]
-void
-ALECG::init()
-// *****************************************************************************
-// Initially compute left hand side diagonal matrix
-// *****************************************************************************
-{
   // Compute left-hand side of PDEs
   lhs();
 }
-//! [init and lhs]
+
+//! [start]
+void
+ALECG::start()
+// *****************************************************************************
+// Start time stepping
+// *****************************************************************************
+{
+  // Start timer measuring time stepping wall clock time
+  Disc()->Timer().zero();
+  // Zero grind-timer
+  Disc()->grindZero();
+  // Continue to next time step
+  next();
+}
+//! [start]
 
 //! [Compute own and send lhs on chare-boundary]
 void
@@ -504,12 +557,8 @@ ALECG::lhsmerge()
 
   // Continue after lhs is complete
   if (m_initial) {
-    // Start timer measuring time stepping wall clock time
-    Disc()->Timer().zero();
-    // Zero grind-timer
-    Disc()->grindZero();
-    // Continue to next time step
-    next();
+    // Output initial conditions to file
+    writeFields( CkCallback(CkIndex_ALECG::start(), thisProxy[thisIndex]) );
   } else {
     lhs_complete();
   }
@@ -552,6 +601,15 @@ ALECG::normfinal()
   for (auto&& [g,n] : m_bnorm) bnorm[ tk::cref_find(lid,g) ] = std::move(n);
   m_bnorm = std::move(bnorm);
 
+  // Apply symmetry boundary conditions on initial conditions
+  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
+
+  // Flatten boundary normal data structure
+  m_symbcnode.resize( m_triinpoel.size()/3, 0 );
+  for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
+    if (m_bnorm.find(m_triinpoel[e*3+0]) != end(m_bnorm))
+      m_symbcnode[e] = 1;
+
   // Count contributions to chare-boundary edges
   std::unordered_map< tk::UnsMesh::Edge, std::size_t,
     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > edge_node_count;
@@ -570,29 +628,58 @@ ALECG::normfinal()
     for (auto & x : n) x *= factor;
   }
 
-  // Convert dual-face normals to streamable (and vectorizable) data structure
-  m_dfn.resize( m_psup.first.size() * 6 );      // 2 vectors per access
+  // Generate list of unique edges
+  tk::UnsMesh::EdgeSet uedge;
+  for (std::size_t p=0; p<m_u.nunk(); ++p)
+    for (auto q : tk::Around(m_psup,p))
+      uedge.insert( {p,q} );
+
+  // Flatten edge list
+  m_edgenode.resize( uedge.size() * 2 );
+  std::size_t f = 0;
   const auto& gid = d->Gid();
-  for (std::size_t p=0,k=0; p<m_u.nunk(); ++p)
-    for (auto q : tk::Around(m_psup,p)) {
-      std::array< std::size_t, 2 > e{ gid[p], gid[q] };
-      auto n = tk::cref_find( m_dfnorm, e );
-      // figure out if this is an edge on the parallel boundary
-      auto nit = m_dfnormc.find( e );
-      auto m = ( nit != m_dfnormc.end() ) ? nit->second : n;
-      // orient normals
-      if (gid[p] > gid[q]) { tk::flip(n); tk::flip(m); }
-      m_dfn[k+0] = n[0];
-      m_dfn[k+1] = n[1];
-      m_dfn[k+2] = n[2];
-      m_dfn[k+3] = m[0];
-      m_dfn[k+4] = m[1];
-      m_dfn[k+5] = m[2];
-      k += 6;
+  for (auto&& [p,q] : uedge) {
+    if (gid[p] > gid[q]) {
+      m_edgenode[f+0] = std::move(q);
+      m_edgenode[f+1] = std::move(p);
+    } else {
+      m_edgenode[f+0] = std::move(p);
+      m_edgenode[f+1] = std::move(q);
     }
+    f += 2;
+  }
+  tk::destroy(uedge);
+
+  // Convert dual-face normals to streamable (and vectorizable) data structure
+  m_dfn.resize( m_edgenode.size() * 3 );      // 2 vectors per access
+  std::unordered_map< tk::UnsMesh::Edge, std::size_t,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > eid;
+  for (std::size_t e=0; e<m_edgenode.size()/2; ++e) {
+    auto p = m_edgenode[e*2+0];
+    auto q = m_edgenode[e*2+1];
+    eid[{p,q}] = e;
+    std::array< std::size_t, 2 > g{ gid[p], gid[q] };
+    auto n = tk::cref_find( m_dfnorm, g );
+    // figure out if this is an edge on the parallel boundary
+    auto nit = m_dfnormc.find( g );
+    auto m = ( nit != m_dfnormc.end() ) ? nit->second : n;
+    // orient normals
+    m_dfn[e*6+0] = n[0];
+    m_dfn[e*6+1] = n[1];
+    m_dfn[e*6+2] = n[2];
+    m_dfn[e*6+3] = m[0];
+    m_dfn[e*6+4] = m[1];
+    m_dfn[e*6+5] = m[2];
+  }
 
   tk::destroy( m_dfnorm );
   tk::destroy( m_dfnormc );
+
+  // Flatten edge id data structure
+  m_edgeid.resize( m_psup.first.size() );
+  for (std::size_t p=0,k=0; p<m_u.nunk(); ++p)
+    for (auto q : tk::Around(m_psup,p))
+      m_edgeid[k++] = tk::cref_find( eid, {p,q} );
 }
 
 void
@@ -738,8 +825,8 @@ ALECG::rhs()
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
-            m_triinpoel, d->Bid(), d->Lid(), m_dfn, m_psup, m_bnorm,
-            d->Vol(), m_grad, m_u, m_rhs );
+            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
+            m_symbcnode, d->Vol(), m_edgenode, m_edgeid, m_grad, m_u, m_rhs );
 
   // Query and match user-specified boundary conditions to side sets
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
@@ -931,7 +1018,7 @@ ALECG::resizePostAMR(
   // Update physical-boundary node-, face-, and element lists
   m_bnode = bnode;
   m_bface = bface;
-  m_triinpoel = triinpoel;
+  m_triinpoel = tk::remap( triinpoel, d->Lid() );
 
   contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
 }
@@ -985,9 +1072,6 @@ ALECG::writeFields( CkCallback c ) const
       nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
     }
 
-    // Generate side set triangle connectivity with local node ids
-    auto ltriinp = tk::remap( m_triinpoel, d->Lid() );
-
     // Collect node block and surface field solution
     auto u = m_u;
     std::vector< std::vector< tk::real > > nodefields;
@@ -996,7 +1080,7 @@ ALECG::writeFields( CkCallback c ) const
       auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord()[0].size(),
                                d->Coord(), d->V(), u );
       nodefields.insert( end(nodefields), begin(o), end(o) );
-      auto s = eq.surfOutput( tk::bfacenodes(m_bface,ltriinp), u );
+      auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
 
@@ -1006,14 +1090,13 @@ ALECG::writeFields( CkCallback c ) const
     //   eq.symbcnodes( m_bface, m_triinpoel, symbcnodes );
     // nodefieldnames.push_back( "bc_type" );
     // nodefields.push_back( std::vector<tk::real>(d->Coord()[0].size(),0.0) );
-    // for (auto i : symbcnodes)
-    //   nodefields.back()[ tk::cref_find(d->Lid(),i) ] = 1.0;
+    // for (auto i : symbcnodes) nodefields.back()[i] = 1.0;
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
     // Send mesh and fields data (solution dump) for output to file
     d->write( d->Inpoel(), d->Coord(), m_bface, tk::remap(m_bnode,d->Lid()),
-              ltriinp, {}, nodefieldnames, nodesurfnames, {}, nodefields,
+              m_triinpoel, {}, nodefieldnames, nodesurfnames, {}, nodefields,
               nodesurfs, c );
 
   }

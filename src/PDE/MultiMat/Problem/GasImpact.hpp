@@ -43,10 +43,10 @@ class MultiMatProblemGasImpact {
               tk::real, int& );
 
     //! Compute and return source term for this problem
-    static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real ) {
-      return std::vector< tk::real >( ncomp, 0.0 );
-    }
+    static tk::MultiMatSrcFn::result_type
+    src( ncomp_t, tk::real, tk::real, tk::real, tk::real,
+         tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
+    { r = ru = rv = rw = re = 0.0; }
 
     //! Return names of integral variables to be output to diagnostics file
     static std::vector< std::string > names( ncomp_t );

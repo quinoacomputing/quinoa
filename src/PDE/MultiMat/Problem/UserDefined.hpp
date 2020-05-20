@@ -62,11 +62,9 @@ class MultiMatProblemUserDefined {
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! \details No-op for user-deefined problems.
-    //! \return Array of reals containing the source for all components
-    //! \note The function signature must follow tk::SrcFn
-    static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real )
-    { return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }}; }
+    static tk::MultiMatSrcFn::result_type
+    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real )
+    { std::vector< tk::real > s( ncomp, 0.0 ); }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output

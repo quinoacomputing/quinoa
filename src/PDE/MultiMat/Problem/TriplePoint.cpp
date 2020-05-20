@@ -109,21 +109,6 @@ MultiMatProblemTriplePoint::solution( ncomp_t system,
   return s;
 }
 
-tk::SrcFn::result_type
-MultiMatProblemTriplePoint::src( ncomp_t, ncomp_t ncomp, tk::real,
-                                       tk::real, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  std::vector< tk::real > s( ncomp, 0.0 );
-
-  return s;
-}
-
 std::vector< std::string >
 MultiMatProblemTriplePoint::names( ncomp_t )
 // *****************************************************************************

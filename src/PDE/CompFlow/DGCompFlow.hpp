@@ -278,8 +278,8 @@ class CompFlow {
       tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, riemannDeriv );
 
-      // compute source term intehrals
-      tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, fd.Esuel().size()/4,
+      // compute ptional source term
+      tk::srcInt( m_system, m_offset, t, ndof, fd.Esuel().size()/4,
                   inpoel, coord, geoElem, Problem::src, ndofel, R );
 
       if(ndof > 1)

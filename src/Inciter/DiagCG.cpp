@@ -294,8 +294,7 @@ DiagCG::setup()
   auto d = Disc();
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_cgpde)
-    eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
+  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
 
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );

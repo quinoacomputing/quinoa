@@ -51,16 +51,81 @@ std::size_t
 npoin_in_graph( const std::vector< std::size_t >& inpoel );
 
 //! Compute the unit normal vector of a triangle
-std::array< tk::real, 3 >
-normal( const std::array< tk::real, 3 >& x,
-        const std::array< tk::real, 3 >& y,
-        const std::array< tk::real, 3 >& z );
+//! \param[in] x1 x coordinate of the 1st vertex of the triangle
+//! \param[in] x2 x coordinate of the 2nd vertex of the triangle
+//! \param[in] x3 x coordinate of the 3rd vertex of the triangle
+//! \param[in] y1 y coordinate of the 1st vertex of the triangle
+//! \param[in] y2 y coordinate of the 2nd vertex of the triangle
+//! \param[in] y3 y coordinate of the 3rd vertex of the triangle
+//! \param[in] z1 z coordinate of the 1st vertex of the triangle
+//! \param[in] z2 z coordinate of the 2nd vertex of the triangle
+//! \param[in] z3 z coordinate of the 3rd vertex of the triangle
+//! \param[out] nx x coordinate of the unit normal
+//! \param[out] ny y coordinate of the unit normal
+//! \param[out] nz z coordinate of the unit normal
+#pragma omp declare simd
+inline void
+normal( real x1, real x2, real x3,
+        real y1, real y2, real y3,
+        real z1, real z2, real z3,
+        real& nx, real& ny, real& nz )
+{
+  real ax = x2 - x1;
+  real ay = y2 - y1;
+  real az = z2 - z1;
+
+  real bx = x3 - x1;
+  real by = y3 - y1;
+  real bz = z3 - z1;
+
+  real n1 =   ay*bz - az*by;
+  real n2 = -(ax*bz - az*bx);
+  real n3 =   ax*by - ay*bx;
+
+  auto farea = std::sqrt( n1*n1 + n2*n2 + n3*n3 );
+
+  nx = n1/farea;
+  ny = n2/farea;
+  nz = n3/farea;
+}
+
+//! Compute the unit normal vector of a triangle
+std::array< real, 3 >
+normal( const std::array< real, 3 >& x,
+        const std::array< real, 3 >& y,
+        const std::array< real, 3 >& z );
+
+//! Compute the are of a triangle
+//! \param[in] x1 x coordinate of the 1st vertex of the triangle
+//! \param[in] x2 x coordinate of the 2nd vertex of the triangle
+//! \param[in] x3 x coordinate of the 3rd vertex of the triangle
+//! \param[in] y1 y coordinate of the 1st vertex of the triangle
+//! \param[in] y2 y coordinate of the 2nd vertex of the triangle
+//! \param[in] y3 y coordinate of the 3rd vertex of the triangle
+//! \param[in] z1 z coordinate of the 1st vertex of the triangle
+//! \param[in] z2 z coordinate of the 2nd vertex of the triangle
+//! \param[in] z3 z coordinate of the 3rd vertex of the triangle
+//! \return Area of the triangle
+#pragma omp declare simd
+inline real
+area( real x1, real x2, real x3,
+      real y1, real y2, real y3,
+      real z1, real z2, real z3 )
+{
+  auto sidea = sqrt( (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1) );
+  auto sideb = sqrt( (x3-x2)*(x3-x2) + (y3-y2)*(y3-y2) + (z3-z2)*(z3-z2) );
+  auto sidec = sqrt( (x1-x3)*(x1-x3) + (y1-y3)*(y1-y3) + (z1-z3)*(z1-z3) );
+
+  auto semip = 0.5 * (sidea + sideb + sidec);
+
+  return sqrt( semip * (semip-sidea) * (semip-sideb) * (semip-sidec) );
+}
 
 //! Compute the area of a triangle
-tk::real
-area( const std::array< tk::real, 3 >& x,
-      const std::array< tk::real, 3 >& y,
-      const std::array< tk::real, 3 >& z );
+real
+area( const std::array< real, 3 >& x,
+      const std::array< real, 3 >& y,
+      const std::array< real, 3 >& z );
 
 //! Generate derived data structure, elements surrounding points
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
@@ -163,41 +228,41 @@ genBelemTet( std::size_t nbfac,
                                std::vector< std::size_t > >& esup );
 
 //! Generate derived data structure, face geometry
-tk::Fields
+Fields
 genGeoFaceTri( std::size_t nipfac,
                const std::vector< std::size_t >& inpofa,
-               const tk::UnsMesh::Coords& coord );
+               const UnsMesh::Coords& coord );
 
 //! Compute geometry of the face given by three vertices
-tk::Fields
-geoFaceTri( const std::array< tk::real, 3 >& x,
-            const std::array< tk::real, 3 >& y,
-            const std::array< tk::real, 3 >& z );
+Fields
+geoFaceTri( const std::array< real, 3 >& x,
+            const std::array< real, 3 >& y,
+            const std::array< real, 3 >& z );
 
 //! Generate derived data structure, element geometry
-tk::Fields
+Fields
 genGeoElemTet( const std::vector< std::size_t >& inpoel,
-               const tk::UnsMesh::Coords& coord );
+               const UnsMesh::Coords& coord );
 
 //! Perform leak-test on mesh (partition)
 bool
 leakyPartition( const std::vector< int >& esueltet,
                 const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord );
+                const UnsMesh::Coords& coord );
 
 //! Check if mesh (partition) is conforming
 bool
 conforming( const std::vector< std::size_t >& inpoel,
-            const tk::UnsMesh::Coords& coord,
+            const UnsMesh::Coords& coord,
             bool cerr = true );
 
 //! Determine if a point is in a tetrahedron
 bool
-intet( const std::array< std::vector< tk::real >, 3 >& coord,
+intet( const std::array< std::vector< real >, 3 >& coord,
        const std::vector< std::size_t >& inpoel,
-       const std::vector< tk::real >& p,
+       const std::vector< real >& p,
        std::size_t e,
-       std::array< tk::real, 4 >& N );
+       std::array< real, 4 >& N );
 
 } // tk::
 

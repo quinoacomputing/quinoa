@@ -130,19 +130,6 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
   return u;
 }
 
-tk::SrcFn::result_type
-CompFlowProblemUserDefined::src( ncomp_t, ncomp_t, tk::real,
-                                 tk::real, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \details No-op for user-defined problems
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-}
-
 std::vector< std::string >
 CompFlowProblemUserDefined::fieldNames( ncomp_t ) const
 // *****************************************************************************

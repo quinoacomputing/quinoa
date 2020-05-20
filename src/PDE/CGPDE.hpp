@@ -40,46 +40,6 @@ namespace cg {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! Compute nodal gradients of primitive variables for ALECG on chare boundary
-void
-chbgrad( ncomp_t ncomp,
-         ncomp_t offset,
-         const std::array< std::vector< tk::real >, 3 >& coord,
-         const std::vector< std::size_t >& inpoel,
-         const std::vector< std::size_t >& bndel,
-         const std::vector< std::size_t >& gid,
-         const std::unordered_map< std::size_t, std::size_t >& bid,
-         const std::tuple< std::vector< tk::real >,
-                           std::vector< tk::real > >& stag,
-         const tk::Fields& U,
-         tk::ElemGradFn egrad,
-         tk::Fields& G );
-
-//! \brief Compute/assemble nodal gradients of primitive variables for ALECG in
-//!   all points
-tk::Fields
-nodegrad( ncomp_t ncomp,
-          ncomp_t offset,
-          const std::array< std::vector< tk::real >, 3 >& coord,
-          const std::vector< std::size_t >& inpoel,
-          const std::unordered_map< std::size_t, std::size_t >& lid,
-          const std::unordered_map< std::size_t, std::size_t >& bid,
-          const std::vector< tk::real >& vol,
-          const std::tuple< std::vector< tk::real >,
-                            std::vector< tk::real > >& stag,
-          const tk::Fields& U,
-          const tk::Fields& G,
-          tk::ElemGradFn egrad );
-
-//! Compute normal of dual-mesh associated to edge
-std::array< tk::real, 3 >
-edfnorm( const tk::UnsMesh::Edge& edge,
-         const std::array< std::vector< tk::real >, 3 >&  coord,
-         const std::vector< std::size_t >& inpoel,
-         const std::unordered_map< tk::UnsMesh::Edge,
-                  std::vector< std::size_t >,
-                  tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
-
 //! \brief Evaluate the increment from t to t+dt of an analytical solution at
 //!   (x,y,z) for all components
 std::vector< tk::real >
@@ -139,7 +99,7 @@ class CGPDE {
     void initialize( const std::array< std::vector< tk::real >, 3 >& coord,
                      tk::Fields& unk,
                      tk::real t,
-                     std::vector< std::size_t >& inbox ) const
+                     std::vector< std::size_t >& inbox )
     { self->initialize( coord, unk, t, inbox ); }
 
     //! Public interface to updating the initial conditions in box ICs
@@ -172,19 +132,23 @@ class CGPDE {
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& triinpoel,
+      const std::vector< std::size_t >& gid,
       const std::unordered_map< std::size_t, std::size_t >& bid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const std::vector< tk::real >& dfn,
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& psup,
-      const std::unordered_map< std::size_t,
-              std::array< tk::real, 4 > >& bnorm,
+      const std::pair< std::vector< std::size_t >,
+                       std::vector< std::size_t > >& esup,
+      const std::vector< int >& symbcnode,
       const std::vector< tk::real >& vol,
+      const std::vector< std::size_t >& edgenode,
+      const std::vector< std::size_t >& edgeid,
       const tk::Fields& G,
       const tk::Fields& U,
       tk::Fields& R ) const
-    { self->rhs( t, coord, inpoel, triinpoel, bid, lid, dfn, psup,
-                 bnorm, vol, G, U, R ); }
+    { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
+                 symbcnode, vol, edgenode, edgeid, G, U, R ); }
 
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
@@ -275,7 +239,7 @@ class CGPDE {
       virtual void initialize( const std::array< std::vector< tk::real >, 3 >&,
                                tk::Fields&,
                                tk::real,
-                               std::vector< std::size_t >& inbox ) const = 0;
+                               std::vector< std::size_t >& inbox ) = 0;
       virtual void box( tk::real, const std::vector< std::size_t >&,
                         tk::Fields& unk ) const = 0;
       virtual void grad( const std::array< std::vector< tk::real >, 3 >&,
@@ -297,17 +261,21 @@ class CGPDE {
         const std::array< std::vector< tk::real >, 3 >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
+        const std::vector< std::size_t >&,
         const std::unordered_map< std::size_t, std::size_t >&,
         const std::unordered_map< std::size_t, std::size_t >&,
         const std::vector< tk::real >&,
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >&,
-        const std::unordered_map< std::size_t,
-                                  std::array< tk::real, 4 > >&,
+        const std::pair< std::vector< std::size_t >,
+                         std::vector< std::size_t > >&,
+        const std::vector< int >&,
         const std::vector< tk::real >&,
+        const std::vector< std::size_t >&,
+        const std::vector< std::size_t >&,
         const tk::Fields&,
         const tk::Fields&,
-        tk::Fields&) const = 0;
+        tk::Fields& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const tk::Fields& ) const = 0;
@@ -356,7 +324,7 @@ class CGPDE {
                        tk::Fields& unk,
                        tk::real t,
                        std::vector< std::size_t >& inbox )
-      const override { data.initialize( coord, unk, t, inbox ); }
+      override { data.initialize( coord, unk, t, inbox ); }
       void box( tk::real v, const std::vector< std::size_t >& boxnodes,
                 tk::Fields& unk ) const override
       { data.box( v, boxnodes, unk ); }
@@ -376,23 +344,28 @@ class CGPDE {
                 tk::Fields& Ue,
                 tk::Fields& R ) const override
       { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
-      void rhs( tk::real t,
+      void rhs(
+        tk::real t,
         const std::array< std::vector< tk::real >, 3 >& coord,
         const std::vector< std::size_t >& inpoel,
         const std::vector< std::size_t >& triinpoel,
+        const std::vector< std::size_t >& gid,
         const std::unordered_map< std::size_t, std::size_t >& bid,
         const std::unordered_map< std::size_t, std::size_t >& lid,
         const std::vector< tk::real >& dfn,
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >& psup,
-        const std::unordered_map< std::size_t,
-                std::array< tk::real, 4 > >& bnorm,
+        const std::pair< std::vector< std::size_t >,
+                         std::vector< std::size_t > >& esup,
+        const std::vector< int >& symbcnode,
         const std::vector< tk::real >& vol,
+        const std::vector< std::size_t >& edgenode,
+        const std::vector< std::size_t >& edgeid,
         const tk::Fields& G,
         const tk::Fields& U,
-        tk::Fields& R) const override
-      { data.rhs( t, coord, inpoel, triinpoel, bid, lid, dfn, psup, bnorm,
-                  vol, G, U, R ); }
+        tk::Fields& R ) const override
+      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
+                  symbcnode, vol, edgenode, edgeid, G, U, R ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override
