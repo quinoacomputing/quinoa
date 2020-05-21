@@ -45,8 +45,8 @@ module alecg {
               const std::unordered_map< tk::UnsMesh::Edge,
               std::array< tk::real, 3 >,
               tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm );
-      entry void comnorm( const std::unordered_map< std::size_t,
-                                  std::array< tk::real, 4 > >& innorm );
+      entry void comnorm( const std::unordered_map< int,
+       std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );
       entry void comgrad( const std::vector< std::size_t >& gid,

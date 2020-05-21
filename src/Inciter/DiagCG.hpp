@@ -119,8 +119,8 @@ class DiagCG : public CBase_DiagCG {
     void lhs();
 
     //! Receive boundary point normals on chare-boundaries
-    void comnorm(
-      const std::unordered_map< std::size_t, std::array<tk::real,4> >& innorm );
+    void comnorm( const std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
 
     //! Receive contributions to left-hand side matrix on chare-boundaries
     void comlhs( const std::vector< std::size_t >& gid,
@@ -192,7 +192,9 @@ class DiagCG : public CBase_DiagCG {
       p | m_vol;
       p | m_bnorm;
       p | m_bnormc;
+      p | m_symbcnodemap;
       p | m_symbcnodes;
+      p | m_farfieldbcnodes;
       p | m_diag;
       p | m_boxnodes;
       p | m_dtp;
@@ -256,16 +258,23 @@ class DiagCG : public CBase_DiagCG {
     std::unordered_map< std::size_t, std::vector< tk::real > > m_difc;
     //! Total mesh volume
     tk::real m_vol;
-    //! Face normals in boundary points
+    //! Face normals in boundary points associated to side sets
     //! \details Key: local node id, value: unit normal and inverse distance
-    //!   square between face centroids and points
-    std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnorm;
-    //! Receive buffer for communication of the boundary point normals
+    //!   square between face centroids and points, outer key: side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnorm;
+    //! \brief Receive buffer for communication of the boundary point normals
+    //!   associated to side sets
     //! \details Key: global node id, value: normals (first 3 components),
-    //!   inverse distance squared (4th component)
-    std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnormc;
-    //! Unique list of nodes at which symmetry BCs are set
+    //!   inverse distance squared (4th component), outer key, side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnormc;
+    //! Unique set of nodes at which symmetry BCs are set for side sets
+    std::unordered_map< int, std::unordered_set< std::size_t > > m_symbcnodemap;
+    //! Unique set of nodes at which symmetry BCs are set
     std::unordered_set< std::size_t > m_symbcnodes;
+    //! Unique set of nodes at which farfield BCs are set
+    std::unordered_set< std::size_t > m_farfieldbcnodes;
     //! Diagnostics object
     NodeDiagnostics m_diag;
     //! Mesh node ids at which user-defined box ICs are defined
@@ -284,7 +293,8 @@ class DiagCG : public CBase_DiagCG {
     }
 
     //! Compute boundary point normals
-    void bnorm();
+    void bnorm( const std::unordered_map< int,
+                std::unordered_set< std::size_t > >& bcnodes );
 
     //! Finish setting up communication maps (norms, etc.)
     void normfinal();

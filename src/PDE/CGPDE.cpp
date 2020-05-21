@@ -53,21 +53,25 @@ solinc( tk::ncomp_t system, tk::ncomp_t ncomp, tk::real x, tk::real y,
   return st2;
 }
 
-std::unordered_map< std::size_t, std::array< tk::real, 4 > >
-bnorm( const std::map< int, std::vector< std::size_t > >& bface,
-       const std::vector< std::size_t >& triinpoel,
-       const std::array< std::vector< tk::real >, 3 >& coord,
-       const std::vector< std::size_t >& gid,
-       std::unordered_set< std::size_t >& bcnodes )
+std::unordered_map< int,
+  std::unordered_map< std::size_t, std::array< tk::real, 4 > > >
+bnorm(
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::vector< std::size_t >& triinpoel,
+  const std::array< std::vector< tk::real >, 3 >& coord,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< int, std::unordered_set< std::size_t > >& bcnodes )
 // *****************************************************************************
 //! Compute boundary point normals
 //! \param[in] bface Boundary-faces mapped to side sets used in the input file
 //! \param[in] triinpoel Boundary-face connectivity where BCs set (local ids)
 //! \param[in] coord Mesh node coordinates
 //! \param[in] gid Local->global node id map
-//! \param[in] bcnodes Local node ids at which BCs are set that require normals
-//! \return Face normals in boundary points, Key: local node id, value: unit
-//!   normal and inverse distance square between face centroids and points
+//! \param[in] bcnodes Local node ids associated to side set ids at which BCs
+//!   are set that require normals
+//! \return Face normals in boundary points, Inner key: local node id, value:
+//!   unit normal and inverse distance square between face centroids and points,
+//!   outer key: side set id
 // *****************************************************************************
 {
   const auto& x = coord[0];
@@ -85,8 +89,10 @@ bnorm( const std::map< int, std::vector< std::size_t > >& bface,
 
   // Compute boundary point normals on all side sets summing inverse distance
   // weighted face normals to points. This is only a partial sum at shared
-  // boundary points in parallel.
-  std::unordered_map< std::size_t, std::array< tk::real, 4 > > norm;
+  // boundary points in parallel. Inner key: global node id, value: normals nad
+  // inverse distance square, outer key, side set id.
+  std::unordered_map< int,
+    std::unordered_map< std::size_t, std::array< tk::real, 4 > > > norm;
   for (const auto& [ setid, faceids ] : bface) {
     for (auto f : faceids) {
       tk::UnsMesh::Face
@@ -96,14 +102,16 @@ bnorm( const std::map< int, std::vector< std::size_t > >& bface,
       std::array< tk::real, 3 > fz{ z[face[0]], z[face[1]], z[face[2]] };
       auto g = tk::geoFaceTri( fx, fy, fz );
       for (auto p : face) {
-        auto i = bcnodes.find( p );
-        if (i != end(bcnodes)) {        // only if user set bc on node
-          tk::real r = invdistsq( g, p );
-          auto& n = norm[ gid[p] ];    // associate global node id
-          n[0] += r*g(0,1,0);
-          n[1] += r*g(0,2,0);
-          n[2] += r*g(0,3,0);
-          n[3] += r;
+        for (const auto& [s,nodes] : bcnodes) {
+          auto i = nodes.find(p);
+          if (i != end(nodes)) {        // only if user set bc on node
+            tk::real r = invdistsq(g,p);
+            auto& n = norm[s][gid[p]];  // associate set id and global node id
+            n[0] += r*g(0,1,0);
+            n[1] += r*g(0,2,0);
+            n[2] += r*g(0,3,0);
+            n[3] += r;
+          }
         }
       }
     }
@@ -111,7 +119,6 @@ bnorm( const std::map< int, std::vector< std::size_t > >& bface,
 
   return norm;
 }
-
 
 } // cg::
 } // inciter::

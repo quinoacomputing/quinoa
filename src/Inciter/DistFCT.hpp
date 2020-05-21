@@ -124,7 +124,10 @@ class DistFCT : public CBase_DistFCT {
       const tk::Fields& Un,
       const std::unordered_map< std::size_t,
               std::vector< std::pair< bool, tk::real > > >& bcdir,
-      const std::unordered_map< std::size_t, std::array<tk::real,4> >& bnorm );
+      const std::unordered_map< int,
+              std::unordered_set< std::size_t > >& symbcnodemap,
+      const std::unordered_map< int,
+        std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm );
 
     //! \brief Compute the maximum and minimum unknowns of all elements
     //!   surrounding nodes

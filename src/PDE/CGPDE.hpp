@@ -47,12 +47,14 @@ solinc( tk::ncomp_t system, tk::ncomp_t ncomp, tk::real x, tk::real y,
         tk::real z, tk::real t, tk::real dt, tk::SolutionFn solution );
 
 //! Compute boundary point normals
-std::unordered_map< std::size_t, std::array< tk::real, 4 > >
+std::unordered_map< int,
+  std::unordered_map< std::size_t, std::array< tk::real, 4 > > >
 bnorm( const std::map< int, std::vector< std::size_t > >& bface,
        const std::vector< std::size_t >& triinpoel,
        const std::array< std::vector< tk::real >, 3 >& coord,
        const std::vector< std::size_t >& gid,
-       std::unordered_set< std::size_t >& bcnodes );
+       const std::unordered_map< int,
+         std::unordered_set< std::size_t > >& bcnodes );
 
 } // cg::
 
@@ -185,19 +187,21 @@ class CGPDE {
 
     //! Public interface to set symmetry boundary conditions at nodes
     void
-    symbc(
-      tk::Fields& U,
-      const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& bnorm,
-      const std::unordered_set< std::size_t >& symbcnodes ) const
-    { self->symbc( U, bnorm, symbcnodes ); }
+    symbc( tk::Fields& U,
+           const std::unordered_map< int,
+                   std::unordered_map< std::size_t,
+                     std::array< tk::real, 4 > > >& bnorm,
+           const std::unordered_set< std::size_t >& nodes ) const
+    { self->symbc( U, bnorm, nodes ); }
 
     //! Public interface to set farfield boundary conditions at nodes
     void
-    farfieldbc(
-      tk::Fields& U,
-      const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& bnorm,
-      const std::unordered_set< std::size_t >& farfieldbcnodes ) const
-    { self->farfieldbc( U, bnorm, farfieldbcnodes ); }
+    farfieldbc( tk::Fields& U,
+                const std::unordered_map< int,
+                        std::unordered_map< std::size_t,
+                          std::array< tk::real, 4 > > >& bnorm,
+                const std::unordered_set< std::size_t >& nodes ) const
+    { self->farfieldbc( U, bnorm, nodes ); }
 
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
@@ -313,11 +317,15 @@ class CGPDE {
              const std::pair< const int, std::vector< std::size_t > >&,
              const std::array< std::vector< tk::real >, 3 >& ) const = 0;
       virtual void symbc( tk::Fields& U,
-         const std::unordered_map< std::size_t, std::array< tk::real, 4 > >&,
-         const std::unordered_set< std::size_t >& ) const = 0;
+        const std::unordered_map< int,
+                std::unordered_map< std::size_t,
+                  std::array< tk::real, 4 > > >&,
+        const std::unordered_set< std::size_t >& ) const = 0;
       virtual void farfieldbc( tk::Fields& U,
-         const std::unordered_map< std::size_t, std::array< tk::real, 4 > >&,
-         const std::unordered_set< std::size_t >& ) const = 0;
+        const std::unordered_map< int,
+                std::unordered_map< std::size_t,
+                  std::array< tk::real, 4 > > >&,
+        const std::unordered_set< std::size_t >& ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -411,13 +419,17 @@ class CGPDE {
              const std::array< std::vector< tk::real >, 3 >& coord ) const
         override { return data.dirbc( t, deltat, tp, dtp, sides, coord ); }
       void symbc( tk::Fields& U,
-        const std::unordered_map<std::size_t, std::array<tk::real,4>>& bnorm,
-        const std::unordered_set< std::size_t >& symbcnodes ) const override
-      { data.symbc( U, bnorm, symbcnodes ); }
+        const std::unordered_map< int,
+                std::unordered_map< std::size_t,
+                  std::array< tk::real, 4 > > >& bnorm,
+        const std::unordered_set< std::size_t >& nodes ) const override
+      { data.symbc( U, bnorm, nodes ); }
       void farfieldbc( tk::Fields& U,
-        const std::unordered_map<std::size_t, std::array<tk::real,4>>& bnorm,
-        const std::unordered_set< std::size_t >& farfieldbcnodes ) const
-      override { data.farfieldbc( U, bnorm, farfieldbcnodes ); }
+        const std::unordered_map< int,
+                std::unordered_map< std::size_t,
+                  std::array< tk::real, 4 > > >& bnorm,
+        const std::unordered_set< std::size_t >& nodes ) const override
+      { data.farfieldbc( U, bnorm, nodes ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
       std::vector< std::string > surfNames() const override

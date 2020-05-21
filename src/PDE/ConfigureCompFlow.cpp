@@ -233,6 +233,11 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   if (fs.size() > c)
     nfo.emplace_back( "Farfield BC sideset(s)", parameters( fs[c] ) );
 
+  const auto& sym =
+    g_inputdeck.get< tag::param, eq, tag::bc, tag::bcsym >();
+  if (sym.size() > c)
+    nfo.emplace_back( "Symmetry BC sideset(s)", parameters( sym[c] ) );
+
   // FCT
 
   auto bool_to_string = [](bool b) -> std::string {

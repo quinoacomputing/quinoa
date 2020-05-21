@@ -622,67 +622,88 @@ class CompFlow {
 
     //! Set symmetry boundary conditions at nodes
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] bnorm Face normals in boundary points: key local node id,
-    //!    value: unit normal
-    //! \param[in] symbcnodes Unique set of local node ids at which to set
-    //!   symmetry BCs
-    void symbc(
-      tk::Fields& U,
-      const std::unordered_map< std::size_t, std::array< real, 4 > >& bnorm,
-      const std::unordered_set< std::size_t >& symbcnodes ) const
+    //! \param[in] bnorm Face normals in boundary points, key local node id,
+    //!   first 3 reals of value: unit normal
+    //! \param[in] nodes Unique set of node ids at which to set symmetry BCs
+    void
+    symbc( tk::Fields& U,
+           const std::unordered_map< int,
+             std::unordered_map< std::size_t, std::array< real, 4 > > >& bnorm,
+           const std::unordered_set< std::size_t >& nodes ) const
     {
-      for (auto i : symbcnodes) {
-        auto nr = tk::cref_find( bnorm, i );
-        std::array< real, 3 >
-          n{ nr[0], nr[1], nr[2] },
-          v{ U(i,1,m_offset), U(i,2,m_offset), U(i,3,m_offset) };
-        auto v_dot_n = tk::dot( v, n );
-        U(i,1,m_offset) -= v_dot_n * n[0];
-        U(i,2,m_offset) -= v_dot_n * n[1];
-        U(i,3,m_offset) -= v_dot_n * n[2];
-      }
+      const auto& sbc = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
+      if (sbc.size() > m_system)
+        for (auto p : nodes)    // for all symbc nodes
+          for (const auto& s : sbc[m_system]) { // for all user-def symbc sets
+            auto j = bnorm.find(std::stoi(s)); // find nodes & normals for side
+            if (j != end(bnorm)) {
+              auto i = j->second.find(p);      // find normal for node
+              if (i != end(j->second)) {
+                std::array< real, 3 >
+                  n{ i->second[0], i->second[1], i->second[2] },
+                  v{ U(p,1,m_offset), U(p,2,m_offset), U(p,3,m_offset) };
+                auto v_dot_n = tk::dot( v, n );
+                U(p,1,m_offset) -= v_dot_n * n[0];
+                U(p,2,m_offset) -= v_dot_n * n[1];
+                U(p,3,m_offset) -= v_dot_n * n[2];
+              }
+            }
+          }
     }
 
     //! Set farfield boundary conditions at nodes
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] bnorm Face normals in boundary points: key local node id,
-    //!    value: unit normal
-    //! \param[in] farfieldbcnodes Unique set of local node ids at which to set
-    //!   farfield BCs
-    void farfieldbc(
+    //! \param[in] bnorm Face normals in boundary points, key local node id,
+    //!   first 3 reals of value: unit normal
+    //! \param[in] nodes Unique set of node ids at which to set farfield BCs
+    void
+    farfieldbc(
       tk::Fields& U,
-      const std::unordered_map< std::size_t, std::array< real, 4 > >& bnorm,
-      const std::unordered_set< std::size_t >& farfieldbcnodes ) const
+      const std::unordered_map< int,
+        std::unordered_map< std::size_t, std::array< real, 4 > > >& bnorm,
+      const std::unordered_set< std::size_t >& nodes ) const
     {
-      for (auto i : farfieldbcnodes) {
-        auto nr = tk::cref_find( bnorm, i );
-        auto& r  = U( i, 0, m_offset );
-        auto& ru = U( i, 1, m_offset );
-        auto& rv = U( i, 2, m_offset );
-        auto& rw = U( i, 3, m_offset );
-        auto& re = U( i, 4, m_offset );
-        auto vn = (ru*nr[0] + rv*nr[1] + rw*nr[2])/r;
-        auto a = eos_soundspeed< eq >( m_system, r,
-                   eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re ) );
-        auto M = vn / a;
-        if (M <= -1.0) {                      // supersonic inflow
-          r  = m_fr;
-          ru = m_fr * m_fu[0];
-          rv = m_fr * m_fu[1];
-          rw = m_fr * m_fu[2];
-          re = eos_totalenergy< eq >
-                 ( m_system, m_fr, m_fu[0], m_fu[1], m_fu[2], m_fp );
-        } else if (M > -1.0 && M < 0.0) {     // subsonic inflow
-          r  = m_fr;
-          ru = m_fr * m_fu[0];
-          rv = m_fr * m_fu[1];
-          rw = m_fr * m_fu[2];
-          re = eos_totalenergy< eq >( m_system, m_fr, m_fu[0], m_fu[1], m_fu[2],
-                 eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re ) );
-        } else if (M >= 0.0 && M < 1.0) {     // subsonic outflow
-          re = eos_totalenergy< eq >( m_system, r, ru/r, rv/r, rw/r, m_fp );
-        }
-      }
+      const auto& fbc = g_inputdeck.get<param, eq, tag::bc, tag::bcfarfield>();
+      if (fbc.size() > m_system)
+        for (auto p : nodes)    // for all farfieldbc nodes
+          for (const auto& s : fbc[m_system]) { // for all user-def farbc sets
+            auto j = bnorm.find(std::stoi(s)); // find nodes & normals for side
+            if (j != end(bnorm)) {
+              auto i = j->second.find(p);      // find normal for node
+              if (i != end(j->second)) {
+                auto& r  = U( p, 0, m_offset );
+                auto& ru = U( p, 1, m_offset );
+                auto& rv = U( p, 2, m_offset );
+                auto& rw = U( p, 3, m_offset );
+                auto& re = U( p, 4, m_offset );
+                auto vn = ( ru*i->second[0] + rv*i->second[1]
+                          + rw*i->second[2] ) / r;
+                auto a = eos_soundspeed< eq >( m_system, r,
+                  eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re ) );
+                auto M = vn / a;
+                if (M <= -1.0) {                      // supersonic inflow
+                  r  = m_fr;
+                  ru = m_fr * m_fu[0];
+                  rv = m_fr * m_fu[1];
+                  rw = m_fr * m_fu[2];
+                  re = eos_totalenergy<eq>
+                         ( m_system, m_fr, m_fu[0], m_fu[1], m_fu[2], m_fp );
+                } else if (M > -1.0 && M < 0.0) {     // subsonic inflow
+                  r  = m_fr;
+                  ru = m_fr * m_fu[0];
+                  rv = m_fr * m_fu[1];
+                  rw = m_fr * m_fu[2];
+                  re =
+                  eos_totalenergy< eq >( m_system, m_fr, m_fu[0], m_fu[1],
+                    m_fu[2], eos_pressure< eq >( m_system, r, ru/r, rv/r,
+                                                 rw/r, re ) );
+                } else if (M >= 0.0 && M < 1.0) {     // subsonic outflow
+                  re = eos_totalenergy< eq >( m_system, r, ru/r, rv/r, rw/r,
+                                              m_fp );
+                }
+              }
+            }
+          }
     }
 
     //! Return field names to be output to file

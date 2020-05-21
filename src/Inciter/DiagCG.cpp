@@ -70,6 +70,9 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_vol(),
   m_bnorm(),
   m_bnormc(),
+  m_symbcnodemap(),
+  m_symbcnodes(),
+  m_farfieldbcnodes(),
   m_diag(),
   m_boxnodes(),
   m_dtp( m_u.nunk(), 0.0 ),
@@ -106,9 +109,10 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 
     // Remap data in bound Discretization object
     d->remap( map );
-
     // Remap local ids in DistFCT
     d->FCT()->remap( *d );
+    // Remap boundary triangle face connectivity
+    tk::remap( m_triinpoel, map );
 
   }
 
@@ -117,32 +121,43 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4lhs();
 
   // Query nodes at which symmetry BCs are specified
-  d->bcnodes< tag::bcsym >( m_bface, m_triinpoel, m_symbcnodes );
+  auto bcnodes = d->bcnodes< tag::bcsym >( m_bface, m_triinpoel );
+  // Query nodes at which farfield BCs are specified
+  auto farfieldbcnodes = d->bcnodes< tag::bcfarfield >( m_bface, m_triinpoel );
+
+  // Merge BC data where boundary-point normals are required
+  for (const auto& [s,n] : farfieldbcnodes)
+    bcnodes[s].insert( begin(n), end(n) );
 
   // Compute boundary point normals
-  bnorm();
+  bnorm( bcnodes );
 }
 
 void
-DiagCG::bnorm()
+DiagCG::bnorm( const std::unordered_map< int,
+                 std::unordered_set< std::size_t > >& bcnodes )
 // *****************************************************************************
 //  Compute boundary point normals
+//! \param[in] bcnodes Local node ids associated to side set ids at which BCs
+//!    are set that require normals
 // *****************************************************************************
 {
   auto d = Disc();
 
-  m_bnorm =
-    cg::bnorm( m_bface, m_triinpoel, d->Coord(), d->Gid(), m_symbcnodes );
+  m_bnorm = cg::bnorm( m_bface, m_triinpoel, d->Coord(), d->Gid(), bcnodes );
 
   // Send our nodal normal contributions to neighbor chares
   if (d->NodeCommMap().empty())
-   comnorm_complete();
+    comnorm_complete();
   else
     for (const auto& [ neighborchare, sharednodes ] : d->NodeCommMap()) {
-      std::unordered_map< std::size_t, std::array< tk::real, 4 > > exp;
-      for (auto i : sharednodes) {      // symmetry BCs may be specified on only
-        auto j = m_bnorm.find(i);       // a subset of chare boundary nodes
-        if (j != end(m_bnorm)) exp[i] = j->second;
+      std::unordered_map< int,
+        std::unordered_map< std::size_t, std::array< tk::real, 4 > > > exp;
+      for (auto i : sharednodes) {
+        for (const auto& [s,norms] : m_bnorm) {
+          auto j = norms.find(i);
+          if (j != end(norms)) exp[s][i] = j->second;
+        }
       }
       thisProxy[ neighborchare ].comnorm( exp );
     }
@@ -151,8 +166,8 @@ DiagCG::bnorm()
 }
 
 void
-DiagCG::comnorm(
-  const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& innorm )
+DiagCG::comnorm( const std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm )
 // *****************************************************************************
 // Receive boundary point normals on chare-boundaries
 //! \param[in] innorm Incoming partial sums of boundary point normal
@@ -160,13 +175,16 @@ DiagCG::comnorm(
 //!   (4th component)
 // *****************************************************************************
 {
-  // Buffer up inccoming contributions
-  for (const auto& [ p, n ] : innorm) {
-    auto& bnorm = m_bnormc[ p ];
-    bnorm[0] += n[0];
-    bnorm[1] += n[1];
-    bnorm[2] += n[2];
-    bnorm[3] += n[3];
+  // Buffer up inccoming boundary-point normal vector contributions
+  for (const auto& [s,norms] : innorm) {
+    auto& bnorms = m_bnormc[s];
+    for (const auto& [p,n] : norms) {
+      auto& bnorm = bnorms[p];
+      bnorm[0] += n[0];
+      bnorm[1] += n[1];
+      bnorm[2] += n[2];
+      bnorm[3] += n[3];
+    }
   }
 
   if (++m_nnorm == Disc()->NodeCommMap().size()) {
@@ -181,40 +199,63 @@ DiagCG::normfinal()
 //  Finish computing boundary point normals
 // *****************************************************************************
 {
-  // Combine own and communicated contributions to boundary point normals
-  for (auto& [ p, n ] : m_bnormc) {
-    auto j = m_bnorm.find(p);
-    if (j != end(m_bnorm)) {
-      auto& norm = j->second;
-      norm[0] += n[0];
-      norm[1] += n[1];
-      norm[2] += n[2];
-      norm[3] += n[3];
-    }
-  }
+  auto d = Disc();
+  const auto& lid = d->Lid();
 
-  // Clear communication buffer
+  // Combine own and communicated contributions to boundary point normals
+  for (const auto& [s,norms] : m_bnormc)
+    for (const auto& [p,n] : norms) {
+      auto k = m_bnorm.find(s);
+      if (k != end(m_bnorm)) {
+        auto j = k->second.find(p);
+        if (j != end(k->second)) {
+          auto& norm = j->second;
+          norm[0] += n[0];
+          norm[1] += n[1];
+          norm[2] += n[2];
+          norm[3] += n[3];
+        }
+      }
+    }
   tk::destroy( m_bnormc );
 
   // Divie summed point normals by the sum of inverse distance squared
-  for (auto& [ p, n ] : m_bnorm) {
-    n[0] /= n[3];
-    n[1] /= n[3];
-    n[2] /= n[3];
-    Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
-            std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
-  }
+  for (auto& [s,norms] : m_bnorm)
+    for (auto& [p,n] : norms) {
+      n[0] /= n[3];
+      n[1] /= n[3];
+      n[2] /= n[3];
+      Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
+              std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
+    }
 
   // Replace global->local ids associated to boundary point normals
   decltype(m_bnorm) bnorm;
-  for (auto&& [g,n] : m_bnorm) {
-    bnorm[ tk::cref_find( Disc()->Lid(), g ) ] = std::move(n);
+  for (auto& [s,norms] : m_bnorm) {
+    auto& bnorms = bnorm[s];
+    for (auto&& [g,n] : norms)
+      bnorms[ tk::cref_find(lid,g) ] = std::move(n);
   }
   m_bnorm = std::move(bnorm);
 
+  // Prepare unique set of symmetry BC nodes
+  m_symbcnodemap = d->bcnodes<tag::bcsym>( m_bface, m_triinpoel );
+  for (const auto& [s,nodes] : m_symbcnodemap)
+    m_symbcnodes.insert( begin(nodes), end(nodes) );
+
+  // Prepare unique set of farfield BC nodes
+  for (const auto& [s,nodes] : d->bcnodes<tag::bcfarfield>(m_bface,m_triinpoel))
+    m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
+
+  // If farfield BC is set on a node, will not also set symmetry BC
+  for (auto fn : m_farfieldbcnodes) {
+    m_symbcnodes.erase(fn);
+    for (auto& [s,nodes] : m_symbcnodemap) nodes.erase(fn);
+  }
+
   // Signal the runtime system that the workers have been created
   contribute( sizeof(int), &m_initial, CkReduction::sum_int,
-    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
+    CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()) );
 }
 
 void
@@ -255,11 +296,15 @@ DiagCG::setup()
   // Set initial conditions for all PDEs
   for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
 
+  // Apply symmetry BCs on initial conditions
+  for (const auto& eq : g_cgpde)
+    eq.symbc( m_u, m_bnorm, m_symbcnodes );
+  // Apply farfield BCs on initial conditions
+  for (const auto& eq : g_cgpde)
+    eq.farfieldbc( m_u, m_bnorm, m_farfieldbcnodes );
+
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );
-
-  // Apply symmetry boundary conditions on initial conditions
-  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm, m_symbcnodes );
 
   // Query time history field output labels from all PDEs integrated
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
@@ -579,16 +624,18 @@ DiagCG::solve( tk::Fields& dif )
   m_ul = m_u + dul;
   m_du = m_rhs / m_lhs;
 
-  // Apply symmetry BCs on low and high order solution increments, and low
-  // order solution
   for (const auto& eq : g_cgpde) {
+    // Apply symmetry BCs
     eq.symbc( dul, m_bnorm, m_symbcnodes );
     eq.symbc( m_ul, m_bnorm, m_symbcnodes );
     eq.symbc( m_du, m_bnorm, m_symbcnodes );
+    // Apply farfield BCs
+    eq.farfieldbc( m_ul, m_bnorm, m_farfieldbcnodes );
+    eq.farfieldbc( m_du, m_bnorm, m_farfieldbcnodes );
   }
 
   // Continue with FCT
-  d->FCT()->aec( *d, m_du, m_u, m_bcdir, m_bnorm );
+  d->FCT()->aec( *d, m_du, m_u, m_bcdir, m_symbcnodemap, m_bnorm );
   d->FCT()->alw( m_u, m_ul, std::move(dul), thisProxy );
 }
 

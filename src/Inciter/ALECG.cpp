@@ -85,9 +85,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_diag(),
   m_bnorm(),
   m_bnormc(),
-  m_symbctri(),
   m_symbcnodes(),
   m_farfieldbcnodes(),
+  m_symbctri(),
   m_stage( 0 ),
   m_boxnodes(),
   m_edgenode(),
@@ -152,17 +152,16 @@ ALECG::norm()
   auto d = Disc();
 
   // Query nodes at which symmetry BCs are specified
-  d->bcnodes< tag::bcsym >( m_bface, m_triinpoel, m_symbcnodes );
+  auto bcnodes = d->bcnodes< tag::bcsym >( m_bface, m_triinpoel );
   // Query nodes at which farfield BCs are specified
-  d->bcnodes< tag::bcfarfield >( m_bface, m_triinpoel, m_farfieldbcnodes );
+  auto farfieldbcnodes = d->bcnodes< tag::bcfarfield >( m_bface, m_triinpoel );
 
-  std::unordered_set< std::size_t > bcnodes;
-  std::merge( m_symbcnodes.cbegin(), m_symbcnodes.cend(),
-              m_farfieldbcnodes.cbegin(), m_farfieldbcnodes.cend(),
-              std::inserter( bcnodes, begin(bcnodes) ) );
+  // Merge BC data where boundary-point normals are required
+  for (const auto& [s,n] : farfieldbcnodes)
+    bcnodes[s].insert( begin(n), end(n) );
 
   // Compute boundary point normals
-  bnorm( std::move(bcnodes) );
+  bnorm( bcnodes );
 
   // Compute dual-face normals associated to edges
   dfnorm();
@@ -304,11 +303,13 @@ ALECG::comdfnorm( const std::unordered_map< tk::UnsMesh::Edge,
 }
 
 void
-ALECG::bnorm( std::unordered_set< std::size_t >&& bcnodes )
+ALECG::bnorm( const std::unordered_map< int,
+                std::unordered_set< std::size_t > >& bcnodes )
 // *****************************************************************************
 //  Compute boundary point normals
-//! \param[in] Local node ids at which BCs are set that require normals
-// *****************************************************************************
+//! \param[in] bcnodes Local node ids associated to side set ids at which BCs
+//!    are set that require normals
+//*****************************************************************************
 {
   auto d = Disc();
 
@@ -316,13 +317,16 @@ ALECG::bnorm( std::unordered_set< std::size_t >&& bcnodes )
 
   // Send our nodal normal contributions to neighbor chares
   if (d->NodeCommMap().empty())
-   comnorm_complete();
+    comnorm_complete();
   else
     for (const auto& [ neighborchare, sharednodes ] : d->NodeCommMap()) {
-      std::unordered_map< std::size_t, std::array< tk::real, 4 > > exp;
-      for (auto i : sharednodes) {      // symmetry BCs may be specified on only
-        auto j = m_bnorm.find(i);       // a subset of chare boundary nodes
-        if (j != end(m_bnorm)) exp[i] = j->second;
+      std::unordered_map< int,
+        std::unordered_map< std::size_t, std::array< tk::real, 4 > > > exp;
+      for (auto i : sharednodes) {
+        for (const auto& [s,norms] : m_bnorm) {
+          auto j = norms.find(i);
+          if (j != end(norms)) exp[s][i] = j->second;
+        }
       }
       thisProxy[ neighborchare ].comnorm( exp );
     }
@@ -331,22 +335,25 @@ ALECG::bnorm( std::unordered_set< std::size_t >&& bcnodes )
 }
 
 void
-ALECG::comnorm(
-  const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& innorm )
+ALECG::comnorm( const std::unordered_map< int,
+  std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm )
 // *****************************************************************************
 // Receive boundary point normals on chare-boundaries
 //! \param[in] innorm Incoming partial sums of boundary point normal
 //!   contributions to normals (first 3 components), inverse distance squared
-//!   (4th component)
+//!   (4th component), associated to side set ids
 // *****************************************************************************
 {
-  // Buffer up inccoming contributions
-  for (const auto& [ p, n ] : innorm) {
-    auto& bnorm = m_bnormc[ p ];
-    bnorm[0] += n[0];
-    bnorm[1] += n[1];
-    bnorm[2] += n[2];
-    bnorm[3] += n[3];
+  // Buffer up incoming boundary-point normal vector contributions
+  for (const auto& [s,norms] : innorm) {
+    auto& bnorms = m_bnormc[s];
+    for (const auto& [p,n] : norms) {
+      auto& bnorm = bnorms[p];
+      bnorm[0] += n[0];
+      bnorm[1] += n[1];
+      bnorm[2] += n[2];
+      bnorm[3] += n[3];
+    }
   }
 
   if (++m_nbnorm == Disc()->NodeCommMap().size()) {
@@ -526,7 +533,8 @@ ALECG::lhsmerge()
   // Clear receive buffer
   tk::destroy(m_lhsc);
 
-  // Combine own and communicated contributions of normals
+  // Combine own and communicated contributions of normals and apply boundary
+  // conditions on the initial conditions
   normfinal();
 
   // Continue after lhs is complete
@@ -542,43 +550,64 @@ ALECG::lhsmerge()
 void
 ALECG::normfinal()
 // *****************************************************************************
-//  Finish computing dual-face and boundary point normals
+//  Finish computing dual-face and boundary point normals and apply boundary
+//  conditions on the initial conditions
 // *****************************************************************************
 {
   auto d = Disc();
   const auto& lid = d->Lid();
 
   // Combine own and communicated contributions to boundary point normals
-  for (auto& [ p, n ] : m_bnormc) {
-    auto j = m_bnorm.find(p);
-    if (j != end(m_bnorm)) {
-      auto& norm = j->second;
-      norm[0] += n[0];
-      norm[1] += n[1];
-      norm[2] += n[2];
-      norm[3] += n[3];
+  for (const auto& [s,norms] : m_bnormc)
+    for (const auto& [p,n] : norms) {
+      auto k = m_bnorm.find(s);
+      if (k != end(m_bnorm)) {
+        auto j = k->second.find(p);
+        if (j != end(k->second)) {
+          auto& norm = j->second;
+          norm[0] += n[0];
+          norm[1] += n[1];
+          norm[2] += n[2];
+          norm[3] += n[3];
+        }
+      }
     }
-  }
   tk::destroy( m_bnormc );
 
-  // Divie summed point normals by the sum of inverse distance squared
-  for (auto& [p,n] : m_bnorm) {
-    n[0] /= n[3];
-    n[1] /= n[3];
-    n[2] /= n[3];
-    Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
-            std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
-  }
+  // Divide summed point normals by the sum of inverse distance squared
+  for (auto& [s,norms] : m_bnorm)
+    for (auto& [p,n] : norms) {
+      n[0] /= n[3];
+      n[1] /= n[3];
+      n[2] /= n[3];
+      Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
+              std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
+    }
 
   // Replace global->local ids associated to boundary point normals
   decltype(m_bnorm) bnorm;
-  for (auto&& [g,n] : m_bnorm) bnorm[ tk::cref_find(lid,g) ] = std::move(n);
+  for (auto& [s,norms] : m_bnorm) {
+    auto& bnorms = bnorm[s];
+    for (auto&& [g,n] : norms)
+      bnorms[ tk::cref_find(lid,g) ] = std::move(n);
+  }
   m_bnorm = std::move(bnorm);
 
-  // Apply symmetry boundary conditions on initial conditions
+  // Prepare unique set of symmetry BC nodes
+  for (const auto& [s,nodes] : d->bcnodes<tag::bcsym>(m_bface,m_triinpoel))
+    m_symbcnodes.insert( begin(nodes), end(nodes) );
+
+  // Prepare unique set of farfield BC nodes
+  for (const auto& [s,nodes] : d->bcnodes<tag::bcfarfield>(m_bface,m_triinpoel))
+    m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
+
+  // If farfield BC is set on a node, will not also set symmetry BC
+  for (auto fn : m_farfieldbcnodes) m_symbcnodes.erase(fn);
+
+  // Apply symmetry BCs on initial conditions
   for (const auto& eq : g_cgpde)
     eq.symbc( m_u, m_bnorm, m_symbcnodes );
-  // Apply farfield boundary conditions on initial conditions
+  // Apply farfield BCs on initial conditions
   for (const auto& eq : g_cgpde)
     eq.farfieldbc( m_u, m_bnorm, m_farfieldbcnodes );
 
@@ -890,7 +919,6 @@ ALECG::solve()
   tk::destroy(m_rhsc);
 
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // Set Dirichlet BCs for lhs and rhs
   for (const auto& [b,bc] : m_bcdir)
@@ -918,7 +946,10 @@ ALECG::solve()
 
   }
 
-  // Apply farfield boundary conditions on new solution
+  // Apply symmetry BCs on initial conditions
+  for (const auto& eq : g_cgpde)
+    eq.symbc( m_u, m_bnorm, m_symbcnodes );
+  // Apply farfield BCs on new solution
   for (const auto& eq : g_cgpde)
     eq.farfieldbc( m_u, m_bnorm, m_farfieldbcnodes );
 
@@ -940,15 +971,7 @@ ALECG::solve()
     d->next();
 
     // Advance physical time for local time stepping
-    if (steady) {
-      const auto term = g_inputdeck.get< tag::discr, tag::term >();
-      for (std::size_t i=0; i<m_u.nunk(); ++i) {
-        if (std::abs(m_dtp[i]) > eps)
-          m_tp[i] += m_dtp[i];
-        else
-          m_tp[i] = term;
-      }
-    }
+    if (steady) for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
 
     // Continue to mesh refinement (if configured)
     if (!diag_computed) refine( 1.0 );
@@ -1130,18 +1153,6 @@ ALECG::writeFields( CkCallback c ) const
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
-
-    // Create volume node field assigning 1 where symmetry BC is set
-    // std::unordered_set< std::size_t > symbcnodes;
-    // d->bcnodes< tag::bcsym >( m_bface, m_triinpoel, bcnodes );
-    // nodefieldnames.push_back( "bc_type" );
-    // nodefields.push_back( std::vector<tk::real>(d->Coord()[0].size(),0.0) );
-    // for (auto i : symbcnodes) nodefields.back()[i] = 1.0;
-
-    // nodefieldnames.push_back( "tp" );
-    // nodefieldnames.push_back( "dtp" );
-    // nodefields.push_back( m_tp );
-    // nodefields.push_back( m_dtp );
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
