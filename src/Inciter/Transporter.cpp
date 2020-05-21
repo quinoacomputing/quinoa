@@ -193,9 +193,12 @@ Transporter::info( const InciterPrint& print )
               g_inputdeck.get< tag::discr, tag::operator_reorder >() );
   auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
   print.item( "Local time stepping", steady );
-  if (steady)
+  if (steady) {
     print.item( "L2-norm residual convergence criterion",
                 g_inputdeck.get< tag::discr, tag::residual >() );
+    print.item( "Convergence criterion component index",
+                g_inputdeck.get< tag::discr, tag::rescomp >() );
+  }
   print.item( "Number of time steps", nstep );
   print.item( "Start time", t0 );
   print.item( "Terminate time", term );
@@ -831,7 +834,7 @@ Transporter::diagHeader()
 
   // Augment diagnostics variables by L2-norm of the residual
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
-    d.push_back( "L2(res)" );
+    for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
   }
 
   // Write diagnostics header
@@ -1082,11 +1085,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   // Finish computing the L2 norm of the residual and append
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  tk::real l2res = 0.0;
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
-    l2res = std::sqrt( d[L2RES][0] / m_meshvol );
-    diag.push_back( l2res );
-  }
+  std::vector< tk::real > l2res( d[L2RES].size(), 0.0 );
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
+    for (std::size_t i=0; i<d[L2RES].size(); ++i) {
+      l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol );
+      diag.push_back( l2res[i] );
+    }
 
   // Append diagnostics file at selected times
   tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),

@@ -217,6 +217,7 @@ struct farfield_velocity {
   static std::string name() { return "farfield_velocity"; } };
 struct bcfarfield { static std::string name() { return "bcfarfield"; } };
 struct component { static std::string name() { return "component"; } };
+struct rescomp { static std::string name() { return "residual component"; } };
 struct interval { static std::string name() { return "interval"; } };
 struct cmd { static std::string name() { return "cmd"; } };
 struct param { static std::string name() { return "param"; } };

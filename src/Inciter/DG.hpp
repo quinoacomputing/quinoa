@@ -150,7 +150,7 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& ndof );
 
     //! Optionally refine/derefine mesh
-    void refine( tk::real l2res );
+    void refine( const std::vector< tk::real >& l2res );
 
     //! Receive new mesh from refiner
     void resizePostAMR(

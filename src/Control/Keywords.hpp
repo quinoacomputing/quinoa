@@ -4208,6 +4208,24 @@ struct residual_info {
 };
 using residual = keyword< residual_info, TAOCPP_PEGTL_STRING("residual") >;
 
+struct rescomp_info {
+  static std::string name() { return "rescomp"; }
+  static std::string shortDescription() { return
+    "Equation system component index for convergence"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a single integer that is used to denote
+    the equation component index in the complete system of equation systems
+    configured in an input file to use for the convergence criterion for local
+    time stepping marching towards steady state.)";
+  }
+  struct expect {
+    using type = uint32_t;
+    static constexpr type lower = 1;
+    static std::string description() { return "uint"; }
+  };
+};
+using rescomp = keyword< rescomp_info, TAOCPP_PEGTL_STRING("rescomp") >;
+
 struct group_info {
   static std::string name() { return "group"; }
   static std::string shortDescription() { return

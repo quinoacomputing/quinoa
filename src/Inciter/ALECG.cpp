@@ -611,7 +611,7 @@ ALECG::normfinal()
   for (const auto& eq : g_cgpde)
     eq.farfieldbc( m_u, m_bnorm, m_farfieldbcnodes );
 
-  // Flatten boundary normal data structure
+  // Prepare boundary nodes contiguously accessible from a triangle-face loop
   m_symbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
     if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
@@ -974,16 +974,17 @@ ALECG::solve()
     if (steady) for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
 
     // Continue to mesh refinement (if configured)
-    if (!diag_computed) refine( 1.0 );
+    if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
   }
   //! [Continue after solve]
 }
 
 void
-ALECG::refine( tk::real l2res )
+ALECG::refine( const std::vector< tk::real >& l2res )
 // *****************************************************************************
 // Optionally refine/derefine mesh
-//! \param[in] l2res L2-norm of the residual across the whole problem
+//! \param[in] l2res L2-norms of the residual for each scalar component
+//!   computed across the whole problem
 // *****************************************************************************
 {
   //! [Refine]
@@ -993,13 +994,14 @@ ALECG::refine( tk::real l2res )
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
   const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
+  const auto rc = g_inputdeck.get< tag::discr, tag::rescomp >() - 1;
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   if (steady) {
 
     // this is the last time step if max time of max number of time steps
     // reached or the residual has reached its convergence criterion
-    if (std::abs(d->T()-term) < eps || d->It() >= nstep || l2res < residual)
+    if (std::abs(d->T()-term) < eps || d->It() >= nstep || l2res[rc] < residual)
       m_finished = 1;
 
   } else {

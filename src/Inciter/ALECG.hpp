@@ -138,7 +138,7 @@ class ALECG : public CBase_ALECG {
     void update( const tk::Fields& a );
 
     //! Optionally refine/derefine mesh
-    void refine( tk::real l2res );
+    void refine( const std::vector< tk::real >& l2res );
 
     //! Receive new mesh from refiner
     void resizePostAMR(

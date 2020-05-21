@@ -116,11 +116,10 @@ NodeDiagnostics::compute( Discretization& d,
 
         // Compute sum for L2 norm of the numerical-analytic solution
         for (std::size_t c=0; c<u.nprop(); ++c)
-          diag[L2ERR][c] +=
-            (u(i,c,0)-a[c]) * (u(i,c,0)-a[c]) * v[i];
+          diag[L2ERR][c] += (u(i,c,0)-a[c]) * (u(i,c,0)-a[c]) * v[i];
         // Compute sum for L2 norm of the residual
         for (std::size_t c=0; c<u.nprop(); ++c)
-          diag[L2RES][0] += (u(i,c,0)-un(i,c,0)) * (u(i,c,0)-un(i,c,0)) * v[i];
+          diag[L2RES][c] += (u(i,c,0)-un(i,c,0)) * (u(i,c,0)-un(i,c,0)) * v[i];
         // Compute max for Linf norm of the numerical-analytic solution
         for (std::size_t c=0; c<u.nprop(); ++c) {
           auto err = std::abs( u(i,c,0) - a[c] );

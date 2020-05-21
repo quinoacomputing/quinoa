@@ -103,6 +103,7 @@ namespace grm {
     WRONGDIRICHLET,     //!< Wrong number of parameters for a Dirichlet PDF
     NEGATIVEPARAM,      //!< Negative parameter given configuring a PDF
     NONCOMP,            //!< No number of components selected
+    LARGECOMP,          //!< Component index indexing out of max eq sys ncomp
     NONMAT,             //!< No number of materials selected
     EOSGAMMA,           //!< Wrong number of EOS gamma parameters
     EOSCV,              //!< Wrong number of EOS cv parameters
@@ -203,6 +204,7 @@ namespace grm {
     { MsgKey::NONCOMP, "The number of components has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'ncomp' to specify the number of components." },
+    { MsgKey::LARGECOMP, "The component index is too large and indexes out of the total number of scalar components of the equation system configured." },
     { MsgKey::NONMAT, "The number of materials has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'nmat' to specify the number of materials." },

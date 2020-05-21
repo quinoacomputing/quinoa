@@ -757,13 +757,15 @@ DiagCG::update( const tk::Fields& a, [[maybe_unused]] tk::Fields&& dul )
   // Increase number of iterations and physical time
   d->next();
   // Continue to mesh refinement (if configured)
-  if (!diag_computed) refine( 0.0 );
+  if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
 }
 
 void
-DiagCG::refine( tk::real )
+DiagCG::refine( [[maybe_unused]] const std::vector< tk::real >& l2res )
 // *****************************************************************************
 // Optionally refine/derefine mesh
+//! \param[in] l2res L2-norms of the residual for each scalar component
+//!   computed across the whole problem
 // *****************************************************************************
 {
   auto d = Disc();

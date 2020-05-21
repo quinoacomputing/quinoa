@@ -501,6 +501,12 @@ namespace grm {
       {
         Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
       }
+
+      // Do error checking on residual eq system component index
+      const auto rc = stack.template get< tag::discr, tag::rescomp >();
+      const auto& ncomps = stack.template get< tag::component >();
+      if (rc < 1 || rc > ncomps.nprop())
+        Message< Stack, ERROR, MsgKey::LARGECOMP >( stack, in );
     }
   };
 
@@ -651,6 +657,7 @@ namespace deck {
            tk::grm::discrparam< use, kw::dt, tag::dt >,
            tk::grm::discrparam< use, kw::cfl, tag::cfl >,
            tk::grm::discrparam< use, kw::residual, tag::residual >,
+           tk::grm::discrparam< use, kw::rescomp, tag::rescomp >,
            tk::grm::process< use< kw::fcteps >,
                              tk::grm::Store< tag::discr, tag::fcteps > >,
            tk::grm::process< use< kw::fctclip >,
