@@ -726,10 +726,7 @@ Discretization::status()
 
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
-    m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
- 
-    // Zero ETA if marching to steady state
-    if (steady) eta = tk::Timer::Watch();
+    if (!steady) m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
 
     const auto& def =
       g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();

@@ -281,10 +281,11 @@ class Discretization : public CBase_Discretization {
           for (const auto& s : ss) {
             auto k = m_bface.find( std::stoi(s) );
             if (k != end(m_bface)) {
+              auto& n = m_nodes[ k->first ];
               for (auto f : k->second) {  // face ids on BCType side set
-                m_nodes[ k->first ].insert( m_triinpoel[f*3+0] );
-                m_nodes[ k->first ].insert( m_triinpoel[f*3+1] );
-                m_nodes[ k->first ].insert( m_triinpoel[f*3+2] );
+                n.insert( m_triinpoel[f*3+0] );
+                n.insert( m_triinpoel[f*3+1] );
+                n.insert( m_triinpoel[f*3+2] );
               }
             }
           }

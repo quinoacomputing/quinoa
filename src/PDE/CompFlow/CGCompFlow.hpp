@@ -623,7 +623,7 @@ class CompFlow {
     //! Set symmetry boundary conditions at nodes
     //! \param[in] U Solution vector at recent time step
     //! \param[in] bnorm Face normals in boundary points, key local node id,
-    //!   first 3 reals of value: unit normal
+    //!   first 3 reals of value: unit normal, outer key: side set id
     //! \param[in] nodes Unique set of node ids at which to set symmetry BCs
     void
     symbc( tk::Fields& U,
@@ -654,7 +654,7 @@ class CompFlow {
     //! Set farfield boundary conditions at nodes
     //! \param[in] U Solution vector at recent time step
     //! \param[in] bnorm Face normals in boundary points, key local node id,
-    //!   first 3 reals of value: unit normal
+    //!   first 3 reals of value: unit normal, outer key: side set id
     //! \param[in] nodes Unique set of node ids at which to set farfield BCs
     void
     farfieldbc(
@@ -686,7 +686,7 @@ class CompFlow {
                   ru = m_fr * m_fu[0];
                   rv = m_fr * m_fu[1];
                   rw = m_fr * m_fu[2];
-                  re = eos_totalenergy<eq>
+                  re = eos_totalenergy< eq >
                          ( m_system, m_fr, m_fu[0], m_fu[1], m_fu[2], m_fp );
                 } else if (M > -1.0 && M < 0.0) {     // subsonic inflow
                   r  = m_fr;
@@ -1152,16 +1152,13 @@ class CompFlow {
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
       // boundary integrals: sum flux contributions to points
-      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
-        std::size_t N[3] =
-          { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+      for (std::size_t e=0; e<triinpoel.size()/3; ++e)
         for (std::size_t c=0; c<m_ncomp; ++c) {
           auto eb = (e*m_ncomp+c)*6;
-          R.var(r[c],N[0]) -= bflux[eb+0] + bflux[eb+5];
-          R.var(r[c],N[1]) -= bflux[eb+1] + bflux[eb+2];
-          R.var(r[c],N[2]) -= bflux[eb+3] + bflux[eb+4];
+          R.var(r[c],triinpoel[e*3+0]) -= bflux[eb+0] + bflux[eb+5];
+          R.var(r[c],triinpoel[e*3+1]) -= bflux[eb+1] + bflux[eb+2];
+          R.var(r[c],triinpoel[e*3+2]) -= bflux[eb+3] + bflux[eb+4];
         }
-      }
 
       tk::destroy(bflux);
     }
