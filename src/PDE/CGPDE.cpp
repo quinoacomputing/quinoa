@@ -93,24 +93,27 @@ bnorm(
   // inverse distance square, outer key, side set id.
   std::unordered_map< int,
     std::unordered_map< std::size_t, std::array< tk::real, 4 > > > norm;
-  for (const auto& [ setid, faceids ] : bface) {
-    for (auto f : faceids) {
+  for (const auto& [ setid, faceids ] : bface) { // for all side sets
+    for (auto f : faceids) { // for all side set triangles
       tk::UnsMesh::Face
         face{ triinpoel[f*3+0], triinpoel[f*3+1], triinpoel[f*3+2] };
       std::array< tk::real, 3 > fx{ x[face[0]], x[face[1]], x[face[2]] };
       std::array< tk::real, 3 > fy{ y[face[0]], y[face[1]], y[face[2]] };
       std::array< tk::real, 3 > fz{ z[face[0]], z[face[1]], z[face[2]] };
       auto g = tk::geoFaceTri( fx, fy, fz );
-      for (auto p : face) {
-        for (const auto& [s,nodes] : bcnodes) {
-          auto i = nodes.find(p);
-          if (i != end(nodes)) {        // only if user set bc on node
-            tk::real r = invdistsq(g,p);
-            auto& n = norm[s][gid[p]];  // associate set id and global node id
-            n[0] += r*g(0,1,0);
-            n[1] += r*g(0,2,0);
-            n[2] += r*g(0,3,0);
-            n[3] += r;
+
+      for (auto p : face) {  // for all 3 nodes of a boundary triangle face
+        for (const auto& [s,nodes] : bcnodes) {  // for all bnd nodes w/ normals
+          if (setid == s) {  // only contribute to side set we operate on
+            auto i = nodes.find(p);
+            if (i != end(nodes)) {        // only if user set bc on node
+              tk::real r = invdistsq(g,p);
+              auto& n = norm[s][gid[p]];  // associate set id and global node id
+              n[0] += r*g(0,1,0);
+              n[1] += r*g(0,2,0);
+              n[2] += r*g(0,3,0);
+              n[3] += r;
+            }
           }
         }
       }

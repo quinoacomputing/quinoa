@@ -633,8 +633,8 @@ class CompFlow {
     {
       const auto& sbc = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
       if (sbc.size() > m_system)
-        for (auto p : nodes)    // for all symbc nodes
-          for (const auto& s : sbc[m_system]) { // for all user-def symbc sets
+        for (auto p : nodes)                   // for all symbc nodes
+          for (const auto& s : sbc[m_system]) {// for all user-def symbc sets
             auto j = bnorm.find(std::stoi(s)); // find nodes & normals for side
             if (j != end(bnorm)) {
               auto i = j->second.find(p);      // find normal for node
@@ -665,8 +665,8 @@ class CompFlow {
     {
       const auto& fbc = g_inputdeck.get<param, eq, tag::bc, tag::bcfarfield>();
       if (fbc.size() > m_system)
-        for (auto p : nodes)    // for all farfieldbc nodes
-          for (const auto& s : fbc[m_system]) { // for all user-def farbc sets
+        for (auto p : nodes)                   // for all farfieldbc nodes
+          for (const auto& s : fbc[m_system]) {// for all user-def farbc sets
             auto j = bnorm.find(std::stoi(s)); // find nodes & normals for side
             if (j != end(bnorm)) {
               auto i = j->second.find(p);      // find normal for node
