@@ -1019,15 +1019,15 @@ Transporter::inthead( const InciterPrint& print )
 {
   print.inthead( "Time integration", "Navier-Stokes solver",
   "Legend: it - iteration count\n"
-  "         t - time\n"
-  "        dt - time step size\n"
-  "       ETE - estimated time elapsed (h:m:s)\n"
-  "       ETA - estimated time for accomplishment (h:m:s)\n"
-  "       EGT - estimated grind time (ms/timestep)\n"
+  "         t - physics time\n"
+  "        dt - physics time step size\n"
+  "       ETE - estimated wall-clock time elapsed (h:m:s)\n"
+  "       ETA - estimated wall-clock time for accomplishment (h:m:s)\n"
+  "       EGT - estimated grind wall-clock time (ms/timestep)\n"
   "       flg - status flags, legend:\n"
   "             f - field (volume and surface)\n"
   "             d - diagnostics\n"
-  "             t - time history\n"
+  "             t - physics time history\n"
   "             h - h-refinement\n"
   "             l - load balancing\n"
   "             r - checkpoint\n",
