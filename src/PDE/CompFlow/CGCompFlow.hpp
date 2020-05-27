@@ -632,7 +632,7 @@ class CompFlow {
            const std::unordered_set< std::size_t >& nodes ) const
     {
       const auto& sbc = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
-      if (sbc.size() > m_system)
+      if (sbc.size() > m_system)             // use symbcs for this system
         for (auto p : nodes)                   // for all symbc nodes
           for (const auto& s : sbc[m_system]) {// for all user-def symbc sets
             auto j = bnorm.find(std::stoi(s)); // find nodes & normals for side
@@ -664,20 +664,20 @@ class CompFlow {
       const std::unordered_set< std::size_t >& nodes ) const
     {
       const auto& fbc = g_inputdeck.get<param, eq, tag::bc, tag::bcfarfield>();
-      if (fbc.size() > m_system)
+      if (fbc.size() > m_system)               // use farbcs for this system
         for (auto p : nodes)                   // for all farfieldbc nodes
           for (const auto& s : fbc[m_system]) {// for all user-def farbc sets
             auto j = bnorm.find(std::stoi(s)); // find nodes & normals for side
             if (j != end(bnorm)) {
               auto i = j->second.find(p);      // find normal for node
               if (i != end(j->second)) {
-                auto& r  = U( p, 0, m_offset );
-                auto& ru = U( p, 1, m_offset );
-                auto& rv = U( p, 2, m_offset );
-                auto& rw = U( p, 3, m_offset );
-                auto& re = U( p, 4, m_offset );
-                auto vn = ( ru*i->second[0] + rv*i->second[1]
-                          + rw*i->second[2] ) / r;
+                auto& r  = U(p,0,m_offset);
+                auto& ru = U(p,1,m_offset);
+                auto& rv = U(p,2,m_offset);
+                auto& rw = U(p,3,m_offset);
+                auto& re = U(p,4,m_offset);
+                auto vn =
+                  (ru*i->second[0] + rv*i->second[1] + rw*i->second[2]) / r;
                 auto a = eos_soundspeed< eq >( m_system, r,
                   eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re ) );
                 auto M = vn / a;
