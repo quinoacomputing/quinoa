@@ -966,7 +966,8 @@ ALECG::solve()
   } else {
 
     // Compute diagnostics, e.g., residuals
-    auto diag_computed = m_diag.compute( *d, m_u, m_un );
+    auto diag_computed =
+      m_diag.compute( *d, m_u, m_un, m_bnorm, m_symbcnodes, m_farfieldbcnodes );
     // Increase number of iterations and physical time
     d->next();
 
