@@ -274,15 +274,15 @@ class Discretization : public CBase_Discretization {
                    std::unordered_set< std::size_t > >& nodes )
         : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes) {}
 
-      template< typename U > void operator()( brigand::type_<U> ) {
+      template< typename Eq > void operator()( brigand::type_<Eq> ) {
         const auto& bc =
-          g_inputdeck.template get< tag::param, U, tag::bc, BCType >();
-        for (const auto& ss : bc) {
-          for (const auto& s : ss) {
+          g_inputdeck.template get< tag::param, Eq, tag::bc, BCType >();
+        for (const auto& eq : bc) {
+          for (const auto& s : eq) {
             auto k = m_bface.find( std::stoi(s) );
             if (k != end(m_bface)) {
-              auto& n = m_nodes[ k->first ];
-              for (auto f : k->second) {  // face ids on BCType side set
+              auto& n = m_nodes[ k->first ];  // associate set id
+              for (auto f : k->second) {      // face ids on BCType side set
                 n.insert( m_triinpoel[f*3+0] );
                 n.insert( m_triinpoel[f*3+1] );
                 n.insert( m_triinpoel[f*3+2] );

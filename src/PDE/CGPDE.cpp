@@ -101,7 +101,6 @@ bnorm(
       std::array< tk::real, 3 > fy{ y[face[0]], y[face[1]], y[face[2]] };
       std::array< tk::real, 3 > fz{ z[face[0]], z[face[1]], z[face[2]] };
       auto g = tk::geoFaceTri( fx, fy, fz );
-
       for (auto p : face) {  // for all 3 nodes of a boundary triangle face
         for (const auto& [s,nodes] : bcnodes) {  // for all bnd nodes w/ normals
           if (setid == s) {  // only contribute to side set we operate on
