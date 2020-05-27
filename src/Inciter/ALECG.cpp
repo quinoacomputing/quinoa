@@ -558,20 +558,16 @@ ALECG::normfinal()
   const auto& lid = d->Lid();
 
   // Combine own and communicated contributions to boundary point normals
-  for (const auto& [s,norms] : m_bnormc)
+  for (const auto& [s,norms] : m_bnormc) {
+    auto& bnorms = m_bnorm[s];
     for (const auto& [p,n] : norms) {
-      auto k = m_bnorm.find(s);
-      if (k != end(m_bnorm)) {
-        auto j = k->second.find(p);
-        if (j != end(k->second)) {
-          auto& norm = j->second;
-          norm[0] += n[0];
-          norm[1] += n[1];
-          norm[2] += n[2];
-          norm[3] += n[3];
-        }
-      }
+      auto& norm = bnorms[p];
+      norm[0] += n[0];
+      norm[1] += n[1];
+      norm[2] += n[2];
+      norm[3] += n[3];
     }
+  }
   tk::destroy( m_bnormc );
 
   // Divide summed point normals by the sum of inverse distance squared
