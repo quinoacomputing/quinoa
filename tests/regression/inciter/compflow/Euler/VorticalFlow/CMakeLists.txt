@@ -331,6 +331,26 @@ add_regression_test(compflow_euler_vorticalflow_alecg_stag_u0.5
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     LABELS alecg)
 
+add_regression_test(compflow_euler_vorticalflow_alecg_steady
+                    ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES vortical_flow_alecg_steady.q unitcube_1k.exo
+                    ARGS -c vortical_flow_alecg_steady.q -i unitcube_1k.exo -v
+                    BIN_BASELINE vortical_flow_alecg_steady_pe4.std.exo.0
+                                 vortical_flow_alecg_steady_pe4.std.exo.1
+                                 vortical_flow_alecg_steady_pe4.std.exo.2
+                                 vortical_flow_alecg_steady_pe4.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_alecg_steady.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF vortical_flow_steady_diag.ndiff.cfg
+                    LABELS alecg)
+
 add_regression_test(compflow_euler_vorticalflow_dgp1_u0.90 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES vortical_flow_dgp1.q unitcube_1k.exo
