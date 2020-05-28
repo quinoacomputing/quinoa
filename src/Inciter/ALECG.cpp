@@ -915,7 +915,6 @@ ALECG::solve()
   tk::destroy(m_rhsc);
 
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // Set Dirichlet BCs for lhs and rhs
   for (const auto& [b,bc] : m_bcdir)
@@ -961,15 +960,7 @@ ALECG::solve()
     d->next();
 
     // Advance physical time for local time stepping
-    if (steady) {
-      const auto term = g_inputdeck.get< tag::discr, tag::term >();
-      for (std::size_t i=0; i<m_u.nunk(); ++i) {
-        if (std::abs(m_dtp[i]) > eps)
-          m_tp[i] += m_dtp[i];
-        else
-          m_tp[i] = term;
-      }
-    }
+    if (steady) for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
 
     // Continue to mesh refinement (if configured)
     if (!diag_computed) refine( 1.0 );
