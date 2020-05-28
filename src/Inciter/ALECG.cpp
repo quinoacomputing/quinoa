@@ -966,12 +966,11 @@ ALECG::solve()
       m_diag.compute( *d, m_u, m_un, m_bnorm, m_symbcnodes, m_farfieldbcnodes );
     // Increase number of iterations and physical time
     d->next();
-
     // Advance physical time for local time stepping
     if (steady) for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
-
     // Continue to mesh refinement (if configured)
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
+
   }
   //! [Continue after solve]
 }
