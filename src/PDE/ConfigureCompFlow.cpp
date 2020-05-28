@@ -90,8 +90,10 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
-  nfo.emplace_back( "flux", ctr::Flux().name(
-    g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (scheme != ctr::SchemeType::DiagCG && scheme != ctr::SchemeType::ALECG)
+    nfo.emplace_back( "flux", ctr::Flux().name(
+      g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
 
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
@@ -248,7 +250,6 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     return b ? "true" : "false";
   };
 
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto fct = g_inputdeck.get< tag::discr, tag::fct >();
   if (scheme == ctr::SchemeType::DiagCG && fct) {
 
