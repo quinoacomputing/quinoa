@@ -2,12 +2,11 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Euler equations computing vortical flow"
+title "Euler equations marching to steady state for vortical flow"
 
 inciter
 
-  #term 1.0
-  ttyi 1       # TTY output interval
+  ttyi 1
   cfl 0.5
   scheme alecg
 
@@ -30,7 +29,7 @@ inciter
     p0 10.0
 
     material
-      gamma 1.66666666666667 end # =5/3 ratio of specific heats
+      gamma 1.66666666666667 end
     end
 
     bc_dirichlet
