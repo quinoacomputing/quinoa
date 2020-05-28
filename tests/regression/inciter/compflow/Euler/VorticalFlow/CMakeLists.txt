@@ -124,6 +124,19 @@ add_regression_test(compflow_euler_vorticalflow_dgp1_lf ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
                     LABELS dg)
 
+add_regression_test(compflow_euler_vorticalflow_alecg_steady
+                    ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES vortical_flow_alecg_steady.q unitcube_1k.exo
+                    ARGS -c vortical_flow_alecg_steady.q -i unitcube_1k.exo -v
+                    BIN_BASELINE vortical_flow_alecg_steady_pe1.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_alecg_steady.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF vortical_flow_steady_diag.ndiff.cfg
+                    LABELS alecg)
+
 # Parallel + no virtualization
 
 add_regression_test(compflow_euler_vorticalflow ${INCITER_EXECUTABLE}
