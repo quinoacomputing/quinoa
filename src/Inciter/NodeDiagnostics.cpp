@@ -82,10 +82,6 @@ NodeDiagnostics::compute(
 
   if ( !((d.It()+1) % diagfreq) ) {     // if remainder, don't dump
 
-    // Store the local IDs of those mesh nodes to which we contribute but do not
-    // own, i.e., slave nodes. Ownership here is defined by having a lower chare
-    // ID than any other chare that also contributes to the node.
-
     // Slave mesh node local IDs. Local IDs of those mesh nodes to which we
     // contribute to but do not own. Ownership here is defined by having a lower
     // chare ID than any other chare that also contributes to the node.

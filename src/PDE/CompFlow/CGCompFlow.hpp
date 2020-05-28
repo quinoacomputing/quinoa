@@ -632,7 +632,7 @@ class CompFlow {
            const std::unordered_set< std::size_t >& nodes ) const
     {
       const auto& sbc = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
-      if (sbc.size() > m_system)             // use symbcs for this system
+      if (sbc.size() > m_system)               // use symbcs for this system
         for (auto p : nodes)                   // for all symbc nodes
           for (const auto& s : sbc[m_system]) {// for all user-def symbc sets
             auto j = bnorm.find(std::stoi(s)); // find nodes & normals for side
