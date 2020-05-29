@@ -830,12 +830,12 @@ class Transport {
     //! Compute boundary integrals for ALECG
     //! \param[in] coord Mesh node coordinates
     //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
-    //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
+    //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     void bndint( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& triinpoel,
-                 const std::vector< int >& symbcnode,
+                 const std::vector< int >& symbctri,
                  const tk::Fields& U,
                  tk::Fields& R ) const
     {
@@ -852,7 +852,7 @@ class Transport {
         std::array< std::size_t, 3 >
           N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
         // apply symmetry BCs
-        if (symbcnode[e]) continue;
+        if (symbctri[e]) continue;
         // node coordinates
         std::array< tk::real, 3 > xp{ x[N[0]], x[N[1]], x[N[2]] },
                                   yp{ y[N[0]], y[N[1]], y[N[2]] },
