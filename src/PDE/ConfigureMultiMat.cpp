@@ -91,6 +91,17 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
                       std::to_string( prelax_ts ) );
   }
 
+  auto intsharp = g_inputdeck.get< tag::param, eq, tag::intsharp >()[c];
+  nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
+
+  if (intsharp)
+  {
+    auto intsharp_param =
+      g_inputdeck.get< tag::param, eq, tag::intsharp_param >()[c];
+    nfo.emplace_back( "interface sharpening parameter",
+                      std::to_string( intsharp_param ) );
+  }
+
   auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 

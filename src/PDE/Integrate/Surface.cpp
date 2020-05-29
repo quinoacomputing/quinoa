@@ -18,6 +18,7 @@
 #include "Surface.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
+#include "Reconstruction.hpp"
 
 void
 tk::surfInt( ncomp_t system,
@@ -29,13 +30,15 @@ tk::surfInt( ncomp_t system,
              const UnsMesh::Coords& coord,
              const inciter::FaceData& fd,
              const Fields& geoFace,
+             const Fields& geoElem,
              const RiemannFluxFn& flux,
              const VelFn& vel,
              const Fields& U,
              const Fields& P,
              const std::vector< std::size_t >& ndofel,
              Fields& R,
-             std::vector< std::vector< tk::real > >& riemannDeriv )
+             std::vector< std::vector< tk::real > >& riemannDeriv,
+             int intsharp )
 // *****************************************************************************
 //  Compute internal surface flux integrals
 //! \param[in] system Equation system index
@@ -57,6 +60,8 @@ tk::surfInt( ncomp_t system,
 //!   computed from the Riemann solver for use in the non-conservative terms.
 //!   These derivatives are used only for multi-material hydro and unused for
 //!   single-material compflow and linear transport.
+//! \param[in] intsharp Interface compression tag, an optional argument, with
+//!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
   const auto& esuf = fd.Esuf();
@@ -160,15 +165,18 @@ tk::surfInt( ncomp_t system,
         dof_er = ndofel[er];
       }
 
+      std::array< tk::real, 3> ref_gp_l{
+        Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+        Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+        Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
+      std::array< tk::real, 3> ref_gp_r{
+        Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
+        Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
+        Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r };
+
       //Compute the basis functions
-      auto B_l = eval_basis( dof_el,
-            Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
-            Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
-            Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
-      auto B_r = eval_basis( dof_er,
-            Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
-            Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
-            Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r );
+      auto B_l = eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
+      auto B_r = eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2] );
 
       auto wt = wgp[igp] * geoFace(f,0,0);
 
@@ -183,6 +191,14 @@ tk::surfInt( ncomp_t system,
       // consolidate primitives into state vector
       state[0].insert(state[0].end(), sprim[0].begin(), sprim[0].end());
       state[1].insert(state[1].end(), sprim[1].begin(), sprim[1].end());
+
+      if ((nmat > 1) && (intsharp > 0))
+      {
+        tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord, geoElem,
+          ref_gp_l, U, P, state[0]);
+        tk::THINCReco(system, offset, rdof, nmat, er, inpoel, coord, geoElem,
+          ref_gp_r, U, P, state[1]);
+      }
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );

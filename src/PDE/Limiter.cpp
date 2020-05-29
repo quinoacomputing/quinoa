@@ -201,6 +201,7 @@ SuperbeeMultiMat_P1(
   const std::vector< int >& esuel,
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
+  std::size_t system,
   inciter::ncomp_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
@@ -211,7 +212,8 @@ SuperbeeMultiMat_P1(
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
-//! \param[in] offset Index for equation systems
+//! \param[in] system Index for equation systems
+//! \param[in] offset Offset this PDE system operates from
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -221,6 +223,8 @@ SuperbeeMultiMat_P1(
 {
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::intsharp >()[system];
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -252,7 +256,21 @@ SuperbeeMultiMat_P1(
       auto phip = SuperbeeFunction(P, esuel, inpoel, coord, e, ndof, rdof,
                     dof_el, offset, nprim, beta_lim);
 
-      consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+      // limits under which compression is to be performed
+      std::vector< std::size_t > matInt(nmat, 0);
+      auto intInd = interfaceIndicator(nmat, offset, rdof, e, U, matInt);
+      if ((intsharp > 0) && intInd)
+      {
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (matInt[k])
+            phic[volfracIdx(nmat,k)] = 1.0;
+        }
+      }
+      else
+      {
+        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+      }
 
       // apply limiter function
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
@@ -342,6 +360,7 @@ VertexBasedMultiMat_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
+  std::size_t system,
   std::size_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
@@ -353,7 +372,8 @@ VertexBasedMultiMat_P1(
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
-//! \param[in] offset Index for equation systems
+//! \param[in] system Index for equation systems
+//! \param[in] offset Offset this PDE system operates from
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -366,6 +386,8 @@ VertexBasedMultiMat_P1(
 {
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::intsharp >()[system];
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -395,7 +417,21 @@ VertexBasedMultiMat_P1(
       auto phip = VertexBasedFunction(P, esup, inpoel, coord, e, rdof, dof_el,
         offset, nprim);
 
-      consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+      // limits under which compression is to be performed
+      std::vector< std::size_t > matInt(nmat, 0);
+      auto intInd = interfaceIndicator(nmat, offset, rdof, e, U, matInt);
+      if ((intsharp > 0) && intInd)
+      {
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (matInt[k])
+            phic[volfracIdx(nmat,k)] = 1.0;
+        }
+      }
+      else
+      {
+        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+      }
 
       // apply limiter function
       for (std::size_t c=0; c<ncomp; ++c)
@@ -905,6 +941,45 @@ void consistentMultiMatLimiting_P1(
     for (std::size_t k=0; k<nmat; ++k)
       phic[volfracIdx(nmat, k)] = phi_al;
   }
+}
+
+bool
+interfaceIndicator( std::size_t nmat,
+  std::size_t offset,
+  std::size_t rdof,
+  std::size_t e,
+  const tk::Fields& U,
+  std::vector< std::size_t >& matInt )
+// *****************************************************************************
+//  Interface indicator function, which checks element for material interface
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] offset Index for equation system
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] e Element being checked for material interface
+//! \param[in] U Second-order solution vector
+//! \param[in] matInt Array indicating which material has an interface
+//! \return Boolean which indicates if the element contains a material interface
+// *****************************************************************************
+{
+  bool intInd = false;
+
+  // limits under which compression is to be performed
+  auto al_eps = 1e-08;
+  auto loLim = 2.0 * al_eps;
+  auto hiLim = 1.0 - loLim;
+
+  auto almax = 0.0;
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    auto alk = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+    almax = std::max(almax, alk);
+    matInt[k] = 0;
+    if ((alk > loLim) && (alk < hiLim)) matInt[k] = 1;
+  }
+
+  if ((almax > loLim) && (almax < hiLim)) intInd = true;
+
+  return intInd;
 }
 
 } // inciter::

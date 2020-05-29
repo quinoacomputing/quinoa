@@ -100,11 +100,12 @@ void
 recoLeastSqExtStencil(
   std::size_t rdof,
   std::size_t offset,
-  std::size_t nelem,
+  std::size_t e,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   const Fields& geoElem,
-  Fields& W );
+  Fields& W,
+  const std::array< std::size_t, 2 >& varRange );
 
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
@@ -115,6 +116,21 @@ transform_P0P1( ncomp_t ncomp,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 Fields& W );
+
+//! Compute THINC reconstructions near material interfaces
+void
+THINCReco( std::size_t system,
+  std::size_t offset,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const std::array< real, 3 >& xp,
+  const Fields& U,
+  const Fields& P,
+  std::vector< real >& state );
 
 //! Compute safe reconstructions near material interfaces
 void

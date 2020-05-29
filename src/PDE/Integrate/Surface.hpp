@@ -38,13 +38,15 @@ surfInt( ncomp_t system,
          const UnsMesh::Coords& coord,
          const inciter::FaceData& fd,
          const Fields& geoFace,
+         const Fields& geoElem,
          const RiemannFluxFn& flux,
          const VelFn& vel,
          const Fields& U,
          const Fields& P,
          const std::vector< std::size_t >& ndofel,
          Fields& R,
-         std::vector< std::vector< tk::real > >& riemannDeriv );
+         std::vector< std::vector< tk::real > >& riemannDeriv,
+         int intcompr=0 );
 
 // Update the rhs by adding surface integration term
 void

@@ -38,6 +38,7 @@ bndSurfInt( ncomp_t system,
             const std::vector< bcconf_t >& bcconfig,
             const inciter::FaceData& fd,
             const Fields& geoFace,
+            const Fields& geoElem,
             const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,
             real t,
@@ -48,7 +49,8 @@ bndSurfInt( ncomp_t system,
             const Fields& P,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
-            std::vector< std::vector< tk::real > >& riemannDeriv );
+            std::vector< std::vector< tk::real > >& riemannDeriv,
+            int intcompr=0 );
 
 //! Update the rhs by adding the boundary surface integration term
 void

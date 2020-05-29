@@ -270,8 +270,8 @@ class Transport {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
-                   fd, geoFace, Upwind::flux, Problem::prescribedVelocity, U, P,
-                   ndofel, R, riemannDeriv );
+                   fd, geoFace, geoElem, Upwind::flux,
+                   Problem::prescribedVelocity, U, P, ndofel, R, riemannDeriv );
 
       if(ndof > 1)
         // compute volume integrals
@@ -282,8 +282,8 @@ class Transport {
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
-          geoFace, inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
-          b.second, U, P, ndofel, R, riemannDeriv );
+          geoFace, geoElem, inpoel, coord, t, Upwind::flux,
+          Problem::prescribedVelocity, b.second, U, P, ndofel, R, riemannDeriv );
     }
 
     //! Compute the minimum time step size

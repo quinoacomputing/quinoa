@@ -343,7 +343,8 @@ class CompFlow {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
-                   fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, riemannDeriv );
+                   fd, geoFace, geoElem, rieflxfn, velfn, U, P, ndofel, R,
+                   riemannDeriv );
 
       // compute ptional source term
       tk::srcInt( m_system, m_offset, t, ndof, fd.Esuel().size()/4,
@@ -357,8 +358,8 @@ class CompFlow {
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
-                        geoFace, inpoel, coord, t, rieflxfn, velfn, b.second, U,
-                        P, ndofel, R, riemannDeriv );
+                        geoFace, geoElem, inpoel, coord, t, rieflxfn, velfn,
+                        b.second, U, P, ndofel, R, riemannDeriv );
 
       // compute external (energy) sources
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();

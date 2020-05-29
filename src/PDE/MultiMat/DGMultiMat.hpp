@@ -376,7 +376,7 @@ class MultiMat {
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
-//    //! \param[in] esup Elements-surrounding-nodes connectivity
+    //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
@@ -386,7 +386,7 @@ class MultiMat {
                       const tk::Fields& geoElem,
                       const inciter::FaceData& fd,
                       const std::map< std::size_t, std::vector< std::size_t > >&
-                        /*esup*/,
+                        esup,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
@@ -394,6 +394,10 @@ class MultiMat {
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      const auto intsharp =
+        g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >()[m_system];
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -450,11 +454,18 @@ class MultiMat {
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhsu_ls, U );
       tk::solveLeastSq_P0P1( nprim(), m_offset, rdof, lhs_ls, rhsp_ls, P );
 
-      //// 1. Reconstruct second-order dofs in Taylor space using nodal-stencils
-      //tk::recoLeastSqExtStencil( rdof, m_offset, nelem, esup, inpoel, geoElem,
-      //  U );
-      //tk::recoLeastSqExtStencil( rdof, m_offset, nelem, esup, inpoel, geoElem,
-      //  P );
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        std::vector< std::size_t > matInt(nmat, 0);
+        auto intInd = interfaceIndicator(nmat, m_offset, rdof, e, U, matInt);
+        if ((intsharp > 0) && intInd)
+        {
+          // Reconstruct second-order dofs of volume-fractions in Taylor space
+          // using nodal-stencils, for a good interface-normal estimate
+          tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+            U, {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)} );
+        }
+      }
 
       // 4. transform reconstructed derivatives to Dubiner dofs
       tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
@@ -493,13 +504,13 @@ class MultiMat {
       // limit vectors of conserved and primitive quantities
       if (limiter == ctr::LimiterType::SUPERBEEP1)
       {
-        SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U, P,
-          nmat );
+        SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_system, m_offset,
+          coord, U, P, nmat );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_offset, coord, U, P, nmat );
+          m_system, m_offset, coord, U, P, nmat );
       }
       else if (limiter == ctr::LimiterType::WENOP1)
       {
@@ -534,6 +545,8 @@ class MultiMat {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      const auto intsharp =
+        g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >()[m_system];
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -571,8 +584,8 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, nmat, m_offset, ndof, rdof, inpoel, coord,
-                   fd, geoFace, rieflxfn, velfn, U, P, ndofel, R,
-                   riemannDeriv );
+                   fd, geoFace, geoElem, rieflxfn, velfn, U, P, ndofel, R,
+                   riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
@@ -582,8 +595,8 @@ class MultiMat {
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, nmat, m_offset, ndof, rdof, b.first,
-                        fd, geoFace, inpoel, coord, t, rieflxfn, velfn,
-                        b.second, U, P, ndofel, R, riemannDeriv );
+                        fd, geoFace, geoElem, inpoel, coord, t, rieflxfn, velfn,
+                        b.second, U, P, ndofel, R, riemannDeriv, intsharp );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );

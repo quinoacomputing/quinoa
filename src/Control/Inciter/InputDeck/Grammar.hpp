@@ -430,6 +430,17 @@ namespace grm {
       if (prelax_ts.empty() || prelax_ts.size() != neq.get< eq >())
         prelax_ts.push_back( 1.0 );
 
+      // If interface compression is not specified, default to 'false'
+      auto& intsharp = stack.template get< param, eq, tag::intsharp >();
+      if (intsharp.empty() || intsharp.size() != neq.get< eq >())
+        intsharp.push_back( 0 );
+
+      // If interface compression parameter is not specified, default to 1.0
+      auto& intsharp_p = stack.template get< param, eq,
+                                            tag::intsharp_param >();
+      if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
+        intsharp_p.push_back( 1.0 );
+
       // If specific heats are not given, set defaults
       using cv_t = kw::mat_cv::info::expect::type;
       auto& cv = stack.template get< param, eq, tag::cv >();
@@ -1377,7 +1388,13 @@ namespace deck {
                                       tag::prelax_timescale >,
                            parameter< tag::multimat,
                                       kw::prelax,
-                                      tag::prelax > >,
+                                      tag::prelax >,
+                           parameter< tag::multimat,
+                                      kw::intsharp_param,
+                                      tag::intsharp_param >,
+                           parameter< tag::multimat,
+                                      kw::intsharp,
+                                      tag::intsharp > >,
            check_errors< tag::multimat, tk::grm::check_multimat > > {};
 
   //! partitioning ... end block

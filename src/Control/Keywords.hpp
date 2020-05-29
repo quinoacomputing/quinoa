@@ -5539,6 +5539,42 @@ struct prelax_timescale_info {
 using prelax_timescale = keyword< prelax_timescale_info,
                                   TAOCPP_PEGTL_STRING("prelax_timescale") >;
 
+struct intsharp_info {
+  static std::string name() { return "Interface sharpening"; }
+  static std::string shortDescription() { return
+    "Turn multi-material interface sharpening on/off"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to turn interface sharpening on/off. It is used
+       only for the multi-material solver, and has no effect when used for the
+       other PDE types.)";
+  }
+  struct expect {
+    using type = int;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "1 | 0"; }
+  };
+};
+using intsharp = keyword< intsharp_info, TAOCPP_PEGTL_STRING("intsharp") >;
+
+struct intsharp_param_info {
+  static std::string name() { return "Interface sharpening parameter"; }
+  static std::string shortDescription() { return
+    "Parameter for multi-material interface sharpening"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the parameter for the interface
+       sharpening. The default value is 1.0. This parameter affects how many
+       cells the material interfaces span, after the use of sharpening. It is
+       used only for multimat, and has no effect for the other PDE types.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.1;
+    static std::string description() { return "real"; }
+  };
+};
+using intsharp_param = keyword< intsharp_param_info,
+                                  TAOCPP_PEGTL_STRING("intsharp_param") >;
+
 struct mat_gamma_info {
   static std::string name() { return "gamma"; }
   static std::string shortDescription() { return "ratio of specific heats"; }
@@ -5686,6 +5722,8 @@ struct multimat_info {
     + nmat::string() + "\', \'"
     + prelax::string() + "\', \'"
     + prelax_timescale::string() + "\', \'"
+    + intsharp::string() + "\', \'"
+    + intsharp_param::string() + "\', \'"
     + pde_alpha::string() + "\', \'"
     + pde_p0::string() + "\', \'"
     + pde_betax::string() + "\', \'"

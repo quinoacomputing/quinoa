@@ -52,6 +52,7 @@ SuperbeeMultiMat_P1(
   const std::vector< int >& esuel,
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
+  std::size_t system,
   inciter::ncomp_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
@@ -76,6 +77,7 @@ VertexBasedMultiMat_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
+  std::size_t system,
   std::size_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
@@ -128,6 +130,15 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
                                     tk::Fields& P,
                                     std::vector< tk::real >& phic,
                                     std::vector< tk::real >& phip );
+
+//! Interface indicator function, which checks element for material interface
+bool
+interfaceIndicator( std::size_t nmat,
+  std::size_t offset,
+  std::size_t rdof,
+  std::size_t e,
+  const tk::Fields& U,
+  std::vector< std::size_t >& matInt );
 
 } // inciter::
 

@@ -227,6 +227,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::vertexbasedp1
                                  , kw::prelax
                                  , kw::prelax_timescale
+                                 , kw::intsharp
+                                 , kw::intsharp_param
                                  , kw::bc_sym
                                  , kw::bc_inlet
                                  , kw::bc_outlet

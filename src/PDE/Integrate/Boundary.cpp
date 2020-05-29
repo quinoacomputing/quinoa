@@ -19,6 +19,7 @@
 #include "Boundary.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
+#include "Reconstruction.hpp"
 
 void
 tk::bndSurfInt( ncomp_t system,
@@ -29,6 +30,7 @@ tk::bndSurfInt( ncomp_t system,
                 const std::vector< bcconf_t >& bcconfig,
                 const inciter::FaceData& fd,
                 const Fields& geoFace,
+                const Fields& geoElem,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 real t,
@@ -39,7 +41,8 @@ tk::bndSurfInt( ncomp_t system,
                 const Fields& P,
                 const std::vector< std::size_t >& ndofel,
                 Fields& R,
-                std::vector< std::vector< tk::real > >& riemannDeriv )
+                std::vector< std::vector< tk::real > >& riemannDeriv,
+                int intsharp )
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
 //! \details This function computes contributions from surface integrals along
@@ -68,6 +71,8 @@ tk::bndSurfInt( ncomp_t system,
 //!   computed from the Riemann solver for use in the non-conservative terms.
 //!   These derivatives are used only for multi-material hydro and unused for
 //!   single-material compflow and linear transport.
+//! \param[in] intsharp Interface compression tag, an optional argument, with
+//!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
@@ -148,11 +153,13 @@ tk::bndSurfInt( ncomp_t system,
             dof_el = ndofel[el];
           }
 
-          //Compute the basis functions for the left element
-          auto B_l = eval_basis( dof_el,
+          std::array< tk::real, 3> ref_gp_l{
             Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
-            Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
+            Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
+
+          //Compute the basis functions for the left element
+          auto B_l = eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
 
           auto wt = wgp[igp] * geoFace(f,0,0);
 
@@ -162,6 +169,12 @@ tk::bndSurfInt( ncomp_t system,
 
           // consolidate primitives into state vector
           ugp.insert(ugp.end(), pgp.begin(), pgp.end());
+
+          if ((nmat > 1) && (intsharp > 0))
+          {
+            tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord,
+              geoElem, ref_gp_l, U, P, ugp);
+          }
 
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                   "appended boundary state vector" );
