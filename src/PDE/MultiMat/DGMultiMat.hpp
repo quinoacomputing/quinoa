@@ -230,6 +230,9 @@ class MultiMat {
         auto v = prim(e, velocityDofIdx(nmat, 1, rdof, 0), m_offset);
         auto w = prim(e, velocityDofIdx(nmat, 2, rdof, 0), m_offset);
         auto pmax = prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset)/almax;
+        auto tmax = eos_temperature< eq >(m_system,
+          unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
+          unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset), almax, kmax);
 
         auto pb(0.0);
         for (std::size_t k=0; k<nmat; ++k)
@@ -243,7 +246,7 @@ class MultiMat {
         {
           auto alk = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           auto pk = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) / alk;
-          if (alk < al_eps && std::fabs((pk-pmax)/pmax) > 1e-08)
+          if (alk < al_eps && alk > 0.0 && std::fabs((pk-pmax)/pmax) > 1e-08)
           {
             //auto gk =
             //  g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][k];
@@ -278,6 +281,17 @@ class MultiMat {
             unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) = alk_new;
             unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = alk_new*rhoEmat;
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk_new*p_target;
+          }
+          // check for unbounded volume fractions
+          else if (alk < 0.0)
+          {
+            auto rhok = eos_density< eq >(m_system, p_target, tmax, k);
+            auto al_fix = 1e-14-alk;
+            unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14;
+            unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14 * rhok;
+            unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14
+              * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
+            unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset) -= al_fix;
           }
         }
 
