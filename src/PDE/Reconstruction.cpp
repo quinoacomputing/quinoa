@@ -558,8 +558,8 @@ tk::findMaxVolfrac( std::size_t offset,
   std::size_t nmat,
   std::size_t nelem,
   const std::vector< int >& esuel,
-  const std::map< std::size_t, std::vector< std::size_t > >& esup,
-  const std::vector< std::size_t >& inpoel,
+  [[maybe_unused]] const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  [[maybe_unused]] const std::vector< std::size_t >& inpoel,
   const Fields& U,
   Fields& VolFracMax )
 // *****************************************************************************
@@ -626,8 +626,8 @@ tk::THINCReco( std::size_t system,
   const std::array< real, 3 >& ref_xp,
   const Fields& U,
   [[maybe_unused]] const Fields& P,
-  const std::vector< real >& vfmin,
-  const std::vector< real >& vfmax,
+  [[maybe_unused]] const std::vector< real >& vfmin,
+  [[maybe_unused]] const std::vector< real >& vfmax,
   std::vector< real >& state )
 // *****************************************************************************
 //  Compute THINC reconstructions near material interfaces
@@ -651,8 +651,7 @@ tk::THINCReco( std::size_t system,
   const auto ncomp = U.nprop()/rdof;
 
   // interface detection
-  //int isCellPinched(0);
-  std::vector< std::size_t > matInt(nmat, 0); //, isPinched(nmat, 0);
+  std::vector< std::size_t > matInt(nmat, 0);
   auto intInd = inciter::interfaceIndicator(nmat, offset, rdof, e, U, matInt);
 
   // determine number of materials with interfaces in this cell
@@ -673,19 +672,6 @@ tk::THINCReco( std::size_t system,
   }
 
   if (nIntMat > 2) bparam = bmod;
-
-  ////nIntMat = 0;
-  //for (std::size_t k=0; k<nmat; ++k)
-  //{
-  //  if (nIntMat > 2 && vfmax[k] < U(e, volfracDofIdx(nmat,k,rdof,0), offset))
-  //  {
-  //    isCellPinched = 1;
-  //    isPinched[k] = 1;
-  //  }
-  //  else isPinched[k] = 0;
-
-  //  //if (U(e, volfracDofIdx(nmat,k,rdof,0), offset) > 0.05) ++nIntMat;
-  //}
 
   // compression parameter
   auto beta = bparam/std::cbrt(6.0*geoElem(e,0,0));
@@ -711,8 +697,8 @@ tk::THINCReco( std::size_t system,
 
     std::array< real, 3 > nInt;
     std::vector< std::array< real, 3 > > ref_n(nmat, {{0.0, 0.0, 0.0}});
-    auto almax(0.0), almin(1.0);
-    std::size_t kmax(0), kmin(0);
+    auto almax(0.0);
+    std::size_t kmax(0);
 
     // Step-1: Get unit normals to material interface
     for (std::size_t k=0; k<nmat; ++k)
@@ -731,11 +717,6 @@ tk::THINCReco( std::size_t system,
       {
         almax = alk;
         kmax = k;
-      }
-      if (alk < almin && alk > 2e-8)
-      {
-        almin = alk;
-        kmin = k;
       }
 
       for (std::size_t i=0; i<3; ++i)
@@ -757,17 +738,12 @@ tk::THINCReco( std::size_t system,
     auto alsum(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
-      if (matInt[k]/* && nIntMat <= 2*//* && !isPinched[k]*/)
+      if (matInt[k])
       {
         // get location of material interface (volume fraction 0.5) from the
         // assumed tanh volume fraction distribution, and cell-averaged
         // volume fraction
-        auto alCC(U(e, volfracDofIdx(nmat,k,rdof,0), offset));
-
-        auto chi(1.0);
-        //if (nIntMat > 2)
-        //  chi = vfmax[k];
-
+        auto alCC = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
         auto Ac(0.0), Bc(0.0), Qc(0.0);
         if ((std::fabs(ref_n[k][0]) > std::fabs(ref_n[k][1]))
           && (std::fabs(ref_n[k][0]) > std::fabs(ref_n[k][2])))
@@ -789,19 +765,13 @@ tk::THINCReco( std::size_t system,
           Bc = std::exp(0.5*beta*(ref_n[k][0]+ref_n[k][1]));
           Qc = std::exp(0.5*beta*ref_n[k][2]*(2.0*alCC-1.0));
         }
-
         auto d = std::log((1.0-Ac*Qc) / (Ac*Bc*(Qc-Ac))) / (2.0*beta);
 
         // THINC reconstruction
-        auto al_c = 0.5 * chi *
-          (1.0 + std::tanh(beta*(tk::dot(ref_n[k], ref_xp) + d)));
+        auto al_c = 0.5 * (1.0 + std::tanh(beta*(tk::dot(ref_n[k], ref_xp) + d)));
 
         alReco[k] = std::min(1.0-1e-14, std::max(1e-14, al_c));
       }
-      //else if (matInt[k] && isPinched[k])
-      //{
-      //  alReco[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-      //}
       else
       {
         // TVD reconstruction for materials without an interface close-by
