@@ -69,6 +69,7 @@ Transporter::Transporter() :
   m_sorter(),
   m_nelem( 0 ),
   m_npoin( 0 ),
+  m_finished( 0 ),
   m_meshvol( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
   m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
@@ -107,7 +108,7 @@ Transporter::Transporter() :
     // Create mesh partitioner AND boundary condition object group
     createPartitioner();
 
-  } else finish( 0, t0 );      // stop if no time stepping requested
+  } else finish();      // stop if no time stepping requested
 }
 
 Transporter::Transporter( CkMigrateMessage* m ) :
@@ -187,9 +188,14 @@ Transporter::info( const InciterPrint& print )
     print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
   print.item( "PE-locality mesh reordering",
-                g_inputdeck.get< tag::discr, tag::pelocal_reorder >() );
+              g_inputdeck.get< tag::discr, tag::pelocal_reorder >() );
   print.item( "Operator-access mesh reordering",
-                g_inputdeck.get< tag::discr, tag::operator_reorder >() );
+              g_inputdeck.get< tag::discr, tag::operator_reorder >() );
+  auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+  print.item( "Local time stepping", steady );
+  if (steady)
+    print.item( "L2-norm residual convergence criterion",
+                g_inputdeck.get< tag::discr, tag::residual >() );
   print.item( "Number of time steps", nstep );
   print.item( "Start time", t0 );
   print.item( "Terminate time", term );
@@ -544,7 +550,7 @@ Transporter::refinserted( int error )
               "partitioning algorithm (e.g., rcb instead of mj). Solution 2: "
               "Decrease +ppn.";
 
-    finish( 0, g_inputdeck.get< tag::discr, tag::t0 >() );
+    finish();
 
   } else {
 
@@ -823,6 +829,11 @@ Transporter::diagHeader()
       d.push_back( errname + '(' + var[i] + "-IC)" );
   }
 
+  // Augment diagnostics variables by L2-norm of the residual
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
+    d.push_back( "L2(res)" );
+  }
+
   // Write diagnostics header
   dw.header( d );
 }
@@ -1059,7 +1070,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   for (const auto& e : error) {
     n += ncomp;
     if (e == tk::ctr::ErrorType::L2) {
-      // Finish computing the L2 norm of the numerical - analytical solution
+     // Finish computing the L2 norm of the numerical - analytical solution
      for (std::size_t i=0; i<d[L2ERR].size(); ++i)
        diag.push_back( sqrt( d[L2ERR][i] / m_meshvol ) );
     } else if (e == tk::ctr::ErrorType::LINF) {
@@ -1067,6 +1078,14 @@ Transporter::diagnostics( CkReductionMsg* msg )
       for (std::size_t i=0; i<d[LINFERR].size(); ++i)
         diag.push_back( d[LINFERR][i] );
     }
+  }
+
+  // Finish computing the L2 norm of the residual and append
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  tk::real l2res = 0.0;
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
+    l2res = std::sqrt( d[L2RES][0] / m_meshvol );
+    diag.push_back( l2res );
   }
 
   // Append diagnostics file at selected times
@@ -1077,7 +1096,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
   // Evaluate whether to continue with next step
-  m_scheme.bcast< Scheme::refine >();
+  m_scheme.bcast< Scheme::refine >( l2res );
 }
 
 void
@@ -1088,12 +1107,7 @@ Transporter::resume()
 //!   when the restart (returning from a checkpoint) is complete
 // *****************************************************************************
 {
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-
-  // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(m_t-term) > eps && m_it < nstep) {
+  if (not m_finished) {
     // If just restarted from a checkpoint, Main( CkMigrateMessage* msg ) has
     // increased nrestart in g_inputdeck, but only on PE 0, so broadcast.
     auto nrestart = g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
@@ -1103,15 +1117,13 @@ Transporter::resume()
 }
 
 void
-Transporter::checkpoint( tk::real it, tk::real t )
+Transporter::checkpoint( int finished )
 // *****************************************************************************
 // Save checkpoint/restart files
-//! \param[in] it Iteration count
-//! \param[in] t Physical time
+//! \param[in] finished True if finished with time stepping
 // *****************************************************************************
 {
-  m_it = static_cast< uint64_t >( it );
-  m_t = t;
+  m_finished = finished;
 
   const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
 
@@ -1125,14 +1137,12 @@ Transporter::checkpoint( tk::real it, tk::real t )
 }
 
 void
-Transporter::finish( tk::real it, tk::real t )
+Transporter::finish()
 // *****************************************************************************
 // Normal finish of time stepping
-//! \param[in] it Iteration count
-//! \param[in] t Physical time
 // *****************************************************************************
 {
-  checkpoint( it, t );
+  checkpoint( /* finished = */ 1 );
 }
 
 #include "NoWarning/transporter.def.h"

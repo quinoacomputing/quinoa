@@ -1797,13 +1797,13 @@ DG::solve( tk::real newdt )
     d->next();
 
     // Continue to mesh refinement (if configured)
-    if (!diag_computed) refine();
+    if (!diag_computed) refine( 0.0 );
 
   }
 }
 
 void
-DG::refine()
+DG::refine( tk::real )
 // *****************************************************************************
 // Optionally refine/derefine mesh
 // *****************************************************************************
@@ -1988,8 +1988,8 @@ DG::evalRestart()
 
   if ( !benchmark && (d->It()) % rsfreq == 0 ) {
 
-    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
-    d->contribute( t, CkReduction::nop,
+    int finished = 0;
+    d->contribute( sizeof(int), &finished, CkReduction::nop,
       CkCallback(CkReductionTarget(Transporter,checkpoint), d->Tr()) );
 
   } else {
@@ -2023,9 +2023,7 @@ DG::step()
  
   } else {
 
-    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
-    d->contribute( t, CkReduction::nop,
-      CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
+    d->contribute( CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
 
   }
 }

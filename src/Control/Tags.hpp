@@ -64,6 +64,9 @@ struct pelocal_reorder {
   static std::string name() { return "pelocal_reorder"; } };
 struct operator_reorder {
   static std::string name() { return "operator_reorder"; } };
+struct steady_state {
+  static std::string name() { return "steady_state"; } };
+struct residual { static std::string name() { return "residual"; } };
 struct error { static std::string name() { return "error"; } };
 struct lbfreq { static std::string name() { return "lbfreq"; } };
 struct rsfreq { static std::string name() { return "rsfreq"; } };

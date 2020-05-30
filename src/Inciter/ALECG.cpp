@@ -89,7 +89,10 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_stage( 0 ),
   m_boxnodes(),
   m_edgenode(),
-  m_edgeid()
+  m_edgeid(),
+  m_dtp( m_u.nunk(), 0.0 ),
+  m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
+  m_finished( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -663,7 +666,6 @@ ALECG::normfinal()
     // figure out if this is an edge on the parallel boundary
     auto nit = m_dfnormc.find( g );
     auto m = ( nit != m_dfnormc.end() ) ? nit->second : n;
-    // orient normals
     m_dfn[e*6+0] = n[0];
     m_dfn[e*6+1] = n[1];
     m_dfn[e*6+2] = n[2];
@@ -713,13 +715,24 @@ ALECG::dt()
   } else {      // compute dt based on CFL
 
     //! [Find the minimum dt across all PDEs integrated]
-    for (const auto& eq : g_cgpde) {
-      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
-      if (eqdt < mindt) mindt = eqdt;
-    }
+    if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
 
-    // Scale smallest dt with CFL coefficient
-    mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+      // compute new dt for each mesh point
+      for (const auto& eq : g_cgpde)
+        eq.dt( d->It(), d->Vol(), m_u, m_dtp );
+
+      // find the smallest dt of all nodes on this chare
+      mindt = *std::min_element( begin(m_dtp), end(m_dtp) );
+
+    } else {    // compute new dt for this chare
+
+      // find the smallest dt of all equations on this chare
+      for (const auto& eq : g_cgpde) {
+        auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
+        if (eqdt < mindt) mindt = eqdt;
+      }
+
+    }
     //! [Find the minimum dt across all PDEs integrated]
 
   }
@@ -740,7 +753,7 @@ void
 ALECG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
-//! \param[in] newdt Size of this new time step
+//! \param[in] newdt The smallest dt across the whole problem
 // *****************************************************************************
 {
   auto d = Disc();
@@ -821,16 +834,25 @@ ALECG::rhs()
   // clear gradients receive buffer
   tk::destroy(m_gradc);
 
+  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+
   // Compute own portion of right-hand side for all equations
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
+  if (steady)
+    for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] += prev_rkcoef * m_dtp[p];
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
             m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-            m_symbcnode, d->Vol(), m_edgenode, m_edgeid, m_grad, m_u, m_rhs );
+            m_symbcnode, d->Vol(), m_edgenode, m_edgeid, m_grad, m_u, m_tp,
+            m_rhs );
+  if (steady)
+    for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
   // Query and match user-specified boundary conditions to side sets
+  if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
-                   d->Coord(), d->Lid(), m_bnode );
+                   m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode );
+  if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
 
   // Communicate rhs to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
@@ -848,7 +870,7 @@ ALECG::rhs()
 
 void
 ALECG::comrhs( const std::vector< std::size_t >& gid,
-                const std::vector< std::vector< tk::real > >& R )
+               const std::vector< std::vector< tk::real > >& R )
 // *****************************************************************************
 //  Receive contributions to right-hand side vector on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive RHS contributions
@@ -890,23 +912,35 @@ ALECG::solve()
   }
 
   // clear receive buffer
-  tk::destroy(m_rhsc);  
+  tk::destroy(m_rhsc);
+
+  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
 
   // Set Dirichlet BCs for lhs and rhs
-  for (const auto& [b,bc] : m_bcdir) {
-    for (ncomp_t c=0; c<ncomp; ++c) {
+  for (const auto& [b,bc] : m_bcdir)
+    for (ncomp_t c=0; c<ncomp; ++c)
       if (bc[c].first) {
-        m_lhs( b, c, 0 ) = 1.0;
-        m_rhs( b, c, 0 ) = bc[c].second / d->Dt() / rkcoef[m_stage];
+        m_lhs(b,c,0) = 1.0;
+        auto deltat = steady ? m_dtp[b] : d->Dt();
+        m_rhs(b,c,0) = bc[c].second / deltat / rkcoef[m_stage];
       }
-    }
-  }
 
   // Update Un
   if (m_stage == 0) m_un = m_u;
 
-  // Solve sytem
-  m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
+  // Solve the sytem
+  if (steady) {
+
+    for (std::size_t i=0; i<m_u.nunk(); ++i)
+      for (ncomp_t c=0; c<m_u.nprop(); ++c)
+        m_u(i,c,0) = m_un(i,c,0)
+          + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c,0) / m_lhs(i,c,0);
+
+  } else {
+
+    m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
+
+  }
 
   //! [Continue after solve]
   if (m_stage < 2) {
@@ -921,23 +955,48 @@ ALECG::solve()
   } else {
 
     // Compute diagnostics, e.g., residuals
-    auto diag_computed = m_diag.compute( *d, m_u );
+    auto diag_computed = m_diag.compute( *d, m_u, m_un );
     // Increase number of iterations and physical time
     d->next();
+
+    // Advance physical time for local time stepping
+    if (steady) for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
+
     // Continue to mesh refinement (if configured)
-    if (!diag_computed) refine();
+    if (!diag_computed) refine( 1.0 );
   }
   //! [Continue after solve]
 }
 
 void
-ALECG::refine()
+ALECG::refine( tk::real l2res )
 // *****************************************************************************
 // Optionally refine/derefine mesh
+//! \param[in] l2res L2-norm of the residual across the whole problem
 // *****************************************************************************
 {
   //! [Refine]
   auto d = Disc();
+
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+  const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  if (steady) {
+
+    // this is the last time step if max time of max number of time steps
+    // reached or the residual has reached its convergence criterion
+    if (std::abs(d->T()-term) < eps || d->It() >= nstep || l2res < residual)
+      m_finished = 1;
+
+  } else {
+
+    // this is the last time step if max time or max iterations reached
+    if (std::abs(d->T()-term) < eps || d->It() >= nstep) m_finished = 1;
+
+  }
 
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
@@ -1092,6 +1151,11 @@ ALECG::writeFields( CkCallback c ) const
     // nodefields.push_back( std::vector<tk::real>(d->Coord()[0].size(),0.0) );
     // for (auto i : symbcnodes) nodefields.back()[i] = 1.0;
 
+    // nodefieldnames.push_back( "tp" );
+    // nodefieldnames.push_back( "dtp" );
+    // nodefields.push_back( m_tp );
+    // nodefields.push_back( m_dtp );
+
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
     // Send mesh and fields data (solution dump) for output to file
@@ -1121,15 +1185,11 @@ ALECG::out()
     d->history( std::move(hist) );
   }
 
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
 
   // output field data if field iteration count is reached or in the last time
   // step
-  if ( !((d->It()) % fieldfreq) ||
-       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+  if ( !((d->It()) % fieldfreq) || m_finished )
     writeFields( CkCallback(CkIndex_ALECG::step(), thisProxy[thisIndex]) );
   else
     step();
@@ -1144,8 +1204,9 @@ ALECG::evalLB( int nrestart )
 {
   auto d = Disc();
 
-  // Detect if just returned from a checkpoint and if so, zero timers
-  d->restarted( nrestart );
+  // Detect if just returned from a checkpoint and if so, zero timers and
+  // finished flag
+  if (d->restarted( nrestart )) m_finished = 0;
 
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
@@ -1176,8 +1237,8 @@ ALECG::evalRestart()
 
   if ( !benchmark && (d->It()) % rsfreq == 0 ) {
 
-    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
-    d->contribute( t, CkReduction::nop,
+    int finished = 0;
+    d->contribute( sizeof(int), &finished, CkReduction::nop,
       CkCallback(CkReductionTarget(Transporter,checkpoint), d->Tr()) );
 
   } else {
@@ -1200,20 +1261,13 @@ ALECG::step()
   // Reset Runge-Kutta stage counter
   m_stage = 0;
 
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-
-  // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
+  if (not m_finished) {
 
     evalRestart();
 
   } else {
 
-    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
-    d->contribute( t, CkReduction::nop,
-      CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
+    d->contribute( CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
 
   }
 }

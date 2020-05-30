@@ -70,7 +70,11 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_vol(),
   m_bnorm(),
   m_bnormc(),
-  m_diag()
+  m_diag(),
+  m_boxnodes(),
+  m_dtp( m_u.nunk(), 0.0 ),
+  m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
+  m_finished( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -458,9 +462,6 @@ DiagCG::dt()
       if (eqdt < mindt) mindt = eqdt;
     }
 
-    // Scale smallest dt with CFL coefficient
-    mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
-
   }
 
   // Actiavate SDAG waits for time step
@@ -517,7 +518,8 @@ DiagCG::rhs()
   auto dif = d->FCT()->diff( *d, m_u );
 
   // Query and match user-specified boundary conditions to side sets
-  m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), lid, m_bnode );
+  m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), m_tp, m_dtp, d->Coord(),
+                   lid, m_bnode );
 
   // Send rhs data on chare-boundary nodes to fellow chares
   if (d->NodeCommMap().empty())
@@ -742,21 +744,22 @@ DiagCG::update( const tk::Fields& a, [[maybe_unused]] tk::Fields&& dul )
   Assert( correctBC(a,dul,m_bcdir), "Dirichlet boundary condition incorrect" );
 
   // Apply limited antidiffusive element contributions to low order solution
+  auto un = m_u;
   if (g_inputdeck.get< tag::discr, tag::fct >())
     m_u = m_ul + a;
   else
     m_u = m_u + m_du;
 
   // Compute diagnostics, e.g., residuals
-  auto diag_computed = m_diag.compute( *d, m_u );
+  auto diag_computed = m_diag.compute( *d, m_u, un );
   // Increase number of iterations and physical time
   d->next();
   // Continue to mesh refinement (if configured)
-  if (!diag_computed) refine();
+  if (!diag_computed) refine( 0.0 );
 }
 
 void
-DiagCG::refine()
+DiagCG::refine( tk::real )
 // *****************************************************************************
 // Optionally refine/derefine mesh
 // *****************************************************************************
@@ -929,8 +932,8 @@ DiagCG::evalRestart()
 
   if ( !benchmark && d->It() % rsfreq == 0 ) {
 
-    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
-    d->contribute( t, CkReduction::nop,
+    int finished = 0;
+    d->contribute( sizeof(int), &finished, CkReduction::nop,
       CkCallback(CkReductionTarget(Transporter,checkpoint), d->Tr()) );
 
   } else {
@@ -962,9 +965,7 @@ DiagCG::step()
 
   } else {
 
-    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
-    d->contribute( t, CkReduction::nop,
-      CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
+    d->contribute( CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
 
   }
 }

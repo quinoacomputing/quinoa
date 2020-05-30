@@ -138,7 +138,7 @@ class ALECG : public CBase_ALECG {
     void update( const tk::Fields& a );
 
     //! Optionally refine/derefine mesh
-    void refine();
+    void refine( tk::real l2res );
 
     //! Receive new mesh from refiner
     void resizePostAMR(
@@ -207,6 +207,9 @@ class ALECG : public CBase_ALECG {
       p | m_boxnodes;
       p | m_edgenode;
       p | m_edgeid;
+      p | m_dtp;
+      p | m_tp;
+      p | m_finished;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -301,6 +304,12 @@ class ALECG : public CBase_ALECG {
     std::vector< std::size_t > m_edgenode;
     //! Edge ids in the order of access
     std::vector< std::size_t > m_edgeid;
+    //! Time step size for each mesh node
+    std::vector< tk::real > m_dtp;
+    //! Physical time for each mesh node
+    std::vector< tk::real > m_tp;
+    //! True in the last time step
+    int m_finished;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

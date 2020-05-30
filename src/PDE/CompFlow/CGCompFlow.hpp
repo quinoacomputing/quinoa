@@ -411,6 +411,7 @@ class CompFlow {
     //! \param[in] edgeid Edge ids in the order of access
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] tp Physical time for each mesh node
     //! \param[in,out] R Right-hand side vector computed
     void rhs( real t,
               const std::array< std::vector< real >, 3 >& coord,
@@ -430,6 +431,7 @@ class CompFlow {
               const std::vector< std::size_t >& edgeid,
               const tk::Fields& G,
               const tk::Fields& U,
+              const std::vector< tk::real >& tp,
               tk::Fields& R ) const
     {
       Assert( G.nprop() == m_ncomp*3,
@@ -453,7 +455,7 @@ class CompFlow {
       bndint( coord, triinpoel, symbcnode, U, R );
 
       // compute optional source integral
-      src( coord, inpoel, t, R );
+      src( coord, inpoel, t, tp, R );
     }
 
     //! Compute the minimum time step size
@@ -512,7 +514,33 @@ class CompFlow {
         // find minimum dt across all elements
         if (elemdt < mindt) mindt = elemdt;
       }
-      return mindt;
+      return mindt * g_inputdeck.get< tag::discr, tag::cfl >();
+    }
+
+    //! Compute a time step size for each mesh node
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] vol Nodal volume (with contributions from other chares)
+    //! \param[in,out] dtp Time step size for each mesh node
+    void dt( uint64_t,
+             const std::vector< tk::real >& vol,
+             const tk::Fields& U,
+             std::vector< tk::real >& dtp ) const
+    {
+      for (std::size_t i=0; i<U.nunk(); ++i) {
+        // compute cubic root of element volume as the characteristic length
+        const auto L = std::cbrt( vol[i] );
+        // access solution at node p at recent time step
+        const auto u = U[i];
+        // compute pressure
+        auto p = eos_pressure< eq >
+                   ( m_system, u[0], u[1]/u[0], u[2]/u[0], u[3]/u[0], u[4] );
+        if (p < 0) p = 0.0;
+        auto c = eos_soundspeed< eq >( m_system, u[0], p );
+        // characteristic velocity
+        auto v = std::sqrt((u[1]*u[1] + u[2]*u[2] + u[3]*u[3])/u[0]/u[0]) + c;
+        // compute dt for node
+        dtp[i] = L / v * g_inputdeck.get< tag::discr, tag::cfl >();
+      }
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.
@@ -542,6 +570,8 @@ class CompFlow {
     //!    all components in this PDE system
     //! \param[in] t Physical time
     //! \param[in] deltat Time step size
+    //! \param[in] tp Physical time for each mesh node
+    //! \param[in] dtp Time step size for each mesh node
     //! \param[in] ss Pair of side set ID and (local) node IDs on the side set
     //! \param[in] coord Mesh node coordinates
     //! \return Vector of pairs of bool and boundary condition value associated
@@ -552,6 +582,8 @@ class CompFlow {
     std::map< std::size_t, std::vector< std::pair<bool,real> > >
     dirbc( real t,
            real deltat,
+           const std::vector< tk::real >& tp,
+           const std::vector< tk::real >& dtp,
            const std::pair< const int, std::vector< std::size_t > >& ss,
            const std::array< std::vector< real >, 3 >& coord ) const
     {
@@ -559,6 +591,7 @@ class CompFlow {
       using NodeBC = std::vector< std::pair< bool, real > >;
       std::map< std::size_t, NodeBC > bc;
       const auto& ubc = g_inputdeck.get< param, eq, tag::bc, bcdir >();
+      const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
       if (!ubc.empty()) {
         Assert( ubc.size() > 0, "Indexing out of Dirichlet BC eq-vector" );
         const auto& x = coord[0];
@@ -568,6 +601,7 @@ class CompFlow {
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
+              if (steady) { t = tp[n]; deltat = dtp[n]; }
               auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
                                t, deltat, Problem::solution );
               bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
@@ -1083,10 +1117,12 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] t Physical time
+    //! \param[in] tp Physical time for each mesh node
     //! \param[in,out] R Right-hand side vector computed
     void src( const std::array< std::vector< real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
               real t,
+              const std::vector< tk::real >& tp,
               tk::Fields& R ) const
     {
       // access node coordinates
@@ -1110,6 +1146,7 @@ class CompFlow {
         // sum source contributions to nodes
         for (std::size_t a=0; a<4; ++a) {
           real s[m_ncomp];
+          if (g_inputdeck.get< tag::discr, tag::steady_state >()) t = tp[N[a]];
           Problem::src( m_system, x[N[a]], y[N[a]], z[N[a]], t,
                         s[0], s[1], s[2], s[3], s[4] );
           for (std::size_t c=0; c<m_ncomp; ++c)

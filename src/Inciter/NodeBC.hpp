@@ -28,6 +28,8 @@ std::unordered_map< std::size_t, std::vector< std::pair< bool, tk::real > > >
 match( tk::ctr::ncomp_t ncomp,
        tk::real t,
        tk::real dt,
+       const std::vector< tk::real >& tp,
+       const std::vector< tk::real >& dtp,
        const tk::UnsMesh::Coords& coord,
        const std::unordered_map< std::size_t, std::size_t >& lid,
        const std::map< int, std::vector< std::size_t > >& sidenodes );

@@ -208,6 +208,7 @@ class Transport {
       const std::vector< std::size_t >& edgeid,
       const tk::Fields& G,
       const tk::Fields& U,
+      const std::vector< tk::real >&,
       tk::Fields& R ) const
     {
       Assert( G.nprop() == m_ncomp*3,
@@ -361,8 +362,8 @@ class Transport {
     //! \param[in] inpoel Mesh element connectivity
     //! \return Minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
-                 const std::vector< std::size_t >& inpoel,
-                 const tk::Fields& U ) const
+             const std::vector< std::size_t >& inpoel,
+             const tk::Fields& U ) const
     {
       using tag::transport;
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
@@ -413,13 +414,21 @@ class Transport {
         // find minimum dt across all elements
         if (elemdt < mindt) mindt = elemdt;
       }
-      return mindt;
+      return mindt * g_inputdeck.get< tag::discr, tag::cfl >();
     }
+
+    //! Compute a time step size for each mesh node
+    void dt( uint64_t,
+             const std::vector< tk::real >&,
+             const tk::Fields&,
+             std::vector< tk::real >& ) const {}
 
     //! \brief Query Dirichlet boundary condition value on a given side set for
     //!    all components in this PDE system
     //! \param[in] t Physical time
     //! \param[in] deltat Time step size
+    //! \param[in] tp Physical time for each mesh node
+    //! \param[in] dtp Time step size for each mesh node
     //! \param[in] ss Pair of side set ID and list of node IDs on the side set
     //! \param[in] coord Mesh node coordinates
     //! \return Vector of pairs of bool and boundary condition value associated
@@ -430,6 +439,8 @@ class Transport {
     std::map< std::size_t, std::vector< std::pair<bool,real> > >
     dirbc( real t,
            real deltat,
+           const std::vector< tk::real >& tp,
+           const std::vector< tk::real >& dtp,
            const std::pair< const int, std::vector< std::size_t > >& ss,
            const std::array< std::vector< real >, 3 >& coord ) const
     {
@@ -437,6 +448,7 @@ class Transport {
       using NodeBC = std::vector< std::pair< bool, real > >;
       std::map< std::size_t, NodeBC > bc;
       const auto& ubc = g_inputdeck.get< param, transport, tag::bc, bcdir >();
+      const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
       if (!ubc.empty()) {
         Assert( ubc.size() > m_system, "Indexing out of Dirichlet BC eq-vector" );
         const auto& x = coord[0];
@@ -446,6 +458,7 @@ class Transport {
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
+              if (steady) { t = tp[n]; deltat = dtp[n]; }
               const auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
                                      t, deltat, Problem::solution );
               auto& nbc = bc[n] = NodeBC( m_ncomp );
@@ -841,7 +854,6 @@ class Transport {
                  const tk::Fields& U,
                  tk::Fields& R ) const
     {
-
       // access node coordinates
       const auto& x = coord[0];
       const auto& y = coord[1];

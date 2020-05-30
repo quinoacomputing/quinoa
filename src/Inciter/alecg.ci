@@ -39,7 +39,7 @@ module alecg {
       entry void resizeComm();
       entry void nodeNeighSetup();
       entry void start();
-      entry void refine();
+      entry void refine( tk::real l2ref );
       entry [reductiontarget] void advance( tk::real newdt );
       entry void comdfnorm(
               const std::unordered_map< tk::UnsMesh::Edge,

@@ -46,11 +46,14 @@ NodeDiagnostics::registerReducers()
 }
 
 bool
-NodeDiagnostics::compute( Discretization& d, const tk::Fields& u ) const
+NodeDiagnostics::compute( Discretization& d,
+                          const tk::Fields& u,
+                          const tk::Fields& un ) const
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization proxy to read from
 //! \param[in] u Current solution vector
+//! \param[in] un Previous solution vector
 //! \return True if diagnostics have been computed
 //! \details Diagnostics are defined as some norm, e.g., L2 norm, of a quantity,
 //!    computed in mesh nodes, A, as ||A||_2 = sqrt[ sum_i(A_i)^2 V_i ],
@@ -59,7 +62,7 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u ) const
 //!    the whole mesh. The final aggregated solution will end up in
 //!    Transporter::diagnostics(). Aggregation of the partially computed
 //!    diagnostics is done via potentially different policies for each field.
-//! \see inciter::mergeDiag(), src/Inciter/Diagnostics.h
+//! \see inciter::mergeDiag(), src/Inciter/Diagnostics.hpp
 // *****************************************************************************
 {
   // Optionally collect diagnostics and send for aggregation across all workers
@@ -92,6 +95,7 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u ) const
     const auto& x = coord[0];
     const auto& y = coord[1];
     const auto& z = coord[2];
+    const auto& v = d.Vol();
 
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk(); ++i)
@@ -99,7 +103,7 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u ) const
 
         // Compute sum for L2 norm of the numerical solution
         for (std::size_t c=0; c<u.nprop(); ++c)
-          diag[L2SOL][c] += u(i,c,0) * u(i,c,0) * d.Vol()[i];
+          diag[L2SOL][c] += u(i,c,0) * u(i,c,0) * v[i];
 
         // Query and collect analytic solution for all components of all PDEs
         // integrated at cell centroids
@@ -113,7 +117,10 @@ NodeDiagnostics::compute( Discretization& d, const tk::Fields& u ) const
         // Compute sum for L2 norm of the numerical-analytic solution
         for (std::size_t c=0; c<u.nprop(); ++c)
           diag[L2ERR][c] +=
-            (u(i,c,0)-a[c]) * (u(i,c,0)-a[c]) * d.Vol()[i];
+            (u(i,c,0)-a[c]) * (u(i,c,0)-a[c]) * v[i];
+        // Compute sum for L2 norm of the residual
+        for (std::size_t c=0; c<u.nprop(); ++c)
+          diag[L2RES][0] += (u(i,c,0)-un(i,c,0)) * (u(i,c,0)-un(i,c,0)) * v[i];
         // Compute max for Linf norm of the numerical-analytic solution
         for (std::size_t c=0; c<u.nprop(); ++c) {
           auto err = std::abs( u(i,c,0) - a[c] );

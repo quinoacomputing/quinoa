@@ -611,11 +611,12 @@ Discretization::grindZero()
   }
 }
 
-void
+bool
 Discretization::restarted( int nrestart )
 // *****************************************************************************
 //  Detect if just returned from a checkpoint and if so, zero timers
 //! \param[in] nrestart Number of times restarted
+//! \return True if restart detected
 // *****************************************************************************
 {
   // Detect if just restarted from checkpoint:
@@ -633,6 +634,8 @@ Discretization::restarted( int nrestart )
     // Zero grind-timer
     grindZero();
   }
+
+  return restarted;
 }
 
 std::string
@@ -718,12 +721,16 @@ Discretization::status()
     const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
     const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
+    const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
     const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
 
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
     m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
  
+    // Zero ETA if marching to steady state
+    if (steady) eta = tk::Timer::Watch();
+
     const auto& def =
       g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
     tk::Print print( g_inputdeck.get< tag::cmd >().logname( def, m_nrestart ),
