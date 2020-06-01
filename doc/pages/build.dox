@@ -255,19 +255,17 @@ On Alpine Linux you can pre-install the packages given in
 @section build_mac Build on Mac OS
 
 On Mac OS we do _not_ recommend using the system-wide compilers. Instead, we
-use [macports](https://www.macports.org/) to install compilers and OpenMPI:
+use [spack](https://spack.readthedocs.io) to install compilers and OpenMPI:
 
-       port install openmpi-clang60
-       port select clang mp-clang-6.0
-       port select mpi openmpi-clang60-fortran
+       spack install cmake libtool autoconf automake
+       spack install environment-modules cmake gcc openmpi%gcc hdf5%gcc+hl
 
-You can also use ports to install some TPLs:
+The above will use install gcc and OpenMPI on top of it. You will have to load
+the environment modules as, e.g.,
 
-       port install pugixml hdf5 +openmpi+clang60+hl
+       module load gcc-9.2.0-clang-10.0.0-apple-vcpkolh openmpi-3.1.4-gcc-9.2.0-my2rkcv hdf5-1.10.5-gcc-9.2.0-prdkirn
 
-Note that the above is optional, since it may also be installed by the TPL
-build, see @ref build_default, but depending on your system you may have better
-luck with one or the other.
+Then follow @ref build_default.
 
 @section build_clang Build using Clang or Intel compilers
 
