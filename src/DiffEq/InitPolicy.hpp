@@ -167,15 +167,21 @@ struct InitBeta {
     // configured for
     const ncomp_t size = std::min( ncomp, betapdf.size() );
 
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
+
     for (ncomp_t c=0; c<size; ++c) {
       // get vector of betapdf parameters for component c
       const auto& bc = betapdf[c];
 
       for (ncomp_t s=0; s<bc.size(); s+=4) {
         // generate beta random numbers for all particles using parameters in bc
-        for (ncomp_t p=0; p<particles.nunk(); ++p)
+        for (ncomp_t p=0; p<particles.nunk(); ++p) {
           rng.beta( stream, 1, bc[s], bc[s+1], bc[s+2], bc[s+3],
                     &particles( p, c, offset ) );
+          auto& v = particles( p, c, offset );
+          if (v < eps) v = eps;
+          if (v > 1.0-eps) v = 1.0-eps;
+        }
       }
     }
 
