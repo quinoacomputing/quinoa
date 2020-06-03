@@ -57,6 +57,9 @@ module dg {
                          const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
+      entry void comnodesol( const std::vector< std::size_t >& gid,
+        const std::vector< std::vector< tk::real > >& un,
+        const std::vector< std::vector< tk::real > >& pn );
       entry void refine( tk::real l2ref );
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
@@ -90,6 +93,10 @@ module dg {
       entry void wait4lim() {
         when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
 
+      entry void wait4nodesol() {
+        when ownnodesol_complete( CkCallback cb ), comnodesol_complete()
+        serial "nodesol" { writeFields( cb ); } }
+
       entry void ownfac_complete();
       entry void comfac_complete();
       entry void ownghost_complete();
@@ -102,6 +109,8 @@ module dg {
       entry void comreco_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
+      entry void ownnodesol_complete( CkCallback cb );
+      entry void comnodesol_complete();
     }
 
   } // inciter::

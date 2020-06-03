@@ -54,6 +54,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nadj( 0 ),
   m_ncomEsup( 0 ),
   m_nsol( 0 ),
+  m_nnodesol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
   m_nreco( 0 ),
@@ -66,6 +67,10 @@ DG::DG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::discr, tag::rdof >()*
          std::accumulate( begin(g_dgpde), end(g_dgpde), 0u,
            [](std::size_t s, const DGPDE& eq){ return s + eq.nprim(); } ) ),
+  m_Unode(m_disc[thisIndex].ckLocal()->Gid().size(),
+    m_u.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
+  m_Pnode(m_disc[thisIndex].ckLocal()->Gid().size(),
+    m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
   m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), Disc()->Coord()) ),
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(),
@@ -165,6 +170,7 @@ DG::resizeComm()
 
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
+    thisProxy[ thisIndex ].wait4nodesol();
     thisProxy[ thisIndex ].wait4sol();
     thisProxy[ thisIndex ].wait4reco();
     thisProxy[ thisIndex ].wait4lim();
@@ -1202,7 +1208,7 @@ DG::boxvol( tk::real v )
   Disc()->Boxvol() = v;
 
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
+  prepNodalFields( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
 }
 
 void
@@ -1314,67 +1320,159 @@ DG::comsol( int fromch,
 }
 
 void
-DG::writeFields( CkCallback c ) const
+DG::prepNodalFields( CkCallback cb )
 // *****************************************************************************
-// Output mesh-based fields to file
-//! \param[in] c Function to continue with after the write
+// Prep for field-output of nodal fields to file
+//! \param[in] cb Function to continue with after the write
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
 
-    c.send();
-
-  } else {
-
-    auto d = Disc();
-
-    const auto& esuel = m_fd.Esuel();
-
-    // Copy mesh form Discretization object and chop off ghosts for dump
-    auto inpoel = d->Inpoel();
-    inpoel.resize( esuel.size() );
-    auto coord = d->Coord();
-    for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
-
-    // Query fields names from all PDEs integrated
-    std::vector< std::string > elemfieldnames;
-    for (const auto& eq : g_dgpde) {
-      auto n = eq.fieldNames();
-      elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
-    }
-
-    auto nielem = esuel.size() / 4;
-
-    // Collect element field solution
-    std::vector< std::vector< tk::real > > elemfields;
-    auto u = m_u;
-    for (const auto& eq : g_dgpde) {
-      auto o =
-        eq.fieldOutput( d->T(), d->meshvol(), nielem, m_geoElem, u, m_p );
-
-      // cut off ghost elements
-      for (auto& f : o) f.resize( nielem );
-      elemfields.insert( end(elemfields), begin(o), end(o) );
-    }
-
-    // Add adaptive indicator array to element-centered field output
-    std::vector<tk::real> ndof( begin(m_ndof), end(m_ndof) );
-    ndof.resize( nielem );  // cut off ghosts
-    elemfields.push_back( ndof );
-
-    // // Collect node field solution
-    // std::vector< std::vector< tk::real > > nodefields;
-    // for (const auto& eq : g_dgpde) {
-    //   auto fields =
-    //     eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_u );
-    //   nodefields.insert( end(nodefields), begin(fields), end(fields) );
-    // }
-
-    // Output chare mesh and fields metadata to file
-    d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), elemfieldnames,
-              {}, {}, elemfields, {}, {}, c );
+    cb.send();
 
   }
+  else
+  {
+    auto d = Disc();
+    auto inpoel = d->Inpoel();
+    auto coord = d->Coord();
+    const auto nielem = m_fd.Esuel().size() / 4;
+
+    // get contributions to nodal-average from this chare
+    for (auto& eq : g_dgpde)
+      eq.avgElemToNode(nielem, inpoel, coord, m_geoElem, m_u, m_p, m_Unode,
+        m_Pnode);
+
+    // Communicate nodal-solutions to other chares on chare-boundary
+    if (d->NodeCommMap().empty())        // in serial we are done
+      comnodesol_complete();
+    else // send contributions of rhs to chare-boundary nodes to fellow chares
+      for (const auto& [c,n] : d->NodeCommMap()) {
+        std::vector< std::vector< tk::real > > un( n.size() );
+        std::vector< std::vector< tk::real > > pn( n.size() );
+        std::size_t j = 0;
+        for (auto i : n)
+        {
+          un[j] = m_Unode[ tk::cref_find(d->Lid(),i) ];
+          pn[j] = m_Pnode[ tk::cref_find(d->Lid(),i) ];
+          ++j;
+        }
+        thisProxy[c].comnodesol(std::vector<std::size_t>(begin(n),end(n)), un,
+          pn);
+      }
+
+    ownnodesol_complete(cb);
+  }
+}
+
+void
+DG::comnodesol( const std::vector< std::size_t >& gid,
+  const std::vector< std::vector< tk::real > >& un,
+  const std::vector< std::vector< tk::real > >& pn )
+// *****************************************************************************
+//  Receive contributions to nodal solution vector on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive RHS contributions
+//! \param[in] un Partial contributions to solution on chare-boundary nodes
+//! \param[in] pn Partial contributions to primitives on chare-boundary nodes
+//! \details This function receives contributions to m_Unode, which stores the
+//!   solution and primitive vectors at mesh nodes. While m_Unode stores own
+//!   contributions, m_Unodec collects the neighbor chare contributions during
+//!   communication. This way work on m_Unode and m_Unodec is overlapped. The
+//!   two are combined in writeFields()().
+// *****************************************************************************
+{
+  Assert( un.size() == gid.size(), "Size mismatch" );
+  Assert( pn.size() == gid.size(), "Size mismatch" );
+
+  using tk::operator+=;
+
+  for (std::size_t i=0; i<gid.size(); ++i)
+  {
+    m_Unodec[ gid[i] ] += un[i];
+    m_Pnodec[ gid[i] ] += pn[i];
+  }
+
+  // When we have heard from all chares we communicate with, this chare is done
+  if (++m_nnodesol == Disc()->NodeCommMap().size()) {
+    m_nnodesol = 0;
+    comnodesol_complete();
+  }
+}
+
+void
+DG::writeFields( CkCallback cb )
+// *****************************************************************************
+// Output mesh-based fields to file
+//! \param[in] cb Function to continue with after the write
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto ncomp = m_Unode.nprop();
+  const auto nprim = m_Pnode.nprop();
+
+  // Combine own and communicated contributions to nodal solutions
+  for (const auto& b : m_Unodec) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
+    for (std::size_t c=0; c<ncomp; ++c) m_Unode(lid,c,0) += b.second[c];
+  }
+  for (const auto& b : m_Pnodec) {
+    auto lid = tk::cref_find( d->Lid(), b.first );
+    for (std::size_t c=0; c<nprim; ++c) m_Pnode(lid,c,0) += b.second[c];
+  }
+
+  // clear receive buffer
+  tk::destroy(m_Unodec);
+  tk::destroy(m_Pnodec);
+
+  // complete nodal-averaging
+  for (std::size_t p=0; p<m_Unode.nunk(); ++p)
+  {
+    auto denom = static_cast< tk::real >(tk::cref_find(m_esup, p).size());
+    for (std::size_t c=0; c<ncomp; ++c) m_Unode(p,c,0) /= denom;
+    for (std::size_t c=0; c<nprim; ++c) m_Pnode(p,c,0) /= denom;
+  }
+
+  const auto& esuel = m_fd.Esuel();
+
+  // Copy mesh from Discretization object and chop off ghosts for dump
+  auto inpoel = d->Inpoel();
+  inpoel.resize( esuel.size() );
+  auto coord = d->Coord();
+  for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
+
+  // Query fields names from all PDEs integrated
+  std::vector< std::string > fieldnames;
+  for (const auto& eq : g_dgpde) {
+    auto n = eq.fieldNames();
+    fieldnames.insert( end(fieldnames), begin(n), end(n) );
+  }
+
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  auto nielem = esuel.size() / 4;
+
+  // Collect element field solution
+  std::vector< std::vector< tk::real > > elemfields;
+  std::vector< std::vector< tk::real > > nodefields;
+  for (const auto& eq : g_dgpde) {
+    auto no = eq.fieldOutput( d->T(), d->meshvol(), 1, coord[0].size(),
+        m_geoElem, m_Unode, m_Pnode );
+    auto eo = eq.fieldOutput( d->T(), d->meshvol(), rdof, nielem, m_geoElem,
+        m_u, m_p );
+
+    // cut off ghost elements
+    for (auto& f : eo) f.resize( nielem );
+    elemfields.insert( end(elemfields), begin(eo), end(eo) );
+    nodefields.insert( end(nodefields), begin(no), end(no) );
+  }
+
+  // Add adaptive indicator array to element-centered field output
+  std::vector<tk::real> ndof( begin(m_ndof), end(m_ndof) );
+  ndof.resize( nielem );  // cut off ghosts
+  elemfields.push_back( ndof );
+
+  // Output chare mesh and fields metadata to file
+  d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), fieldnames,
+            fieldnames, {}, elemfields, nodefields, {}, cb );
 }
 
 void
@@ -1711,12 +1809,22 @@ DG::solve( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
+
   // Enable SDAG wait for building the solution vector during the next stage
+  if ( !((d->It() + 1) % fieldfreq) ||
+       (std::fabs(d->T()+newdt-term) < eps || (d->It()+1 >= nstep)) )
+    thisProxy[ thisIndex ].wait4nodesol();
+
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4reco();
   thisProxy[ thisIndex ].wait4lim();
 
-  auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   const auto neq = m_u.nprop()/rdof;
@@ -1928,7 +2036,7 @@ DG::out()
   // step, otherwise continue to next time step
   if ( !((d->It()) % fieldfreq) ||
        (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
-    writeFields( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
+    prepNodalFields( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
   else
     step();
 }

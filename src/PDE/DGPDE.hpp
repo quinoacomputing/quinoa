@@ -217,11 +217,12 @@ class DGPDE {
     std::vector< std::vector< tk::real > > fieldOutput(
       tk::real t,
       tk::real V,
+      std::size_t rdof,
       std::size_t nunk,
       const tk::Fields& geoElem,
       tk::Fields& U,
       const tk::Fields& P ) const
-    { return self->fieldOutput( t, V, nunk, geoElem, U, P ); }
+    { return self->fieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
 
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
@@ -230,12 +231,16 @@ class DGPDE {
     { return self->surfOutput( bnd, U ); }
 
     //! Public interface to returning nodal field output
-    std::vector< std::vector< tk::real > > avgElemToNode(
+    void avgElemToNode( std::size_t nielem,
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const tk::Fields& geoElem,
-      const tk::Fields& U ) const
-    { return self->avgElemToNode( inpoel, coord, geoElem, U ); }
+      const tk::Fields& U,
+      const tk::Fields& P,
+      tk::Fields& Unode,
+      tk::Fields& Pnode ) const
+    { return self->avgElemToNode( nielem, inpoel, coord, geoElem, U, P, Unode,
+      Pnode ); }
 
     //! Public interface to returning analytic solution
     std::vector< tk::real >
@@ -321,17 +326,22 @@ class DGPDE {
         tk::real,
         tk::real,
         std::size_t,
+        std::size_t,
         const tk::Fields&,
         tk::Fields&,
         const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
         tk::Fields& ) const = 0;
-      virtual std::vector< std::vector< tk::real > > avgElemToNode(
+      virtual void avgElemToNode(
+        std::size_t,
         const std::vector< std::size_t >&,
         const tk::UnsMesh::Coords&,
         const tk::Fields&,
-        const tk::Fields& ) const = 0;
+        const tk::Fields&,
+        const tk::Fields&,
+        tk::Fields&,
+        tk::Fields& ) const = 0;
       virtual std::vector< tk::real > analyticSolution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
@@ -419,21 +429,27 @@ class DGPDE {
       std::vector< std::vector< tk::real > > fieldOutput(
         tk::real t,
         tk::real V,
+        std::size_t rdof,
         std::size_t nunk,
         const tk::Fields& geoElem,
         tk::Fields& U,
         const tk::Fields& P ) const override
-      { return data.fieldOutput( t, V, nunk, geoElem, U, P ); }
+      { return data.fieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
       std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
         tk::Fields& U ) const override
       { return data.surfOutput( bnd, U ); }
-      std::vector< std::vector< tk::real > > avgElemToNode(
+      void avgElemToNode(
+        std::size_t nielem,
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
         const tk::Fields& geoElem,
-        const tk::Fields& U ) const override
-      { return data.avgElemToNode( inpoel, coord, geoElem, U ); }
+        const tk::Fields& U,
+        const tk::Fields& P,
+        tk::Fields& Unode,
+        tk::Fields& Pnode ) const override
+      { return data.avgElemToNode( nielem, inpoel, coord, geoElem, U, P, Unode,
+        Pnode ); }
       std::vector< tk::real >
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }
