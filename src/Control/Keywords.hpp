@@ -4646,6 +4646,25 @@ struct gas_impact_info {
 using gas_impact =
   keyword< gas_impact_info, TAOCPP_PEGTL_STRING("gas_impact") >;
 
+struct shock_hebubble_info {
+  using code = Code< T >;
+  static std::string name() { return "Shock He-bubble problem"; }
+  static std::string shortDescription() { return
+    "Select the shock He-bubble test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the shock He-bubble test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material algorithm and its shock-interface interaction
+    capabilities. Example: "problem shock_hebubble". For more details, see
+    Quirk, J. J., & Karni, S. (1996). On the dynamics of a shock–bubble
+    interaction. Journal of Fluid Mechanics, 318, 129-163.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using shock_hebubble =
+  keyword< shock_hebubble_info, TAOCPP_PEGTL_STRING("shock_hebubble") >;
+
 struct problem_info {
   using code = Code< t >;
   static std::string name() { return "Test problem"; }
