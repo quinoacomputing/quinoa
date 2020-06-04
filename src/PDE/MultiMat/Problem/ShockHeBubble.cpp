@@ -3,11 +3,11 @@
   \file      src/PDE/MultiMat/Problem/ShockHeBubble.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the multi-material flow equations
   \details   This file defines a Problem policy class for the multi-material
-    compressible flow equations, defined in PDE/MultiMat/MultiMat.hpp. See
+    compressible flow equations, defined in PDE/MultiMat/DGMultiMat.hpp. See
     PDE/MultiMat/Problem.hpp for general requirements on Problem policy classes
     for MultiMat.
 */
