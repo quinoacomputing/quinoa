@@ -85,7 +85,7 @@ walker::VelocityCoeffConstShear::update(
 walker::VelocityCoeffStationary::VelocityCoeffStationary(
   kw::sde_c0::info::expect::type C0_,
   kw::sde_c0::info::expect::type& C0,
-  std::array< tk::real, 9 >& )
+  std::array< tk::real, 9 >& dU )
 // *****************************************************************************
 // Constructor: initialize coefficients
 //! \param[in] C0_ Value of C0 parameter in the Langevin model
@@ -96,6 +96,7 @@ walker::VelocityCoeffStationary::VelocityCoeffStationary(
 // *****************************************************************************
 {
   C0 = C0_;
+  dU = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 }
 
 void
@@ -143,7 +144,7 @@ walker::VelocityCoeffStationary::update(
 walker::VelocityCoeffHydroTimeScale::VelocityCoeffHydroTimeScale(
   kw::sde_c0::info::expect::type C0_,
   kw::sde_c0::info::expect::type& C0,
-  std::array< tk::real, 9 >& )
+  std::array< tk::real, 9 >& dU )
 // *****************************************************************************
 // Constructor: initialize coefficients
 //! \param[in] C0_ Value of C0 parameter in the Langevin model
@@ -151,6 +152,7 @@ walker::VelocityCoeffHydroTimeScale::VelocityCoeffHydroTimeScale(
 // *****************************************************************************
 {
   C0 = C0_;
+  dU = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 }
 
 void
