@@ -1400,6 +1400,31 @@ DG::comnodesol( const std::vector< std::size_t >& gid,
 }
 
 void
+DG::isFieldOutput( CkCallback cb )
+// *****************************************************************************
+//! Determine if field output is needed in this timestep
+//! \param[in] cb Function to continue with after the write
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
+
+  // output field data if field iteration count is reached or in the last time
+  // step, otherwise continue to next time step
+  if ( !((d->It()) % fieldfreq) ||
+       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+    writeFields(cb);
+  else
+  {
+    step();
+  }
+}
+
+void
 DG::writeFields( CkCallback cb )
 // *****************************************************************************
 // Output mesh-based fields to file
@@ -1797,6 +1822,9 @@ DG::dt()
     mindt = d->Dt();
   }
 
+  // Enable SDAG wait for nodal field output
+  thisProxy[ thisIndex ].wait4nodesol();
+
   // Contribute to minimum dt across all chares then advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
               CkCallback(CkReductionTarget(DG,solve), thisProxy) );
@@ -1810,16 +1838,6 @@ DG::solve( tk::real newdt )
 // *****************************************************************************
 {
   auto d = Disc();
-
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
-
-  // Enable SDAG wait for building the solution vector during the next stage
-  if ( !((d->It() + 1) % fieldfreq) ||
-       (std::fabs(d->T()+newdt-term) < eps || (d->It()+1 >= nstep)) )
-    thisProxy[ thisIndex ].wait4nodesol();
 
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4reco();
@@ -2038,7 +2056,10 @@ DG::out()
        (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
     prepNodalFields( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
   else
-    step();
+  {
+    ownnodesol_complete( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
+    comnodesol_complete();
+  }
 }
 
 void

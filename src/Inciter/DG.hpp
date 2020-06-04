@@ -415,6 +415,9 @@ class DG : public CBase_DG {
     //! Output mesh-based fields to file
     void writeFields( CkCallback cb );
 
+    //! Determine if field output is needed in this timestep
+    void isFieldOutput( CkCallback cb );
+
     //! Compute solution reconstructions
     void reco();
 

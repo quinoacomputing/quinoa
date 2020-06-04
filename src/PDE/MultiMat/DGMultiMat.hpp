@@ -799,15 +799,15 @@ class MultiMat {
     avgElemToNode( std::size_t nielem,
                    const std::vector< std::size_t >& inpoel,
                    const tk::UnsMesh::Coords& coord,
-                   const tk::Fields& geoElem,
+                   const tk::Fields& /*geoElem*/,
                    const tk::Fields& U,
                    const tk::Fields& P,
                    tk::Fields& Unode,
                    tk::Fields& Pnode ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      //const auto nmat =
+      //  g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
       //const auto intcompr =
       //  g_inputdeck.get< tag::param, tag::multimat, tag::intcompr >()[m_system];
 

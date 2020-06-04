@@ -95,7 +95,7 @@ module dg {
 
       entry void wait4nodesol() {
         when ownnodesol_complete( CkCallback cb ), comnodesol_complete()
-        serial "nodesol" { writeFields( cb ); } }
+        serial "nodesol" { isFieldOutput( cb ); } }
 
       entry void ownfac_complete();
       entry void comfac_complete();
