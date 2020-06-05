@@ -19,6 +19,7 @@
 #include "Boundary.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 
 void
 tk::bndSurfInt( ncomp_t system,
@@ -39,6 +40,8 @@ tk::bndSurfInt( ncomp_t system,
                 const Fields& P,
                 const std::vector< std::size_t >& ndofel,
                 Fields& R,
+                std::vector< std::vector< tk::real > >& vriem,
+                std::vector< std::vector< tk::real > >& xcoord,
                 std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
@@ -64,6 +67,8 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] vriem Vector of the riemann velocity
+//! \param[in,out] xcoord Vector of the coordinates of riemann velocity data
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms.
 //!   These derivatives are used only for multi-material hydro and unused for
@@ -174,6 +179,27 @@ tk::bndSurfInt( ncomp_t system,
           // Add the surface integration term to the rhs
           update_rhs_bc( ncomp, nmat, offset, ndof, ndofel[el], wt, fn, el, fl,
                          B_l, R, riemannDeriv );
+
+          // Store the riemann velocity and coordinates data used for velocity
+          // reconstruction
+          if (fl.size() > ncomp)
+          {
+            xcoord[el].push_back( gp[0] );
+            xcoord[el].push_back( gp[1] );
+            xcoord[el].push_back( gp[2] );
+
+            tk::real pbl(0.0);
+            for (std::size_t k=0; k<nmat; ++k)
+              pbl += ugp[nmat+k];
+
+            auto ul = ugp[2*nmat] / pbl;
+            auto vl = ugp[2*nmat+1] / pbl;
+            auto wl = ugp[2*nmat+2] / pbl;
+
+            vriem[el].push_back(ul);
+            vriem[el].push_back(vl);
+            vriem[el].push_back(wl);
+          }
         }
       }
     }

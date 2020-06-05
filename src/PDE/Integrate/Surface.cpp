@@ -35,6 +35,8 @@ tk::surfInt( ncomp_t system,
              const Fields& P,
              const std::vector< std::size_t >& ndofel,
              Fields& R,
+             std::vector< std::vector< tk::real > >& vriem,
+             std::vector< std::vector< tk::real > >& xcoord,
              std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //  Compute internal surface flux integrals
@@ -53,6 +55,8 @@ tk::surfInt( ncomp_t system,
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] vriem Vector of the riemann velocity
+//! \param[in,out] xcoord Vector of the coordinates of riemann velocity data
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms.
 //!   These derivatives are used only for multi-material hydro and unused for
@@ -199,6 +203,55 @@ tk::surfInt( ncomp_t system,
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, offset, ndof, ndofel[el], ndofel[er], wt, fn,
                      el, er, fl, B_l, B_r, R, riemannDeriv );
+
+      // Store the riemann velocity and coordinates data used for velocity
+      // reconstruction
+      if (fl.size() > ncomp)
+      {
+        xcoord[el].push_back( gp[0] );
+        xcoord[el].push_back( gp[1] );
+        xcoord[el].push_back( gp[2] );
+
+        xcoord[er].push_back( gp[0] );
+        xcoord[er].push_back( gp[1] );
+        xcoord[er].push_back( gp[2] );
+
+        tk::real pbl(0.0), pbr(0.0);
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          pbl += state[0][nmat+k];
+          pbr += state[1][nmat+k];
+        }
+
+        if(fl[ncomp+nmat] > 0)
+        {
+          auto ul = state[0][2*nmat] / pbl;
+          auto vl = state[0][2*nmat+1] / pbl;
+          auto wl = state[0][2*nmat+2] / pbl;
+
+          vriem[el].push_back(ul);
+          vriem[el].push_back(vl);
+          vriem[el].push_back(wl);
+
+          vriem[er].push_back(ul);
+          vriem[er].push_back(vl);
+          vriem[er].push_back(wl);
+        }
+        else
+        {
+          auto ur = state[1][2*nmat] / pbr;
+          auto vr = state[1][2*nmat+1] / pbr;
+          auto wr = state[1][2*nmat+2] / pbr;
+
+          vriem[el].push_back(ur);
+          vriem[el].push_back(vr);
+          vriem[el].push_back(wr);
+
+          vriem[er].push_back(ur);
+          vriem[er].push_back(vr);
+          vriem[er].push_back(wr);
+        }
+      }
     }
   }
 }

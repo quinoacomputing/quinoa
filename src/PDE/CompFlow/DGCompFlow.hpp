@@ -123,6 +123,10 @@ class CompFlow {
     //!   requires primitive variables for example, this would be the place to
     //!   add the computation of the primitive variables.
     void updatePrimitives( const tk::Fields&,
+                           const tk::Fields&,
+                           const std::vector< std::size_t >&,
+                           const tk::UnsMesh::Coords&,
+                           const tk::Fields&,
                            tk::Fields&,
                            std::size_t ) const {}
 
@@ -264,6 +268,9 @@ class CompFlow {
       // terms in the system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
+      std::vector< std::vector< tk::real > > vriem ( U.nunk() );
+      std::vector< std::vector< tk::real > > xcoord( U.nunk() );
+
       // configure Riemann flux function
       auto rieflxfn =
         [this]( const std::array< tk::real, 3 >& fn,
@@ -275,8 +282,9 @@ class CompFlow {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
-                   fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, riemannDeriv );
+      tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord, fd,
+                   geoFace, rieflxfn, velfn, U, P, ndofel, R, vriem, xcoord,
+                   riemannDeriv );
 
       // compute source term intehrals
       tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, fd.Esuel().size()/4,
@@ -291,7 +299,7 @@ class CompFlow {
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
                         geoFace, inpoel, coord, t, rieflxfn, velfn, b.second, U,
-                        P, ndofel, R, riemannDeriv );
+                        P, ndofel, R, vriem, xcoord, riemannDeriv );
     }
 
     //! Compute the minimum time step size

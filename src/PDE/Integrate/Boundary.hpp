@@ -48,6 +48,8 @@ bndSurfInt( ncomp_t system,
             const Fields& P,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
+            std::vector< std::vector< tk::real > >& vriem,
+            std::vector< std::vector< tk::real > >& xcoord,
             std::vector< std::vector< tk::real > >& riemannDeriv );
 
 //! Update the rhs by adding the boundary surface integration term

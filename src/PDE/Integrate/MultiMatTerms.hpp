@@ -39,6 +39,7 @@ nonConservativeInt( ncomp_t system,
                     const Fields& U,
                     const Fields& P,
                     const std::vector< std::vector< tk::real > >& riemannDeriv,
+                    const std::vector< std::vector< tk::real > >& vriempoly,
                     const std::vector< std::size_t >& ndofel,
                     Fields& R );
 
@@ -46,12 +47,17 @@ nonConservativeInt( ncomp_t system,
 void
 update_rhs_ncn( ncomp_t ncomp,
                 ncomp_t offset,
+                const std::size_t nmat,
                 const std::size_t ndof,
                 const std::size_t ndof_el,
                 const tk::real wt,
                 const std::size_t e,
+                const std::vector<tk::real>& ugp,
+                const std::vector<tk::real>& B,
                 const std::array< std::vector<tk::real>, 3 >& dBdx,
-                const std::vector< tk::real >& ncf,
+                const std::vector< std::vector<tk::real> >& riemannDeriv,
+                const std::vector< tk::real >& vriem,
+                std::vector< tk::real >& ncf,
                 Fields& R );
 
 //! Compute volume integrals of pressure relaxation terms in multi-material DG
@@ -68,6 +74,29 @@ pressureRelaxationInt( ncomp_t system,
                        const std::vector< std::size_t >& ndofel,
                        const tk::real ct,
                        Fields& R );
+
+//! Update the rhs by adding the pressure relaxation integrals
+void
+update_rhs_pncn(
+  ncomp_t ncomp,
+  ncomp_t offset,
+  const std::size_t ndof,
+  const std::size_t ndof_el,
+  const tk::real wt,
+  const std::size_t e,
+  const std::vector< tk::real >& B,
+  std::vector< tk::real >& ncf,
+  Fields& R );
+
+void solvevriem( const std::size_t nelem,
+                 const std::vector< std::vector< tk::real > >& vriem,
+                 const std::vector< std::vector< tk::real > >& xcoord,
+                 std::vector< std::vector< tk::real > >& vriempoly );
+
+void LU( const std::size_t n,
+         const std::vector< std::vector< tk::real > >& A,
+         const std::vector< tk::real >& b,
+         std::vector< tk::real >& x );
 
 } // tk::
 

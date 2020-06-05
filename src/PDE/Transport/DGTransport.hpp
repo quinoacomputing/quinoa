@@ -118,6 +118,10 @@ class Transport {
     //! \details This function computes and stores the dofs for primitive
     //!   quantities, which are currently unused for transport.
     void updatePrimitives( const tk::Fields&,
+                           const tk::Fields&,
+                           const std::vector< std::size_t >&,
+                           const tk::UnsMesh::Coords&,
+                           const tk::Fields&,
                            tk::Fields&,
                            std::size_t ) const {}
 
@@ -259,10 +263,15 @@ class Transport {
       // system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
+      std::vector< std::vector< tk::real > >
+        vriem( U.nunk() );
+      std::vector< std::vector< tk::real > >
+        xcoord( U.nunk() );
+
       // compute internal surface flux integrals
       tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, Upwind::flux, Problem::prescribedVelocity, U, P,
-                   ndofel, R, riemannDeriv );
+                   ndofel, R, vriem, xcoord, riemannDeriv );
 
       if(ndof > 1)
         // compute volume integrals
@@ -274,7 +283,7 @@ class Transport {
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
           geoFace, inpoel, coord, t, Upwind::flux, Problem::prescribedVelocity,
-          b.second, U, P, ndofel, R, riemannDeriv );
+          b.second, U, P, ndofel, R, vriem, xcoord, riemannDeriv );
     }
 
     //! Compute the minimum time step size

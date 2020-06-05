@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <map>
+#include <array>
 
 #include "Macro.hpp"
 #include "Exception.hpp"
@@ -127,10 +128,15 @@ class MultiMat {
     //!   normal velocity for advection is calculated from independently
     //!   reconstructed velocities.
     void updatePrimitives( const tk::Fields& unk,
+                           const tk::Fields& L,
+                           const std::vector< std::size_t >& inpoel,
+                           const tk::UnsMesh::Coords& coord,
+                           const tk::Fields& geoElem,
                            tk::Fields& prim,
                            std::size_t nielem ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto ndof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
@@ -145,33 +151,78 @@ class MultiMat {
 
       for (std::size_t e=0; e<nielem; ++e)
       {
-        // cell-average bulk density
-        tk::real rhob(0.0);
-        for (std::size_t k=0; k<nmat; ++k)
+        std::vector< tk::real > R((nmat+3)*ndof, 0.0);
+
+        auto ng = tk::NGvol(ndof);
+
+        // arrays for quadrature points
+        std::array< std::vector< tk::real >, 3 > coordgp;
+        std::vector< tk::real > wgp;
+
+        coordgp[0].resize( ng );
+        coordgp[1].resize( ng );
+        coordgp[2].resize( ng );
+        wgp.resize( ng );
+
+        tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+        for (std::size_t igp=0; igp<ng; ++igp)
         {
-          rhob += unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset);
+          // Compute the basis function
+          auto B =
+            tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+
+          auto w = wgp[igp] * geoElem(e, 0, 0);
+
+          auto state = tk::eval_state( 3*nmat+3, 0, ndof, ndof, e, unk, B );
+
+          // cell-average bulk density
+          tk::real rhob(0.0);
+          for (std::size_t k=0; k<nmat; ++k)
+            rhob += state[densityIdx(nmat, k)];
+
+          // cell-average velocity
+          std::array< tk::real, 3 >
+            vel{ state[momentumIdx(nmat, 0)]/rhob,
+                  state[momentumIdx(nmat, 1)]/rhob,
+                  state[momentumIdx(nmat, 2)]/rhob };
+
+          std::vector< tk::real > pri(nmat + 3, 0.0);
+          for(std::size_t imat = 0; imat < nmat; imat++)
+          {
+            auto alphamat = state[volfracIdx(nmat, imat)];
+            auto arhomat = state[densityIdx(nmat, imat)];
+            auto arhoemat = state[energyIdx(nmat, imat)];
+            pri[imat] = eos_pressure< tag::multimat >( m_system, arhomat, vel[0], vel[1],
+              vel[2], arhoemat, alphamat, imat );
+          }
+
+          pri[nmat] = vel[0];
+          pri[nmat+1] = vel[1];
+          pri[nmat+2] = vel[2];
+
+          for(int k = 0; k < nmat+3; k++)
+          {
+            auto mark = k * ndof;
+            R[mark] += w * pri[k];
+            if(ndof > 1)
+            {
+              for(std::size_t idir = 0; idir < 3; idir++)
+                R[mark+idir] += w * pri[k] * B[idir+1];
+            }
+          }
         }
 
-        // cell-average velocity
-        std::array< tk::real, 3 >
-          vel{{ unk(e, momentumDofIdx(nmat, 0, rdof, 0), m_offset)/rhob,
-                unk(e, momentumDofIdx(nmat, 1, rdof, 0), m_offset)/rhob,
-                unk(e, momentumDofIdx(nmat, 2, rdof, 0), m_offset)/rhob }};
-
-        for (std::size_t idir=0; idir<3; ++idir)
+        for(int k = 0; k < nmat+3; k++)
         {
-          prim(e, velocityDofIdx(nmat, idir, rdof, 0), m_offset) = vel[idir];
-        }
-
-        // cell-average material pressure
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          tk::real arhomat = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset);
-          tk::real arhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset);
-          tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
-          prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
-            eos_pressure< tag::multimat >( m_system, arhomat, vel[0], vel[1],
-              vel[2], arhoemat, alphamat, k );
+          auto mark = k * ndof;
+          auto rmark = k * rdof;
+          prim(e, rmark, 0) = R[mark] / L(e, mark, 0);
+          if(ndof > 1)
+          {
+            for(std::size_t idir = 0; idir < 3; idir++)
+              prim(e, rmark+idir+1, 0) = R[mark] / L(e, mark+idir+1, 0);
+          }
         }
       }
     }
@@ -514,7 +565,7 @@ class MultiMat {
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
-      Assert( ndof == 1, "DGP1/2 not set up for multi-material" );
+      //Assert( ndof == 1, "DGP1/2 not set up for multi-material" );
 
       // set rhs to zero
       R.fill(0.0);
@@ -522,6 +573,13 @@ class MultiMat {
       // allocate space for Riemann derivatives used in non-conservative terms
       std::vector< std::vector< tk::real > >
         riemannDeriv( 3*nmat+1, std::vector<tk::real>(U.nunk(),0.0) );
+
+      // vectors to store the data of riemann velocity used for reconstruction
+      // in volume fraction equation
+      std::vector< std::vector< tk::real > >
+        vriem( U.nunk() );
+      std::vector< std::vector< tk::real > >
+        xcoord( U.nunk() );
 
       // configure Riemann flux function
       auto rieflxfn =
@@ -536,7 +594,7 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, nmat, m_offset, ndof, rdof, inpoel, coord,
-                   fd, geoFace, rieflxfn, velfn, U, P, ndofel, R,
+                   fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, vriem, xcoord,
                    riemannDeriv );
 
       // compute source term integrals
@@ -552,7 +610,7 @@ class MultiMat {
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, nmat, m_offset, ndof, rdof, b.first,
                         fd, geoFace, inpoel, coord, t, rieflxfn, velfn,
-                        b.second, U, P, ndofel, R, riemannDeriv );
+                        b.second, U, P, ndofel, R, vriem, xcoord, riemannDeriv );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );
@@ -566,9 +624,14 @@ class MultiMat {
           riemannDeriv[k][e] /= geoElem(e, 0, 0);
       }
 
+      std::vector< std::vector< tk::real > >
+        vriempoly( U.nunk(), std::vector<tk::real>(12,0.0) );
+      if(ndof > 1)
+        tk::solvevriem(nelem, vriem, xcoord, vriempoly);
+
       // compute volume integrals of non-conservative terms
       tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, riemannDeriv,
+                              inpoel, coord, geoElem, U, P, riemannDeriv, vriempoly,
                               ndofel, R );
 
       // compute finite pressure relaxation terms
