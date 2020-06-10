@@ -4,7 +4,8 @@ add_library(MultiMatProblem
             InterfaceAdvection.cpp
             WaterAirShocktube.cpp
             TriplePoint.cpp
-            GasImpact.cpp)
+            GasImpact.cpp
+            ShockHeBubble.cpp)
 
 target_include_directories(MultiMatProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}
