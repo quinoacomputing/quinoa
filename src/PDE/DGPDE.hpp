@@ -231,16 +231,13 @@ class DGPDE {
     { return self->surfOutput( bnd, U ); }
 
     //! Public interface to returning nodal field output
-    void avgElemToNode( std::size_t nielem,
-      const std::vector< std::size_t >& inpoel,
-      const tk::UnsMesh::Coords& coord,
-      const tk::Fields& geoElem,
+    void avgElemToNode( std::size_t npoin,
+      const std::map< std::size_t, std::vector< std::size_t > >& esup,
       const tk::Fields& U,
       const tk::Fields& P,
       tk::Fields& Unode,
       tk::Fields& Pnode ) const
-    { return self->avgElemToNode( nielem, inpoel, coord, geoElem, U, P, Unode,
-      Pnode ); }
+    { return self->avgElemToNode( npoin, esup, U, P, Unode, Pnode ); }
 
     //! Public interface to returning analytic solution
     std::vector< tk::real >
@@ -335,9 +332,7 @@ class DGPDE {
         tk::Fields& ) const = 0;
       virtual void avgElemToNode(
         std::size_t,
-        const std::vector< std::size_t >&,
-        const tk::UnsMesh::Coords&,
-        const tk::Fields&,
+        const std::map< std::size_t, std::vector< std::size_t > >&,
         const tk::Fields&,
         const tk::Fields&,
         tk::Fields&,
@@ -440,16 +435,13 @@ class DGPDE {
         tk::Fields& U ) const override
       { return data.surfOutput( bnd, U ); }
       void avgElemToNode(
-        std::size_t nielem,
-        const std::vector< std::size_t >& inpoel,
-        const tk::UnsMesh::Coords& coord,
-        const tk::Fields& geoElem,
+        std::size_t npoin,
+        const std::map< std::size_t, std::vector< std::size_t > >& esup,
         const tk::Fields& U,
         const tk::Fields& P,
         tk::Fields& Unode,
         tk::Fields& Pnode ) const override
-      { return data.avgElemToNode( nielem, inpoel, coord, geoElem, U, P, Unode,
-        Pnode ); }
+      { return data.avgElemToNode( npoin, esup, U, P, Unode, Pnode ); }
       std::vector< tk::real >
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }

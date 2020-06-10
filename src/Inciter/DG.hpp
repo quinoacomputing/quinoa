@@ -149,11 +149,6 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
-    //! Receive contributions to nodal solution vector on chare-boundaries
-    void comnodesol( const std::vector< std::size_t >& gid,
-      const std::vector< std::vector< tk::real > >& un,
-      const std::vector< std::vector< tk::real > >& pn );
-
     //! Optionally refine/derefine mesh
     void refine( tk::real l2res );
 
@@ -199,7 +194,6 @@ class DG : public CBase_DG {
       p | m_nadj;
       p | m_ncomEsup;
       p | m_nsol;
-      p | m_nnodesol;
       p | m_ninitsol;
       p | m_nlim;
       p | m_nreco;
@@ -230,8 +224,6 @@ class DG : public CBase_DG {
       p | m_bid;
       p | m_uc;
       p | m_pc;
-      p | m_Unodec;
-      p | m_Pnodec;
       p | m_ndofc;
       p | m_initial;
       p | m_expChBndFace;
@@ -266,8 +258,6 @@ class DG : public CBase_DG {
     std::size_t m_ncomEsup;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
-    //! Counter signaling that we have received all nodal solution ghost data
-    std::size_t m_nnodesol;
     //! \brief Counter signaling that we have received all our solution ghost
     //!    data during setup
     std::size_t m_ninitsol;
@@ -336,10 +326,6 @@ class DG : public CBase_DG {
     std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
-    //! Nodal Solution receive buffers for ghosts only
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_Unodec;
-    //! Nodal Primitive-variable receive buffers for ghosts only
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_Pnodec;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
     std::array< std::vector< std::size_t >, 3 > m_ndofc;
@@ -409,14 +395,8 @@ class DG : public CBase_DG {
     //! Output mesh and particle fields to files
     void out();
 
-    //! Prep for field-output of nodal fields to file
-    void prepNodalFields( CkCallback cb );
-
     //! Output mesh-based fields to file
-    void writeFields( CkCallback cb );
-
-    //! Determine if field output is needed in this timestep
-    void isFieldOutput( CkCallback cb );
+    void writeFields( CkCallback c );
 
     //! Compute solution reconstructions
     void reco();

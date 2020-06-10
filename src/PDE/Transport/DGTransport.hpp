@@ -319,62 +319,26 @@ class Transport {
       return n;
     }
 
-    //! Return nodal field output going to file
+    //! Compute nodal field output going to file
+    //! \param[in] npoin Number of nodes in mesh chunk
+    //! \param[in] esup Elements surrounding points
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Vector of primitive quantities at recent time step
+    //! \param[in,out] Unode Solution vector at nodes
+    //! \param[in,out] Pnode Vector of primitive quantities at nodes
     void
-    avgElemToNode( std::size_t nielem,
-                   const std::vector< std::size_t >& inpoel,
-                   const tk::UnsMesh::Coords& coord,
-                   const tk::Fields& /*geoElem*/,
+    avgElemToNode( std::size_t npoin,
+                   const std::map< std::size_t, std::vector< std::size_t > >&
+                     esup,
                    const tk::Fields& U,
-                   const tk::Fields&,
+                   const tk::Fields& P,
                    tk::Fields& Unode,
-                   tk::Fields& ) const
+                   tk::Fields& Pnode ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
-
-      for (std::size_t e=0; e<nielem ; ++e)
-      {
-        // nodal coordinates of the element
-        std::array< std::array< tk::real, 3 >, 4 >
-          pi{{ {{ cx[ inpoel[4*e] ],
-                  cy[ inpoel[4*e] ],
-                  cz[ inpoel[4*e] ] }},
-               {{ cx[ inpoel[4*e+1] ],
-                  cy[ inpoel[4*e+1] ],
-                  cz[ inpoel[4*e+1] ] }},
-               {{ cx[ inpoel[4*e+2] ],
-                  cy[ inpoel[4*e+2] ],
-                  cz[ inpoel[4*e+2] ] }},
-               {{ cx[ inpoel[4*e+3] ],
-                  cy[ inpoel[4*e+3] ],
-                  cz[ inpoel[4*e+3] ] }} }};
-        auto detT = tk::Jacobian( pi[0], pi[1], pi[2], pi[3] );
-
-        // scatter contributions of element e to all its nodes
-        for (std::size_t i=0; i<4; ++i)
-        {
-          tk::real detT_gp;
-          // transformation of the physical coordinates of the quadrature point
-          // to reference space for the left element to be able to compute
-          // basis functions on the left element.
-          detT_gp = tk::Jacobian( pi[0], pi[i], pi[2], pi[3] );
-          auto xi = detT_gp / detT;
-          detT_gp = tk::Jacobian( pi[0], pi[1], pi[i], pi[3] );
-          auto eta = detT_gp / detT;
-          detT_gp = tk::Jacobian( pi[0], pi[1], pi[2], pi[i] );
-          auto zeta = detT_gp / detT;
-
-          auto B = tk::eval_basis(rdof, xi, eta, zeta);
-          auto ugp = tk::eval_state(m_ncomp, m_offset, rdof, rdof, e, U, B);
-
-          for (std::size_t c=0; c<m_ncomp; ++c)
-            Unode(inpoel[4*e+i], c, m_offset) += ugp[c];
-        }
-      }
+      tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
+        Pnode);
     }
 
     //! Return surface field output going to file
