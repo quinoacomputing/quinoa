@@ -128,6 +128,7 @@ using intervals = tk::TaggedTuple< brigand::list<
 //! History output parameters storage
 using history = tk::TaggedTuple< brigand::list<
     tag::point,   std::vector< std::vector< kw::point::info::expect::type > >
+  , tag::id,      std::vector< std::string >     //!< Point identifiers
 > >;
 
 //! IO parameters storage
