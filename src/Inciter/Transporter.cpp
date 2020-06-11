@@ -288,7 +288,7 @@ Transporter::info( const InciterPrint& print )
               of + ".e-s.<meshid>.<numchares>.<chareid>" );
   print.item( "Surface field output file(s)",
               of + "-surf.<surfid>.e-s.<meshid>.<numchares>.<chareid>" );
-  print.item( "History output file(s)", of + ".hist.{<px>_<py>_<pz>}" );
+  print.item( "History output file(s)", of + ".hist.{pointid}" );
   print.item( "Diagnostics file",
               g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
   print.item( "Checkpoint/restart directory",
@@ -309,15 +309,17 @@ Transporter::info( const InciterPrint& print )
     print.item( "Surface side set(s)", tk::parameters( outsets ) );
   }
 
-  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
-  if (!hist_points.empty()) {
+  const auto& pt = g_inputdeck.get< tag::history, tag::point >();
+  const auto& id = g_inputdeck.get< tag::history, tag::id >();
+  if (!pt.empty()) {
     print.section( "Output time history" );
-    for (const auto& p : hist_points) {
+    for (std::size_t p=0; p<pt.size(); ++p) {
       std::stringstream ss;
       auto prec = g_inputdeck.get< tag::prec, tag::history >();
       ss << std::setprecision( static_cast<int>(prec) );
-      ss << of << ".hist.{" << p[0] << '_' << p[1] << '_' << p[2] << '}';
-      print.item( "At point " + tk::parameters(p), ss.str() );
+      ss << of << ".hist." << id[p];
+      print.longitem( "At point " + id[p] + ' ' + tk::parameters(pt[p]),
+                      ss.str() );
     }
   }
 
