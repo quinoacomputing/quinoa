@@ -45,6 +45,11 @@ namespace deck {
            , tag::multimat,    std::size_t
          > > neq;
 
+  //! \brief Parser-lifetime storage for point names
+  //! \details Used to track the point names registered so that parsing new ones
+  //!    can be required to be unique.
+  static std::set< std::string > pointnames;
+
 } // ::deck
 } // ::inciter
 
@@ -544,6 +549,12 @@ namespace grm {
       std::unordered_set< int > bcset;
       brigand::for_each< tk::cartesian_product< PDETypes, BCTypes > >(
         ensure_disjoint< Input, Stack >( in, stack, bcset ) );
+
+      // Do error checking on time history point names (this is a programmer
+      // error if triggers, hence assert)
+      Assert(
+        (stack.template get< tag::history, tag::id >().size() == hist.size()),
+        "Number of history points and ids must equal" );
     }
   };
 
@@ -643,6 +654,26 @@ namespace grm {
       auto& tolref = stack.template get< tag::pref, tag::tolref >();
       if (tolref < 0.0 || tolref > 1.0)
         Message< Stack, ERROR, MsgKey::PREFTOL >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
+  struct match_pointname : pegtl::success {};
+  //! \brief Match PDF name to the registered ones
+  //! \details This is used to check the set of PDF names dependent previously
+  //!    registered to make sure all are unique.
+  template<>
+  struct action< match_pointname > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::deck::pointnames;
+      // find matched name in set of registered ones
+      if (pointnames.find( in.string() ) == pointnames.end()) {
+        pointnames.insert( in.string() );
+        stack.template get< tag::history, tag::id >().push_back( in.string() );
+      }
+      else  // error out if name matched var is already registered
+        Message< Stack, ERROR, MsgKey::POINTEXISTS >( stack, in );
     }
   };
 
@@ -1165,7 +1196,7 @@ namespace deck {
              tk::grm::interval< use< kw::interval >, tag::field >,
              pegtl::if_must<
                tk::grm::vector<
-                 kw::sideset,
+                 use< kw::sideset >,
                  tk::grm::Store_back< tag::cmd, tag::io, tag::surface >,
                  use< kw::end > > > > > {};
 
@@ -1184,10 +1215,15 @@ namespace deck {
                                               tag::history >,
                pegtl::alpha >,
              pegtl::if_must<
-               tk::grm::vector< use< kw::point >,
-                 tk::grm::Store_back_back< tag::history, tag::point >,
-                 use< kw::end >,
-                 tk::grm::start_vector< tag::history, tag::point > > > > > {};
+               tk::grm::readkw< use< kw::point >::pegtl_string >,
+               tk::grm::act< pegtl::identifier, tk::grm::match_pointname >,
+               pegtl::seq<
+                 tk::grm::start_vector< tag::history, tag::point >,
+                 tk::grm::block<
+                   use< kw::end >,
+                   tk::grm::scan< tk::grm::number,
+                     tk::grm::Store_back_back< tag::history, tag::point > > >
+               > > > > {};
 
   //! 'inciter' block
   struct inciter :

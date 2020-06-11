@@ -56,9 +56,9 @@ namespace grm {
   //!   case). This is true for both inserting variables into the set as well as
   //!   at matching terms of products in parsing requested statistics.
   static std::set< char, tk::ctr::CaseInsensitiveCharLess > depvars;
-  //! \brief Parser-lifetime storage for PDF names.
-  //! \details Used to track the names registered  so that parsing new ones can
-  //!    be required to be unique.
+  //! \brief Parser-lifetime storage for PDF names
+  //! \details Used to track the names of PDFs registered so that parsing new
+  //!    ones can be required to be unique.
   static std::set< std::string > pdfnames;
 
   // Common auxiliary functions (reused by multiple grammars)
@@ -125,6 +125,7 @@ namespace grm {
     BINSIZES,           //!< PDF sample space vars unequal to number of bins
     PDF,                //!< PDF specification syntax error
     PDFEXISTS,          //!< PDF identifier already defined
+    POINTEXISTS,        //!< Point identifier already defined
     BADPRECISION,       //!< Floating point precision specification incorrect
     BOUNDS,             //!< Specified value out of bounds
     PRECISIONBOUNDS,    //!< Floating point precision spec out of bounds
@@ -326,6 +327,8 @@ namespace grm {
       "equal the number of bin sizes given." },
     { MsgKey::PDF, "Syntax error while parsing PDF specification." },
     { MsgKey::PDFEXISTS, "PDF already exists. PDF identifiers must be unique."},
+    { MsgKey::POINTEXISTS, "Point already exists. Point identifiers must be "
+      "unique."},
     { MsgKey::BADPRECISION, "Precision specification invalid. It should be a "
       "positive integer or the word \'max\', selecting the maximum number of "
       "digits for the underyling floating point type."},
