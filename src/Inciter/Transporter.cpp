@@ -318,7 +318,8 @@ Transporter::info( const InciterPrint& print )
       auto prec = g_inputdeck.get< tag::prec, tag::history >();
       ss << std::setprecision( static_cast<int>(prec) );
       ss << of << ".hist." << id[p];
-      print.item( "At point " + id[p] + ' ' + tk::parameters(pt[p]), ss.str() );
+      print.longitem( "At point " + id[p] + ' ' + tk::parameters(pt[p]),
+                      ss.str() );
     }
   }
 
