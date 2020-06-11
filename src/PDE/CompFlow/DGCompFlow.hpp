@@ -548,6 +548,11 @@ class CompFlow {
     std::vector< std::string > fieldNames() const
     { return m_problem.fieldNames( m_ncomp ); }
 
+    //! Return field names to be output to file
+    //! \return Vector of strings labelling fields output in file
+    std::vector< std::string > nodalFieldNames() const
+    { return {}; }
+
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
@@ -569,6 +574,19 @@ class CompFlow {
 
       return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, t, V,
                                     geoElem.extract(0,0), coord, U );
+    }
+
+    //! Nodal field output setup will go here
+    std::vector< std::vector< tk::real > >
+    nodalFieldOutput( tk::real,
+      tk::real,
+      std::size_t,
+      std::size_t,
+      const tk::Fields&,
+      tk::Fields&,
+      const tk::Fields& ) const
+    {
+      return {};
     }
 
     //! Return surface field output going to file

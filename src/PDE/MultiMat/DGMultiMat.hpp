@@ -763,6 +763,16 @@ class MultiMat {
       return MultiMatFieldNames(nmat);
     }
 
+    //! Return field names to be output to file
+    //! \return Vector of strings labelling fields output in file
+    std::vector< std::string > nodalFieldNames() const
+    {
+      auto nmat =
+        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
+
+      return MultiMatFieldNames(nmat);
+    }
+
     //! Return field output going to file
     //! \param[in] rdof Total number of degrees of freedom
     //! \param[in] nunk Number of unknowns
@@ -771,6 +781,28 @@ class MultiMat {
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real,
+                 tk::real,
+                 std::size_t rdof,
+                 std::size_t nunk,
+                 const tk::Fields&,
+                 tk::Fields& U,
+                 const tk::Fields& P ) const
+    {
+      // number of materials
+      auto nmat =
+        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
+
+      return MultiMatFieldOutput(m_system, nmat, m_offset, nunk, rdof, U, P);
+    }
+
+    //! Return nodal field output going to file
+    //! \param[in] rdof Total number of degrees of freedom
+    //! \param[in] nunk Number of unknowns
+    //! \param[in,out] U Nodal solution vector at recent time step
+    //! \param[in] P Nodal vector of primitive quantities at recent time step
+    //! \return Vector of vectors to be output to file
+    std::vector< std::vector< tk::real > >
+    nodalFieldOutput( tk::real,
                  tk::real,
                  std::size_t rdof,
                  std::size_t nunk,

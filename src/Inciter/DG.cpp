@@ -1343,17 +1343,19 @@ DG::writeFields( CkCallback c )
       eq.avgElemToNode(m_ncoord, m_esup, m_u, m_p, m_Unode, m_Pnode);
 
     // Query fields names from all PDEs integrated
-    std::vector< std::string > fieldnames;
+    std::vector< std::string > elemfieldnames, nodalfieldnames;
     for (const auto& eq : g_dgpde) {
       auto n = eq.fieldNames();
-      fieldnames.insert( end(fieldnames), begin(n), end(n) );
+      elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
+      auto nn = eq.nodalFieldNames();
+      nodalfieldnames.insert( end(nodalfieldnames), begin(nn), end(nn) );
     }
 
     // Collect element and nodal field solution
     std::vector< std::vector< tk::real > > elemfields;
     std::vector< std::vector< tk::real > > nodefields;
     for (const auto& eq : g_dgpde) {
-      auto no = eq.fieldOutput( d->T(), d->meshvol(), 1, m_ncoord,
+      auto no = eq.nodalFieldOutput( d->T(), d->meshvol(), 1, m_ncoord,
           m_geoElem, m_Unode, m_Pnode );
       auto eo = eq.fieldOutput( d->T(), d->meshvol(), rdof, nielem, m_geoElem,
           m_u, m_p );
@@ -1374,8 +1376,8 @@ DG::writeFields( CkCallback c )
     elemfields.push_back( ndof );
 
     // Output chare mesh and fields metadata to file
-    d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), fieldnames,
-              fieldnames, {}, elemfields, nodefields, {}, c );
+    d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), elemfieldnames,
+              nodalfieldnames, {}, elemfields, nodefields, {}, c );
   }
 }
 

@@ -210,6 +210,10 @@ class DGPDE {
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
 
+    //! Public interface to returning field output labels
+    std::vector< std::string > nodalFieldNames() const
+    { return self->nodalFieldNames(); }
+
     //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
 
@@ -223,6 +227,17 @@ class DGPDE {
       tk::Fields& U,
       const tk::Fields& P ) const
     { return self->fieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
+
+    //! Public interface to returning nodal field output
+    std::vector< std::vector< tk::real > > nodalFieldOutput(
+      tk::real t,
+      tk::real V,
+      std::size_t rdof,
+      std::size_t nunk,
+      const tk::Fields& geoElem,
+      tk::Fields& U,
+      const tk::Fields& P ) const
+    { return self->nodalFieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
 
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
@@ -318,8 +333,17 @@ class DGPDE {
                            const tk::Fields&,
                            const std::size_t ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
+      virtual std::vector< std::string > nodalFieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
+        tk::real,
+        tk::real,
+        std::size_t,
+        std::size_t,
+        const tk::Fields&,
+        tk::Fields&,
+        const tk::Fields& ) const = 0;
+      virtual std::vector< std::vector< tk::real > > nodalFieldOutput(
         tk::real,
         tk::real,
         std::size_t,
@@ -419,6 +443,8 @@ class DGPDE {
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U, P, nielem ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
+      std::vector< std::string > nodalFieldNames() const override
+      { return data.nodalFieldNames(); }
       std::vector< std::string > names() const override
       { return data.names(); }
       std::vector< std::vector< tk::real > > fieldOutput(
@@ -430,6 +456,15 @@ class DGPDE {
         tk::Fields& U,
         const tk::Fields& P ) const override
       { return data.fieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
+      std::vector< std::vector< tk::real > > nodalFieldOutput(
+        tk::real t,
+        tk::real V,
+        std::size_t rdof,
+        std::size_t nunk,
+        const tk::Fields& geoElem,
+        tk::Fields& U,
+        const tk::Fields& P ) const override
+      { return data.nodalFieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
       std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
         tk::Fields& U ) const override

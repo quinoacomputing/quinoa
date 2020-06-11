@@ -319,6 +319,11 @@ class Transport {
       return n;
     }
 
+    //! Return field names to be output to file
+    //! \return Vector of strings labelling fields output in file
+    std::vector< std::string > nodalFieldNames() const
+    { return {}; }
+
     //! Compute nodal field output going to file
     //! \param[in] npoin Number of nodes in mesh chunk
     //! \param[in] esup Elements surrounding points
@@ -396,6 +401,19 @@ class Transport {
         out.push_back( e );
       }
       return out;
+    }
+
+    //! Nodal field output setup will go here
+    std::vector< std::vector< tk::real > >
+    nodalFieldOutput( tk::real,
+      tk::real,
+      std::size_t,
+      std::size_t,
+      const tk::Fields&,
+      tk::Fields&,
+      const tk::Fields& ) const
+    {
+      return {};
     }
 
     //! Return names of integral variables to be output to diagnostics file
