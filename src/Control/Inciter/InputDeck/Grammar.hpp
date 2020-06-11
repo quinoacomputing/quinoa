@@ -508,8 +508,9 @@ namespace grm {
       }
       // Do error checking on time history point names (this is a programmer
       // error if triggers, hence assert)
-      Assert( stack.template get<tag::history,tag::id>().size() == hist.size(),
-              "Number of history points and ids must equal" );
+      Assert(
+        (stack.template get< tag::history, tag::id >().size() == hist.size()),
+        "Number of history points and ids must equal" );
     }
   };
 
