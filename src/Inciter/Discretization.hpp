@@ -221,7 +221,7 @@ class Discretization : public CBase_Discretization {
     void status();
 
     //! Construct history output filename
-    std::string histfilename( const std::array< tk::real, 3 >& p,
+    std::string histfilename( const std::string& id,
                               kw::precision::info::expect::type precision );
 
     //! Output headers for time history files (one for each point)
