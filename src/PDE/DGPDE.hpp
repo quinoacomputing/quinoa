@@ -232,7 +232,6 @@ class DGPDE {
     std::vector< std::vector< tk::real > > nodalFieldOutput(
       tk::real t,
       tk::real V,
-      std::size_t rdof,
       std::size_t nunk,
       const std::map< std::size_t, std::vector< std::size_t > >& esup,
       const tk::Fields& geoElem,
@@ -240,7 +239,7 @@ class DGPDE {
       tk::Fields& Pnode,
       tk::Fields& U,
       const tk::Fields& P ) const
-    { return self->nodalFieldOutput( t, V, rdof, nunk, esup, geoElem, Unode,
+    { return self->nodalFieldOutput( t, V, nunk, esup, geoElem, Unode,
       Pnode, U, P ); }
 
     //! Public interface to returning surface field output
@@ -341,7 +340,6 @@ class DGPDE {
       virtual std::vector< std::vector< tk::real > > nodalFieldOutput(
         tk::real,
         tk::real,
-        std::size_t,
         std::size_t,
         const std::map< std::size_t, std::vector< std::size_t > >&,
         const tk::Fields&,
@@ -450,7 +448,6 @@ class DGPDE {
       std::vector< std::vector< tk::real > > nodalFieldOutput(
         tk::real t,
         tk::real V,
-        std::size_t rdof,
         std::size_t nunk,
         const std::map< std::size_t, std::vector< std::size_t > >& esup,
         const tk::Fields& geoElem,
@@ -458,7 +455,7 @@ class DGPDE {
         tk::Fields& Pnode,
         tk::Fields& U,
         const tk::Fields& P ) const override
-      { return data.nodalFieldOutput( t, V, rdof, nunk, esup, geoElem, Unode,
+      { return data.nodalFieldOutput( t, V, nunk, esup, geoElem, Unode,
         Pnode, U, P ); }
       std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,

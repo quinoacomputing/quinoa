@@ -1351,7 +1351,7 @@ DG::writeFields( CkCallback c )
     std::vector< std::vector< tk::real > > elemfields;
     std::vector< std::vector< tk::real > > nodefields;
     for (const auto& eq : g_dgpde) {
-      auto no = eq.nodalFieldOutput( d->T(), d->meshvol(), 1, m_ncoord, m_esup,
+      auto no = eq.nodalFieldOutput( d->T(), d->meshvol(), m_ncoord, m_esup,
           m_geoElem, m_Unode, m_Pnode, m_u, m_p );
       auto eo = eq.fieldOutput( d->T(), d->meshvol(), rdof, nielem, m_geoElem,
           m_u, m_p );

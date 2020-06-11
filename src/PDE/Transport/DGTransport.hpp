@@ -386,7 +386,6 @@ class Transport {
     nodalFieldOutput( tk::real,
       tk::real,
       std::size_t,
-      std::size_t,
       const std::map< std::size_t, std::vector< std::size_t > >&,
       const tk::Fields&,
       tk::Fields&,

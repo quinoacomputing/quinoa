@@ -796,7 +796,6 @@ class MultiMat {
     }
 
     //! Return nodal field output going to file
-    //! \param[in] rdof Total number of degrees of freedom
     //! \param[in] npoin Number of nodes
     //! \param[in] esup Elements surrounding points
     //! \param[in,out] Unode Nodal solution vector
@@ -807,7 +806,6 @@ class MultiMat {
     std::vector< std::vector< tk::real > >
     nodalFieldOutput( tk::real,
                  tk::real,
-                 std::size_t rdof,
                  std::size_t npoin,
                  const std::map< std::size_t, std::vector< std::size_t > >&
                    esup,
@@ -817,6 +815,7 @@ class MultiMat {
                  tk::Fields& U,
                  const tk::Fields& P ) const
     {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       // number of materials
       const auto nmat =
         g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
@@ -824,7 +823,8 @@ class MultiMat {
       tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
         Pnode);
 
-      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, rdof, U, P);
+      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, 1, Unode,
+        Pnode);
     }
 
     //! Return surface field output going to file
@@ -834,28 +834,6 @@ class MultiMat {
     {
       std::vector< std::vector< tk::real > > s; // punt for now
       return s;
-    }
-
-    //! Compute nodal field output going to file
-    //! \param[in] npoin Number of nodes in mesh chunk
-    //! \param[in] esup Elements surrounding points
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] P Vector of primitive quantities at recent time step
-    //! \param[in,out] Unode Solution vector at nodes
-    //! \param[in,out] Pnode Vector of primitive quantities at nodes
-    void
-    avgElemToNode( std::size_t npoin,
-                   const std::map< std::size_t, std::vector< std::size_t > >&
-                     esup,
-                   const tk::Fields& U,
-                   const tk::Fields& P,
-                   tk::Fields& Unode,
-                   tk::Fields& Pnode ) const
-    {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-
-      tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
-        Pnode);
     }
 
     //! Return names of integral variables to be output to diagnostics file
