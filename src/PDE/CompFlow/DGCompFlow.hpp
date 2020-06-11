@@ -582,7 +582,10 @@ class CompFlow {
       tk::real,
       std::size_t,
       std::size_t,
+      const std::map< std::size_t, std::vector< std::size_t > >&,
       const tk::Fields&,
+      tk::Fields&,
+      tk::Fields&,
       tk::Fields&,
       const tk::Fields& ) const
     {
@@ -596,28 +599,6 @@ class CompFlow {
     {
       std::vector< std::vector< tk::real > > s; // punt for now
       return s;
-    }
-
-    //! Compute nodal field output going to file
-    //! \param[in] npoin Number of nodes in mesh chunk
-    //! \param[in] esup Elements surrounding points
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] P Vector of primitive quantities at recent time step
-    //! \param[in,out] Unode Solution vector at nodes
-    //! \param[in,out] Pnode Vector of primitive quantities at nodes
-    void
-    avgElemToNode( std::size_t npoin,
-                   const std::map< std::size_t, std::vector< std::size_t > >&
-                     esup,
-                   const tk::Fields& U,
-                   const tk::Fields& P,
-                   tk::Fields& Unode,
-                   tk::Fields& Pnode ) const
-    {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-
-      tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
-        Pnode);
     }
 
     //! Return names of integral variables to be output to diagnostics file

@@ -234,25 +234,20 @@ class DGPDE {
       tk::real V,
       std::size_t rdof,
       std::size_t nunk,
+      const std::map< std::size_t, std::vector< std::size_t > >& esup,
       const tk::Fields& geoElem,
+      tk::Fields& Unode,
+      tk::Fields& Pnode,
       tk::Fields& U,
       const tk::Fields& P ) const
-    { return self->nodalFieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
+    { return self->nodalFieldOutput( t, V, rdof, nunk, esup, geoElem, Unode,
+      Pnode, U, P ); }
 
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
                 tk::Fields& U ) const
     { return self->surfOutput( bnd, U ); }
-
-    //! Public interface to returning nodal field output
-    void avgElemToNode( std::size_t npoin,
-      const std::map< std::size_t, std::vector< std::size_t > >& esup,
-      const tk::Fields& U,
-      const tk::Fields& P,
-      tk::Fields& Unode,
-      tk::Fields& Pnode ) const
-    { return self->avgElemToNode( npoin, esup, U, P, Unode, Pnode ); }
 
     //! Public interface to returning analytic solution
     std::vector< tk::real >
@@ -348,18 +343,14 @@ class DGPDE {
         tk::real,
         std::size_t,
         std::size_t,
+        const std::map< std::size_t, std::vector< std::size_t > >&,
         const tk::Fields&,
+        tk::Fields&,
+        tk::Fields&,
         tk::Fields&,
         const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
-        tk::Fields& ) const = 0;
-      virtual void avgElemToNode(
-        std::size_t,
-        const std::map< std::size_t, std::vector< std::size_t > >&,
-        const tk::Fields&,
-        const tk::Fields&,
-        tk::Fields&,
         tk::Fields& ) const = 0;
       virtual std::vector< tk::real > analyticSolution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
@@ -461,22 +452,18 @@ class DGPDE {
         tk::real V,
         std::size_t rdof,
         std::size_t nunk,
+        const std::map< std::size_t, std::vector< std::size_t > >& esup,
         const tk::Fields& geoElem,
+        tk::Fields& Unode,
+        tk::Fields& Pnode,
         tk::Fields& U,
         const tk::Fields& P ) const override
-      { return data.nodalFieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
+      { return data.nodalFieldOutput( t, V, rdof, nunk, esup, geoElem, Unode,
+        Pnode, U, P ); }
       std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
         tk::Fields& U ) const override
       { return data.surfOutput( bnd, U ); }
-      void avgElemToNode(
-        std::size_t npoin,
-        const std::map< std::size_t, std::vector< std::size_t > >& esup,
-        const tk::Fields& U,
-        const tk::Fields& P,
-        tk::Fields& Unode,
-        tk::Fields& Pnode ) const override
-      { return data.avgElemToNode( npoin, esup, U, P, Unode, Pnode ); }
       std::vector< tk::real >
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }

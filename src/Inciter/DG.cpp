@@ -1338,10 +1338,6 @@ DG::writeFields( CkCallback c )
     const auto& esuel = m_fd.Esuel();
     const auto nielem = esuel.size() / 4;
 
-    // get contributions to nodal-average from this chare
-    for (auto& eq : g_dgpde)
-      eq.avgElemToNode(m_ncoord, m_esup, m_u, m_p, m_Unode, m_Pnode);
-
     // Query fields names from all PDEs integrated
     std::vector< std::string > elemfieldnames, nodalfieldnames;
     for (const auto& eq : g_dgpde) {
@@ -1355,8 +1351,8 @@ DG::writeFields( CkCallback c )
     std::vector< std::vector< tk::real > > elemfields;
     std::vector< std::vector< tk::real > > nodefields;
     for (const auto& eq : g_dgpde) {
-      auto no = eq.nodalFieldOutput( d->T(), d->meshvol(), 1, m_ncoord,
-          m_geoElem, m_Unode, m_Pnode );
+      auto no = eq.nodalFieldOutput( d->T(), d->meshvol(), 1, m_ncoord, m_esup,
+          m_geoElem, m_Unode, m_Pnode, m_u, m_p );
       auto eo = eq.fieldOutput( d->T(), d->meshvol(), rdof, nielem, m_geoElem,
           m_u, m_p );
 

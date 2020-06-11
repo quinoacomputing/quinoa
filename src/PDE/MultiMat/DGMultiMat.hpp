@@ -797,7 +797,10 @@ class MultiMat {
 
     //! Return nodal field output going to file
     //! \param[in] rdof Total number of degrees of freedom
-    //! \param[in] nunk Number of unknowns
+    //! \param[in] npoin Number of nodes
+    //! \param[in] esup Elements surrounding points
+    //! \param[in,out] Unode Nodal solution vector
+    //! \param[in,out] Pnode Nodal vector of primitive quantities
     //! \param[in,out] U Nodal solution vector at recent time step
     //! \param[in] P Nodal vector of primitive quantities at recent time step
     //! \return Vector of vectors to be output to file
@@ -805,16 +808,23 @@ class MultiMat {
     nodalFieldOutput( tk::real,
                  tk::real,
                  std::size_t rdof,
-                 std::size_t nunk,
+                 std::size_t npoin,
+                 const std::map< std::size_t, std::vector< std::size_t > >&
+                   esup,
                  const tk::Fields&,
+                 tk::Fields& Unode,
+                 tk::Fields& Pnode,
                  tk::Fields& U,
                  const tk::Fields& P ) const
     {
       // number of materials
-      auto nmat =
+      const auto nmat =
         g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
 
-      return MultiMatFieldOutput(m_system, nmat, m_offset, nunk, rdof, U, P);
+      tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
+        Pnode);
+
+      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, rdof, U, P);
     }
 
     //! Return surface field output going to file

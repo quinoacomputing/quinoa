@@ -94,8 +94,8 @@ MultiMatFieldOutput(
   // material densities
   for (std::size_t k=0; k<nmat; ++k) {
     for (std::size_t i=0; i<nunk; ++i) {
-      out[nmat+k][i] = U(i, densityDofIdx(nmat, k, rdof, 0), offset)
-        /U(i, volfracDofIdx(nmat, k, rdof, 0), offset);
+      out[nmat+k][i] = U(i, densityDofIdx(nmat, k, rdof, 0), offset) /
+        std::max(1e-16, U(i, volfracDofIdx(nmat, k, rdof, 0), offset));
     }
   }
 
@@ -117,7 +117,7 @@ MultiMatFieldOutput(
     for (std::size_t i=0; i<nunk; ++i) {
       out[2*nmat+4+k][i] =
         P(i, pressureDofIdx(nmat, k, rdof, 0), offset) /
-        U(i, volfracDofIdx(nmat, k, rdof, 0), offset);
+        std::max(1e-16, U(i, volfracDofIdx(nmat, k, rdof, 0), offset));
     }
   }
 
@@ -132,7 +132,7 @@ MultiMatFieldOutput(
     for (std::size_t i=0; i<nunk; ++i) {
       out[3*nmat+5+k][i] =
       eos_soundspeed< tag::multimat >( 0,
-        U(i, densityDofIdx(nmat,k,rdof,0), offset),
+        std::max(1e-16, U(i, densityDofIdx(nmat,k,rdof,0), offset)),
         P(i, pressureDofIdx(nmat,k,rdof,0), offset),
         U(i, volfracDofIdx(nmat,k,rdof,0), offset), k );
     }
