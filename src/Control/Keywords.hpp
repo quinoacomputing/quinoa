@@ -4621,6 +4621,27 @@ struct shock_hebubble_info {
 using shock_hebubble =
   keyword< shock_hebubble_info, TAOCPP_PEGTL_STRING("shock_hebubble") >;
 
+struct underwater_ex_info {
+  using code = Code< T >;
+  static std::string name() { return "Underwater explosion problem"; }
+  static std::string shortDescription() { return
+    "Select the underwater explosion test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the underwater explosion test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material algorithm and its interface capturing capabilities in the
+    presence of strong shocks and large deformations.
+    Example: "problem underwater_ex". For more details, see
+    Chiapolino, A., Saurel, R., & Nkonga, B. (2017). Sharpening diffuse
+    interfaces with compressible fluids on unstructured meshes. Journal of
+    Computational Physics, 340, 389-417.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using underwater_ex =
+  keyword< underwater_ex_info, TAOCPP_PEGTL_STRING("underwater_ex") >;
+
 struct problem_info {
   using code = Code< t >;
   static std::string name() { return "Test problem"; }
