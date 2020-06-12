@@ -26,8 +26,8 @@
 namespace inciter {
 
 //! MultiMat system of PDEs problem: Underwater explosion problem
-//! \see Chiapolino, A., Saurel, R., & Nkonga, B. (2017). Sharpening diffuse         
-//!   interfaces with compressible fluids on unstructured meshes. Journal of      
+//! \see Chiapolino, A., Saurel, R., & Nkonga, B. (2017). Sharpening diffuse
+//!   interfaces with compressible fluids on unstructured meshes. Journal of
 //!   Computational Physics, 340, 389-417.
 class MultiMatProblemUnderwaterEx {
 
