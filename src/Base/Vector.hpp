@@ -13,11 +13,7 @@
 #define Vector_h
 
 #include <array>
-<<<<<<< HEAD
-#include <vector>
-=======
 #include <cmath>
->>>>>>> develop
 
 #include "Types.hpp"
 #include "Exception.hpp"
