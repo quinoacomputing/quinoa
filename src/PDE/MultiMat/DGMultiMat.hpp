@@ -129,14 +129,12 @@ class MultiMat {
     //!   reconstructed velocities.
     void updatePrimitives( const tk::Fields& unk,
                            const tk::Fields& L,
-                           const std::vector< std::size_t >& inpoel,
-                           const tk::UnsMesh::Coords& coord,
                            const tk::Fields& geoElem,
                            tk::Fields& prim,
                            std::size_t nielem ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto ndof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
@@ -174,7 +172,7 @@ class MultiMat {
 
           auto w = wgp[igp] * geoElem(e, 0, 0);
 
-          auto state = tk::eval_state( 3*nmat+3, 0, ndof, ndof, e, unk, B );
+          auto state = tk::eval_state( 3*nmat+3, 0, rdof, ndof, e, unk, B );
 
           // cell-average bulk density
           tk::real rhob(0.0);
@@ -184,14 +182,14 @@ class MultiMat {
           // cell-average velocity
           std::array< tk::real, 3 >
             vel{ state[momentumIdx(nmat, 0)]/rhob,
-                  state[momentumIdx(nmat, 1)]/rhob,
-                  state[momentumIdx(nmat, 2)]/rhob };
+                 state[momentumIdx(nmat, 1)]/rhob,
+                 state[momentumIdx(nmat, 2)]/rhob };
 
           std::vector< tk::real > pri(nmat + 3, 0.0);
           for(std::size_t imat = 0; imat < nmat; imat++)
           {
             auto alphamat = state[volfracIdx(nmat, imat)];
-            auto arhomat = state[densityIdx(nmat, imat)];
+            auto arhomat  = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
             pri[imat] = eos_pressure< tag::multimat >( m_system, arhomat, vel[0], vel[1],
               vel[2], arhoemat, alphamat, imat );
@@ -208,7 +206,7 @@ class MultiMat {
             if(ndof > 1)
             {
               for(std::size_t idir = 0; idir < 3; idir++)
-                R[mark+idir] += w * pri[k] * B[idir+1];
+                R[mark+idir+1] += w * pri[k] * B[idir+1];
             }
           }
         }
@@ -221,7 +219,7 @@ class MultiMat {
           if(ndof > 1)
           {
             for(std::size_t idir = 0; idir < 3; idir++)
-              prim(e, rmark+idir+1, 0) = R[mark] / L(e, mark+idir+1, 0);
+              prim(e, rmark+idir+1, 0) = R[mark+idir+1] / L(e, mark+idir+1, 0);
           }
         }
       }

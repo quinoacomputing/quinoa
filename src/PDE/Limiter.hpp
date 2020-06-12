@@ -118,6 +118,16 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
                                     std::vector< tk::real >& phic,
                                     std::vector< tk::real >& phip );
 
+void MaxPreservingLimiting(
+  std::size_t nmat,
+  ncomp_t offset,
+  std::size_t ndof,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U,
+  std::vector< tk::real >& phic );
+
 } // inciter::
 
 #endif // Limiter_h

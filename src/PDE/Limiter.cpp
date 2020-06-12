@@ -252,6 +252,9 @@ SuperbeeMultiMat_P1(
       auto phip = SuperbeeFunction(P, esuel, inpoel, coord, e, ndof, rdof,
                     dof_el, offset, nprim, beta_lim);
 
+      if(ndof > 1)
+        MaxPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
+
       consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
 
       // apply limiter function
@@ -853,6 +856,112 @@ void consistentMultiMatLimiting_P1(
     for (std::size_t k=0; k<nmat; ++k)
       phic[volfracIdx(nmat, k)] = phi_al;
   }
+}
+
+void MaxPreservingLimiting(
+  std::size_t nmat,
+  ncomp_t offset,
+  std::size_t ndof,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U,
+  std::vector< tk::real >& phic )
+// *****************************************************************************
+//  Max preserving limiter modifications for P1 dofs
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] offset Index for equation system
+//! \param[in] ndof Total number of reconstructed dofs
+//! \param[in] e Element being checked for consistency
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in,out] U Second-order solution vector which gets modified near
+//!   material interfaces for consistency
+//! \param[in,out] phic Vector of limiter functions for the conserved quantities
+// *****************************************************************************
+{
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  // Extract the element coordinates
+    std::array< std::array< tk::real, 3>, 4 > coordel {{
+      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+  // Compute the determinant of Jacobian matrix
+    auto detT =
+      tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+  // Extract the node index of local faces
+    std::array< std::array< std::size_t, 3>, 4 > nodefa {{
+      {{ inpoel[4*e  ], inpoel[4*e+1], inpoel[4*e+2] }},
+      {{ inpoel[4*e+1], inpoel[4*e+2], inpoel[4*e+3] }},
+      {{ inpoel[4*e+2], inpoel[4*e+3], inpoel[4*e  ] }},
+      {{ inpoel[4*e+3], inpoel[4*e  ], inpoel[4*e+1] }} }};
+
+  std::vector< tk::real > phi_vol(nmat, 1.0);
+
+  // loop over all faces of the element e
+  for (std::size_t lf=0; lf<4; ++lf)
+  {
+    // Extract the face coordinates
+    std::array< std::array< tk::real, 3>, 3 > coordfa {{
+      {{ cx[ nodefa[lf][0] ], cy[ nodefa[lf][0] ], cz[ nodefa[lf][0] ] }},
+      {{ cx[ nodefa[lf][1] ], cy[ nodefa[lf][1] ], cz[ nodefa[lf][1] ] }},
+      {{ cx[ nodefa[lf][2] ], cy[ nodefa[lf][2] ], cz[ nodefa[lf][2] ] }} }};
+
+    auto ng = tk::NGfa(ndof);
+
+    // arrays for quadrature points
+    std::array< std::vector< tk::real >, 2 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    wgp.resize( ng );
+
+    // get quadrature point weights and coordinates for triangle
+    tk::GaussQuadratureTri( ng, coordgp, wgp );
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      // Compute the coordinates of quadrature point at physical domain
+      auto gp = tk::eval_gp( igp, coordfa, coordgp );
+
+      //Compute the basis functions
+      auto B = tk::eval_basis( ndof,
+            tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+
+      auto state = eval_state( U.nprop()/ndof, offset, ndof, ndof, e, U, B );
+
+      for(std::size_t imat = 0; imat < nmat; imat++)
+      {
+        tk::real phi(1.0);
+        auto al = state[volfracIdx(nmat, imat)];
+        if(al > 1.0)
+        {
+          phi = fabs( (1.0 - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
+                    / (al  - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset)) );
+        }
+        else if(al < 1e-14)
+        {
+          phi = fabs( (1e-14 - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
+                    / (al    - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset)) );
+        }
+
+        phi_vol[imat] = std::min( phi_vol[imat], phi );
+      }
+    }
+  }
+
+  for(std::size_t imat = 0; imat < nmat; imat++)
+    phic[imat] = phi_vol[imat] * phic[imat];
 }
 
 } // inciter::

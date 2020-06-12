@@ -188,6 +188,11 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
             vriem[idir] += vriempoly[e][mark+k] * gp[k-1];
         }
       }
+      //if(e == 1000)
+      //  std::cout << "vriem = " << vriem[0] << "\t" << vriem[1] << "\t" << vriem[2] << std::endl;
+      //vriem[0] = std::sqrt(1);
+      //vriem[1] = std::sqrt(1);
+      //vriem[2] = 0;
 
       update_rhs_ncn( ncomp, offset, nmat, ndof, ndofel[e], wt, e, ugp, B, dBdx,
                       riemannDeriv, vriem, ncf, R );
@@ -455,6 +460,13 @@ void solvevriem( const std::size_t nelem,
                  const std::vector< std::vector< tk::real > >& vriem,
                  const std::vector< std::vector< tk::real > >& xcoord,
                  std::vector< std::vector< tk::real > >& vriempoly )
+// *****************************************************************************
+//  Solve the reconstruct velocity used for volume fraction equation
+//! \param[in] nelem Numer of elements
+//! \param[in,out] vriem Vector of the riemann velocity
+//! \param[in,out] xcoord Vector of the coordinates of riemann velocity data
+//! \param[in,out] vriempoly Vector of velocity polynomial solution 
+// *****************************************************************************
 {
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -517,6 +529,13 @@ void LU( const std::size_t n,
          const std::vector< std::vector< tk::real > >& A,
          const std::vector< tk::real >& b,
          std::vector< tk::real >& x )
+// *****************************************************************************
+//  Solve a nxn system of equations using LU method
+//!  \param[in] n Dimension of the linear system
+//!  \param[in] A nxn lhs matrix
+//!  \param[in] b nx1 rhs matrix
+//!  \param[in,out] x Vector of solutions
+// *****************************************************************************
 {
   std::vector< std::vector< tk::real > >L(n, std::vector<tk::real>(n,0.0));
   auto U = A;

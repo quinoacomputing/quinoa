@@ -88,6 +88,7 @@ update_rhs_pncn(
   std::vector< tk::real >& ncf,
   Fields& R );
 
+//! Solve the reconstruct velocity used for volume fraction equation
 void solvevriem( const std::size_t nelem,
                  const std::vector< std::vector< tk::real > >& vriem,
                  const std::vector< std::vector< tk::real > >& xcoord,

@@ -119,8 +119,6 @@ class Transport {
     //!   quantities, which are currently unused for transport.
     void updatePrimitives( const tk::Fields&,
                            const tk::Fields&,
-                           const std::vector< std::size_t >&,
-                           const tk::UnsMesh::Coords&,
                            const tk::Fields&,
                            tk::Fields&,
                            std::size_t ) const {}

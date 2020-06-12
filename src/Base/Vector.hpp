@@ -13,6 +13,7 @@
 #define Vector_h
 
 #include <array>
+#include <vector>
 
 #include "Types.hpp"
 
@@ -88,6 +89,11 @@ std::array < tk::real, 3 >
 cramer( const std::array< std::array< tk::real, 3 >, 3>& a,
         const std::array< tk::real, 3 >& b );
 
+//! Solve a nxn system of equations using LU method
+//void LU( const std::size_t n,
+//         const std::vector< std::vector< tk::real > >& A,
+//         const std::vector< tk::real >& b,
+//         std::vector< tk::real >& x );
 } // tk::
 
 #endif // Vector_h
