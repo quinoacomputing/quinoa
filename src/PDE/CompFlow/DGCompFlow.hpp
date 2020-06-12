@@ -548,6 +548,11 @@ class CompFlow {
     std::vector< std::string > fieldNames() const
     { return m_problem.fieldNames( m_ncomp ); }
 
+    //! Return field names to be output to file
+    //! \return Vector of strings labelling fields output in file
+    std::vector< std::string > nodalFieldNames() const
+    { return {}; }
+
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
@@ -558,6 +563,7 @@ class CompFlow {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  tk::real V,
+                 std::size_t,
                  std::size_t nunk,
                  const tk::Fields& geoElem,
                  tk::Fields& U,
@@ -570,6 +576,21 @@ class CompFlow {
                                     geoElem.extract(0,0), coord, U );
     }
 
+    //! Nodal field output setup will go here
+    std::vector< std::vector< tk::real > >
+    nodalFieldOutput( tk::real,
+      tk::real,
+      std::size_t,
+      const std::map< std::size_t, std::vector< std::size_t > >&,
+      const tk::Fields&,
+      tk::Fields&,
+      tk::Fields&,
+      tk::Fields&,
+      const tk::Fields& ) const
+    {
+      return {};
+    }
+
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >&,
@@ -577,97 +598,6 @@ class CompFlow {
     {
       std::vector< std::vector< tk::real > > s; // punt for now
       return s;
-    }
-
-    //! Return nodal field output going to file
-    std::vector< std::vector< tk::real > >
-    avgElemToNode( const std::vector< std::size_t >& inpoel,
-                   const tk::UnsMesh::Coords& coord,
-                   const tk::Fields& /*geoElem*/,
-                   const tk::Fields& U ) const
-    {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
-
-      std::vector< tk::real > count(cx.size(), 0);
-      std::vector< std::vector< tk::real > >
-        out( 6, std::vector< tk::real >( cx.size(), 0.0 ) );
-
-      for (std::size_t e=0; e<inpoel.size()/4 ; ++e)
-      {
-        // nodal coordinates of the left element
-        std::array< std::array< tk::real, 3 >, 4 >
-          pi{{ {{ cx[ inpoel[4*e] ],
-                 cy[ inpoel[4*e] ],
-                 cz[ inpoel[4*e] ] }},
-              {{ cx[ inpoel[4*e+1] ],
-                 cy[ inpoel[4*e+1] ],
-                 cz[ inpoel[4*e+1] ] }},
-              {{ cx[ inpoel[4*e+2] ],
-                 cy[ inpoel[4*e+2] ],
-                 cz[ inpoel[4*e+2] ] }},
-              {{ cx[ inpoel[4*e+3] ],
-                 cy[ inpoel[4*e+3] ],
-                 cz[ inpoel[4*e+3] ] }} }};
-        auto detT = tk::Jacobian( pi[0], pi[1], pi[2], pi[3] );
-
-        for (std::size_t i=0; i<4; ++i)
-        {
-          tk::real detT_gp;
-          // transformation of the physical coordinates of the quadrature point
-          // to reference space for the left element to be able to compute
-          // basis functions on the left element.
-          detT_gp = tk::Jacobian( pi[0], pi[i], pi[2], pi[3] );
-          auto xi = detT_gp / detT;
-          detT_gp = tk::Jacobian( pi[0], pi[1], pi[i], pi[3] );
-          auto eta = detT_gp / detT;
-          detT_gp = tk::Jacobian( pi[0], pi[1], pi[2], pi[i] );
-          auto zeta = detT_gp / detT;
-
-          auto B2 = 2.0 * xi + eta + zeta - 1.0;
-          auto B3 = 3.0 * eta + zeta - 1.0;
-          auto B4 = 4.0 * zeta - 1.0;
-
-          std::vector< tk::real > ugp(5,0);
-
-          for (ncomp_t c=0; c<5; ++c)
-          {
-            if (rdof == 1) {
-              ugp[c] =  U(e, c, m_offset);
-            } else {
-              auto mark = c*rdof;
-              ugp[c] =  U(e, mark,   m_offset)
-                      + U(e, mark+1, m_offset) * B2
-                      + U(e, mark+2, m_offset) * B3
-                      + U(e, mark+3, m_offset) * B4;
-            }
-          }
-
-          auto u = ugp[1] / ugp[0];
-          auto v = ugp[2] / ugp[0];
-          auto w = ugp[3] / ugp[0];
-          auto p =
-            eos_pressure< tag::compflow >( m_system, ugp[0], u, v, w, ugp[4] );
-
-          out[0][ inpoel[4*e+i] ] += ugp[0];
-          out[1][ inpoel[4*e+i] ] += u;
-          out[2][ inpoel[4*e+i] ] += v;
-          out[3][ inpoel[4*e+i] ] += w;
-          out[4][ inpoel[4*e+i] ] += ugp[4]/ugp[0];
-          out[5][ inpoel[4*e+i] ] += p;
-          count[ inpoel[4*e+i] ] += 1.0;
-        }
-      }
-
-      // average
-      for (std::size_t i=0; i<cx.size(); ++i)
-        for (std::size_t c=0; c<6; ++c)
-          out[c][i] /= count[i];
-
-      return out;
     }
 
     //! Return names of integral variables to be output to diagnostics file

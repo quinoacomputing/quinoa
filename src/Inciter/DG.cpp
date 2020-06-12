@@ -66,6 +66,10 @@ DG::DG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::discr, tag::rdof >()*
          std::accumulate( begin(g_dgpde), end(g_dgpde), 0u,
            [](std::size_t s, const DGPDE& eq){ return s + eq.nprim(); } ) ),
+  m_Unode(m_disc[thisIndex].ckLocal()->Gid().size(),
+    m_u.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
+  m_Pnode(m_disc[thisIndex].ckLocal()->Gid().size(),
+    m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
   m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), Disc()->Coord()) ),
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(),
@@ -1314,7 +1318,7 @@ DG::comsol( int fromch,
 }
 
 void
-DG::writeFields( CkCallback c ) const
+DG::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] c Function to continue with after the write
@@ -1326,54 +1330,50 @@ DG::writeFields( CkCallback c ) const
 
   } else {
 
+    // Copy mesh from Discretization object
     auto d = Disc();
-
-    const auto& esuel = m_fd.Esuel();
-
-    // Copy mesh form Discretization object and chop off ghosts for dump
     auto inpoel = d->Inpoel();
-    inpoel.resize( esuel.size() );
     auto coord = d->Coord();
-    for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
+    const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+    const auto& esuel = m_fd.Esuel();
+    const auto nielem = esuel.size() / 4;
 
     // Query fields names from all PDEs integrated
-    std::vector< std::string > elemfieldnames;
+    std::vector< std::string > elemfieldnames, nodalfieldnames;
     for (const auto& eq : g_dgpde) {
       auto n = eq.fieldNames();
       elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
+      auto nn = eq.nodalFieldNames();
+      nodalfieldnames.insert( end(nodalfieldnames), begin(nn), end(nn) );
     }
 
-    auto nielem = esuel.size() / 4;
-
-    // Collect element field solution
+    // Collect element and nodal field solution
     std::vector< std::vector< tk::real > > elemfields;
-    auto u = m_u;
+    std::vector< std::vector< tk::real > > nodefields;
     for (const auto& eq : g_dgpde) {
-      auto o =
-        eq.fieldOutput( d->T(), d->meshvol(), nielem, m_geoElem, u, m_p );
+      auto no = eq.nodalFieldOutput( d->T(), d->meshvol(), m_ncoord, m_esup,
+          m_geoElem, m_Unode, m_Pnode, m_u, m_p );
+      auto eo = eq.fieldOutput( d->T(), d->meshvol(), rdof, nielem, m_geoElem,
+          m_u, m_p );
 
-      // cut off ghost elements
-      for (auto& f : o) f.resize( nielem );
-      elemfields.insert( end(elemfields), begin(o), end(o) );
+      // cut off ghost elements from element output
+      for (auto& f : eo) f.resize( nielem );
+      elemfields.insert( end(elemfields), begin(eo), end(eo) );
+      nodefields.insert( end(nodefields), begin(no), end(no) );
     }
+
+    // chop off ghosts from mesh for dump
+    inpoel.resize( esuel.size() );
+    for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
 
     // Add adaptive indicator array to element-centered field output
     std::vector<tk::real> ndof( begin(m_ndof), end(m_ndof) );
     ndof.resize( nielem );  // cut off ghosts
     elemfields.push_back( ndof );
 
-    // // Collect node field solution
-    // std::vector< std::vector< tk::real > > nodefields;
-    // for (const auto& eq : g_dgpde) {
-    //   auto fields =
-    //     eq.avgElemToNode( d->Inpoel(), d->Coord(), m_geoElem, m_u );
-    //   nodefields.insert( end(nodefields), begin(fields), end(fields) );
-    // }
-
     // Output chare mesh and fields metadata to file
     d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), elemfieldnames,
-              {}, {}, elemfields, {}, {}, c );
-
+              nodalfieldnames, {}, elemfields, nodefields, {}, c );
   }
 }
 
