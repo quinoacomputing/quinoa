@@ -135,7 +135,7 @@ class DiagCG : public CBase_DiagCG {
     void update( const tk::Fields& a, tk::Fields&& dul );
 
     //! Optionally refine/derefine mesh
-    void refine();
+    void refine( tk::real l2res );
 
     //! Receive new mesh from refiner
     void resizePostAMR(
@@ -194,6 +194,8 @@ class DiagCG : public CBase_DiagCG {
       p | m_bnormc;
       p | m_diag;
       p | m_boxnodes;
+      p | m_dtp;
+      p | m_tp;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -265,6 +267,12 @@ class DiagCG : public CBase_DiagCG {
     NodeDiagnostics m_diag;
     //! Mesh node ids at which user-defined box ICs are defined
     std::vector< std::size_t > m_boxnodes;
+    //! Time step size for each mesh node
+    std::vector< tk::real > m_dtp;
+    //! Physical time for each mesh node
+    std::vector< tk::real > m_tp;
+    //! True in the last time step
+    int m_finished;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

@@ -67,6 +67,7 @@ tk::real eos_density( ncomp_t system,
 //!   the calling code
 //! \return Material partial pressure (alpha_k * p_k) calculated using the
 //!   stiffened-gas EoS
+#pragma omp declare simd
 template< class Eq >
 tk::real eos_pressure( ncomp_t system,
                        tk::real arho,
@@ -78,10 +79,8 @@ tk::real eos_pressure( ncomp_t system,
                        std::size_t imat=0 )
 {
   // query input deck to get gamma, p_c
-  auto g =
-    g_inputdeck.get< tag::param, Eq, tag::gamma >()[ system ][imat];
-  auto p_c =
-    g_inputdeck.get< tag::param, Eq, tag::pstiff >()[ system ][imat];
+  auto g = g_inputdeck.get< tag::param, Eq, tag::gamma >()[ system ][imat];
+  auto p_c = g_inputdeck.get< tag::param, Eq, tag::pstiff >()[ system ][imat];
 
   tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c)
                           * (g-1.0) - alpha*p_c;

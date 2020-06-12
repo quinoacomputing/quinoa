@@ -18,7 +18,8 @@ namespace inciter {
 
 //! History point data
 using HistData = tk::TaggedTuple< brigand::list<
-    tag::elem,  std::size_t               //!< Host elem id
+    tag::id,    std::string               //!< Point identifier
+  , tag::elem,  std::size_t               //!< Host elem id
   , tag::coord, std::array< tk::real, 3 > //!< Point coordinates
   , tag::fn,    std::array< tk::real, 4 > //!< Shapefunctions evaluated at point
 > >;

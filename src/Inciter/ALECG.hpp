@@ -103,8 +103,8 @@ class ALECG : public CBase_ALECG {
     //! Receive total box IC volume
     void boxvol( tk::real v );
 
-    // Initially compute left hand side diagonal matrix
-    void init();
+    // Start time stepping
+    void start();
 
     //! Advance equations to next time step
     void advance( tk::real newdt );
@@ -138,7 +138,7 @@ class ALECG : public CBase_ALECG {
     void update( const tk::Fields& a );
 
     //! Optionally refine/derefine mesh
-    void refine();
+    void refine( tk::real l2res );
 
     //! Receive new mesh from refiner
     void resizePostAMR(
@@ -185,7 +185,10 @@ class ALECG : public CBase_ALECG {
       p | m_bface;
       p | m_triinpoel;
       p | m_bndel;
+      p | m_dfnorm;
+      p | m_dfnormc;
       p | m_dfn;
+      p | m_esup;
       p | m_psup;
       p | m_u;
       p | m_un;
@@ -199,8 +202,14 @@ class ALECG : public CBase_ALECG {
       p | m_diag;
       p | m_bnorm;
       p | m_bnormc;
+      p | m_symbcnode;
       p | m_stage;
       p | m_boxnodes;
+      p | m_edgenode;
+      p | m_edgeid;
+      p | m_dtp;
+      p | m_tp;
+      p | m_finished;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -243,6 +252,8 @@ class ALECG : public CBase_ALECG {
                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnormc;
     //! Streamable dual-face normals
     std::vector< tk::real > m_dfn;
+    //! El;ements surrounding points
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_esup;
     //! Points surrounding points
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector at mesh nodes
@@ -283,16 +294,35 @@ class ALECG : public CBase_ALECG {
     //! \details Key: global node id, value: normals (first 3 components),
     //!   inverse distance squared (4th component)
     std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnormc;
+    //! Vector with 1 at symmetry BC nodes
+    std::vector< int > m_symbcnode;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Mesh node ids at which user-defined box ICs are defined
     std::vector< std::size_t > m_boxnodes;
+    //! Local node IDs of edges
+    std::vector< std::size_t > m_edgenode;
+    //! Edge ids in the order of access
+    std::vector< std::size_t > m_edgeid;
+    //! Time step size for each mesh node
+    std::vector< tk::real > m_dtp;
+    //! Physical time for each mesh node
+    std::vector< tk::real > m_tp;
+    //! True in the last time step
+    int m_finished;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
+
+    //! Compute normal of dual-mesh associated to edge
+    std::array< tk::real, 3 >
+    edfnorm( const tk::UnsMesh::Edge& edge,
+             const std::unordered_map< tk::UnsMesh::Edge,
+                     std::vector< std::size_t >,
+                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
 
     //! Find elements along our mesh chunk boundary
     std::vector< std::size_t > bndel() const;

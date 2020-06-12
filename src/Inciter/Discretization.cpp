@@ -119,15 +119,15 @@ Discretization::Discretization(
 
   // Find host elements of user-specified points where time histories are
   // saved, and save the shape functions evaluated at the point locations
-  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
-  if (!hist_points.empty()) {
-    for (const auto& p : hist_points) {
-      std::array< tk::real, 4 > N;
-      for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
-        if (tk::intet( m_coord, m_inpoel, p, e, N )) {
-          m_histdata.push_back( HistData{{ e, {p[0],p[1],p[2]}, N }} );
-          break;
-        }
+  const auto& pt = g_inputdeck.get< tag::history, tag::point >();
+  const auto& id = g_inputdeck.get< tag::history, tag::id >();
+  for (std::size_t p=0; p<pt.size(); ++p) {
+    std::array< tk::real, 4 > N;
+    const auto& l = pt[p];
+    for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+      if (tk::intet( m_coord, m_inpoel, l, e, N )) {
+        m_histdata.push_back( HistData{{ id[p], e, {l[0],l[1],l[2]}, N }} );
+        break;
       }
     }
   }
@@ -163,11 +163,11 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
   m_nodeCommMap = nodeCommMap;        // update node communication map
 
   // Generate local ids for new chare boundary global ids
-  std::size_t lid = m_bid.size();
+  std::size_t bid = m_bid.size();
   for (const auto& [ neighborchare, sharednodes ] : m_nodeCommMap)
     for (auto g : sharednodes)
       if (m_bid.find( g ) == end(m_bid))
-        m_bid[ g ] = lid++;
+        m_bid[ g ] = bid++;
 
   // Clear receive buffer that will be used for collecting nodal volumes
   m_volc.clear();
@@ -611,11 +611,12 @@ Discretization::grindZero()
   }
 }
 
-void
+bool
 Discretization::restarted( int nrestart )
 // *****************************************************************************
 //  Detect if just returned from a checkpoint and if so, zero timers
 //! \param[in] nrestart Number of times restarted
+//! \return True if restart detected
 // *****************************************************************************
 {
   // Detect if just restarted from checkpoint:
@@ -633,21 +634,24 @@ Discretization::restarted( int nrestart )
     // Zero grind-timer
     grindZero();
   }
+
+  return restarted;
 }
 
 std::string
-Discretization::histfilename( const std::array< tk::real, 3 >& p,
+Discretization::histfilename( const std::string& id,
                               kw::precision::info::expect::type precision )
 // *****************************************************************************
 //  Construct history output filename
+//! \param[in] id History point id
+//! \param[in] precision Floating point precision to use for output
 //! \return History file name
 // *****************************************************************************
 {
   auto of = g_inputdeck.get< tag::cmd, tag::io, tag::output >();
   std::stringstream ss;
 
-  ss << std::setprecision( static_cast<int>(precision) )
-     << of << ".hist.{" << p[0] << '_' << p[1] << '_' << p[2] << '}';
+  ss << std::setprecision(static_cast<int>(precision)) << of << ".hist." << id;
 
   return ss.str();
 }
@@ -661,7 +665,7 @@ Discretization::histheader( std::vector< std::string >&& names )
 {
   for (const auto& h : m_histdata) {
     auto prec = g_inputdeck.get< tag::prec, tag::history >();
-    tk::DiagWriter hw( histfilename( h.get< tag::coord >(), prec ),
+    tk::DiagWriter hw( histfilename( h.get< tag::id >(), prec ),
                        g_inputdeck.get< tag::flformat, tag::history >(),
                        prec );
     hw.header( names );
@@ -680,7 +684,7 @@ Discretization::history( std::vector< std::vector< tk::real > >&& data )
   std::size_t i = 0;
   for (const auto& h : m_histdata) {
     auto prec = g_inputdeck.get< tag::prec, tag::history >();
-    tk::DiagWriter hw( histfilename( h.get< tag::coord >(), prec ),
+    tk::DiagWriter hw( histfilename( h.get< tag::id >(), prec ),
                        g_inputdeck.get< tag::flformat, tag::history >(),
                        prec,
                        std::ios_base::app );
@@ -718,12 +722,16 @@ Discretization::status()
     const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
     const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
+    const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
     const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
 
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
     m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
  
+    // Zero ETA if marching to steady state
+    if (steady) eta = tk::Timer::Watch();
+
     const auto& def =
       g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
     tk::Print print( g_inputdeck.get< tag::cmd >().logname( def, m_nrestart ),

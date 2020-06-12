@@ -4239,6 +4239,37 @@ struct operator_reorder_info {
 using operator_reorder =
   keyword< operator_reorder_info, TAOCPP_PEGTL_STRING("operator_reorder") >;
 
+struct steady_state_info {
+  static std::string name() { return "steady_state"; }
+  static std::string shortDescription() { return "March to steady state"; }
+  static std::string longDescription() { return
+    R"(This keyword is used indicate that local time stepping should be used
+       towards a stationary solution.)"; }
+  struct expect {
+    using type = bool;
+    static std::string choices() { return "true | false"; }
+    static std::string description() { return "string"; }
+  };
+};
+using steady_state =
+  keyword< steady_state_info, TAOCPP_PEGTL_STRING("steady_state") >;
+
+struct residual_info {
+  static std::string name() { return "residual"; }
+  static std::string shortDescription() { return
+    "Set the convergence criterion for the residual to reach"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a convergence criterion for, e.g., local
+    time stepping marching to steady state, below which the simulation is
+    considered converged.)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 1.0e-14;
+    static std::string description() { return "real"; }
+  };
+};
+using residual = keyword< residual_info, TAOCPP_PEGTL_STRING("residual") >;
+
 struct group_info {
   static std::string name() { return "group"; }
   static std::string shortDescription() { return
@@ -4614,6 +4645,25 @@ struct gas_impact_info {
 };
 using gas_impact =
   keyword< gas_impact_info, TAOCPP_PEGTL_STRING("gas_impact") >;
+
+struct shock_hebubble_info {
+  using code = Code< T >;
+  static std::string name() { return "Shock He-bubble problem"; }
+  static std::string shortDescription() { return
+    "Select the shock He-bubble test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the shock He-bubble test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material algorithm and its shock-interface interaction
+    capabilities. Example: "problem shock_hebubble". For more details, see
+    Quirk, J. J., & Karni, S. (1996). On the dynamics of a shock–bubble
+    interaction. Journal of Fluid Mechanics, 318, 129-163.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using shock_hebubble =
+  keyword< shock_hebubble_info, TAOCPP_PEGTL_STRING("shock_hebubble") >;
 
 struct problem_info {
   using code = Code< t >;

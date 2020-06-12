@@ -1,19 +1,19 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMat/Problem/SodShocktube.cpp
+  \file      src/PDE/MultiMat/Problem/ShockHeBubble.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Problem configuration for the compressible flow equations
+  \brief     Problem configuration for the multi-material flow equations
   \details   This file defines a Problem policy class for the multi-material
-    compressible flow equations, defined in PDE/MultiMat/MultiMat.hpp. See
+    compressible flow equations, defined in PDE/MultiMat/DGMultiMat.hpp. See
     PDE/MultiMat/Problem.hpp for general requirements on Problem policy classes
     for MultiMat.
 */
 // *****************************************************************************
 
-#include "SodShocktube.hpp"
+#include "ShockHeBubble.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
@@ -24,28 +24,29 @@ extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
-using inciter::MultiMatProblemSodShocktube;
+using inciter::MultiMatProblemShockHeBubble;
 
 tk::SolutionFn::result_type
-MultiMatProblemSodShocktube::solution( ncomp_t system,
-                                       ncomp_t ncomp,
-                                       tk::real x,
-                                       tk::real,
-                                       tk::real,
-                                       tk::real,
-                                       int& )
+MultiMatProblemShockHeBubble::solution( ncomp_t system,
+  ncomp_t ncomp,
+  tk::real x,
+  tk::real y,
+  tk::real z,
+  tk::real,
+  int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which compressible
+//! \param[in] system Equation system index, i.e., which multi-material
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
+//! \param[in] z Z coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn
-//! \details This function only initializes the Sod shock tube problem, but does
-//!   not actually give the analytical solution at time greater than 0. The
-//!   analytical solution would require an exact Riemann solver, which has not
-//!   been implemented yet.
+//! \details This function only initializes the shock He-bubble interaction
+//!   problem, but does not actually give the analytical solution at time
+//!   greater than 0.
 // *****************************************************************************
 {
   // see also Control/Inciter/InputDeck/Grammar.hpp
@@ -54,49 +55,62 @@ MultiMatProblemSodShocktube::solution( ncomp_t system,
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
-  std::vector< tk::real > s( ncomp, 0.0 );
-  tk::real r, p, u, v, w;
+  std::vector< tk::real > s(ncomp, 0.0), r(nmat, 0.0);
+  tk::real p, u, v, w, temp;
   auto alphamin = 1.0e-12;
 
-  if (x<0.5) {
-    // volume-fraction
-    s[volfracIdx(nmat, 0)] = 1.0-alphamin;
-    s[volfracIdx(nmat, 1)] = alphamin;
-    // density
-    r = 1.0;
-    // pressure
-    p = 1.0;
-    // velocity
-    u = 0.0;
-    v = 0.0;
-    w = 0.0;
-  }
-  else {
+  // pre-shock state
+  s[volfracIdx(nmat, 0)] = alphamin;
+  s[volfracIdx(nmat, 1)] = 1.0-alphamin;
+  p = 1.0e5;
+  u = 0.0;
+  v = 0.0;
+  w = 0.0;
+  temp = 248.88;
+
+  // post-shock state
+  if (x >= 0.2125) {
     // volume-fraction
     s[volfracIdx(nmat, 0)] = alphamin;
     s[volfracIdx(nmat, 1)] = 1.0-alphamin;
-    // density
-    r = 0.125;
     // pressure
-    p = 0.1;
+    p = 1.5698e5;
     // velocity
-    u = 0.0;
-    v = 0.0;
-    w = 0.0;
+    u = -113.5;
+    // temperature
+    temp = 283.86;
   }
-  s[densityIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*r;
-  s[densityIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*r;
-  // total specific energy
-  s[energyIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*
-                            eos_totalenergy< eq >( system, r, u, v, w, p, 0 );
-  s[energyIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*
-                            eos_totalenergy< eq >( system, r, u, v, w, p, 1 );
+
+  // bubble
+  auto radb = std::sqrt((x-0.1725)*(x-0.1725) + y*y + z*z);
+  if (radb <= 0.025) {
+    // volume-fraction
+    s[volfracIdx(nmat, 0)] = 1.0-alphamin;
+    s[volfracIdx(nmat, 1)] = alphamin;
+  }
+
+  auto rb(0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    // densities
+    r[k] = eos_density< eq >( system, p, temp, k );
+    // partial density
+    s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)]*r[k];
+    // total specific energy
+    s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]*
+      eos_totalenergy< eq >( system, r[k], u, v, w, p, k );
+    rb += s[densityIdx(nmat, k)];
+  }
+
+  s[momentumIdx(nmat, 0)] = rb * u;
+  s[momentumIdx(nmat, 1)] = rb * v;
+  s[momentumIdx(nmat, 2)] = rb * w;
 
   return s;
 }
 
 std::vector< std::string >
-MultiMatProblemSodShocktube::names( ncomp_t )
+MultiMatProblemShockHeBubble::names( ncomp_t )
 // *****************************************************************************
 //  Return names of integral variables to be output to diagnostics file
 //! \return Vector of strings labelling integral variables output

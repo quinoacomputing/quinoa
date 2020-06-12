@@ -41,6 +41,7 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
+#include "Problem/FieldOutput.hpp"
 
 namespace inciter {
 
@@ -595,10 +596,6 @@ class MultiMat {
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, vriem, xcoord,
                    riemannDeriv );
 
-      // compute source term integrals
-      tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, nelem, inpoel, coord,
-                  geoElem, Problem::src, ndofel, R );
-
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_system, m_ncomp, m_offset, ndof, nelem, inpoel, coord,
@@ -820,28 +817,75 @@ class MultiMat {
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > fieldNames() const
-    { return Problem::fieldNames( m_ncomp ); }
+    {
+      auto nmat =
+        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
+
+      return MultiMatFieldNames(nmat);
+    }
+
+    //! Return field names to be output to file
+    //! \return Vector of strings labelling fields output in file
+    std::vector< std::string > nodalFieldNames() const
+    {
+      auto nmat =
+        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
+
+      return MultiMatFieldNames(nmat);
+    }
 
     //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] geoElem Element geometry array
+    //! \param[in] rdof Total number of degrees of freedom
+    //! \param[in] nunk Number of unknowns
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
+    fieldOutput( tk::real,
+                 tk::real,
+                 std::size_t rdof,
                  std::size_t nunk,
-                 const tk::Fields& geoElem,
+                 const tk::Fields&,
                  tk::Fields& U,
                  const tk::Fields& P ) const
     {
-      std::array< std::vector< tk::real >, 3 > coord{
-        geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
+      // number of materials
+      auto nmat =
+        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
 
-      return Problem::fieldOutput( m_system, m_ncomp, m_offset, nunk, t,
-                                   V, geoElem.extract(0,0), coord, U, P );
+      return MultiMatFieldOutput(m_system, nmat, m_offset, nunk, rdof, U, P);
+    }
+
+    //! Return nodal field output going to file
+    //! \param[in] npoin Number of nodes
+    //! \param[in] esup Elements surrounding points
+    //! \param[in,out] Unode Nodal solution vector
+    //! \param[in,out] Pnode Nodal vector of primitive quantities
+    //! \param[in,out] U Nodal solution vector at recent time step
+    //! \param[in] P Nodal vector of primitive quantities at recent time step
+    //! \return Vector of vectors to be output to file
+    std::vector< std::vector< tk::real > >
+    nodalFieldOutput( tk::real,
+                 tk::real,
+                 std::size_t npoin,
+                 const std::map< std::size_t, std::vector< std::size_t > >&
+                   esup,
+                 const tk::Fields&,
+                 tk::Fields& Unode,
+                 tk::Fields& Pnode,
+                 tk::Fields& U,
+                 const tk::Fields& P ) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      // number of materials
+      const auto nmat =
+        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
+
+      tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
+        Pnode);
+
+      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, 1, Unode,
+        Pnode);
     }
 
     //! Return surface field output going to file
@@ -851,17 +895,6 @@ class MultiMat {
     {
       std::vector< std::vector< tk::real > > s; // punt for now
       return s;
-    }
-
-    //! Return nodal field output going to file
-    std::vector< std::vector< tk::real > >
-    avgElemToNode( const std::vector< std::size_t >& /*inpoel*/,
-                   const tk::UnsMesh::Coords& /*coord*/,
-                   const tk::Fields& /*geoElem*/,
-                   const tk::Fields& /*U*/ ) const
-    {
-      std::vector< std::vector< tk::real > > out;
-      return out;
     }
 
     //! Return names of integral variables to be output to diagnostics file
@@ -977,6 +1010,7 @@ class MultiMat {
     //! \param[in] y Y-coordinate at which to compute the states
     //! \param[in] z Z-coordinate at which to compute the states
     //! \param[in] t Physical time
+    //! \param[in] fn Unit face normal
     //! \return Left and right states for all scalar components in this PDE
     //!   system
     //! \note The function signature must follow tk::StateFn. For multimat, the
@@ -985,7 +1019,7 @@ class MultiMat {
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >& )
+               const std::array< tk::real, 3 >& fn )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -1007,16 +1041,51 @@ class MultiMat {
       ur[ncomp+velocityIdx(nmat, 1)] = ur[momentumIdx(nmat, 1)] / rho;
       ur[ncomp+velocityIdx(nmat, 2)] = ur[momentumIdx(nmat, 2)] / rho;
 
-      // material pressures
+      // determine the speed of sound of the majority material
+      auto almax(0.0);
+      std::size_t kmax(0);
       for (std::size_t k=0; k<nmat; ++k)
       {
-        tk::real arhomat = ur[densityIdx(nmat, k)];
-        tk::real arhoemat = ur[energyIdx(nmat, k)];
-        tk::real alphamat = ur[volfracIdx(nmat, k)];
-        ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
-          arhomat, ur[ncomp+velocityIdx(nmat, 0)],
-          ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          arhoemat, alphamat, k );
+        if (ul[volfracIdx(nmat, k)] > almax)
+        {
+          almax = ul[volfracIdx(nmat, k)];
+          kmax = k;
+        }
+      }
+
+      auto vn = tk::dot({{ul[ncomp+velocityIdx(nmat, 0)],
+        ul[ncomp+velocityIdx(nmat, 1)], ul[ncomp+velocityIdx(nmat, 2)]}}, fn);
+      auto Ml = vn/eos_soundspeed< tag::multimat >(system,
+        ul[densityIdx(nmat,kmax)], ul[ncomp+pressureIdx(nmat,kmax)],
+        almax, kmax);
+
+      // material pressures
+      if (Ml > 1.0)
+      {
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          tk::real arhomat = ur[densityIdx(nmat, k)];
+          tk::real arhoemat = ur[energyIdx(nmat, k)];
+          tk::real alphamat = ur[volfracIdx(nmat, k)];
+          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
+            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
+            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
+            arhoemat, alphamat, k );
+        }
+      }
+      else
+      {
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          ur[ncomp+pressureIdx(nmat, k)] = ul[ncomp+pressureIdx(nmat, k)];
+          ur[energyIdx(nmat, k)] = ur[volfracIdx(nmat, k)] *
+            eos_totalenergy< tag::multimat >(system,
+            ur[densityIdx(nmat, k)]/ur[volfracIdx(nmat, k)],
+            ur[ncomp+velocityIdx(nmat, 0)],
+            ur[ncomp+velocityIdx(nmat, 1)],
+            ur[ncomp+velocityIdx(nmat, 2)],
+            ul[ncomp+pressureIdx(nmat, k)]/ul[volfracIdx(nmat, k)], k);
+        }
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

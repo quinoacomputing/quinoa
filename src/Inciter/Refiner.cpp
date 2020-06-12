@@ -743,7 +743,7 @@ Refiner::writeMesh( const std::string& basefilename,
     // Evaluate initial conditions on current mesh at t0
     tk::Fields u( m_coord[0].size(), nprop );
     std::vector< std::size_t > inbox;
-    for (const auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, inbox );
+    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, inbox );
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
@@ -1211,7 +1211,7 @@ Refiner::nodeinit( std::size_t npoin,
 
     // Evaluate ICs for all scalar components integrated
     std::vector< std::size_t > inbox;
-    for (const auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, inbox );
+    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, inbox );
 
   } else if (centering == tk::Centering::ELEM) {
 

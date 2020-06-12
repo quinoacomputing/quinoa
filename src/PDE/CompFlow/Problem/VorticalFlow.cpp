@@ -65,45 +65,6 @@ CompFlowProblemVorticalFlow::solution( ncomp_t system,
   return {{ 1.0, ru, rv, rw, rE }};
 }
 
-tk::SrcFn::result_type
-CompFlowProblemVorticalFlow::src( ncomp_t system, ncomp_t ncomp, tk::real x,
-                                  tk::real y, tk::real z, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  using tag::param; using tag::compflow;
-
-  // manufactured solution parameters
-  const auto& a =
-    g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
-  const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
-  // ratio of specific heats
-  tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
-  // evaluate solution at x,y,z
-  int inbox = 0;
-  auto s = solution( system, ncomp, x, y, z, 0.0, inbox );
-  std::vector< tk::real > r( ncomp );
-  // density source
-  r[0] = 0.0;
-  // momentum source
-  r[1] = a*s[1]/s[0] - b*s[2]/s[0];
-  r[2] = b*s[1]/s[0] + a*s[2]/s[0];
-  r[3] = 0.0;
-  // energy source
-  r[4] = (r[1]*s[1] + r[2]*s[2])/s[0] + 8.0*a*a*a*z*z/(g-1.0);
-
-  return r;
-}
-
 std::vector< std::string >
 CompFlowProblemVorticalFlow::fieldNames( ncomp_t ) const
 // *****************************************************************************

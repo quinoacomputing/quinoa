@@ -1,19 +1,19 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMat/Problem/SodShocktube.hpp
+  \file      src/PDE/MultiMat/Problem/ShockHeBubble.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Problem configuration for Sod's shock-tube
+  \brief     Problem configuration for gas impact
   \details   This file defines a policy class for the multi-material
-    compressible flow equations, defined in PDE/MultiMat/MultiMat.hpp.
+    compressible flow equations, defined in PDE/MultiMat/DGMultiMat.hpp.
     See PDE/MultiMat/Problem.hpp for general requirements on Problem policy
     classes for MultiMat.
 */
 // *****************************************************************************
-#ifndef MultiMatProblemSodShocktube_h
-#define MultiMatProblemSodShocktube_h
+#ifndef MultiMatProblemShockHeBubble_h
+#define MultiMatProblemShockHeBubble_h
 
 #include <string>
 
@@ -25,10 +25,10 @@
 
 namespace inciter {
 
-//! MultiMat system of PDEs problem: Sod shock-tube
-//! \see G. A. Sod. A Survey of Several Finite Difference Methods for Systems of
-//!   Nonlinear Hyperbolic Conservation Laws. J. Comput. Phys., 27:1–31, 1978.
-class MultiMatProblemSodShocktube {
+//! MultiMat system of PDEs problem: Shock He-bubble interaction
+//! \see Quirk, J. J., & Karni, S. (1996). On the dynamics of a shock–bubble         
+//!   interaction. Journal of Fluid Mechanics, 318, 129-163.
+class MultiMatProblemShockHeBubble {
 
   protected:
     using ncomp_t = tk::ctr::ncomp_t;
@@ -37,22 +37,23 @@ class MultiMatProblemSodShocktube {
   public:
     //! Evaluate analytical solution at (x,y,0) for all components
     static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
+    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real,
               tk::real, int& );
 
     //! Compute and return source term for this problem
     static tk::MultiMatSrcFn::result_type
-    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real )
-    { std::vector< tk::real > s( ncomp, 0.0 ); }
+    src( ncomp_t, tk::real, tk::real, tk::real, tk::real,
+         tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
+    { r = ru = rv = rw = re = 0.0; }
 
     //! Return names of integral variables to be output to diagnostics file
     static std::vector< std::string > names( ncomp_t );
 
     //! Return problem type
     static ctr::ProblemType type() noexcept
-    { return ctr::ProblemType::SOD_SHOCKTUBE; }
+    { return ctr::ProblemType::SHOCK_HEBUBBLE; }
 };
 
 } // inciter::
 
-#endif // MultiMatProblemSodShocktube_h
+#endif // MultiMatProblemShockHeBubble_h

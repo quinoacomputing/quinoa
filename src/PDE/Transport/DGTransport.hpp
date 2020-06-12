@@ -326,16 +326,10 @@ class Transport {
       return n;
     }
 
-    //!
-    std::vector< std::vector< tk::real > >
-    avgElemToNode( const std::vector< std::size_t >& /*inpoel*/,
-                   const tk::UnsMesh::Coords& /*coord*/,
-                   const tk::Fields& /*geoElem*/,
-                   const tk::Fields& /*U*/ ) const
-    {
-      std::vector< std::vector< tk::real > > out;
-      return out;
-    }
+    //! Return field names to be output to file
+    //! \return Vector of strings labelling fields output in file
+    std::vector< std::string > nodalFieldNames() const
+    { return {}; }
 
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
@@ -357,6 +351,7 @@ class Transport {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  tk::real,
+                 std::size_t,
                  std::size_t,
                  const tk::Fields& geoElem,
                  tk::Fields& U,
@@ -391,6 +386,21 @@ class Transport {
         out.push_back( e );
       }
       return out;
+    }
+
+    //! Nodal field output setup will go here
+    std::vector< std::vector< tk::real > >
+    nodalFieldOutput( tk::real,
+      tk::real,
+      std::size_t,
+      const std::map< std::size_t, std::vector< std::size_t > >&,
+      const tk::Fields&,
+      tk::Fields&,
+      tk::Fields&,
+      tk::Fields&,
+      const tk::Fields& ) const
+    {
+      return {};
     }
 
     //! Return names of integral variables to be output to diagnostics file

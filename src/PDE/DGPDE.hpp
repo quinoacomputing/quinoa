@@ -212,6 +212,10 @@ class DGPDE {
     //! Public interface to returning field output labels
     std::vector< std::string > fieldNames() const { return self->fieldNames(); }
 
+    //! Public interface to returning field output labels
+    std::vector< std::string > nodalFieldNames() const
+    { return self->nodalFieldNames(); }
+
     //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
 
@@ -219,25 +223,32 @@ class DGPDE {
     std::vector< std::vector< tk::real > > fieldOutput(
       tk::real t,
       tk::real V,
+      std::size_t rdof,
       std::size_t nunk,
       const tk::Fields& geoElem,
       tk::Fields& U,
       const tk::Fields& P ) const
-    { return self->fieldOutput( t, V, nunk, geoElem, U, P ); }
+    { return self->fieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
+
+    //! Public interface to returning nodal field output
+    std::vector< std::vector< tk::real > > nodalFieldOutput(
+      tk::real t,
+      tk::real V,
+      std::size_t nunk,
+      const std::map< std::size_t, std::vector< std::size_t > >& esup,
+      const tk::Fields& geoElem,
+      tk::Fields& Unode,
+      tk::Fields& Pnode,
+      tk::Fields& U,
+      const tk::Fields& P ) const
+    { return self->nodalFieldOutput( t, V, nunk, esup, geoElem, Unode,
+      Pnode, U, P ); }
 
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
                 tk::Fields& U ) const
     { return self->surfOutput( bnd, U ); }
-
-    //! Public interface to returning nodal field output
-    std::vector< std::vector< tk::real > > avgElemToNode(
-      const std::vector< std::size_t >& inpoel,
-      const tk::UnsMesh::Coords& coord,
-      const tk::Fields& geoElem,
-      const tk::Fields& U ) const
-    { return self->avgElemToNode( inpoel, coord, geoElem, U ); }
 
     //! Public interface to returning analytic solution
     std::vector< tk::real >
@@ -320,22 +331,29 @@ class DGPDE {
                            const tk::Fields&,
                            const std::size_t ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
+      virtual std::vector< std::string > nodalFieldNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
         tk::real,
         std::size_t,
+        std::size_t,
         const tk::Fields&,
+        tk::Fields&,
+        const tk::Fields& ) const = 0;
+      virtual std::vector< std::vector< tk::real > > nodalFieldOutput(
+        tk::real,
+        tk::real,
+        std::size_t,
+        const std::map< std::size_t, std::vector< std::size_t > >&,
+        const tk::Fields&,
+        tk::Fields&,
+        tk::Fields&,
         tk::Fields&,
         const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
         tk::Fields& ) const = 0;
-      virtual std::vector< std::vector< tk::real > > avgElemToNode(
-        const std::vector< std::size_t >&,
-        const tk::UnsMesh::Coords&,
-        const tk::Fields&,
-        const tk::Fields& ) const = 0;
       virtual std::vector< tk::real > analyticSolution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
@@ -420,26 +438,35 @@ class DGPDE {
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U, P, nielem ); }
       std::vector< std::string > fieldNames() const override
       { return data.fieldNames(); }
+      std::vector< std::string > nodalFieldNames() const override
+      { return data.nodalFieldNames(); }
       std::vector< std::string > names() const override
       { return data.names(); }
       std::vector< std::vector< tk::real > > fieldOutput(
         tk::real t,
         tk::real V,
+        std::size_t rdof,
         std::size_t nunk,
         const tk::Fields& geoElem,
         tk::Fields& U,
         const tk::Fields& P ) const override
-      { return data.fieldOutput( t, V, nunk, geoElem, U, P ); }
+      { return data.fieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
+      std::vector< std::vector< tk::real > > nodalFieldOutput(
+        tk::real t,
+        tk::real V,
+        std::size_t nunk,
+        const std::map< std::size_t, std::vector< std::size_t > >& esup,
+        const tk::Fields& geoElem,
+        tk::Fields& Unode,
+        tk::Fields& Pnode,
+        tk::Fields& U,
+        const tk::Fields& P ) const override
+      { return data.nodalFieldOutput( t, V, nunk, esup, geoElem, Unode,
+        Pnode, U, P ); }
       std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
         tk::Fields& U ) const override
       { return data.surfOutput( bnd, U ); }
-      std::vector< std::vector< tk::real > > avgElemToNode(
-        const std::vector< std::size_t >& inpoel,
-        const tk::UnsMesh::Coords& coord,
-        const tk::Fields& geoElem,
-        const tk::Fields& U ) const override
-      { return data.avgElemToNode( inpoel, coord, geoElem, U ); }
       std::vector< tk::real >
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }

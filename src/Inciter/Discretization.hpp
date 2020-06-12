@@ -221,7 +221,7 @@ class Discretization : public CBase_Discretization {
     void status();
 
     //! Construct history output filename
-    std::string histfilename( const std::array< tk::real, 3 >& p,
+    std::string histfilename( const std::string& id,
                               kw::precision::info::expect::type precision );
 
     //! Output headers for time history files (one for each point)
@@ -248,7 +248,7 @@ class Discretization : public CBase_Discretization {
     void grindZero();
 
     //! Detect if just returned from a checkpoint and if so, zero timers
-    void restarted( int nrestart );
+    bool restarted( int nrestart );
 
     //! Remap mesh data due to new local ids
     void remap( const std::unordered_map< std::size_t, std::size_t >& map );

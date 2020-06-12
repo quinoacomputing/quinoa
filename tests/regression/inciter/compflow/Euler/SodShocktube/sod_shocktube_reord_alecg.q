@@ -12,6 +12,7 @@ inciter
   cfl 0.5
 
   scheme alecg
+  operator_reorder true
 
   partitioning
     algorithm mj

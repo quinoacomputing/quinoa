@@ -14,6 +14,7 @@
 
 #include <array>
 #include <vector>
+#include <iostream>
 
 #include "Vector.hpp"
 #include "Base/HashMapReducer.hpp"
@@ -541,6 +542,64 @@ tk::transform_P0P1( ncomp_t ncomp,
 }
 
 void
+tk::nodeAvg( std::size_t ncomp,
+  std::size_t nprim,
+  std::size_t offset,
+  std::size_t rdof,
+  std::size_t npoin,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const Fields& U,
+  const Fields& P,
+  Fields& Unode,
+  Fields& Pnode )
+// *****************************************************************************
+//  Compute nodal field outputs
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] nprim Number of primitive quantities stored in this PDE system
+//! \param[in] offset Index for equation systems
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] npoin Total number of nodes
+//! \param[in] esup Elements surrounding points
+//! \param[in] U Vector of cell-averaged unknowns
+//! \param[in] P Vector of cell-averaged primitive quantities
+//! \param[in,out] Unode Vector of unknowns at nodes
+//! \param[in,out] Pnode Vector of primitive quantities at nodes
+// *****************************************************************************
+{
+  Unode.fill(0.0);
+  Pnode.fill(0.0);
+
+  for (std::size_t p=0; p<npoin; ++p)
+  {
+    const auto& pesup = esup.at(p);
+
+    // loop over all the elements surrounding this node p
+    auto denom(0.0);
+    for (auto er : pesup)
+    {
+      denom += 1.0;
+      // average cell-averaged solution to node p
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*rdof;
+        Unode(p,c,offset) += U(er,mark,offset);
+      }
+      for (std::size_t c=0; c<nprim; ++c)
+      {
+        auto mark = c*rdof;
+        Pnode(p,c,offset) += P(er,mark,offset);
+      }
+    }
+
+    // complete the average
+    for (std::size_t c=0; c<ncomp; ++c)
+      Unode(p,c,offset) /= denom;
+    for (std::size_t c=0; c<nprim; ++c)
+      Pnode(p,c,offset) /= denom;
+  }
+}
+
+void
 tk::safeReco( std::size_t offset,
   std::size_t rdof,
   std::size_t nmat,
@@ -621,86 +680,4 @@ tk::safeReco( std::size_t offset,
     safeLimit(densityIdx(nmat,k), ul, ur);
 
   }
-}
-
-constexpr tk::real muscl_eps = 1.0e-9;
-constexpr tk::real muscl_const = 1.0/3.0;
-constexpr tk::real muscl_m1 = 1.0 - muscl_const;
-constexpr tk::real muscl_p1 = 1.0 + muscl_const;
-
-void
-tk::muscl( const UnsMesh::Edge& edge,
-           const UnsMesh::Coords& coord,
-           const Fields& G,
-           std::vector< tk::real >& uL,
-           std::vector< tk::real >& uR,
-           bool enforce_realizability )
-// *****************************************************************************
-// Compute MUSCL reconstruction in edge-end points using a MUSCL procedure with
-// van Leer limiting
-//! \param[in] edge Node ids of edge-end points
-//! \param[in] coord Array of nodal coordinates
-//! \param[in] G Gradient of all unknowns in mesh points
-//! \param[in,out] uL Primitive variables at left edge-end point
-//! \param[in,out] uR Primitive variables at right edge-end point
-//! \param[in] enforce_realizability True to enforce positivity of density and
-//!   internal energy, assuming 5 scalar components in uL and uR.
-// *****************************************************************************
-{
-  const auto ncomp = G.nprop()/3;
-
-  Assert( uL.size() == ncomp && uR.size() == ncomp, "Size mismatch" );
-
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
-
-  // edge-end points
-  auto p = edge[0];
-  auto q = edge[1];
-
-  // edge vector
-  std::array< tk::real, 3 > vw{ x[q]-x[p], y[q]-y[p], z[q]-z[p] };
-
-  std::vector< tk::real >
-    delta1( ncomp, 0.0 ), delta2( ncomp, 0.0 ), delta3( ncomp, 0.0 );
-  auto url = uL;
-  auto urr = uR;
-
-  // MUSCL reconstruction of edge-end-point primitive variables
-  for (std::size_t c=0; c<ncomp; ++c) {
-    // gradients
-    std::array< tk::real, 3 >
-      g1{ G(p,c*3+0,0), G(p,c*3+1,0), G(p,c*3+2,0) },
-      g2{ G(q,c*3+0,0), G(q,c*3+1,0), G(q,c*3+2,0) };
-
-    delta2[c] = uR[c] - uL[c];
-    delta1[c] = 2.0 * tk::dot(g1,vw) - delta2[c];
-    delta3[c] = 2.0 * tk::dot(g2,vw) - delta2[c];
-
-    // form limiters
-    auto rL = (delta2[c] + muscl_eps) / (delta1[c] + muscl_eps);
-    auto rR = (delta2[c] + muscl_eps) / (delta3[c] + muscl_eps);
-    auto rLinv = (delta1[c] + muscl_eps) / (delta2[c] + muscl_eps);
-    auto rRinv = (delta3[c] + muscl_eps) / (delta2[c] + muscl_eps);
-
-    auto phiL = (std::abs(rL) + rL) / (std::abs(rL) + 1.0);
-    auto phiR = (std::abs(rR) + rR) / (std::abs(rR) + 1.0);
-    auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
-    auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
-
-    // update unknowns with reconstructed unknowns
-    url[c] += 0.25*(delta1[c]*muscl_m1*phiL + delta2[c]*muscl_p1*phi_L_inv);
-    urr[c] -= 0.25*(delta3[c]*muscl_m1*phiR + delta2[c]*muscl_p1*phi_R_inv);
-  }
-
-  // force first order if the reconstructions for density or internal energy
-  // would have allowed negative values
-  if (enforce_realizability) {
-    if (uL[0] < delta1[0] || uL[4] < delta1[4]) url = uL;
-    if (uR[0] < -delta3[0] || uR[4] < -delta3[4]) urr = uR;
-  }
-
-  uL = std::move(url);
-  uR = std::move(urr);
 }

@@ -102,6 +102,19 @@ recoLeastSqExtStencil( std::size_t rdof,
   const Fields& geoElem,
   Fields& W );
 
+//! Compute nodal field outputs
+void
+nodeAvg( std::size_t ncomp,
+  std::size_t nprim,
+  std::size_t offset,
+  std::size_t rdof,
+  std::size_t npoin,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const Fields& U,
+  const Fields& P,
+  Fields& Unode,
+  Fields& Pnode );
+
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
 transform_P0P1( ncomp_t ncomp,
@@ -121,16 +134,6 @@ safeReco( std::size_t offset,
   int er,
   const Fields& U,
   std::array< std::vector< real >, 2 >& state );
-
-//! \brief Compute MUSCL reconstruction in edge-end points using a MUSCL
-//!   procedure with Van Leer limiting
-void
-muscl( const UnsMesh::Edge& edge,
-       const UnsMesh::Coords& coord,
-       const Fields& G,
-       std::vector< tk::real >& uL,
-       std::vector< tk::real >& uR,
-       bool enforce_realizability = false );
 
 } // tk::
 

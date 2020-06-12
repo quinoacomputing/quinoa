@@ -199,8 +199,11 @@ class MixMassFractionBeta {
       // Initialize values derived from primary prognostic variable
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p)
-        for (ncomp_t i=0; i<m_ncomp; ++i)
+        for (ncomp_t i=0; i<m_ncomp; ++i) {
+          Assert( particles( p, i, m_offset ) > 0.0, "Beta IC out of bounds!" );
+          Assert( particles( p, i, m_offset ) < 1.0, "Beta IC out of bounds!" );
           derived( particles, p, i );
+        }
     }
 
     //! \brief Advance particles according to the system of mix mass-fraction

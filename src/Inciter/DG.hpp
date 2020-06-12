@@ -150,7 +150,7 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& ndof );
 
     //! Optionally refine/derefine mesh
-    void refine();
+    void refine( tk::real l2res );
 
     //! Receive new mesh from refiner
     void resizePostAMR(
@@ -201,6 +201,8 @@ class DG : public CBase_DG {
       p | m_u;
       p | m_un;
       p | m_p;
+      p | m_Unode;
+      p | m_Pnode;
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
@@ -271,6 +273,10 @@ class DG : public CBase_DG {
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
+    //! Vector of unknown/solution at each mesh node
+    tk::Fields m_Unode;
+    //! Vector of primitive quantities at each mesh node
+    tk::Fields m_Pnode;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
@@ -390,7 +396,7 @@ class DG : public CBase_DG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( CkCallback c ) const;
+    void writeFields( CkCallback c );
 
     //! Compute solution reconstructions
     void reco();

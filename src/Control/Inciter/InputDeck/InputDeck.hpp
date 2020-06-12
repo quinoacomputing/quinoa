@@ -152,6 +152,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::sysfctvar,
                                    kw::pelocal_reorder,
                                    kw::operator_reorder,
+                                   kw::steady_state,
+                                   kw::residual,
                                    kw::amr,
                                    kw::amr_t0ref,
                                    kw::amr_dtref,
@@ -225,7 +227,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::gauss_hump_compflow,
                                    kw::waterair_shocktube,
                                    kw::triple_point,
-                                   kw::gas_impact >;
+                                   kw::gas_impact,
+                                   kw::shock_hebubble >;
 
     //! Set of tags to ignore when printing this InputDeck
     using ignore = CmdLine::ignore;
@@ -252,6 +255,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
         std::numeric_limits< tk::real >::epsilon();
       get< tag::discr, tag::pelocal_reorder >() = false;
       get< tag::discr, tag::operator_reorder >() = false;
+      get< tag::discr, tag::steady_state >() = false;
+      get< tag::discr, tag::residual >() = 1.0e-8;
       get< tag::discr, tag::scheme >() = SchemeType::DiagCG;
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::limiter >() = LimiterType::NOLIMITER;
