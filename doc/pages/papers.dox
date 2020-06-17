@@ -69,6 +69,12 @@ implemented in Quinoa. The papers are grouped by executables.
   in 1D, whose 3D version is currently being implemented in Quinoa.
 
 - @m_div{m-text m-strong}
+  J. Waltz, N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, **[A three-dimensional finite element arbitrary Lagrangian–Eulerian method for shock hydrodynamics on unstructured grids](https://doi.org/10.1016/j.compfluid.2013.12.021)**, Computers & Fluids, 92: 172-187, 2014.
+  @m_enddiv
+
+  This paper describes the hydro scheme implemented in @ref inciter_main as `ALECG`.
+
+- @m_div{m-text m-strong}
   J. Waltz, **[Parallel adaptive refinement for unsteady flow calculations on 3D unstructured grids](http://dx.doi.org/10.1002/fld.674)**, International Journal for Numerical Methods in Fluids, 46: 37–57, 2004.
   @m_enddiv
 
