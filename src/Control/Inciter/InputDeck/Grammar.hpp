@@ -292,21 +292,40 @@ namespace grm {
 
       // Error check stagnation BC block
       const auto& bcstag = stack.template get< tag::param, eq, tag::bcstag >();
-      const auto& point = bcstag.template get< tag::point >();
-      const auto& radius = bcstag.template get< tag::radius >();
-      if ( (!point.empty() && !point.back().empty() &&
-            !radius.empty() && !radius.back().empty() &&
-            point.back().size() != 3*radius.back().size()) ||
-           (!radius.empty() && !radius.back().empty() &&
-            !point.empty() && !point.back().empty() &&
-            point.back().size() != 3*radius.back().size()) ||
-           (!point.empty() && !point.back().empty() &&
-            (radius.empty() || (!radius.empty() && radius.back().empty()))) ||
-           (!radius.empty() && !radius.back().empty() &&
-            (point.empty() || (!point.empty() && point.back().empty())))
+      const auto& spoint = bcstag.template get< tag::point >();
+      const auto& sradius = bcstag.template get< tag::radius >();
+      if ( (!spoint.empty() && !spoint.back().empty() &&
+            !sradius.empty() && !sradius.back().empty() &&
+            spoint.back().size() != 3*sradius.back().size()) ||
+           (!sradius.empty() && !sradius.back().empty() &&
+            !spoint.empty() && !spoint.back().empty() &&
+            spoint.back().size() != 3*sradius.back().size()) ||
+           (!spoint.empty() && !spoint.back().empty() &&
+            (sradius.empty() || (!sradius.empty() && sradius.back().empty())))||
+           (!sradius.empty() && !sradius.back().empty() &&
+            (spoint.empty() || (!spoint.empty() && spoint.back().empty())))
          )
       {
         Message< Stack, ERROR, MsgKey::STAGBCWRONG >( stack, in );
+      }
+
+      // Error check skip BC block
+      const auto& bcskip = stack.template get< tag::param, eq, tag::bcskip >();
+      const auto& kpoint = bcskip.template get< tag::point >();
+      const auto& kradius = bcskip.template get< tag::radius >();
+      if ( (!kpoint.empty() && !kpoint.back().empty() &&
+            !kradius.empty() && !kradius.back().empty() &&
+            kpoint.back().size() != 3*kradius.back().size()) ||
+           (!kradius.empty() && !kradius.back().empty() &&
+            !kpoint.empty() && !kpoint.back().empty() &&
+            kpoint.back().size() != 3*kradius.back().size()) ||
+           (!kpoint.empty() && !kpoint.back().empty() &&
+            (kradius.empty() || (!kradius.empty() && kradius.back().empty())))||
+           (!kradius.empty() && !kradius.back().empty() &&
+            (kpoint.empty() || (!kpoint.empty() && kpoint.back().empty())))
+         )
+      {
+        Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
       }
     }
   };
@@ -791,10 +810,10 @@ namespace deck {
                                         eq, tag::bc, param > > > {};
 
   //! Stagnation boundary conditions block
-  template< class eq, class param >
-  struct bc_stag :
+  template< class eq, class bc, class kwbc >
+  struct bc_spec :
          pegtl::if_must<
-           tk::grm::readkw< kw::bc_stag::pegtl_string >,
+           tk::grm::readkw< typename kwbc::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
              tk::grm::parameter_vector< use,
@@ -802,13 +821,13 @@ namespace deck {
                                         tk::grm::Store_back_back,
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
-                                        eq, tag::bcstag, tag::radius >,
+                                        eq, bc, tag::radius >,
              tk::grm::parameter_vector< use,
                                         use< kw::point >,
                                         tk::grm::Store_back_back,
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
-                                        eq, tag::bcstag, tag::point > > > {};
+                                        eq, bc, tag::point > > > {};
 
   //! Farfield boundary conditions block
   template< class keyword, class eq, class param >
@@ -1015,7 +1034,8 @@ namespace deck {
                                       tag::kappa >,
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
-                           bc_stag< tag::compflow, tag::bcstag >,
+                           bc_spec< tag::compflow, tag::bcstag, kw::bc_stag >,
+                           bc_spec< tag::compflow, tag::bcskip, kw::bc_skip >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
                            farfield_bc< kw::bc_farfield,
                                         tag::compflow,

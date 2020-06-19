@@ -292,16 +292,17 @@ DiagCG::setup()
 // *****************************************************************************
 {
   auto d = Disc();
+  const auto& coord = d->Coord();
 
   // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
+  for (auto& eq : g_cgpde) eq.initialize( coord, m_u, d->T(), m_boxnodes );
 
   // Apply symmetry BCs on initial conditions
   for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, m_bnorm, m_symbcnodes );
+    eq.symbc( m_u, coord, m_bnorm, m_symbcnodes );
   // Apply farfield BCs on initial conditions
   for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, m_bnorm, m_farfieldbcnodes );
+    eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
 
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );
@@ -624,14 +625,15 @@ DiagCG::solve( tk::Fields& dif )
   m_ul = m_u + dul;
   m_du = m_rhs / m_lhs;
 
+  const auto& coord = d->Coord();
   for (const auto& eq : g_cgpde) {
     // Apply symmetry BCs
-    eq.symbc( dul, m_bnorm, m_symbcnodes );
-    eq.symbc( m_ul, m_bnorm, m_symbcnodes );
-    eq.symbc( m_du, m_bnorm, m_symbcnodes );
+    eq.symbc( dul, coord, m_bnorm, m_symbcnodes );
+    eq.symbc( m_ul, coord, m_bnorm, m_symbcnodes );
+    eq.symbc( m_du, coord, m_bnorm, m_symbcnodes );
     // Apply farfield BCs
-    eq.farfieldbc( m_ul, m_bnorm, m_farfieldbcnodes );
-    eq.farfieldbc( m_du, m_bnorm, m_farfieldbcnodes );
+    eq.farfieldbc( m_ul, coord, m_bnorm, m_farfieldbcnodes );
+    eq.farfieldbc( m_du, coord, m_bnorm, m_farfieldbcnodes );
   }
 
   // Continue with FCT

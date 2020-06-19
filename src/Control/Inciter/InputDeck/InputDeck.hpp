@@ -213,6 +213,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::bc_farfield,
                                    kw::bc_extrapolate,
                                    kw::bc_stag,
+                                   kw::bc_skip,
                                    kw::point,
                                    kw::radius,
                                    kw::gauss_hump,
@@ -327,24 +328,25 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       return ids;
     }
 
-    //! Query stagnation point BC configuration
+    //! Query special point BC configuration
     //! \tparam eq PDE type to query
+    //! \tparam bc  Special BC type to query, e.g., stagnation, skip
     //! \param[in] system Equation system id
-    //! \return Vectors configuring the stagnation points and their radii
-    template< class eq >
+    //! \return Vectors configuring the special points and their radii
+    template< class eq, class bc >
     std::tuple< std::vector< tk::real >, std::vector< tk::real > >
-    stagnationBC( std::size_t system ) {
-      const auto& bcstag = get< tag::param, eq, tag::bcstag >();
-      const auto& point = bcstag.template get< tag::point >();
-      const auto& radius = bcstag.template get< tag::radius >();
-      std::vector< tk::real > stag_pnt;
-      std::vector< tk::real > stag_rad;
+    specialBC( std::size_t system ) {
+      const auto& bcspec = get< tag::param, eq, bc >();
+      const auto& point = bcspec.template get< tag::point >();
+      const auto& radius = bcspec.template get< tag::radius >();
+      std::vector< tk::real > pnt;
+      std::vector< tk::real > rad;
       if (point.size() > system && radius.size() > system) {
-        stag_pnt = point[ system ];
-        stag_rad = radius[ system ];
+        pnt = point[ system ];
+        rad = radius[ system ];
       }
-      Assert( stag_pnt.size() == 3*stag_rad.size(), "Size mismatch" );
-      return { std::move(stag_pnt), std::move(stag_rad) };
+      Assert( pnt.size() == 3*rad.size(), "Size mismatch" );
+      return { std::move(pnt), std::move(rad) };
     }
 };
 

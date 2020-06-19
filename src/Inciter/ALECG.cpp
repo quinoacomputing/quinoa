@@ -602,10 +602,10 @@ ALECG::normfinal()
 
   // Apply symmetry BCs on initial conditions
   for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, m_bnorm, m_symbcnodes );
+    eq.symbc( m_u, d->Coord(), m_bnorm, m_symbcnodes );
   // Apply farfield BCs on initial conditions
   for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, m_bnorm, m_farfieldbcnodes );
+    eq.farfieldbc( m_u, d->Coord(), m_bnorm, m_farfieldbcnodes );
 
   // Prepare boundary nodes contiguously accessible from a triangle-face loop
   m_symbctri.resize( m_triinpoel.size()/3, 0 );
@@ -944,10 +944,10 @@ ALECG::solve()
 
   // Apply symmetry BCs on initial conditions
   for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, m_bnorm, m_symbcnodes );
+    eq.symbc( m_u, d->Coord(), m_bnorm, m_symbcnodes );
   // Apply farfield BCs on new solution
   for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, m_bnorm, m_farfieldbcnodes );
+    eq.farfieldbc( m_u, d->Coord(), m_bnorm, m_farfieldbcnodes );
 
   //! [Continue after solve]
   if (m_stage < 2) {

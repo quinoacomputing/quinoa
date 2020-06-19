@@ -5129,6 +5129,23 @@ struct bc_stag_info {
 };
 using bc_stag = keyword< bc_stag_info, TAOCPP_PEGTL_STRING("bc_stag") >;
 
+struct bc_skip_info {
+  static std::string name() { return "Skip boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing skip boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_skip ... end block, used to
+    specify the configuration for setting 'skip' boundary conditions for a
+    partial differential equation. If a mesh point falls into a skip region,
+    configured by a point and a radius, any application of boundary conditions
+    on those points will be skipped. Keywords allowed in a bc_skip ... end
+    block: )" + std::string("\'")
+    + point::string() + "\', \'"
+    + radius::string() + "\'. ";
+  }
+};
+using bc_skip = keyword< bc_skip_info, TAOCPP_PEGTL_STRING("bc_skip") >;
+
 struct bc_inlet_info {
   static std::string name() { return "Inlet boundary condition"; }
   static std::string shortDescription() { return

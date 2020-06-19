@@ -137,6 +137,7 @@ namespace grm {
     SYSFCTVAR,          //!< System-FCT variable index incorrect
     BGICMISSING,        //!< Background IC unspecified
     STAGBCWRONG,        //!< Stagnation BC incorrectly configured
+    SKIPBCWRONG,        //!< Skip BC incorrectly configured
     NONDISJOINTBC,      //!< Different BC types assigned to the same side set
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
@@ -357,6 +358,11 @@ namespace grm {
       "The block must list integers between 1 and 5 both inclusive." },
     { MsgKey::STAGBCWRONG, "Stagnation boundary conditions incorrectly "
       "configured. Within a bc_stag ... end block there must be a point ... "
+      "end block and a radius ... end block. Both point and radius blocks must "
+      "contain floating-point numbers, and the number of items in the point "
+      "block must be exactly 3x that of radii." },
+    { MsgKey::SKIPBCWRONG, "Skip boundary conditions incorrectly "
+      "configured. Within a bc_skip ... end block there must be a point ... "
       "end block and a radius ... end block. Both point and radius blocks must "
       "contain floating-point numbers, and the number of items in the point "
       "block must be exactly 3x that of radii." },

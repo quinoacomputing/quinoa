@@ -214,12 +214,20 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   // BCs
 
   const auto& bcstag = g_inputdeck.get< tag::param, eq, tag::bcstag >();
-  const auto& point = bcstag.get< tag::point >();
-  if (point.size() > c)
-    nfo.emplace_back( "Stagnation BC point(s)", parameters( point[c] ) );
-  const auto& radius = bcstag.get< tag::radius >();
-  if (radius.size() > c)
-    nfo.emplace_back( "Stagnation BC radii", parameters( radius[c] ) );
+  const auto& spoint = bcstag.get< tag::point >();
+  if (spoint.size() > c)
+    nfo.emplace_back( "Stagnation BC point(s)", parameters( spoint[c] ) );
+  const auto& sradius = bcstag.get< tag::radius >();
+  if (sradius.size() > c)
+    nfo.emplace_back( "Stagnation BC radii", parameters( sradius[c] ) );
+
+  const auto& bcskip = g_inputdeck.get< tag::param, eq, tag::bcskip >();
+  const auto& kpoint = bcskip.get< tag::point >();
+  if (kpoint.size() > c)
+    nfo.emplace_back( "Skip BC point(s)", parameters( kpoint[c] ) );
+  const auto& kradius = bcskip.get< tag::radius >();
+  if (kradius.size() > c)
+    nfo.emplace_back( "Skip BC radii", parameters( kradius[c] ) );
 
   const auto& fs =
     g_inputdeck.get< tag::param, eq, tag::bc, tag::bcfarfield >();
