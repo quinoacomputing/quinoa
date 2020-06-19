@@ -67,6 +67,7 @@ tk::real eos_density( ncomp_t system,
 //!   the calling code
 //! \return Material partial pressure (alpha_k * p_k) calculated using the
 //!   stiffened-gas EoS
+#pragma omp declare simd
 template< class Eq >
 tk::real eos_pressure( ncomp_t system,
                        tk::real arho,
@@ -78,10 +79,8 @@ tk::real eos_pressure( ncomp_t system,
                        std::size_t imat=0 )
 {
   // query input deck to get gamma, p_c
-  auto g =
-    g_inputdeck.get< tag::param, Eq, tag::gamma >()[ system ][imat];
-  auto p_c =
-    g_inputdeck.get< tag::param, Eq, tag::pstiff >()[ system ][imat];
+  auto g = g_inputdeck.get< tag::param, Eq, tag::gamma >()[ system ][imat];
+  auto p_c = g_inputdeck.get< tag::param, Eq, tag::pstiff >()[ system ][imat];
 
   tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c)
                           * (g-1.0) - alpha*p_c;
@@ -153,22 +152,26 @@ tk::real eos_totalenergy( ncomp_t system,
 //!   material specific total energy
 //! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
 //! \param[in] system Equation system index
-//! \param[in] rho Material density
+//! \param[in] arho Material partial density (alpha_k * rho_k)
 //! \param[in] u X-velocity
 //! \param[in] v Y-velocity
 //! \param[in] w Z-velocity
-//! \param[in] rhoE Material specific total energy
+//! \param[in] arhoE Material total energy (alpha_k * rho_k * E_k)
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for the
+//!   single-material system, this argument can be left unspecified by the
+//!   calling code
 //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
 //!   for the single-material system, this argument can be left unspecified by
 //!   the calling code
 //! \return Material temperature using the stiffened-gas EoS
 template< class Eq >
 tk::real eos_temperature( ncomp_t system,
-                          tk::real rho,
+                          tk::real arho,
                           tk::real u,
                           tk::real v,
                           tk::real w,
-                          tk::real rhoE,
+                          tk::real arhoE,
+                          tk::real alpha=1.0,
                           std::size_t imat=0 )
 {
   // query input deck to get gamma, p_c, cv
@@ -177,7 +180,7 @@ tk::real eos_temperature( ncomp_t system,
   auto cv =
     g_inputdeck.get< tag::param, Eq, tag::cv >()[ system ][imat];
 
-  tk::real t = (rhoE - 0.5 * rho * (u*u + v*v + w*w) - p_c) / (rho*cv);
+  tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c) / (arho*cv);
   return t;
 }
 

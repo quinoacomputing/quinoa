@@ -30,9 +30,11 @@ module diagcg {
                     const std::vector< std::size_t >& triinpoel );
       initnode void registerReducers();
       entry void setup();
+      entry void boxvol( tk::real v );
       entry void resizeComm();
+      entry void nodeNeighSetup();
       entry void init();
-      entry void refine();
+      entry void refine( tk::real l2ref );
       entry [reductiontarget] void advance( tk::real newdt );
       entry void comnorm( const std::unordered_map< std::size_t,
                                   std::array< tk::real, 4 > >& innorm );
@@ -45,7 +47,7 @@ module diagcg {
       entry void lhs();
       entry void step();
       entry void next();
-      entry void evalLB();
+      entry void evalLB( int nrestart );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

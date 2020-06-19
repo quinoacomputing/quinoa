@@ -19,6 +19,7 @@
 #include "NodeBC.hpp"
 #include "CGPDE.hpp"
 #include "Fields.hpp"
+#include "Vector.hpp"
 
 namespace inciter {
 
@@ -28,6 +29,8 @@ std::unordered_map< std::size_t, std::vector< std::pair< bool, tk::real > > >
 match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
        tk::real t,
        tk::real dt,
+       const std::vector< tk::real >& tp,
+       const std::vector< tk::real >& dtp,
        const tk::UnsMesh::Coords& coord,
        const std::unordered_map< std::size_t, std::size_t >& lid,
        const std::map< int, std::vector< std::size_t > >& bnode )
@@ -36,6 +39,8 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
 //! \param[in] ncomp Number of scalar components in PDE system
 //! \param[in] t Physical time at which to query boundary conditions
 //! \param[in] dt Time step size (for querying BC increments in time)
+//! \param[in] tp Physical time for each mesh node
+//! \param[in] dtp Time step size for each mesh node
 //! \param[in] coord Mesh node coordinates
 //! \param[in] lid Local node IDs associated to local node IDs
 //! \param[in] bnode Map storing global mesh node IDs mapped to side set ids
@@ -118,7 +123,7 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
     auto l = local(s.second);   // generate local node ids on side set
     for (std::size_t eq=0; eq<g_cgpde.size(); ++eq) {
       // query Dirichlet BCs at nodes of this side set
-      auto eqbc = g_cgpde[eq].dirbc( t, dt, {s.first,l}, coord );
+      auto eqbc = g_cgpde[eq].dirbc( t, dt, tp, dtp, {s.first,l}, coord );
       for (const auto& n : eqbc) {
         auto id = n.first;                      // BC node ID
         const auto& bcs = n.second;             // BCs

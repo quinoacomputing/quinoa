@@ -1901,6 +1901,17 @@ struct statistics_info {
 };
 using statistics = keyword< statistics_info, TAOCPP_PEGTL_STRING("statistics") >;
 
+struct history_info {
+  static std::string name() { return "history"; }
+  static std::string shortDescription() { return
+    "Start of history input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to start a block in the input file containing the
+    descriptions and settings of requested history output.)";
+  }
+};
+using history = keyword< history_info, TAOCPP_PEGTL_STRING("history") >;
+
 struct plotvar_info {
   static std::string name() { return "plotvar"; }
   static std::string shortDescription() { return
@@ -2511,6 +2522,22 @@ struct velocityic_info {
 };
 using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
 
+struct massic_info {
+  static std::string name() { return "massic"; }
+  static std::string shortDescription() { return
+    "Specify mass initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set initial conditions by specifying the mass
+       and associated volume within a box.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using massic = keyword< massic_info, TAOCPP_PEGTL_STRING("mass") >;
+
 struct densityic_info {
   static std::string name() { return "densityic"; }
   static std::string shortDescription() { return
@@ -2555,6 +2582,22 @@ struct energyic_info {
   };
 };
 using energyic = keyword< energyic_info, TAOCPP_PEGTL_STRING("energy") >;
+
+struct energy_content_ic_info {
+  static std::string name() { return "energy_content_ic"; }
+  static std::string shortDescription() { return
+    "Specify energy per unit volume as initial conditions";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to set the energy per unit volume as initial
+    conditions.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using energy_content_ic =
+  keyword< energy_content_ic_info, TAOCPP_PEGTL_STRING("energy_content") >;
 
 struct temperatureic_info {
   static std::string name() { return "temperatureic"; }
@@ -2672,9 +2715,11 @@ struct box_info {
     will be set to 1.2 and the pressure to be 1.4. Besides the box dimensions,
     the following physics keywords are allowed in a box ... end block:)"
     + std::string("\'")
+    + massic::string()+ "\', \'"
     + densityic::string()+ "\', \'"
     + velocityic::string() + "\', \'"
     + energyic::string() + "\', \'"
+    + energy_content_ic::string() + "\', \'"
     + temperatureic::string() + "\', \'"
     + pressureic::string() + "\'."; }
 };
@@ -2687,6 +2732,7 @@ struct ic_info {
   static std::string longDescription() { return
     R"(This keyword is used to introduce an ic...end block used to set initial
     conditions. Keywords allowed in a ic ... end block: )" + std::string("\'")
+    + massic::string()+ "\', \'"
     + densityic::string()+ "\', \'"
     + velocityic::string() + "\', \'"
     + pressureic::string() + "\', \'"
@@ -4042,6 +4088,22 @@ struct output_info {
 };
 using output = keyword< output_info, TAOCPP_PEGTL_STRING("output") >;
 
+struct screen_info {
+  static std::string name() { return "screen"; }
+  static std::string shortDescription() {
+    return "Specify the screen output file"; }
+  static std::string longDescription() { return
+    R"(This option is used to set the screen output file name. The default is
+    "<executable>_screen.log".)";
+  }
+  using alias = Alias< O >;
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using screen = keyword< screen_info, TAOCPP_PEGTL_STRING("screen") >;
+
 struct restart_info {
   static std::string name() { return "checkpoint/restart directory name"; }
   static std::string shortDescription()
@@ -4157,10 +4219,9 @@ struct pelocal_reorder_info {
   static std::string longDescription() { return
     R"(This keyword is used in inciter as a keyword in the inciter...end block
     as "pelocal_reorder true" (or false) to do (or not do) a global distributed
-    mesh
-    reordering across all PEs that yields an approximately continous mesh node
-    ID order as mesh partitions are assigned to PEs after mesh partitioning.
-    This reordering is optional.)";
+    mesh reordering across all PEs that yields an approximately continous mesh
+    node ID order as mesh partitions are assigned to PEs after mesh
+    partitioning. This reordering is optional.)";
   }
   struct expect {
     using type = bool;
@@ -4177,7 +4238,7 @@ struct operator_reorder_info {
   static std::string longDescription() { return
     R"(This keyword is used in inciter as a keyword in the inciter...end block
     as "operator_reorder on" (or off) to do (or not do) a local mesh node
-    reordering based on the PDE operator access pattern. This rReordering is
+    reordering based on the PDE operator access pattern. This reordering is
     optional.)";
   }
   struct expect {
@@ -4188,6 +4249,37 @@ struct operator_reorder_info {
 };
 using operator_reorder =
   keyword< operator_reorder_info, TAOCPP_PEGTL_STRING("operator_reorder") >;
+
+struct steady_state_info {
+  static std::string name() { return "steady_state"; }
+  static std::string shortDescription() { return "March to steady state"; }
+  static std::string longDescription() { return
+    R"(This keyword is used indicate that local time stepping should be used
+       towards a stationary solution.)"; }
+  struct expect {
+    using type = bool;
+    static std::string choices() { return "true | false"; }
+    static std::string description() { return "string"; }
+  };
+};
+using steady_state =
+  keyword< steady_state_info, TAOCPP_PEGTL_STRING("steady_state") >;
+
+struct residual_info {
+  static std::string name() { return "residual"; }
+  static std::string shortDescription() { return
+    "Set the convergence criterion for the residual to reach"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a convergence criterion for, e.g., local
+    time stepping marching to steady state, below which the simulation is
+    considered converged.)"; }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 1.0e-14;
+    static std::string description() { return "real"; }
+  };
+};
+using residual = keyword< residual_info, TAOCPP_PEGTL_STRING("residual") >;
 
 struct group_info {
   static std::string name() { return "group"; }
@@ -4543,6 +4635,67 @@ struct triple_point_info {
 };
 using triple_point =
   keyword< triple_point_info, TAOCPP_PEGTL_STRING("triple_point") >;
+
+struct gas_impact_info {
+  using code = Code< T >;
+  static std::string name() { return "Gas impact problem"; }
+  static std::string shortDescription() { return
+    "Select the gas impact test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the gas impact test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material algorithm and its interface capturing
+    capabilities. Example: "problem gas_impact". For more details, see
+    Barlow, A., Hill, R., & Shashkov, M. (2014). Constrained optimization
+    framework for interface-aware sub-scale dynamics closure model for
+    multimaterial cells in Lagrangian and arbitrary Lagrangian–Eulerian
+    hydrodynamics. Journal of Computational Physics, 276, 92-135.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using gas_impact =
+  keyword< gas_impact_info, TAOCPP_PEGTL_STRING("gas_impact") >;
+
+struct shock_hebubble_info {
+  using code = Code< T >;
+  static std::string name() { return "Shock He-bubble problem"; }
+  static std::string shortDescription() { return
+    "Select the shock He-bubble test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the shock He-bubble test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material algorithm and its shock-interface interaction
+    capabilities. Example: "problem shock_hebubble". For more details, see
+    Quirk, J. J., & Karni, S. (1996). On the dynamics of a shock–bubble
+    interaction. Journal of Fluid Mechanics, 318, 129-163.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using shock_hebubble =
+  keyword< shock_hebubble_info, TAOCPP_PEGTL_STRING("shock_hebubble") >;
+
+struct underwater_ex_info {
+  using code = Code< T >;
+  static std::string name() { return "Underwater explosion problem"; }
+  static std::string shortDescription() { return
+    "Select the underwater explosion test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the underwater explosion test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material algorithm and its interface capturing capabilities in the
+    presence of strong shocks and large deformations.
+    Example: "problem underwater_ex". For more details, see
+    Chiapolino, A., Saurel, R., & Nkonga, B. (2017). Sharpening diffuse
+    interfaces with compressible fluids on unstructured meshes. Journal of
+    Computational Physics, 340, 389-417.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using underwater_ex =
+  keyword< underwater_ex_info, TAOCPP_PEGTL_STRING("underwater_ex") >;
 
 struct problem_info {
   using code = Code< t >;
@@ -4985,6 +5138,52 @@ struct bc_sym_info {
 using bc_sym =
   keyword< bc_sym_info, TAOCPP_PEGTL_STRING("bc_sym") >;
 
+struct point_info {
+  static std::string name() { return "point"; }
+  static std::string shortDescription() { return "Specify a point"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a point, used, e.g., in specifying a
+    point in 3D space for setting a stagnation (velocity vector = 0).  Example
+    specification: 'point 0.0 0.1 0.2 end')";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "3 reals"; }
+  };
+};
+using point = keyword< point_info, TAOCPP_PEGTL_STRING("point") >;
+
+struct radius_info {
+  static std::string name() { return "radius"; }
+  static std::string shortDescription() { return "Specify a radius"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a radius, used, e.g., in specifying a
+    point in 3D space for setting a stagnation (velocity vector = 0).  Example
+    specification: 'radius 1.0e-5')";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using radius = keyword< radius_info, TAOCPP_PEGTL_STRING("radius") >;
+
+struct bc_stag_info {
+  static std::string name() { return "Stagnation boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing stagnation boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_stag ... end block, used to
+    specify the configuration for setting stagnation boundary conditions for a
+    partial differential equation. Keywords allowed in a bc_stag ... end
+    block: )" + std::string("\'")
+    + point::string() + "\', \'"
+    + radius::string() + "\'. ";
+  }
+};
+using bc_stag = keyword< bc_stag_info, TAOCPP_PEGTL_STRING("bc_stag") >;
+
 struct bc_inlet_info {
   static std::string name() { return "Inlet boundary condition"; }
   static std::string shortDescription() { return
@@ -5027,7 +5226,7 @@ struct transport_info {
     R"(This keyword is used to introduce an transport ... end block, used to
     specify the configuration for a transport equation type. Keywords allowed
     in an transport ... end block: )" + std::string("\'")
-    + depvar::string()+ "\', \'"
+    + depvar::string() + "\', \'"
     + ncomp::string() + "\', \'"
     + problem::string() + "\', \'"
     + physics::string() + "\', \'"
@@ -6149,6 +6348,20 @@ struct superbeep1_info {
 };
 using superbeep1 = keyword< superbeep1_info, TAOCPP_PEGTL_STRING("superbeep1") >;
 
+struct vertexbasedp1_info {
+  static std::string name() { return "VERTEXBASEDP1"; }
+  static std::string shortDescription() { return
+    "Select the vertex-based limiter for DGP1"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the vertex-based limiter used for
+    discontinuous Galerkin (DG) P1 spatial discretization used in inciter.
+    Ref. Kuzmin, D. (2010). A vertex-based hierarchical slope limiter for
+    p-adaptive discontinuous Galerkin methods. Journal of computational and
+    applied mathematics, 233(12), 3077-3085.
+    See Control/Inciter/Options/Limiter.hpp for other valid options.)"; }
+};
+using vertexbasedp1 = keyword< vertexbasedp1_info, TAOCPP_PEGTL_STRING("vertexbasedp1") >;
+
 struct limiter_info {
   static std::string name() { return "Limiter function"; }
   static std::string shortDescription() { return
@@ -6162,7 +6375,8 @@ struct limiter_info {
     static std::string choices() {
       return '\'' + nolimiter::string() + "\' | \'"
                   + wenop1::string() + "\' | \'"
-                  + superbeep1::string() + '\'';
+                  + superbeep1::string() + "\' | \'"
+                  + vertexbasedp1::string() + '\'';
     }
   };
 };

@@ -22,7 +22,7 @@
 #include "CartesianProduct.hpp"
 #include "PDEFactory.hpp"
 #include "Inciter/Options/PDE.hpp"
-
+#include "ContainerUtil.hpp"
 #include "ConfigureCompFlow.hpp"
 #include "CompFlow/Physics/CG.hpp"
 #include "CompFlow/Physics/DG.hpp"
@@ -69,6 +69,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 {
   using eq = tag::compflow;
+  using tk::parameters;
 
   auto c = ++cnt[ ctr::PDEType::COMPFLOW ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -150,6 +151,8 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   const auto& p0 = g_inputdeck.get< tag::param, eq, tag::p0 >();
   if (!p0.empty()) nfo.emplace_back( "coeff p0", parameters( p0 ) );
 
+  // ICs
+
   const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
 
   const auto& bgdensityic = ic.get< tag::density >();
@@ -192,12 +195,31 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
                       std::to_string( boxpressureic[c][0] ) );
   const auto& boxenergyic = icbox.get< tag::energy >();
   if (boxenergyic.size() > c)
-    nfo.emplace_back( "IC box internal energy",
+    nfo.emplace_back( "IC box internal energy per unit mass",
                       std::to_string( boxenergyic[c][0] ) );
+  const auto& boxmassic = icbox.get< tag::mass >();
+  if (boxmassic.size() > c)
+    nfo.emplace_back( "IC box mass", std::to_string( boxmassic[c][0] ) );
+  const auto& boxenergy_content_ic = icbox.get< tag::energy_content >();
+  if (boxenergy_content_ic.size() > c)
+    nfo.emplace_back( "IC box internal energy per unit volume",
+                      std::to_string( boxenergy_content_ic[c][0] ) );
   const auto& boxtemperatureic = icbox.get< tag::temperature >();
   if (boxtemperatureic.size() > c)
     nfo.emplace_back( "IC box temperature",
                       std::to_string( boxtemperatureic[c][0] ) );
+
+  // BCs
+
+  const auto& bcstag = g_inputdeck.get< tag::param, eq, tag::bcstag >();
+  const auto& point = bcstag.get< tag::point >();
+  if (point.size() > c)
+    nfo.emplace_back( "Stagnation BC point(s)", parameters( point[c] ) );
+  const auto& radius = bcstag.get< tag::radius >();
+  if (radius.size() > c)
+    nfo.emplace_back( "Stagnation BC radii", parameters( radius[c] ) );
+
+  // FCT
 
   auto bool_to_string = [](bool b) -> std::string {
     return b ? "true" : "false";

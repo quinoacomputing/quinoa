@@ -61,6 +61,25 @@ add_regression_test(compflow_euler_nleg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg
                     LABELS diagcg)
 
+add_regression_test(compflow_euler_nleg_stag ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES nleg_stag.q unitcube_1k.exo
+                    ARGS -c nleg_stag.q -i unitcube_1k.exo -v
+                    BIN_BASELINE nleg_pe4.std.exo.0
+                                 nleg_pe4.std.exo.1
+                                 nleg_pe4.std.exo.2
+                                 nleg_pe4.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                    BIN_DIFF_PROG_ARGS -m
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF nleg_diag.ndiff.cfg
+                    LABELS diagcg)
+
 add_regression_test(compflow_euler_nleg_dgp2 ${INCITER_EXECUTABLE}
                     NUMPES 4
                     INPUTFILES nleg_dgp2.q unitcube_1k.exo

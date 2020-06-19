@@ -32,7 +32,8 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
                                       [[maybe_unused]] tk::real x,
                                       [[maybe_unused]] tk::real y,
                                       [[maybe_unused]] tk::real z,
-                                      [[maybe_unused]] tk::real t )
+                                      [[maybe_unused]] tk::real t,
+                                      int& inbox )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -41,6 +42,8 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
+//! \param[in] z Z coordinate where to evaluate the solution
+//! \param[in,out] 1 If box ICs are applied, if if point did not fall into box
 //! \return Values of all components
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
@@ -97,6 +100,7 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
     const auto& boxtemperatureic = icbox.get< tag::temperature >();
 
     if (x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5]) {
+      inbox = 1;
       if (boxdensityic.size() > system && !boxdensityic[system].empty()) {
         u[0] = boxdensityic[system][0];
       }
@@ -110,7 +114,9 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
                                       boxpressureic[system][0] );
       }
       if (boxenergyic.size() > system && !boxenergyic[system].empty()) {
-        u[4] = u[0] * boxenergyic[system][0];
+        const auto ux = u[1]/u[0], uy = u[2]/u[0], uz = u[3]/u[0];
+        const auto ke = 0.5*(ux*ux + uy*uy + uz*uz);
+        u[4] = u[0] * (boxenergyic[system][0] + ke);
       }
       if (boxtemperatureic.size() > system &&
          !boxtemperatureic[system].empty())
@@ -122,19 +128,6 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
   }
 
   return u;
-}
-
-tk::SrcFn::result_type
-CompFlowProblemUserDefined::src( ncomp_t, ncomp_t, tk::real,
-                                 tk::real, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \details No-op for user-defined problems
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
 }
 
 std::vector< std::string >
@@ -152,6 +145,7 @@ CompFlowProblemUserDefined::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,
@@ -163,11 +157,12 @@ CompFlowProblemUserDefined::fieldOutput(
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] U Solution vector at recent time step
-//! \return Vector of vectors to be output to file
+//! \return Vector of vectors of solution fields to be output to file
 // *****************************************************************************
 {
-  return CompFlowFieldOutput( system, offset, U );
+  return CompFlowFieldOutput( system, offset, nunk, U );
 }
 
 std::vector< std::string >

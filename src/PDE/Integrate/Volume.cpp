@@ -22,6 +22,7 @@ tk::volInt( ncomp_t system,
             ncomp_t ncomp,
             ncomp_t offset,
             const std::size_t ndof,
+            const std::size_t nelem,
             const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,
             const Fields& geoElem,
@@ -36,6 +37,7 @@ tk::volInt( ncomp_t system,
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] nelem Maximum number of elements
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
@@ -51,7 +53,7 @@ tk::volInt( ncomp_t system,
   const auto& cz = coord[2];
 
   // compute volume integrals
-  for (std::size_t e=0; e<U.nunk(); ++e)
+  for (std::size_t e=0; e<nelem; ++e)
   {
     if(ndofel[e] > 1)
     {

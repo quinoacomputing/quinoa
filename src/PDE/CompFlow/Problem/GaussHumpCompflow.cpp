@@ -30,7 +30,8 @@ CompFlowProblemGaussHump::solution( ncomp_t system,
                                     tk::real x,
                                     tk::real y,
                                     tk::real,
-                                    tk::real t )
+                                    tk::real t,
+                                    int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -70,18 +71,6 @@ CompFlowProblemGaussHump::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-tk::SrcFn::result_type
-CompFlowProblemGaussHump::src( ncomp_t, ncomp_t, tk::real,
-                               tk::real, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-}
-
 std::vector< std::string >
 CompFlowProblemGaussHump::fieldNames( ncomp_t ) const
 // *****************************************************************************
@@ -112,6 +101,7 @@ CompFlowProblemGaussHump::fieldOutput(
   ncomp_t system,
   ncomp_t ncomp,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real t,
   tk::real V,
   const std::vector< tk::real >& vol,
@@ -124,6 +114,7 @@ CompFlowProblemGaussHump::fieldOutput(
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] t Physical time
 //! \param[in] V Total mesh volume (across the whole problem)
 //! \param[in] vol Nodal mesh volumes
@@ -135,7 +126,7 @@ CompFlowProblemGaussHump::fieldOutput(
 {
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
-  auto out = CompFlowFieldOutput(system, offset, U);
+  auto out = CompFlowFieldOutput( system, offset, nunk, U );
 
   auto r = U.extract( 0*rdof, offset );
   auto u = U.extract( 1*rdof, offset );
@@ -150,7 +141,8 @@ CompFlowProblemGaussHump::fieldOutput(
 
   auto er = r, p = r;
   for (std::size_t i=0; i<r.size(); ++i) {
-    auto s = solution( system, ncomp, x[i], y[i], z[i], t );
+    int inbox = 0;
+    auto s = solution( system, ncomp, x[i], y[i], z[i], t, inbox );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
     r[i] = s[0];
     u[i] = s[1]/s[0];

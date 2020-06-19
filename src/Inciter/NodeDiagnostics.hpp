@@ -29,7 +29,8 @@ class NodeDiagnostics {
     static void registerReducers();
 
     //! Compute diagnostics, e.g., residuals, norms of errors, etc.
-    bool compute( Discretization& d, const tk::Fields& u ) const;
+    bool compute( Discretization& d, const tk::Fields& u, const tk::Fields& un )
+    const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

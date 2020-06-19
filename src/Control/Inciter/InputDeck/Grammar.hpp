@@ -44,6 +44,11 @@ namespace deck {
            , tag::multimat,    std::size_t
          > > neq;
 
+  //! \brief Parser-lifetime storage for point names
+  //! \details Used to track the point names registered so that parsing new ones
+  //!    can be required to be unique.
+  static std::set< std::string > pointnames;
+
 } // ::deck
 } // ::inciter
 
@@ -283,6 +288,25 @@ namespace grm {
       const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
       for (const auto& s : bc)
         if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+
+      // Error check stagnation BC block
+      const auto& bcstag = stack.template get< tag::param, eq, tag::bcstag >();
+      const auto& point = bcstag.template get< tag::point >();
+      const auto& radius = bcstag.template get< tag::radius >();
+      if ( (!point.empty() && !point.back().empty() &&
+            !radius.empty() && !radius.back().empty() &&
+            point.back().size() != 3*radius.back().size()) ||
+           (!radius.empty() && !radius.back().empty() &&
+            !point.empty() && !point.back().empty() &&
+            point.back().size() != 3*radius.back().size()) ||
+           (!point.empty() && !point.back().empty() &&
+            (radius.empty() || (!radius.empty() && radius.back().empty()))) ||
+           (!radius.empty() && !radius.back().empty() &&
+            (point.empty() || (!point.empty() && point.back().empty())))
+         )
+      {
+        Message< Stack, ERROR, MsgKey::STAGBCWRONG >( stack, in );
+      }
     }
   };
 
@@ -474,6 +498,19 @@ namespace grm {
         stack.template get< tag::discr, tag::rdof >() = 10;
         stack.template get< tag::pref, tag::pref >() = true;
       }
+
+      // Do error checking on time history points
+      const auto& hist = stack.template get< tag::history, tag::point >();
+      if (std::any_of( begin(hist), end(hist),
+           [](const auto& p){ return p.size() != 3; } ) )
+      {
+        Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+      }
+      // Do error checking on time history point names (this is a programmer
+      // error if triggers, hence assert)
+      Assert(
+        (stack.template get< tag::history, tag::id >().size() == hist.size()),
+        "Number of history points and ids must equal" );
     }
   };
 
@@ -576,6 +613,26 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  struct match_pointname : pegtl::success {};
+  //! \brief Match PDF name to the registered ones
+  //! \details This is used to check the set of PDF names dependent previously
+  //!    registered to make sure all are unique.
+  template<>
+  struct action< match_pointname > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::deck::pointnames;
+      // find matched name in set of registered ones
+      if (pointnames.find( in.string() ) == pointnames.end()) {
+        pointnames.insert( in.string() );
+        stack.template get< tag::history, tag::id >().push_back( in.string() );
+      }
+      else  // error out if name matched var is already registered
+        Message< Stack, ERROR, MsgKey::POINTEXISTS >( stack, in );
+    }
+  };
+
 } // ::grm
 } // ::tk
 
@@ -623,6 +680,7 @@ namespace deck {
            tk::grm::discrparam< use, kw::t0, tag::t0 >,
            tk::grm::discrparam< use, kw::dt, tag::dt >,
            tk::grm::discrparam< use, kw::cfl, tag::cfl >,
+           tk::grm::discrparam< use, kw::residual, tag::residual >,
            tk::grm::process< use< kw::fcteps >,
                              tk::grm::Store< tag::discr, tag::fcteps > >,
            tk::grm::process< use< kw::fctclip >,
@@ -639,6 +697,9 @@ namespace deck {
            tk::grm::process< use< kw::operator_reorder >,
                              tk::grm::Store< tag::discr, tag::operator_reorder >,
                              pegtl::alpha >,
+           tk::grm::process< use< kw::steady_state >,
+                             tk::grm::Store< tag::discr, tag::steady_state >,
+                             pegtl::alpha >,
            tk::grm::interval< use< kw::ttyi >, tag::tty >,
            discroption< use, kw::scheme, inciter::ctr::Scheme, tag::scheme >,
            discroption< use, kw::limiter, inciter::ctr::Limiter, tag::limiter >,
@@ -653,8 +714,7 @@ namespace deck {
                                     tk::grm::Store_back_back,
                                     tk::grm::start_vector,
                                     tk::grm::check_vector,
-                                    eq,
-                                    param, xparams... > {};
+                                    eq, param, xparams... > {};
 
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename param,
@@ -683,9 +743,27 @@ namespace deck {
                                         tk::grm::Store_back_back,
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
-                                        eq,
-                                        tag::bc,
-                                        param > > > {};
+                                        eq, tag::bc, param > > > {};
+
+  //! Stagnation boundary conditions block
+  template< class eq, class param >
+  struct bc_stag :
+         pegtl::if_must<
+           tk::grm::readkw< kw::bc_stag::pegtl_string >,
+           tk::grm::block<
+             use< kw::end >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::radius >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq, tag::bcstag, tag::radius >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::point >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq, tag::bcstag, tag::point > > > {};
 
   //! Characteristic boundary conditions block
   template< class keyword, class eq, class param >
@@ -704,9 +782,7 @@ namespace deck {
                                         tk::grm::Store_back_back,
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
-                                        eq,
-                                        tag::bc,
-                                        param > > > {};
+                                        eq, tag::bc, param > > > {};
 
   //! edgelist ... end block
   struct edgelist :
@@ -732,21 +808,6 @@ namespace deck {
                          half_world< kw::amr_zminus, tag::zminus >,
                          half_world< kw::amr_zplus, tag::zplus > > > {};
 
-  //! physics variables block (for ICs)
-  template< class eq, class Tag, class... Tags >
-  struct physvar :
-         pegtl::sor<
-           pde_parameter_vector< kw::densityic,
-                                 eq, Tag, Tags..., tag::density >,
-           pde_parameter_vector< kw::velocityic,
-                                 eq, Tag, Tags..., tag::velocity >,
-           pde_parameter_vector< kw::pressureic,
-                                 eq, Tag, Tags..., tag::pressure >,
-           pde_parameter_vector< kw::temperatureic,
-                                 eq, Tag, Tags..., tag::temperature >,
-           pde_parameter_vector< kw::energyic,
-                                 eq, Tag, Tags..., tag::energy > > {};
-
   //! initial conditins box block
   template< class eq >
   struct box :
@@ -765,7 +826,21 @@ namespace deck {
                                tag::param, eq, tag::ic, tag::box, tag::zmin >,
              tk::grm::control< use< kw::zmax >, tk::grm::number,
                                tag::param, eq, tag::ic, tag::box, tag::zmax >,
-             physvar< eq, tag::ic, tag::box > > > {};
+             pegtl::sor<
+               pde_parameter_vector< kw::massic,
+                                     eq, tag::ic, tag::box, tag::mass >,
+               pde_parameter_vector< kw::densityic,
+                                     eq, tag::ic, tag::box, tag::density >,
+               pde_parameter_vector< kw::velocityic,
+                                     eq, tag::ic, tag::box, tag::velocity >,
+               pde_parameter_vector< kw::pressureic,
+                                     eq, tag::ic, tag::box, tag::pressure >,
+               pde_parameter_vector< kw::temperatureic,
+                                     eq, tag::ic, tag::box, tag::temperature >,
+               pde_parameter_vector< kw::energy_content_ic,
+                 eq, tag::ic, tag::box, tag::energy_content >,
+               pde_parameter_vector< kw::energyic,
+                  eq, tag::ic, tag::box, tag::energy > > > > {};
 
   //! initial conditions block for compressible flow
   template< class eq >
@@ -773,9 +848,18 @@ namespace deck {
          pegtl::if_must<
            tk::grm::readkw< use< kw::ic >::pegtl_string >,
            tk::grm::block< use< kw::end >,
-                           physvar< eq, tag::ic >,
-                           pegtl::seq< box< eq > >
-                         > > {};
+             pegtl::sor<
+               pde_parameter_vector< kw::densityic,
+                                     eq, tag::ic, tag::density >,
+               pde_parameter_vector< kw::velocityic,
+                                     eq, tag::ic, tag::velocity >,
+               pde_parameter_vector< kw::pressureic,
+                                     eq, tag::ic, tag::pressure >,
+               pde_parameter_vector< kw::temperatureic,
+                                     eq, tag::ic, tag::temperature >,
+               pde_parameter_vector< kw::energyic,
+                                     eq, tag::ic, tag::energy > >,
+               pegtl::seq< box< eq > > > > {};
 
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
@@ -889,6 +973,7 @@ namespace deck {
                                       tag::kappa >,
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
+                           bc_stag< tag::compflow, tag::bcstag >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
                            characteristic_bc< kw::bc_outlet,
                                               tag::compflow,
@@ -1058,15 +1143,45 @@ namespace deck {
   struct plotvar :
          pegtl::if_must<
            tk::grm::readkw< use< kw::plotvar >::pegtl_string >,
-           tk::grm::block< use< kw::end >,
-                           tk::grm::process< use< kw::filetype >,
-                                             tk::grm::store_inciter_option<
-                                               tk::ctr::FieldFile,
-                                               tag::selected,
-                                               tag::filetype >,
-                                             pegtl::alpha >,
-                           tk::grm::interval< use< kw::interval >,
-                                              tag::field > > > {};
+           tk::grm::block<
+             use< kw::end >,
+             tk::grm::process< use< kw::filetype >,
+                               tk::grm::store_inciter_option<
+                                 tk::ctr::FieldFile,
+                                 tag::selected,
+                                 tag::filetype >,
+                               pegtl::alpha >,
+             tk::grm::interval< use< kw::interval >, tag::field >,
+             pegtl::if_must<
+               tk::grm::vector<
+                 use< kw::sideset >,
+                 tk::grm::Store_back< tag::cmd, tag::io, tag::surface >,
+                 use< kw::end > > > > > {};
+
+  //! history ... end block
+  struct history :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::history >::pegtl_string >,
+           tk::grm::block<
+             use< kw::end >,
+             tk::grm::interval< use< kw::interval >, tag::history >,
+             tk::grm::precision< use, tag::history >,
+             tk::grm::process<
+               use< kw::txt_float_format >,
+               tk::grm::store_inciter_option< tk::ctr::TxtFloatFormat,
+                                              tag::flformat,
+                                              tag::history >,
+               pegtl::alpha >,
+             pegtl::if_must<
+               tk::grm::readkw< use< kw::point >::pegtl_string >,
+               tk::grm::act< pegtl::identifier, tk::grm::match_pointname >,
+               pegtl::seq<
+                 tk::grm::start_vector< tag::history, tag::point >,
+                 tk::grm::block<
+                   use< kw::end >,
+                   tk::grm::scan< tk::grm::number,
+                     tk::grm::Store_back_back< tag::history, tag::point > > >
+               > > > > {};
 
   //! 'inciter' block
   struct inciter :
@@ -1081,6 +1196,7 @@ namespace deck {
                            pref,
                            partitioning,
                            plotvar,
+                           history,
                            tk::grm::diagnostics<
                              use,
                              tk::grm::store_inciter_option > >,

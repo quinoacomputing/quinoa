@@ -16,13 +16,6 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
-#include "FieldOutput.hpp"
-
-//namespace inciter {
-//
-//extern ctr::InputDeck g_inputdeck;
-//
-//} // ::inciter
 
 using inciter::MultiMatProblemInterfaceAdvection;
 
@@ -32,7 +25,8 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
                                              tk::real x,
                                              tk::real y,
                                              tk::real /*z*/,
-                                             tk::real t )
+                                             tk::real t,
+                                             int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -104,69 +98,6 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
   s[momentumIdx(nmat, 2)] = rhob * w;
 
   return s;
-}
-
-tk::SrcFn::result_type
-MultiMatProblemInterfaceAdvection::src( ncomp_t, ncomp_t ncomp, tk::real,
-                                        tk::real, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  std::vector< tk::real > s( ncomp, 0.0 );
-
-  return s;
-}
-
-std::vector< std::string >
-MultiMatProblemInterfaceAdvection::fieldNames( ncomp_t )
-// *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
-// *****************************************************************************
-{
-  auto nmat =
-    g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
-
-  return MultiMatFieldNames(nmat);
-}
-
-std::vector< std::vector< tk::real > >
-MultiMatProblemInterfaceAdvection::fieldOutput(
-  ncomp_t system,
-  ncomp_t,
-  ncomp_t offset,
-  tk::real /*t*/,
-  tk::real,
-  const std::vector< tk::real >&,
-  const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-  tk::Fields& U,
-  const tk::Fields& P )
-// *****************************************************************************
-//  Return field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
-//! \param[in] t Physical time
-//! \param[in] coord Mesh node coordinates
-//! \param[in] U Solution vector at recent time step
-//! \param[in] P Vector of primitive quantities at recent time step
-//! \return Vector of vectors to be output to file
-// *****************************************************************************
-{
-  // number of degrees of freedom
-  const std::size_t rdof =
-    g_inputdeck.get< tag::discr, tag::rdof >();
-
-  // number of materials
-  auto nmat =
-    g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
-
-  return MultiMatFieldOutput(system, nmat, offset, rdof, U, P);
 }
 
 std::vector< std::string >

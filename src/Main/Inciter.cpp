@@ -189,7 +189,11 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::INCITER,
-                          tk::inciter_executable() ) ),
+                          tk::inciter_executable(),
+                          inciter::g_inputdeck_defaults.get< tag::cmd, tag::io,
+                            tag::screen >(),
+                          inciter::g_inputdeck_defaults.get< tag::cmd, tag::io,
+                            tag::nrestart >() ) ),
       // Start new timer measuring the total runtime
       m_timer(1),
       m_timestamp()
@@ -222,10 +226,16 @@ class Main : public CBase_Main {
                           reinterpret_cast<CkArgMsg*>(msg)->argv,
                           m_cmdline,
                           tk::HeaderType::INCITER,
-                          tk::inciter_executable() ) ),
+                          tk::inciter_executable(),
+                          inciter::g_inputdeck_defaults.get< tag::cmd,
+                            tag::io, tag::screen >(),
+                          inciter::g_inputdeck.get< tag::cmd,
+                            tag::io, tag::nrestart >()+1 ) ),
       m_timer(1),
       m_timestamp()
     {
+      // increase number of restarts (available for Transporter on PE 0)
+      ++inciter::g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
       g_trace = m_cmdline.get< tag::trace >();
       tk::MainCtor( mainProxy, thisProxy, m_timer, m_cmdline,
                     CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
@@ -242,8 +252,9 @@ class Main : public CBase_Main {
     //! Towards normal exit but collect chare state first (if any)
     void finalize() {
       tk::finalize( m_cmdline, m_timer, stateProxy, m_timestamp,
-                    tk::inciter_executable(),
-                    CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+        inciter::g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >(),
+        inciter::g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >(),
+        CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
     }
 
     //! Entry method triggered when quiescence is detected
@@ -256,7 +267,10 @@ class Main : public CBase_Main {
 
     //! Dump chare state
     void dumpstate( CkReductionMsg* msg ) {
-      tk::dumpstate( m_cmdline, tk::inciter_executable(), msg );
+      tk::dumpstate( m_cmdline,
+        inciter::g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >(),
+        inciter::g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >(),
+        msg );
     }
 
     /** @name Charm++ pack/unpack serializer member functions */

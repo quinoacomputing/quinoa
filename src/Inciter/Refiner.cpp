@@ -30,6 +30,7 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
 
@@ -741,7 +742,8 @@ Refiner::writeMesh( const std::string& basefilename,
 
     // Evaluate initial conditions on current mesh at t0
     tk::Fields u( m_coord[0].size(), nprop );
-    for (const auto& eq : g_cgpde) eq.initialize( m_coord, u, t0 );
+    std::vector< std::size_t > inbox;
+    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, inbox );
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
@@ -775,7 +777,8 @@ Refiner::writeMesh( const std::string& basefilename,
     write( /*meshoutput = */ true, /*fieldoutput = */ true, itr, 1, t,
            thisIndex, basefilename, m_inpoel, m_coord, m_bface,
            tk::remap(m_bnode,m_lid), tk::remap(m_triinpoel,m_lid),
-           elemfieldnames, nodefieldnames, elemfields, nodefields, c );
+           elemfieldnames, nodefieldnames, {}, elemfields, nodefields, {},
+           {}, c );
 }
 
 void
@@ -1123,17 +1126,22 @@ Refiner::coordRefine()
   auto zplus = g_inputdeck.get< tag::amr, tag::zplus >();
 
   // The default is the largest representable double
-  auto rmax = std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
   auto eps =
     std::numeric_limits< kw::amr_xminus::info::expect::type >::epsilon();
+  auto xminus_default = g_inputdeck_defaults.get< tag::amr, tag::xminus >();
+  auto xplus_default = g_inputdeck_defaults.get< tag::amr, tag::xplus >();
+  auto yminus_default = g_inputdeck_defaults.get< tag::amr, tag::yminus >();
+  auto yplus_default = g_inputdeck_defaults.get< tag::amr, tag::yplus >();
+  auto zminus_default = g_inputdeck_defaults.get< tag::amr, tag::zminus >();
+  auto zplus_default = g_inputdeck_defaults.get< tag::amr, tag::zplus >();
 
   // Decide if user has configured the half-world
-  bool xm = std::abs(xminus - rmax) > eps ? true : false;
-  bool xp = std::abs(xplus - rmax) > eps ? true : false;
-  bool ym = std::abs(yminus - rmax) > eps ? true : false;
-  bool yp = std::abs(yplus - rmax) > eps ? true : false;
-  bool zm = std::abs(zminus - rmax) > eps ? true : false;
-  bool zp = std::abs(zplus - rmax) > eps ? true : false;
+  bool xm = std::abs(xminus - xminus_default) > eps ? true : false;
+  bool xp = std::abs(xplus - xplus_default) > eps ? true : false;
+  bool ym = std::abs(yminus - yminus_default) > eps ? true : false;
+  bool yp = std::abs(yplus - yplus_default) > eps ? true : false;
+  bool zm = std::abs(zminus - zminus_default) > eps ? true : false;
+  bool zp = std::abs(zplus - zplus_default) > eps ? true : false;
 
   using AMR::edge_t;
   using AMR::edge_tag;
@@ -1150,8 +1158,8 @@ Refiner::coordRefine()
     const auto& z = m_coord[2];
     // Compute edges to be tagged for refinement
     std::vector< std::pair< edge_t, edge_tag > > tagged_edges;
-    for (std::size_t p=0; p<npoin; ++p)        // for all mesh nodes on this chare
-      for (auto q : tk::Around(psup,p)) {      // for all nodes surrounding p
+    for (std::size_t p=0; p<npoin; ++p)    // for all mesh nodes on this chare
+      for (auto q : tk::Around(psup,p)) {  // for all nodes surrounding p
         Edge e{{p,q}};
 
         bool t = true;
@@ -1202,7 +1210,8 @@ Refiner::nodeinit( std::size_t npoin,
   if (centering == tk::Centering::NODE) {
 
     // Evaluate ICs for all scalar components integrated
-    for (const auto& eq : g_cgpde) eq.initialize( m_coord, u, t0 );
+    std::vector< std::size_t > inbox;
+    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, inbox );
 
   } else if (centering == tk::Centering::ELEM) {
 

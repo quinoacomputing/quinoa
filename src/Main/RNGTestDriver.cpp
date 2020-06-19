@@ -25,19 +25,23 @@
 namespace rngtest {
 
 extern ctr::InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
 
 } // rngtest::
 
 using rngtest::RNGTestDriver;
 
-RNGTestDriver::RNGTestDriver( const ctr::CmdLine& cmdline ) :
-  m_print( tk::rngtest_executable() + "_screen.log",
+RNGTestDriver::RNGTestDriver( const ctr::CmdLine& cmdline, int nrestart ) :
+  m_print( cmdline.logname(
+             g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >(),
+             nrestart ),
            cmdline.get< tag::verbose >() ? std::cout : std::clog,
            std::ios_base::app )
 // *****************************************************************************
 //  Constructor
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
+//! \param[in] nrestart Number of times restarted
 // *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here

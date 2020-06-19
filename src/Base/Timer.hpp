@@ -16,7 +16,6 @@
 #define Timer_h
 
 #include <cstdint>
-#include <type_traits>          // for move, enable_if<>::type
 #include <chrono>
 
 #include "NoWarning/pup.hpp"      // for er

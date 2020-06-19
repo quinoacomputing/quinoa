@@ -100,8 +100,14 @@ class DiagCG : public CBase_DiagCG {
     //! Size communication buffers (no-op)
     void resizeComm() {}
 
+    //! Setup node-neighborhood (no-op)
+    void nodeNeighSetup() {}
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
+
+    //! Receive total box IC volume
+    void boxvol( tk::real v );
 
     // Initially compute left hand side diagonal matrix
     void init();
@@ -129,7 +135,7 @@ class DiagCG : public CBase_DiagCG {
     void update( const tk::Fields& a, tk::Fields&& dul );
 
     //! Optionally refine/derefine mesh
-    void refine();
+    void refine( tk::real l2res );
 
     //! Receive new mesh from refiner
     void resizePostAMR(
@@ -154,7 +160,7 @@ class DiagCG : public CBase_DiagCG {
     void step();
 
     // Evaluate whether to do load balancing
-    void evalLB();
+    void evalLB( int nrestart );
 
     //! Continue to next time step
     void next();
@@ -171,6 +177,8 @@ class DiagCG : public CBase_DiagCG {
       p | m_nrhs;
       p | m_nnorm;
       p | m_bnode;
+      p | m_bface;
+      p | m_triinpoel;
       p | m_u;
       p | m_ul;
       p | m_du;
@@ -185,6 +193,9 @@ class DiagCG : public CBase_DiagCG {
       p | m_bnorm;
       p | m_bnormc;
       p | m_diag;
+      p | m_boxnodes;
+      p | m_dtp;
+      p | m_tp;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -209,6 +220,10 @@ class DiagCG : public CBase_DiagCG {
     std::size_t m_nnorm;
     //! Boundary node lists mapped to side set ids
     std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Boundary faces side-set information
+    std::map< int, std::vector< std::size_t > > m_bface;
+    //! Triangle face connecitivity
+    std::vector< std::size_t > m_triinpoel;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes (low orderd)
@@ -250,6 +265,14 @@ class DiagCG : public CBase_DiagCG {
     std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnormc;
     //! Diagnostics object
     NodeDiagnostics m_diag;
+    //! Mesh node ids at which user-defined box ICs are defined
+    std::vector< std::size_t > m_boxnodes;
+    //! Time step size for each mesh node
+    std::vector< tk::real > m_dtp;
+    //! Physical time for each mesh node
+    std::vector< tk::real > m_tp;
+    //! True in the last time step
+    int m_finished;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

@@ -448,7 +448,7 @@ class Data {
     //! \param[in] offset System offset specifying the position of the system of
     //!   equations among other systems
     //! \param[in] value Value to fill vector of unknowns with
-    void fill( ncomp_t component, ncomp_t offset, tk::real value ) {
+    inline void fill( ncomp_t component, ncomp_t offset, tk::real value ) {
       auto p = cptr( component, offset );
       for (ncomp_t i=0; i<m_nunk; ++i) var(p,i) = value;
     }
@@ -459,8 +459,7 @@ class Data {
     { std::fill( begin(m_vec), end(m_vec), value ); }
 
     //! Check if vector of unknowns is empty
-    bool empty() const noexcept
-    { return m_vec.empty(); }
+    bool empty() const noexcept { return m_vec.empty(); }
 
     //! Layout name dispatch
     //! \return The name of the data layout used
@@ -550,14 +549,14 @@ class Data {
     //! \return Const reference to data of type tk::real
     //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
     //!   Patterns Applied, Addison-Wesley Professional, 2001.
-    const tk::real&
+    inline const tk::real&
     var( const tk::real* const pt, ncomp_t unknown, int2type< UnkEqComp > )
     const {
       Assert( unknown < m_nunk, "Out-of-bounds access: unknown < number of "
               "unknowns" );
       return *(pt + unknown*m_nprop);
     }
-    const tk::real&
+    inline const tk::real&
     var( const tk::real* const pt, ncomp_t unknown, int2type< EqCompUnk > )
     const {
       Assert( unknown < m_nunk, "Out-of-bounds access: unknown < number of "

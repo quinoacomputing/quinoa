@@ -26,8 +26,10 @@ using namespace tao;
 
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
-    tag::input,  std::string   //!< Input filename
-  , tag::output, std::string   //!< Output filename
+    tag::nrestart,  int                             //!< Number of restarts
+  , tag::input,     std::string                     //!< Input filename
+  , tag::output,    std::string                     //!< Output filename
+  , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
 > >;
 
 //! PEGTL location/position type to use throughout all of MeshConv's parsers

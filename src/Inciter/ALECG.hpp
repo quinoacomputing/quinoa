@@ -94,11 +94,17 @@ class ALECG : public CBase_ALECG {
     //! Size communication buffers (no-op)
     void resizeComm() {}
 
+    //! Setup node-neighborhood (no-op)
+    void nodeNeighSetup() {}
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
-    // Initially compute left hand side diagonal matrix
-    void init();
+    //! Receive total box IC volume
+    void boxvol( tk::real v );
+
+    // Start time stepping
+    void start();
 
     //! Advance equations to next time step
     void advance( tk::real newdt );
@@ -132,7 +138,7 @@ class ALECG : public CBase_ALECG {
     void update( const tk::Fields& a );
 
     //! Optionally refine/derefine mesh
-    void refine();
+    void refine( tk::real l2res );
 
     //! Receive new mesh from refiner
     void resizePostAMR(
@@ -157,7 +163,7 @@ class ALECG : public CBase_ALECG {
     void step();
 
     // Evaluate whether to do load balancing
-    void evalLB();
+    void evalLB( int nrestart );
 
     //! Continue to next time step
     void next();
@@ -180,6 +186,10 @@ class ALECG : public CBase_ALECG {
       p | m_triinpoel;
       p | m_bndel;
       p | m_dfnorm;
+      p | m_dfnormc;
+      p | m_dfn;
+      p | m_esup;
+      p | m_psup;
       p | m_u;
       p | m_un;
       p | m_lhs;
@@ -192,8 +202,14 @@ class ALECG : public CBase_ALECG {
       p | m_diag;
       p | m_bnorm;
       p | m_bnormc;
-      p | m_dfnormc;
+      p | m_symbcnode;
       p | m_stage;
+      p | m_boxnodes;
+      p | m_edgenode;
+      p | m_edgeid;
+      p | m_dtp;
+      p | m_tp;
+      p | m_finished;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -220,9 +236,9 @@ class ALECG : public CBase_ALECG {
     std::size_t m_nbnorm;
     //! Counter for receiving dual-face normals on chare-boundary edges
     std::size_t m_ndfnorm;
-    //! Boundary node lists mapped to side set ids where BCs are set by user
+    //! Boundary node lists mapped to side set ids used in the input file
     std::map< int, std::vector< std::size_t > > m_bnode;
-    //! Boundary facee lists mapped to side set ids where BCs are set by user
+    //! Boundary face lists mapped to side set ids used in the input file
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Boundary triangle face connecitivity where BCs are set by user
     std::vector< std::size_t > m_triinpoel;
@@ -231,6 +247,15 @@ class ALECG : public CBase_ALECG {
     //! Dual-face normals along edges
     std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
                         tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnorm;
+    //! Receive buffer for dual-face normals along chare-boundary edges
+    std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
+                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnormc;
+    //! Streamable dual-face normals
+    std::vector< tk::real > m_dfn;
+    //! El;ements surrounding points
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_esup;
+    //! Points surrounding points
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes at previous time
@@ -269,17 +294,35 @@ class ALECG : public CBase_ALECG {
     //! \details Key: global node id, value: normals (first 3 components),
     //!   inverse distance squared (4th component)
     std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnormc;
-    //! Receive buffer for dual-face normals along chare-boundary edges
-    std::unordered_map< tk::UnsMesh::Edge, std::array< tk::real, 3 >,
-                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > m_dfnormc;
+    //! Vector with 1 at symmetry BC nodes
+    std::vector< int > m_symbcnode;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
+    //! Mesh node ids at which user-defined box ICs are defined
+    std::vector< std::size_t > m_boxnodes;
+    //! Local node IDs of edges
+    std::vector< std::size_t > m_edgenode;
+    //! Edge ids in the order of access
+    std::vector< std::size_t > m_edgeid;
+    //! Time step size for each mesh node
+    std::vector< tk::real > m_dtp;
+    //! Physical time for each mesh node
+    std::vector< tk::real > m_tp;
+    //! True in the last time step
+    int m_finished;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
+
+    //! Compute normal of dual-mesh associated to edge
+    std::array< tk::real, 3 >
+    edfnorm( const tk::UnsMesh::Edge& edge,
+             const std::unordered_map< tk::UnsMesh::Edge,
+                     std::vector< std::size_t >,
+                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
 
     //! Find elements along our mesh chunk boundary
     std::vector< std::size_t > bndel() const;
@@ -314,9 +357,6 @@ class ALECG : public CBase_ALECG {
 
     //! Compute righ-hand side vector of transport equations
     void rhs();
-
-    //! Start time stepping
-    void start();
 
     //! Solve low and high order diagonal systems
     void solve();

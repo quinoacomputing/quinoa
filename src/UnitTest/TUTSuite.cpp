@@ -40,8 +40,7 @@ extern int g_maxTestsInGroup;
 using unittest::TUTSuite;
 
 TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
-  m_screen( tk::unittest_executable() + "_screen.log" ),
-  m_verbose( cmdline.get< tag::verbose >() ),
+  m_cmdline( cmdline ),
   m_mpirunner(),
   m_nrun( 0 ),
   m_ngroup( 0 ),

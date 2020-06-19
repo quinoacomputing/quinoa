@@ -30,7 +30,8 @@ CompFlowProblemSheddingFlow::solution( ncomp_t system,
                                        tk::real,
                                        tk::real,
                                        tk::real,
-                                       tk::real )
+                                       tk::real,
+                                       int& )
 // *****************************************************************************
 //! Evaluate initial solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -57,44 +58,6 @@ CompFlowProblemSheddingFlow::solution( ncomp_t system,
   return {{ r, r*u[0], r*u[1], r*u[2], rE }};
 }
 
-std::vector< tk::real >
-CompFlowProblemSheddingFlow::solinc( ncomp_t system, ncomp_t ncomp, tk::real x,
-  tk::real y, tk::real z, tk::real t, tk::real dt ) const
-// *****************************************************************************
-// Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-// for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in] t Time where to evaluate the solution increment starting from
-//! \param[in] dt Time increment at which evaluate the solution increment to
-//! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-// *****************************************************************************
-{
-  auto st1 = solution( system, ncomp, x, y, z, t );
-  auto st2 = solution( system, ncomp, x, y, z, t+dt );
-
-  std::transform( begin(st1), end(st1), begin(st2), begin(st2),
-                  []( tk::real s, tk::real& d ){ return d -= s; } );
-
-  return st2;
-}
-
-tk::SrcFn::result_type
-CompFlowProblemSheddingFlow::src( ncomp_t, ncomp_t, tk::real,
-                                  tk::real, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-}
-
 std::vector< std::string >
 CompFlowProblemSheddingFlow::fieldNames( ncomp_t ) const
 // *****************************************************************************
@@ -117,6 +80,7 @@ CompFlowProblemSheddingFlow::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,
@@ -128,11 +92,12 @@ CompFlowProblemSheddingFlow::fieldOutput(
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  return CompFlowFieldOutput(system, offset, U);
+  return CompFlowFieldOutput( system, offset, nunk, U );
 }
 
 std::vector< std::string >

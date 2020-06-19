@@ -39,7 +39,10 @@ enum class ProblemType : uint8_t { USER_DEFINED,
                                    INTERFACE_ADVECTION,
                                    GAUSS_HUMP_COMPFLOW,
                                    WATERAIR_SHOCKTUBE,
-                                   TRIPLE_POINT };
+                                   TRIPLE_POINT,
+                                   GAS_IMPACT,
+                                   SHOCK_HEBUBBLE,
+                                   UNDERWATER_EX };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
@@ -66,6 +69,9 @@ class Problem : public tk::Toggle< ProblemType > {
                                   , kw::gauss_hump_compflow
                                   , kw::waterair_shocktube
                                   , kw::triple_point
+                                  , kw::gas_impact
+                                  , kw::shock_hebubble
+                                  , kw::underwater_ex
                                   >;
 
     //! \brief Options constructor
@@ -95,7 +101,11 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::GAUSS_HUMP_COMPFLOW,
             kw::gauss_hump_compflow::name() },
           { ProblemType::WATERAIR_SHOCKTUBE, kw::waterair_shocktube::name() },
-          { ProblemType::TRIPLE_POINT, kw::triple_point::name() } },
+          { ProblemType::TRIPLE_POINT, kw::triple_point::name() },
+          { ProblemType::GAS_IMPACT, kw::gas_impact::name() },
+          { ProblemType::SHOCK_HEBUBBLE, kw::shock_hebubble::name() },
+          { ProblemType::UNDERWATER_EX, kw::underwater_ex::name() }
+        },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
           { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
@@ -119,7 +129,14 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::waterair_shocktube::string(),
             ProblemType::WATERAIR_SHOCKTUBE },
           { kw::triple_point::string(),
-            ProblemType::TRIPLE_POINT } } )
+            ProblemType::TRIPLE_POINT },
+          { kw::gas_impact::string(),
+            ProblemType::GAS_IMPACT },
+          { kw::shock_hebubble::string(),
+            ProblemType::SHOCK_HEBUBBLE },
+          { kw::underwater_ex::string(),
+            ProblemType::UNDERWATER_EX }
+        } )
     {
        brigand::for_each< keywords >( assertPolicyCodes() );
     }
@@ -167,6 +184,9 @@ class Problem : public tk::Toggle< ProblemType > {
       , { ProblemType::GAUSS_HUMP_COMPFLOW, *kw::gauss_hump_compflow::code() }
       , { ProblemType::WATERAIR_SHOCKTUBE, *kw::waterair_shocktube::code() }
       , { ProblemType::TRIPLE_POINT, *kw::triple_point::code() }
+      , { ProblemType::GAS_IMPACT, *kw::gas_impact::code() }
+      , { ProblemType::SHOCK_HEBUBBLE, *kw::shock_hebubble::code() }
+      , { ProblemType::UNDERWATER_EX, *kw::underwater_ex::code() }
     };
 };
 

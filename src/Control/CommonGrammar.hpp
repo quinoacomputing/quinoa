@@ -56,9 +56,9 @@ namespace grm {
   //!   case). This is true for both inserting variables into the set as well as
   //!   at matching terms of products in parsing requested statistics.
   static std::set< char, tk::ctr::CaseInsensitiveCharLess > depvars;
-  //! \brief Parser-lifetime storage for PDF names.
-  //! \details Used to track the names registered  so that parsing new ones can
-  //!    be required to be unique.
+  //! \brief Parser-lifetime storage for PDF names
+  //! \details Used to track the names of PDFs registered so that parsing new
+  //!    ones can be required to be unique.
   static std::set< std::string > pdfnames;
 
   // Common auxiliary functions (reused by multiple grammars)
@@ -124,6 +124,7 @@ namespace grm {
     BINSIZES,           //!< PDF sample space vars unequal to number of bins
     PDF,                //!< PDF specification syntax error
     PDFEXISTS,          //!< PDF identifier already defined
+    POINTEXISTS,        //!< Point identifier already defined
     BADPRECISION,       //!< Floating point precision specification incorrect
     BOUNDS,             //!< Specified value out of bounds
     PRECISIONBOUNDS,    //!< Floating point precision spec out of bounds
@@ -134,7 +135,7 @@ namespace grm {
     BC_EMPTY,           //!< Empty boundary condition block
     SYSFCTVAR,          //!< System-FCT variable index incorrect
     BGICMISSING,        //!< Background IC unspecified
-    BOXIC,              //!< Box IC incorrect
+    STAGBCWRONG,        //!< Stagnation BC incorrectly configured
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
@@ -323,6 +324,8 @@ namespace grm {
       "equal the number of bin sizes given." },
     { MsgKey::PDF, "Syntax error while parsing PDF specification." },
     { MsgKey::PDFEXISTS, "PDF already exists. PDF identifiers must be unique."},
+    { MsgKey::POINTEXISTS, "Point already exists. Point identifiers must be "
+      "unique."},
     { MsgKey::BADPRECISION, "Precision specification invalid. It should be a "
       "positive integer or the word \'max\', selecting the maximum number of "
       "digits for the underyling floating point type."},
@@ -349,13 +352,11 @@ namespace grm {
       "condition specifications, e.g., 'sideset end', are not allowed." },
     { MsgKey::SYSFCTVAR, "Error in the system-FCT variable definition block. "
       "The block must list integers between 1 and 5 both inclusive." },
-    { MsgKey::BGICMISSING, "Background initial conditions not specified or "
-      "incomplete. If a articular test problem is NOT configured, the default "
-      "problem type is user-defined. A user-defined problem requires an ic ... "
-      "end block in the input file, specifying at least the background ICs for "
-      "physics variables. Both the background density and velocity must be "
-      "specified as well as either the background pressure, internal energy, "
-      "or temperature must also be specified." },
+    { MsgKey::STAGBCWRONG, "Stagnation boundary conditions incorrectly "
+      "configured. Within a bc_stag ... end block there must be a point ... "
+      "end block and a radius ... end block. Both point and radius blocks must "
+      "contain floating-point numbers, and the number of items in the point "
+      "block must be exactly 3x that of radii." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
     { MsgKey::HYDROTIMESCALES, "Error in the preceding line or block. "
@@ -1125,6 +1126,15 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  struct noop : pegtl::success {};
+  //! Action that does nothing
+  template<>
+  struct action< noop > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& ) {}
+  };
+
+  //! Rule used to trigger action
   template< class eq, class param, class... xparam >
   struct check_spikes : pegtl::success {};
   //! Check if the spikes parameter vector specifications are correct
@@ -1450,7 +1460,7 @@ namespace grm {
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
   //!   between values
   template< class key, class insert, class endkeyword,
-            class starter, class value = number >
+            class starter = noop, class value = number >
   // cppcheck-suppress syntaxError
   struct vector :
          pegtl::seq<

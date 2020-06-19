@@ -52,6 +52,9 @@
 #include "Problem/SodShocktube.hpp"
 #include "Problem/WaterAirShocktube.hpp"
 #include "Problem/TriplePoint.hpp"
+#include "Problem/GasImpact.hpp"
+#include "Problem/ShockHeBubble.hpp"
+#include "Problem/UnderwaterEx.hpp"
 
 namespace inciter {
 
@@ -61,7 +64,10 @@ using MultiMatProblems =
                , MultiMatProblemSodShocktube
                , MultiMatProblemInterfaceAdvection
                , MultiMatProblemWaterAirShocktube
-               , MultiMatProblemTriplePoint >;
+               , MultiMatProblemTriplePoint
+               , MultiMatProblemGasImpact
+               , MultiMatProblemShockHeBubble
+               , MultiMatProblemUnderwaterEx >;
 
 } // inciter::
 

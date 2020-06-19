@@ -16,7 +16,7 @@
 #define UnitTestTypes_h
 
 #include "Tags.hpp"
-#include "Keyword.hpp"
+#include "Keywords.hpp"
 
 namespace unittest {
 namespace ctr {
@@ -25,6 +25,13 @@ using namespace tao;
 
 //! PEGTL location/position type to use throughout all of UnitTest's parsers
 using Location = pegtl::position;
+
+//! IO parameters storage
+using ios = tk::TaggedTuple< brigand::list<
+    tag::nrestart,  int                             //!< Number of restarts
+  , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
+> >;
+
 
 } // ctr::
 } // unittest::

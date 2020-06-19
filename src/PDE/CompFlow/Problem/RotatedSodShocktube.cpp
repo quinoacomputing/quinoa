@@ -22,7 +22,8 @@ CompFlowProblemRotatedSodShocktube::solution( ncomp_t system,
                                               tk::real x,
                                               tk::real y,
                                               tk::real z,
-                                              tk::real t )
+                                              tk::real t,
+                                              int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -40,6 +41,7 @@ CompFlowProblemRotatedSodShocktube::solution( ncomp_t system,
   // axis compared to the original tube with largest dimension in X
   tk::real a = -45.0*M_PI/180.0;
   auto c = tk::rotateX( tk::rotateY( tk::rotateZ( {{ x, y, z }}, a ), a ), a );
-  return CompFlowProblemSodShocktube::solution( system, ncomp,
-                                                c[0], c[1], c[2], t );
+  int inbox = 0;
+  return CompFlowProblemSodShocktube::
+           solution( system, ncomp, c[0], c[1], c[2], t, inbox );
 }

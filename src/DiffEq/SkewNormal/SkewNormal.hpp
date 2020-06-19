@@ -70,6 +70,7 @@
 
 #include <vector>
 #include <cmath>
+#include <cfenv>
 
 #include "InitPolicy.hpp"
 #include "SkewNormalCoeffPolicy.hpp"
@@ -139,6 +140,9 @@ class SkewNormal {
                   tk::real,
                   const std::map< tk::ctr::Product, tk::real >& )
     {
+      fenv_t fe;
+      feholdexcept( &fe );
+
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance
@@ -158,6 +162,9 @@ class SkewNormal {
                  + d*dW[i];
         }
       }
+
+      feclearexcept( FE_UNDERFLOW );
+      feupdateenv( &fe );
     }
 
   private:

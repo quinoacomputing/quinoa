@@ -90,6 +90,8 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::cfl,    kw::cfl::info::expect::type    //!< CFL coefficient
   , tag::pelocal_reorder, bool                  //!< PE-locality reordering
   , tag::operator_reorder, bool                 //!< Operator-access reordering
+  , tag::steady_state, bool                     //!< March to steady state
+  , tag::residual, kw::residual::info::expect::type //!< Convergence residual
   , tag::fct,    bool                           //!< FCT on/off
   , tag::fctclip,bool                           //!< FCT clipping limiter on/off
   , tag::fcteps, kw::fcteps::info::expect::type //!< FCT small number
@@ -105,25 +107,39 @@ using discretization = tk::TaggedTuple< brigand::list<
 using precision = tk::TaggedTuple< brigand::list<
     //! Diagnostics output precision
     tag::diag, kw::precision::info::expect::type
+    //! History output precision
+  , tag::history, kw::precision::info::expect::type
 > >;
 
 //! ASCII output floating-point format
 using floatformat = tk::TaggedTuple< brigand::list<
-    tag::diag, tk::ctr::TxtFloatFormatType  //!< Diagnostics output format
+    tag::diag,    tk::ctr::TxtFloatFormatType  //!< Diagnostics output format
+  , tag::history, tk::ctr::TxtFloatFormatType  //!< History output format
 > >;
 
 //! Output intervals storage
 using intervals = tk::TaggedTuple< brigand::list<
-    tag::tty,   kw::ttyi::info::expect::type      //!< TTY output interval
-  , tag::field, kw::interval::info::expect::type  //!< Field output interval
-  , tag::diag,  kw::interval::info::expect::type  //!< Diags output interval
+    tag::tty,     kw::ttyi::info::expect::type      //!< TTY output interval
+  , tag::field,   kw::interval::info::expect::type  //!< Field output interval
+  , tag::history, kw::interval::info::expect::type  //!< History output interval
+  , tag::diag,    kw::interval::info::expect::type  //!< Diags output interval
+> >;
+
+//! History output parameters storage
+using history = tk::TaggedTuple< brigand::list<
+    tag::point,   std::vector< std::vector< kw::point::info::expect::type > >
+  , tag::id,      std::vector< std::string >     //!< Point identifiers
 > >;
 
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
-    tag::control,   kw::control::info::expect::type //!< Control filename
+    tag::nrestart,  int                             //!< Number of restarts
+  , tag::control,   kw::control::info::expect::type //!< Control filename
   , tag::input,     kw::input::info::expect::type   //!< Input filename
   , tag::output,    kw::output::info::expect::type  //!< Output filename
+  , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
+    //! List of side sets to save as field output
+  , tag::surface,   std::vector< kw::sideset::info::expect::type >
     //! Diagnostics filename
   , tag::diag,      kw::diagnostics_cmd::info::expect::type
   , tag::particles, std::string                     //!< Particles filename
@@ -143,6 +159,8 @@ using box = tk::TaggedTuple< brigand::list<
   , tag::ymax,          kw::ymax::info::expect::type
   , tag::zmin,          kw::zmin::info::expect::type
   , tag::zmax,          kw::zmax::info::expect::type
+  , tag::mass,         std::vector<
+                          std::vector< kw::massic::info::expect::type > >
   , tag::density,       std::vector<
                           std::vector< kw::densityic::info::expect::type > >
   , tag::velocity,      std::vector<
@@ -150,7 +168,9 @@ using box = tk::TaggedTuple< brigand::list<
   , tag::pressure,      std::vector<
                           std::vector< kw::pressureic::info::expect::type > >
   , tag::energy,        std::vector<
-                            std::vector< kw::energyic::info::expect::type > >
+                          std::vector< kw::energyic::info::expect::type > >
+  , tag::energy_content,std::vector< std::vector<
+                          kw::energy_content_ic::info::expect::type > >
   , tag::temperature,   std::vector<
                           std::vector< kw::temperatureic::info::expect::type > >
 > >;
@@ -200,6 +220,14 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::bc,            bc
 > >;
 
+//! Stagnation boundary conditions parameters storage
+using StagnationBCParameters = tk::TaggedTuple< brigand::list<
+    tag::point,         std::vector<
+                          std::vector< kw::point::info::expect::type > >
+  , tag::radius,        std::vector<
+                          std::vector< kw::radius::info::expect::type > >
+> >;
+
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
@@ -213,6 +241,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
                               kw::farfield_velocity::info::expect::type > >
   , tag::bc,            bc
   , tag::ic,            ic
+  //! Stagnation boundary condition configuration storage
+  , tag::bcstag,        StagnationBCParameters
   //! System FCT character
   , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system
@@ -313,9 +343,9 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
 
 //! Parameters storage
 using parameters = tk::TaggedTuple< brigand::list<
-    tag::transport,     TransportPDEParameters
-  , tag::compflow,      CompFlowPDEParameters
-  , tag::multimat,      MultiMatPDEParameters
+    tag::transport, TransportPDEParameters
+  , tag::compflow,  CompFlowPDEParameters
+  , tag::multimat,  MultiMatPDEParameters
 > >;
 
 //! PEGTL location/position type to use throughout all of Inciter's parsers

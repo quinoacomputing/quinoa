@@ -65,9 +65,13 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_ndfnorm( 0 ),
   m_bnode( bnode ),
   m_bface( bface ),
-  m_triinpoel( triinpoel ),
+  m_triinpoel( tk::remap( triinpoel, Disc()->Lid() ) ),
   m_bndel( bndel() ),
   m_dfnorm(),
+  m_dfnormc(),
+  m_dfn(),
+  m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
+  m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
@@ -81,18 +85,52 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_diag(),
   m_bnorm(),
   m_bnormc(),
-  m_dfnormc(),
-  m_stage( 0 )
+  m_symbcnode(),
+  m_stage( 0 ),
+  m_boxnodes(),
+  m_edgenode(),
+  m_edgeid(),
+  m_dtp( m_u.nunk(), 0.0 ),
+  m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
+  m_finished( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
-//! \param[in] bface Boundary-faces mapped to side set ids where BCs set
-//! \param[in] bnode Boundary-node lists mapped to side set ids where BCs set
+//! \param[in] bface Boundary-faces mapped to side sets used in the input file
+//! \param[in] bnode Boundary-node lists mapped to side sets used in input file
 //! \param[in] triinpoel Boundary-face connectivity where BCs set (global ids)
 // *****************************************************************************
 //! [Constructor]
 {
   usesAtSync = true;    // enable migration at AtSync
+
+  // Perform optional operator-access-pattern mesh node reordering
+  if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
+
+    auto d = Disc();
+
+    // Create new local ids based on access pattern of PDE operators
+    std::unordered_map< std::size_t, std::size_t > map;
+    std::size_t n = 0;
+
+    for (std::size_t p=0; p<m_u.nunk(); ++p) {  // for each point p
+      if (map.find(p) == end(map)) map[p] = n++;
+      for (auto q : tk::Around(m_psup,p)) {     // for each edge p-q
+        if (map.find(q) == end(map)) map[q] = n++;
+      }
+    }
+
+    Assert( map.size() == d->Gid().size(), "Map size mismatch" );
+
+    // Remap data in bound Discretization object
+    d->remap( map );
+    // Recompute elements surrounding points
+    m_esup = tk::genEsup( d->Inpoel(), 4 );
+    // Recompute points surrounding points
+    m_psup = tk::genPsup( d->Inpoel(), 4, m_esup );
+    // Remap boundary triangle face connectivity
+    tk::remap( m_triinpoel, map );
+  }
 
   // Activate SDAG wait for initially computing the left-hand side and normals
   thisProxy[ thisIndex ].wait4lhs();
@@ -147,6 +185,58 @@ ALECG::bndel() const
   return e;
 }
 
+std::array< tk::real, 3 >
+ALECG::edfnorm( const tk::UnsMesh::Edge& edge,
+                const std::unordered_map< tk::UnsMesh::Edge,
+                        std::vector< std::size_t >,
+                        tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued )
+// *****************************************************************************
+//  Compute normal of dual-mesh associated to edge
+//! \param[in] edge Edge whose dual-face normal to compute given by local ids
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] esued Elements surrounding edges
+//! \return Dual-face normal for edge
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto& inpoel = d->Inpoel();
+  const auto& coord = d->Coord();
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  std::array< tk::real, 3 > n{ 0.0, 0.0, 0.0 };
+
+  for (auto e : tk::cref_find(esued,edge)) {
+    // access node IDs
+    const std::array< std::size_t, 4 >
+      N{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+    // compute element Jacobi determinant
+    const std::array< tk::real, 3 >
+      ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+      ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+      da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+    const auto J = tk::triple( ba, ca, da );        // J = 6V
+    Assert( J > 0, "Element Jacobian non-positive" );
+    // shape function derivatives, nnode*ndim [4][3]
+    std::array< std::array< tk::real, 3 >, 4 > grad;
+    grad[1] = tk::crossdiv( ca, da, J );
+    grad[2] = tk::crossdiv( da, ba, J );
+    grad[3] = tk::crossdiv( ba, ca, J );
+    for (std::size_t i=0; i<3; ++i)
+      grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+    // sum normal contributions
+    auto J48 = J/48.0;
+    for (const auto& [a,b] : tk::lpoed) {
+      auto s = tk::orient( {N[a],N[b]}, edge );
+      for (std::size_t j=0; j<3; ++j)
+        n[j] += J48 * s * (grad[a][j] - grad[b][j]);
+    }
+  }
+
+  return n;
+}
+
 void
 ALECG::dfnorm()
 // *****************************************************************************
@@ -155,19 +245,16 @@ ALECG::dfnorm()
 {
   auto d = Disc();
   const auto& inpoel = d->Inpoel();
-  const auto& coord = d->Coord();
   const auto& gid = d->Gid();
 
   // compute derived data structures
-  auto esup = tk::genEsup( inpoel, 4 );
-  auto psup = tk::genPsup( inpoel, 4, esup );
-  auto esued = tk::genEsued( inpoel, 4, esup );
+  auto esued = tk::genEsued( inpoel, 4, tk::genEsup( inpoel, 4 ) );
 
   // Compute dual-face normals for domain edges
   for (std::size_t p=0; p<gid.size(); ++p)    // for each point p
-    for (auto q : tk::Around(psup,p))         // for each edge p-q
+    for (auto q : tk::Around(m_psup,p))       // for each edge p-q
       if (gid[p] < gid[q])
-        m_dfnorm[{gid[p],gid[q]}] = cg::edfnorm( {p,q}, coord, inpoel, esued );
+        m_dfnorm[{gid[p],gid[q]}] = edfnorm( {p,q}, esued );
 
   // Send our dual-face normal contributions to neighbor chares
   if (d->EdgeCommMap().empty())
@@ -211,13 +298,12 @@ void
 ALECG::bnorm( std::unordered_set< std::size_t >&& symbcnodes )
 // *****************************************************************************
 //  Compute boundary point normals
-//! \param[in] Node ids at which symmetry BCs are set
+//! \param[in] Local node ids at which symmetry BCs are set
 // *****************************************************************************
 {
   auto d = Disc();
 
   const auto& coord = d->Coord();
-  const auto& lid = d->Lid();
   const auto& x = coord[0];
   const auto& y = coord[1];
   const auto& z = coord[2];
@@ -238,15 +324,13 @@ ALECG::bnorm( std::unordered_set< std::size_t >&& symbcnodes )
   for (const auto& [ setid, faceids ] : m_bface) {
     for (auto f : faceids) {
       tk::UnsMesh::Face
-        face{ tk::cref_find( lid, m_triinpoel[f*3+0] ),
-              tk::cref_find( lid, m_triinpoel[f*3+1] ),
-              tk::cref_find( lid, m_triinpoel[f*3+2] ) };
+        face{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] };
       std::array< tk::real, 3 > fx{ x[face[0]], x[face[1]], x[face[2]] };
       std::array< tk::real, 3 > fy{ y[face[0]], y[face[1]], y[face[2]] };
       std::array< tk::real, 3 > fz{ z[face[0]], z[face[1]], z[face[2]] };
       auto g = tk::geoFaceTri( fx, fy, fz );
       for (auto p : face) {
-        auto i = symbcnodes.find( gid[p] );
+        auto i = symbcnodes.find( p );
         if (i != end(symbcnodes)) {     // only if user set symbc on node
           tk::real r = invdistsq( g, p );
           auto& n = m_bnorm[ gid[p] ];  // associate global node id
@@ -336,40 +420,57 @@ ALECG::setup()
   auto d = Disc();
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
+  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
 
-  // Apply symmetry boundary conditions on initial conditions
-  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
+  // Compute volume of user-defined box IC
+  d->boxvol( m_boxnodes );
 
-  // Output initial conditions to file (regardless of whether it was requested)
-  writeFields( CkCallback(CkIndex_ALECG::init(), thisProxy[thisIndex]) );
+  // Query time history field output labels from all PDEs integrated
+  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+  if (!hist_points.empty()) {
+    std::vector< std::string > histnames;
+    for (const auto& eq : g_cgpde) {
+      auto n = eq.histNames();
+      histnames.insert( end(histnames), begin(n), end(n) );
+    }
+    d->histheader( std::move(histnames) );
+  }
 }
 
-//! [init and lhs]
 void
-ALECG::init()
+ALECG::boxvol( tk::real v )
 // *****************************************************************************
-// Initially compute left hand side diagonal matrix
+// Receive total box IC volume
+//! \param[in] v Total volume within user-specified box
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  // Store user-defined box IC volume
+  d->Boxvol() = v;
+
+  // Update density in user-defined IC box based on box volume
+  for (const auto& eq : g_cgpde) eq.box( d->Boxvol(), m_boxnodes, m_u );
+
   // Compute left-hand side of PDEs
   lhs();
 }
-//! [init and lhs]
 
-
+//! [start]
 void
 ALECG::start()
 // *****************************************************************************
-//  Start time stepping
+// Start time stepping
 // *****************************************************************************
 {
   // Start timer measuring time stepping wall clock time
   Disc()->Timer().zero();
-
-  // Start time stepping by computing the size of the next time step)
+  // Zero grind-timer
+  Disc()->grindZero();
+  // Continue to next time step
   next();
 }
+//! [start]
 
 //! [Compute own and send lhs on chare-boundary]
 void
@@ -458,7 +559,12 @@ ALECG::lhsmerge()
   normfinal();
 
   // Continue after lhs is complete
-  if (m_initial) start(); else lhs_complete();
+  if (m_initial) {
+    // Output initial conditions to file
+    writeFields( CkCallback(CkIndex_ALECG::start(), thisProxy[thisIndex]) );
+  } else {
+    lhs_complete();
+  }
 }
 //! [Merge lhs and continue]
 
@@ -498,6 +604,15 @@ ALECG::normfinal()
   for (auto&& [g,n] : m_bnorm) bnorm[ tk::cref_find(lid,g) ] = std::move(n);
   m_bnorm = std::move(bnorm);
 
+  // Apply symmetry boundary conditions on initial conditions
+  for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
+
+  // Flatten boundary normal data structure
+  m_symbcnode.resize( m_triinpoel.size()/3, 0 );
+  for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
+    if (m_bnorm.find(m_triinpoel[e*3+0]) != end(m_bnorm))
+      m_symbcnode[e] = 1;
+
   // Count contributions to chare-boundary edges
   std::unordered_map< tk::UnsMesh::Edge, std::size_t,
     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > edge_node_count;
@@ -515,6 +630,58 @@ ALECG::normfinal()
     auto factor = 1.0/(count + 1.0);
     for (auto & x : n) x *= factor;
   }
+
+  // Generate list of unique edges
+  tk::UnsMesh::EdgeSet uedge;
+  for (std::size_t p=0; p<m_u.nunk(); ++p)
+    for (auto q : tk::Around(m_psup,p))
+      uedge.insert( {p,q} );
+
+  // Flatten edge list
+  m_edgenode.resize( uedge.size() * 2 );
+  std::size_t f = 0;
+  const auto& gid = d->Gid();
+  for (auto&& [p,q] : uedge) {
+    if (gid[p] > gid[q]) {
+      m_edgenode[f+0] = std::move(q);
+      m_edgenode[f+1] = std::move(p);
+    } else {
+      m_edgenode[f+0] = std::move(p);
+      m_edgenode[f+1] = std::move(q);
+    }
+    f += 2;
+  }
+  tk::destroy(uedge);
+
+  // Convert dual-face normals to streamable (and vectorizable) data structure
+  m_dfn.resize( m_edgenode.size() * 3 );      // 2 vectors per access
+  std::unordered_map< tk::UnsMesh::Edge, std::size_t,
+                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> > eid;
+  for (std::size_t e=0; e<m_edgenode.size()/2; ++e) {
+    auto p = m_edgenode[e*2+0];
+    auto q = m_edgenode[e*2+1];
+    eid[{p,q}] = e;
+    std::array< std::size_t, 2 > g{ gid[p], gid[q] };
+    auto n = tk::cref_find( m_dfnorm, g );
+    // figure out if this is an edge on the parallel boundary
+    auto nit = m_dfnormc.find( g );
+    auto m = ( nit != m_dfnormc.end() ) ? nit->second : n;
+    m_dfn[e*6+0] = n[0];
+    m_dfn[e*6+1] = n[1];
+    m_dfn[e*6+2] = n[2];
+    m_dfn[e*6+3] = m[0];
+    m_dfn[e*6+4] = m[1];
+    m_dfn[e*6+5] = m[2];
+  }
+
+  tk::destroy( m_dfnorm );
+  tk::destroy( m_dfnormc );
+
+  // Flatten edge id data structure
+  m_edgeid.resize( m_psup.first.size() );
+  for (std::size_t p=0,k=0; p<m_u.nunk(); ++p)
+    for (auto q : tk::Around(m_psup,p))
+      m_edgeid[k++] = tk::cref_find( eid, {p,q} );
 }
 
 void
@@ -548,13 +715,24 @@ ALECG::dt()
   } else {      // compute dt based on CFL
 
     //! [Find the minimum dt across all PDEs integrated]
-    for (const auto& eq : g_cgpde) {
-      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
-      if (eqdt < mindt) mindt = eqdt;
-    }
+    if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
 
-    // Scale smallest dt with CFL coefficient
-    mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+      // compute new dt for each mesh point
+      for (const auto& eq : g_cgpde)
+        eq.dt( d->It(), d->Vol(), m_u, m_dtp );
+
+      // find the smallest dt of all nodes on this chare
+      mindt = *std::min_element( begin(m_dtp), end(m_dtp) );
+
+    } else {    // compute new dt for this chare
+
+      // find the smallest dt of all equations on this chare
+      for (const auto& eq : g_cgpde) {
+        auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
+        if (eqdt < mindt) mindt = eqdt;
+      }
+
+    }
     //! [Find the minimum dt across all PDEs integrated]
 
   }
@@ -575,7 +753,7 @@ void
 ALECG::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
-//! \param[in] newdt Size of this new time step
+//! \param[in] newdt The smallest dt across the whole problem
 // *****************************************************************************
 {
   auto d = Disc();
@@ -656,16 +834,25 @@ ALECG::rhs()
   // clear gradients receive buffer
   tk::destroy(m_gradc);
 
+  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+
   // Compute own portion of right-hand side for all equations
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
+  if (steady)
+    for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] += prev_rkcoef * m_dtp[p];
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
-            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfnorm, m_dfnormc,
-            m_bnorm, d->Vol(), m_grad, m_u, m_rhs );
+            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
+            m_symbcnode, d->Vol(), m_edgenode, m_edgeid, m_grad, m_u, m_tp,
+            m_rhs );
+  if (steady)
+    for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
   // Query and match user-specified boundary conditions to side sets
+  if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
-                   d->Coord(), d->Lid(), m_bnode );
+                   m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode );
+  if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
 
   // Communicate rhs to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
@@ -683,7 +870,7 @@ ALECG::rhs()
 
 void
 ALECG::comrhs( const std::vector< std::size_t >& gid,
-                const std::vector< std::vector< tk::real > >& R )
+               const std::vector< std::vector< tk::real > >& R )
 // *****************************************************************************
 //  Receive contributions to right-hand side vector on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive RHS contributions
@@ -725,23 +912,35 @@ ALECG::solve()
   }
 
   // clear receive buffer
-  tk::destroy(m_rhsc);  
+  tk::destroy(m_rhsc);
+
+  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
 
   // Set Dirichlet BCs for lhs and rhs
-  for (const auto& [b,bc] : m_bcdir) {
-    for (ncomp_t c=0; c<ncomp; ++c) {
+  for (const auto& [b,bc] : m_bcdir)
+    for (ncomp_t c=0; c<ncomp; ++c)
       if (bc[c].first) {
-        m_lhs( b, c, 0 ) = 1.0;
-        m_rhs( b, c, 0 ) = bc[c].second / d->Dt() / rkcoef[m_stage];
+        m_lhs(b,c,0) = 1.0;
+        auto deltat = steady ? m_dtp[b] : d->Dt();
+        m_rhs(b,c,0) = bc[c].second / deltat / rkcoef[m_stage];
       }
-    }
-  }
 
   // Update Un
   if (m_stage == 0) m_un = m_u;
 
-  // Solve sytem
-  m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
+  // Solve the sytem
+  if (steady) {
+
+    for (std::size_t i=0; i<m_u.nunk(); ++i)
+      for (ncomp_t c=0; c<m_u.nprop(); ++c)
+        m_u(i,c,0) = m_un(i,c,0)
+          + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c,0) / m_lhs(i,c,0);
+
+  } else {
+
+    m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
+
+  }
 
   //! [Continue after solve]
   if (m_stage < 2) {
@@ -756,23 +955,48 @@ ALECG::solve()
   } else {
 
     // Compute diagnostics, e.g., residuals
-    auto diag_computed = m_diag.compute( *d, m_u );
+    auto diag_computed = m_diag.compute( *d, m_u, m_un );
     // Increase number of iterations and physical time
     d->next();
+
+    // Advance physical time for local time stepping
+    if (steady) for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
+
     // Continue to mesh refinement (if configured)
-    if (!diag_computed) refine();
+    if (!diag_computed) refine( 1.0 );
   }
   //! [Continue after solve]
 }
 
 void
-ALECG::refine()
+ALECG::refine( tk::real l2res )
 // *****************************************************************************
 // Optionally refine/derefine mesh
+//! \param[in] l2res L2-norm of the residual across the whole problem
 // *****************************************************************************
 {
   //! [Refine]
   auto d = Disc();
+
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+  const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  if (steady) {
+
+    // this is the last time step if max time of max number of time steps
+    // reached or the residual has reached its convergence criterion
+    if (std::abs(d->T()-term) < eps || d->It() >= nstep || l2res < residual)
+      m_finished = 1;
+
+  } else {
+
+    // this is the last time step if max time or max iterations reached
+    if (std::abs(d->T()-term) < eps || d->It() >= nstep) m_finished = 1;
+
+  }
 
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
@@ -853,9 +1077,7 @@ ALECG::resizePostAMR(
   // Update physical-boundary node-, face-, and element lists
   m_bnode = bnode;
   m_bface = bface;
-  m_triinpoel = triinpoel;
-
-  tk::destroy( m_dfnormc );
+  m_triinpoel = tk::remap( triinpoel, d->Lid() );
 
   contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
 }
@@ -899,24 +1121,47 @@ ALECG::writeFields( CkCallback c ) const
 
     auto d = Disc();
 
-    // Query and collect field names from PDEs integrated
+    // Query and collect block and surface field names from PDEs integrated
     std::vector< std::string > nodefieldnames;
+    std::vector< std::string > nodesurfnames;
     for (const auto& eq : g_cgpde) {
       auto n = eq.fieldNames();
       nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
+      auto s = eq.surfNames();
+      nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
     }
 
-    // Collect node field solution
+    // Collect node block and surface field solution
     auto u = m_u;
     std::vector< std::vector< tk::real > > nodefields;
+    std::vector< std::vector< tk::real > > nodesurfs;
     for (const auto& eq : g_cgpde) {
-      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
+      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord()[0].size(),
+                               d->Coord(), d->V(), u );
       nodefields.insert( end(nodefields), begin(o), end(o) );
+      auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
+      nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
 
+    // Create volume node field assigning 1 where symmetry BC is set
+    // std::unordered_set< std::size_t > symbcnodes;
+    // for (const auto& eq : g_cgpde)
+    //   eq.symbcnodes( m_bface, m_triinpoel, symbcnodes );
+    // nodefieldnames.push_back( "bc_type" );
+    // nodefields.push_back( std::vector<tk::real>(d->Coord()[0].size(),0.0) );
+    // for (auto i : symbcnodes) nodefields.back()[i] = 1.0;
+
+    // nodefieldnames.push_back( "tp" );
+    // nodefieldnames.push_back( "dtp" );
+    // nodefields.push_back( m_tp );
+    // nodefields.push_back( m_dtp );
+
+    Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
+
     // Send mesh and fields data (solution dump) for output to file
-    d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {}, {},
-              nodefieldnames, {}, nodefields, c );
+    d->write( d->Inpoel(), d->Coord(), m_bface, tk::remap(m_bnode,d->Lid()),
+              m_triinpoel, {}, nodefieldnames, nodesurfnames, {}, nodefields,
+              nodesurfs, c );
 
   }
 }
@@ -929,27 +1174,39 @@ ALECG::out()
 {
   auto d = Disc();
 
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  // Output time history if we hit its output frequency
+  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
+  if ( !((d->It()) % histfreq) ) {
+    std::vector< std::vector< tk::real > > hist;
+    for (const auto& eq : g_cgpde) {
+      auto h = eq.histOutput( d->Hist(), d->Inpoel(), m_u );
+      hist.insert( end(hist), begin(h), end(h) );
+    }
+    d->history( std::move(hist) );
+  }
+
   const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
 
   // output field data if field iteration count is reached or in the last time
   // step
-  if ( !((d->It()) % fieldfreq) ||
-       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+  if ( !((d->It()) % fieldfreq) || m_finished )
     writeFields( CkCallback(CkIndex_ALECG::step(), thisProxy[thisIndex]) );
   else
     step();
 }
 
 void
-ALECG::evalLB()
+ALECG::evalLB( int nrestart )
 // *****************************************************************************
 // Evaluate whether to do load balancing
+//! \param[in] nrestart Number of times restarted
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Detect if just returned from a checkpoint and if so, zero timers and
+  // finished flag
+  if (d->restarted( nrestart )) m_finished = 0;
 
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
@@ -980,13 +1237,13 @@ ALECG::evalRestart()
 
   if ( !benchmark && (d->It()) % rsfreq == 0 ) {
 
-    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
-    d->contribute( t, CkReduction::nop,
+    int finished = 0;
+    d->contribute( sizeof(int), &finished, CkReduction::nop,
       CkCallback(CkReductionTarget(Transporter,checkpoint), d->Tr()) );
 
   } else {
 
-    evalLB();
+    evalLB( /* nrestart = */ -1 );
 
   }
 }
@@ -1004,20 +1261,13 @@ ALECG::step()
   // Reset Runge-Kutta stage counter
   m_stage = 0;
 
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-
-  // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
+  if (not m_finished) {
 
     evalRestart();
 
   } else {
 
-    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
-    d->contribute( t, CkReduction::nop,
-      CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
+    d->contribute( CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
 
   }
 }

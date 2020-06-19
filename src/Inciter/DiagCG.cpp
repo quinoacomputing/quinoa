@@ -55,11 +55,12 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_nrhs( 0 ),
   m_nnorm( 0 ),
   m_bnode( bnode ),
-  m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
-       g_inputdeck.get< tag::component >().nprop() ),
+  m_bface( bface ),
+  m_triinpoel( tk::remap(triinpoel,Disc()->Lid()) ),
+  m_u( Disc()->Gid().size(), g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_u.nunk(), m_u.nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
-  m_ue( m_disc[thisIndex].ckLocal()->Inpoel().size()/4, m_u.nprop() ),
+  m_ue( Disc()->Inpoel().size()/4, m_u.nprop() ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_bcdir(),
@@ -69,7 +70,11 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_vol(),
   m_bnorm(),
   m_bnormc(),
-  m_diag()
+  m_diag(),
+  m_boxnodes(),
+  m_dtp( m_u.nunk(), 0.0 ),
+  m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
+  m_finished( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -84,7 +89,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
 
     auto d = Disc();
-    auto& inpoel = d->Inpoel();
+    const auto& inpoel = d->Inpoel();
 
     // Create new local ids based on access pattern of PDE operators
     std::unordered_map< std::size_t, std::size_t > map;
@@ -293,10 +298,40 @@ DiagCG::setup()
   auto d = Disc();
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T() );
+  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
+
+  // Compute volume of user-defined box IC
+  d->boxvol( m_boxnodes );
 
   // Apply symmetry boundary conditions on initial conditions
   for (const auto& eq : g_cgpde) eq.symbc( m_u, m_bnorm );
+
+  // Query time history field output labels from all PDEs integrated
+  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+  if (!hist_points.empty()) {
+    std::vector< std::string > histnames;
+    for (const auto& eq : g_cgpde) {
+      auto n = eq.histNames();
+      histnames.insert( end(histnames), begin(n), end(n) );
+    }
+    d->histheader( std::move(histnames) );
+  }
+}
+
+void
+DiagCG::boxvol( tk::real v )
+// *****************************************************************************
+// Receive total box IC volume
+//! \param[in] v Total volume within user-specified box
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Store user-defined box IC volume
+  d->Boxvol() = v;
+
+  // Update density in user-defined IC box based on box volume
+  for (const auto& eq : g_cgpde) eq.box( d->Boxvol(), m_boxnodes, m_u );
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields( CkCallback(CkIndex_DiagCG::init(), thisProxy[thisIndex]) );
@@ -309,22 +344,6 @@ DiagCG::init()
 // *****************************************************************************
 {
   lhs();
-}
-
-void
-DiagCG::start()
-// *****************************************************************************
-//  Start time stepping
-// *****************************************************************************
-{
-  // Start timer measuring time stepping wall clock time
-  Disc()->Timer().zero();
-
-  // Zero grind-timer
-  Disc()->grindZero();
-
-  // Start time stepping by computing the size of the next time step)
-  next();
 }
 
 void
@@ -404,7 +423,16 @@ DiagCG::lhsmerge()
   tk::destroy(m_lhsc);
 
   // Continue after lhs is complete
-  if (m_initial) start(); else lhs_complete();
+  if (m_initial) {
+    // Start timer measuring time stepping wall clock time
+    Disc()->Timer().zero();
+    // Zero grind-timer
+    Disc()->grindZero();
+    // Continue to next time step
+    next();
+  } else {
+    lhs_complete();
+  }
 }
 
 void
@@ -433,9 +461,6 @@ DiagCG::dt()
       auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
       if (eqdt < mindt) mindt = eqdt;
     }
-
-    // Scale smallest dt with CFL coefficient
-    mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
 
   }
 
@@ -493,7 +518,8 @@ DiagCG::rhs()
   auto dif = d->FCT()->diff( *d, m_u );
 
   // Query and match user-specified boundary conditions to side sets
-  m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), d->Coord(), lid, m_bnode );
+  m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), m_tp, m_dtp, d->Coord(),
+                   lid, m_bnode );
 
   // Send rhs data on chare-boundary nodes to fellow chares
   if (d->NodeCommMap().empty())
@@ -626,20 +652,29 @@ DiagCG::writeFields( CkCallback c ) const
 
     auto d = Disc();
 
-    // Query and collect field names from PDEs integrated
+    // Query and collect block and surface field names from PDEs integrated
     std::vector< std::string > nodefieldnames;
+    std::vector< std::string > nodesurfnames;
     for (const auto& eq : g_cgpde) {
       auto n = eq.fieldNames();
       nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
+      auto s = eq.surfNames();
+      nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
     }
 
     // Collect node field solution
     auto u = m_u;
     std::vector< std::vector< tk::real > > nodefields;
+    std::vector< std::vector< tk::real > > nodesurfs;
     for (const auto& eq : g_cgpde) {
-      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord(), d->V(), u );
+      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord()[0].size(),
+                               d->Coord(), d->V(), u );
       nodefields.insert( end(nodefields), begin(o), end(o) );
+      auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
+      nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
+
+    Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
     std::vector< std::string > elemfieldnames;
     std::vector< std::vector< tk::real > > elemfields;
@@ -687,8 +722,9 @@ DiagCG::writeFields( CkCallback c ) const
       begin(fct_elemfields), end(fct_elemfields) );
 
     // Send mesh and fields data (solution dump) for output to file
-    d->write( d->Inpoel(), d->Coord(), {}, tk::remap(m_bnode,d->Lid()), {},
-              elemfieldnames, nodefieldnames, elemfields, nodefields, c );
+    d->write( d->Inpoel(), d->Coord(), m_bface, tk::remap( m_bnode,d->Lid() ),
+              m_triinpoel, elemfieldnames, nodefieldnames, nodesurfnames,
+              elemfields, nodefields, nodesurfs, c );
 
   }
 }
@@ -708,21 +744,22 @@ DiagCG::update( const tk::Fields& a, [[maybe_unused]] tk::Fields&& dul )
   Assert( correctBC(a,dul,m_bcdir), "Dirichlet boundary condition incorrect" );
 
   // Apply limited antidiffusive element contributions to low order solution
+  auto un = m_u;
   if (g_inputdeck.get< tag::discr, tag::fct >())
     m_u = m_ul + a;
   else
     m_u = m_u + m_du;
 
   // Compute diagnostics, e.g., residuals
-  auto diag_computed = m_diag.compute( *d, m_u );
+  auto diag_computed = m_diag.compute( *d, m_u, un );
   // Increase number of iterations and physical time
   d->next();
   // Continue to mesh refinement (if configured)
-  if (!diag_computed) refine();
+  if (!diag_computed) refine( 0.0 );
 }
 
 void
-DiagCG::refine()
+DiagCG::refine( tk::real )
 // *****************************************************************************
 // Optionally refine/derefine mesh
 // *****************************************************************************
@@ -829,6 +866,17 @@ DiagCG::out()
 {
   auto d = Disc();
 
+  // Output time history if we hit its output frequency
+  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
+  if ( !((d->It()) % histfreq) ) {
+    std::vector< std::vector< tk::real > > hist;
+    for (const auto& eq : g_cgpde) {
+      auto h = eq.histOutput( d->Hist(), d->Inpoel(), m_u );
+      hist.insert( end(hist), begin(h), end(h) );
+    }
+    d->history( std::move(hist) );
+  }
+
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
@@ -844,12 +892,16 @@ DiagCG::out()
 }
 
 void
-DiagCG::evalLB()
+DiagCG::evalLB( int nrestart )
 // *****************************************************************************
 // Evaluate whether to do load balancing
+//! \param[in] nrestart Number of times restarted
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Detect if just returned from a checkpoint and if so, zero timers
+  d->restarted( nrestart );
 
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
@@ -880,13 +932,13 @@ DiagCG::evalRestart()
 
   if ( !benchmark && d->It() % rsfreq == 0 ) {
 
-    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
-    d->contribute( t, CkReduction::nop,
+    int finished = 0;
+    d->contribute( sizeof(int), &finished, CkReduction::nop,
       CkCallback(CkReductionTarget(Transporter,checkpoint), d->Tr()) );
 
   } else {
 
-    evalLB();
+    evalLB( /* nrestart = */ -1 );
 
   }
 }
@@ -913,9 +965,7 @@ DiagCG::step()
 
   } else {
 
-    std::vector< tk::real > t{{ static_cast<tk::real>(d->It()), d->T() }};
-    d->contribute( t, CkReduction::nop,
-      CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
+    d->contribute( CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
 
   }
 }

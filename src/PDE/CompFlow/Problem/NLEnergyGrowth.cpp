@@ -63,7 +63,8 @@ CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
                                          tk::real x,
                                          tk::real y,
                                          tk::real z,
-                                         tk::real t )
+                                         tk::real t,
+                                         int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -101,71 +102,6 @@ CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
   return {{ r, 0.0, 0.0, 0.0, r*ec(ce,k,t,h,-1.0/3.0) }};
 }
 
-tk::SrcFn::result_type
-CompFlowProblemNLEnergyGrowth::src( ncomp_t system, ncomp_t ncomp, tk::real x,
-                                    tk::real y, tk::real z, tk::real t )
-// *****************************************************************************
-//  Compute and return source term for NLEG manufactured solution
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in] t Physical time at which to evaluate the source
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  using tag::param; using std::sin; using std::cos;
-  // manufactured solution parameters
-  const auto a = g_inputdeck.get< param, eq, tag::alpha >()[system];
-  const auto bx = g_inputdeck.get< param, eq, tag::betax >()[system];
-  const auto by = g_inputdeck.get< param, eq, tag::betay >()[system];
-  const auto bz = g_inputdeck.get< param, eq, tag::betaz >()[system];
-  const auto ce = g_inputdeck.get< param, eq, tag::ce >()[system];
-  const auto kappa = g_inputdeck.get< param, eq, tag::kappa >()[system];
-  const auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[system];
-  // ratio of specific heats
-  const auto g = g_inputdeck.get< param, eq, tag::gamma >()[system][0];
-  // spatial component of density field
-  const auto gx = 1.0 - x*x - y*y - z*z;
-  // derivative of spatial component of density field
-  const std::array< tk::real, 3 > dg{{ -2.0*x, -2.0*y, -2.0*z }};
-  // spatial component of energy field
-  const auto h = hx( bx, by, bz, x, y, z );
-  // derivative of spatial component of energy field
-  std::array< tk::real, 3 >
-    dh{{ -bx*M_PI*sin(bx*M_PI*x)*cos(by*M_PI*y)*cos(bz*M_PI*z),
-         -by*M_PI*cos(bx*M_PI*x)*sin(by*M_PI*y)*cos(bz*M_PI*z),
-         -bz*M_PI*cos(bx*M_PI*x)*cos(by*M_PI*y)*sin(bz*M_PI*z) }};
-  // temporal function f and its derivative
-  const auto ft = std::exp(-a*t);
-  const auto dfdt = -a*ft;
-  // density and its derivatives
-  const auto rho = r0 + ft*gx;
-  const std::array< tk::real, 3 > drdx{{ ft*dg[0], ft*dg[1], ft*dg[2] }};
-  const auto drdt = gx*dfdt;
-  // internal energy and its derivatives
-  const auto ie = ec( ce, kappa, t, h, -1.0/3.0 );
-  const std::array< tk::real, 3 > dedx{{
-    2.0*std::pow(ie,4.0)*kappa*h*dh[0]*t,
-    2.0*std::pow(ie,4.0)*kappa*h*dh[1]*t,
-    2.0*std::pow(ie,4.0)*kappa*h*dh[2]*t }};
-  const auto dedt = kappa*h*h*std::pow(ie,4.0);
-  // sources
-  std::vector< tk::real > r( ncomp );
-  // density source
-  r[0] = drdt;
-  // momentum source
-  r[1] = (g-1.0)*(rho*dedx[0] + ie*drdx[0]);
-  r[2] = (g-1.0)*(rho*dedx[1] + ie*drdx[1]);
-  r[3] = (g-1.0)*(rho*dedx[2] + ie*drdx[2]);
-  // energy source
-  r[4] = rho*dedt + ie*drdt;
-  return r;
-}
-
 std::vector< std::string >
 CompFlowProblemNLEnergyGrowth::fieldNames( ncomp_t ) const
 // *****************************************************************************
@@ -197,6 +133,7 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
   ncomp_t system,
   ncomp_t ncomp,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real t,
   tk::real V,
   const std::vector< tk::real >& vol,
@@ -209,6 +146,7 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] t Physical time
 //! \param[in] V Total mesh volume (across the whole problem)
 //! \param[in] vol Nodal mesh volumes
@@ -221,7 +159,7 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
   const std::size_t rdof =
     g_inputdeck.get< tag::discr, tag::rdof >();
 
-  auto out = CompFlowFieldOutput(system, offset, U);
+  auto out = CompFlowFieldOutput( system, offset, nunk, U );
 
   auto r = U.extract( 0*rdof, offset );
   auto u = U.extract( 1*rdof, offset );
@@ -236,7 +174,8 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
 
   auto er = r, ee = r, p = r;
   for (std::size_t i=0; i<r.size(); ++i) {
-    auto s = solution( system, ncomp, x[i], y[i], z[i], t );
+    int inbox = 0;
+    auto s = solution( system, ncomp, x[i], y[i], z[i], t, inbox );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
     ee[i] = std::pow( E[i] - s[4]/s[0], 2.0 ) * vol[i] / V;
     r[i] = s[0];
