@@ -115,8 +115,10 @@ class CompFlow {
 
     //! Set initial condition in user-defined box IC nodes
     //! \param[in] V Total box volume
-    //! \details If the user is specified a box where mass is specified, we also
-    //!   assume that internal energy content (energy per unit volume) is also
+    //! \details This function sets the fluid density and total specific energy
+    //!   within a box initial condition, configured by the user. If the user
+    //!   is specified a box where mass is specified, we also assume here that
+    //!   internal energy content (energy per unit volume) is also
     //!   specified. Specific internal energy (energy per unit mass) is then
     //!   computed here (and added to the kinetic energy) from the internal
     //!   energy per unit volume by multiplying it with the total box volume
