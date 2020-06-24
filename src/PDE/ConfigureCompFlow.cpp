@@ -211,6 +211,27 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     nfo.emplace_back( "IC box temperature",
                       std::to_string( boxtemperatureic[c][0] ) );
 
+  const auto& initiate = icbox.get< tag::initiate >();
+  const auto& inittype = initiate.get< tag::init >();
+  if (inittype.size() > c) {
+    auto opt = ctr::Initiate();
+    nfo.emplace_back( opt.group(), opt.name(inittype[c]) );
+    if (inittype[c] == ctr::InitiateType::LINEAR) {
+      const auto& linpoint = initiate.get< tag::point >();
+      if (linpoint.size() > c)
+        nfo.emplace_back( "IC box initiate linear point(s)",
+                          parameters( linpoint[c] ) );
+      const auto& linradius = initiate.get< tag::radius >();
+      if (linradius.size() > c)
+        nfo.emplace_back( "IC box initiate linear radii",
+                          parameters( linradius[c] ) );
+      const auto& linvelocity = initiate.get< tag::velocity >();
+      if (linvelocity.size() > c)
+        nfo.emplace_back( "IC box initiate linear velocity",
+                          parameters( linvelocity[c] ) );
+    }
+  }
+
   // BCs
 
   const auto& bcstag = g_inputdeck.get< tag::param, eq, tag::bcstag >();
