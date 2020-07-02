@@ -337,6 +337,7 @@ class MultiMat {
             std::cout << "Partial density:  " << arho << std::endl;
             std::cout << "Partial pressure: " << apr << std::endl;
             std::cout << "Major pressure:   " << pmax << std::endl;
+            std::cout << "Major temperature:" << tmax << std::endl;
             std::cout << "Velocity:         " << u << ", " << v << ", " << w
               << std::endl;
           };
@@ -790,6 +791,7 @@ class MultiMat {
     //! Return field output going to file
     //! \param[in] rdof Total number of degrees of freedom
     //! \param[in] nunk Number of unknowns
+    //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \return Vector of vectors to be output to file
@@ -798,7 +800,7 @@ class MultiMat {
                  tk::real,
                  std::size_t rdof,
                  std::size_t nunk,
-                 const tk::Fields&,
+                 const tk::Fields& geoElem,
                  tk::Fields& U,
                  const tk::Fields& P ) const
     {
@@ -806,12 +808,14 @@ class MultiMat {
       auto nmat =
         g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
 
-      return MultiMatFieldOutput(m_system, nmat, m_offset, nunk, rdof, U, P);
+      return MultiMatFieldOutput(m_system, nmat, m_offset, nunk, rdof, geoElem,
+        U, P);
     }
 
     //! Return nodal field output going to file
     //! \param[in] npoin Number of nodes
     //! \param[in] esup Elements surrounding points
+    //! \param[in] geoElem Element geometry array
     //! \param[in,out] Unode Nodal solution vector
     //! \param[in,out] Pnode Nodal vector of primitive quantities
     //! \param[in,out] U Nodal solution vector at recent time step
@@ -823,7 +827,7 @@ class MultiMat {
                  std::size_t npoin,
                  const std::map< std::size_t, std::vector< std::size_t > >&
                    esup,
-                 const tk::Fields&,
+                 const tk::Fields& geoElem,
                  tk::Fields& Unode,
                  tk::Fields& Pnode,
                  tk::Fields& U,
@@ -837,8 +841,8 @@ class MultiMat {
       tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
         Pnode);
 
-      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, 1, Unode,
-        Pnode);
+      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, 1, geoElem,
+        Unode, Pnode);
     }
 
     //! Return surface field output going to file
