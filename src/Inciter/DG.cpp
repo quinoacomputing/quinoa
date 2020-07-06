@@ -1196,9 +1196,9 @@ DG::setup()
 }
 
 void
-DG::boxvol( tk::real v )
+DG::box( tk::real v )
 // *****************************************************************************
-// Receive total box IC volume
+// Receive total box IC volume and set conditions in box
 //! \param[in] v Total volume within user-specified box
 // *****************************************************************************
 {

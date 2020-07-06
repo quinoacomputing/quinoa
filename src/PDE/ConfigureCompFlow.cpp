@@ -179,7 +179,8 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
                                icbox.get< tag::zmax >() };
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   if (std::any_of( begin(box), end(box),
-        [=]( tk::real p ){ return std::abs(p) > eps; })) {
+        [=]( tk::real p ){ return std::abs(p) > eps; }))
+  {
     nfo.emplace_back( "IC box", parameters( box ) );
   }
 

@@ -90,6 +90,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_symbctri(),
   m_stage( 0 ),
   m_boxnodes(),
+  m_boxnodes_set(),
   m_edgenode(),
   m_edgeid(),
   m_dtp( m_u.nunk(), 0.0 ),
@@ -416,9 +417,9 @@ ALECG::setup()
 }
 
 void
-ALECG::boxvol( tk::real v )
+ALECG::box( tk::real v )
 // *****************************************************************************
-// Receive total box IC volume
+// Receive total box IC volume and set conditions in box
 //! \param[in] v Total volume within user-specified box
 // *****************************************************************************
 {
@@ -427,8 +428,11 @@ ALECG::boxvol( tk::real v )
   // Store user-defined box IC volume
   d->Boxvol() = v;
 
-  // Update density in user-defined IC box based on box volume
-  for (const auto& eq : g_cgpde) eq.box( d->Boxvol(), m_boxnodes, m_u );
+  // Set user-defined IC box conditions
+  for (const auto& eq : g_cgpde)
+    eq.box( d->Boxvol(), d->T(), m_boxnodes, d->Coord(), m_u, m_boxnodes_set );
+  if (m_boxnodes_set.size() != m_boxnodes.size())
+    std::cout << thisIndex << ':' << m_boxnodes.size() - m_boxnodes_set.size() << '\n';
 
   // Compute left-hand side of PDEs
   lhs();
@@ -577,7 +581,8 @@ ALECG::normfinal()
       n[1] /= n[3];
       n[2] /= n[3];
       Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
-              std::numeric_limits< tk::real >::epsilon(), "Non-unit normal" );
+              1.0e+3*std::numeric_limits< tk::real >::epsilon(),
+              "Non-unit normal" );
     }
 
   // Replace global->local ids associated to boundary point normals
@@ -949,6 +954,13 @@ ALECG::solve()
   for (const auto& eq : g_cgpde)
     eq.farfieldbc( m_u, d->Coord(), m_bnorm, m_farfieldbcnodes );
 
+  // Set user-defined IC box conditions
+  for (const auto& eq : g_cgpde)
+    eq.box( d->Boxvol(), d->T()+d->Dt(), m_boxnodes, d->Coord(), m_u,
+            m_boxnodes_set );
+  if (m_boxnodes_set.size() != m_boxnodes.size())
+    std::cout << thisIndex << ':' << m_boxnodes.size() - m_boxnodes_set.size() << '\n';
+
   //! [Continue after solve]
   if (m_stage < 2) {
 
@@ -1151,6 +1163,11 @@ ALECG::writeFields( CkCallback c ) const
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
+
+    // nodefieldnames.push_back( "initiated" );
+    // std::vector< tk::real > initiated( m_u.nunk(), 0.0 );
+    // for (auto i : m_boxnodes_set) initiated[i] = 1.0;
+    // nodefields.push_back( initiated );
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 

@@ -137,7 +137,7 @@ class Scheme {
 
     //! Entry method tags for specific Scheme classes to use with bcast()
     struct setup {};
-    struct boxvol {};
+    struct box {};
     struct advance {};
     struct resized {};
     struct resizeComm {};
@@ -159,8 +159,8 @@ class Scheme {
       std::visit( [&]( auto& p ){
           if constexpr( std::is_same_v< Fn, setup > )
             p.setup( std::forward< Args >( args )... );
-          if constexpr( std::is_same_v< Fn, boxvol > )
-            p.boxvol( std::forward< Args >( args )... );
+          if constexpr( std::is_same_v< Fn, box > )
+            p.box( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, advance > )
             p.advance( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, resized > )

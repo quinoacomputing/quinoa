@@ -1009,7 +1009,7 @@ Transporter::boxvol( tk::real v )
 // *****************************************************************************
 {
   if (v > 0.0) printer().diag( "Box IC volume: " + std::to_string(v) );
-  m_scheme.bcast< Scheme::boxvol >( v );
+  m_scheme.bcast< Scheme::box >( v );
 }
 
 void
@@ -1033,7 +1033,7 @@ Transporter::inthead( const InciterPrint& print )
   "             h - h-refinement\n"
   "             l - load balancing\n"
   "             r - checkpoint\n",
-  "\n      it             t            dt        ETE        ETA        EGT  out\n"
+  "\n      it             t            dt        ETE        ETA        EGT  flg\n"
     " -------------------------------------------------------------------------\n" );
 }
 

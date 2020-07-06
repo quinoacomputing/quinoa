@@ -112,9 +112,13 @@ class CompFlow {
       }
     }
 
-
-    //! Set initial condition in user-defined box IC nodes
+    //! Set user-defined box IC nodes
     //! \param[in] V Total box volume
+    //! \param[in] t Physical time
+    //! \param[in] boxnodes Mesh node ids within user-defined box
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in,out] boxnodes_set Box nodes that have been set
     //! \details This function sets the fluid density and total specific energy
     //!   within a box initial condition, configured by the user. If the user
     //!   is specified a box where mass is specified, we also assume here that
@@ -127,13 +131,21 @@ class CompFlow {
     //!    * internal energy content (energy per unit volume): J/m^3
     //!    * specific energy (internal energy per unit mass): J/kg
     void box( real V,
+              real t,
               const std::vector< std::size_t >& boxnodes,
-              tk::Fields& unk ) const
+              const std::array< std::vector< real >, 3 >& coord,
+              tk::Fields& unk,
+              std::unordered_set< std::size_t >& boxnodes_set ) const
     {
-      const auto& boxmassic =
-        g_inputdeck.get< tag::param, eq, tag::ic, tag::box, tag::mass >();
-      const auto& boxenergy_content_ic = g_inputdeck.get<
-        tag::param, eq, tag::ic, tag::box, tag::energy_content >();
+      if (boxnodes_set.size() == boxnodes.size()) return;
+
+      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      const auto& initiate = icbox.get< tag::initiate >();
+      const auto& inittype = initiate.get< tag::init >();
+
+      const auto& boxmassic = icbox.get< tag::mass >();
+      const auto& boxenergy_content_ic = icbox.get< tag::energy_content >();
       if (boxmassic.size() > m_system && !boxmassic[m_system].empty()) {
         Assert( boxenergy_content_ic.size() > m_system &&
                 !boxenergy_content_ic[m_system].empty(),
@@ -141,18 +153,66 @@ class CompFlow {
         auto mass = boxmassic[m_system][0];
         auto rho = mass / V;
         auto spi = boxenergy_content_ic[m_system][0] * V / mass;
-        for (auto i : boxnodes) {
-          // extract velocity IC dividing by previously set box density
-          const auto u = unk(i,1,m_offset) / unk(i,0,m_offset),
-                     v = unk(i,2,m_offset) / unk(i,0,m_offset),
-                     w = unk(i,3,m_offset) / unk(i,0,m_offset);
-          const auto ke = 0.5*(u*u + v*v + w*w);
-          unk(i,0,m_offset) = rho;
-          unk(i,1,m_offset) = rho * u;
-          unk(i,2,m_offset) = rho * v;
-          unk(i,3,m_offset) = rho * w;
-          unk(i,4,m_offset) = rho * (spi + ke);
-        }
+
+        if (inittype[m_system] == ctr::InitiateType::IMPULSE) {
+
+          for (auto i : boxnodes) {
+            // superimpose on existing velocity field
+            const auto u = unk(i,1,m_offset) / unk(i,0,m_offset),
+                       v = unk(i,2,m_offset) / unk(i,0,m_offset),
+                       w = unk(i,3,m_offset) / unk(i,0,m_offset);
+            const auto ke = 0.5*(u*u + v*v + w*w);
+            unk(i,0,m_offset) = rho;
+            unk(i,1,m_offset) = rho * u;
+            unk(i,2,m_offset) = rho * v;
+            unk(i,3,m_offset) = rho * w;
+            unk(i,4,m_offset) = rho * (spi + ke);
+          }
+          boxnodes_set.insert( begin(boxnodes), end(boxnodes) );
+
+        } else if (inittype[m_system] == ctr::InitiateType::LINEAR) {
+
+          const auto& x = coord[0];
+          const auto& y = coord[1];
+          const auto& z = coord[2];
+
+          // apply box conditions within growing sphere
+          tk::real box_extent =
+            std::max( icbox.get< tag::xmax >() - icbox.get< tag::xmin >(),
+              std::max( icbox.get< tag::ymax >() - icbox.get< tag::ymin >(),
+                        icbox.get< tag::zmax >() - icbox.get< tag::zmin >() ) );
+          const auto& p = initiate.get< tag::point >()[ m_system ];
+          const auto& r = initiate.get< tag::radius >()[ m_system ];
+          const auto& iv = initiate.get< tag::velocity >()[ m_system ];
+          Assert( p.size() == r.size()*3, "Size mismatch" );
+          Assert( p.size() == iv.size()*3, "Size mismatch" );
+          for (std::size_t s=0; s<p.size()/3; ++s) {  // for each sphere
+            auto r0t = iv[s]*0.5*t;
+            auto r1t = r[s] + iv[s]*t;
+            if (r1t > box_extent) // done if initiation front reached box extent
+              boxnodes_set.insert( begin(boxnodes), end(boxnodes) );
+            else
+              for (auto i : boxnodes) {
+                auto d = std::sqrt( (x[i]-p[s*3+0])*(x[i]-p[s*3+0]) +
+                                    (y[i]-p[s*3+1])*(y[i]-p[s*3+1]) +
+                                    (z[i]-p[s*3+2])*(z[i]-p[s*3+2]) );
+                if (d > r0t && d < r1t) {
+                  // superimpose on existing velocity field
+                  const auto u = unk(i,1,m_offset)/unk(i,0,m_offset),
+                             v = unk(i,2,m_offset)/unk(i,0,m_offset),
+                             w = unk(i,3,m_offset)/unk(i,0,m_offset);
+                  const auto ke = 0.5*(u*u + v*v + w*w);
+                  unk(i,0,m_offset) = rho;
+                  unk(i,1,m_offset) = rho * u;
+                  unk(i,2,m_offset) = rho * v;
+                  unk(i,3,m_offset) = rho * w;
+                  unk(i,4,m_offset) = rho * (spi + ke);
+                  boxnodes_set.insert( i );       // mark node as set
+                }
+              }
+          }
+
+        } else Throw( "IC box initiate type not implemented" );
       }
     }
 

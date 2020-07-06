@@ -75,6 +75,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_farfieldbcnodes(),
   m_diag(),
   m_boxnodes(),
+  m_boxnodes_set(),
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 )
@@ -320,9 +321,9 @@ DiagCG::setup()
 }
 
 void
-DiagCG::boxvol( tk::real v )
+DiagCG::box( tk::real v )
 // *****************************************************************************
-// Receive total box IC volume
+// Receive total box IC volume and set conditions in box
 //! \param[in] v Total volume within user-specified box
 // *****************************************************************************
 {
@@ -331,8 +332,9 @@ DiagCG::boxvol( tk::real v )
   // Store user-defined box IC volume
   d->Boxvol() = v;
 
-  // Update density in user-defined IC box based on box volume
-  for (const auto& eq : g_cgpde) eq.box( d->Boxvol(), m_boxnodes, m_u );
+  // Set user-defined IC box conditions
+  for (const auto& eq : g_cgpde)
+    eq.box( d->Boxvol(), d->T(), m_boxnodes, d->Coord(), m_u, m_boxnodes_set );
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields( CkCallback(CkIndex_DiagCG::init(), thisProxy[thisIndex]) );
