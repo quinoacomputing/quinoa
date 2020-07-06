@@ -359,7 +359,7 @@ function(ADD_REGRESSION_TEST test_name executable)
   endif()
 
   # Make exodiff quiet (errors and warnings will still come to output)
-  list(APPEND ARG_BIN_DIFF_PROG_ARGS "-q")
+  #list(APPEND ARG_BIN_DIFF_PROG_ARGS "-q")
   if(ARG_BIN_DIFF_PROG_ARGS)
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_ARGS "${ARG_BIN_DIFF_PROG_ARGS}")
   endif()

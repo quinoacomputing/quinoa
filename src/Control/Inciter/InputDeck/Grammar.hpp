@@ -327,6 +327,13 @@ namespace grm {
       {
         Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
       }
+
+      // Set default inititate type for box ICs
+      auto& icbox = ic.template get< tag::box >();
+      auto& initiate = icbox.template get< tag::initiate >();
+      auto& inittype = initiate.template get< tag::init >();
+      if (inittype.size() != neq.get< eq >())
+        inittype.push_back( inciter::ctr::InitiateType::IMPULSE );
     }
   };
 

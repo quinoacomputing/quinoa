@@ -431,8 +431,8 @@ ALECG::box( tk::real v )
   // Set user-defined IC box conditions
   for (const auto& eq : g_cgpde)
     eq.box( d->Boxvol(), d->T(), m_boxnodes, d->Coord(), m_u, m_boxnodes_set );
-  if (m_boxnodes_set.size() != m_boxnodes.size())
-    std::cout << thisIndex << ':' << m_boxnodes.size() - m_boxnodes_set.size() << '\n';
+  //if (m_boxnodes_set.size() != m_boxnodes.size())
+  //  std::cout << thisIndex << ':' << m_boxnodes.size() - m_boxnodes_set.size() << '\n';
 
   // Compute left-hand side of PDEs
   lhs();
@@ -958,8 +958,8 @@ ALECG::solve()
   for (const auto& eq : g_cgpde)
     eq.box( d->Boxvol(), d->T()+d->Dt(), m_boxnodes, d->Coord(), m_u,
             m_boxnodes_set );
-  if (m_boxnodes_set.size() != m_boxnodes.size())
-    std::cout << thisIndex << ':' << m_boxnodes.size() - m_boxnodes_set.size() << '\n';
+  //if (m_boxnodes_set.size() != m_boxnodes.size())
+  //  std::cout << thisIndex << ':' << m_boxnodes.size() - m_boxnodes_set.size() << '\n';
 
   //! [Continue after solve]
   if (m_stage < 2) {
