@@ -113,7 +113,8 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >()[c];
   if (!cv.empty())
-    nfo.emplace_back( "specific heat at const. volume", std::to_string(cv[0]) );
+    nfo.emplace_back( "specific heat at constant volume",
+                      std::to_string(cv[0]) );
 
   // Heat conductivity is optional: the outer vector may be empty
   const auto& k = g_inputdeck.get< tag::param, eq, tag::k >();
@@ -169,6 +170,14 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   if (bgpressureic.size() > c && !bgpressureic[c].empty())
     nfo.emplace_back( "IC background pressure",
                       std::to_string( bgpressureic[c][0] ) );
+  const auto& bgenergyic = ic.get< tag::energy >();
+  if (bgenergyic.size() > c && !bgenergyic[c].empty())
+    nfo.emplace_back( "IC background energy",
+                      std::to_string( bgenergyic[c][0] ) );
+  const auto& bgtemperatureic = ic.get< tag::temperature >();
+  if (bgtemperatureic.size() > c && !bgtemperatureic[c].empty())
+    nfo.emplace_back( "IC background temperature",
+                      std::to_string( bgtemperatureic[c][0] ) );
 
   const auto& icbox = ic.get< tag::box >();
   std::vector< tk::real > box{ icbox.get< tag::xmin >(),
