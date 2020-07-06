@@ -333,7 +333,7 @@ else() # Test command ran successfully, attempt to do diffs
 
         set(bin_diff_command ${runner_prefix} ${BIN_DIFF_PROG} ${BIN_DIFF_PROG_ARGS} -f ${conf} ${baseline} ${result})
         string(REPLACE ";" " " bin_diff_command_string "${bin_diff_command}")
-        message("Running binary diff command: '${bin_diff_command_string}'")
+        #message("Running binary diff command: '${bin_diff_command_string}'")
         execute_process(COMMAND ${bin_diff_command} RESULT_VARIABLE ERROR
                         ERROR_VARIABLE ERROR_OUTPUT OUTPUT_VARIABLE BINDIFF_OUTPUT)
 
