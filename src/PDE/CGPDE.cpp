@@ -89,7 +89,7 @@ bnorm(
 
   // Compute boundary point normals on all side sets summing inverse distance
   // weighted face normals to points. This is only a partial sum at shared
-  // boundary points in parallel. Inner key: global node id, value: normals nad
+  // boundary points in parallel. Inner key: global node id, value: normals and
   // inverse distance square, outer key, side set id.
   std::unordered_map< int,
     std::unordered_map< std::size_t, std::array< tk::real, 4 > > > norm;
