@@ -207,7 +207,9 @@ namespace grm {
     { MsgKey::NONCOMP, "The number of components has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'ncomp' to specify the number of components." },
-    { MsgKey::LARGECOMP, "The component index is too large and indexes out of the total number of scalar components of the equation system configured." },
+    { MsgKey::LARGECOMP, "The component index is too large and indexes out of "
+      "the total number of scalar components of the equation system "
+      "configured." },
     { MsgKey::NONMAT, "The number of materials has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'nmat' to specify the number of materials." },
