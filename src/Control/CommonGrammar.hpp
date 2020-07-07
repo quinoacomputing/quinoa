@@ -103,6 +103,7 @@ namespace grm {
     WRONGDIRICHLET,     //!< Wrong number of parameters for a Dirichlet PDF
     NEGATIVEPARAM,      //!< Negative parameter given configuring a PDF
     NONCOMP,            //!< No number of components selected
+    LARGECOMP,          //!< Component index indexing out of max eq sys ncomp
     NONMAT,             //!< No number of materials selected
     EOSGAMMA,           //!< Wrong number of EOS gamma parameters
     EOSCV,              //!< Wrong number of EOS cv parameters
@@ -136,6 +137,7 @@ namespace grm {
     SYSFCTVAR,          //!< System-FCT variable index incorrect
     BGICMISSING,        //!< Background IC unspecified
     STAGBCWRONG,        //!< Stagnation BC incorrectly configured
+    NONDISJOINTBC,      //!< Different BC types assigned to the same side set
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
@@ -204,6 +206,9 @@ namespace grm {
     { MsgKey::NONCOMP, "The number of components has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'ncomp' to specify the number of components." },
+    { MsgKey::LARGECOMP, "The component index is too large and indexes out of "
+      "the total number of scalar components of the equation system "
+      "configured." },
     { MsgKey::NONMAT, "The number of materials has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'nmat' to specify the number of materials." },
@@ -357,6 +362,8 @@ namespace grm {
       "end block and a radius ... end block. Both point and radius blocks must "
       "contain floating-point numbers, and the number of items in the point "
       "block must be exactly 3x that of radii." },
+    { MsgKey::NONDISJOINTBC, "Different boundary condition types are assigned "
+      "to the same side set." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
     { MsgKey::HYDROTIMESCALES, "Error in the preceding line or block. "

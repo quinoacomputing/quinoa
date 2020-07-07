@@ -13,6 +13,8 @@
 #ifndef Discretization_h
 #define Discretization_h
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "Types.hpp"
 #include "Timer.hpp"
 #include "Keywords.hpp"
@@ -22,11 +24,14 @@
 #include "UnsMesh.hpp"
 #include "CommMap.hpp"
 #include "History.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
 
 namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
 
 //! \brief Discretization Charm++ chare array holding common functinoality to
 //!   all discretization schemes
@@ -252,6 +257,60 @@ class Discretization : public CBase_Discretization {
 
     //! Remap mesh data due to new local ids
     void remap( const std::unordered_map< std::size_t, std::size_t >& map );
+
+    //! \brief Function object for querying the node ids at which a particular
+    //!   BCType BC is configured by the user, called for each PDE type
+    template< typename BCType >
+    struct BCNodes {
+
+      const std::map< int, std::vector< std::size_t > >& m_bface;
+      const std::vector< std::size_t >& m_triinpoel;
+      std::unordered_map< int, std::unordered_set< std::size_t > >& m_nodes;
+
+      explicit
+        BCNodes( const std::map< int, std::vector< std::size_t > >& bface,
+                 const std::vector< std::size_t >& triinpoel,
+                 std::unordered_map< int,
+                   std::unordered_set< std::size_t > >& nodes )
+        : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes) {}
+
+      template< typename Eq > void operator()( brigand::type_<Eq> ) {
+        const auto& bc =
+          g_inputdeck.template get< tag::param, Eq, tag::bc, BCType >();
+        for (const auto& eq : bc) {
+          for (const auto& s : eq) {
+            auto k = m_bface.find( std::stoi(s) );
+            if (k != end(m_bface)) {
+              auto& n = m_nodes[ k->first ];  // associate set id
+              for (auto f : k->second) {      // face ids on BCType side set
+                n.insert( m_triinpoel[f*3+0] );
+                n.insert( m_triinpoel[f*3+1] );
+                n.insert( m_triinpoel[f*3+2] );
+              }
+            }
+          }
+        }
+      }
+    };
+
+    //! \brief Query nodes at which BCType boundary conditions are set for all
+    //!   PDE types
+    //! \tparam BCType Boundary condition type
+    //! \param[in] bface Boundary-faces mapped to side set ids
+    //! \param[in] triinpoel Boundary-face connectivity
+    //! \return Node ids at which BCType BCs are set (value),
+    //!    associated to sides set id on which the BC is set (key)
+    template< typename BCType >
+    std::unordered_map< int, std::unordered_set< std::size_t > >
+    bcnodes( const std::map< int, std::vector< std::size_t > >& bface,
+             const std::vector< std::size_t >& triinpoel ) const
+    {
+      using PDETypes = ctr::parameters::Keys;
+      std::unordered_map< int, std::unordered_set< std::size_t > > nodes;
+      brigand::for_each< PDETypes >(
+        BCNodes< BCType >( bface, triinpoel, nodes ) );
+      return nodes;
+    }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

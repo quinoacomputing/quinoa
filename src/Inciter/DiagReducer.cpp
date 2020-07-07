@@ -81,8 +81,8 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
     for (std::size_t i=0; i<v[L2SOL].size(); ++i) v[L2SOL][i] += w[L2SOL][i];
     // Sum for the L2 norm of the numerical - analytical solution for all comps
     for (std::size_t i=0; i<v[L2ERR].size(); ++i) v[L2ERR][i] += w[L2ERR][i];
-    // Sum for the L2 norm of the residual
-    v[L2RES][0] += w[L2RES][0];
+    // Sum for the L2 norm of the residual of all components
+    for (std::size_t i=0; i<v[L2RES].size(); ++i) v[L2RES][i] += w[L2RES][i];
     // Max for the Linf norm of the numerical - analytical solution for all comp
     for (std::size_t i=0; i<v[LINFERR].size(); ++i)
       if (w[LINFERR][i] > v[LINFERR][i]) v[LINFERR][i] = w[LINFERR][i];

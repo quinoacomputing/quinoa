@@ -1269,7 +1269,7 @@ namespace deck {
                                                  tag::mixmassfracbeta,
                                                  tag::mean_gradient >,
                            tk::grm::process<
-                             use< kw::velocity >,
+                             use< kw::velocitysde >,
                              tk::grm::Store_back< tag::param,
                                                   tag::mixmassfracbeta,
                                                   tag::velocity >,
@@ -1526,7 +1526,7 @@ namespace deck {
   //! Velocity SDE
   struct velocity :
          pegtl::if_must<
-           scan_sde< use< kw::velocity >, tag::velocity >,
+           scan_sde< use< kw::velocitysde >, tag::velocity >,
            tk::grm::block< use< kw::end >,
                            tk::grm::depvar< use,
                                             tag::velocity,
@@ -1641,7 +1641,7 @@ namespace deck {
                            icgaussian< tag::position >,
                            icjointgaussian< tag::position >,
                            tk::grm::process<
-                             use< kw::velocity >,
+                             use< kw::velocitysde >,
                              tk::grm::Store_back< tag::param,
                                                   tag::position,
                                                   tag::velocity >,
@@ -1700,7 +1700,7 @@ namespace deck {
                            icgaussian< tag::dissipation >,
                            icjointgaussian< tag::dissipation >,
                            tk::grm::process<
-                             use< kw::velocity >,
+                             use< kw::velocitysde >,
                              tk::grm::Store_back< tag::param,
                                                   tag::dissipation,
                                                   tag::velocity >,

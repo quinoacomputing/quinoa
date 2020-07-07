@@ -57,7 +57,7 @@ module dg {
                          const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
-      entry void refine( tk::real l2ref );
+      entry void refine( const std::vector< tk::real >& l2ref );
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void lhs();

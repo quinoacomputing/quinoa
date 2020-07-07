@@ -471,35 +471,20 @@ class Transport {
 
     //! Set symmetry boundary conditions at nodes
     void
-    symbc( tk::Fields&,
-           const std::unordered_map<std::size_t,std::array<real,4>>& )
-    const {}
+    symbc(
+      tk::Fields&,
+      const std::unordered_map< int,
+              std::unordered_map< std::size_t,
+                std::array< real, 4 > > >&,
+      const std::unordered_set< std::size_t >& ) const {}
 
-    //! Query nodes at which symmetry boundary conditions are set
-    //! \param[in] bface Boundary-faces mapped to side set ids
-    //! \param[in] triinpoel Boundary-face connectivity
-    //! \param[in,out] nodes Node ids at which symmetry BCs are set
-    void
-    symbcnodes( const std::map< int, std::vector< std::size_t > >& bface,
-                const std::vector< std::size_t >& triinpoel,
-                std::unordered_set< std::size_t >& nodes ) const
-    {
-      using tag::param; using tag::transport; using tag::bcsym;
-      const auto& bc = g_inputdeck.get< param, transport, tag::bc, bcsym >();
-      if (!bc.empty() && bc.size() > m_system) {
-        const auto& ss = bc[ m_system ];// side sets with sym bcs specified
-        for (const auto& s : ss) {
-          auto k = bface.find( std::stoi(s) );
-          if (k != end(bface)) {
-            for (auto f : k->second) {  // face ids on symbc side set
-              nodes.insert( triinpoel[f*3+0] );
-              nodes.insert( triinpoel[f*3+1] );
-              nodes.insert( triinpoel[f*3+2] );
-            }
-          }
-        }
-      }
-    }
+    //! Set farfield boundary conditions at nodes
+    void farfieldbc(
+      tk::Fields&,
+      const std::unordered_map< int,
+              std::unordered_map< std::size_t,
+                std::array< real, 4 > > >&,
+      const std::unordered_set< std::size_t >& ) const {}
 
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
@@ -845,12 +830,12 @@ class Transport {
     //! Compute boundary integrals for ALECG
     //! \param[in] coord Mesh node coordinates
     //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
-    //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
+    //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     void bndint( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& triinpoel,
-                 const std::vector< int >& symbcnode,
+                 const std::vector< int >& symbctri,
                  const tk::Fields& U,
                  tk::Fields& R ) const
     {
@@ -867,7 +852,7 @@ class Transport {
         std::array< std::size_t, 3 >
           N{ triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
         // apply symmetry BCs
-        if (symbcnode[e]) continue;
+        if (symbctri[e]) continue;
         // node coordinates
         std::array< tk::real, 3 > xp{ x[N[0]], x[N[1]], x[N[2]] },
                                   yp{ y[N[0]], y[N[1]], y[N[2]] },
