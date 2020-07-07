@@ -27,6 +27,7 @@
 #include "Problem/FieldOutput.hpp"
 #include "Riemann/Rusanov.hpp"
 #include "NodeBC.hpp"
+#include "EoS/EoS.hpp"
 #include "History.hpp"
 
 namespace inciter {
@@ -48,6 +49,7 @@ class CompFlow {
     using ncomp_t = kw::ncomp::info::expect::type;
     using eq = tag::compflow;
     using real = tk::real;
+    using param = tag::param;
 
     static constexpr std::size_t m_ncomp = 5;
     static constexpr real muscl_eps = 1.0e-9;
@@ -63,9 +65,16 @@ class CompFlow {
       m_problem(),
       m_system( c ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_stagCnf( g_inputdeck.stagnationBC< eq >( c ) )
+      m_stagCnf( g_inputdeck.stagnationBC< eq >( c ) ),
+      m_fr( g_inputdeck.get< param, eq, tag::farfield_density >().size() > c ?
+            g_inputdeck.get< param, eq, tag::farfield_density >()[c] : 1.0 ),
+      m_fp( g_inputdeck.get< param, eq, tag::farfield_pressure >().size() > c ?
+            g_inputdeck.get< param, eq, tag::farfield_pressure >()[c] : 1.0 ),
+      m_fu( g_inputdeck.get< param, eq, tag::farfield_velocity >().size() > c ?
+            g_inputdeck.get< param, eq, tag::farfield_velocity >()[c] :
+            std::vector< real >( 3, 0.0 ) )
     {
-       Assert( g_inputdeck.get< tag::component >().get< eq >().at(c) == m_ncomp,
+      Assert( g_inputdeck.get< tag::component >().get< eq >().at(c) == m_ncomp,
        "Number of CompFlow PDE components must be " + std::to_string(m_ncomp) );
     }
 
@@ -405,7 +414,7 @@ class CompFlow {
     //! \param[in] lid Global->local node ids
     //! \param[in] dfn Dual-face normals
     //! \param[in] psup Points surrounding points
-    //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
+    //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] vol Nodal volumes
     //! \param[in] edgenode Local node IDs of edges
     //! \param[in] edgeid Edge ids in the order of access
@@ -425,7 +434,7 @@ class CompFlow {
                                std::vector< std::size_t > >& psup,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup,
-              const std::vector< int >& symbcnode,
+              const std::vector< int >& symbctri,
               const std::vector< real >& vol,
               const std::vector< std::size_t >& edgenode,
               const std::vector< std::size_t >& edgeid,
@@ -452,7 +461,7 @@ class CompFlow {
       domainint( coord, gid, edgenode, edgeid, psup, dfn, U, Grad, R );
 
       // compute boundary integrals
-      bndint( coord, triinpoel, symbcnode, U, R );
+      bndint( coord, triinpoel, symbctri, U, R );
 
       // compute optional source integral
       src( coord, inpoel, t, tp, R );
@@ -613,47 +622,88 @@ class CompFlow {
 
     //! Set symmetry boundary conditions at nodes
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] bnorm Face normals in boundary points: key local node id,
-    //!    value: unit normal
+    //! \param[in] bnorm Face normals in boundary points, key local node id,
+    //!   first 3 reals of value: unit normal, outer key: side set id
+    //! \param[in] nodes Unique set of node ids at which to set symmetry BCs
     void
     symbc( tk::Fields& U,
-           const std::unordered_map<std::size_t,std::array<real,4>>& bnorm )
-    const {
-      for (const auto& [ i, nr ] : bnorm ) {
-        std::array< real, 3 >
-          n{ nr[0], nr[1], nr[2] },
-          v{ U(i,1,m_offset), U(i,2,m_offset), U(i,3,m_offset) };
-        auto v_dot_n = tk::dot( v, n );
-        U(i,1,m_offset) -= v_dot_n * n[0];
-        U(i,2,m_offset) -= v_dot_n * n[1];
-        U(i,3,m_offset) -= v_dot_n * n[2];
-      }
-    }
-
-    //! Query nodes at which symmetry boundary conditions are set
-    //! \param[in] bface Boundary-faces mapped to side set ids
-    //! \param[in] triinpoel Boundary-face connectivity
-    //! \param[in,out] nodes Node ids at which symmetry BCs are set
-    void
-    symbcnodes( const std::map< int, std::vector< std::size_t > >& bface,
-                const std::vector< std::size_t >& triinpoel,
-                std::unordered_set< std::size_t >& nodes ) const
+           const std::unordered_map< int,
+             std::unordered_map< std::size_t, std::array< real, 4 > > >& bnorm,
+           const std::unordered_set< std::size_t >& nodes ) const
     {
-      using tag::param; using tag::bcsym;
-      const auto& bc = g_inputdeck.get< param, eq, tag::bc, bcsym >();
-      if (!bc.empty() && bc.size() > m_system) {
-        const auto& ss = bc[ m_system ];// side sets with sym bcs specified
-        for (const auto& s : ss) {
-          auto k = bface.find( std::stoi(s) );
-          if (k != end(bface)) {
-            for (auto f : k->second) {  // face ids on symbc side set
-              nodes.insert( triinpoel[f*3+0] );
-              nodes.insert( triinpoel[f*3+1] );
-              nodes.insert( triinpoel[f*3+2] );
+      const auto& sbc = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
+      if (sbc.size() > m_system)               // use symbcs for this system
+        for (auto p : nodes)                   // for all symbc nodes
+          for (const auto& s : sbc[m_system]) {// for all user-def symbc sets
+            auto j = bnorm.find(std::stoi(s)); // find nodes & normals for side
+            if (j != end(bnorm)) {
+              auto i = j->second.find(p);      // find normal for node
+              if (i != end(j->second)) {
+                std::array< real, 3 >
+                  n{ i->second[0], i->second[1], i->second[2] },
+                  v{ U(p,1,m_offset), U(p,2,m_offset), U(p,3,m_offset) };
+                auto v_dot_n = tk::dot( v, n );
+                U(p,1,m_offset) -= v_dot_n * n[0];
+                U(p,2,m_offset) -= v_dot_n * n[1];
+                U(p,3,m_offset) -= v_dot_n * n[2];
+              }
             }
           }
-        }
-      }
+    }
+
+    //! Set farfield boundary conditions at nodes
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] bnorm Face normals in boundary points, key local node id,
+    //!   first 3 reals of value: unit normal, outer key: side set id
+    //! \param[in] nodes Unique set of node ids at which to set farfield BCs
+    void
+    farfieldbc(
+      tk::Fields& U,
+      const std::unordered_map< int,
+        std::unordered_map< std::size_t, std::array< real, 4 > > >& bnorm,
+      const std::unordered_set< std::size_t >& nodes ) const
+    {
+      const auto& fbc = g_inputdeck.get<param, eq, tag::bc, tag::bcfarfield>();
+      if (fbc.size() > m_system)               // use farbcs for this system
+        for (auto p : nodes)                   // for all farfieldbc nodes
+          for (const auto& s : fbc[m_system]) {// for all user-def farbc sets
+            auto j = bnorm.find(std::stoi(s)); // find nodes & normals for side
+            if (j != end(bnorm)) {
+              auto i = j->second.find(p);      // find normal for node
+              if (i != end(j->second)) {
+                auto& r  = U(p,0,m_offset);
+                auto& ru = U(p,1,m_offset);
+                auto& rv = U(p,2,m_offset);
+                auto& rw = U(p,3,m_offset);
+                auto& re = U(p,4,m_offset);
+                auto vn =
+                  (ru*i->second[0] + rv*i->second[1] + rw*i->second[2]) / r;
+                auto a = eos_soundspeed< eq >( m_system, r,
+                  eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re ) );
+                auto M = vn / a;
+                if (M <= -1.0) {                      // supersonic inflow
+                  r  = m_fr;
+                  ru = m_fr * m_fu[0];
+                  rv = m_fr * m_fu[1];
+                  rw = m_fr * m_fu[2];
+                  re = eos_totalenergy< eq >
+                         ( m_system, m_fr, m_fu[0], m_fu[1], m_fu[2], m_fp );
+                } else if (M > -1.0 && M < 0.0) {     // subsonic inflow
+                  r  = m_fr;
+                  ru = m_fr * m_fu[0];
+                  rv = m_fr * m_fu[1];
+                  rw = m_fr * m_fu[2];
+                  re =
+                  eos_totalenergy< eq >( m_system, m_fr, m_fu[0], m_fu[1],
+                    m_fu[2], eos_pressure< eq >( m_system, r, ru/r, rv/r,
+                                                 rw/r, re ) );
+                } else if (M >= 0.0 && M < 1.0) {     // subsonic outflow
+                  re = eos_totalenergy< eq >( m_system, r, ru/r, rv/r, rw/r,
+                                              m_fp );
+                }
+              }
+            }
+          }
     }
 
     //! Return field names to be output to file
@@ -715,6 +765,9 @@ class CompFlow {
     const ncomp_t m_offset;             //!< Offset PDE operates from
     //! Stagnation point BC user configuration: point coordinates and radii
     const std::tuple< std::vector< real >, std::vector< real > > m_stagCnf;
+    const real m_fr;                    //!< Farfield density
+    const real m_fp;                    //!< Farfield pressure
+    const std::vector< real > m_fu;     //!< Farfield velocity
 
     //! Decide if point is a stagnation point
     //! \param[in] x X mesh point coordinates to query
@@ -1000,12 +1053,12 @@ class CompFlow {
     //! Compute boundary integrals for ALECG
     //! \param[in] coord Mesh node coordinates
     //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
-    //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
+    //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
     void bndint( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& triinpoel,
-                 const std::vector< int >& symbcnode,
+                 const std::vector< int >& symbctri,
                  const tk::Fields& U,
                  tk::Fields& R ) const
     {
@@ -1052,7 +1105,7 @@ class CompFlow {
         // compute boundary flux
         real f[m_ncomp][3];
         real p, vn;
-        int sym = symbcnode[e];
+        int sym = symbctri[e];
         p = eos_pressure< eq >( m_system, rA, ruA/rA, rvA/rA, rwA/rA, reA );
         vn = sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA) / rA;
         f[0][0] = rA*vn;
@@ -1099,16 +1152,13 @@ class CompFlow {
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
 
       // boundary integrals: sum flux contributions to points
-      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
-        std::size_t N[3] =
-          { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+      for (std::size_t e=0; e<triinpoel.size()/3; ++e)
         for (std::size_t c=0; c<m_ncomp; ++c) {
           auto eb = (e*m_ncomp+c)*6;
-          R.var(r[c],N[0]) -= bflux[eb+0] + bflux[eb+5];
-          R.var(r[c],N[1]) -= bflux[eb+1] + bflux[eb+2];
-          R.var(r[c],N[2]) -= bflux[eb+3] + bflux[eb+4];
+          R.var(r[c],triinpoel[e*3+0]) -= bflux[eb+0] + bflux[eb+5];
+          R.var(r[c],triinpoel[e*3+1]) -= bflux[eb+1] + bflux[eb+2];
+          R.var(r[c],triinpoel[e*3+2]) -= bflux[eb+3] + bflux[eb+4];
         }
-      }
 
       tk::destroy(bflux);
     }

@@ -88,13 +88,13 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::ic,
                                    kw::box,
                                    kw::lua,
-                                   kw::massic,
-                                   kw::densityic,
-                                   kw::velocityic,
-                                   kw::pressureic,
-                                   kw::energyic,
-                                   kw::energy_content_ic,
-                                   kw::temperatureic,
+                                   kw::mass,
+                                   kw::density,
+                                   kw::velocity,
+                                   kw::pressure,
+                                   kw::energy,
+                                   kw::energy_content,
+                                   kw::temperature,
                                    kw::xmin,
                                    kw::xmax,
                                    kw::ymin,
@@ -155,6 +155,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::operator_reorder,
                                    kw::steady_state,
                                    kw::residual,
+                                   kw::rescomp,
                                    kw::amr,
                                    kw::amr_t0ref,
                                    kw::amr_dtref,
@@ -210,14 +211,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::bc_sym,
                                    kw::bc_inlet,
                                    kw::bc_outlet,
-                                   kw::bc_characteristic,
+                                   kw::bc_farfield,
                                    kw::bc_extrapolate,
                                    kw::bc_stag,
                                    kw::point,
                                    kw::radius,
-                                   kw::farfield_pressure,
-                                   kw::farfield_density,
-                                   kw::farfield_velocity,
                                    kw::gauss_hump,
                                    kw::rotated_sod_shocktube,
                                    kw::cyl_advect,
@@ -259,6 +257,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::operator_reorder >() = false;
       get< tag::discr, tag::steady_state >() = false;
       get< tag::discr, tag::residual >() = 1.0e-8;
+      get< tag::discr, tag::rescomp >() = 1;
       get< tag::discr, tag::scheme >() = SchemeType::DiagCG;
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::limiter >() = LimiterType::NOLIMITER;

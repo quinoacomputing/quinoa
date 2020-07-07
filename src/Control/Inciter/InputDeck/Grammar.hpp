@@ -18,6 +18,7 @@
 #include <cmath>
 
 #include "CommonGrammar.hpp"
+#include "CartesianProduct.hpp"
 #include "Keywords.hpp"
 #include "ContainerUtil.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
@@ -429,6 +430,35 @@ namespace grm {
     }
   };
 
+  //! Function object to ensure disjoint side sets for all boundary conditions
+  //! \details This is instantiated using a Cartesian product of all PDE types
+  //!    and all BC types at compile time. It goes through all side sets
+  //!    configured by the user and triggers an error if a side set is assigned
+  //!    a BC more than once.
+  template< typename Input, typename Stack >
+  struct ensure_disjoint {
+    const Input& m_input;
+    Stack& m_stack;
+    std::unordered_set< int >& m_bcset;
+    explicit ensure_disjoint( const Input& in,
+                              Stack& stack,
+                              std::unordered_set< int >& bcset ) :
+      m_input( in ), m_stack( stack ), m_bcset( bcset ) {}
+    template< typename U > void operator()( brigand::type_<U> ) {
+      using Eq = typename brigand::front< U >;
+      using BC = typename brigand::back< U >;
+      const auto& bc = m_stack.template get< tag::param, Eq, tag::bc, BC >();
+      for (const auto& eq : bc)
+        for (const auto& s : eq) {
+          auto id = std::stoi(s);
+          if (m_bcset.find(id) != end(m_bcset))
+            Message< Stack, ERROR, MsgKey::NONDISJOINTBC >( m_stack, m_input );
+          else
+            m_bcset.insert( id );
+        }
+    }
+  };
+
   //! Rule used to trigger action
   struct check_inciter : pegtl::success {};
   //! \brief Do error checking on the inciter block
@@ -506,6 +536,20 @@ namespace grm {
       {
         Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
       }
+
+      // Do error checking on residual eq system component index
+      const auto rc = stack.template get< tag::discr, tag::rescomp >();
+      const auto& ncomps = stack.template get< tag::component >();
+      if (rc < 1 || rc > ncomps.nprop())
+        Message< Stack, ERROR, MsgKey::LARGECOMP >( stack, in );
+
+      // Ensure no different BC types are assigned to the same side set
+      using PDETypes = inciter::ctr::parameters::Keys;
+      using BCTypes = inciter::ctr::bc::Keys;
+      std::unordered_set< int > bcset;
+      brigand::for_each< tk::cartesian_product< PDETypes, BCTypes > >(
+        ensure_disjoint< Input, Stack >( in, stack, bcset ) );
+
       // Do error checking on time history point names (this is a programmer
       // error if triggers, hence assert)
       Assert(
@@ -681,6 +725,7 @@ namespace deck {
            tk::grm::discrparam< use, kw::dt, tag::dt >,
            tk::grm::discrparam< use, kw::cfl, tag::cfl >,
            tk::grm::discrparam< use, kw::residual, tag::residual >,
+           tk::grm::discrparam< use, kw::rescomp, tag::rescomp >,
            tk::grm::process< use< kw::fcteps >,
                              tk::grm::Store< tag::discr, tag::fcteps > >,
            tk::grm::process< use< kw::fctclip >,
@@ -765,18 +810,16 @@ namespace deck {
                                         tk::grm::check_vector,
                                         eq, tag::bcstag, tag::point > > > {};
 
-  //! Characteristic boundary conditions block
+  //! Farfield boundary conditions block
   template< class keyword, class eq, class param >
-  struct characteristic_bc :
+  struct farfield_bc :
          pegtl::if_must<
            tk::grm::readkw< typename use< keyword >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
-             parameter< eq, kw::farfield_pressure, tag::farfield_pressure >,
-             parameter< eq, kw::farfield_density, tag::farfield_density >,
-             pde_parameter_vector< kw::farfield_velocity,
-                                   eq,
-                                   tag::farfield_velocity >,
+             parameter< eq, kw::pressure, tag::farfield_pressure >,
+             parameter< eq, kw::density, tag::farfield_density >,
+             pde_parameter_vector< kw::velocity, eq, tag::farfield_velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,
@@ -827,19 +870,19 @@ namespace deck {
              tk::grm::control< use< kw::zmax >, tk::grm::number,
                                tag::param, eq, tag::ic, tag::box, tag::zmax >,
              pegtl::sor<
-               pde_parameter_vector< kw::massic,
+               pde_parameter_vector< kw::mass,
                                      eq, tag::ic, tag::box, tag::mass >,
-               pde_parameter_vector< kw::densityic,
+               pde_parameter_vector< kw::density,
                                      eq, tag::ic, tag::box, tag::density >,
-               pde_parameter_vector< kw::velocityic,
+               pde_parameter_vector< kw::velocity,
                                      eq, tag::ic, tag::box, tag::velocity >,
-               pde_parameter_vector< kw::pressureic,
+               pde_parameter_vector< kw::pressure,
                                      eq, tag::ic, tag::box, tag::pressure >,
-               pde_parameter_vector< kw::temperatureic,
+               pde_parameter_vector< kw::temperature,
                                      eq, tag::ic, tag::box, tag::temperature >,
-               pde_parameter_vector< kw::energy_content_ic,
+               pde_parameter_vector< kw::energy_content,
                  eq, tag::ic, tag::box, tag::energy_content >,
-               pde_parameter_vector< kw::energyic,
+               pde_parameter_vector< kw::energy,
                   eq, tag::ic, tag::box, tag::energy > > > > {};
 
   //! initial conditions block for compressible flow
@@ -849,15 +892,15 @@ namespace deck {
            tk::grm::readkw< use< kw::ic >::pegtl_string >,
            tk::grm::block< use< kw::end >,
              pegtl::sor<
-               pde_parameter_vector< kw::densityic,
+               pde_parameter_vector< kw::density,
                                      eq, tag::ic, tag::density >,
-               pde_parameter_vector< kw::velocityic,
+               pde_parameter_vector< kw::velocity,
                                      eq, tag::ic, tag::velocity >,
-               pde_parameter_vector< kw::pressureic,
+               pde_parameter_vector< kw::pressure,
                                      eq, tag::ic, tag::pressure >,
-               pde_parameter_vector< kw::temperatureic,
+               pde_parameter_vector< kw::temperature,
                                      eq, tag::ic, tag::temperature >,
-               pde_parameter_vector< kw::energyic,
+               pde_parameter_vector< kw::energy,
                                      eq, tag::ic, tag::energy > >,
                pegtl::seq< box< eq > > > > {};
 
@@ -975,9 +1018,9 @@ namespace deck {
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc_stag< tag::compflow, tag::bcstag >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           characteristic_bc< kw::bc_outlet,
-                                              tag::compflow,
-                                              tag::bccharacteristic >,
+                           farfield_bc< kw::bc_farfield,
+                                        tag::compflow,
+                                        tag::bcfarfield >,
                            bc< kw::bc_extrapolate, tag::compflow,
                                tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
