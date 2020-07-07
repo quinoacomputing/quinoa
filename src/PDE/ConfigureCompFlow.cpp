@@ -194,30 +194,30 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   }
 
   const auto& boxdensityic = icbox.get< tag::density >();
-  if (boxdensityic.size() > c)
+  if (boxdensityic.size() > c && !boxdensityic[c].empty())
     nfo.emplace_back( "IC box density",
                       std::to_string( boxdensityic[c][0] ) );
   const auto& boxvelocityic = icbox.get< tag::velocity >();
-  if (boxvelocityic.size() > c)
+  if (boxvelocityic.size() > c && !boxvelocityic[c].empty())
     nfo.emplace_back( "IC box velocity",
                       parameters( boxvelocityic[c] ) );
   const auto& boxpressureic = icbox.get< tag::pressure >();
-  if (boxpressureic.size() > c)
+  if (boxpressureic.size() > c && !boxpressureic[c].empty())
     nfo.emplace_back( "IC box pressure",
                       std::to_string( boxpressureic[c][0] ) );
   const auto& boxenergyic = icbox.get< tag::energy >();
-  if (boxenergyic.size() > c)
+  if (boxenergyic.size() > c && !boxenergyic[c].empty())
     nfo.emplace_back( "IC box internal energy per unit mass",
                       std::to_string( boxenergyic[c][0] ) );
   const auto& boxmassic = icbox.get< tag::mass >();
-  if (boxmassic.size() > c)
+  if (boxmassic.size() > c && !boxmassic[c].empty())
     nfo.emplace_back( "IC box mass", std::to_string( boxmassic[c][0] ) );
   const auto& boxenergy_content_ic = icbox.get< tag::energy_content >();
-  if (boxenergy_content_ic.size() > c)
+  if (boxenergy_content_ic.size() > c && !boxenergy_content_ic[c].empty())
     nfo.emplace_back( "IC box internal energy per unit volume",
                       std::to_string( boxenergy_content_ic[c][0] ) );
   const auto& boxtemperatureic = icbox.get< tag::temperature >();
-  if (boxtemperatureic.size() > c)
+  if (boxtemperatureic.size() > c && !boxtemperatureic[c].empty())
     nfo.emplace_back( "IC box temperature",
                       std::to_string( boxtemperatureic[c][0] ) );
 
