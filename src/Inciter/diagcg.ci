@@ -30,7 +30,7 @@ module diagcg {
                     const std::vector< std::size_t >& triinpoel );
       initnode void registerReducers();
       entry void setup();
-      entry void boxvol( tk::real v );
+      entry void box( tk::real v );
       entry void resizeComm();
       entry void nodeNeighSetup();
       entry void init();

@@ -75,6 +75,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_farfieldbcnodes(),
   m_diag(),
   m_boxnodes(),
+  m_boxnodes_set(),
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 )
@@ -292,16 +293,17 @@ DiagCG::setup()
 // *****************************************************************************
 {
   auto d = Disc();
+  const auto& coord = d->Coord();
 
   // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
+  for (auto& eq : g_cgpde) eq.initialize( coord, m_u, d->T(), m_boxnodes );
 
   // Apply symmetry BCs on initial conditions
   for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, m_bnorm, m_symbcnodes );
+    eq.symbc( m_u, coord, m_bnorm, m_symbcnodes );
   // Apply farfield BCs on initial conditions
   for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, m_bnorm, m_farfieldbcnodes );
+    eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
 
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );
@@ -319,9 +321,9 @@ DiagCG::setup()
 }
 
 void
-DiagCG::boxvol( tk::real v )
+DiagCG::box( tk::real v )
 // *****************************************************************************
-// Receive total box IC volume
+// Receive total box IC volume and set conditions in box
 //! \param[in] v Total volume within user-specified box
 // *****************************************************************************
 {
@@ -330,8 +332,9 @@ DiagCG::boxvol( tk::real v )
   // Store user-defined box IC volume
   d->Boxvol() = v;
 
-  // Update density in user-defined IC box based on box volume
-  for (const auto& eq : g_cgpde) eq.box( d->Boxvol(), m_boxnodes, m_u );
+  // Set user-defined IC box conditions
+  for (const auto& eq : g_cgpde)
+    eq.box( d->Boxvol(), d->T(), m_boxnodes, d->Coord(), m_u, m_boxnodes_set );
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields( CkCallback(CkIndex_DiagCG::init(), thisProxy[thisIndex]) );
@@ -624,14 +627,15 @@ DiagCG::solve( tk::Fields& dif )
   m_ul = m_u + dul;
   m_du = m_rhs / m_lhs;
 
+  const auto& coord = d->Coord();
   for (const auto& eq : g_cgpde) {
     // Apply symmetry BCs
-    eq.symbc( dul, m_bnorm, m_symbcnodes );
-    eq.symbc( m_ul, m_bnorm, m_symbcnodes );
-    eq.symbc( m_du, m_bnorm, m_symbcnodes );
+    eq.symbc( dul, coord, m_bnorm, m_symbcnodes );
+    eq.symbc( m_ul, coord, m_bnorm, m_symbcnodes );
+    eq.symbc( m_du, coord, m_bnorm, m_symbcnodes );
     // Apply farfield BCs
-    eq.farfieldbc( m_ul, m_bnorm, m_farfieldbcnodes );
-    eq.farfieldbc( m_du, m_bnorm, m_farfieldbcnodes );
+    eq.farfieldbc( m_ul, coord, m_bnorm, m_farfieldbcnodes );
+    eq.farfieldbc( m_du, coord, m_bnorm, m_farfieldbcnodes );
   }
 
   // Continue with FCT

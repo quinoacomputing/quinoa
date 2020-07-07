@@ -113,7 +113,8 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >()[c];
   if (!cv.empty())
-    nfo.emplace_back( "specific heat at const. volume", std::to_string(cv[0]) );
+    nfo.emplace_back( "specific heat at constant volume",
+                      std::to_string(cv[0]) );
 
   // Heat conductivity is optional: the outer vector may be empty
   const auto& k = g_inputdeck.get< tag::param, eq, tag::k >();
@@ -169,6 +170,14 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   if (bgpressureic.size() > c && !bgpressureic[c].empty())
     nfo.emplace_back( "IC background pressure",
                       std::to_string( bgpressureic[c][0] ) );
+  const auto& bgenergyic = ic.get< tag::energy >();
+  if (bgenergyic.size() > c && !bgenergyic[c].empty())
+    nfo.emplace_back( "IC background energy",
+                      std::to_string( bgenergyic[c][0] ) );
+  const auto& bgtemperatureic = ic.get< tag::temperature >();
+  if (bgtemperatureic.size() > c && !bgtemperatureic[c].empty())
+    nfo.emplace_back( "IC background temperature",
+                      std::to_string( bgtemperatureic[c][0] ) );
 
   const auto& icbox = ic.get< tag::box >();
   std::vector< tk::real > box{ icbox.get< tag::xmin >(),
@@ -179,7 +188,8 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
                                icbox.get< tag::zmax >() };
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   if (std::any_of( begin(box), end(box),
-        [=]( tk::real p ){ return std::abs(p) > eps; })) {
+        [=]( tk::real p ){ return std::abs(p) > eps; }))
+  {
     nfo.emplace_back( "IC box", parameters( box ) );
   }
 
@@ -211,15 +221,44 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     nfo.emplace_back( "IC box temperature",
                       std::to_string( boxtemperatureic[c][0] ) );
 
+  const auto& initiate = icbox.get< tag::initiate >();
+  const auto& inittype = initiate.get< tag::init >();
+  if (inittype.size() > c) {
+    auto opt = ctr::Initiate();
+    nfo.emplace_back( opt.group(), opt.name(inittype[c]) );
+    if (inittype[c] == ctr::InitiateType::LINEAR) {
+      const auto& linpoint = initiate.get< tag::point >();
+      if (linpoint.size() > c)
+        nfo.emplace_back( "IC box initiate linear point(s)",
+                          parameters( linpoint[c] ) );
+      const auto& linradius = initiate.get< tag::radius >();
+      if (linradius.size() > c)
+        nfo.emplace_back( "IC box initiate linear radii",
+                          parameters( linradius[c] ) );
+      const auto& linvelocity = initiate.get< tag::velocity >();
+      if (linvelocity.size() > c)
+        nfo.emplace_back( "IC box initiate linear velocity",
+                          parameters( linvelocity[c] ) );
+    }
+  }
+
   // BCs
 
   const auto& bcstag = g_inputdeck.get< tag::param, eq, tag::bcstag >();
-  const auto& point = bcstag.get< tag::point >();
-  if (point.size() > c)
-    nfo.emplace_back( "Stagnation BC point(s)", parameters( point[c] ) );
-  const auto& radius = bcstag.get< tag::radius >();
-  if (radius.size() > c)
-    nfo.emplace_back( "Stagnation BC radii", parameters( radius[c] ) );
+  const auto& spoint = bcstag.get< tag::point >();
+  if (spoint.size() > c)
+    nfo.emplace_back( "Stagnation BC point(s)", parameters( spoint[c] ) );
+  const auto& sradius = bcstag.get< tag::radius >();
+  if (sradius.size() > c)
+    nfo.emplace_back( "Stagnation BC radii", parameters( sradius[c] ) );
+
+  const auto& bcskip = g_inputdeck.get< tag::param, eq, tag::bcskip >();
+  const auto& kpoint = bcskip.get< tag::point >();
+  if (kpoint.size() > c)
+    nfo.emplace_back( "Skip BC point(s)", parameters( kpoint[c] ) );
+  const auto& kradius = bcskip.get< tag::radius >();
+  if (kradius.size() > c)
+    nfo.emplace_back( "Skip BC radii", parameters( kradius[c] ) );
 
   const auto& fs =
     g_inputdeck.get< tag::param, eq, tag::bc, tag::bcfarfield >();

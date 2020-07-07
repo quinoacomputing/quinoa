@@ -2641,6 +2641,53 @@ struct zmax_info {
 };
 using zmax = keyword< zmax_info, TAOCPP_PEGTL_STRING("zmax") >;
 
+struct impulse_info {
+  static std::string name() { return "impulse"; }
+  static std::string shortDescription() { return
+    "Select the impulse initiation type, e.g., for a box IC"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to select the 'impulse' initiation/assignment
+    type for box initial conditions. It simply assigns the prescribed values to
+    mesh points within a configured box at t=0.)"; }
+};
+using impulse = keyword< impulse_info, TAOCPP_PEGTL_STRING("impulse") >;
+
+struct linear_info {
+  static std::string name() { return "linear"; }
+  static std::string shortDescription() { return
+    "Select the linear initiation type, e.g., for a box IC"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to select the 'linear' initiation/assignment
+    type for box initial conditions. Linear initiation uses a linear function
+    in time and space, configured with an initiation point in space, an initial
+    radius around the point, and a constant velocity that grows a sphere in time
+    (and space) linearly and assigns values to mesh points falling within a
+    growing sphere within a configured box.)"; }
+};
+using linear = keyword< linear_info, TAOCPP_PEGTL_STRING("linear") >;
+
+struct initiate_info {
+  static std::string name() { return "IC box initiate type"; }
+  static std::string shortDescription() { return "Initiation/assignemt type"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select an initiation type to configure how
+    values are assigned, e.g., for a box initial condition. This can be used to
+    specify, how the values are assigned to mesh nodes within a box. Examples:
+    (1) impulse: assign the full values at t=0 for all points in a box,
+    (2) linear: use a linear function in time and space, configured with an
+    initiation point in space, an initial radius around the point, and a
+    velocity that grows a sphere in time (and space) linearly and assigns values
+    to mesh points falling within a growing sphere within a configured box.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + impulse::string() + "\' | \'"
+                  + linear::string() + '\'';
+    }
+  };
+};
+using initiate = keyword< initiate_info, TAOCPP_PEGTL_STRING("initiate") >;
+
 struct box_info {
   static std::string name() { return "box"; }
   static std::string shortDescription() { return
@@ -5139,6 +5186,23 @@ struct bc_stag_info {
   }
 };
 using bc_stag = keyword< bc_stag_info, TAOCPP_PEGTL_STRING("bc_stag") >;
+
+struct bc_skip_info {
+  static std::string name() { return "Skip boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing skip boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_skip ... end block, used to
+    specify the configuration for setting 'skip' boundary conditions for a
+    partial differential equation. If a mesh point falls into a skip region,
+    configured by a point and a radius, any application of boundary conditions
+    on those points will be skipped. Keywords allowed in a bc_skip ... end
+    block: )" + std::string("\'")
+    + point::string() + "\', \'"
+    + radius::string() + "\'. ";
+  }
+};
+using bc_skip = keyword< bc_skip_info, TAOCPP_PEGTL_STRING("bc_skip") >;
 
 struct bc_inlet_info {
   static std::string name() { return "Inlet boundary condition"; }

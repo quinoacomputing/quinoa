@@ -23,6 +23,7 @@
 #include "Inciter/Options/Scheme.hpp"
 #include "Inciter/Options/Limiter.hpp"
 #include "Inciter/Options/Flux.hpp"
+#include "Inciter/Options/Initiate.hpp"
 #include "Inciter/Options/AMRInitial.hpp"
 #include "Inciter/Options/AMRError.hpp"
 #include "Inciter/Options/PrefIndicator.hpp"
@@ -152,6 +153,17 @@ using diagnostics = tk::TaggedTuple< brigand::list<
   tag::error,       std::vector< tk::ctr::ErrorType > //!< Errors to compute
 > >;
 
+//! Initiation configuration for box IC
+using InitiateParameters = tk::TaggedTuple< brigand::list<
+    tag::init,          std::vector< InitiateType >
+  , tag::point,         std::vector<
+                          std::vector< kw::point::info::expect::type > >
+  , tag::radius,        std::vector<
+                          std::vector< kw::radius::info::expect::type > >
+  , tag::velocity,      std::vector<
+                          std::vector< kw::velocity::info::expect::type > >
+> >;
+
 //! Box, given by coordinates, specifying physics variables
 using box = tk::TaggedTuple< brigand::list<
     tag::xmin,          kw::xmin::info::expect::type
@@ -174,6 +186,7 @@ using box = tk::TaggedTuple< brigand::list<
                           kw::energy_content::info::expect::type > >
   , tag::temperature,   std::vector<
                           std::vector< kw::temperature::info::expect::type > >
+  , tag::initiate,      InitiateParameters
 > >;
 
 //! Initial condition configuration
@@ -229,6 +242,14 @@ using StagnationBCParameters = tk::TaggedTuple< brigand::list<
                           std::vector< kw::radius::info::expect::type > >
 > >;
 
+//! Skip boundary conditions parameters storage
+using SkipBCParameters = tk::TaggedTuple< brigand::list<
+    tag::point,         std::vector<
+                          std::vector< kw::point::info::expect::type > >
+  , tag::radius,        std::vector<
+                          std::vector< kw::radius::info::expect::type > >
+> >;
+
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
@@ -242,6 +263,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage
   , tag::bcstag,        StagnationBCParameters
+  //! Skip boundary condition configuration storage
+  , tag::bcskip,        SkipBCParameters
   //! System FCT character
   , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system
