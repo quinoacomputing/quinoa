@@ -119,10 +119,10 @@ NodeDiagnostics::compute(
     }
     // Apply symmetry BCs on analytic solution (if exist, if not, IC)
     for (const auto& eq : g_cgpde)
-      eq.symbc( an, bnorm, symbcnodes );
+      eq.symbc( an, coord, bnorm, symbcnodes );
     // Apply farfield BCs on analytic solution (if exist, if not, IC)
     for (const auto& eq : g_cgpde)
-      eq.farfieldbc( an, bnorm, farfieldbcnodes );
+      eq.farfieldbc( an, coord, bnorm, farfieldbcnodes );
 
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk(); ++i) {

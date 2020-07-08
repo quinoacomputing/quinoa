@@ -229,6 +229,14 @@ using StagnationBCParameters = tk::TaggedTuple< brigand::list<
                           std::vector< kw::radius::info::expect::type > >
 > >;
 
+//! Skip boundary conditions parameters storage
+using SkipBCParameters = tk::TaggedTuple< brigand::list<
+    tag::point,         std::vector<
+                          std::vector< kw::point::info::expect::type > >
+  , tag::radius,        std::vector<
+                          std::vector< kw::radius::info::expect::type > >
+> >;
+
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
@@ -242,6 +250,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage
   , tag::bcstag,        StagnationBCParameters
+  //! Skip boundary condition configuration storage
+  , tag::bcskip,        SkipBCParameters
   //! System FCT character
   , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system

@@ -245,6 +245,7 @@ struct u0 { static std::string name() { return "u0"; } };
 struct bcdir { static std::string name() { return "bcdir"; } };
 struct bcsym { static std::string name() { return "bcsym"; } };
 struct bcstag { static std::string name() { return "bcstag"; } };
+struct bcskip { static std::string name() { return "bcskip"; } };
 struct point { static std::string name() { return "point"; } };
 struct radius { static std::string name() { return "radius"; } };
 struct bcinlet { static std::string name() { return "bcinlet"; } };
