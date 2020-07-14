@@ -106,8 +106,8 @@ class DiagCG : public CBase_DiagCG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
-    //! Receive total box IC volume
-    void boxvol( tk::real v );
+    //! Receive total box IC volume and set conditions in box
+    void box( tk::real v );
 
     // Initially compute left hand side diagonal matrix
     void init();
@@ -197,6 +197,7 @@ class DiagCG : public CBase_DiagCG {
       p | m_farfieldbcnodes;
       p | m_diag;
       p | m_boxnodes;
+      p | m_boxnodes_set;
       p | m_dtp;
       p | m_tp;
     }
@@ -279,6 +280,8 @@ class DiagCG : public CBase_DiagCG {
     NodeDiagnostics m_diag;
     //! Mesh node ids at which user-defined box ICs are defined
     std::vector< std::size_t > m_boxnodes;
+    //! Box nodes that have been set
+    std::unordered_set< std::size_t > m_boxnodes_set;
     //! Time step size for each mesh node
     std::vector< tk::real > m_dtp;
     //! Physical time for each mesh node

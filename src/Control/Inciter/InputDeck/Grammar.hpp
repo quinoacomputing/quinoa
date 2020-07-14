@@ -327,6 +327,13 @@ namespace grm {
       {
         Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
       }
+
+      // Set default inititate type for box ICs
+      auto& icbox = ic.template get< tag::box >();
+      auto& initiate = icbox.template get< tag::initiate >();
+      auto& inittype = initiate.template get< tag::init >();
+      if (inittype.size() != neq.get< eq >())
+        inittype.push_back( inciter::ctr::InitiateType::IMPULSE );
     }
   };
 
@@ -863,12 +870,12 @@ namespace deck {
            pegtl::if_must<
              tk::grm::readkw< use< kw::amr_coordref >::pegtl_string >,
              tk::grm::block< use< kw::end >,
-                         half_world< kw::amr_xminus, tag::xminus >,
-                         half_world< kw::amr_xplus, tag::xplus >,
-                         half_world< kw::amr_yminus, tag::yminus >,
-                         half_world< kw::amr_yplus, tag::yplus >,
-                         half_world< kw::amr_zminus, tag::zminus >,
-                         half_world< kw::amr_zplus, tag::zplus > > > {};
+                             half_world< kw::amr_xminus, tag::xminus >,
+                             half_world< kw::amr_xplus, tag::xplus >,
+                             half_world< kw::amr_yminus, tag::yminus >,
+                             half_world< kw::amr_yplus, tag::yplus >,
+                             half_world< kw::amr_zminus, tag::zminus >,
+                             half_world< kw::amr_zplus, tag::zplus > > > {};
 
   //! initial conditins box block
   template< class eq >
@@ -902,7 +909,43 @@ namespace deck {
                pde_parameter_vector< kw::energy_content,
                  eq, tag::ic, tag::box, tag::energy_content >,
                pde_parameter_vector< kw::energy,
-                  eq, tag::ic, tag::box, tag::energy > > > > {};
+                  eq, tag::ic, tag::box, tag::energy >,
+               tk::grm::process< use< kw::initiate >,
+                                 tk::grm::store_back_option< use,
+                                                             ctr::Initiate,
+                                                             tag::param,
+                                                             eq,
+                                                             tag::ic,
+                                                             tag::box,
+                                                             tag::initiate,
+                                                             tag::init >,
+                                 pegtl::alpha >,
+               pegtl::if_must<
+                 tk::grm::readkw< use< kw::linear >::pegtl_string >,
+                 tk::grm::block< use< kw::end >,
+                   tk::grm::parameter_vector< use,
+                                              use< kw::point >,
+                                              tk::grm::Store_back_back,
+                                              tk::grm::start_vector,
+                                              tk::grm::check_vector,
+                                              eq,
+                                              tag::ic,
+                                              tag::box,
+                                              tag::initiate,
+                                              tag::point >,
+                   tk::grm::parameter_vector< use,
+                                              use< kw::radius >,
+                                              tk::grm::Store_back_back,
+                                              tk::grm::start_vector,
+                                              tk::grm::check_vector,
+                                              eq,
+                                              tag::ic,
+                                              tag::box,
+                                              tag::initiate,
+                                              tag::radius >,
+                   pde_parameter_vector< kw::velocity,
+                     eq, tag::ic, tag::box, tag::initiate, tag::velocity > > >
+             > > > {};
 
   //! initial conditions block for compressible flow
   template< class eq >

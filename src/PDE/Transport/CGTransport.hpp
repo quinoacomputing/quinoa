@@ -92,7 +92,9 @@ class Transport {
     }
 
     //! Set initial condition in user-defined box IC nodes (no-op for Transport)
-    void box( real, const std::vector< std::size_t >&, tk::Fields& ) const {}
+    void box( real, real, const std::vector< std::size_t >&,
+              const std::array< std::vector< real >, 3 >&, tk::Fields&,
+              std::unordered_set< std::size_t >& ) const {}
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate

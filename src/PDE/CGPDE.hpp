@@ -114,8 +114,11 @@ class CGPDE {
     { self->initialize( coord, unk, t, inbox ); }
 
     //! Public interface to updating the initial conditions in box ICs
-    void box( real v, const std::vector< std::size_t >& boxnodes,
-              tk::Fields& unk ) const { self->box( v, boxnodes, unk ); }
+    void box( real v, real t, const std::vector< std::size_t >& boxnodes,
+              const std::array< std::vector< real >, 3 >& coord,
+              tk::Fields& unk,
+              std::unordered_set< std::size_t >& boxnodes_set ) const
+    { self->box( v, t, boxnodes, coord, unk, boxnodes_set ); }
 
     //! Public interface to computing the nodal gradients for ALECG
     void grad( const std::array< std::vector< real >, 3 >& coord,
@@ -268,8 +271,11 @@ class CGPDE {
                                tk::Fields&,
                                real,
                                std::vector< std::size_t >& inbox ) = 0;
-      virtual void box( real, const std::vector< std::size_t >&,
-                        tk::Fields& unk ) const = 0;
+      virtual void box(
+        real, real, const std::vector< std::size_t >&,
+        const std::array< std::vector< real >, 3 >&,
+        tk::Fields& unk,
+        std::unordered_set< std::size_t >& boxnodes_set ) const = 0;
       virtual void grad( const std::array< std::vector< real >, 3 >&,
                          const std::vector< std::size_t >&,
                          const std::vector< std::size_t >&,
@@ -366,9 +372,11 @@ class CGPDE {
                        real t,
                        std::vector< std::size_t >& inbox )
       override { data.initialize( coord, unk, t, inbox ); }
-      void box( real v, const std::vector< std::size_t >& boxnodes,
-                tk::Fields& unk ) const override
-      { data.box( v, boxnodes, unk ); }
+      void box( real v, real t, const std::vector< std::size_t >& boxnodes,
+                const std::array< std::vector< real >, 3 >& coord,
+                tk::Fields& unk,
+                std::unordered_set< std::size_t >& boxnodes_set ) const override
+      { data.box( v, t, boxnodes, coord, unk, boxnodes_set ); }
       void grad( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
                  const std::vector< std::size_t >& bndel,

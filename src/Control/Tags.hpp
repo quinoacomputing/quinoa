@@ -222,6 +222,7 @@ struct interval { static std::string name() { return "interval"; } };
 struct cmd { static std::string name() { return "cmd"; } };
 struct param { static std::string name() { return "param"; } };
 struct init { static std::string name() { return "init"; } };
+struct initiate { static std::string name() { return "initiate"; } };
 struct solve { static std::string name() { return "solve"; } };
 struct chare { static std::string name() { return "chare"; } };
 struct battery { static std::string name() { return "battery"; } };

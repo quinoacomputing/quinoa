@@ -32,10 +32,10 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
                                       [[maybe_unused]] tk::real x,
                                       [[maybe_unused]] tk::real y,
                                       [[maybe_unused]] tk::real z,
-                                      [[maybe_unused]] tk::real t,
+                                      [[maybe_unused]] tk::real,
                                       int& inbox )
 // *****************************************************************************
-//! Evaluate analytical solution at (x,y,z,t) for all components
+//! Set initial conditions
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -43,7 +43,7 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in,out] 1 If box ICs are applied, if if point did not fall into box
+//! \param[in,out] inbox 1 If box ICs are applied and point fell into box
 //! \return Values of all components
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
@@ -55,76 +55,42 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
 
   // Set background ICs
   const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
-  const auto& bgdensityic = ic.get< tag::density >();
-  const auto& bgvelocityic = ic.get< tag::velocity >();
-  const auto& bgpressureic = ic.get< tag::pressure >();
-  const auto& bgenergyic = ic.get< tag::energy >();
-  const auto& bgtemperatureic = ic.get< tag::temperature >();
+  const auto& bgrhoic = ic.get< tag::density >();
+  const auto& bgvelic = ic.get< tag::velocity >();
+  const auto& bgpreic = ic.get< tag::pressure >();
+  const auto& bgenic = ic.get< tag::energy >();
+  const auto& bgtempic = ic.get< tag::temperature >();
 
-  Assert( bgdensityic.size() > system, "No background density IC" );
-  Assert( bgvelocityic.size() > 3*system, "No background velocity IC" );
+  Assert( bgrhoic.size() > system, "No background density IC" );
+  Assert( bgvelic.size() > 3*system, "No background velocity IC" );
 
-  u[0] = bgdensityic.at(system).at(0);
-  u[1] = u[0] * bgvelocityic.at(system).at(0);
-  u[2] = u[0] * bgvelocityic.at(system).at(1);
-  u[3] = u[0] * bgvelocityic.at(system).at(2);
+  u[0] = bgrhoic.at(system).at(0);
+  u[1] = u[0] * bgvelic.at(system).at(0);
+  u[2] = u[0] * bgvelic.at(system).at(1);
+  u[3] = u[0] * bgvelic.at(system).at(2);
 
-  if (bgpressureic.size() > system && !bgpressureic[system].empty()) {
+  if (bgpreic.size() > system && !bgpreic[system].empty()) {
     u[4] = eos_totalenergy< eq >( system, u[0], u[1], u[2], u[3],
-                                  bgpressureic.at(system).at(0) );
-  } else if (bgenergyic.size() > system && !bgenergyic[system].empty()) {
-    u[4] = u[0] * bgenergyic[system][0];
-  } else
-    if (bgtemperatureic.size() > system && !bgtemperatureic[system].empty())
-  {
+                                  bgpreic.at(system).at(0) );
+  } else if (bgenic.size() > system && !bgenic[system].empty()) {
+    u[4] = u[0] * bgenic[system][0];
+  } else if (bgtempic.size() > system && !bgtempic[system].empty()) {
     const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
-    u[4] = u[0] * bgtemperatureic[system][0] * cv.at(system).at(0);
-  }
+    u[4] = u[0] * bgtempic[system][0] * cv.at(system).at(0);
+  } else Throw( "IC background energy cannot be computed. User must specify "
+                "one of background pressure, energy, or velocity." );
 
-  // Apply optional box ICs on top of background ICs
+  // Detect if user has configured a box IC
   const auto& icbox = ic.get< tag::box >();
-  std::vector< tk::real > box{ icbox.get< tag::xmin >(),
-                               icbox.get< tag::xmax >(),
-                               icbox.get< tag::ymin >(),
-                               icbox.get< tag::ymax >(),
-                               icbox.get< tag::zmin >(),
-                               icbox.get< tag::zmax >() };
+  std::vector< tk::real >
+    box{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
+         icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
+         icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  if (std::any_of( begin(box), end(box),
-        [=]( tk::real p ){ return std::abs(p) > eps; }))
+  if ( std::any_of( begin(box), end(box), [=](auto p){return abs(p) > eps;} ) &&
+       x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5] )
   {
-    const auto& boxdensityic = icbox.get< tag::density >();
-    const auto& boxvelocityic = icbox.get< tag::velocity >();
-    const auto& boxpressureic = icbox.get< tag::pressure >();
-    const auto& boxenergyic = icbox.get< tag::energy >();
-    const auto& boxtemperatureic = icbox.get< tag::temperature >();
-
-    if (x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5]) {
-      inbox = 1;
-      if (boxdensityic.size() > system && !boxdensityic[system].empty()) {
-        u[0] = boxdensityic[system][0];
-      }
-      if (boxvelocityic.size() > system && boxvelocityic[system].size() > 2) {
-        u[1] = u[0] * boxvelocityic[system][0];
-        u[2] = u[0] * boxvelocityic[system][1];
-        u[3] = u[0] * boxvelocityic[system][2];
-      }
-      if (boxpressureic.size() > system && !boxpressureic[system].empty()) {
-        u[4] = eos_totalenergy< eq >( system, u[0], u[1], u[2], u[3],
-                                      boxpressureic[system][0] );
-      }
-      if (boxenergyic.size() > system && !boxenergyic[system].empty()) {
-        const auto ux = u[1]/u[0], uy = u[2]/u[0], uz = u[3]/u[0];
-        const auto ke = 0.5*(ux*ux + uy*uy + uz*uz);
-        u[4] = u[0] * (boxenergyic[system][0] + ke);
-      }
-      if (boxtemperatureic.size() > system &&
-         !boxtemperatureic[system].empty())
-      {
-        const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
-        u[4] = u[0] * boxtemperatureic[system][0] * cv.at(system).at(0);
-      }
-    }
+    inbox = 1;
   }
 
   return u;

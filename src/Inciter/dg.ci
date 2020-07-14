@@ -40,7 +40,7 @@ module dg {
           nodeBoundaryCells );
       initnode void registerReducers();      
       entry void setup();
-      entry void boxvol( tk::real v );
+      entry void box( tk::real v );
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
