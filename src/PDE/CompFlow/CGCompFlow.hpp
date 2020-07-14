@@ -189,6 +189,8 @@ class CompFlow {
 
       }
 
+      // Initiate type 'impulse' simply assigns the prescribed values to all
+      // nodes within a box.
       if (inittype[m_system] == ctr::InitiateType::IMPULSE) {
 
         for (auto i : boxnodes) {
@@ -212,6 +214,9 @@ class CompFlow {
         }
         boxnodes_set.insert( begin(boxnodes), end(boxnodes) );
 
+      // Initiate type 'linear' assigns the prescribed values to all
+      // nodes within a box using linearly expanding sphere within which nodes
+      // get assigned their prescribed values.
       } else if (inittype[m_system] == ctr::InitiateType::LINEAR) {
 
         const auto& x = coord[0];
