@@ -149,7 +149,7 @@ CompFlowSurfOutput( ncomp_t system,
       out[i+3][j] = u[3]/u[0];
       out[i+4][j] = u[4]/u[0];
       out[i+5][j] = eos_pressure< tag::compflow >
-                      ( system, u[0], u[1], u[2], u[3], u[4] );
+                      ( system, u[0], u[1]/u[0], u[2]/u[0], u[3]/u[0], u[4] );
       ++j;
     }
   }
@@ -207,8 +207,9 @@ CompFlowHistOutput( ncomp_t system,
       out[j][2] += n[i] * u[2]/u[0];
       out[j][3] += n[i] * u[3]/u[0];
       out[j][4] += n[i] * u[4]/u[0];
-      out[j][5] += n[i] * eos_pressure< tag::compflow >
-                            ( system, u[0], u[1], u[2], u[3], u[4] );
+      out[j][5] += n[i] *
+        eos_pressure< tag::compflow >
+                    ( system, u[0], u[1]/u[0], u[2]/u[0], u[3]/u[0], u[4] );
     }
     ++j;
   }
