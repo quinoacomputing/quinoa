@@ -77,19 +77,19 @@ struct Rusanov {
     auto al = eos_soundspeed< tag::compflow >( 0, rL, pl );
     auto ar = eos_soundspeed< tag::compflow >( 0, rR, pr );
 
+    // dissipation
+    real len = tk::length( {mx,my,mz} );
+    real vml = ul*mx + vl*my + wl*mz;
+    real vmr = ur*mx + vr*my + wr*mz;
+    auto sl = std::abs(vml) + al*len;
+    auto sr = std::abs(vmr) + ar*len;
+    auto smax = std::max( sl, sr );
+
     // face-normal velocities
     real vnl = ul*nx + vl*ny + wl*nz;
     real vnr = ur*nx + vr*ny + wr*nz;
 
-    // dissipation
-    auto len = tk::length( {mx,my,mz} );
-    vnl = ul*mx + vl*my + wl*mz;
-    vnr = ur*mx + vr*my + wr*mz;
-    auto sl = std::abs(vnl) + al*len;
-    auto sr = std::abs(vnr) + ar*len;
-    auto smax = std::max( sl, sr );
-
-    // Numerical fluxes
+    // numerical fluxes
     fr  = 0.5*(rL*vnl + rR*vnr - smax*(rR - rL));
     fru = 0.5*(ruL*vnl + pl*nx + ruR*vnr + pr*nx - smax*(ruR - ruL));
     frv = 0.5*(rvL*vnl + pl*ny + rvR*vnr + pr*ny - smax*(rvR - rvL));
