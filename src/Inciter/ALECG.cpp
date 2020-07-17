@@ -581,7 +581,7 @@ ALECG::normfinal()
       n[1] /= n[3];
       n[2] /= n[3];
       Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
-              1.0e+3*std::numeric_limits< tk::real >::epsilon();
+              1.0e+3*std::numeric_limits< tk::real >::epsilon(),
               "Non-unit normal" );
     }
 
