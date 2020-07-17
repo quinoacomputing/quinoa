@@ -82,16 +82,6 @@ NodeDiagnostics::compute(
 
   if ( !((d.It()+1) % diagfreq) ) {     // if remainder, don't dump
 
-    // Slave mesh node local IDs. Local IDs of those mesh nodes to which we
-    // contribute to but do not own. Ownership here is defined by having a lower
-    // chare ID than any other chare that also contributes to the node.
-    std::unordered_set< std::size_t > slave;
-
-    for (const auto& c : d.NodeCommMap())// for all neighbor chares
-      if (d.thisIndex > c.first)        // if our chare ID is larger than theirs
-        for (auto i : c.second)         // store local ID in set
-          slave.insert( tk::cref_find( d.Lid(), i ) );
-
     // Diagnostics vector (of vectors) during aggregation. See
     // Inciter/Diagnostics.h.
     std::vector< std::vector< tk::real > >
@@ -101,21 +91,19 @@ NodeDiagnostics::compute(
     const auto& x = coord[0];
     const auto& y = coord[1];
     const auto& z = coord[2];
-    const auto& v = d.Vol();
+    const auto& v = d.V();  // nodal volumes without contributions from others
 
     // Evaluate analytic solution (if exist, if not, IC)
     auto an = u;
     for (std::size_t i=0; i<an.nunk(); ++i) {
-      if (slave.find(i) == end(slave)) {    // ignore non-owned nodes
-        // Query analytic solution for all components of all PDEs integrated
-        std::vector< tk::real > a;
-        for (const auto& eq : g_cgpde) {
-          auto s = eq.analyticSolution( x[i], y[i], z[i], d.T()+d.Dt() );
-          std::move( begin(s), end(s), std::back_inserter(a) );
-        }
-        Assert( a.size() == u.nprop(), "Size mismatch" );
-        for (std::size_t c=0; c<an.nprop(); ++c) an(i,c,0) = a[c];
+      // Query analytic solution for all components of all PDEs integrated
+      std::vector< tk::real > a;
+      for (const auto& eq : g_cgpde) {
+        auto s = eq.analyticSolution( x[i], y[i], z[i], d.T()+d.Dt() );
+        std::move( begin(s), end(s), std::back_inserter(a) );
       }
+      Assert( a.size() == u.nprop(), "Size mismatch" );
+      for (std::size_t c=0; c<an.nprop(); ++c) an(i,c,0) = a[c];
     }
     // Apply symmetry BCs on analytic solution (if exist, if not, IC)
     for (const auto& eq : g_cgpde)
@@ -126,21 +114,19 @@ NodeDiagnostics::compute(
 
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk(); ++i) {
-      if (slave.find(i) == end(slave)) {    // ignore non-owned nodes
-        // Compute sum for L2 norm of the numerical solution
-        for (std::size_t c=0; c<u.nprop(); ++c)
-          diag[L2SOL][c] += u(i,c,0) * u(i,c,0) * v[i];
-        // Compute sum for L2 norm of the numerical-analytic solution
-        for (std::size_t c=0; c<u.nprop(); ++c)
-          diag[L2ERR][c] += (u(i,c,0)-an(i,c,0)) * (u(i,c,0)-an(i,c,0)) * v[i];
-        // Compute sum for L2 norm of the residual
-        for (std::size_t c=0; c<u.nprop(); ++c)
-          diag[L2RES][c] += (u(i,c,0)-un(i,c,0)) * (u(i,c,0)-un(i,c,0)) * v[i];
-        // Compute max for Linf norm of the numerical-analytic solution
-        for (std::size_t c=0; c<u.nprop(); ++c) {
-          auto err = std::abs( u(i,c,0) - an(i,c,0) );
-          if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
-        }
+      // Compute sum for L2 norm of the numerical solution
+      for (std::size_t c=0; c<u.nprop(); ++c)
+        diag[L2SOL][c] += u(i,c,0) * u(i,c,0) * v[i];
+      // Compute sum for L2 norm of the numerical-analytic solution
+      for (std::size_t c=0; c<u.nprop(); ++c)
+        diag[L2ERR][c] += (u(i,c,0)-an(i,c,0)) * (u(i,c,0)-an(i,c,0)) * v[i];
+      // Compute sum for L2 norm of the residual
+      for (std::size_t c=0; c<u.nprop(); ++c)
+        diag[L2RES][c] += (u(i,c,0)-un(i,c,0)) * (u(i,c,0)-un(i,c,0)) * v[i];
+      // Compute max for Linf norm of the numerical-analytic solution
+      for (std::size_t c=0; c<u.nprop(); ++c) {
+        auto err = std::abs( u(i,c,0) - an(i,c,0) );
+        if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
       }
     }
 
