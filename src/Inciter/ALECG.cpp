@@ -560,7 +560,6 @@ ALECG::normfinal()
 {
   auto d = Disc();
   const auto& lid = d->Lid();
-  auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // Combine own and communicated contributions to boundary point normals
   for (const auto& [s,norms] : m_bnormc) {
@@ -581,7 +580,8 @@ ALECG::normfinal()
       n[0] /= n[3];
       n[1] /= n[3];
       n[2] /= n[3];
-      Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) < 1.0e+3*eps,
+      Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
+              1.0e+3*std::numeric_limits< tk::real >::epsilon();
               "Non-unit normal" );
     }
 
