@@ -24,7 +24,7 @@ void box( const sol::table& tbl, ctr::box& icbox ) {
   // get access to the 'box' table within the 'tbl' lua table
   const auto& boxlua = tbl.get_or< sol::table >( kw::box::string(), {} );
 
-  if (boxlua != sol::nil) {      // if table 'box' exists in table
+  if (boxlua != sol::lua_nil) {      // if table 'box' exists in table
     using v = std::vector< tk::real >;
 
     icbox.template get< tag::xmin >() =
@@ -60,7 +60,7 @@ void ic( const sol::state& lua, ctr::InputDeck& deck ) {
   // get access to the 'ic' table in lua
   const auto& iclua = lua.get_or< sol::table >( kw::ic::string(), {} );
 
-  if (iclua != sol::nil) {      // if table 'ic' exists in lua
+  if (iclua != sol::lua_nil) {      // if table 'ic' exists in lua
     using v = std::vector< tk::real >;
     auto& icblock = deck.get< tag::param, eq, tag::ic >();
 
