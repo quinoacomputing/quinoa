@@ -35,6 +35,7 @@ tk::surfInt( ncomp_t system,
              const VelFn& vel,
              const Fields& U,
              const Fields& P,
+             const Fields& VolFracMax,
              const std::vector< std::size_t >& ndofel,
              Fields& R,
              std::vector< std::vector< tk::real > >& riemannDeriv,
@@ -194,10 +195,21 @@ tk::surfInt( ncomp_t system,
 
       if ((nmat > 1) && (intsharp > 0))
       {
+        std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
+
+        for (std::size_t k=0; k<nmat; ++k) {
+          vfmin[k] = VolFracMax(el, 2*k, 0);
+          vfmax[k] = VolFracMax(el, 2*k+1, 0);
+        }
         tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord, geoElem,
-          ref_gp_l, U, P, state[0]);
+          ref_gp_l, U, P, vfmin, vfmax, state[0]);
+
+        for (std::size_t k=0; k<nmat; ++k) {
+          vfmin[k] = VolFracMax(er, 2*k, 0);
+          vfmax[k] = VolFracMax(er, 2*k+1, 0);
+        }
         tk::THINCReco(system, offset, rdof, nmat, er, inpoel, coord, geoElem,
-          ref_gp_r, U, P, state[1]);
+          ref_gp_r, U, P, vfmin, vfmax, state[1]);
       }
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "

@@ -139,6 +139,7 @@ class DG : public CBase_DG {
                   const std::vector< std::size_t >& tetid,
                   const std::vector< std::vector< tk::real > >& u,
                   const std::vector< std::vector< tk::real > >& prim,
+                  const std::vector< std::vector< tk::real > >& volfm,
                   const std::vector< std::size_t >& ndof );
 
     //! Receive chare-boundary ghost data from neighboring chares
@@ -219,6 +220,7 @@ class DG : public CBase_DG {
       p | m_u;
       p | m_un;
       p | m_p;
+      p | m_vfm;
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
@@ -240,6 +242,7 @@ class DG : public CBase_DG {
       p | m_bid;
       p | m_uc;
       p | m_pc;
+      p | m_vfmc;
       p | m_ndofc;
       p | m_initial;
       p | m_expChBndFace;
@@ -302,6 +305,8 @@ class DG : public CBase_DG {
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
+    //! Vector of maximum volume fraction for each mesh element
+    tk::Fields m_vfm;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
@@ -351,6 +356,8 @@ class DG : public CBase_DG {
     std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
+    //! Volume fraction max receive buffers for ghosts only
+    std::array< std::vector< std::vector< tk::real > >, 3 > m_vfmc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
     std::array< std::vector< std::size_t >, 3 > m_ndofc;

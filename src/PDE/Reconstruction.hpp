@@ -117,6 +117,18 @@ transform_P0P1( ncomp_t ncomp,
                 const UnsMesh::Coords& coord,
                 Fields& W );
 
+//! Find maximum volume fractions in the neighborhood of each cell
+void
+findMaxVolfrac( std::size_t offset,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t nelem,
+  const std::vector< int >& esuel,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const Fields& U,
+  Fields& VolFracMax );
+
 //! Compute THINC reconstructions near material interfaces
 void
 THINCReco( std::size_t system,
@@ -130,6 +142,8 @@ THINCReco( std::size_t system,
   const std::array< real, 3 >& xp,
   const Fields& U,
   const Fields& P,
+  const std::vector< real >& vfmin,
+  const std::vector< real >& vfmax,
   std::vector< real >& state );
 
 //! Compute safe reconstructions near material interfaces

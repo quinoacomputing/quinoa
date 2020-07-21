@@ -221,8 +221,11 @@ class MultiMat {
 
       for (std::size_t e=0; e<nielem; ++e)
       {
-        // find material in largest quantity
-        auto almax = 0.0;
+        // find material in largest quantity, and determine if pressure
+        // relaxation is needed. If it is, determine materials that need
+        // relaxation, and the total volume of these materials.
+        std::vector< int > relaxInd(nmat, 0);
+        auto almax(0.0), relaxVol(0.0);
         std::size_t kmax = 0;
         for (std::size_t k=0; k<nmat; ++k)
         {
@@ -232,7 +235,14 @@ class MultiMat {
             almax = al;
             kmax = k;
           }
+          else if (al < al_eps)
+          {
+            relaxInd[k] = 1;
+            relaxVol += al;
+          }
         }
+        relaxInd[kmax] = 1;
+        relaxVol += almax;
 
         auto u = prim(e, velocityDofIdx(nmat, 0, rdof, 0), m_offset);
         auto v = prim(e, velocityDofIdx(nmat, 1, rdof, 0), m_offset);
@@ -242,18 +252,31 @@ class MultiMat {
           unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
           unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset), almax, kmax);
 
-        auto pb(0.0);
+        // get equilibrium pressure
+        std::vector< tk::real > kmat(nmat, 0.0);
+        tk::real p_target(0.0), ratio(0.0), d_al(0.0), d_arE(0.0);
         for (std::size_t k=0; k<nmat; ++k)
-          pb += prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset);
+        {
+          auto arhok = unk(e, densityDofIdx(nmat,k,rdof,0), m_offset);
+          auto alk = unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
+          auto apk = prim(e, pressureDofIdx(nmat,k,rdof,0), m_offset);
+          auto ak = eos_soundspeed< eq >(m_system, arhok, apk, alk, k );
+          kmat[k] = arhok * ak * ak;
 
-        // isentropic expansion/compression
-        tk::real d_arE(0.0), d_al(0.0), p_target(pmax), rhoEmat(0.0);
+          p_target += alk * apk / kmat[k];
+          ratio += alk * alk / kmat[k];
+        }
+        p_target /= ratio;
+        p_target = std::max(p_target, 1e-14);
+        p_target = std::max(pmax, 1e-14);
 
         // 1. Correct minority materials and store volume/energy changes
         for (std::size_t k=0; k<nmat; ++k)
         {
           auto alk = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           auto pk = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) / alk;
+          auto Pck =
+            g_inputdeck.get< tag::param, eq, tag::pstiff >()[ m_system ][k];
           // for positive volume fractions
           if (alk > 0.0)
           {
@@ -261,7 +284,7 @@ class MultiMat {
             // if the material pressure is significantly different from pressure
             // of material present in majority. If both these conditions are
             // true, perform pressure relaxation.
-            if ((alk < al_eps) && (std::fabs((pk-pmax)/pmax) > 1e-08))
+            if ((alk < al_eps) || (pk+Pck < 0.0)/*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
             {
               //auto gk =
               //  g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][k];
@@ -284,7 +307,7 @@ class MultiMat {
               // energy change
               auto rhomat = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset)
                 / alk_new;
-              rhoEmat = eos_totalenergy< eq >(m_system, rhomat, u, v, w,
+              auto rhoEmat = eos_totalenergy< eq >(m_system, rhomat, u, v, w,
                 p_target, k);
 
               // volume-fraction and total energy flux into majority material
@@ -329,16 +352,69 @@ class MultiMat {
 
         // 2. Flux energy change into majority material
         unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset) += d_arE;
-
-        // correct pressure of majority material
         prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset) =
           eos_pressure< eq >(m_system,
           unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
           unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset),
           unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset), kmax);
 
+        // enforce unit sum of volume fractions
+        auto alsum = 0.0;
+        for (std::size_t k=0; k<nmat; ++k)
+          alsum += unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
+
+        for (std::size_t k=0; k<nmat; ++k) {
+          unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) /= alsum;
+          unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) /= alsum;
+          unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) /= alsum;
+          prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) /= alsum;
+        }
+
+        //// bulk quantities
+        //auto rhoEb(0.0), rhob(0.0), volb(0.0);
+        //for (std::size_t k=0; k<nmat; ++k)
+        //{
+        //  if (relaxInd[k] > 0.0)
+        //  {
+        //    rhoEb += unk(e, energyDofIdx(nmat,k,rdof,0), m_offset);
+        //    volb += unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
+        //    rhob += unk(e, densityDofIdx(nmat,k,rdof,0), m_offset);
+        //  }
+        //}
+
+        //// 2. find mixture-pressure
+        //tk::real pmix(0.0), den(0.0);
+        //pmix = rhoEb - 0.5*rhob*(u*u+v*v+w*w);
+        //for (std::size_t k=0; k<nmat; ++k)
+        //{
+        //  auto gk =
+        //    g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][k];
+        //  auto Pck =
+        //    g_inputdeck.get< tag::param, eq, tag::pstiff >()[ m_system ][k];
+
+        //  pmix -= unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset) * gk * Pck *
+        //    relaxInd[k] / (gk-1.0);
+        //  den += unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset) * relaxInd[k]
+        //    / (gk-1.0);
+        //}
+        //pmix /= den;
+
+        //// 3. correct energies
+        //for (std::size_t k=0; k<nmat; ++k)
+        //{
+        //  if (relaxInd[k] > 0.0)
+        //  {
+        //    auto alk_new = unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
+        //    unk(e, energyDofIdx(nmat,k,rdof,0), m_offset) = alk_new *
+        //      eos_totalenergy< eq >(m_system, rhomat[k], u, v, w, pmix, k);
+        //    prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk_new * pmix;
+        //  }
+        //}
+
+        pmax = prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset) /
+          unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset);
+
         // check for unphysical state
-        pmax = prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset)/almax;
         for (std::size_t k=0; k<nmat; ++k)
         {
           auto alpha = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
@@ -390,7 +466,8 @@ class MultiMat {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P ) const
+                      tk::Fields& P,
+                      tk::Fields& VolFracMax ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
@@ -470,6 +547,10 @@ class MultiMat {
       // 4. transform reconstructed derivatives to Dubiner dofs
       tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
       tk::transform_P0P1( nprim(), m_offset, rdof, nelem, inpoel, coord, P );
+
+      // 5. Find the maximum volume fraction in the neighborhood of each cell
+      tk::findMaxVolfrac( m_offset, rdof, nmat, nelem, fd.Esuel(), esup, inpoel,
+        U, VolFracMax );
     }
 
     //! Limit second-order solution, and primitive quantities separately
@@ -538,6 +619,7 @@ class MultiMat {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
+              const tk::Fields& VolFracMax,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
@@ -554,12 +636,16 @@ class MultiMat {
               "vector and primitive vector at recent time step incorrect" );
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
+      Assert( VolFracMax.nunk() == P.nunk(), "Number of unknowns in volfracmax "
+              "vector and primitive vector at recent time step incorrect" );
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( P.nprop() == rdof*nprim(), "Number of components in primitive "
               "vector must equal "+ std::to_string(rdof*nprim()) );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
+      Assert( VolFracMax.nprop() == 2*nmat, "Number of components in "
+              "volfracmax vector incorrect" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
       Assert( ndof == 1, "DGP1/2 not set up for multi-material" );
@@ -584,8 +670,8 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, nmat, m_offset, ndof, rdof, inpoel, coord,
-                   fd, geoFace, geoElem, rieflxfn, velfn, U, P, ndofel, R,
-                   riemannDeriv, intsharp );
+                   fd, geoFace, geoElem, rieflxfn, velfn, U, P, VolFracMax,
+                   ndofel, R, riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
@@ -596,7 +682,8 @@ class MultiMat {
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, nmat, m_offset, ndof, rdof, b.first,
                         fd, geoFace, geoElem, inpoel, coord, t, rieflxfn, velfn,
-                        b.second, U, P, ndofel, R, riemannDeriv, intsharp );
+                        b.second, U, P, VolFracMax, ndofel, R, riemannDeriv,
+                        intsharp );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );

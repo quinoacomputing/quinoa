@@ -154,7 +154,8 @@ class Transport {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P ) const
+                      tk::Fields& P,
+                      tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
@@ -241,6 +242,7 @@ class Transport {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
+              const tk::Fields& VolFracMax,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
@@ -271,7 +273,8 @@ class Transport {
       // compute internal surface flux integrals
       tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, geoElem, Upwind::flux,
-                   Problem::prescribedVelocity, U, P, ndofel, R, riemannDeriv );
+                   Problem::prescribedVelocity, U, P, VolFracMax, ndofel, R,
+                   riemannDeriv );
 
       if(ndof > 1)
         // compute volume integrals
@@ -283,7 +286,8 @@ class Transport {
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
           geoFace, geoElem, inpoel, coord, t, Upwind::flux,
-          Problem::prescribedVelocity, b.second, U, P, ndofel, R, riemannDeriv );
+          Problem::prescribedVelocity, b.second, U, P, VolFracMax, ndofel, R,
+          riemannDeriv );
     }
 
     //! Compute the minimum time step size
