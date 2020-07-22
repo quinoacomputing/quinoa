@@ -29,9 +29,13 @@ if(SOL2_INCLUDE_DIRS)
 endif()
 
 find_path(SOL2_INCLUDE_DIR NAMES sol.hpp
-                           HINTS ${SOL2_ROOT}/include
-                                 $ENV{SOL2_ROOT}/include
-                           PATH_SUFFIXES sol)
+                           HINTS ${SOL2_ROOT}
+                                 $ENV{SOL2_ROOT}
+                           PATH_SUFFIXES sol include)
+
+# Remove last 'sol' from path found, otherwise some compilers will not find
+# sol.hpp.
+get_filename_component(SOL2_INCLUDE_DIR ${SOL2_INCLUDE_DIR} DIRECTORY)
 
 set(SOL2_INCLUDE_DIRS ${SOL2_INCLUDE_DIR})
 
