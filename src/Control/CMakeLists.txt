@@ -22,6 +22,7 @@ target_include_directories(InciterControl PUBLIC
                            ${CHARM_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
                            ${LUA_INCLUDE_DIR}
+                           ${SOL2_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 
 set_target_properties(InciterControl PROPERTIES
