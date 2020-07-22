@@ -1,6 +1,12 @@
 /*!
   \page      git_submodules_subtrees Modules
 
+@tableofcontents{xml}
+
+This page discusses how Quinoa's code repositories are organized into git
+submodules and subtrees. It also gives an example of how to add a new
+third-party library (TPL) as a new submodule.
+
 Quinoa uses git _submodules_ as well as git _subtrees_ to pull in third-party
 libraries (TPLs) and auxiliary tools. This allows easy update to a TPL's (or
 tool's) new or custom version, record all TPLs' and tools' histories (including
@@ -102,4 +108,322 @@ branches, stashing, are quicker. This can be especially useful on large HPC
 machines where the large parallel file systems are shared among many users who
 may be doing heavy I/O. Another option is to _deinitialize_ the submodules once
 not needed if they were recursively cloned and initialized.
+
+@section submodule_new Add a new TPL as a new submodule
+
+This section walks through on adding a new TPL as a git submodule. We add a new
+library `Sol2`, which is header-only (no build required, only a copy of the
+header files) and depends on Lua.
+
+First, we tell the `quinoa-tpl` repository about the the source repository of
+`Sol2` as a new git submodule:
+
+@code{.bash}
+git clone https://github.com/quinoacomputing/quinoa-tpl.git
+cd quinoa-tpl
+git submodule add https://github.com/ThePhD/sol2.git src/sol2
+cd src/sol2 && git checkout v3.2.0 && cd -
+git add src/sol2
+@endcode
+
+Then we extend `quinoa-tpl/CMakeLists.txt`. The best is to find a library
+similar to the one being added and add the relevant sections. Since `Sol2` is a
+header-only library, we just find everything `brigand`-related (`brigand` is
+also a header-only library) and end up with the following diff:
+
+@code{.diff}
+$ git diff CMakeLists.txt
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 32e715d..595bed9 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -92,6 +92,7 @@ set(ENABLE_BACKWARDCPP ON CACHE BOOL "Enable BackwardCpp")
+ set(ENABLE_HIGHWAYHASH ON CACHE BOOL "Enable HighwayHash")
+ set(ENABLE_OMEGAH OFF CACHE BOOL "Enable Omega_H")
+ set(ENABLE_BRIGAND ON CACHE BOOL "Enable Brigand")
++set(ENABLE_SOL2 ON CACHE BOOL "Enable Sol2")
+ set(ENABLE_DOXYGEN ON CACHE BOOL "Enable Doxygen")
+ set(ENABLE_MCSS ON CACHE BOOL "Enable m.css")
+
+@@ -124,6 +125,7 @@ if (UNITTEST_ONLY OR INCITER_ONLY OR RNGTEST_ONLY OR MESHCONV_ONLY OR
+   set(ENABLE_HIGHWAYHASH OFF)
+   set(ENABLE_OMEGAH OFF)
+   set(ENABLE_BRIGAND OFF)
++  set(ENABLE_SOL2 OFF)
+   set(ENABLE_DOXYGEN OFF)
+   set(ENABLE_MCSS OFF)
+   set(REQUESTED_EXECUTABLES)
+@@ -157,6 +159,7 @@ if (UNITTEST_ONLY OR INCITER_ONLY OR RNGTEST_ONLY OR MESHCONV_ONLY OR
+     set(ENABLE_HDF5 ON)
+     set(ENABLE_HIGHWAYHASH ON)
+     set(ENABLE_BRIGAND ON)
++    set(ENABLE_SOL2 ON)
+     set(ENABLE_PEGTL ON)
+     set(ENABLE_LAPACK ON)
+     set(ENABLE_BOOST ON)
+@@ -724,6 +727,17 @@ if (ENABLE_BRIGAND)
+   endif()
+ endif()
+
++# Sol2
++if (ENABLE_SOL2)
++  find_package(Lua)
++  find_package(Sol2)
++  if(SOL2_FOUND)
++    set(sol2 "")
++  else()
++    set(sol2 "sol2")
++  endif()
++endif()
++
+ # Doxygen
+ if (ENABLE_DOXYGEN)
+   find_package(Doxygen 1.8.15)
+@@ -758,7 +772,7 @@ get_compiler_flags()
+ set(tpls2build ${charm} ${hdf5} ${netcdf} ${boost} ${pstreams}
+ ${pugixml} ${pegtl} ${random123} ${rngsse2} ${lapack} ${aec} ${h5part}
+ ${testu01} ${trilinos} ${tut} ${numdiff} ${root} ${backwardcpp} ${highwayhash}
+-${omega_h} ${brigand} ${doxygen} ${mcss})
++${omega_h} ${brigand} ${sol2} ${doxygen} ${mcss})
+
+ list(LENGTH tpls2build ntpl)
+ list(SORT tpls2build)
+@@ -1333,6 +1347,23 @@ if (brigand)
+   )
+ endif()
+
++#### Sol2 ######################################################################
++# https://github.com/ThePhD/sol2
++# Header only, only if not found
++if (sol2)
++  ExternalProject_Add(
++    sol2
++    PREFIX sol2
++    # Header-only, copy include dir over
++    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
++                      ${PROJECT_SOURCE_DIR}/src/sol2/include/sol
++                      ${CMAKE_INSTALL_PREFIX}/include/sol
++    BUILD_COMMAND ""
++    INSTALL_COMMAND ""
++    DOWNLOAD_COMMAND ""
++  )
++endif()
++
+ #### Doxygen, documentation generation #########################################
+ # https://doxygen.org
+ if (doxygen)
+@endcode
+
+We also add cmake code to find Sol2, as a new file `cmake/FindSol2.cmake`,
+since we do not expect that to be packaged by the OS.
+
+@code{.cmake}
+################################################################################
+#
+# \file      FindSol2.cmake
+# \copyright 2012-2015 J. Bakosi,
+#            2016-2018 Los Alamos National Security, LLC.,
+#            2019 Triad National Security, LLC.
+#            All rights reserved. See the LICENSE file for details.
+# \brief     Find the Sol2 Lua C++ binding library
+#
+################################################################################
+
+# Sol2: https://github.com/ThePhD/sol2
+#
+#  SOL2_FOUND - System has Sol2
+#  SOL2_INCLUDE_DIRS - The Sol2 include directory
+#
+#  Set the SOL2_ROOT cmake variable or shell environment variable before
+#  calling find_package to a path to add an additional search path, e.g.,
+#
+#  Usage:
+#
+#  set(SOL2_ROOT "/path/to/custom/brigand") # prefer over system
+#  find_package(Sol2)
+#  include_directories(${SOL2_INCLUDE_DIRS})
+
+# If already in cache, be silent
+if(SOL2_INCLUDE_DIRS)
+  set (SOL2_FIND_QUIETLY TRUE)
+endif()
+
+find_path(SOL2_INCLUDE_DIR NAMES sol.hpp
+                           HINTS ${SOL2_ROOT}/include
+                                 $ENV{SOL2_ROOT}/include
+                           PATH_SUFFIXES sol)
+
+set(SOL2_INCLUDE_DIRS ${SOL2_INCLUDE_DIR})
+
+# Handle the QUIETLY and REQUIRED arguments and set SOL2_FOUND to TRUE if
+# all listed variables are TRUE.
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Sol2 REQUIRED_VARS SOL2_INCLUDE_DIRS)
+
+MARK_AS_ADVANCED(SOL2_INCLUDE_DIRS)
+@endcode
+
+@note We assume that [Lua](https://www.lua.org), required by Sol2, will be
+found on the system. On debian/ubuntu Lua can be installed by ```apt-get
+install liblua5.3-dev```.
+
+We can now test if the TPL build works:
+
+@code{.bash}
+cd quinoa-tpl && mdkir build && cd build
+cmake ..
+@endcode
+
+Example cmake screen output:
+@code{.bash}
+...
+-- Found Lua: /usr/lib/x86_64-linux-gnu/liblua5.3.so;/usr/lib/x86_64-linux-gnu/libm.so (found version "5.3.3")
+-- Could NOT find Sol2 (missing: SOL2_INCLUDE_DIRS)
+...
+@endcode
+
+As expected, Lua is there on the system, but we need to supply Sol2. Now we
+build sol2, and see if it is found:
+
+@code{.bash}
+make sol2
+cmake .
+@endcode
+
+Example cmake screen output:
+@code{.bash}
+...
+-- Found Lua: /usr/lib/x86_64-linux-gnu/liblua5.3.so;/usr/lib/x86_64-linux-gnu/libm.so (found version "5.3.3")
+-- Found Sol2: [...]/quinoa-tpl/install/clang-x86_64/include/sol
+...
+@endcode
+
+Since this works fine, we commit the changes to the `quinoa-tpl` repository:
+
+@code{.bash}
+git add CMakeLists.txt
+git status
+git commit -m"Add lua and sol2"
+@endcode
+
+Example `git status` output from above:
+
+@code{.bash}
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes to be committed:
+  (use "git reset HEAD <file>..." to unstage)
+
+        modified:   .gitmodules
+        modified:   CMakeLists.txt
+        new file:   src/sol2
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+
+        modified:   cmake (untracked content)
+...
+@endcode
+
+@note We do _not_ commit the contents of the `cmake/` directory to the
+`quinoa-tpl` repository. Changes in that go into the
+[cmake-modules](https://github.com/quinoacomputing/cmake-modules) repository.
+
+We also update `cmake/TPLs.cmake` in the cmake-modules repository to include
+and run cmake code that finds Lua and Sol2 when quinoa is configured.
+
+First, clone `cmake-modules`:
+
+@code{.bash}
+git clone https://github.com/quinoacomputing/cmake-modules.git
+cd cmake-modules
+@endcode
+
+Next, augment `TPLs.cmake` in the cmake-module repository, which runs when
+quinoa is configured:
+
+@code{.diff}
+$ git diff TPLs.cmake
+diff --git a/cmake/TPLs.cmake b/cmake/TPLs.cmake
+index a7ca35a93..f4064ea2c 100644
+--- a/cmake/TPLs.cmake
++++ b/cmake/TPLs.cmake
+@@ -156,6 +156,11 @@ find_package(HighwayHash)
+ set(BRIGAND_ROOT ${TPL_DIR}) # prefer ours
+ find_package(Brigand)
+
++#### Configure Sol2
++set(SOL2_ROOT ${TPL_DIR}) # prefer ours
++find_package(Lua)
++find_package(Sol2)
++
+ message(STATUS "------------------------------------------")
+
+ # Function to print a list of missing library names
+@@ -197,11 +202,12 @@ endif()
+
+ if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
+     Zoltan2_FOUND AND HDF5_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
+-    (MKL_FOUND OR LAPACKE_FOUND) AND Boost_FOUND AND HIGHWAYHASH_FOUND)
++    (MKL_FOUND OR LAPACKE_FOUND) AND Boost_FOUND AND HIGHWAYHASH_FOUND AND
++    LUA_FOUND AND SOL2_FOUND)
+   set(ENABLE_INCITER "true")
+   set(INCITER_EXECUTABLE inciter)
+ else()
+-  PrintMissing(inciter "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;Zoltan2_FOUND;HDF5_FOUND;BRIGAND_FOUND;PEGTL_FOUND;MKL_FOUND;LAPACKE_FOUND;Boost_FOUND")
++  PrintMissing(inciter "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;Zoltan2_FOUND;HDF5_FOUND;BRIGAND_FOUND;PEGTL_FOUND;MKL_FOUND;LAPACKE_FOUND;Boost_FOUND;LUA_FOUND;SOL2_FOUND")
+ endif()
+
+ if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
+@endcode
+
+Now we commit the changes to `cmake-modules`:
+
+@code{.bash}
+cd cmake-modules
+mv quinoa-tpl/cmake/FindSol2.cmake .
+git add FindSol2.cmake TPLs.cmake
+git commit -m"Add cmake code so quinoa finds Lua and Sol2"
+git push
+@endcode
+
+@note Since we _moved_ `FindSol2.cmake` from quinoa-tpl/cmake, we pull it in
+from the cmake repository:
+
+@code{.bash}
+cd quinoa-tpl/cmake
+git pull
+@endcode
+
+Next we commit the change in the TPL repo to reflect the updated `cmake`
+submodule:
+
+@code{.bash}
+cd quinoa-tpl
+git add cmake
+git commit -m"Pull in latest cmake"
+git push
+@endcode
+
+Finally, we pull the changes from both the `cmake` subtree (cmake-modules
+repository) and the TPLs  (quinoa-tpl) into the `quinoa` repository.
+
+@code{.bash}
+git clone https://github.com/quinoacomputing/quinoa.git
+cd quinoa
+git submodule init && git submodule update --recursive && cd external && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
+cd external && git checkout master && git pull && cd -
+cd cmake && git checkout master && git pull && cd -
+git submodule update --init external/src/sol2
+git commit -am"Pull in latest external"
+git fetch cmake
+git subtree pull --prefix=cmake cmake master --squash
+@endcode
+
+@note The above instructions assume a @ref build_nonrecursive "non-recursive"
+clone of the quinoa repository.
+
 */

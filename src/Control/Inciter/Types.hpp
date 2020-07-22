@@ -307,6 +307,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::npar,          std::vector< kw::npar::info::expect::type >
     //! Flux function type
   , tag::flux,          std::vector< FluxType >
+    //! Lua code
+  , tag::lua,           std::string
 > >;
 
 //! Compressible flow equation parameters storage
