@@ -15,6 +15,7 @@
 #include <type_traits>
 
 #include "NoWarning/pegtl.hpp"
+#include "NoWarning/sol.hpp"
 
 #include "Print.hpp"
 #include "Tags.hpp"
@@ -22,6 +23,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/InputDeck/Parser.hpp"
 #include "Inciter/InputDeck/Grammar.hpp"
+#include "Inciter/InputDeck/LuaGrammar.hpp"
 
 namespace tk {
 namespace grm {
@@ -62,6 +64,12 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   // Parse input file and populate the underlying tagged tuple
   tao::pegtl::file_input<> in( m_filename );
   tao::pegtl::parse< deck::read_file, tk::grm::action >( in, id );
+
+  // Parse lua ... end block(s) as Lua code using Sol2
+  sol::state lua;
+  lua.script( id.get< tag::param, tag::compflow, tag::lua >() );
+  // Interpret ic ... end block within lua block
+  lua::ic< tag::compflow >( lua, id );
 
   // Echo errors and warnings accumulated during parsing
   diagnostics( print, id.get< tag::error >() );

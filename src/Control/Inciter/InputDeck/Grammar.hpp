@@ -21,8 +21,6 @@
 #include "CartesianProduct.hpp"
 #include "Keywords.hpp"
 #include "ContainerUtil.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
@@ -186,7 +184,7 @@ namespace grm {
         }
       }
 
-      // Verify correct number of multi-material properties configured
+      // Verify correct number of material properties configured
       const auto& gamma = stack.template get< param, eq, tag::gamma >();
       if (gamma.empty() || gamma.back().size() != 1)
         Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
@@ -274,66 +272,72 @@ namespace grm {
         {
           Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
         }
-      } else {
-        // put in empty vectors for non-user-defined ICs so client code can
-        // directly index into these vectors using the eq system id
+
+        // put in empty vectors for background ICs so client code can directly
+        // index into these vectors using the eq system id
         bgdensityic.push_back( {} );
         bgvelocityic.push_back( {} );
         bgpressureic.push_back( {} );
         bgenergyic.push_back( {} );
         bgtemperatureic.push_back( {} );
+
+        // Error check Dirichlet boundary condition block for all compflow
+        // configurations
+        const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
+        for (const auto& s : bc)
+          if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+
+        // Error check stagnation BC block
+        const auto& bcstag = stack.template get<tag::param, eq, tag::bcstag>();
+        const auto& spoint = bcstag.template get< tag::point >();
+        const auto& sradius = bcstag.template get< tag::radius >();
+        if ( (!spoint.empty() && !spoint.back().empty() &&
+              !sradius.empty() && !sradius.back().empty() &&
+              spoint.back().size() != 3*sradius.back().size())
+         || (!sradius.empty() && !sradius.back().empty() &&
+              !spoint.empty() && !spoint.back().empty() &&
+              spoint.back().size() != 3*sradius.back().size())
+         || (!spoint.empty() && !spoint.back().empty() &&
+              (sradius.empty() || (!sradius.empty() && sradius.back().empty())))
+         || (!sradius.empty() && !sradius.back().empty() &&
+              (spoint.empty() || (!spoint.empty() && spoint.back().empty()))) )
+        {
+          Message< Stack, ERROR, MsgKey::STAGBCWRONG >( stack, in );
+        }
+
+        // Error check skip BC block
+        const auto& bcskip = stack.template get<tag::param, eq, tag::bcskip>();
+        const auto& kpoint = bcskip.template get< tag::point >();
+        const auto& kradius = bcskip.template get< tag::radius >();
+        if ( (!kpoint.empty() && !kpoint.back().empty() &&
+              !kradius.empty() && !kradius.back().empty() &&
+              kpoint.back().size() != 3*kradius.back().size())
+          || (!kradius.empty() && !kradius.back().empty() &&
+              !kpoint.empty() && !kpoint.back().empty() &&
+              kpoint.back().size() != 3*kradius.back().size())
+          || (!kpoint.empty() && !kpoint.back().empty() &&
+              (kradius.empty() || (!kradius.empty() && kradius.back().empty())))
+          || (!kradius.empty() && !kradius.back().empty() &&
+              (kpoint.empty() || (!kpoint.empty() && kpoint.back().empty()))) )
+        {
+          Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
+        }
+
+        // Set default inititate type for box ICs
+        auto& icbox = ic.template get< tag::box >();
+        auto& initiate = icbox.template get< tag::initiate >();
+        auto& inittype = initiate.template get< tag::init >();
+        if (inittype.size() != neq.get< eq >())
+          inittype.push_back( inciter::ctr::InitiateType::IMPULSE );
+
+        // put in empty vectors for non-user-defined box ICs so client code can
+        // directly index into these vectors using the eq system id
+        icbox.template get< tag::density >().push_back( {} );
+        icbox.template get< tag::velocity >().push_back( {} );
+        icbox.template get< tag::pressure >().push_back( {} );
+        icbox.template get< tag::energy >().push_back( {} );
+        icbox.template get< tag::temperature >().push_back( {} );
       }
-
-      // Error check Dirichlet boundary condition block for all compflow
-      // configurations
-      const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
-      for (const auto& s : bc)
-        if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
-
-      // Error check stagnation BC block
-      const auto& bcstag = stack.template get< tag::param, eq, tag::bcstag >();
-      const auto& spoint = bcstag.template get< tag::point >();
-      const auto& sradius = bcstag.template get< tag::radius >();
-      if ( (!spoint.empty() && !spoint.back().empty() &&
-            !sradius.empty() && !sradius.back().empty() &&
-            spoint.back().size() != 3*sradius.back().size()) ||
-           (!sradius.empty() && !sradius.back().empty() &&
-            !spoint.empty() && !spoint.back().empty() &&
-            spoint.back().size() != 3*sradius.back().size()) ||
-           (!spoint.empty() && !spoint.back().empty() &&
-            (sradius.empty() || (!sradius.empty() && sradius.back().empty())))||
-           (!sradius.empty() && !sradius.back().empty() &&
-            (spoint.empty() || (!spoint.empty() && spoint.back().empty())))
-         )
-      {
-        Message< Stack, ERROR, MsgKey::STAGBCWRONG >( stack, in );
-      }
-
-      // Error check skip BC block
-      const auto& bcskip = stack.template get< tag::param, eq, tag::bcskip >();
-      const auto& kpoint = bcskip.template get< tag::point >();
-      const auto& kradius = bcskip.template get< tag::radius >();
-      if ( (!kpoint.empty() && !kpoint.back().empty() &&
-            !kradius.empty() && !kradius.back().empty() &&
-            kpoint.back().size() != 3*kradius.back().size()) ||
-           (!kradius.empty() && !kradius.back().empty() &&
-            !kpoint.empty() && !kpoint.back().empty() &&
-            kpoint.back().size() != 3*kradius.back().size()) ||
-           (!kpoint.empty() && !kpoint.back().empty() &&
-            (kradius.empty() || (!kradius.empty() && kradius.back().empty())))||
-           (!kradius.empty() && !kradius.back().empty() &&
-            (kpoint.empty() || (!kpoint.empty() && kpoint.back().empty())))
-         )
-      {
-        Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
-      }
-
-      // Set default inititate type for box ICs
-      auto& icbox = ic.template get< tag::box >();
-      auto& initiate = icbox.template get< tag::initiate >();
-      auto& inittype = initiate.template get< tag::init >();
-      if (inittype.size() != neq.get< eq >())
-        inittype.push_back( inciter::ctr::InitiateType::IMPULSE );
     }
   };
 
@@ -896,8 +900,6 @@ namespace deck {
              tk::grm::control< use< kw::zmax >, tk::grm::number,
                                tag::param, eq, tag::ic, tag::box, tag::zmax >,
              pegtl::sor<
-               pde_parameter_vector< kw::mass,
-                                     eq, tag::ic, tag::box, tag::mass >,
                pde_parameter_vector< kw::density,
                                      eq, tag::ic, tag::box, tag::density >,
                pde_parameter_vector< kw::velocity,
@@ -906,10 +908,12 @@ namespace deck {
                                      eq, tag::ic, tag::box, tag::pressure >,
                pde_parameter_vector< kw::temperature,
                                      eq, tag::ic, tag::box, tag::temperature >,
-               pde_parameter_vector< kw::energy_content,
-                 eq, tag::ic, tag::box, tag::energy_content >,
                pde_parameter_vector< kw::energy,
-                  eq, tag::ic, tag::box, tag::energy >,
+                                     eq, tag::ic, tag::box, tag::energy >,
+               pde_parameter_vector< kw::mass,
+                                     eq, tag::ic, tag::box, tag::mass >,
+               pde_parameter_vector< kw::energy_content,
+                                   eq, tag::ic, tag::box, tag::energy_content >,
                tk::grm::process< use< kw::initiate >,
                                  tk::grm::store_back_option< use,
                                                              ctr::Initiate,
@@ -1048,6 +1052,7 @@ namespace deck {
                                                            tag::flux >,
                              pegtl::alpha >,
                            ic< tag::compflow >,
+                           tk::grm::lua< use, tag::param, tag::compflow >,
                            material_properties< tag::compflow >,
                            pde_parameter_vector< kw::sysfctvar,
                                                  tag::compflow,

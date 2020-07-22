@@ -87,6 +87,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::multimat,
                                    kw::ic,
                                    kw::box,
+                                   kw::lua,
                                    kw::mass,
                                    kw::density,
                                    kw::velocity,
