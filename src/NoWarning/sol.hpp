@@ -35,6 +35,8 @@
   #pragma clang diagnostic ignored "-Wc++2a-compat"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
+  #pragma clang diagnostic ignored "-Wfloat-equal"
+  #pragma clang diagnostic ignored "-Wcast-qual"
 #endif
 
 #include <sol/sol.hpp>
