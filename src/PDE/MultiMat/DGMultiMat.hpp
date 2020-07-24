@@ -246,8 +246,13 @@ class MultiMat {
         {
           auto alk = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           auto pk = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) / alk;
+          // for positive volume fractions
           if (alk > 0.0)
           {
+            // check if volume fraction is lesser than threshold (al_eps) and
+            // if the material pressure is significantly different from pressure
+            // of material present in majority. If both these conditions are
+            // true, perform pressure relaxation.
             if ((alk < al_eps) && (std::fabs((pk-pmax)/pmax) > 1e-08))
             {
               //auto gk =

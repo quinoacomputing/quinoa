@@ -1490,10 +1490,11 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
     for (std::size_t i=0; i<nnpe-1; ++i)
     {
       for (std::size_t j=i+1; j<nnpe; ++j)
-        edgelen = std::min(edgelen,
-          std::sqrt(std::pow(x[inpoel[nnpe*e+i]]-x[inpoel[nnpe*e+j]],2)
-          + std::pow(y[inpoel[nnpe*e+i]]-y[inpoel[nnpe*e+j]],2)
-          + std::pow(z[inpoel[nnpe*e+i]]-z[inpoel[nnpe*e+j]],2)));
+      {
+        auto ni(inpoel[nnpe*e+i]), nj(inpoel[nnpe*e+j]);
+        edgelen = std::min( edgelen, tk::length( x[ni]-x[nj], y[ni]-y[nj],
+          z[ni]-z[nj] ) );
+      }
     }
     geoElem(e,4,0) = edgelen;
   }
