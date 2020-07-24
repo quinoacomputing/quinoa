@@ -58,7 +58,6 @@
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 181 )
-  #pragma warning( disable: 2282 )
   #pragma warning( disable: 1125 )
   #pragma warning( disable: 1720 )
 #endif

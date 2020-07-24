@@ -37,6 +37,9 @@
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wfloat-equal"
   #pragma GCC diagnostic ignored "-Wcast-qual"
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( push )
+  #pragma warning( disable: 1 )
 #endif
 
 #include <sol/sol.hpp>
@@ -45,6 +48,8 @@
   #pragma clang diagnostic pop
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
+#elif defined(__INTEL_COMPILER)
+  #pragma warning( pop )
 #endif
 
 #endif // nowarning_sol_h
