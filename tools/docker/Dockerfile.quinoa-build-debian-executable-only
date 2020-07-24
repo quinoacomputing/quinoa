@@ -25,7 +25,7 @@ FROM debian:stable
 
 # Install system-wide prerequisites
 #RUN sed -i 's/stable main/stable main contrib non-free/g' /etc/apt/sources.list
-RUN apt-get update -y && apt-get install -y m4 autoconf git cmake gfortran gcc g++ openmpi-bin libopenmpi-dev gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev zlib1g-dev libhdf5-dev libhdf5-openmpi-dev libnetcdf-mpi-dev libbackward-cpp-dev tao-pegtl-dev binutils-dev libx11-dev libxpm-dev libxft-dev libxext-dev ninja-build flex bison libdw-dev libdwarf-dev vim wget
+RUN apt-get update -y && apt-get install -y m4 autoconf git cmake gfortran gcc g++ openmpi-bin libopenmpi-dev gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev zlib1g-dev libhdf5-dev libhdf5-openmpi-dev libnetcdf-mpi-dev libbackward-cpp-dev tao-pegtl-dev binutils-dev libx11-dev libxpm-dev libxft-dev libxext-dev ninja-build flex bison libdw-dev libdwarf-dev vim wget liblua5.3-dev
 
 # Setup user
 RUN adduser --gecos "" --disabled-password quinoa
