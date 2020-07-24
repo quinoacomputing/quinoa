@@ -4660,6 +4660,25 @@ struct gas_impact_info {
 using gas_impact =
   keyword< gas_impact_info, TAOCPP_PEGTL_STRING("gas_impact") >;
 
+struct gas_impact_4mat_info {
+  using code = Code< T >;
+  static std::string name() { return "Gas impacting with two slabs problem"; }
+  static std::string shortDescription() { return
+    "Select the gas impacting with two slabs test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the test involving a gas impacting two
+    slabs. It involves four materials: the impactor, two slabs and the
+    background. The purpose of this test problem is to test the correctness of
+    multi-material algorithm for more than three materials and its interface
+    capturing capabilities under high deformation.
+    Example: "problem gas_impact_4mat".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using gas_impact_4mat =
+  keyword< gas_impact_4mat_info, TAOCPP_PEGTL_STRING("gas_impact_4mat") >;
+
 struct shock_hebubble_info {
   using code = Code< T >;
   static std::string name() { return "Shock He-bubble problem"; }

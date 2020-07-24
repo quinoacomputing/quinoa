@@ -231,6 +231,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::waterair_shocktube,
                                    kw::triple_point,
                                    kw::gas_impact,
+                                   kw::gas_impact_4mat,
                                    kw::shock_hebubble,
                                    kw::underwater_ex >;
 
