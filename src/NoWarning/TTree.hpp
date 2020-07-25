@@ -26,7 +26,6 @@
   #pragma warning( disable: 1 )
   #pragma warning( disable: 181 )
   #pragma warning( disable: 522 )
-  #pragma warning( disable: 2282 )
 #endif
 
 #include <TTree.h>
