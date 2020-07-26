@@ -41,6 +41,7 @@ enum class ProblemType : uint8_t { USER_DEFINED,
                                    WATERAIR_SHOCKTUBE,
                                    TRIPLE_POINT,
                                    GAS_IMPACT,
+                                   GAS_IMPACT_4MAT,
                                    SHOCK_HEBUBBLE,
                                    UNDERWATER_EX };
 
@@ -70,6 +71,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                   , kw::waterair_shocktube
                                   , kw::triple_point
                                   , kw::gas_impact
+                                  , kw::gas_impact_4mat
                                   , kw::shock_hebubble
                                   , kw::underwater_ex
                                   >;
@@ -103,6 +105,7 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::WATERAIR_SHOCKTUBE, kw::waterair_shocktube::name() },
           { ProblemType::TRIPLE_POINT, kw::triple_point::name() },
           { ProblemType::GAS_IMPACT, kw::gas_impact::name() },
+          { ProblemType::GAS_IMPACT_4MAT, kw::gas_impact_4mat::name() },
           { ProblemType::SHOCK_HEBUBBLE, kw::shock_hebubble::name() },
           { ProblemType::UNDERWATER_EX, kw::underwater_ex::name() }
         },
@@ -132,6 +135,8 @@ class Problem : public tk::Toggle< ProblemType > {
             ProblemType::TRIPLE_POINT },
           { kw::gas_impact::string(),
             ProblemType::GAS_IMPACT },
+          { kw::gas_impact_4mat::string(),
+            ProblemType::GAS_IMPACT_4MAT },
           { kw::shock_hebubble::string(),
             ProblemType::SHOCK_HEBUBBLE },
           { kw::underwater_ex::string(),
@@ -185,6 +190,7 @@ class Problem : public tk::Toggle< ProblemType > {
       , { ProblemType::WATERAIR_SHOCKTUBE, *kw::waterair_shocktube::code() }
       , { ProblemType::TRIPLE_POINT, *kw::triple_point::code() }
       , { ProblemType::GAS_IMPACT, *kw::gas_impact::code() }
+      , { ProblemType::GAS_IMPACT_4MAT, *kw::gas_impact_4mat::code() }
       , { ProblemType::SHOCK_HEBUBBLE, *kw::shock_hebubble::code() }
       , { ProblemType::UNDERWATER_EX, *kw::underwater_ex::code() }
     };

@@ -53,6 +53,7 @@
 #include "Problem/WaterAirShocktube.hpp"
 #include "Problem/TriplePoint.hpp"
 #include "Problem/GasImpact.hpp"
+#include "Problem/GasImpact4Mat.hpp"
 #include "Problem/ShockHeBubble.hpp"
 #include "Problem/UnderwaterEx.hpp"
 
@@ -66,6 +67,7 @@ using MultiMatProblems =
                , MultiMatProblemWaterAirShocktube
                , MultiMatProblemTriplePoint
                , MultiMatProblemGasImpact
+               , MultiMatProblemGasImpact4Mat
                , MultiMatProblemShockHeBubble
                , MultiMatProblemUnderwaterEx >;
 
