@@ -652,7 +652,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
 
     Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
     Assert( nodes.size() <= 4*3, "Overflow of faces/tet received" );
-    Assert( geo.size() % 4 == 0, "Ghost geometry size mismatch" );
+    Assert( geo.size() % 5 == 0, "Ghost geometry size mismatch" );
     Assert( geo.size() == m_geoElem.nprop(), "Ghost geometry number mismatch" );
     Assert( coordg.size() == 3, "Incorrect ghost node coordinate size" );
     Assert( inpoelg.size() == 4, "Incorrect ghost inpoel size" );

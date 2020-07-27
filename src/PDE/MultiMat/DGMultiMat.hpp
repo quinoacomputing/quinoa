@@ -230,6 +230,9 @@ class MultiMat {
         auto v = prim(e, velocityDofIdx(nmat, 1, rdof, 0), m_offset);
         auto w = prim(e, velocityDofIdx(nmat, 2, rdof, 0), m_offset);
         auto pmax = prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset)/almax;
+        auto tmax = eos_temperature< eq >(m_system,
+          unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
+          unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset), almax, kmax);
 
         auto pb(0.0);
         for (std::size_t k=0; k<nmat; ++k)
@@ -243,45 +246,66 @@ class MultiMat {
         {
           auto alk = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           auto pk = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) / alk;
-          if (alk < al_eps && std::fabs((pk-pmax)/pmax) > 1e-08)
+          // for positive volume fractions
+          if (alk > 0.0)
           {
-            //auto gk =
-            //  g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][k];
+            // check if volume fraction is lesser than threshold (al_eps) and
+            // if the material pressure is significantly different from pressure
+            // of material present in majority. If both these conditions are
+            // true, perform pressure relaxation.
+            if ((alk < al_eps) && (std::fabs((pk-pmax)/pmax) > 1e-08))
+            {
+              //auto gk =
+              //  g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][k];
 
-            tk::real alk_new(0.0);
-            //// volume change based on polytropic expansion/isentropic compression
-            //if (pk > p_target)
-            //{
-            //  alk_new = std::pow((pk/p_target), (1.0/gk)) * alk;
-            //}
-            //else
-            //{
-            //  auto arhok = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset);
-            //  auto ck = eos_soundspeed< eq >(m_system, arhok, alk*pk, alk, k);
-            //  auto kk = arhok * ck * ck;
-            //  alk_new = alk - (alk*alk/kk) * (p_target-pk);
-            //}
-            alk_new = alk;
+              tk::real alk_new(0.0);
+              //// volume change based on polytropic expansion/isentropic compression
+              //if (pk > p_target)
+              //{
+              //  alk_new = std::pow((pk/p_target), (1.0/gk)) * alk;
+              //}
+              //else
+              //{
+              //  auto arhok = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset);
+              //  auto ck = eos_soundspeed< eq >(m_system, arhok, alk*pk, alk, k);
+              //  auto kk = arhok * ck * ck;
+              //  alk_new = alk - (alk*alk/kk) * (p_target-pk);
+              //}
+              alk_new = alk;
 
-            // energy change
-            auto rhomat = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset)
-              / alk_new;
-            rhoEmat = eos_totalenergy< eq >(m_system, rhomat, u, v, w,
-              p_target, k);
+              // energy change
+              auto rhomat = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset)
+                / alk_new;
+              rhoEmat = eos_totalenergy< eq >(m_system, rhomat, u, v, w,
+                p_target, k);
 
-            // volume-fraction and total energy flux into majority material
-            d_al += (alk - alk_new);
-            d_arE += (unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset)
-              - alk_new * rhoEmat);
+              // volume-fraction and total energy flux into majority material
+              d_al += (alk - alk_new);
+              d_arE += (unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset)
+                - alk_new * rhoEmat);
 
+              // update state of trace material
+              unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) = alk_new;
+              unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = alk_new*rhoEmat;
+              prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk_new*p_target;
+            }
+          }
+          // check for unbounded volume fractions
+          else if (alk < 0.0)
+          {
+            auto rhok = eos_density< eq >(m_system, p_target, tmax, k);
+            d_al += (alk - 1e-14);
             // update state of trace material
-            unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) = alk_new;
-            unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = alk_new*rhoEmat;
-            prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk_new*p_target;
+            unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14;
+            unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14 * rhok;
+            unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14
+              * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
+            prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14 *
+              p_target;
           }
         }
 
-        //// 2. Based on volume change in majority material, compute energy change
+        // 2. Based on volume change in majority material, compute energy change
         //auto gmax =
         //  g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][kmax];
         //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
@@ -292,7 +316,7 @@ class MultiMat {
         //auto d_arEmax_new = (almax+d_al) * rhoEmax_new
         //  - unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset);
 
-        //unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset) += d_al;
+        unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset) += d_al;
         //unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset) += d_arEmax_new;
 
         // 2. Flux energy change into majority material
@@ -323,6 +347,7 @@ class MultiMat {
             std::cout << "Partial density:  " << arho << std::endl;
             std::cout << "Partial pressure: " << apr << std::endl;
             std::cout << "Major pressure:   " << pmax << std::endl;
+            std::cout << "Major temperature:" << tmax << std::endl;
             std::cout << "Velocity:         " << u << ", " << v << ", " << w
               << std::endl;
           };
@@ -776,6 +801,7 @@ class MultiMat {
     //! Return field output going to file
     //! \param[in] rdof Total number of degrees of freedom
     //! \param[in] nunk Number of unknowns
+    //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \return Vector of vectors to be output to file
@@ -784,7 +810,7 @@ class MultiMat {
                  tk::real,
                  std::size_t rdof,
                  std::size_t nunk,
-                 const tk::Fields&,
+                 const tk::Fields& geoElem,
                  tk::Fields& U,
                  const tk::Fields& P ) const
     {
@@ -792,12 +818,14 @@ class MultiMat {
       auto nmat =
         g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
 
-      return MultiMatFieldOutput(m_system, nmat, m_offset, nunk, rdof, U, P);
+      return MultiMatFieldOutput(m_system, nmat, m_offset, nunk, rdof, geoElem,
+        U, P);
     }
 
     //! Return nodal field output going to file
     //! \param[in] npoin Number of nodes
     //! \param[in] esup Elements surrounding points
+    //! \param[in] geoElem Element geometry array
     //! \param[in,out] Unode Nodal solution vector
     //! \param[in,out] Pnode Nodal vector of primitive quantities
     //! \param[in,out] U Nodal solution vector at recent time step
@@ -809,7 +837,7 @@ class MultiMat {
                  std::size_t npoin,
                  const std::map< std::size_t, std::vector< std::size_t > >&
                    esup,
-                 const tk::Fields&,
+                 const tk::Fields& geoElem,
                  tk::Fields& Unode,
                  tk::Fields& Pnode,
                  tk::Fields& U,
@@ -823,8 +851,8 @@ class MultiMat {
       tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
         Pnode);
 
-      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, 1, Unode,
-        Pnode);
+      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, 1, geoElem,
+        Unode, Pnode);
     }
 
     //! Return surface field output going to file

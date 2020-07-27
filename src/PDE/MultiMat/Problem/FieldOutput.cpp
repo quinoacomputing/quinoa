@@ -13,6 +13,7 @@
 #include "FieldOutput.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "EoS/EoS.hpp"
+#include "Vector.hpp"
 
 namespace inciter {
 
@@ -41,6 +42,7 @@ MultiMatFieldNames( std::size_t nmat )
     n.push_back( "soundspeed"+std::to_string(k+1) );
   n.push_back( "total_energy_density_numerical" );
   n.push_back( "material_indicator" );
+  n.push_back( "timestep" );
 
   return n;
 }
@@ -52,6 +54,7 @@ MultiMatFieldOutput(
   ncomp_t offset,
   std::size_t nunk,
   std::size_t rdof,
+  const tk::Fields& geoElem,
   tk::Fields& U,
   const tk::Fields& P )
 // *****************************************************************************
@@ -76,9 +79,10 @@ MultiMatFieldOutput(
   // - nmat material sound-speeds
   // - 1 bulk total energy density
   // - 1 material indicator
-  // leading to a size of 4*nmat+7
+  // - 1 time-step
+  // leading to a size of 4*nmat+8
   std::vector< std::vector< tk::real > >
-    out( 4*nmat+7, std::vector< tk::real >( nunk ) );
+    out( 4*nmat+8, std::vector< tk::real >( nunk ) );
 
   //// mesh node coordinates
   //const auto& x = coord[0];
@@ -151,6 +155,30 @@ MultiMatFieldOutput(
       out[4*nmat+6][i] += U(i, volfracDofIdx(nmat,k,rdof,0), offset)
         * static_cast< tk::real >(k+1);
     }
+  }
+
+  // time-step
+  for (std::size_t i=0; i<nunk; ++i) {
+    // advection velocity
+    auto u = U(i, velocityDofIdx(nmat,0,rdof,0), offset);
+    auto v = U(i, velocityDofIdx(nmat,1,rdof,0), offset);
+    auto w = U(i, velocityDofIdx(nmat,2,rdof,0), offset);
+
+    auto vn = std::sqrt(tk::dot({{u, v, w}}, {{u, v, w}}));
+
+    // acoustic speed
+    auto a = 0.0;
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      if (U(i, volfracDofIdx(nmat,k,rdof,0), offset) > 1.0e-04) {
+        a = std::max( a, eos_soundspeed< tag::multimat >( 0,
+          U(i, densityDofIdx(nmat,k,rdof,0), offset),
+          P(i, pressureDofIdx(nmat,k,rdof,0), offset),
+          U(i, volfracDofIdx(nmat,k,rdof,0), offset), k ) );
+      }
+    }
+
+    out[4*nmat+7][i] = geoElem(i,4,0) / (std::fabs(vn) + a);
   }
 
   return out;

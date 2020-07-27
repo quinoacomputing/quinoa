@@ -5,6 +5,7 @@ add_library(MultiMatProblem
             WaterAirShocktube.cpp
             TriplePoint.cpp
             GasImpact.cpp
+            GasImpact4Mat.cpp
             ShockHeBubble.cpp
             UnderwaterEx.cpp)
 
