@@ -177,6 +177,30 @@ class UnsMesh {
               "Size of tetinpoel must be divisible by 4" );
     }
 
+    //! \brief Constructor copying over triangle element connectivity and array
+    //!    of point coordinates
+    explicit UnsMesh(
+      const Coords& coord,
+      const std::vector< std::size_t >& triinp,
+      const std::vector< std::string >& nodevarnames = {},
+      const std::vector< tk::real >& vartimes = {},
+      const std::vector< std::vector< std::vector< tk::real > > >&
+        nodevars = {} ) :
+      m_graphsize( graphsize( triinp ) ),
+      m_lininpoel(),
+      m_triinpoel( triinp ),
+      m_tetinpoel(),
+      m_x( coord[0] ),
+      m_y( coord[1] ),
+      m_z( coord[2] ),
+      m_nodevarnames( nodevarnames ),
+      m_vartimes( vartimes ),
+      m_nodevars( nodevars )
+    {
+      Assert( m_triinpoel.size()%3 == 0,
+              "Size of triinpoel must be divisible by 3" );
+    }
+
     //! Constructor swallowing element connectivity and point coordinates
     explicit UnsMesh( std::vector< std::size_t >&& tetinp,
                       std::vector< real >&& X,
@@ -326,6 +350,29 @@ class UnsMesh {
     { return m_bnode; }
     ///@}
 
+    /** @name Node variable names accessors */
+    ///@{
+    const std::vector< std::string >& nodevarnames() const noexcept
+    { return m_nodevarnames; }
+    std::vector< std::string >& nodevarnames() noexcept
+    { return m_nodevarnames; }
+    ///@}
+
+    /** @name Variable times accessors */
+    ///@{
+    const std::vector< tk::real >& vartimes() const noexcept
+    { return m_vartimes; }
+    std::vector< tk::real >& vartimes() noexcept { return m_vartimes; }
+    ///@}
+
+    /** @name Node variables accessors */
+    ///@{
+    const std::vector< std::vector< std::vector< tk::real > > >& nodevars()
+    const noexcept { return m_nodevars; }
+    std::vector< std::vector< std::vector< tk::real > > >& nodevars() noexcept
+    { return m_nodevars; }
+    ///@}
+
   private:
     //! Number of nodes
     //! \details Stores the size (number of nodes) of the mesh graph.
@@ -360,6 +407,15 @@ class UnsMesh {
     //!   adjacent to side set associated to side set id.
     //! \note This is what ExodusII calls side set side list.
     std::map< int, std::vector< std::size_t > > m_faceid;
+
+    //! Node field data names
+    std::vector< std::string > m_nodevarnames;
+
+    //! Time values for node field data
+    std::vector< tk::real > m_vartimes;
+
+    //! Node field data
+    std::vector< std::vector< std::vector< tk::real > > > m_nodevars;
 
     //! Compute and return number of unique nodes in element connectivity
     //! \param[in] inpoel Element connectivity

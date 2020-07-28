@@ -136,7 +136,7 @@ FileParser::diagnostics( const tk::Print& print,
         // special-handle the beginning of the line with no space in front of it
         if (sloc == std::string::npos) sloc = 0; else ++sloc;
         // underline error and warning differently
-        for (auto i=sloc; i<std::max(cnum,l.underline.size()); ++i)
+        for (auto i=sloc; i<l.underline.size(); ++i)
           l.underline[i] = underchar;
       }
     } else if (!e.empty()) lines.emplace( 0, ErroneousLine(e) );

@@ -85,7 +85,9 @@ class Main : public CBase_Main {
                         ( msg->argc, msg->argv,
                           m_cmdline,
 			  tk::HeaderType::FILECONV,
-			  tk::fileconv_executable() ) ),
+			  tk::fileconv_executable(),
+                          m_cmdline.get< tag::io, tag::screen >(),
+                          m_cmdline.get< tag::io, tag::nrestart >() ) ),
       m_timer(1),       // Start new timer measuring the total runtime
       m_timestamp()
     {
@@ -114,8 +116,9 @@ class Main : public CBase_Main {
     //! Towards normal exit but collect chare state first (if any)
     void finalize() {
       tk::finalize( m_cmdline, m_timer, stateProxy, m_timestamp,
-                    tk::fileconv_executable(),
-                    CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+        m_cmdline.get< tag::io, tag::screen >(),
+        m_cmdline.get< tag::io, tag::nrestart >(),
+        CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
     }
 
     //! Entry method triggered when quiescence is detected
@@ -128,7 +131,10 @@ class Main : public CBase_Main {
 
     //! Dump chare state
     void dumpstate( CkReductionMsg* msg ) {
-      tk::dumpstate( m_cmdline, tk::fileconv_executable(), msg );
+      tk::dumpstate( m_cmdline,
+        m_cmdline.get< tag::io, tag::screen >(),
+        m_cmdline.get< tag::io, tag::nrestart >(),
+        msg );
     }
 
     //! Add a time stamp contributing to final timers output

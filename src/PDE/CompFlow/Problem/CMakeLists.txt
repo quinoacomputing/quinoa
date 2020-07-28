@@ -17,6 +17,7 @@ target_include_directories(CompFlowProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/Mesh
                            ${QUINOA_SOURCE_DIR}/PDE
+                           ${QUINOA_SOURCE_DIR}/Inciter
                            ${PROJECT_BINARY_DIR}/../Main
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}

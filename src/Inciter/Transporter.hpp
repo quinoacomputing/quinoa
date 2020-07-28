@@ -124,6 +124,9 @@ class Transporter : public CBase_Transporter {
     //!   after mesh refinement
     void resized();
 
+    //! Reduction target: all worker chares have generated their own esup
+    void startEsup();
+
     //! Reduction target: all Sorter chares have queried their boundary nodes
     void queried();
     //! \brief Reduction target: all Sorter chares have responded with their
@@ -178,6 +181,9 @@ class Transporter : public CBase_Transporter {
     //!    workers
     void pdfstat( CkReductionMsg* msg );
 
+    //! Reduction target computing total volume of IC box
+    void boxvol( tk::real v );
+
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
@@ -186,10 +192,10 @@ class Transporter : public CBase_Transporter {
     void resume();
 
     //! Save checkpoint/restart files
-    void checkpoint( tk::real it, tk::real t );
+    void checkpoint( int finished );
 
     //! Normal finish of time stepping
-    void finish( tk::real it, tk::real t );
+    void finish();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -209,8 +215,7 @@ class Transporter : public CBase_Transporter {
       p | m_sorter;
       p | m_nelem;
       p | m_npoin;
-      p | m_t;
-      p | m_it;
+      if (p.isUnpacking()) m_finished = 0;      // returning from checkpoint
       p | m_meshvol;
       p | m_minstat;
       p | m_maxstat;
@@ -235,8 +240,7 @@ class Transporter : public CBase_Transporter {
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number of mesh elements
     std::size_t m_npoin;                 //!< Total number mesh points
-    tk::real m_t;                        //!< Physical time
-    uint64_t m_it;                       //!< Iteration count
+    int m_finished;                      //!< True if finished with timestepping
     //! Total mesh volume
     tk::real m_meshvol;
     //! Minimum mesh statistics
@@ -282,8 +286,12 @@ class Transporter : public CBase_Transporter {
 
     //! Create pretty printer specialized to Inciter
     //! \return Pretty printer
-    InciterPrint printer() const { return
-      InciterPrint( tk::inciter_executable() + "_screen.log",
+    InciterPrint printer() const {
+      const auto& def =
+        g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+      auto nrestart = g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
+      return InciterPrint(
+        g_inputdeck.get< tag::cmd >().logname( def, nrestart ),
         g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
         std::ios_base::app );
     }

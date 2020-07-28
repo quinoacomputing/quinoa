@@ -58,6 +58,7 @@ bndLeastSqConservedVar_P0P1( ncomp_t system,
   const Fields& geoElem,
   real t,
   const StateFn& state,
+  const Fields& P,
   const Fields& U,
   std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
   std::size_t nprim=0 );
@@ -90,6 +91,30 @@ solveLeastSq_P0P1(
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
   Fields& W );
 
+//! \brief Reconstruct the second-order solution using least-squares approach
+//!   from an extended stencil involving the node-neighbors
+void
+recoLeastSqExtStencil( std::size_t rdof,
+  std::size_t offset,
+  std::size_t nelem,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const Fields& geoElem,
+  Fields& W );
+
+//! Compute nodal field outputs
+void
+nodeAvg( std::size_t ncomp,
+  std::size_t nprim,
+  std::size_t offset,
+  std::size_t rdof,
+  std::size_t npoin,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const Fields& U,
+  const Fields& P,
+  Fields& Unode,
+  Fields& Pnode );
+
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
 transform_P0P1( ncomp_t ncomp,
@@ -100,14 +125,15 @@ transform_P0P1( ncomp_t ncomp,
                 const UnsMesh::Coords& coord,
                 Fields& W );
 
-//! \brief Compute MUSCL reconstruction in edge-end points using a MUSCL
-//!   procedure with Van Leer limiting
+//! Compute safe reconstructions near material interfaces
 void
-muscl( const UnsMesh::Edge& edge,
-       const UnsMesh::Coords& coord,
-       const Fields& G,
-       std::array< std::vector< tk::real >, 2 >& u,
-       bool enforce_realizability = false );
+safeReco( std::size_t offset,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t el,
+  int er,
+  const Fields& U,
+  std::array< std::vector< real >, 2 >& state );
 
 } // tk::
 

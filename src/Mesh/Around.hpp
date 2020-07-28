@@ -54,24 +54,24 @@ class Around {
     //! \return Iterator to the beginning of the entries of surrounding entries
     //! \note This class does not allow modifing the underlying linked list, so
     //!   the begin/end iterators are aliased to cbegin/cend.
-    const_iterator begin() const { return this->cbegin(); }
+    const_iterator begin() const noexcept { return this->cbegin(); }
 
     //! Const iterator to the entry after the last of the surrounding entries
     //! \return Iterator to the entry after the last of the surrounding entries
     //! \note This class does not allow modifing the underlying linked list, so
     //!   the begin/end iterators are aliased to cbegin/cend.
-    const_iterator end() const { return this->cend(); }
+    const_iterator end() const noexcept { return this->cend(); }
 
     //! Iterator to the beginning of the entries of surrounding entries
     //! \return Iterator to the beginning of the entries of surrounding entries
-    const_iterator cbegin() const {
+    const_iterator cbegin() const noexcept {
       return m_list.first.cbegin() +
              static_cast< diff_type >( m_list.second[m_idx] + 1 );
     }
 
     //! Iterator to the entry after the last of the surrounding entries
     //! \return Iterator to the entry after the last of the surrounding entries
-    const_iterator cend() const {
+    const_iterator cend() const noexcept {
       return m_list.first.cbegin() +
              static_cast< diff_type >( m_list.second[m_idx+1] + 1 );
     }

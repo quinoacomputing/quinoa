@@ -14,7 +14,6 @@ add_library(Base
             Reader.cpp
             Writer.cpp
             Table.cpp
-            Vector.cpp
             PrintUtil.cpp
             ChareStateCollector.cpp
 )

@@ -32,7 +32,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! \see e.g., inciter::CompFlowProblemVorticalFlow::solution
 //! \note Used for both continuous and discontinuous Galerkin discretizations
 using SolutionFn = std::function<
-  std::vector< real >( ncomp_t, ncomp_t, real, real, real, real ) >;
+  std::vector< real >( ncomp_t, ncomp_t, real, real, real, real, int& ) >;
 
 //! Function prototype for Riemann flux functions
 //! \details Functions of this type are used to compute numerical fluxes across a
@@ -70,13 +70,23 @@ using StateFn = std::function<
   ( ncomp_t, ncomp_t, const std::vector< real >&, real, real, real, real,
     const std::array< tk::real, 3 >& ) >;
 
-//! Function prototype for evaluating a source term for a system of PDEs
+//! Function prototype for evaluating a source term for CompFlow
 //! \details Functions of this type are used to evaluate an arbitrary source
-//!   term specialized to a particular problem, e.g., derived using the method
-//!   of manufactured solutions, and specialized to a particular system of PDEs
+//!   term specialized to a particular CompFlow problem, e.g., derived using the
+//!   method of manufactured solutions
 //! \see e.g., CompFlowProblemRayleighTaylor::src
-using SrcFn = std::function<
-  std::vector< tk::real >( ncomp_t, ncomp_t, real, real, real, real ) >;
+using CompFlowSrcFn = std::function<
+  void( ncomp_t, tk::real, tk::real, tk::real, tk::real,
+        tk::real&, tk::real&, tk::real&, tk::real&, tk::real& ) >;
+
+//! Function prototype for evaluating a source term for MultiMat
+//! \details Functions of this type are used to evaluate an arbitrary source
+//!   term specialized to a particular MultiMat problem, e.g., derived using the
+//!   method of manufactured solutions
+//! \warning The number of in/out variables are almsot certainly wrong here.
+using MultiMatSrcFn = std::function<
+  void( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real,
+        tk::real&, tk::real&, tk::real&, tk::real&, tk::real& ) >;
 
 //! \brief Function prototype for computing the element gradient contribution to a
 //!    nodal gradient in ALECG
@@ -89,6 +99,8 @@ using ElemGradFn = std::function<
                           std::size_t,
                           const std::array< std::vector< tk::real >, 3 >&,
                           const std::vector< std::size_t >&,
+                          const std::tuple< std::vector< tk::real >,
+                                            std::vector< tk::real > >&,
                           const tk::Fields& ) >;
 
 } // tk::

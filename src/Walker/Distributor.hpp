@@ -177,8 +177,12 @@ class Distributor : public CBase_Distributor {
 
     //! Create pretty printer specialized to Walker
     //! \return Pretty printer
-    WalkerPrint printer() const { return
-      WalkerPrint( tk::walker_executable() + "_screen.log",
+    WalkerPrint printer() const {
+      const auto& def =
+        g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+      auto nrestart = g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
+      return WalkerPrint(
+        g_inputdeck.get< tag::cmd >().logname( def, nrestart ),
         g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
         std::ios_base::app );
     }

@@ -37,6 +37,7 @@ add_library(NativeMeshIO
             NetgenMeshReader.cpp
             ASCMeshReader.cpp
             UGRIDMeshReader.cpp
+            RDGFLOMeshReader.cpp
             GmshMeshWriter.cpp
             NetgenMeshWriter.cpp
             #SiloWriter.cpp
@@ -114,7 +115,7 @@ if (HAS_OMEGA_H)
   )
 endif()
 
-if (HAS_ROOT)
+if (HAS_ROOT AND ENABLE_FILECONV)
   add_library(RootMeshIO
               FileConvWriter.cpp
               RootMeshWriter.cpp)
@@ -139,25 +140,26 @@ if (HAS_ROOT)
   )
 endif()
 
-add_library(HyperMeshIO
-            HyperMeshReader.cpp)
-
-target_include_directories(HyperMeshIO PUBLIC
-                           ${QUINOA_SOURCE_DIR}
-                           ${QUINOA_SOURCE_DIR}/Base
-                           ${QUINOA_SOURCE_DIR}/Mesh
-                           ${TPL_INCLUDE_DIR}
-                           ${HIGHWAYHASH_INCLUDE_DIRS}
-                           ${PUGIXML_INCLUDE_DIRS})
-
-set_target_properties(HyperMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
-                      quinoa_hypermeshio)
-
-INSTALL(TARGETS HyperMeshIO
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+if (ENABLE_UNITTEST OR ENABLE_MESHCONV)
+  add_library(HyperMeshIO
+              HyperMeshReader.cpp)
+  
+  target_include_directories(HyperMeshIO PUBLIC
+                             ${QUINOA_SOURCE_DIR}
+                             ${QUINOA_SOURCE_DIR}/Base
+                             ${QUINOA_SOURCE_DIR}/Mesh
+                             ${TPL_INCLUDE_DIR}
+                             ${HIGHWAYHASH_INCLUDE_DIRS}
+                             ${PUGIXML_INCLUDE_DIRS})
+  
+  set_target_properties(HyperMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
+                        quinoa_hypermeshio)
+  
+  INSTALL(TARGETS HyperMeshIO
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+endif()
 
 add_library(MeshDetect
             MeshDetect.cpp)

@@ -28,6 +28,7 @@
 
 #include "Exception.hpp"
 #include "ProcessException.hpp"
+#include "QuinoaConfig.hpp"
 
 namespace tk {
 
@@ -54,11 +55,11 @@ signalHandler( int signum )
   const char* name = nullptr;
   switch( signum ) {
     case SIGABRT: name = "SIGABRT";  break;
-    case SIGFPE:  name = "SIGFPE";  break;
+    case SIGFPE:  name = "SIGFPE";   break;
     case SIGILL:  name = "SIGILL";   break;
-    case SIGINT:  name = "SIGINT";  break;
+    case SIGINT:  name = "SIGINT";   break;
     case SIGSEGV: name = "SIGSEGV";  break;
-    case SIGTERM: name = "SIGTERM";   break;
+    case SIGTERM: name = "SIGTERM";  break;
   }
 
   // Echo what signal is caught
@@ -95,11 +96,9 @@ setSignalHandlers()
   signal( SIGSEGV, tk::signalHandler );
   signal( SIGTERM, tk::signalHandler );
 
-  // This is commented at this time, because there is at least a single SIGFPE
-  // that is generated from a place we have no control over, e.g., pthreads.
-  // Will revisit in the future, because this should be enabled to detect and
-  // terminate with a trace on floating point exceptions.
-  //feenableexcept( FE_ALL_EXCEPT );
+  #if !defined(__APPLE__) && !defined(HOST_OS_ALPINE)
+  feenableexcept( FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW );
+  #endif
 
   return 0;
 }

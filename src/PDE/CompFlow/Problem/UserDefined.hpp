@@ -33,13 +33,22 @@ class CompFlowProblemUserDefined {
     using eq = tag::compflow;
 
   public:
-    //! Evaluate initial condition solution at (x,y,z,t) for all components
+    //! Set initial conditions
     static tk::SolutionFn::result_type
-    solution( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real );
+    solution( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real,
+              int& inbox );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
-    static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
+    //! \param[in,out] r Density source
+    //! \param[in,out] ru X momentum source
+    //! \param[in,out] rv Y momentum source
+    //! \param[in,out] rw Z momentum source
+    //! \param[in,out] re Specific total energy source
+    //! \note The function signature must follow tk::SrcFn
+    static tk::CompFlowSrcFn::result_type
+    src( ncomp_t, tk::real, tk::real, tk::real, tk::real,
+         tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
+    { r = ru = rv = rw = re = 0.0; }
 
     //! Return field names to be output to file
     std::vector< std::string > fieldNames( ncomp_t ) const;
@@ -49,6 +58,7 @@ class CompFlowProblemUserDefined {
     fieldOutput( ncomp_t,
                  ncomp_t,
                  ncomp_t offset,
+                 std::size_t nunk,
                  tk::real,
                  tk::real,
                  const std::vector< tk::real >&,

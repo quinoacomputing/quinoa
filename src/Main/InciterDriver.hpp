@@ -23,7 +23,7 @@ class InciterDriver {
 
   public:
     //! Constructor
-    explicit InciterDriver( const ctr::CmdLine& cmdline );
+    explicit InciterDriver( const ctr::CmdLine& cmdline, int nrestart );
 
     //! Execute driver
     void execute() const;

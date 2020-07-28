@@ -13,6 +13,8 @@
 #ifndef Discretization_h
 #define Discretization_h
 
+#include <brigand/algorithms/for_each.hpp>
+
 #include "Types.hpp"
 #include "Timer.hpp"
 #include "Keywords.hpp"
@@ -21,11 +23,15 @@
 #include "PDFReducer.hpp"
 #include "UnsMesh.hpp"
 #include "CommMap.hpp"
+#include "History.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
 
 namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
 
 //! \brief Discretization Charm++ chare array holding common functinoality to
 //!   all discretization schemes
@@ -104,6 +110,9 @@ class Discretization : public CBase_Discretization {
     //! Compute mesh cell statistics
     void stat( tk::real mesh_volume );
 
+    //! Compute total box IC volume
+    void boxvol( const std::vector< std::size_t >& boxnodes );
+
     /** @name Accessors */
     ///@{
     //! Coordinates accessors as const-ref
@@ -141,6 +150,12 @@ class Discretization : public CBase_Discretization {
     //! Nodal mesh volumes accessors as non-const-ref
     std::vector< tk::real >& Vol() { return m_vol; }
 
+    //! History points data accessor as const-ref
+    const std::vector< HistData >& Hist() const { return m_histdata; }
+
+    //! Box volume accessor
+    tk::real& Boxvol() { return m_boxvol; }
+
     //! Time step size accessor
     tk::real Dt() const { return m_dt; }
     //! Physical time accessor
@@ -152,6 +167,9 @@ class Discretization : public CBase_Discretization {
     uint64_t& Itr() { return m_itr; }
     //! Non-const-ref field-output iteration count accessor
     uint64_t& Itf() { return m_itf; }
+
+    //! Non-const-ref number of restarts accessor
+    int& Nrestart() { return m_nrestart; }
 
     //! Timer accessor as const-ref
     const tk::Timer& Timer() const { return m_timer; }
@@ -207,6 +225,16 @@ class Discretization : public CBase_Discretization {
     //! Otput one-liner status report
     void status();
 
+    //! Construct history output filename
+    std::string histfilename( const std::string& id,
+                              kw::precision::info::expect::type precision );
+
+    //! Output headers for time history files (one for each point)
+    void histheader( std::vector< std::string >&& names );
+
+    //! Output time history for a time step
+    void history( std::vector< std::vector< tk::real > >&& data );
+
     //! Output mesh and fields data (solution dump) to file(s)
     void write( const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
@@ -215,15 +243,74 @@ class Discretization : public CBase_Discretization {
                 const std::vector< std::size_t >& triinpoel,
                 const std::vector< std::string>& elemfieldnames,
                 const std::vector< std::string>& nodefieldnames,
+                const std::vector< std::string>& nodesurfnames,
                 const std::vector< std::vector< tk::real > >& elemfields,
                 const std::vector< std::vector< tk::real > >& nodefields,
+                const std::vector< std::vector< tk::real > >& nodesurfs,
                 CkCallback c );
 
     //! Zero grind-timer
     void grindZero();
 
+    //! Detect if just returned from a checkpoint and if so, zero timers
+    bool restarted( int nrestart );
+
     //! Remap mesh data due to new local ids
     void remap( const std::unordered_map< std::size_t, std::size_t >& map );
+
+    //! \brief Function object for querying the node ids at which a particular
+    //!   BCType BC is configured by the user, called for each PDE type
+    template< typename BCType >
+    struct BCNodes {
+
+      const std::map< int, std::vector< std::size_t > >& m_bface;
+      const std::vector< std::size_t >& m_triinpoel;
+      std::unordered_map< int, std::unordered_set< std::size_t > >& m_nodes;
+
+      explicit
+        BCNodes( const std::map< int, std::vector< std::size_t > >& bface,
+                 const std::vector< std::size_t >& triinpoel,
+                 std::unordered_map< int,
+                   std::unordered_set< std::size_t > >& nodes )
+        : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes) {}
+
+      template< typename Eq > void operator()( brigand::type_<Eq> ) {
+        const auto& bc =
+          g_inputdeck.template get< tag::param, Eq, tag::bc, BCType >();
+        for (const auto& eq : bc) {
+          for (const auto& s : eq) {
+            auto k = m_bface.find( std::stoi(s) );
+            if (k != end(m_bface)) {
+              auto& n = m_nodes[ k->first ];  // associate set id
+              for (auto f : k->second) {      // face ids on BCType side set
+                n.insert( m_triinpoel[f*3+0] );
+                n.insert( m_triinpoel[f*3+1] );
+                n.insert( m_triinpoel[f*3+2] );
+              }
+            }
+          }
+        }
+      }
+    };
+
+    //! \brief Query nodes at which BCType boundary conditions are set for all
+    //!   PDE types
+    //! \tparam BCType Boundary condition type
+    //! \param[in] bface Boundary-faces mapped to side set ids
+    //! \param[in] triinpoel Boundary-face connectivity
+    //! \return Node ids at which BCType BCs are set (value),
+    //!    associated to sides set id on which the BC is set (key)
+    template< typename BCType >
+    std::unordered_map< int, std::unordered_set< std::size_t > >
+    bcnodes( const std::map< int, std::vector< std::size_t > >& bface,
+             const std::vector< std::size_t >& triinpoel ) const
+    {
+      using PDETypes = ctr::parameters::Keys;
+      std::unordered_map< int, std::unordered_set< std::size_t > > nodes;
+      brigand::for_each< PDETypes >(
+        BCNodes< BCType >( bface, triinpoel, nodes ) );
+      return nodes;
+    }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -256,10 +343,13 @@ class Discretization : public CBase_Discretization {
       p | m_v;
       p | m_vol;
       p | m_volc;
+      p | m_boxvol;
       p | m_bid;
       p | m_timer;
       p | m_refined;
       p( reinterpret_cast<char*>(&m_prevstatus), sizeof(Clock::time_point) );
+      p | m_nrestart;
+      p | m_histdata;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -342,6 +432,8 @@ class Discretization : public CBase_Discretization {
     //!   cell volumes / 4) with contributions from other chares on
     //!   chare-boundaries.
     std::unordered_map< std::size_t, tk::real > m_volc;
+    //! Volume of user-defined box IC
+    tk::real m_boxvol;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of elements we
     //!   contribute to
@@ -352,6 +444,10 @@ class Discretization : public CBase_Discretization {
     int m_refined;
     //! Time point storing clock state at status()
     Clock::time_point m_prevstatus;
+    //! Number of times restarted
+    int m_nrestart;
+    //! Data at history point locations
+    std::vector< HistData > m_histdata;
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );

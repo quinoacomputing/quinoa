@@ -16,6 +16,7 @@
 #include "DerivedData.hpp"
 #include "Discretization.hpp"
 #include "MeshWriter.hpp"
+#include "DiagWriter.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/Options/Scheme.hpp"
 #include "Print.hpp"
@@ -25,6 +26,7 @@ namespace inciter {
 
 static CkReduction::reducerType PDFMerger;
 extern ctr::InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
 
 } // inciter::
 
@@ -61,7 +63,9 @@ Discretization::Discretization(
   m_bid(),
   m_timer(),
   m_refined( 0 ),
-  m_prevstatus( std::chrono::high_resolution_clock::now() )
+  m_prevstatus( std::chrono::high_resolution_clock::now() ),
+  m_nrestart( 0 ),
+  m_histdata()
 // *****************************************************************************
 //  Constructor
 //! \param[in] fctproxy Distributed FCT proxy
@@ -113,6 +117,21 @@ Discretization::Discretization(
   std::size_t npoin = m_gid.size();
   for (auto g : m_gid) if (slave(g)) --npoin;
 
+  // Find host elements of user-specified points where time histories are
+  // saved, and save the shape functions evaluated at the point locations
+  const auto& pt = g_inputdeck.get< tag::history, tag::point >();
+  const auto& id = g_inputdeck.get< tag::history, tag::id >();
+  for (std::size_t p=0; p<pt.size(); ++p) {
+    std::array< tk::real, 4 > N;
+    const auto& l = pt[p];
+    for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+      if (tk::intet( m_coord, m_inpoel, l, e, N )) {
+        m_histdata.push_back( HistData{{ id[p], e, {l[0],l[1],l[2]}, N }} );
+        break;
+      }
+    }
+  }
+
   // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
   // is configured false in the input deck, at this point, we still need the FCT
   // object as FCT is still being performed, only its results are ignored.
@@ -144,11 +163,11 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
   m_nodeCommMap = nodeCommMap;        // update node communication map
 
   // Generate local ids for new chare boundary global ids
-  std::size_t lid = m_bid.size();
+  std::size_t bid = m_bid.size();
   for (const auto& [ neighborchare, sharednodes ] : m_nodeCommMap)
     for (auto g : sharednodes)
       if (m_bid.find( g ) == end(m_bid))
-        m_bid[ g ] = lid++;
+        m_bid[ g ] = bid++;
 
   // Clear receive buffer that will be used for collecting nodal volumes
   m_volc.clear();
@@ -314,6 +333,9 @@ Discretization::vol()
   // chare-boundaries
   m_v = m_vol;
 
+  // Compute volume in user-defined IC box
+  
+
   // Send our nodal volume contributions to neighbor chares
   if (m_nodeCommMap.empty())
    totalvol();
@@ -463,6 +485,22 @@ Discretization::stat( tk::real mesh_volume )
 }
 
 void
+Discretization::boxvol( const std::vector< std::size_t >& nodes )
+// *****************************************************************************
+// Compute total box IC volume
+//! \param[in] nodes Node list contributing to box IC volume
+// *****************************************************************************
+{
+  // Compute partial box IC volume
+  tk::real boxvol = 0.0;
+  for (auto i : nodes) boxvol += m_v[i];
+
+  // Sum up box IC volume across all chares
+  contribute( sizeof(tk::real), &boxvol, CkReduction::sum_double,
+    CkCallback(CkReductionTarget(Transporter,boxvol), m_transporter) );
+}
+
+void
 Discretization::write(
   const std::vector< std::size_t >& inpoel,
   const tk::UnsMesh::Coords& coord,
@@ -471,8 +509,10 @@ Discretization::write(
   const std::vector< std::size_t >& triinpoel,
   const std::vector< std::string>& elemfieldnames,
   const std::vector< std::string>& nodefieldnames,
+  const std::vector< std::string>& nodesurfnames,
   const std::vector< std::vector< tk::real > >& elemfields,
   const std::vector< std::vector< tk::real > >& nodefields,
+  const std::vector< std::vector< tk::real > >& nodesurfs,
   CkCallback c )
 // *****************************************************************************
 //  Output mesh and fields data (solution dump) to file(s)
@@ -486,8 +526,10 @@ Discretization::write(
 //!   mesh chunk
 //! \param[in] elemfieldnames Names of element fields to be output to file
 //! \param[in] nodefieldnames Names of node fields to be output to file
+//! \param[in] nodesurfnames Names of node surface fields to be output to file
 //! \param[in] elemfields Field data in mesh elements to output to file
-//! \param[in] nodefields Field data in mesh node to output to file
+//! \param[in] nodefields Field data in mesh nodes to output to file
+//! \param[in] nodesurfs Surface field data in mesh nodes to output to file
 //! \param[in] c Function to continue with after the write
 //! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
 //!   an instance is guaranteed on every PE. We index the first PE on every
@@ -522,7 +564,8 @@ Discretization::write(
     write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex,
            g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
            inpoel, coord, bface, bnode, triinpoel, elemfieldnames,
-           nodefieldnames, elemfields, nodefields, c );
+           nodefieldnames, nodesurfnames, elemfields, nodefields, nodesurfs,
+           g_inputdeck.outsets(), c );
 }
 
 void
@@ -559,10 +602,94 @@ Discretization::grindZero()
 
   if (thisIndex == 0) {
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
-    tk::Print print( tk::inciter_executable() + "_screen.log",
+    const auto& def =
+      g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+    tk::Print print( g_inputdeck.get< tag::cmd >().logname( def, m_nrestart ),
                      verbose ? std::cout : std::clog,
                      std::ios_base::app );
     print.diag( "Starting time stepping" );
+  }
+}
+
+bool
+Discretization::restarted( int nrestart )
+// *****************************************************************************
+//  Detect if just returned from a checkpoint and if so, zero timers
+//! \param[in] nrestart Number of times restarted
+//! \return True if restart detected
+// *****************************************************************************
+{
+  // Detect if just restarted from checkpoint:
+  //   nrestart == -1 if there was no checkpoint this step
+  //   d->Nrestart() == nrestart if there was a checkpoint this step
+  //   if both false, just restarted from a checkpoint
+  bool restarted = nrestart != -1 && m_nrestart != nrestart;
+
+   // If just restarted from checkpoint
+  if (restarted) {
+    // Update number of restarts
+    m_nrestart = nrestart;
+    // Start timer measuring time stepping wall clock time
+    m_timer.zero();
+    // Zero grind-timer
+    grindZero();
+  }
+
+  return restarted;
+}
+
+std::string
+Discretization::histfilename( const std::string& id,
+                              kw::precision::info::expect::type precision )
+// *****************************************************************************
+//  Construct history output filename
+//! \param[in] id History point id
+//! \param[in] precision Floating point precision to use for output
+//! \return History file name
+// *****************************************************************************
+{
+  auto of = g_inputdeck.get< tag::cmd, tag::io, tag::output >();
+  std::stringstream ss;
+
+  ss << std::setprecision(static_cast<int>(precision)) << of << ".hist." << id;
+
+  return ss.str();
+}
+
+void
+Discretization::histheader( std::vector< std::string >&& names )
+// *****************************************************************************
+//  Output headers for time history files (one for each point)
+//! \param[in] names History output variable names
+// *****************************************************************************
+{
+  for (const auto& h : m_histdata) {
+    auto prec = g_inputdeck.get< tag::prec, tag::history >();
+    tk::DiagWriter hw( histfilename( h.get< tag::id >(), prec ),
+                       g_inputdeck.get< tag::flformat, tag::history >(),
+                       prec );
+    hw.header( names );
+  }
+}
+
+void
+Discretization::history( std::vector< std::vector< tk::real > >&& data )
+// *****************************************************************************
+//  Output time history for a time step
+//! \param[in] data Time history data for all variables and equations integrated
+// *****************************************************************************
+{
+  Assert( data.size() == m_histdata.size(), "Size mismatch" );
+
+  std::size_t i = 0;
+  for (const auto& h : m_histdata) {
+    auto prec = g_inputdeck.get< tag::prec, tag::history >();
+    tk::DiagWriter hw( histfilename( h.get< tag::id >(), prec ),
+                       g_inputdeck.get< tag::flformat, tag::history >(),
+                       prec,
+                       std::ios_base::app );
+    hw.diag( m_it, m_t, m_dt, data[i] );
+    ++i;
   }
 }
 
@@ -590,16 +717,21 @@ Discretization::status()
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
     const auto field = g_inputdeck.get< tag::interval,tag::field >();
     const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
+    const auto hist = g_inputdeck.get< tag::interval, tag::history >();
     const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
     const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
     const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
+    const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+    const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
 
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
-    m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
- 
-    tk::Print print( tk::inciter_executable() + "_screen.log",
+    if (!steady) m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
+
+    const auto& def =
+      g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+    tk::Print print( g_inputdeck.get< tag::cmd >().logname( def, m_nrestart ),
                      verbose ? std::cout : std::clog,
                      std::ios_base::app );
  
@@ -624,6 +756,7 @@ Discretization::status()
     // Augment one-liner status with output indicators
     if (!benchmark && !(m_it % field)) print << 'f';
     if (!(m_it % diag)) print << 'd';
+    if (!(m_it % hist) && !hist_points.empty()) print << 't';
     if (m_refined) print << 'h';
     if (!(m_it % lbfreq) && !finish) print << 'l';
     if (!benchmark && (!(m_it % rsfreq) || finish)) print << 'r';

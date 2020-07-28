@@ -105,6 +105,7 @@ namespace cmd {
                      io< kw::control, tag::control >,
                      io< kw::pdf, tag::pdf >,
                      io< kw::stat, tag::stat >,
+                     io< kw::screen, tag::screen >,
                      io< kw::particles, tag::particles > > {};
 
   //! entry point: parse keywords and until end of string

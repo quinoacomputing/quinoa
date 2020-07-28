@@ -19,6 +19,7 @@
 #include <iterator>
 #include <unordered_set>
 #include <type_traits>
+#include <sstream>
 
 #include "Exception.hpp"
 
@@ -57,10 +58,12 @@ uniquecopy( const Container& src )
 //! \note If key is not found an exception is thrown.
 template< typename Container >
 auto cref_find( const Container& map, const typename Container::key_type& key )
+noexcept(ndebug)
   -> const typename Container::mapped_type&
 {
   const auto it = map.find( key );
-  if (it != end(map)) return it->second; else Throw( "Can't find key" );
+  Assert( it != end(map), "Can't find key" );
+  return it->second;
 }
 
 //! \brief Find and return a reference to value for key in a container that
@@ -71,6 +74,7 @@ auto cref_find( const Container& map, const typename Container::key_type& key )
 //! \note If key is not found an exception is thrown.
 template< typename Container >
 auto ref_find( const Container& map, const typename Container::key_type& key )
+noexcept(ndebug)
   -> typename Container::mapped_type&
 {
   return const_cast< typename Container::mapped_type& >( cref_find(map,key) );
@@ -250,6 +254,19 @@ void concat( std::unordered_set< Key, Hash,Eq >&& src,
     std::move( std::begin(src), std::end(src), std::inserter(dst,end(dst)) );
     src.clear();
   }
+}
+
+//! \brief Convert and return values from container as string
+//! \tparam V Container range for works on
+//! \param[in] v Container whose components to return as a string
+//! \return Concatenated string of values read from a container
+template< typename V >
+std::string parameters( const V& v ) {
+  std::stringstream s;
+  s << "{ ";
+  for (auto p : v) s << p << ' ';
+  s << "}";
+  return s.str();
 }
 
 } // tk::

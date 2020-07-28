@@ -126,7 +126,7 @@ add_regression_test(amr_dtref_u_compflow_nleg_diagcg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE nleg_diagcg_amr.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
+                    TEXT_DIFF_PROG_CONF nleg_diagcg.ndiff.cfg
                     LABELS diagcg amr)
 
 add_regression_test(amr_dtref_u_compflow_nleg_diagcg_migr ${INCITER_EXECUTABLE}
@@ -162,7 +162,7 @@ add_regression_test(amr_dtref_u_compflow_nleg_diagcg_migr ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE nleg_diagcg_amr.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
+                    TEXT_DIFF_PROG_CONF nleg_diagcg.ndiff.cfg
                     LABELS diagcg amr migration)
 
 add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg ${INCITER_EXECUTABLE}
@@ -197,7 +197,7 @@ add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE nleg_diagcg_amr.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
+                    TEXT_DIFF_PROG_CONF nleg_diagcg.ndiff.cfg
                     LABELS diagcg amr)
 
  add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg_migr
@@ -234,7 +234,7 @@ add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg ${INCITER_EXECUTABLE}
                      BIN_DIFF_PROG_ARGS -m
                      TEXT_BASELINE nleg_diagcg_amr.std
                      TEXT_RESULT diag
-                     TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
+                     TEXT_DIFF_PROG_CONF nleg_diagcg.ndiff.cfg
                      LABELS diagcg amr migration)
 
 add_regression_test(amr_dtref_u_trans_gauss_hump_dg ${INCITER_EXECUTABLE}

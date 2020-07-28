@@ -30,7 +30,8 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
                                        tk::real x,
                                        tk::real,
                                        tk::real,
-                                       tk::real )
+                                       tk::real,
+                                       int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -76,18 +77,6 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-tk::SrcFn::result_type
-CompFlowProblemSodShocktube::src( ncomp_t, ncomp_t, tk::real,
-                                  tk::real, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-}
-
 std::vector< std::string >
 CompFlowProblemSodShocktube::fieldNames( ncomp_t ) const
 // *****************************************************************************
@@ -108,6 +97,7 @@ CompFlowProblemSodShocktube::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,
@@ -119,11 +109,12 @@ CompFlowProblemSodShocktube::fieldOutput(
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  return CompFlowFieldOutput( system, offset, U );
+  return CompFlowFieldOutput( system, offset, nunk, U );
 }
 
 std::vector< std::string >

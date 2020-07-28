@@ -28,6 +28,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
                     ncomp_t offset,
                     const std::size_t ndof,
                     const std::size_t rdof,
+                    const std::size_t nelem,
                     const std::vector< std::size_t >& inpoel,
                     const UnsMesh::Coords& coord,
                     const Fields& geoElem,
@@ -50,6 +51,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] nelem Total number of elements
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
@@ -75,7 +77,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
   auto nprim = P.nprop()/rdof;
 
   // compute volume integrals
-  for (std::size_t e=0; e<U.nunk(); ++e)
+  for (std::size_t e=0; e<nelem; ++e)
   {
     auto ng = tk::NGvol(ndofel[e]);
 
@@ -221,6 +223,7 @@ pressureRelaxationInt( ncomp_t system,
                        ncomp_t offset,
                        const std::size_t ndof,
                        const std::size_t rdof,
+                       const std::size_t nelem,
                        const Fields& geoElem,
                        const Fields& U,
                        const Fields& P,
@@ -241,6 +244,7 @@ pressureRelaxationInt( ncomp_t system,
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] nelem Total number of elements
 //! \param[in] geoElem Element geometry array
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitive quantities at recent time step
@@ -260,9 +264,9 @@ pressureRelaxationInt( ncomp_t system,
   auto nprim = P.nprop()/rdof;
 
   // compute volume integrals
-  for (std::size_t e=0; e<U.nunk(); ++e)
+  for (std::size_t e=0; e<nelem; ++e)
   {
-    auto dx = std::cbrt(geoElem(e, 0, 0));
+    auto dx = geoElem(e,4,0)/2.0;
     auto ng = NGvol(ndofel[e]);
 
     // arrays for quadrature points

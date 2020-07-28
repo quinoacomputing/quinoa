@@ -55,6 +55,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::helpctr
                                      , kw::helpkw
                                      , kw::control
+                                     , kw::screen
                                      , kw::pdf
                                      , kw::stat
                                      , kw::particles
@@ -106,6 +107,8 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //!   otherwise it would be a mutual dependency.
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
+      get< tag::io, tag::screen >() =
+        tk::baselogname( tk::walker_executable() );
       get< tag::io, tag::output >() = "out";
       get< tag::io, tag::pdf >() = "pdf";
       get< tag::io, tag::stat >() = "stat.txt";
@@ -131,6 +134,17 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //! \param[in,out] c CmdLine object reference
     friend void operator|( PUP::er& p, CmdLine& c ) { c.pup(p); }
     //@}
+
+    //! Compute and return log file name
+    //! \param[in] def Default log file name (so we don't mess with user's)
+    //! \param[in] nrestart Number of times restarted
+    //! \return Log file name
+    std::string logname( const std::string& def, int nrestart ) const {
+      if (get< tag::io, tag::screen >() != def)
+        return get< tag::io, tag::screen >();
+      else
+        return tk::logname( tk::walker_executable(), nrestart );
+    }
 };
 
 } // ctr::

@@ -48,6 +48,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
                       ${OMEGA_H_LIBRARIES}
+                      ${LUA_LIBRARIES}
                       ${LIBCXX_LIBRARIES}       # only for static link with libc++
                       ${LIBCXXABI_LIBRARIES})   # only for static link with libc++
 

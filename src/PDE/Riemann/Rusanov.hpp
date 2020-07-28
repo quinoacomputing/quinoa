@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Integrate/Riemann/Rusanov.hpp
+  \file      src/PDE/Riemann/Rusanov.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019 Triad National Security, LLC.
@@ -27,75 +27,74 @@ namespace inciter {
 //! \details This class can be used polymorphically with inciter::RiemannSolver
 struct Rusanov {
 
+  using real = tk::real;
+
   //! Rusanov approximate Riemann solver flux function
-  //! \param[in] fn Face/Surface normal
-  //! \param[in] u Left and right unknown/state vector
-  //! \param[in] aux Auxiliary vector, used here to pass in normal vectors
-  //!    weighted by the number of contributions to the edge
-  //! \return Riemann solution according to Rusanov
-  //! \note The function signature must follow tk::RiemannFluxFn
-  static tk::RiemannFluxFn::result_type
-  flux( const std::array< tk::real, 3 >& fn,
-        const std::array< std::vector< tk::real >, 2 >& u,
-        const std::vector< std::array< tk::real, 3 > >& aux )
+  //! \param[in] nx X component of the surface normal
+  //! \param[in] ny Y component of the surface normal
+  //! \param[in] nz Z component of the surface normal
+  //! \param[in] mx X component of the weighted surface normal on chare
+  //!   boundary, weighted by the number of contributions to the edge
+  //! \param[in] my Y component of the weighted surface normal on chare
+  //!   boundary, weighted by the number of contributions to the edge
+  //! \param[in] mz Z component of the weighted surface normal on chare
+  //!   boundary, weighted by the number of contributions to the edge
+  //! \param[in] rL Left density
+  //! \param[in] ruL Left X momentum
+  //! \param[in] rvL Left Y momentum
+  //! \param[in] rwL Left Z momentum
+  //! \param[in] reL Left total specific energy
+  //! \param[in] rL Left density
+  //! \param[in] ruL Left X momentum
+  //! \param[in] rvL Left Y momentum
+  //! \param[in] rwL Left Z momentum
+  //! \param[in] reL Left total specific energy
+  //! \param[in,out] fr Riemann solution for density according to Rusanov
+  //! \param[in,out] fru Riemann solution for X momenutm according to Rusanov
+  //! \param[in,out] frv Riemann solution for Y momenutm according to Rusanov
+  //! \param[in,out] frw Riemann solution for Z momenutm according to Rusanov
+  //! \param[in,out] fre Riemann solution for specific total energy according
+  //!   to Rusanov
+  #pragma omp declare simd
+  static void
+  flux( real nx, real ny, real nz,
+        real mx, real my, real mz,
+        real rL, real ruL, real rvL, real rwL, real reL,
+        real rR, real ruR, real rvR, real rwR, real reR,
+        real& fr, real& fru, real& frv, real& frw, real& fre )
   {
-    std::vector< tk::real > flx( u[0].size(), 0 );
+    auto ul = ruL/rL;
+    auto vl = rvL/rL;
+    auto wl = rwL/rL;
 
-    const auto & UL = u[0];
-    const auto & UR = u[1];
+    auto ur = ruR/rR;
+    auto vr = rvR/rR;
+    auto wr = rwR/rR;
 
-    // Primitive variables
-    auto rhol = UL[0];
-    auto rhor = UR[0];
+    auto pl = eos_pressure< tag::compflow >( 0, rL, ul, vl, wl, reL );
+    auto pr = eos_pressure< tag::compflow >( 0, rR, ur, vr, wr, reR );
 
-    auto ul = UL[1]/rhol;
-    auto vl = UL[2]/rhol;
-    auto wl = UL[3]/rhol;
+    auto al = eos_soundspeed< tag::compflow >( 0, rL, pl );
+    auto ar = eos_soundspeed< tag::compflow >( 0, rR, pr );
 
-    auto ur = UR[1]/rhor;
-    auto vr = UR[2]/rhor;
-    auto wr = UR[3]/rhor;
+    // face-normal velocities
+    real vnl = ul*nx + vl*ny + wl*nz;
+    real vnr = ur*nx + vr*ny + wr*nz;
 
-    auto pl = eos_pressure< tag::compflow >( 0, rhol, ul, vl, wl, UL[4] );
-    auto pr = eos_pressure< tag::compflow >( 0, rhor, ur, vr, wr, UR[4] );
-
-    auto al = eos_soundspeed< tag::compflow >( 0, rhol, pl );
-    auto ar = eos_soundspeed< tag::compflow >( 0, rhor, pr );
-
-    // Face-normal velocities
-    tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
-    tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
-
-
-    // Numerical fluxes
-    flx[0]  = 0.5 * ( UL[0] * vnl );
-    flx[1]  = 0.5 * ( UL[1] * vnl + pl*fn[0] );
-    flx[2]  = 0.5 * ( UL[2] * vnl + pl*fn[1] );
-    flx[3]  = 0.5 * ( UL[3] * vnl + pl*fn[2] );
-    flx[4]  = 0.5 * ( ( UL[4] + pl ) * vnl );
-    
-    flx[0] += 0.5 * ( UR[0] * vnr );
-    flx[1] += 0.5 * ( UR[1] * vnr + pr*fn[0] );
-    flx[2] += 0.5 * ( UR[2] * vnr + pr*fn[1] );
-    flx[3] += 0.5 * ( UR[3] * vnr + pr*fn[2] );
-    flx[4] += 0.5 * ( ( UR[4] + pr ) * vnr );
-    
-    // dissipation term
-    const auto & n2 = aux[0];
-    auto len = tk::length(n2);
-    vnl = ( ul*n2[0] + vl*n2[1] + wl*n2[2] );
-    vnr = ( ur*n2[0] + vr*n2[1] + wr*n2[2] );
+    // dissipation
+    auto len = tk::length( {mx,my,mz} );
+    vnl = ul*mx + vl*my + wl*mz;
+    vnr = ur*mx + vr*my + wr*mz;
     auto sl = std::abs(vnl) + al*len;
     auto sr = std::abs(vnr) + ar*len;
     auto smax = std::max( sl, sr );
 
-    flx[0] -= 0.5 * smax * ( UR[0] - UL[0] ); 
-    flx[1] -= 0.5 * smax * ( UR[1] - UL[1] ); 
-    flx[2] -= 0.5 * smax * ( UR[2] - UL[2] ); 
-    flx[3] -= 0.5 * smax * ( UR[3] - UL[3] ); 
-    flx[4] -= 0.5 * smax * ( UR[4] - UL[4] ); 
-
-    return flx;
+    // Numerical fluxes
+    fr  = 0.5*(rL*vnl + rR*vnr - smax*(rR - rL));
+    fru = 0.5*(ruL*vnl + pl*nx + ruR*vnr + pr*nx - smax*(ruR - ruL));
+    frv = 0.5*(rvL*vnl + pl*ny + rvR*vnr + pr*ny - smax*(rvR - rvL));
+    frw = 0.5*(rwL*vnl + pl*nz + rwR*vnr + pr*nz - smax*(rwR - rwL));
+    fre = 0.5*((reL + pl)*vnl + (reR + pr)*vnr - smax*(reR - reL));
   }
 
   //! Flux type accessor

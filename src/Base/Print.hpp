@@ -203,6 +203,13 @@ class Print {
     void item( const std::string& name, const T& value ) const
     { stream<s>() << m_item_name_value_fmt % m_item_indent % name % value; }
 
+    //! Formatted print of item with wide name: name : value
+    //! \param[in] name Long item name to be printed
+    //! \param[in] value Item value to be printed
+    template< Style s = VERBOSE, typename T >
+    void longitem( const std::string& name, const T& value ) const
+    { stream<s>() << m_item_longname_value_fmt % m_item_indent % name % value; }
+
     //! Formatted print of item: name : bool
     //! \param[in] name Item name to be printed
     //! \param[in] b Item value as bool to be printed
@@ -796,6 +803,7 @@ class Print {
     mutable format m_description_fmt = format("%s\n\n");
     mutable format m_item_name_fmt = format("%s%-40s : ");
     mutable format m_item_name_value_fmt = format("%s%-40s : %s\n");
+    mutable format m_item_longname_value_fmt = format("%s%-55s : %s\n");
     mutable format m_item_name_watch_fmt = format("%s%-75s : %d:%d:%d\n");
     mutable format m_item_name_perf_fmt = format("%s%-75s : %s\n");
     mutable format m_item_widename_value_fmt = format("%s%-75s : %s\n");

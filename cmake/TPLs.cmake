@@ -156,6 +156,11 @@ find_package(HighwayHash)
 set(BRIGAND_ROOT ${TPL_DIR}) # prefer ours
 find_package(Brigand)
 
+#### Configure Sol2
+set(SOL2_ROOT ${TPL_DIR}) # prefer ours
+find_package(Lua)
+find_package(Sol2)
+
 message(STATUS "------------------------------------------")
 
 # Function to print a list of missing library names
@@ -197,11 +202,12 @@ endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
     Zoltan2_FOUND AND HDF5_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
-    (MKL_FOUND OR LAPACKE_FOUND) AND Boost_FOUND AND HIGHWAYHASH_FOUND)
+    (MKL_FOUND OR LAPACKE_FOUND) AND Boost_FOUND AND HIGHWAYHASH_FOUND AND
+    LUA_FOUND AND SOL2_FOUND)
   set(ENABLE_INCITER "true")
   set(INCITER_EXECUTABLE inciter)
 else()
-  PrintMissing(inciter "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;Zoltan2_FOUND;HDF5_FOUND;BRIGAND_FOUND;PEGTL_FOUND;MKL_FOUND;LAPACKE_FOUND;Boost_FOUND")
+  PrintMissing(inciter "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;Zoltan2_FOUND;HDF5_FOUND;BRIGAND_FOUND;PEGTL_FOUND;MKL_FOUND;LAPACKE_FOUND;Boost_FOUND;LUA_FOUND;SOL2_FOUND")
 endif()
 
 if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND

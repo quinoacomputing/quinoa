@@ -14,10 +14,12 @@
 
 #include <array>
 #include <vector>
+#include <iostream>
 
 #include "Vector.hpp"
 #include "Base/HashMapReducer.hpp"
 #include "Reconstruction.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 
 void
 tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
@@ -173,6 +175,7 @@ tk::bndLeastSqConservedVar_P0P1( ncomp_t system,
   const Fields& geoElem,
   real t,
   const StateFn& state,
+  const Fields& P,
   const Fields& U,
   std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
   std::size_t nprim )
@@ -190,6 +193,7 @@ tk::bndLeastSqConservedVar_P0P1( ncomp_t system,
 //! \param[in] t Physical time
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
+//! \param[in] P Primitive vector to be reconstructed at recent time step
 //! \param[in] U Solution vector to be reconstructed at recent time step
 //! \param[in,out] rhs_ls RHS reconstruction vector
 //! \param[in] nprim This is the number of primitive quantities stored for this
@@ -225,7 +229,7 @@ tk::bndLeastSqConservedVar_P0P1( ncomp_t system,
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
         auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B );
-        std::vector< real >uprim(nprim,0.0);
+        auto uprim = eval_state( nprim, offset, rdof, 1, el, P, B );
 
         // consolidate primitives into state vector
         ul.insert(ul.end(), uprim.begin(), uprim.end());
@@ -389,6 +393,92 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
 }
 
 void
+tk::recoLeastSqExtStencil( std::size_t rdof,
+  std::size_t offset,
+  std::size_t nielem,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const Fields& geoElem,
+  Fields& W )
+// *****************************************************************************
+//  \brief Reconstruct the second-order solution using least-squares approach
+//    from an extended stencil involving the node-neighbors
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] nielem Number of internal elements in this mesh chunk
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] geoElem Element geometry array
+//! \param[in,out] W Solution vector to be reconstructed at recent time step
+//! \details A second-order (piecewise linear) solution polynomial is obtained
+//!   from the first-order (piecewise constant) FV solutions by using a
+//!   least-squares (LS) reconstruction process. This LS reconstruction function
+//!   using the nodal-neighbors of a cell, to get an overdetermined system of
+//!   equations for the derivatives of the solution. This overdetermined system
+//!   is solved in the least-squares sense using the normal equations approach.
+// *****************************************************************************
+{
+  const auto ncomp = W.nprop()/rdof;
+
+  for (std::size_t e=0; e<nielem; ++e)
+  {
+    // lhs matrix
+    std::array< std::array< tk::real, 3 >, 3 >
+      lhs_ls( {{ {{0.0, 0.0, 0.0}},
+                 {{0.0, 0.0, 0.0}},
+                 {{0.0, 0.0, 0.0}} }} );
+    // rhs matrix
+    std::vector< std::array< tk::real, 3 > >
+    rhs_ls( ncomp, {{ 0.0, 0.0, 0.0 }} );
+
+    // loop over all nodes of the element e
+    for (std::size_t lp=0; lp<4; ++lp)
+    {
+      auto p = inpoel[4*e+lp];
+      const auto& pesup = cref_find(esup, p);
+
+      // loop over all the elements surrounding this node p
+      for (auto er : pesup)
+      {
+        // centroid distance
+        std::array< real, 3 > wdeltax{{ geoElem(er,1,0)-geoElem(e,1,0),
+                                        geoElem(er,2,0)-geoElem(e,2,0),
+                                        geoElem(er,3,0)-geoElem(e,3,0) }};
+
+        // contribute to lhs matrix
+        for (std::size_t idir=0; idir<3; ++idir)
+          for (std::size_t jdir=0; jdir<3; ++jdir)
+            lhs_ls[idir][jdir] += wdeltax[idir] * wdeltax[jdir];
+
+        // compute rhs matrix
+        for (std::size_t c=0; c<ncomp; ++c)
+        {
+          auto mark = c*rdof;
+          for (std::size_t idir=0; idir<3; ++idir)
+            rhs_ls[c][idir] +=
+              wdeltax[idir] * (W(er,mark,offset)-W(e,mark,offset));
+        }
+      }
+    }
+
+    // solve least-square normal equation system using Cramer's rule
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*rdof;
+
+      auto ux = tk::cramer( lhs_ls, rhs_ls[c] );
+
+      // Update the P1 dofs with the reconstructioned gradients.
+      // Since this reconstruction does not affect the cell-averaged solution,
+      // W(e,mark+0,offset) is unchanged.
+      W(e,mark+1,offset) = ux[0];
+      W(e,mark+2,offset) = ux[1];
+      W(e,mark+3,offset) = ux[2];
+    }
+  }
+}
+
+void
 tk::transform_P0P1( ncomp_t ncomp,
                     ncomp_t offset,
                     std::size_t rdof,
@@ -451,82 +541,143 @@ tk::transform_P0P1( ncomp_t ncomp,
   }
 }
 
-constexpr tk::real muscl_eps = 1.0e-9;
-constexpr tk::real muscl_const = 1.0/3.0;
-constexpr tk::real muscl_m1 = 1.0 - muscl_const;
-constexpr tk::real muscl_p1 = 1.0 + muscl_const;
-
 void
-tk::muscl( const UnsMesh::Edge& edge,
-           const UnsMesh::Coords& coord,
-           const Fields& G,
-           std::array< std::vector< tk::real >, 2 >& u,
-           bool enforce_realizability )
+tk::nodeAvg( std::size_t ncomp,
+  std::size_t nprim,
+  std::size_t offset,
+  std::size_t rdof,
+  std::size_t npoin,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const Fields& U,
+  const Fields& P,
+  Fields& Unode,
+  Fields& Pnode )
 // *****************************************************************************
-// Compute MUSCL reconstruction in edge-end points using a MUSCL procedure with
-// van Leer limiting
-//! \param[in] edge Node ids of edge-end points
-//! \param[in] coord Array of nodal coordinates
-//! \param[in] G Gradient of all unknowns in mesh points
-//! \param[in,out] u Primitive variables at edge-end points, size ncomp x 2
-//! \param[in] enforce_realizability True to enforce positivity of density and
-//!   internal energy, assuming 5 scalar components in u.
+//  Compute nodal field outputs
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] nprim Number of primitive quantities stored in this PDE system
+//! \param[in] offset Index for equation systems
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] npoin Total number of nodes
+//! \param[in] esup Elements surrounding points
+//! \param[in] U Vector of cell-averaged unknowns
+//! \param[in] P Vector of cell-averaged primitive quantities
+//! \param[in,out] Unode Vector of unknowns at nodes
+//! \param[in,out] Pnode Vector of primitive quantities at nodes
 // *****************************************************************************
 {
-  const auto ncomp = G.nprop()/3;
+  Unode.fill(0.0);
+  Pnode.fill(0.0);
 
-  Assert( u[0].size() == ncomp && u[1].size() == ncomp, "Size mismatch" );
+  for (std::size_t p=0; p<npoin; ++p)
+  {
+    const auto& pesup = esup.at(p);
 
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
+    // loop over all the elements surrounding this node p
+    auto denom(0.0);
+    for (auto er : pesup)
+    {
+      denom += 1.0;
+      // average cell-averaged solution to node p
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*rdof;
+        Unode(p,c,offset) += U(er,mark,offset);
+      }
+      for (std::size_t c=0; c<nprim; ++c)
+      {
+        auto mark = c*rdof;
+        Pnode(p,c,offset) += P(er,mark,offset);
+      }
+    }
 
-  // edge-end points
-  auto p = edge[0];
-  auto q = edge[1];
-
-  // edge vector
-  std::array< tk::real, 3 > vw{ x[q]-x[p], y[q]-y[p], z[q]-z[p] };
-
-  std::vector< tk::real > delta1( ncomp, 0.0 ),
-                          delta2( ncomp, 0.0 ),
-                          delta3( ncomp, 0.0 );
-  std::array< std::vector< tk::real >, 2 > ur = u;
-
-
-  // MUSCL reconstruction of edge-end-point primitive variables
-  for (std::size_t c=0; c<ncomp; ++c) {
-    // gradients
-    std::array< tk::real, 3 >
-      g1{ G(p,c*3+0,0), G(p,c*3+1,0), G(p,c*3+2,0) },
-      g2{ G(q,c*3+0,0), G(q,c*3+1,0), G(q,c*3+2,0) };
-
-    delta2[c] = u[1][c] - u[0][c];
-    delta1[c] = 2.0 * tk::dot(g1,vw) - delta2[c];
-    delta3[c] = 2.0 * tk::dot(g2,vw) - delta2[c];
-
-    // form limiters
-    auto rL = (delta2[c] + muscl_eps) / (delta1[c] + muscl_eps);
-    auto rR = (delta2[c] + muscl_eps) / (delta3[c] + muscl_eps);
-    auto rLinv = (delta1[c] + muscl_eps) / (delta2[c] + muscl_eps);
-    auto rRinv = (delta3[c] + muscl_eps) / (delta2[c] + muscl_eps);
-
-    auto phiL = (std::abs(rL) + rL) / (std::abs(rL) + 1.0);
-    auto phiR = (std::abs(rR) + rR) / (std::abs(rR) + 1.0);
-    auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
-    auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
-
-    // update unknowns with reconstructed unknowns
-    ur[0][c] += 0.25*(delta1[c]*muscl_m1*phiL + delta2[c]*muscl_p1*phi_L_inv);
-    ur[1][c] -= 0.25*(delta3[c]*muscl_m1*phiR + delta2[c]*muscl_p1*phi_R_inv);
+    // complete the average
+    for (std::size_t c=0; c<ncomp; ++c)
+      Unode(p,c,offset) /= denom;
+    for (std::size_t c=0; c<nprim; ++c)
+      Pnode(p,c,offset) /= denom;
   }
+}
 
-  // force first order if the reconstructions for density or internal energy
-  // would have allowed negative values
-  if (enforce_realizability) {
-    if (u[0][0] < delta1[0] || u[0][4] < delta1[4]) ur[0] = u[0];
-    if (u[1][0] < -delta3[0] || u[1][4] < -delta3[4]) ur[1] = u[1];
+void
+tk::safeReco( std::size_t offset,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t el,
+  int er,
+  const Fields& U,
+  std::array< std::vector< real >, 2 >& state )
+// *****************************************************************************
+//  Compute safe reconstructions near material interfaces
+//! \param[in] offset Index for equation systems
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of material is PDE system
+//! \param[in] el Element on the left-side of face
+//! \param[in] er Element on the right-side of face
+//! \param[in] U Solution vector at recent time-stage
+//! \param[in,out] state Second-order reconstructed state, at cell-face, that
+//!   is being modified for safety
+//! \details When the consistent limiting is applied, there is a possibility
+//!   that the material densities and energies violate TVD bounds. This function
+//!   enforces the TVD bounds locally
+// *****************************************************************************
+{
+  using inciter::densityIdx;
+  using inciter::densityDofIdx;
+
+  // define a lambda for the safe limiting
+  auto safeLimit = [&]( std::size_t c, real ul, real ur )
+  {
+    // find min/max at the face
+    auto uMin = std::min(ul, ur);
+    auto uMax = std::max(ul, ur);
+
+    // left-state limiting
+    if ( (state[0][c] < ul) &&
+      (state[0][c] < ur) )
+    {
+      state[0][c] = uMin;
+    }
+    else if ( (state[0][c] > ul) &&
+      (state[0][c] > ur) )
+    {
+      state[0][c] = uMax;
+    }
+
+    // right-state limiting
+    if (er > -1)
+    {
+      if ( (state[1][c] < ul) &&
+        (state[1][c] < ur) )
+      {
+        state[1][c] = uMin;
+      }
+      else if ( (state[1][c] > ul) &&
+        (state[1][c] > ur) )
+      {
+        state[1][c] = uMax;
+      }
+    }
+  };
+
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    real ul(0.0), ur(0.0);
+
+    // establish left- and right-hand states
+    ul = U(el, densityDofIdx(nmat, k, rdof, 0), offset);
+    if (er <= -1)
+    {
+      ur = state[1][densityIdx(nmat, k)];
+    }
+    else
+    {
+      auto eR = static_cast< std::size_t >(er);
+      ur = U(eR, densityDofIdx(nmat, k, rdof, 0), offset);
+    }
+
+    // limit reconstructed density
+    safeLimit(densityIdx(nmat,k), ul, ur);
+
   }
-
-  u = ur;
 }

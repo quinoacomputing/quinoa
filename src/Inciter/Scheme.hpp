@@ -137,11 +137,13 @@ class Scheme {
 
     //! Entry method tags for specific Scheme classes to use with bcast()
     struct setup {};
+    struct box {};
     struct advance {};
     struct resized {};
     struct resizeComm {};
     struct refine {};
     struct lhs {};
+    struct nodeNeighSetup {};
     struct diag {};
     struct evalLB {};
     struct doneInserting {};
@@ -157,6 +159,8 @@ class Scheme {
       std::visit( [&]( auto& p ){
           if constexpr( std::is_same_v< Fn, setup > )
             p.setup( std::forward< Args >( args )... );
+          if constexpr( std::is_same_v< Fn, box > )
+            p.box( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, advance > )
             p.advance( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, resized > )
@@ -167,6 +171,8 @@ class Scheme {
             p.refine( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, lhs > )
             p.lhs( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, nodeNeighSetup > )
+            p.nodeNeighSetup( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, diag > )
             p.diag( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, evalLB > )

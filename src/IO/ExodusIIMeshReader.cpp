@@ -46,6 +46,11 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
 //! \param[in] iowordsize Set I/O word size, see ExodusII documentation
 // *****************************************************************************
 {
+  // Increase verbosity from ExodusII library in debug mode
+  #ifndef NDEBUG
+  ex_opts( EX_DEBUG | EX_VERBOSE );
+  #endif
+
   float version;
 
   m_inFile = ex_open( filename.c_str(), EX_READ, &cpuwordsize, &iowordsize,
@@ -75,6 +80,11 @@ ExodusIIMeshReader::readMesh( UnsMesh& mesh )
   readAllElements( mesh );
   readAllNodes( mesh );
   readSidesetFaces( mesh.bface(), mesh.faceid() );
+  readTimeValues( mesh.vartimes() );
+  readNodeVarNames( mesh.nodevarnames() );
+  readNodeScalars( mesh.vartimes().size(),
+                   mesh.nodevarnames().size(),
+                   mesh.nodevars() );
 }
 
 void
@@ -825,6 +835,105 @@ ExodusIIMeshReader::triinpoel(
   belem = std::move(belem_own);
 
   return bnd_triinpoel;
+}
+
+void
+ExodusIIMeshReader::readNodeVarNames( std::vector< std::string >& nv ) const
+// *****************************************************************************
+//  Read the names of nodal output variables from ExodusII file
+//! \param[in,out] nv Nodal variable names
+// *****************************************************************************
+{
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wvla"
+    #pragma clang diagnostic ignored "-Wvla-extension"
+  #elif defined(STRICT_GNUC)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wvla"
+  #endif
+
+  int numvars = 0;
+
+  ErrChk(
+    ex_get_variable_param( m_inFile, EX_NODE_BLOCK, &numvars ) == 0,
+    "Failed to read nodal output variable parameters from ExodusII file: " +
+    m_filename );
+
+  if (numvars) {
+
+    char* names[ static_cast< std::size_t >( numvars ) ];
+    for (int i=0; i<numvars; ++i)
+      names[i] = static_cast<char*>( calloc((MAX_STR_LENGTH+1), sizeof(char)) );
+
+    ErrChk( ex_get_variable_names( m_inFile,
+                                   EX_NODAL,
+                                   numvars,
+                                   names ) == 0,
+            "Failed to read nodal variable names from ExodusII file: " +
+            m_filename );
+
+    nv.resize( static_cast< std::size_t >( numvars ) );
+    std::size_t i = 0;
+    for (auto& n : nv) n = names[ i++ ];
+
+  }
+
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #elif defined(STRICT_GNUC)
+    #pragma GCC diagnostic pop
+  #endif
+}
+
+void
+ExodusIIMeshReader::readTimeValues( std::vector< tk::real >& tv ) const
+// *****************************************************************************
+//  Read time values from ExodusII file
+//! \param[in] tv Vector of time values at which field data is saved
+// *****************************************************************************
+{
+  auto num_time_steps =
+    static_cast< std::size_t >( ex_inquire_int( m_inFile, EX_INQ_TIME ) );
+
+  if (num_time_steps) {
+    tv.resize( num_time_steps, 0.0 );
+    ErrChk( ex_get_all_times( m_inFile, tv.data() ) == 0,
+             "Failed to read time values from ExodusII file: " + m_filename );
+  }
+}
+
+void
+ExodusIIMeshReader::readNodeScalars(
+  std::size_t ntime,
+  std::size_t nvar,
+  std::vector< std::vector< std::vector< tk::real > > >& var ) const
+// *****************************************************************************
+//  Read node scalar fields from ExodusII file
+//! \param[in] ntime Number of time steps to read
+//! \param[in] nvar Number of variables to read
+//! \param[in] var Vector of nodal variables to read to: inner vector: nodes,
+//!   middle vector: (physics) variable, outer vector: time step
+// *****************************************************************************
+{
+  var.resize( ntime );
+  for (auto& v : var) {
+    v.resize( nvar );
+    for (auto& n : v) n.resize( m_nnode );
+  }
+
+  for (std::size_t t=0; t<var.size(); ++t) {
+    for (std::size_t id=0; id<var[t].size(); ++id) {
+      ErrChk( ex_get_var( m_inFile,
+                          static_cast< int >( t+1 ),
+                          EX_NODAL,
+                          static_cast< int >( id+1 ),
+                          1,
+                          static_cast< int64_t >( var[t][id].size() ),
+                          var[t][id].data() ) == 0,
+              "Failed to read node scalar from ExodusII file: " + m_filename );
+    }
+  }
 }
 
 std::size_t

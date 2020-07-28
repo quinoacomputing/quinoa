@@ -47,7 +47,8 @@ void echoBuildEnv( const Print& print, const std::string& executable );
 
 //! Echo runtime environment
 void echoRunEnv( const Print& print, int argc, char** argv,
-                 bool verbose, bool quiescence, bool charestate, bool trace );
+                 bool verbose, bool quiescence, bool charestate, bool trace,
+                 const std::string& screen_log, const std::string& input_log );
 
 //! \brief Generic Main() used for all executables for code-reuse and a uniform
 //!    output
@@ -65,17 +66,21 @@ void echoRunEnv( const Print& print, int argc, char** argv,
 //! \param[in] header Header type enum indicating which executable header to
 //!   print
 //! \param[in] executable Name of the executable
+//! \param[in] def Default log file name
+//! \param[in] nrestart Number of times restarted
 //! \return Instantiated driver object which can then be used to execute()
 //!   whatever it is intended to drive
 template< class Driver, class CmdLine >
 Driver Main( int argc, char* argv[],
              const CmdLine& cmdline,
              HeaderType header,
-             const std::string& executable )
+             const std::string& executable,
+             const std::string& def,
+             int nrestart )
 {
   // Create pretty printer
   tk::Print
-    print( executable + "_screen.log",
+    print( cmdline.logname( def, nrestart ),
            cmdline.template get< tag::verbose >() ? std::cout : std::clog );
 
   // Echo program header
@@ -89,10 +94,12 @@ Driver Main( int argc, char* argv[],
   echoRunEnv( print, argc, argv, cmdline.template get< tag::verbose >(),
               cmdline.template get< tag::quiescence >(),
               cmdline.template get< tag::chare >(),
-              cmdline.template get< tag::trace >() );
+              cmdline.template get< tag::trace >(),
+              cmdline.logname( def, nrestart ),
+              executable + "_input.log" );
 
   // Create and return driver
-  return Driver( cmdline );
+  return Driver( cmdline, nrestart );
 }
 
 //! Generic Main Charm++ module constructor for all executables
@@ -128,12 +135,14 @@ void MainCtor( MainProxy& mp,
 //! \tparam CmdLine Executable-specific tagged tuple storing the rusult of the
 //!    command line parser
 //! \param[in] cmdline Command line grammar stack for the executable
-//! \param[in] executable Name of the executable
+//! \param[in] def Default log file name
+//! \param[in] nrestart Number of times restarted
 //! \param[in] msg Charm++ reduction message containing the chare state
 //!   aggregated from all PEs
 template< class CmdLine >
 void dumpstate( const CmdLine& cmdline,
-                const std::string& executable,
+                const std::string& def,
+                int nrestart,
                 CkReductionMsg* msg )
 {
   try {
@@ -152,7 +161,7 @@ void dumpstate( const CmdLine& cmdline,
     // pretty-print collected chare state (only if user requested it or
     // quiescence was detected which is and indication of a logic error)
     if (cmdline.template get< tag::chare >() || error) {
-      tk::Print print( executable + "_screen.log",
+      tk::Print print( cmdline.logname( def, nrestart ),
         cmdline.template get< tag::verbose >() ? std::cout : std::clog,
         std::ios_base::app );
       print.charestate( state );
@@ -172,9 +181,10 @@ void dumpstate( const CmdLine& cmdline,
 //! \param[in] timer Vector of timers, held by the main chare
 //! \param[in,out] state Chare state collector proxy
 //! \param[in,out] timestamp Vector of time stamps in h:m:s with labels
-//! \param[in] executable Name of the executable
 //! \param[in] dumpstateTarget Pre-created Charm++ callback to use as the
 //!   target function for dumping chare state
+//! \param[in] def Default log file name
+//! \param[in] nrestart Number of times restarted
 //! \param[in] clean True if we should exit with a zero exit code, false to
 //!   exit with a nonzero exit code
 template< class CmdLine >
@@ -183,7 +193,8 @@ void finalize( const CmdLine& cmdline,
                tk::CProxy_ChareStateCollector& state,
                std::vector< std::pair< std::string,
                                        tk::Timer::Watch > >& timestamp,
-               const std::string& executable,
+               const std::string& def,
+               int nrestart,
                const CkCallback& dumpstateTarget,
                bool clean = true )
 {
@@ -191,7 +202,7 @@ void finalize( const CmdLine& cmdline,
 
     if (!timer.empty()) {
       timestamp.emplace_back( "Total runtime", timer[0].hms() );
-       tk::Print print( executable + "_screen.log",
+       tk::Print print( cmdline.logname( def, nrestart ),
          cmdline.template get< tag::verbose >() ? std::cout : std::clog,
          std::ios_base::app );
       print.time( "Timers (h:m:s)", timestamp );

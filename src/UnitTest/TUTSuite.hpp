@@ -41,8 +41,7 @@ class TUTSuite : public CBase_TUTSuite {
     void evaluate( std::vector< std::string > status );
 
   private:
-    std::string m_screen;          //!< Screen output log filename
-    bool m_verbose;                //1< True if verbose screen output
+    ctr::CmdLine m_cmdline;        //!< Command line user input
     //! MPI unit test runner nodegroup proxy
     CProxy_MPIRunner< CProxy_TUTSuite > m_mpirunner;
     std::size_t m_nrun;            //!< Number of tests ran (including dummies)
@@ -86,10 +85,12 @@ class TUTSuite : public CBase_TUTSuite {
 
     //! Create pretty printer specialized to UnitTest
     //! \return Pretty printer
-    UnitTestPrint printer() const { return
-      UnitTestPrint( m_screen,
-                     m_verbose ? std::cout : std::clog,
-                     std::ios_base::app );
+    UnitTestPrint printer() const {
+      return UnitTestPrint(
+        m_cmdline.logname( m_cmdline.get< tag::io, tag::screen >(),
+                           m_cmdline.get< tag::io, tag::nrestart >() ),
+        m_cmdline.get< tag::verbose >() ? std::cout : std::clog,
+        std::ios_base::app );
     }
 };
 

@@ -78,7 +78,7 @@ class CompFlow {
         , symmetry
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
-        , characteristic
+        , farfield
         , extrapolate } ) );
     }
 
@@ -142,22 +142,22 @@ class CompFlow {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
+    //! \param[in,out] P Primitive vector at recent time step
     void reconstruct( tk::real t,
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
                       const inciter::FaceData& fd,
+                      const std::map< std::size_t, std::vector< std::size_t > >&,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& ) const
+                      tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
 
       Assert( U.nprop() == rdof*5, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*5) );
-      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
-              "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
@@ -181,7 +181,7 @@ class CompFlow {
       // 2. boundary face contributions
       for (const auto& b : m_bc)
         tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
-          b.first, fd, geoFace, geoElem, t, b.second, U, rhs_ls );
+          b.first, fd, geoFace, geoElem, t, b.second, P, U, rhs_ls );
 
       // 3. solve 3x3 least-squares system
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
@@ -203,6 +203,7 @@ class CompFlow {
                 [[maybe_unused]] const tk::Fields& geoFace,
                 [[maybe_unused]] const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
+                const std::map< std::size_t, std::vector< std::size_t > >&,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
@@ -252,8 +253,6 @@ class CompFlow {
               "vector must equal "+ std::to_string(0) );
       Assert( R.nprop() == ndof*5, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*5) );
-      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
-              "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
@@ -279,14 +278,14 @@ class CompFlow {
       tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, riemannDeriv );
 
-      // compute source term intehrals
-      tk::srcInt( m_system, m_ncomp, m_offset, t, ndof, inpoel, coord, geoElem,
-                  Problem::src, ndofel, R );
+      // compute ptional source term
+      tk::srcInt( m_system, m_offset, t, ndof, fd.Esuel().size()/4,
+                  inpoel, coord, geoElem, Problem::src, ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, geoElem,
-                    flux, velfn, U, ndofel, R );
+        tk::volInt( m_system, m_ncomp, m_offset, ndof, fd.Esuel().size()/4,
+                    inpoel, coord, geoElem, flux, velfn, U, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
@@ -501,7 +500,7 @@ class CompFlow {
       tk::real dgp = 0.0;
 
       // compute allowable dt
-      for (std::size_t e=0; e<U.nunk(); ++e)
+      for (std::size_t e=0; e<fd.Esuel().size()/4; ++e)
       {
         dgp = 0.0;
         if (ndofel[e] == 4)
@@ -549,117 +548,56 @@ class CompFlow {
     std::vector< std::string > fieldNames() const
     { return m_problem.fieldNames( m_ncomp ); }
 
+    //! Return field names to be output to file
+    //! \return Vector of strings labelling fields output in file
+    std::vector< std::string > nodalFieldNames() const
+    { return {}; }
+
     //! Return field output going to file
     //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume
+    //! \param[in] nunk Number of unknowns to extract
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
+                 tk::real V,
+                 std::size_t,
+                 std::size_t nunk,
                  const tk::Fields& geoElem,
                  tk::Fields& U,
                  const tk::Fields& ) const
     {
-      std::array< std::vector< tk::real >, 3 > coord;
-      std::vector< tk::real > v;
-      v        = geoElem.extract(0,0);
-      coord[0] = geoElem.extract(1,0);
-      coord[1] = geoElem.extract(2,0);
-      coord[2] = geoElem.extract(3,0);
+      std::array< std::vector< tk::real >, 3 > coord{
+        geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
 
-      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, t, 0.0, v,
-                                    coord, U );
+      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, t, V,
+                                    geoElem.extract(0,0), coord, U );
     }
 
-    //! Return nodal field output going to file
+    //! Nodal field output setup will go here
     std::vector< std::vector< tk::real > >
-    avgElemToNode( const std::vector< std::size_t >& inpoel,
-                   const tk::UnsMesh::Coords& coord,
-                   const tk::Fields& /*geoElem*/,
-                   const tk::Fields& U ) const
+    nodalFieldOutput( tk::real,
+      tk::real,
+      std::size_t,
+      const std::map< std::size_t, std::vector< std::size_t > >&,
+      const tk::Fields&,
+      tk::Fields&,
+      tk::Fields&,
+      tk::Fields&,
+      const tk::Fields& ) const
     {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      return {};
+    }
 
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
-
-      std::vector< tk::real > count(cx.size(), 0);
-      std::vector< std::vector< tk::real > >
-        out( 6, std::vector< tk::real >( cx.size(), 0.0 ) );
-
-      for (std::size_t e=0; e<inpoel.size()/4 ; ++e)
-      {
-        // nodal coordinates of the left element
-        std::array< std::array< tk::real, 3 >, 4 >
-          pi{{ {{ cx[ inpoel[4*e] ],
-                 cy[ inpoel[4*e] ],
-                 cz[ inpoel[4*e] ] }},
-              {{ cx[ inpoel[4*e+1] ],
-                 cy[ inpoel[4*e+1] ],
-                 cz[ inpoel[4*e+1] ] }},
-              {{ cx[ inpoel[4*e+2] ],
-                 cy[ inpoel[4*e+2] ],
-                 cz[ inpoel[4*e+2] ] }},
-              {{ cx[ inpoel[4*e+3] ],
-                 cy[ inpoel[4*e+3] ],
-                 cz[ inpoel[4*e+3] ] }} }};
-        auto detT = tk::Jacobian( pi[0], pi[1], pi[2], pi[3] );
-
-        for (std::size_t i=0; i<4; ++i)
-        {
-          tk::real detT_gp;
-          // transformation of the physical coordinates of the quadrature point
-          // to reference space for the left element to be able to compute
-          // basis functions on the left element.
-          detT_gp = tk::Jacobian( pi[0], pi[i], pi[2], pi[3] );
-          auto xi = detT_gp / detT;
-          detT_gp = tk::Jacobian( pi[0], pi[1], pi[i], pi[3] );
-          auto eta = detT_gp / detT;
-          detT_gp = tk::Jacobian( pi[0], pi[1], pi[2], pi[i] );
-          auto zeta = detT_gp / detT;
-
-          auto B2 = 2.0 * xi + eta + zeta - 1.0;
-          auto B3 = 3.0 * eta + zeta - 1.0;
-          auto B4 = 4.0 * zeta - 1.0;
-
-          std::vector< tk::real > ugp(5,0);
-
-          for (ncomp_t c=0; c<5; ++c)
-          {
-            if (rdof == 1) {
-              ugp[c] =  U(e, c, m_offset);
-            } else {
-              auto mark = c*rdof;
-              ugp[c] =  U(e, mark,   m_offset)
-                      + U(e, mark+1, m_offset) * B2
-                      + U(e, mark+2, m_offset) * B3
-                      + U(e, mark+3, m_offset) * B4;
-            }
-          }
-
-          auto u = ugp[1] / ugp[0];
-          auto v = ugp[2] / ugp[0];
-          auto w = ugp[3] / ugp[0];
-          auto p =
-            eos_pressure< tag::compflow >( m_system, ugp[0], u, v, w, ugp[4] );
-
-          out[0][ inpoel[4*e+i] ] += ugp[0];
-          out[1][ inpoel[4*e+i] ] += u;
-          out[2][ inpoel[4*e+i] ] += v;
-          out[3][ inpoel[4*e+i] ] += w;
-          out[4][ inpoel[4*e+i] ] += ugp[4]/ugp[0];
-          out[5][ inpoel[4*e+i] ] += p;
-          count[ inpoel[4*e+i] ] += 1.0;
-        }
-      }
-
-      // average
-      for (std::size_t i=0; i<cx.size(); ++i)
-        for (std::size_t c=0; c<6; ++c)
-          out[c][i] /= count[i];
-
-      return out;
+    //! Return surface field output going to file
+    std::vector< std::vector< tk::real > >
+    surfOutput( const std::map< int, std::vector< std::size_t > >&,
+                tk::Fields& ) const
+    {
+      std::vector< std::vector< tk::real > > s; // punt for now
+      return s;
     }
 
     //! Return names of integral variables to be output to diagnostics file
@@ -676,8 +614,9 @@ class CompFlow {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
-      return std::vector< tk::real >( begin(s), end(s) );
+      int inbox = 0;
+      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
+      return std::vector< tk::real >( std::begin(s), std::end(s) );
     }
 
   private:
@@ -757,7 +696,8 @@ class CompFlow {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
+      int inbox = 0;
+      return {{ ul, Problem::solution( system, ncomp, x, y, z, t, inbox ) }};
     }
 
     //! \brief Boundary state function providing the left and right state of a
@@ -793,18 +733,16 @@ class CompFlow {
     }
 
     //! \brief Boundary state function providing the left and right state of a
-    //!   face at characteristic boundaries
+    //!   face at farfield boundaries
     //! \param[in] ul Left (domain-internal) state
     //! \param[in] fn Unit face normal
     //! \return Left and right states for all scalar components in this PDE
     //!   system
-    //! \details The characteristic boudary calculation, implemented here, is
-    //!   based on the characteristic theory of hyperbolic systems.
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    characteristic( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
-                    tk::real, tk::real, tk::real, tk::real,
-                    const std::array< tk::real, 3 >& fn )
+    farfield( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
+              tk::real, tk::real, tk::real, tk::real,
+              const std::array< tk::real, 3 >& fn )
     {
       using tag::param; using tag::bc;
 

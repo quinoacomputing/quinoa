@@ -137,22 +137,22 @@ class Transport {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
+    //! \param[in,out] P Primitive vector at recent time step
     void reconstruct( tk::real t,
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
                       const inciter::FaceData& fd,
+                      const std::map< std::size_t, std::vector< std::size_t > >&,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& ) const
+                      tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
-              "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
@@ -176,7 +176,7 @@ class Transport {
       // 2. boundary face contributions
       for (const auto& b : m_bc)
         tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
-          b.first, fd, geoFace, geoElem, t, b.second, U, rhs_ls );
+          b.first, fd, geoFace, geoElem, t, b.second, P, U, rhs_ls );
 
       // 3. solve 3x3 least-squares system
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
@@ -198,6 +198,7 @@ class Transport {
                 [[maybe_unused]] const tk::Fields& geoFace,
                 [[maybe_unused]] const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
+                const std::map< std::size_t, std::vector< std::size_t > >&,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
@@ -247,8 +248,6 @@ class Transport {
               "vector must equal "+ std::to_string(0) );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
-      Assert( inpoel.size()/4 == U.nunk(), "Connectivity inpoel has incorrect "
-              "size" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
 
@@ -267,8 +266,9 @@ class Transport {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, ndof, inpoel, coord, geoElem,
-                    flux, Problem::prescribedVelocity, U, ndofel, R );
+        tk::volInt( m_system, m_ncomp, m_offset, ndof, fd.Esuel().size()/4,
+                    inpoel, coord, geoElem, flux, Problem::prescribedVelocity,
+                    U, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
@@ -319,15 +319,18 @@ class Transport {
       return n;
     }
 
-    //!
+    //! Return field names to be output to file
+    //! \return Vector of strings labelling fields output in file
+    std::vector< std::string > nodalFieldNames() const
+    { return {}; }
+
+    //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
-    avgElemToNode( const std::vector< std::size_t >& /*inpoel*/,
-                   const tk::UnsMesh::Coords& /*coord*/,
-                   const tk::Fields& /*geoElem*/,
-                   const tk::Fields& /*U*/ ) const
+    surfOutput( const std::map< int, std::vector< std::size_t > >&,
+                tk::Fields& ) const
     {
-      std::vector< std::vector< tk::real > > out;
-      return out;
+      std::vector< std::vector< tk::real > > s; // punt for now
+      return s;
     }
 
     //! Return field output going to file
@@ -340,6 +343,9 @@ class Transport {
     //! \note U is overwritten
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
+                 tk::real,
+                 std::size_t,
+                 std::size_t,
                  const tk::Fields& geoElem,
                  tk::Fields& U,
                  const tk::Fields& ) const
@@ -354,8 +360,9 @@ class Transport {
       auto E = U;
       for (std::size_t e=0; e<U.nunk(); ++e)
       {
+        int inbox = 0;
         auto s = Problem::solution( m_system, m_ncomp, geoElem(e,1,0),
-                                    geoElem(e,2,0), geoElem(e,3,0), t );
+                                    geoElem(e,2,0), geoElem(e,3,0), t, inbox );
         for (ncomp_t c=0; c<m_ncomp; ++c)
           E( e, c*rdof, m_offset ) = s[c];
       }
@@ -372,6 +379,21 @@ class Transport {
         out.push_back( e );
       }
       return out;
+    }
+
+    //! Nodal field output setup will go here
+    std::vector< std::vector< tk::real > >
+    nodalFieldOutput( tk::real,
+      tk::real,
+      std::size_t,
+      const std::map< std::size_t, std::vector< std::size_t > >&,
+      const tk::Fields&,
+      tk::Fields&,
+      tk::Fields&,
+      tk::Fields&,
+      const tk::Fields& ) const
+    {
+      return {};
     }
 
     //! Return names of integral variables to be output to diagnostics file
@@ -394,7 +416,10 @@ class Transport {
     //! \return Vector of analytic solution at given spatial location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::solution( m_system, m_ncomp, xi, yi, zi, t ); }
+    {
+      int inbox = 0;
+      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
+    }
 
   private:
     const Physics m_physics;            //!< Physics policy
@@ -491,7 +516,8 @@ class Transport {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
+      int inbox = 0;
+      return {{ ul, Problem::solution( system, ncomp, x, y, z, t, inbox ) }};
     }
 };
 

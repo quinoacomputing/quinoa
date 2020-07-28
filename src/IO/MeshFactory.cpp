@@ -21,6 +21,7 @@
 #include "ExodusIIMeshReader.hpp"
 #include "HyperMeshReader.hpp"
 #include "UGRIDMeshReader.hpp"
+#include "RDGFLOMeshReader.hpp"
 #include "ASCMeshReader.hpp"
 #include "NetgenMeshWriter.hpp"
 #include "GmshMeshWriter.hpp"
@@ -48,7 +49,7 @@ readUnsMesh( const tk::Print& print,
 //! \return Unstructured mesh object
 // *****************************************************************************
 {
-  print.diagstart( "Reading mesh from file ..." );
+  print.diagstart( "Reading mesh from file '" + filename + "' ..." );
 
   // Read in mesh
   tk::Timer t;
@@ -68,10 +69,13 @@ readUnsMesh( const tk::Print& print,
     ASCMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReaderType::UGRID)
     UGRIDMeshReader( filename ).readMesh( mesh );
+  else if (meshtype == MeshReaderType::RDGFLO)
+    RDGFLOMeshReader( filename ).readMesh( mesh );
   else if (meshtype == MeshReaderType::HYPER)
     HyperMeshReader( filename ).readMesh( mesh );
 
-  timestamp = std::make_pair( "Read mesh from file", t.dsec() );
+  timestamp =
+    std::make_pair( "Read mesh from file '" + filename + '\'', t.dsec() );
 
   print.diagend( "done" );
 
@@ -157,7 +161,7 @@ writeUnsMesh( const tk::Print& print,
     t.zero();
   }
 
-  print.diagstart( "Writing mesh to file ..." );
+  print.diagstart( "Writing mesh to file '" + filename + "' ..." );
 
   const auto meshtype = pickOutput( filename );
 

@@ -274,6 +274,86 @@ SuperbeeMultiMat_P1(
 }
 
 void
+VertexBasedMultiMat_P1(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  std::size_t offset,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U,
+  tk::Fields& P,
+  std::size_t nmat )
+// *****************************************************************************
+//  Kuzmin's vertex-based limiter for multi-material DGP1
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element connectivity
+//! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in] nelem Number of elements
+//! \param[in] offset Index for equation systems
+//! \param[in] coord Array of nodal coordinates
+//! \param[in,out] U High-order solution vector which gets limited
+//! \param[in,out] P High-order vector of primitives which gets limited
+//! \param[in] nmat Number of materials in this PDE system
+//! \details This vertex-based limiter function should be called for multimat.
+//!   For details see: Kuzmin, D. (2010). A vertex-based hierarchical slope
+//!   limiter for p-adaptive discontinuous Galerkin methods. Journal of
+//!   computational and applied mathematics, 233(12), 3077-3085.
+// *****************************************************************************
+{
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  std::size_t ncomp = U.nprop()/rdof;
+  std::size_t nprim = P.nprop()/rdof;
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // If an rDG method is set up (P0P1), then, currently we compute the P1
+    // basis functions and solutions by default. This implies that P0P1 is
+    // unsupported in the p-adaptive DG (PDG). This is a workaround until we
+    // have rdofel, which is needed to distinguish between ndofs and rdofs per
+    // element for pDG.
+    std::size_t dof_el;
+    if (rdof > ndof)
+    {
+      dof_el = rdof;
+    }
+    else
+    {
+      dof_el = ndofel[e];
+    }
+
+    if (dof_el > 1)
+    {
+      // limit conserved quantities
+      auto phic = VertexBasedFunction(U, esup, inpoel, coord, e, rdof, dof_el,
+        offset, ncomp);
+      // limit primitive quantities
+      auto phip = VertexBasedFunction(P, esup, inpoel, coord, e, rdof, dof_el,
+        offset, nprim);
+
+      consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+
+      // apply limiter function
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*rdof;
+        U(e, mark+1, offset) = phic[c] * U(e, mark+1, offset);
+        U(e, mark+2, offset) = phic[c] * U(e, mark+2, offset);
+        U(e, mark+3, offset) = phic[c] * U(e, mark+3, offset);
+      }
+      for (std::size_t c=0; c<nprim; ++c)
+      {
+        auto mark = c*rdof;
+        P(e, mark+1, offset) = phip[c] * P(e, mark+1, offset);
+        P(e, mark+2, offset) = phip[c] * P(e, mark+2, offset);
+        P(e, mark+3, offset) = phip[c] * P(e, mark+3, offset);
+      }
+    }
+  }
+}
+
+void
 WENOFunction( const tk::Fields& U,
               const std::vector< int >& esuel,
               std::size_t e,
@@ -543,6 +623,124 @@ SuperbeeFunction( const tk::Fields& U,
   return phi;
 }
 
+std::vector< tk::real >
+VertexBasedFunction( const tk::Fields& U,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  std::size_t e,
+  std::size_t rdof,
+  std::size_t dof_el,
+  std::size_t offset,
+  std::size_t ncomp )
+// *****************************************************************************
+//  Kuzmin's vertex-based limiter function calculation for P1 dofs
+//! \param[in] U High-order solution vector which is to be limited
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] e Id of element whose solution is to be limited
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] dof_el Local number of degrees of freedom
+//! \param[in] offset Index for equation systems
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \return phi Limiter function for solution in element e
+// *****************************************************************************
+{
+  // Kuzmin's vertex-based TVD limiter uses min-max bounds that the
+  // high-order solution should satisfy, to ensure TVD properties. For a
+  // high-order method like DG, this involves the following steps:
+  // 1. Find min-max bounds in the nodal-neighborhood of cell.
+  // 2. Calculate the limiter function (Superbee) for all the vertices of cell.
+  //    From these, use the minimum value of the limiter function.
+
+  // Prepare for calculating Basis functions
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  // Extract the element coordinates
+  std::array< std::array< tk::real, 3>, 4 > coordel {{
+    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+  // Compute the determinant of Jacobian matrix
+  auto detT =
+    tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+  std::vector< tk::real > uMin(ncomp, 0.0), uMax(ncomp, 0.0), phi(ncomp, 1.0);
+
+  // loop over all nodes of the element e
+  for (std::size_t lp=0; lp<4; ++lp)
+  {
+    // reset min/max
+    for (std::size_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*rdof;
+      uMin[c] = U(e, mark, offset);
+      uMax[c] = U(e, mark, offset);
+    }
+
+    auto p = inpoel[4*e+lp];
+    const auto& pesup = tk::cref_find(esup, p);
+
+    // ----- Step-1: find min/max in the neighborhood of node p
+    // loop over all the elements surrounding this node p
+    for (auto er : pesup)
+    {
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*rdof;
+        uMin[c] = std::min(uMin[c], U(er, mark, offset));
+        uMax[c] = std::max(uMax[c], U(er, mark, offset));
+      }
+    }
+
+    // ----- Step-2: compute the limiter function at this node
+
+    // compute the basis functions
+    std::array< tk::real, 3 > gp{cx[p], cy[p], cz[p]};
+    auto B_p = tk::eval_basis( rdof,
+          tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
+          tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
+          tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+
+    // find high-order solution
+    auto state = tk::eval_state( ncomp, offset, rdof, dof_el, e, U, B_p );
+
+    Assert( state.size() == ncomp, "Size mismatch" );
+
+    // compute the limiter function
+    for (std::size_t c=0; c<ncomp; ++c)
+    {
+      auto phi_gp = 1.0;
+      auto mark = c*rdof;
+      auto uNeg = state[c] - U(e, mark, offset);
+      if (uNeg > 1.0e-14)
+      {
+        uNeg = std::max(uNeg, 1.0e-08);
+        phi_gp = std::min( 1.0, (uMax[c]-U(e, mark, offset))/uNeg );
+      }
+      else if (uNeg < -1.0e-14)
+      {
+        uNeg = std::min(uNeg, -1.0e-08);
+        phi_gp = std::min( 1.0, (uMin[c]-U(e, mark, offset))/uNeg );
+      }
+      else
+      {
+        phi_gp = 1.0;
+      }
+
+    // ----- Step-3: take the minimum of the nodal-limiter functions
+      phi[c] = std::min( phi[c], phi_gp );
+    }
+  }
+
+  return phi;
+}
+
 void consistentMultiMatLimiting_P1(
   std::size_t nmat,
   ncomp_t offset,
@@ -590,6 +788,8 @@ void consistentMultiMatLimiting_P1(
     dalmax = std::max( dalmax, dmax );
   }
 
+  auto al_band = 1e-4;
+
   //phi_al = phic[nmax];
 
   // determine if cell is a material-interface cell based on ad-hoc tolerances.
@@ -614,38 +814,27 @@ void consistentMultiMatLimiting_P1(
   // to be applied. This if-test says that, the fix is applied when the change
   // in volume-fraction across a cell is greater than 0.1, *and* the
   // volume-fraction is between 0.1 and 0.9.
-  if ( dalmax > 0.1 &&
-       (almax > 0.1 && almax < (1.0-0.1)) )
+  if ( dalmax > al_band &&
+       (almax > al_band && almax < (1.0-al_band)) )
   {
     // 1. consistent high-order dofs
-    std::array< tk::real, 3 > drhob {{ 0.0, 0.0, 0.0 }};
-    auto rhob(0.0), vel(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
       auto alk = std::max( 1.0e-14, U(e,volfracDofIdx(nmat, k, rdof, 0),offset) );
       auto rhok = U(e,densityDofIdx(nmat, k, rdof, 0),offset)/alk;
-      auto rhoEk = U(e,energyDofIdx(nmat, k, rdof, 0),offset)/alk;
       for (std::size_t idir=1; idir<=3; ++idir)
       {
         U(e,densityDofIdx(nmat, k, rdof, idir),offset) = rhok *
           U(e,volfracDofIdx(nmat, k, rdof, idir),offset);
-        U(e,energyDofIdx(nmat, k, rdof, idir),offset) = rhoEk *
-          U(e,volfracDofIdx(nmat, k, rdof, idir),offset);
-        drhob[idir-1] += U(e,densityDofIdx(nmat, k, rdof, idir),offset);
-      }
-      rhob += U(e,densityDofIdx(nmat, k, rdof, 0),offset);
-    }
-    for (std::size_t idir=1; idir<=3; ++idir)
-    {
-      for (std::size_t jdir=1; jdir<=3; ++jdir)
-      {
-        vel = U(e,momentumDofIdx(nmat, jdir-1, rdof, 0),offset)/rhob;
-        U(e,momentumDofIdx(nmat, jdir-1, rdof, idir),offset) = vel * drhob[idir-1];
       }
     }
 
-    // 2. same limiter for all equations
-    for (auto& p : phic) p = phi_al;
+    // 2. same limiter for all volume-fractions and densities
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      phic[volfracIdx(nmat, k)] = phi_al;
+      phic[densityIdx(nmat, k)] = phi_al;
+    }
   }
   else
   {
