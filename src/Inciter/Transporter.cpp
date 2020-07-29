@@ -666,18 +666,17 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
 // *****************************************************************************
 {
   std::stringstream err;
-  if (cb < 0.0) {  // called from Refiner
+  if (cb < 0.0) {
     err << "Mesh boundary leaky after mesh refinement step; this is due to a "
      "problem with updating the side sets used to specify boundary conditions "
-     "on faces, required for DG methods: ";
-  } else if (cb > 0.0) {  // called from DG
-    err << "Mesh boundary leaky during initialization of the DG algorithm; this "
-    "is due to incorrect or incompletely specified boundary conditions for a "
-    "given input mesh: ";
+     "on faces: ";
+  } else if (cb > 0.0) {
+    err << "Mesh boundary leaky during initialization; this is due to "
+    "incorrect or incompletely specified boundary conditions for a given input "
+    "mesh: ";
   }
 
-  auto eps = std::numeric_limits< tk::real >::epsilon() * 1.0e+3; // ~ 2.0e-13
-
+  auto eps = 1.0e-10;
   if (std::abs(sx) > eps || std::abs(sy) > eps || std::abs(sz) > eps) {
     err << "Integral result must be a zero vector: " << std::setprecision(12) <<
            std::abs(sx) << ", " << std::abs(sy) << ", " << std::abs(sz) <<

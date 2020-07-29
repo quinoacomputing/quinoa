@@ -947,7 +947,7 @@ ALECG::solve()
 
   }
 
-  // Apply symmetry BCs on initial conditions
+  // Apply symmetry BCs on new solution
   for (const auto& eq : g_cgpde)
     eq.symbc( m_u, d->Coord(), m_bnorm, m_symbcnodes );
   // Apply farfield BCs on new solution
