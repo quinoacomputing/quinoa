@@ -429,7 +429,7 @@ namespace AMR {
      */
     void mesh_adapter_t::perform_refinement()
     {
-        // Track tets which needs to be deleted this iteration
+        // Track tets which need to be deleted this iteration
         std::set<size_t> round_two;
 
         trace_out << "Perform ref" << std::endl;
@@ -1367,7 +1367,7 @@ namespace AMR {
                         // What do we do with skip?
                         break;
                 }
-                // Mark tet as not needing refinement
+                // Mark tet as not needing derefinement
                 tet_store.marked_derefinements.erase(tet_id);
             }
         }
