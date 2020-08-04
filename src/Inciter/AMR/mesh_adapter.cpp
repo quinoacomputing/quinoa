@@ -110,14 +110,23 @@ namespace AMR {
      */
     void mesh_adapter_t::mark_uniform_derefinement()
     {
-        for (auto& kv : tet_store.edge_store.edges) {
-           auto& local = kv.second;
-           if (local.lock_case == Edge_Lock_Case::unlocked)
-             local.needs_derefining = 1;
+      const auto& inp = tet_store.get_active_inpoel();
+      auto& edge_store = tet_store.edge_store;
+      for (std::size_t t=0; t<inp.size()/4; ++t) {
+        const auto edges =
+          edge_store.generate_keys(
+            {inp[t*4+0], inp[t*4+1], inp[t*4+2], inp[t*4+3]});
+        for (const auto& tetedge : edges) {
+          auto e = edge_store.edges.find(tetedge);
+          if (e != end(edge_store.edges)) {
+            auto& local = e->second;
+            if (local.lock_case == Edge_Lock_Case::unlocked)
+              local.needs_derefining = 1;
+          }
         }
-        mark_derefinement();
+      }
+      mark_derefinement();
     }
-
 
     /**
      * @brief For a given set of edges, set their refinement criteria for
@@ -454,7 +463,6 @@ namespace AMR {
                         refiner.refine_one_to_eight(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Refinement_Case::two_to_eight:
-                        tet_store.get_parent_id(tet_id);
                         round_two.insert( tet_store.get_parent_id(tet_id) );
                         //std::cout << "2->8\n";
                         break;
