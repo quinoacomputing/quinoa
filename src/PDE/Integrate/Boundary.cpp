@@ -180,25 +180,41 @@ tk::bndSurfInt( ncomp_t system,
           update_rhs_bc( ncomp, nmat, offset, ndof, ndofel[el], wt, fn, el, fl,
                          B_l, R, riemannDeriv );
 
-          // Store the riemann velocity and coordinates data used for velocity
-          // reconstruction
+          // Store the riemann velocity and coordinates data of quadrature point
+          // used for velocity reconstruction if MulMat scheme is selected
           if (fl.size() > ncomp)
           {
             xcoord[el].push_back( gp[0] );
             xcoord[el].push_back( gp[1] );
             xcoord[el].push_back( gp[2] );
 
-            tk::real pbl(0.0);
+            auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn );
+
+            tk::real pbl(0.0), pbr(0.0);
             for (std::size_t k=0; k<nmat; ++k)
-              pbl += ugp[nmat+k];
+            {
+              pbl += var[0][inciter::densityIdx(nmat, k)];
+              pbr += var[1][inciter::densityIdx(nmat, k)];
+            }
 
-            auto ul = ugp[2*nmat] / pbl;
-            auto vl = ugp[2*nmat+1] / pbl;
-            auto wl = ugp[2*nmat+2] / pbl;
+            auto ul = var[0][inciter::momentumIdx(nmat, 0)] / pbl;
+            auto vl = var[0][inciter::momentumIdx(nmat, 1)] / pbl;
+            auto wl = var[0][inciter::momentumIdx(nmat, 2)] / pbl;
 
-            vriem[el].push_back(ul);
-            vriem[el].push_back(vl);
-            vriem[el].push_back(wl);
+            auto ur = var[1][inciter::momentumIdx(nmat, 0)] / pbr;
+            auto vr = var[1][inciter::momentumIdx(nmat, 1)] / pbr;
+            auto wr = var[1][inciter::momentumIdx(nmat, 2)] / pbr;
+
+            auto vnl = ul * fn[0] + vl * fn[1] + wl * fn[2];
+            auto vnr = ur * fn[0] + vr * fn[1] + wr * fn[2];
+
+            auto urie = 0.5 * ((ul + ur) - fn[0] * (vnl + vnr)) + fl[ncomp+nmat] * fn[0];
+            auto vrie = 0.5 * ((vl + vr) - fn[1] * (vnl + vnr)) + fl[ncomp+nmat] * fn[1];
+            auto wrie = 0.5 * ((wl + wr) - fn[2] * (vnl + vnr)) + fl[ncomp+nmat] * fn[2];
+
+            vriem[el].push_back(urie);
+            vriem[el].push_back(vrie);
+            vriem[el].push_back(wrie);
           }
         }
       }

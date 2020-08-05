@@ -204,8 +204,8 @@ tk::surfInt( ncomp_t system,
       update_rhs_fa( ncomp, nmat, offset, ndof, ndofel[el], ndofel[er], wt, fn,
                      el, er, fl, B_l, B_r, R, riemannDeriv );
 
-      // Store the riemann velocity and coordinates data used for velocity
-      // reconstruction
+      // Store the riemann velocity and coordinates data of quadrature point
+      // used for velocity reconstruction if MulMat scheme is selected
       if (fl.size() > ncomp)
       {
         xcoord[el].push_back( gp[0] );
@@ -223,34 +223,28 @@ tk::surfInt( ncomp_t system,
           pbr += state[1][nmat+k];
         }
 
-        if(fl[ncomp+nmat] > 0)
-        {
-          auto ul = state[0][2*nmat] / pbl;
-          auto vl = state[0][2*nmat+1] / pbl;
-          auto wl = state[0][2*nmat+2] / pbl;
+        auto ul = state[0][2*nmat] / pbl;
+        auto vl = state[0][2*nmat+1] / pbl;
+        auto wl = state[0][2*nmat+2] / pbl;
 
-          vriem[el].push_back(ul);
-          vriem[el].push_back(vl);
-          vriem[el].push_back(wl);
+        auto ur = state[1][2*nmat] / pbr;
+        auto vr = state[1][2*nmat+1] / pbr;
+        auto wr = state[1][2*nmat+2] / pbr;
 
-          vriem[er].push_back(ul);
-          vriem[er].push_back(vl);
-          vriem[er].push_back(wl);
-        }
-        else
-        {
-          auto ur = state[1][2*nmat] / pbr;
-          auto vr = state[1][2*nmat+1] / pbr;
-          auto wr = state[1][2*nmat+2] / pbr;
+        auto vnl = ul * fn[0] + vl * fn[1] + wl * fn[2];
+        auto vnr = ur * fn[0] + vr * fn[1] + wr * fn[2];
 
-          vriem[el].push_back(ur);
-          vriem[el].push_back(vr);
-          vriem[el].push_back(wr);
+        auto urie = 0.5 * ((ul + ur) - fn[0] * (vnl + vnr)) + fl[ncomp+nmat] * fn[0];
+        auto vrie = 0.5 * ((vl + vr) - fn[1] * (vnl + vnr)) + fl[ncomp+nmat] * fn[1];
+        auto wrie = 0.5 * ((wl + wr) - fn[2] * (vnl + vnr)) + fl[ncomp+nmat] * fn[2];
 
-          vriem[er].push_back(ur);
-          vriem[er].push_back(vr);
-          vriem[er].push_back(wr);
-        }
+        vriem[el].push_back(urie);
+        vriem[el].push_back(vrie);
+        vriem[el].push_back(wrie);
+
+        vriem[er].push_back(urie);
+        vriem[er].push_back(vrie);
+        vriem[er].push_back(wrie);
       }
     }
   }

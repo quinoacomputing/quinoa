@@ -220,7 +220,11 @@ class MultiMat {
           if(ndof > 1)
           {
             for(std::size_t idir = 0; idir < 3; idir++)
+            {
               prim(e, rmark+idir+1, 0) = R[mark+idir+1] / L(e, mark+idir+1, 0);
+              if(fabs(prim(e, rmark+idir+1, 0)) < 1e-20)
+                prim(e, rmark+idir+1, 0) = 0;
+            }
           }
         }
       }

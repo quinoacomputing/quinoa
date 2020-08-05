@@ -1773,6 +1773,8 @@ DG::solve( tk::real newdt )
         m_u(e, rmark, 0) =  rkcoef[0][m_stage] * m_un(e, rmark, 0)
           + rkcoef[1][m_stage] * ( m_u(e, rmark, 0)
             + d->Dt() * m_rhs(e, mark, 0)/m_lhs(e, mark, 0) );
+        if(fabs(m_u(e, rmark, 0)) < 1e-20)
+          m_u(e, rmark, 0) = 0;
       }
 
   // Update primitives based on the evolved solution

@@ -188,11 +188,6 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
             vriem[idir] += vriempoly[e][mark+k] * gp[k-1];
         }
       }
-      //if(e == 1000)
-      //  std::cout << "vriem = " << vriem[0] << "\t" << vriem[1] << "\t" << vriem[2] << std::endl;
-      //vriem[0] = std::sqrt(1);
-      //vriem[1] = std::sqrt(1);
-      //vriem[2] = 0;
 
       update_rhs_ncn( ncomp, offset, nmat, ndof, ndofel[e], wt, e, ugp, B, dBdx,
                       riemannDeriv, vriem, ncf, R );
@@ -404,13 +399,13 @@ pressureRelaxationInt( ncomp_t system,
         s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
       }
 
-      update_rhs_pncn( ncomp, offset, ndof, ndofel[e], wt, e, B, s_prelax, R );
+      update_rhs_pre( ncomp, offset, ndof, ndofel[e], wt, e, B, s_prelax, R );
     }
   }
 }
 
 void
-update_rhs_pncn(
+update_rhs_pre(
   ncomp_t ncomp,
   ncomp_t offset,
   const std::size_t ndof,
@@ -421,7 +416,7 @@ update_rhs_pncn(
   std::vector< tk::real >& ncf,
   Fields& R )
 // *****************************************************************************
-//  Update the rhs by adding the non-conservative term integrals
+//  Update the rhs by adding the pressure relaxation integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -461,15 +456,17 @@ void solvevriem( const std::size_t nelem,
                  const std::vector< std::vector< tk::real > >& xcoord,
                  std::vector< std::vector< tk::real > >& vriempoly )
 // *****************************************************************************
-//  Solve the reconstruct velocity used for volume fraction equation
+//  Solve the reconstruct velocity used for volume fraction equation by
+//  Least square method
 //! \param[in] nelem Numer of elements
 //! \param[in,out] vriem Vector of the riemann velocity
 //! \param[in,out] xcoord Vector of the coordinates of riemann velocity data
-//! \param[in,out] vriempoly Vector of velocity polynomial solution 
+//! \param[in,out] vriempoly Vector of velocity polynomial solution
 // *****************************************************************************
 {
   for (std::size_t e=0; e<nelem; ++e)
   {
+    // Use the normal method to construct the linear system A^T * A * x = u
     auto npoin = xcoord[e].size()/3;
     std::vector< std::vector< tk::real > > A(npoin, std::vector<tk::real>(4, 1.0));
 
@@ -486,13 +483,6 @@ void solvevriem( const std::size_t nelem,
       for(std::size_t j = 0; j < 4; j++)
         for(std::size_t k = 0; k < npoin; k++)
           B[i][j] += A[k][i] * A[k][j];
-    //std::cout << "B = " << npoin << std::endl;
-    //for(std::size_t i = 0; i < 4; i++)
-    //{
-    //  for(std::size_t j = 0; j < 4; j++)
-    //    std::cout << B[i][j] << "\t";
-    //  std::cout << std::endl;
-    //}
 
     for(std::size_t idir = 0; idir < 3; idir++)
     {
@@ -508,61 +498,14 @@ void solvevriem( const std::size_t nelem,
       for(std::size_t k = 0; k < 4; k++)
         for(std::size_t i = 0; i < npoin; i++)
           u[k] += A[i][k] * vel[i];
-
-      //std::cout << "u = " << std::endl;
-      //for(std::size_t i = 0; i < 4; i++)
-      //  std::cout << u[i] << "\t";
-      //std::cout << std::endl;
-
-      //std::cout << "Start LU" << std::endl;
+ 
+      // Solve the 4x4 linear system by LU method
       LU(4, B, u, x);
-      //std::cout << "Finish LU" << std::endl;
 
       auto idirmark = idir * 4;
       for(std::size_t k = 0; k < 4; k++)
         vriempoly[e][idirmark+k] = x[k];
     }
-  }
-}
-
-void LU( const std::size_t n,
-         const std::vector< std::vector< tk::real > >& A,
-         const std::vector< tk::real >& b,
-         std::vector< tk::real >& x )
-// *****************************************************************************
-//  Solve a nxn system of equations using LU method
-//!  \param[in] n Dimension of the linear system
-//!  \param[in] A nxn lhs matrix
-//!  \param[in] b nx1 rhs matrix
-//!  \param[in,out] x Vector of solutions
-// *****************************************************************************
-{
-  std::vector< std::vector< tk::real > >L(n, std::vector<tk::real>(n,0.0));
-  auto U = A;
-
-  for (std::size_t j = 0; j < n-1; j++)
-  {
-    for (std::size_t i = j+1; i < n; i++)
-    {
-      L[i][j] = U[i][j] / U[j][j];
-      for (int k = j+1; k < n; k++ )
-        U[i][k] = U[i][k] - L[i][j] * U[j][k];
-    }
-  }
-
-  auto y = b;
-
-  for ( int i = 0; i < n; i++ )
-    for (int j = 0; j < i; j++ )
-      y[i] = y[i] - L[i][j] * y[j];
-
-  for ( int i = n-1; i > -1; i-- )
-  {
-    x[i] = y[i];
-
-    for ( int j = i+1; j < n; j++ )
-      x[i] = x[i] - U[i][j] * x[j];
-    x[i] = x[i] / U[i][i];
   }
 }
 

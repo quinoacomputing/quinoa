@@ -77,7 +77,7 @@ pressureRelaxationInt( ncomp_t system,
 
 //! Update the rhs by adding the pressure relaxation integrals
 void
-update_rhs_pncn(
+update_rhs_pre(
   ncomp_t ncomp,
   ncomp_t offset,
   const std::size_t ndof,
@@ -93,11 +93,6 @@ void solvevriem( const std::size_t nelem,
                  const std::vector< std::vector< tk::real > >& vriem,
                  const std::vector< std::vector< tk::real > >& xcoord,
                  std::vector< std::vector< tk::real > >& vriempoly );
-
-void LU( const std::size_t n,
-         const std::vector< std::vector< tk::real > >& A,
-         const std::vector< tk::real >& b,
-         std::vector< tk::real >& x );
 
 } // tk::
 
