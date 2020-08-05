@@ -193,9 +193,12 @@ Transporter::info( const InciterPrint& print )
               g_inputdeck.get< tag::discr, tag::operator_reorder >() );
   auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
   print.item( "Local time stepping", steady );
-  if (steady)
+  if (steady) {
     print.item( "L2-norm residual convergence criterion",
                 g_inputdeck.get< tag::discr, tag::residual >() );
+    print.item( "Convergence criterion component index",
+                g_inputdeck.get< tag::discr, tag::rescomp >() );
+  }
   print.item( "Number of time steps", nstep );
   print.item( "Start time", t0 );
   print.item( "Terminate time", term );
@@ -663,18 +666,17 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
 // *****************************************************************************
 {
   std::stringstream err;
-  if (cb < 0.0) {  // called from Refiner
+  if (cb < 0.0) {
     err << "Mesh boundary leaky after mesh refinement step; this is due to a "
      "problem with updating the side sets used to specify boundary conditions "
-     "on faces, required for DG methods: ";
-  } else if (cb > 0.0) {  // called from DG
-    err << "Mesh boundary leaky during initialization of the DG algorithm; this "
-    "is due to incorrect or incompletely specified boundary conditions for a "
-    "given input mesh: ";
+     "on faces: ";
+  } else if (cb > 0.0) {
+    err << "Mesh boundary leaky during initialization; this is due to "
+    "incorrect or incompletely specified boundary conditions for a given input "
+    "mesh: ";
   }
 
-  auto eps = std::numeric_limits< tk::real >::epsilon() * 1.0e+3; // ~ 2.0e-13
-
+  auto eps = 1.0e-10;
   if (std::abs(sx) > eps || std::abs(sy) > eps || std::abs(sz) > eps) {
     err << "Integral result must be a zero vector: " << std::setprecision(12) <<
            std::abs(sx) << ", " << std::abs(sy) << ", " << std::abs(sz) <<
@@ -833,7 +835,7 @@ Transporter::diagHeader()
 
   // Augment diagnostics variables by L2-norm of the residual
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
-    d.push_back( "L2(res)" );
+    for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
   }
 
   // Write diagnostics header
@@ -1006,7 +1008,7 @@ Transporter::boxvol( tk::real v )
 // *****************************************************************************
 {
   if (v > 0.0) printer().diag( "Box IC volume: " + std::to_string(v) );
-  m_scheme.bcast< Scheme::boxvol >( v );
+  m_scheme.bcast< Scheme::box >( v );
 }
 
 void
@@ -1018,19 +1020,19 @@ Transporter::inthead( const InciterPrint& print )
 {
   print.inthead( "Time integration", "Navier-Stokes solver",
   "Legend: it - iteration count\n"
-  "         t - time\n"
-  "        dt - time step size\n"
-  "       ETE - estimated time elapsed (h:m:s)\n"
-  "       ETA - estimated time for accomplishment (h:m:s)\n"
-  "       EGT - estimated grind time (ms/timestep)\n"
+  "         t - physics time\n"
+  "        dt - physics time step size\n"
+  "       ETE - estimated wall-clock time elapsed (h:m:s)\n"
+  "       ETA - estimated wall-clock time for accomplishment (h:m:s)\n"
+  "       EGT - estimated grind wall-clock time (ms/timestep)\n"
   "       flg - status flags, legend:\n"
   "             f - field (volume and surface)\n"
   "             d - diagnostics\n"
-  "             t - time history\n"
+  "             t - physics time history\n"
   "             h - h-refinement\n"
   "             l - load balancing\n"
   "             r - checkpoint\n",
-  "\n      it             t            dt        ETE        ETA        EGT  out\n"
+  "\n      it             t            dt        ETE        ETA        EGT  flg\n"
     " -------------------------------------------------------------------------\n" );
 }
 
@@ -1084,11 +1086,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   // Finish computing the L2 norm of the residual and append
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  tk::real l2res = 0.0;
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
-    l2res = std::sqrt( d[L2RES][0] / m_meshvol );
-    diag.push_back( l2res );
-  }
+  std::vector< tk::real > l2res( d[L2RES].size(), 0.0 );
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
+    for (std::size_t i=0; i<d[L2RES].size(); ++i) {
+      l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol );
+      diag.push_back( l2res[i] );
+    }
 
   // Append diagnostics file at selected times
   tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),

@@ -106,8 +106,8 @@ class DiagCG : public CBase_DiagCG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
-    //! Receive total box IC volume
-    void boxvol( tk::real v );
+    //! Receive total box IC volume and set conditions in box
+    void box( tk::real v );
 
     // Initially compute left hand side diagonal matrix
     void init();
@@ -119,8 +119,8 @@ class DiagCG : public CBase_DiagCG {
     void lhs();
 
     //! Receive boundary point normals on chare-boundaries
-    void comnorm(
-      const std::unordered_map< std::size_t, std::array<tk::real,4> >& innorm );
+    void comnorm( const std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
 
     //! Receive contributions to left-hand side matrix on chare-boundaries
     void comlhs( const std::vector< std::size_t >& gid,
@@ -135,7 +135,7 @@ class DiagCG : public CBase_DiagCG {
     void update( const tk::Fields& a, tk::Fields&& dul );
 
     //! Optionally refine/derefine mesh
-    void refine( tk::real l2res );
+    void refine( const std::vector< tk::real >& l2ref );
 
     //! Receive new mesh from refiner
     void resizePostAMR(
@@ -192,8 +192,12 @@ class DiagCG : public CBase_DiagCG {
       p | m_vol;
       p | m_bnorm;
       p | m_bnormc;
+      p | m_symbcnodemap;
+      p | m_symbcnodes;
+      p | m_farfieldbcnodes;
       p | m_diag;
       p | m_boxnodes;
+      p | m_boxnodes_set;
       p | m_dtp;
       p | m_tp;
     }
@@ -255,18 +259,29 @@ class DiagCG : public CBase_DiagCG {
     std::unordered_map< std::size_t, std::vector< tk::real > > m_difc;
     //! Total mesh volume
     tk::real m_vol;
-    //! Face normals in boundary points
+    //! Face normals in boundary points associated to side sets
     //! \details Key: local node id, value: unit normal and inverse distance
-    //!   square between face centroids and points
-    std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnorm;
-    //! Receive buffer for communication of the boundary point normals
+    //!   square between face centroids and points, outer key: side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnorm;
+    //! \brief Receive buffer for communication of the boundary point normals
+    //!   associated to side sets
     //! \details Key: global node id, value: normals (first 3 components),
-    //!   inverse distance squared (4th component)
-    std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnormc;
+    //!   inverse distance squared (4th component), outer key, side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnormc;
+    //! Unique set of nodes at which symmetry BCs are set for side sets
+    std::unordered_map< int, std::unordered_set< std::size_t > > m_symbcnodemap;
+    //! Unique set of nodes at which symmetry BCs are set
+    std::unordered_set< std::size_t > m_symbcnodes;
+    //! Unique set of nodes at which farfield BCs are set
+    std::unordered_set< std::size_t > m_farfieldbcnodes;
     //! Diagnostics object
     NodeDiagnostics m_diag;
     //! Mesh node ids at which user-defined box ICs are defined
     std::vector< std::size_t > m_boxnodes;
+    //! Box nodes that have been set
+    std::unordered_set< std::size_t > m_boxnodes_set;
     //! Time step size for each mesh node
     std::vector< tk::real > m_dtp;
     //! Physical time for each mesh node
@@ -281,10 +296,8 @@ class DiagCG : public CBase_DiagCG {
     }
 
     //! Compute boundary point normals
-    void
-    bnorm( const std::map< int, std::vector< std::size_t > >& bface,
-           const std::vector< std::size_t >& triinpoel,
-           std::unordered_set< std::size_t >&& symbcnodes );
+    void bnorm( const std::unordered_map< int,
+                std::unordered_set< std::size_t > >& bcnodes );
 
     //! Finish setting up communication maps (norms, etc.)
     void normfinal();

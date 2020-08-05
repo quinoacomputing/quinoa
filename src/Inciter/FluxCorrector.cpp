@@ -33,8 +33,11 @@ FluxCorrector::aec(
   const std::vector< std::size_t >& inpoel,
   const std::vector< tk::real >& vol,
   const std::unordered_map< std::size_t,
-          std::vector< std::pair< bool, tk::real > > >& bcdir,
-  const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& bnorm,
+    std::vector< std::pair< bool, tk::real > > >& bcdir,
+  const std::unordered_map< int,
+    std::unordered_set< std::size_t > >& symbcnodemap,
+  const std::unordered_map< int,
+    std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm,
   const tk::Fields& Un,
   tk::Fields& P )
 // *****************************************************************************
@@ -45,8 +48,10 @@ FluxCorrector::aec(
 //! \param[in] bcdir Vector of pairs of bool and boundary condition value
 //!   associated to local mesh node IDs at which to set Dirichlet boundary
 //!   conditions.
+//! \param[in] symbcnodemap Unique set of node ids at which to set symmetry BCs
+//!   associated to side set ids
 //! \param[in] bnorm Face normals in boundary points: key global node id,
-//!   value: unit normal
+//!   value: unit normal, outer key: side set id
 //! \param[in] Un Solution at the previous time step
 //! \param[in,out] P The sums of positive (negative) AECs to nodes
 //! \details The antidiffusive element contributions (AEC) are defined as the
@@ -131,15 +136,16 @@ FluxCorrector::aec(
           m_aec(e*4+j,c,0) += m[j][k] * ctau*un[c][k] / vol[N[j]];
   }
 
-  // At nodes where Dirichlet boundary conditions (BC) are set, we set the AEC
-  // to zero. This is because if the (same) BCs are correctly set for both the
-  // low and the high order solution, there should be no difference between the
-  // low and high order increments, thus AEC = dUh - dUl = 0.
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-    const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
-                                           inpoel[e*4+2], inpoel[e*4+3] }};
+    const std::array< std::size_t, 4 >
+      N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
     for (std::size_t j=0; j<4; ++j) {
-      auto b = bcdir.find( N[j] );  // Dirichlet BCs
+      // Dirichlet BCs: At nodes where Dirichlet boundary conditions (BC) are
+      // set, we set the AEC to zero. This is because if the (same) BCs are
+      // correctly set for both the low and the high order solution, there
+      // should be no difference between the low and high order increments,
+      // thus AEC = dUh - dUl = 0.
+      auto b = bcdir.find(N[j]);
       if (b != end(bcdir)) {
         for (ncomp_t c=0; c<ncomp; ++c) {
           if (b->second[c].first) {
@@ -147,19 +153,25 @@ FluxCorrector::aec(
           }
         }
       }
-      auto i = bnorm.find( N[j] );  // Symmetry BCs
-      if (i != end(bnorm)) {
-        const auto& norm = i->second;
-        for (const auto& vel : m_vel) {
-          std::array< tk::real, 3 >
-            v{ m_aec(e*4+j,vel[0],0),
-               m_aec(e*4+j,vel[1],0),
-               m_aec(e*4+j,vel[2],0) },
-            n{ norm[0], norm[1], norm[2] };
-          auto vn = tk::dot( v, n );
-          m_aec(e*4+j,vel[0],0) -= vn * n[0];
-          m_aec(e*4+j,vel[1],0) -= vn * n[1];
-          m_aec(e*4+j,vel[2],0) -= vn * n[2];
+      // Symmetry BCs
+      for (const auto& [s,nodes] : symbcnodemap) {
+        auto i = nodes.find(N[j]);
+        if (i != end(nodes)) {
+          auto l = bnorm.find(s);
+          if (l != end(bnorm)) {
+            auto k = l->second.find(N[j]);
+            for (const auto& vel : m_vel) {
+              std::array< tk::real, 3 >
+                v{ m_aec(e*4+j,vel[0],0),
+                   m_aec(e*4+j,vel[1],0),
+                   m_aec(e*4+j,vel[2],0) },
+                n{ k->second[0], k->second[1], k->second[2] };
+              auto vn = tk::dot( v, n );
+              m_aec(e*4+j,vel[0],0) -= vn * n[0];
+              m_aec(e*4+j,vel[1],0) -= vn * n[1];
+              m_aec(e*4+j,vel[2],0) -= vn * n[2];
+            }
+          }
         }
       }
     }

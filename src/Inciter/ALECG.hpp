@@ -100,8 +100,8 @@ class ALECG : public CBase_ALECG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
-    //! Receive total box IC volume
-    void boxvol( tk::real v );
+    //! Receive total box IC volume and set conditions in box
+    void box( tk::real v );
 
     // Start time stepping
     void start();
@@ -119,8 +119,8 @@ class ALECG : public CBase_ALECG {
               tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm );
 
     //! Receive boundary point normals on chare-boundaries
-    void comnorm(
-      const std::unordered_map< std::size_t, std::array<tk::real,4> >& innorm );
+    void comnorm( const std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
 
     //! Receive contributions to left-hand side matrix on chare-boundaries
     void comlhs( const std::vector< std::size_t >& gid,
@@ -138,7 +138,7 @@ class ALECG : public CBase_ALECG {
     void update( const tk::Fields& a );
 
     //! Optionally refine/derefine mesh
-    void refine( tk::real l2res );
+    void refine( const std::vector< tk::real >& l2res );
 
     //! Receive new mesh from refiner
     void resizePostAMR(
@@ -202,9 +202,12 @@ class ALECG : public CBase_ALECG {
       p | m_diag;
       p | m_bnorm;
       p | m_bnormc;
-      p | m_symbcnode;
+      p | m_symbcnodes;
+      p | m_farfieldbcnodes;
+      p | m_symbctri;
       p | m_stage;
       p | m_boxnodes;
+      p | m_boxnodes_set;
       p | m_edgenode;
       p | m_edgeid;
       p | m_dtp;
@@ -286,20 +289,29 @@ class ALECG : public CBase_ALECG {
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
     //! Diagnostics object
     NodeDiagnostics m_diag;
-    //! Face normals in boundary points
+    //! Face normals in boundary points associated to side sets
     //! \details Key: local node id, value: unit normal and inverse distance
-    //!   square between face centroids and points
-    std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnorm;
-    //! Receive buffer for communication of the boundary point normals
+    //!   square between face centroids and points, outer key: side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnorm;
+    //! \brief Receive buffer for communication of the boundary point normals
+    //!   associated to side sets
     //! \details Key: global node id, value: normals (first 3 components),
-    //!   inverse distance squared (4th component)
-    std::unordered_map< std::size_t, std::array< tk::real, 4 > > m_bnormc;
-    //! Vector with 1 at symmetry BC nodes
-    std::vector< int > m_symbcnode;
+    //!   inverse distance squared (4th component), outer key, side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnormc;
+    //! Unique set of nodes at which symmetry BCs are set
+    std::unordered_set< std::size_t > m_symbcnodes;
+    //! Unique set of nodes at which farfield BCs are set
+    std::unordered_set< std::size_t > m_farfieldbcnodes;
+    //! Vector with 1 at symmetry BC boundary triangles
+    std::vector< int > m_symbctri;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Mesh node ids at which user-defined box ICs are defined
     std::vector< std::size_t > m_boxnodes;
+    //! Box nodes that have been set
+    std::unordered_set< std::size_t > m_boxnodes_set;
     //! Local node IDs of edges
     std::vector< std::size_t > m_edgenode;
     //! Edge ids in the order of access
@@ -338,9 +350,11 @@ class ALECG : public CBase_ALECG {
 
     //! Compute boundary point normals
     void
-    bnorm( std::unordered_set< std::size_t >&& symbcnodes );
+    bnorm( const std::unordered_map< int,
+             std::unordered_set< std::size_t > >& bcnodes );
 
-    //! Finish setting up communication maps (norms, etc.)
+    //! \brief Finish computing dual-face and boundary point normals and apply
+    //!   boundary conditions on the initial conditions
     void normfinal();
 
     //! Output mesh and particle fields to files

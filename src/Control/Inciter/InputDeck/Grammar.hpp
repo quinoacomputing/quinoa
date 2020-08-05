@@ -18,10 +18,9 @@
 #include <cmath>
 
 #include "CommonGrammar.hpp"
+#include "CartesianProduct.hpp"
 #include "Keywords.hpp"
 #include "ContainerUtil.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
@@ -185,7 +184,7 @@ namespace grm {
         }
       }
 
-      // Verify correct number of multi-material properties configured
+      // Verify correct number of material properties configured
       const auto& gamma = stack.template get< param, eq, tag::gamma >();
       if (gamma.empty() || gamma.back().size() != 1)
         Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
@@ -273,39 +272,71 @@ namespace grm {
         {
           Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
         }
-      } else {
-        // put in empty vectors for non-user-defined ICs so client code can
-        // directly index into these vectors using the eq system id
+
+        // put in empty vectors for background ICs so client code can directly
+        // index into these vectors using the eq system id
         bgdensityic.push_back( {} );
         bgvelocityic.push_back( {} );
         bgpressureic.push_back( {} );
         bgenergyic.push_back( {} );
         bgtemperatureic.push_back( {} );
-      }
 
-      // Error check Dirichlet boundary condition block for all compflow
-      // configurations
-      const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
-      for (const auto& s : bc)
-        if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+        // Error check Dirichlet boundary condition block for all compflow
+        // configurations
+        const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
+        for (const auto& s : bc)
+          if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
 
-      // Error check stagnation BC block
-      const auto& bcstag = stack.template get< tag::param, eq, tag::bcstag >();
-      const auto& point = bcstag.template get< tag::point >();
-      const auto& radius = bcstag.template get< tag::radius >();
-      if ( (!point.empty() && !point.back().empty() &&
-            !radius.empty() && !radius.back().empty() &&
-            point.back().size() != 3*radius.back().size()) ||
-           (!radius.empty() && !radius.back().empty() &&
-            !point.empty() && !point.back().empty() &&
-            point.back().size() != 3*radius.back().size()) ||
-           (!point.empty() && !point.back().empty() &&
-            (radius.empty() || (!radius.empty() && radius.back().empty()))) ||
-           (!radius.empty() && !radius.back().empty() &&
-            (point.empty() || (!point.empty() && point.back().empty())))
-         )
-      {
-        Message< Stack, ERROR, MsgKey::STAGBCWRONG >( stack, in );
+        // Error check stagnation BC block
+        const auto& bcstag = stack.template get<tag::param, eq, tag::bcstag>();
+        const auto& spoint = bcstag.template get< tag::point >();
+        const auto& sradius = bcstag.template get< tag::radius >();
+        if ( (!spoint.empty() && !spoint.back().empty() &&
+              !sradius.empty() && !sradius.back().empty() &&
+              spoint.back().size() != 3*sradius.back().size())
+         || (!sradius.empty() && !sradius.back().empty() &&
+              !spoint.empty() && !spoint.back().empty() &&
+              spoint.back().size() != 3*sradius.back().size())
+         || (!spoint.empty() && !spoint.back().empty() &&
+              (sradius.empty() || (!sradius.empty() && sradius.back().empty())))
+         || (!sradius.empty() && !sradius.back().empty() &&
+              (spoint.empty() || (!spoint.empty() && spoint.back().empty()))) )
+        {
+          Message< Stack, ERROR, MsgKey::STAGBCWRONG >( stack, in );
+        }
+
+        // Error check skip BC block
+        const auto& bcskip = stack.template get<tag::param, eq, tag::bcskip>();
+        const auto& kpoint = bcskip.template get< tag::point >();
+        const auto& kradius = bcskip.template get< tag::radius >();
+        if ( (!kpoint.empty() && !kpoint.back().empty() &&
+              !kradius.empty() && !kradius.back().empty() &&
+              kpoint.back().size() != 3*kradius.back().size())
+          || (!kradius.empty() && !kradius.back().empty() &&
+              !kpoint.empty() && !kpoint.back().empty() &&
+              kpoint.back().size() != 3*kradius.back().size())
+          || (!kpoint.empty() && !kpoint.back().empty() &&
+              (kradius.empty() || (!kradius.empty() && kradius.back().empty())))
+          || (!kradius.empty() && !kradius.back().empty() &&
+              (kpoint.empty() || (!kpoint.empty() && kpoint.back().empty()))) )
+        {
+          Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
+        }
+
+        // Set default inititate type for box ICs
+        auto& icbox = ic.template get< tag::box >();
+        auto& initiate = icbox.template get< tag::initiate >();
+        auto& inittype = initiate.template get< tag::init >();
+        if (inittype.size() != neq.get< eq >())
+          inittype.push_back( inciter::ctr::InitiateType::IMPULSE );
+
+        // put in empty vectors for non-user-defined box ICs so client code can
+        // directly index into these vectors using the eq system id
+        icbox.template get< tag::density >().push_back( {} );
+        icbox.template get< tag::velocity >().push_back( {} );
+        icbox.template get< tag::pressure >().push_back( {} );
+        icbox.template get< tag::energy >().push_back( {} );
+        icbox.template get< tag::temperature >().push_back( {} );
       }
     }
   };
@@ -429,6 +460,35 @@ namespace grm {
     }
   };
 
+  //! Function object to ensure disjoint side sets for all boundary conditions
+  //! \details This is instantiated using a Cartesian product of all PDE types
+  //!    and all BC types at compile time. It goes through all side sets
+  //!    configured by the user and triggers an error if a side set is assigned
+  //!    a BC more than once.
+  template< typename Input, typename Stack >
+  struct ensure_disjoint {
+    const Input& m_input;
+    Stack& m_stack;
+    std::unordered_set< int >& m_bcset;
+    explicit ensure_disjoint( const Input& in,
+                              Stack& stack,
+                              std::unordered_set< int >& bcset ) :
+      m_input( in ), m_stack( stack ), m_bcset( bcset ) {}
+    template< typename U > void operator()( brigand::type_<U> ) {
+      using Eq = typename brigand::front< U >;
+      using BC = typename brigand::back< U >;
+      const auto& bc = m_stack.template get< tag::param, Eq, tag::bc, BC >();
+      for (const auto& eq : bc)
+        for (const auto& s : eq) {
+          auto id = std::stoi(s);
+          if (m_bcset.find(id) != end(m_bcset))
+            Message< Stack, ERROR, MsgKey::NONDISJOINTBC >( m_stack, m_input );
+          else
+            m_bcset.insert( id );
+        }
+    }
+  };
+
   //! Rule used to trigger action
   struct check_inciter : pegtl::success {};
   //! \brief Do error checking on the inciter block
@@ -506,6 +566,20 @@ namespace grm {
       {
         Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
       }
+
+      // Do error checking on residual eq system component index
+      const auto rc = stack.template get< tag::discr, tag::rescomp >();
+      const auto& ncomps = stack.template get< tag::component >();
+      if (rc < 1 || rc > ncomps.nprop())
+        Message< Stack, ERROR, MsgKey::LARGECOMP >( stack, in );
+
+      // Ensure no different BC types are assigned to the same side set
+      using PDETypes = inciter::ctr::parameters::Keys;
+      using BCTypes = inciter::ctr::bc::Keys;
+      std::unordered_set< int > bcset;
+      brigand::for_each< tk::cartesian_product< PDETypes, BCTypes > >(
+        ensure_disjoint< Input, Stack >( in, stack, bcset ) );
+
       // Do error checking on time history point names (this is a programmer
       // error if triggers, hence assert)
       Assert(
@@ -681,6 +755,7 @@ namespace deck {
            tk::grm::discrparam< use, kw::dt, tag::dt >,
            tk::grm::discrparam< use, kw::cfl, tag::cfl >,
            tk::grm::discrparam< use, kw::residual, tag::residual >,
+           tk::grm::discrparam< use, kw::rescomp, tag::rescomp >,
            tk::grm::process< use< kw::fcteps >,
                              tk::grm::Store< tag::discr, tag::fcteps > >,
            tk::grm::process< use< kw::fctclip >,
@@ -746,10 +821,10 @@ namespace deck {
                                         eq, tag::bc, param > > > {};
 
   //! Stagnation boundary conditions block
-  template< class eq, class param >
-  struct bc_stag :
+  template< class eq, class bc, class kwbc >
+  struct bc_spec :
          pegtl::if_must<
-           tk::grm::readkw< kw::bc_stag::pegtl_string >,
+           tk::grm::readkw< typename kwbc::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
              tk::grm::parameter_vector< use,
@@ -757,26 +832,24 @@ namespace deck {
                                         tk::grm::Store_back_back,
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
-                                        eq, tag::bcstag, tag::radius >,
+                                        eq, bc, tag::radius >,
              tk::grm::parameter_vector< use,
                                         use< kw::point >,
                                         tk::grm::Store_back_back,
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
-                                        eq, tag::bcstag, tag::point > > > {};
+                                        eq, bc, tag::point > > > {};
 
-  //! Characteristic boundary conditions block
+  //! Farfield boundary conditions block
   template< class keyword, class eq, class param >
-  struct characteristic_bc :
+  struct farfield_bc :
          pegtl::if_must<
            tk::grm::readkw< typename use< keyword >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
-             parameter< eq, kw::farfield_pressure, tag::farfield_pressure >,
-             parameter< eq, kw::farfield_density, tag::farfield_density >,
-             pde_parameter_vector< kw::farfield_velocity,
-                                   eq,
-                                   tag::farfield_velocity >,
+             parameter< eq, kw::pressure, tag::farfield_pressure >,
+             parameter< eq, kw::density, tag::farfield_density >,
+             pde_parameter_vector< kw::velocity, eq, tag::farfield_velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,
@@ -801,12 +874,12 @@ namespace deck {
            pegtl::if_must<
              tk::grm::readkw< use< kw::amr_coordref >::pegtl_string >,
              tk::grm::block< use< kw::end >,
-                         half_world< kw::amr_xminus, tag::xminus >,
-                         half_world< kw::amr_xplus, tag::xplus >,
-                         half_world< kw::amr_yminus, tag::yminus >,
-                         half_world< kw::amr_yplus, tag::yplus >,
-                         half_world< kw::amr_zminus, tag::zminus >,
-                         half_world< kw::amr_zplus, tag::zplus > > > {};
+                             half_world< kw::amr_xminus, tag::xminus >,
+                             half_world< kw::amr_xplus, tag::xplus >,
+                             half_world< kw::amr_yminus, tag::yminus >,
+                             half_world< kw::amr_yplus, tag::yplus >,
+                             half_world< kw::amr_zminus, tag::zminus >,
+                             half_world< kw::amr_zplus, tag::zplus > > > {};
 
   //! initial conditins box block
   template< class eq >
@@ -827,20 +900,56 @@ namespace deck {
              tk::grm::control< use< kw::zmax >, tk::grm::number,
                                tag::param, eq, tag::ic, tag::box, tag::zmax >,
              pegtl::sor<
-               pde_parameter_vector< kw::massic,
-                                     eq, tag::ic, tag::box, tag::mass >,
-               pde_parameter_vector< kw::densityic,
+               pde_parameter_vector< kw::density,
                                      eq, tag::ic, tag::box, tag::density >,
-               pde_parameter_vector< kw::velocityic,
+               pde_parameter_vector< kw::velocity,
                                      eq, tag::ic, tag::box, tag::velocity >,
-               pde_parameter_vector< kw::pressureic,
+               pde_parameter_vector< kw::pressure,
                                      eq, tag::ic, tag::box, tag::pressure >,
-               pde_parameter_vector< kw::temperatureic,
+               pde_parameter_vector< kw::temperature,
                                      eq, tag::ic, tag::box, tag::temperature >,
-               pde_parameter_vector< kw::energy_content_ic,
-                 eq, tag::ic, tag::box, tag::energy_content >,
-               pde_parameter_vector< kw::energyic,
-                  eq, tag::ic, tag::box, tag::energy > > > > {};
+               pde_parameter_vector< kw::mass,
+                                     eq, tag::ic, tag::box, tag::mass >,
+               pde_parameter_vector< kw::energy_content,
+                                   eq, tag::ic, tag::box, tag::energy_content >,
+               pde_parameter_vector< kw::energy,
+                                     eq, tag::ic, tag::box, tag::energy >,
+               tk::grm::process< use< kw::initiate >,
+                                 tk::grm::store_back_option< use,
+                                                             ctr::Initiate,
+                                                             tag::param,
+                                                             eq,
+                                                             tag::ic,
+                                                             tag::box,
+                                                             tag::initiate,
+                                                             tag::init >,
+                                 pegtl::alpha >,
+               pegtl::if_must<
+                 tk::grm::readkw< use< kw::linear >::pegtl_string >,
+                 tk::grm::block< use< kw::end >,
+                   tk::grm::parameter_vector< use,
+                                              use< kw::point >,
+                                              tk::grm::Store_back_back,
+                                              tk::grm::start_vector,
+                                              tk::grm::check_vector,
+                                              eq,
+                                              tag::ic,
+                                              tag::box,
+                                              tag::initiate,
+                                              tag::point >,
+                   tk::grm::parameter_vector< use,
+                                              use< kw::radius >,
+                                              tk::grm::Store_back_back,
+                                              tk::grm::start_vector,
+                                              tk::grm::check_vector,
+                                              eq,
+                                              tag::ic,
+                                              tag::box,
+                                              tag::initiate,
+                                              tag::radius >,
+                   pde_parameter_vector< kw::velocity,
+                     eq, tag::ic, tag::box, tag::initiate, tag::velocity > > >
+             > > > {};
 
   //! initial conditions block for compressible flow
   template< class eq >
@@ -849,15 +958,15 @@ namespace deck {
            tk::grm::readkw< use< kw::ic >::pegtl_string >,
            tk::grm::block< use< kw::end >,
              pegtl::sor<
-               pde_parameter_vector< kw::densityic,
+               pde_parameter_vector< kw::density,
                                      eq, tag::ic, tag::density >,
-               pde_parameter_vector< kw::velocityic,
+               pde_parameter_vector< kw::velocity,
                                      eq, tag::ic, tag::velocity >,
-               pde_parameter_vector< kw::pressureic,
+               pde_parameter_vector< kw::pressure,
                                      eq, tag::ic, tag::pressure >,
-               pde_parameter_vector< kw::temperatureic,
+               pde_parameter_vector< kw::temperature,
                                      eq, tag::ic, tag::temperature >,
-               pde_parameter_vector< kw::energyic,
+               pde_parameter_vector< kw::energy,
                                      eq, tag::ic, tag::energy > >,
                pegtl::seq< box< eq > > > > {};
 
@@ -943,6 +1052,7 @@ namespace deck {
                                                            tag::flux >,
                              pegtl::alpha >,
                            ic< tag::compflow >,
+                           tk::grm::lua< use, tag::param, tag::compflow >,
                            material_properties< tag::compflow >,
                            pde_parameter_vector< kw::sysfctvar,
                                                  tag::compflow,
@@ -972,11 +1082,12 @@ namespace deck {
                                       tag::kappa >,
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
-                           bc_stag< tag::compflow, tag::bcstag >,
+                           bc_spec< tag::compflow, tag::bcstag, kw::bc_stag >,
+                           bc_spec< tag::compflow, tag::bcskip, kw::bc_skip >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
-                           characteristic_bc< kw::bc_outlet,
-                                              tag::compflow,
-                                              tag::bccharacteristic >,
+                           farfield_bc< kw::bc_farfield,
+                                        tag::compflow,
+                                        tag::bcfarfield >,
                            bc< kw::bc_extrapolate, tag::compflow,
                                tag::bcextrapolate > >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};

@@ -115,8 +115,8 @@ class DG : public CBase_DG {
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
-    //! Receive total box IC volume
-    void boxvol( tk::real v );
+    //! Receive total box IC volume and set conditions in box
+    void box( tk::real v );
 
     // Evaluate whether to do load balancing
     void evalLB( int nrestart );
@@ -150,7 +150,7 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& ndof );
 
     //! Optionally refine/derefine mesh
-    void refine( tk::real l2res );
+    void refine( const std::vector< tk::real >& l2res );
 
     //! Receive new mesh from refiner
     void resizePostAMR(

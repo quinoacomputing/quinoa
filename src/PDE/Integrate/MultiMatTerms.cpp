@@ -322,7 +322,7 @@ pressureRelaxationInt( ncomp_t system,
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
   {
-    auto dx = std::cbrt(geoElem(e, 0, 0));
+    auto dx = geoElem(e,4,0)/2.0;
     auto ng = NGvol(ndofel[e]);
 
     // arrays for quadrature points

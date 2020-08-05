@@ -1768,61 +1768,6 @@ struct ncomp_info {
 };
 using ncomp = keyword< ncomp_info,  TAOCPP_PEGTL_STRING("ncomp") >;
 
-struct farfield_pressure_info {
-  static std::string name() { return "farfield_pressure"; }
-  static std::string shortDescription() { return
-    "Select the far-field pressure"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field pressure when
-    characteristic boundary condition is used. This parameter is set up in
-    boundary condition block. Example specification: 'farfield_pressure 1.0')";
-  }
-  struct expect {
-    using type = tk::real;
-    static constexpr type lower = 0.0;
-    static std::string description() { return "real"; }
-  };
-};
-using farfield_pressure = keyword< farfield_pressure_info,
-                            TAOCPP_PEGTL_STRING("farfield_pressure") >;
-
-struct farfield_density_info {
-  static std::string name() { return "farfield_density"; }
-  static std::string shortDescription() { return
-    "Select the far-field density"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field density when characteristic
-    boundary condition is used. This parameter is set up in boundary condition
-    block. Example specification: 'farfield_density 1.0')";
-  }
-  struct expect {
-    using type = tk::real;
-    static constexpr type lower = 0.0;
-    static std::string description() { return "real"; }
-  };
-};
-using farfield_density = keyword< farfield_density_info,
-                            TAOCPP_PEGTL_STRING("farfield_density") >;
-
-struct farfield_velocity_info {
-  static std::string name() { return "farfield_velocity"; }
-  static std::string shortDescription() { return
-    "Select the far-field velocity vector"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify the far-field velocity vector when
-    characteristic boundary condition is used. This parameter is set up in
-    boundary condition block.
-    Example specification: 'farfield_velocity 1.0 0.0 0.0 end')";
-  }
-  struct expect {
-    using type = tk::real;
-    static constexpr type lower = 0.0;
-    static std::string description() { return "real(s)"; }
-  };
-};
-using farfield_velocity = keyword< farfield_velocity_info,
-                             TAOCPP_PEGTL_STRING("farfield_velocity") >;
-
 struct nmat_info {
   static std::string name() { return "nmat"; }
   static std::string shortDescription() { return
@@ -2507,28 +2452,25 @@ struct icdirichlet_info {
 using icdirichlet =
   keyword< icdirichlet_info, TAOCPP_PEGTL_STRING("icdirichlet") >;
 
-struct velocityic_info {
-  static std::string name() { return "velocityic"; }
-  static std::string shortDescription() { return
-    "Specify velocity initial conditions";
-  }
+struct velocity_info {
+  static std::string name() { return "velocity"; }
+  static std::string shortDescription() { return "Specify velocity"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions for the velocity field.)";
+    R"(This keyword is used to configure a velocity vector, used for, e.g.,
+    boundary or initial conditions.)";
   }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real(s)"; }
   };
 };
-using velocityic = keyword< velocityic_info, TAOCPP_PEGTL_STRING("velocity") >;
+using velocity = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
 
-struct massic_info {
-  static std::string name() { return "massic"; }
-  static std::string shortDescription() { return
-    "Specify mass initial conditions";
-  }
+struct mass_info {
+  static std::string name() { return "mass"; }
+  static std::string shortDescription() { return "Specify mass"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions by specifying the mass
+    R"(This keyword is used to configure the mass
        and associated volume within a box.)";
   }
   struct expect {
@@ -2536,83 +2478,90 @@ struct massic_info {
     static std::string description() { return "real"; }
   };
 };
-using massic = keyword< massic_info, TAOCPP_PEGTL_STRING("mass") >;
+using mass = keyword< mass_info, TAOCPP_PEGTL_STRING("mass") >;
 
-struct densityic_info {
-  static std::string name() { return "densityic"; }
-  static std::string shortDescription() { return
-    "Specify density initial conditions";
-  }
+struct density_info {
+  static std::string name() { return "density"; }
+  static std::string shortDescription() { return "Specify density"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions for the density field.)";
+    R"(This keyword is used to configure a density, used for, e.g., boundary or
+    initial conditions.)";
   }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
-using densityic = keyword< densityic_info, TAOCPP_PEGTL_STRING("density") >;
+using density = keyword< density_info, TAOCPP_PEGTL_STRING("density") >;
 
-struct pressureic_info {
-  static std::string name() { return "pressureic"; }
-  static std::string shortDescription() { return
-    "Specify pressure initial conditions";
-  }
+struct pressure_info {
+  static std::string name() { return "pressure"; }
+  static std::string shortDescription() { return "Specify pressure"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set initial conditions for the pressure field.)";
+    R"(This keyword is used to configure a pressure, used for, e.g., boundary or
+    initial conditions.)";
   }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
-using pressureic = keyword< pressureic_info, TAOCPP_PEGTL_STRING("pressure") >;
+using pressure = keyword< pressure_info, TAOCPP_PEGTL_STRING("pressure") >;
 
-struct energyic_info {
-  static std::string name() { return "energyic"; }
+struct energy_info {
+  static std::string name() { return "energy"; }
   static std::string shortDescription() { return
-    "Specify energy per unit mass as initial conditions";
-  }
+    "Specify energy per unit mass"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set the energy per unit mass as initial
-    conditions.)"; }
+    R"(This keyword is used to configure energy per unit mass, used for, e.g.,
+    boundary or initial conditions.)"; }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
-using energyic = keyword< energyic_info, TAOCPP_PEGTL_STRING("energy") >;
+using energy = keyword< energy_info, TAOCPP_PEGTL_STRING("energy") >;
 
-struct energy_content_ic_info {
-  static std::string name() { return "energy_content_ic"; }
+struct energy_content_info {
+  static std::string name() { return "energy_content"; }
   static std::string shortDescription() { return
-    "Specify energy per unit volume as initial conditions";
+    "Specify energy per unit volume";
   }
   static std::string longDescription() { return
-    R"(This keyword is used to set the energy per unit volume as initial
-    conditions.)"; }
+    R"(This keyword is used to configure energy per unit volume, used for, e.g.,
+    boundary or initial conditions.)"; }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
-using energy_content_ic =
-  keyword< energy_content_ic_info, TAOCPP_PEGTL_STRING("energy_content") >;
+using energy_content =
+  keyword< energy_content_info, TAOCPP_PEGTL_STRING("energy_content") >;
 
-struct temperatureic_info {
-  static std::string name() { return "temperatureic"; }
-  static std::string shortDescription() { return
-    "Specify temperature as initial conditions";
-  }
+struct temperature_info {
+  static std::string name() { return "temperature"; }
+  static std::string shortDescription() { return "Specify temperature"; }
   static std::string longDescription() { return
-    R"(This keyword is used to set the temperature as initial conditions.)"; }
+    R"(This keyword is used to configure temperature, used for, e.g.,
+    boundary or initial conditions.)"; }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
-using temperatureic =
-  keyword< temperatureic_info, TAOCPP_PEGTL_STRING("temperature") >;
+using temperature =
+  keyword< temperature_info, TAOCPP_PEGTL_STRING("temperature") >;
+
+struct lua_info {
+  static std::string name() { return "lua"; }
+  static std::string shortDescription() { return
+    R"(Introduce a lua ... end block to inject lua code in control files)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a lua ... end block which can be used
+    to inject arbitrary Lua code into control files. For more info on the lua
+    language, see https://www.lua.org.)"; }
+};
+using lua = keyword< lua_info, TAOCPP_PEGTL_STRING("lua") >;
 
 struct xmin_info {
   static std::string name() { return "xmin"; }
@@ -2692,6 +2641,53 @@ struct zmax_info {
 };
 using zmax = keyword< zmax_info, TAOCPP_PEGTL_STRING("zmax") >;
 
+struct impulse_info {
+  static std::string name() { return "impulse"; }
+  static std::string shortDescription() { return
+    "Select the impulse initiation type, e.g., for a box IC"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to select the 'impulse' initiation/assignment
+    type for box initial conditions. It simply assigns the prescribed values to
+    mesh points within a configured box at t=0.)"; }
+};
+using impulse = keyword< impulse_info, TAOCPP_PEGTL_STRING("impulse") >;
+
+struct linear_info {
+  static std::string name() { return "linear"; }
+  static std::string shortDescription() { return
+    "Select the linear initiation type, e.g., for a box IC"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to select the 'linear' initiation/assignment
+    type for box initial conditions. Linear initiation uses a linear function
+    in time and space, configured with an initiation point in space, an initial
+    radius around the point, and a constant velocity that grows a sphere in time
+    (and space) linearly and assigns values to mesh points falling within a
+    growing sphere within a configured box.)"; }
+};
+using linear = keyword< linear_info, TAOCPP_PEGTL_STRING("linear") >;
+
+struct initiate_info {
+  static std::string name() { return "IC box initiate type"; }
+  static std::string shortDescription() { return "Initiation/assignemt type"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select an initiation type to configure how
+    values are assigned, e.g., for a box initial condition. This can be used to
+    specify, how the values are assigned to mesh nodes within a box. Examples:
+    (1) impulse: assign the full values at t=0 for all points in a box,
+    (2) linear: use a linear function in time and space, configured with an
+    initiation point in space, an initial radius around the point, and a
+    velocity that grows a sphere in time (and space) linearly and assigns values
+    to mesh points falling within a growing sphere within a configured box.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + impulse::string() + "\' | \'"
+                  + linear::string() + '\'';
+    }
+  };
+};
+using initiate = keyword< initiate_info, TAOCPP_PEGTL_STRING("initiate") >;
+
 struct box_info {
   static std::string name() { return "box"; }
   static std::string shortDescription() { return
@@ -2704,13 +2700,13 @@ struct box_info {
     will be set to 1.2 and the pressure to be 1.4. Besides the box dimensions,
     the following physics keywords are allowed in a box ... end block:)"
     + std::string("\'")
-    + massic::string()+ "\', \'"
-    + densityic::string()+ "\', \'"
-    + velocityic::string() + "\', \'"
-    + energyic::string() + "\', \'"
-    + energy_content_ic::string() + "\', \'"
-    + temperatureic::string() + "\', \'"
-    + pressureic::string() + "\'."; }
+    + mass::string()+ "\', \'"
+    + density::string()+ "\', \'"
+    + velocity::string() + "\', \'"
+    + energy::string() + "\', \'"
+    + energy_content::string() + "\', \'"
+    + temperature::string() + "\', \'"
+    + pressure::string() + "\'."; }
 };
 using box = keyword< box_info, TAOCPP_PEGTL_STRING("box") >;
 
@@ -2721,12 +2717,12 @@ struct ic_info {
   static std::string longDescription() { return
     R"(This keyword is used to introduce an ic...end block used to set initial
     conditions. Keywords allowed in a ic ... end block: )" + std::string("\'")
-    + massic::string()+ "\', \'"
-    + densityic::string()+ "\', \'"
-    + velocityic::string() + "\', \'"
-    + pressureic::string() + "\', \'"
-    + energyic::string() + "\', \'"
-    + temperatureic::string() + "\', \'"
+    + mass::string()+ "\', \'"
+    + density::string()+ "\', \'"
+    + velocity::string() + "\', \'"
+    + pressure::string() + "\', \'"
+    + energy::string() + "\', \'"
+    + temperature::string() + "\', \'"
     + box::string() + "\'.";
   }
 };
@@ -3635,7 +3631,7 @@ struct dissipation_info {
 using dissipation =
   keyword< dissipation_info, TAOCPP_PEGTL_STRING("dissipation") >;
 
-struct velocity_info {
+struct velocitysde_info {
   static std::string name() { return "velocity"; }
   static std::string shortDescription() { return
     "Introduce the velocity equation input block or coupling"; }
@@ -3665,7 +3661,7 @@ struct velocity_info {
     which the 'velocity' keyword appears) to another labeled by a 'depvar'.)";
   }
 };
-using velocity = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
+using velocitysde = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }
@@ -4270,6 +4266,24 @@ struct residual_info {
 };
 using residual = keyword< residual_info, TAOCPP_PEGTL_STRING("residual") >;
 
+struct rescomp_info {
+  static std::string name() { return "rescomp"; }
+  static std::string shortDescription() { return
+    "Equation system component index for convergence"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a single integer that is used to denote
+    the equation component index in the complete system of equation systems
+    configured in an input file to use for the convergence criterion for local
+    time stepping marching towards steady state.)";
+  }
+  struct expect {
+    using type = uint32_t;
+    static constexpr type lower = 1;
+    static std::string description() { return "uint"; }
+  };
+};
+using rescomp = keyword< rescomp_info, TAOCPP_PEGTL_STRING("rescomp") >;
+
 struct group_info {
   static std::string name() { return "group"; }
   static std::string shortDescription() { return
@@ -4646,6 +4660,25 @@ struct gas_impact_info {
 using gas_impact =
   keyword< gas_impact_info, TAOCPP_PEGTL_STRING("gas_impact") >;
 
+struct gas_impact_4mat_info {
+  using code = Code< T >;
+  static std::string name() { return "Gas impacting with two slabs problem"; }
+  static std::string shortDescription() { return
+    "Select the gas impacting with two slabs test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the test involving a gas impacting two
+    slabs. It involves four materials: the impactor, two slabs and the
+    background. The purpose of this test problem is to test the correctness of
+    multi-material algorithm for more than three materials and its interface
+    capturing capabilities under high deformation.
+    Example: "problem gas_impact_4mat".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using gas_impact_4mat =
+  keyword< gas_impact_4mat_info, TAOCPP_PEGTL_STRING("gas_impact_4mat") >;
+
 struct shock_hebubble_info {
   using code = Code< T >;
   static std::string name() { return "Shock He-bubble problem"; }
@@ -4664,6 +4697,27 @@ struct shock_hebubble_info {
 };
 using shock_hebubble =
   keyword< shock_hebubble_info, TAOCPP_PEGTL_STRING("shock_hebubble") >;
+
+struct underwater_ex_info {
+  using code = Code< T >;
+  static std::string name() { return "Underwater explosion problem"; }
+  static std::string shortDescription() { return
+    "Select the underwater explosion test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the underwater explosion test problem. The
+    purpose of this test problem is to test the correctness of the
+    multi-material algorithm and its interface capturing capabilities in the
+    presence of strong shocks and large deformations.
+    Example: "problem underwater_ex". For more details, see
+    Chiapolino, A., Saurel, R., & Nkonga, B. (2017). Sharpening diffuse
+    interfaces with compressible fluids on unstructured meshes. Journal of
+    Computational Physics, 340, 389-417.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using underwater_ex =
+  keyword< underwater_ex_info, TAOCPP_PEGTL_STRING("underwater_ex") >;
 
 struct problem_info {
   using code = Code< t >;
@@ -5152,6 +5206,23 @@ struct bc_stag_info {
 };
 using bc_stag = keyword< bc_stag_info, TAOCPP_PEGTL_STRING("bc_stag") >;
 
+struct bc_skip_info {
+  static std::string name() { return "Skip boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing skip boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an bc_skip ... end block, used to
+    specify the configuration for setting 'skip' boundary conditions for a
+    partial differential equation. If a mesh point falls into a skip region,
+    configured by a point and a radius, any application of boundary conditions
+    on those points will be skipped. Keywords allowed in a bc_skip ... end
+    block: )" + std::string("\'")
+    + point::string() + "\', \'"
+    + radius::string() + "\'. ";
+  }
+};
+using bc_skip = keyword< bc_skip_info, TAOCPP_PEGTL_STRING("bc_skip") >;
+
 struct bc_inlet_info {
   static std::string name() { return "Inlet boundary condition"; }
   static std::string shortDescription() { return
@@ -5211,22 +5282,23 @@ struct transport_info {
 };
 using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
 
-struct bc_characteristic_info {
-  static std::string name() { return "Characteristic boundary condition"; }
+struct bc_farfield_info {
+  static std::string name() { return "Farfield boundary condition"; }
   static std::string shortDescription() { return
-    "Start configuration block describing Characteristic boundary conditions"; }
+    "Start configuration block describing farfield boundary conditions"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce a bc_characteristic ... end block, used
-    to specify the configuration for setting characteristic boundary conditions
-    for a partial differential equation. Keywords allowed in a bc_characteristic
+    R"(This keyword is used to introduce a bc_farfield ... end block, used
+    to specify the configuration for setting farfield boundary conditions
+    for the compressible flow equations. Keywords allowed in a bc_farfield
     ... end block: )" + std::string("\'")
-    + sideset::string() + "\'. "
-    + R"(For an example bc_characteristic ... end block, see
-      doc/html/inciter_example_gausshump.html.)";
+    + density::string() + "\', \'"
+    + pressure::string() + "\', \'"
+    + velocity::string() + "\', \'"
+    + sideset::string() + "\'. ";
   }
 };
-using bc_characteristic =
-  keyword< bc_characteristic_info, TAOCPP_PEGTL_STRING("bc_characteristic") >;
+using bc_farfield =
+  keyword< bc_farfield_info, TAOCPP_PEGTL_STRING("bc_farfield") >;
 
 struct bc_extrapolate_info {
   static std::string name() { return "Extrapolation boundary condition"; }
@@ -5419,7 +5491,7 @@ struct compflow_info {
     + bc_sym::string() + "\', \'"
     + bc_inlet::string() + "\', \'"
     + bc_outlet::string() + "\', \'"
-    + bc_characteristic::string() + "\', \'"
+    + bc_farfield::string() + "\', \'"
     + bc_extrapolate::string() + "\'."
     + R"(For an example compflow ... end block, see
       doc/html/inicter_example_compflow.html.)";

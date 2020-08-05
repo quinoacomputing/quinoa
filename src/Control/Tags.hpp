@@ -215,11 +215,14 @@ struct farfield_density {
   static std::string name() { return "farfield_density"; } };
 struct farfield_velocity {
   static std::string name() { return "farfield_velocity"; } };
+struct bcfarfield { static std::string name() { return "bcfarfield"; } };
 struct component { static std::string name() { return "component"; } };
+struct rescomp { static std::string name() { return "residual component"; } };
 struct interval { static std::string name() { return "interval"; } };
 struct cmd { static std::string name() { return "cmd"; } };
 struct param { static std::string name() { return "param"; } };
 struct init { static std::string name() { return "init"; } };
+struct initiate { static std::string name() { return "initiate"; } };
 struct solve { static std::string name() { return "solve"; } };
 struct chare { static std::string name() { return "chare"; } };
 struct battery { static std::string name() { return "battery"; } };
@@ -243,12 +246,11 @@ struct u0 { static std::string name() { return "u0"; } };
 struct bcdir { static std::string name() { return "bcdir"; } };
 struct bcsym { static std::string name() { return "bcsym"; } };
 struct bcstag { static std::string name() { return "bcstag"; } };
+struct bcskip { static std::string name() { return "bcskip"; } };
 struct point { static std::string name() { return "point"; } };
 struct radius { static std::string name() { return "radius"; } };
 struct bcinlet { static std::string name() { return "bcinlet"; } };
 struct bcoutlet { static std::string name() { return "bcoutlet"; } };
-struct bccharacteristic {
-  static std::string name() { return "bccharacteristic"; } };
 struct bcextrapolate { static std::string name() { return "bcextrapolate"; } };
 struct material {};
 struct id { static std::string name() { return "id"; } };
@@ -302,6 +304,7 @@ struct ymin { static std::string name() { return "ymin"; } };
 struct ymax { static std::string name() { return "ymax"; } };
 struct zmin { static std::string name() { return "zmin"; } };
 struct zmax { static std::string name() { return "zmax"; } };
+struct lua { static std::string name() { return "lua"; } };
 
 struct BirthdaySpacings {};
 struct Collision {};

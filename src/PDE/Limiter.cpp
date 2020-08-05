@@ -824,34 +824,23 @@ void consistentMultiMatLimiting_P1(
        (almax > al_band && almax < (1.0-al_band)) )
   {
     // 1. consistent high-order dofs
-    std::array< tk::real, 3 > drhob {{ 0.0, 0.0, 0.0 }};
-    auto rhob(0.0), vel(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
       auto alk = std::max( 1.0e-14, U(e,volfracDofIdx(nmat, k, rdof, 0),offset) );
       auto rhok = U(e,densityDofIdx(nmat, k, rdof, 0),offset)/alk;
-      auto rhoEk = U(e,energyDofIdx(nmat, k, rdof, 0),offset)/alk;
       for (std::size_t idir=1; idir<=3; ++idir)
       {
         U(e,densityDofIdx(nmat, k, rdof, idir),offset) = rhok *
           U(e,volfracDofIdx(nmat, k, rdof, idir),offset);
-        U(e,energyDofIdx(nmat, k, rdof, idir),offset) = rhoEk *
-          U(e,volfracDofIdx(nmat, k, rdof, idir),offset);
-        drhob[idir-1] += U(e,densityDofIdx(nmat, k, rdof, idir),offset);
-      }
-      rhob += U(e,densityDofIdx(nmat, k, rdof, 0),offset);
-    }
-    for (std::size_t idir=1; idir<=3; ++idir)
-    {
-      for (std::size_t jdir=1; jdir<=3; ++jdir)
-      {
-        vel = U(e,momentumDofIdx(nmat, jdir-1, rdof, 0),offset)/rhob;
-        U(e,momentumDofIdx(nmat, jdir-1, rdof, idir),offset) = vel * drhob[idir-1];
       }
     }
 
-    // 2. same limiter for all equations
-    for (auto& p : phic) p = phi_al;
+    // 2. same limiter for all volume-fractions and densities
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      phic[volfracIdx(nmat, k)] = phi_al;
+      phic[densityIdx(nmat, k)] = phi_al;
+    }
   }
   else
   {

@@ -182,8 +182,11 @@ DistFCT::aec(
   const tk::Fields& dUh,
   const tk::Fields& Un,
   const std::unordered_map< std::size_t,
-          std::vector< std::pair< bool, tk::real > > >& bcdir,
-  const std::unordered_map< std::size_t, std::array< tk::real, 4 > >& bnorm )
+    std::vector< std::pair< bool, tk::real > > >& bcdir,
+  const std::unordered_map< int,
+    std::unordered_set< std::size_t > >& symbcnodemap,
+  const std::unordered_map< int,
+    std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm )
 // *****************************************************************************
 //  Compute and sum antidiffusive element contributions (AEC) to mesh nodes
 //! \param[in] d Discretization proxy to read mesh data from
@@ -193,8 +196,9 @@ DistFCT::aec(
 //!   associated to mesh node IDs at which to set Dirichlet boundary conditions.
 //!   Note that this BC data structure must include boundary conditions set
 //!   across all PEs, not just the ones need to be set on this PE.
+//! \param[in] nodes Unique set of node ids at which to set symmetry BCs
 //! \param[in] bnorm Face normals in boundary points: key global node id,
-//!   value: unit normal
+//!   value: unit normal, outer key: side set id
 //! \details This function computes and starts communicating m_p, which stores
 //!    the sum of all positive (negative) antidiffusive element contributions to
 //!    nodes (Lohner: P^{+,-}_i), see also FluxCorrector::aec().
@@ -206,7 +210,8 @@ DistFCT::aec(
   // Compute and sum antidiffusive element contributions to mesh nodes. Note
   // that the sums are complete on nodes that are not shared with other chares
   // and only partial sums on chare-boundary nodes.
-  m_fluxcorrector.aec( d.Coord(), m_inpoel, d.Vol(), bcdir, bnorm, Un, m_p );
+  m_fluxcorrector.aec( d.Coord(), m_inpoel, d.Vol(), bcdir, symbcnodemap, bnorm,
+                       Un, m_p );
 
   if (d.NodeCommMap().empty())
     comaec_complete();

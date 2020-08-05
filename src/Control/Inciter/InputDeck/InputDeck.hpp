@@ -87,13 +87,17 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::multimat,
                                    kw::ic,
                                    kw::box,
-                                   kw::massic,
-                                   kw::densityic,
-                                   kw::velocityic,
-                                   kw::pressureic,
-                                   kw::energyic,
-                                   kw::energy_content_ic,
-                                   kw::temperatureic,
+                                   kw::lua,
+                                   kw::mass,
+                                   kw::density,
+                                   kw::velocity,
+                                   kw::initiate,
+                                   kw::impulse,
+                                   kw::linear,
+                                   kw::pressure,
+                                   kw::energy,
+                                   kw::energy_content,
+                                   kw::temperature,
                                    kw::xmin,
                                    kw::xmax,
                                    kw::ymin,
@@ -154,6 +158,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::operator_reorder,
                                    kw::steady_state,
                                    kw::residual,
+                                   kw::rescomp,
                                    kw::amr,
                                    kw::amr_t0ref,
                                    kw::amr_dtref,
@@ -209,14 +214,12 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::bc_sym,
                                    kw::bc_inlet,
                                    kw::bc_outlet,
-                                   kw::bc_characteristic,
+                                   kw::bc_farfield,
                                    kw::bc_extrapolate,
                                    kw::bc_stag,
+                                   kw::bc_skip,
                                    kw::point,
                                    kw::radius,
-                                   kw::farfield_pressure,
-                                   kw::farfield_density,
-                                   kw::farfield_velocity,
                                    kw::gauss_hump,
                                    kw::rotated_sod_shocktube,
                                    kw::cyl_advect,
@@ -228,7 +231,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::waterair_shocktube,
                                    kw::triple_point,
                                    kw::gas_impact,
-                                   kw::shock_hebubble >;
+                                   kw::gas_impact_4mat,
+                                   kw::shock_hebubble,
+                                   kw::underwater_ex >;
 
     //! Set of tags to ignore when printing this InputDeck
     using ignore = CmdLine::ignore;
@@ -257,6 +262,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::operator_reorder >() = false;
       get< tag::discr, tag::steady_state >() = false;
       get< tag::discr, tag::residual >() = 1.0e-8;
+      get< tag::discr, tag::rescomp >() = 1;
       get< tag::discr, tag::scheme >() = SchemeType::DiagCG;
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::limiter >() = LimiterType::NOLIMITER;
@@ -327,24 +333,25 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       return ids;
     }
 
-    //! Query stagnation point BC configuration
+    //! Query special point BC configuration
     //! \tparam eq PDE type to query
+    //! \tparam bc  Special BC type to query, e.g., stagnation, skip
     //! \param[in] system Equation system id
-    //! \return Vectors configuring the stagnation points and their radii
-    template< class eq >
+    //! \return Vectors configuring the special points and their radii
+    template< class eq, class bc >
     std::tuple< std::vector< tk::real >, std::vector< tk::real > >
-    stagnationBC( std::size_t system ) {
-      const auto& bcstag = get< tag::param, eq, tag::bcstag >();
-      const auto& point = bcstag.template get< tag::point >();
-      const auto& radius = bcstag.template get< tag::radius >();
-      std::vector< tk::real > stag_pnt;
-      std::vector< tk::real > stag_rad;
+    specialBC( std::size_t system ) {
+      const auto& bcspec = get< tag::param, eq, bc >();
+      const auto& point = bcspec.template get< tag::point >();
+      const auto& radius = bcspec.template get< tag::radius >();
+      std::vector< tk::real > pnt;
+      std::vector< tk::real > rad;
       if (point.size() > system && radius.size() > system) {
-        stag_pnt = point[ system ];
-        stag_rad = radius[ system ];
+        pnt = point[ system ];
+        rad = radius[ system ];
       }
-      Assert( stag_pnt.size() == 3*stag_rad.size(), "Size mismatch" );
-      return { std::move(stag_pnt), std::move(stag_rad) };
+      Assert( pnt.size() == 3*rad.size(), "Size mismatch" );
+      return { std::move(pnt), std::move(rad) };
     }
 };
 

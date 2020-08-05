@@ -652,7 +652,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
 
     Assert( nodes.size() % 3 == 0, "Face node IDs must be triplets" );
     Assert( nodes.size() <= 4*3, "Overflow of faces/tet received" );
-    Assert( geo.size() % 4 == 0, "Ghost geometry size mismatch" );
+    Assert( geo.size() % 5 == 0, "Ghost geometry size mismatch" );
     Assert( geo.size() == m_geoElem.nprop(), "Ghost geometry number mismatch" );
     Assert( coordg.size() == 3, "Incorrect ghost node coordinate size" );
     Assert( inpoelg.size() == 4, "Incorrect ghost inpoel size" );
@@ -1196,9 +1196,9 @@ DG::setup()
 }
 
 void
-DG::boxvol( tk::real v )
+DG::box( tk::real v )
 // *****************************************************************************
-// Receive total box IC volume
+// Receive total box IC volume and set conditions in box
 //! \param[in] v Total volume within user-specified box
 // *****************************************************************************
 {
@@ -1799,15 +1799,17 @@ DG::solve( tk::real newdt )
     d->next();
 
     // Continue to mesh refinement (if configured)
-    if (!diag_computed) refine( 0.0 );
+    if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
 
   }
 }
 
 void
-DG::refine( tk::real )
+DG::refine( [[maybe_unused]] const std::vector< tk::real >& l2res )
 // *****************************************************************************
 // Optionally refine/derefine mesh
+//! \param[in] l2res L2-norms of the residual for each scalar component
+//!   computed across the whole problem
 // *****************************************************************************
 {
   auto d = Disc();
