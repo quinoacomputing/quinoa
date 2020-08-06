@@ -869,10 +869,10 @@ namespace deck {
   struct half_world :
          tk::grm::control< use< keyword >, pegtl::digit, tag::amr, Tag > {};
 
-  //! coordref ... end block
-  struct coordref :
+  //! coords ... end block
+  struct coords :
            pegtl::if_must<
-             tk::grm::readkw< use< kw::amr_coordref >::pegtl_string >,
+             tk::grm::readkw< use< kw::amr_coords >::pegtl_string >,
              tk::grm::block< use< kw::end >,
                              half_world< kw::amr_xminus, tag::xminus >,
                              half_world< kw::amr_xplus, tag::xplus >,
@@ -1190,7 +1190,7 @@ namespace deck {
            tk::grm::block< use< kw::end >,
                            refvars,
                            edgelist,
-                           coordref,
+                           coords,
                            tk::grm::process<
                              use< kw::amr_initial >,
                              tk::grm::store_back_option< use,
