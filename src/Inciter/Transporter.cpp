@@ -238,6 +238,7 @@ Transporter::info( const InciterPrint& print )
       const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
       print.item( "Initial refinement steps", initref.size() );
       print.ItemVec< ctr::AMRInitial >( initref );
+      print.ItemVecLegend< ctr::AMRInitial >();
       print.edgeref( g_inputdeck.get< tag::amr, tag::edge >() );
 
       auto eps =
