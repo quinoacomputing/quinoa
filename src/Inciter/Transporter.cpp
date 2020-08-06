@@ -616,7 +616,7 @@ Transporter::matched( std::size_t nextra,
 //! \param[in] nref Sum of number of refined tetrahedra across all chares.
 //! \param[in] nderef Sum of number of derefined tetrahedra across all chares.
 //! \param[in] initial Sum of contributions from all chares. If larger than
-//!    zero, we are during time stepping and if zero we are during setup.
+//!    zero, we are before time stepping, if zero we are during time stepping.
 // *****************************************************************************
 {
   // If at least a single edge on a chare still needs correction, do correction,
