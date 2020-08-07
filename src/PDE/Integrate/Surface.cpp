@@ -197,8 +197,7 @@ tk::surfInt( ncomp_t system,
       auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
 
       // compute flux
-      auto fl =
-         flux( fn, state, v );
+      auto fl = flux( fn, state, v );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, offset, ndof, ndofel[el], ndofel[er], wt, fn,
@@ -206,7 +205,7 @@ tk::surfInt( ncomp_t system,
 
       // Store the riemann velocity and coordinates data of quadrature point
       // used for velocity reconstruction if MulMat scheme is selected
-      if (fl.size() > ncomp)
+      if (fl.size() > ncomp && ndof > 1)
       {
         xcoord[el].push_back( gp[0] );
         xcoord[el].push_back( gp[1] );
@@ -231,9 +230,14 @@ tk::surfInt( ncomp_t system,
         auto vr = state[1][2*nmat+1] / pbr;
         auto wr = state[1][2*nmat+2] / pbr;
 
+        // Compute the normal velocities from left and right cells
         auto vnl = ul * fn[0] + vl * fn[1] + wl * fn[2];
         auto vnr = ur * fn[0] + vr * fn[1] + wr * fn[2];
 
+        // The interface velocity is evaluated by adding the vertical velocity
+        // which is the riemann velocity from flux computation and the normal
+        // velocity which is the average of the normal velocities from the left
+        // and right cells
         auto urie = 0.5 * ((ul + ur) - fn[0] * (vnl + vnr)) + fl[ncomp+nmat] * fn[0];
         auto vrie = 0.5 * ((vl + vr) - fn[1] * (vnl + vnr)) + fl[ncomp+nmat] * fn[1];
         auto wrie = 0.5 * ((wl + wr) - fn[2] * (vnl + vnr)) + fl[ncomp+nmat] * fn[2];
