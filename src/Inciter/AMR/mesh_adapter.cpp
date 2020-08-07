@@ -403,7 +403,7 @@ namespace AMR {
                     } // if num_to_refine
                     else {
                             // If we got here, we don't want to refine this guy
-                            tet_store.marked_refinements.add(tet_id, AMR::Refinement_Case::none);
+                            //tet_store.marked_refinements.add(tet_id, AMR::Refinement_Case::none);
                     }
                 } // if active
                 else {
