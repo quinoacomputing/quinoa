@@ -633,15 +633,28 @@ Transporter::matched( std::size_t nextra,
     if (initial > 0) {
 
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
-        print.diag( { "t0ref", "nref", "nderef", "ncorr" },
-                    { ++m_nt0refit, nref, nderef, m_ncit } );
+        const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
+        ctr::AMRInitial opt;
+        print.diag( { "t0ref", "type", "nref", "nderef", "ncorr" },
+                    { std::to_string(m_nt0refit),
+                      opt.code(initref[m_nt0refit]),
+                      std::to_string(nref),
+                      std::to_string(nderef),
+                      std::to_string(m_ncit) } );
+        ++m_nt0refit;
       }
       m_progMesh.inc< REFINE >( print );
 
     } else {
 
-      print.diag( { "dtref", "nref", "nderef", "ncorr" },
-                  { ++m_ndtrefit, nref, nderef, m_ncit }, false );
+      auto dtref_uni = g_inputdeck.get< tag::amr, tag::dtref_uniform >();
+      print.diag( { "dtref", "type", "nref", "nderef", "ncorr" },
+                  { std::to_string(++m_ndtrefit),
+                    (dtref_uni?"uniform":"error"),
+                    std::to_string(nref),
+                    std::to_string(nderef),
+                    std::to_string(m_ncit) },
+                  false );
 
     }
 
