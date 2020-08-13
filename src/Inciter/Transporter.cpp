@@ -567,7 +567,7 @@ Transporter::refinserted( int error )
 void
 Transporter::queriedRef()
 // *****************************************************************************
-// Reduction target: all Sorter chares have queried their boundary nodes
+// Reduction target: all mesh Refiner chares have queried their boundary edges
 // *****************************************************************************
 {
   m_refiner.response();
@@ -576,7 +576,7 @@ Transporter::queriedRef()
 void
 Transporter::respondedRef()
 // *****************************************************************************
-// Reduction target: all mesh refiner chares have setup their boundary edges
+// Reduction target: all mesh Refiner chares have setup their boundary edges
 // *****************************************************************************
 {
   m_refiner.refine();
@@ -707,7 +707,7 @@ Transporter::refined( std::size_t nelem, std::size_t npoin )
 void
 Transporter::queried()
 // *****************************************************************************
-// Reduction target: all Sorter chares have queried their boundary nodes
+// Reduction target: all Sorter chares have queried their boundary edges
 // *****************************************************************************
 {
   m_sorter.response();
@@ -716,7 +716,7 @@ Transporter::queried()
 void
 Transporter::responded()
 // *****************************************************************************
-// Reduction target: all Sorter chares have responded with their boundary nodes
+// Reduction target: all Sorter chares have responded with their boundary edges
 // *****************************************************************************
 {
   m_sorter.start();

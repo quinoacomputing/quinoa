@@ -263,7 +263,7 @@ Refiner::t0ref()
 void
 Refiner::start()
 // *****************************************************************************
-//  Start new step of initial mesh refinement
+//  Start new step of mesh refinement
 // *****************************************************************************
 {
   m_extra = 0;

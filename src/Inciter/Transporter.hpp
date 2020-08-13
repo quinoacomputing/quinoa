@@ -87,8 +87,7 @@ class Transporter : public CBase_Transporter {
 
     //! Reduction target: all Refiner chares have queried their boundary edges
     void queriedRef();
-    //! \brief Reduction target: all Refiner mesh refiner chares have setup their
-    //!   boundary edges
+    //! Reduction target: all Refiner chares have setup their boundary edges
     void respondedRef();
 
     //! Reduction target: all PEs have created the mesh refiners
@@ -127,10 +126,9 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: all worker chares have generated their own esup
     void startEsup();
 
-    //! Reduction target: all Sorter chares have queried their boundary nodes
+    //! Reduction target: all Sorter chares have queried their boundary edges
     void queried();
-    //! \brief Reduction target: all Sorter chares have responded with their
-    //!   boundary nodes
+    //! Reduction target: all Sorter chares have setup their boundary edges
     void responded();
 
     //! Non-reduction target for receiving progress report on partitioning mesh
