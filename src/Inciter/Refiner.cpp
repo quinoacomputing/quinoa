@@ -64,7 +64,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_bnode( bnode ),
   m_triinpoel( triinpoel ),
   m_nchare( nchare ),
-  m_initial( true ),
+  m_mode( RefMode::T0REF ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
   m_ninitref( g_inputdeck.get< tag::amr, tag::init >().size() ),
   m_refiner( m_inpoel ),
@@ -232,7 +232,7 @@ Refiner::dtref( const std::map< int, std::vector< std::size_t > >& bface,
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
-  m_initial = false;
+  m_mode = RefMode::DTREF;
 
   // Update boundary node lists
   m_bface = bface;
@@ -434,7 +434,7 @@ Refiner::refine()
             m_inpoel, m_coord ),
           "Mesh partition before refinement leaky" );
 
-  if (m_initial) {      // if initial (t<0) AMR (t0ref)
+  if (m_mode == RefMode::T0REF) {
 
     // Refine mesh based on next initial refinement type
     if (!m_initref.empty()) {
@@ -452,13 +452,18 @@ Refiner::refine()
       else Throw( "Initial AMR type not implemented" );
     }
 
-  } else {              // if during time stepping (t>0) AMR (dtref)
+  } else if (m_mode == RefMode::DTREF) {
 
     if (g_inputdeck.get< tag::amr, tag::dtref_uniform >())
       uniformRefine();
     else
       errorRefine();
-  }
+
+  } else if (m_mode == RefMode::OUTREF) {
+
+    uniformRefine();
+
+  } else Throw( "RefMode not implemented" );
 
   // Communicate extra edges
   comExtra();
@@ -607,10 +612,11 @@ Refiner::correctref()
   // Aggregate number of extra edges that still need correction and some
   // refinement/derefinement statistics
   const auto& tet_store = m_refiner.tet_store;
-  std::vector< std::size_t > m{ m_extra,
-                                tet_store.marked_refinements.size(),
-                                tet_store.marked_derefinements.size(),
-                                m_initial };
+  std::vector< std::size_t >
+    m{ m_extra,
+       tet_store.marked_refinements.size(),
+       tet_store.marked_derefinements.size(),
+       static_cast< std::underlying_type_t< RefMode > >( m_mode ) };
   contribute( m, CkReduction::sum_ulong, m_cbr.get< tag::matched >() );
 }
 
@@ -808,7 +814,8 @@ Refiner::perform()
 
   updateMesh();
 
-  if (m_initial) {      // if initial (before t=0) AMR
+  if (m_mode == RefMode::T0REF) {
+
     auto l = m_ninitref - m_initref.size() + 1;  // num initref steps completed
     auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     // Generate times equally subdividing t0-1...t0 to ninitref steps
@@ -818,8 +825,11 @@ Refiner::perform()
     // Output mesh after refinement step
     writeMesh( "t0ref", itr, t,
                CkCallback( CkIndex_Refiner::next(), thisProxy[thisIndex] ) );
+
   } else {
+
     next();
+
   }
 }
 
@@ -829,14 +839,14 @@ Refiner::next()
 // Continue after finishing a refinement step
 // *****************************************************************************
 {
-  if (m_initial) {      // if initial (before t=0) AMR
+  if (m_mode == RefMode::T0REF) {
 
     // Remove initial mesh refinement step from list
     if (!m_initref.empty()) m_initref.pop_back();
     // Continue to next initial AMR step or finish
     if (!m_initref.empty()) t0ref(); else endt0ref();
 
-  } else {              // if AMR during time stepping (t>0)
+  } else if (m_mode == RefMode::DTREF) {
 
     // Augment node communication map with newly added nodes on chare-boundary
     for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
@@ -855,7 +865,12 @@ Refiner::next()
     m_scheme.ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel, m_el,
       m_coord, m_addedNodes, m_addedTets, m_nodeCommMap, m_bface, m_bnode,
       m_triinpoel );
-  }
+
+  } else if (m_mode == RefMode::OUTREF) {
+
+
+
+  } else Throw( "RefMode not implemented" );
 }
 
 void
@@ -997,12 +1012,12 @@ Refiner::solution( std::size_t npoin,
   // Get solution whose error to evaluate
   tk::Fields u;
 
-  if (m_initial) {      // initial (before t=0) AMR
+  if (m_mode == RefMode::T0REF) {
 
     // Evaluate initial conditions at mesh nodes
     u = nodeinit( npoin, esup );
 
-  } else {              // AMR during time stepping (t>0)
+  } else if (m_mode == RefMode::DTREF) {
 
     // Query current solution
     u = m_scheme.ckLocal< Scheme::solution >( thisIndex );
@@ -1015,7 +1030,11 @@ Refiner::solution( std::size_t npoin,
 
     }
 
-  }
+  } else if (m_mode == RefMode::OUTREF) {
+
+
+
+  } else Throw( "RefMode not implemented" );
 
   return u;
 }
@@ -1271,7 +1290,7 @@ Refiner::updateMesh()
   for (auto r : ref) if (old.find(r) == end(old)) m_lref[r] = l++;
 
   // Get nodal communication map from Discretization worker
-  if (!m_initial)
+  if (m_mode == RefMode::DTREF)
     m_nodeCommMap = m_scheme.disc()[thisIndex].ckLocal()->NodeCommMap();
 
   // Update mesh and solution after refinement

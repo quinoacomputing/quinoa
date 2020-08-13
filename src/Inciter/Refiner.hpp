@@ -63,6 +63,11 @@ class Refiner : public CBase_Refiner {
     //! Used to associate error to edges
     using EdgeError = std::unordered_map< Edge, tk::real, Hash<2>, Eq<2> >;
 
+    //! Mode of operation: the way Refiner is used
+    enum class RefMode : std::size_t {
+      T0REF,            //!< Initial (t<0) refinement
+      DTREF,            //!< During time stepping (t>0)
+      OUTREF };         //!< Refinement for field output
 
   public:
     //! Constructor
@@ -167,7 +172,7 @@ class Refiner : public CBase_Refiner {
       p | m_bnode;
       p | m_triinpoel;
       p | m_nchare;
-      p | m_initial;
+      p | m_mode;
       p | m_initref;
       p | m_refiner;
       p | m_nref;
@@ -239,7 +244,7 @@ class Refiner : public CBase_Refiner {
     //! Total number of refiner chares
     int m_nchare;
     //! True if initial AMR, false if during time stepping
-    bool m_initial;
+    RefMode m_mode;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
     //! Number of initial mesh refinement/derefinement steps
