@@ -76,7 +76,7 @@ enum class RNGType : uint8_t { NO_RNG=0
 inline void operator|( PUP::er& p, RNGType& e ) { PUP::pup( p, e ); }
 
 //! Enum class underlying type shortcut
-using RawRNGType = std::underlying_type< RNGType >::type;
+using RawRNGType = std::underlying_type_t< RNGType >;
 
 //! Return underlying type
 //! \param[in] r RNG enum class value
