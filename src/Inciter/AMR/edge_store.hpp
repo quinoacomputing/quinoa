@@ -109,7 +109,7 @@ namespace AMR {
             }
 
             /**
-             * @brief Function to add edge to ede store
+             * @brief Function to add edge to edge store
              *
              * @param key The key for the given edge
              * @param e The edge data

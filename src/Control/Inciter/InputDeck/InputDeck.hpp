@@ -176,7 +176,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::amr_tolref,
                                    kw::amr_tolderef,
                                    kw::amr_edgelist,
-                                   kw::amr_coordref,
                                    kw::amr_xminus,
                                    kw::amr_xplus,
                                    kw::amr_yminus,

@@ -6,11 +6,13 @@ title "Initial uniform mesh refinement"
 
 inciter
 
-  nstep 1     # Max number of time steps
-  cfl   0.8   # CFL coefficient
+  nstep 1    # Max number of time steps
+  cfl   0.2   # CFL coefficient
   ttyi 1      # TTY output interval
 
   scheme diagcg
+
+  fct true
 
   partitioning
     algorithm mj
@@ -27,15 +29,16 @@ inciter
 
   amr
     t0ref true
-    #initial uniform
-    #initial ic
-    initial coords
-    initial coords
+    dtref false
+    dtfreq 5
 
-    coords
-      x- 0.5
-      #x+ 0.25 x- 0.75
-    end
+    initial ic
+    initial uniform_derefine
+    initial ic
+    initial uniform
+    refvar c end
+    error hessian
+
   end
 
   plotvar
