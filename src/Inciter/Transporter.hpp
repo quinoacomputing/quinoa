@@ -206,6 +206,8 @@ class Transporter : public CBase_Transporter {
       p | m_ncit;
       p | m_nt0refit;
       p | m_ndtrefit;
+      p | m_noutrefit;
+      p | m_noutderefit;
       p | m_scheme;
       p | m_partitioner;
       p | m_refiner;
@@ -229,8 +231,10 @@ class Transporter : public CBase_Transporter {
   private:
     int m_nchare;                        //!< Number of worker chares
     std::size_t m_ncit;                  //!< Number of mesh ref corr iter
-    std::size_t m_nt0refit;              //!< Number of (t<0) mesh ref iters
-    std::size_t m_ndtrefit;              //!< Number of (t>0) mesh ref iters
+    std::size_t m_nt0refit;              //!< Number of t0ref mesh ref iters
+    std::size_t m_ndtrefit;              //!< Number of dtref mesh ref iters
+    std::size_t m_noutrefit;             //!< Number of outref mesh ref iters
+    std::size_t m_noutderefit;           //!< Number of outderef mesh ref iters
     Scheme m_scheme;                     //!< Discretization scheme
     CProxy_Partitioner m_partitioner;    //!< Partitioner nodegroup proxy
     CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy

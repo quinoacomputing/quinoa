@@ -62,6 +62,8 @@ Transporter::Transporter() :
   m_ncit( 0 ),
   m_nt0refit( 0 ),
   m_ndtrefit( 0 ),
+  m_noutrefit( 0 ),
+  m_noutderefit( 0 ),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
@@ -607,7 +609,7 @@ void
 Transporter::matched( std::size_t nextra,
                       std::size_t nref,
                       std::size_t nderef,
-                      std::size_t initial )
+                      std::size_t sumrefmode )
 // *****************************************************************************
 // Reduction target: all mesh refiner chares have matched/corrected the tagging
 // of chare-boundary edges, all chares are ready to perform refinement.
@@ -615,8 +617,8 @@ Transporter::matched( std::size_t nextra,
 //!   chare that need correction along chare boundaries
 //! \param[in] nref Sum of number of refined tetrahedra across all chares.
 //! \param[in] nderef Sum of number of derefined tetrahedra across all chares.
-//! \param[in] initial Sum of contributions from all chares. If larger than
-//!    zero, we are before time stepping, if zero we are during time stepping.
+//! \param[in] sumrefmode Sum of contributions from all chares, encoding
+//!   refinement mode of operation.
 // *****************************************************************************
 {
   // If at least a single edge on a chare still needs correction, do correction,
@@ -630,7 +632,11 @@ Transporter::matched( std::size_t nextra,
 
     auto print = printer();
 
-    if (initial > 0) {
+    // decode refmode
+    auto refmode = static_cast< Refiner::RefMode >(
+                     sumrefmode / static_cast<std::size_t>(m_nchare) );
+
+    if (refmode == Refiner::RefMode::T0REF) {
 
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
         const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
@@ -645,7 +651,7 @@ Transporter::matched( std::size_t nextra,
       }
       m_progMesh.inc< REFINE >( print );
 
-    } else {
+    } else if (refmode == Refiner::RefMode::DTREF) {
 
       auto dtref_uni = g_inputdeck.get< tag::amr, tag::dtref_uniform >();
       print.diag( { "dtref", "type", "nref", "nderef", "ncorr" },
@@ -656,7 +662,24 @@ Transporter::matched( std::size_t nextra,
                     std::to_string(m_ncit) },
                   false );
 
-    }
+    } else if (refmode == Refiner::RefMode::OUTREF) {
+
+      print.diag( { "outref", "nref", "nderef", "ncorr" },
+                  { std::to_string(++m_noutrefit),
+                    std::to_string(nref),
+                    std::to_string(nderef),
+                    std::to_string(m_ncit) }, false );
+
+    } else if (refmode == Refiner::RefMode::OUTDEREF) {
+
+      print.diag( { "outderef", "nref", "nderef", "ncorr" },
+                  { std::to_string(++m_noutderefit),
+                    std::to_string(nref),
+                    std::to_string(nderef),
+                    std::to_string(m_ncit) },
+                  false );
+
+    } else Throw( "RefMode not implemented" );
 
     m_ncit = 0;
     m_refiner.perform();
