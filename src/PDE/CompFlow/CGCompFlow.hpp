@@ -438,7 +438,8 @@ class CompFlow {
 //         m_physics.conductRhs( deltat, J, N, grad, u, r, R );
     }
 
-    //! Compute nodal gradients of primitive variables for ALECG along boundary
+    //! \brief Compute nodal gradients of primitive variables for ALECG along
+    //!   chare-boundary
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] bndel List of elements contributing to chare-boundary nodes
@@ -447,13 +448,16 @@ class CompFlow {
     //!    global node ids (key)
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] G Nodal gradients of primitive variables
-    void grad( const std::array< std::vector< real >, 3 >& coord,
-               const std::vector< std::size_t >& inpoel,
-               const std::vector< std::size_t >& bndel,
-               const std::vector< std::size_t >& gid,
-               const std::unordered_map< std::size_t, std::size_t >& bid,
-               const tk::Fields& U,
-               tk::Fields& G ) const
+    //! \details This function only computes local contributions to gradients
+    //!   at chare-boundary nodes. Internal node gradients are calculated as
+    //!   required, and do not need to be stored.
+    void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
+      const std::vector< std::size_t >& inpoel,
+      const std::vector< std::size_t >& bndel,
+      const std::vector< std::size_t >& gid,
+      const std::unordered_map< std::size_t, std::size_t >& bid,
+      const tk::Fields& U,
+      tk::Fields& G ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
@@ -1127,16 +1131,16 @@ class CompFlow {
     //! \param[in] q Right node id of edge-end
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] G Gradient of all unknowns in mesh points
-    //! \param[in] rL Left density
-    //! \param[in] uL Left X velocity
-    //! \param[in] vL Left Y velocity
-    //! \param[in] wL Left Z velocity
-    //! \param[in] eL Left internal energy
-    //! \param[in] rR Right density
-    //! \param[in] uR Right X velocity
-    //! \param[in] vR Right Y velocity
-    //! \param[in] wR Right Z velocity
-    //! \param[in] eR Right internal energy
+    //! \param[in,out] rL Left density
+    //! \param[in,out] uL Left X velocity
+    //! \param[in,out] vL Left Y velocity
+    //! \param[in,out] wL Left Z velocity
+    //! \param[in,out] eL Left internal energy
+    //! \param[in,out] rR Right density
+    //! \param[in,out] uR Right X velocity
+    //! \param[in,out] vR Right Y velocity
+    //! \param[in,out] wR Right Z velocity
+    //! \param[in,out] eR Right internal energy
     void muscl( std::size_t p,
                 std::size_t q,
                 const tk::UnsMesh::Coords& coord,

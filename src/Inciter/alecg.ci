@@ -49,8 +49,8 @@ module alecg {
        std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
       entry void comlhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& L );
-      entry void comgrad( const std::vector< std::size_t >& gid,
-                          const std::vector< std::vector< tk::real > >& G );
+      entry void comChBndGrad( const std::vector< std::size_t >& gid,
+                               const std::vector< std::vector< tk::real > >& G );
       entry void comrhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& R );
       entry void resized();
