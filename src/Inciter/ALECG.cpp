@@ -77,10 +77,10 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
-  m_chboundGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
+  m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_bcdir(),
   m_lhsc(),
-  m_chboundGradc(),
+  m_chBndGradc(),
   m_rhsc(),
   m_diag(),
   m_bnorm(),
@@ -767,11 +767,11 @@ ALECG::advance( tk::real newdt )
   if (m_stage == 0) d->setdt( newdt );
 
   // Compute gradients for next time step
-  chboundGrad();
+  chBndGrad();
 }
 
 void
-ALECG::chboundGrad()
+ALECG::chBndGrad()
 // *****************************************************************************
 // Compute nodal gradients at chare-boundary nodes. Gradients at internal nodes
 // are calculated locally as needed and are not stored.
@@ -781,8 +781,8 @@ ALECG::chboundGrad()
 
   // Compute own portion of gradients for all equations
   for (const auto& eq : g_cgpde)
-    eq.chboundGrad(d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u,
-      m_chboundGrad);
+    eq.chBndGrad(d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u,
+      m_chBndGrad);
 
   // Communicate gradients to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
@@ -791,32 +791,32 @@ ALECG::chboundGrad()
     for (const auto& [c,n] : d->NodeCommMap()) {
       std::vector< std::vector< tk::real > > g( n.size() );
       std::size_t j = 0;
-      for (auto i : n) g[ j++ ] = m_chboundGrad[ tk::cref_find(d->Bid(),i) ];
-      thisProxy[c].comcbgrad( std::vector<std::size_t>(begin(n),end(n)), g );
+      for (auto i : n) g[ j++ ] = m_chBndGrad[ tk::cref_find(d->Bid(),i) ];
+      thisProxy[c].comChBndGrad( std::vector<std::size_t>(begin(n),end(n)), g );
     }
 
   owngrad_complete();
 }
 
 void
-ALECG::comcbgrad( const std::vector< std::size_t >& gid,
-                  const std::vector< std::vector< tk::real > >& G )
+ALECG::comChBndGrad( const std::vector< std::size_t >& gid,
+                     const std::vector< std::vector< tk::real > >& G )
 // *****************************************************************************
 //  Receive contributions to nodal gradients on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive grad contributions
 //! \param[in] G Partial contributions of gradients to chare-boundary nodes
-//! \details This function receives contributions to m_chboundGrad, which stores
-//!   nodal gradients at mesh chare-boundary nodes. While m_chboundGrad stores
-//!   own contributions, m_chboundGradc collects the neighbor chare
-//!   contributions during communication. This way work on m_chboundGrad and
-//!   m_chboundGradc is overlapped. The two are combined in rhs().
+//! \details This function receives contributions to m_chBndGrad, which stores
+//!   nodal gradients at mesh chare-boundary nodes. While m_chBndGrad stores
+//!   own contributions, m_chBndGradc collects the neighbor chare
+//!   contributions during communication. This way work on m_chBndGrad and
+//!   m_chBndGradc is overlapped. The two are combined in rhs().
 // *****************************************************************************
 {
   Assert( G.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
 
-  for (std::size_t i=0; i<gid.size(); ++i) m_chboundGradc[ gid[i] ] += G[i];
+  for (std::size_t i=0; i<gid.size(); ++i) m_chBndGradc[ gid[i] ] += G[i];
 
   if (++m_ngrad == Disc()->NodeCommMap().size()) {
     m_ngrad = 0;
@@ -833,14 +833,14 @@ ALECG::rhs()
   auto d = Disc();
 
   // Combine own and communicated contributions to nodal gradients
-  for (const auto& [gid,g] : m_chboundGradc) {
+  for (const auto& [gid,g] : m_chBndGradc) {
     auto bid = tk::cref_find( d->Bid(), gid );
-    for (ncomp_t c=0; c<m_chboundGrad.nprop(); ++c)
-      m_chboundGrad(bid,c,0) += g[c];
+    for (ncomp_t c=0; c<m_chBndGrad.nprop(); ++c)
+      m_chBndGrad(bid,c,0) += g[c];
   }
 
   // clear gradients receive buffer
-  tk::destroy(m_chboundGradc);
+  tk::destroy(m_chBndGradc);
 
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
 
@@ -851,8 +851,8 @@ ALECG::rhs()
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
             m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-            m_symbctri, d->Vol(), m_edgenode, m_edgeid, m_chboundGrad, m_u,
-            m_tp, m_rhs );
+            m_symbctri, d->Vol(), m_edgenode, m_edgeid, m_chBndGrad, m_u, m_tp,
+            m_rhs );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
@@ -1091,7 +1091,7 @@ ALECG::resizePostAMR(
   m_un.resize( npoin, nprop );
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
-  m_chboundGrad.resize( d->Bid().size(), nprop*3 );
+  m_chBndGrad.resize( d->Bid().size(), nprop*3 );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)
@@ -1127,7 +1127,7 @@ ALECG::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise output field data to file(s)
-  if (m_stage < 3) chboundGrad(); else out();
+  if (m_stage < 3) chBndGrad(); else out();
 }
 
 void

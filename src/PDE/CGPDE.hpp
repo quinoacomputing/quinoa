@@ -121,14 +121,14 @@ class CGPDE {
     { self->box( v, t, boxnodes, coord, unk, boxnodes_set ); }
 
     //! Public interface to computing the nodal gradients for ALECG
-    void chboundGrad( const std::array< std::vector< real >, 3 >& coord,
+    void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& bndel,
       const std::vector< std::size_t >& gid,
       const std::unordered_map< std::size_t, std::size_t >& bid,
       const tk::Fields& U,
       tk::Fields& G ) const
-    { self->chboundGrad( coord, inpoel, bndel, gid, bid, U, G ); }
+    { self->chBndGrad( coord, inpoel, bndel, gid, bid, U, G ); }
 
     //! Public interface to computing the right-hand side vector for DiagCG
     void rhs( real t,
@@ -276,7 +276,7 @@ class CGPDE {
         const std::array< std::vector< real >, 3 >&,
         tk::Fields& unk,
         std::unordered_set< std::size_t >& boxnodes_set ) const = 0;
-      virtual void chboundGrad( const std::array< std::vector< real >, 3 >&,
+      virtual void chBndGrad( const std::array< std::vector< real >, 3 >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
@@ -377,14 +377,14 @@ class CGPDE {
                 tk::Fields& unk,
                 std::unordered_set< std::size_t >& boxnodes_set ) const override
       { data.box( v, t, boxnodes, coord, unk, boxnodes_set ); }
-      void chboundGrad( const std::array< std::vector< real >, 3 >& coord,
+      void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
         const std::vector< std::size_t >& inpoel,
         const std::vector< std::size_t >& bndel,
         const std::vector< std::size_t >& gid,
         const std::unordered_map< std::size_t, std::size_t >& bid,
         const tk::Fields& U,
         tk::Fields& G ) const override
-      { data.chboundGrad( coord, inpoel, bndel, gid, bid, U, G ); }
+      { data.chBndGrad( coord, inpoel, bndel, gid, bid, U, G ); }
       void rhs( real t,
                 real deltat,
                 const std::array< std::vector< real >, 3 >& coord,

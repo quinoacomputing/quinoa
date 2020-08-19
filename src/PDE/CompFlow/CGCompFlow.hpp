@@ -451,7 +451,7 @@ class CompFlow {
     //! \details This function only computes local contributions to gradients
     //!   at chare-boundary nodes. Internal node gradients are calculated as
     //!   required, and do not need to be stored.
-    void chboundGrad( const std::array< std::vector< real >, 3 >& coord,
+    void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& bndel,
       const std::vector< std::size_t >& gid,

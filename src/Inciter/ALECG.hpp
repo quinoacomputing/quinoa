@@ -127,8 +127,8 @@ class ALECG : public CBase_ALECG {
                  const std::vector< std::vector< tk::real > >& L );
 
     //! Receive contributions to gradients on chare-boundaries
-    void comcbgrad( const std::vector< std::size_t >& gid,
-                    const std::vector< std::vector< tk::real > >& G );
+    void comChBndGrad( const std::vector< std::size_t >& gid,
+                       const std::vector< std::vector< tk::real > >& G );
 
     //! Receive contributions to right-hand side vector on chare-boundaries
     void comrhs( const std::vector< std::size_t >& gid,
@@ -194,10 +194,10 @@ class ALECG : public CBase_ALECG {
       p | m_un;
       p | m_lhs;
       p | m_rhs;
-      p | m_chboundGrad;
+      p | m_chBndGrad;
       p | m_bcdir;
       p | m_lhsc;
-      p | m_chboundGradc;
+      p | m_chBndGradc;
       p | m_rhsc;
       p | m_diag;
       p | m_bnorm;
@@ -268,7 +268,7 @@ class ALECG : public CBase_ALECG {
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
     //! Nodal gradients at chare-boundary nodes
-    tk::Fields m_chboundGrad;
+    tk::Fields m_chBndGrad;
     //! Boundary conditions evaluated and assigned to local mesh node IDs
     //! \details Vector of pairs of bool and boundary condition value associated
     //!   to local mesh node IDs at which the user has set Dirichlet boundary
@@ -283,7 +283,7 @@ class ALECG : public CBase_ALECG {
     //! Receive buffer for communication of the nodal gradients
     //! \details Key: chare id, value: gradients for all scalar components per
     //!   node
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_chboundGradc;
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_chBndGradc;
     //! Receive buffer for communication of the right hand side
     //! \details Key: chare id, value: rhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
@@ -367,7 +367,7 @@ class ALECG : public CBase_ALECG {
     void lhsmerge();
 
     //! Compute gradients
-    void chboundGrad();
+    void chBndGrad();
 
     //! Compute righ-hand side vector of transport equations
     void rhs();

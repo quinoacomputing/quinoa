@@ -119,7 +119,7 @@ class Transport {
     //!    global node ids (key)
     //! \param[in] U Solution vector at recent time step
     //! \param[in,out] G Nodal gradients of primitive variables
-    void chboundGrad( const std::array< std::vector< real >, 3 >& coord,
+    void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
       const std::vector< std::size_t >& bndel,
       const std::vector< std::size_t >& gid,
