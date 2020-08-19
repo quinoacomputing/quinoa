@@ -4073,6 +4073,22 @@ struct output_info {
 };
 using output = keyword< output_info, TAOCPP_PEGTL_STRING("output") >;
 
+struct refined_info {
+  static std::string name() { return "Refined field output"; }
+  static std::string shortDescription() { return
+    "Turn refined field output on/off"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to turn on/off refined field output, which
+    refines the mesh and evaluates the solution on the refined mesh for saving
+    the solution.)"; }
+  struct expect {
+    using type = bool;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using refined =keyword< refined_info, TAOCPP_PEGTL_STRING("refined") >;
+
 struct screen_info {
   static std::string name() { return "screen"; }
   static std::string shortDescription() {

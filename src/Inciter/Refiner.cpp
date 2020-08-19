@@ -264,9 +264,9 @@ Refiner::dtref( const std::map< int, std::vector< std::size_t > >& bface,
 }
 
 void
-Refiner::outref( const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::map< int, std::vector< std::size_t > >& bnode,
-                 const std::vector< std::size_t >& triinpoel,
+Refiner::outref( const std::map< int, std::vector< std::size_t > >& /*bface*/,
+                 const std::map< int, std::vector< std::size_t > >& /*bnode*/,
+                 const std::vector< std::size_t >& /*triinpoel*/,
                  CkCallback c,
                  RefMode mode )
 // *****************************************************************************

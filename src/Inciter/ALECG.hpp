@@ -155,15 +155,15 @@ class ALECG : public CBase_ALECG {
     //! Receive new field output mesh from Refiner
     void writePostAMR(
       const std::vector< std::size_t >& /* ginpoel */,
-      const tk::UnsMesh::Chunk& chunk,
-      const tk::UnsMesh::Coords& coord,
+      const tk::UnsMesh::Chunk& /*chunk*/,
+      const tk::UnsMesh::Coords& /*coord*/,
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /* addedNodes */,
-      const std::unordered_map< std::size_t, std::size_t >& addedTets,
-      const tk::NodeCommMap& nodeCommMap,
-      const std::map< int, std::vector< std::size_t > >& bface,
+      const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
+      const tk::NodeCommMap& /*nodeCommMap*/,
+      const std::map< int, std::vector< std::size_t > >& /*bface*/,
       const std::map< int, std::vector< std::size_t > >& /* bnode */,
-      const std::vector< std::size_t >& triinpoel,
-      CkCallback c ) {}
+      const std::vector< std::size_t >& /*triinpoel*/,
+      CkCallback /*c*/ ) {}
 
     //! Const-ref access to current solution
     //! \return Const-ref to current solution

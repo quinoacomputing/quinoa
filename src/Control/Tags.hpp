@@ -140,7 +140,7 @@ struct sysfctvar { static std::string name() { return "sysfctvar"; } };
 struct fcteps { static std::string name() { return "fcteps"; } };
 struct ctau { static std::string name() { return "ctau"; } };
 struct npar { static std::string name() { return "npar"; } };
-struct refined {};
+struct refined { static std::string name() { return "refined output"; } };
 struct matched {};
 struct compatibility {};
 struct bndint {};

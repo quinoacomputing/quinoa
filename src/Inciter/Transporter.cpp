@@ -1055,6 +1055,7 @@ Transporter::inthead( const InciterPrint& print )
 //! \param[in] print Pretty printer object to use for printing
 // *****************************************************************************
 {
+  auto refined = g_inputdeck.get< tag::cmd, tag::io, tag::refined >();
   print.inthead( "Time integration", "Navier-Stokes solver",
   "Legend: it - iteration count\n"
   "         t - physics time\n"
@@ -1063,7 +1064,8 @@ Transporter::inthead( const InciterPrint& print )
   "       ETA - estimated wall-clock time for accomplishment (h:m:s)\n"
   "       EGT - estimated grind wall-clock time (ms/timestep)\n"
   "       flg - status flags, legend:\n"
-  "             f - field (volume and surface)\n"
+  "             f - " + std::string(refined ? "refined " : "")
+                      + "field (volume and surface)\n"
   "             d - diagnostics\n"
   "             t - physics time history\n"
   "             h - h-refinement\n"

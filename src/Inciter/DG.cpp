@@ -1331,10 +1331,15 @@ DG::writeFields( CkCallback c )
 
   } else {
 
-    // Refine mesh for field output
+    // Optionally refine mesh for field output
     auto d = Disc();
-    const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
-    d->Ref()->outref( m_fd.Bface(), {}, tr, c );
+    if (g_inputdeck.get< tag::cmd, tag::io, tag::refined >()) {
+      const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
+      d->Ref()->outref( m_fd.Bface(), {}, tr, c );
+    } else {
+      writePostAMR( {}, d->Chunk(), d->Coord(), {}, {}, d->NodeCommMap(),
+                    m_fd.Bface(), {}, m_fd.Triinpoel(), c );
+    }
 
   }
 }
@@ -1342,7 +1347,7 @@ DG::writeFields( CkCallback c )
 void
 DG::writePostAMR(
   const std::vector< std::size_t >& /*ginpoel*/,
-  const tk::UnsMesh::Chunk& chunk,
+  const tk::UnsMesh::Chunk& /*chunk*/,
   const tk::UnsMesh::Coords& /*coord*/,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
   const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,

@@ -137,6 +137,9 @@ class Discretization : public CBase_Discretization {
     //!    non-const-ref
     std::vector< std::size_t >& Inpoel() { return m_inpoel; }
 
+    //! Mesh chunk accessor as const-ref
+    const tk::UnsMesh::Chunk& Chunk() const { return m_el; }
+
     //! Total mesh volume accessor
     tk::real meshvol() const { return m_meshvol; }
 

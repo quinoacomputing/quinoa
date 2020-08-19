@@ -68,6 +68,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::slot_cyl,
                                    kw::problem,
                                    kw::plotvar,
+                                   kw::refined,
                                    kw::interval,
                                    kw::partitioning,
                                    kw::algorithm,
