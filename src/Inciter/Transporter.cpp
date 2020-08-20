@@ -833,12 +833,11 @@ Transporter::diagHeader()
       d.push_back( errname + '(' + var[i] + "-IC)" );
   }
 
-  // Augment diagnostics variables by L2-norm of the residual
+  // Augment diagnostics variables by L2-norm of the residual and total energy
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
     for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
+    d.push_back( "mE" );
   }
-
-  d.push_back( "mE" );
 
   // Write diagnostics header
   dw.header( d );
@@ -1089,14 +1088,15 @@ Transporter::diagnostics( CkReductionMsg* msg )
   // Finish computing the L2 norm of the residual and append
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   std::vector< tk::real > l2res( d[L2RES].size(), 0.0 );
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol );
       diag.push_back( l2res[i] );
     }
 
-  // Append total energy
-  diag.push_back( d[TOTALSOL][0] );
+    // Append total energy
+    diag.push_back( d[TOTALSOL][0] );
+  }
 
   // Append diagnostics file at selected times
   tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),

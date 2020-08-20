@@ -130,7 +130,7 @@ NodeDiagnostics::compute(
       }
       // Compute sum of the total energy over the entire domain (only the first
       // entry is used)
-      diag[TOTALSOL][0] += u(i,4,0) * v[i];
+      diag[TOTALSOL][0] += u(i,u.nprop()-1,0) * v[i];
     }
 
     // Append diagnostics vector with metadata on the current time step
