@@ -1096,7 +1096,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
     }
 
   // Append total energy
-  diag.push_back( d[TOTALSOL][4] );
+  diag.push_back( d[TOTALSOL][0] );
 
   // Append diagnostics file at selected times
   tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),

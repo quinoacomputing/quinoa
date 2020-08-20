@@ -87,7 +87,7 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
     for (std::size_t i=0; i<v[LINFERR].size(); ++i)
       if (w[LINFERR][i] > v[LINFERR][i]) v[LINFERR][i] = w[LINFERR][i];
     // Sum of the total energy over the entire domain
-    v[TOTALSOL][4] += w[TOTALSOL][4];
+    v[TOTALSOL][0] += w[TOTALSOL][0];
     // Copy ITER, TIME, DT
     for (std::size_t j=v.size()-3; j<v.size(); ++j)
       for (std::size_t i=0; i<v[j].size(); ++i)
