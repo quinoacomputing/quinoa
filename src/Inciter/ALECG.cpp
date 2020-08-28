@@ -235,6 +235,10 @@ ALECG::edfnorm( const tk::UnsMesh::Edge& edge,
     for (std::size_t i=0; i<3; ++i)
       grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
     // sum normal contributions
+    // The constant 1/48: Eq (12) from Waltz et al. Computers & fluids (92) 2014
+    // The result of the integral of shape function N on a tet is V/4.
+    // This can be written as J/(6*4). Eq (12) has a 1/2 multiplier.
+    // This leads to J/48.
     auto J48 = J/48.0;
     for (const auto& [a,b] : tk::lpoed) {
       auto s = tk::orient( {N[a],N[b]}, edge );
@@ -949,6 +953,12 @@ ALECG::solve()
     m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
 
   }
+
+  // The following BC enforcement changes the updated solution to ensure strong
+  // imposition of the BCs. This is a matter of choice. Another alternative is
+  // to only apply BCs when computing fluxes at boundary faces, thereby only
+  // weakly enforcing the BCs. The former is conventionally used in finite
+  // element methods, whereas the latter, in finite volume methods.
 
   // Apply symmetry BCs on new solution
   for (const auto& eq : g_cgpde)

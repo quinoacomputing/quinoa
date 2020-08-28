@@ -1118,6 +1118,12 @@ class CompFlow {
         for (auto q : tk::Around(psup,p)) {
           auto s = gid[p] > gid[q] ? -1.0 : 1.0;
           auto e = edgeid[k++];
+          // the 2.0 in the following expression is so that the RHS contribution
+          // conforms with Eq 12 (Waltz et al. Computers & fluids (92) 2014);
+          // The 1/2 in Eq 12 is extracted from the flux function (Rusanov).
+          // However, Rusanov::flux computes the flux with the 1/2. This 2
+          // cancels with the 1/2 in Rusanov::flux, so that the 1/2 can be
+          // extracted out and multiplied as in Eq 12
           for (std::size_t c=0; c<m_ncomp; ++c)
             R.var(r[c],p) -= 2.0*s*dflux[e*m_ncomp+c];
         }
