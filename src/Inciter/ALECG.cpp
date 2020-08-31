@@ -77,10 +77,10 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
-  m_grad( Disc()->Bid().size(), m_u.nprop()*3 ),
+  m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_bcdir(),
   m_lhsc(),
-  m_gradc(),
+  m_chBndGradc(),
   m_rhsc(),
   m_diag(),
   m_bnorm(),
@@ -235,6 +235,10 @@ ALECG::edfnorm( const tk::UnsMesh::Edge& edge,
     for (std::size_t i=0; i<3; ++i)
       grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
     // sum normal contributions
+    // The constant 1/48: Eq (12) from Waltz et al. Computers & fluids (92) 2014
+    // The result of the integral of shape function N on a tet is V/4.
+    // This can be written as J/(6*4). Eq (12) has a 1/2 multiplier.
+    // This leads to J/48.
     auto J48 = J/48.0;
     for (const auto& [a,b] : tk::lpoed) {
       auto s = tk::orient( {N[a],N[b]}, edge );
@@ -767,20 +771,22 @@ ALECG::advance( tk::real newdt )
   if (m_stage == 0) d->setdt( newdt );
 
   // Compute gradients for next time step
-  grad();
+  chBndGrad();
 }
 
 void
-ALECG::grad()
+ALECG::chBndGrad()
 // *****************************************************************************
-// Compute nodal gradients
+// Compute nodal gradients at chare-boundary nodes. Gradients at internal nodes
+// are calculated locally as needed and are not stored.
 // *****************************************************************************
 {
   auto d = Disc();
 
   // Compute own portion of gradients for all equations
   for (const auto& eq : g_cgpde)
-    eq.grad(d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u, m_grad);
+    eq.chBndGrad(d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u,
+      m_chBndGrad);
 
   // Communicate gradients to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
@@ -789,32 +795,32 @@ ALECG::grad()
     for (const auto& [c,n] : d->NodeCommMap()) {
       std::vector< std::vector< tk::real > > g( n.size() );
       std::size_t j = 0;
-      for (auto i : n) g[ j++ ] = m_grad[ tk::cref_find(d->Bid(),i) ];
-      thisProxy[c].comgrad( std::vector<std::size_t>(begin(n),end(n)), g );
+      for (auto i : n) g[ j++ ] = m_chBndGrad[ tk::cref_find(d->Bid(),i) ];
+      thisProxy[c].comChBndGrad( std::vector<std::size_t>(begin(n),end(n)), g );
     }
 
   owngrad_complete();
 }
 
 void
-ALECG::comgrad( const std::vector< std::size_t >& gid,
-                const std::vector< std::vector< tk::real > >& G )
+ALECG::comChBndGrad( const std::vector< std::size_t >& gid,
+                     const std::vector< std::vector< tk::real > >& G )
 // *****************************************************************************
 //  Receive contributions to nodal gradients on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive grad contributions
 //! \param[in] G Partial contributions of gradients to chare-boundary nodes
-//! \details This function receives contributions to m_grad, which stores the
-//!   nodal gradients at mesh nodes. While m_grad stores own
-//!   contributions, m_gradc collects the neighbor chare contributions during
-//!   communication. This way work on m_grad and m_gradc is overlapped. The two
-//!   are combined in rhs().
+//! \details This function receives contributions to m_chBndGrad, which stores
+//!   nodal gradients at mesh chare-boundary nodes. While m_chBndGrad stores
+//!   own contributions, m_chBndGradc collects the neighbor chare
+//!   contributions during communication. This way work on m_chBndGrad and
+//!   m_chBndGradc is overlapped. The two are combined in rhs().
 // *****************************************************************************
 {
   Assert( G.size() == gid.size(), "Size mismatch" );
 
   using tk::operator+=;
 
-  for (std::size_t i=0; i<gid.size(); ++i) m_gradc[ gid[i] ] += G[i];
+  for (std::size_t i=0; i<gid.size(); ++i) m_chBndGradc[ gid[i] ] += G[i];
 
   if (++m_ngrad == Disc()->NodeCommMap().size()) {
     m_ngrad = 0;
@@ -831,13 +837,14 @@ ALECG::rhs()
   auto d = Disc();
 
   // Combine own and communicated contributions to nodal gradients
-  for (const auto& [gid,g] : m_gradc) {
+  for (const auto& [gid,g] : m_chBndGradc) {
     auto bid = tk::cref_find( d->Bid(), gid );
-    for (ncomp_t c=0; c<m_grad.nprop(); ++c) m_grad(bid,c,0) += g[c];
+    for (ncomp_t c=0; c<m_chBndGrad.nprop(); ++c)
+      m_chBndGrad(bid,c,0) += g[c];
   }
 
   // clear gradients receive buffer
-  tk::destroy(m_gradc);
+  tk::destroy(m_chBndGradc);
 
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
 
@@ -848,7 +855,7 @@ ALECG::rhs()
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
             m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-            m_symbctri, d->Vol(), m_edgenode, m_edgeid, m_grad, m_u, m_tp,
+            m_symbctri, d->Vol(), m_edgenode, m_edgeid, m_chBndGrad, m_u, m_tp,
             m_rhs );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
@@ -946,6 +953,12 @@ ALECG::solve()
     m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
 
   }
+
+  // The following BC enforcement changes the updated solution to ensure strong
+  // imposition of the BCs. This is a matter of choice. Another alternative is
+  // to only apply BCs when computing fluxes at boundary faces, thereby only
+  // weakly enforcing the BCs. The former is conventionally used in finite
+  // element methods, whereas the latter, in finite volume methods.
 
   // Apply symmetry BCs on new solution
   for (const auto& eq : g_cgpde)
@@ -1088,7 +1101,7 @@ ALECG::resizePostAMR(
   m_un.resize( npoin, nprop );
   m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
-  m_grad.resize( d->Bid().size(), nprop*3 );
+  m_chBndGrad.resize( d->Bid().size(), nprop*3 );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)
@@ -1124,7 +1137,7 @@ ALECG::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise output field data to file(s)
-  if (m_stage < 3) grad(); else out();
+  if (m_stage < 3) chBndGrad(); else out();
 }
 
 void
