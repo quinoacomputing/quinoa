@@ -1347,14 +1347,14 @@ DG::writeFields( CkCallback c )
 void
 DG::writePostAMR(
   const std::vector< std::size_t >& /*ginpoel*/,
-  const tk::UnsMesh::Chunk& /*chunk*/,
-  const tk::UnsMesh::Coords& /*coord*/,
+  const tk::UnsMesh::Chunk& chunk,
+  const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
-  const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
+  const std::unordered_map< std::size_t, std::size_t >& addedTets,
   const tk::NodeCommMap& /*nodeCommMap*/,
-  const std::map< int, std::vector< std::size_t > >& /*bface*/,
+  const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
-  const std::vector< std::size_t >& /*triinpoel*/,
+  const std::vector< std::size_t >& triinpoel,
   CkCallback c )
 // *****************************************************************************
 //  Receive new field output mesh from Refiner
@@ -1367,50 +1367,60 @@ DG::writePostAMR(
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  // Copy mesh from Discretization object
   auto d = Disc();
-  auto inpoel = d->Inpoel();
-  auto coord = d->Coord();
+  const auto& inpoel = std::get< 0 >( chunk );
+  const auto& lid = std::get< 2 >( chunk );
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto& esuel = m_fd.Esuel();
-  const auto nielem = esuel.size() / 4;
 
   // Query fields names from all PDEs integrated
   std::vector< std::string > elemfieldnames, nodalfieldnames;
   for (const auto& eq : g_dgpde) {
     auto n = eq.fieldNames();
     elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
-    auto nn = eq.nodalFieldNames();
-    nodalfieldnames.insert( end(nodalfieldnames), begin(nn), end(nn) );
+    //auto nn = eq.nodalFieldNames();
+    //nodalfieldnames.insert( end(nodalfieldnames), begin(nn), end(nn) );
+  }
+
+  // Evaluate solution on refined mesh, cell center value only
+  auto nelem = inpoel.size()/4;
+  auto unprop = m_u.nprop();
+  auto pnprop = m_p.nprop();
+  auto u = m_u;
+  auto p = m_p;
+  u.resize( nelem, unprop );
+  p.resize( nelem, pnprop );
+  [[maybe_unused]] auto old_nelem = d->Inpoel().size()/4;
+  for (const auto& [child,parent] : addedTets) {
+    Assert( child < nelem, "Indexing out of new solution vector" );
+    Assert( parent < old_nelem, "Indexing out of old solution vector" );
+    for (std::size_t i=0; i<unprop; ++i) u(child,i,0) = m_u(parent,i,0);
+    for (std::size_t i=0; i<pnprop; ++i) p(child,i,0) = m_p(parent,i,0);
   }
 
   // Collect element and nodal field solution
   std::vector< std::vector< tk::real > > elemfields;
   std::vector< std::vector< tk::real > > nodefields;
+  auto geoElem = tk::genGeoElemTet( inpoel, coord );
+  auto t = d->T();
   for (const auto& eq : g_dgpde) {
-    auto no = eq.nodalFieldOutput( d->T(), d->meshvol(), m_ncoord, m_esup,
-        m_geoElem, m_Unode, m_Pnode, m_u, m_p );
-    auto eo = eq.fieldOutput( d->T(), d->meshvol(), rdof, nielem, m_geoElem,
-        m_u, m_p );
+    auto eo = eq.fieldOutput( t, d->meshvol(), rdof, nelem, geoElem, u, p );
+    //auto no = eq.nodalFieldOutput( t, d->meshvol(), m_ncoord, m_esup,
+    //    m_geoElem, m_Unode, m_Pnode, m_u, m_p );
 
     // cut off ghost elements from element output
-    for (auto& f : eo) f.resize( nielem );
+    //for (auto& f : eo) f.resize( nielem );
     elemfields.insert( end(elemfields), begin(eo), end(eo) );
-    nodefields.insert( end(nodefields), begin(no), end(no) );
+    //nodefields.insert( end(nodefields), begin(no), end(no) );
   }
 
-  // chop off ghosts from mesh for dump
-  inpoel.resize( esuel.size() );
-  for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
-
   // Add adaptive indicator array to element-centered field output
-  std::vector<tk::real> ndof( begin(m_ndof), end(m_ndof) );
-  ndof.resize( nielem );  // cut off ghosts
-  elemfields.push_back( ndof );
+  //std::vector<tk::real> ndof( begin(m_ndof), end(m_ndof) );
+  //ndof.resize( nielem );  // cut off ghosts
+  //elemfields.push_back( ndof );
 
   // Output chare mesh and fields metadata to file
-  d->write( inpoel, coord, m_fd.Bface(), {}, m_fd.Triinpoel(), elemfieldnames,
-            nodalfieldnames, {}, elemfields, nodefields, {}, c );
+  d->write( inpoel, coord, bface, {}, tk::remap(triinpoel,lid),
+    elemfieldnames, nodalfieldnames, {}, elemfields, nodefields, {}, c );
 }
 
 void

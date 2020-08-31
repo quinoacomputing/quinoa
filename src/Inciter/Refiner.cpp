@@ -264,9 +264,9 @@ Refiner::dtref( const std::map< int, std::vector< std::size_t > >& bface,
 }
 
 void
-Refiner::outref( const std::map< int, std::vector< std::size_t > >& /*bface*/,
-                 const std::map< int, std::vector< std::size_t > >& /*bnode*/,
-                 const std::vector< std::size_t >& /*triinpoel*/,
+Refiner::outref( const std::map< int, std::vector< std::size_t > >& bface,
+                 const std::map< int, std::vector< std::size_t > >& bnode,
+                 const std::vector< std::size_t >& triinpoel,
                  CkCallback c,
                  RefMode mode )
 // *****************************************************************************
@@ -283,9 +283,9 @@ Refiner::outref( const std::map< int, std::vector< std::size_t > >& /*bface*/,
   m_writeCallback = c;
 
   // Update boundary node lists
-  //m_bface = bface;
-  //m_bnode = bnode;
-  //m_triinpoel = triinpoel;
+  m_bface = bface;
+  m_bnode = bnode;
+  m_triinpoel = triinpoel;
 
   start();
 }
@@ -514,11 +514,11 @@ Refiner::refine()
 
   } else if (m_mode == RefMode::OUTREF) {
 
-    //uniformRefine();
+    uniformRefine();
 
   } else if (m_mode == RefMode::OUTDEREF) {
 
-    //uniformDeRefine();
+    uniformDeRefine();
 
   } else Throw( "RefMode not implemented" );
 
@@ -859,7 +859,7 @@ Refiner::perform()
 {
   // Save old tets and their ids before performing refinement. Outref is always
   // followed by outderef, so to the outside world, the mesh is uchanged, thus
-  // no need to update.
+  // no update.
   if (m_mode != RefMode::OUTREF && m_mode != RefMode::OUTDEREF) {
     m_oldntets = m_oldTets.size();
     m_oldTets.clear();
@@ -874,9 +874,8 @@ Refiner::perform()
   m_refiner.perform_derefinement();
   //std::cout << "after deref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
 
-  // Update volume and boundary mesh. Outref is always followed by outderef, so
-  // to the outside world, the mesh is uchanged, thus no need to update.
-  if (m_mode != RefMode::OUTREF && m_mode != RefMode::OUTDEREF) updateMesh();
+  // Update volume and boundary mesh
+  updateMesh();
 
   // Save mesh at every initial refinement step (mainly for debugging). Will
   // replace with just a 'next()' in production.
@@ -946,7 +945,8 @@ Refiner::next()
     m_outref_triinpoel = m_triinpoel;
 
     // Derefine mesh to the state previous to field output
-    outref( m_bface, m_bnode, m_triinpoel, m_writeCallback, RefMode::OUTDEREF );
+    outref( m_outref_bface, m_outref_bnode, m_outref_triinpoel, m_writeCallback,
+            RefMode::OUTDEREF );
 
   } else if (m_mode == RefMode::OUTDEREF) {
 
