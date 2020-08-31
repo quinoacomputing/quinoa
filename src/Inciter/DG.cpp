@@ -1338,8 +1338,12 @@ DG::writeFields( CkCallback c )
       d->Ref()->outref( m_fd.Bface(), {}, tr, c );
     } else {
       const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
-      writePostAMR( {}, d->Chunk(), d->Coord(), {}, {}, d->NodeCommMap(),
-                    m_fd.Bface(), {}, tr, c );
+      auto inpoel = d->Inpoel();
+      inpoel.resize( m_fd.Esuel().size() );
+      auto coord = d->Coord();
+      for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
+      writePostAMR( {}, {inpoel,d->Gid(),d->Lid()}, coord, {}, {},
+                    d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
     }
 
   }
