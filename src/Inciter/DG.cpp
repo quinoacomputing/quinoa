@@ -1337,8 +1337,9 @@ DG::writeFields( CkCallback c )
       const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
       d->Ref()->outref( m_fd.Bface(), {}, tr, c );
     } else {
+      const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
       writePostAMR( {}, d->Chunk(), d->Coord(), {}, {}, d->NodeCommMap(),
-                    m_fd.Bface(), {}, m_fd.Triinpoel(), c );
+                    m_fd.Bface(), {}, tr, c );
     }
 
   }
