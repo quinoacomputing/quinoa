@@ -128,6 +128,9 @@ NodeDiagnostics::compute(
         auto err = std::abs( u(i,c,0) - an(i,c,0) );
         if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
       }
+      // Compute sum of the total energy over the entire domain (only the first
+      // entry is used)
+      diag[TOTALSOL][0] += u(i,u.nprop()-1,0) * v[i];
     }
 
     // Append diagnostics vector with metadata on the current time step

@@ -158,8 +158,14 @@ class CompFlow {
 
         Assert( boxenc.size() > m_system && !boxenc[m_system].empty(),
           "Box energy content unspecified in input file" );
+        std::vector< tk::real >
+          boxdim{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
+                  icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
+                  icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
+        auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
+          (boxdim[5]-boxdim[4]);
         rho = boxmas[m_system][0] / V;
-        spi = boxenc[m_system][0] * V / boxmas[m_system][0];
+        spi = boxenc[m_system][0] * V_ex / (V * rho);
         boxmassic = true;
 
       } else {
@@ -1118,6 +1124,12 @@ class CompFlow {
         for (auto q : tk::Around(psup,p)) {
           auto s = gid[p] > gid[q] ? -1.0 : 1.0;
           auto e = edgeid[k++];
+          // the 2.0 in the following expression is so that the RHS contribution
+          // conforms with Eq 12 (Waltz et al. Computers & fluids (92) 2014);
+          // The 1/2 in Eq 12 is extracted from the flux function (Rusanov).
+          // However, Rusanov::flux computes the flux with the 1/2. This 2
+          // cancels with the 1/2 in Rusanov::flux, so that the 1/2 can be
+          // extracted out and multiplied as in Eq 12
           for (std::size_t c=0; c<m_ncomp; ++c)
             R.var(r[c],p) -= 2.0*s*dflux[e*m_ncomp+c];
         }
