@@ -1942,13 +1942,13 @@ DG::resizePostAMR(
   // Update solution on new mesh, P0 (cell center value) only for now
   m_un = m_u;
   auto pn = m_p;
-  for (const auto& e : addedTets) {
-    Assert( e.first < nelem, "Indexing out of new solution vector" );
-    Assert( e.second < old_nelem, "Indexing out of old solution vector" );
-    for (std::size_t c=0; c<nprop; ++c)
-      m_u(e.first,c,0) = m_un(e.second,c,0);
-    for (std::size_t c=0; c<m_p.nprop(); ++c)
-      m_p(e.first,c,0) = pn(e.second,c,0);
+  auto unprop = m_u.nprop();
+  auto pnprop = m_p.nprop();
+  for (const auto& [child,parent] : addedTets) {
+    Assert( child < nelem, "Indexing out of new solution vector" );
+    Assert( parent < old_nelem, "Indexing out of old solution vector" );
+    for (std::size_t i=0; i<unprop; ++i) m_u(child,i,0) = m_un(parent,i,0);
+    for (std::size_t i=0; i<pnprop; ++i) m_p(child,i,0) = pn(parent,i,0);
   }
   m_un = m_u;
 
