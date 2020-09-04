@@ -1532,7 +1532,7 @@ DG::solref( const std::vector< std::size_t >& inpoel,
       for (std::size_t i=0; i<pncomp; ++i) p(child,i*rdof,0) = chp[i];
     }
 
-  } else Throw( "Refined field output for scheme not implemented" );
+  } //else Throw( "Refined field output for scheme not implemented" );
 
   return { u, p };
 }
