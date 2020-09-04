@@ -64,7 +64,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_bnode( bnode ),
   m_triinpoel( triinpoel ),
   m_nchare( nchare ),
-  m_initial( true ),
+  m_initial( 1 ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
   m_ninitref( g_inputdeck.get< tag::amr, tag::init >().size() ),
   m_refiner( m_inpoel ),
@@ -232,7 +232,7 @@ Refiner::dtref( const std::map< int, std::vector< std::size_t > >& bface,
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
-  m_initial = false;
+  m_initial = 0;
 
   // Update boundary node lists
   m_bface = bface;
@@ -1049,8 +1049,8 @@ Refiner::errorRefine()
       tagged_edges.push_back( { edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ),
                                 edge_tag::REFINE } );
     } else if (e.second < tolderef) {
-      tagged_edges.push_back( { edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ),
-                                edge_tag::DEREFINE } );
+      //tagged_edges.push_back( { edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ),
+      //                          edge_tag::DEREFINE } );
     }
   }
 

@@ -55,6 +55,8 @@ class InciterPrint : public tk::Print {
     }
 
     //! Print list of codes of vector-valued option
+    //! \tparam Option Option type
+    //! \tparam T Enum type for option type
     //! \param[in] v Vector of option types (enums) whose code vector to print
     template< typename Option, typename T >
     void ItemVec( const std::vector< T >& v ) const {
@@ -62,6 +64,13 @@ class InciterPrint : public tk::Print {
       std::string codes;
       for (auto e : v) codes += opt.code(e);
       item( opt.group(), codes );
+    }
+
+    //! Print legend for list of codes of vector-valued option
+    //! \tparam Option Option type
+    template< typename Option >
+    void ItemVecLegend() const {
+      brigand::for_each< typename Option::keywords >( echoPolicies(this) );
     }
 
     // Helper class for compact output of PDE policies

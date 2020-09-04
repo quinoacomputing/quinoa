@@ -238,8 +238,8 @@ class Refiner : public CBase_Refiner {
     std::vector< std::size_t > m_triinpoel;
     //! Total number of refiner chares
     int m_nchare;
-    //! True if initial AMR, false if during time stepping
-    bool m_initial;
+    //! 1 if initial AMR (before time stepping), 0 if during time stepping
+    std::size_t m_initial;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
     //! Number of initial mesh refinement/derefinement steps
