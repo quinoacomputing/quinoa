@@ -6064,7 +6064,7 @@ struct amr_info {
 using amr = keyword< amr_info, TAOCPP_PEGTL_STRING("amr") >;
 
 struct pref_spectral_decay_info {
-  static std::string name() { return "SPECTRAL_DECAY"; }
+  static std::string name() { return "spectral decay"; }
   static std::string shortDescription() { return "Select the spectral-decay"
     " indicator for p-adaptive DG scheme"; }
   static std::string longDescription() { return
@@ -6076,7 +6076,7 @@ using pref_spectral_decay = keyword< pref_spectral_decay_info,
                                      TAOCPP_PEGTL_STRING("spectral_decay") >;
 
 struct pref_non_conformity_info {
-  static std::string name() { return "NON_CONFORMITY"; }
+  static std::string name() { return "non-conformity"; }
   static std::string shortDescription() { return "Select the non-conformity"
     " indicator for p-adaptive DG scheme"; }
   static std::string longDescription() { return

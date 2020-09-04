@@ -44,7 +44,7 @@ tk::volInt( ncomp_t system,
 //! \param[in] flux Flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
-//! \param[in] ndofel Vector of local number of degrees of freedome
+//! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
@@ -94,8 +94,8 @@ tk::volInt( ncomp_t system,
         auto gp = eval_gp( igp, coordel, coordgp );
 
         // Compute the basis function
-        auto B =
-          eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+        auto B = eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+                             coordgp[2][igp] );
 
         auto wt = wgp[igp] * geoElem(e, 0, 0);
 
@@ -136,9 +136,12 @@ tk::update_rhs( ncomp_t ncomp,
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  Assert( dBdx[0].size() == ndof_el, "Size mismatch for basis function derivatives" );
-  Assert( dBdx[1].size() == ndof_el, "Size mismatch for basis function derivatives" );
-  Assert( dBdx[2].size() == ndof_el, "Size mismatch for basis function derivatives" );
+  Assert( dBdx[0].size() == ndof_el,
+    "Size mismatch for basis function derivatives" );
+  Assert( dBdx[1].size() == ndof_el,
+    "Size mismatch for basis function derivatives" );
+  Assert( dBdx[2].size() == ndof_el,
+    "Size mismatch for basis function derivatives" );
   Assert( fl.size() == ncomp, "Size mismatch for flux term" );
 
   for (ncomp_t c=0; c<ncomp; ++c)

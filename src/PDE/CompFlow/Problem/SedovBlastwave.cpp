@@ -87,8 +87,7 @@ CompFlowProblemSedovBlastwave::fieldNames( ncomp_t ) const
 
   auto n = CompFlowFieldNames();
 
-  if(pref)
-    n.push_back( "number of degree of freedom" );
+  if(pref) n.push_back( "NDOF" );
 
   return n;
 }
