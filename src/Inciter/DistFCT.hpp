@@ -3,7 +3,7 @@
   \file      src/Inciter/DistFCT.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface for distributed flux-corrected transport
   \details   Charm++ module interface file for asynchronous distributed
@@ -80,7 +80,7 @@ class DistFCT : public CBase_DistFCT {
     DistFCT( int nchare,
              std::size_t nu,
              std::size_t np,
-             const std::unordered_map< int, std::vector< std::size_t > >& msum,
+             const tk::NodeCommMap& nodeCommMap,
              const std::unordered_map< std::size_t, std::size_t >& bid,
              const std::unordered_map< std::size_t, std::size_t >& lid,
              const std::vector< std::size_t >& inpoel );
@@ -95,9 +95,6 @@ class DistFCT : public CBase_DistFCT {
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
-
-    //! Compute lumped mass lhs required for the low order solution
-    tk::Fields lump( const Discretization& d );
 
     //! \brief Compute mass diffusion rhs contribution required for the low
     //!   order solution
@@ -121,11 +118,16 @@ class DistFCT : public CBase_DistFCT {
                  const std::vector< std::vector< tk::real > >& A );
 
     //! Compute and sum antidiffusive element contributions (AEC) to mesh nodes
-    void aec( const Discretization& d,
-              const tk::Fields& dUh,
-              const tk::Fields& Un,
-              const std::unordered_map< std::size_t,
-                      std::vector< std::pair< bool, tk::real > > >& bc );
+    void aec(
+      const Discretization& d,
+      const tk::Fields& dUh,
+      const tk::Fields& Un,
+      const std::unordered_map< std::size_t,
+              std::vector< std::pair< bool, tk::real > > >& bcdir,
+      const std::unordered_map< int,
+              std::unordered_set< std::size_t > >& symbcnodemap,
+      const std::unordered_map< int,
+        std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm );
 
     //! \brief Compute the maximum and minimum unknowns of all elements
     //!   surrounding nodes
@@ -134,13 +136,22 @@ class DistFCT : public CBase_DistFCT {
               tk::Fields&& dUl,
               const CProxy_DiagCG& host );
 
+    //! Remap local ids after a mesh node reorder
+    void remap( const Discretization& d );
+
     //! Resize FCT data structures (e.g., after mesh refinement)
     void resize( std::size_t nu,
-                 const std::unordered_map< int,
-                   std::vector< std::size_t > >& msum,
+                 const tk::NodeCommMap& nodeCommMap,
                  const std::unordered_map< std::size_t, std::size_t >& bid,
                  const std::unordered_map< std::size_t, std::size_t >& lid,
                  const std::vector< std::size_t >& inpoel );
+
+    //! Collect mesh output fields from FCT
+    std::tuple< std::vector< std::string >,
+            std::vector< std::vector< tk::real > >,
+            std::vector< std::string >,
+            std::vector< std::vector< tk::real > > >
+    fields() const;
 
     /** @name Pack/unpack (Charm++ serialization) routines */
     ///@{
@@ -151,7 +162,7 @@ class DistFCT : public CBase_DistFCT {
       p | m_nalw;
       p | m_nlim;
       p | m_nchare;
-      p | m_msum;
+      p | m_nodeCommMap;
       p | m_bid;
       p | m_lid;
       p | m_inpoel;
@@ -189,10 +200,8 @@ class DistFCT : public CBase_DistFCT {
     std::size_t m_nchare;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!   chares associated to their chare IDs
-    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
-    //!   points
     //! \note This is a copy. Original in (bound) Discretization
-    std::unordered_map< int, std::vector< std::size_t > > m_msum;
+    tk::NodeCommMap m_nodeCommMap;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of mesh elements we
     //!   contribute to
@@ -220,7 +229,8 @@ class DistFCT : public CBase_DistFCT {
     void resizeComm();
 
     //! Compute the limited antidiffusive element contributions
-    void lim();
+    void lim( const std::unordered_map< std::size_t,
+                std::vector< std::pair< bool, tk::real > > >& bcdir );
 
     //! Apply limited antidiffusive element contributions
     void apply();

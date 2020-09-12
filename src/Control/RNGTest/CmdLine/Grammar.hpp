@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/CmdLine/Grammar.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -40,12 +40,13 @@ namespace cmd {
          tk::grm::process_cmd_switch< use, kw::charestate,
                                       tag::chare > {};
 
-  //! \brief Match and set control (i.e., input deck) file name
-  struct control :
-         tk::grm::process_cmd< use, kw::control,
-                               tk::grm::Store< tag::io, tag::control >,
+  //! \brief Match and set io parameter
+  template< typename keyword, typename io_tag >
+  struct io :
+         tk::grm::process_cmd< use, keyword,
+                               tk::grm::Store< tag::io, io_tag >,
                                pegtl::any,
-                               tag::io, tag::control > {};
+                               tag::io, io_tag > {};
 
   //! \brief Match help on control file keywords
   struct helpctr :
@@ -88,14 +89,15 @@ namespace cmd {
   struct keywords :
          pegtl::sor< verbose,
                      charestate,
-                     control,
                      help,
                      helpctr,
                      helpkw,
                      quiescence,
                      trace,
                      version,
-                     license > {};
+                     license,
+                     io< kw::screen, tag::screen >,
+                     io< kw::control, tag::control > > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :

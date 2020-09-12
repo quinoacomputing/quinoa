@@ -3,7 +3,7 @@
   \file      src/Inciter/Transporter.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -76,7 +76,7 @@ class Transporter : public CBase_Transporter {
     explicit Transporter( CkMigrateMessage* m );
 
     //! Reduction target: the mesh has been read from file on all PEs
-    void load( std::size_t nelem, std::size_t npoin );
+    void load( std::size_t nelem );
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
@@ -85,6 +85,12 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: all PEs have distrbuted their mesh after partitioning
     void distributed();
 
+    //! Reduction target: all Refiner chares have queried their boundary edges
+    void queriedRef();
+    //! \brief Reduction target: all Refiner mesh refiner chares have setup their
+    //!   boundary edges
+    void respondedRef();
+
     //! Reduction target: all PEs have created the mesh refiners
     void refinserted( int error );
 
@@ -92,15 +98,11 @@ class Transporter : public CBase_Transporter {
     void discinserted();
 
     //! Reduction target: all Discretization constructors have been called
-    void disccreated();
+    void disccreated( std::size_t npoin );
 
     //! \brief Reduction target: all worker (derived discretization) chares have
     //!   been inserted
     void workinserted();
-
-    //! \brief Reduction target: all mesh refiner chares have setup their
-    //!   boundary edges
-    void edges();
 
     //! \brief Reduction target: all mesh refiner chares have received a round
     //!   of edges, and ran their compatibility algorithm
@@ -122,6 +124,9 @@ class Transporter : public CBase_Transporter {
     //!   after mesh refinement
     void resized();
 
+    //! Reduction target: all worker chares have generated their own esup
+    void startEsup();
+
     //! Reduction target: all Sorter chares have queried their boundary nodes
     void queried();
     //! \brief Reduction target: all Sorter chares have responded with their
@@ -129,28 +134,28 @@ class Transporter : public CBase_Transporter {
     void responded();
 
     //! Non-reduction target for receiving progress report on partitioning mesh
-    void pepartitioned() { m_progMesh.inc< PART >(); }
+    void pepartitioned() { m_progMesh.inc< PART >( printer() ); }
     //! Non-reduction target for receiving progress report on distributing mesh
-    void pedistributed() { m_progMesh.inc< DIST >(); }
+    void pedistributed() { m_progMesh.inc< DIST >( printer() ); }
     //! Non-reduction target for receiving progress report on finding bnd nodes
-    void chbnd() { m_progMesh.inc< BND >(); }
+    void chbnd() { m_progMesh.inc< BND >( printer() ); }
     //! Non-reduction target for receiving progress report on node ID comm map
-    void chcomm() { m_progMesh.inc< COMM >(); }
+    void chcomm() { m_progMesh.inc< COMM >( printer() ); }
     //! Non-reduction target for receiving progress report on node ID mask
-    void chmask() { m_progMesh.inc< MASK >(); }
+    void chmask() { m_progMesh.inc< MASK >( printer() ); }
     //! Non-reduction target for receiving progress report on reordering mesh
-    void chreordered() { m_progMesh.inc< REORD >(); }
+    void chreordered() { m_progMesh.inc< REORD >( printer() ); }
 
     //! Non-reduction target for receiving progress report on creating workers
-    void chcreated() { m_progWork.inc< CREATE >(); }
+    void chcreated() { m_progWork.inc< CREATE >( printer() ); }
     //! Non-reduction target for receiving progress report on finding bnd faces
-    void chbndface() { m_progWork.inc< BNDFACE >(); }
+    void chbndface() { m_progWork.inc< BNDFACE >( printer() ); }
     //! Non-reduction target for receiving progress report on face communication
-    void chcomfac() { m_progWork.inc< COMFAC >(); }
+    void chcomfac() { m_progWork.inc< COMFAC >( printer() ); }
     //! Non-reduction target for receiving progress report on sending ghost data
-    void chghost() { m_progWork.inc< GHOST >(); }
+    void chghost() { m_progWork.inc< GHOST >( printer() ); }
     //! Non-reduction target for receiving progress report on face adjacency
-    void chadj() { m_progWork.inc< ADJ >(); }
+    void chadj() { m_progWork.inc< ADJ >( printer() ); }
 
     //! Reduction target indicating that the communication maps have been setup
     void comfinal( int initial );
@@ -176,6 +181,9 @@ class Transporter : public CBase_Transporter {
     //!    workers
     void pdfstat( CkReductionMsg* msg );
 
+    //! Reduction target computing total volume of IC box
+    void boxvol( tk::real v );
+
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
@@ -184,10 +192,10 @@ class Transporter : public CBase_Transporter {
     void resume();
 
     //! Save checkpoint/restart files
-    void checkpoint( tk::real it, tk::real t );
+    void checkpoint( int finished );
 
     //! Normal finish of time stepping
-    void finish( tk::real it, tk::real t );
+    void finish();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -206,9 +214,8 @@ class Transporter : public CBase_Transporter {
       p | m_meshwriter;
       p | m_sorter;
       p | m_nelem;
-      p | m_npoin_larger;
-      p | m_t;
-      p | m_it;
+      p | m_npoin;
+      if (p.isUnpacking()) m_finished = 0;      // returning from checkpoint
       p | m_meshvol;
       p | m_minstat;
       p | m_maxstat;
@@ -222,7 +229,6 @@ class Transporter : public CBase_Transporter {
     //@}
 
   private:
-    InciterPrint m_print;                //!< Pretty printer
     int m_nchare;                        //!< Number of worker chares
     std::size_t m_ncit;                  //!< Number of mesh ref corr iter
     std::size_t m_nt0refit;              //!< Number of (t<0) mesh ref iters
@@ -233,9 +239,8 @@ class Transporter : public CBase_Transporter {
     tk::CProxy_MeshWriter m_meshwriter;  //!< Mesh writer nodegroup proxy
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number of mesh elements
-    std::size_t m_npoin_larger;          //!< Total number mesh points
-    tk::real m_t;                        //!< Physical time
-    uint64_t m_it;                       //!< Iteration count
+    std::size_t m_npoin;                 //!< Total number mesh points
+    int m_finished;                      //!< True if finished with timestepping
     //! Total mesh volume
     tk::real m_meshvol;
     //! Minimum mesh statistics
@@ -260,10 +265,10 @@ class Transporter : public CBase_Transporter {
     void diagHeader();
 
     //! Echo configuration to screen
-    void info();
+    void info( const InciterPrint& print );
 
     //! Print out time integration header to screen
-    void inthead();
+    void inthead( const InciterPrint& print );
 
     //! Echo diagnostics on mesh statistics
     void stat();
@@ -279,43 +284,38 @@ class Transporter : public CBase_Transporter {
       var.insert( end(var), begin(o), end(o) );
     }
 
-    //! Verify boundary condition (BC) side sets used exist in mesh file
-    //! \details This function does two things: (1) it verifies that the side
-    //!   sets to which boundary conditions (BC) are assigned by the user in the
-    //!   input file all exist among the side sets read from the input mesh
-    //!   file and errors out if at least one does not, and (2) it matches the
-    //!   side set ids at which the user has configured BCs to side set ids read
-    //!   from the mesh file and removes those face and node lists associated
-    //!   to side sets that the user did not set BCs on (as they will not need
-    //!   processing further since they will not be used).
-    //! \tparam Eq Equation type, e.g., CG, DG, used to solve PDEs
-    //! \param[in] pde List of PDE system solved
-    //! \param[in,out] bnd Node or face lists mapped to side set ids
-    template< class Eq >
-    void matchBCs( const std::vector< Eq >& pde,
-                   std::map< int, std::vector< std::size_t > >& bnd )
-    {
-      // Query side set ids at which BCs assigned for all PDEs
-      std::unordered_set< int > userbc;
-      for (const auto& eq : pde) eq.side( userbc );
-      // Find user-configured side set ids among side sets read from mesh file
-      std::unordered_set< int > sidesets_as_bc;
-      for (auto i : userbc) {   // for all side sets at which BCs are assigned
-        if (bnd.find(i) != end(bnd))  // user BC found among side sets in file
-          sidesets_as_bc.insert( i );  // store side set id configured as BC
-        else {
-          Throw( "Boundary conditions specified on side set " +
-            std::to_string(i) + " which does not exist in mesh file" );
-        }
-      }
-      // Remove sidesets not configured as BCs (will not process those further)
-      tk::erase_if( bnd, [&]( auto& item ) {
-        return sidesets_as_bc.find( item.first ) == end(sidesets_as_bc);
-      });
-      // Warn on no BCs
-      if (bnd.empty())
-        m_print << "\n>>> WARNING: No boundary conditions set\n\n";
+    //! Create pretty printer specialized to Inciter
+    //! \return Pretty printer
+    InciterPrint printer() const {
+      const auto& def =
+        g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+      auto nrestart = g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
+      return InciterPrint(
+        g_inputdeck.get< tag::cmd >().logname( def, nrestart ),
+        g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
+        std::ios_base::app );
     }
+
+    //! Function object for querying the side set ids the user configured
+    //! \details Used to query and collect the side set ids the user has
+    //!   configured for all PDE types querying all BC types. Used on a
+    //!   Carteisan product of 2 type lists: PDE types and BC types.
+    struct UserBC {
+      const ctr::InputDeck& inputdeck;
+      std::unordered_set< int >& userbc;
+      explicit UserBC( const ctr::InputDeck& i, std::unordered_set< int >& u )
+        : inputdeck(i), userbc(u) {}
+      template< typename U > void operator()( brigand::type_<U> ) {
+        using tag::param;
+        using eq = typename brigand::front< U >;
+        using bc = typename brigand::back< U >;
+        for (const auto& s : inputdeck.get< param, eq, tag::bc, bc >())
+          for (const auto& i : s) userbc.insert( std::stoi(i) );
+      }
+    };
+
+    //! Verify boundary condition (BC) side sets used exist in mesh file
+    bool matchBCs( std::map< int, std::vector< std::size_t > >& bnd );
 };
 
 } // inciter::

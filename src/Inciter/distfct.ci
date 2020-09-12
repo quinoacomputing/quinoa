@@ -3,7 +3,7 @@
   \file      src/Inciter/distfct.ci
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface for distributed flux-corrected transport
   \details   Charm++ module interface file for asynchronous distributed
@@ -15,6 +15,7 @@
 module distfct {
 
   include "unordered_map";
+  include "CommMap.hpp";
 
   namespace inciter {
 
@@ -23,7 +24,7 @@ module distfct {
         int nchare,
         std::size_t nu,
         std::size_t np,
-        const std::unordered_map< int, std::vector< std::size_t > >& msum,
+        const tk::NodeCommMap& nodeCommMap,
         const std::unordered_map< std::size_t, std::size_t >& bid,
         const std::unordered_map< std::size_t, std::size_t >& lid,
         const std::vector< std::size_t >& inpoel );
@@ -38,13 +39,19 @@ module distfct {
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       entry void wait4fct() {
-        when ownaec_complete(), comaec_complete(),
-             ownalw_complete(), comalw_complete() serial "fct" { lim(); } };
+        when ownaec_complete(
+               const std::unordered_map< std::size_t,
+                       std::vector< std::pair< bool, tk::real > > >& bcdir ),
+             comaec_complete(),
+             ownalw_complete(),
+             comalw_complete() serial "fct" { lim( bcdir ); } };
 
       entry void wait4app() {
         when ownlim_complete(), comlim_complete() serial "app" { apply(); } };
 
-      entry void ownaec_complete();
+      entry void ownaec_complete(
+               const std::unordered_map< std::size_t,
+                       std::vector< std::pair< bool, tk::real > > >& bcdir );
       entry void ownalw_complete();
       entry void ownlim_complete();
       entry void comaec_complete();

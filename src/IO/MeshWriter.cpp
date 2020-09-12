@@ -3,7 +3,7 @@
   \file      src/IO/MeshWriter.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ group for outputing mesh data to file
   \details   Charm++ group definition used to output data associated to
@@ -15,6 +15,7 @@
 
 #include "QuinoaConfig.hpp"
 #include "MeshWriter.hpp"
+#include "Reorder.hpp"
 #include "ExodusIIMeshWriter.hpp"
 
 #ifdef HAS_ROOT
@@ -69,8 +70,11 @@ MeshWriter::write(
   const std::vector< std::size_t >& triinpoel,
   const std::vector< std::string >& elemfieldnames,
   const std::vector< std::string >& nodefieldnames,
+  const std::vector< std::string >& nodesurfnames,
   const std::vector< std::vector< tk::real > >& elemfields,
   const std::vector< std::vector< tk::real > >& nodefields,
+  const std::vector< std::vector< tk::real > >& nodesurfs,
+  const std::set< int >& outsets,
   CkCallback c )
 // *****************************************************************************
 //  Output unstructured mesh into file
@@ -93,42 +97,90 @@ MeshWriter::write(
 //!   mesh chunk with local ids
 //! \param[in] elemfieldnames Names of element fields to be output to file
 //! \param[in] nodefieldnames Names of node fields to be output to file
+//! \param[in] nodesurfnames Names of node surface fields to be output to file
 //! \param[in] elemfields Field data in mesh elements to output to file
 //! \param[in] nodefields Field data in mesh nodes to output to file
+//! \param[in] nodesurfs Surface field data in mesh nodes to output to file
+//! \param[in] outsets Unique set of surface side set ids along which to save
+//!   solution field variables
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   if (!m_benchmark) {
 
-    auto f = filename( basefilename, itr, chareid );
+    // Generate filenames for volume and surface field output
+    auto vf = filename( basefilename, itr, chareid );
   
     if (meshoutput) {
       #ifdef HAS_ROOT
       if (m_filetype == ctr::FieldFileType::ROOT) {
 
-        RootMeshWriter rmw( f, 0 );
+        RootMeshWriter rmw( vf, 0 );
         rmw.writeMesh( UnsMesh( inpoel, coord ) );
         rmw.writeNodeVarNames( nodefieldnames );
 
       } else
       #endif
       if (m_filetype == ctr::FieldFileType::EXODUSII) {
-        ExodusIIMeshWriter ew( f, ExoWriter::CREATE );
+
+        // Write volume mesh and field names
+        ExodusIIMeshWriter ev( vf, ExoWriter::CREATE );
         // Write chare mesh (do not write side sets in parallel)
         if (m_nchare == 1) {
 
           if (m_bndCentering == Centering::ELEM)
-            ew.writeMesh( inpoel, coord, bface, triinpoel );
+            ev.writeMesh( inpoel, coord, bface, triinpoel );
           else if (m_bndCentering == Centering::NODE)
-            ew.writeMesh( inpoel, coord, bnode );
+            ev.writeMesh( inpoel, coord, bnode );
           else Throw( "Centering not handled for writing mesh" );
 
         } else {
-          ew.writeMesh( inpoel, coord );
+          ev.writeMesh< 4 >( inpoel, coord );
         }
-        // Write field names
-        ew.writeElemVarNames( elemfieldnames );
-        ew.writeNodeVarNames( nodefieldnames );
+        ev.writeElemVarNames( elemfieldnames );
+        Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
+        ev.writeNodeVarNames( nodefieldnames );
+
+        // Write surface meshes and surface variable field names
+        for (auto s : outsets) {
+          auto sf = filename( basefilename, itr, chareid, s );
+          ExodusIIMeshWriter es( sf, ExoWriter::CREATE );
+          auto b = bface.find(s);
+          if (b == end(bface)) {
+            // If a side set does not exist on a chare, write out a
+            // connectivity for a single triangle with its node coordinates of
+            // zero. This is so the paraview series reader can load side sets
+            // distributed across multiple files. See also
+            // https://www.paraview.org/Wiki/Restarted_Simulation_Readers.
+            es.writeMesh< 3 >( std::vector< std::size_t >{1,2,3},
+              UnsMesh::Coords{{ {{0,0,0}}, {{0,0,0}}, {{0,0,0}} }} );
+            es.writeNodeVarNames( nodesurfnames );
+            continue;
+          }
+          std::vector< std::size_t > nodes;
+          for (auto f : b->second) {
+            nodes.push_back( triinpoel[f*3+0] );
+            nodes.push_back( triinpoel[f*3+1] );
+            nodes.push_back( triinpoel[f*3+2] );
+          }
+          auto [inp,gid,lid] = tk::global2local( nodes );
+          tk::unique( nodes );
+          auto nnode = nodes.size();
+          UnsMesh::Coords scoord;
+          scoord[0].resize( nnode );
+          scoord[1].resize( nnode );
+          scoord[2].resize( nnode );
+          std::size_t j = 0;
+          for (auto i : nodes) {
+            scoord[0][j] = coord[0][i];
+            scoord[1][j] = coord[1][i];
+            scoord[2][j] = coord[2][i];
+            ++j;
+          }
+          es.writeMesh< 3 >( inp, scoord );
+          es.writeNodeVarNames( nodesurfnames );
+        }
+
       }
     }
 
@@ -136,7 +188,7 @@ MeshWriter::write(
       #ifdef HAS_ROOT
       if (m_filetype == ctr::FieldFileType::ROOT) {
 
-        RootMeshWriter rw( f, 1 );
+        RootMeshWriter rw( vf, 1 );
         rw.writeTimeStamp( itf, time );
         int varid = 0;
         for (const auto& v : nodefields) rw.writeNodeScalar( itf, ++varid, v );
@@ -145,12 +197,35 @@ MeshWriter::write(
       #endif
       if (m_filetype == ctr::FieldFileType::EXODUSII) {
 
-        ExodusIIMeshWriter ew( f, ExoWriter::OPEN );
-        ew.writeTimeStamp( itf, time );
+        // Write volume variable fields
+        ExodusIIMeshWriter ev( vf, ExoWriter::OPEN );
+        ev.writeTimeStamp( itf, time );
+        // Write volume element variable fields
         int varid = 0;
-        for (const auto& v : elemfields) ew.writeElemScalar( itf, ++varid, v );
+        for (const auto& v : elemfields) ev.writeElemScalar( itf, ++varid, v );
+        // Write volume node variable fields
         varid = 0;
-        for (const auto& v : nodefields) ew.writeNodeScalar( itf, ++varid, v );
+        for (const auto& v : nodefields) ev.writeNodeScalar( itf, ++varid, v );
+
+        // Write surface node variable fields
+        std::size_t j = 0;
+        auto nvar = static_cast< int >( nodesurfnames.size() ) ;
+        for (auto s : outsets) {
+          auto sf = filename( basefilename, itr, chareid, s );
+          ExodusIIMeshWriter es( sf, ExoWriter::OPEN );
+          es.writeTimeStamp( itf, time );
+          if (bface.find(s) == end(bface)) {
+            // If a side set does not exist on a chare, write out a
+            // a node field for a single triangle with zeros. This is so the
+            // paraview series reader can load side sets distributed across
+            // multiple files. See also
+            // https://www.paraview.org/Wiki/Restarted_Simulation_Readers.
+            for (int i=1; i<=nvar; ++i) es.writeNodeScalar( itf, i, {0,0,0} );
+            continue;
+          }
+          for (int i=1; i<=nvar; ++i)
+            es.writeNodeScalar( itf, i, nodesurfs[j++] );
+        }
 
       }
     }
@@ -163,13 +238,15 @@ MeshWriter::write(
 std::string
 MeshWriter::filename( const std::string& basefilename,
                       uint64_t itr,
-                      int chareid ) const
+                      int chareid,
+                      int surfid ) const
 // *****************************************************************************
 //  Compute filename
 //! \param[in] basefilename String use as the base filename.
 //! \param[in] itr Iteration count since a new mesh. New mesh in this context
 //!   means that either the mesh is moved and/or its topology has changed.
 //! \param[in] chareid The chare id the write-to-file request is coming from
+//! \param[in] surfid Surface ID if computing a surface filename
 //! \details We use a file naming convention for large field output data that
 //!   allows ParaView to glue multiple files into a single simulation output by
 //!   only loading a single file. The base filename is followed by ".e-s.",
@@ -189,7 +266,8 @@ MeshWriter::filename( const std::string& basefilename,
 //! \see https://www.paraview.org/Wiki/Restarted_Simulation_Readers
 // *****************************************************************************
 {
-  return basefilename + ".e-s"
+  return basefilename + (surfid ? "-surf." + std::to_string(surfid) : "")
+         + ".e-s"
          + '.' + std::to_string( itr )        // iteration count with new mesh
          + '.' + std::to_string( m_nchare )   // total number of workers
          + '.' + std::to_string( chareid )    // new file per worker

@@ -3,7 +3,7 @@
   \file      src/IO/ExodusIIMeshWriter.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     ExodusII mesh-based data writer
   \details   ExodusII mesh-based data writer class definition.
@@ -36,7 +36,7 @@ ExodusIIMeshWriter::ExodusIIMeshWriter( const std::string& filename,
 // *****************************************************************************
 {
   // Increase verbosity from ExodusII library in debug mode
-  #ifdef NDEBUG
+  #ifndef NDEBUG
   ex_opts( EX_DEBUG | EX_VERBOSE );
   #endif
 
@@ -83,18 +83,9 @@ ExodusIIMeshWriter::writeMesh( const UnsMesh& mesh ) const
   writeElements( mesh );
   writeSidesets( mesh );
   writeNodesets( mesh );
-}
-
-void
-ExodusIIMeshWriter::writeMesh( const std::vector< std::size_t >& tetinp,
-                               const UnsMesh::Coords& coord ) const
-// *****************************************************************************
-//  Write ExodusII mesh file taking inputs to a tk::UnsMesh object
-//! \param[in] tetinp Tetrahedron element connectivity
-//! \param[in] coord Node coordinates
-// *****************************************************************************
-{
-  writeMesh( tk::UnsMesh( tetinp, coord ) );
+  writeTimeValues( mesh.vartimes() );
+  writeNodeVarNames( mesh.nodevarnames() );
+  writeNodeScalars( mesh.nodevars() );
 }
 
 void
@@ -376,6 +367,21 @@ ExodusIIMeshWriter::writeTimeStamp( uint64_t it, tk::real time ) const
 }
 
 void
+ExodusIIMeshWriter::writeTimeValues( const std::vector< tk::real >& tv ) const
+// *****************************************************************************
+//  Write time values to ExodusII file
+//! \param[in] tv Time values for all time steps
+// *****************************************************************************
+{
+   int i = 0;
+   for (const auto& v : tv) {
+     ErrChk( ex_put_time( m_outFile, ++i, &v ) == 0,
+             "Failed to write time value for a time step to ExodusII file: " +
+             m_filename );
+   }
+}
+
+void
 ExodusIIMeshWriter::writeNodeVarNames( const std::vector< std::string >& nv )
 const
 // *****************************************************************************
@@ -460,6 +466,27 @@ const
     #elif defined(STRICT_GNUC)
       #pragma GCC diagnostic pop
     #endif
+  }
+}
+
+void
+ExodusIIMeshWriter::writeNodeScalars(
+  const std::vector< std::vector< std::vector< tk::real > > >& var ) const
+// *****************************************************************************
+//  Write multiple node scalar fields to ExodusII file at multiple time steps
+//! \param[in] var Vector of nodal variables to read to: inner vector: nodes,
+//!   middle vector: (physics) variable, outer vector: time step
+// *****************************************************************************
+{
+  uint64_t time = 0;
+  int varid = 0;
+
+  for (const auto& t : var) {    // for all times
+    ++time;
+    for (const auto& v : t) {    // for all variables
+      writeNodeScalar( time, ++varid, v );
+    }
+    varid = 0;
   }
 }
 

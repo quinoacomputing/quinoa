@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/InputDeck/InputDeck.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -30,7 +30,8 @@ namespace ctr {
 
 //! Member data for tagged tuple
 using InputDeckMembers = brigand::list<
-    tag::title,      kw::title::info::expect::type
+    tag::cmd,        CmdLine
+  , tag::title,      kw::title::info::expect::type
   , tag::selected,   selects
   , tag::amr,        amr
   , tag::pref,       pref
@@ -39,10 +40,10 @@ using InputDeckMembers = brigand::list<
   , tag::flformat,   floatformat
   , tag::component,  ncomps
   , tag::interval,   intervals
-  , tag::cmd,        CmdLine
   , tag::param,      parameters
   , tag::diag,       diagnostics
   , tag::error,      std::vector< std::string >
+  , tag::history,    history
 >;
 
 //! \brief InputDeck : Control< specialized to Inciter >, see Types.h,
@@ -85,12 +86,31 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::compflow,
                                    kw::multimat,
                                    kw::ic,
+                                   kw::box,
+                                   kw::lua,
+                                   kw::mass,
+                                   kw::density,
+                                   kw::velocity,
+                                   kw::initiate,
+                                   kw::impulse,
+                                   kw::linear,
+                                   kw::pressure,
+                                   kw::energy,
+                                   kw::energy_content,
+                                   kw::temperature,
+                                   kw::xmin,
+                                   kw::xmax,
+                                   kw::ymin,
+                                   kw::ymax,
+                                   kw::zmin,
+                                   kw::zmax,
                                    kw::txt_float_format,
                                    kw::txt_float_default,
                                    kw::txt_float_fixed,
                                    kw::txt_float_scientific,
                                    kw::precision,
                                    kw::diagnostics,
+                                   kw::history,
                                    kw::material,
                                    kw::id,
                                    kw::mat_gamma,
@@ -130,7 +150,15 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::l2,
                                    kw::linf,
                                    kw::fct,
-                                   kw::reorder,
+                                   kw::fctclip,
+                                   kw::fcteps,
+                                   kw::sysfct,
+                                   kw::sysfctvar,
+                                   kw::pelocal_reorder,
+                                   kw::operator_reorder,
+                                   kw::steady_state,
+                                   kw::residual,
+                                   kw::rescomp,
                                    kw::amr,
                                    kw::amr_t0ref,
                                    kw::amr_dtref,
@@ -148,7 +176,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::amr_tolref,
                                    kw::amr_tolderef,
                                    kw::amr_edgelist,
-                                   kw::amr_coordref,
                                    kw::amr_xminus,
                                    kw::amr_xplus,
                                    kw::amr_yminus,
@@ -156,6 +183,10 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::amr_zminus,
                                    kw::amr_zplus,
                                    kw::pref,
+                                   kw::pref_indicator,
+                                   kw::pref_spectral_decay,
+                                   kw::pref_non_conformity,
+                                   kw::pref_ndofmax,
                                    kw::pref_tolref,
                                    kw::scheme,
                                    kw::diagcg,
@@ -170,21 +201,41 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::hllc,
                                    kw::upwind,
                                    kw::ausm,
+                                   kw::hll,
                                    kw::limiter,
                                    kw::cweight,
                                    kw::nolimiter,
                                    kw::wenop1,
                                    kw::superbeep1,
+                                   kw::vertexbasedp1,
+                                   kw::prelax,
+                                   kw::prelax_timescale,
                                    kw::bc_sym,
                                    kw::bc_inlet,
                                    kw::bc_outlet,
+                                   kw::bc_farfield,
                                    kw::bc_extrapolate,
+                                   kw::bc_stag,
+                                   kw::bc_skip,
+                                   kw::point,
+                                   kw::radius,
                                    kw::gauss_hump,
                                    kw::rotated_sod_shocktube,
                                    kw::cyl_advect,
+                                   kw::shedding_flow,
                                    kw::sod_shocktube,
                                    kw::sedov_blastwave,
-                                   kw::interface_advection >;
+                                   kw::interface_advection,
+                                   kw::gauss_hump_compflow,
+                                   kw::waterair_shocktube,
+                                   kw::triple_point,
+                                   kw::gas_impact,
+                                   kw::gas_impact_4mat,
+                                   kw::shock_hebubble,
+                                   kw::underwater_ex >;
+
+    //! Set of tags to ignore when printing this InputDeck
+    using ignore = CmdLine::ignore;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -202,10 +253,16 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::dt >() = 0.0;
       get< tag::discr, tag::cfl >() = 0.0;
       get< tag::discr, tag::fct >() = true;
-      get< tag::discr, tag::reorder >() = false;
+      get< tag::discr, tag::fctclip >() = false;
       get< tag::discr, tag::ctau >() = 1.0;
+      get< tag::discr, tag::fcteps >() =
+        std::numeric_limits< tk::real >::epsilon();
+      get< tag::discr, tag::pelocal_reorder >() = false;
+      get< tag::discr, tag::operator_reorder >() = false;
+      get< tag::discr, tag::steady_state >() = false;
+      get< tag::discr, tag::residual >() = 1.0e-8;
+      get< tag::discr, tag::rescomp >() = 1;
       get< tag::discr, tag::scheme >() = SchemeType::DiagCG;
-      get< tag::discr, tag::flux >() = FluxType::HLLC;
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::limiter >() = LimiterType::NOLIMITER;
       get< tag::discr, tag::cweight >() = 1.0;
@@ -223,7 +280,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::tolref >() = 0.2;
       get< tag::amr, tag::tolderef >() = 0.05;
       auto rmax =
-        std::numeric_limits< kw::amr_xminus::info::expect::type >::max();
+        std::numeric_limits< kw::amr_xminus::info::expect::type >::max() / 100;
       get< tag::amr, tag::xminus >() = rmax;
       get< tag::amr, tag::xplus >() = -rmax;
       get< tag::amr, tag::yminus >() = rmax;
@@ -232,13 +289,17 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::zplus >() = -rmax;
       // Default p-refinement settings
       get< tag::pref, tag::pref >() = false;
-      get< tag::pref, tag::tolref >() = 0.1;
+      get< tag::pref, tag::indicator >() = PrefIndicatorType::SPECTRAL_DECAY;
+      get< tag::pref, tag::ndofmax >() = 10;
+      get< tag::pref, tag::tolref >() = 0.5;
       // Default txt floating-point output precision in digits
       get< tag::prec, tag::diag >() = std::cout.precision();
+      get< tag::prec, tag::history >() = std::cout.precision();
       // Default intervals
       get< tag::interval, tag::tty >() = 1;
       get< tag::interval, tag::field >() = 1;
       get< tag::interval, tag::diag >() = 1;
+      get< tag::interval, tag::history >() = 1;
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       brigand::for_each< keywords >( ctrinfoFill );
@@ -254,6 +315,43 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
     //! \param[in,out] i InputDeck object reference
     friend void operator|( PUP::er& p, InputDeck& i ) { i.pup(p); }
     //@}
+
+    //! Extract surface side set ids along which user wants to save solution
+    //! \return Unique set of surface side set ids along which user wants to
+    //!   save solution field variables
+    //! \note This returns an ordered set so the order of the set ids are
+    //!   always the same.
+    std::set< int > outsets() const {
+      std::set< int > ids;
+      for (const auto& s : get< tag::cmd, tag::io, tag::surface >()) {
+        std::stringstream conv( s );
+        int num;
+        conv >> num;
+        ids.insert( num );
+      }
+      return ids;
+    }
+
+    //! Query special point BC configuration
+    //! \tparam eq PDE type to query
+    //! \tparam bc  Special BC type to query, e.g., stagnation, skip
+    //! \param[in] system Equation system id
+    //! \return Vectors configuring the special points and their radii
+    template< class eq, class bc >
+    std::tuple< std::vector< tk::real >, std::vector< tk::real > >
+    specialBC( std::size_t system ) {
+      const auto& bcspec = get< tag::param, eq, bc >();
+      const auto& point = bcspec.template get< tag::point >();
+      const auto& radius = bcspec.template get< tag::radius >();
+      std::vector< tk::real > pnt;
+      std::vector< tk::real > rad;
+      if (point.size() > system && radius.size() > system) {
+        pnt = point[ system ];
+        rad = radius[ system ];
+      }
+      Assert( pnt.size() == 3*rad.size(), "Size mismatch" );
+      return { std::move(pnt), std::move(rad) };
+    }
 };
 
 } // ctr::

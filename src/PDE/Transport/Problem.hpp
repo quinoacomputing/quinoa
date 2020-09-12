@@ -3,7 +3,7 @@
   \file      src/PDE/Transport/Problem.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     All problem configurations for the scalar transport equations
   \details   This file collects all Problem policy classes for the scalar
@@ -27,12 +27,6 @@
       analytic solution (if defined) and for initialization of the computed
       fields at time _t_.
 
-    - Must define the function _solinc()_, used to evaluate the
-      increment from t to t+dt of the analytic solution (if defined).
-
-    - Must define the function _side()_,  used to query all side set IDs
-      the user has configured for all components.
-  
     - Must define the static function _prescribedVelocity()_, used to query the
       prescribed velocity at a point.
 */

@@ -3,7 +3,7 @@
   \file      src/IO/ExodusIIMeshReader.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration.
@@ -62,6 +62,9 @@ class ExodusIIMeshReader {
     //! Read only connectivity graph from file
     void readGraph( UnsMesh& mesh );
 
+    //! Return total number of mesh points in mesh file
+    std::size_t npoin() { return readHeader(); }
+
     //! Read part of the mesh (graph and coords) from file
     //! \details Total number of PEs defaults to 1 for a single-CPU read, this
     //!    PE defaults to 0 for a single-CPU read.
@@ -118,6 +121,18 @@ class ExodusIIMeshReader {
       const std::map< int, std::vector< std::size_t > >& faces,
       const std::vector< std::size_t >& ginpoel,
       const std::vector< std::size_t >& triinp ) const;
+
+    //! Read the names of nodal output variables from ExodusII file
+    void readNodeVarNames( std::vector< std::string >& nv ) const;
+
+    //! Read time values from ExodusII file
+    void readTimeValues( std::vector< tk::real >& tv ) const;
+
+    //! Read node scalar fields from ExodusII file
+    void readNodeScalars(
+      std::size_t ntime,
+      std::size_t nvar,
+      std::vector< std::vector< std::vector< tk::real > > >& var ) const;
 
     //!  Return number of elements in a mesh block in the ExodusII file
     std::size_t nelem( tk::ExoElemType elemtype ) const;

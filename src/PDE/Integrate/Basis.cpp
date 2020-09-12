@@ -3,7 +3,7 @@
   \file      src/PDE/Integrate/Basis.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing the Dubiner basis functions in DG methods
   \details   This file contains functionality for computing the basis functions
@@ -326,7 +326,10 @@ tk::eval_state ( ncomp_t ncomp,
 //! \return Vector of state variable for tetrahedron element
 // *****************************************************************************
 {
-  Assert( B.size() == ndof_el, "Size mismatch" );
+  // This is commented for now because that when p0/p1 adaptive with limiter
+  // applied, the size of basis will be 10. However, ndof_el will be 4 which
+  // leads to a size mismatch in limiter function.
+  //Assert( B.size() == ndof_el, "Size mismatch" );
 
   if (U.empty()) return {};
 

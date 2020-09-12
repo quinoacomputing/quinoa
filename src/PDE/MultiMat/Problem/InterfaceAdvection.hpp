@@ -3,7 +3,7 @@
   \file      src/PDE/MultiMat/Problem/InterfaceAdvection.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the multi-material compressible flow
     equations
@@ -17,7 +17,6 @@
 #define MultiMatProblemInterfaceAdvection_h
 
 #include <string>
-#include <unordered_set>
 
 #include "Types.hpp"
 #include "Fields.hpp"
@@ -48,40 +47,14 @@ class MultiMatProblemInterfaceAdvection {
               tk::real x,
               tk::real y,
               tk::real /*z*/,
-              tk::real t );
-
-    //! \brief Evaluate the increment from t to t+dt of the analytical solution
-    //!   at (x,y,z) for all components
-    static std::vector< tk::real >
-    solinc( ncomp_t system,
-            ncomp_t ncomp,
-            tk::real x,
-            tk::real y,
-            tk::real z,
-            tk::real t,
-            tk::real dt );
+              tk::real t,
+              int& );
 
     //! Compute and return source term for interface advection
-    static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real );
-
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    static void side( std::unordered_set< int >& conf );
-
-    //! Return field names to be output to file
-    static std::vector< std::string > fieldNames( ncomp_t );
-
-    //! Return field output going to file
-    static std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t system,
-                 ncomp_t /*ncomp*/,
-                 ncomp_t offset,
-                 tk::real t,
-                 tk::real,
-                 const std::vector< tk::real >&,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 tk::Fields& U );
+    static tk::MultiMatSrcFn::result_type
+    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real,
+         tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
+    { r = ru = rv = rw = re = 0.0; }
 
     //! Return names of integral variables to be output to diagnostics file
     static std::vector< std::string > names( ncomp_t );

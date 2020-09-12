@@ -11,7 +11,7 @@ inciter
   ttyi 1      # TTY output interval
 
   scheme diagcg
-  reorder true
+  pelocal_reorder true
 
   partitioning
     algorithm mj

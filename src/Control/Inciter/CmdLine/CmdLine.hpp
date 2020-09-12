@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/CmdLine/CmdLine.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -70,6 +70,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::control
                                      , kw::input
                                      , kw::output
+                                     , kw::screen
                                      , kw::restart
                                      , kw::diagnostics_cmd
                                      , kw::quiescence
@@ -79,6 +80,12 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::version
                                      , kw::license
                                      >;
+
+    //! Set of tags to ignore when printing this CmdLine
+    using ignore =
+      brigand::set< tag::cmdinfo
+                  , tag::ctrinfo
+                  , tag::helpkw >;
 
     //! \brief Constructor: set all defaults.
     //! \param[in] ctrinfo std::map of control file keywords and their info
@@ -112,9 +119,12 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //!   otherwise it would be a mutual dependency.
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
+      get< tag::io, tag::nrestart >() = 0;
       get< tag::io, tag::output >() = "out";
+      get< tag::io, tag::screen >() =
+        tk::baselogname( tk::inciter_executable() );
       get< tag::io, tag::diag >() = "diag";
-      get< tag::io, tag::part >() = "track.h5part";
+      get< tag::io, tag::particles >() = "track.h5part";
       get< tag::io, tag::restart >() = "restart";
       get< tag::virtualization >() = 0.0;
       get< tag::verbose >() = false; // Quiet output by default
@@ -123,7 +133,7 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
       get< tag::benchmark >() = false; // No benchmark mode by default
       get< tag::feedback >() = false; // No detailed feedback by default
       get< tag::lbfreq >() = 1; // Load balancing every time-step by default
-      get< tag::rsfreq >() = 100;// Chkpt/restart after this many time steps
+      get< tag::rsfreq >() = 1000;// Chkpt/restart after this many time steps
       get< tag::trace >() = true; // Output call and stack trace by default
       get< tag::version >() = false; // Do not display version info by default
       get< tag::license >() = false; // Do not display license info by default
@@ -142,6 +152,17 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //! \param[in,out] c CmdLine object reference
     friend void operator|( PUP::er& p, CmdLine& c ) { c.pup(p); }
     //@}
+
+    //! Compute and return log file name
+    //! \param[in] def Default log file name (so we don't mess with user's)
+    //! \param[in] nrestart Number of times restarted
+    //! \return Log file name
+    std::string logname( const std::string& def, int nrestart ) const {
+      if (get< tag::io, tag::screen >() != def)
+        return get< tag::io, tag::screen >();
+      else
+        return tk::logname( tk::inciter_executable(), nrestart );
+    }
 };
 
 } // ctr::

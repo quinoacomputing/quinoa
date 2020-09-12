@@ -3,7 +3,7 @@
   \file      src/PDE/MultiMat/Problem.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     All problem configurations for the compressible flow equations
   \details   This file collects all Problem policy classes for the compressible
@@ -28,14 +28,8 @@
       the computed fields and/or sampling the analytical solution (if exist) at
       time t.
 
-    - Must define the static function _solinc()_, used to evaluate the increment
-      from t to t+dt of the analytic solution (if defined).
-
     - Must define the static function _src()_, used for adding source terms to
       the righ hand side.
-
-    - Must define the static function _side()_,  used to query all side set IDs
-      the user has configured for all components.
 
     - Must define the static function _dirbc()_,  used to query Dirichlet
       boundary condition value on a given side set for all components in the PDE
@@ -56,6 +50,12 @@
 #include "Problem/UserDefined.hpp"
 #include "Problem/InterfaceAdvection.hpp"
 #include "Problem/SodShocktube.hpp"
+#include "Problem/WaterAirShocktube.hpp"
+#include "Problem/TriplePoint.hpp"
+#include "Problem/GasImpact.hpp"
+#include "Problem/GasImpact4Mat.hpp"
+#include "Problem/ShockHeBubble.hpp"
+#include "Problem/UnderwaterEx.hpp"
 
 namespace inciter {
 
@@ -63,7 +63,13 @@ namespace inciter {
 using MultiMatProblems =
   brigand::list< MultiMatProblemUserDefined
                , MultiMatProblemSodShocktube
-               , MultiMatProblemInterfaceAdvection >;
+               , MultiMatProblemInterfaceAdvection
+               , MultiMatProblemWaterAirShocktube
+               , MultiMatProblemTriplePoint
+               , MultiMatProblemGasImpact
+               , MultiMatProblemGasImpact4Mat
+               , MultiMatProblemShockHeBubble
+               , MultiMatProblemUnderwaterEx >;
 
 } // inciter::
 

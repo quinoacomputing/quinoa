@@ -3,7 +3,7 @@
   \file      src/Base/Exception.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by
@@ -22,6 +22,12 @@
 
 //! Toolkit declarations and definitions for general purpose utilities
 namespace tk {
+
+#ifdef NDEBUG    // asserts disabled
+static constexpr bool ndebug = true;
+#else            // asserts enabled
+static constexpr bool ndebug = false;
+#endif
 
 //! \brief Throw macro that always throws an exception
 //! \details Throw Exception with arguments passed in. Add source filename,

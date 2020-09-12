@@ -3,7 +3,7 @@
   \file      tests/unit/Base/TestTimer.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for tk::Timer
   \details   Unit tests for tk::Timer
@@ -29,6 +29,11 @@ extern CProxy_TUTSuite g_suiteProxy;
 #ifndef DOXYGEN_GENERATING_OUTPUT
 
 namespace tut {
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
 
 //! All tests in group inherited from this base
 struct Timer_common {
@@ -224,6 +229,9 @@ template<> template<>
 void Timer_object::test< 8 >() {
   set_test_name( "query throws with non-existent key" );
 
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
   try {
     std::map< std::string, tk::Timer > timer;
     timer[ "some timer" ];// start timing, assign to label
@@ -233,7 +241,12 @@ void Timer_object::test< 8 >() {
   catch ( tk::Exception& ) {
     // exception thrown, test ok
   }
+  #endif
 }
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
+#endif
 
 } // tut::
 

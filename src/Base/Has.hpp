@@ -3,7 +3,7 @@
   \file      src/Base/Has.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     "Has-a" utilities for detecting class internals
   \details   "Has-a" utilities for detecting class internals
@@ -38,6 +38,19 @@ struct HasTypedef_code< T, std::void_t< typename T::code > >
 
 template < typename T >
 inline constexpr bool HasTypedef_code_v = HasTypedef_code< T >::value;
+
+
+//! Detect if a type defines type 'i_am_tagged_tuple'
+template< typename, typename = std::void_t<> >
+struct HasTypedef_i_am_tagged_tuple : std::false_type {};
+
+template< typename T >
+struct HasTypedef_i_am_tagged_tuple< T,
+  std::void_t< typename T::i_am_tagged_tuple > > : std::true_type {};
+
+template < typename T >
+inline constexpr bool HasTypedef_i_am_tagged_tuple_v =
+  HasTypedef_i_am_tagged_tuple< T >::value;
 
 
 //! Detect if a type defines function 'expect::description()'

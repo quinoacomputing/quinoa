@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/CmdLine/CmdLine.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     RNGTest's command line
   \details   This file defines the heterogeneous stack that is used for storing
@@ -56,11 +56,18 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
                                      , kw::help
                                      , kw::helpctr
                                      , kw::helpkw
+                                     , kw::screen
                                      , kw::quiescence
                                      , kw::trace
                                      , kw::version
                                      , kw::license
                                      >;
+
+    //! Set of tags to ignore when printing this CmdLine
+    using ignore =
+      brigand::set< tag::cmdinfo
+                  , tag::ctrinfo
+                  , tag::helpkw >;
 
     //! \brief Constructor: set all defaults.
     //! \param[in] ctrinfo std::map of control file keywords and their info
@@ -94,6 +101,8 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //!   otherwise it would be a mutual dependency.
     // cppcheck-suppress noExplicitConstructor
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
+      get< tag::io, tag::screen >() =
+        tk::baselogname( tk::rngtest_executable() );
       get< tag::verbose >() = false; // Use quiet output by default
       get< tag::chare >() = false; // No chare state output by default
       get< tag::trace >() = true; // Output call and stack trace by default
@@ -114,6 +123,17 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     //! \param[in,out] c CmdLine object reference
     friend void operator|( PUP::er& p, CmdLine& c ) { c.pup(p); }
     //@}
+
+    //! Compute and return log file name
+    //! \param[in] def Default log file name (so we don't mess with user's)
+    //! \param[in] nrestart Number of times restarted
+    //! \return Log file name
+    std::string logname( const std::string& def, int nrestart ) const {
+      if (get< tag::io, tag::screen >() != def)
+        return get< tag::io, tag::screen >();
+      else
+        return tk::logname( tk::rngtest_executable(), nrestart );
+    }
 };
 
 } // ctr::

@@ -91,7 +91,8 @@ Here are the important classes that interoperate within inciter:
 
  - `Transporter` (single chare, driver)
  - `Partitioner` (chare _nodegroup_, mesh partitioner)
- - `MeshWriter` (chare _group_, mesh writer, performing file output in parallel)
+ - `tk::MeshWriter` (chare _group_, mesh writer, performing file output in
+   parallel)
  - `Refiner` (chare _array_, mesh refiner)
  - `Sorter` (chare _array_, performs mesh reordering)
  - `Discretization` (chare _array_, generic PDE solver base class)

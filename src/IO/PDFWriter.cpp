@@ -3,7 +3,7 @@
   \file      src/IO/PDFWriter.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Univariate PDF writer
   \brief     PDF writer class definition
@@ -403,14 +403,14 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
   // If no user-specified sample space extents, output pdf map directly
   if (uext.empty()) {
 
-    std::vector< bool > out( nbix*nbiy, false ); // indicate bins filled
+    std::vector< int > out( nbix*nbiy, 0 ); // indicate bins filled (1)
     for (const auto& p : pdf.map()) {
       const auto bin = (p.first[1] - ext[2]) * static_cast<long>(nbix) +
                        (p.first[0] - ext[0]) % static_cast<long>(nbix);
       Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshTxt()." );
       Assert( static_cast<std::size_t>(bin) < nbix*nbiy,
               "Bin overflow in PDFWriter::writeGmshTxt()." );
-      out[ static_cast<std::size_t>(bin) ] = true;
+      out[ static_cast<std::size_t>(bin) ] = 1;
       m_outFile << bin+1 << '\t'
                 << p.second / binsize[0] / binsize[1]
                             / static_cast<tk::real>(pdf.nsample())
@@ -419,7 +419,7 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
     // Output bins nonexistent in PDF (gmsh sometimes fails to plot the exiting
     // bins if holes exist in the data, it also looks better as zero than holes)
     for (std::size_t i=0; i<out.size(); ++i)
-      if (!out[i]) m_outFile << i+1 << "\t0" << std::endl;
+      if (out[i] == 0) m_outFile << i+1 << "\t0" << std::endl;
 
   } else { // If user-specified sample space extents, output outpdf array
 
@@ -528,7 +528,7 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
   // If no user-specified sample space extents, output pdf map directly
   if (uext.empty()) {
 
-    std::vector< bool > out( nbix*nbiy*nbiz, false ); // indicate bins filled
+    std::vector< int > out( nbix*nbiy*nbiz, 0 ); // indicate bins filled
     for (const auto& q : pdf.map()) {
       const auto bin = (q.first[2] - ext[4]) * static_cast<long>(nbix*nbiy) +
                        (q.first[1] - ext[2]) * static_cast<long>(nbix) +
@@ -536,7 +536,7 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
       Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshTxt()." );
       Assert( static_cast<std::size_t>(bin) < nbix*nbiy*nbiz,
               "Bin overflow in PDFWriter::writeGmshTxt()." );
-      out[ static_cast<std::size_t>(bin) ] = true;
+      out[ static_cast<std::size_t>(bin) ] = 1 ;
       m_outFile << bin+1 << '\t'
                 << q.second / binsize[0] / binsize[1] / binsize[2]
                             / static_cast<tk::real>(pdf.nsample())
@@ -545,7 +545,7 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
     // Output bins nonexistent in PDF (gmsh sometimes fails to plot the exiting
     // bins if holes exist in the data, it also looks better as zero than holes)
     for (std::size_t i=0; i<out.size(); ++i)
-      if (!out[i]) m_outFile << i+1 << "\t0" << std::endl;
+      if (out[i] == 0) m_outFile << i+1 << "\t0" << std::endl;
 
   } else { // If user-specified sample space extents, output outpdf array
 
@@ -665,14 +665,14 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
   // If no user-specified sample space extents, output pdf map directly
   if (uext.empty()) {
 
-    std::vector< bool > out( nbix*nbiy, false ); // indicate bins filled
+    std::vector< int > out( nbix*nbiy, 0 ); // indicate bins filled
     for (const auto& p : pdf.map()) {
       const auto bin = (p.first[1] - ext[2]) * static_cast<long>(nbix) +
                        (p.first[0] - ext[0]) % static_cast<long>(nbix);
       Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshBin()." );
       Assert( static_cast<std::size_t>(bin) < nbix*nbiy,
               "Bin overflow in PDFWriter::writeGmshBin()." );
-      out[ static_cast<std::size_t>(bin) ] = true;
+      out[ static_cast<std::size_t>(bin) ] = 1;
       auto id = static_cast<int>(bin+1);
       tk::real prob = p.second / binsize[0] / binsize[1]
                                / static_cast<tk::real>(pdf.nsample());
@@ -683,7 +683,7 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
     // bins if holes exist in the data, it also looks better as zero than holes)
     tk::real prob = 0.0;
     for (std::size_t i=0; i<out.size(); ++i)
-      if (!out[i]) {
+      if (out[i] == 0) {
         auto id = static_cast<int>(i+1);
         m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
         m_outFile.write( reinterpret_cast< char* >( &prob ), sizeof(tk::real) );
@@ -821,7 +821,7 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
   // If no user-specified sample space extents, output pdf map directly
   if (uext.empty()) {
 
-    std::vector< bool > out( nbix*nbiy*nbiz, false ); // indicate bins filled
+    std::vector< int > out( nbix*nbiy*nbiz, 0 ); // indicate bins filled
     for (const auto& q : pdf.map()) {
       const auto bin = (q.first[2] - ext[4]) * static_cast<long>(nbix*nbiy) +
                        (q.first[1] - ext[2]) * static_cast<long>(nbix) +
@@ -829,7 +829,7 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
       Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshBin()." );
       Assert( static_cast<std::size_t>(bin) < nbix*nbiy*nbiz,
               "Bin overflow in PDFWriter::writeGmshBin()." );
-      out[ static_cast<std::size_t>(bin) ] = true;
+      out[ static_cast<std::size_t>(bin) ] = 1;
       auto id = static_cast<int>(bin+1);
       tk::real prob = q.second / binsize[0] / binsize[1] / binsize[2]
                                / static_cast<tk::real>(pdf.nsample());
@@ -840,7 +840,7 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
     // bins if holes exist in the data, it also looks better as zero than holes)
     tk::real prob = 0.0;
     for (std::size_t i=0; i<out.size(); ++i)
-      if (!out[i]) {
+      if (out[i] == 0) {
         auto id = static_cast<int>(i+1);
         m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
         m_outFile.write( reinterpret_cast< char* >( &prob ), sizeof(tk::real) );

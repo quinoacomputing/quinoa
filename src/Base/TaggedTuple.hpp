@@ -3,7 +3,7 @@
   \file      src/Base/TaggedTuple.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Tagged tuple allowing tag-based access
   \details   Tagged tuple allowing tag-based access. This is very much like
@@ -28,6 +28,7 @@
 #include <tuple>
 
 #include <brigand/adapted/tuple.hpp>
+
 #include "NoWarning/any.hpp"
 #include "NoWarning/partition.hpp"
 #include "NoWarning/index_of.hpp"
@@ -51,31 +52,34 @@ class TaggedTuple{
     template< typename T >
     using is_odd = brigand::size_t< (brigand::index_of<List,T>::value%2) != 0 >;
 
-    //! Partition a type list into lists of even and odd types
+    //! Partition a type list into two lists with the even and the odd types
     using Pair = brigand::partition< List, brigand::bind<is_odd,brigand::_1> >;
 
     //! List of member types
     using Data = typename Pair::first_type;
-
-    //! List of keys
-    using Keys = typename Pair::second_type;
 
     //! Tuple of member types
     using Tuple = brigand::as_tuple< Data >;
 
     //! False-overload for detecting if T is a tagged tuple
     template< typename T, typename = std::void_t<> >
-    struct is_tagged_tuple : std::false_type {};
+    struct is_tagged_tuple_t : std::false_type {};
 
     //! True-overload for detecting if T is a tagged tuple
     template< typename T >
-    struct is_tagged_tuple< T, std::void_t< typename T::i_am_tagged_tuple > >
+    struct is_tagged_tuple_t< T, std::void_t< typename T::i_am_tagged_tuple > >
      : std::true_type {};
 
     //! Member data as a tuple
     Tuple m_members;
 
   public:
+    //! List of key-value pairs
+    using PairList = List;
+
+    //! List of keys
+    using Keys = typename Pair::second_type;
+
     //! Typedef defining self for identifying self
     using i_am_tagged_tuple = void;
 
@@ -83,6 +87,12 @@ class TaggedTuple{
     template< typename Tag >
     using TupleElement =
       std::tuple_element_t< brigand::index_of<Keys,Tag>::value, Tuple >;
+
+    //! Query if the type behind Tag is a TaggedTuple
+    //! Usage: if constexpr( is_tagged_tuple<Tag>::value ) { ... }
+    template< typename Tag >
+    using is_tagged_tuple =
+      is_tagged_tuple_t< std::decay_t< TupleElement<Tag> > >;
 
     //! Default constructor
     explicit TaggedTuple() = default;
@@ -96,8 +106,7 @@ class TaggedTuple{
     template< typename Tag, typename... Tags >
     const auto& get() const noexcept {
       constexpr std::size_t idx = brigand::index_of< Keys, Tag >::value;
-      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
-                    sizeof...(Tags) != 0 )
+      if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
         return std::get< idx >( m_members ).template get< Tags... >();
       else
         return std::get< idx >( m_members );
@@ -107,8 +116,7 @@ class TaggedTuple{
     template< typename Tag, typename... Tags >
     auto& get() noexcept {
       constexpr std::size_t idx = brigand::index_of< Keys, Tag >::value;
-      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
-                    sizeof...(Tags) != 0 )
+      if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
         return std::get< idx >( m_members ).template get< Tags... >();
       else
         return std::get< idx >( m_members );
@@ -118,8 +126,7 @@ class TaggedTuple{
     //! \param[in] value Value to convert and store
     template< typename Tag, typename... Tags >
     void store( const std::string& value ) noexcept {
-      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
-                    sizeof...(Tags) != 0 )
+      if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
       {
         using T = std::remove_reference_t< decltype( get<Tag,Tags...>() ) >;
         get< Tag, Tags... >() = convert< T >( value );
@@ -133,8 +140,7 @@ class TaggedTuple{
     //! \param[in] value Value to convert and store
     template< typename Tag, typename... Tags >
     void store_back( const std::string& value ) noexcept {
-      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
-                    sizeof...(Tags) != 0 )
+      if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
       {
         using T = typename std::remove_reference_t<
                     decltype( get<Tag,Tags...>() ) >::value_type;
@@ -146,13 +152,24 @@ class TaggedTuple{
       }
     }
 
+    //! Convert bool and push back, converting from string, to vector of ints
+    //! \param[in] value Value to convert and store
+    template< typename Tag, typename... Tags >
+    void store_back_bool( const std::string& value ) noexcept {
+      if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
+      {
+        get< Tag, Tags... >().push_back( convert_bool( value ) );
+      } else {
+        get< Tag >().push_back( convert_bool( value ) );
+      }
+    }
+
     //! \brief Convert and push back value, converting from string, to back of
     //!   a nested vector
     //! \param[in] value Value to convert and store
     template< typename Tag, typename... Tags >
     void store_back_back( const std::string& value ) noexcept {
-      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
-                    sizeof...(Tags) != 0 )
+      if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
       {
         using T = typename std::remove_reference_t<
                     decltype( get<Tag,Tags...>() ) >::value_type::value_type;
@@ -169,8 +186,7 @@ class TaggedTuple{
     //! \param[in] value Value to convert and store
     template< typename Tag, typename... Tags >
     void store_back_back_back( const std::string& value ) noexcept {
-      if constexpr( is_tagged_tuple<std::decay_t<TupleElement<Tag>>>::value and
-                    sizeof...(Tags) != 0 )
+      if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
       {
         using T = typename std::remove_reference_t<
           decltype( get<Tag,Tags...>() ) >::value_type::value_type::value_type;
@@ -242,14 +258,35 @@ class TaggedTuple{
     friend void operator|( PUP::er& p, TaggedTuple<List>& t ) { t.pup(p); }
     //@}
 
-    //! \brief Convert string to a type given by the template argument using
-    //!   std::stringstream
+    //! Convert/parse string to and return as type given by template argument
     //! \param[in] str String to convert
     //! \return A value of type given by the template argument
     template< typename type >
     type convert( const std::string& str ) {
       std::stringstream ss( str );
       type num;
+      ss >> std::boolalpha >> num;
+      if (ss.fail())
+        Throw( "Failed to convert '" + str +
+               "' to typeid " + typeid(num).name() );
+      return num;
+    }
+
+    //! Convert/parse string to bool and return as int
+    //! \param[in] str String to convert
+    //! \return Bool parsed from str returned as an int
+    //! \details Parsing a bool from a string, e.g., "true" or "false" is
+    //!   special compared to the above convert template, because the type into
+    //!   which we parse to (from stringstream) must be bool, but its value must
+    //!   be returned as an int. Input data stored this way ensures that the
+    //!   data is stored as an int and not a bool, which could be problematic if
+    //!   stored in a std::vector. Using this function via store_back_bool is a
+    //!   better way to achieve type-safety of the user input and ensures data
+    //!   does not get corrupted during Charm++ serialization as distributed to
+    //!   multiple PEs.
+    int convert_bool( const std::string& str ) {
+      std::stringstream ss( str );
+      bool num;
       ss >> std::boolalpha >> num;
       if (ss.fail())
         Throw( "Failed to convert '" + str +

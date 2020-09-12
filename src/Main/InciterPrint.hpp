@@ -3,7 +3,7 @@
   \file      src/Main/InciterPrint.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
@@ -14,8 +14,6 @@
 
 #include <iostream>
 #include <string>
-
-#include <brigand/algorithms/for_each.hpp>
 
 #include "NoWarning/format.hpp"
 
@@ -35,12 +33,17 @@ class InciterPrint : public tk::Print {
 
   public:
     //! Constructor
+    //! \param[in] screen Screen output filename
     //! \param[in,out] str Verbose stream
+    //! \param[in] mode Open mode for screen output file, see
+    //!   http://en.cppreference.com/w/cpp/io/ios_base/openmode
     //! \param[in,out] qstr Quiet stream
     //! \see tk::RNGPrint::RNGPrint and tk::Print::Print
-    explicit InciterPrint( std::ostream& str = std::clog,
+    explicit InciterPrint( const std::string& screen,
+                           std::ostream& str = std::clog,
+                           std::ios_base::openmode mode = std::ios_base::out,
                            std::ostream& qstr = std::cout ) :
-      Print( str, qstr ) {}
+      Print( screen, str, mode, qstr ) {}
 
     //! Print control option: 'group : option'
     template< typename Option, typename... tags >
@@ -52,6 +55,8 @@ class InciterPrint : public tk::Print {
     }
 
     //! Print list of codes of vector-valued option
+    //! \tparam Option Option type
+    //! \tparam T Enum type for option type
     //! \param[in] v Vector of option types (enums) whose code vector to print
     template< typename Option, typename T >
     void ItemVec( const std::vector< T >& v ) const {
@@ -59,6 +64,13 @@ class InciterPrint : public tk::Print {
       std::string codes;
       for (auto e : v) codes += opt.code(e);
       item( opt.group(), codes );
+    }
+
+    //! Print legend for list of codes of vector-valued option
+    //! \tparam Option Option type
+    template< typename Option >
+    void ItemVecLegend() const {
+      brigand::for_each< typename Option::keywords >( echoPolicies(this) );
     }
 
     // Helper class for compact output of PDE policies
@@ -96,7 +108,7 @@ class InciterPrint : public tk::Print {
     };
 
     //! Print PDE factory legend
-    void eqlegend();
+    void eqlegend() const;
 
     //! Print equation list with policies
     //! \param[in] t Section title
@@ -137,10 +149,10 @@ class InciterPrint : public tk::Print {
 
     //! Print mesh refinement variables and their indices in the unknown vector
     void refvar( const std::vector< std::string >& rvar,
-                 const std::vector< std::size_t >& refidx );
+                 const std::vector< std::size_t >& refidx ) const;
 
     //! Print initial mesh refinement edge-node pairs
-    void edgeref( const std::vector< std::size_t >& edgenodes );
+    void edgeref( const std::vector< std::size_t >& edgenodes ) const;
 
   private:
     //! Return partial differential equation name

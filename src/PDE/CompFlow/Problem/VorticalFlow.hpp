@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/Problem/VorticalFlow.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the single-material compressible flow
     equations
@@ -24,8 +24,11 @@
 #include "FunctionPrototypes.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
 
 //! CompFlow system of PDEs problem: vortical flow
 //! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
@@ -41,22 +44,45 @@ class CompFlowProblemVorticalFlow {
     //! Evaluate analytical solution at (x,y,z) for all components
     static tk::SolutionFn::result_type
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real );
-
-    //! \brief Evaluate the increment from t to t+dt of the analytical solution
-    //!   at (x,y,z) for all components
-    std::vector< tk::real >
-    solinc( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real,
-            tk::real ) const;
+              tk::real, int& );
 
     //! Compute and return source term for vortical flow manufactured solution
-    static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-         tk::real );
+    //! \param[in] system Equation system index, i.e., which compressible
+    //!   flow equation system we operate on among the systems of PDEs
+    //! \param[in] x X coordinate where to evaluate the solution
+    //! \param[in] y Y coordinate where to evaluate the solution
+    //! \param[in] z Z coordinate where to evaluate the solution
+    //! \param[in,out] r Density source
+    //! \param[in,out] ru X momentum source
+    //! \param[in,out] rv Y momentum source
+    //! \param[in,out] rw Z momentum source
+    //! \param[in,out] re Specific total energy source
+    //! \note The function signature must follow tk::SrcFn
+    static tk::CompFlowSrcFn::result_type
+    src( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real,
+         tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
+    {
+      using tag::param; using tag::compflow;
 
-    //! \brief Query all side set IDs the user has configured for all components
-    //!   in this PDE system
-    void side( std::unordered_set< int >& conf ) const;
+      // manufactured solution parameters
+      const auto& a =
+        g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
+      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
+      // ratio of specific heats
+      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
+      // evaluate solution at x,y,z
+      int inbox = 0;
+      auto s = solution( system, 5, x, y, z, 0.0, inbox );
+
+      // density source
+      r = 0.0;
+      // momentum source
+      ru = a*s[1]/s[0] - b*s[2]/s[0];
+      rv = b*s[1]/s[0] + a*s[2]/s[0];
+      rw = 0.0;
+      // energy source
+      re = (ru*s[1] + rv*s[2])/s[0] + 8.0*a*a*a*z*z/(g-1.0);
+    }
 
     //! Return field names to be output to file
     std::vector< std::string > fieldNames( ncomp_t ) const;
@@ -66,6 +92,7 @@ class CompFlowProblemVorticalFlow {
     fieldOutput( ncomp_t system,
                  ncomp_t,
                  ncomp_t offset,
+                 std::size_t nunk,
                  tk::real,
                  tk::real,
                  const std::vector< tk::real >&,

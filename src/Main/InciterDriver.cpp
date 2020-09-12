@@ -3,20 +3,20 @@
   \file      src/Main/InciterDriver.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter driver
   \details   Inciter driver.
 */
 // *****************************************************************************
 
-#include <unordered_map>
-
 #include "InciterPrint.hpp"
 #include "InciterDriver.hpp"
 #include "Inciter/InputDeck/Parser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "TaggedTupleDeepPrint.hpp"
+#include "Writer.hpp"
 
 #include "NoWarning/transporter.decl.h"
 
@@ -29,17 +29,22 @@ extern ctr::InputDeck g_inputdeck_defaults;
 
 using inciter::InciterDriver;
 
-InciterDriver::InciterDriver( const InciterPrint& print,
-                              const ctr::CmdLine& cmdline ) :
-  m_print( print )
+InciterDriver::InciterDriver( const ctr::CmdLine& cmdline, int nrestart )
 // *****************************************************************************
 //  Constructor
-//! \param[in] print Pretty printer
 //! \param[in] cmdline Command line object storing data parsed from the command
 //!   line arguments
+//! \param[in] nrestart Number of times restarted
 // *****************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
+
+  // Create pretty printer
+  const auto& def =
+    g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+  InciterPrint print( cmdline.logname( def, nrestart ),
+                      cmdline.get< tag::verbose >() ? std::cout : std::clog,
+                      std::ios_base::app );
 
   print.item( "Non-blocking migration, -" + *kw::nonblocking::alias(),
                cmdline.get< tag::nonblocking >() ? "on" : "off" );
@@ -63,11 +68,16 @@ InciterDriver::InciterDriver( const InciterPrint& print,
                std::to_string(cmdline.get< tag::rsfreq >()) );
 
   // Parse input deck into g_inputdeck
-  m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );
+  print.item( "Control file", cmdline.get< tag::io, tag::control >() );
   g_inputdeck = g_inputdeck_defaults;   // overwrite with defaults if restarted
-  InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
-  m_print.item( "Parsed control file", "success" );  
-  m_print.endpart();
+  InputDeckParser inputdeckParser( print, cmdline, g_inputdeck );
+  print.item( "Parsed control file", "success" );
+  print.endpart();
+
+  // Output command line object to file
+  auto logfilename = tk::inciter_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), "inputdeck", g_inputdeck );
 }
 
 void

@@ -17,7 +17,7 @@ add_regression_test(amr_dtref_u_trans_diagcg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE slot_cyl_amr_diagcg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
-                    LABELS amr)
+                    LABELS diagcg amr)
 
 add_regression_test(amr_dtref_u_trans_reord_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -33,7 +33,7 @@ add_regression_test(amr_dtref_u_trans_reord_diagcg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE slot_cyl_amr_diagcg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
-                    LABELS amr)
+                    LABELS diagcg amr)
 
 add_regression_test(amr_dtref_u_trans_gauss_hump_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -48,7 +48,7 @@ add_regression_test(amr_dtref_u_trans_gauss_hump_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_dtref_u_trans_reord_gauss_hump_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -63,7 +63,7 @@ add_regression_test(amr_dtref_u_trans_reord_gauss_hump_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 # Parallel, no virtualization
 
@@ -92,7 +92,7 @@ add_regression_test(amr_dtref_u_trans_diagcg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE slot_cyl_amr_diagcg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
-                    LABELS amr) 
+                    LABELS diagcg amr) 
 
 add_regression_test(amr_dtref_u_compflow_nleg_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -126,8 +126,8 @@ add_regression_test(amr_dtref_u_compflow_nleg_diagcg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE nleg_diagcg_amr.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
-                    LABELS amr)
+                    TEXT_DIFF_PROG_CONF nleg_diagcg.ndiff.cfg
+                    LABELS diagcg amr)
 
 add_regression_test(amr_dtref_u_compflow_nleg_diagcg_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -162,8 +162,8 @@ add_regression_test(amr_dtref_u_compflow_nleg_diagcg_migr ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE nleg_diagcg_amr.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
-                    LABELS amr migration)
+                    TEXT_DIFF_PROG_CONF nleg_diagcg.ndiff.cfg
+                    LABELS diagcg amr migration)
 
 add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -197,8 +197,8 @@ add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE nleg_diagcg_amr.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
-                    LABELS amr)
+                    TEXT_DIFF_PROG_CONF nleg_diagcg.ndiff.cfg
+                    LABELS diagcg amr)
 
  add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg_migr
                      ${INCITER_EXECUTABLE}
@@ -234,8 +234,8 @@ add_regression_test(amr_dtref_u_compflow_nleg_reord_diagcg ${INCITER_EXECUTABLE}
                      BIN_DIFF_PROG_ARGS -m
                      TEXT_BASELINE nleg_diagcg_amr.std
                      TEXT_RESULT diag
-                     TEXT_DIFF_PROG_CONF nleg_diagcg_amr.ndiff.cfg
-                     LABELS amr migration)
+                     TEXT_DIFF_PROG_CONF nleg_diagcg.ndiff.cfg
+                     LABELS diagcg amr migration)
 
 add_regression_test(amr_dtref_u_trans_gauss_hump_dg ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -270,7 +270,7 @@ add_regression_test(amr_dtref_u_trans_gauss_hump_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_dtref_u_trans_reord_gauss_hump_dg ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -305,7 +305,7 @@ add_regression_test(amr_dtref_u_trans_reord_gauss_hump_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_dtref_u_trans_gauss_hump_dg_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -341,7 +341,7 @@ add_regression_test(amr_dtref_u_trans_gauss_hump_dg_migr ${INCITER_EXECUTABLE}
                     TEXT_BASELINE gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr migration)
+                    LABELS dg amr migration)
 
 add_regression_test(amr_dtref_u_trans_reord_gauss_hump_dg_migr
                     ${INCITER_EXECUTABLE}
@@ -378,7 +378,7 @@ add_regression_test(amr_dtref_u_trans_reord_gauss_hump_dg_migr
                     TEXT_BASELINE gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr migration)
+                    LABELS dg amr migration)
 
 # Parallel, virtualization
 
@@ -468,7 +468,7 @@ add_regression_test(amr_dtref_u_trans_diagcg_u0.8 ${INCITER_EXECUTABLE}
                     TEXT_BASELINE slot_cyl_amr_diagcg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
-                    LABELS amr)
+                    LABELS diagcg amr)
 
 add_regression_test(amr_dtref_u_trans_diagcg_u0.8_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -556,7 +556,7 @@ add_regression_test(amr_dtref_u_trans_diagcg_u0.8_migr ${INCITER_EXECUTABLE}
                     TEXT_BASELINE slot_cyl_amr_diagcg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF slot_cyl_diagcg.ndiff.cfg
-                    LABELS amr migration)
+                    LABELS diagcg amr migration)
 
 add_regression_test(amr_dtref_u_trans_gauss_hump_dg_u0.8 ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -675,7 +675,7 @@ add_regression_test(amr_dtref_u_trans_gauss_hump_dg_u0.8 ${INCITER_EXECUTABLE}
                     TEXT_BASELINE gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr)
+                    LABELS dg amr)
 
 add_regression_test(amr_dtref_u_trans_gauss_hump_dg_u0.8_migr
                     ${INCITER_EXECUTABLE}
@@ -796,4 +796,4 @@ add_regression_test(amr_dtref_u_trans_gauss_hump_dg_u0.8_migr
                     TEXT_BASELINE gauss_hump_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
-                    LABELS amr migration)
+                    LABELS dg amr migration)

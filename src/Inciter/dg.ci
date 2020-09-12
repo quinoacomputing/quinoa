@@ -3,7 +3,7 @@
   \file      src/Inciter/dg.ci
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface file for the discontinuous Galerkin scheme
   \details   Charm++ module interface file for the discontinuous Galerking
@@ -32,26 +32,39 @@ module dg {
       entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
       entry void comGhost( int fromch, const GhostData& ghost );
       entry void reqGhost();
+      entry void nodeNeighSetup();
+      entry void comEsup( int fromch,
+        const std::unordered_map< std::size_t, std::vector< std::size_t > >&
+          bndEsup,
+        const std::unordered_map< std::size_t, std::vector< tk::real > >&
+          nodeBoundaryCells );
       initnode void registerReducers();      
       entry void setup();
+      entry void box( tk::real v );
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
+      entry void comreco( int fromch,
+                          const std::vector< std::size_t >& tetid,
+                          const std::vector< std::vector< tk::real > >& u,
+                          const std::vector< std::vector< tk::real > >& prim,
+                          const std::vector< std::size_t >& ndof );
       entry void comsol( int fromch,
                          std::size_t fromstage,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
-      entry void refine();
+      entry void refine( const std::vector< tk::real >& l2ref );
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void lhs();
       entry void step();
+      entry void start();
       entry void next();
-      entry void evalLB();
+      entry void evalLB( int nrestart );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -64,9 +77,15 @@ module dg {
         when ownghost_complete(), reqghost_complete() serial "ghost"
         { sendGhost(); } }
 
+      entry void wait4esup() {
+        when ownesup_complete(), comesup_complete() serial "esup"
+        { adj(); } }
+
       entry void wait4sol() {
-        when ownsol_complete(), comsol_complete() serial "sol"
-        { lim(); } }
+        when ownsol_complete(), comsol_complete() serial "sol" { reco(); } }
+
+      entry void wait4reco() {
+        when ownreco_complete(), comreco_complete() serial "reco" { lim(); } }
 
       entry void wait4lim() {
         when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
@@ -75,8 +94,12 @@ module dg {
       entry void comfac_complete();
       entry void ownghost_complete();
       entry void reqghost_complete();
+      entry void ownesup_complete();
+      entry void comesup_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
+      entry void ownreco_complete();
+      entry void comreco_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
     }

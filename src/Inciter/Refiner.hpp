@@ -3,7 +3,7 @@
   \file      src/Inciter/Refiner.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Mesh refiner for interfacing the mesh refinement library
   \details   Mesh refiner is a Charm++ chare array and is used to interface the
@@ -33,6 +33,7 @@
 #include "DiagCG.hpp"
 #include "ALECG.hpp"
 #include "DG.hpp"
+#include "CommMap.hpp"
 
 #include "NoWarning/transporter.decl.h"
 #include "NoWarning/refiner.decl.h"
@@ -41,6 +42,27 @@ namespace inciter {
 
 //! Mesh refiner for interfacing the mesh refinement library
 class Refiner : public CBase_Refiner {
+
+  private:
+    using Edge = tk::UnsMesh::Edge;
+    using Face = tk::UnsMesh::Face;
+    using Tet = tk::UnsMesh::Tet;
+    using EdgeSet = tk::UnsMesh::EdgeSet;
+    using FaceSet = tk::UnsMesh::FaceSet;
+    using TetSet = tk::UnsMesh::TetSet;
+    template< std::size_t N > using Hash = tk::UnsMesh::Hash< N >;
+    template< std::size_t N > using Eq = tk::UnsMesh::Eq< N >;
+
+    //! Boundary face data bundle, see boundary()
+    using BndFaceData = std::tuple<
+      std::unordered_map< Face, std::size_t, Hash<3>, Eq<3> >,
+      std::unordered_map< Face, Tet, Hash<3>, Eq<3> >,
+      std::unordered_map< int, FaceSet >
+    >;
+
+    //! Used to associate error to edges
+    using EdgeError = std::unordered_map< Edge, tk::real, Hash<2>, Eq<2> >;
+
 
   public:
     //! Constructor
@@ -68,8 +90,17 @@ class Refiner : public CBase_Refiner {
       #pragma clang diagnostic pop
     #endif
 
-    //! Configure Charm++ reduction types
-    static void registerReducers();
+    //! \brief Incoming query for a list boundary edges for which this chare
+    //!   compiles shared edges
+    void query( int fromch, const EdgeSet& edges );
+    //! Receive receipt of boundary edge lists to quer
+    void recvquery();
+    //! Respond to boundary edge list queries
+    void response();
+    //! Receive shared boundary edges for our mesh chunk
+    void bnd( int fromch, const std::vector< int >& chares );
+    //! Receive receipt of shared boundary edges
+    void recvbnd();
 
     //! Query Sorter and update local mesh with the reordered one
     void reorder();
@@ -84,9 +115,6 @@ class Refiner : public CBase_Refiner {
     void dtref( const std::map< int, std::vector< std::size_t > >& bface,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 const std::vector< std::size_t >& triinpoel );
-
-    //! Receive boundary edges from all PEs (including this one)
-    void addBndEdges( CkReductionMsg* msg );
 
     //! Do a single step of mesh refinemen/derefinementt (only tag edges)
     void refine();
@@ -143,14 +171,16 @@ class Refiner : public CBase_Refiner {
       p | m_initref;
       p | m_refiner;
       p | m_nref;
+      p | m_nbnd;
       p | m_extra;
       p | m_ch;
+      p | m_edgech;
+      p | m_chedge;
       p | m_localEdgeData;
       p | m_remoteEdgeData;
       p | m_remoteEdges;
       p | m_intermediates;
-      p | m_bndEdges;
-      p | m_msumset;
+      p | m_nodeCommMap;
       p | m_oldTets;
       p | m_addedNodes;
       p | m_addedTets;
@@ -170,25 +200,6 @@ class Refiner : public CBase_Refiner {
     //@}
 
   private:
-    using Edge = tk::UnsMesh::Edge;
-    using Face = tk::UnsMesh::Face;
-    using Tet = tk::UnsMesh::Tet;
-    using EdgeSet = tk::UnsMesh::EdgeSet;
-    using FaceSet = tk::UnsMesh::FaceSet;
-    using TetSet = tk::UnsMesh::TetSet;
-    template< std::size_t N > using Hash = tk::UnsMesh::Hash< N >;
-    template< std::size_t N > using Eq = tk::UnsMesh::Eq< N >;
-
-    //! Boundary face data bundle, see boundary()
-    using BndFaceData = std::tuple<
-      std::unordered_map< Face, std::size_t, Hash<3>, Eq<3> >,
-      std::unordered_map< Face, Tet, Hash<3>, Eq<3> >,
-      std::unordered_map< int, FaceSet >
-    >;
-
-    //! Used to associate error to edges
-    using EdgeError = std::unordered_map< Edge, tk::real, Hash<2>, Eq<2> >;
-
     //! Host proxy
     CProxy_Transporter m_host;
     //! Mesh sorter proxy
@@ -227,8 +238,8 @@ class Refiner : public CBase_Refiner {
     std::vector< std::size_t > m_triinpoel;
     //! Total number of refiner chares
     int m_nchare;
-    //! True if initial AMR, false if during time stepping
-    bool m_initial;
+    //! 1 if initial AMR (before time stepping), 0 if during time stepping
+    std::size_t m_initial;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
     //! Number of initial mesh refinement/derefinement steps
@@ -237,37 +248,38 @@ class Refiner : public CBase_Refiner {
     AMR::mesh_adapter_t m_refiner;
     //! Counter during distribution of newly added nodes to chare-boundary edges
     std::size_t m_nref;
+    //! Counter for number of chares contributing to chare boundary edges
+    std::size_t m_nbnd;
     //! Number of chare-boundary newly added nodes that need correction
     std::size_t m_extra;
     //! Chares we share at least a single edge with
     std::unordered_set< int > m_ch;
+    //! Edge->chare map used to build shared boundary edges
+    std::unordered_map< Edge, std::vector< int >, Hash<2>, Eq<2> > m_edgech;
+    //! Chare->edge map used to build shared boundary edges
+    std::unordered_map< int, EdgeSet > m_chedge;
     //! Refinement data associated to edges
     AMR::EdgeData m_localEdgeData;
     //! Refinement data associated to edges shared with other chares
     std::unordered_map< int, std::vector< std::tuple<
-      tk::UnsMesh::Edge, int, AMR::Edge_Lock_Case > > > m_remoteEdgeData;
+      Edge, int, AMR::Edge_Lock_Case > > > m_remoteEdgeData;
     //! Edges received from other chares
-    std::unordered_map< int, std::vector< tk::UnsMesh::Edge > > m_remoteEdges;
+    std::unordered_map< int, std::vector< Edge > > m_remoteEdges;
     //! Intermediate nodes
     std::unordered_set< size_t> m_intermediates;
-    //! Boundary edges associated to chares we share these edges with
-    std::unordered_map< int, tk::UnsMesh::EdgeSet > m_bndEdges;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs for the coarse mesh
-    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
-    //!   points. This is the same data as in Discretization::m_msum, but the
-    //!   nodelist is stored as a hash-set for faster searches.
-    std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
+    tk::NodeCommMap m_nodeCommMap;
     //! Tetrahedra before refinement/derefinement step
     TetSet m_oldTets;
     //! Newly added mesh nodes (local id) and their parents (local ids)
-    std::unordered_map< std::size_t, tk::UnsMesh::Edge > m_addedNodes;
+    std::unordered_map< std::size_t, Edge > m_addedNodes;
     //! Newly added mesh cells (local id) and their parent (local id)
     std::unordered_map< std::size_t, std::size_t > m_addedTets;
     //! Number of tetrahedra in the mesh before refinement/derefinement step
     std::size_t m_oldntets;
     //! A unique set of faces associated to side sets of the coarsest mesh
-    std::unordered_map< int, tk::UnsMesh::FaceSet > m_coarseBndFaces;
+    std::unordered_map< int, FaceSet > m_coarseBndFaces;
     //! A unique set of nodes associated to side sets of the coarsest mesh
     std::unordered_map< int, std::unordered_set<std::size_t> > m_coarseBndNodes;
     //! Local -> refiner lib node id map

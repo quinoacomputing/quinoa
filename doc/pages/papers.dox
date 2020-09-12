@@ -7,6 +7,15 @@ implemented in Quinoa. The papers are grouped by executables.
 @section papers_walker Walker
 
 - @m_div{m-text m-strong}
+  J.R. Ristorcelli, J. Bakosi, **[A Fokker–Planck approach to a moment closure for mixing in variable-density turbulence](https://doi.org/10.1080/14685248.2019.1662030)**, Journal of Turbulence, vol. 20, issue 7, Pages 393-423, 2019.
+  @m_enddiv
+
+  This paper develops a statistical moment closure for mixing of two fluids
+  with very different densities in a flow that becomes turbulent starting from a
+  quiescent state. Developed using the Monte Carlo solutions from walker::Beta,
+  and walker::MixMassFractionBeta.
+
+- @m_div{m-text m-strong}
   J. Bakosi, J.R. Ristorcelli, **[Diffusion Processes Satisfying a Conservation Law Constraint](http://dx.doi.org/10.1155/2014/603692)**, International Journal of Stochastic Analysis, vol. 2014, Article ID 603692, 9 pages, 2014.
   @m_enddiv
 
@@ -51,6 +60,19 @@ implemented in Quinoa. The papers are grouped by executables.
   walker::MixNumberFractionBeta, and walker::MixMassFractionBeta.
 
 @section papers_inciter Inciter
+
+- @m_div{m-text m-strong}
+  A. Pandare, J. Waltz, J. Bakosi, **[A reconstructed discontinuous Galerkin method for multi‐material hydrodynamics with sharp interfaces](https://doi.org/10.1002/fld.4810)**, International Journal for Numerical Methods in Fluids, 2020: 1–25.
+  @m_enddiv
+
+  This paper describes a discontinuous Galerkin method for multi-material flows
+  in 1D, whose 3D version is currently being implemented in Quinoa.
+
+- @m_div{m-text m-strong}
+  J. Waltz, N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, **[A three-dimensional finite element arbitrary Lagrangian–Eulerian method for shock hydrodynamics on unstructured grids](https://doi.org/10.1016/j.compfluid.2013.12.021)**, Computers & Fluids, 92: 172-187, 2014.
+  @m_enddiv
+
+  This paper describes the hydro scheme implemented in @ref inciter_main as `ALECG`.
 
 - @m_div{m-text m-strong}
   J. Waltz, **[Parallel adaptive refinement for unsteady flow calculations on 3D unstructured grids](http://dx.doi.org/10.1002/fld.674)**, International Journal for Numerical Methods in Fluids, 46: 37–57, 2004.

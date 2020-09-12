@@ -3,7 +3,7 @@
   \file      src/Inciter/DG.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
@@ -99,14 +99,30 @@ class DG : public CBase_DG {
     //! Send all of our ghost data to fellow chares
     void sendGhost();
 
+    //! Setup node-neighborhood (esup)
+    void nodeNeighSetup();
+
+    //! Receive element-surr-points data on chare boundaries from fellow chare
+    void comEsup( int fromch,
+      const std::unordered_map< std::size_t, std::vector< std::size_t > >&
+        bndEsup,
+      const std::unordered_map< std::size_t, std::vector< tk::real > >&
+        nodeBndCells );
+
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
 
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
+    //! Receive total box IC volume and set conditions in box
+    void box( tk::real v );
+
     // Evaluate whether to do load balancing
-    void evalLB();
+    void evalLB( int nrestart );
+
+    //! Start time stepping
+    void start();
 
     //! Continue to next time step
     void next();
@@ -118,6 +134,13 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
+    //! Receive chare-boundary reconstructed data from neighboring chares
+    void comreco( int fromch,
+                  const std::vector< std::size_t >& tetid,
+                  const std::vector< std::vector< tk::real > >& u,
+                  const std::vector< std::vector< tk::real > >& prim,
+                  const std::vector< std::size_t >& ndof );
+
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
                  std::size_t fromstage,
@@ -127,7 +150,7 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& ndof );
 
     //! Optionally refine/derefine mesh
-    void refine();
+    void refine( const std::vector< tk::real >& l2res );
 
     //! Receive new mesh from refiner
     void resizePostAMR(
@@ -136,7 +159,7 @@ class DG : public CBase_DG {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /* addedNodes */,
       const std::unordered_map< std::size_t, std::size_t >& addedTets,
-      const std::unordered_map< int, std::vector< std::size_t > >& msum,
+      const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::map< int, std::vector< std::size_t > >& /* bnode */,
       const std::vector< std::size_t >& triinpoel );
@@ -147,9 +170,6 @@ class DG : public CBase_DG {
 
     //! Compute left hand side
     void lhs();
-
-    //! Compute limiter function
-    void lim();
 
     //! Const-ref access to current solution
     //! \param[in,out] u Reference to update with current solution
@@ -172,13 +192,17 @@ class DG : public CBase_DG {
       p | m_disc;
       p | m_ncomfac;
       p | m_nadj;
+      p | m_ncomEsup;
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
+      p | m_nreco;
       p | m_fd;
       p | m_u;
       p | m_un;
       p | m_p;
+      p | m_Unode;
+      p | m_Pnode;
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
@@ -186,10 +210,10 @@ class DG : public CBase_DG {
       p | m_nfac;
       p | m_nunk;
       p | m_ncoord;
-      p | m_msumset;
       p | m_ipface;
       p | m_bndFace;
       p | m_ghostData;
+      p | m_sendGhost;
       p | m_ghostReq;
       p | m_ghost;
       p | m_exptGhost;
@@ -204,6 +228,8 @@ class DG : public CBase_DG {
       p | m_initial;
       p | m_expChBndFace;
       p | m_infaces;
+      p | m_esup;
+      p | m_esupc;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -228,6 +254,8 @@ class DG : public CBase_DG {
     std::size_t m_ncomfac;
     //! Counter signaling that all ghost data have been received
     std::size_t m_nadj;
+    //! Counter for element-surr-node adjacency communication map
+    std::size_t m_ncomEsup;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
     //! \brief Counter signaling that we have received all our solution ghost
@@ -235,6 +263,8 @@ class DG : public CBase_DG {
     std::size_t m_ninitsol;
     //! Counter signaling that we have received all our limiter function ghost data
     std::size_t m_nlim;
+    //! Counter signaling that we have received all our reconstructed ghost data
+    std::size_t m_nreco;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
@@ -243,6 +273,10 @@ class DG : public CBase_DG {
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
+    //! Vector of unknown/solution at each mesh node
+    tk::Fields m_Unode;
+    //! Vector of primitive quantities at each mesh node
+    tk::Fields m_Pnode;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
@@ -257,12 +291,6 @@ class DG : public CBase_DG {
     std::size_t m_nunk;
     //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_ncoord;
-    //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
-    //!    worker chares associated to their chare IDs
-    //! \details msum: mesh chunks surrounding mesh chunks and their neighbor
-    //!   points. This is the same data as in Discretization::m_msum, but the
-    //!   nodelist is stored as a set.
-    std::unordered_map< int, std::unordered_set< std::size_t > > m_msumset;
     //! Internal + physical boundary faces (inverse of inpofa)
     tk::UnsMesh::FaceSet m_ipface;
     //! Face & tet IDs associated to global node IDs of the face for each chare
@@ -272,6 +300,8 @@ class DG : public CBase_DG {
     std::unordered_map< int, FaceMap > m_bndFace;
     //! Ghost data associated to chare IDs we communicate with
     std::unordered_map< int, GhostData > m_ghostData;
+    //! Elements which are ghosts for other chares associated to those chare IDs
+    std::unordered_map< int, std::unordered_set< std::size_t > > m_sendGhost;
     //! Number of chares requesting ghost data
     std::size_t m_ghostReq;
     //! Local element id associated to ghost remote id charewise
@@ -293,18 +323,22 @@ class DG : public CBase_DG {
     //! Map local ghost tet ids (value) and zero-based boundary ids (key)
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Solution receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 2 > m_uc;
+    std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 2 > m_pc;
+    std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
-    std::array< std::vector< std::size_t >, 2 > m_ndofc;
+    std::array< std::vector< std::size_t >, 3 > m_ndofc;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
     tk::UnsMesh::FaceSet m_expChBndFace;
     //! Incoming communication buffer during chare-boundary face communication
     std::unordered_map< int, tk::UnsMesh::FaceSet > m_infaces;
+    //! Elements (value) surrounding point (key) data-structure
+    std::map< std::size_t, std::vector< std::size_t > > m_esup;
+    //! Communication buffer for esup data-structure
+    std::map< std::size_t, std::vector< std::size_t > > m_esupc;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -339,6 +373,9 @@ class DG : public CBase_DG {
     void setupGhost();
 
     //! Continue after face adjacency communication map completed on this chare
+    void faceAdj();
+
+    //! Continue after node adjacency communication map completed on this chare
     void adj();
 
     //! Fill elements surrounding a face along chare boundary
@@ -349,6 +386,8 @@ class DG : public CBase_DG {
                    std::size_t ghostid,
                    const tk::UnsMesh::Face& t );
 
+    void addEsup();
+
     //! Fill face geometry data along chare boundary
     void addGeoFace( const tk::UnsMesh::Face& t,
                      const std::array< std::size_t, 2 >& id );
@@ -357,7 +396,13 @@ class DG : public CBase_DG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( CkCallback c ) const;
+    void writeFields( CkCallback c );
+
+    //! Compute solution reconstructions
+    void reco();
+
+    //! Compute limiter function
+    void lim();
 
     //! Compute time step size
     void dt();
@@ -367,10 +412,6 @@ class DG : public CBase_DG {
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
-
-    //! Calculate the local number of degrees of freedom for each element for
-    //! p-adaptive DG
-    void eval_ndof();
 
     //! p-refine all elements that are adjacent to p-refined elements
     void propagate_ndof();

@@ -1,12 +1,15 @@
 add_library(CompFlowProblem
+            FieldOutput.cpp
             NLEnergyGrowth.cpp
             RayleighTaylor.cpp
             SodShocktube.cpp
+            SheddingFlow.cpp
             RotatedSodShocktube.cpp
             SedovBlastwave.cpp
             TaylorGreen.cpp
             UserDefined.cpp
-            VorticalFlow.cpp)
+            VorticalFlow.cpp
+            GaussHumpCompflow.cpp)
 
 target_include_directories(CompFlowProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -14,6 +17,7 @@ target_include_directories(CompFlowProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/Mesh
                            ${QUINOA_SOURCE_DIR}/PDE
+                           ${QUINOA_SOURCE_DIR}/Inciter
                            ${PROJECT_BINARY_DIR}/../Main
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}

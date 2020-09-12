@@ -45,7 +45,7 @@ inciter
     error jump
     tol_refine 0.8
 
-#    coordref
+#    coords
 #      #x- 0.5
 #      x+ 0.5 #x- 0.75
 #      #y+ 0.25 y- 0.75

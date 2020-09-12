@@ -3,7 +3,7 @@
   \file      src/Main/LBSwitch.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ chare group for switching on/off load balancing
   \details   Charm++ chare group for switching on/off load balancing.
@@ -25,7 +25,7 @@ class LBSwitch : public CBase_LBSwitch {
 
   public:
     //! Constructor: turn on automatic load balancing
-    explicit LBSwitch( bool verbose );
+    explicit LBSwitch();
 
     #if defined(__clang__)
       #pragma clang diagnostic push

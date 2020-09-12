@@ -3,7 +3,7 @@
   \file      src/Mesh/DerivedData.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -20,7 +20,9 @@
 #include <cstddef>
 #include <array>
 #include <unordered_set>
+#include <unordered_map>
 #include <iostream>
+#include <cfenv>
 
 #include "Exception.hpp"
 #include "DerivedData.hpp"
@@ -28,6 +30,21 @@
 #include "Vector.hpp"
 
 namespace tk {
+
+int
+orient( const UnsMesh::Edge& t, const UnsMesh::Edge& e )
+// *****************************************************************************
+// Determine edge orientation
+//! \return -1.0 if edge t is oriented the same as edge e, +1.0 opposite
+// *****************************************************************************
+{
+  if (t[0] == e[0] && t[1] == e[1])
+    return -1;
+  else if (t[0] == e[1] && t[1] == e[0])
+    return 1;
+  else
+    return 0;
+}
 
 std::size_t
 npoin_in_graph( const std::vector< std::size_t >& inpoel )
@@ -554,13 +571,13 @@ genEsuel( const std::vector< std::size_t >& inpoel,
 
   auto nelem = inpoel.size()/nnpe;
 
-  // lambda that returns true if elements hel and gel share a face
+  // lambda that returns 1 if elements hel and gel share a face
   auto adj = [ &inpoel, nnpe ]( std::size_t hel, std::size_t gel ) -> bool {
-    std::vector< bool > sp;
+    std::size_t sp = 0;
     for (std::size_t h=0; h<nnpe; ++h)
       for (std::size_t g=0; g<nnpe; ++g)
-        if (inpoel[hel*nnpe+h] == inpoel[gel*nnpe+g]) sp.push_back( true );
-    if (sp.size() == nnpe-1) return true; else return false;
+        if (inpoel[hel*nnpe+h] == inpoel[gel*nnpe+g]) ++sp;
+    if (sp == nnpe-1) return true; else return false;
   };
 
   // map to associate unique elements and their surrounding elements
@@ -711,7 +728,8 @@ genInedel( const std::vector< std::size_t >& inpoel,
   return inedel;
 }
 
-std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+std::unordered_map< UnsMesh::Edge, std::vector< std::size_t >,
+                    UnsMesh::Hash<2>, UnsMesh::Eq<2> >
 genEsued( const std::vector< std::size_t >& inpoel,
           std::size_t nnpe,
           const std::pair< std::vector< std::size_t >,
@@ -728,28 +746,22 @@ genEsued( const std::vector< std::size_t >& inpoel,
 //!   and { 10, 14, 13, 12 }.
 //! \param[in] nnpe Number of nodes per element (3 or 4)
 //! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
-//! \return Linked lists storing elements surrounding edges
+//! \return Associative container storing elements surrounding edges (value),
+//!    assigned to edge-end points (key)
 //! \warning It is not okay to call this function with an empty container for
 //!   inpoel or esup.first or esup.second or a non-positive number of nodes per
 //!   element; it will throw an exception.
-//! \details The data generated here is stored in a linked list, more precisely,
-//!   two linked arrays (vectors), _esued1_ and _esued2_, where _esued2_ holds
-//!   the indices at which _esued1_ holds the element ids surrounding edges.
-//!   Looping over all elements surrounding edges can then be accomplished by
+//! \details Looping over elements surrounding all edges can be accomplished by
 //!   the following loop:
 //!   \code{.cpp}
-//!     for (std::size_t e=0; e<nedge; ++e)
-//!       for (auto i=esued.second[e]+1; i<=esued.second[e+1]; ++i)
-//!         use element id esued.first[i]
+//!    for (const auto& [edge,surr_elements] : esued) {
+//!      use element edge-end-point ids edge[0] and edge[1]
+//!      for (auto e : surr_elements) {
+//!         use element id e
+//!      }
+//!    }
 //!   \endcode
-//!   To find out the number of edges, _nedge_, the edge connectivity, _inpoed_,
-//!   can be queried:
-//!   \code{.cpp}
-//!     auto esup = tk::genEsup(inpoel,nnpe);
-//!     auto nedge = tk::genInpoed(inpoel,nnpe,esup).size()/2;
-//!   \endcode
-//!   where _nnpe_ is the number of nodes per element (4 for tetrahedra, 3 for
-//!   triangles).
+//!   esued.size() equals the number of edges.
 //! \note At first sight, this function seems to work for elements with more
 //!   vertices than that of tetrahedra. However, that is not the case since the
 //!   algorithm for nnpe > 4 would erronously identify any two combination of
@@ -780,20 +792,18 @@ genEsued( const std::vector< std::size_t >& inpoel,
   std::vector< std::size_t > lpoin( npoin, 0 );
 
   // lambda that returns true if element e contains edge (p < q)
-  auto has = [ &inpoel, nnpe ]( std::size_t e, std::size_t p, std::size_t q )
-  -> bool {
-    std::vector< bool > sp;
+  auto has = [ &inpoel, nnpe ]( std::size_t e, std::size_t p, std::size_t q ) {
+    int sp = 0;
     for (std::size_t n=0; n<nnpe; ++n)
-      if (inpoel[e*nnpe+n] == p || inpoel[e*nnpe+n] == q)
-        sp.push_back( true );
-    if (sp.size() == 2) return true; else return false;
+      if (inpoel[e*nnpe+n] == p || inpoel[e*nnpe+n] == q) ++sp;
+    return sp == 2;
   };
 
   // map to associate edges to unique surrounding element ids
-  std::map< std::size_t,  std::vector< std::size_t > > revolver;
+  std::unordered_map< UnsMesh::Edge, std::vector< std::size_t >,
+                      UnsMesh::Hash<2>, UnsMesh::Eq<2> > esued;
 
   // generate edges and associated vector of unique surrounding element ids
-  std::size_t ed = 0;
   for (std::size_t p=0; p<npoin; ++p)
     for (std::size_t i=esup2[p]+1; i<=esup2[p+1]; ++i )
       for (std::size_t n=0; n<nnpe; ++n) {
@@ -802,26 +812,18 @@ genEsued( const std::vector< std::size_t >& inpoel,
           if (p < q) {  // for edge given point ids p < q
             for (std::size_t j=esup2[p]+1; j<=esup2[p+1]; ++j ) {
               auto e = esup1[j];
-              if (has(e,p,q)) revolver[ed].push_back(e);
+              if (has(e,p,q)) esued[{p,q}].push_back(e);
             }
-            ++ed;
           }
           lpoin[q] = p+1;
         }
       }
 
-  // linked lists (vectors) to store elements surrounding edges
-  std::vector< std::size_t > esued1( 1, 0 ), esued2( 1, 0 );
+  // sort element ids surrounding edges for each edge
+  for (auto& p : esued) std::sort( begin(p.second), end(p.second) );
 
-  // sort and store elements surrounding edges and their indices in vectors
-  for (auto& p : revolver) {
-    std::sort( begin(p.second), end(p.second) );
-    esued2.push_back( esued2.back() + p.second.size() );
-    esued1.insert( end(esued1), begin(p.second), end(p.second) );
-  }
-
-  // Return (move out) linked lists
-  return std::make_pair( std::move(esued1), std::move(esued2) );
+  // Return elements surrounding edges data structure
+  return esued;
 }
 
 std::size_t
@@ -880,8 +882,8 @@ genNbfacTet( std::size_t tnbfac,
   auto nptet = inpoel;
   auto nptri = triinpoel_complete;
 
-  tk::unique( nptet );
-  tk::unique( nptri );
+  unique( nptet );
+  unique( nptri );
 
   std::unordered_set< std::size_t > snptet;
 
@@ -920,7 +922,7 @@ genNbfacTet( std::size_t tnbfac,
           auto ip = triinpoel_complete[icoun+i];
 
           // find local renumbered node-id to store in triinpoel
-          triinpoel.push_back( tk::cref_find(lid,ip) );
+          triinpoel.push_back( cref_find(lid,ip) );
         }
 
         bface[ss.first].push_back(nbfac);
@@ -1289,10 +1291,10 @@ genBelemTet( std::size_t nbfac,
   return belem;
 }
         
-tk::Fields
+Fields
 genGeoFaceTri( std::size_t nipfac,
                const std::vector< std::size_t >& inpofa,
-               const tk::UnsMesh::Coords& coord )
+               const UnsMesh::Coords& coord )
 // *****************************************************************************
 //  Generate derived data, which stores the geometry details both internal and
 //   boundary triangular faces in the mesh.
@@ -1303,6 +1305,7 @@ genGeoFaceTri( std::size_t nipfac,
 //!   pointing outward of the element to the left of the face, and face
 //!   centroid coordinates. Use the following examples to access this
 //!   information for face-f.
+//! \details
 //!   face area: geoFace(f,0,0),
 //!   unit-normal x-component: geoFace(f,1,0),
 //!               y-component: geoFace(f,2,0),
@@ -1312,7 +1315,7 @@ genGeoFaceTri( std::size_t nipfac,
 //!            z-coordinate: geoFace(f,6,0).
 // *****************************************************************************
 {
-  tk::Fields geoFace( nipfac, 7 );
+  Fields geoFace( nipfac, 7 );
 
   // set triangle geometry
   std::size_t nnpf(3);
@@ -1323,7 +1326,7 @@ genGeoFaceTri( std::size_t nipfac,
   for(std::size_t f=0; f<nipfac; ++f)
   {
     std::size_t ip1, ip2, ip3;
-    tk::real xp1, yp1, zp1,
+    real xp1, yp1, zp1,
              xp2, yp2, zp2,
              xp3, yp3, zp3;
 
@@ -1355,10 +1358,10 @@ genGeoFaceTri( std::size_t nipfac,
   return geoFace;
 }
 
-std::array< tk::real, 3 >
-normal( const std::array< tk::real, 3 >& x,
-        const std::array< tk::real, 3 >& y,
-        const std::array< tk::real, 3 >& z )
+std::array< real, 3 >
+normal( const std::array< real, 3 >& x,
+        const std::array< real, 3 >& y,
+        const std::array< real, 3 >& z )
 // *****************************************************************************
 //! Compute the unit normal vector of a triangle
 //! \param[in] x x-coordinates of the three vertices of the triangle
@@ -1367,27 +1370,30 @@ normal( const std::array< tk::real, 3 >& x,
 //! \return Unit normal
 // *****************************************************************************
 {
-  tk::real ax = x[1] - x[0];
-  tk::real ay = y[1] - y[0];
-  tk::real az = z[1] - z[0];
-
-  tk::real bx = x[2] - x[0];
-  tk::real by = y[2] - y[0];
-  tk::real bz = z[2] - z[0];
-
-  tk::real nx =   ay*bz - az*by;
-  tk::real ny = -(ax*bz - az*bx);
-  tk::real nz =   ax*by - ay*bx;
-
-  auto farea = std::sqrt( nx*nx + ny*ny + nz*nz );
-
-  return {{ nx/farea, ny/farea, nz/farea }};
+  real nx, ny, nz;
+  normal( x[0],x[1],x[2], y[0],y[1],y[2], z[0],z[1],z[2], nx, ny, nz );
+  return { std::move(nx), std::move(ny), std::move(nz) };
 }
 
-tk::Fields
-geoFaceTri( const std::array< tk::real, 3 >& x,
-            const std::array< tk::real, 3 >& y,
-            const std::array< tk::real, 3 >& z )
+real
+area( const std::array< real, 3 >& x,
+      const std::array< real, 3 >& y,
+      const std::array< real, 3 >& z )
+// *****************************************************************************
+//! Compute the are of a triangle
+//! \param[in] x x-coordinates of the three vertices of the triangle
+//! \param[in] y y-coordinates of the three vertices of the triangle
+//! \param[in] z z-coordinates of the three vertices of the triangle
+//! \return Area
+// *****************************************************************************
+{
+  return area( x[0],x[1],x[2], y[0],y[1],y[2], z[0],z[1],z[2] );
+}
+
+Fields
+geoFaceTri( const std::array< real, 3 >& x,
+            const std::array< real, 3 >& y,
+            const std::array< real, 3 >& z )
 // *****************************************************************************
 //! Compute geometry of the face given by three vertices
 //! \param[in] x x-coordinates of the three vertices of the triangular face.
@@ -1396,36 +1402,28 @@ geoFaceTri( const std::array< tk::real, 3 >& x,
 //! \return Face geometry information. This includes face area, unit normal
 //!   pointing outward of the element to the left of the face, and face
 //!   centroid coordinates.
+//! \details
+//!   face area: geoFace(f,0,0),
+//!   unit-normal x-component: geoFace(f,1,0),
+//!               y-component: geoFace(f,2,0),
+//!               z-component: geoFace(f,3,0),
+//!   centroid x-coordinate: geoFace(f,4,0),
+//!            y-coordinate: geoFace(f,5,0),
+//!            z-coordinate: geoFace(f,6,0).
 // *****************************************************************************
 {
-  tk::Fields geoiFace( 1, 7 );
+  Fields geoiFace( 1, 7 );
 
-  auto sidea = std::sqrt( (x[1]-x[0])*(x[1]-x[0])
-                        + (y[1]-y[0])*(y[1]-y[0])
-                        + (z[1]-z[0])*(z[1]-z[0]) );
+  // compute area
+  geoiFace(0,0,0) = area( x, y, z );
 
-  auto sideb = std::sqrt( (x[2]-x[1])*(x[2]-x[1])
-                        + (y[2]-y[1])*(y[2]-y[1])
-                        + (z[2]-z[1])*(z[2]-z[1]) );
-
-  auto sidec = std::sqrt( (x[0]-x[2])*(x[0]-x[2])
-                        + (y[0]-y[2])*(y[0]-y[2])
-                        + (z[0]-z[2])*(z[0]-z[2]) );
-
-  auto semip = 0.5 * (sidea + sideb + sidec);
-
-  geoiFace(0,0,0) = sqrt( semip
-                        * (semip-sidea)
-                        * (semip-sideb)
-                        * (semip-sidec) );
-
-  // get unit normal to face
+  // compute unit normal to face
   auto n = normal( x, y, z );
   geoiFace(0,1,0) = n[0];
   geoiFace(0,2,0) = n[1];
   geoiFace(0,3,0) = n[2];
 
-  // get centroid
+  // compute centroid
   geoiFace(0,4,0) = (x[0]+x[1]+x[2])/3.0;
   geoiFace(0,5,0) = (y[0]+y[1]+y[2])/3.0;
   geoiFace(0,6,0) = (z[0]+z[1]+z[2])/3.0;
@@ -1433,21 +1431,22 @@ geoFaceTri( const std::array< tk::real, 3 >& x,
   return geoiFace;
 }
         
-tk::Fields
+Fields
 genGeoElemTet( const std::vector< std::size_t >& inpoel,
-               const tk::UnsMesh::Coords& coord )
+               const UnsMesh::Coords& coord )
 // *****************************************************************************
 //  Generate derived data, which stores the geometry details of tetrahedral
 //   elements.
 //! \param[in] inpoel Element-node connectivity.
 //! \param[in] coord Co-ordinates of nodes in this mesh-chunk.
-//! \return Element geometry information. This includes element volume and
-//!   element centroid coordinates. Use the following examples to access this
-//!   information for element-e.
+//! \return Element geometry information. This includes element volume,
+//!   element centroid coordinates, and minimum edge length. Use the following
+//!   examples to access this information for element-e.
 //!   volume: geoElem(e,0,0),
-//!   centroid x-coordinate: geoElem(f,1,0),
-//!            y-coordinate: geoElem(f,2,0),
-//!            z-coordinate: geoElem(f,3,0).
+//!   centroid x-coordinate: geoElem(e,1,0),
+//!            y-coordinate: geoElem(e,2,0),
+//!            z-coordinate: geoElem(e,3,0).
+//!   minimum edge-length: geoElem(e,4,0).
 // *****************************************************************************
 {
   // set tetrahedron geometry
@@ -1458,7 +1457,7 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
 
   auto nelem = inpoel.size()/nnpe;
 
-  tk::Fields geoElem( nelem, 4 );
+  Fields geoElem( nelem, 5 );
 
   const auto& x = coord[0];
   const auto& y = coord[1];
@@ -1471,11 +1470,11 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
     const auto B = inpoel[nnpe*e+1];
     const auto C = inpoel[nnpe*e+2];
     const auto D = inpoel[nnpe*e+3];
-    std::array< tk::real, 3 > ba{{ x[B]-x[A], y[B]-y[A], z[B]-z[A] }},
+    std::array< real, 3 > ba{{ x[B]-x[A], y[B]-y[A], z[B]-z[A] }},
                               ca{{ x[C]-x[A], y[C]-y[A], z[C]-z[A] }},
                               da{{ x[D]-x[A], y[D]-y[A], z[D]-z[A] }};
 
-    const auto vole = tk::triple( ba, ca, da ) / 6.0;
+    const auto vole = triple( ba, ca, da ) / 6.0;
 
     Assert( vole > 0, "Element Jacobian non-positive" );
 
@@ -1485,6 +1484,19 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
     geoElem(e,1,0) = (x[A]+x[B]+x[C]+x[D])/4.0;
     geoElem(e,2,0) = (y[A]+y[B]+y[C]+y[D])/4.0;
     geoElem(e,3,0) = (z[A]+z[B]+z[C]+z[D])/4.0;
+
+    // calculate minimum edge-length
+    tk::real edgelen = std::numeric_limits< tk::real >::max();
+    for (std::size_t i=0; i<nnpe-1; ++i)
+    {
+      for (std::size_t j=i+1; j<nnpe; ++j)
+      {
+        auto ni(inpoel[nnpe*e+i]), nj(inpoel[nnpe*e+j]);
+        edgelen = std::min( edgelen, tk::length( x[ni]-x[nj], y[ni]-y[nj],
+          z[ni]-z[nj] ) );
+      }
+    }
+    geoElem(e,4,0) = edgelen;
   }
 
   return geoElem;
@@ -1493,7 +1505,7 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
 bool
 leakyPartition( const std::vector< int >& esueltet,
                 const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord )
+                const UnsMesh::Coords& coord )
 // *****************************************************************************
 // Perform leak-test on mesh (partition)
 //! \param[in] esueltet Elements surrounding elements for tetrahedra, see
@@ -1513,20 +1525,20 @@ leakyPartition( const std::vector< int >& esueltet,
   const auto& z = coord[2];
 
   // Storage for surface integral over our mesh partition
-  std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0}};
+  std::array< real, 3 > s{{ 0.0, 0.0, 0.0}};
 
   for (std::size_t e=0; e<esueltet.size()/4; ++e) {   // for all our tets
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f)     // for all tet faces
       if (esueltet[mark+f] == -1) {     // if face has no outside-neighbor tet
         // 3 local node IDs of face
-        auto A = inpoel[ mark + tk::lpofa[f][0] ];
-        auto B = inpoel[ mark + tk::lpofa[f][1] ];
-        auto C = inpoel[ mark + tk::lpofa[f][2] ];
+        auto A = inpoel[ mark + lpofa[f][0] ];
+        auto B = inpoel[ mark + lpofa[f][1] ];
+        auto C = inpoel[ mark + lpofa[f][2] ];
         // Compute geometry data for face
-        auto geoface = tk::geoFaceTri( {{x[A], x[B], x[C]}},
-                                       {{y[A], y[B], y[C]}},
-                                       {{z[A], z[B], z[C]}} );
+        auto geoface = geoFaceTri( {{x[A], x[B], x[C]}},
+                                   {{y[A], y[B], y[C]}},
+                                   {{z[A], z[B], z[C]}} );
         // Sum up face area * face unit-normal
         s[0] += geoface(0,0,0) * geoface(0,1,0);
         s[1] += geoface(0,0,0) * geoface(0,2,0);
@@ -1534,13 +1546,13 @@ leakyPartition( const std::vector< int >& esueltet,
       }
   }
 
-  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+  auto eps = 1.0e-9;
   return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
 }
 
 bool
 conforming( const std::vector< std::size_t >& inpoel,
-            const tk::UnsMesh::Coords& coord,
+            const UnsMesh::Coords& coord,
             bool cerr )
 // *****************************************************************************
 // Check if mesh (partition) is conforming
@@ -1583,7 +1595,7 @@ conforming( const std::vector< std::size_t >& inpoel,
   // Compare operator to be used as less-than for std::array< tk::real, 3 >,
   // implemented as a lexicographic ordering.
   struct CoordLess {
-    const tk::real eps = std::numeric_limits< tk::real >::epsilon();
+    const real eps = std::numeric_limits< real >::epsilon();
     bool operator() ( const Coord& lhs, const Coord& rhs ) const {
       if (lhs[0] < rhs[0])
         return true;
@@ -1611,6 +1623,9 @@ conforming( const std::vector< std::size_t >& inpoel,
   const auto& y = coord[1];
   const auto& z = coord[2];
 
+  fenv_t fe;
+  feholdexcept( &fe );
+
   // Compute coordinates of nodes of mid-points of all edges
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
     auto A = inpoel[e*4+0];
@@ -1626,6 +1641,9 @@ conforming( const std::vector< std::size_t >& inpoel,
       edgeNodes[ en ] = std::tuple<std::size_t,Tet,Edge>{ e, {{A,B,C,D}}, n };
     }
   }
+
+  feclearexcept( FE_UNDERFLOW );
+  feupdateenv( &fe );
 
   // Find hanging nodes. If the coordinates of an element vertex coincide with
   // that of a mid-point node of an edge, that is a hanging node. If we find one
@@ -1660,5 +1678,98 @@ conforming( const std::vector< std::size_t >& inpoel,
 
   return true;
 }
+
+bool
+intet( const std::array< std::vector< real >, 3 >& coord,
+       const std::vector< std::size_t >& inpoel,
+       const std::vector< real >& p,
+       std::size_t e,
+       std::array< real, 4 >& N )
+// *****************************************************************************
+//  Determine if a point is in a tetrahedron
+//! \param[in] coord Mesh node coordinates
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] p Point coordinates
+//! \param[in] e Mesh cell index
+//! \param[in,out] N Shapefunctions evaluated at the point
+//! \return True if ppoint is in mesh cell
+//! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
+// *****************************************************************************
+{
+  Assert( p.size() == 3, "Size mismatch" );
+
+  // Tetrahedron node indices
+  const auto A = inpoel[e*4+0];
+  const auto B = inpoel[e*4+1];
+  const auto C = inpoel[e*4+2];
+  const auto D = inpoel[e*4+3];
+
+  // Tetrahedron node coordinates
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // Point coordinates
+  const auto& xp = p[0];
+  const auto& yp = p[1];
+  const auto& zp = p[2];
+
+  // Evaluate linear shapefunctions at point locations using Cramer's Rule
+  //    | xp |   | x1 x2 x3 x4 |   | N1 |
+  //    | yp | = | y1 y2 y3 y4 | • | N2 |
+  //    | zp |   | z1 z2 z3 z4 |   | N3 |
+  //    | 1  |   | 1  1  1  1  |   | N4 |
+
+  real DetX = (y[B]*z[C] - y[C]*z[B] - y[B]*z[D] + y[D]*z[B] +
+    y[C]*z[D] - y[D]*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
+    x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
+    x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[C]*y[A]*z[D] + x[C]*y[D]*z[A] +
+    x[D]*y[A]*z[C] - x[D]*y[C]*z[A] - x[B]*y[C]*z[D] + x[B]*y[D]*z[C] +
+    x[C]*y[B]*z[D] - x[C]*y[D]*z[B] - x[D]*y[B]*z[C] + x[D]*y[C]*z[B];
+
+  real DetX1 = (y[D]*z[C] - y[C]*z[D] + y[C]*zp - yp*z[C] -
+    y[D]*zp + yp*z[D])*x[B] + x[C]*y[B]*z[D] - x[C]*y[D]*z[B] -
+    x[D]*y[B]*z[C] + x[D]*y[C]*z[B] - x[C]*y[B]*zp + x[C]*yp*z[B] +
+    xp*y[B]*z[C] - xp*y[C]*z[B] + x[D]*y[B]*zp - x[D]*yp*z[B] -
+    xp*y[B]*z[D] + xp*y[D]*z[B] + x[C]*y[D]*zp - x[C]*yp*z[D] -
+    x[D]*y[C]*zp + x[D]*yp*z[C] + xp*y[C]*z[D] - xp*y[D]*z[C];
+
+  real DetX2 = (y[C]*z[D] - y[D]*z[C] - y[C]*zp + yp*z[C] +
+    y[D]*zp - yp*z[D])*x[A] + x[C]*y[D]*z[A] - x[C]*y[A]*z[D] +
+    x[D]*y[A]*z[C] - x[D]*y[C]*z[A] + x[C]*y[A]*zp - x[C]*yp*z[A] -
+    xp*y[A]*z[C] + xp*y[C]*z[A] - x[D]*y[A]*zp + x[D]*yp*z[A] +
+    xp*y[A]*z[D] - xp*y[D]*z[A] - x[C]*y[D]*zp + x[C]*yp*z[D] +
+    x[D]*y[C]*zp - x[D]*yp*z[C] - xp*y[C]*z[D] + xp*y[D]*z[C];
+
+  real DetX3 = (y[D]*z[B] - y[B]*z[D] + y[B]*zp - yp*z[B] -
+    y[D]*zp + yp*z[D])*x[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
+    x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[B]*y[A]*zp + x[B]*yp*z[A] +
+    xp*y[A]*z[B] - xp*y[B]*z[A] + x[D]*y[A]*zp - x[D]*yp*z[A] -
+    xp*y[A]*z[D] + xp*y[D]*z[A] + x[B]*y[D]*zp - x[B]*yp*z[D] -
+    x[D]*y[B]*zp + x[D]*yp*z[B] + xp*y[B]*z[D] - xp*y[D]*z[B];
+
+  real DetX4 = (y[B]*z[C] - y[C]*z[B] - y[B]*zp + yp*z[B] +
+    y[C]*zp - yp*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
+    x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*zp - x[B]*yp*z[A] -
+    xp*y[A]*z[B] + xp*y[B]*z[A] - x[C]*y[A]*zp + x[C]*yp*z[A] +
+    xp*y[A]*z[C] - xp*y[C]*z[A] - x[B]*y[C]*zp + x[B]*yp*z[C] +
+    x[C]*y[B]*zp - x[C]*yp*z[B] - xp*y[B]*z[C] + xp*y[C]*z[B];
+
+  // Shape functions evaluated at point
+  N[0] = DetX1/DetX;
+  N[1] = DetX2/DetX;
+  N[2] = DetX3/DetX;
+  N[3] = DetX4/DetX;
+
+  // if min( N^i, 1-N^i ) > 0 for all i, point is in cell
+  if ( std::min(N[0],1.0-N[0]) > 0 && std::min(N[1],1.0-N[1]) > 0 &&
+       std::min(N[2],1.0-N[2]) > 0 && std::min(N[3],1.0-N[3]) > 0 )
+  {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 
 } // tk::

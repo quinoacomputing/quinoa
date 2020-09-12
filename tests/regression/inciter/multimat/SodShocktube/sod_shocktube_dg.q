@@ -6,8 +6,8 @@ title "Multi-material Sod shock-tube"
 
 inciter
 
-  nstep 100  # Max number of time steps
-  dt   2.0e-4 # Time step size
+  nstep 25   # Max number of time steps
+  dt   1.0e-3 # Time step size
   ttyi 10     # TTY output interval
   scheme dg
 
@@ -38,7 +38,7 @@ inciter
   end
 
   plotvar
-    interval 20
+    interval 5
   end
 
 end

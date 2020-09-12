@@ -3,7 +3,7 @@
   \file      src/DiffEq/InitPolicy.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Initialization policies
   \details   This file defines initialization policy classes. As opposed to
@@ -47,6 +47,7 @@
 #define InitPolicy_h
 
 #include <algorithm>
+#include <cfenv>
 
 #include <brigand/sequences/list.hpp>
 
@@ -166,15 +167,21 @@ struct InitBeta {
     // configured for
     const ncomp_t size = std::min( ncomp, betapdf.size() );
 
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
+
     for (ncomp_t c=0; c<size; ++c) {
       // get vector of betapdf parameters for component c
       const auto& bc = betapdf[c];
 
       for (ncomp_t s=0; s<bc.size(); s+=4) {
         // generate beta random numbers for all particles using parameters in bc
-        for (ncomp_t p=0; p<particles.nunk(); ++p)
+        for (ncomp_t p=0; p<particles.nunk(); ++p) {
           rng.beta( stream, 1, bc[s], bc[s+1], bc[s+2], bc[s+3],
                     &particles( p, c, offset ) );
+          auto& v = particles( p, c, offset );
+          if (v < eps) v = eps;
+          if (v > 1.0-eps) v = 1.0-eps;
+        }
       }
     }
 
@@ -342,6 +349,9 @@ struct InitDirichlet {
         rng.gamma( stream, 1, dir[c], 1.0, Y.data()+c );
       }
 
+      fenv_t fe;
+      feholdexcept( &fe );
+
       auto Ysum = std::accumulate( begin(Y), end(Y), 0.0 );
 
       // Assign N=K+1 particle values by dividing the gamma-distributed numbers
@@ -352,6 +362,9 @@ struct InitDirichlet {
         if (y < 0.0 || y > 1.0) Throw( "Dirichlet samples out of bounds" );
         particles( p, c, offset ) = y;
       }
+
+      feclearexcept( FE_UNDERFLOW );
+      feupdateenv( &fe );
     }
 
     // Verify boundedness of all ncomp+1 (=N=K+1) scalars

@@ -19,6 +19,7 @@ inciter
     depvar c
     physics euler
     problem vortical_flow
+    sysfct false
 
     alpha 0.1
     beta 1.0

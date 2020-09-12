@@ -3,7 +3,7 @@
   \file      src/NoWarning/H5Part.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Include H5Part.h with turning off specific compiler warnings
 */
@@ -26,9 +26,6 @@
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wlong-long"
   #pragma GCC diagnostic ignored "-Wcast-qual"
-#elif defined(__INTEL_COMPILER)
-  #pragma warning( push )
-  #pragma warning( disable: 2282 )
 #endif
 
 #define PARALLEL_IO
@@ -39,8 +36,6 @@
   #pragma clang diagnostic pop
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
-#elif defined(__INTEL_COMPILER)
-  #pragma warning( pop )
 #endif
 
 #endif // nowarning_H5Part_h

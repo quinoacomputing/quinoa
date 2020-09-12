@@ -3,7 +3,7 @@
   \file      src/Inciter/DiagReducer.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Custom Charm++ reducer for merging std::vectors across PEs
   \details   Custom Charm++ reducer for merging std::vectors across PEs.
@@ -81,11 +81,15 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
     for (std::size_t i=0; i<v[L2SOL].size(); ++i) v[L2SOL][i] += w[L2SOL][i];
     // Sum for the L2 norm of the numerical - analytical solution for all comps
     for (std::size_t i=0; i<v[L2ERR].size(); ++i) v[L2ERR][i] += w[L2ERR][i];
+    // Sum for the L2 norm of the residual of all components
+    for (std::size_t i=0; i<v[L2RES].size(); ++i) v[L2RES][i] += w[L2RES][i];
     // Max for the Linf norm of the numerical - analytical solution for all comp
     for (std::size_t i=0; i<v[LINFERR].size(); ++i)
       if (w[LINFERR][i] > v[LINFERR][i]) v[LINFERR][i] = w[LINFERR][i];
-    // Copy the rest
-    for (std::size_t j=3; j<v.size(); ++j)
+    // Sum of the total energy over the entire domain
+    v[TOTALSOL][0] += w[TOTALSOL][0];
+    // Copy ITER, TIME, DT
+    for (std::size_t j=v.size()-3; j<v.size(); ++j)
       for (std::size_t i=0; i<v[j].size(); ++i)
         v[j][i] = w[j][i];
   }

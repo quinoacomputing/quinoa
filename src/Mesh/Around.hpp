@@ -3,7 +3,7 @@
   \file      src/Mesh/Around.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Helper class for iterating through linked lists of derived data
   \details   Helper class for iterating through every item in a linked list data
@@ -54,24 +54,24 @@ class Around {
     //! \return Iterator to the beginning of the entries of surrounding entries
     //! \note This class does not allow modifing the underlying linked list, so
     //!   the begin/end iterators are aliased to cbegin/cend.
-    const_iterator begin() const { return this->cbegin(); }
+    const_iterator begin() const noexcept { return this->cbegin(); }
 
     //! Const iterator to the entry after the last of the surrounding entries
     //! \return Iterator to the entry after the last of the surrounding entries
     //! \note This class does not allow modifing the underlying linked list, so
     //!   the begin/end iterators are aliased to cbegin/cend.
-    const_iterator end() const { return this->cend(); }
+    const_iterator end() const noexcept { return this->cend(); }
 
     //! Iterator to the beginning of the entries of surrounding entries
     //! \return Iterator to the beginning of the entries of surrounding entries
-    const_iterator cbegin() const {
+    const_iterator cbegin() const noexcept {
       return m_list.first.cbegin() +
              static_cast< diff_type >( m_list.second[m_idx] + 1 );
     }
 
     //! Iterator to the entry after the last of the surrounding entries
     //! \return Iterator to the entry after the last of the surrounding entries
-    const_iterator cend() const {
+    const_iterator cend() const noexcept {
       return m_list.first.cbegin() +
              static_cast< diff_type >( m_list.second[m_idx+1] + 1 );
     }

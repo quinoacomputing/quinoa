@@ -3,7 +3,7 @@
   \file      src/Control/MeshConv/Types.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Types for FileConv's parsers
   \details   Types for UnitTest's parsers. This file defines the components of
@@ -26,8 +26,10 @@ using namespace tao;
 
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
-    tag::input,           std::string     //!< Input filename
-  , tag::output,          std::string     //!< Output filename
+    tag::nrestart,  int                             //!< Number of restarts
+  , tag::input,     std::string                     //!< Input filename
+  , tag::output,    std::string                     //!< Output filename
+  , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
 > >;
 
 //! PEGTL location/position type to use throughout all of MeshConv's parsers

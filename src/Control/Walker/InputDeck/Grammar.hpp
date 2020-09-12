@@ -3,7 +3,7 @@
   \file      src/Control/Walker/InputDeck/Grammar.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the Parsing
@@ -172,6 +172,21 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< class eq, class vec >
+  struct check_gravity : pegtl::success {};
+  //! Do error checking for a vector of prescribed mean gradient
+  template< class eq, class vec  >
+  struct action< check_gravity< eq, vec > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      auto& vv = stack.template get< tag::param, eq, vec >();
+      Assert( !vv.empty(), "Vector of vectors checked must not be empty" );
+      if (vv.back().size() != 3)
+        Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
   template< class eq > struct check_eq : pegtl::success {};
   //! \brief Do general error checking on the differential equation block
   //! \details This is error checking that all equation types must satisfy.
@@ -277,7 +292,7 @@ namespace grm {
   //!   coupled to eq among other DiffEqs of type coupledeq
   //! \tparam depvar_msg Error message key to use on missing coupled depvar
   //! \param[in] in Parser input
-  //! \param[in,out] stack Grammar stack to wrok with
+  //! \param[in,out] stack Grammar stack to work with
   //! \param[in] missing Error message key to use on missing coupled equation
   //!   if the coupling is required. Pass MsgKey::OPTIONAL as missing if the
   //!   coupling is optional.
@@ -359,6 +374,34 @@ namespace grm {
     }
   }
 
+  //! Query if equation 'eq' has been coupled to equation 'coupledeq'
+  //! \tparam eq Tag of the equation to query
+  //! \tparam coupledeq Tag of the equation that is potentially coupled to
+  //!   equation 'eq'
+  //! \param[in] stack Grammar stack to work with
+  //! \return True if equation 'eq' is coupled to equation 'coupledeq'
+  //! \note Always the eq system that is parsed last is interrogated.
+  template< typename eq, typename coupledeq, typename Stack >
+  static bool coupled( const Stack& stack ) {
+    return stack.template get< tag::param, eq, coupledeq >().back() != '-';
+  }
+
+  //! Query number of components of coupled equation
+  //! \tparam eq Tag of the equation that is coupled
+  //! \tparam coupledeq Tag of the equation that is coupled to equation 'eq'
+  //! \tparam id Tag to access the coupled equation 'eq' (relative) ids, see
+  //!   tk::grm::couple.
+  //! \param[in] stack Grammar stack to work with
+  //! \return Number of scalar components of coupled equation
+  //! \note Always the eq system that is parsed last is interrogated.
+  template< typename eq, typename coupledeq, typename id, typename Stack >
+  static std::size_t ncomp_coupled( const Stack& stack ) {
+    Assert( (coupled< eq, coupledeq >( stack )), "Eq must be coupled" );
+    // Query relative id of coupled eq
+    auto cid = stack.template get< tag::param, eq, id >().back();
+    return stack.template get< tag::component, coupledeq >().at( cid );
+  }
+
   //! Rule used to trigger action
   struct check_velocity : pegtl::success {};
   //! \brief Do error checking on the velocity eq block
@@ -386,6 +429,33 @@ namespace grm {
           stack.template get< tag::param, tag::velocity, tag::solve >();
         if (solve.size() != neq.get< tag::velocity >())
           Message< Stack, ERROR, MsgKey::NOSOLVE >( stack, in );
+
+        // Increase number of components by the number of particle densities if
+        // we solve for particle momentum, coupled to mass fractions. This is
+        // to allocate storage for particle velocity as variables derived from
+        // momentum.
+        if ( !solve.empty() &&
+             ( solve.back() == walker::ctr::DepvarType::PRODUCT ||
+               solve.back() == walker::ctr::DepvarType::FLUCTUATING_MOMENTUM ) )
+        {
+          //! Error out if not coupled to mixmassfracbeta
+          if (!coupled< tag::velocity, tag::mixmassfracbeta >( stack )) {
+            Message< Stack, ERROR, MsgKey::MIXMASSFRACBETA_DEPVAR >(stack,in);
+          } else {
+            // access number of components of velocity eq just parsed
+            auto& ncomp = stack.template get< tag::component, tag::velocity >();
+            // query number of components of coupled mixmassfracbeta model
+            auto nc = ncomp_coupled< tag::velocity, tag::mixmassfracbeta,
+                                     tag::mixmassfracbeta_id >( stack );
+            // Augment storage of velocity equation, solving for momentum by
+            // the number of scalar components the coupled mixmassfracbeta mix
+            // model solves for. The magic number, 4, below is
+            // MixMassFractionBeta::NUMDERIVED + 1, and the 3 is the number of
+            // velocity components derived from momentum.
+            ncomp.back() += (nc/4)*3;
+          }
+        }
+
         // Set C0 = 2.1 if not specified
         auto& C0 = stack.template get< tag::param, tag::velocity, tag::c0 >();
         if (C0.size() != neq.get< tag::velocity >()) C0.push_back( 2.1 );
@@ -394,6 +464,12 @@ namespace grm {
           stack.template get< tag::param, tag::velocity, tag::variant >();
         if (variant.size() != neq.get< tag::velocity >())
           variant.push_back( walker::ctr::VelocityVariantType::SLM );
+
+        // Set gravity to {0,0,0} if unspecified
+        auto& gravity =
+          stack.template get< tag::param, tag::velocity, tag::gravity >();
+        if (gravity.size() != neq.get< tag::velocity >())
+          gravity.push_back( { 0.0, 0.0, 0.0 } );
       }
     }
   };
@@ -630,7 +706,9 @@ namespace deck {
                      tk::grm::discrparam< use, kw::nstep, tag::nstep >,
                      tk::grm::discrparam< use, kw::term, tag::term >,
                      tk::grm::discrparam< use, kw::dt, tag::dt >,
-                     tk::grm::interval< use< kw::ttyi >, tag::tty > > {};
+                     tk::grm::interval< use< kw::ttyi >, tag::tty >,
+                     tk::grm::interval< use< kw::pari >, tag::particles >
+                   > {};
 
   //! rngs
   struct rngs :
@@ -1191,7 +1269,7 @@ namespace deck {
                                                  tag::mixmassfracbeta,
                                                  tag::mean_gradient >,
                            tk::grm::process<
-                             use< kw::velocity >,
+                             use< kw::velocitysde >,
                              tk::grm::Store_back< tag::param,
                                                   tag::mixmassfracbeta,
                                                   tag::velocity >,
@@ -1448,7 +1526,7 @@ namespace deck {
   //! Velocity SDE
   struct velocity :
          pegtl::if_must<
-           scan_sde< use< kw::velocity >, tag::velocity >,
+           scan_sde< use< kw::velocitysde >, tag::velocity >,
            tk::grm::block< use< kw::end >,
                            tk::grm::depvar< use,
                                             tag::velocity,
@@ -1478,6 +1556,10 @@ namespace deck {
                                             ctr::VelocityVariant,
                                             tag::velocity,
                                             tag::variant >,
+                           sde_parameter_vector< kw::gravity,
+                                                 tk::grm::check_gravity,
+                                                 tag::velocity,
+                                                 tag::gravity >,
                            icdelta< tag::velocity >,
                            icbeta< tag::velocity >,
                            icgamma< tag::velocity >,
@@ -1559,7 +1641,7 @@ namespace deck {
                            icgaussian< tag::position >,
                            icjointgaussian< tag::position >,
                            tk::grm::process<
-                             use< kw::velocity >,
+                             use< kw::velocitysde >,
                              tk::grm::Store_back< tag::param,
                                                   tag::position,
                                                   tag::velocity >,
@@ -1618,7 +1700,7 @@ namespace deck {
                            icgaussian< tag::dissipation >,
                            icjointgaussian< tag::dissipation >,
                            tk::grm::process<
-                             use< kw::velocity >,
+                             use< kw::velocitysde >,
                              tk::grm::Store_back< tag::param,
                                                   tag::dissipation,
                                                   tag::velocity >,

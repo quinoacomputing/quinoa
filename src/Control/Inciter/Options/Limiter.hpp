@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/Options/Limiter.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Limiter options for DG
   \details   Limiter options for DG
@@ -24,7 +24,8 @@ namespace ctr {
 //! Limiter types
 enum class LimiterType : uint8_t { NOLIMITER
                                  , WENOP1
-                                 , SUPERBEEP1 };
+                                 , SUPERBEEP1
+                                 , VERTEXBASEDP1 };
 
 //! Pack/Unpack LimiterType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, LimiterType& e ) { PUP::pup( p, e ); }
@@ -37,6 +38,7 @@ class Limiter : public tk::Toggle< LimiterType > {
     using keywords = brigand::list< kw::nolimiter
                                   , kw::wenop1
                                   , kw::superbeep1
+                                  , kw::vertexbasedp1
                                   >;
 
     //! \brief Options constructor
@@ -49,11 +51,13 @@ class Limiter : public tk::Toggle< LimiterType > {
         //! Enums -> names (if defined, policy codes, if not, name)
         { { LimiterType::NOLIMITER, kw::nolimiter::name() },
           { LimiterType::WENOP1, kw::wenop1::name() },
-          { LimiterType::SUPERBEEP1, kw::superbeep1::name() } },
+          { LimiterType::SUPERBEEP1, kw::superbeep1::name() },
+          { LimiterType::VERTEXBASEDP1, kw::vertexbasedp1::name() } },
         //! keywords -> Enums
         { { kw::nolimiter::string(), LimiterType::NOLIMITER },
           { kw::wenop1::string(), LimiterType::WENOP1 },
-          { kw::superbeep1::string(), LimiterType::SUPERBEEP1 } } )
+          { kw::superbeep1::string(), LimiterType::SUPERBEEP1 },
+          { kw::vertexbasedp1::string(), LimiterType::VERTEXBASEDP1 } } )
     {}
 
 };

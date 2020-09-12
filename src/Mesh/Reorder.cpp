@@ -3,7 +3,7 @@
   \file      src/Mesh/Reorder.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.
@@ -345,6 +345,32 @@ positiveJacobians( const std::vector< std::size_t >& inpoel,
  }
 
  return true;
+}
+
+std::map< int, std::vector< std::size_t > >
+bfacenodes( const std::map< int, std::vector< std::size_t > >& bface,
+            const std::vector< std::size_t >& triinpoel )
+// *****************************************************************************
+// Generate nodes of side set faces
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
+//! \return Nodes of side set faces for each side set passed in
+// *****************************************************************************
+{
+  auto bfn = bface;
+
+  for (auto& [s,b] : bfn) {
+    std::vector< std::size_t > nodes;
+    for (auto f : b) {
+      nodes.push_back( triinpoel[f*3+0] );
+      nodes.push_back( triinpoel[f*3+1] );
+      nodes.push_back( triinpoel[f*3+2] );
+    }
+    tk::unique( nodes );
+    b = std::move( nodes );
+  }
+
+  return bfn;
 }
 
 } // tk::

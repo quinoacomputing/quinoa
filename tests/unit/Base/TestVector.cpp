@@ -3,7 +3,7 @@
   \file      tests/unit/Base/TestVector.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/Vector.hpp
   \details   Unit tests for Base/Vector.hpp
@@ -98,6 +98,34 @@ void Vector_object::test< 4 >() {
   const auto result = tk::triple( v1, v2, v3 );
   ensure_equals( "triple product incorrect", result, correct_result,
                  precision );
+}
+
+//! Test vector length
+template<> template<>
+void Vector_object::test< 5 >() {
+  set_test_name( "length" );
+
+  std::array< tk::real, 3 > v1{{ -1.0, 3.0, 3.0 }}, v2{{  0.0, 4.0, 0.0 }};
+  tk::real correct_result_1 = 4.358898943540674;
+  tk::real correct_result_2 = 4.0;
+
+  const auto result_1 = tk::length( v1 );
+  const auto result_2 = tk::length( v2 );
+  ensure_equals( "length incorrect", result_1, correct_result_1, precision );
+  ensure_equals( "length incorrect", result_2, correct_result_2, precision );
+}
+
+//! Test normalizing a vector
+template<> template<>
+void Vector_object::test< 6 >() {
+  set_test_name( "unit" );
+
+  std::array< tk::real, 3 > v1{{ -1.0, 3.0, 3.0 }}, v2{{  0.0, 4.0, 0.0 }};
+
+  tk::unit( v1 );
+  tk::unit( v2 );
+  ensure_equals( "unit incorrect", tk::length(v1), 1.0, precision );
+  ensure_equals( "unit incorrect", tk::length(v2), 1.0, precision );
 }
 
 } // tut::

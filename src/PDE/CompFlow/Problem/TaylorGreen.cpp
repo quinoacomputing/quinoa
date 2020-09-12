@@ -3,7 +3,7 @@
   \file      src/PDE/CompFlow/Problem/TaylorGreen.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for the compressible flow equations
   \details   This file defines a Problem policy class for the compressible flow
@@ -14,7 +14,7 @@
 
 #include "TaylorGreen.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
+#include "FieldOutput.hpp"
 
 namespace inciter {
 
@@ -30,7 +30,8 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
                                       tk::real x,
                                       tk::real y,
                                       tk::real,
-                                      tk::real )
+                                      tk::real,
+                                      int& )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -60,49 +61,6 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-std::vector< tk::real >
-CompFlowProblemTaylorGreen::solinc( ncomp_t, ncomp_t, tk::real, tk::real,
-                                    tk::real, tk::real, tk::real ) const
-// *****************************************************************************
-// Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-// for all components
-//! \return Increment in values of all components evaluated at (x,y,z,t+dt)
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0, 0.0 }};
-}
-
-tk::SrcFn::result_type
-CompFlowProblemTaylorGreen::src( ncomp_t, ncomp_t, tk::real x,
-                                 tk::real y, tk::real, tk::real )
-// *****************************************************************************
-//  Compute and return source term for manufactured solution
-//! \param[in] x X coordinate where to evaluate the source
-//! \param[in] y Y coordinate where to evaluate the source
-//! \return Array of reals containing the source for all components
-//! \note The function signature must follow tk::SrcFn
-// *****************************************************************************
-{
-  return {{ 0.0, 0.0, 0.0, 0.0,
-    3.0*M_PI/8.0*( cos(3.0*M_PI*x)*cos(M_PI*y) -
-                   cos(3.0*M_PI*y)*cos(M_PI*x) ) }};
-}
-
-void
-CompFlowProblemTaylorGreen::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param; using tag::bcdir;
-
-  for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
-}
-
 std::vector< std::string >
 CompFlowProblemTaylorGreen::fieldNames( ncomp_t ) const
 // *****************************************************************************
@@ -110,22 +68,16 @@ CompFlowProblemTaylorGreen::fieldNames( ncomp_t ) const
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
-  std::vector< std::string > n;
+  auto n = CompFlowFieldNames();
 
-  n.push_back( "density_numerical" );
   n.push_back( "density_analytical" );
-  n.push_back( "x-velocity_numerical" );
   n.push_back( "x-velocity_analytical" );
   n.push_back( "err(u)" );
-  n.push_back( "y-velocity_numerical" );
   n.push_back( "y-velocity_analytical" );
   n.push_back( "err(v)" );
-  n.push_back( "z-velocity_numerical" );
   n.push_back( "z-velocity_analytical" );
-  n.push_back( "specific_total_energy_numerical" );
   n.push_back( "specific_total_energy_analytical" );
   n.push_back( "err(E)" );
-  n.push_back( "pressure_numerical" );
   n.push_back( "pressure_analytical" );
 
   return n;
@@ -136,6 +88,7 @@ CompFlowProblemTaylorGreen::fieldOutput(
   ncomp_t system,
   ncomp_t,
   ncomp_t offset,
+  std::size_t nunk,
   tk::real,
   tk::real V,
   const std::vector< tk::real >& vol,
@@ -147,6 +100,7 @@ CompFlowProblemTaylorGreen::fieldOutput(
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
+//! \param[in] nunk Number of unknowns to extract
 //! \param[in] V Total mesh volume (across the whole problem)
 //! \param[in] vol Nodal mesh volumes
 //! \param[in] coord Mesh point coordinates
@@ -158,81 +112,55 @@ CompFlowProblemTaylorGreen::fieldOutput(
   const std::size_t rdof =
     g_inputdeck.get< tag::discr, tag::rdof >();
 
-  std::vector< std::vector< tk::real > > out;
+  auto out = CompFlowFieldOutput( system, offset, nunk, U );
+
   const auto r  = U.extract( 0*rdof, offset );
   const auto ru = U.extract( 1*rdof, offset );
   const auto rv = U.extract( 2*rdof, offset );
-  const auto rw = U.extract( 3*rdof, offset );
   const auto re = U.extract( 4*rdof, offset );
 
   // mesh node coordinates
   const auto& x = coord[0];
   const auto& y = coord[1];
 
-  out.push_back( r );
-  out.push_back( std::vector< tk::real >( r.size(), 1.0 ) );
+  out.push_back( std::vector< tk::real >( nunk, 1.0 ) );
 
-  std::vector< tk::real > u = ru;
-  std::transform( r.begin(), r.end(), u.begin(), u.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( u );
-  std::vector< tk::real > ua = ru;
-  for (std::size_t i=0; i<ua.size(); ++i)
+  std::vector< tk::real > ua( nunk );
+  for (std::size_t i=0; i<nunk; ++i)
     ua[i] = std::sin(M_PI*x[i]) * std::cos(M_PI*y[i]);
   out.push_back( ua );
 
   // error in x-velocity
-  auto err = u;
-  for (std::size_t i=0; i<u.size(); ++i)
-     err[i] = std::pow( ua[i] - u[i], 2.0 ) * vol[i] / V;
-   out.push_back( err );
+  std::vector< tk::real > err( nunk );
+  for (std::size_t i=0; i<nunk; ++i)
+    err[i] = std::pow( ua[i] - ru[i], 2.0 ) * vol[i] / V;
+  out.push_back( err );
 
-  std::vector< tk::real > v = rv;
-  std::vector< tk::real > va = rv;
-  std::transform( r.begin(), r.end(), v.begin(), v.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( v );
-  for (std::size_t i=0; i<va.size(); ++i)
+  std::vector< tk::real > va( nunk );
+  for (std::size_t i=0; i<nunk; ++i)
     va[i] = -std::cos(M_PI*x[i]) * std::sin(M_PI*y[i]);
   out.push_back( va );
 
   // error in v-velocity
-  for (std::size_t i=0; i<v.size(); ++i)
-    err[i] = std::pow( va[i] - v[i], 2.0 ) * vol[i] / V;
+  for (std::size_t i=0; i<nunk; ++i)
+    err[i] = std::pow( va[i] - rv[i], 2.0 ) * vol[i] / V;
   out.push_back( err );
 
-  std::vector< tk::real > w = rw;
-  std::vector< tk::real > wa = rw;
-  std::transform( r.begin(), r.end(), w.begin(), w.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( w );
-  for (std::size_t i=0; i<wa.size(); ++i)
-    wa[i] = 0.0;
-  out.push_back( wa );
+  out.push_back( std::vector< tk::real >( nunk, 0.0 ) );
 
-  std::vector< tk::real > E = re;
-  std::vector< tk::real > Ea = re;
-  std::vector< tk::real > Pa( r.size(), 0.0 );
-  std::transform( r.begin(), r.end(), E.begin(), E.begin(),
-                  []( tk::real s, tk::real& d ){ return d /= s; } );
-  out.push_back( E );
-  for (std::size_t i=0; i<Ea.size(); ++i) {
-    Pa[i] = 10.0 +
-      r[i]/4.0*(std::cos(2.0*M_PI*x[i]) + std::cos(2.0*M_PI*y[i]));
+  std::vector< tk::real > Ea( nunk ), Pa( nunk );
+  for (std::size_t i=0; i<nunk; ++i) {
+    Pa[i] = 10.0 + r[i]/4.0*(std::cos(2.0*M_PI*x[i]) + std::cos(2.0*M_PI*y[i]));
     Ea[i] = eos_totalenergy< eq >( system, r[i], ua[i]/r[i], va[i]/r[i],
-                                   wa[i]/r[i], Pa[i]/r[i] );
+                                   0.0, Pa[i]/r[i] );
   }
   out.push_back( Ea );
 
   // error in total specific energy
-  for (std::size_t i=0; i<v.size(); ++i)
-    err[i] = std::pow( Ea[i] - E[i], 2.0 ) * vol[i] / V;
+  for (std::size_t i=0; i<nunk; ++i)
+    err[i] = std::pow( Ea[i] - re[i], 2.0 ) * vol[i] / V;
   out.push_back( err );
 
-  std::vector< tk::real > P( r.size(), 0.0 );
-  for (std::size_t i=0; i<P.size(); ++i)
-    P[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*E[i] );
-  out.push_back( P );
   out.push_back( Pa );
 
   return out;

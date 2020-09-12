@@ -10,7 +10,7 @@ inciter
   dt   1.0e-3 # Time step size
   ttyi 1     # TTY output interval
   scheme dg
-  reorder true
+  pelocal_reorder true
 
   partitioning
     algorithm mj

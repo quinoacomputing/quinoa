@@ -3,7 +3,7 @@
   \file      src/PDE/Transport/Physics/CGAdvDiff.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Physics policy for the transport equations using continuous
              Galerkin (CG)
@@ -28,7 +28,7 @@ using inciter::cg::TransportPhysicsAdvDiff;
 
 void
 TransportPhysicsAdvDiff::diffusionRhs(
-  ncomp_t e,
+  ncomp_t system,
   ncomp_t ncomp,
   tk::real deltat,
   tk::real J,
@@ -38,12 +38,15 @@ TransportPhysicsAdvDiff::diffusionRhs(
   const std::vector< const tk::real* >& r,
   tk::Fields& R ) const
 // *****************************************************************************
-//! Add diffusion contribution to rhs at 2nd time step stage
-//! \param[in] e Equation system index, i.e., which transport equation
+//  Add diffusion contribution to rhs
+//! \param[in] system Equation system index, i.e., which transport equation
 //!   system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of components in this PDE
 //! \param[in] deltat Size of time step
 //! \param[in] J Element Jacobi determinant
+//! \param[in] gid Local->global node id map
+//! \param[in] bid Local chare-boundary node ids (value) associated to global
+//!   node ids (key)
 //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
 //! \param[in] N Element node indices
 //! \param[in] u Solution at element nodes at recent time step
@@ -52,17 +55,18 @@ TransportPhysicsAdvDiff::diffusionRhs(
 // *****************************************************************************
 {
   // diffusivities for all components
-  const auto& diff = g_inputdeck.get< tag::param, eq, tag::diffusivity >()[e];
+  const auto& diff =
+    g_inputdeck.get< tag::param, eq, tag::diffusivity >()[ system ];
 
   // add diffusion contribution to right hand side
   const auto d = deltat * J/6.0;
-  for (ncomp_t c=0; c<ncomp; ++c)
-    for (std::size_t k=0; k<3; ++k) {
-      const auto D = diff[ 3*c+k ];
-      for (std::size_t a=0; a<4; ++a)
-        for (std::size_t b=0; b<4; ++b)
-          R.var(r[c],N[a]) -= d * D * grad[a][k] * grad[b][k] * u[c][b];
-    }
+  for (std::size_t a=0; a<4; ++a)
+    for (ncomp_t c=0; c<ncomp; ++c)
+      for (std::size_t k=0; k<3; ++k) {
+        const auto D = diff[ 3*c+k ];
+          for (std::size_t b=0; b<4; ++b)
+            R.var(r[c],N[a]) -= d * D * grad[a][k] * grad[b][k] * u[c][b];
+      }
 }
 
 tk::real

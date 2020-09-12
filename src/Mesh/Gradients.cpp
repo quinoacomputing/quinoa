@@ -3,7 +3,7 @@
   \file      src/Mesh/Gradients.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Functions computing gradients on unstructured meshes for tetrahedra
   \details   Functions computing gradients using linear finite element shape
@@ -93,20 +93,16 @@ nodegrad( std::size_t node,
 }
 
 std::array< tk::real, 3 >
-edgegrad( std::size_t edge,
-          const std::array< std::vector< tk::real >, 3 >& coord,
+edgegrad( const std::array< std::vector< tk::real >, 3 >& coord,
           const std::vector< std::size_t >& inpoel,
-          const std::pair< std::vector< std::size_t >,
-                           std::vector< std::size_t > >& esued,
+          const std::vector< std::size_t >& esued,
           const tk::Fields& U,
           ncomp_t c )
 // *****************************************************************************
 //  Compute gradient at a mesh edge
-//! \param[in] edge Edge id at which to compute gradient
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
-//! \param[in] esued Linked lists storing elements surrounding edges, see
-//!    tk::genEsued()
+//! \param[in] esued List of elements surrounding edge, see tk::genEsued()
 //! \param[in] U Field vector whose component gradient to compute
 //! \param[in] c Scalar component to compute gradient of
 //! \return Gradient of U(c) at mesh edge
@@ -122,8 +118,8 @@ edgegrad( std::size_t edge,
   std::array< tk::real, 3 > g{{ 0.0, 0.0, 0.0 }};
   tk::real vol = 0.0;
 
-  // loop over cells surrounding mesh edge
-  for (auto e : tk::Around(esued,edge)) {
+  // loop over elements surrounding edge
+  for (auto e : esued) {
      // access node IDs
      const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
                                             inpoel[e*4+2], inpoel[e*4+3] }};

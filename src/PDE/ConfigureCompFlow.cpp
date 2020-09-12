@@ -3,7 +3,7 @@
   \file      src/PDE/ConfigureCompFlow.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Register and compile configuration for compressible flow PDE
   \details   Register and compile configuration for compressible flow PDE.
@@ -14,6 +14,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <limits>
 
 #include <brigand/algorithms/for_each.hpp>
 
@@ -21,7 +22,7 @@
 #include "CartesianProduct.hpp"
 #include "PDEFactory.hpp"
 #include "Inciter/Options/PDE.hpp"
-
+#include "ContainerUtil.hpp"
 #include "ConfigureCompFlow.hpp"
 #include "CompFlow/Physics/CG.hpp"
 #include "CompFlow/Physics/DG.hpp"
@@ -68,6 +69,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 {
   using eq = tag::compflow;
+  using tk::parameters;
 
   auto c = ++cnt[ ctr::PDEType::COMPFLOW ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -88,6 +90,11 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (scheme != ctr::SchemeType::DiagCG && scheme != ctr::SchemeType::ALECG)
+    nfo.emplace_back( "flux", ctr::Flux().name(
+      g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
+
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
 
@@ -106,7 +113,8 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >()[c];
   if (!cv.empty())
-    nfo.emplace_back( "specific heat at const. volume", std::to_string(cv[0]) );
+    nfo.emplace_back( "specific heat at constant volume",
+                      std::to_string(cv[0]) );
 
   // Heat conductivity is optional: the outer vector may be empty
   const auto& k = g_inputdeck.get< tag::param, eq, tag::k >();
@@ -145,6 +153,158 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   const auto& p0 = g_inputdeck.get< tag::param, eq, tag::p0 >();
   if (!p0.empty()) nfo.emplace_back( "coeff p0", parameters( p0 ) );
+
+  // ICs
+
+  const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+
+  const auto& bgdensityic = ic.get< tag::density >();
+  if (bgdensityic.size() > c && !bgdensityic[c].empty())
+    nfo.emplace_back( "IC background density",
+                      std::to_string( bgdensityic[c][0] ) );
+  const auto& bgvelocityic = ic.get< tag::velocity >();
+  if (bgvelocityic.size() > c && !bgvelocityic[c].empty())
+    nfo.emplace_back( "IC background velocity",
+                      parameters( bgvelocityic[c] ) );
+  const auto& bgpressureic = ic.get< tag::pressure >();
+  if (bgpressureic.size() > c && !bgpressureic[c].empty())
+    nfo.emplace_back( "IC background pressure",
+                      std::to_string( bgpressureic[c][0] ) );
+  const auto& bgenergyic = ic.get< tag::energy >();
+  if (bgenergyic.size() > c && !bgenergyic[c].empty())
+    nfo.emplace_back( "IC background energy",
+                      std::to_string( bgenergyic[c][0] ) );
+  const auto& bgtemperatureic = ic.get< tag::temperature >();
+  if (bgtemperatureic.size() > c && !bgtemperatureic[c].empty())
+    nfo.emplace_back( "IC background temperature",
+                      std::to_string( bgtemperatureic[c][0] ) );
+
+  const auto& icbox = ic.get< tag::box >();
+  std::vector< tk::real > box{ icbox.get< tag::xmin >(),
+                               icbox.get< tag::xmax >(),
+                               icbox.get< tag::ymin >(),
+                               icbox.get< tag::ymax >(),
+                               icbox.get< tag::zmin >(),
+                               icbox.get< tag::zmax >() };
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  if (std::any_of( begin(box), end(box),
+        [=]( tk::real p ){ return std::abs(p) > eps; }))
+  {
+    nfo.emplace_back( "IC box", parameters( box ) );
+
+    const auto& boxdensityic = icbox.get< tag::density >();
+    if (boxdensityic.size() > c && !boxdensityic[c].empty())
+      nfo.emplace_back( "IC box density",
+                        std::to_string( boxdensityic[c][0] ) );
+    const auto& boxvelocityic = icbox.get< tag::velocity >();
+    if (boxvelocityic.size() > c && !boxvelocityic[c].empty())
+      nfo.emplace_back( "IC box velocity",
+                        parameters( boxvelocityic[c] ) );
+    const auto& boxpressureic = icbox.get< tag::pressure >();
+    if (boxpressureic.size() > c && !boxpressureic[c].empty())
+      nfo.emplace_back( "IC box pressure",
+                        std::to_string( boxpressureic[c][0] ) );
+    const auto& boxenergyic = icbox.get< tag::energy >();
+    if (boxenergyic.size() > c && !boxenergyic[c].empty())
+      nfo.emplace_back( "IC box internal energy per unit mass",
+                        std::to_string( boxenergyic[c][0] ) );
+    const auto& boxmassic = icbox.get< tag::mass >();
+    if (boxmassic.size() > c && !boxmassic[c].empty())
+      nfo.emplace_back( "IC box mass", std::to_string( boxmassic[c][0] ) );
+    const auto& boxenergy_content_ic = icbox.get< tag::energy_content >();
+    if (boxenergy_content_ic.size() > c && !boxenergy_content_ic[c].empty())
+      nfo.emplace_back( "IC box internal energy per unit volume",
+                        std::to_string( boxenergy_content_ic[c][0] ) );
+    const auto& boxtemperatureic = icbox.get< tag::temperature >();
+    if (boxtemperatureic.size() > c && !boxtemperatureic[c].empty())
+      nfo.emplace_back( "IC box temperature",
+                        std::to_string( boxtemperatureic[c][0] ) );
+
+    const auto& initiate = icbox.get< tag::initiate >();
+    const auto& inittype = initiate.get< tag::init >();
+    if (inittype.size() > c) {
+      auto opt = ctr::Initiate();
+      nfo.emplace_back( opt.group(), opt.name(inittype[c]) );
+      if (inittype[c] == ctr::InitiateType::LINEAR) {
+        const auto& linpoint = initiate.get< tag::point >();
+        if (linpoint.size() > c)
+          nfo.emplace_back( "IC box initiate linear point(s)",
+                            parameters( linpoint[c] ) );
+        const auto& linradius = initiate.get< tag::radius >();
+        if (linradius.size() > c)
+          nfo.emplace_back( "IC box initiate linear radii",
+                            parameters( linradius[c] ) );
+        const auto& linvelocity = initiate.get< tag::velocity >();
+        if (linvelocity.size() > c)
+          nfo.emplace_back( "IC box initiate linear velocity",
+                            parameters( linvelocity[c] ) );
+      }
+    }
+  }
+
+  // BCs
+
+  const auto& bcstag = g_inputdeck.get< tag::param, eq, tag::bcstag >();
+  const auto& spoint = bcstag.get< tag::point >();
+  if (spoint.size() > c)
+    nfo.emplace_back( "Stagnation BC point(s)", parameters( spoint[c] ) );
+  const auto& sradius = bcstag.get< tag::radius >();
+  if (sradius.size() > c)
+    nfo.emplace_back( "Stagnation BC radii", parameters( sradius[c] ) );
+
+  const auto& bcskip = g_inputdeck.get< tag::param, eq, tag::bcskip >();
+  const auto& kpoint = bcskip.get< tag::point >();
+  if (kpoint.size() > c)
+    nfo.emplace_back( "Skip BC point(s)", parameters( kpoint[c] ) );
+  const auto& kradius = bcskip.get< tag::radius >();
+  if (kradius.size() > c)
+    nfo.emplace_back( "Skip BC radii", parameters( kradius[c] ) );
+
+  const auto& fs =
+    g_inputdeck.get< tag::param, eq, tag::bc, tag::bcfarfield >();
+  if (fs.size() > c) {
+    nfo.emplace_back( "Farfield BC sideset(s)", parameters( fs[c] ) );
+    const auto& fr =
+      g_inputdeck.get< tag::param, eq, tag::farfield_density >();
+    if (fr.size() > c)
+      nfo.emplace_back( "Farfield BC density", std::to_string(fr[c]) );
+    const auto& fu =
+      g_inputdeck.get< tag::param, eq, tag::farfield_velocity >();
+    if (fu.size() > c)
+      nfo.emplace_back( "Farfield BC velocity", parameters( fu[c] ) );
+    const auto& fp =
+      g_inputdeck.get< tag::param, eq, tag::farfield_pressure >();
+    if (fp.size() > c)
+      nfo.emplace_back( "Farfield BC pressure", std::to_string(fp[c]) );
+  }
+
+  const auto& sym =
+    g_inputdeck.get< tag::param, eq, tag::bc, tag::bcsym >();
+  if (sym.size() > c)
+    nfo.emplace_back( "Symmetry BC sideset(s)", parameters( sym[c] ) );
+
+  // FCT
+
+  auto bool_to_string = [](bool b) -> std::string {
+    return b ? "true" : "false";
+  };
+
+  const auto fct = g_inputdeck.get< tag::discr, tag::fct >();
+  if (scheme == ctr::SchemeType::DiagCG && fct) {
+
+    const auto& sys = g_inputdeck.get< tag::param, eq, tag::sysfct >();
+    if (sys.size() > c) {
+      nfo.emplace_back( "FCT system character", bool_to_string( sys[c] ) );
+
+      if (sys[c]) {     // if system FCT is enabled for this system
+        const auto& sv = g_inputdeck.get< tag::param, eq, tag::sysfctvar >();
+        if (sv.size() > c) {
+          nfo.emplace_back( "System-FCT variables", parameters( sv[c] ) );
+        }
+      }
+    }
+
+  }
 
   return nfo;
 }

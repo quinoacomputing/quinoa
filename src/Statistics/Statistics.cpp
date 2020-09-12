@@ -3,7 +3,7 @@
   \file      src/Statistics/Statistics.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <iosfwd>
 #include <cctype>
+#include <cfenv>
 
 #include "Types.hpp"
 #include "Exception.hpp"
@@ -264,6 +265,9 @@ Statistics::accumulateOrd()
 //  Accumulate (i.e., only do the sum for) ordinary moments
 // *****************************************************************************
 {
+  fenv_t fe;
+  feholdexcept( &fe );
+
   if (m_nord) {
     // Zero ordinary moment accumulators
     std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );
@@ -282,6 +286,9 @@ Statistics::accumulateOrd()
       }
     }
   }
+
+  feclearexcept( FE_UNDERFLOW );
+  feupdateenv( &fe );
 }
 
 void

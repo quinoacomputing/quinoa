@@ -3,7 +3,7 @@
   \file      src/Control/FileParser.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     File parser base class definition
   \details   File parser base class defintion. File parser base serves as a
@@ -136,7 +136,7 @@ FileParser::diagnostics( const tk::Print& print,
         // special-handle the beginning of the line with no space in front of it
         if (sloc == std::string::npos) sloc = 0; else ++sloc;
         // underline error and warning differently
-        for (auto i=sloc; i<std::max(cnum,l.underline.size()); ++i)
+        for (auto i=sloc; i<l.underline.size(); ++i)
           l.underline[i] = underchar;
       }
     } else if (!e.empty()) lines.emplace( 0, ErroneousLine(e) );

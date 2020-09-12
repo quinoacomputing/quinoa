@@ -3,7 +3,7 @@
   \file      src/PDE/Transport/Problem/ShearDiff.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for transport equations
   \details   This file defines a Problem policy class for the transport
@@ -28,7 +28,7 @@ using inciter::TransportProblemShearDiff;
 
 std::vector< tk::real >
 TransportProblemShearDiff::solution( ncomp_t system, ncomp_t ncomp,
-          tk::real x, tk::real y, tk::real z, tk::real t )
+          tk::real x, tk::real y, tk::real z, tk::real t, int& )
 // *****************************************************************************
 //  Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index
@@ -66,32 +66,6 @@ TransportProblemShearDiff::solution( ncomp_t system, ncomp_t ncomp,
   return r;
 }
 
-std::vector< tk::real >
-TransportProblemShearDiff::solinc( ncomp_t system, ncomp_t ncomp, tk::real x,
-                              tk::real y, tk::real z, tk::real t, tk::real dt )
-const
-// *****************************************************************************
-//  Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
-//  for all components
-//! \param[in] system Equation system index
-//! \param[in] ncomp Number of components in this transport equation system
-//! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in] t Time where to evaluate the solution increment starting from
-//! \param[in] dt Time increment at which evaluate the solution increment to
-//! \return Increment in values of all components evaluated at (x,y,t+dt)
-// *****************************************************************************
-{
-  auto st1 = solution( system, ncomp, x, y, z, t );
-  auto st2 = solution( system, ncomp, x, y, z, t+dt );
-
-  std::transform( begin(st1), end(st1), begin(st2), begin(st2),
-                  []( tk::real s, tk::real& d ){ return d -= s; } );
-
-  return st2;
-}
-
 void
 TransportProblemShearDiff::errchk( ncomp_t system, ncomp_t ncomp ) const
 // *****************************************************************************
@@ -114,21 +88,6 @@ TransportProblemShearDiff::errchk( ncomp_t system, ncomp_t ncomp ) const
   const auto& d = g_inputdeck.get< param, eq, tag::diffusivity >()[system];
   ErrChk( 3*ncomp == d.size(),
     "Wrong number of advection-diffusion PDE parameters 'diffusivity'" );
-}
-
-void
-TransportProblemShearDiff::side( std::unordered_set< int >& conf ) const
-// *****************************************************************************
-//  Query all side set IDs the user has configured for all components in this
-//  PDE system
-//! \param[in,out] conf Set of unique side set IDs to add to
-// *****************************************************************************
-{
-  using tag::param; using tag::bcdir;
-
-  for (const auto& s : g_inputdeck.get< param, eq, bcdir >())
-    for (const auto& i : s)
-      conf.insert( std::stoi(i) );
 }
 
 std::vector< std::array< tk::real, 3 > >

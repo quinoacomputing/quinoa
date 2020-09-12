@@ -3,7 +3,7 @@
   \file      src/Inciter/DiagCG.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     DiagCG for a PDE system with continuous Galerkin without a matrix
   \details   DiagCG advances a system of partial differential equations (PDEs)
@@ -38,6 +38,7 @@
 #include "DerivedData.hpp"
 #include "FluxCorrector.hpp"
 #include "NodeDiagnostics.hpp"
+#include "CommMap.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
 #include "NoWarning/diagcg.decl.h"
@@ -75,9 +76,9 @@ class DiagCG : public CBase_DiagCG {
 
     //! Constructor
     explicit DiagCG( const CProxy_Discretization& disc,
-                     const std::map< int, std::vector< std::size_t > >& /* bface */,
+                     const std::map< int, std::vector< std::size_t > >& bface,
                      const std::map< int, std::vector< std::size_t > >& bnode,
-                     const std::vector< std::size_t >& /* triinpoel */ );
+                     const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -99,8 +100,14 @@ class DiagCG : public CBase_DiagCG {
     //! Size communication buffers (no-op)
     void resizeComm() {}
 
+    //! Setup node-neighborhood (no-op)
+    void nodeNeighSetup() {}
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
+
+    //! Receive total box IC volume and set conditions in box
+    void box( tk::real v );
 
     // Initially compute left hand side diagonal matrix
     void init();
@@ -110,6 +117,10 @@ class DiagCG : public CBase_DiagCG {
 
     //! Compute left-hand side of transport equations
     void lhs();
+
+    //! Receive boundary point normals on chare-boundaries
+    void comnorm( const std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
 
     //! Receive contributions to left-hand side matrix on chare-boundaries
     void comlhs( const std::vector< std::size_t >& gid,
@@ -124,7 +135,7 @@ class DiagCG : public CBase_DiagCG {
     void update( const tk::Fields& a, tk::Fields&& dul );
 
     //! Optionally refine/derefine mesh
-    void refine();
+    void refine( const std::vector< tk::real >& l2ref );
 
     //! Receive new mesh from refiner
     void resizePostAMR(
@@ -133,7 +144,7 @@ class DiagCG : public CBase_DiagCG {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
       const std::unordered_map< std::size_t, std::size_t >& addedTets,
-      const std::unordered_map< int, std::vector< std::size_t > >& msum,
+      const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& /* bface */,
       const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& /* triinpoel */ );
@@ -149,7 +160,7 @@ class DiagCG : public CBase_DiagCG {
     void step();
 
     // Evaluate whether to do load balancing
-    void evalLB();
+    void evalLB( int nrestart );
 
     //! Continue to next time step
     void next();
@@ -164,19 +175,31 @@ class DiagCG : public CBase_DiagCG {
       p | m_nsol;
       p | m_nlhs;
       p | m_nrhs;
+      p | m_nnorm;
       p | m_bnode;
+      p | m_bface;
+      p | m_triinpoel;
       p | m_u;
       p | m_ul;
       p | m_du;
       p | m_ue;
       p | m_lhs;
       p | m_rhs;
-      p | m_bc;
+      p | m_bcdir;
       p | m_lhsc;
       p | m_rhsc;
       p | m_difc;
       p | m_vol;
+      p | m_bnorm;
+      p | m_bnormc;
+      p | m_symbcnodemap;
+      p | m_symbcnodes;
+      p | m_farfieldbcnodes;
       p | m_diag;
+      p | m_boxnodes;
+      p | m_boxnodes_set;
+      p | m_dtp;
+      p | m_tp;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -197,8 +220,14 @@ class DiagCG : public CBase_DiagCG {
     std::size_t m_nlhs;
     //! Counter for right-hand side vector nodes updated
     std::size_t m_nrhs;
+    //! Counter for receiving boundary point normals
+    std::size_t m_nnorm;
     //! Boundary node lists mapped to side set ids
     std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Boundary faces side-set information
+    std::map< int, std::vector< std::size_t > > m_bface;
+    //! Triangle face connecitivity
+    std::vector< std::size_t > m_triinpoel;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes (low orderd)
@@ -211,14 +240,14 @@ class DiagCG : public CBase_DiagCG {
     tk::Fields m_lhs;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
-    //! Boundary conditions evaluated and assigned to mesh node IDs
+    //! Boundary conditions evaluated and assigned to local mesh node IDs
     //! \details Vector of pairs of bool and boundary condition value associated
-    //!   to meshnode IDs at which the user has set Dirichlet boundary
+    //!   to local mesh node IDs at which the user has set Dirichlet boundary
     //!   conditions for all PDEs integrated. The bool indicates whether the BC
     //!   is set at the node for that component the if true, the real value is
     //!   the increment (from t to dt) in the BC specified for a component.
     std::unordered_map< std::size_t,
-      std::vector< std::pair< bool, tk::real > > > m_bc;
+      std::vector< std::pair< bool, tk::real > > > m_bcdir;
     //! Receive buffer for communication of the left hand side
     //! \details Key: chare id, value: lhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_lhsc;
@@ -230,14 +259,48 @@ class DiagCG : public CBase_DiagCG {
     std::unordered_map< std::size_t, std::vector< tk::real > > m_difc;
     //! Total mesh volume
     tk::real m_vol;
+    //! Face normals in boundary points associated to side sets
+    //! \details Key: local node id, value: unit normal and inverse distance
+    //!   square between face centroids and points, outer key: side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnorm;
+    //! \brief Receive buffer for communication of the boundary point normals
+    //!   associated to side sets
+    //! \details Key: global node id, value: normals (first 3 components),
+    //!   inverse distance squared (4th component), outer key, side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnormc;
+    //! Unique set of nodes at which symmetry BCs are set for side sets
+    std::unordered_map< int, std::unordered_set< std::size_t > > m_symbcnodemap;
+    //! Unique set of nodes at which symmetry BCs are set
+    std::unordered_set< std::size_t > m_symbcnodes;
+    //! Unique set of nodes at which farfield BCs are set
+    std::unordered_set< std::size_t > m_farfieldbcnodes;
     //! Diagnostics object
     NodeDiagnostics m_diag;
+    //! Mesh node ids at which user-defined box ICs are defined
+    std::vector< std::size_t > m_boxnodes;
+    //! Box nodes that have been set
+    std::unordered_set< std::size_t > m_boxnodes_set;
+    //! Time step size for each mesh node
+    std::vector< tk::real > m_dtp;
+    //! Physical time for each mesh node
+    std::vector< tk::real > m_tp;
+    //! True in the last time step
+    int m_finished;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
+
+    //! Compute boundary point normals
+    void bnorm( const std::unordered_map< int,
+                std::unordered_set< std::size_t > >& bcnodes );
+
+    //! Finish setting up communication maps (norms, etc.)
+    void normfinal();
 
     //! Output mesh fields to files
     void out();

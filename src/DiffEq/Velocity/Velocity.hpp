@@ -3,7 +3,7 @@
   \file      src/DiffEq/Velocity/Velocity.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     A model for velocity in variable-density turbulence
   \details   This file implements the time integration of a system of stochastic
@@ -54,7 +54,21 @@ class Velocity {
     explicit Velocity( ncomp_t c ) :
       m_c( c ),
       m_depvar( g_inputdeck.get< tag::param, eq, tag::depvar >().at(c) ),
-      m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
+      m_solve( g_inputdeck.get< tag::param, eq, tag::solve >().at(c) ),
+      m_mixmassfracbeta_coupled( coupled< eq, tag::mixmassfracbeta >( c ) ),
+      m_mixmassfracbeta_depvar( depvar< eq, tag::mixmassfracbeta >( c ) ),
+      m_mixmassfracbeta_offset(
+        offset< eq, tag::mixmassfracbeta, tag::mixmassfracbeta_id >( c ) ),
+      m_mixmassfracbeta_ncomp(
+        // The magic number, 4, below is MixMassFractionBeta::NUMDERIVED + 1,
+        // but cannot be given as such, because that would lead to circular
+        // dependencies of Velocity depending on MixMassfractionBeta, and vice
+        // versa.
+        m_mixmassfracbeta_coupled ?
+        ncomp< eq, tag::mixmassfracbeta, tag::mixmassfracbeta_id >( c ) / 4 :
+        0 ),
+      m_numderived( numderived() ),
+      m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) - m_numderived ),
       m_offset(
         g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
@@ -66,18 +80,14 @@ class Velocity {
       m_dissipation_depvar( depvar< eq, tag::dissipation >( c ) ),
       m_dissipation_offset(
         offset< eq, tag::dissipation, tag::dissipation_id >( c ) ),
-      m_mixmassfracbeta_coupled( coupled< eq, tag::mixmassfracbeta >( c ) ),
-      m_mixmassfracbeta_depvar( depvar< eq, tag::mixmassfracbeta >( c ) ),
-      m_mixmassfracbeta_offset(
-        offset< eq, tag::mixmassfracbeta, tag::mixmassfracbeta_id >( c ) ),
-      m_solve(g_inputdeck.get< tag::param, eq, tag::solve >().at(c)),
       m_U( {{ tk::ctr::mean( m_depvar, 0 ),
               tk::ctr::mean( m_depvar, 1 ),
               tk::ctr::mean( m_depvar, 2 ) }} ),
       m_variant( g_inputdeck.get< tag::param, eq, tag::variant >().at(c) ),
       m_c0(),
       m_G(),
-      m_coeff( g_inputdeck.get< tag::param, eq, tag::c0 >().at(c), m_c0, m_dU )
+      m_coeff( g_inputdeck.get< tag::param, eq, tag::c0 >().at(c), m_c0, m_dU ),
+      m_gravity( { 0.0, 0.0, 0.0 } )
     {
       Assert( m_ncomp == 3, "Velocity eq number of components must be 3" );
       // Zero prescribed mean velocity gradient if full variable is solved for
@@ -90,6 +100,26 @@ class Velocity {
         Assert( hts.size() == 1,
                 "Velocity eq Hydrotimescales vector size must be 1" );
         m_hts = ctr::HydroTimeScales().table( hts[0] );
+      }
+      // Initialize gravity body force if configured
+      const auto& gravity =
+        g_inputdeck.get< tag::param, eq, tag::gravity >().at(c);
+      if (!gravity.empty()) {
+        m_gravity[0] = gravity[0];
+        m_gravity[1] = gravity[1];
+        m_gravity[2] = gravity[2];
+      }
+    }
+
+    //! Compute number of derived variables
+    //! \return Number of derived variables computed
+    std::size_t numderived() const {
+      if (m_solve == ctr::DepvarType::PRODUCT ||
+          m_solve == ctr::DepvarType::FLUCTUATING_MOMENTUM)
+      { // derived: 3 velocity components for each coupled mass fraction
+        return m_mixmassfracbeta_ncomp * 3;
+      } else {
+        return 0;
       }
     }
 
@@ -114,6 +144,9 @@ class Velocity {
                   tk::real t,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
+      using ctr::DepvarType;
+      const auto epsilon = std::numeric_limits< tk::real >::epsilon();
+
       // Update coefficients
       tk::real eps = 0.0;
       m_coeff.update( m_depvar, m_dissipation_depvar, moments, m_hts, m_solve,
@@ -121,7 +154,7 @@ class Velocity {
 
       // Access mean velocity (if needed)
       std::array< tk::real, 3 > U{{ 0.0, 0.0, 0.0 }};
-      if (m_solve == ctr::DepvarType::FULLVAR) {
+      if (m_solve == DepvarType::FULLVAR || m_solve == DepvarType::PRODUCT) {
         using tk::ctr::lookup;
         U[0] = lookup( m_U[0], moments );
         U[1] = lookup( m_U[1], moments );
@@ -131,12 +164,43 @@ class Velocity {
       // Modify G with the mean velocity gradient
       for (std::size_t i=0; i<9; ++i) m_G[i] -= m_dU[i];
 
+      // Access mean specific volume (if needed)
+      using tk::ctr::mean;
+      using tk::ctr::Term;
+      using tk::ctr::Product;
+      auto mixncomp = m_mixmassfracbeta_ncomp;
+      std::vector< tk::real > R;
+      std::vector< tk::real > RU;
+      auto Uc = static_cast< char >( std::toupper(m_depvar) );
+      if (m_solve == ctr::DepvarType::PRODUCT ||
+          m_solve == DepvarType::FLUCTUATING_MOMENTUM)
+      {
+        R.resize( mixncomp, 0.0 );
+        RU.resize( mixncomp*3, 0.0 );
+        for (std::size_t c=0; c<mixncomp; ++c) {
+          R[c] = lookup(mean(m_mixmassfracbeta_depvar, c+mixncomp), moments);
+          Term Rs( static_cast<char>(std::toupper(m_mixmassfracbeta_depvar)),
+                   mixncomp + c,
+                   tk::ctr::Moment::ORDINARY );
+          std::array< Term, 3 > Us{
+            Term( Uc, m_ncomp+(c*3)+0, tk::ctr::Moment::ORDINARY ),
+            Term( Uc, m_ncomp+(c*3)+1, tk::ctr::Moment::ORDINARY ),
+            Term( Uc, m_ncomp+(c*3)+2, tk::ctr::Moment::ORDINARY ) };
+          std::array< Product, 3 > RsUs{ Product( { Us[0], Rs } ),
+                                         Product( { Us[1], Rs } ),
+                                         Product( { Us[2], Rs } ) };
+          RU[ c*3+0 ] = lookup( RsUs[0], moments );
+          RU[ c*3+1 ] = lookup( RsUs[1], moments );
+          RU[ c*3+2 ] = lookup( RsUs[2], moments );
+        }
+      }
+
       const auto npar = particles.nunk();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance
         std::vector< tk::real > dW( m_ncomp );
         m_rng.gaussian( stream, m_ncomp, dW.data() );
-        // Acces particle velocity
+        // Access particle velocity
         tk::real& Up = particles( p, 0, m_offset );
         tk::real& Vp = particles( p, 1, m_offset );
         tk::real& Wp = particles( p, 2, m_offset );
@@ -147,16 +211,50 @@ class Velocity {
         tk::real u = Up - U[0];
         tk::real v = Vp - U[1];
         tk::real w = Wp - U[2];
-        // Update particle velocity
+        // Update particle velocity based on Langevin model
         Up += (m_G[0]*u + m_G[1]*v + m_G[2]*w)*dt + d*dW[0];
         Vp += (m_G[3]*u + m_G[4]*v + m_G[5]*w)*dt + d*dW[1];
         Wp += (m_G[6]*u + m_G[7]*v + m_G[8]*w)*dt + d*dW[2];
+        // Add gravity
+        if (m_solve == ctr::DepvarType::PRODUCT ||
+            m_solve == ctr::DepvarType::FLUCTUATING_MOMENTUM)
+        {
+          for (ncomp_t c=0; c<mixncomp; ++c) {
+            auto rhoi = particles( p, mixncomp + c, m_mixmassfracbeta_offset );
+            if (std::abs(rhoi) > epsilon) {
+              // add gravity force to particle momentum
+              Up += (rhoi - R[c]) * m_gravity[0] * dt;
+              Vp += (rhoi - R[c]) * m_gravity[1] * dt;
+              Wp += (rhoi - R[c]) * m_gravity[2] * dt;
+              // compute derived particle velocity
+              particles( p, m_ncomp+(c*3)+0, m_offset ) = (Up + RU[c*3+0])/rhoi;
+              particles( p, m_ncomp+(c*3)+1, m_offset ) = (Vp + RU[c*3+1])/rhoi;
+              particles( p, m_ncomp+(c*3)+2, m_offset ) = (Wp + RU[c*3+2])/rhoi;
+            }
+          }
+        } else {
+          Up += m_gravity[0] * dt;
+          Vp += m_gravity[1] * dt;
+          Wp += m_gravity[2] * dt;
+        }
       }
     }
 
   private:
     const ncomp_t m_c;                  //!< Equation system index
     const char m_depvar;                //!< Dependent variable
+    const ctr::DepvarType m_solve;      //!< Dependent variable to solve for
+
+    //! True if coupled to mixmassfracbeta
+    const bool m_mixmassfracbeta_coupled;
+    //! Depvar of coupled mixmassfracbeta eq
+    const char m_mixmassfracbeta_depvar;
+    //! Offset of coupled mixmassfracbeta eq
+    const ncomp_t m_mixmassfracbeta_offset;
+    //! Number of scalar components in coupled mixmassfracbeta eq
+    const ncomp_t m_mixmassfracbeta_ncomp;
+
+    const ncomp_t m_numderived;         //!< Number of derived variables
     const ncomp_t m_ncomp;              //!< Number of components
     const ncomp_t m_offset;             //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
@@ -169,15 +267,6 @@ class Velocity {
     const char m_dissipation_depvar;    //!< Coupled dissipation dependent var
     const ncomp_t m_dissipation_offset; //!< Offset of coupled dissipation eq
 
-    //! True if coupled to mixmassfracbeta
-    const bool m_mixmassfracbeta_coupled;
-    //! Depvar of coupled mixmassfracbeta eq
-    const char m_mixmassfracbeta_depvar;
-    //! Offset of coupled mixmassfracbeta eq
-    const ncomp_t m_mixmassfracbeta_offset;
-
-    //! Depndent variable to solve for
-    const ctr::DepvarType m_solve;
     //! Array of tk::ctr::Product used to access the mean velocity
     const std::array< tk::ctr::Product, 3 > m_U;
     //! Velocity model variant
@@ -197,6 +286,9 @@ class Velocity {
 
     //! (Optionally) prescribed mean velocity gradient
     std::array< tk::real, 9 > m_dU;
+
+    //! Optional gravity body force
+    std::array< tk::real, 3 > m_gravity;
 };
 
 } // walker::

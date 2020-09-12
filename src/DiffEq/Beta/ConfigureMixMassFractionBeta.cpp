@@ -3,7 +3,7 @@
   \file      src/DiffEq/Beta/ConfigureMixMassFractionBeta.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Register and compile configuration on the mix mass fraction beta
              SDE
@@ -75,8 +75,12 @@ infoMixMassFractionBeta( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
   auto ncomp = g_inputdeck.get< tag::component, eq >()[c];
-  nfo.emplace_back( "number of components",
-    std::to_string( ncomp ) + " (" + std::to_string(ncomp/4) + "*4) " );
+
+  auto numderived =
+    MixMassFractionBeta<InitZero,MixMassFracBetaCoeffInstVel>::NUMDERIVED;
+  nfo.emplace_back( "number of components", std::to_string(ncomp) + " (=" +
+                    std::to_string(ncomp/(numderived+1)) + '*' +
+                    std::to_string(numderived+1) + ") " );
 
   coupledInfo< eq, tag::velocity, tag::velocity_id >
              ( c, "velocity", nfo );

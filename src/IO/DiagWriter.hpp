@@ -3,7 +3,7 @@
   \file      src/IO/DiagWriter.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Text diagnostics writer declaration
   \details   This file declares the ASCII diagnostics writer class that
@@ -45,6 +45,9 @@ class DiagWriter : public tk::Writer {
                       tk::real t,
                       tk::real dt,
                       const std::vector< tk::real >& diagnostics );
+
+    //! Precision accessor
+    int prec() const { return m_precision; }
 
   private:
     int m_precision;    //!< Floating-point precision in digits

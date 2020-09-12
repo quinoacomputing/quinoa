@@ -48,12 +48,13 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
                       ${OMEGA_H_LIBRARIES}
+                      ${LUA_LIBRARIES}
                       ${LIBCXX_LIBRARIES}       # only for static link with libc++
                       ${LIBCXXABI_LIBRARIES})   # only for static link with libc++
 
 # Add custom dependencies for Inciter's main Charm++ module
 addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
-addCharmModule( "lbswitch" "${INCITER_EXECUTABLE}" )
+addCharmModule( "lbswitch" "inciterCharmModule" )
 
 add_dependencies( "inciterCharmModule" "charestatecollectorCharmModule" )
 add_dependencies( "inciterCharmModule" "meshwriterCharmModule" )

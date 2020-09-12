@@ -3,7 +3,7 @@
   \file      src/PDE/Integrate/Initialize.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Functions for initialization of system of PDEs in DG methods
   \details   This file contains functionality for setting initial conditions
@@ -100,7 +100,8 @@ tk::initialize( ncomp_t system,
       auto B =
         eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
-      const auto s = solution( system, ncomp, gp[0], gp[1], gp[2], t );
+      int inbox = 0;
+      const auto s = solution( system, ncomp, gp[0], gp[1], gp[2], t, inbox );
 
       auto wt = wgp[igp] * vole;
 

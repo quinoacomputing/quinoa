@@ -3,7 +3,7 @@
 # \file      TPLs.cmake
 # \copyright 2012-2015 J. Bakosi,
 #            2016-2018 Los Alamos National Security, LLC.,
-#            2019 Triad National Security, LLC.
+#            2019-2020 Triad National Security, LLC.
 #            All rights reserved. See the LICENSE file for details.
 # \brief     Find the third-party libraries required to build Quinoa
 #
@@ -156,6 +156,11 @@ find_package(HighwayHash)
 set(BRIGAND_ROOT ${TPL_DIR}) # prefer ours
 find_package(Brigand)
 
+#### Configure Sol2
+set(SOL2_ROOT ${TPL_DIR}) # prefer ours
+find_package(Lua)
+find_package(Sol2)
+
 message(STATUS "------------------------------------------")
 
 # Function to print a list of missing library names
@@ -197,11 +202,12 @@ endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
     Zoltan2_FOUND AND HDF5_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
-    (MKL_FOUND OR LAPACKE_FOUND) AND Boost_FOUND AND HIGHWAYHASH_FOUND)
+    (MKL_FOUND OR LAPACKE_FOUND) AND Boost_FOUND AND HIGHWAYHASH_FOUND AND
+    LUA_FOUND AND SOL2_FOUND)
   set(ENABLE_INCITER "true")
   set(INCITER_EXECUTABLE inciter)
 else()
-  PrintMissing(inciter "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;Zoltan2_FOUND;HDF5_FOUND;BRIGAND_FOUND;PEGTL_FOUND;MKL_FOUND;LAPACKE_FOUND;Boost_FOUND")
+  PrintMissing(inciter "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;Zoltan2_FOUND;HDF5_FOUND;BRIGAND_FOUND;PEGTL_FOUND;MKL_FOUND;LAPACKE_FOUND;Boost_FOUND;LUA_FOUND;SOL2_FOUND")
 endif()
 
 if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
@@ -225,11 +231,11 @@ endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
     BRIGAND_FOUND AND HDF5_FOUND AND RANDOM123_FOUND AND Boost_FOUND AND
-    (MKL_FOUND OR LAPACKE_FOUND) AND HIGHWAYHASH_FOUND)
+    (MKL_FOUND OR LAPACKE_FOUND) AND HIGHWAYHASH_FOUND AND H5Part_FOUND)
   set(ENABLE_WALKER "true")
   set(WALKER_EXECUTABLE walker)
 else()
-  PrintMissing(walker "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;PEGTL_FOUND;BRIGAND_FOUND;HDF5_FOUND;RANDOM123_FOUND;Boost_FOUND;MKL_FOUND;LAPACKE_FOUND;HIGHWAYHASH_FOUND")
+  PrintMissing(walker "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;PEGTL_FOUND;BRIGAND_FOUND;HDF5_FOUND;RANDOM123_FOUND;Boost_FOUND;MKL_FOUND;LAPACKE_FOUND;HIGHWAYHASH_FOUND;H5Part_FOUND")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND ROOT_FOUND

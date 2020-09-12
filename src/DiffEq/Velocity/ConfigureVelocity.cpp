@@ -3,7 +3,7 @@
   \file      src/DiffEq/Velocity/ConfigureVelocity.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Register and compile configuration on the velocity SDE
   \details   Register and compile configuration on the velocity SDE.
@@ -65,10 +65,23 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
 
   nfo.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::VELOCITY ), "" );
 
+  auto solve = g_inputdeck.get< tag::param, eq, tag::solve >()[c];
+
   nfo.emplace_back( "start offset in particle array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
   auto ncomp = g_inputdeck.get< tag::component, eq >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+
+  if (solve == ctr::DepvarType::PRODUCT &&
+      coupled< eq, tag::mixmassfracbeta >(c))
+  {
+    auto numderived =
+      Velocity<InitZero,VelocityCoeffStationary>(c).numderived();
+    nfo.emplace_back( "number of components", std::to_string(ncomp) + " (=" +
+                      std::to_string(ncomp - numderived) + '+' +
+                      std::to_string(numderived) + ") " );
+  } else {
+    nfo.emplace_back( "number of components", std::to_string(ncomp) );
+  }
 
   coupledInfo< eq, tag::position, tag::position_id >
              ( c, "position", nfo );
@@ -85,7 +98,6 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
   auto cp = g_inputdeck.get< tag::param, eq, tag::coeffpolicy >()[c];
   nfo.emplace_back( "coefficients policy", ctr::CoeffPolicy().name( cp ) );
 
-  auto solve = g_inputdeck.get< tag::param, eq, tag::solve >()[c];
   auto dv = ctr::Depvar();
   nfo.emplace_back( dv.group(), dv.name(solve) );
 
@@ -112,6 +124,10 @@ infoVelocity( std::map< ctr::DiffEqType, tk::ctr::ncomp_t >& cnt )
     g_inputdeck.get< tag::param, eq, tag::rng >()[c] ) );
   nfo.emplace_back( "coeff C0", std::to_string(
     g_inputdeck.get< tag::param, eq, tag::c0 >().at(c) ) );
+
+  const auto& gravity =
+    g_inputdeck.get< tag::param, tag::velocity, tag::gravity >().at(c);
+  if (!gravity.empty()) nfo.emplace_back( "gravity [3]", parameters(gravity) );
 
   return nfo;
 }

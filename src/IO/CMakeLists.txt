@@ -36,6 +36,8 @@ add_library(NativeMeshIO
             STLTxtMeshReader.cpp
             NetgenMeshReader.cpp
             ASCMeshReader.cpp
+            UGRIDMeshReader.cpp
+            RDGFLOMeshReader.cpp
             GmshMeshWriter.cpp
             NetgenMeshWriter.cpp
             #SiloWriter.cpp
@@ -113,7 +115,7 @@ if (HAS_OMEGA_H)
   )
 endif()
 
-if (HAS_ROOT)
+if (HAS_ROOT AND ENABLE_FILECONV)
   add_library(RootMeshIO
               FileConvWriter.cpp
               RootMeshWriter.cpp)
@@ -138,25 +140,26 @@ if (HAS_ROOT)
   )
 endif()
 
-add_library(HyperMeshIO
-            HyperMeshReader.cpp)
-
-target_include_directories(HyperMeshIO PUBLIC
-                           ${QUINOA_SOURCE_DIR}
-                           ${QUINOA_SOURCE_DIR}/Base
-                           ${QUINOA_SOURCE_DIR}/Mesh
-                           ${TPL_INCLUDE_DIR}
-                           ${HIGHWAYHASH_INCLUDE_DIRS}
-                           ${PUGIXML_INCLUDE_DIRS})
-
-set_target_properties(HyperMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
-                      quinoa_hypermeshio)
-
-INSTALL(TARGETS HyperMeshIO
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+if (ENABLE_UNITTEST OR ENABLE_MESHCONV)
+  add_library(HyperMeshIO
+              HyperMeshReader.cpp)
+  
+  target_include_directories(HyperMeshIO PUBLIC
+                             ${QUINOA_SOURCE_DIR}
+                             ${QUINOA_SOURCE_DIR}/Base
+                             ${QUINOA_SOURCE_DIR}/Mesh
+                             ${TPL_INCLUDE_DIR}
+                             ${HIGHWAYHASH_INCLUDE_DIRS}
+                             ${PUGIXML_INCLUDE_DIRS})
+  
+  set_target_properties(HyperMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
+                        quinoa_hypermeshio)
+  
+  INSTALL(TARGETS HyperMeshIO
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+endif()
 
 add_library(MeshDetect
             MeshDetect.cpp)
@@ -203,22 +206,29 @@ INSTALL(TARGETS MeshWriter
 
 addCharmModule( "meshwriter" "MeshWriter" )
 
-add_library(ParticleIO
-            H5PartWriter.cpp)
+if (ENABLE_WALKER)
+  add_library(ParticleWriter
+              H5PartWriter.cpp
+              ParticleWriter.cpp)
 
-target_include_directories(ParticleIO PUBLIC
-                           ${QUINOA_SOURCE_DIR}
-                           ${QUINOA_SOURCE_DIR}/Base
-                           ${H5PART_INCLUDE_DIRS}
-                           ${HDF5_INCLUDE_DIRS}
-                           ${MPI_CXX_INCLUDE_DIRS}
-                           ${MPI_CXX_INCLUDE_PATH})
+  target_include_directories(ParticleWriter PUBLIC
+                             ${QUINOA_SOURCE_DIR}
+                             ${QUINOA_SOURCE_DIR}/Base
+                             ${PROJECT_BINARY_DIR}/../IO
+                             ${H5PART_INCLUDE_DIRS}
+                             ${HDF5_INCLUDE_DIRS}
+                             ${CHARM_INCLUDE_DIRS}
+                             ${MPI_CXX_INCLUDE_DIRS}
+                             ${MPI_CXX_INCLUDE_PATH})
 
-set_target_properties(ParticleIO PROPERTIES LIBRARY_OUTPUT_NAME
-                      quinoa_particleio)
+  set_target_properties(ParticleWriter PROPERTIES LIBRARY_OUTPUT_NAME
+                        quinoa_particlewriter)
 
-INSTALL(TARGETS ParticleIO
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
+  INSTALL(TARGETS ParticleWriter
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+  )
+
+  addCharmModule( "particlewriter" "ParticleWriter" )
+endif()

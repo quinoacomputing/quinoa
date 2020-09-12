@@ -3,7 +3,7 @@
   \file      src/IO/MeshWriter.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ group for outputing mesh data to file
   \details   Charm++ group declaration used to output data associated to
@@ -66,8 +66,11 @@ class MeshWriter : public CBase_MeshWriter {
                 const std::vector< std::size_t >& triinpoel,
                 const std::vector< std::string >& elemfieldnames,
                 const std::vector< std::string >& nodefieldnames,
+                const std::vector< std::string >& nodesurfnames,
                 const std::vector< std::vector< tk::real > >& elemfields,
                 const std::vector< std::vector< tk::real > >& nodefields,
+                const std::vector< std::vector< tk::real > >& nodesurfs,
+                const std::set< int >& outsets,
                 CkCallback c );
 
     /** @name Charm++ pack/unpack serializer member functions */
@@ -95,14 +98,14 @@ class MeshWriter : public CBase_MeshWriter {
     Centering m_bndCentering;
     //! True if benchmark mode
     bool m_benchmark;
-
     //! Total number chares across the whole problem
     int m_nchare;
 
     //! Compute filename
     std::string filename( const std::string& basefilename,
                           uint64_t itr,
-                          int chareid ) const;
+                          int chareid,
+                          int surfid = 0 ) const;
 };
 
 } // tk::

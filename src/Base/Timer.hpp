@@ -3,7 +3,7 @@
   \file      src/Base/Timer.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Timer declaration
   \details   Timer declaration. Timer is a simple class to do timing various
@@ -16,7 +16,6 @@
 #define Timer_h
 
 #include <cstdint>
-#include <type_traits>          // for move, enable_if<>::type
 #include <chrono>
 
 #include "NoWarning/pup.hpp"      // for er

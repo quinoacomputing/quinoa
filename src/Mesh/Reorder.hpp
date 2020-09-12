@@ -3,7 +3,7 @@
   \file      src/Mesh/Reorder.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Mesh reordering routines for unstructured meshes
   \details   Mesh reordering routines for unstructured meshes.
@@ -76,6 +76,11 @@ global2local( const std::vector< std::size_t >& ginpoel );
 bool
 positiveJacobians( const std::vector< std::size_t >& inpoel,
                    const std::array< std::vector< real >, 3 >& coord );
+
+//! Generate nodes of side set faces
+std::map< int, std::vector< std::size_t > >
+bfacenodes( const std::map< int, std::vector< std::size_t > >& bface,
+            const std::vector< std::size_t >& triinpoel );
 
 } // ::tk
 

@@ -3,7 +3,7 @@
   \file      src/Main/RNGTest.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
@@ -53,7 +53,10 @@ CProxy_Main mainProxy;
 tk::CProxy_ChareStateCollector stateProxy;
 
 //! If true, call and stack traces are to be output with exceptions
-bool g_trace;
+//! \note This is true by default so that the trace is always output between
+//!   program start and the Main ctor in which the user-input from command line
+//!   setting for this overrides this true setting.
+bool g_trace = true;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -211,15 +214,16 @@ class Main : public CBase_Main {
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
-      // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create RNGTest driver
       m_driver( tk::Main< rngtest::RNGTestDriver >
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::RNGTEST,
                           tk::rngtest_executable(),
-                          m_print ) ),
+                          rngtest::g_inputdeck_defaults.get< tag::cmd, tag::io,
+                            tag::screen >(),
+                          rngtest::g_inputdeck_defaults.get< tag::cmd, tag::io,
+                            tag::nrestart >() ) ),
       m_timer(1),       // Start new timer measuring the total runtime
       m_timestamp()
     {
@@ -247,8 +251,10 @@ class Main : public CBase_Main {
 
     //! Towards normal exit but collect chare state first (if any)
     void finalize() {
-      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
-                    CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+      tk::finalize( m_cmdline, m_timer, stateProxy, m_timestamp,
+        rngtest::g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >(),
+        rngtest::g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >(),
+        CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
     }
 
     //! Entry method triggered when quiescence is detected
@@ -261,14 +267,16 @@ class Main : public CBase_Main {
 
     //! Dump chare state
     void dumpstate( CkReductionMsg* msg ) {
-      tk::dumpstate( m_cmdline, m_print, msg );
+      tk::dumpstate( m_cmdline,
+        rngtest::g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >(),
+        rngtest::g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >(),
+        msg );
     }
 
   private:
     int m_signal;                               //!< Used to set signal handlers
     rngtest::ctr::CmdLine m_cmdline;            //!< Command line
     rngtest::CmdLineParser m_cmdParser;         //!< Command line parser
-    rngtest::RNGTestPrint m_print;              //!< Pretty printer
     rngtest::RNGTestDriver m_driver;            //!< Driver
     std::vector< tk::Timer > m_timer;           //!< Timers
 

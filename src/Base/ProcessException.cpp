@@ -3,7 +3,7 @@
   \file      src/Base/ProcessException.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Process an exception
   \details   This file contains the implementation of processing an exception.
@@ -21,12 +21,14 @@
 #include <cstdio>
 #include <csignal>
 #include <exception>
+#include <cfenv>
 
 #include "NoWarning/charm.hpp"
 #include "NoWarning/mpi.hpp"
 
 #include "Exception.hpp"
 #include "ProcessException.hpp"
+#include "QuinoaConfig.hpp"
 
 namespace tk {
 
@@ -53,9 +55,11 @@ signalHandler( int signum )
   const char* name = nullptr;
   switch( signum ) {
     case SIGABRT: name = "SIGABRT";  break;
-    case SIGSEGV: name = "SIGSEGV";  break;
-    case SIGILL:  name = "SIGILL";   break;
     case SIGFPE:  name = "SIGFPE";   break;
+    case SIGILL:  name = "SIGILL";   break;
+    case SIGINT:  name = "SIGINT";   break;
+    case SIGSEGV: name = "SIGSEGV";  break;
+    case SIGTERM: name = "SIGTERM";  break;
   }
 
   // Echo what signal is caught
@@ -86,9 +90,15 @@ setSignalHandlers()
   } );
 
   signal( SIGABRT, tk::signalHandler );
-  signal( SIGSEGV, tk::signalHandler );
-  signal( SIGILL,  tk::signalHandler );
   signal( SIGFPE,  tk::signalHandler );
+  signal( SIGILL,  tk::signalHandler );
+  signal( SIGINT,  tk::signalHandler );
+  signal( SIGSEGV, tk::signalHandler );
+  signal( SIGTERM, tk::signalHandler );
+
+  #if !defined(__APPLE__) && !defined(HOST_OS_ALPINE)
+  feenableexcept( FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW );
+  #endif
 
   return 0;
 }

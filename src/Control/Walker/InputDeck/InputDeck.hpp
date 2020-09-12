@@ -3,7 +3,7 @@
   \file      src/Control/Walker/InputDeck/InputDeck.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -30,14 +30,14 @@ namespace ctr {
 
 //! Member data for tagged tuple
 using InputDeckMembers = brigand::list<
-    tag::title,      kw::title::info::expect::type
+    tag::cmd,        CmdLine
+  , tag::title,      kw::title::info::expect::type
   , tag::selected,   selects
   , tag::discr,      discretization
   , tag::prec,       precision
   , tag::flformat,   floatformat
   , tag::component,  ncomps
   , tag::interval,   intervals
-  , tag::cmd,        CmdLine
   , tag::param,      parameters
   , tag::stat,       std::vector< tk::ctr::Product >
   , tag::pdf,        std::vector< tk::ctr::Probability >
@@ -66,6 +66,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::term
                                  , kw::dt
                                  , kw::ttyi
+                                 , kw::pari
                                  , kw::rngs
                                  , kw::ncomp
                                  , kw::rng
@@ -87,6 +88,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::sde_mean
                                  , kw::sde_cov
                                  , kw::mean_gradient
+                                 , kw::gravity
                                  , kw::sde_T
                                  , kw::sde_lambda
                                  , kw::sde_b
@@ -115,7 +117,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::const_shear
                                  , kw::stationary
                                  , kw::position
-                                 , kw::velocity
+                                 , kw::velocitysde
                                  , kw::inst_velocity
                                  , kw::seed
                                  #ifdef HAS_MKL
@@ -218,6 +220,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::sde_com2
                                  , kw::fullvar
                                  , kw::fluctuation
+                                 , kw::product
+                                 , kw::fluctuating_momentum
                                  , kw::solve
                                  , kw::variant
                                  , kw::slm
@@ -226,6 +230,12 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::light
                                  , kw::heavy
                                  >;
+
+    //! Set of tags to ignore when printing this InputDeck
+    using ignore =
+      brigand::set< tag::cmdinfo
+                  , tag::ctrinfo
+                  , tag::helpkw >;
 
     //! \brief Constructor: set all defaults
     //! \param[in] cl Previously parsed and store command line
@@ -246,6 +256,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       // Default intervals
       get< tag::interval, tag::tty >() = 1;
       get< tag::interval, tag::stat >() = 1;
+      get< tag::interval, tag::particles >() = 10000;
       get< tag::interval, tag::pdf >() = 1;
       // Default requested statistics
       get< tag::stat >() = std::vector< tk::ctr::Product >();

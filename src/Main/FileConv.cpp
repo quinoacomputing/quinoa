@@ -3,7 +3,7 @@
   \file      src/Main/FileConv.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     File converter Charm++ main chare
   \details   File converter Charm++ main chare. This file contains the
@@ -43,7 +43,10 @@ CProxy_Main mainProxy;
 tk::CProxy_ChareStateCollector stateProxy;
 
 //! If true, call and stack traces are to be output with exceptions
-bool g_trace;
+//! \note This is true by default so that the trace is always output between
+//!   program start and the Main ctor in which the user-input from command line
+//!   setting for this overrides this true setting.
+bool g_trace = true;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -77,15 +80,14 @@ class Main : public CBase_Main {
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
-      // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create FileConv driver
       m_driver( tk::Main< fileconv::FileConvDriver >
                         ( msg->argc, msg->argv,
                           m_cmdline,
 			  tk::HeaderType::FILECONV,
 			  tk::fileconv_executable(),
-			  m_print ) ),
+                          m_cmdline.get< tag::io, tag::screen >(),
+                          m_cmdline.get< tag::io, tag::nrestart >() ) ),
       m_timer(1),       // Start new timer measuring the total runtime
       m_timestamp()
     {
@@ -113,8 +115,10 @@ class Main : public CBase_Main {
 
     //! Towards normal exit but collect chare state first (if any)
     void finalize() {
-      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
-                    CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
+      tk::finalize( m_cmdline, m_timer, stateProxy, m_timestamp,
+        m_cmdline.get< tag::io, tag::screen >(),
+        m_cmdline.get< tag::io, tag::nrestart >(),
+        CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
     }
 
     //! Entry method triggered when quiescence is detected
@@ -127,7 +131,10 @@ class Main : public CBase_Main {
 
     //! Dump chare state
     void dumpstate( CkReductionMsg* msg ) {
-      tk::dumpstate( m_cmdline, m_print, msg );
+      tk::dumpstate( m_cmdline,
+        m_cmdline.get< tag::io, tag::screen >(),
+        m_cmdline.get< tag::io, tag::nrestart >(),
+        msg );
     }
 
     //! Add a time stamp contributing to final timers output
@@ -144,7 +151,6 @@ class Main : public CBase_Main {
     int m_signal;                               //!< Used to set signal handlers
     fileconv::ctr::CmdLine m_cmdline;           //!< Command line
     fileconv::CmdLineParser m_cmdParser;        //!< Command line parser
-    tk::Print m_print;                          //!< Pretty printer
     fileconv::FileConvDriver m_driver;          //!< Driver
     std::vector< tk::Timer > m_timer;           //!< Timers
 

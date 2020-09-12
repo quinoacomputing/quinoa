@@ -3,7 +3,7 @@
 # \file      tests/regression/CMakeLists.txt
 # \copyright 2012-2015 J. Bakosi,
 #            2016-2018 Los Alamos National Security, LLC.,
-#            2019 Triad National Security, LLC.
+#            2019-2020 Triad National Security, LLC.
 #            All rights reserved. See the LICENSE file for details.
 # \brief     Cmake code common to all regression testing
 #
@@ -80,11 +80,13 @@ if(ENABLE_INCITER)
   add_subdirectory(inciter/compflow/Euler/TaylorGreen)
   add_subdirectory(inciter/compflow/Euler/RayleighTaylor)
   add_subdirectory(inciter/compflow/Euler/NLEnergyGrowth)
+  add_subdirectory(inciter/compflow/Euler/GaussHump)
   add_subdirectory(inciter/mesh_refinement/t0ref)
   add_subdirectory(inciter/mesh_refinement/dtref)
   add_subdirectory(inciter/compflow/Euler/SodShocktube)
   add_subdirectory(inciter/compflow/Euler/SedovBlastwave)
   add_subdirectory(inciter/multimat/InterfaceAdvection)
   add_subdirectory(inciter/multimat/SodShocktube)
+  add_subdirectory(inciter/multimat/WaterAirShocktube)
   add_subdirectory(inciter/restart)
 endif()

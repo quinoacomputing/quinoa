@@ -3,7 +3,7 @@
   \file      src/Inciter/ElemDiagnostics.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     ElemDiagnostics class for collecting element diagnostics
   \details   ElemDiagnostics class for collecting element diagnostics, e.g.,
@@ -119,7 +119,8 @@ ElemDiagnostics::compute_diag( const Discretization& d,
                                const tk::Fields& geoElem,
                                const std::vector< std::size_t >& ndofel,
                                const tk::Fields& u,
-                               std::vector< std::vector< tk::real > >& diag ) const
+                               std::vector< std::vector< tk::real > >& diag )
+const
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc. for DG
 //! \param[in] d Discretization base class to read from
@@ -167,8 +168,8 @@ ElemDiagnostics::compute_diag( const Discretization& d,
       auto gp = tk::eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
-      auto B =
-        tk::eval_basis(ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]);
+      auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+                               coordgp[2][igp]);
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 

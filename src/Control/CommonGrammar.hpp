@@ -3,7 +3,7 @@
   \file      src/Control/CommonGrammar.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Generic, low-level grammar, re-used by specific grammars
   \details   Generic, low-level grammar. We use the Parsing Expression Grammar
@@ -56,9 +56,9 @@ namespace grm {
   //!   case). This is true for both inserting variables into the set as well as
   //!   at matching terms of products in parsing requested statistics.
   static std::set< char, tk::ctr::CaseInsensitiveCharLess > depvars;
-  //! \brief Parser-lifetime storage for PDF names.
-  //! \details Used to track the names registered  so that parsing new ones can
-  //!    be required to be unique.
+  //! \brief Parser-lifetime storage for PDF names
+  //! \details Used to track the names of PDFs registered so that parsing new
+  //!    ones can be required to be unique.
   static std::set< std::string > pdfnames;
 
   // Common auxiliary functions (reused by multiple grammars)
@@ -103,6 +103,7 @@ namespace grm {
     WRONGDIRICHLET,     //!< Wrong number of parameters for a Dirichlet PDF
     NEGATIVEPARAM,      //!< Negative parameter given configuring a PDF
     NONCOMP,            //!< No number of components selected
+    LARGECOMP,          //!< Component index indexing out of max eq sys ncomp
     NONMAT,             //!< No number of materials selected
     EOSGAMMA,           //!< Wrong number of EOS gamma parameters
     EOSCV,              //!< Wrong number of EOS cv parameters
@@ -124,6 +125,7 @@ namespace grm {
     BINSIZES,           //!< PDF sample space vars unequal to number of bins
     PDF,                //!< PDF specification syntax error
     PDFEXISTS,          //!< PDF identifier already defined
+    POINTEXISTS,        //!< Point identifier already defined
     BADPRECISION,       //!< Floating point precision specification incorrect
     BOUNDS,             //!< Specified value out of bounds
     PRECISIONBOUNDS,    //!< Floating point precision spec out of bounds
@@ -132,6 +134,11 @@ namespace grm {
     ENERGY_UNFINISHED,  //!< Nonlinear energy growth problem config unfinished
     RT_UNFINISHED,      //!< Reyleigh-Taylor unstable configuration unfinished
     BC_EMPTY,           //!< Empty boundary condition block
+    SYSFCTVAR,          //!< System-FCT variable index incorrect
+    BGICMISSING,        //!< Background IC unspecified
+    STAGBCWRONG,        //!< Stagnation BC incorrectly configured
+    SKIPBCWRONG,        //!< Skip BC incorrectly configured
+    NONDISJOINTBC,      //!< Different BC types assigned to the same side set
     WRONGSIZE,          //!< Size of parameter vector incorrect
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
@@ -200,6 +207,9 @@ namespace grm {
     { MsgKey::NONCOMP, "The number of components has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'ncomp' to specify the number of components." },
+    { MsgKey::LARGECOMP, "The component index is too large and indexes out of "
+      "the total number of scalar components of the equation system "
+      "configured." },
     { MsgKey::NONMAT, "The number of materials has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'nmat' to specify the number of materials." },
@@ -320,6 +330,8 @@ namespace grm {
       "equal the number of bin sizes given." },
     { MsgKey::PDF, "Syntax error while parsing PDF specification." },
     { MsgKey::PDFEXISTS, "PDF already exists. PDF identifiers must be unique."},
+    { MsgKey::POINTEXISTS, "Point already exists. Point identifiers must be "
+      "unique."},
     { MsgKey::BADPRECISION, "Precision specification invalid. It should be a "
       "positive integer or the word \'max\', selecting the maximum number of "
       "digits for the underyling floating point type."},
@@ -344,6 +356,20 @@ namespace grm {
       "above."},
     { MsgKey::BC_EMPTY, "Error in the preceding block. Empty boundary "
       "condition specifications, e.g., 'sideset end', are not allowed." },
+    { MsgKey::SYSFCTVAR, "Error in the system-FCT variable definition block. "
+      "The block must list integers between 1 and 5 both inclusive." },
+    { MsgKey::STAGBCWRONG, "Stagnation boundary conditions incorrectly "
+      "configured. Within a bc_stag ... end block there must be a point ... "
+      "end block and a radius ... end block. Both point and radius blocks must "
+      "contain floating-point numbers, and the number of items in the point "
+      "block must be exactly 3x that of radii." },
+    { MsgKey::SKIPBCWRONG, "Skip boundary conditions incorrectly "
+      "configured. Within a bc_skip ... end block there must be a point ... "
+      "end block and a radius ... end block. Both point and radius blocks must "
+      "contain floating-point numbers, and the number of items in the point "
+      "block must be exactly 3x that of radii." },
+    { MsgKey::NONDISJOINTBC, "Different boundary condition types are assigned "
+      "to the same side set." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
     { MsgKey::HYDROTIMESCALES, "Error in the preceding line or block. "
@@ -612,6 +638,22 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       stack.template store_back< tag, tags... >( in.string() );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename tag, typename... tags >
+  struct Store_back_bool : pegtl::success {};
+  //! \brief Convert and push back a bool to vector of ints in state at position
+  //!    given by tags
+  //! \details This struct and its apply function are used as a functor-like
+  //!    wrapper for calling the store_back member function of the underlying
+  //!    grammar stack, tk::Control::store_back.
+  template< typename tag, typename...tags >
+  struct action< Store_back_bool< tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template store_back_bool< tag, tags... >( in.string() );
     }
   };
 
@@ -1097,6 +1139,15 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  struct noop : pegtl::success {};
+  //! Action that does nothing
+  template<>
+  struct action< noop > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& ) {}
+  };
+
+  //! Rule used to trigger action
   template< class eq, class param, class... xparam >
   struct check_spikes : pegtl::success {};
   //! Check if the spikes parameter vector specifications are correct
@@ -1286,6 +1337,18 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  template< typename Tag, typename... Tags >
+  struct store_lua : pegtl::success {};
+  //! Append character parsed in a lua ... end block to a string
+  template< typename Tag, typename... Tags >
+  struct action< store_lua< Tag, Tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template get< Tag, Tags..., tag::lua >() += in.string();
+    }
+  };
+
   // Common grammar (grammar that is reused by multiple grammars)
 
   //! Read 'token' until 'erased' trimming, i.e., not consuming, 'erased'
@@ -1410,7 +1473,7 @@ namespace grm {
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
   //!   between values
   template< class key, class insert, class endkeyword,
-            class starter, class value = number >
+            class starter = noop, class value = number >
   // cppcheck-suppress syntaxError
   struct vector :
          pegtl::seq<
@@ -1657,6 +1720,14 @@ namespace grm {
                                          pegtl::alpha >,
                                 precision< use, tag::diag > > > {};
 
+  //! Parse lua ... end block and store it behind Tag, Tags..., tag::lua
+  template< template< class > class use, typename Tag, typename... Tags >
+  struct lua :
+         pegtl::if_must<
+           readkw< typename use< kw::lua >::pegtl_string >,
+           pegtl::until< readkw< typename use< kw::end >::pegtl_string >,
+                          act< pegtl::any, store_lua< Tag, Tags... > > > > {};
+
   //! Match model parameter
   template< typename keyword, typename kw_type, typename model, typename Tag >
   struct parameter :
@@ -1679,7 +1750,6 @@ namespace grm {
   struct rngblock :
          pegtl::if_must< readkw< typename use< kw::rngs >::pegtl_string >,
                          block< use< kw::end >, rngs > > {};
-
 
   //! Match equation/model parameter vector
   //! \details This structure is used to match a keyword ... end block that

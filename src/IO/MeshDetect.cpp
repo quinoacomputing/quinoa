@@ -3,7 +3,7 @@
   \file      src/IO/MeshDetect.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Unstructured mesh file format detection
   \details   Unstructured mesh file format detection functions.
@@ -60,6 +60,10 @@ detectInput( const std::string& filename )
     return MeshReaderType::HYPER;
   } else if ( s.find("*nd") != std::string::npos ) {
     return MeshReaderType::ASC;
+  } else if ( s.find("   ") != std::string::npos ) {
+    return MeshReaderType::UGRID;
+  } else if ( s.find(" npo") != std::string::npos ) {
+    return MeshReaderType::RDGFLO;
   } else {
     try {
       // cppcheck-suppress ignoredReturnValue

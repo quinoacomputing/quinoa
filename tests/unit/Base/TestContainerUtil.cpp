@@ -3,7 +3,7 @@
   \file      tests/unit/Base/TestContainerUtil.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/ContainerUtil.hpp
   \details   Unit tests for Base/ContainerUtil.hpp
@@ -26,6 +26,11 @@
 #ifndef DOXYGEN_GENERATING_OUTPUT
 
 namespace tut {
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
+#endif
 
 //! All tests in group inherited from this base
 struct ContainerUtil_common {
@@ -111,16 +116,18 @@ void ContainerUtil_object::test< 3 >() {
   ensure_equals( "ref_find incorrect", two, "two" );
 
   // test if cref_find throws in DEBUG when cannot find key
+  // skipped in RELEASE mode, would yield segmentation fault
+  #ifdef NDEBUG
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
   try {
     auto three = tk::ref_find(u,3);
-    #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
-    #endif
   }
   catch ( tk::Exception& ) {
     // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
   }
+  #endif
 }
 
 //! Test vector extents
@@ -357,6 +364,10 @@ void ContainerUtil_object::test< 11 >() {
   tk::erase_if( b, []( decltype(b)::value_type& p ){ return p.first<0; } );
   ensure( "erase_if on map incorrect", b == correct_result );
 }
+
+#if defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
+#endif
 
 } // tut::
 

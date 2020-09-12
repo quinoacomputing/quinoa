@@ -3,7 +3,7 @@
   \file      src/Inciter/NodeDiagnostics.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     NodeDiagnostics class for collecting diagnostics
   \details   NodeDiagnostics class for collecting diagnostics, e.g., residuals,
@@ -29,7 +29,13 @@ class NodeDiagnostics {
     static void registerReducers();
 
     //! Compute diagnostics, e.g., residuals, norms of errors, etc.
-    bool compute( Discretization& d, const tk::Fields& u ) const;
+    bool compute(
+      Discretization& d,
+      const tk::Fields& u, const tk::Fields& un,
+      const std::unordered_map< int,
+        std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm,
+      const std::unordered_set< std::size_t >& symbcnodes,
+      const std::unordered_set< std::size_t >& farfieldbcnodes ) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/Types.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers. This file defines the components of
@@ -38,7 +38,9 @@ using selects = tk::TaggedTuple< brigand::list<
 
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
-    tag::control,   std::string                  //!< Control filename
+    tag::nrestart,  int                             //!< Number of restarts
+  , tag::control,  std::string                      //!< Control filename
+  , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
 > >;
 
 //! Parameters storage

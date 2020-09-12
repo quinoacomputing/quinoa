@@ -3,7 +3,7 @@
   \file      src/PDE/PDEFactory.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Differential equations factory
   \details   This file declares the type for a differential equations factory.
@@ -14,8 +14,6 @@
 
 #include <map>
 #include <set>
-
-#include <brigand/algorithms/for_each.hpp>
 
 #include "CGPDE.hpp"
 #include "DGPDE.hpp"
@@ -106,18 +104,6 @@ struct registerDG : registerPDE< Eq, DGFactory, DGPDE > {
                        ctr::PDEType t ) :
     registerPDE< Eq, DGFactory, DGPDE >( f, t, eqtypes ) {}
 };
-
-//! \brief Convert and return values from vector as string
-//! \param[in] v Vector whose components to return as a string
-//! \return Concatenated string of values read from a vector
-template< typename V >
-std::string parameters( const V& v ) {
-  std::stringstream s;
-  s << "{ ";
-  for (auto p : v) s << p << ' ';
-  s << "}";
-  return s.str();
-}
 
 } // inciter::
 

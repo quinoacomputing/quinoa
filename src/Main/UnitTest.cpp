@@ -3,7 +3,7 @@
   \file      src/Main/UnitTest.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -55,7 +55,10 @@ CProxy_Main mainProxy;
 tk::CProxy_ChareStateCollector stateProxy;
 
 //! If true, call and stack traces are to be output with exceptions
-bool g_trace;
+//! \note This is true by default so that the trace is always output between
+//!   program start and the Main ctor in which the user-input from command line
+//!   setting for this overrides this true setting.
+bool g_trace = true;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -143,15 +146,14 @@ class Main : public CBase_Main {
       m_cmdline(),
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline, m_helped ),
-      // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create UnitTest driver
       m_driver( tk::Main< unittest::UnitTestDriver >
                         ( msg->argc, msg->argv,
                           m_cmdline,
                           tk::HeaderType::UNITTEST,
                           tk::unittest_executable(),
-                          m_print ) ),
+                          m_cmdline.get< tag::io, tag::screen >(),
+                          m_cmdline.get< tag::io, tag::nrestart >() ) ),
       m_timer(1), // Start new timer measuring the serial+Charm++ runtime
       m_timestamp()
     {
@@ -186,9 +188,11 @@ class Main : public CBase_Main {
 
     //! Towards normal exit but collect chare state first (if any)
     void finalize( bool pass ) {
-      tk::finalize( m_cmdline, m_timer, m_print, stateProxy, m_timestamp,
-                    CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ),
-                    pass );
+      tk::finalize( m_cmdline, m_timer, stateProxy, m_timestamp,
+        m_cmdline.get< tag::io, tag::screen >(),
+        m_cmdline.get< tag::io, tag::nrestart >(),
+        CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ),
+        pass );
     }
 
     //! Entry method triggered when quiescence is detected
@@ -201,7 +205,10 @@ class Main : public CBase_Main {
 
     //! Dump chare state
     void dumpstate( CkReductionMsg* msg ) {
-      tk::dumpstate( m_cmdline, m_print, msg );
+      tk::dumpstate( m_cmdline,
+        m_cmdline.get< tag::io, tag::screen >(),
+        m_cmdline.get< tag::io, tag::nrestart >(),
+        msg );
     }
 
   private:
@@ -209,7 +216,6 @@ class Main : public CBase_Main {
     bool m_helped;      //!< Indicates if help was requested on the command line
     unittest::ctr::CmdLine m_cmdline;                   //!< Command line
     unittest::CmdLineParser m_cmdParser;                //!< Command line parser
-    unittest::UnitTestPrint m_print;                    //!< Pretty printer
     unittest::UnitTestDriver m_driver;                  //!< Driver
     std::vector< tk::Timer > m_timer;                   //!< Timers
 

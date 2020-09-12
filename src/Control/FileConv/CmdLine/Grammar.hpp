@@ -3,7 +3,7 @@
   \file      src/Control/FileConv/CmdLine/Grammar.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     FileConv's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -91,7 +91,8 @@ namespace cmd {
                      version,
                      license,
                      io< kw::input, tag::input >,
-                     io< kw::output, tag::output > > {};
+                     io< kw::output, tag::output >,
+                     io< kw::screen, tag::screen > > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :
