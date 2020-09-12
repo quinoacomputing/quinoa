@@ -24,7 +24,7 @@ disallow_in_source_builds()
 
 # Set version number: major.minor
 set(MAJOR_VER 0)
-set(MINOR_VER 2)
+set(MINOR_VER 3)
 
 # Set LA-CC number
 set(LACC "20072")
