@@ -64,7 +64,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_bnode( bnode ),
   m_triinpoel( triinpoel ),
   m_nchare( nchare ),
-  m_initial( 1 ),
+  m_mode( RefMode::T0REF ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
   m_ninitref( g_inputdeck.get< tag::amr, tag::init >().size() ),
   m_refiner( m_inpoel ),
@@ -84,8 +84,19 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_coarseBndFaces(),
   m_coarseBndNodes(),
   m_rid( ginpoel.size() ),
+  m_oldrid(),
   m_lref( ginpoel.size() ),
-  m_parent()
+  m_parent(),
+  m_writeCallback(),
+  m_outref_ginpoel(),
+  m_outref_el(),
+  m_outref_coord(),
+  m_outref_addedNodes(),
+  m_outref_addedTets(),
+  m_outref_nodeCommMap(),
+  m_outref_bface(),
+  m_outref_bnode(),
+  m_outref_triinpoel()
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Transporter (host) proxy
@@ -112,11 +123,8 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   Assert( tk::conforming( m_inpoel, m_coord ),
           "Input mesh to Refiner not conforming" );
 
-  // Fill initial (matching) mapping between local and refiner node ids
-  std::iota( begin(m_rid), end(m_rid), 0 );
-  // Fill in inverse, mapping refiner to local node ids
-  std::size_t i = 0;
-  for (auto r : m_rid) m_lref[r] = i++;
+  // Generate local -> refiner lib node id map and its inverse
+  libmap();
 
   // Reverse initial mesh refinement type list (will pop from back)
   std::reverse( begin(m_initref), end(m_initref) );
@@ -130,6 +138,19 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
     t0ref();
   else
     endt0ref();
+}
+void
+Refiner::libmap()
+// *****************************************************************************
+// (Re-)generate local -> refiner lib node id map and its inverse
+// *****************************************************************************
+{
+  // Fill initial (matching) mapping between local and refiner node ids
+  std::iota( begin(m_rid), end(m_rid), 0 );
+
+  // Fill in inverse, mapping refiner to local node ids
+  std::size_t i = 0;
+  for (auto r : m_rid) m_lref[r] = i++;
 }
 
 void
@@ -232,7 +253,34 @@ Refiner::dtref( const std::map< int, std::vector< std::size_t > >& bface,
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
-  m_initial = 0;
+  m_mode = RefMode::DTREF;
+
+  // Update boundary node lists
+  m_bface = bface;
+  m_bnode = bnode;
+  m_triinpoel = triinpoel;
+
+  start();
+}
+
+void
+Refiner::outref( const std::map< int, std::vector< std::size_t > >& bface,
+                 const std::map< int, std::vector< std::size_t > >& bnode,
+                 const std::vector< std::size_t >& triinpoel,
+                 CkCallback c,
+                 RefMode mode )
+// *****************************************************************************
+// Start mesh refinement (for field output)
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
+//! \param[in] c Function to continue with after the writing field output
+//! \param[in] mode Refinement mode
+// *****************************************************************************
+{
+  m_mode = mode;
+
+  m_writeCallback = c;
 
   // Update boundary node lists
   m_bface = bface;
@@ -263,7 +311,7 @@ Refiner::t0ref()
 void
 Refiner::start()
 // *****************************************************************************
-//  Start new step of initial mesh refinement
+//  Start new step of mesh refinement
 // *****************************************************************************
 {
   m_extra = 0;
@@ -415,13 +463,18 @@ void
 Refiner::refine()
 // *****************************************************************************
 //  Do a single step of mesh refinement (really, only tag edges)
-//! \details During initial (t<0) mesh refinement, this is a single step in a
-//!   potentially multiple-entry list of initial adaptive mesh refinement steps.
-//!   Distribution of the chare-boundary edges must have preceded this step, so
-//!   that boundary edges (shared by multiple chares) can agree on a refinement
-//!   that yields a conforming mesh across chare boundaries.
-//!   During-timestepping (dtref) mesh refinement this is called once, as we
-//!   only do a single step during time stepping.
+//! \details During initial (t<0, t0ref) mesh refinement, this is a single step
+//!   in a potentially multiple-entry list of initial adaptive mesh refinement
+//!   steps. Distribution of the chare-boundary edges must have preceded this
+//!   step, so that boundary edges (shared by multiple chares) can agree on a
+//!   refinement that yields a conforming mesh across chare boundaries.
+//!
+//!   During-timestepping (t>0, dtref) mesh refinement this is called once, as
+//!   we only do a single step during time stepping.
+//!
+//!   During field-output (outref) mesh refinement, this may be called multiple
+//!   times, depending the number of refinement levels needed for the field
+//!   output.
 // *****************************************************************************
 {
   // Free memory used for computing shared boundary edges
@@ -434,7 +487,7 @@ Refiner::refine()
             m_inpoel, m_coord ),
           "Mesh partition before refinement leaky" );
 
-  if (m_initial) {      // if initial (t<0) AMR (t0ref)
+  if (m_mode == RefMode::T0REF) {
 
     // Refine mesh based on next initial refinement type
     if (!m_initref.empty()) {
@@ -452,13 +505,22 @@ Refiner::refine()
       else Throw( "Initial AMR type not implemented" );
     }
 
-  } else {              // if during time stepping (t>0) AMR (dtref)
+  } else if (m_mode == RefMode::DTREF) {
 
     if (g_inputdeck.get< tag::amr, tag::dtref_uniform >())
       uniformRefine();
     else
       errorRefine();
-  }
+
+  } else if (m_mode == RefMode::OUTREF) {
+
+    uniformRefine();
+
+  } else if (m_mode == RefMode::OUTDEREF) {
+
+    uniformDeRefine();
+
+  } else Throw( "RefMode not implemented" );
 
   // Communicate extra edges
   comExtra();
@@ -607,10 +669,11 @@ Refiner::correctref()
   // Aggregate number of extra edges that still need correction and some
   // refinement/derefinement statistics
   const auto& tet_store = m_refiner.tet_store;
-  std::vector< std::size_t > m{ m_extra,
-                                tet_store.marked_refinements.size(),
-                                tet_store.marked_derefinements.size(),
-                                m_initial };
+  std::vector< std::size_t >
+    m{ m_extra,
+       tet_store.marked_refinements.size(),
+       tet_store.marked_derefinements.size(),
+       static_cast< std::underlying_type_t< RefMode > >( m_mode ) };
   contribute( m, CkReduction::sum_ulong, m_cbr.get< tag::matched >() );
 }
 
@@ -628,6 +691,7 @@ Refiner::updateEdgeData()
   // other chares.
   const auto& ref_edges = m_refiner.tet_store.edge_store.edges;
   const auto& refinpoel = m_refiner.tet_store.get_active_inpoel();
+
   for (std::size_t e=0; e<refinpoel.size()/4; ++e) {
     auto A = refinpoel[e*4+0];
     auto B = refinpoel[e*4+1];
@@ -793,11 +857,15 @@ Refiner::perform()
 //!   (Discretization).
 // *****************************************************************************
 {
-  // Save old tets and their ids before performing refinement
-  m_oldntets = m_oldTets.size();
-  m_oldTets.clear();
-  for (const auto& [ id, tet ] : m_refiner.tet_store.tets)
-    m_oldTets.insert( tet );
+  // Save old tets and their ids before performing refinement. Outref is always
+  // followed by outderef, so to the outside world, the mesh is uchanged, thus
+  // no update.
+  if (m_mode != RefMode::OUTREF && m_mode != RefMode::OUTDEREF) {
+    m_oldntets = m_oldTets.size();
+    m_oldTets.clear();
+    for (const auto& [ id, tet ] : m_refiner.tet_store.tets)
+      m_oldTets.insert( tet );
+  }
 
   //auto& tet_store = m_refiner.tet_store;
   //std::cout << "before ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
@@ -806,9 +874,13 @@ Refiner::perform()
   m_refiner.perform_derefinement();
   //std::cout << "after deref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
 
+  // Update volume and boundary mesh
   updateMesh();
 
-  if (m_initial) {      // if initial (before t=0) AMR
+  // Save mesh at every initial refinement step (mainly for debugging). Will
+  // replace with just a 'next()' in production.
+  if (m_mode == RefMode::T0REF) {
+
     auto l = m_ninitref - m_initref.size() + 1;  // num initref steps completed
     auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     // Generate times equally subdividing t0-1...t0 to ninitref steps
@@ -818,8 +890,11 @@ Refiner::perform()
     // Output mesh after refinement step
     writeMesh( "t0ref", itr, t,
                CkCallback( CkIndex_Refiner::next(), thisProxy[thisIndex] ) );
+
   } else {
+
     next();
+
   }
 }
 
@@ -829,14 +904,14 @@ Refiner::next()
 // Continue after finishing a refinement step
 // *****************************************************************************
 {
-  if (m_initial) {      // if initial (before t=0) AMR
+  if (m_mode == RefMode::T0REF) {
 
     // Remove initial mesh refinement step from list
     if (!m_initref.empty()) m_initref.pop_back();
     // Continue to next initial AMR step or finish
     if (!m_initref.empty()) t0ref(); else endt0ref();
 
-  } else {              // if AMR during time stepping (t>0)
+  } else if (m_mode == RefMode::DTREF) {
 
     // Augment node communication map with newly added nodes on chare-boundary
     for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
@@ -855,7 +930,33 @@ Refiner::next()
     m_scheme.ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel, m_el,
       m_coord, m_addedNodes, m_addedTets, m_nodeCommMap, m_bface, m_bnode,
       m_triinpoel );
-  }
+
+  } else if (m_mode == RefMode::OUTREF) {
+
+    // Store field output mesh
+    m_outref_ginpoel = m_ginpoel;
+    m_outref_el = m_el;
+    m_outref_coord = m_coord;
+    m_outref_addedNodes = m_addedNodes;
+    m_outref_addedTets = m_addedTets;
+    m_outref_nodeCommMap = m_nodeCommMap;
+    m_outref_bface = m_bface;
+    m_outref_bnode = m_bnode;
+    m_outref_triinpoel = m_triinpoel;
+
+    // Derefine mesh to the state previous to field output
+    outref( m_outref_bface, m_outref_bnode, m_outref_triinpoel, m_writeCallback,
+            RefMode::OUTDEREF );
+
+  } else if (m_mode == RefMode::OUTDEREF) {
+
+    // Send field output mesh to PDE worker
+    m_scheme.ckLocal< Scheme::writePostAMR >( thisIndex, m_outref_ginpoel,
+      m_outref_el, m_outref_coord, m_outref_addedNodes, m_outref_addedTets,
+      m_outref_nodeCommMap, m_outref_bface, m_outref_bnode, m_outref_triinpoel,
+      m_writeCallback );
+
+  } else Throw( "RefMode not implemented" );
 }
 
 void
@@ -878,34 +979,34 @@ Refiner::endt0ref()
                                         m_coord[0].size() }};
   contribute( meshsize, CkReduction::sum_ulong, m_cbr.get< tag::refined >() );
 
-  // Free up memory if no dtref
-  if (!g_inputdeck.get< tag::amr, tag::dtref >()) {
-    tk::destroy( m_ginpoel );
-    tk::destroy( m_el );
-    tk::destroy( m_coordmap );
-    tk::destroy( m_coord );
-    tk::destroy( m_bface );
-    tk::destroy( m_bnode );
-    tk::destroy( m_triinpoel );
-    tk::destroy( m_initref );
-    tk::destroy( m_ch );
-    tk::destroy( m_edgech );
-    tk::destroy( m_chedge );
-    tk::destroy( m_localEdgeData );
-    tk::destroy( m_remoteEdgeData );
-    tk::destroy( m_remoteEdges );
-    tk::destroy( m_intermediates );
-    tk::destroy( m_nodeCommMap );
-    tk::destroy( m_oldTets );
-    tk::destroy( m_addedNodes );
-    tk::destroy( m_addedTets );
-    tk::destroy( m_coarseBndFaces );
-    tk::destroy( m_coarseBndNodes );
-    tk::destroy( m_rid );
-    tk::destroy( m_oldrid );
-    tk::destroy( m_lref );
-    tk::destroy( m_parent );
-  }
+  // // Free up memory if no dtref
+  // if (!g_inputdeck.get< tag::amr, tag::dtref >()) {
+  //   tk::destroy( m_ginpoel );
+  //   tk::destroy( m_el );
+  //   tk::destroy( m_coordmap );
+  //   tk::destroy( m_coord );
+  //   tk::destroy( m_bface );
+  //   tk::destroy( m_bnode );
+  //   tk::destroy( m_triinpoel );
+  //   tk::destroy( m_initref );
+  //   tk::destroy( m_ch );
+  //   tk::destroy( m_edgech );
+  //   tk::destroy( m_chedge );
+  //   tk::destroy( m_localEdgeData );
+  //   tk::destroy( m_remoteEdgeData );
+  //   tk::destroy( m_remoteEdges );
+  //   tk::destroy( m_intermediates );
+  //   tk::destroy( m_nodeCommMap );
+  //   tk::destroy( m_oldTets );
+  //   tk::destroy( m_addedNodes );
+  //   tk::destroy( m_addedTets );
+  //   tk::destroy( m_coarseBndFaces );
+  //   tk::destroy( m_coarseBndNodes );
+  //   tk::destroy( m_rid );
+  //   tk::destroy( m_oldrid );
+  //   tk::destroy( m_lref );
+  //   tk::destroy( m_parent );
+  // }
 }
 
 void
@@ -997,12 +1098,12 @@ Refiner::solution( std::size_t npoin,
   // Get solution whose error to evaluate
   tk::Fields u;
 
-  if (m_initial) {      // initial (before t=0) AMR
+  if (m_mode == RefMode::T0REF) {
 
     // Evaluate initial conditions at mesh nodes
     u = nodeinit( npoin, esup );
 
-  } else {              // AMR during time stepping (t>0)
+  } else if (m_mode == RefMode::DTREF) {
 
     // Query current solution
     u = m_scheme.ckLocal< Scheme::solution >( thisIndex );
@@ -1015,7 +1116,15 @@ Refiner::solution( std::size_t npoin,
 
     }
 
-  }
+  } else if (m_mode == RefMode::OUTREF) {
+
+
+
+  } else if (m_mode == RefMode::OUTDEREF) {
+
+
+
+  } else Throw( "RefMode not implemented" );
 
   return u;
 }
@@ -1271,7 +1380,7 @@ Refiner::updateMesh()
   for (auto r : ref) if (old.find(r) == end(old)) m_lref[r] = l++;
 
   // Get nodal communication map from Discretization worker
-  if (!m_initial)
+  if (m_mode == RefMode::DTREF)
     m_nodeCommMap = m_scheme.disc()[thisIndex].ckLocal()->NodeCommMap();
 
   // Update mesh and solution after refinement
@@ -1458,8 +1567,8 @@ Refiner::boundary()
 {
   // Generate the inverse of AMR's tet store
   std::unordered_map< Tet, std::size_t, Hash<4>, Eq<4> > invtets;
-  for (const auto& [key, value] : m_refiner.tet_store.tets)
-    invtets[ value ] = key;
+  for (const auto& [key, tet] : m_refiner.tet_store.tets)
+    invtets[ tet ] = key;
 
   //std::cout << thisIndex << " invt: " << invtets.size() << '\n';
   //std::cout << thisIndex << " active inpoel size: " << m_refiner.tet_store.get_active_inpoel().size() << '\n';

@@ -1262,6 +1262,10 @@ namespace deck {
                                  tag::filetype >,
                                pegtl::alpha >,
              tk::grm::interval< use< kw::interval >, tag::field >,
+             tk::grm::process<
+               use< kw::refined >,
+               tk::grm::Store< tag::cmd, tag::io, tag::refined >,
+               pegtl::alpha >,
              pegtl::if_must<
                tk::grm::vector<
                  use< kw::sideset >,

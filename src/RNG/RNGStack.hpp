@@ -47,7 +47,7 @@ class RNGStack {
                        const ctr::RNGRandom123Parameters& r123param );
 
     //! Instantiate selected RNGs
-    std::map< std::underlying_type< tk::ctr::RNGType >::type, tk::RNG >
+    std::map< std::underlying_type_t< tk::ctr::RNGType >, tk::RNG >
     selected( const std::vector< ctr::RNGType >& sel ) const;
 
     //! Instantiate a RNG

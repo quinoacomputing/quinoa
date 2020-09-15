@@ -47,7 +47,7 @@ namespace PUP {
 template< typename E,
           typename std::enable_if< std::is_enum< E >::value, int >::type = 0 >
 inline void pup( PUP::er& p, E& e ) {
-  auto v = static_cast< typename std::underlying_type< E >::type >( e );
+  auto v = static_cast< typename std::underlying_type_t< E > >( e );
   p | v;
   e = static_cast< E >( v );
 }
