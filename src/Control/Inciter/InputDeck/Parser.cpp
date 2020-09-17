@@ -14,6 +14,8 @@
 #include <ostream>
 #include <type_traits>
 
+#include "QuinoaConfig.hpp"
+
 #include "NoWarning/pegtl.hpp"
 
 #ifdef HAS_LUA
