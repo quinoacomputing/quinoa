@@ -14,8 +14,13 @@
 #include <ostream>
 #include <type_traits>
 
+#include "QuinoaConfig.hpp"
+
 #include "NoWarning/pegtl.hpp"
-#include "NoWarning/sol.hpp"
+
+#ifdef HAS_LUA
+  #include "NoWarning/sol.hpp"
+#endif
 
 #include "Print.hpp"
 #include "Tags.hpp"
@@ -23,7 +28,10 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/InputDeck/Parser.hpp"
 #include "Inciter/InputDeck/Grammar.hpp"
-#include "Inciter/InputDeck/LuaGrammar.hpp"
+
+#ifdef HAS_LUA
+  #include "Inciter/InputDeck/LuaGrammar.hpp"
+#endif
 
 namespace tk {
 namespace grm {
@@ -65,11 +73,13 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   tao::pegtl::file_input<> in( m_filename );
   tao::pegtl::parse< deck::read_file, tk::grm::action >( in, id );
 
+#ifdef HAS_LUA
   // Parse lua ... end block(s) as Lua code using Sol2
   sol::state lua;
   lua.script( id.get< tag::param, tag::compflow, tag::lua >() );
   // Interpret ic ... end block within lua block
   lua::ic< tag::compflow >( lua, id );
+#endif
 
   // Echo errors and warnings accumulated during parsing
   diagnostics( print, id.get< tag::error >() );
