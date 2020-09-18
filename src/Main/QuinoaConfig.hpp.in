@@ -39,6 +39,7 @@ namespace tk {
 #cmakedefine HAS_ROOT
 #cmakedefine HAS_BACKWARD
 #cmakedefine HAS_OMEGA_H
+#cmakedefine HAS_LUA
 
 // Executables optional
 #cmakedefine ENABLE_INCITER

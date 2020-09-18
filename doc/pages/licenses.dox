@@ -182,14 +182,14 @@ executable.
   - License: @subpage brigand_license_page
 
 \subsection lua_license Lua for embedding configuration and scripts
-  - Required
-  - Must be present system-wide
+  - Optional
+  - Not searched for by default, if enabled, must be present system-wide
   - Web: https://www.lua.org/
   - License: @subpage lua_license_page
 
 \subsection sol2_license Sol2 for binding Lua and C++
-  - Required
-  - Searched for and if not found, built by default
+  - Optional
+  - Not searched for by default
   - Web: http://sol2.rtfd.io
   - License: @subpage sol2_license_page
 
