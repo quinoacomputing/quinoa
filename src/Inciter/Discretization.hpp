@@ -403,12 +403,12 @@ class Discretization : public CBase_Discretization {
     //!   IDs.
     tk::UnsMesh::Chunk m_el;
     //! Alias to element connectivity
-    std::vector< std::size_t >& m_inpoel = std::get< 0 >( m_el );
+    std::vector< std::size_t >& m_inpoel = std::get<0>( m_el );
     //! Alias to global node IDs of owned elements
-    std::vector< std::size_t >& m_gid = std::get< 1 >( m_el );
+    std::vector< std::size_t >& m_gid = std::get<1>( m_el );
     //! \brief Alias to local node ids associated to the global ones of owned
     //!    elements
-    std::unordered_map< std::size_t, std::size_t >& m_lid = std::get< 2 >( m_el );
+    std::unordered_map< std::size_t, std::size_t >& m_lid = std::get<2>( m_el );
     //! Mesh point coordinates
     tk::UnsMesh::Coords m_coord;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
