@@ -110,14 +110,23 @@ namespace AMR {
      */
     void mesh_adapter_t::mark_uniform_derefinement()
     {
-        for (auto& kv : tet_store.edge_store.edges) {
-           auto& local = kv.second;
-           if (local.lock_case == Edge_Lock_Case::unlocked)
-             local.needs_derefining = 1;
+      const auto& inp = tet_store.get_active_inpoel();
+      auto& edge_store = tet_store.edge_store;
+      for (std::size_t t=0; t<inp.size()/4; ++t) {
+        const auto edges =
+          edge_store.generate_keys(
+            {inp[t*4+0], inp[t*4+1], inp[t*4+2], inp[t*4+3]});
+        for (const auto& tetedge : edges) {
+          auto e = edge_store.edges.find(tetedge);
+          if (e != end(edge_store.edges)) {
+            auto& local = e->second;
+            if (local.lock_case == Edge_Lock_Case::unlocked)
+              local.needs_derefining = 1;
+          }
         }
-        mark_derefinement();
+      }
+      mark_derefinement();
     }
-
 
     /**
      * @brief For a given set of edges, set their refinement criteria for
@@ -137,13 +146,16 @@ namespace AMR {
              local.needs_refining = 1;
            }
          } else if (r.second == edge_tag::DEREFINE) {
-           if (local.lock_case == Edge_Lock_Case::unlocked) {
+           if (local.lock_case > Edge_Lock_Case::unlocked) {
+             local.needs_derefining = 0;
+           } else {
              local.needs_derefining = 1;
            }
          }
        }
 
        mark_refinement();
+       mark_derefinement();
     }
 
    void mesh_adapter_t::mark_error_refinement_corr( const EdgeData& edges )
@@ -391,7 +403,7 @@ namespace AMR {
                     } // if num_to_refine
                     else {
                             // If we got here, we don't want to refine this guy
-                            tet_store.marked_refinements.add(tet_id, AMR::Refinement_Case::none);
+                            //tet_store.marked_refinements.add(tet_id, AMR::Refinement_Case::none);
                     }
                 } // if active
                 else {
@@ -426,7 +438,7 @@ namespace AMR {
      */
     void mesh_adapter_t::perform_refinement()
     {
-        // Track tets which needs to be deleted this iteration
+        // Track tets which need to be deleted this iteration
         std::set<size_t> round_two;
 
         trace_out << "Perform ref" << std::endl;
@@ -451,7 +463,6 @@ namespace AMR {
                         refiner.refine_one_to_eight(tet_store,node_connectivity,tet_id);
                         break;
                     case AMR::Refinement_Case::two_to_eight:
-                        tet_store.get_parent_id(tet_id);
                         round_two.insert( tet_store.get_parent_id(tet_id) );
                         //std::cout << "2->8\n";
                         break;
@@ -1364,7 +1375,7 @@ namespace AMR {
                         // What do we do with skip?
                         break;
                 }
-                // Mark tet as not needing refinement
+                // Mark tet as not needing derefinement
                 tet_store.marked_derefinements.erase(tet_id);
             }
         }

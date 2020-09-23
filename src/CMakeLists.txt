@@ -27,7 +27,7 @@ set(MAJOR_VER 0)
 set(MINOR_VER 2)
 
 # Set LA-CC number
-set(LACC "17087")
+set(LACC "20072")
 
 # Sets CMAKE_INSTALL_{BIN,LIB}DIR needed for multilib support
 include(GNUInstallDirs)

@@ -63,8 +63,14 @@ class Refiner : public CBase_Refiner {
     //! Used to associate error to edges
     using EdgeError = std::unordered_map< Edge, tk::real, Hash<2>, Eq<2> >;
 
-
   public:
+    //! Mode of operation: the way Refiner is used
+    enum class RefMode : std::size_t {
+      T0REF = 1,        //!< Initial (t<0) refinement
+      DTREF,            //!< During time stepping (t>0)
+      OUTREF,           //!< Refinement for field output
+      OUTDEREF };       //!< De-refinement after field output
+
     //! Constructor
     explicit Refiner( const CProxy_Transporter& transporter,
                       const CProxy_Sorter& sorter,
@@ -115,6 +121,13 @@ class Refiner : public CBase_Refiner {
     void dtref( const std::map< int, std::vector< std::size_t > >& bface,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 const std::vector< std::size_t >& triinpoel );
+
+    //! Start mesh refinement (for field output)
+    void outref( const std::map< int, std::vector< std::size_t > >& bface,
+                 const std::map< int, std::vector< std::size_t > >& bnode,
+                 const std::vector< std::size_t >& triinpoel,
+                 CkCallback c,
+                 RefMode mode = RefMode::OUTREF );
 
     //! Do a single step of mesh refinemen/derefinementt (only tag edges)
     void refine();
@@ -167,7 +180,7 @@ class Refiner : public CBase_Refiner {
       p | m_bnode;
       p | m_triinpoel;
       p | m_nchare;
-      p | m_initial;
+      p | m_mode;
       p | m_initref;
       p | m_refiner;
       p | m_nref;
@@ -192,6 +205,16 @@ class Refiner : public CBase_Refiner {
       p | m_lref;
       //p | m_oldlref;
       p | m_parent;
+      p | m_writeCallback;
+      p | m_outref_ginpoel;
+      p | m_outref_el;
+      p | m_outref_coord;
+      p | m_outref_addedNodes;
+      p | m_outref_addedTets;
+      p | m_outref_nodeCommMap;
+      p | m_outref_bface;
+      p | m_outref_bnode;
+      p | m_outref_triinpoel;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -239,7 +262,7 @@ class Refiner : public CBase_Refiner {
     //! Total number of refiner chares
     int m_nchare;
     //! True if initial AMR, false if during time stepping
-    bool m_initial;
+    RefMode m_mode;
     //! Initial mesh refinement type list (in reverse order)
     std::vector< ctr::AMRInitialType > m_initref;
     //! Number of initial mesh refinement/derefinement steps
@@ -292,6 +315,41 @@ class Refiner : public CBase_Refiner {
     //std::unordered_map< std::size_t, std::size_t > m_oldlref;
     //! Child -> parent tet map
     std::unordered_map< Tet, Tet, Hash<4>, Eq<4> > m_parent;
+    //! Function to continue with after writing field output
+    CkCallback m_writeCallback;
+    //! \brief Tetrahedron element connectivity of our chunk of the mesh
+    //!   (global ids) for the field-output-refined mesh
+    std::vector< std::size_t > m_outref_ginpoel;
+    //! \brief Elements of the mesh chunk we operate on for the
+    //!   field-output-refined mesh
+    //! \details The first vector is the element connectivity (local IDs), the
+    //!   second vector is the global node IDs of owned elements, while the
+    //!   third one is a map of global->local node IDs.
+    tk::UnsMesh::Chunk m_outref_el;
+    //! \brief Coordinates of mesh nodes of our chunk of the mesh for
+    //!   field-output-refined mesh
+    tk::UnsMesh::Coords m_outref_coord;
+    //! \brief Newly added mesh nodes (local id) and their parents (local ids)
+    //!   for the field-output-refined mesh
+    std::unordered_map< std::size_t, Edge > m_outref_addedNodes;
+    //! \brief Newly added mesh cells (local id) and their parent (local id)
+    //!   for the field-output-refined mesh
+    std::unordered_map< std::size_t, std::size_t > m_outref_addedTets;
+    //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
+    //!    worker chares associated to their chare IDs for the coarse mesh for
+    //!    the field-output-refined mesh
+    tk::NodeCommMap m_outref_nodeCommMap;
+    //! \brief List of boundary faces associated to side-set IDs for the
+    //!   field-output-refined mesh
+    std::map< int, std::vector< std::size_t > > m_outref_bface;
+    //! \brief List of boundary nodes associated to side-set IDs for the
+    //!   field-output-refined mesh
+    std::map< int, std::vector< std::size_t > > m_outref_bnode;
+    //! Boundary face-node connectivity for the field-output-refinedmesh
+    std::vector< std::size_t > m_outref_triinpoel;
+
+    //! (Re-)generate local -> refiner lib node id map and its inverse
+    void libmap();
 
     //! (Re-)generate boundary data structures for coarse mesh
     void coarseBnd();

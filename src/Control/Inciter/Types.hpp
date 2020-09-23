@@ -139,6 +139,8 @@ using ios = tk::TaggedTuple< brigand::list<
   , tag::control,   kw::control::info::expect::type //!< Control filename
   , tag::input,     kw::input::info::expect::type   //!< Input filename
   , tag::output,    kw::output::info::expect::type  //!< Output filename
+    //! Refined output (output field data on a refined mesh)
+  , tag::refined,   kw::refined::info::expect::type
   , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
     //! List of side sets to save as field output
   , tag::surface,   std::vector< kw::sideset::info::expect::type >

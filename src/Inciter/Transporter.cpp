@@ -62,6 +62,8 @@ Transporter::Transporter() :
   m_ncit( 0 ),
   m_nt0refit( 0 ),
   m_ndtrefit( 0 ),
+  m_noutrefit( 0 ),
+  m_noutderefit( 0 ),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
@@ -238,6 +240,7 @@ Transporter::info( const InciterPrint& print )
       const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
       print.item( "Initial refinement steps", initref.size() );
       print.ItemVec< ctr::AMRInitial >( initref );
+      print.ItemVecLegend< ctr::AMRInitial >();
       print.edgeref( g_inputdeck.get< tag::amr, tag::edge >() );
 
       auto eps =
@@ -567,7 +570,7 @@ Transporter::refinserted( int error )
 void
 Transporter::queriedRef()
 // *****************************************************************************
-// Reduction target: all Sorter chares have queried their boundary nodes
+// Reduction target: all mesh Refiner chares have queried their boundary edges
 // *****************************************************************************
 {
   m_refiner.response();
@@ -576,7 +579,7 @@ Transporter::queriedRef()
 void
 Transporter::respondedRef()
 // *****************************************************************************
-// Reduction target: all mesh refiner chares have setup their boundary edges
+// Reduction target: all mesh Refiner chares have setup their boundary edges
 // *****************************************************************************
 {
   m_refiner.refine();
@@ -606,7 +609,7 @@ void
 Transporter::matched( std::size_t nextra,
                       std::size_t nref,
                       std::size_t nderef,
-                      std::size_t initial )
+                      std::size_t sumrefmode )
 // *****************************************************************************
 // Reduction target: all mesh refiner chares have matched/corrected the tagging
 // of chare-boundary edges, all chares are ready to perform refinement.
@@ -614,8 +617,8 @@ Transporter::matched( std::size_t nextra,
 //!   chare that need correction along chare boundaries
 //! \param[in] nref Sum of number of refined tetrahedra across all chares.
 //! \param[in] nderef Sum of number of derefined tetrahedra across all chares.
-//! \param[in] initial Sum of contributions from all chares. If larger than
-//!    zero, we are during time stepping and if zero we are during setup.
+//! \param[in] sumrefmode Sum of contributions from all chares, encoding
+//!   refinement mode of operation.
 // *****************************************************************************
 {
   // If at least a single edge on a chare still needs correction, do correction,
@@ -629,20 +632,54 @@ Transporter::matched( std::size_t nextra,
 
     auto print = printer();
 
-    if (initial > 0) {
+    // decode refmode
+    auto refmode = static_cast< Refiner::RefMode >(
+                     sumrefmode / static_cast<std::size_t>(m_nchare) );
+
+    if (refmode == Refiner::RefMode::T0REF) {
 
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
-        print.diag( { "t0ref", "nref", "nderef", "ncorr" },
-                    { ++m_nt0refit, nref, nderef, m_ncit } );
+        const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
+        ctr::AMRInitial opt;
+        print.diag( { "t0ref", "type", "nref", "nderef", "ncorr" },
+                    { std::to_string(m_nt0refit),
+                      opt.code(initref[m_nt0refit]),
+                      std::to_string(nref),
+                      std::to_string(nderef),
+                      std::to_string(m_ncit) } );
+        ++m_nt0refit;
       }
       m_progMesh.inc< REFINE >( print );
 
-    } else {
+    } else if (refmode == Refiner::RefMode::DTREF) {
 
-      print.diag( { "dtref", "nref", "nderef", "ncorr" },
-                  { ++m_ndtrefit, nref, nderef, m_ncit }, false );
+      auto dtref_uni = g_inputdeck.get< tag::amr, tag::dtref_uniform >();
+      print.diag( { "dtref", "type", "nref", "nderef", "ncorr" },
+                  { std::to_string(++m_ndtrefit),
+                    (dtref_uni?"uniform":"error"),
+                    std::to_string(nref),
+                    std::to_string(nderef),
+                    std::to_string(m_ncit) },
+                  false );
 
-    }
+    } else if (refmode == Refiner::RefMode::OUTREF) {
+
+      print.diag( { "outref", "nref", "nderef", "ncorr" },
+                  { std::to_string(++m_noutrefit),
+                    std::to_string(nref),
+                    std::to_string(nderef),
+                    std::to_string(m_ncit) }, false );
+
+    } else if (refmode == Refiner::RefMode::OUTDEREF) {
+
+      print.diag( { "outderef", "nref", "nderef", "ncorr" },
+                  { std::to_string(++m_noutderefit),
+                    std::to_string(nref),
+                    std::to_string(nderef),
+                    std::to_string(m_ncit) },
+                  false );
+
+    } else Throw( "RefMode not implemented" );
 
     m_ncit = 0;
     m_refiner.perform();
@@ -707,7 +744,7 @@ Transporter::refined( std::size_t nelem, std::size_t npoin )
 void
 Transporter::queried()
 // *****************************************************************************
-// Reduction target: all Sorter chares have queried their boundary nodes
+// Reduction target: all Sorter chares have queried their boundary edges
 // *****************************************************************************
 {
   m_sorter.response();
@@ -716,7 +753,7 @@ Transporter::queried()
 void
 Transporter::responded()
 // *****************************************************************************
-// Reduction target: all Sorter chares have responded with their boundary nodes
+// Reduction target: all Sorter chares have responded with their boundary edges
 // *****************************************************************************
 {
   m_sorter.start();
@@ -833,9 +870,10 @@ Transporter::diagHeader()
       d.push_back( errname + '(' + var[i] + "-IC)" );
   }
 
-  // Augment diagnostics variables by L2-norm of the residual
+  // Augment diagnostics variables by L2-norm of the residual and total energy
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
     for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
+    d.push_back( "mE" );
   }
 
   // Write diagnostics header
@@ -1018,6 +1056,7 @@ Transporter::inthead( const InciterPrint& print )
 //! \param[in] print Pretty printer object to use for printing
 // *****************************************************************************
 {
+  auto refined = g_inputdeck.get< tag::cmd, tag::io, tag::refined >();
   print.inthead( "Time integration", "Navier-Stokes solver",
   "Legend: it - iteration count\n"
   "         t - physics time\n"
@@ -1026,7 +1065,8 @@ Transporter::inthead( const InciterPrint& print )
   "       ETA - estimated wall-clock time for accomplishment (h:m:s)\n"
   "       EGT - estimated grind wall-clock time (ms/timestep)\n"
   "       flg - status flags, legend:\n"
-  "             f - field (volume and surface)\n"
+  "             f - " + std::string(refined ? "refined " : "")
+                      + "field (volume and surface)\n"
   "             d - diagnostics\n"
   "             t - physics time history\n"
   "             h - h-refinement\n"
@@ -1087,11 +1127,15 @@ Transporter::diagnostics( CkReductionMsg* msg )
   // Finish computing the L2 norm of the residual and append
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   std::vector< tk::real > l2res( d[L2RES].size(), 0.0 );
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol );
       diag.push_back( l2res[i] );
     }
+
+    // Append total energy
+    diag.push_back( d[TOTALSOL][0] );
+  }
 
   // Append diagnostics file at selected times
   tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),

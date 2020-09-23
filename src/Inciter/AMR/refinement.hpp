@@ -25,7 +25,7 @@ namespace AMR {
 
         public:
 
-            size_t MAX_REFINEMENT_LEVEL = 4;
+            size_t MAX_REFINEMENT_LEVEL = 10;
 
             // TODO: Document this
             child_id_list_t generate_child_ids( tet_store_t& tet_store, size_t parent_id, size_t count = MAX_CHILDREN)
@@ -824,8 +824,37 @@ namespace AMR {
             void derefine_eight_to_two(tet_store_t& tet_store, node_connectivity_t& node_connectivity, size_t parent_id)
             {
                 //if (!check_allowed_derefinement(tet_store,parent_id)) return;
+
+                // Figure out which edge is the one that we want to have the
+                // split along
+                size_t edge_A = 0;
+                size_t edge_B = 0;
+
+                // will have 5 edges set to deref, find the one that's not
+                child_id_list_t children = tet_store.data(parent_id).children;
+                for (size_t i = 0; i < children.size(); i++)
+                {
+                    // TODO: Is this in element or tet ids?
+                    edge_list_t edge_list = tet_store.generate_edge_keys(children[i]);
+                    for (size_t k = 0; k < NUM_TET_EDGES; k++)
+                    {
+                        edge_t edge = edge_list[k];
+                        if (tet_store.edge_store.get(edge).needs_derefining)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            // found the non-deref
+                            edge_A = std::min( edge.first(), edge.second() );
+                            edge_B = std::max( edge.first(), edge.second() );
+                            //std::cout << "A " << edge_A << " B " << edge_B << std::endl;
+                        }
+                    }
+                }
+
                 derefine_eight_to_one(tet_store, node_connectivity, parent_id);
-                refine_one_to_two( tet_store, node_connectivity, parent_id);
+                refine_one_to_two( tet_store, node_connectivity, parent_id, edge_A, edge_B );
             }
 
             // TODO: Document This.

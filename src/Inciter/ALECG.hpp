@@ -127,8 +127,8 @@ class ALECG : public CBase_ALECG {
                  const std::vector< std::vector< tk::real > >& L );
 
     //! Receive contributions to gradients on chare-boundaries
-    void comgrad( const std::vector< std::size_t >& gid,
-                  const std::vector< std::vector< tk::real > >& G );
+    void comChBndGrad( const std::vector< std::size_t >& gid,
+                       const std::vector< std::vector< tk::real > >& G );
 
     //! Receive contributions to right-hand side vector on chare-boundaries
     void comrhs( const std::vector< std::size_t >& gid,
@@ -140,7 +140,7 @@ class ALECG : public CBase_ALECG {
     //! Optionally refine/derefine mesh
     void refine( const std::vector< tk::real >& l2res );
 
-    //! Receive new mesh from refiner
+    //! Receive new mesh from Refiner
     void resizePostAMR(
       const std::vector< std::size_t >& ginpoel,
       const tk::UnsMesh::Chunk& chunk,
@@ -151,6 +151,19 @@ class ALECG : public CBase_ALECG {
       const std::map< int, std::vector< std::size_t > >& /* bface */,
       const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& triinpoel );
+
+    //! Receive new field output mesh from Refiner
+    void writePostAMR(
+      const std::vector< std::size_t >& /* ginpoel */,
+      const tk::UnsMesh::Chunk& /*chunk*/,
+      const tk::UnsMesh::Coords& /*coord*/,
+      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /* addedNodes */,
+      const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
+      const tk::NodeCommMap& /*nodeCommMap*/,
+      const std::map< int, std::vector< std::size_t > >& /*bface*/,
+      const std::map< int, std::vector< std::size_t > >& /* bnode */,
+      const std::vector< std::size_t >& /*triinpoel*/,
+      CkCallback /*c*/ ) {}
 
     //! Const-ref access to current solution
     //! \return Const-ref to current solution
@@ -194,10 +207,10 @@ class ALECG : public CBase_ALECG {
       p | m_un;
       p | m_lhs;
       p | m_rhs;
-      p | m_grad;
+      p | m_chBndGrad;
       p | m_bcdir;
       p | m_lhsc;
-      p | m_gradc;
+      p | m_chBndGradc;
       p | m_rhsc;
       p | m_diag;
       p | m_bnorm;
@@ -267,8 +280,8 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_lhs;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
-    //! Nodal gradients
-    tk::Fields m_grad;
+    //! Nodal gradients at chare-boundary nodes
+    tk::Fields m_chBndGrad;
     //! Boundary conditions evaluated and assigned to local mesh node IDs
     //! \details Vector of pairs of bool and boundary condition value associated
     //!   to local mesh node IDs at which the user has set Dirichlet boundary
@@ -283,7 +296,7 @@ class ALECG : public CBase_ALECG {
     //! Receive buffer for communication of the nodal gradients
     //! \details Key: chare id, value: gradients for all scalar components per
     //!   node
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_gradc;
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_chBndGradc;
     //! Receive buffer for communication of the right hand side
     //! \details Key: chare id, value: rhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
@@ -367,7 +380,7 @@ class ALECG : public CBase_ALECG {
     void lhsmerge();
 
     //! Compute gradients
-    void grad();
+    void chBndGrad();
 
     //! Compute righ-hand side vector of transport equations
     void rhs();

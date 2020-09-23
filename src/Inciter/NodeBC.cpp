@@ -52,11 +52,11 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
 //! \details Boundary conditions (BC), mathematically speaking, are applied on
 //!   finite surfaces. These finite surfaces are given by element sets (i.e., a
 //!   list of elements). This function queries Dirichlet boundary condition
-//!   values from all PDEs in the system of systems of PDEs integrated at the
-//!   node lists associated to side set IDs, given by bnode  Each
+//!   values from all PDEs in the multiple systems of PDEs integrated at the
+//!   node lists associated to side set IDs, given by bnode. Each
 //!   PDE system returns a BC data structure. Note that the BC mesh nodes that
-//!   this function results in, stored in dirbc, only contains those nodes that
-//!   are supplied via bnode  i.e., in parallel only a part of the mesh is
+//!   this function results in (stored in dirbc) only contains those nodes that
+//!   are supplied via bnode. i.e., in parallel only a part of the mesh is
 //!   worked on.
 // *****************************************************************************
 {
@@ -72,8 +72,8 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
   // pair of bool and real value, the former is the fact that the BC is to be
   // set while the latter is the value if it is to be set). The length of this
   // NodeBC vector, returning from each system of PDEs equals to the number of
-  // scalar components the given PDE integrates. Here then we contatenate this
-  // map for all PDEs integrated. If there are multiple BCs set at a mesh node
+  // scalar components the given PDE integrates. Here we contatenate this map
+  // for all PDEs being integrated. If there are multiple BCs set at a mesh node
   // (dirbc::key), either because (1) in the same PDE system the user prescribed
   // BCs on side sets that share nodes or (2) because more than a single PDE
   // system assigns BCs to a given node (on different variables), the NodeBC

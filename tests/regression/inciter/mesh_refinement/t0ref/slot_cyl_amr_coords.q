@@ -32,7 +32,7 @@ inciter
     initial coords
     initial coords
 
-    coordref
+    coords
       x- 0.5
       #x+ 0.25 x- 0.75
     end

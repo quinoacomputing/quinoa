@@ -321,16 +321,15 @@ class Print {
     //! \note The number of labels and values must equal.
     template< Style s = VERBOSE >
     void diag( const std::vector< std::string >& labels,
-               const std::vector< std::size_t >& values,
+               const std::vector< std::string >& values,
                bool precr = true ) const
     {
       Assert( labels.size() == values.size(), "Size mismatch" );
       if (!labels.empty()) {
         stream<s>() << (precr ? "\n" : "") <<
-          m_inprog_diag_fmt % labels[0] % std::to_string(values[0]);
+          m_inprog_diag_fmt % labels[0] % values[0];
         for (std::size_t i=1; i<labels.size(); ++i)
-          stream<s>() <<
-            m_inprog_extra_diag_fmt % labels[i] % std::to_string(values[i]);
+          stream<s>() << m_inprog_extra_diag_fmt % labels[i] % values[i];
         stream<s>() << (precr ? " " : "\n") << std::flush;
       }
     }

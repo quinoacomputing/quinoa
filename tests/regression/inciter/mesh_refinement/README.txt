@@ -9,7 +9,7 @@
 # * t0ref/dtref - AMR at t<0 (t0ref), AMR at t>0 (dtref)
 # * uu - 2 uniform refinement, 1:8 for all tets,
 #        other examples: u, ui, ii, iu, iii, cu, cli, eci, ..., legend:
-#        - u: uniform (1->8) (keyword: uniform)
+#        - u: uniform refinement (1->8) (keyword: uniform)
 #        - i: initial conditions based adaptive refinement (keyword: ic)
 #        - c: coordinate based refinement (keyword: coords)
 #        - e: refine a list of tagged edges (keyword: edgelist)
