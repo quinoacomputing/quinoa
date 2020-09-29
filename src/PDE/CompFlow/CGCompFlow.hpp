@@ -1184,20 +1184,53 @@ class CompFlow {
         delta1[c] = 2.0 * tk::dot(g1,vw) - delta2[c];
         delta3[c] = 2.0 * tk::dot(g2,vw) - delta2[c];
 
-        // form limiters
-        auto rcL = (delta2[c] + muscl_eps) / (delta1[c] + muscl_eps);
-        auto rcR = (delta2[c] + muscl_eps) / (delta3[c] + muscl_eps);
-        auto rLinv = (delta1[c] + muscl_eps) / (delta2[c] + muscl_eps);
-        auto rRinv = (delta3[c] + muscl_eps) / (delta2[c] + muscl_eps);
+        //// form limiters
+        //auto rcL = (delta2[c] + muscl_eps) / (delta1[c] + muscl_eps);
+        //auto rcR = (delta2[c] + muscl_eps) / (delta3[c] + muscl_eps);
+        //auto rLinv = (delta1[c] + muscl_eps) / (delta2[c] + muscl_eps);
+        //auto rRinv = (delta3[c] + muscl_eps) / (delta2[c] + muscl_eps);
 
-        auto phiL = (std::abs(rcL) + rcL) / (std::abs(rcL) + 1.0);
-        auto phiR = (std::abs(rcR) + rcR) / (std::abs(rcR) + 1.0);
-        auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
-        auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
+        //// van Leer limiter
+        //auto phiL = (std::abs(rcL) + rcL) / (std::abs(rcL) + 1.0);
+        //auto phiR = (std::abs(rcR) + rcR) / (std::abs(rcR) + 1.0);
+        //auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
+        //auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
 
-        // update unknowns with reconstructed unknowns
-        url[c] += 0.25*(delta1[c]*muscl_m1*phiL + delta2[c]*muscl_p1*phi_L_inv);
-        urr[c] -= 0.25*(delta3[c]*muscl_m1*phiR + delta2[c]*muscl_p1*phi_R_inv);
+        //// minmod limiter
+        //auto phiL = std::max(0.0, std::min(rcL, 1.0));
+        //auto phiR = std::max(0.0, std::min(rcR, 1.0));
+        //auto phi_L_inv = std::max(0.0, std::min(rLinv, 1.0));
+        //auto phi_R_inv = std::max(0.0, std::min(rRinv, 1.0));
+
+        //// update unknowns with reconstructed unknowns
+        //// this reconstruction is from the following paper:
+        //// Waltz, J., Morgan, N. R., Canfield, T. R., Charest, M. R.,
+        //// Risinger, L. D., & Wohlbier, J. G. (2014). A three-dimensional
+        //// finite element arbitrary Lagrangian–Eulerian method for shock
+        //// hydrodynamics on unstructured grids. Computers & Fluids, 92,
+        //// 172-187.
+        //url[c] += 0.25*(delta1[c]*muscl_m1*phiL + delta2[c]*muscl_p1*phi_L_inv);
+        //urr[c] -= 0.25*(delta3[c]*muscl_m1*phiR + delta2[c]*muscl_p1*phi_R_inv);
+
+        // get Van Albada limiter
+        // the following form is derived from the flux limiter phi as:
+        // s = phi_inv - (1 - phi)
+        auto sL = std::max(0.0, (2.0*delta1[c]*delta2[c] + muscl_eps)
+          /(delta1[c]*delta1[c] + delta2[c]*delta2[c] + muscl_eps));
+        auto sR = std::max(0.0, (2.0*delta3[c]*delta2[c] + muscl_eps)
+          /(delta3[c]*delta3[c] + delta2[c]*delta2[c] + muscl_eps));
+
+        // update unknowns with unknowns reconstructed using MUSCL
+        // reconstruction. See the following two papers:
+        // Luo, H., Baum, J. D., & Lohner, R. (1994). Edge-based finite element
+        // scheme for the Euler equations. AIAA journal, 32(6), 1183-1190.
+        // Van Leer, B. (1974). Towards the ultimate conservative difference
+        // scheme. II. Monotonicity and conservation combined in a second-order
+        // scheme. Journal of computational physics, 14(4), 361-370.
+        url[c] += 0.25*sL*(delta1[c]*(1.0-muscl_const*sL)
+          + delta2[c]*(1.0+muscl_const*sL));
+        urr[c] -= 0.25*sR*(delta3[c]*(1.0-muscl_const*sR)
+          + delta2[c]*(1.0+muscl_const*sR));
       }
 
       // force first order if the reconstructions for density or internal energy
