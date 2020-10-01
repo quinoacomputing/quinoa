@@ -164,7 +164,7 @@ class CompFlow {
                   icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
         auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
           (boxdim[5]-boxdim[4]);
-        rho = boxmas[m_system][0] / V;
+        rho = boxmas[m_system][0] / V_ex;
         spi = boxenc[m_system][0] * V_ex / (V * rho);
         boxmassic = true;
 
