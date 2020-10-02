@@ -164,7 +164,7 @@ class CompFlow {
                   icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
         auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
           (boxdim[5]-boxdim[4]);
-        rho = boxmas[m_system][0] / V;
+        rho = boxmas[m_system][0] / V_ex;
         spi = boxenc[m_system][0] * V_ex / (V * rho);
         boxmassic = true;
 
@@ -1184,20 +1184,60 @@ class CompFlow {
         delta1[c] = 2.0 * tk::dot(g1,vw) - delta2[c];
         delta3[c] = 2.0 * tk::dot(g2,vw) - delta2[c];
 
-        // form limiters
-        auto rcL = (delta2[c] + muscl_eps) / (delta1[c] + muscl_eps);
-        auto rcR = (delta2[c] + muscl_eps) / (delta3[c] + muscl_eps);
-        auto rLinv = (delta1[c] + muscl_eps) / (delta2[c] + muscl_eps);
-        auto rRinv = (delta3[c] + muscl_eps) / (delta2[c] + muscl_eps);
+        // MUSCL extrapolation option 1:
+        // ---------------------------------------------------------------------
+        // Uncomment the following 3 blocks of code if this version is required.
+        // this reconstruction is from the following paper:
+        // Waltz, J., Morgan, N. R., Canfield, T. R., Charest, M. R.,
+        // Risinger, L. D., & Wohlbier, J. G. (2014). A three-dimensional
+        // finite element arbitrary Lagrangian–Eulerian method for shock
+        // hydrodynamics on unstructured grids. Computers & Fluids, 92,
+        // 172-187.
 
-        auto phiL = (std::abs(rcL) + rcL) / (std::abs(rcL) + 1.0);
-        auto phiR = (std::abs(rcR) + rcR) / (std::abs(rcR) + 1.0);
-        auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
-        auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
+        //// form limiters
+        //auto rcL = (delta2[c] + muscl_eps) / (delta1[c] + muscl_eps);
+        //auto rcR = (delta2[c] + muscl_eps) / (delta3[c] + muscl_eps);
+        //auto rLinv = (delta1[c] + muscl_eps) / (delta2[c] + muscl_eps);
+        //auto rRinv = (delta3[c] + muscl_eps) / (delta2[c] + muscl_eps);
+
+        //// van Leer limiter
+        //// any other symmetric limiter could be used instead too
+        //auto phiL = (std::abs(rcL) + rcL) / (std::abs(rcL) + 1.0);
+        //auto phiR = (std::abs(rcR) + rcR) / (std::abs(rcR) + 1.0);
+        //auto phi_L_inv = (std::abs(rLinv) + rLinv) / (std::abs(rLinv) + 1.0);
+        //auto phi_R_inv = (std::abs(rRinv) + rRinv) / (std::abs(rRinv) + 1.0);
+
+        //// update unknowns with reconstructed unknowns
+        //url[c] += 0.25*(delta1[c]*muscl_m1*phiL + delta2[c]*muscl_p1*phi_L_inv);
+        //urr[c] -= 0.25*(delta3[c]*muscl_m1*phiR + delta2[c]*muscl_p1*phi_R_inv);
+
+        // ---------------------------------------------------------------------
+
+        // MUSCL extrapolation option 2:
+        // ---------------------------------------------------------------------
+        // The following 2 blocks of code.
+        // this reconstruction is from the following paper:
+        // Luo, H., Baum, J. D., & Lohner, R. (1994). Edge-based finite element
+        // scheme for the Euler equations. AIAA journal, 32(6), 1183-1190.
+        // Van Leer, B. (1974). Towards the ultimate conservative difference
+        // scheme. II. Monotonicity and conservation combined in a second-order
+        // scheme. Journal of computational physics, 14(4), 361-370.
+
+        // get Van Albada limiter
+        // the following form is derived from the flux limiter phi as:
+        // s = phi_inv - (1 - phi)
+        auto sL = std::max(0.0, (2.0*delta1[c]*delta2[c] + muscl_eps)
+          /(delta1[c]*delta1[c] + delta2[c]*delta2[c] + muscl_eps));
+        auto sR = std::max(0.0, (2.0*delta3[c]*delta2[c] + muscl_eps)
+          /(delta3[c]*delta3[c] + delta2[c]*delta2[c] + muscl_eps));
 
         // update unknowns with reconstructed unknowns
-        url[c] += 0.25*(delta1[c]*muscl_m1*phiL + delta2[c]*muscl_p1*phi_L_inv);
-        urr[c] -= 0.25*(delta3[c]*muscl_m1*phiR + delta2[c]*muscl_p1*phi_R_inv);
+        url[c] += 0.25*sL*(delta1[c]*(1.0-muscl_const*sL)
+          + delta2[c]*(1.0+muscl_const*sL));
+        urr[c] -= 0.25*sR*(delta3[c]*(1.0-muscl_const*sR)
+          + delta2[c]*(1.0+muscl_const*sR));
+
+        // ---------------------------------------------------------------------
       }
 
       // force first order if the reconstructions for density or internal energy
