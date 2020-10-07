@@ -1321,7 +1321,7 @@ DG::comsol( int fromch,
 void
 DG::writeFields( CkCallback c )
 // *****************************************************************************
-// Output mesh-based fields to file
+// Start preparing mesh-based fields for output to file
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
@@ -1409,9 +1409,10 @@ DG::writePostAMR(
   }
 
   // Add adaptive indicator array to element-centered field output
-  std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
-  ndof.resize( inpoel.size()/4 );  // cut off ghosts
-  for (const auto& [child,parent] : addedTets) ndof[child] = ndof[parent];
+  std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );;
+
+  ndof.resize( inpoel.size()/4 );
+  for (const auto& [child,parent] : addedTets) ndof[child] = m_ndof[parent];
   elemfields.push_back( ndof );
 
   // Output chare mesh and fields metadata to file

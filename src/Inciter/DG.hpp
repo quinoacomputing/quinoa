@@ -408,7 +408,7 @@ class DG : public CBase_DG {
     //! Output mesh and particle fields to files
     void out();
 
-    //! Output mesh-based fields to file
+    //! Start preparing mesh-based fields for output to file
     void writeFields( CkCallback c );
 
     //! Compute solution reconstructions
