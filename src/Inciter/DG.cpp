@@ -1334,10 +1334,17 @@ DG::writeFields( CkCallback c )
 
     // Optionally refine mesh for field output
     auto d = Disc();
-    if (g_inputdeck.get< tag::cmd, tag::io, tag::refined >()) {
+    const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+
+    if (g_inputdeck.get< tag::cmd, tag::io, tag::refined >() &&
+        scheme != ctr::SchemeType::DG)
+    {
+
       const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
       d->Ref()->outref( m_fd.Bface(), {}, tr, c );
+
     } else {
+
       // cut off ghosts from mesh connectivity and coordinates
       const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
       auto inpoel = d->Inpoel();
@@ -1346,6 +1353,7 @@ DG::writeFields( CkCallback c )
       for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
       writePostAMR( {}, {inpoel,d->Gid(),d->Lid()}, coord, {}, {},
                     d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
+
     }
 
   }
