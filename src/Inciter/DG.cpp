@@ -1409,7 +1409,7 @@ DG::writePostAMR(
   }
 
   // Add adaptive indicator array to element-centered field output
-  std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );;
+  std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
 
   ndof.resize( inpoel.size()/4 );
   for (const auto& [child,parent] : addedTets) ndof[child] = m_ndof[parent];
