@@ -66,7 +66,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_bnode( bnode ),
   m_bface( bface ),
   m_triinpoel( tk::remap( triinpoel, Disc()->Lid() ) ),
-  m_bndel( bndel() ),
+  m_bndel( Disc()->bndel() ),
   m_dfnorm(),
   m_dfnormc(),
   m_dfn(),
@@ -166,32 +166,6 @@ ALECG::norm()
 
   // Compute dual-face normals associated to edges
   dfnorm();
-}
-
-std::vector< std::size_t >
-ALECG::bndel() const
-// *****************************************************************************
-// Find elements along our mesh chunk boundary
-//! \return List of local element ids that have at least a single node
-//!   contributing to a chare boundary
-// *****************************************************************************
-{
-  // Lambda to find out if a mesh node is shared with another chare
-  auto shared = [this]( std::size_t i ){
-    for (const auto& [c,n] : Disc()->NodeCommMap())
-      if (n.find(i) != end(n)) return true;
-    return false;
-  };
-
-  // Find elements along our mesh chunk boundary
-  std::vector< std::size_t > e;
-  const auto& inpoel = Disc()->Inpoel();
-  const auto gid = Disc()->Gid();
-  for (std::size_t n=0; n<inpoel.size(); ++n)
-    if (shared( gid[ inpoel[n] ] )) e.push_back( n/4 );
-  tk::unique( e );
-
-  return e;
 }
 
 std::array< tk::real, 3 >

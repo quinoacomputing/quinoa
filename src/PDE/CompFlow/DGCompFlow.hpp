@@ -619,6 +619,16 @@ class CompFlow {
       return std::vector< tk::real >( std::begin(s), std::end(s) );
     }
 
+    //! \brief Compute nodal field output along the chare-boundary
+    //! \details This function only computes local contributions to field output
+    //!   at chare-boundary nodes. Internal node field output is calculated as
+    //!   required, and do not need to be stored.
+    std::vector< std::vector< tk::real > > chBndFieldOut() const
+    {
+      std::vector< std::vector< tk::real > > f;
+      return f;
+    }
+
   private:
     //! Physics policy
     const Physics m_physics;

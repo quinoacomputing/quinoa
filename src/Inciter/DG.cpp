@@ -68,10 +68,6 @@ DG::DG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::discr, tag::rdof >()*
          std::accumulate( begin(g_dgpde), end(g_dgpde), 0u,
            [](std::size_t s, const DGPDE& eq){ return s + eq.nprim(); } ) ),
-  m_Unode(m_disc[thisIndex].ckLocal()->Gid().size(),
-    m_u.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
-  m_Pnode(m_disc[thisIndex].ckLocal()->Gid().size(),
-    m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
   m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), Disc()->Coord()) ),
   m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
   m_lhs( m_u.nunk(),
@@ -81,6 +77,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_ncoord( Disc()->Coord()[0].size() ),
+  m_ipface(),
   m_bndFace(),
   m_ghostData(),
   m_sendGhost(),
@@ -96,7 +93,12 @@ DG::DG( const CProxy_Discretization& disc,
   m_pc(),
   m_ndofc(),
   m_initial( 1 ),
-  m_expChBndFace()
+  m_expChBndFace(),
+  m_infaces(),
+  m_esupc(),
+  m_bndel( Disc()->bndel() ),
+  m_chBndFieldOut(),
+  m_chBndFieldOutc()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -2137,10 +2139,18 @@ DG::nodal()
     auto d = Disc();
     if (d->NodeCommMap().empty())
       comnod_complete();
-    else
+    else {
+
+      // Extract chare-boundary nodal field output for all equations
+      //for (const auto& eq : g_dgpde)
+      //  auto nf = eq.chBndFieldOut( d->Coord(), d->Inpoel(), m_bndel,
+      //                              d->Gid(), d->Bid(), m_u, m_chBndFieldOut );
+
+
       for(const auto& [cid, nodes] : d->NodeCommMap()) {
         thisProxy[ cid ].comnod( thisIndex );
       }
+    }
 
     ownnod_complete();
 
@@ -2148,7 +2158,7 @@ DG::nodal()
 }
 
 void
-DG::comnod( int fromch )
+DG::comnod( int /*fromch*/ )
 // *****************************************************************************
 //  Receive chare-boundary nodal solution contributions from neighboring chares
 //! \param[in] fromch Sender chare id

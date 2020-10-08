@@ -421,6 +421,16 @@ class Transport {
       return Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
     }
 
+    //! \brief Compute nodal field output along the chare-boundary
+    //! \details This function only computes local contributions to field output
+    //!   at chare-boundary nodes. Internal node field output is calculated as
+    //!   required, and do not need to be stored.
+    std::vector< std::vector< tk::real > > chBndFieldOut() const
+    {
+      std::vector< std::vector< tk::real > > f;
+      return f;
+    }
+
   private:
     const Physics m_physics;            //!< Physics policy
     const Problem m_problem;            //!< Problem policy

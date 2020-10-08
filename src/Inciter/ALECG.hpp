@@ -349,9 +349,6 @@ class ALECG : public CBase_ALECG {
                      std::vector< std::size_t >,
                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
 
-    //! Find elements along our mesh chunk boundary
-    std::vector< std::size_t > bndel() const;
-
     //! Compute chare-boundary edges
     void bndEdges();
 

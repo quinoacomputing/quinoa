@@ -218,8 +218,6 @@ class DG : public CBase_DG {
       p | m_u;
       p | m_un;
       p | m_p;
-      p | m_Unode;
-      p | m_Pnode;
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
@@ -247,6 +245,9 @@ class DG : public CBase_DG {
       p | m_infaces;
       p | m_esup;
       p | m_esupc;
+      p | m_bndel;
+      p | m_chBndFieldOut;
+      p | m_chBndFieldOutc;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -294,10 +295,6 @@ class DG : public CBase_DG {
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
-    //! Vector of unknown/solution at each mesh node
-    tk::Fields m_Unode;
-    //! Vector of primitive quantities at each mesh node
-    tk::Fields m_Pnode;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
@@ -360,6 +357,13 @@ class DG : public CBase_DG {
     std::map< std::size_t, std::vector< std::size_t > > m_esup;
     //! Communication buffer for esup data-structure
     std::map< std::size_t, std::vector< std::size_t > > m_esupc;
+    //! Elements along mesh boundary
+    std::vector< std::size_t > m_bndel;
+    //! Nodal output fields in chare-boundary nodes only
+    std::vector< std::vector< tk::real > > m_chBndFieldOut;
+    //! Receive buffer for communication of the nodal output fields
+    //! \details Key: chare id, value: nodal output fields per node
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_chBndFieldOutc;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

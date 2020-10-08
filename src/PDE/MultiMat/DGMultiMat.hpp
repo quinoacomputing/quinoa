@@ -822,38 +822,48 @@ class MultiMat {
         U, P);
     }
 
-    //! Return nodal field output going to file
-    //! \param[in] npoin Number of nodes
-    //! \param[in] esup Elements surrounding points
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] Unode Nodal solution vector
-    //! \param[in,out] Pnode Nodal vector of primitive quantities
-    //! \param[in,out] U Nodal solution vector at recent time step
-    //! \param[in] P Nodal vector of primitive quantities at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    nodalFieldOutput( tk::real,
-                 tk::real,
-                 std::size_t npoin,
-                 const std::map< std::size_t, std::vector< std::size_t > >&
-                   esup,
-                 const tk::Fields& geoElem,
-                 tk::Fields& Unode,
-                 tk::Fields& Pnode,
-                 tk::Fields& U,
-                 const tk::Fields& P ) const
+    //! \brief Compute nodal field output along the chare-boundary
+    //! \details This function only computes local contributions to field output
+    //!   at chare-boundary nodes. Internal node field output is calculated as
+    //!   required, and do not need to be stored.
+    std::vector< std::vector< tk::real > > chBndFieldOut() const
     {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      // number of materials
-      const auto nmat =
-        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-
-      tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
-        Pnode);
-
-      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, 1, geoElem,
-        Unode, Pnode);
+      std::vector< std::vector< tk::real > > f;
+      return f;
     }
+
+//    //! Return nodal field output going to file
+//    //! \param[in] npoin Number of nodes
+//    //! \param[in] esup Elements surrounding points
+//    //! \param[in] geoElem Element geometry array
+//    //! \param[in,out] Unode Nodal solution vector
+//    //! \param[in,out] Pnode Nodal vector of primitive quantities
+//    //! \param[in,out] U Nodal solution vector at recent time step
+//    //! \param[in] P Nodal vector of primitive quantities at recent time step
+//    //! \return Vector of vectors to be output to file
+//    std::vector< std::vector< tk::real > >
+//    nodalFieldOutput( tk::real,
+//                 tk::real,
+//                 std::size_t npoin,
+//                 const std::map< std::size_t, std::vector< std::size_t > >&
+//                   esup,
+//                 const tk::Fields& geoElem,
+//                 tk::Fields& Unode,
+//                 tk::Fields& Pnode,
+//                 tk::Fields& U,
+//                 const tk::Fields& P ) const
+//    {
+//      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+//      // number of materials
+//      const auto nmat =
+//        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
+//
+//      tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
+//        Pnode);
+//
+//      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, 1, geoElem,
+//        Unode, Pnode);
+//    }
 
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
