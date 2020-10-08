@@ -2132,7 +2132,7 @@ DG::nodal()
 // Start preparing nodal fields for output to file
 // *****************************************************************************
 {
-  if (fieldOutput() && refinedOutput()) {
+  if (fieldOutput()) {
 
     auto d = Disc();
     if (d->NodeCommMap().empty())
