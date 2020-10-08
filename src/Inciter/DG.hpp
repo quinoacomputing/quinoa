@@ -149,6 +149,9 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
+    //! Receive nodal solution contributions from neighboring chares
+    void comnod( int fromch );
+
     //! Optionally refine/derefine mesh
     void refine( const std::vector< tk::real >& l2res );
 
@@ -209,6 +212,7 @@ class DG : public CBase_DG {
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
+      p | m_nnod;
       p | m_nreco;
       p | m_fd;
       p | m_u;
@@ -274,8 +278,12 @@ class DG : public CBase_DG {
     //! \brief Counter signaling that we have received all our solution ghost
     //!    data during setup
     std::size_t m_ninitsol;
-    //! Counter signaling that we have received all our limiter function ghost data
+    //! \brief Counter signaling that we have received all our limiter function
+    //!   ghost data
     std::size_t m_nlim;
+    //! \brief Counter signaling that we have received all our node solution
+    //!   contributions
+    std::size_t m_nnod;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
     //! Face data
@@ -434,6 +442,15 @@ class DG : public CBase_DG {
     solref( const std::vector< std::size_t >& inpoel,
             const tk::UnsMesh::Coords& coord,
             const std::unordered_map< std::size_t, std::size_t >& addedTets );
+
+    //! Decide wether to output field data
+    bool fieldOutput() const;
+
+    //! Decide if we write field output using a refined mesh
+    bool refinedOutput() const;
+
+    //! Start preparing nodal fields for output to file
+    void nodal();
 };
 
 } // inciter::

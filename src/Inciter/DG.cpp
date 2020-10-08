@@ -57,6 +57,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
+  m_nnod( 0 ),
   m_nreco( 0 ),
   m_fd( Disc()->Inpoel(), bface, tk::remap(triinpoel,Disc()->Lid()) ),
   m_u( Disc()->Inpoel().size()/4,
@@ -173,6 +174,7 @@ DG::resizeComm()
     thisProxy[ thisIndex ].wait4sol();
     thisProxy[ thisIndex ].wait4reco();
     thisProxy[ thisIndex ].wait4lim();
+    thisProxy[ thisIndex ].wait4nod();
   }
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
@@ -1334,11 +1336,8 @@ DG::writeFields( CkCallback c )
 
     // Optionally refine mesh for field output
     auto d = Disc();
-    const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
 
-    if (g_inputdeck.get< tag::cmd, tag::io, tag::refined >() &&
-        scheme != ctr::SchemeType::DG)
-    {
+    if (refinedOutput()) {
 
       const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
       d->Ref()->outref( m_fd.Bface(), {}, tr, c );
@@ -1884,6 +1883,7 @@ DG::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4reco();
   thisProxy[ thisIndex ].wait4lim();
+  thisProxy[ thisIndex ].wait4nod();
 
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -2082,10 +2082,11 @@ DG::resizePostAMR(
   resizeComm();
 }
 
-void
-DG::out()
+bool
+DG::fieldOutput() const
 // *****************************************************************************
-// Output mesh field data
+// Decide wether to output field data
+//! \return True if field data is output in this step
 // *****************************************************************************
 {
   auto d = Disc();
@@ -2097,11 +2098,66 @@ DG::out()
 
   // output field data if field iteration count is reached or in the last time
   // step, otherwise continue to next time step
-  if ( !((d->It()) % fieldfreq) ||
-       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+  return !((d->It()) % fieldfreq) ||
+         std::fabs(d->T()-term) < eps ||
+         d->It() >= nstep;
+}
+
+bool
+DG::refinedOutput() const
+// *****************************************************************************
+// Decide if we write field output using a refined mesh
+//! \return True if field output will use a refined mesh
+// *****************************************************************************
+{
+  return g_inputdeck.get< tag::cmd, tag::io, tag::refined >() &&
+         g_inputdeck.get< tag::discr, tag::scheme >() != ctr::SchemeType::DG;
+}
+
+void
+DG::out()
+// *****************************************************************************
+// Output mesh field data
+// *****************************************************************************
+{
+  if (fieldOutput())
     writeFields( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
   else
     step();
+}
+
+void
+DG::nodal()
+// *****************************************************************************
+// Start preparing nodal fields for output to file
+// *****************************************************************************
+{
+  if (fieldOutput() && refinedOutput()) {
+
+    auto d = Disc();
+    if (d->NodeCommMap().empty())
+      comnod_complete();
+    else
+      for(const auto& [cid, nodes] : d->NodeCommMap()) {
+        thisProxy[ cid ].comnod( thisIndex );
+      }
+
+    ownnod_complete();
+
+  } else out();
+}
+
+void
+DG::comnod( int fromch )
+// *****************************************************************************
+//  Receive chare-boundary nodal solution contributions from neighboring chares
+//! \param[in] fromch Sender chare id
+// *****************************************************************************
+{
+  if (++m_nnod == Disc()->NodeCommMap().size()) {
+    m_nnod = 0;
+    comnod_complete();
+  }
 }
 
 void
@@ -2114,8 +2170,8 @@ DG::stage()
   ++m_stage;
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
-  // otherwise output field data to file(s)
-  if (m_stage < 3) next(); else out();
+  // otherwise prepare for nodal field output
+  if (m_stage < 3) next(); else nodal();
 }
 
 void
