@@ -55,7 +55,7 @@ MultiMatFieldOutput(
   std::size_t nunk,
   std::size_t rdof,
   const tk::Fields& geoElem,
-  tk::Fields& U,
+  const tk::Fields& U,
   const tk::Fields& P )
 // *****************************************************************************
 //  Return field output going to file

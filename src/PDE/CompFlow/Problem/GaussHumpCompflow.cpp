@@ -105,7 +105,7 @@ CompFlowProblemGaussHump::fieldOutput(
   tk::real V,
   const std::vector< tk::real >& vol,
   const std::array< std::vector< tk::real >, 3 >& coord,
-  tk::Fields& U ) const
+  const tk::Fields& U ) const
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
@@ -120,7 +120,6 @@ CompFlowProblemGaussHump::fieldOutput(
 //! \param[in] coord Mesh node coordinates
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
-
 // *****************************************************************************
 {
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();

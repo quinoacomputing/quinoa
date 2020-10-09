@@ -97,8 +97,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_infaces(),
   m_esupc(),
   m_bndel( Disc()->bndel() ),
-  m_chBndFieldOut(),
-  m_chBndFieldOutc()
+  m_nodeFieldOut(),
+  m_nodeFieldOutc()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -1404,10 +1404,8 @@ DG::writePostAMR(
   std::vector< std::vector< tk::real > > nodefields;
   auto geoElem = tk::genGeoElemTet( inpoel, coord );
   auto t = d->T();
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   for (const auto& eq : g_dgpde) {
-    auto eo =
-      eq.fieldOutput( t, d->meshvol(), rdof, inpoel.size()/4, geoElem, u, p );
+    auto eo = eq.fieldOutput( t, d->meshvol(), inpoel.size()/4, geoElem, u, p );
     //auto no = eq.nodalFieldOutput( t, d->meshvol(), m_ncoord, m_esup,
     //    m_geoElem, m_Unode, m_Pnode, m_u, m_p );
 
@@ -2142,10 +2140,13 @@ DG::nodal()
     else {
 
       // Extract chare-boundary nodal field output for all equations
-      //for (const auto& eq : g_dgpde)
-      //  auto nf = eq.chBndFieldOut( d->Coord(), d->Inpoel(), m_bndel,
-      //                              d->Gid(), d->Bid(), m_u, m_chBndFieldOut );
-
+      //const auto& inpoel = d->Inpoel();
+      //const auto& coord = d->Coord();
+      //auto geoElem = tk::genGeoElemTet( inpoel, coord );
+      //for (const auto& eq : g_dgpde) {
+      //  auto nf = eq.nodeFieldOutput( d->T(), d->meshvol(),
+      //              inpoel.size()/4, geoElem, m_u, m_p );
+      //}
 
       for(const auto& [cid, nodes] : d->NodeCommMap()) {
         thisProxy[ cid ].comnod( thisIndex );

@@ -94,7 +94,7 @@ CompFlowProblemVorticalFlow::fieldOutput(
   tk::real,
   const std::vector< tk::real >&,
   const std::array< std::vector< tk::real >, 3 >& coord,
-  tk::Fields& U ) const
+  const tk::Fields& U ) const
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible

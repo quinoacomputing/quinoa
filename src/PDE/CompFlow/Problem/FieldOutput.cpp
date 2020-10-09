@@ -40,7 +40,7 @@ std::vector< std::vector< tk::real > >
 CompFlowFieldOutput( ncomp_t system,
                      ncomp_t offset,
                      std::size_t nunk,
-                     tk::Fields& U )
+                     const tk::Fields& U )
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible

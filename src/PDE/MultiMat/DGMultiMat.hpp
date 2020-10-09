@@ -799,7 +799,6 @@ class MultiMat {
     }
 
     //! Return field output going to file
-    //! \param[in] rdof Total number of degrees of freedom
     //! \param[in] nunk Number of unknowns
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
@@ -808,27 +807,35 @@ class MultiMat {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real,
                  tk::real,
-                 std::size_t rdof,
                  std::size_t nunk,
                  const tk::Fields& geoElem,
-                 tk::Fields& U,
+                 const tk::Fields& U,
                  const tk::Fields& P ) const
     {
       // number of materials
-      auto nmat =
-        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-
-      return MultiMatFieldOutput(m_system, nmat, m_offset, nunk, rdof, geoElem,
-        U, P);
+      auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
+      auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      return MultiMatFieldOutput( m_system, nmat, m_offset, nunk, rdof, geoElem,
+                                  U, P );
     }
 
-    //! \brief Compute nodal field output along the chare-boundary
-    //! \details This function only computes local contributions to field output
-    //!   at chare-boundary nodes. Internal node field output is calculated as
-    //!   required, and do not need to be stored.
-    std::vector< std::vector< tk::real > > chBndFieldOut() const
+    //! Compute nodal field output
+    //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume
+    //! \param[in] nunk Number of unknowns to extract
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Primitive variable vector at recent time step
+    //! \return Vector of vectors to be output to file
+    std::vector< std::vector< tk::real > >
+    nodeFieldOutput( tk::real t,
+                     tk::real V,
+                     std::size_t nunk,
+                     const tk::Fields& geoElem,
+                     const tk::Fields& U,
+                     const tk::Fields& P ) const
     {
-      std::vector< std::vector< tk::real > > f;
+      auto f = fieldOutput( t, V, nunk, geoElem, U, P );
       return f;
     }
 

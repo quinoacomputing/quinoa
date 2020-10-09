@@ -563,10 +563,9 @@ class CompFlow {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  tk::real V,
-                 std::size_t,
                  std::size_t nunk,
                  const tk::Fields& geoElem,
-                 tk::Fields& U,
+                 const tk::Fields& U,
                  const tk::Fields& ) const
     {
       std::array< std::vector< tk::real >, 3 > coord{
@@ -574,21 +573,6 @@ class CompFlow {
 
       return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, t, V,
                                     geoElem.extract(0,0), coord, U );
-    }
-
-    //! Nodal field output setup will go here
-    std::vector< std::vector< tk::real > >
-    nodalFieldOutput( tk::real,
-      tk::real,
-      std::size_t,
-      const std::map< std::size_t, std::vector< std::size_t > >&,
-      const tk::Fields&,
-      tk::Fields&,
-      tk::Fields&,
-      tk::Fields&,
-      const tk::Fields& ) const
-    {
-      return {};
     }
 
     //! Return surface field output going to file
@@ -619,13 +603,22 @@ class CompFlow {
       return std::vector< tk::real >( std::begin(s), std::end(s) );
     }
 
-    //! \brief Compute nodal field output along the chare-boundary
-    //! \details This function only computes local contributions to field output
-    //!   at chare-boundary nodes. Internal node field output is calculated as
-    //!   required, and do not need to be stored.
-    std::vector< std::vector< tk::real > > chBndFieldOut() const
+    //! Compute nodal field output
+    //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume
+    //! \param[in] nunk Number of unknowns to extract
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] U Solution vector at recent time step
+    //! \return Vector of vectors to be output to file
+    std::vector< std::vector< tk::real > >
+    nodeFieldOutput( tk::real t,
+                     tk::real V,
+                     std::size_t nunk,
+                     const tk::Fields& geoElem,
+                     const tk::Fields& U,
+                     const tk::Fields& ) const
     {
-      std::vector< std::vector< tk::real > > f;
+      auto f = fieldOutput( t, V, nunk, geoElem, U, U );
       return f;
     }
 

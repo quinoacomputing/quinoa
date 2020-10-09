@@ -246,8 +246,8 @@ class DG : public CBase_DG {
       p | m_esup;
       p | m_esupc;
       p | m_bndel;
-      p | m_chBndFieldOut;
-      p | m_chBndFieldOutc;
+      p | m_nodeFieldOut;
+      p | m_nodeFieldOutc;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -360,10 +360,10 @@ class DG : public CBase_DG {
     //! Elements along mesh boundary
     std::vector< std::size_t > m_bndel;
     //! Nodal output fields in chare-boundary nodes only
-    std::vector< std::vector< tk::real > > m_chBndFieldOut;
+    std::vector< std::vector< tk::real > > m_nodeFieldOut;
     //! Receive buffer for communication of the nodal output fields
     //! \details Key: chare id, value: nodal output fields per node
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_chBndFieldOutc;
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_nodeFieldOutc;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
