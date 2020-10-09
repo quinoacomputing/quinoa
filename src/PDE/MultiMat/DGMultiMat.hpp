@@ -823,6 +823,8 @@ class MultiMat {
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
     //! \param[in] npoin Number of unknowns to extract in points
+    //! \param[in] coord Node coordinates
+    //! \param[in] inpoel Mesh connectivity
     //! \param[in] esup Elements surrounding points
     //! \param[in] geoElem Element geometry array
     //! \param[in] U Solution vector at recent time step
@@ -832,8 +834,10 @@ class MultiMat {
     nodeFieldOutput( tk::real t,
                      tk::real V,
                      std::size_t npoin,
-                     const std::map< std::size_t,
-                       std::vector< std::size_t > >& esup,
+                     const tk::UnsMesh::Coords& coord,
+                     const std::vector< std::size_t >& inpoel,
+                     const std::pair< std::vector< std::size_t >,
+                                      std::vector< std::size_t > >& esup,
                      const tk::Fields& geoElem,
                      const tk::Fields& U,
                      const tk::Fields& P ) const

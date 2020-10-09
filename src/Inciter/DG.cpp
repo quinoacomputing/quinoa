@@ -2142,9 +2142,10 @@ DG::nodal()
       const auto& inpoel = d->Inpoel();
       const auto& coord = d->Coord();
       auto geoElem = tk::genGeoElemTet( inpoel, coord );
+      auto esup = tk::genEsup( inpoel, 4 );
       for (const auto& eq : g_dgpde) {
-        auto nf = eq.nodeFieldOutput( d->T(), d->meshvol(), m_npoin, m_esup,
-                                      geoElem, m_u, m_p );
+        auto nf = eq.nodeFieldOutput( d->T(), d->meshvol(), m_npoin, coord,
+                                      inpoel, esup, geoElem, m_u, m_p );
       }
 
       for(const auto& [cid, nodes] : d->NodeCommMap()) {

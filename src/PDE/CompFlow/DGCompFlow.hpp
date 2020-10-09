@@ -607,6 +607,8 @@ class CompFlow {
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
     //! \param[in] npoin Number of unknowns to extract in points
+    //! \param[in] coord Node coordinates
+    //! \param[in] inpoel Mesh connectivity
     //! \param[in] esup Elements surrounding points
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
@@ -615,19 +617,24 @@ class CompFlow {
     nodeFieldOutput( tk::real t,
                      tk::real V,
                      std::size_t npoin,
-                     const std::map< std::size_t,
-                       std::vector< std::size_t > >& esup,
+                     const tk::UnsMesh::Coords& coord,
+                     const std::vector< std::size_t >& inpoel,
+                     const std::pair< std::vector< std::size_t >,
+                                      std::vector< std::size_t > >& esup,
                      const tk::Fields& geoElem,
                      const tk::Fields& U,
                      const tk::Fields& ) const
     {
       // Evaluate solution in nodes
-      //tk::Fields Un;
-      //const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      //tk::nodeEval( m_ncomp, 0, m_offset, rdof, npoin, esup, U, U, Un, Un );
+      auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      tk::Fields Un( npoin, U.nprop()/rdof );
+      tk::nodeEval( m_ncomp, 0, m_offset, ndof, rdof, npoin, coord, inpoel,
+                    esup, U, U, Un, Un );
 
-      //auto f = fieldOutput( t, V, npoin, geoElem, U, U );
-      return {};
+      // Next: change this to extract fields from Un
+      auto f = fieldOutput( t, V, npoin, geoElem, U, U );
+      return f;
     }
 
   private:

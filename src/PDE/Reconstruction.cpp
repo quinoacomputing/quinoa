@@ -17,6 +17,7 @@
 #include <iostream>
 
 #include "Vector.hpp"
+#include "Around.hpp"
 #include "Base/HashMapReducer.hpp"
 #include "Reconstruction.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
@@ -609,9 +610,13 @@ void
 tk::nodeEval( std::size_t ncomp,
               std::size_t nprim,
               std::size_t offset,
+              std::size_t ndof,
               std::size_t rdof,
               std::size_t npoin,
-              const std::map< std::size_t, std::vector< std::size_t > >& esup,
+              const tk::UnsMesh::Coords& coord,
+              const std::vector< std::size_t >& inpoel,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& esup,
               const Fields& U,
               const Fields& P,
               Fields& Un,
@@ -623,6 +628,8 @@ tk::nodeEval( std::size_t ncomp,
 //! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] npoin Total number of nodes
+//! \param[in] coord Node coordinates
+//! \param[in] inpoel Mesh connectivity
 //! \param[in] esup Elements surrounding points
 //! \param[in] U Vector of cell-averaged unknowns
 //! \param[in] P Vector of cell-averaged primitive quantities
@@ -630,37 +637,37 @@ tk::nodeEval( std::size_t ncomp,
 //! \param[in,out] Pn Vector of primitive quantities at nodes
 // *****************************************************************************
 {
+  using tk::dot;
+
   Un.fill(0.0);
   Pn.fill(0.0);
 
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  const auto uncomp = U.nprop() / rdof;
+  const auto pncomp = P.nprop() / rdof;
+
   for (std::size_t p=0; p<npoin; ++p)
-  {
-    const auto& pesup = esup.at(p);
-
-    // loop over all the elements surrounding this node p
-    auto denom(0.0);
-    for (auto er : pesup)
-    {
-      denom += 1.0;
-      // average cell-averaged solution to node p
-      for (std::size_t c=0; c<ncomp; ++c)
-      {
-        auto mark = c*rdof;
-        Un(p,c,offset) += U(er,mark,offset);
-      }
-      for (std::size_t c=0; c<nprim; ++c)
-      {
-        auto mark = c*rdof;
-        Pn(p,c,offset) += P(er,mark,offset);
-      }
+    for (auto e : tk::Around(esup,p)) {
+      // Extract element coordinates
+      auto e4 = 4*e;
+      std::array< std::array< tk::real, 3>, 4 > ce{{
+        {{ x[inpoel[e4  ]], y[inpoel[e4  ]], z[inpoel[e4  ]] }},
+        {{ x[inpoel[e4+1]], y[inpoel[e4+1]], z[inpoel[e4+1]] }},
+        {{ x[inpoel[e4+2]], y[inpoel[e4+2]], z[inpoel[e4+2]] }},
+        {{ x[inpoel[e4+3]], y[inpoel[e4+3]], z[inpoel[e4+3]] }} }};
+      // Evaluate inverse Jacobian of the element
+      auto J = tk::inverseJacobian( ce[0], ce[1], ce[2], ce[3] );
+      // Compute in and sum solution to p
+      std::array<tk::real,3> h{ x[p]-ce[0][0], y[p]-ce[0][1], z[p]-ce[0][2] };
+      auto B = tk::eval_basis( ndof, dot(J[0],h), dot(J[1],h), dot(J[2],h) );
+      auto chu = eval_state( uncomp, 0, ndof, ndof, e, U, B );
+      for (std::size_t i=0; i<uncomp; ++i) Un(p,i,0) += chu[i];
+      auto chp = eval_state( pncomp, 0, ndof, ndof, e, P, B );
+      for (std::size_t i=0; i<pncomp; ++i) Pn(p,i,0) += chp[i];
     }
-
-    // complete the average
-    for (std::size_t c=0; c<ncomp; ++c)
-      Un(p,c,offset) /= denom;
-    for (std::size_t c=0; c<nprim; ++c)
-      Pn(p,c,offset) /= denom;
-  }
 }
 
 void
