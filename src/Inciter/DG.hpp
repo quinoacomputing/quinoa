@@ -224,7 +224,7 @@ class DG : public CBase_DG {
       p | m_rhs;
       p | m_nfac;
       p | m_nunk;
-      p | m_ncoord;
+      p | m_npoin;
       p | m_ipface;
       p | m_bndFace;
       p | m_ghostData;
@@ -307,7 +307,7 @@ class DG : public CBase_DG {
     //! Counter for number of unknowns on this chare (including ghosts)
     std::size_t m_nunk;
     //! Counter for number of nodes on this chare excluding ghosts
-    std::size_t m_ncoord;
+    std::size_t m_npoin;
     //! Internal + physical boundary faces (inverse of inpofa)
     tk::UnsMesh::FaceSet m_ipface;
     //! Face & tet IDs associated to global node IDs of the face for each chare

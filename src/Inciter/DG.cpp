@@ -76,7 +76,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
-  m_ncoord( Disc()->Coord()[0].size() ),
+  m_npoin( Disc()->Coord()[0].size() ),
   m_ipface(),
   m_bndFace(),
   m_ghostData(),
@@ -1350,7 +1350,7 @@ DG::writeFields( CkCallback c )
       auto inpoel = d->Inpoel();
       inpoel.resize( m_fd.Esuel().size() );
       auto coord = d->Coord();
-      for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
+      for (std::size_t i=0; i<3; ++i) coord[i].resize( m_npoin );
       writePostAMR( {}, {inpoel,d->Gid(),d->Lid()}, coord, {}, {},
                     d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
 
@@ -1405,7 +1405,7 @@ DG::writePostAMR(
   auto t = d->T();
   for (const auto& eq : g_dgpde) {
     auto eo = eq.fieldOutput( t, d->meshvol(), inpoel.size()/4, geoElem, u, p );
-    //auto no = eq.nodalFieldOutput( t, d->meshvol(), m_ncoord, m_esup,
+    //auto no = eq.nodalFieldOutput( t, d->meshvol(), m_npoin, m_esup,
     //    m_geoElem, m_Unode, m_Pnode, m_u, m_p );
 
     // cut off ghost elements from element output
@@ -2054,7 +2054,7 @@ DG::resizePostAMR(
 
   m_nfac = m_fd.Inpofa().size()/3;
   m_nunk = nelem;
-  m_ncoord = coord[0].size();
+  m_npoin = coord[0].size();
   m_bndFace.clear();
   m_exptGhost.clear();
   m_sendGhost.clear();
@@ -2143,7 +2143,7 @@ DG::nodal()
       const auto& coord = d->Coord();
       auto geoElem = tk::genGeoElemTet( inpoel, coord );
       for (const auto& eq : g_dgpde) {
-        auto nf = eq.nodeFieldOutput( d->T(), d->meshvol(), inpoel.size()/4,
+        auto nf = eq.nodeFieldOutput( d->T(), d->meshvol(), m_npoin, m_esup,
                                       geoElem, m_u, m_p );
       }
 

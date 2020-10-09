@@ -822,7 +822,8 @@ class MultiMat {
     //! Compute nodal field output
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
-    //! \param[in] nunk Number of unknowns to extract
+    //! \param[in] npoin Number of unknowns to extract in points
+    //! \param[in] esup Elements surrounding points
     //! \param[in] geoElem Element geometry array
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive variable vector at recent time step
@@ -830,13 +831,14 @@ class MultiMat {
     std::vector< std::vector< tk::real > >
     nodeFieldOutput( tk::real t,
                      tk::real V,
-                     std::size_t nunk,
+                     std::size_t npoin,
+                     const std::map< std::size_t,
+                       std::vector< std::size_t > >& esup,
                      const tk::Fields& geoElem,
                      const tk::Fields& U,
                      const tk::Fields& P ) const
     {
-      auto f = fieldOutput( t, V, nunk, geoElem, U, P );
-      return f;
+      return {};
     }
 
 //    //! Return nodal field output going to file

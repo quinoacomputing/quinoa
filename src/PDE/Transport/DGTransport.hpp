@@ -409,19 +409,22 @@ class Transport {
 
     //! Compute nodal field output
     //! \param[in] t Physical time
+    //! \param[in] npoin Number of unknowns to extract in points
+    //! \param[in] esup Elements surrounding points
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     nodeFieldOutput( tk::real t,
                      tk::real,
-                     std::size_t nunk,
+                     std::size_t npoin,
+                     const std::map< std::size_t,
+                       std::vector< std::size_t > >& esup,
                      const tk::Fields& geoElem,
                      const tk::Fields& U,
                      const tk::Fields& ) const
     {
-      auto f = fieldOutput( t, 0.0, nunk, geoElem, U, U );
-      return f;
+      return {};
     }
 
   private:
