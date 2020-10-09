@@ -1057,6 +1057,12 @@ Transporter::inthead( const InciterPrint& print )
 // *****************************************************************************
 {
   auto refined = g_inputdeck.get< tag::cmd, tag::io, tag::refined >();
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (refined && scheme == ctr::SchemeType::DG) {
+    printer() << "\n>>> WARNING: Ignoring refined field output for DG(P0)\n\n";
+    refined = false;
+  }
+
   print.inthead( "Time integration", "Navier-Stokes solver",
   "Legend: it - iteration count\n"
   "         t - physics time\n"
