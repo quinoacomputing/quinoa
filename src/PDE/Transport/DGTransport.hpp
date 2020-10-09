@@ -335,6 +335,7 @@ class Transport {
 
     //! Return field output going to file
     //! \param[in] t Physical time
+    //! \param[in] nunk Number of unknowns to extract
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
@@ -344,20 +345,21 @@ class Transport {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  tk::real,
-                 std::size_t,
+                 std::size_t nunk,
                  const tk::Fields& geoElem,
                  const tk::Fields& U,
                  const tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
+      Assert( geoElem.nunk() == nunk, "Size mismatch" );
+      Assert( U.nunk() >= nunk, "Size mismatch" );
       std::vector< std::vector< tk::real > > out;
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c*rdof, m_offset ) );
       // evaluate analytic solution at time t
       auto E = U;
-      for (std::size_t e=0; e<U.nunk(); ++e)
+      for (std::size_t e=0; e<nunk; ++e)
       {
         int inbox = 0;
         auto s = Problem::solution( m_system, m_ncomp, geoElem(e,1,0),
@@ -373,7 +375,7 @@ class Transport {
         auto mark = c*rdof;
         auto u = U.extract( mark, m_offset );
         auto e = E.extract( mark, m_offset );
-        for (std::size_t i=0; i<u.size(); ++i)
+        for (std::size_t i=0; i<nunk; ++i)
           e[i] = std::pow( e[i] - u[i], 2.0 ) * geoElem(i,0,0);
         out.push_back( e );
       }
@@ -413,12 +415,12 @@ class Transport {
     std::vector< std::vector< tk::real > >
     nodeFieldOutput( tk::real t,
                      tk::real,
-                     std::size_t,
+                     std::size_t nunk,
                      const tk::Fields& geoElem,
                      const tk::Fields& U,
                      const tk::Fields& ) const
     {
-      auto f = fieldOutput( t, 0.0, 0, geoElem, U, U );
+      auto f = fieldOutput( t, 0.0, nunk, geoElem, U, U );
       return f;
     }
 

@@ -62,27 +62,27 @@ CompFlowFieldOutput( ncomp_t system,
   const auto rw = U.extract( 3*rdof, offset );
   const auto re = U.extract( 4*rdof, offset );
 
+  Assert( r.size() >= nunk, "Size mismatch" );
+  Assert( ru.size() >= nunk, "Size mismatch" );
+  Assert( rv.size() >= nunk, "Size mismatch" );
+  Assert( rw.size() >= nunk, "Size mismatch" );
+  Assert( re.size() >= nunk, "Size mismatch" );
+
   out.push_back( r );
 
-  Assert( r.size() >= nunk, "Size mismatch" );
-
   std::vector< tk::real > u = ru;
-  Assert( u.size() >= nunk, "Size mismatch" );
   for (std::size_t i=0; i<nunk; ++i) u[i] /= r[i];
   out.push_back( u );
 
   std::vector< tk::real > v = rv;
-  Assert( v.size() >= nunk, "Size mismatch" );
   for (std::size_t i=0; i<nunk; ++i) v[i] /= r[i];
   out.push_back( v );
 
   std::vector< tk::real > w = rw;
-  Assert( w.size() >= nunk, "Size mismatch" );
   for (std::size_t i=0; i<nunk; ++i) w[i] /= r[i];
   out.push_back( w );
 
   std::vector< tk::real > E = re;
-  Assert( E.size() >= nunk, "Size mismatch" );
   for (std::size_t i=0; i<nunk; ++i) E[i] /= r[i];
   out.push_back( E );
 

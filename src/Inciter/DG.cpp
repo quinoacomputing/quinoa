@@ -96,7 +96,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_expChBndFace(),
   m_infaces(),
   m_esupc(),
-  m_bndel( Disc()->bndel() ),
   m_nodeFieldOut(),
   m_nodeFieldOutc()
 // *****************************************************************************
@@ -2140,13 +2139,13 @@ DG::nodal()
     else {
 
       // Extract chare-boundary nodal field output for all equations
-      //const auto& inpoel = d->Inpoel();
-      //const auto& coord = d->Coord();
-      //auto geoElem = tk::genGeoElemTet( inpoel, coord );
-      //for (const auto& eq : g_dgpde) {
-      //  auto nf = eq.nodeFieldOutput( d->T(), d->meshvol(),
-      //              inpoel.size()/4, geoElem, m_u, m_p );
-      //}
+      const auto& inpoel = d->Inpoel();
+      const auto& coord = d->Coord();
+      auto geoElem = tk::genGeoElemTet( inpoel, coord );
+      for (const auto& eq : g_dgpde) {
+        auto nf = eq.nodeFieldOutput( d->T(), d->meshvol(), inpoel.size()/4,
+                                      geoElem, m_u, m_p );
+      }
 
       for(const auto& [cid, nodes] : d->NodeCommMap()) {
         thisProxy[ cid ].comnod( thisIndex );

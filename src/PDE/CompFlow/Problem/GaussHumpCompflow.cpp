@@ -138,7 +138,7 @@ CompFlowProblemGaussHump::fieldOutput(
   const auto& z = coord[2];
 
   auto er = r, p = r;
-  for (std::size_t i=0; i<r.size(); ++i) {
+  for (std::size_t i=0; i<nunk; ++i) {
     int inbox = 0;
     auto s = solution( system, ncomp, x[i], y[i], z[i], t, inbox );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;

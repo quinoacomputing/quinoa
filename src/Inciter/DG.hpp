@@ -245,7 +245,6 @@ class DG : public CBase_DG {
       p | m_infaces;
       p | m_esup;
       p | m_esupc;
-      p | m_bndel;
       p | m_nodeFieldOut;
       p | m_nodeFieldOutc;
     }
@@ -357,9 +356,7 @@ class DG : public CBase_DG {
     std::map< std::size_t, std::vector< std::size_t > > m_esup;
     //! Communication buffer for esup data-structure
     std::map< std::size_t, std::vector< std::size_t > > m_esupc;
-    //! Elements along mesh boundary
-    std::vector< std::size_t > m_bndel;
-    //! Nodal output fields in chare-boundary nodes only
+    //! Nodal output fields
     std::vector< std::vector< tk::real > > m_nodeFieldOut;
     //! Receive buffer for communication of the nodal output fields
     //! \details Key: chare id, value: nodal output fields per node

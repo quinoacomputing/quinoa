@@ -134,28 +134,28 @@ CompFlowProblemVorticalFlow::fieldOutput(
    const auto& y = coord[1];
    const auto& z = coord[2];
 
-   out.push_back( std::vector< tk::real >( r.size(), 1.0 ) );
+   out.push_back( std::vector< tk::real >( nunk, 1.0 ) );
 
    std::vector< tk::real > u = ru;
-   for (std::size_t i=0; i<u.size(); ++i) u[i] = a*x[i] - b*y[i];
+   for (std::size_t i=0; i<nunk; ++i) u[i] = a*x[i] - b*y[i];
    out.push_back( u );
 
    std::vector< tk::real > v = rv;
-   for (std::size_t i=0; i<v.size(); ++i) v[i] = b*x[i] + a*y[i];
+   for (std::size_t i=0; i<nunk; ++i) v[i] = b*x[i] + a*y[i];
    out.push_back( v );
 
    std::vector< tk::real > w = rw;
-   for (std::size_t i=0; i<w.size(); ++i) w[i] = -2.0*a*z[i];
+   for (std::size_t i=0; i<nunk; ++i) w[i] = -2.0*a*z[i];
    out.push_back( w );
 
    std::vector< tk::real > E = re;
-   for (std::size_t i=0; i<E.size(); ++i)
+   for (std::size_t i=0; i<nunk; ++i)
      E[i] = 0.5*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i]) +
             (p0 - 2.0*a*a*z[i]*z[i])/(g-1.0);
    out.push_back( E );
 
-   std::vector< tk::real > P( r.size(), 0.0 );
-   for (std::size_t i=0; i<P.size(); ++i)
+   std::vector< tk::real > P( nunk, 0.0 );
+   for (std::size_t i=0; i<nunk; ++i)
      P[i] = p0 - 2.0*a*a*z[i]*z[i];
    out.push_back( P );
 
