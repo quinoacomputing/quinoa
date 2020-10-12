@@ -415,7 +415,7 @@ class DG : public CBase_DG {
                      const std::array< std::size_t, 2 >& id );
 
     //! Output mesh and particle fields to files
-    void out();
+    void out( CkCallback c );
 
     //! Start preparing mesh-based fields for output to file
     void writeFields( CkCallback c );
@@ -451,7 +451,7 @@ class DG : public CBase_DG {
     bool refinedOutput() const;
 
     //! Start preparing nodal fields for output to file
-    void nodal();
+    void nodal( CkCallback c );
 };
 
 } // inciter::

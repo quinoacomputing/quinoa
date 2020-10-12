@@ -1210,7 +1210,7 @@ DG::box( tk::real v )
   Disc()->Boxvol() = v;
 
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
+  nodal( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
 }
 
 void
@@ -2115,21 +2115,23 @@ DG::refinedOutput() const
 }
 
 void
-DG::out()
+DG::out( CkCallback c )
 // *****************************************************************************
 // Output mesh field data
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   if (fieldOutput())
-    writeFields( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
+    writeFields( c );
   else
     step();
 }
 
 void
-DG::nodal()
+DG::nodal( CkCallback c )
 // *****************************************************************************
 // Start preparing nodal fields for output to file
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   if (fieldOutput()) {
@@ -2154,9 +2156,9 @@ DG::nodal()
       }
     }
 
-    ownnod_complete();
+    ownnod_complete( c );
 
-  } else out();
+  } else out( c );
 }
 
 void
@@ -2183,7 +2185,10 @@ DG::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise prepare for nodal field output
-  if (m_stage < 3) next(); else nodal();
+  if (m_stage < 3)
+    next();
+  else
+    nodal( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
 }
 
 void

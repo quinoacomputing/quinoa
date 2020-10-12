@@ -441,13 +441,13 @@ class Transport {
                      const tk::Fields& ) const
     {
       // Evaluate solution in nodes
-      //auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      //auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      //auto [Un, Pn] =
-      //  tk::nodeEval( m_offset, ndof, rdof, npoin, coord, inpoel, esup, U );
-      //// Extract nodal fields
-      //auto f = fieldOutput( t, V, npoin, 1, geoElem.extract(0,0), coord, Un );
-      return {};
+      auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      auto [Un, Pn] =
+        tk::nodeEval( m_offset, ndof, rdof, npoin, coord, inpoel, esup, U );
+      // Extract nodal fields
+      auto f = fieldOutput( t, V, npoin, 1, geoElem.extract(0,0), coord, Un );
+      return f;
     }
 
   private:

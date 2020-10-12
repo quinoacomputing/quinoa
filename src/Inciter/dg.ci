@@ -92,7 +92,8 @@ module dg {
         when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
 
       entry void wait4nod() {
-        when ownnod_complete(), comnod_complete() serial "nod" { out(); } }
+        when ownnod_complete( CkCallback c ), comnod_complete()
+        serial "nod" { out(c); } }
 
       entry void ownfac_complete();
       entry void comfac_complete();
@@ -106,7 +107,7 @@ module dg {
       entry void comreco_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
-      entry void ownnod_complete();
+      entry void ownnod_complete( CkCallback c );
       entry void comnod_complete();
     }
 
