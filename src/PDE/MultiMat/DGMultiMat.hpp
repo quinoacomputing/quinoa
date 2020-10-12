@@ -800,7 +800,8 @@ class MultiMat {
 
     //! Return field output going to file
     //! \param[in] nunk Number of unknowns
-    //! \param[in] geoElem Element geometry array
+    //! \param[in] vol Volumes associated to elements (or nodes)
+    //! \param[in] coord Coordinates at which to evaluate the solution
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \return Vector of vectors to be output to file
@@ -809,14 +810,15 @@ class MultiMat {
                  tk::real,
                  std::size_t nunk,
                  std::size_t rdof,
-                 const tk::Fields& geoElem,
+                 const std::vector< tk::real >& vol,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
                  const tk::Fields& U,
                  const tk::Fields& P ) const
     {
       // number of materials
       auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-      return MultiMatFieldOutput( m_system, nmat, m_offset, nunk, rdof, geoElem,
-                                  U, P );
+      return MultiMatFieldOutput( m_system, nmat, m_offset, nunk, rdof, vol,
+                                  coord, U, P );
     }
 
     //! Compute nodal field output

@@ -223,10 +223,11 @@ class DGPDE {
       tk::real V,
       std::size_t nunk,
       std::size_t rdof,
-      const tk::Fields& geoElem,
+      const std::vector< tk::real >& vol,
+      const std::array< std::vector< tk::real >, 3 >& coord,
       const tk::Fields& U,
       const tk::Fields& P ) const
-    { return self->fieldOutput( t, V, nunk, rdof, geoElem, U, P ); }
+    { return self->fieldOutput( t, V, nunk, rdof, vol, coord, U, P ); }
 
     //! Public interface to returning chare-boundary nodal field output
     std::vector< std::vector< tk::real > >
@@ -335,7 +336,8 @@ class DGPDE {
         tk::real,
         std::size_t,
         std::size_t,
-        const tk::Fields&,
+        const std::vector< tk::real >& vol,
+        const std::array< std::vector< tk::real >, 3 >& coord,
         const tk::Fields&,
         const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > >
@@ -443,10 +445,11 @@ class DGPDE {
         tk::real V,
         std::size_t nunk,
         std::size_t rdof,
-        const tk::Fields& geoElem,
+        const std::vector< tk::real >& vol,
+        const std::array< std::vector< tk::real >, 3 >& coord,
         const tk::Fields& U,
         const tk::Fields& P ) const override
-      { return data.fieldOutput( t, V, nunk, rdof, geoElem, U, P ); }
+      { return data.fieldOutput( t, V, nunk, rdof, vol, coord, U, P ); }
       std::vector< std::vector< tk::real > >
       nodeFieldOutput( tk::real t,
                        tk::real V,

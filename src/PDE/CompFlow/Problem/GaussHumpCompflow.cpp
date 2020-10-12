@@ -120,8 +120,8 @@ CompFlowProblemGaussHump::fieldOutput(
 //!   components.
 //! \param[in] t Physical time
 //! \param[in] V Total mesh volume (across the whole problem)
-//! \param[in] vol Nodal mesh volumes
-//! \param[in] coord Mesh node coordinates
+//! \param[in] vol Volumes associated to elements (or nodes)
+//! \param[in] coord Coordinates at which to evaluate the solution
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************

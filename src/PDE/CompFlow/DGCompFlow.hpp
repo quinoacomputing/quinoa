@@ -560,7 +560,6 @@ class CompFlow {
     //! \param[in] rdof Number of reconstructed degrees of freedom. This used as
     //!   the number of scalar components to shift when extracting scalar
     //!   components.
-    //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
@@ -568,15 +567,13 @@ class CompFlow {
                  tk::real V,
                  std::size_t nunk,
                  std::size_t rdof,
-                 const tk::Fields& geoElem,
+                 const std::vector< tk::real >& vol,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
                  const tk::Fields& U,
-                 const tk::Fields& ) const
+                 const tk::Fields& P = tk::Fields() ) const
     {
-      std::array< std::vector< tk::real >, 3 > coord{
-        geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
-
       return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, rdof,
-                                    t, V, geoElem.extract(0,0), coord, U );
+                                    t, V, vol, coord, U );
     }
 
     //! Return surface field output going to file
@@ -635,7 +632,7 @@ class CompFlow {
       auto [Un, Pn] =
         tk::nodeEval( m_offset, ndof, rdof, npoin, coord, inpoel, esup, U );
       // Extract nodal fields
-      auto f = fieldOutput( t, V, npoin, 1, geoElem, Un, Pn );
+      auto f = fieldOutput( t, V, npoin, 1, geoElem.extract(0,0), coord, Un );
       return f;
     }
 

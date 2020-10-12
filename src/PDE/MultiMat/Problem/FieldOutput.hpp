@@ -31,7 +31,8 @@ MultiMatFieldOutput(
   ncomp_t offset,
   std::size_t nunk,
   std::size_t rdof,
-  const tk::Fields& geoElem,
+  const std::vector< tk::real >& vol,
+  const std::array< std::vector< tk::real >, 3 >& coord,
   const tk::Fields& U,
   const tk::Fields& P );
 

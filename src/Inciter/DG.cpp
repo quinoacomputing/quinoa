@@ -1391,7 +1391,7 @@ DG::write(
   for (const auto& eq : g_dgpde) {
     auto n = eq.fieldNames();
     elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
-    //auto nn = eq.nodalFieldNames();
+    auto nn = eq.nodalFieldNames();
     //nodefieldnames.insert( end(nodefieldnames), begin(nn), end(nn) );
   }
 
@@ -1404,11 +1404,12 @@ DG::write(
   auto geoElem = tk::genGeoElemTet( inpoel, coord );
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   auto t = d->T();
+  std::array< std::vector< tk::real >, 3 > coorde{
+    geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
+  auto vole = geoElem.extract(0,0);
   for (const auto& eq : g_dgpde) {
-    auto eo =
-      eq.fieldOutput( t, d->meshvol(), inpoel.size()/4, rdof, geoElem, u, p );
-    // cut off ghost elements from element output
-    //for (auto& f : eo) f.resize( nielem );
+    auto eo = eq.fieldOutput( t, d->meshvol(), inpoel.size()/4, rdof, vole,
+                              coorde, u, p );
     elemfields.insert( end(elemfields), begin(eo), end(eo) );
     //nodefields.insert( end(nodefields),
     //                   begin(m_nodeFieldOut), end(m_nodeFieldOut) );
