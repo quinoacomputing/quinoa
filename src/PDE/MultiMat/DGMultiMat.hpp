@@ -808,13 +808,13 @@ class MultiMat {
     fieldOutput( tk::real,
                  tk::real,
                  std::size_t nunk,
+                 std::size_t rdof,
                  const tk::Fields& geoElem,
                  const tk::Fields& U,
                  const tk::Fields& P ) const
     {
       // number of materials
       auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-      auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       return MultiMatFieldOutput( m_system, nmat, m_offset, nunk, rdof, geoElem,
                                   U, P );
     }

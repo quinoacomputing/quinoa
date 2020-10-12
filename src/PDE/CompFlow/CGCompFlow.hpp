@@ -869,11 +869,12 @@ class CompFlow {
     fieldOutput( tk::real t,
                  tk::real V,
                  std::size_t nunk,
+                 std::size_t,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< tk::real >& v,
                  tk::Fields& U ) const
     {
-      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, t,
+      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, 1, t,
                                     V, v, coord, U );
     }
 

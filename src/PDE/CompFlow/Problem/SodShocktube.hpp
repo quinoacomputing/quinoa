@@ -61,6 +61,7 @@ class CompFlowProblemSodShocktube {
                  ncomp_t /*ncomp*/,
                  ncomp_t offset,
                  std::size_t nunk,
+                 std::size_t rdof,
                  tk::real,
                  tk::real /*V*/,
                  const std::vector< tk::real >& /*vol*/,

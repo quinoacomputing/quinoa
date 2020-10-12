@@ -1351,8 +1351,8 @@ DG::writeFields( CkCallback c )
       inpoel.resize( m_fd.Esuel().size() );
       auto coord = d->Coord();
       for (std::size_t i=0; i<3; ++i) coord[i].resize( m_npoin );
-      writePostAMR( {}, {inpoel,d->Gid(),d->Lid()}, coord, {}, {},
-                    d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
+      write( {}, {inpoel,d->Gid(),d->Lid()}, coord, {}, {},
+             d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
 
     }
 
@@ -1360,7 +1360,7 @@ DG::writeFields( CkCallback c )
 }
 
 void
-DG::writePostAMR(
+DG::write(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
@@ -1372,7 +1372,7 @@ DG::writePostAMR(
   const std::vector< std::size_t >& triinpoel,
   CkCallback c )
 // *****************************************************************************
-//  Receive new field output mesh from Refiner
+//  Output field data to file
 //! \param[in] chunk Field-output mesh chunk (connectivity and global<->local
 //!    id maps)
 //! \param[in] coord Field-output mesh node coordinates
@@ -1387,12 +1387,12 @@ DG::writePostAMR(
   const auto& inpoel = std::get< 0 >( chunk );  // refined mesh
 
   // Query fields names from all PDEs integrated
-  std::vector< std::string > elemfieldnames, nodalfieldnames;
+  std::vector< std::string > elemfieldnames, nodefieldnames;
   for (const auto& eq : g_dgpde) {
     auto n = eq.fieldNames();
     elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
     //auto nn = eq.nodalFieldNames();
-    //nodalfieldnames.insert( end(nodalfieldnames), begin(nn), end(nn) );
+    //nodefieldnames.insert( end(nodefieldnames), begin(nn), end(nn) );
   }
 
   // Evaluate solution on refined mesh
@@ -1402,16 +1402,16 @@ DG::writePostAMR(
   std::vector< std::vector< tk::real > > elemfields;
   std::vector< std::vector< tk::real > > nodefields;
   auto geoElem = tk::genGeoElemTet( inpoel, coord );
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   auto t = d->T();
   for (const auto& eq : g_dgpde) {
-    auto eo = eq.fieldOutput( t, d->meshvol(), inpoel.size()/4, geoElem, u, p );
-    //auto no = eq.nodalFieldOutput( t, d->meshvol(), m_npoin, m_esup,
-    //    m_geoElem, m_Unode, m_Pnode, m_u, m_p );
-
+    auto eo =
+      eq.fieldOutput( t, d->meshvol(), inpoel.size()/4, rdof, geoElem, u, p );
     // cut off ghost elements from element output
     //for (auto& f : eo) f.resize( nielem );
     elemfields.insert( end(elemfields), begin(eo), end(eo) );
-    //nodefields.insert( end(nodefields), begin(no), end(no) );
+    //nodefields.insert( end(nodefields),
+    //                   begin(m_nodeFieldOut), end(m_nodeFieldOut) );
   }
 
   // Add adaptive indicator array to element-centered field output
@@ -1424,7 +1424,7 @@ DG::writePostAMR(
   // Output chare mesh and fields metadata to file
   const auto& lid = std::get< 2 >( chunk );
   d->write( inpoel, coord, bface, {}, tk::remap(triinpoel,lid),
-    elemfieldnames, nodalfieldnames, {}, elemfields, nodefields, {}, c );
+    elemfieldnames, nodefieldnames, {}, elemfields, nodefields, {}, c );
 }
 
 std::tuple< tk::Fields, tk::Fields >
@@ -2133,21 +2133,21 @@ DG::nodal()
 {
   if (fieldOutput()) {
 
+    // Extract chare-boundary nodal field output for all equations
     auto d = Disc();
+    const auto& inpoel = d->Inpoel();
+    const auto& coord = d->Coord();
+    auto geoElem = tk::genGeoElemTet( inpoel, coord );
+    auto esup = tk::genEsup( inpoel, 4 );
+    for (const auto& eq : g_dgpde) {
+      m_nodeFieldOut =
+        eq.nodeFieldOutput( d->T(), d->meshvol(), m_npoin, coord, inpoel,
+                            esup, geoElem, m_u, m_p );
+    }
+
     if (d->NodeCommMap().empty())
       comnod_complete();
     else {
-
-      // Extract chare-boundary nodal field output for all equations
-      const auto& inpoel = d->Inpoel();
-      const auto& coord = d->Coord();
-      auto geoElem = tk::genGeoElemTet( inpoel, coord );
-      auto esup = tk::genEsup( inpoel, 4 );
-      for (const auto& eq : g_dgpde) {
-        auto nf = eq.nodeFieldOutput( d->T(), d->meshvol(), m_npoin, coord,
-                                      inpoel, esup, geoElem, m_u, m_p );
-      }
-
       for(const auto& [cid, nodes] : d->NodeCommMap()) {
         thisProxy[ cid ].comnod( thisIndex );
       }

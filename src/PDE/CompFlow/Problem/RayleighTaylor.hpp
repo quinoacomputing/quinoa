@@ -132,6 +132,7 @@ class CompFlowProblemRayleighTaylor {
                  ncomp_t ncomp,
                  ncomp_t offset,
                  std::size_t nunk,
+                 std::size_t rdof,
                  tk::real t,
                  tk::real V,
                  const std::vector< tk::real >& vol,

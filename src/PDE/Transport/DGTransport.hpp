@@ -322,7 +322,7 @@ class Transport {
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > nodalFieldNames() const
-    { return {}; }
+    { return fieldNames(); }
 
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
@@ -346,11 +346,11 @@ class Transport {
     fieldOutput( tk::real t,
                  tk::real,
                  std::size_t nunk,
+                 std::size_t rdof,
                  const tk::Fields& geoElem,
                  const tk::Fields& U,
                  const tk::Fields& ) const
     {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       Assert( geoElem.nunk() == nunk, "Size mismatch" );
       Assert( U.nunk() >= nunk, "Size mismatch" );
       std::vector< std::vector< tk::real > > out;
@@ -410,6 +410,7 @@ class Transport {
     //! Compute nodal field output
     //! \param[in] t Physical time
     //! \param[in] npoin Number of unknowns to extract in points
+    //! \param[in] V Total mesh volume
     //! \param[in] coord Node coordinates
     //! \param[in] inpoel Mesh connectivity
     //! \param[in] esup Elements surrounding points
@@ -418,7 +419,7 @@ class Transport {
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     nodeFieldOutput( tk::real t,
-                     tk::real,
+                     tk::real V,
                      std::size_t npoin,
                      const tk::UnsMesh::Coords& coord,
                      const std::vector< std::size_t >& inpoel,
@@ -428,6 +429,14 @@ class Transport {
                      const tk::Fields& U,
                      const tk::Fields& ) const
     {
+      //// Evaluate solution in nodes
+      //auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      //auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      //auto [Un, Pn] =
+      //  tk::nodeEval( m_offset, ndof, rdof, npoin, coord, inpoel, esup, U );
+      //// Extract nodal fields
+      //auto f = fieldOutput( t, V, npoin, 1, geoElem, Un, Pn );
+      //return f;
       return {};
     }
 

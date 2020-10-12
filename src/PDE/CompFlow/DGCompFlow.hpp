@@ -551,12 +551,15 @@ class CompFlow {
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > nodalFieldNames() const
-    { return {}; }
+    { return fieldNames(); }
 
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
     //! \param[in] nunk Number of unknowns to extract
+    //! \param[in] rdof Number of reconstructed degrees of freedom. This used as
+    //!   the number of scalar components to shift when extracting scalar
+    //!   components.
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
@@ -564,6 +567,7 @@ class CompFlow {
     fieldOutput( tk::real t,
                  tk::real V,
                  std::size_t nunk,
+                 std::size_t rdof,
                  const tk::Fields& geoElem,
                  const tk::Fields& U,
                  const tk::Fields& ) const
@@ -571,8 +575,8 @@ class CompFlow {
       std::array< std::vector< tk::real >, 3 > coord{
         geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
 
-      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, t, V,
-                                    geoElem.extract(0,0), coord, U );
+      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, rdof,
+                                    t, V, geoElem.extract(0,0), coord, U );
     }
 
     //! Return surface field output going to file
@@ -628,12 +632,10 @@ class CompFlow {
       // Evaluate solution in nodes
       auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      tk::Fields Un( npoin, U.nprop()/rdof );
-      tk::nodeEval( m_ncomp, 0, m_offset, ndof, rdof, npoin, coord, inpoel,
-                    esup, U, U, Un, Un );
-
-      // Next: change this to extract fields from Un
-      auto f = fieldOutput( t, V, npoin, geoElem, U, U );
+      auto [Un, Pn] =
+        tk::nodeEval( m_offset, ndof, rdof, npoin, coord, inpoel, esup, U );
+      // Extract nodal fields
+      auto f = fieldOutput( t, V, npoin, 1, geoElem, Un, Pn );
       return f;
     }
 

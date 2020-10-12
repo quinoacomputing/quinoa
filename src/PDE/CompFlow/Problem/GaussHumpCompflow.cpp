@@ -101,6 +101,7 @@ CompFlowProblemGaussHump::fieldOutput(
   ncomp_t ncomp,
   ncomp_t offset,
   std::size_t nunk,
+  std::size_t rdof,
   tk::real t,
   tk::real V,
   const std::vector< tk::real >& vol,
@@ -114,6 +115,9 @@ CompFlowProblemGaussHump::fieldOutput(
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
 //! \param[in] nunk Number of unknowns to extract
+//! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
+//!   the number of scalar components to shift when extracting scalar
+//!   components.
 //! \param[in] t Physical time
 //! \param[in] V Total mesh volume (across the whole problem)
 //! \param[in] vol Nodal mesh volumes
@@ -122,9 +126,7 @@ CompFlowProblemGaussHump::fieldOutput(
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-
-  auto out = CompFlowFieldOutput( system, offset, nunk, U );
+  auto out = CompFlowFieldOutput( system, offset, nunk, rdof, U );
 
   auto r = U.extract( 0*rdof, offset );
   auto u = U.extract( 1*rdof, offset );

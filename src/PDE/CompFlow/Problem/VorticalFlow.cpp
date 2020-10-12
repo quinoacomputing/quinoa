@@ -90,6 +90,7 @@ CompFlowProblemVorticalFlow::fieldOutput(
   ncomp_t,
   ncomp_t offset,
   std::size_t nunk,
+  std::size_t rdof,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,
@@ -114,14 +115,11 @@ CompFlowProblemVorticalFlow::fieldOutput(
      g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[system];
    const auto& p0 =
      g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[system];
-   // number of degree of freedom
-   const std::size_t rdof =
-     g_inputdeck.get< tag::discr, tag::rdof >();
    // ratio of specific heats
    tk::real g =
      g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system][0];
 
-   auto out = CompFlowFieldOutput( system, offset, nunk, U );
+   auto out = CompFlowFieldOutput( system, offset, nunk, rdof, U );
 
    const auto r  = U.extract( 0*rdof, offset );
    const auto ru = U.extract( 1*rdof, offset );

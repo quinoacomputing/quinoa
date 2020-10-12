@@ -40,6 +40,7 @@ std::vector< std::vector< tk::real > >
 CompFlowFieldOutput( ncomp_t system,
                      ncomp_t offset,
                      std::size_t nunk,
+                     std::size_t rdof,
                      const tk::Fields& U )
 // *****************************************************************************
 //  Return field output going to file
@@ -48,13 +49,13 @@ CompFlowFieldOutput( ncomp_t system,
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
 //! \param[in] nunk Number of unknowns to extract
+//! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
+//!   the number of scalar components to shift when extracting scalar
+//!   components.
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  // number of degree of freedom
-  const std::size_t rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-
   std::vector< std::vector< tk::real > > out;
   const auto r  = U.extract( 0*rdof, offset );
   const auto ru = U.extract( 1*rdof, offset );

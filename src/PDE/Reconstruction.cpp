@@ -606,10 +606,8 @@ tk::nodeAvg( std::size_t ncomp,
   }
 }
 
-void
-tk::nodeEval( std::size_t ncomp,
-              std::size_t nprim,
-              std::size_t offset,
+std::tuple< tk::Fields, tk::Fields >
+tk::nodeEval( std::size_t offset,
               std::size_t ndof,
               std::size_t rdof,
               std::size_t npoin,
@@ -618,13 +616,9 @@ tk::nodeEval( std::size_t ncomp,
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup,
               const Fields& U,
-              const Fields& P,
-              Fields& Un,
-              Fields& Pn )
+              const Fields& P )
 // *****************************************************************************
 //  Evaluate solution in nodes
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] nprim Number of primitive quantities stored in this PDE system
 //! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] npoin Total number of nodes
@@ -633,11 +627,13 @@ tk::nodeEval( std::size_t ncomp,
 //! \param[in] esup Elements surrounding points
 //! \param[in] U Vector of cell-averaged unknowns
 //! \param[in] P Vector of cell-averaged primitive quantities
-//! \param[in,out] Un Vector of unknowns at nodes
-//! \param[in,out] Pn Vector of primitive quantities at nodes
+//! \return Vector of unknowns at nodes, vector of primitive quantities at nodes
 // *****************************************************************************
 {
   using tk::dot;
+
+  tk::Fields Un( npoin, U.nprop()/rdof );
+  tk::Fields Pn( npoin, P.nprop()/rdof );
 
   Un.fill(0.0);
   Pn.fill(0.0);
@@ -646,10 +642,7 @@ tk::nodeEval( std::size_t ncomp,
   const auto& y = coord[1];
   const auto& z = coord[2];
 
-  const auto uncomp = U.nprop() / rdof;
-  const auto pncomp = P.nprop() / rdof;
-
-  for (std::size_t p=0; p<npoin; ++p)
+  for (std::size_t p=0; p<npoin; ++p) {
     for (auto e : tk::Around(esup,p)) {
       // Extract element coordinates
       auto e4 = 4*e;
@@ -663,11 +656,17 @@ tk::nodeEval( std::size_t ncomp,
       // Compute in and sum solution to p
       std::array<tk::real,3> h{ x[p]-ce[0][0], y[p]-ce[0][1], z[p]-ce[0][2] };
       auto B = tk::eval_basis( ndof, dot(J[0],h), dot(J[1],h), dot(J[2],h) );
-      auto chu = eval_state( uncomp, 0, ndof, ndof, e, U, B );
-      for (std::size_t i=0; i<uncomp; ++i) Un(p,i,0) += chu[i];
-      auto chp = eval_state( pncomp, 0, ndof, ndof, e, P, B );
-      for (std::size_t i=0; i<pncomp; ++i) Pn(p,i,0) += chp[i];
+      auto chu = eval_state( Un.nprop(), offset, rdof, ndof, e, U, B );
+      for (std::size_t i=0; i<Un.nprop(); ++i) Un(p,i,offset) += chu[i];
+      auto chp = eval_state( Pn.nprop(), offset, rdof, ndof, e, P, B );
+      for (std::size_t i=0; i<Pn.nprop(); ++i) Pn(p,i,offset) += chp[i];
     }
+    auto n = esup.second[p+1] - esup.second[p];
+    for (std::size_t i=0; i<Un.nprop(); ++i) Un(p,i,offset) /= n;
+    for (std::size_t i=0; i<Pn.nprop(); ++i) Pn(p,i,offset) /= n;
+  }
+
+  return { Un, Pn };
 }
 
 void

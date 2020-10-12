@@ -29,6 +29,7 @@ std::vector< std::vector< tk::real > >
 CompFlowFieldOutput( ncomp_t system,
                      ncomp_t offset,
                      std::size_t nunk,
+                     std::size_t rdof,
                      const tk::Fields& U );
 
 //! Return surface field names to be output to file

@@ -152,8 +152,8 @@ class ALECG : public CBase_ALECG {
       const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& triinpoel );
 
-    //! Receive new field output mesh from Refiner
-    void writePostAMR(
+    //! Output field data to file
+    void write(
       const std::vector< std::size_t >& /* ginpoel */,
       const tk::UnsMesh::Chunk& /*chunk*/,
       const tk::UnsMesh::Coords& /*coord*/,
