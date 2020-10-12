@@ -30,6 +30,7 @@
 #include "Reorder.hpp"
 #include "Vector.hpp"
 #include "Around.hpp"
+#include "Integrate/Basis.hpp"
 
 namespace inciter {
 
@@ -1320,7 +1321,7 @@ DG::comsol( int fromch,
 void
 DG::writeFields( CkCallback c )
 // *****************************************************************************
-// Output mesh-based fields to file
+// Start preparing mesh-based fields for output to file
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
@@ -1333,10 +1334,18 @@ DG::writeFields( CkCallback c )
 
     // Optionally refine mesh for field output
     auto d = Disc();
-    if (g_inputdeck.get< tag::cmd, tag::io, tag::refined >()) {
+    const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+
+    if (g_inputdeck.get< tag::cmd, tag::io, tag::refined >() &&
+        scheme != ctr::SchemeType::DG)
+    {
+
       const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
       d->Ref()->outref( m_fd.Bface(), {}, tr, c );
+
     } else {
+
+      // cut off ghosts from mesh connectivity and coordinates
       const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
       auto inpoel = d->Inpoel();
       inpoel.resize( m_fd.Esuel().size() );
@@ -1344,6 +1353,7 @@ DG::writeFields( CkCallback c )
       for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
       writePostAMR( {}, {inpoel,d->Gid(),d->Lid()}, coord, {}, {},
                     d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
+
     }
 
   }
@@ -1363,19 +1373,18 @@ DG::writePostAMR(
   CkCallback c )
 // *****************************************************************************
 //  Receive new field output mesh from Refiner
-//! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
-//! \param[in] coord New mesh node coordinates
-//! \param[in] addedTets Newly added mesh cells and their parents (local ids)
-//! \param[in] nodeCommMap New node communication map
-//! \param[in] bface Boundary-faces mapped to side set ids
-//! \param[in] triinpoel Boundary-face connectivity
+//! \param[in] chunk Field-output mesh chunk (connectivity and global<->local
+//!    id maps)
+//! \param[in] coord Field-output mesh node coordinates
+//! \param[in] addedTets Field-output mesh cells and their parents (local ids)
+//! \param[in] nodeCommMap Field-output mesh node communication map
+//! \param[in] bface Field-output meshndary-faces mapped to side set ids
+//! \param[in] triinpoel Field-output mesh boundary-face connectivity
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   auto d = Disc();
-  const auto& inpoel = std::get< 0 >( chunk );
-  const auto& lid = std::get< 2 >( chunk );
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto& inpoel = std::get< 0 >( chunk );  // refined mesh
 
   // Query fields names from all PDEs integrated
   std::vector< std::string > elemfieldnames, nodalfieldnames;
@@ -1386,29 +1395,18 @@ DG::writePostAMR(
     //nodalfieldnames.insert( end(nodalfieldnames), begin(nn), end(nn) );
   }
 
-  // Evaluate solution on refined mesh, cell center value only
-  auto nelem = inpoel.size()/4;
-  auto unprop = m_u.nprop();
-  auto pnprop = m_p.nprop();
-  auto u = m_u;
-  auto p = m_p;
-  u.resize( nelem, unprop );
-  p.resize( nelem, pnprop );
-  [[maybe_unused]] auto old_nelem = d->Inpoel().size()/4;
-  for (const auto& [child,parent] : addedTets) {
-    Assert( child < nelem, "Indexing out of new solution vector" );
-    Assert( parent < old_nelem, "Indexing out of old solution vector" );
-    for (std::size_t i=0; i<unprop; ++i) u(child,i,0) = m_u(parent,i,0);
-    for (std::size_t i=0; i<pnprop; ++i) p(child,i,0) = m_p(parent,i,0);
-  }
+  // Evaluate solution on refined mesh
+  auto [u,p] = solref( inpoel, coord, addedTets );
 
   // Collect element and nodal field solution
   std::vector< std::vector< tk::real > > elemfields;
   std::vector< std::vector< tk::real > > nodefields;
   auto geoElem = tk::genGeoElemTet( inpoel, coord );
   auto t = d->T();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   for (const auto& eq : g_dgpde) {
-    auto eo = eq.fieldOutput( t, d->meshvol(), rdof, nelem, geoElem, u, p );
+    auto eo =
+      eq.fieldOutput( t, d->meshvol(), rdof, inpoel.size()/4, geoElem, u, p );
     //auto no = eq.nodalFieldOutput( t, d->meshvol(), m_ncoord, m_esup,
     //    m_geoElem, m_Unode, m_Pnode, m_u, m_p );
 
@@ -1419,13 +1417,133 @@ DG::writePostAMR(
   }
 
   // Add adaptive indicator array to element-centered field output
-  //std::vector<tk::real> ndof( begin(m_ndof), end(m_ndof) );
-  //ndof.resize( nielem );  // cut off ghosts
-  //elemfields.push_back( ndof );
+  std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
+
+  ndof.resize( inpoel.size()/4 );
+  for (const auto& [child,parent] : addedTets) ndof[child] = m_ndof[parent];
+  elemfields.push_back( ndof );
 
   // Output chare mesh and fields metadata to file
+  const auto& lid = std::get< 2 >( chunk );
   d->write( inpoel, coord, bface, {}, tk::remap(triinpoel,lid),
     elemfieldnames, nodalfieldnames, {}, elemfields, nodefields, {}, c );
+}
+
+std::tuple< tk::Fields, tk::Fields >
+DG::solref( const std::vector< std::size_t >& inpoel,
+            const tk::UnsMesh::Coords& coord,
+            const std::unordered_map< std::size_t, std::size_t >& addedTets )
+// *****************************************************************************
+// Evaluate solution on refined (field-output) mesh
+//! \param[in] inpoel Field-output mesh connectivity
+//! \param[in] coord Field-output mesh node coordinates
+//! \param[in] addedTets Field-output mesh cells and their parents (local ids)
+// *****************************************************************************
+{
+  using tk::dot;
+
+  auto d = Disc();
+  const auto nelem = inpoel.size()/4;
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto uncomp = m_u.nprop() / rdof;
+  const auto pncomp = m_p.nprop() / rdof;
+  auto u = m_u; // will store solution on field-output mesh
+  auto p = m_p; // will store primitive variables on field-output mesh
+  u.resize( nelem, uncomp );
+  p.resize( nelem, pncomp );
+
+  for ([[maybe_unused]] const auto& [child,parent] : addedTets) {
+    Assert( child < nelem, "Indexing out of new solution vector" );
+    Assert( parent < d->Inpoel().size()/4,
+            "Indexing out of old solution vector" );
+  }
+
+  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+
+  // DG(P0): copy cell center solution
+  if (scheme == ctr::SchemeType::DG) {
+
+    for (const auto& [child,parent] : addedTets) {
+      for (std::size_t i=0; i<uncomp; ++i) u(child,i,0) = m_u(parent,i,0);
+      for (std::size_t i=0; i<pncomp; ++i) p(child,i,0) = m_p(parent,i,0);
+    }
+
+  // DG(P1): Evaluate cell centroid of child in parent tet
+  } else if (scheme == ctr::SchemeType::DGP1) {
+
+    const auto& pinpoel = d->Inpoel();  // unrefined (parent) mesh
+    const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+    const auto& x = coord[0];
+    const auto& y = coord[1];
+    const auto& z = coord[2];
+
+    for (const auto& [child,parent] : addedTets) {
+      // Extract parent element coordinates
+      auto p4 = 4*parent;
+      std::array< std::array< tk::real, 3>, 4 > cp{{
+        {{ x[pinpoel[p4  ]], y[pinpoel[p4  ]], z[pinpoel[p4  ]] }},
+        {{ x[pinpoel[p4+1]], y[pinpoel[p4+1]], z[pinpoel[p4+1]] }},
+        {{ x[pinpoel[p4+2]], y[pinpoel[p4+2]], z[pinpoel[p4+2]] }},
+        {{ x[pinpoel[p4+3]], y[pinpoel[p4+3]], z[pinpoel[p4+3]] }} }};
+      // Evaluate inverse Jacobian of the parent
+      auto J = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
+      // Compute child cell centroid
+      auto c4 = 4*child;
+      auto cx = (x[inpoel[c4  ]] + x[inpoel[c4+1]] +
+                 x[inpoel[c4+2]] + x[inpoel[c4+3]]) / 4.0;
+      auto cy = (y[inpoel[c4  ]] + y[inpoel[c4+1]] +
+                 y[inpoel[c4+2]] + y[inpoel[c4+3]]) / 4.0;
+      auto cz = (z[inpoel[c4  ]] + z[inpoel[c4+1]] +
+                 z[inpoel[c4+2]] + z[inpoel[c4+3]]) / 4.0;
+      // Compute solution in child centroid
+      std::array< tk::real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
+      auto B = tk::eval_basis( ndof, dot(J[0],h), dot(J[1],h), dot(J[2],h) );
+      auto chu = eval_state( uncomp, 0, ndof, ndof, parent, m_u, B );
+      for (std::size_t i=0; i<uncomp; ++i) u(child,i*rdof,0) = chu[i];
+      auto chp = eval_state( pncomp, 0, ndof, ndof, parent, m_p, B );
+      for (std::size_t i=0; i<pncomp; ++i) p(child,i*rdof,0) = chp[i];
+    }
+
+  // p-adaptive DG: Evaluate cell centroid of child in parent tet
+  } else if (scheme == ctr::SchemeType::PDG) {
+
+    const auto& pinpoel = d->Inpoel();  // unrefined (parent) mesh
+    const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+    const auto& x = coord[0];
+    const auto& y = coord[1];
+    const auto& z = coord[2];
+
+    for (const auto& [child,parent] : addedTets) {
+      // Extract parent element coordinates
+      auto p4 = 4*parent;
+      std::array< std::array< tk::real, 3>, 4 > cp{{
+        {{ x[pinpoel[p4  ]], y[pinpoel[p4  ]], z[pinpoel[p4  ]] }},
+        {{ x[pinpoel[p4+1]], y[pinpoel[p4+1]], z[pinpoel[p4+1]] }},
+        {{ x[pinpoel[p4+2]], y[pinpoel[p4+2]], z[pinpoel[p4+2]] }},
+        {{ x[pinpoel[p4+3]], y[pinpoel[p4+3]], z[pinpoel[p4+3]] }} }};
+      // Evaluate inverse Jacobian of the parent
+      auto J = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
+      // Compute child cell centroid
+      auto c4 = 4*child;
+      auto cx = (x[inpoel[c4  ]] + x[inpoel[c4+1]] +
+                 x[inpoel[c4+2]] + x[inpoel[c4+3]]) / 4.0;
+      auto cy = (y[inpoel[c4  ]] + y[inpoel[c4+1]] +
+                 y[inpoel[c4+2]] + y[inpoel[c4+3]]) / 4.0;
+      auto cz = (z[inpoel[c4  ]] + z[inpoel[c4+1]] +
+                 z[inpoel[c4+2]] + z[inpoel[c4+3]]) / 4.0;
+      // Compute solution in child centroid
+      std::array< tk::real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
+      auto B =
+        tk::eval_basis( m_ndof[parent], dot(J[0],h), dot(J[1],h), dot(J[2],h) );
+      auto chu = eval_state( uncomp, 0, ndof, m_ndof[parent], parent, m_u, B );
+      for (std::size_t i=0; i<uncomp; ++i) u(child,i*rdof,0) = chu[i];
+      auto chp = eval_state( pncomp, 0, ndof, m_ndof[parent], parent, m_p, B );
+      for (std::size_t i=0; i<pncomp; ++i) p(child,i*rdof,0) = chp[i];
+    }
+
+  } //else Throw( "Refined field output for scheme not implemented" );
+
+  return { u, p };
 }
 
 void

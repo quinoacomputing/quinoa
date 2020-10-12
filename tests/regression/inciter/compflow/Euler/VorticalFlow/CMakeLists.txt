@@ -72,19 +72,6 @@ add_regression_test(compflow_euler_vorticalflow_dg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
                     LABELS dg)
 
-add_regression_test(compflow_euler_vorticalflow_outref_dg ${INCITER_EXECUTABLE}
-                    NUMPES 1
-                    INPUTFILES vortical_flow_outref_dg.q unitcube_1k.exo
-                    ARGS -c vortical_flow_outref_dg.q -i unitcube_1k.exo -v
-                    BIN_BASELINE vortical_flow_outref_dg.std.exo
-                    BIN_RESULT out.e-s.0.1.0
-                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
-                    BIN_DIFF_PROG_ARGS -m
-                    TEXT_BASELINE diag_dg.std
-                    TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
-                    LABELS dg)
-
 add_regression_test(compflow_euler_vorticalflow_dg_lf ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES vortical_flow_dg_lf.q unitcube_1k.exo
@@ -116,6 +103,19 @@ add_regression_test(compflow_euler_vorticalflow_dgp1 ${INCITER_EXECUTABLE}
                     INPUTFILES vortical_flow_dgp1.q unitcube_1k.exo
                     ARGS -c vortical_flow_dgp1.q -i unitcube_1k.exo -v
                     BIN_BASELINE vortical_flow_dgp1.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_dgp1.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
+                    LABELS dg)
+
+add_regression_test(compflow_euler_vorticalflow_outref_dgp1 ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES vortical_flow_outref_dgp1.q unitcube_1k.exo
+                    ARGS -c vortical_flow_outref_dgp1.q -i unitcube_1k.exo -v
+                    BIN_BASELINE vortical_flow_outref_dgp1.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     BIN_DIFF_PROG_ARGS -m
@@ -206,6 +206,25 @@ add_regression_test(compflow_euler_vorticalflow_alecg_steady
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF vortical_flow_steady_diag.ndiff.cfg
                     LABELS alecg)
+
+add_regression_test(compflow_euler_vorticalflow_outref_dgp1 ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES vortical_flow_outref_dgp1.q unitcube_1k.exo
+                    ARGS -c vortical_flow_outref_dgp1.q -i unitcube_1k.exo -v
+                    BIN_BASELINE vortical_flow_outref_dgp1_pe4.std.exo.0
+                                 vortical_flow_outref_dgp1_pe4.std.exo.1
+                                 vortical_flow_outref_dgp1_pe4.std.exo.2
+                                 vortical_flow_outref_dgp1_pe4.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_dgp1.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
+                    LABELS dg)
 
 # Parallel + virtualization
 

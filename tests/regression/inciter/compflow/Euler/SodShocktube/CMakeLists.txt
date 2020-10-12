@@ -114,7 +114,7 @@ add_regression_test(compflow_euler_sodshocktube_alecg_userdef
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
                     LABELS alecg)
 
-if(LUA_FOUND)
+if(HAS_LUA)
   add_regression_test(compflow_euler_sodshocktube_alecg_userdef_lua
                       ${INCITER_EXECUTABLE}
                       NUMPES 1

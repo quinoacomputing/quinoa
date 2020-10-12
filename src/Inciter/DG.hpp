@@ -408,7 +408,7 @@ class DG : public CBase_DG {
     //! Output mesh and particle fields to files
     void out();
 
-    //! Output mesh-based fields to file
+    //! Start preparing mesh-based fields for output to file
     void writeFields( CkCallback c );
 
     //! Compute solution reconstructions
@@ -428,6 +428,12 @@ class DG : public CBase_DG {
 
     //! p-refine all elements that are adjacent to p-refined elements
     void propagate_ndof();
+
+    //! Evaluate solution on refined (field-output) mesh
+    std::tuple< tk::Fields, tk::Fields >
+    solref( const std::vector< std::size_t >& inpoel,
+            const tk::UnsMesh::Coords& coord,
+            const std::unordered_map< std::size_t, std::size_t >& addedTets );
 };
 
 } // inciter::
