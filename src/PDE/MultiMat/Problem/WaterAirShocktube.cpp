@@ -56,7 +56,7 @@ MultiMatProblemWaterAirShocktube::solution( ncomp_t system,
 
   std::vector< tk::real > s(ncomp, 0.0), r(nmat, 0.0);
   tk::real p, u, v, w;
-  auto alphamin = 1.0e-12;
+  auto alphamin = 1.0e-8;
 
   if (x<0.75) {
     // volume-fraction

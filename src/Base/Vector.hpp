@@ -367,13 +367,13 @@ LU( const std::size_t n,
     for (std::size_t j = 0; j < i; j++ )
       y[i] = y[i] - L[i][j] * y[j];
 
-  for ( std::size_t i = n-1; i > -1; i-- )
+  for ( std::size_t i = n; i > 0; i-- )
   {
-    x[i] = y[i];
+    x[i-1] = y[i-1];
 
-    for ( std::size_t j = i+1; j < n; j++ )
-      x[i] = x[i] - U[i][j] * x[j];
-    x[i] = x[i] / U[i][i];
+    for ( std::size_t j = i; j < n; j++ )
+      x[i-1] = x[i-1] - U[i-1][j] * x[j];
+    x[i-1] = x[i-1] / U[i-1][i-1];
   }
 }
 
