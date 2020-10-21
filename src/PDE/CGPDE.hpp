@@ -158,12 +158,14 @@ class CGPDE {
       const std::vector< real >& vol,
       const std::vector< std::size_t >& edgenode,
       const std::vector< std::size_t >& edgeid,
+      const std::vector< std::size_t >& boxnodes,
       const tk::Fields& G,
       const tk::Fields& U,
       const std::vector< real >& tp,
+      real V,
       tk::Fields& R ) const
     { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
-                 symbctri, vol, edgenode, edgeid, G, U, tp, R ); }
+                 symbctri, vol, edgenode, edgeid, boxnodes, G, U, tp, V, R ); }
 
     //! Public interface for computing the minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
@@ -307,9 +309,11 @@ class CGPDE {
         const std::vector< real >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
+        const std::vector< std::size_t >&,
         const tk::Fields&,
         const tk::Fields&,
         const std::vector< real >&,
+        real,
         tk::Fields& ) const = 0;
       virtual real dt( const std::array< std::vector< real >, 3 >&,
                        const std::vector< std::size_t >&,
@@ -410,12 +414,14 @@ class CGPDE {
         const std::vector< real >& vol,
         const std::vector< std::size_t >& edgenode,
         const std::vector< std::size_t >& edgeid,
+        const std::vector< std::size_t >& boxnodes,
         const tk::Fields& G,
         const tk::Fields& U,
         const std::vector< real >& tp,
+        real V,
         tk::Fields& R ) const override
       { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
-                  symbctri, vol, edgenode, edgeid, G, U, tp, R ); }
+                  symbctri, vol, edgenode, edgeid, boxnodes, G, U, tp, V, R ); }
       real dt( const std::array< std::vector< real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const tk::Fields& U ) const override

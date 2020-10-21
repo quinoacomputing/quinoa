@@ -70,7 +70,7 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
   u[3] = u[0] * bgvelic.at(system).at(2);
 
   if (bgpreic.size() > system && !bgpreic[system].empty()) {
-    u[4] = eos_totalenergy< eq >( system, u[0], u[1], u[2], u[3],
+    u[4] = eos_totalenergy< eq >( system, u[0], u[1]/u[0], u[2]/u[0], u[3]/u[0],
                                   bgpreic.at(system).at(0) );
   } else if (bgenic.size() > system && !bgenic[system].empty()) {
     u[4] = u[0] * bgenic[system][0];

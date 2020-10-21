@@ -133,7 +133,7 @@ class CompFlow {
     void box( real V,
               real t,
               const std::vector< std::size_t >& boxnodes,
-              const std::array< std::vector< real >, 3 >& coord,
+              const std::array< std::vector< real >, 3 >& /*coord*/,
               tk::Fields& unk,
               std::unordered_set< std::size_t >& boxnodes_set ) const
     {
@@ -219,50 +219,46 @@ class CompFlow {
           }
         }
         boxnodes_set.insert( begin(boxnodes), end(boxnodes) );
+      }
 
       // Initiate type 'linear' assigns the prescribed values to all
-      // nodes within a box using linearly expanding sphere within which nodes
-      // get assigned their prescribed values.
-      } else if (inittype[m_system] == ctr::InitiateType::LINEAR) {
+      // nodes within a box. This is followed by adding a time-dependent energy
+      // source term representing a planar wave-front propagating along the
+      // z-direction with a velocity specified in the IC linear...end block.
+      // The wave front is smoothed out to include a couple of mesh nodes.
+      // see boxSrc() for further details.
+      else if (inittype[m_system] == ctr::InitiateType::LINEAR && t < 1e-12) {
 
-        const auto& x = coord[0];
-        const auto& y = coord[1];
-        const auto& z = coord[2];
+        for (auto i : boxnodes) {
 
-        // apply box conditions within growing sphere
-        tk::real box_extent =
-          std::max( icbox.get< tag::xmax >() - icbox.get< tag::xmin >(),
-            std::max( icbox.get< tag::ymax >() - icbox.get< tag::ymin >(),
-                      icbox.get< tag::zmax >() - icbox.get< tag::zmin >() ) );
-        const auto& p = initiate.get< tag::point >()[ m_system ];
-        const auto& r = initiate.get< tag::radius >()[ m_system ];
-        const auto& iv = initiate.get< tag::velocity >()[ m_system ];
-        Assert( p.size() == r.size()*3, "Size mismatch" );
-        Assert( p.size() == iv.size()*3, "Size mismatch" );
-        for (std::size_t s=0; s<p.size()/3; ++s) {  // for each sphere
-          auto r0t = iv[s]*0.5*t;
-          auto r1t = r[s] + iv[s]*t;
-          if (r1t > box_extent) // done if initiation front reached box extent
-            boxnodes_set.insert( begin(boxnodes), end(boxnodes) );
-          else
-            for (auto i : boxnodes) {
-              auto d = std::sqrt( (x[i]-p[s*3+0])*(x[i]-p[s*3+0]) +
-                                  (y[i]-p[s*3+1])*(y[i]-p[s*3+1]) +
-                                  (z[i]-p[s*3+2])*(z[i]-p[s*3+2]) );
-              if (d > r0t && d < r1t) {
-                // superimpose on existing velocity field
-                const auto u = unk(i,1,m_offset)/unk(i,0,m_offset),
-                           v = unk(i,2,m_offset)/unk(i,0,m_offset),
-                           w = unk(i,3,m_offset)/unk(i,0,m_offset);
-                const auto ke = 0.5*(u*u + v*v + w*w);
-                unk(i,0,m_offset) = rho;
-                unk(i,1,m_offset) = rho * u;
-                unk(i,2,m_offset) = rho * v;
-                unk(i,3,m_offset) = rho * w;
-                unk(i,4,m_offset) = rho * (spi + ke);
-                boxnodes_set.insert( i );       // mark node as set
-              }
-            }
+          // superimpose on existing velocity field
+          const auto u = unk(i,1,m_offset)/unk(i,0,m_offset),
+                     v = unk(i,2,m_offset)/unk(i,0,m_offset),
+                     w = unk(i,3,m_offset)/unk(i,0,m_offset);
+          const auto ke = 0.5*(u*u + v*v + w*w);
+
+          const auto& bgpreic = ic.get< tag::pressure >();
+          //const auto& bgtempic = ic.get< tag::temperature >();
+
+          Assert( bgpreic.size() > m_system, "No background pressure IC" );
+
+          if (bgpreic.size() > m_system && !bgpreic[m_system].empty()) {
+            // energy based on box density and background pressure
+            spi = eos_totalenergy< eq >( m_system, rho, u, v, w,
+                                          bgpreic[m_system][0] )/rho;
+          }
+          //else if (bgtempic.size() > m_system && !bgtempic[m_system].empty()) {
+          //  // energy based on box density and background temperature
+          //  const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
+          //  spi = bgtempic[m_system][0] * cv[m_system][0];
+          //}
+
+          unk(i,0,m_offset) = rho;
+          unk(i,1,m_offset) = rho * u;
+          unk(i,2,m_offset) = rho * v;
+          unk(i,3,m_offset) = rho * w;
+          unk(i,4,m_offset) = rho * (spi + ke);
+          boxnodes_set.insert( i );       // mark node as set
         }
 
       } else Throw( "IC box initiate type not implemented" );
@@ -539,13 +535,16 @@ class CompFlow {
     //! \param[in] lid Global->local node ids
     //! \param[in] dfn Dual-face normals
     //! \param[in] psup Points surrounding points
+    //! \param[in] esup Elements surrounding points
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] vol Nodal volumes
     //! \param[in] edgenode Local node IDs of edges
     //! \param[in] edgeid Edge ids in the order of access
+    //! \param[in] boxnodes Mesh node ids within user-defined box
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
     //! \param[in] tp Physical time for each mesh node
+    //! \param[in] V Total box volume
     //! \param[in,out] R Right-hand side vector computed
     void rhs( real t,
               const std::array< std::vector< real >, 3 >& coord,
@@ -563,9 +562,11 @@ class CompFlow {
               const std::vector< real >& vol,
               const std::vector< std::size_t >& edgenode,
               const std::vector< std::size_t >& edgeid,
+              const std::vector< std::size_t >& boxnodes,
               const tk::Fields& G,
               const tk::Fields& U,
               const std::vector< tk::real >& tp,
+              real V,
               tk::Fields& R ) const
     {
       Assert( G.nprop() == m_ncomp*3,
@@ -587,6 +588,15 @@ class CompFlow {
 
       // compute boundary integrals
       bndint( coord, triinpoel, symbctri, U, R );
+
+      // compute external (energy) sources
+      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      const auto& initiate = icbox.get< tag::initiate >();
+      const auto& inittype = initiate.get< tag::init >();
+      if (inittype[m_system] == ctr::InitiateType::LINEAR) {
+        boxSrc( V, t, inpoel, esup, boxnodes, coord, R );
+      }
 
       // compute optional source integral
       src( coord, inpoel, t, tp, R );
@@ -1421,6 +1431,120 @@ class CompFlow {
                         s[0], s[1], s[2], s[3], s[4] );
           for (std::size_t c=0; c<m_ncomp; ++c)
             R.var(r[c],N[a]) += J24 * s[c];
+        }
+      }
+    }
+
+    //! Compute sources corresponding to a propagating front in user-defined box
+    //! \param[in] V Total box volume
+    //! \param[in] t Physical time
+    //! \param[in] inpoel Element point connectivity
+    //! \param[in] esup Elements surrounding points
+    //! \param[in] boxnodes Mesh node ids within user-defined box
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] R Right-hand side vector
+    //! \details This function add the energy source corresponding to a planar
+    //!   wave-front propagating along the z-direction with a user-specified
+    //!   velocity, within a box initial condition, configured by the user.
+    //!   Example (SI) units of the quantities involved:
+    //!    * internal energy content (energy per unit volume): J/m^3
+    //!    * specific energy (internal energy per unit mass): J/kg
+    void boxSrc( real V,
+      real t,
+      const std::vector< std::size_t >& inpoel,
+      const std::pair< std::vector< std::size_t >,
+                       std::vector< std::size_t > >& esup,
+      const std::vector< std::size_t >& boxnodes,
+      const std::array< std::vector< real >, 3 >& coord,
+      tk::Fields& R ) const
+    {
+      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      const auto& initiate = icbox.get< tag::initiate >();
+
+      //const auto& boxrho = icbox.get< tag::density >();
+      //const auto& boxvel = icbox.get< tag::velocity >();
+      //const auto& boxpre = icbox.get< tag::pressure >();
+      //const auto& boxene = icbox.get< tag::energy >();
+      //const auto& boxtem = icbox.get< tag::temperature >();
+      //const auto& boxmas = icbox.get< tag::mass >();
+      const auto& boxenc = icbox.get< tag::energy_content >();
+
+      Assert( boxenc.size() > m_system && !boxenc[m_system].empty(),
+        "Box energy content unspecified in input file" );
+      std::vector< tk::real >
+        boxdim{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
+                icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
+                icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
+      auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
+        (boxdim[5]-boxdim[4]);
+      //auto rho = boxmas[m_system][0] / V_ex;
+      //auto spi = boxenc[m_system][0] * V_ex / (V * rho);
+
+      // determine times at which sourcing is initialized and terminated
+      const auto& iv = initiate.get< tag::velocity >()[ m_system ];
+      Assert( iv.size() == 1, "Excess velocities in ic-box block" );
+      auto wFront = 0.08;
+      auto tInit = 0.0;
+      auto tFinal = tInit + (boxdim[5] - boxdim[4] - 2.0*wFront) /
+        std::fabs(iv[0]);
+      auto aBox = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]);
+
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      if (t >= tInit && t <= tFinal) {
+
+        // the energy front is assumed to have a half-sine-wave shape. The half
+        // wave-length is the width of the front. At t=0, the center of this
+        // front (i.e. the peak of the partial-sine-wave) is at X_0 + W_0.
+        // W_0 is calculated based on the width of the front and the direction
+        // of propagation (which is assumed to be along the z-direction).
+        // initial center of front
+        tk::real zInit(boxdim[4]);
+        if (iv[0] < 0.0) zInit = boxdim[5];
+        // current location of front
+        auto z0 = zInit + iv[0]*t;
+        auto z1 = z0 + std::copysign(wFront, iv[0]);
+        //std::cout << " ------------------------------ " << std::endl;
+        //std::cout << boxdim[4] << " " << boxdim[5] << " " << iv[0] << std::endl;
+        //std::cout << z0 << " " << z1 << std::endl;
+        tk::real s0(z0), s1(z1);
+        if (iv[0] < 0.0) {
+          s0 = z1;
+          s1 = z0;
+        }
+        // amplitude of the sine-wave
+        auto pi = 4.0 * std::atan(1.0);
+        auto amplE = boxenc[m_system][0] * V_ex * pi
+          / (aBox * wFront * 2.0 * (tFinal-tInit));
+        amplE *= V_ex / V;
+
+        // add source
+        for (auto p : boxnodes) {
+          if (z[p] >= s0 && z[p] <= s1) {
+            auto S = amplE * std::sin(pi*(z[p]-s0)/wFront);
+            //std::cout << "[ " << s0 << ", " << s1 << " ]: " << z[p] << ") value: " << S << std::endl;
+            for (auto e : tk::Around(esup,p)) {
+              // access node IDs
+              std::size_t N[4] =
+                { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+              // compute element Jacobi determinant, J = 6V
+              real bax = x[N[1]]-x[N[0]];
+              real bay = y[N[1]]-y[N[0]];
+              real baz = z[N[1]]-z[N[0]];
+              real cax = x[N[2]]-x[N[0]];
+              real cay = y[N[2]]-y[N[0]];
+              real caz = z[N[2]]-z[N[0]];
+              real dax = x[N[3]]-x[N[0]];
+              real day = y[N[3]]-y[N[0]];
+              real daz = z[N[3]]-z[N[0]];
+              auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+              auto J24 = J/24.0;
+              R(p,4,m_offset) += J24 * S;
+            }
+          }
         }
       }
     }

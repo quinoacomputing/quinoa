@@ -208,9 +208,11 @@ class Transport {
       const std::vector< real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >& edgeid,
+      const std::vector< std::size_t >&,
       const tk::Fields& G,
       const tk::Fields& U,
       const std::vector< tk::real >&,
+      real,
       tk::Fields& R ) const
     {
       Assert( G.nprop() == m_ncomp*3,
