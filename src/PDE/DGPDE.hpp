@@ -233,7 +233,6 @@ class DGPDE {
     std::vector< std::vector< tk::real > >
     nodeFieldOutput( tk::real t,
                      tk::real V,
-                     std::size_t npoin,
                      const tk::UnsMesh::Coords& coord,
                      const std::vector< std::size_t >& inpoel,
                      const std::pair< std::vector< std::size_t >,
@@ -241,7 +240,7 @@ class DGPDE {
                      const tk::Fields& geoElem,
                      const tk::Fields& U,
                      const tk::Fields& P ) const
-    { return self->nodeFieldOutput( t, V, npoin, coord, inpoel, esup, geoElem,
+    { return self->nodeFieldOutput( t, V, coord, inpoel, esup, geoElem,
                                     U, P ); }
 
     //! Public interface to returning surface field output
@@ -343,7 +342,6 @@ class DGPDE {
       virtual std::vector< std::vector< tk::real > >
         nodeFieldOutput( tk::real,
                          tk::real,
-                         std::size_t,
                          const tk::UnsMesh::Coords&,
                          const std::vector< std::size_t >&,
                          const std::pair< std::vector< std::size_t >,
@@ -453,7 +451,6 @@ class DGPDE {
       std::vector< std::vector< tk::real > >
       nodeFieldOutput( tk::real t,
                        tk::real V,
-                       std::size_t npoin,
                        const tk::UnsMesh::Coords& coord,
                        const std::vector< std::size_t >& inpoel,
                        const std::pair< std::vector< std::size_t >,
@@ -461,7 +458,7 @@ class DGPDE {
                        const tk::Fields& geoElem,
                        const tk::Fields& U,
                        const tk::Fields& P ) const override
-      { return data.nodeFieldOutput( t, V, npoin, coord, inpoel, esup, geoElem,
+      { return data.nodeFieldOutput( t, V, coord, inpoel, esup, geoElem,
                                      U, P ); }
       std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,

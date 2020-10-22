@@ -245,8 +245,10 @@ class DG : public CBase_DG {
       p | m_infaces;
       p | m_esup;
       p | m_esupc;
-      p | m_nodeFieldOut;
-      p | m_nodeFieldOutc;
+      p | m_elemfields;
+      p | m_nodefields;
+      p | m_nodefieldsc;
+      p | m_outmesh;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -356,11 +358,21 @@ class DG : public CBase_DG {
     std::map< std::size_t, std::vector< std::size_t > > m_esup;
     //! Communication buffer for esup data-structure
     std::map< std::size_t, std::vector< std::size_t > > m_esupc;
-    //! Nodal output fields
-    std::vector< std::vector< tk::real > > m_nodeFieldOut;
+    //! Elem output fields
+    std::vector< std::vector< tk::real > > m_elemfields;
+    //! Node output fields
+    std::vector< std::vector< tk::real > > m_nodefields;
     //! Receive buffer for communication of the nodal output fields
     //! \details Key: chare id, value: nodal output fields per node
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_nodeFieldOutc;
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_nodefieldsc;
+    //! ...
+    struct {
+      tk::UnsMesh::Chunk chunk;
+      tk::UnsMesh::Coords coord;
+      std::vector< std::size_t > triinpoel;
+      std::map< int, std::vector< std::size_t > > bface;
+      void pup( PUP::er& p ) { p|chunk; p|coord; p|triinpoel; p|bface; }
+    } m_outmesh;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -414,10 +426,7 @@ class DG : public CBase_DG {
     void addGeoFace( const tk::UnsMesh::Face& t,
                      const std::array< std::size_t, 2 >& id );
 
-    //! Output mesh and particle fields to files
-    void out( CkCallback c );
-
-    //! Start preparing mesh-based fields for output to file
+    //! Output mesh field data
     void writeFields( CkCallback c );
 
     //! Compute solution reconstructions
@@ -438,11 +447,11 @@ class DG : public CBase_DG {
     //! p-refine all elements that are adjacent to p-refined elements
     void propagate_ndof();
 
-    //! Evaluate solution on refined (field-output) mesh
+    //! Evaluate solution on incomping (a potentially refined) mesh
     std::tuple< tk::Fields, tk::Fields >
-    solref( const std::vector< std::size_t >& inpoel,
-            const tk::UnsMesh::Coords& coord,
-            const std::unordered_map< std::size_t, std::size_t >& addedTets );
+    solution( const std::vector< std::size_t >& inpoel,
+              const tk::UnsMesh::Coords& coord,
+              const std::unordered_map< std::size_t, std::size_t >& addedTets );
 
     //! Decide wether to output field data
     bool fieldOutput() const;
@@ -450,8 +459,8 @@ class DG : public CBase_DG {
     //! Decide if we write field output using a refined mesh
     bool refinedOutput() const;
 
-    //! Start preparing nodal fields for output to file
-    void nodal( CkCallback c );
+    //! Start preparing fields for output to file
+    void startout( CkCallback c );
 };
 
 } // inciter::

@@ -351,7 +351,7 @@ class Transport {
                  const std::vector< tk::real >& vol,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const tk::Fields& U,
-                 const tk::Fields& P = tk::Fields() ) const
+                 [[maybe_unused]] const tk::Fields& = tk::Fields() ) const
     {
       Assert( U.nunk() >= nunk, "Size mismatch" );
       std::vector< std::vector< tk::real > > out;
@@ -420,7 +420,6 @@ class Transport {
 
     //! Compute nodal field output
     //! \param[in] t Physical time
-    //! \param[in] npoin Number of unknowns to extract in points
     //! \param[in] V Total mesh volume
     //! \param[in] coord Node coordinates
     //! \param[in] inpoel Mesh connectivity
@@ -431,7 +430,6 @@ class Transport {
     std::vector< std::vector< tk::real > >
     nodeFieldOutput( tk::real t,
                      tk::real V,
-                     std::size_t npoin,
                      const tk::UnsMesh::Coords& coord,
                      const std::vector< std::size_t >& inpoel,
                      const std::pair< std::vector< std::size_t >,
@@ -443,10 +441,11 @@ class Transport {
       // Evaluate solution in nodes
       auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      auto [Un, Pn] =
-        tk::nodeEval( m_offset, ndof, rdof, npoin, coord, inpoel, esup, U );
+      auto [Un,Pn] =
+        tk::nodeEval( m_offset, ndof, rdof, coord, inpoel, esup, U );
       // Extract nodal fields
-      auto f = fieldOutput( t, V, npoin, 1, geoElem.extract(0,0), coord, Un );
+      auto f = fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
+                            coord, Un );
       return f;
     }
 

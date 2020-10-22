@@ -124,7 +124,6 @@ std::tuple< tk::Fields, tk::Fields >
 nodeEval( std::size_t offset,
           std::size_t ndof,
           std::size_t rdof,
-          std::size_t npoin,
           const tk::UnsMesh::Coords& coord,
           const std::vector< std::size_t >& inpoel,
           const std::pair< std::vector< std::size_t >,

@@ -610,7 +610,6 @@ std::tuple< tk::Fields, tk::Fields >
 tk::nodeEval( std::size_t offset,
               std::size_t ndof,
               std::size_t rdof,
-              std::size_t npoin,
               const tk::UnsMesh::Coords& coord,
               const std::vector< std::size_t >& inpoel,
               const std::pair< std::vector< std::size_t >,
@@ -621,7 +620,6 @@ tk::nodeEval( std::size_t offset,
 //  Evaluate solution in nodes
 //! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
-//! \param[in] npoin Total number of nodes
 //! \param[in] coord Node coordinates
 //! \param[in] inpoel Mesh connectivity
 //! \param[in] esup Elements surrounding points
@@ -631,6 +629,8 @@ tk::nodeEval( std::size_t offset,
 // *****************************************************************************
 {
   using tk::dot;
+
+  auto npoin = coord[0].size();
 
   tk::Fields Un( npoin, U.nprop()/rdof );
   tk::Fields Pn( npoin, P.nprop()/rdof );
