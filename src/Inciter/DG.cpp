@@ -1351,8 +1351,8 @@ DG::writeFields( CkCallback c )
       inpoel.resize( m_fd.Esuel().size() );
       auto coord = d->Coord();
       for (std::size_t i=0; i<3; ++i) coord[i].resize( m_npoin );
-      write( {}, {inpoel,d->Gid(),d->Lid()}, coord, {}, {},
-             d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
+      extract( {}, {inpoel,d->Gid(),d->Lid()}, coord, {}, {},
+               d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
 
     }
 
@@ -1360,7 +1360,7 @@ DG::writeFields( CkCallback c )
 }
 
 void
-DG::write(
+DG::extract(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,

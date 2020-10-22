@@ -167,8 +167,8 @@ class DG : public CBase_DG {
       const std::map< int, std::vector< std::size_t > >& /* bnode */,
       const std::vector< std::size_t >& triinpoel );
 
-    //! Output field data to file
-    void write(
+    //! Extract field output going to file
+    void extract(
       const std::vector< std::size_t >& /* ginpoel */,
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,
