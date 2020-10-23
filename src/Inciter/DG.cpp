@@ -1418,7 +1418,7 @@ DG::extract(
   m_elemfields.push_back( ndof );
 
   // Collect node field solutions
-  //tk::destroy(m_nodefields);
+  tk::destroy(m_nodefields);
   //auto esup = tk::genEsup( inpoel, 4 );
   //for (const auto& eq : g_dgpde) {
   //  auto no = eq.nodeFieldOutput( d->T(), d->meshvol(), coord,
@@ -1472,9 +1472,36 @@ DG::solution( const std::vector< std::size_t >& inpoel,
             "Indexing out of old solution vector" );
   }
 
+//  // Evaluate DG solution on potentially refined mesh
+//  auto eval = ()[]{};
+
+  // Lambda to assign DG(P1) solution for all scalar components
+  auto assign_p1 = [&]( std::size_t ncomp,
+                        std::size_t parent,
+                        std::size_t child,
+                        const std::vector< tk::real >& chu,
+                        const std::array< std::array< real, 3 >, 3 >& bp,
+                        const std::array< std::array< real, 3 >, 3 >& bc,
+                        const tk::Fields& src,
+                        tk::Fields& dst )
+  {
+    for (std::size_t i=0; i<ncomp; ++i) {
+      auto ir = i*rdof;
+      // Assign child's cell center solution
+      dst(child,ir,0) = chu[i];
+      // Assign slopes from higher-order DOFs by transforming from and to
+      // Dubiner basis
+      std::array< real, 3 >
+        m{{ src(parent,ir+1,0), src(parent,ir+2,0), src(parent,ir+3,0) }};
+      auto n = tk::cramer( bc, {{dot(bp[0],m), dot(bp[1],m), dot(bp[2],m)}} );
+      dst(child,ir+1,0) = n[0];
+      dst(child,ir+2,0) = n[1];
+      dst(child,ir+3,0) = n[2];
+    }
+  };
+
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
 
-  // DG(P0): copy cell center solution
   if (scheme == ctr::SchemeType::DG) {
 
     for (const auto& [child,parent] : addedTets) {
@@ -1482,7 +1509,6 @@ DG::solution( const std::vector< std::size_t >& inpoel,
       for (std::size_t i=0; i<pncomp; ++i) p(child,i,0) = m_p(parent,i,0);
     }
 
-  // DG(P1): Evaluate cell centroid of child in parent tet
   } else if (scheme == ctr::SchemeType::DGP1) {
 
     const auto& pinpoel = d->Inpoel();  // unrefined (parent) mesh
@@ -1532,36 +1558,11 @@ DG::solution( const std::vector< std::size_t >& inpoel,
         bc{{ {{ dBc[0][1], dBc[0][2], dBc[0][3] }},
              {{ dBc[1][1], dBc[1][2], dBc[1][3] }},
              {{ dBc[2][1], dBc[2][2], dBc[2][3] }} }};
-      for (std::size_t i=0; i<uncomp; ++i) {
-        auto ir = i*rdof;
-        // Assign child's cell center solution
-        u(child,ir,0) = chu[i];
-        // Assign slopes from higher-order DOFs by transforming from and to
-        // Dubiner basis
-        std::array< real, 3 >
-          m{{ m_u(parent,ir+1,0), m_u(parent,ir+2,0), m_u(parent,ir+3,0) }};
-        auto n = tk::cramer( bc, {{dot(bp[0],m), dot(bp[1],m), dot(bp[2],m)}} );
-        u(child,ir+1,0) = n[0];
-        u(child,ir+2,0) = n[1];
-        u(child,ir+3,0) = n[2];
-      }
+      assign_p1( uncomp, parent, child, chu, bp, bc, m_u, u );
       auto chp = eval_state( pncomp, 0, rdof, ndof, parent, m_p, B );
-      for (std::size_t i=0; i<pncomp; ++i) {
-        auto ir = i*rdof;
-        // Assign child's cell center solution
-        p(child,ir,0) = chp[i];
-        // Assign slopes from higher-order DOFs by transforming from and to
-        // Dubiner basis
-        std::array< real, 3 >
-          m{{ m_p(parent,ir+1,0), m_p(parent,ir+2,0), m_p(parent,ir+3,0) }};
-        auto n = tk::cramer( bc, {{dot(bp[0],m), dot(bp[1],m), dot(bp[2],m)}} );
-        p(child,ir+1,0) = n[0];
-        p(child,ir+2,0) = n[1];
-        p(child,ir+3,0) = n[2];
-      }
+      assign_p1( pncomp, parent, child, chp, bp, bc, m_p, p );
     }
 
-  // p-adaptive DG: Evaluate cell centroid of child in parent tet
   } else if (scheme == ctr::SchemeType::PDG) {
 
     const auto& pinpoel = d->Inpoel();  // unrefined (parent) mesh
@@ -1578,7 +1579,7 @@ DG::solution( const std::vector< std::size_t >& inpoel,
         {{ x[pinpoel[p4+2]], y[pinpoel[p4+2]], z[pinpoel[p4+2]] }},
         {{ x[pinpoel[p4+3]], y[pinpoel[p4+3]], z[pinpoel[p4+3]] }} }};
       // Evaluate inverse Jacobian of the parent
-      auto J = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
+      auto Jp = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
       // Compute child cell centroid
       auto c4 = 4*child;
       auto cx = (x[inpoel[c4  ]] + x[inpoel[c4+1]] +
@@ -1589,8 +1590,8 @@ DG::solution( const std::vector< std::size_t >& inpoel,
                  z[inpoel[c4+2]] + z[inpoel[c4+3]]) / 4.0;
       // Compute solution in child centroid
       std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
-      auto B =
-        tk::eval_basis( m_ndof[parent], dot(J[0],h), dot(J[1],h), dot(J[2],h) );
+      auto B = tk::eval_basis( m_ndof[parent],
+                               dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
       auto chu = eval_state( uncomp, 0, rdof, m_ndof[parent], parent, m_u, B );
       for (std::size_t i=0; i<uncomp; ++i) u(child,i*rdof,0) = chu[i];
       auto chp = eval_state( pncomp, 0, rdof, m_ndof[parent], parent, m_p, B );
