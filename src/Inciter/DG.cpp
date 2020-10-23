@@ -1418,13 +1418,13 @@ DG::extract(
   m_elemfields.push_back( ndof );
 
   // Collect node field solutions
-  tk::destroy(m_nodefields);
-  auto esup = tk::genEsup( inpoel, 4 );
-  for (const auto& eq : g_dgpde) {
-    auto no = eq.nodeFieldOutput( d->T(), d->meshvol(), coord,
-                                 inpoel, esup, geoElem, u, p );
-    m_nodefields.insert( end(m_nodefields), begin(no), end(no) );
-  }
+  //tk::destroy(m_nodefields);
+  //auto esup = tk::genEsup( inpoel, 4 );
+  //for (const auto& eq : g_dgpde) {
+  //  auto no = eq.nodeFieldOutput( d->T(), d->meshvol(), coord,
+  //                               inpoel, esup, geoElem, u, p );
+  //  m_nodefields.insert( end(m_nodefields), begin(no), end(no) );
+  //}
 
   // Send node fields contributions to neighbor chares
   if (d->NodeCommMap().empty())
@@ -1454,6 +1454,7 @@ DG::solution( const std::vector< std::size_t >& inpoel,
 // *****************************************************************************
 {
   using tk::dot;
+  using tk::real;
 
   auto d = Disc();
   const auto nelem = inpoel.size()/4;
@@ -1493,13 +1494,13 @@ DG::solution( const std::vector< std::size_t >& inpoel,
     for (const auto& [child,parent] : addedTets) {
       // Extract parent element coordinates
       auto p4 = 4*parent;
-      std::array< std::array< tk::real, 3>, 4 > cp{{
+      std::array< std::array< real, 3>, 4 > cp{{
         {{ x[pinpoel[p4  ]], y[pinpoel[p4  ]], z[pinpoel[p4  ]] }},
         {{ x[pinpoel[p4+1]], y[pinpoel[p4+1]], z[pinpoel[p4+1]] }},
         {{ x[pinpoel[p4+2]], y[pinpoel[p4+2]], z[pinpoel[p4+2]] }},
         {{ x[pinpoel[p4+3]], y[pinpoel[p4+3]], z[pinpoel[p4+3]] }} }};
       // Evaluate inverse Jacobian of the parent
-      auto J = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
+      auto Jp = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
       // Compute child cell centroid
       auto c4 = 4*child;
       auto cx = (x[inpoel[c4  ]] + x[inpoel[c4+1]] +
@@ -1509,21 +1510,54 @@ DG::solution( const std::vector< std::size_t >& inpoel,
       auto cz = (z[inpoel[c4  ]] + z[inpoel[c4+1]] +
                  z[inpoel[c4+2]] + z[inpoel[c4+3]]) / 4.0;
       // Compute solution in child centroid
-      std::array< tk::real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
-      auto B = tk::eval_basis( ndof, dot(J[0],h), dot(J[1],h), dot(J[2],h) );
+      std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
+      auto B = tk::eval_basis( ndof, dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
       auto chu = eval_state( uncomp, 0, rdof, ndof, parent, m_u, B );
+      // Extract child element coordinates
+      std::array< std::array< real, 3>, 4 > cc{{
+        {{ x[inpoel[c4  ]], y[inpoel[c4  ]], z[inpoel[c4  ]] }},
+        {{ x[inpoel[c4+1]], y[inpoel[c4+1]], z[inpoel[c4+1]] }},
+        {{ x[inpoel[c4+2]], y[inpoel[c4+2]], z[inpoel[c4+2]] }},
+        {{ x[inpoel[c4+3]], y[inpoel[c4+3]], z[inpoel[c4+3]] }} }};
+      // Evaluate inverse Jacobian of the child
+      auto Jc = tk::inverseJacobian( cc[0], cc[1], cc[2], cc[3] );
+      // Compute basis function derivatives of the parent
+      auto dBp = tk::eval_dBdx_p1( ndof, Jp );
+      // Compute basis function derivatives of the child
+      auto dBc = tk::eval_dBdx_p1( ndof, Jc );
+      std::array< std::array< real, 3 >, 3 >
+        bp{{ {{ dBp[0][1], dBp[0][2], dBp[0][3] }},
+             {{ dBp[1][1], dBp[1][2], dBp[1][3] }},
+             {{ dBp[2][1], dBp[2][2], dBp[2][3] }} }},
+        bc{{ {{ dBc[0][1], dBc[0][2], dBc[0][3] }},
+             {{ dBc[1][1], dBc[1][2], dBc[1][3] }},
+             {{ dBc[2][1], dBc[2][2], dBc[2][3] }} }};
       for (std::size_t i=0; i<uncomp; ++i) {
-        u(child,i*rdof,0) = chu[i];
-        u(child,i*rdof+1,0) = m_u(parent,i*rdof+1,0);
-        u(child,i*rdof+2,0) = m_u(parent,i*rdof+2,0);
-        u(child,i*rdof+3,0) = m_u(parent,i*rdof+3,0);
+        auto ir = i*rdof;
+        // Assign child's cell center solution
+        u(child,ir,0) = chu[i];
+        // Assign slopes from higher-order DOFs by transforming from and to
+        // Dubiner basis
+        std::array< real, 3 >
+          m{{ m_u(parent,ir+1,0), m_u(parent,ir+2,0), m_u(parent,ir+3,0) }};
+        auto n = tk::cramer( bc, {{dot(bp[0],m), dot(bp[1],m), dot(bp[2],m)}} );
+        u(child,ir+1,0) = n[0];
+        u(child,ir+2,0) = n[1];
+        u(child,ir+3,0) = n[2];
       }
       auto chp = eval_state( pncomp, 0, rdof, ndof, parent, m_p, B );
       for (std::size_t i=0; i<pncomp; ++i) {
-        p(child,i*rdof,0) = chp[i];
-        p(child,i*rdof+1,0) = m_p(parent,i*rdof+1,0);
-        p(child,i*rdof+2,0) = m_p(parent,i*rdof+2,0);
-        p(child,i*rdof+3,0) = m_p(parent,i*rdof+3,0);
+        auto ir = i*rdof;
+        // Assign child's cell center solution
+        p(child,ir,0) = chp[i];
+        // Assign slopes from higher-order DOFs by transforming from and to
+        // Dubiner basis
+        std::array< real, 3 >
+          m{{ m_p(parent,ir+1,0), m_p(parent,ir+2,0), m_p(parent,ir+3,0) }};
+        auto n = tk::cramer( bc, {{dot(bp[0],m), dot(bp[1],m), dot(bp[2],m)}} );
+        p(child,ir+1,0) = n[0];
+        p(child,ir+2,0) = n[1];
+        p(child,ir+3,0) = n[2];
       }
     }
 
@@ -1538,7 +1572,7 @@ DG::solution( const std::vector< std::size_t >& inpoel,
     for (const auto& [child,parent] : addedTets) {
       // Extract parent element coordinates
       auto p4 = 4*parent;
-      std::array< std::array< tk::real, 3>, 4 > cp{{
+      std::array< std::array< real, 3>, 4 > cp{{
         {{ x[pinpoel[p4  ]], y[pinpoel[p4  ]], z[pinpoel[p4  ]] }},
         {{ x[pinpoel[p4+1]], y[pinpoel[p4+1]], z[pinpoel[p4+1]] }},
         {{ x[pinpoel[p4+2]], y[pinpoel[p4+2]], z[pinpoel[p4+2]] }},
@@ -1554,7 +1588,7 @@ DG::solution( const std::vector< std::size_t >& inpoel,
       auto cz = (z[inpoel[c4  ]] + z[inpoel[c4+1]] +
                  z[inpoel[c4+2]] + z[inpoel[c4+3]]) / 4.0;
       // Compute solution in child centroid
-      std::array< tk::real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
+      std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
       auto B =
         tk::eval_basis( m_ndof[parent], dot(J[0],h), dot(J[1],h), dot(J[2],h) );
       auto chu = eval_state( uncomp, 0, rdof, m_ndof[parent], parent, m_u, B );
@@ -2152,8 +2186,8 @@ DG::writeFields( CkCallback c )
   for (const auto& eq : g_dgpde) {
     auto n = eq.fieldNames();
     elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
-    auto nn = eq.nodalFieldNames();
-    nodefieldnames.insert( end(nodefieldnames), begin(nn), end(nn) );
+    //auto nn = eq.nodalFieldNames();
+    //nodefieldnames.insert( end(nodefieldnames), begin(nn), end(nn) );
   }
 
   // Output chare mesh and fields metadata to file
