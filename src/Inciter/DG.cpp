@@ -1475,7 +1475,15 @@ DG::solution( const std::vector< std::size_t >& inpoel,
 //  // Evaluate DG solution on potentially refined mesh
 //  auto eval = ()[]{};
 
-  // Lambda to assign DG(P1) solution for all scalar components
+  // Lambda to assign DG(P1) solution from parent to child element
+  // ncomp - number of components to assign
+  // parent - parent celement id
+  // child - child element id
+  // chu - cell center solution to assign for all components
+  // bp - basis function derivatives of the parent element
+  // bc - basis function derivatives of the child element
+  // src - source solution/unknown to assign from
+  // dst - destination solution/unknown to assign to
   auto assign_p1 = [&]( std::size_t ncomp,
                         std::size_t parent,
                         std::size_t child,
@@ -2190,6 +2198,9 @@ DG::writeFields( CkCallback c )
     //auto nn = eq.nodalFieldNames();
     //nodefieldnames.insert( end(nodefieldnames), begin(nn), end(nn) );
   }
+
+  if (g_inputdeck.get< tag::pref, tag::pref >())
+    elemfieldnames.push_back( "NDOF" );
 
   // Output chare mesh and fields metadata to file
   const auto& inpoel = std::get< 0 >( m_outmesh.chunk );

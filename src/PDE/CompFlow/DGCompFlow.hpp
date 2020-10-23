@@ -570,7 +570,7 @@ class CompFlow {
                  const std::vector< tk::real >& vol,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const tk::Fields& U,
-                 [[maybe_unused]] const tk::Fields& P = tk::Fields() ) const
+                 [[maybe_unused]] const tk::Fields& = tk::Fields() ) const
     {
       return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, rdof,
                                     t, V, vol, coord, U );
