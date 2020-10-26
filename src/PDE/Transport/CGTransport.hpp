@@ -367,6 +367,7 @@ class Transport {
     //! \return Minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
+             tk::real,
              const tk::Fields& U ) const
     {
       using tag::transport;

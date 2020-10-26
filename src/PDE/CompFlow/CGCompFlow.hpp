@@ -606,13 +606,32 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] t Physical time
     //! \return Minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
-                 const std::vector< std::size_t >& inpoel,
-                 const tk::Fields& U ) const
+             const std::vector< std::size_t >& inpoel,
+             tk::real t,
+             const tk::Fields& U ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
+
+      // energy source propagation time and velocity
+      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      const auto& initiate = icbox.get< tag::initiate >();
+      const auto& iv = initiate.get< tag::velocity >()[ m_system ];
+      Assert( iv.size() == 1, "Excess velocities in ic-box block" );
+      std::vector< tk::real >
+        boxdim{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
+                icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
+                icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
+      const auto& inittype = initiate.get< tag::init >();
+      auto wFront = 0.08;
+      auto tInit = 0.0;
+      auto tFinal = tInit + (boxdim[5] - boxdim[4] - 2.0*wFront) /
+        std::fabs(iv[0]);
+
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
@@ -645,6 +664,10 @@ class CompFlow {
           if (p < 0) p = 0.0;
           auto c = eos_soundspeed< eq >( m_system, r, p );
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
+
+          // energy source propagation velocity
+          if (inittype[m_system] == ctr::InitiateType::LINEAR &&
+            t >= tInit && t <= tFinal) v = std::max(v, std::fabs(iv[0]));
           if (v > maxvel) maxvel = v;
         }
         // compute element dt for the Euler equations

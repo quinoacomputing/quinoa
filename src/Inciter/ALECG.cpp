@@ -737,7 +737,7 @@ ALECG::dt()
 
       // find the smallest dt of all equations on this chare
       for (const auto& eq : g_cgpde) {
-        auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
+        auto eqdt = eq.dt( d->Coord(), d->Inpoel(), d->T(), m_u );
         if (eqdt < mindt) mindt = eqdt;
       }
 

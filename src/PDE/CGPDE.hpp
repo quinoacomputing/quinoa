@@ -170,8 +170,9 @@ class CGPDE {
     //! Public interface for computing the minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
+             tk::real t,
              const tk::Fields& U ) const
-    { return self->dt( coord, inpoel, U ); }
+    { return self->dt( coord, inpoel, t, U ); }
 
     //! Public interface for computing a time step size for each mesh node
     void dt( uint64_t it,
@@ -317,6 +318,7 @@ class CGPDE {
         tk::Fields& ) const = 0;
       virtual real dt( const std::array< std::vector< real >, 3 >&,
                        const std::vector< std::size_t >&,
+                       tk::real,
                        const tk::Fields& ) const = 0;
       virtual void dt( uint64_t,
                        const std::vector< real > &,
@@ -423,9 +425,10 @@ class CGPDE {
       { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
                   symbctri, vol, edgenode, edgeid, boxnodes, G, U, tp, V, R ); }
       real dt( const std::array< std::vector< real >, 3 >& coord,
-                   const std::vector< std::size_t >& inpoel,
-                   const tk::Fields& U ) const override
-      { return data.dt( coord, inpoel, U ); }
+               const std::vector< std::size_t >& inpoel,
+               tk::real t,
+               const tk::Fields& U ) const override
+      { return data.dt( coord, inpoel, t, U ); }
       void dt( uint64_t it,
                const std::vector< real > & vol,
                const tk::Fields& U,
