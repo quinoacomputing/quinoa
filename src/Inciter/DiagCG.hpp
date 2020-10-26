@@ -185,7 +185,6 @@ class DiagCG : public CBase_DiagCG {
     void pup( PUP::er &p ) override {
       p | m_disc;
       p | m_initial;
-      p | m_nsol;
       p | m_nlhs;
       p | m_nrhs;
       p | m_nnorm;
@@ -227,8 +226,6 @@ class DiagCG : public CBase_DiagCG {
     CProxy_Discretization m_disc;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
-    //! Counter for high order solution vector nodes updated
-    std::size_t m_nsol;
     //! Counter for left-hand side matrix (vector) nodes updated
     std::size_t m_nlhs;
     //! Counter for right-hand side vector nodes updated

@@ -50,7 +50,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
                 const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_initial( 1 ),
-  m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
   m_nnorm( 0 ),
