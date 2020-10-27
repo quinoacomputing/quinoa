@@ -116,7 +116,7 @@ class CompFlow {
     //! \param[in] V Total box volume
     //! \param[in] t Physical time
     //! \param[in] boxnodes Mesh node ids within user-defined box
-    //! \param[in] coord Mesh node coordinates
+//    //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in,out] boxnodes_set Box nodes that have been set
     //! \details This function sets the fluid density and total specific energy
@@ -594,9 +594,9 @@ class CompFlow {
       const auto& icbox = ic.get< tag::box >();
       const auto& initiate = icbox.get< tag::initiate >();
       const auto& inittype = initiate.get< tag::init >();
-      if (inittype[m_system] == ctr::InitiateType::LINEAR) {
-        boxSrc( V, t, inpoel, esup, boxnodes, coord, R );
-      }
+      if (inittype.size() > m_system)
+        if (inittype[m_system] == ctr::InitiateType::LINEAR)
+          boxSrc( V, t, inpoel, esup, boxnodes, coord, R );
 
       // compute optional source integral
       src( coord, inpoel, t, tp, R );
@@ -621,16 +621,7 @@ class CompFlow {
       const auto& icbox = ic.get< tag::box >();
       const auto& initiate = icbox.get< tag::initiate >();
       const auto& iv = initiate.get< tag::velocity >()[ m_system ];
-      Assert( iv.size() == 1, "Excess velocities in ic-box block" );
-      std::vector< tk::real >
-        boxdim{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
-                icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
-                icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
       const auto& inittype = initiate.get< tag::init >();
-      auto wFront = 0.08;
-      auto tInit = 0.0;
-      auto tFinal = tInit + (boxdim[5] - boxdim[4] - 2.0*wFront) /
-        std::fabs(iv[0]);
 
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -666,8 +657,18 @@ class CompFlow {
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
 
           // energy source propagation velocity
-          if (inittype[m_system] == ctr::InitiateType::LINEAR &&
-            t >= tInit && t <= tFinal) v = std::max(v, std::fabs(iv[0]));
+          if (inittype.size() > m_system)
+            if (inittype[m_system] == ctr::InitiateType::LINEAR) {
+              std::vector< tk::real >
+                boxdim{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
+                        icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
+                        icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
+              auto wFront = 0.08;
+              auto tInit = 0.0;
+              auto tFinal = tInit + (boxdim[5] - boxdim[4] - 2.0*wFront) /
+                std::fabs(iv[0]);
+              if (t >= tInit && t <= tFinal) v = std::max(v, std::fabs(iv[0]));
+            }
           if (v > maxvel) maxvel = v;
         }
         // compute element dt for the Euler equations
