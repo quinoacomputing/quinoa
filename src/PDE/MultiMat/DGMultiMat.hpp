@@ -292,13 +292,25 @@ class MultiMat {
           pb += prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset);
 
         // isentropic expansion/compression
-        tk::real d_arE(0.0), d_al(0.0), p_target(pmax), rhoEmat(0.0);
+        tk::real d_arE(0.0), d_al(0.0), rhoEmat(0.0);
 
         // 1. Correct minority materials and store volume/energy changes
         for (std::size_t k=0; k<nmat; ++k)
         {
+          // query input deck to get stiffness parameter 
+          auto p_ck =
+            g_inputdeck.get< tag::param, eq, tag::pstiff >()[ m_system ][k];
+          auto p_target = pmax;
+
+          // if the material is ideal gas and the partial pressure for major
+          // material is negative, reset the partial pressure to be zero since
+          // negative pressure is not allowed for the ideal gas system
+          if(p_ck < 1e-14 && p_target < 0)
+            p_target = 0;
+
           auto alk = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           auto pk = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) / alk;
+
           // for positive volume fractions
           if (alk > 0.0)
           {
