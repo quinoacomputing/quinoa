@@ -390,7 +390,7 @@ tk::evaluRiemann( ncomp_t ncomp,
   using inciter::densityIdx;
   using inciter::momentumIdx;
 
-  std::size_t el, er;
+  std::size_t el(0), er(0);
   el = static_cast< std::size_t >(e_left);
   if(e_right != -1)
     er = static_cast< std::size_t >(e_right);
