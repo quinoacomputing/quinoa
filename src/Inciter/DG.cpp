@@ -1212,7 +1212,7 @@ DG::box( tk::real v )
   Disc()->Boxvol() = v;
 
   // Output initial conditions to file (regardless of whether it was requested)
-  startout( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
+  startFieldOutput( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
 }
 
 void
@@ -1230,7 +1230,7 @@ DG::start()
 }
 
 void
-DG::startout( CkCallback c )
+DG::startFieldOutput( CkCallback c )
 // *****************************************************************************
 // Start preparing fields for output to file
 //! \param[in] c Function to continue with after the write
@@ -1259,8 +1259,8 @@ DG::startout( CkCallback c )
       inpoel.resize( m_fd.Esuel().size() );
       auto coord = d->Coord();
       for (std::size_t i=0; i<3; ++i) coord[i].resize( m_npoin );
-      extract( {}, {inpoel,d->Gid(),d->Lid()}, coord, {}, {},
-               d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
+      extractFieldOutput( {}, {inpoel,d->Gid(),d->Lid()}, coord, {}, {},
+                          d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
 
     }
 
@@ -1362,7 +1362,7 @@ DG::comsol( int fromch,
 }
 
 void
-DG::extract(
+DG::extractFieldOutput(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
@@ -1395,7 +1395,7 @@ DG::extract(
   auto nelem = inpoel.size() / 4;
 
   // Evaluate element solution on incoming mesh
-  auto [u,p] = solution( inpoel, coord, addedTets );
+  auto [u,p] = evalSolution( inpoel, coord, addedTets );
 
   // Collect element field solutions
   tk::destroy(m_elemfields);
@@ -1428,10 +1428,10 @@ DG::extract(
 
   // Send node fields contributions to neighbor chares
   if (d->NodeCommMap().empty())
-    comnod_complete();
+    comnodeout_complete();
   else {
     for(const auto& [cid, nodes] : d->NodeCommMap()) {
-      thisProxy[ cid ].comnod( thisIndex );
+      thisProxy[ cid ].comnodeout();
     }
   }
 
@@ -1439,9 +1439,10 @@ DG::extract(
 }
 
 std::tuple< tk::Fields, tk::Fields >
-DG::solution( const std::vector< std::size_t >& inpoel,
-              const tk::UnsMesh::Coords& coord,
-              const std::unordered_map< std::size_t, std::size_t >& addedTets )
+DG::evalSolution(
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const std::unordered_map< std::size_t, std::size_t >& addedTets )
 // *****************************************************************************
 // Evaluate solution on incomping (a potentially refined) mesh
 //! \param[in] inpoel Incoming (potentially refined field-output) mesh
@@ -1471,9 +1472,6 @@ DG::solution( const std::vector< std::size_t >& inpoel,
     Assert( parent < d->Inpoel().size()/4,
             "Indexing out of old solution vector" );
   }
-
-//  // Evaluate DG solution on potentially refined mesh
-//  auto eval = ()[]{};
 
   // Lambda to assign DG(P1) solution from parent to child element
   // ncomp - number of components to assign
@@ -2212,15 +2210,15 @@ DG::writeFields( CkCallback c )
 }
 
 void
-DG::comnod( int /*fromch*/ )
+DG::comnodeout()
 // *****************************************************************************
-//  Receive chare-boundary nodal solution contributions from neighboring chares
-//! \param[in] fromch Sender chare id
+//  Receive chare-boundary nodal solution (for field output) contributions from
+//  neighboring chares
 // *****************************************************************************
 {
   if (++m_nnod == Disc()->NodeCommMap().size()) {
     m_nnod = 0;
-    comnod_complete();
+    comnodeout_complete();
   }
 }
 
@@ -2238,7 +2236,7 @@ DG::stage()
   if (m_stage < 3)
     next();
   else
-    startout( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
+    startFieldOutput( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
 }
 
 void

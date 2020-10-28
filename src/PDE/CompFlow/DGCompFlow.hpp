@@ -40,6 +40,7 @@
 #include "EoS/EoS.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
+#include "FieldOutputUtil.hpp"
 
 namespace inciter {
 

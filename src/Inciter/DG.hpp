@@ -149,8 +149,9 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
-    //! Receive nodal solution contributions from neighboring chares
-    void comnod( int fromch );
+    //! \brief Receive nodal solution (ofor field output) contributions from
+    //!   neighboring chares
+    void comnodeout();
 
     //! Optionally refine/derefine mesh
     void refine( const std::vector< tk::real >& l2res );
@@ -168,7 +169,7 @@ class DG : public CBase_DG {
       const std::vector< std::size_t >& triinpoel );
 
     //! Extract field output going to file
-    void extract(
+    void extractFieldOutput(
       const std::vector< std::size_t >& /* ginpoel */,
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,
@@ -186,10 +187,6 @@ class DG : public CBase_DG {
 
     //! Compute left hand side
     void lhs();
-
-    //! Const-ref access to current solution
-    //! \param[in,out] u Reference to update with current solution
-    void solution( tk::Fields& u ) const { u = m_u; }
 
     //! Unused in DG
     void resized() {}
@@ -365,7 +362,7 @@ class DG : public CBase_DG {
     //! Receive buffer for communication of the nodal output fields
     //! \details Key: chare id, value: nodal output fields per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_nodefieldsc;
-    //! ...
+    //! Storage for refined mesh used for field output
     struct {
       tk::UnsMesh::Chunk chunk;
       tk::UnsMesh::Coords coord;
@@ -449,9 +446,10 @@ class DG : public CBase_DG {
 
     //! Evaluate solution on incomping (a potentially refined) mesh
     std::tuple< tk::Fields, tk::Fields >
-    solution( const std::vector< std::size_t >& inpoel,
-              const tk::UnsMesh::Coords& coord,
-              const std::unordered_map< std::size_t, std::size_t >& addedTets );
+    evalSolution(
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      const std::unordered_map< std::size_t, std::size_t >& addedTets );
 
     //! Decide wether to output field data
     bool fieldOutput() const;
@@ -460,7 +458,7 @@ class DG : public CBase_DG {
     bool refinedOutput() const;
 
     //! Start preparing fields for output to file
-    void startout( CkCallback c );
+    void startFieldOutput( CkCallback c );
 };
 
 } // inciter::

@@ -46,7 +46,7 @@ module dg {
                          const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
-      entry void comnod( int fromch );
+      entry void comnodeout();
       entry void comreco( int fromch,
                           const std::vector< std::size_t >& tetid,
                           const std::vector< std::vector< tk::real > >& u,
@@ -92,7 +92,7 @@ module dg {
         when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
 
       entry void wait4nod() {
-        when ownnod_complete( CkCallback c ), comnod_complete()
+        when ownnod_complete( CkCallback c ), comnodeout_complete()
         serial "nod" { writeFields( c ); } }
 
       entry void ownfac_complete();
@@ -108,7 +108,7 @@ module dg {
       entry void ownlim_complete();
       entry void comlim_complete();
       entry void ownnod_complete( CkCallback c );
-      entry void comnod_complete();
+      entry void comnodeout_complete();
     }
 
   } // inciter::

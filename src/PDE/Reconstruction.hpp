@@ -106,31 +106,6 @@ recoLeastSqExtStencil(
   const Fields& geoElem,
   Fields& W );
 
-//! Compute nodal field outputs
-void
-nodeAvg( std::size_t ncomp,
-         std::size_t nprim,
-         std::size_t offset,
-         std::size_t rdof,
-         std::size_t npoin,
-         const std::map< std::size_t, std::vector< std::size_t > >& esup,
-         const Fields& U,
-         const Fields& P,
-         Fields& Unode,
-         Fields& Pnode );
-
-//! Evaluate solution in nodes
-std::tuple< tk::Fields, tk::Fields >
-nodeEval( std::size_t offset,
-          std::size_t ndof,
-          std::size_t rdof,
-          const tk::UnsMesh::Coords& coord,
-          const std::vector< std::size_t >& inpoel,
-          const std::pair< std::vector< std::size_t >,
-                           std::vector< std::size_t > >& esup,
-          const Fields& U,
-          const Fields& P = tk::Fields() );
-
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
 transform_P0P1( ncomp_t ncomp,

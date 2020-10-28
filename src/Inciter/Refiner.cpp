@@ -951,7 +951,7 @@ Refiner::next()
   } else if (m_mode == RefMode::OUTDEREF) {
 
     // Send field output mesh to PDE worker
-    m_scheme.ckLocal< Scheme::extract >( thisIndex, m_outref_ginpoel,
+    m_scheme.ckLocal< Scheme::extractFieldOutput >( thisIndex, m_outref_ginpoel,
       m_outref_el, m_outref_coord, m_outref_addedNodes, m_outref_addedTets,
       m_outref_nodeCommMap, m_outref_bface, m_outref_bnode, m_outref_triinpoel,
       m_writeCallback );

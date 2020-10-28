@@ -184,7 +184,7 @@ class Scheme {
 
     //! Entry method tags for specific Scheme classes to use with ckLocal()
     struct resizePostAMR {};
-    struct extract {};
+    struct extractFieldOutput {};
     struct solution {};
     //! Call Scheme entry method via Charm++ chare array element's ckLocal()
     //! \tparam Fn Function tag identifying the entry method to call
@@ -201,8 +201,8 @@ class Scheme {
       return std::visit( [&]( auto& p ){
           if constexpr( std::is_same_v< Fn, resizePostAMR > )
             return p.ckLocal()->resizePostAMR( std::forward<Args>(args)... );
-          else if constexpr( std::is_same_v< Fn, extract > )
-            return p.ckLocal()->extract( std::forward<Args>(args)... );
+          else if constexpr( std::is_same_v< Fn, extractFieldOutput > )
+            return p.ckLocal()->extractFieldOutput(std::forward<Args>(args)...);
           else if constexpr( std::is_same_v< Fn, solution > )
             return p.ckLocal()->solution( std::forward<Args>(args)... );
         }, e );

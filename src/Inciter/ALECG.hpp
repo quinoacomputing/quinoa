@@ -153,7 +153,7 @@ class ALECG : public CBase_ALECG {
       const std::vector< std::size_t >& triinpoel );
 
     //! Extract field output to file
-    void extract(
+    void extractFieldOutput(
       const std::vector< std::size_t >& /* ginpoel */,
       const tk::UnsMesh::Chunk& /*chunk*/,
       const tk::UnsMesh::Coords& /*coord*/,

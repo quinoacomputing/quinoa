@@ -12,8 +12,8 @@
     discretizations.
 */
 // *****************************************************************************
-#ifndef MultiMatDG_h
-#define MultiMatDG_h
+#ifndef DGMultiMat_h
+#define DGMultiMat_h
 
 #include <cmath>
 #include <algorithm>
@@ -41,6 +41,7 @@
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "Problem/FieldOutput.hpp"
+#include "FieldOutputUtil.hpp"
 
 namespace inciter {
 
@@ -1205,4 +1206,4 @@ class MultiMat {
 
 } // inciter::
 
-#endif // MultiMatDG_h
+#endif // DGMultiMat_h
