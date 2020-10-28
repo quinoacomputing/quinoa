@@ -222,7 +222,7 @@ class MultiMat {
             for(std::size_t idir = 0; idir < 3; idir++)
             {
               prim(e, rmark+idir+1, 0) = R[mark+idir+1] / L(e, mark+idir+1, 0);
-              if(fabs(prim(e, rmark+idir+1, 0)) < 1e-20)
+              if(fabs(prim(e, rmark+idir+1, 0)) < 1e-16)
                 prim(e, rmark+idir+1, 0) = 0;
             }
           }
@@ -305,8 +305,8 @@ class MultiMat {
           // if the material is ideal gas and the partial pressure for major
           // material is negative, reset the partial pressure to be zero since
           // negative pressure is not allowed for the ideal gas system
-          if(p_ck < 1e-14 && p_target < 0)
-            p_target = 0;
+          if(p_ck + p_target < 1e-14)
+            p_target = 1e-14;
 
           auto alk = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           auto pk = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) / alk;
@@ -605,7 +605,7 @@ class MultiMat {
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
-      //Assert( ndof == 1, "DGP1/2 not set up for multi-material" );
+      Assert( ndof <= 4, "DGP2 not set up for multi-material" );
 
       // set rhs to zero
       R.fill(0.0);
@@ -616,10 +616,8 @@ class MultiMat {
 
       // vectors to store the data of riemann velocity used for reconstruction
       // in volume fraction equation
-      std::vector< std::vector< tk::real > >
-        vriem( U.nunk() );
-      std::vector< std::vector< tk::real > >
-        xcoord( U.nunk() );
+      std::vector< std::vector< tk::real > > vriem( U.nunk() );
+      std::vector< std::vector< tk::real > > riemannLoc( U.nunk() );
 
       // configure Riemann flux function
       auto rieflxfn =
@@ -634,8 +632,8 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, nmat, m_offset, ndof, rdof, inpoel, coord,
-                   fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, vriem, xcoord,
-                   riemannDeriv );
+                   fd, geoFace, rieflxfn, velfn, U, P, ndofel, R, vriem,
+                   riemannLoc, riemannDeriv );
 
       if(ndof > 1)
         // compute volume integrals
@@ -646,7 +644,8 @@ class MultiMat {
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, nmat, m_offset, ndof, rdof, b.first,
                         fd, geoFace, inpoel, coord, t, rieflxfn, velfn,
-                        b.second, U, P, ndofel, R, vriem, xcoord, riemannDeriv );
+                        b.second, U, P, ndofel, R, vriem, riemannLoc,
+                        riemannDeriv );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );
@@ -663,12 +662,12 @@ class MultiMat {
       std::vector< std::vector< tk::real > >
         vriempoly( U.nunk(), std::vector<tk::real>(12,0.0) );
       if(ndof > 1)
-        tk::solvevriem(nelem, vriem, xcoord, vriempoly);
+        tk::solvevriem(nelem, vriem, riemannLoc, vriempoly);
 
       // compute volume integrals of non-conservative terms
       tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, riemannDeriv, vriempoly,
-                              ndofel, R );
+                              inpoel, coord, geoElem, U, P, riemannDeriv,
+                              vriempoly, ndofel, R );
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])

@@ -52,12 +52,9 @@ update_rhs_ncn( ncomp_t ncomp,
                 const std::size_t ndof_el,
                 const tk::real wt,
                 const std::size_t e,
-                const std::vector<tk::real>& ugp,
                 const std::vector<tk::real>& B,
                 const std::array< std::vector<tk::real>, 3 >& dBdx,
-                const std::vector< std::vector<tk::real> >& riemannDeriv,
-                const std::vector< tk::real >& vriem,
-                std::vector< tk::real >& ncf,
+                const std::vector< std::vector< tk::real > >& ncf,
                 Fields& R );
 
 //! Compute volume integrals of pressure relaxation terms in multi-material DG
@@ -89,11 +86,10 @@ update_rhs_pre(
   Fields& R );
 
 //! Solve the reconstruct velocity used for volume fraction equation
-void solvevriem( const std::size_t nelem,
+void solvevriem( const std::size_t& nelem,
                  const std::vector< std::vector< tk::real > >& vriem,
-                 const std::vector< std::vector< tk::real > >& xcoord,
+                 const std::vector< std::vector< tk::real > >& riemannLoc,
                  std::vector< std::vector< tk::real > >& vriempoly );
-
 } // tk::
 
 #endif // MultiMatTerms_h

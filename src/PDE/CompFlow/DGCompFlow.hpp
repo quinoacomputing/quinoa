@@ -266,8 +266,8 @@ class CompFlow {
       // terms in the system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
-      std::vector< std::vector< tk::real > > vriem ( U.nunk() );
-      std::vector< std::vector< tk::real > > xcoord( U.nunk() );
+      std::vector< std::vector< tk::real > > vriem;
+      std::vector< std::vector< tk::real > > riemannLoc;
 
       // configure Riemann flux function
       auto rieflxfn =
@@ -281,7 +281,7 @@ class CompFlow {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord, fd,
-                   geoFace, rieflxfn, velfn, U, P, ndofel, R, vriem, xcoord,
+                   geoFace, rieflxfn, velfn, U, P, ndofel, R, vriem, riemannLoc,
                    riemannDeriv );
 
       // compute ptional source term
@@ -297,7 +297,7 @@ class CompFlow {
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
                         geoFace, inpoel, coord, t, rieflxfn, velfn, b.second, U,
-                        P, ndofel, R, vriem, xcoord, riemannDeriv );
+                        P, ndofel, R, vriem, riemannLoc, riemannDeriv );
     }
 
     //! Compute the minimum time step size

@@ -124,7 +124,7 @@ void BoundPreservingLimiting( std::size_t nmat,
                               std::size_t e,
                               const std::vector< std::size_t >& inpoel,
                               const tk::UnsMesh::Coords& coord,
-                              tk::Fields& U,
+                              const tk::Fields& U,
                               std::vector< tk::real >& phic );
 
 } // inciter::

@@ -36,7 +36,7 @@ tk::surfInt( ncomp_t system,
              const std::vector< std::size_t >& ndofel,
              Fields& R,
              std::vector< std::vector< tk::real > >& vriem,
-             std::vector< std::vector< tk::real > >& xcoord,
+             std::vector< std::vector< tk::real > >& riemannLoc,
              std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //  Compute internal surface flux integrals
@@ -56,7 +56,8 @@ tk::surfInt( ncomp_t system,
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] vriem Vector of the riemann velocity
-//! \param[in,out] xcoord Vector of the coordinates of riemann velocity data
+//! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data
+//!   is available
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms.
 //!   These derivatives are used only for multi-material hydro and unused for
@@ -205,51 +206,10 @@ tk::surfInt( ncomp_t system,
 
       // Store the riemann velocity and coordinates data of quadrature point
       // used for velocity reconstruction if MulMat scheme is selected
-      if (fl.size() > ncomp && ndof > 1)
-      {
-        xcoord[el].push_back( gp[0] );
-        xcoord[el].push_back( gp[1] );
-        xcoord[el].push_back( gp[2] );
+      if (nmat > 1 && ndof > 1)
+        tk::evaluRiemann( ncomp, esuf[2*f], esuf[2*f+1], nmat, fl, fn, gp,
+                          state, vriem, riemannLoc );
 
-        xcoord[er].push_back( gp[0] );
-        xcoord[er].push_back( gp[1] );
-        xcoord[er].push_back( gp[2] );
-
-        tk::real pbl(0.0), pbr(0.0);
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          pbl += state[0][nmat+k];
-          pbr += state[1][nmat+k];
-        }
-
-        auto ul = state[0][2*nmat] / pbl;
-        auto vl = state[0][2*nmat+1] / pbl;
-        auto wl = state[0][2*nmat+2] / pbl;
-
-        auto ur = state[1][2*nmat] / pbr;
-        auto vr = state[1][2*nmat+1] / pbr;
-        auto wr = state[1][2*nmat+2] / pbr;
-
-        // Compute the normal velocities from left and right cells
-        auto vnl = ul * fn[0] + vl * fn[1] + wl * fn[2];
-        auto vnr = ur * fn[0] + vr * fn[1] + wr * fn[2];
-
-        // The interface velocity is evaluated by adding the vertical velocity
-        // which is the riemann velocity from flux computation and the normal
-        // velocity which is the average of the normal velocities from the left
-        // and right cells
-        auto urie = 0.5 * ((ul + ur) - fn[0] * (vnl + vnr)) + fl[ncomp+nmat] * fn[0];
-        auto vrie = 0.5 * ((vl + vr) - fn[1] * (vnl + vnr)) + fl[ncomp+nmat] * fn[1];
-        auto wrie = 0.5 * ((wl + wr) - fn[2] * (vnl + vnr)) + fl[ncomp+nmat] * fn[2];
-
-        vriem[el].push_back(urie);
-        vriem[el].push_back(vrie);
-        vriem[el].push_back(wrie);
-
-        vriem[er].push_back(urie);
-        vriem[er].push_back(vrie);
-        vriem[er].push_back(wrie);
-      }
     }
   }
 }

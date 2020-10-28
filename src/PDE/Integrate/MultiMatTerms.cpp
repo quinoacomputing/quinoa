@@ -34,10 +34,8 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
                     const Fields& geoElem,
                     const Fields& U,
                     const Fields& P,
-                    const std::vector< std::vector< tk::real > >&
-                      riemannDeriv,
-                    const std::vector< std::vector< tk::real > >&
-                      vriempoly,
+                    const std::vector< std::vector< tk::real > >& riemannDeriv,
+                    const std::vector< std::vector< tk::real > >& vriempoly,
                     const std::vector< std::size_t >& ndofel,
                     Fields& R )
 // *****************************************************************************
@@ -61,7 +59,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 //! \param[in] P Vector of primitive quantities at recent time step
 //! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms
-//! \param[in] vriempoly Vector of velocity polynomial solution
+//! \param[in] vriempoly Vector of Riemann velocity polynomial
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
@@ -158,22 +156,6 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
           dap[idir] += riemannDeriv[3*k+idir][e];
       }
 
-      // compute non-conservative terms
-      std::vector< tk::real > ncf(ncomp, 0.0);
-
-      for (std::size_t idir=0; idir<3; ++idir)
-        ncf[momentumIdx(nmat, idir)] = 0.0;
-
-      for (std::size_t k=0; k<nmat; ++k)
-      {
-        ncf[densityIdx(nmat, k)] = 0.0;
-        ncf[volfracIdx(nmat, k)] = ugp[volfracIdx(nmat, k)]
-                                   * riemannDeriv[3*nmat][e];
-        for (std::size_t idir=0; idir<3; ++idir)
-          ncf[energyIdx(nmat, k)] -= vel[idir] * ( ymat[k]*dap[idir]
-                                                - riemannDeriv[3*k+idir][e] );
-      }
-
       // Evaluate the velocity used for the multi-material term integration for
       // volume fraction equation
       std::vector< tk::real> vriem(3, 0.0);
@@ -189,8 +171,34 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
         }
       }
 
-      update_rhs_ncn( ncomp, offset, nmat, ndof, ndofel[e], wt, e, ugp, B, dBdx,
-                      riemannDeriv, vriem, ncf, R );
+      // compute non-conservative terms
+      std::vector< std::vector< tk::real > > ncf
+        (ncomp, std::vector<tk::real>(ndof,0.0));
+
+      for (std::size_t idir=0; idir<3; ++idir)
+        for(std::size_t idof=0; idof<ndof; ++idof)
+          ncf[momentumIdx(nmat, idir)][idof] = 0.0;
+
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        for(std::size_t idof=0; idof<ndof; ++idof)
+        {
+          ncf[densityIdx(nmat, k)][idof] = 0.0;
+          for (std::size_t idir=0; idir<3; ++idir)
+            ncf[energyIdx(nmat, k)][idof] -= vel[idir] * ( ymat[k]*dap[idir]
+                                                  - riemannDeriv[3*k+idir][e] );
+        }
+
+        ncf[volfracIdx(nmat, k)][0] = ugp[volfracIdx(nmat, k)]
+                                    * riemannDeriv[3*nmat][e];
+        if(ndof > 1)
+         for(std::size_t idof=1; idof<ndof; ++idof)
+            ncf[volfracIdx(nmat, k)][idof] = ugp[volfracIdx(nmat, k)] *
+              (riemannDeriv[3*nmat][e] * B[idof] + vriem[0] * dBdx[0][idof]
+              + vriem[1] * dBdx[1][idof] + vriem[2] * dBdx[2][idof]);
+      }
+
+      update_rhs_ncn( ncomp, offset, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
     }
   }
 }
@@ -201,15 +209,12 @@ update_rhs_ncn(
   ncomp_t offset,
   const std::size_t nmat,
   const std::size_t ndof,
-  const std::size_t ndof_el,
+  [[maybe_unused]] const std::size_t ndof_el,
   const tk::real wt,
   const std::size_t e,
-  const std::vector<tk::real>& ugp,
   const std::vector<tk::real>& B,
-  const std::array< std::vector<tk::real>, 3 >& dBdx,
-  const std::vector< std::vector<tk::real> >& riemannDeriv,
-  const std::vector< tk::real >& vriem,
-  std::vector< tk::real >& ncf,
+  [[maybe_unused]] const std::array< std::vector<tk::real>, 3 >& dBdx,
+  const std::vector< std::vector< tk::real > >& ncf,
   Fields& R )
 // *****************************************************************************
 //  Update the rhs by adding the non-conservative term integrals
@@ -220,12 +225,9 @@ update_rhs_ncn(
 //! \param[in] ndof_el Number of degrees of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] e Element index
-//! \param[in] ugp Conservative variables at local quadrature point
 //! \param[in] B Basis function evaluated at local quadrature point
 //! \param[in] dBdx Vector of basis function derivatives
-//! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
 //! \param[in] ncf Vector of non-conservative terms
-//! \param[in] vriem Velocity used for volume fraction equation
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
@@ -242,33 +244,23 @@ update_rhs_ncn(
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    R(e, mark, offset) += wt * ncf[c];
+    R(e, mark, offset) += wt * ncf[c][0];
   }
 
   if( ndof_el > 1)
   {
-    std::vector< tk::real > ncf_volp1(3*nmat, 0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
-      ncf_volp1[3*k  ] = ugp[inciter::volfracIdx(nmat, k)] * (riemannDeriv[3*nmat][e] * B[1]
-        + vriem[0] * dBdx[0][1] + vriem[1] * dBdx[1][1] + vriem[2] * dBdx[2][1]);
-      ncf_volp1[3*k+1] = ugp[inciter::volfracIdx(nmat, k)] * (riemannDeriv[3*nmat][e] * B[2]
-        + vriem[0] * dBdx[0][2] + vriem[1] * dBdx[1][2] + vriem[2] * dBdx[2][2]);
-      ncf_volp1[3*k+2] = ugp[inciter::volfracIdx(nmat, k)] * (riemannDeriv[3*nmat][e] * B[3]
-        + vriem[0] * dBdx[0][3] + vriem[1] * dBdx[1][3] + vriem[2] * dBdx[2][3]);
-
       auto mark = k*ndof;
-      R(e, mark+1, offset) += wt * ncf_volp1[3*k];
-      R(e, mark+2, offset) += wt * ncf_volp1[3*k+1];
-      R(e, mark+3, offset) += wt * ncf_volp1[3*k+2];
+      for(std::size_t idof = 1; idof < ndof; idof++)
+        R(e, mark+idof, offset) += wt * ncf[k][idof];
     }
 
     for (ncomp_t c=nmat; c<ncomp; ++c)
     {
       auto mark = c*ndof;
-      R(e, mark+1, offset) += wt * ncf[c] * B[1];
-      R(e, mark+2, offset) += wt * ncf[c] * B[2];
-      R(e, mark+3, offset) += wt * ncf[c] * B[3];
+      for(std::size_t idof = 1; idof < ndof; idof++)
+        R(e, mark+idof, offset) += wt * ncf[c][idof] * B[idof];
     }
   }
 }
@@ -399,7 +391,7 @@ pressureRelaxationInt( ncomp_t system,
         s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
       }
 
-      update_rhs_pre( ncomp, offset, ndof, ndofel[e], wt, e, B, s_prelax, R );
+      update_rhs_pre( ncomp, offset, ndof, dof_el, wt, e, B, s_prelax, R );
     }
   }
 }
@@ -409,7 +401,7 @@ update_rhs_pre(
   ncomp_t ncomp,
   ncomp_t offset,
   const std::size_t ndof,
-  const std::size_t ndof_el,
+  [[maybe_unused]] const std::size_t ndof_el,
   const tk::real wt,
   const std::size_t e,
   const std::vector< tk::real >& B,
@@ -441,66 +433,63 @@ update_rhs_pre(
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    R(e, mark, offset) += wt * ncf[c];
-    if( ndof_el > 1)
-    {
-      R(e, mark+1, offset) += wt * ncf[c] * B[1];
-      R(e, mark+2, offset) += wt * ncf[c] * B[2];
-      R(e, mark+3, offset) += wt * ncf[c] * B[3];
-    }
+    for(std::size_t idof = 0; idof < ndof; idof++)
+      R(e, mark+idof, offset) += wt * ncf[c] * B[idof];
   }
 }
 
-void solvevriem( const std::size_t nelem,
+void solvevriem( const std::size_t& nelem,
                  const std::vector< std::vector< tk::real > >& vriem,
-                 const std::vector< std::vector< tk::real > >& xcoord,
+                 const std::vector< std::vector< tk::real > >& riemannLoc,
                  std::vector< std::vector< tk::real > >& vriempoly )
 // *****************************************************************************
 //  Solve the reconstruct velocity used for volume fraction equation by
 //  Least square method
 //! \param[in] nelem Numer of elements
 //! \param[in,out] vriem Vector of the riemann velocity
-//! \param[in,out] xcoord Vector of the coordinates of riemann velocity data
-//! \param[in,out] vriempoly Vector of velocity polynomial solution
+//! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data
+//!   is available
+//! \param[in,out] vriempoly Vector of Riemann velocity polynomial solution
 // *****************************************************************************
 {
   for (std::size_t e=0; e<nelem; ++e)
   {
     // Use the normal method to construct the linear system A^T * A * x = u
-    auto npoin = xcoord[e].size()/3;
-    std::vector< std::vector< tk::real > > A(npoin, std::vector<tk::real>(4, 1.0));
+    auto numgp = riemannLoc[e].size()/3;
+    std::vector< std::vector< tk::real > > A(numgp,
+                                             std::vector<tk::real>(4, 1.0));
 
-    for(std::size_t k = 0; k < npoin; k++)
+    for(std::size_t k = 0; k < numgp; k++)
     {
       auto mark = k * 3;
-      A[k][1] = xcoord[e][mark];
-      A[k][2] = xcoord[e][mark+1];
-      A[k][3] = xcoord[e][mark+2];
+      A[k][1] = riemannLoc[e][mark];
+      A[k][2] = riemannLoc[e][mark+1];
+      A[k][3] = riemannLoc[e][mark+2];
     }
 
-    std::vector< std::vector< tk::real > > B(4, std::vector<tk::real>(4, 1.0));
+    std::vector< std::vector< tk::real > > AA_T(4, std::vector<tk::real>(4, 1.0));
     for(std::size_t i = 0; i < 4; i++)
       for(std::size_t j = 0; j < 4; j++)
-        for(std::size_t k = 0; k < npoin; k++)
-          B[i][j] += A[k][i] * A[k][j];
+        for(std::size_t k = 0; k < numgp; k++)
+          AA_T[i][j] += A[k][i] * A[k][j];
 
     for(std::size_t idir = 0; idir < 3; idir++)
     {
       std::vector<tk::real> x(4, 0.0);
       std::vector<tk::real> u(4, 0.0);
 
-      std::vector<tk::real> vel(npoin, 1.0);
-      for(std::size_t k = 0; k < npoin; k++)
+      std::vector<tk::real> vel(numgp, 1.0);
+      for(std::size_t k = 0; k < numgp; k++)
       {
         auto mark = k * 3 + idir;
         vel[k] = vriem[e][mark];
       }
       for(std::size_t k = 0; k < 4; k++)
-        for(std::size_t i = 0; i < npoin; i++)
+        for(std::size_t i = 0; i < numgp; i++)
           u[k] += A[i][k] * vel[i];
  
       // Solve the 4x4 linear system by LU method
-      LU(4, B, u, x);
+      LU(4, AA_T, u, x);
 
       auto idirmark = idir * 4;
       for(std::size_t k = 0; k < 4; k++)

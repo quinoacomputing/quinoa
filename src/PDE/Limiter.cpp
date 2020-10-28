@@ -856,7 +856,7 @@ void BoundPreservingLimiting( std::size_t nmat,
                               std::size_t e,
                               const std::vector< std::size_t >& inpoel,
                               const tk::UnsMesh::Coords& coord,
-                              tk::Fields& U,
+                              const tk::Fields& U,
                               std::vector< tk::real >& phic )
 // *****************************************************************************
 //  Bound preserving limiter for P1 dofs when MulMat scheme is selected
@@ -937,13 +937,15 @@ void BoundPreservingLimiting( std::size_t nmat,
         auto al = state[volfracIdx(nmat, imat)];
         if(al > 1.0)
         {
-          phi = fabs( (1.0 - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
-                    / (al  - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset)) );
+          phi = std::fabs(
+                  (1.0 - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
+                / (al  - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset)) );
         }
         else if(al < 1e-14)
         {
-          phi = fabs( (1e-14 - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
-                    / (al    - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset)) );
+          phi = std::fabs(
+                    (1e-14 - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
+                  / (al    - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset)) );
         }
 
         phi_bound[imat] = std::min( phi_bound[imat], phi );

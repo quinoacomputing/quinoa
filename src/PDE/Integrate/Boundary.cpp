@@ -41,7 +41,7 @@ tk::bndSurfInt( ncomp_t system,
                 const std::vector< std::size_t >& ndofel,
                 Fields& R,
                 std::vector< std::vector< tk::real > >& vriem,
-                std::vector< std::vector< tk::real > >& xcoord,
+                std::vector< std::vector< tk::real > >& riemannLoc,
                 std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
@@ -68,7 +68,8 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] vriem Vector of the riemann velocity
-//! \param[in,out] xcoord Vector of the coordinates of riemann velocity data
+//! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data
+//!   is available
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms.
 //!   These derivatives are used only for multi-material hydro and unused for
@@ -171,10 +172,10 @@ tk::bndSurfInt( ncomp_t system,
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                   "appended boundary state vector" );
 
+          auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn );
+
           // Compute the numerical flux
-          auto fl = flux( fn,
-                      state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn ),
-                      vel( system, ncomp, gp[0], gp[1], gp[2] ) );
+          auto fl = flux( fn, var, vel( system, ncomp, gp[0], gp[1], gp[2] ) );
 
           // Add the surface integration term to the rhs
           update_rhs_bc( ncomp, nmat, offset, ndof, ndofel[el], wt, fn, el, fl,
@@ -182,45 +183,9 @@ tk::bndSurfInt( ncomp_t system,
 
           // Store the riemann velocity and coordinates data of quadrature point
           // used for velocity reconstruction if MulMat scheme is selected
-          if (fl.size() > ncomp && ndof > 1)
-          {
-            xcoord[el].push_back( gp[0] );
-            xcoord[el].push_back( gp[1] );
-            xcoord[el].push_back( gp[2] );
-
-            auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn );
-
-            tk::real pbl(0.0), pbr(0.0);
-            for (std::size_t k=0; k<nmat; ++k)
-            {
-              pbl += var[0][inciter::densityIdx(nmat, k)];
-              pbr += var[1][inciter::densityIdx(nmat, k)];
-            }
-
-            auto ul = var[0][inciter::momentumIdx(nmat, 0)] / pbl;
-            auto vl = var[0][inciter::momentumIdx(nmat, 1)] / pbl;
-            auto wl = var[0][inciter::momentumIdx(nmat, 2)] / pbl;
-
-            auto ur = var[1][inciter::momentumIdx(nmat, 0)] / pbr;
-            auto vr = var[1][inciter::momentumIdx(nmat, 1)] / pbr;
-            auto wr = var[1][inciter::momentumIdx(nmat, 2)] / pbr;
-
-            // Compute the normal velocities from left and right cells
-            auto vnl = ul * fn[0] + vl * fn[1] + wl * fn[2];
-            auto vnr = ur * fn[0] + vr * fn[1] + wr * fn[2];
-
-            // The interface velocity is evaluated by adding the vertical velocity
-            // which is the riemann velocity from flux computation and the normal
-            // velocity which is the average of the normal velocities from the left
-            // and right cells
-            auto urie = 0.5 * ((ul + ur) - fn[0] * (vnl + vnr)) + fl[ncomp+nmat] * fn[0];
-            auto vrie = 0.5 * ((vl + vr) - fn[1] * (vnl + vnr)) + fl[ncomp+nmat] * fn[1];
-            auto wrie = 0.5 * ((wl + wr) - fn[2] * (vnl + vnr)) + fl[ncomp+nmat] * fn[2];
-
-            vriem[el].push_back(urie);
-            vriem[el].push_back(vrie);
-            vriem[el].push_back(wrie);
-          }
+          if (nmat > 1 && ndof > 1)
+            tk::evaluRiemann( ncomp, esuf[2*f], esuf[2*f+1], nmat, fl, fn, gp,
+                              var, vriem, riemannLoc );
         }
       }
     }
