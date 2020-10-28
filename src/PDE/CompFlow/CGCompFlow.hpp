@@ -1486,12 +1486,6 @@ class CompFlow {
       const auto& icbox = ic.get< tag::box >();
       const auto& initiate = icbox.get< tag::initiate >();
 
-      //const auto& boxrho = icbox.get< tag::density >();
-      //const auto& boxvel = icbox.get< tag::velocity >();
-      //const auto& boxpre = icbox.get< tag::pressure >();
-      //const auto& boxene = icbox.get< tag::energy >();
-      //const auto& boxtem = icbox.get< tag::temperature >();
-      //const auto& boxmas = icbox.get< tag::mass >();
       const auto& boxenc = icbox.get< tag::energy_content >();
 
       Assert( boxenc.size() > m_system && !boxenc[m_system].empty(),
@@ -1502,8 +1496,6 @@ class CompFlow {
                 icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
       auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
         (boxdim[5]-boxdim[4]);
-      //auto rho = boxmas[m_system][0] / V_ex;
-      //auto spi = boxenc[m_system][0] * V_ex / (V * rho);
 
       // determine times at which sourcing is initialized and terminated
       const auto& iv = initiate.get< tag::velocity >()[ m_system ];
@@ -1531,25 +1523,24 @@ class CompFlow {
         // current location of front
         auto z0 = zInit + iv[0]*t;
         auto z1 = z0 + std::copysign(wFront, iv[0]);
-        //std::cout << " ------------------------------ " << std::endl;
-        //std::cout << boxdim[4] << " " << boxdim[5] << " " << iv[0] << std::endl;
-        //std::cout << z0 << " " << z1 << std::endl;
         tk::real s0(z0), s1(z1);
         if (iv[0] < 0.0) {
           s0 = z1;
           s1 = z0;
         }
-        // amplitude of the sine-wave
+        // Sine-wave (positive part of the wave) source term amplitude
         auto pi = 4.0 * std::atan(1.0);
         auto amplE = boxenc[m_system][0] * V_ex * pi
           / (aBox * wFront * 2.0 * (tFinal-tInit));
+        //// Square wave (constant) source term amplitude
+        //auto amplE = boxenc[m_system][0] * V_ex
+        //  / (aBox * wFront * (tFinal-tInit));
         amplE *= V_ex / V;
 
         // add source
         for (auto p : boxnodes) {
           if (z[p] >= s0 && z[p] <= s1) {
             auto S = amplE * std::sin(pi*(z[p]-s0)/wFront);
-            //std::cout << "[ " << s0 << ", " << s1 << " ]: " << z[p] << ") value: " << S << std::endl;
             for (auto e : tk::Around(esup,p)) {
               // access node IDs
               std::size_t N[4] =
