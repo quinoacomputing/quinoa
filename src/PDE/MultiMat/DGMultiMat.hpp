@@ -145,7 +145,7 @@ class MultiMat {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
-      Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) == 1, "High-order "
+      Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) <= 4, "High-order "
               "discretizations not set up for multimat updatePrimitives()" );
 
       for (std::size_t e=0; e<nielem; ++e)
@@ -200,7 +200,7 @@ class MultiMat {
           pri[nmat+1] = vel[1];
           pri[nmat+2] = vel[2];
 
-          for(int k = 0; k < nmat+3; k++)
+          for(std::size_t k = 0; k < nmat+3; k++)
           {
             auto mark = k * ndof;
             R[mark] += w * pri[k];
@@ -212,7 +212,7 @@ class MultiMat {
           }
         }
 
-        for(int k = 0; k < nmat+3; k++)
+        for(std::size_t k = 0; k < nmat+3; k++)
         {
           auto mark = k * ndof;
           auto rmark = k * rdof;
