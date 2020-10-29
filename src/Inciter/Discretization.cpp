@@ -147,6 +147,30 @@ Discretization::Discretization(
     CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
 }
 
+std::vector< std::size_t >
+Discretization::bndel() const
+// *****************************************************************************
+// Find elements along our mesh chunk boundary
+//! \return List of local element ids that have at least a single node
+//!   contributing to a chare boundary
+// *****************************************************************************
+{
+  // Lambda to find out if a mesh node is shared with another chare
+  auto shared = [this]( std::size_t i ){
+    for (const auto& [c,n] : m_nodeCommMap)
+      if (n.find(i) != end(n)) return true;
+    return false;
+  };
+
+  // Find elements along our mesh chunk boundary
+  std::vector< std::size_t > e;
+  for (std::size_t n=0; n<m_inpoel.size(); ++n)
+    if (shared( m_gid[ m_inpoel[n] ] )) e.push_back( n/4 );
+  tk::unique( e );
+
+  return e;
+}
+
 void
 Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
                                const tk::UnsMesh::Coords& coord,

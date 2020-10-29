@@ -458,12 +458,12 @@ class CompFlow {
     //!   at chare-boundary nodes. Internal node gradients are calculated as
     //!   required, and do not need to be stored.
     void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
-      const std::vector< std::size_t >& inpoel,
-      const std::vector< std::size_t >& bndel,
-      const std::vector< std::size_t >& gid,
-      const std::unordered_map< std::size_t, std::size_t >& bid,
-      const tk::Fields& U,
-      tk::Fields& G ) const
+                    const std::vector< std::size_t >& inpoel,
+                    const std::vector< std::size_t >& bndel,
+                    const std::vector< std::size_t >& gid,
+                    const std::unordered_map< std::size_t, std::size_t >& bid,
+                    const tk::Fields& U,
+                    tk::Fields& G ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
@@ -869,11 +869,12 @@ class CompFlow {
     fieldOutput( tk::real t,
                  tk::real V,
                  std::size_t nunk,
+                 std::size_t,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< tk::real >& v,
                  tk::Fields& U ) const
     {
-      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, t,
+      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, 1, t,
                                     V, v, coord, U );
     }
 

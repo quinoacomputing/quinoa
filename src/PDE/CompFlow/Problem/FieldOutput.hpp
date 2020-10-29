@@ -24,24 +24,25 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! Return field names to be output to file
 std::vector< std::string > CompFlowFieldNames();
 
-//! Return surface field names to be output to file
-std::vector< std::string > CompFlowSurfNames();
-
-//! Return time history field names to be output to file
-std::vector< std::string > CompFlowHistNames();
-
 //! Return field output going to file
 std::vector< std::vector< tk::real > > 
 CompFlowFieldOutput( ncomp_t system,
                      ncomp_t offset,
                      std::size_t nunk,
-                     tk::Fields& U );
+                     std::size_t rdof,
+                     const tk::Fields& U );
+
+//! Return surface field names to be output to file
+std::vector< std::string > CompFlowSurfNames();
 
 //! Return surface field output going to file
 std::vector< std::vector< tk::real > >
 CompFlowSurfOutput( ncomp_t system,
                     const std::map< int, std::vector< std::size_t > >& bnd,
                     tk::Fields& U );
+
+//! Return time history field names to be output to file
+std::vector< std::string > CompFlowHistNames();
 
 //! Return time history field output evaluated at time history points
 std::vector< std::vector< tk::real > >

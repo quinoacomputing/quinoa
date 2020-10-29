@@ -35,6 +35,7 @@
 #include "Riemann/Upwind.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
+#include "FieldOutputUtil.hpp"
 
 namespace inciter {
 
@@ -322,7 +323,7 @@ class Transport {
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > nodalFieldNames() const
-    { return {}; }
+    { return fieldNames(); }
 
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
@@ -335,7 +336,9 @@ class Transport {
 
     //! Return field output going to file
     //! \param[in] t Physical time
-    //! \param[in] geoElem Element geometry array
+    //! \param[in] nunk Number of unknowns to extract
+    //! \param[in] vol Volumes associated to elements (or nodes)
+    //! \param[in] coord Coordinates at which to evaluate the solution
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     //! \details This functions should be written in conjunction with names(),
@@ -344,56 +347,51 @@ class Transport {
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  tk::real,
-                 std::size_t,
-                 std::size_t,
-                 const tk::Fields& geoElem,
-                 tk::Fields& U,
-                 const tk::Fields& ) const
+                 std::size_t nunk,
+                 std::size_t rdof,
+                 const std::vector< tk::real >& vol,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const tk::Fields& U,
+                 [[maybe_unused]] const tk::Fields& = tk::Fields() ) const
     {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
+      Assert( U.nunk() >= nunk, "Size mismatch" );
       std::vector< std::vector< tk::real > > out;
+
       // will output numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c*rdof, m_offset ) );
+
+      // mesh node coordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
       // evaluate analytic solution at time t
       auto E = U;
-      for (std::size_t e=0; e<U.nunk(); ++e)
+      for (std::size_t i=0; i<nunk; ++i)
       {
         int inbox = 0;
-        auto s = Problem::solution( m_system, m_ncomp, geoElem(e,1,0),
-                                    geoElem(e,2,0), geoElem(e,3,0), t, inbox );
+        auto s =
+          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t, inbox );
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          E( e, c*rdof, m_offset ) = s[c];
+          E( i, c*rdof, m_offset ) = s[c];
       }
+
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( E.extract( c*rdof, m_offset ) );
+
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) {
         auto mark = c*rdof;
         auto u = U.extract( mark, m_offset );
         auto e = E.extract( mark, m_offset );
-        for (std::size_t i=0; i<u.size(); ++i)
-          e[i] = std::pow( e[i] - u[i], 2.0 ) * geoElem(i,0,0);
+        for (std::size_t i=0; i<nunk; ++i)
+          e[i] = std::pow( e[i] - u[i], 2.0 ) * vol[i];
         out.push_back( e );
       }
-      return out;
-    }
 
-    //! Nodal field output setup will go here
-    std::vector< std::vector< tk::real > >
-    nodalFieldOutput( tk::real,
-      tk::real,
-      std::size_t,
-      const std::map< std::size_t, std::vector< std::size_t > >&,
-      const tk::Fields&,
-      tk::Fields&,
-      tk::Fields&,
-      tk::Fields&,
-      const tk::Fields& ) const
-    {
-      return {};
+      return out;
     }
 
     //! Return names of integral variables to be output to diagnostics file
@@ -419,6 +417,37 @@ class Transport {
     {
       int inbox = 0;
       return Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
+    }
+
+    //! Compute nodal field output
+    //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume
+    //! \param[in] coord Node coordinates
+    //! \param[in] inpoel Mesh connectivity
+    //! \param[in] esup Elements surrounding points
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] U Solution vector at recent time step
+    //! \return Vector of vectors to be output to file
+    std::vector< std::vector< tk::real > >
+    nodeFieldOutput( tk::real t,
+                     tk::real V,
+                     const tk::UnsMesh::Coords& coord,
+                     const std::vector< std::size_t >& inpoel,
+                     const std::pair< std::vector< std::size_t >,
+                                      std::vector< std::size_t > >& esup,
+                     const tk::Fields& geoElem,
+                     const tk::Fields& U,
+                     const tk::Fields& ) const
+    {
+      // Evaluate solution in nodes
+      auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      auto [Un,Pn] =
+        tk::nodeEval( m_offset, ndof, rdof, coord, inpoel, esup, U );
+      // Extract nodal fields
+      auto f = fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
+                            coord, Un );
+      return f;
     }
 
   private:

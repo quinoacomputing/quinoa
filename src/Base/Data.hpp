@@ -593,7 +593,7 @@ class Data {
     }
 
     void resize( std::size_t, tk::real, int2type< EqCompUnk > ) {
-      Throw( "Not implented. It would be inefficient" );
+      Throw( "Not implemented. It would be inefficient" );
     }
 
     // Overloads for the name-queries of data lauouts

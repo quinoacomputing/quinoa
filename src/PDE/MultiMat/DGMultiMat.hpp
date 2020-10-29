@@ -12,8 +12,8 @@
     discretizations.
 */
 // *****************************************************************************
-#ifndef MultiMatDG_h
-#define MultiMatDG_h
+#ifndef DGMultiMat_h
+#define DGMultiMat_h
 
 #include <cmath>
 #include <algorithm>
@@ -41,6 +41,7 @@
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "Problem/FieldOutput.hpp"
+#include "FieldOutputUtil.hpp"
 
 namespace inciter {
 
@@ -799,60 +800,58 @@ class MultiMat {
     }
 
     //! Return field output going to file
-    //! \param[in] rdof Total number of degrees of freedom
     //! \param[in] nunk Number of unknowns
-    //! \param[in] geoElem Element geometry array
+    //! \param[in] vol Volumes associated to elements (or nodes)
+    //! \param[in] coord Coordinates at which to evaluate the solution
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real,
                  tk::real,
-                 std::size_t rdof,
                  std::size_t nunk,
-                 const tk::Fields& geoElem,
-                 tk::Fields& U,
+                 std::size_t rdof,
+                 const std::vector< tk::real >& vol,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const tk::Fields& U,
                  const tk::Fields& P ) const
     {
       // number of materials
-      auto nmat =
-        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-
-      return MultiMatFieldOutput(m_system, nmat, m_offset, nunk, rdof, geoElem,
-        U, P);
+      auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
+      return MultiMatFieldOutput( m_system, nmat, m_offset, nunk, rdof, vol,
+                                  coord, U, P );
     }
 
-    //! Return nodal field output going to file
-    //! \param[in] npoin Number of nodes
+    //! Compute nodal field output
+    //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume
+    //! \param[in] coord Node coordinates
+    //! \param[in] inpoel Mesh connectivity
     //! \param[in] esup Elements surrounding points
     //! \param[in] geoElem Element geometry array
-    //! \param[in,out] Unode Nodal solution vector
-    //! \param[in,out] Pnode Nodal vector of primitive quantities
-    //! \param[in,out] U Nodal solution vector at recent time step
-    //! \param[in] P Nodal vector of primitive quantities at recent time step
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Primitive variable vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
-    nodalFieldOutput( tk::real,
-                 tk::real,
-                 std::size_t npoin,
-                 const std::map< std::size_t, std::vector< std::size_t > >&
-                   esup,
-                 const tk::Fields& geoElem,
-                 tk::Fields& Unode,
-                 tk::Fields& Pnode,
-                 tk::Fields& U,
-                 const tk::Fields& P ) const
+    nodeFieldOutput( tk::real t,
+                     tk::real V,
+                     const tk::UnsMesh::Coords& coord,
+                     const std::vector< std::size_t >& inpoel,
+                     const std::pair< std::vector< std::size_t >,
+                                      std::vector< std::size_t > >& esup,
+                     const tk::Fields& geoElem,
+                     const tk::Fields& U,
+                     const tk::Fields& P ) const
     {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      // number of materials
-      const auto nmat =
-        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-
-      tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
-        Pnode);
-
-      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, 1, geoElem,
-        Unode, Pnode);
+      // Evaluate solution in nodes
+      auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      auto [Un,Pn] =
+        tk::nodeEval( m_offset, ndof, rdof, coord, inpoel, esup, U, P );
+      // Extract nodal fields
+      auto f = fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
+                            coord, Un, Pn );
+      return f;
     }
 
     //! Return surface field output going to file
@@ -1207,4 +1206,4 @@ class MultiMat {
 
 } // inciter::
 
-#endif // MultiMatDG_h
+#endif // DGMultiMat_h
