@@ -238,20 +238,22 @@ class CompFlow {
           const auto ke = 0.5*(u*u + v*v + w*w);
 
           const auto& bgpreic = ic.get< tag::pressure >();
-          //const auto& bgtempic = ic.get< tag::temperature >();
 
-          Assert( bgpreic.size() > m_system, "No background pressure IC" );
-
+          // The linear-propagating source initialization can be done only based
+          // on background pressure (not on temperature): The IC box can have a
+          // different density than the background, while having the same
+          // pressure and temperature as the background. This means, the
+          // material in the box has a different specific heat (Cv) than the
+          // background material. If such a box has to be initialized based
+          // on temperature, the Cv of the box will have to be specified
+          // separately. This is not currently supported.
           if (bgpreic.size() > m_system && !bgpreic[m_system].empty()) {
             // energy based on box density and background pressure
             spi = eos_totalenergy< eq >( m_system, rho, u, v, w,
                                           bgpreic[m_system][0] )/rho;
           }
-          //else if (bgtempic.size() > m_system && !bgtempic[m_system].empty()) {
-          //  // energy based on box density and background temperature
-          //  const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
-          //  spi = bgtempic[m_system][0] * cv[m_system][0];
-          //}
+          else Throw("Background pressure must be specified for box-IC with "
+                     "linear propagating source");
 
           unk(i,0,m_offset) = rho;
           unk(i,1,m_offset) = rho * u;
@@ -1512,11 +1514,16 @@ class CompFlow {
 
       if (t >= tInit && t <= tFinal) {
 
-        // the energy front is assumed to have a half-sine-wave shape. The half
+        // The energy front is assumed to have a half-sine-wave shape. The half
         // wave-length is the width of the front. At t=0, the center of this
         // front (i.e. the peak of the partial-sine-wave) is at X_0 + W_0.
         // W_0 is calculated based on the width of the front and the direction
         // of propagation (which is assumed to be along the z-direction).
+        // If the front propagation velocity is positive, it is assumed that the
+        // initial position of the energy source is the minimum z-coordinate of
+        // the box; whereas if this velocity is negative, the initial position
+        // is the maximum z-coordinate of the box.
+
         // initial center of front
         tk::real zInit(boxdim[4]);
         if (iv[0] < 0.0) zInit = boxdim[5];
@@ -1524,6 +1531,7 @@ class CompFlow {
         auto z0 = zInit + iv[0]*t;
         auto z1 = z0 + std::copysign(wFront, iv[0]);
         tk::real s0(z0), s1(z1);
+        // if velocity of propagation is negative, initial position is z1
         if (iv[0] < 0.0) {
           s0 = z1;
           s1 = z0;
