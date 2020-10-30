@@ -151,7 +151,9 @@ class DG : public CBase_DG {
 
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
-    void comnodeout();
+    void comnodeout( const std::vector< std::size_t >& gid,
+                     const std::vector< std::size_t >& nesup,
+                     const std::vector< std::vector< tk::real > >& L );
 
     //! Optionally refine/derefine mesh
     void refine( const std::vector< tk::real >& l2res );
@@ -365,16 +367,32 @@ class DG : public CBase_DG {
     std::vector< std::vector< tk::real > > m_elemfields;
     //! Node output fields
     std::vector< std::vector< tk::real > > m_nodefields;
-    //! Receive buffer for communication of the nodal output fields
-    //! \details Key: chare id, value: nodal output fields per node
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_nodefieldsc;
+    //! Receive buffer for communication of node output fields
+    //! \details Key: global node id, value: output fields and number of
+    //!   elements surrounding the node
+    std::unordered_map< std::size_t, std::pair< std::vector< tk::real >,
+                                                std::size_t > > m_nodefieldsc;
     //! Storage for refined mesh used for field output
     struct {
       tk::UnsMesh::Chunk chunk;
       tk::UnsMesh::Coords coord;
       std::vector< std::size_t > triinpoel;
       std::map< int, std::vector< std::size_t > > bface;
-      void pup( PUP::er& p ) { p|chunk; p|coord; p|triinpoel; p|bface; }
+      tk::NodeCommMap nodeCommMap;
+      void pup( PUP::er& p ) {
+        p|chunk; p|coord; p|triinpoel; p|bface; p|nodeCommMap;
+      }
+      void destroy() {
+        tk::destroy( std::get<0>(chunk) );
+        tk::destroy( std::get<1>(chunk) );
+        tk::destroy( std::get<2>(chunk) );
+        tk::destroy( coord[0] );
+        tk::destroy( coord[1] );
+        tk::destroy( coord[2] );
+        tk::destroy( triinpoel );
+        tk::destroy( bface );
+        tk::destroy( nodeCommMap );
+      }
     } m_outmesh;
 
     //! Access bound Discretization class pointer

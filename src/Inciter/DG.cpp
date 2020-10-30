@@ -97,6 +97,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_initial( 1 ),
   m_expChBndFace(),
   m_infaces(),
+  m_esup(),
   m_esupc(),
   m_elemfields(),
   m_nodefields(),
@@ -938,8 +939,8 @@ DG::faceAdj()
     for (auto e : tk::Around(esup, p))
     {
       // since inpoel has been augmented with the face-ghost cell previously,
-      // genEsup() also contains cells which are not on this mesh-chunk. Hence
-      // the following test.
+      // esup also contains cells which are not on this mesh-chunk, hence the
+      // following test
       if (e < m_fd.Esuel().size()/4) m_esup[p].push_back(e);
     }
   }
@@ -1061,6 +1062,7 @@ DG::adj()
 //    for problem setup.
 // *****************************************************************************
 {
+  // combine own and communicated contributions to elements surrounding points
   for (auto& [p, elist] : m_esupc)
   {
     auto& pesup = tk::ref_find(m_esup, p);
@@ -1211,6 +1213,9 @@ DG::start()
 //  Start time stepping
 // *****************************************************************************
 {
+  // Free memory storing output mesh
+  m_outmesh.destroy();
+
   // Start timer measuring time stepping wall clock time
   Disc()->Timer().zero();
   // Zero grind-timer
@@ -1354,7 +1359,7 @@ DG::extractFieldOutput(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
   const std::unordered_map< std::size_t, std::size_t >& addedTets,
-  const tk::NodeCommMap& /*nodeCommMap*/,
+  const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
   const std::vector< std::size_t >& triinpoel,
@@ -1375,6 +1380,7 @@ DG::extractFieldOutput(
   m_outmesh.coord = coord;
   m_outmesh.triinpoel = triinpoel;
   m_outmesh.bface = bface;
+  m_outmesh.nodeCommMap = nodeCommMap;
 
   auto d = Disc();
   const auto& inpoel = std::get< 0 >( chunk );
@@ -1405,7 +1411,7 @@ DG::extractFieldOutput(
 
   // Collect node field solutions
   tk::destroy(m_nodefields);
-  //auto esup = tk::genEsup( inpoel, 4 );
+  auto esup = tk::genEsup( inpoel, 4 );
   //for (const auto& eq : g_dgpde) {
   //  auto no = eq.nodeFieldOutput( d->T(), d->meshvol(), coord,
   //                               inpoel, esup, geoElem, u, p );
@@ -1413,11 +1419,28 @@ DG::extractFieldOutput(
   //}
 
   // Send node fields contributions to neighbor chares
-  if (d->NodeCommMap().empty())
+  if (nodeCommMap.empty())
     comnodeout_complete();
   else {
-    for(const auto& [cid, nodes] : d->NodeCommMap()) {
-      thisProxy[ cid ].comnodeout();
+    const auto& lid = std::get< 2 >( chunk );
+    for(const auto& [ch,nodes] : nodeCommMap) {
+      // Pack node field data in chare boundary nodes
+      std::vector< std::vector< tk::real > >
+        l( m_nodefields.size(), std::vector< tk::real >( nodes.size() ) );
+      for (std::size_t f=0; f<m_nodefields.size(); ++f) {
+        std::size_t j = 0;
+        for (auto g : nodes)
+          l[f][j++] = m_nodefields[f][ tk::cref_find(lid,g) ];
+      }
+      // Pack (partial) number of elements surrounding chare boundary nodes
+      std::vector< std::size_t > nesup( nodes.size() );
+      std::size_t j = 0;
+      for (auto g : nodes) {
+        auto i = tk::cref_find( lid, g );
+        nesup[j++] = esup.second[i+1] - esup.second[i];
+      }
+      thisProxy[ch].comnodeout(
+        std::vector<std::size_t>(begin(nodes),end(nodes)), nesup, l );
     }
   }
 
@@ -2172,8 +2195,42 @@ DG::writeFields( CkCallback c )
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  // Combine nodal field data on chare boundaries
-  // ...
+  auto d = Disc();
+
+  const auto& inpoel = std::get< 0 >( m_outmesh.chunk );
+  auto esup = tk::genEsup( inpoel, 4 );
+
+  // Combine own and communicated contributions and finish averaging of node
+  // field output in chare boundary nodes
+  const auto& lid = std::get< 2 >( m_outmesh.chunk );
+  for (const auto& [g,f] : m_nodefieldsc) {
+    Assert( m_nodefields.size() == f.first.size(), "Size mismatch" );
+    auto p = tk::cref_find( lid, g );
+    for (std::size_t i=0; i<f.first.size(); ++i) {
+      m_nodefields[i][p] += f.first[i];
+      m_nodefields[i][p] /= esup.second[p+1] - esup.second[p] + f.second;
+    }
+  }
+  tk::destroy( m_nodefieldsc );
+
+  // Lambda to decide if a node (global id) is on a chare boundary of the field
+  // output mesh. p - global node id, return true if node is on the chare
+  // boundary.
+  auto chbnd = [ this ]( std::size_t p ) {
+    return
+      std::any_of( m_outmesh.nodeCommMap.cbegin(), m_outmesh.nodeCommMap.cend(),
+        [&](const auto& s) { return s.second.find(p) != s.second.cend(); } );
+  };
+
+  // Finish computing node field output averages in internal nodes
+  auto npoin = m_outmesh.coord[0].size();
+  auto& gid = std::get< 1 >( m_outmesh.chunk );
+  for (std::size_t p=0; p<npoin; ++p) {
+    if (!chbnd(gid[p])) {
+      auto n = esup.second[p+1] - esup.second[p];
+      for (auto& f : m_nodefields) f[p] /= n;
+    }
+  }
 
   // Query fields names from all PDEs integrated
   std::vector< std::string > elemfieldnames, nodefieldnames;
@@ -2188,22 +2245,37 @@ DG::writeFields( CkCallback c )
     elemfieldnames.push_back( "NDOF" );
 
   // Output chare mesh and fields metadata to file
-  const auto& inpoel = std::get< 0 >( m_outmesh.chunk );
-  const auto& lid = std::get< 2 >( m_outmesh.chunk );
   const auto& triinpoel = m_outmesh.triinpoel;
-  Disc()->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
-                 tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-                 {}, m_elemfields, m_nodefields, {}, c );
+  d->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
+            tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
+            {}, m_elemfields, m_nodefields, {}, c );
 }
 
 void
-DG::comnodeout()
+DG::comnodeout( const std::vector< std::size_t >& gid,
+                const std::vector< std::size_t >& nesup,
+                const std::vector< std::vector< tk::real > >& L )
 // *****************************************************************************
 //  Receive chare-boundary nodal solution (for field output) contributions from
 //  neighboring chares
+//! \param[in] gid Global mesh node IDs at which we receive contributions
+//! \param[in] nesup Number of elements surrounding points
+//! \param[in] L Partial contributions of node fields to chare-boundary nodes
 // *****************************************************************************
 {
-  if (++m_nnod == Disc()->NodeCommMap().size()) {
+  Assert( gid.size() == nesup.size(), "Size mismatch" );
+  for (std::size_t f=0; f<L.size(); ++f)
+    Assert( gid.size() == L[f].size(), "Size mismatch" );
+
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto& nf = m_nodefieldsc[ gid[i] ];
+    nf.first.resize( L.size() );
+    for (std::size_t f=0; f<L.size(); ++f) nf.first[f] += L[f][i];
+    nf.second += nesup[i];
+  }
+
+  // When we have heard from all chares we communicate with, this chare is done
+  if (++m_nnod == m_outmesh.nodeCommMap.size()) {
     m_nnod = 0;
     comnodeout_complete();
   }
@@ -2284,6 +2356,9 @@ DG::step()
 // Evaluate wether to continue with next time step
 // *****************************************************************************
 {
+  // Free memory storing output mesh
+  m_outmesh.destroy();
+
   auto d = Disc();
 
   // Output one-liner status report to screen
