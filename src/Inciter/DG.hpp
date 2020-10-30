@@ -211,6 +211,8 @@ class DG : public CBase_DG {
       p | m_nlim;
       p | m_nnod;
       p | m_nreco;
+      p | m_inpoel;
+      p | m_coord;
       p | m_fd;
       p | m_u;
       p | m_un;
@@ -285,6 +287,10 @@ class DG : public CBase_DG {
     std::size_t m_nnod;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
+    //! Mesh connectivity extended
+    std::vector< std::size_t > m_inpoel;
+    //! Node coordinates extended
+    tk::UnsMesh::Coords m_coord;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
