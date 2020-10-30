@@ -315,6 +315,9 @@ class Discretization : public CBase_Discretization {
       return nodes;
     }
 
+    //! Find elements along our mesh chunk boundary
+    std::vector< std::size_t > bndel() const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

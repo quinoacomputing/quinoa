@@ -221,26 +221,27 @@ class DGPDE {
     std::vector< std::vector< tk::real > > fieldOutput(
       tk::real t,
       tk::real V,
+      std::size_t nunk,
       std::size_t rdof,
-      std::size_t nunk,
-      const tk::Fields& geoElem,
-      tk::Fields& U,
+      const std::vector< tk::real >& vol,
+      const std::array< std::vector< tk::real >, 3 >& coord,
+      const tk::Fields& U,
       const tk::Fields& P ) const
-    { return self->fieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
+    { return self->fieldOutput( t, V, nunk, rdof, vol, coord, U, P ); }
 
-    //! Public interface to returning nodal field output
-    std::vector< std::vector< tk::real > > nodalFieldOutput(
-      tk::real t,
-      tk::real V,
-      std::size_t nunk,
-      const std::map< std::size_t, std::vector< std::size_t > >& esup,
-      const tk::Fields& geoElem,
-      tk::Fields& Unode,
-      tk::Fields& Pnode,
-      tk::Fields& U,
-      const tk::Fields& P ) const
-    { return self->nodalFieldOutput( t, V, nunk, esup, geoElem, Unode,
-      Pnode, U, P ); }
+    //! Public interface to returning chare-boundary nodal field output
+    std::vector< std::vector< tk::real > >
+    nodeFieldOutput( tk::real t,
+                     tk::real V,
+                     const tk::UnsMesh::Coords& coord,
+                     const std::vector< std::size_t >& inpoel,
+                     const std::pair< std::vector< std::size_t >,
+                                      std::vector< std::size_t > >& esup,
+                     const tk::Fields& geoElem,
+                     const tk::Fields& U,
+                     const tk::Fields& P ) const
+    { return self->nodeFieldOutput( t, V, coord, inpoel, esup, geoElem,
+                                    U, P ); }
 
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
@@ -334,19 +335,20 @@ class DGPDE {
         tk::real,
         std::size_t,
         std::size_t,
+        const std::vector< tk::real >& vol,
+        const std::array< std::vector< tk::real >, 3 >& coord,
         const tk::Fields&,
-        tk::Fields&,
         const tk::Fields& ) const = 0;
-      virtual std::vector< std::vector< tk::real > > nodalFieldOutput(
-        tk::real,
-        tk::real,
-        std::size_t,
-        const std::map< std::size_t, std::vector< std::size_t > >&,
-        const tk::Fields&,
-        tk::Fields&,
-        tk::Fields&,
-        tk::Fields&,
-        const tk::Fields& ) const = 0;
+      virtual std::vector< std::vector< tk::real > >
+        nodeFieldOutput( tk::real,
+                         tk::real,
+                         const tk::UnsMesh::Coords&,
+                         const std::vector< std::size_t >&,
+                         const std::pair< std::vector< std::size_t >,
+                                          std::vector< std::size_t > >&,
+                         const tk::Fields&,
+                         const tk::Fields&,
+                         const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
         tk::Fields& ) const = 0;
@@ -439,24 +441,25 @@ class DGPDE {
       std::vector< std::vector< tk::real > > fieldOutput(
         tk::real t,
         tk::real V,
+        std::size_t nunk,
         std::size_t rdof,
-        std::size_t nunk,
-        const tk::Fields& geoElem,
-        tk::Fields& U,
+        const std::vector< tk::real >& vol,
+        const std::array< std::vector< tk::real >, 3 >& coord,
+        const tk::Fields& U,
         const tk::Fields& P ) const override
-      { return data.fieldOutput( t, V, rdof, nunk, geoElem, U, P ); }
-      std::vector< std::vector< tk::real > > nodalFieldOutput(
-        tk::real t,
-        tk::real V,
-        std::size_t nunk,
-        const std::map< std::size_t, std::vector< std::size_t > >& esup,
-        const tk::Fields& geoElem,
-        tk::Fields& Unode,
-        tk::Fields& Pnode,
-        tk::Fields& U,
-        const tk::Fields& P ) const override
-      { return data.nodalFieldOutput( t, V, nunk, esup, geoElem, Unode,
-        Pnode, U, P ); }
+      { return data.fieldOutput( t, V, nunk, rdof, vol, coord, U, P ); }
+      std::vector< std::vector< tk::real > >
+      nodeFieldOutput( tk::real t,
+                       tk::real V,
+                       const tk::UnsMesh::Coords& coord,
+                       const std::vector< std::size_t >& inpoel,
+                       const std::pair< std::vector< std::size_t >,
+                                        std::vector< std::size_t > >& esup,
+                       const tk::Fields& geoElem,
+                       const tk::Fields& U,
+                       const tk::Fields& P ) const override
+      { return data.nodeFieldOutput( t, V, coord, inpoel, esup, geoElem,
+                                     U, P ); }
       std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
         tk::Fields& U ) const override

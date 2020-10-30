@@ -98,11 +98,12 @@ CompFlowProblemSedovBlastwave::fieldOutput(
   ncomp_t,
   ncomp_t offset,
   std::size_t nunk,
+  std::size_t rdof,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,
   const std::array< std::vector< tk::real >, 3 >&,
-  tk::Fields& U ) const
+  const tk::Fields& U ) const
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
@@ -110,11 +111,14 @@ CompFlowProblemSedovBlastwave::fieldOutput(
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
 //! \param[in] nunk Number of unknowns to extract
+//! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
+//!   the number of scalar components to shift when extracting scalar
+//!   components.
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  return CompFlowFieldOutput( system, offset, nunk, U );
+  return CompFlowFieldOutput( system, offset, nunk, rdof, U );
 }
 
 std::vector< std::string >

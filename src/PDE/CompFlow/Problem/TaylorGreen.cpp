@@ -89,11 +89,12 @@ CompFlowProblemTaylorGreen::fieldOutput(
   ncomp_t,
   ncomp_t offset,
   std::size_t nunk,
+  std::size_t rdof,
   tk::real,
   tk::real V,
   const std::vector< tk::real >& vol,
   const std::array< std::vector< tk::real >, 3 >& coord,
-  tk::Fields& U ) const
+  const tk::Fields& U ) const
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
@@ -101,6 +102,9 @@ CompFlowProblemTaylorGreen::fieldOutput(
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
 //! \param[in] nunk Number of unknowns to extract
+//! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
+//!   the number of scalar components to shift when extracting scalar
+//!   components.
 //! \param[in] V Total mesh volume (across the whole problem)
 //! \param[in] vol Nodal mesh volumes
 //! \param[in] coord Mesh point coordinates
@@ -108,11 +112,7 @@ CompFlowProblemTaylorGreen::fieldOutput(
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  // number of degree of freedom
-  const std::size_t rdof =
-    g_inputdeck.get< tag::discr, tag::rdof >();
-
-  auto out = CompFlowFieldOutput( system, offset, nunk, U );
+  auto out = CompFlowFieldOutput( system, offset, nunk, rdof, U );
 
   const auto r  = U.extract( 0*rdof, offset );
   const auto ru = U.extract( 1*rdof, offset );

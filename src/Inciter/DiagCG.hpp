@@ -149,8 +149,8 @@ class DiagCG : public CBase_DiagCG {
       const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& /* triinpoel */ );
 
-    //! Receive new field output mesh from Refiner
-    void writePostAMR(
+    //! Extract field output to file
+    void extractFieldOutput(
       const std::vector< std::size_t >& /* ginpoel */,
       const tk::UnsMesh::Chunk& /*chunk*/,
       const tk::UnsMesh::Coords& /*coord*/,
@@ -185,7 +185,6 @@ class DiagCG : public CBase_DiagCG {
     void pup( PUP::er &p ) override {
       p | m_disc;
       p | m_initial;
-      p | m_nsol;
       p | m_nlhs;
       p | m_nrhs;
       p | m_nnorm;
@@ -227,8 +226,6 @@ class DiagCG : public CBase_DiagCG {
     CProxy_Discretization m_disc;
     //! 1 if starting time stepping, 0 if during time stepping
     int m_initial;
-    //! Counter for high order solution vector nodes updated
-    std::size_t m_nsol;
     //! Counter for left-hand side matrix (vector) nodes updated
     std::size_t m_nlhs;
     //! Counter for right-hand side vector nodes updated

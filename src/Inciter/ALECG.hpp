@@ -152,8 +152,8 @@ class ALECG : public CBase_ALECG {
       const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& triinpoel );
 
-    //! Receive new field output mesh from Refiner
-    void writePostAMR(
+    //! Extract field output to file
+    void extractFieldOutput(
       const std::vector< std::size_t >& /* ginpoel */,
       const tk::UnsMesh::Chunk& /*chunk*/,
       const tk::UnsMesh::Coords& /*coord*/,
@@ -348,9 +348,6 @@ class ALECG : public CBase_ALECG {
              const std::unordered_map< tk::UnsMesh::Edge,
                      std::vector< std::size_t >,
                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
-
-    //! Find elements along our mesh chunk boundary
-    std::vector< std::size_t > bndel() const;
 
     //! Compute chare-boundary edges
     void bndEdges();

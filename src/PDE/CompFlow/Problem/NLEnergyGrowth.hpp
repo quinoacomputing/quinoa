@@ -125,11 +125,12 @@ class CompFlowProblemNLEnergyGrowth {
                  ncomp_t ncomp,
                  ncomp_t offset,
                  std::size_t nunk,
+                 std::size_t rdof,
                  tk::real t,
                  tk::real V,
                  const std::vector< tk::real >& vol,
                  const std::array< std::vector< tk::real >, 3 >& coord,
-                 tk::Fields& U ) const;
+                 const tk::Fields& U ) const;
 
     //! Return names of integral variables to be output to diagnostics file
     std::vector< std::string > names( ncomp_t ) const;

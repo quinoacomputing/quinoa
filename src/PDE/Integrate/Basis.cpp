@@ -334,7 +334,7 @@ tk::eval_state ( ncomp_t ncomp,
   if (U.empty()) return {};
 
   // Array of state variable for tetrahedron element
-  std::vector< tk::real > state( ncomp );
+  std::vector< tk::real > state( ncomp, 0.0 );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {

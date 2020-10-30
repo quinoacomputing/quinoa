@@ -40,6 +40,7 @@
 #include "EoS/EoS.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
+#include "FieldOutputUtil.hpp"
 
 namespace inciter {
 
@@ -551,44 +552,29 @@ class CompFlow {
     //! Return field names to be output to file
     //! \return Vector of strings labelling fields output in file
     std::vector< std::string > nodalFieldNames() const
-    { return {}; }
+    { return fieldNames(); }
 
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
     //! \param[in] nunk Number of unknowns to extract
-    //! \param[in] geoElem Element geometry array
+    //! \param[in] rdof Number of reconstructed degrees of freedom. This used as
+    //!   the number of scalar components to shift when extracting scalar
+    //!   components.
     //! \param[in,out] U Solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     fieldOutput( tk::real t,
                  tk::real V,
-                 std::size_t,
                  std::size_t nunk,
-                 const tk::Fields& geoElem,
-                 tk::Fields& U,
-                 const tk::Fields& ) const
+                 std::size_t rdof,
+                 const std::vector< tk::real >& vol,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const tk::Fields& U,
+                 [[maybe_unused]] const tk::Fields& = tk::Fields() ) const
     {
-      std::array< std::vector< tk::real >, 3 > coord{
-        geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
-
-      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, t, V,
-                                    geoElem.extract(0,0), coord, U );
-    }
-
-    //! Nodal field output setup will go here
-    std::vector< std::vector< tk::real > >
-    nodalFieldOutput( tk::real,
-      tk::real,
-      std::size_t,
-      const std::map< std::size_t, std::vector< std::size_t > >&,
-      const tk::Fields&,
-      tk::Fields&,
-      tk::Fields&,
-      tk::Fields&,
-      const tk::Fields& ) const
-    {
-      return {};
+      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, rdof,
+                                    t, V, vol, coord, U );
     }
 
     //! Return surface field output going to file
@@ -617,6 +603,37 @@ class CompFlow {
       int inbox = 0;
       auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
       return std::vector< tk::real >( std::begin(s), std::end(s) );
+    }
+
+    //! Compute nodal field output
+    //! \param[in] t Physical time
+    //! \param[in] V Total mesh volume
+    //! \param[in] coord Node coordinates
+    //! \param[in] inpoel Mesh connectivity
+    //! \param[in] esup Elements surrounding points
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] U Solution vector at recent time step
+    //! \return Vector of vectors to be output to file
+    std::vector< std::vector< tk::real > >
+    nodeFieldOutput( tk::real t,
+                     tk::real V,
+                     const tk::UnsMesh::Coords& coord,
+                     const std::vector< std::size_t >& inpoel,
+                     const std::pair< std::vector< std::size_t >,
+                                      std::vector< std::size_t > >& esup,
+                     const tk::Fields& geoElem,
+                     const tk::Fields& U,
+                     const tk::Fields& ) const
+    {
+      // Evaluate solution in nodes
+      auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      auto [Un,Pn] =
+        tk::nodeEval( m_offset, ndof, rdof, coord, inpoel, esup, U );
+      // Extract nodal fields
+      auto f = fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
+                            coord, Un );
+      return f;
     }
 
   private:
