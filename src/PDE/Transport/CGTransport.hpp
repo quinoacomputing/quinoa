@@ -208,9 +208,11 @@ class Transport {
       const std::vector< real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >& edgeid,
+      const std::vector< std::size_t >&,
       const tk::Fields& G,
       const tk::Fields& U,
       const std::vector< tk::real >&,
+      real,
       tk::Fields& R ) const
     {
       Assert( G.nprop() == m_ncomp*3,
@@ -365,6 +367,7 @@ class Transport {
     //! \return Minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
+             tk::real,
              const tk::Fields& U ) const
     {
       using tag::transport;
