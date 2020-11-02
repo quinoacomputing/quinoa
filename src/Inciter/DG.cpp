@@ -2275,7 +2275,7 @@ DG::comnodeout( const std::vector< std::size_t >& gid,
   }
 
   // When we have heard from all chares we communicate with, this chare is done
-  if (++m_nnod == m_outmesh.nodeCommMap.size()) {
+  if (++m_nnod == Disc()->NodeCommMap().size()) {
     m_nnod = 0;
     comnodeout_complete();
   }
