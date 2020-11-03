@@ -20,7 +20,6 @@ add_library(Inciter
             DiagReducer.cpp
             NodeDiagnostics.cpp
             ElemDiagnostics.cpp
-            FieldOutputUtil.cpp
             PrefIndicator.cpp
             NodeBC.cpp)
 
