@@ -356,11 +356,6 @@ namespace grm {
       using inciter::deck::neq;
       using tag::param;
 
-      // Error out if no dependent variable has been selected
-      auto& depvar = stack.template get< param, eq, tag::depvar >();
-      if (depvar.empty() || depvar.size() != neq.get< eq >())
-        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
-
       // If physics type is not given, default to 'veleq'
       auto& physics = stack.template get< param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
