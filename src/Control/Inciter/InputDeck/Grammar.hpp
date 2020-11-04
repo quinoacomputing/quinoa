@@ -1249,12 +1249,21 @@ namespace deck {
                          >,
            tk::grm::check_pref_errors > {};
 
+  //! outvar ... end block
+  struct outvar :
+         tk::grm::vector<
+           use< kw::outvar >,
+           tk::grm::Store_back< tag::cmd, tag::io, tag::outvar >,
+           use< kw::end >,
+           tk::grm::noop, pegtl::identifier > {};
+
   //! field_output ... end block
   struct field_output :
          pegtl::if_must<
            tk::grm::readkw< use< kw::field_output >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
+             outvar,
              tk::grm::process< use< kw::filetype >,
                                tk::grm::store_inciter_option<
                                  tk::ctr::FieldFile,
@@ -1278,6 +1287,7 @@ namespace deck {
            tk::grm::readkw< use< kw::history_output >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
+             outvar,
              tk::grm::interval< use< kw::interval >, tag::history >,
              tk::grm::precision< use, tag::history >,
              tk::grm::process<

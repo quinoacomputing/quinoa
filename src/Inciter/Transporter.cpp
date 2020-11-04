@@ -303,18 +303,23 @@ Transporter::info( const InciterPrint& print )
   // Print output intervals
   print.section( "Output intervals" );
   print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
-  print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
+  print.item( "Field and surface",
+              g_inputdeck.get< tag::interval, tag::field >() );
   print.item( "Diagnostics",
               g_inputdeck.get< tag::interval, tag::diag >() );
   print.item( "Checkpoint/restart",
               g_inputdeck.get< tag::cmd, tag::rsfreq >() );
 
+  // Print output variables: fields and surfaces
   const auto outsets = g_inputdeck.outsets();
-  if (!outsets.empty()) {
-    print.section( "Output fields" );
-    print.item( "Surface side set(s)", tk::parameters( outsets ) );
-  }
+  const auto outvars = g_inputdeck.outvars();
+  if (!outsets.empty() || !outvars.empty()) print.section( "Output fields" );
+  if (!outvars.empty())
+    print.item( "Field(s)", tk::parameters(outvars) );
+  if (!outsets.empty())
+    print.item( "Surface side set(s)", tk::parameters(outsets) );
 
+  // Print output variables: history
   const auto& pt = g_inputdeck.get< tag::history, tag::point >();
   const auto& id = g_inputdeck.get< tag::history, tag::id >();
   if (!pt.empty()) {

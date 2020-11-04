@@ -1870,6 +1870,17 @@ struct field_output_info {
 using field_output =
   keyword< field_output_info, TAOCPP_PEGTL_STRING("field_output") >;
 
+struct outvar_info {
+  static std::string name() { return "outvar"; }
+  static std::string shortDescription() { return
+    "Start of outvar ... end input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to start a block in the input file containing a
+       list of physics variables for output.)";
+  }
+};
+using outvar = keyword< outvar_info, TAOCPP_PEGTL_STRING("outvar") >;
+
 struct rngs_info {
   static std::string name() { return "rngs"; }
   static std::string shortDescription() { return
