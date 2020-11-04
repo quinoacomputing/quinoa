@@ -1188,13 +1188,9 @@ DG::setup()
   // Compute left-hand side of discrete PDEs
   lhs();
 
-  // Set initial conditions for all PDEs
-  for (const auto& eq : g_dgpde) 
-  {
-    eq.initialize( m_lhs, d->Inpoel(), d->Coord(), m_boxelems, m_u, d->T(),
-                   m_fd.Esuel().size()/4 );
-    eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
-  }
+  // Determine elements inside user-defined IC box
+  for (auto& eq : g_dgpde) eq.inIcBox( m_geoElem, m_fd.Esuel().size()/4,
+    m_boxelems );
 
   // Compute volume of user-defined box IC
   d->boxvol( {} );      // punt for now
@@ -1209,8 +1205,18 @@ DG::box( tk::real v )
 //! \param[in] v Total volume within user-specified box
 // *****************************************************************************
 {
+  auto d = Disc();
+
   // Store user-defined box IC volume
-  Disc()->Boxvol() = v;
+  d->Boxvol() = v;
+
+  // Set initial conditions for all PDEs
+  for (const auto& eq : g_dgpde)
+  {
+    eq.initialize( m_lhs, d->Inpoel(), d->Coord(), m_boxelems, m_u, d->T(),
+                   m_fd.Esuel().size()/4 );
+    eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
+  }
 
   // Output initial conditions to file (regardless of whether it was requested)
   startFieldOutput( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );

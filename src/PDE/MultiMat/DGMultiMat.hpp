@@ -93,6 +93,11 @@ class MultiMat {
       return (nmat+3);
     }
 
+    //! Determine elements that lie inside the user-defined IC box
+    void inIcBox( const tk::Fields&,
+      std::size_t,
+      std::vector< std::size_t >& ) const {}
+
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity

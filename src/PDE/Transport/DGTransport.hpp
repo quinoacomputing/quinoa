@@ -89,6 +89,11 @@ class Transport {
       return 0;
     }
 
+    //! Determine elements that lie inside the user-defined IC box
+    void inIcBox( const tk::Fields&,
+      std::size_t,
+      std::vector< std::size_t >& ) const {}
+
     //! Initalize the transport equations for DG
     //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
