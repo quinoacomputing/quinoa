@@ -35,8 +35,7 @@ class CompFlowProblemUserDefined {
   public:
     //! Set initial conditions
     static tk::SolutionFn::result_type
-    solution( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real,
-              int& inbox );
+    solution( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! \param[in,out] r Density source

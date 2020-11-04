@@ -99,7 +99,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_elemfields(),
   m_nodefields(),
   m_nodefieldsc(),
-  m_outmesh()
+  m_outmesh(),
+  m_boxelems()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -1190,7 +1191,7 @@ DG::setup()
   // Set initial conditions for all PDEs
   for (const auto& eq : g_dgpde) 
   {
-    eq.initialize( m_lhs, d->Inpoel(), d->Coord(), m_u, d->T(),
+    eq.initialize( m_lhs, d->Inpoel(), d->Coord(), m_boxelems, m_u, d->T(),
                    m_fd.Esuel().size()/4 );
     eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
   }

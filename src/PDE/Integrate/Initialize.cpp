@@ -100,8 +100,7 @@ tk::initialize( ncomp_t system,
       auto B =
         eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
-      int inbox = 0;
-      const auto s = solution( system, ncomp, gp[0], gp[1], gp[2], t, inbox );
+      const auto s = solution( system, ncomp, gp[0], gp[1], gp[2], t );
 
       auto wt = wgp[igp] * vole;
 

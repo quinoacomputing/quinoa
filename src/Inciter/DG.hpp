@@ -246,6 +246,7 @@ class DG : public CBase_DG {
       p | m_nodefields;
       p | m_nodefieldsc;
       p | m_outmesh;
+      p | m_boxelems;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -370,6 +371,8 @@ class DG : public CBase_DG {
       std::map< int, std::vector< std::size_t > > bface;
       void pup( PUP::er& p ) { p|chunk; p|coord; p|triinpoel; p|bface; }
     } m_outmesh;
+    //! Element ids at which box ICs are defined by user
+    std::vector< std::size_t > m_boxelems;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

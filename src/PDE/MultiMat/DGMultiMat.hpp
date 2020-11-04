@@ -97,12 +97,14 @@ class MultiMat {
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+//    //! \param[in,out] inbox List of elements at which box user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
+                     std::vector< std::size_t >& /*inbox*/,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
@@ -877,8 +879,7 @@ class MultiMat {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      int inbox = 0;
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
+      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
       return std::vector< tk::real >( begin(s), end(s) );
     }
 
@@ -990,8 +991,7 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      int inbox = 0;
-      auto ur = Problem::solution( system, ncomp, x, y, z, t, inbox );
+      auto ur = Problem::solution( system, ncomp, x, y, z, t );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );
 
       ur.resize(ul.size());

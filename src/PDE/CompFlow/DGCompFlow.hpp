@@ -92,16 +92,49 @@ class CompFlow {
       return 0;
     }
 
+    ////! Determine elements that lie inside the user-defined IC box
+    ////! \param[in] geoElem Element geometry array
+    ////! \param[in] nielem Number of internal elements
+    ////! \param[in,out] inbox List of nodes at which box user ICs are set
+    //void inIcBox( const tk::UnsMesh::Coords&,
+    //  const tk::Fields& geoElem,
+    //  std::size_t nielem,
+    //  std::vector< std::size_t >& inbox ) const
+    //{
+    //  // Detect if user has configured a box IC
+    //  const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+    //  const auto& icbox = ic.get< tag::box >();
+    //  std::vector< tk::real >
+    //    box{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
+    //         icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
+    //         icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
+    //  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+    //  // Determine which elements lie in the IC box
+    //  for (ncomp_t e=0; e<nielem; ++e) {
+    //    auto x = geoElem(e,1,0);
+    //    auto y = geoElem(e,2,0);
+    //    auto z = geoElem(e,3,0);
+    //    if ( std::any_of( begin(box), end(box), [=](auto p)
+    //      {return abs(p) > eps;} ) &&
+    //      x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5] )
+    //    {
+    //      inbox.push_back( e );
+    //    }
+    //}
+
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+//    //! \param[in,out] inbox List of elements at which box user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
+                     std::vector< std::size_t >& /*inbox*/,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
@@ -600,8 +633,7 @@ class CompFlow {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      int inbox = 0;
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
+      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
       return std::vector< tk::real >( std::begin(s), std::end(s) );
     }
 
@@ -713,8 +745,7 @@ class CompFlow {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      int inbox = 0;
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t, inbox ) }};
+      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
     }
 
     //! \brief Boundary state function providing the left and right state of a

@@ -93,12 +93,14 @@ class Transport {
     //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+//    //! \param[in,out] inbox List of elements at which box user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
+                     std::vector< std::size_t >& /*inbox*/,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
@@ -370,9 +372,8 @@ class Transport {
       auto E = U;
       for (std::size_t i=0; i<nunk; ++i)
       {
-        int inbox = 0;
         auto s =
-          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t, inbox );
+          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
           E( i, c*rdof, m_offset ) = s[c];
       }
@@ -415,8 +416,7 @@ class Transport {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      int inbox = 0;
-      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
+      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
     }
 
     //! Compute nodal field output
@@ -545,8 +545,7 @@ class Transport {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      int inbox = 0;
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t, inbox ) }};
+      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
     }
 };
 

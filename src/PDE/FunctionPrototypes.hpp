@@ -32,7 +32,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! \see e.g., inciter::CompFlowProblemVorticalFlow::solution
 //! \note Used for both continuous and discontinuous Galerkin discretizations
 using SolutionFn = std::function<
-  std::vector< real >( ncomp_t, ncomp_t, real, real, real, real, int& ) >;
+  std::vector< real >( ncomp_t, ncomp_t, real, real, real, real ) >;
 
 //! Function prototype for Riemann flux functions
 //! \details Functions of this type are used to compute numerical fluxes across a
