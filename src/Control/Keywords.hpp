@@ -1870,13 +1870,75 @@ struct field_output_info {
 using field_output =
   keyword< field_output_info, TAOCPP_PEGTL_STRING("field_output") >;
 
+struct outvar_density_info {
+  static std::string name() { return "density"; }
+  static std::string shortDescription() { return "Request density"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid density as an output
+       variable.)";
+  }
+};
+using outvar_density =
+  keyword< outvar_density_info, TAOCPP_PEGTL_STRING("density") >;
+
+struct outvar_momentum_info {
+  static std::string name() { return "momentum"; }
+  static std::string shortDescription() { return "Request momentum"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid momentum as an output
+       variable.)";
+  }
+};
+using outvar_momentum =
+  keyword< outvar_momentum_info, TAOCPP_PEGTL_STRING("momentum") >;
+
+struct outvar_total_energy_info {
+  static std::string name() { return "total_energy"; }
+  static std::string shortDescription() { return "Request total energy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid total energy as an output
+       variable.)";
+  }
+};
+using outvar_total_energy =
+  keyword< outvar_total_energy_info, TAOCPP_PEGTL_STRING("total_energy") >;
+
+struct outvar_velocity_info {
+  static std::string name() { return "velocity"; }
+  static std::string shortDescription() { return "Request velocity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid velocity as an output
+       variable.)";
+  }
+};
+using outvar_velocity =
+  keyword< outvar_velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
+
+struct outvar_pressure_info {
+  static std::string name() { return "pressure"; }
+  static std::string shortDescription() { return "Request pressure"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid pressure as an output
+       variable.)";
+  }
+};
+using outvar_pressure =
+  keyword< outvar_pressure_info, TAOCPP_PEGTL_STRING("pressure") >;
+
 struct outvar_info {
   static std::string name() { return "outvar"; }
   static std::string shortDescription() { return
     "Start of outvar ... end input block"; }
   static std::string longDescription() { return
     R"(This keyword is used to start a block in the input file containing a
-       list of physics variables for output.)";
+       list of physics variables for output. The following keywords are allowed
+       in an outvar ... end block:)"
+    + std::string("\'")
+    + outvar_density::string()+ "\', \'"
+    + outvar_momentum::string()+ "\', \'"
+    + outvar_total_energy::string() + "\', \'"
+    + outvar_velocity::string() + "\', \'"
+    + outvar_pressure::string() + "\'.";
   }
 };
 using outvar = keyword< outvar_info, TAOCPP_PEGTL_STRING("outvar") >;

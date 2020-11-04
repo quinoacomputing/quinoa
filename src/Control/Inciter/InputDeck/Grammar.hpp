@@ -1244,13 +1244,27 @@ namespace deck {
                          >,
            tk::grm::check_pref_errors > {};
 
-  //! outvar ... end block
+
+  //! Match an output variable: var must be a keyword
+  template< class var >
   struct outvar :
-         tk::grm::vector<
-           use< kw::outvar >,
-           tk::grm::Store_back< tag::cmd, tag::io, tag::outvar >,
-           use< kw::end >,
-           tk::grm::noop, pegtl::identifier > {};
+         tk::grm::exact_scan< typename use< var >::pegtl_string,
+           tk::grm::Store_back< tag::cmd, tag::io, tag::outvar > > {};
+
+  //! outvar ... end block
+  struct outvar_block :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::outvar >::pegtl_string >,
+           tk::grm::block<
+             use< kw::end >,
+             tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
+               tk::grm::match_depvar<
+                 tk::grm::Store_back< tag::cmd, tag::io, tag::outvar > > >,
+             outvar< kw::outvar_density >,
+             outvar< kw::outvar_momentum >,
+             outvar< kw::outvar_total_energy >,
+             outvar< kw::outvar_velocity >,
+             outvar< kw::outvar_pressure > > > {};
 
   //! field_output ... end block
   struct field_output :
@@ -1258,7 +1272,7 @@ namespace deck {
            tk::grm::readkw< use< kw::field_output >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
-             outvar,
+             outvar_block,
              tk::grm::process< use< kw::filetype >,
                                tk::grm::store_inciter_option<
                                  tk::ctr::FieldFile,
@@ -1282,7 +1296,7 @@ namespace deck {
            tk::grm::readkw< use< kw::history_output >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
-             outvar,
+             outvar_block,
              tk::grm::interval< use< kw::interval >, tag::history >,
              tk::grm::precision< use, tag::history >,
              tk::grm::process<
