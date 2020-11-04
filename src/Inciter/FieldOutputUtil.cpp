@@ -62,7 +62,7 @@ tk::nodeEval( std::size_t offset,
         {{ x[inpoel[e4+3]], y[inpoel[e4+3]], z[inpoel[e4+3]] }} }};
       // Evaluate inverse Jacobian of the element
       auto J = tk::inverseJacobian( ce[0], ce[1], ce[2], ce[3] );
-      // Compute in and sum solution to p
+      // Evaluate in and sum solution to p (will average later)
       std::array<tk::real,3> h{ x[p]-ce[0][0], y[p]-ce[0][1], z[p]-ce[0][2] };
       auto B = tk::eval_basis( ndof, dot(J[0],h), dot(J[1],h), dot(J[2],h) );
       auto chu = eval_state( Un.nprop(), offset, rdof, ndof, e, U, B );
@@ -70,9 +70,6 @@ tk::nodeEval( std::size_t offset,
       auto chp = eval_state( Pn.nprop(), offset, rdof, ndof, e, P, B );
       for (std::size_t i=0; i<Pn.nprop(); ++i) Pn(p,i,offset) += chp[i];
     }
-    auto n = esup.second[p+1] - esup.second[p];
-    for (std::size_t i=0; i<Un.nprop(); ++i) Un(p,i,offset) /= n;
-    for (std::size_t i=0; i<Pn.nprop(); ++i) Pn(p,i,offset) /= n;
   }
 
   return { Un, Pn };
