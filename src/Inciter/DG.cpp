@@ -2000,8 +2000,8 @@ DG::solve( tk::real newdt )
   if (m_stage == 0) m_un = m_u;
 
   for (const auto& eq : g_dgpde)
-    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
-            m_p, m_ndof, m_rhs );
+    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), m_boxelems,
+            d->Coord(), m_u, m_p, m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<m_nunk; ++e)
