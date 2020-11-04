@@ -14,4 +14,4 @@ add_regression_test(multimat_waterair_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF waterair_shocktube_diag.ndiff.cfg
-                    LABELS dg)
+                    LABELS dg multimat)

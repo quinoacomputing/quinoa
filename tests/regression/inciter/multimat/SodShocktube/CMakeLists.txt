@@ -14,7 +14,7 @@ add_regression_test(multimat_sod_shocktube_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
-                    LABELS dg)
+                    LABELS dg multimat)
 
 add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 1
@@ -27,7 +27,7 @@ add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
-                    LABELS dg)
+                    LABELS dg multimat)
 
 # Parallel
 
@@ -48,7 +48,7 @@ add_regression_test(multimat_sod_shocktube_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
-                    LABELS dg)
+                    LABELS dg multimat)
 
 add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 4
@@ -67,7 +67,7 @@ add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
-                    LABELS dg)
+                    LABELS dg multimat)
 
 # Parallel + Virtualization
 
@@ -158,4 +158,4 @@ add_regression_test(multimat_sod_shocktube_p0p1_u0.9 ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
-                    LABELS dg)
+                    LABELS dg multimat)
