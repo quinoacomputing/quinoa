@@ -955,7 +955,7 @@ struct exodusii_info {
     R"(This keyword is used to select the
     ExodusII output file type readable by, e.g., ParaView of either a requested
     probability density function (PDF) within a pdfs ... end block or for
-    mesh-based field output in a plotvar ... end block. Example:
+    mesh-based field output in a field_output ... end block. Example:
     "filetype exodusii", which selects ExodusII file output. For more info on
     ExodusII, see http://sourceforge.net/projects/exodusii.)";
   }
@@ -968,9 +968,9 @@ struct root_info {
     "Select Root output"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the Root output file type readable by the
-    Root framework from CERN for mesh-based field output in a plotvar ... end
-    block. Example: "filetype root", which selects the root file output format.
-    For more info on Root, see https://root.cern.ch.)";
+    Root framework from CERN for mesh-based field output in a field_output ...
+    end block. Example: "filetype root", which selects the root file output
+    format. For more info on Root, see https://root.cern.ch.)";
   }
 };
 using root = keyword< root_info, TAOCPP_PEGTL_STRING("root") >;
@@ -982,11 +982,11 @@ struct filetype_info {
   static std::string longDescription() { return
     R"(This keyword is used to specify the output file type of a requested
     probability density function (PDF) within a pdfs ... end block or for
-    mesh-based field output in a plotvar ... end block. Example:
+    mesh-based field output in a field_output ... end block. Example:
     "filetype exodusii", which selects ExodusII output. Valid options depend on
     which block the keyword is used: in a pdfs ... end the valid choices are
-    'txt', 'gmshtxt', 'gmshbin', and 'exodusii', in a plotvar ... end  block the
-    valid choices are 'exodusii' and 'root'.)"; }
+    'txt', 'gmshtxt', 'gmshbin', and 'exodusii', in a field_output ... end
+    block the valid choices are 'exodusii' and 'root'.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
@@ -1857,16 +1857,17 @@ struct history_info {
 };
 using history = keyword< history_info, TAOCPP_PEGTL_STRING("history") >;
 
-struct plotvar_info {
-  static std::string name() { return "plotvar"; }
+struct field_output_info {
+  static std::string name() { return "field_output"; }
   static std::string shortDescription() { return
-    "Start of plotvar input block"; }
+    "Start of field_output input block"; }
   static std::string longDescription() { return
     R"(This keyword is used to start a block in the input file containing the
     list and settings of requested field output.)";
   }
 };
-using plotvar = keyword< plotvar_info, TAOCPP_PEGTL_STRING("plotvar") >;
+using field_output =
+  keyword< field_output_info, TAOCPP_PEGTL_STRING("field_output") >;
 
 struct rngs_info {
   static std::string name() { return "rngs"; }

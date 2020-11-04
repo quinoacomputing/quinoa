@@ -17,7 +17,7 @@ inciter
     problem slot_cyl
   end
 
-  plotvar
+  field_output
     interval 1
     filetype root
   end

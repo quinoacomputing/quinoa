@@ -19,7 +19,7 @@ inciter
     problem slot_cyl
   end
 
-  plotvar
+  field_output
     interval 50
     filetype exodusii
   end

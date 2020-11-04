@@ -53,7 +53,7 @@ inciter
     end
   end
 
-  plotvar
+  field_output
     interval 25
   end
 

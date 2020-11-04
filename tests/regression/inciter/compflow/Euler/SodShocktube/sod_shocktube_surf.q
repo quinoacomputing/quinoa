@@ -38,7 +38,7 @@ inciter
     end
   end
 
-  plotvar
+  field_output
     interval 10000
     sideset 1 2 3 4 5 6 end
   end

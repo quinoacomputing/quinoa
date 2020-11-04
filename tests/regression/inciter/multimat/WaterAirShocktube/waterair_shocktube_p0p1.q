@@ -47,7 +47,7 @@ inciter
     error l2
   end
 
-  plotvar
+  field_output
     interval 25
   end
 

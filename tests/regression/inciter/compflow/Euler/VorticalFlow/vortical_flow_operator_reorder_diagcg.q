@@ -37,7 +37,7 @@ inciter
 
   end
 
-  plotvar
+  field_output
     interval 10
   end
 

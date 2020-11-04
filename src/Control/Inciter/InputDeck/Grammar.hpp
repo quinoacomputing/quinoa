@@ -1249,10 +1249,10 @@ namespace deck {
                          >,
            tk::grm::check_pref_errors > {};
 
-  //! plotvar ... end block
-  struct plotvar :
+  //! field_output ... end block
+  struct field_output :
          pegtl::if_must<
-           tk::grm::readkw< use< kw::plotvar >::pegtl_string >,
+           tk::grm::readkw< use< kw::field_output >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
              tk::grm::process< use< kw::filetype >,
@@ -1309,7 +1309,7 @@ namespace deck {
                            amr,
                            pref,
                            partitioning,
-                           plotvar,
+                           field_output,
                            history,
                            tk::grm::diagnostics<
                              use,

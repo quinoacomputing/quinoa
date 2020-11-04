@@ -32,7 +32,7 @@ inciter
     end
   end
 
-  plotvar
+  field_output
     interval 10000
   end
 
