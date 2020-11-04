@@ -1846,16 +1846,17 @@ struct statistics_info {
 };
 using statistics = keyword< statistics_info, TAOCPP_PEGTL_STRING("statistics") >;
 
-struct history_info {
-  static std::string name() { return "history"; }
+struct history_output_info {
+  static std::string name() { return "history_output"; }
   static std::string shortDescription() { return
-    "Start of history input block"; }
+    "Start of history_output input block"; }
   static std::string longDescription() { return
     R"(This keyword is used to start a block in the input file containing the
     descriptions and settings of requested history output.)";
   }
 };
-using history = keyword< history_info, TAOCPP_PEGTL_STRING("history") >;
+using history_output =
+  keyword< history_output_info, TAOCPP_PEGTL_STRING("history_output") >;
 
 struct field_output_info {
   static std::string name() { return "field_output"; }

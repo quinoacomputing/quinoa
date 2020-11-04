@@ -1272,10 +1272,10 @@ namespace deck {
                  tk::grm::Store_back< tag::cmd, tag::io, tag::surface >,
                  use< kw::end > > > > > {};
 
-  //! history ... end block
-  struct history :
+  //! history_output ... end block
+  struct history_output :
          pegtl::if_must<
-           tk::grm::readkw< use< kw::history >::pegtl_string >,
+           tk::grm::readkw< use< kw::history_output >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
              tk::grm::interval< use< kw::interval >, tag::history >,
@@ -1310,7 +1310,7 @@ namespace deck {
                            pref,
                            partitioning,
                            field_output,
-                           history,
+                           history_output,
                            tk::grm::diagnostics<
                              use,
                              tk::grm::store_inciter_option > >,

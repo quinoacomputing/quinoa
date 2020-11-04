@@ -111,7 +111,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                    kw::txt_float_scientific,
                                    kw::precision,
                                    kw::diagnostics,
-                                   kw::history,
+                                   kw::history_output,
                                    kw::material,
                                    kw::id,
                                    kw::mat_gamma,
