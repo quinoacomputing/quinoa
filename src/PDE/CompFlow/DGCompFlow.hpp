@@ -765,6 +765,11 @@ class CompFlow {
     std::vector< std::string > nodalFieldNames() const
     { return fieldNames(); }
 
+    //! Return time history field names to be output to file
+    //! \return Vector of strings labeling time history fields output in file
+    std::vector< std::string > histNames() const
+    { return CompFlowHistNames(); }
+
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
@@ -795,6 +800,60 @@ class CompFlow {
     {
       std::vector< std::vector< tk::real > > s; // punt for now
       return s;
+    }
+
+    //! Return time history field output evaluated at time history points
+    //! \param[in] h History point data
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] U Array of unknowns
+    std::vector< std::vector< tk::real > >
+    histOutput( const std::vector< HistData >& h,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const tk::Fields& U ) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      std::vector< std::vector< tk::real > > Up(h.size());
+
+      std::size_t j = 0;
+      for (const auto& p : h) {
+        auto e = p.get< tag::elem >();
+        auto chp = p.get< tag::coord >();
+
+        // Evaluate inverse Jacobian
+        std::array< std::array< tk::real, 3>, 4 > cp{{
+          {{ x[inpoel[4*e  ]], y[inpoel[4*e  ]], z[inpoel[4*e  ]] }},
+          {{ x[inpoel[4*e+1]], y[inpoel[4*e+1]], z[inpoel[4*e+1]] }},
+          {{ x[inpoel[4*e+2]], y[inpoel[4*e+2]], z[inpoel[4*e+2]] }},
+          {{ x[inpoel[4*e+3]], y[inpoel[4*e+3]], z[inpoel[4*e+3]] }} }};
+        auto J = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
+
+        // evaluate solution at history-point
+        std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
+          chp[2]-cp[0][2]}};
+        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc));
+        auto uhp = eval_state(m_ncomp, 0, rdof, rdof, e, U, B);
+
+        // store solution in history output vector
+        Up[j].resize(6, 0.0);
+        Up[j][0] = uhp[0];
+        Up[j][1] = uhp[1]/uhp[0];
+        Up[j][2] = uhp[2]/uhp[0];
+        Up[j][3] = uhp[3]/uhp[0];
+        Up[j][4] = uhp[4]/uhp[0];
+        Up[j][5] = eos_pressure< tag::compflow > (m_system, uhp[0],
+          uhp[1]/uhp[0], uhp[2]/uhp[0], uhp[3]/uhp[0], uhp[4] );
+        ++j;
+      }
+
+      return Up;
     }
 
     //! Return names of integral variables to be output to diagnostics file

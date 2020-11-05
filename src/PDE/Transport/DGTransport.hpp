@@ -342,6 +342,13 @@ class Transport {
       return s;
     }
 
+    //! Return time history field names to be output to file
+    //! \return Vector of strings labelling time history fields output in file
+    std::vector< std::string > histNames() const {
+      std::vector< std::string > s; // punt for now
+      return s;
+    }
+
     //! Return field output going to file
     //! \param[in] t Physical time
     //! \param[in] nunk Number of unknowns to extract
@@ -454,6 +461,18 @@ class Transport {
       auto f = fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
                             coord, Un );
       return f;
+    }
+
+    //! Return time history field output evaluated at time history points
+    //! \param[in] h History point data
+    std::vector< std::vector< tk::real > >
+    histOutput( const std::vector< HistData >& h,
+                const std::vector< std::size_t >&,
+                const tk::UnsMesh::Coords&,
+                const tk::Fields& ) const
+    {
+      std::vector< std::vector< tk::real > > Up(h.size()); //punt for now
+      return Up;
     }
 
   private:

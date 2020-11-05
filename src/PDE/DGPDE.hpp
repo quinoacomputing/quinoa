@@ -32,6 +32,7 @@
 #include "UnsMesh.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "FunctionPrototypes.hpp"
+#include "History.hpp"
 
 namespace inciter {
 
@@ -223,6 +224,9 @@ class DGPDE {
     std::vector< std::string > nodalFieldNames() const
     { return self->nodalFieldNames(); }
 
+    //! Public interface to returning time history field output labels
+    std::vector< std::string > histNames() const { return self->histNames(); }
+
     //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
 
@@ -257,6 +261,14 @@ class DGPDE {
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
                 tk::Fields& U ) const
     { return self->surfOutput( bnd, U ); }
+
+    //! Public interface to return point history output
+    std::vector< std::vector< tk::real > >
+    histOutput( const std::vector< HistData >& h,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      const tk::Fields& U ) const
+    { return self->histOutput( h, inpoel, coord, U ); }
 
     //! Public interface to returning analytic solution
     std::vector< tk::real >
@@ -343,6 +355,7 @@ class DGPDE {
                            const std::size_t ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > nodalFieldNames() const = 0;
+      virtual std::vector< std::string > histNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
@@ -366,6 +379,11 @@ class DGPDE {
       virtual std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
         tk::Fields& ) const = 0;
+      virtual std::vector< std::vector< tk::real > > histOutput(
+        const std::vector< HistData >&,
+        const std::vector< std::size_t >&,
+        const tk::UnsMesh::Coords&,
+        const tk::Fields& ) const = 0;
       virtual std::vector< tk::real > analyticSolution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
@@ -458,6 +476,8 @@ class DGPDE {
       { return data.fieldNames(); }
       std::vector< std::string > nodalFieldNames() const override
       { return data.nodalFieldNames(); }
+      std::vector< std::string > histNames() const override
+      { return data.histNames(); }
       std::vector< std::string > names() const override
       { return data.names(); }
       std::vector< std::vector< tk::real > > fieldOutput(
@@ -486,6 +506,12 @@ class DGPDE {
         const std::map< int, std::vector< std::size_t > >& bnd,
         tk::Fields& U ) const override
       { return data.surfOutput( bnd, U ); }
+      std::vector< std::vector< tk::real > > histOutput(
+        const std::vector< HistData >& h,
+        const std::vector< std::size_t >& inpoel,
+        const tk::UnsMesh::Coords& coord,
+        const tk::Fields& U ) const override
+      { return data.histOutput( h, inpoel, coord, U ); }
       std::vector< tk::real >
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }

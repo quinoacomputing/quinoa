@@ -1186,6 +1186,17 @@ DG::setup()
 
   // Compute volume of user-defined box IC
   d->boxvol( {} );      // punt for now
+
+  // Query time history field output labels from all PDEs integrated
+  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+  if (!hist_points.empty()) {
+    std::vector< std::string > histnames;
+    for (const auto& eq : g_dgpde) {
+      auto n = eq.histNames();
+      histnames.insert( end(histnames), begin(n), end(n) );
+    }
+    d->histheader( std::move(histnames) );
+  }
 }
 
 void
@@ -2171,6 +2182,17 @@ DG::fieldOutput() const
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Output time history if we hit its output frequency
+  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
+  if ( !((d->It()) % histfreq) ) {
+    std::vector< std::vector< tk::real > > hist;
+    for (const auto& eq : g_dgpde) {
+      auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u );
+      hist.insert( end(hist), begin(h), end(h) );
+    }
+    d->history( std::move(hist) );
+  }
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
