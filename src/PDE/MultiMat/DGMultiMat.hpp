@@ -165,6 +165,7 @@ class MultiMat {
 
         tk::GaussQuadratureTet( ng, coordgp, wgp );
 
+        // Loop over quadrature points in element e
         for (std::size_t igp=0; igp<ng; ++igp)
         {
           // Compute the basis function
@@ -175,18 +176,20 @@ class MultiMat {
 
           auto state = tk::eval_state( 3*nmat+3, 0, rdof, ndof, e, unk, B );
 
-          // cell-average bulk density
+          // bulk density at quadrature point
           tk::real rhob(0.0);
           for (std::size_t k=0; k<nmat; ++k)
             rhob += state[densityIdx(nmat, k)];
 
-          // cell-average velocity
+          // velocity vector at quadrature point
           std::array< tk::real, 3 >
             vel{ state[momentumIdx(nmat, 0)]/rhob,
                  state[momentumIdx(nmat, 1)]/rhob,
                  state[momentumIdx(nmat, 2)]/rhob };
 
-          std::vector< tk::real > pri(nmat + 3, 0.0);
+          std::vector< tk::real > pri(nmat+3, 0.0);
+
+          // Evaluate material pressure at quadrature point
           for(std::size_t imat = 0; imat < nmat; imat++)
           {
             auto alphamat = state[volfracIdx(nmat, imat)];
@@ -212,6 +215,7 @@ class MultiMat {
           }
         }
 
+        // Update the DG solution of primitive variables
         for(std::size_t k = 0; k < nmat+3; k++)
         {
           auto mark = k * ndof;
@@ -661,8 +665,9 @@ class MultiMat {
 
       std::vector< std::vector< tk::real > >
         vriempoly( U.nunk(), std::vector<tk::real>(12,0.0) );
+      // get the polynomial solution of Riemann velocity at the interface
       if(ndof > 1)
-        tk::solvevriem(nelem, vriem, riemannLoc, vriempoly);
+        vriempoly = tk::solvevriem(nelem, vriem, riemannLoc);
 
       // compute volume integrals of non-conservative terms
       tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, nelem,

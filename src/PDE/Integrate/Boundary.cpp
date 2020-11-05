@@ -19,6 +19,7 @@
 #include "Boundary.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
+#include "MultiMatTerms.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 void

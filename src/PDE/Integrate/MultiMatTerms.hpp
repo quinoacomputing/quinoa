@@ -86,10 +86,22 @@ update_rhs_pre(
   Fields& R );
 
 //! Solve the reconstruct velocity used for volume fraction equation
-void solvevriem( const std::size_t& nelem,
-                 const std::vector< std::vector< tk::real > >& vriem,
-                 const std::vector< std::vector< tk::real > >& riemannLoc,
-                 std::vector< std::vector< tk::real > >& vriempoly );
+std::vector< std::vector< tk::real > >
+solvevriem( std::size_t nelem,
+            const std::vector< std::vector< tk::real > >& vriem,
+            const std::vector< std::vector< tk::real > >& riemannLoc );
+
+//! Compute the riemann velociry at the interface
+void evaluRiemann( ncomp_t ncomp,
+                   const int e_left,
+                   const int e_right,
+                   const std::size_t nmat,
+                   const std::vector< tk::real >& fl,
+                   const std::array< tk::real, 3 >& fn,
+                   const std::array< tk::real, 3 >& gp,
+                   const std::array< std::vector< tk::real >, 2 >& state,
+                   std::vector< std::vector< tk::real > >& vriem,
+                   std::vector< std::vector< tk::real > >& riemannLoc );
 } // tk::
 
 #endif // MultiMatTerms_h

@@ -142,6 +142,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
       for (std::size_t k=0; k<nmat; ++k)
           rhob += ugp[densityIdx(nmat, k)];
 
+      // get the velocity vector
       std::array< tk::real, 3 > vel{{ pgp[velocityIdx(nmat, 0)],
                                       pgp[velocityIdx(nmat, 1)],
                                       pgp[velocityIdx(nmat, 2)] }};
@@ -181,6 +182,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 
       for (std::size_t k=0; k<nmat; ++k)
       {
+        // evaluate non-conservative term for energy equation
         for(std::size_t idof=0; idof<ndof; ++idof)
         {
           ncf[densityIdx(nmat, k)][idof] = 0.0;
@@ -189,8 +191,14 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
                                                   - riemannDeriv[3*k+idir][e] );
         }
 
+        // evaluate non-conservative term for volume fraction equation
         ncf[volfracIdx(nmat, k)][0] = ugp[volfracIdx(nmat, k)]
                                     * riemannDeriv[3*nmat][e];
+
+        // evaluate the non-conservative term for volume fraction equation in
+        // high order discretization. The following code compuetes the
+        // non-conservative term:
+        //      alpha * (d(u*B)/dx) = alpha * (u*dBdx + B*dudx)
         if(ndof > 1)
          for(std::size_t idof=1; idof<ndof; ++idof)
             ncf[volfracIdx(nmat, k)][idof] = ugp[volfracIdx(nmat, k)] *
@@ -249,6 +257,7 @@ update_rhs_ncn(
 
   if( ndof_el > 1)
   {
+    // Update rhs with distributions from volume fraction equations
     for (std::size_t k=0; k<nmat; ++k)
     {
       auto mark = k*ndof;
@@ -256,6 +265,7 @@ update_rhs_ncn(
         R(e, mark+idof, offset) += wt * ncf[k][idof];
     }
 
+    // Update rhs with distributions from the rest of the equatons
     for (ncomp_t c=nmat; c<ncomp; ++c)
     {
       auto mark = c*ndof;
@@ -438,10 +448,10 @@ update_rhs_pre(
   }
 }
 
-void solvevriem( const std::size_t& nelem,
-                 const std::vector< std::vector< tk::real > >& vriem,
-                 const std::vector< std::vector< tk::real > >& riemannLoc,
-                 std::vector< std::vector< tk::real > >& vriempoly )
+std::vector< std::vector< tk::real > >
+solvevriem( std::size_t nelem,
+            const std::vector< std::vector< tk::real > >& vriem,
+            const std::vector< std::vector< tk::real > >& riemannLoc )
 // *****************************************************************************
 //  Solve the reconstruct velocity used for volume fraction equation by
 //  Least square method
@@ -449,9 +459,12 @@ void solvevriem( const std::size_t& nelem,
 //! \param[in,out] vriem Vector of the riemann velocity
 //! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data
 //!   is available
-//! \param[in,out] vriempoly Vector of Riemann velocity polynomial solution
+//! \return Vector of Riemann velocity polynomial solution
 // *****************************************************************************
 {
+  std::vector< std::vector< tk::real > >
+    vriempoly( nelem, std::vector<tk::real>(12,0.0) );
+
   for (std::size_t e=0; e<nelem; ++e)
   {
     // Use the normal method to construct the linear system A^T * A * x = u
@@ -495,6 +508,88 @@ void solvevriem( const std::size_t& nelem,
       for(std::size_t k = 0; k < 4; k++)
         vriempoly[e][idirmark+k] = x[k];
     }
+  }
+  return vriempoly;
+}
+
+void evaluRiemann( ncomp_t ncomp,
+                   const int e_left,
+                   const int e_right,
+                   const std::size_t nmat,
+                   const std::vector< tk::real >& fl,
+                   const std::array< tk::real, 3 >& fn,
+                   const std::array< tk::real, 3 >& gp,
+                   const std::array< std::vector< tk::real >, 2 >& state,
+                   std::vector< std::vector< tk::real > >& vriem,
+                   std::vector< std::vector< tk::real > >& riemannLoc )
+// *****************************************************************************
+//  Compute the riemann velocity at the interface
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] e_left Index for the left element
+//! \param[in] e_right Index for the right element
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] fn Face/Surface normal
+//! \param[in] fl Surface flux
+//! \param[in] state Vector of state variables for left and right side
+//! \param[in,out] vriem Vector of the riemann velocity
+//! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data is
+//                 available
+// *****************************************************************************
+{
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+
+  std::size_t el(0), er(0);
+  el = static_cast< std::size_t >(e_left);
+  if(e_right != -1)
+    er = static_cast< std::size_t >(e_right);
+
+  riemannLoc[el].push_back( gp[0] );
+  riemannLoc[el].push_back( gp[1] );
+  riemannLoc[el].push_back( gp[2] );
+
+  if(e_right != -1)
+  {
+    riemannLoc[er].push_back( gp[0] );
+    riemannLoc[er].push_back( gp[1] );
+    riemannLoc[er].push_back( gp[2] );
+  }
+
+  tk::real rhobl(0.0), rhobr(0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    rhobl += state[0][densityIdx(nmat, k)];
+    rhobr += state[1][densityIdx(nmat, k)];
+  }
+
+  auto ul = state[0][momentumIdx(nmat, 0)] / rhobl;
+  auto vl = state[0][momentumIdx(nmat, 1)] / rhobl;
+  auto wl = state[0][momentumIdx(nmat, 2)] / rhobl;
+
+  auto ur = state[1][momentumIdx(nmat, 0)] / rhobr;
+  auto vr = state[1][momentumIdx(nmat, 1)] / rhobr;
+  auto wr = state[1][momentumIdx(nmat, 2)] / rhobr;
+
+  // Compute the normal velocities from left and right cells
+  auto vnl = ul * fn[0] + vl * fn[1] + wl * fn[2];
+  auto vnr = ur * fn[0] + vr * fn[1] + wr * fn[2];
+
+  // The interface velocity is evaluated by adding the normal velocity which
+  // is taken from the Riemann solver and the tangential velocity which is
+  // evaluated as an average of the left and right cells
+  auto urie = 0.5 * ((ul + ur) - fn[0] * (vnl + vnr)) + fl[ncomp+nmat] * fn[0];
+  auto vrie = 0.5 * ((vl + vr) - fn[1] * (vnl + vnr)) + fl[ncomp+nmat] * fn[1];
+  auto wrie = 0.5 * ((wl + wr) - fn[2] * (vnl + vnr)) + fl[ncomp+nmat] * fn[2];
+
+  vriem[el].push_back(urie);
+  vriem[el].push_back(vrie);
+  vriem[el].push_back(wrie);
+
+  if(e_right != -1)
+  {
+    vriem[er].push_back(urie);
+    vriem[er].push_back(vrie);
+    vriem[er].push_back(wrie);
   }
 }
 

@@ -20,6 +20,7 @@
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
+#include "MultiMatTerms.hpp"
 #include "FunctionPrototypes.hpp"
 
 namespace tk {

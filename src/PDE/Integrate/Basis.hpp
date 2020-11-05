@@ -72,19 +72,6 @@ eval_state ( ncomp_t ncomp,
              const std::size_t e,
              const Fields& U,
              const std::vector< tk::real >& B );
-
-//  Compute the riemann velociry at the interface
-void
-evaluRiemann( ncomp_t ncomp,
-              const int e_left,
-              const int e_right,
-              const std::size_t nmat,
-              const std::vector< tk::real >& fl,
-              const std::array< tk::real, 3 >& fn,
-              const std::array< tk::real, 3 >& gp,
-              const std::array< std::vector< tk::real >, 2 >& state,
-              std::vector< std::vector< tk::real > >& vriem,
-              std::vector< std::vector< tk::real > >& riemannLoc );
 } // tk::
 
 #endif // Basis_h
