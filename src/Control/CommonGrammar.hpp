@@ -1427,9 +1427,9 @@ namespace grm {
   //! \details As opposed to scan_until this rule, allows multiple actions
   template< class keyword, class... actions >
   struct scan :
-           pegtl::pad< act< trim< keyword, pegtl::space >, actions... >,
-                       pegtl::blank,
-                       pegtl::space > {};
+         pegtl::pad< act< trim< keyword, pegtl::space >, actions... >,
+                     pegtl::blank,
+                     pegtl::space > {};
 
   //! \brief Scan input padded by blank at left and space at right and if it
   //!   matches 'keywords', apply 'action'
@@ -1447,7 +1447,7 @@ namespace grm {
   //!   exactly matches 'keyword', apply 'actions'
   template< class keyword, class... actions >
   struct exact_scan :
-         pegtl::pad< act< pegtl::until< pegtl::space, keyword >, actions... >,
+         pegtl::pad< act< pegtl::until< keyword, pegtl::space >, actions... >,
                      pegtl::blank,
                      pegtl::space > {};
 

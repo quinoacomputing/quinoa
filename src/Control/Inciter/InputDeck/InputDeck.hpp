@@ -343,8 +343,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
     //! \return Unique set of field output variable names user wants
     //! \note This returns an ordered set so the order of the variable names
     //!   are alphabetical and unique.
-    std::set< std::string > outvars() const {
-      std::set< std::string > vars;
+    std::set< tk::ctr::OutVar > outvars() const {
+      std::set< tk::ctr::OutVar > vars;
       for (const auto& s : get< tag::cmd, tag::io, tag::outvar >()) {
         vars.insert( s );
       }

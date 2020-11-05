@@ -21,6 +21,7 @@
 #include "CartesianProduct.hpp"
 #include "Keywords.hpp"
 #include "ContainerUtil.hpp"
+#include "Centering.hpp"
 
 namespace inciter {
 
@@ -702,6 +703,40 @@ namespace grm {
     }
   };
 
+  //! Rule used to trigger action
+  template< typename tk::Centering >
+  struct push_outvar : pegtl::success {};
+  //! Add matched outvar based on depvar into vector of vector of outvars
+  template< tk::Centering centering >
+  struct action< push_outvar< centering > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      // Use a shorthand of reference to vector to push_back to
+      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
+      // Push outvar based on depvar: use first char of matched token as
+      // OutVar::var, OutVar::name = "" by default.
+      vars.emplace_back( tk::ctr::OutVar(in.string()[0], field, centering) );
+      // reset default field
+      field = 0;
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename tk::Centering >
+  struct push_outvar_human : pegtl::success {};
+  //! Add matched outvar based on depvar into vector of vector of outvars
+  template< tk::Centering centering >
+  struct action< push_outvar_human< centering > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      // Use a shorthand of reference to vector to push_back to
+      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
+      // Push outvar based on human readable string: OutVar::var = '0',
+      // OutVar::name = matched token.
+      vars.emplace_back( tk::ctr::OutVar('0', 0, centering, in.string()) );
+    }
+  };
+
 } // ::grm
 } // ::tk
 
@@ -1248,13 +1283,13 @@ namespace deck {
   template< class var >
   struct outvar_human :
       tk::grm::exact_scan< typename use< var >::pegtl_string,
-         tk::grm::Store_back< tag::cmd, tag::io, tag::outvar > > {};
+        tk::grm::push_outvar_human< tk::Centering::NODE > > {};
 
   //! Match an output variable based on depvar defined upstream of input file
   struct outvar_depvar :
          tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
-           tk::grm::match_depvar<
-             tk::grm::Store_back< tag::cmd, tag::io, tag::outvar > > > {};
+           tk::grm::match_depvar< tk::grm::push_outvar< tk::Centering::NODE > >
+         > {};
 
   //! outvar ... end block
   struct outvar_block :
