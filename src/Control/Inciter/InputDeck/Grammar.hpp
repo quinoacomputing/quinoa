@@ -737,6 +737,41 @@ namespace grm {
     }
   };
 
+  //! Function object for error checking outvar bounds for each equation type
+  template< typename Stack >
+  struct OutVarBounds {
+    const Stack& stack;
+    bool& inbounds;
+    explicit OutVarBounds( const Stack& s, bool& i )
+      : stack(s), inbounds(i) { inbounds = false; }
+    template< typename U > void operator()( brigand::type_<U> ) {
+      const auto& depvar = stack.template get< tag::param, U, tag::depvar >();
+      const auto& ncomp = stack.template get< tag::component, U >();
+      const auto& outvar = stack.template get<tag::cmd, tag::io, tag::outvar>();
+      Assert( depvar.size() == ncomp.size(), "Size mismatch" );
+      // called after matching each outvar, so only check the last one
+      const auto& var = outvar.back();
+      const auto& v = static_cast<char>( std::tolower(var.var) );
+      for (std::size_t e=0; e<depvar.size(); ++e)
+        if (v == depvar[e] && var.field < ncomp[e]) inbounds = true;
+    }
+  };
+
+  //! Rule used to trigger action
+  struct check_outvar : pegtl::success {};
+  //! Bounds checking for output variables at the end of a var ... end block
+  template<>
+  struct action< check_outvar > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      bool inbounds;
+      brigand::for_each< inciter::ctr::parameters::Keys >
+                       ( OutVarBounds( stack, inbounds ) );
+      if (!inbounds)
+        Message< Stack, ERROR, MsgKey::NOSUCHCOMPONENT >( stack, in );
+    }
+  };
+
 } // ::grm
 } // ::tk
 
@@ -1288,8 +1323,8 @@ namespace deck {
   //! Match an output variable based on depvar defined upstream of input file
   struct outvar_depvar :
          tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
-           tk::grm::match_depvar< tk::grm::push_outvar< tk::Centering::NODE > >
-         > {};
+           tk::grm::match_depvar< tk::grm::push_outvar< tk::Centering::NODE > >,
+           tk::grm::check_outvar > {};
 
   //! outvar ... end block
   struct outvar_block :

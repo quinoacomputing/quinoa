@@ -176,19 +176,23 @@ namespace grm {
       "the option must be selected upstream." },
     { MsgKey::EXISTS, "Dependent variable already used." },
     { MsgKey::NOSUCHDEPVAR, "Dependent variable not selected upstream in the "
-      "input file. To request a statistic or PDF involving this variable, use "
-      "this variable as a coefficients policy variable, or use this variable as "
-      "a refinement variable, or use a dependent variable in any way, an "
-      "equation must be specified upstream in the control file assigning this "
-      "variable to an equation to be integrated using the depvar keyword." },
+      "input file. To request an output variable, a statistic, configure a PDF "
+      "a involving this variable, use this variable as a coefficients policy "
+      "variable, use this variable as a refinement variable, or use a "
+      "dependent variable in any way, an equation must be specified upstream "
+      "in the control file assigning this variable to an equation to be "
+      "integrated using the depvar keyword." },
     { MsgKey::NOSUCHCOMPONENT, "Scalar component, used in conjunction with "
-      "dependent variable, does not exist in the preceeding block. This happens "
-      "when referring to a scalar component of a multi-component system of "
-      "equations that has less than the number of total components than the one "
-      "specified. Note that numbering components starts from 1 and their "
-      "maximum value is the number specified by the 'ncomp' keyword, if "
-      "applicable for the equation block the component specification refers "
-      "to." },
+      "dependent variable, does not exist upstream in the input file. This "
+      "happens when referring to a scalar component of a multi-component "
+      "system of equations that has less than the number of total components "
+      "than the one specified. Note that numbering of the components starts "
+      "from 1 and their maximum value is the number specified by the 'ncomp' "
+      "keyword, inclusive, if applicable for the equation block the component "
+      "specification refers to. Note that there are equation system types for "
+      "which the number of components are not configurable with the 'ncomp' "
+      "keyword, instead their ncomp is assumed known, e.g., for compflow ncomp "
+      "= 5." },
     { MsgKey::POSITIVECOMPONENT, "Scalar component must be positive." },
     { MsgKey::NOTALPHA, "Variable not alphanumeric." },
     { MsgKey::HEIGHTSPIKES, "The sum of all spike heights given in the "
