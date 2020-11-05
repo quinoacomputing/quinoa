@@ -1186,8 +1186,6 @@ DG::setup()
 
   // Compute volume of user-defined box IC
   d->boxvol( {} );      // punt for now
-
-  m_un = m_u;
 }
 
 void
@@ -1209,6 +1207,8 @@ DG::box( tk::real v )
                    m_fd.Esuel().size()/4 );
     eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
   }
+
+  m_un = m_u;
 
   // Output initial conditions to file (regardless of whether it was requested)
   startFieldOutput( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
