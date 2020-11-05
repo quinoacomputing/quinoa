@@ -1244,12 +1244,17 @@ namespace deck {
                          >,
            tk::grm::check_pref_errors > {};
 
-
-  //! Match an output variable: var must be a keyword
+  //! Match an output variable in a human readable form: var must be a keyword
   template< class var >
-  struct outvar :
-         tk::grm::exact_scan< typename use< var >::pegtl_string,
-           tk::grm::Store_back< tag::cmd, tag::io, tag::outvar > > {};
+  struct outvar_human :
+      tk::grm::exact_scan< typename use< var >::pegtl_string,
+         tk::grm::Store_back< tag::cmd, tag::io, tag::outvar > > {};
+
+  //! Match an output variable based on depvar defined upstream of input file
+  struct outvar_depvar :
+         tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
+           tk::grm::match_depvar<
+             tk::grm::Store_back< tag::cmd, tag::io, tag::outvar > > > {};
 
   //! outvar ... end block
   struct outvar_block :
@@ -1257,14 +1262,12 @@ namespace deck {
            tk::grm::readkw< use< kw::outvar >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
-             tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
-               tk::grm::match_depvar<
-                 tk::grm::Store_back< tag::cmd, tag::io, tag::outvar > > >,
-             outvar< kw::outvar_density >,
-             outvar< kw::outvar_momentum >,
-             outvar< kw::outvar_total_energy >,
-             outvar< kw::outvar_velocity >,
-             outvar< kw::outvar_pressure > > > {};
+             outvar_depvar,
+             outvar_human< kw::outvar_density >,
+             outvar_human< kw::outvar_momentum >,
+             outvar_human< kw::outvar_total_energy >,
+             outvar_human< kw::outvar_velocity >,
+             outvar_human< kw::outvar_pressure > > > {};
 
   //! field_output ... end block
   struct field_output :
