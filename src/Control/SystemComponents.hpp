@@ -93,7 +93,7 @@ namespace ctr {
 using ncomp_t = kw::ncomp::info::expect::type;
 
 //! \brief Map associating offsets to dependent variables for systems
-//! \details This map associates offsets of systems of differential !
+//! \details This map associates offsets of systems of differential
 //!   equations in a larger data array storing dependent variables for all
 //!   scalar components of a system of systems. These offsets are where a
 //!   particular system starts and their field (or component) ids then can be
