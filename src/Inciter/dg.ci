@@ -46,7 +46,9 @@ module dg {
                          const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
-      entry void comnodeout();
+      entry void comnodeout( const std::vector< std::size_t >& gid,
+                             const std::vector< std::size_t >& nesup,
+                             const std::vector< std::vector< tk::real > >& L );
       entry void comreco( int fromch,
                           const std::vector< std::size_t >& tetid,
                           const std::vector< std::vector< tk::real > >& u,

@@ -936,6 +936,19 @@ Refiner::next()
 
   } else if (m_mode == RefMode::OUTREF) {
 
+    // Augment node communication map with newly added nodes on chare-boundary
+    for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
+      auto& nodes = tk::ref_find( m_nodeCommMap, neighborchare );
+      for (const auto& e : edges) {
+        // If parent nodes were part of the node communication map for chare
+        if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes)) {
+          // Add new node if local id was generated for it
+          auto n = Hash<2>()( e );
+          if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
+        }
+      }
+    }
+
     // Store field output mesh
     m_outref_ginpoel = m_ginpoel;
     m_outref_el = m_el;
@@ -1386,8 +1399,11 @@ Refiner::updateMesh()
   for (auto r : ref) if (old.find(r) == end(old)) m_lref[r] = l++;
 
   // Get nodal communication map from Discretization worker
-  if (m_mode == RefMode::DTREF)
+  if ( m_mode == RefMode::DTREF ||
+       m_mode == RefMode::OUTREF ||
+       m_mode == RefMode::OUTDEREF ) {
     m_nodeCommMap = m_scheme.disc()[thisIndex].ckLocal()->NodeCommMap();
+  }
 
   // Update mesh and solution after refinement
   newVolMesh( old, ref );
