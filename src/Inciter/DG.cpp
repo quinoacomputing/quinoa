@@ -31,6 +31,7 @@
 #include "Vector.hpp"
 #include "Around.hpp"
 #include "Integrate/Basis.hpp"
+#include "FieldOutput.hpp"
 
 namespace inciter {
 
@@ -1410,11 +1411,7 @@ DG::extractFieldOutput(
   m_elemfields.push_back( ndof );
 
   // Collect node field solutions
-  tk::destroy(m_nodefields);
-  //for (const auto& eq : g_dgpde) {
-  //  auto no = eq.nodeFieldOutput(d->T(), d->meshvol(), coord, geoElem, un, pn);
-  //  m_nodefields.insert( end(m_nodefields), begin(no), end(no) );
-  //}
+  m_nodefields = nodeFieldOutput( un );
 
   // Send node fields contributions to neighbor chares
   if (nodeCommMap.empty())
@@ -2201,13 +2198,12 @@ DG::writeFields( CkCallback c )
   }
 
   // Query fields names from all PDEs integrated
-  std::vector< std::string > elemfieldnames, nodefieldnames;
+  std::vector< std::string > elemfieldnames;
   for (const auto& eq : g_dgpde) {
     auto ef = eq.fieldNames();
     elemfieldnames.insert( end(elemfieldnames), begin(ef), end(ef) );
-    //auto nf = eq.nodalFieldNames();
-    //nodefieldnames.insert( end(nodefieldnames), begin(nf), end(nf) );
   }
+  auto nodefieldnames = nodeFieldNames();
 
   if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );

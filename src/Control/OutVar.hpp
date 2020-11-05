@@ -70,6 +70,11 @@ struct OutVar {
     else
       return false;
   }
+
+  //! Write OutVar to ostream without centering
+  //! \param[in,out] os Output stream to write to
+  void print( std::ostream& os ) const
+  { if (name.empty()) os << var << field+1; else os << name; }
 };
 
 //! \brief Pack/Unpack: Namespace-scope serialize OutVar object for Charm++
@@ -82,16 +87,14 @@ inline void pup( PUP::er& p, OutVar& v ) { v.pup(p); }
   #pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
-//! \brief Operator << for writing OutVar to output streams
+//! Operator << for writing OutVar to output streams
 //! \param[in,out] os Output stream to write to
 //! \param[in] outvar OutVar to write
 //! \return Updated output stream
 static std::ostream& operator<< ( std::ostream& os, const OutVar& outvar ) {
   std::string c( 1, static_cast< char >( outvar.centering ) );
-  if (outvar.name.empty())
-    os << outvar.var << outvar.field+1 << c;
-  else
-    os << outvar.name << '_' << c;
+  outvar.print( os );
+  os << (outvar.name.empty() ? "" : "_") << c;
   return os;
 }
 

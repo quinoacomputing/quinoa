@@ -21,6 +21,7 @@ add_library(Inciter
             NodeDiagnostics.cpp
             ElemDiagnostics.cpp
             PrefIndicator.cpp
+            FieldOutput.cpp
             NodeBC.cpp)
 
 target_include_directories(Inciter PUBLIC
