@@ -82,12 +82,14 @@ class CompFlow {
     //! Determine nodes that lie inside the user-defined IC box
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] inbox List of nodes at which box user ICs are set
-    void inIcBox( const tk::UnsMesh::Coords& coord,
-      std::vector< std::size_t >& inbox ) const
+    std::unordered_set< std::size_t >
+    IcBoxNodes( const tk::UnsMesh::Coords& coord ) const
     {
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
+
+      std::unordered_set< std::size_t > inbox;
 
       // Detect if user has configured a box IC
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
@@ -105,9 +107,11 @@ class CompFlow {
           x[i]>box[0] && x[i]<box[1] && y[i]>box[2] && y[i]<box[3] &&
           z[i]>box[4] && z[i]<box[5] )
         {
-          inbox.push_back( i );
+          inbox.insert( i );
         }
       }
+
+      return inbox;
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
@@ -120,7 +124,7 @@ class CompFlow {
                      tk::Fields& unk,
                      real t,
                      real V,
-                     const std::vector< std::size_t >& inbox ) const
+                     const std::unordered_set< std::size_t >& inbox ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
 
@@ -131,12 +135,7 @@ class CompFlow {
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
         int boxed = 0;
-        for (std::size_t il=0; il<inbox.size(); ++il) {
-          if (inbox[il] == i) {
-            boxed = 1;
-            break;
-          }
-        }
+        if (inbox.find(i) != inbox.end()) boxed = 1;
         auto s = Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t );
 
         // initialize the user-defined box IC
@@ -591,7 +590,7 @@ class CompFlow {
               const std::vector< real >& vol,
               const std::vector< std::size_t >& edgenode,
               const std::vector< std::size_t >& edgeid,
-              const std::vector< std::size_t >& boxnodes,
+              const std::unordered_set< std::size_t >& boxnodes,
               const tk::Fields& G,
               const tk::Fields& U,
               const std::vector< tk::real >& tp,
@@ -1508,7 +1507,7 @@ class CompFlow {
       const std::vector< std::size_t >& inpoel,
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& esup,
-      const std::vector< std::size_t >& boxnodes,
+      const std::unordered_set< std::size_t >& boxnodes,
       const std::array< std::vector< real >, 3 >& coord,
       tk::Fields& R ) const
     {

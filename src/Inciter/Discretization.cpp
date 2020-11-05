@@ -509,7 +509,7 @@ Discretization::stat( tk::real mesh_volume )
 }
 
 void
-Discretization::boxvol( const std::vector< std::size_t >& nodes )
+Discretization::boxvol( const std::unordered_set< std::size_t >& nodes )
 // *****************************************************************************
 // Compute total box IC volume
 //! \param[in] nodes Node list contributing to box IC volume

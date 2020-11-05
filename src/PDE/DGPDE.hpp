@@ -125,16 +125,15 @@ class DGPDE {
     { return self->nprim(); }
 
     //! Public interface to determine elements that lie inside the IC box
-    void inIcBox( const tk::Fields& geoElem,
-      std::size_t nielem,
-      std::vector< std::size_t >& inbox ) const
-    { self->inIcBox( geoElem, nielem, inbox ); }
+    std::unordered_set< std::size_t > IcBoxElems( const tk::Fields& geoElem,
+      std::size_t nielem ) const
+    { return self->IcBoxElems( geoElem, nielem ); }
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
-                     std::vector< std::size_t >& inbox,
+                     const std::unordered_set< std::size_t >& inbox,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
@@ -193,7 +192,7 @@ class DGPDE {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
-              const std::vector< std::size_t >& boxelems,
+              const std::unordered_set< std::size_t >& boxelems,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
@@ -282,13 +281,12 @@ class DGPDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual std::size_t nprim() const = 0;
-      virtual void inIcBox( const tk::Fields&,
-        std::size_t,
-        std::vector< std::size_t >& ) const = 0;
+      virtual std::unordered_set< std::size_t > IcBoxElems( const tk::Fields&,
+        std::size_t ) const = 0;
       virtual void initialize( const tk::Fields&,
                                const std::vector< std::size_t >&,
                                const tk::UnsMesh::Coords&,
-                               std::vector< std::size_t >&,
+                               const std::unordered_set< std::size_t >&,
                                tk::Fields&,
                                tk::real,
                                const std::size_t nielem ) const = 0;
@@ -326,7 +324,7 @@ class DGPDE {
                         const tk::Fields&,
                         const inciter::FaceData&,
                         const std::vector< std::size_t >&,
-                        const std::vector< std::size_t >&,
+                        const std::unordered_set< std::size_t >&,
                         const tk::UnsMesh::Coords&,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -378,14 +376,13 @@ class DGPDE {
       Concept* copy() const override { return new Model( *this ); }
       std::size_t nprim() const override
       { return data.nprim(); }
-      void inIcBox( const tk::Fields& geoElem,
-        std::size_t nielem,
-        std::vector< std::size_t >& inbox )
-      const override { data.inIcBox( geoElem, nielem, inbox ); }
+      std::unordered_set< std::size_t > IcBoxElems( const tk::Fields& geoElem,
+        std::size_t nielem )
+      const override { return data.IcBoxElems( geoElem, nielem ); }
       void initialize( const tk::Fields& L,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
-                       std::vector< std::size_t >& inbox,
+                       const std::unordered_set< std::size_t >& inbox,
                        tk::Fields& unk,
                        tk::real t,
                        const std::size_t nielem )
@@ -434,7 +431,7 @@ class DGPDE {
                 const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
                 const std::vector< std::size_t >& inpoel,
-                const std::vector< std::size_t >& boxelems,
+                const std::unordered_set< std::size_t >& boxelems,
                 const tk::UnsMesh::Coords& coord,
                 const tk::Fields& U,
                 const tk::Fields& P,

@@ -96,9 +96,8 @@ class CompFlow {
     //! \param[in] geoElem Element geometry array
     //! \param[in] nielem Number of internal elements
     //! \param[in,out] inbox List of nodes at which box user ICs are set
-    void inIcBox( const tk::Fields& geoElem,
-      std::size_t nielem,
-      std::vector< std::size_t >& inbox ) const
+    std::unordered_set< std::size_t > IcBoxElems( const tk::Fields& geoElem,
+      std::size_t nielem ) const
     {
       // Detect if user has configured a box IC
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
@@ -109,6 +108,8 @@ class CompFlow {
              icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
       const auto eps = std::numeric_limits< tk::real >::epsilon();
 
+      std::unordered_set< std::size_t > inbox;
+
       // Determine which elements lie in the IC box
       for (ncomp_t e=0; e<nielem; ++e) {
         auto x = geoElem(e,1,0);
@@ -118,9 +119,11 @@ class CompFlow {
           {return abs(p) > eps;} ) &&
           x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5] )
         {
-          inbox.push_back( e );
+          inbox.insert( e );
         }
       }
+
+      return inbox;
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
@@ -134,7 +137,7 @@ class CompFlow {
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
-                     std::vector< std::size_t >& inbox,
+                     const std::unordered_set< std::size_t >& inbox,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
@@ -145,12 +148,7 @@ class CompFlow {
       // Set initial conditions inside user-defined IC box
       for (std::size_t e=0; e<nielem; ++e) {
         int boxed = 0;
-        for (std::size_t il=0; il<inbox.size(); ++il) {
-          if (inbox[il] == e) {
-            boxed = 1;
-            break;
-          }
-        }
+        if (inbox.find(e) != inbox.end()) boxed = 1;
 
         // initialize the user-defined box IC
         if (boxed) initializeBox(e, t, unk);
@@ -436,7 +434,7 @@ class CompFlow {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
-              const std::vector< std::size_t >& boxelems,
+              const std::unordered_set< std::size_t >& boxelems,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
@@ -1067,7 +1065,7 @@ class CompFlow {
     //!    * specific energy (internal energy per unit mass): J/kg
     void boxSrc( tk::real t,
       const std::vector< std::size_t >& inpoel,
-      const std::vector< std::size_t >& boxelems,
+      const std::unordered_set< std::size_t >& boxelems,
       const tk::UnsMesh::Coords& coord,
       const tk::Fields& geoElem,
       const std::vector< std::size_t >& ndofel,

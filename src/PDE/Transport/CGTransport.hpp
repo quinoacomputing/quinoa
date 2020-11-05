@@ -70,9 +70,12 @@ class Transport {
     }
 
     //! Determine nodes that lie inside the user-defined IC box
-    void inIcBox( const tk::UnsMesh::Coords&,
-      std::vector< std::size_t >& ) const
-    {}
+    std::unordered_set< std::size_t >
+      IcBoxNodes( const tk::UnsMesh::Coords& ) const
+    {
+      std::unordered_set< std::size_t > inbox;
+      return inbox;
+    }
 
     //! Initalize the transport equations using problem policy
     //! \param[in] coord Mesh node coordinates
@@ -82,7 +85,7 @@ class Transport {
                      tk::Fields& unk,
                      real t,
                      real,
-                     const std::vector< std::size_t >& ) const
+                     const std::unordered_set< std::size_t >& ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
@@ -207,7 +210,7 @@ class Transport {
       const std::vector< real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >& edgeid,
-      const std::vector< std::size_t >&,
+      const std::unordered_set< std::size_t >&,
       const tk::Fields& G,
       const tk::Fields& U,
       const std::vector< tk::real >&,
@@ -573,7 +576,7 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
-      std::vector< std::size_t > inbox;
+      std::unordered_set< std::size_t > inbox;
       initialize( coord, U, t, V, inbox );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)

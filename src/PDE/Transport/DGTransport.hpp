@@ -90,9 +90,12 @@ class Transport {
     }
 
     //! Determine elements that lie inside the user-defined IC box
-    void inIcBox( const tk::Fields&,
-      std::size_t,
-      std::vector< std::size_t >& ) const {}
+    std::unordered_set< std::size_t > IcBoxElems( const tk::Fields&,
+      std::size_t ) const
+    {
+      std::unordered_set< std::size_t > inbox;
+      return inbox;
+    }
 
     //! Initalize the transport equations for DG
     //! \param[in] L Element mass matrix
@@ -105,7 +108,7 @@ class Transport {
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
-                     std::vector< std::size_t >& /*inbox*/,
+                     const std::unordered_set< std::size_t >& /*inbox*/,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
@@ -237,7 +240,7 @@ class Transport {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
-              const std::vector< std::size_t >&,
+              const std::unordered_set< std::size_t >&,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
