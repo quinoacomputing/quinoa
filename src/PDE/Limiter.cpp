@@ -876,22 +876,15 @@ void BoundPreservingLimiting( std::size_t nmat,
   const auto& cz = coord[2];
 
   // Extract the element coordinates
-    std::array< std::array< tk::real, 3>, 4 > coordel {{
-      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+  std::array< std::array< tk::real, 3>, 4 > coordel {{
+    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
 
   // Compute the determinant of Jacobian matrix
-    auto detT =
-      tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
-
-  // Extract the node index of local faces
-    std::array< std::array< std::size_t, 3>, 4 > nodefa {{
-      {{ inpoel[4*e  ], inpoel[4*e+1], inpoel[4*e+2] }},
-      {{ inpoel[4*e+1], inpoel[4*e+2], inpoel[4*e+3] }},
-      {{ inpoel[4*e+2], inpoel[4*e+3], inpoel[4*e  ] }},
-      {{ inpoel[4*e+3], inpoel[4*e  ], inpoel[4*e+1] }} }};
+  auto detT =
+    tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
   std::vector< tk::real > phi_bound(nmat, 1.0);
 
@@ -899,10 +892,14 @@ void BoundPreservingLimiting( std::size_t nmat,
   for (std::size_t lf=0; lf<4; ++lf)
   {
     // Extract the face coordinates
+    std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
+                                             inpoel[4*e+tk::lpofa[lf][1]],
+                                             inpoel[4*e+tk::lpofa[lf][2]] }};
+
     std::array< std::array< tk::real, 3>, 3 > coordfa {{
-      {{ cx[ nodefa[lf][0] ], cy[ nodefa[lf][0] ], cz[ nodefa[lf][0] ] }},
-      {{ cx[ nodefa[lf][1] ], cy[ nodefa[lf][1] ], cz[ nodefa[lf][1] ] }},
-      {{ cx[ nodefa[lf][2] ], cy[ nodefa[lf][2] ], cz[ nodefa[lf][2] ] }} }};
+      {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
+      {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
+      {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
 
     auto ng = tk::NGfa(ndof);
 
