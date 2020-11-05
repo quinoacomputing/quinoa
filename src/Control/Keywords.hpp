@@ -1941,7 +1941,7 @@ struct outvar_info {
     + outvar_pressure::string() + "\'.";
   }
 };
-using outvar = keyword< outvar_info, TAOCPP_PEGTL_STRING("outvar") >;
+using outvar = keyword< outvar_info, TAOCPP_PEGTL_STRING("var") >;
 
 struct rngs_info {
   static std::string name() { return "rngs"; }
