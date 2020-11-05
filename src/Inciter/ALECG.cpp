@@ -376,7 +376,7 @@ ALECG::setup()
   auto d = Disc();
 
   // Determine nodes inside user-defined IC box
-  for (auto& eq : g_cgpde) eq.inIcBox( d->Coord(), m_boxnodes );
+  for (auto& eq : g_cgpde) m_boxnodes = eq.IcBoxNodes( d->Coord() );
 
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );

@@ -107,16 +107,16 @@ class CGPDE {
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to determining which nodes are in IC box
-    void inIcBox( const tk::UnsMesh::Coords& coord,
-      std::vector< std::size_t >& inbox )
-    { self->inIcBox( coord, inbox ); }
+    std::unordered_set< std::size_t>
+    IcBoxNodes( const tk::UnsMesh::Coords& coord )
+    { return self->IcBoxNodes( coord ); }
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< real >, 3 >& coord,
                      tk::Fields& unk,
                      real t,
                      real V,
-                     const std::vector< std::size_t >& inbox )
+                     const std::unordered_set< std::size_t >& inbox )
     { self->initialize( coord, unk, t, V, inbox ); }
 
     //! Public interface to computing the nodal gradients for ALECG
@@ -157,7 +157,7 @@ class CGPDE {
       const std::vector< real >& vol,
       const std::vector< std::size_t >& edgenode,
       const std::vector< std::size_t >& edgeid,
-      const std::vector< std::size_t >& boxnodes,
+      const std::unordered_set< std::size_t >& boxnodes,
       const tk::Fields& G,
       const tk::Fields& U,
       const std::vector< real >& tp,
@@ -270,13 +270,13 @@ class CGPDE {
       Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void inIcBox( const tk::UnsMesh::Coords&,
-        std::vector< std::size_t >& ) = 0;
+      virtual std::unordered_set< std::size_t >
+        IcBoxNodes( const tk::UnsMesh::Coords& ) = 0;
       virtual void initialize( const std::array< std::vector< real >, 3 >&,
                                tk::Fields&,
                                real,
                                real,
-                               const std::vector< std::size_t >& inbox ) = 0;
+                               const std::unordered_set< std::size_t >& ) = 0;
       virtual void chBndGrad( const std::array< std::vector< real >, 3 >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
@@ -308,7 +308,7 @@ class CGPDE {
         const std::vector< real >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
-        const std::vector< std::size_t >&,
+        const std::unordered_set< std::size_t >&,
         const tk::Fields&,
         const tk::Fields&,
         const std::vector< real >&,
@@ -372,14 +372,14 @@ class CGPDE {
     struct Model : Concept {
       explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      void inIcBox( const tk::UnsMesh::Coords& coord,
-        std::vector< std::size_t >& inbox )
-      override { data.inIcBox( coord, inbox ); }
+      std::unordered_set< std::size_t >
+        IcBoxNodes( const tk::UnsMesh::Coords& coord )
+      override { return data.IcBoxNodes( coord ); }
       void initialize( const std::array< std::vector< real >, 3 >& coord,
                        tk::Fields& unk,
                        real t,
                        real V,
-                       const std::vector< std::size_t >& inbox )
+                       const std::unordered_set< std::size_t >& inbox )
       override { data.initialize( coord, unk, t, V, inbox ); }
       void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
         const std::vector< std::size_t >& inpoel,
@@ -414,7 +414,7 @@ class CGPDE {
         const std::vector< real >& vol,
         const std::vector< std::size_t >& edgenode,
         const std::vector< std::size_t >& edgeid,
-        const std::vector< std::size_t >& boxnodes,
+        const std::unordered_set< std::size_t >& boxnodes,
         const tk::Fields& G,
         const tk::Fields& U,
         const std::vector< real >& tp,

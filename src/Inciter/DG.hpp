@@ -396,7 +396,7 @@ class DG : public CBase_DG {
       }
     } m_outmesh;
     //! Element ids at which box ICs are defined by user
-    std::vector< std::size_t > m_boxelems;
+    std::unordered_set< std::size_t > m_boxelems;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

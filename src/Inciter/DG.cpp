@@ -1181,8 +1181,8 @@ DG::setup()
   lhs();
 
   // Determine elements inside user-defined IC box
-  for (auto& eq : g_dgpde) eq.inIcBox( m_geoElem, m_fd.Esuel().size()/4,
-    m_boxelems );
+  for (auto& eq : g_dgpde)
+    m_boxelems = eq.IcBoxElems( m_geoElem, m_fd.Esuel().size()/4 );
 
   // Compute volume of user-defined box IC
   d->boxvol( {} );      // punt for now
