@@ -35,7 +35,6 @@
 #include "Riemann/Upwind.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
-#include "FieldOutputUtil.hpp"
 
 namespace inciter {
 
@@ -437,31 +436,19 @@ class Transport {
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
     //! \param[in] coord Node coordinates
-    //! \param[in] inpoel Mesh connectivity
-    //! \param[in] esup Elements surrounding points
     //! \param[in] geoElem Element geometry array
-    //! \param[in,out] U Solution vector at recent time step
+    //! \param[in,out] Un Node solution vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     nodeFieldOutput( tk::real t,
                      tk::real V,
                      const tk::UnsMesh::Coords& coord,
-                     const std::vector< std::size_t >& inpoel,
-                     const std::pair< std::vector< std::size_t >,
-                                      std::vector< std::size_t > >& esup,
                      const tk::Fields& geoElem,
-                     const tk::Fields& U,
+                     const tk::Fields& Un,
                      const tk::Fields& ) const
     {
-      // Evaluate solution in nodes
-      auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      auto [Un,Pn] =
-        tk::nodeEval( m_offset, ndof, rdof, coord, inpoel, esup, U );
-      // Extract nodal fields
-      auto f = fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
-                            coord, Un );
-      return f;
+      return fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
+                          coord, Un );
     }
 
     //! Return time history field output evaluated at time history points

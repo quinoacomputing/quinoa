@@ -472,7 +472,7 @@ class DG : public CBase_DG {
     void propagate_ndof();
 
     //! Evaluate solution on incomping (a potentially refined) mesh
-    std::tuple< tk::Fields, tk::Fields >
+    std::tuple< tk::Fields, tk::Fields, tk::Fields, tk::Fields >
     evalSolution(
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
