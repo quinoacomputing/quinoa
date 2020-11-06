@@ -14,16 +14,17 @@
 
 #include "Types.hpp"
 #include "Fields.hpp"
+#include "Centering.hpp"
 
 namespace inciter {
 
 //! Collect field output names based on user input
 std::vector< std::string >
-userFieldNames();
+userFieldNames( tk::Centering c );
 
 //! Collect field output from solution based on user input
 std::vector< std::vector< tk::real > >
-userFieldOutput( const tk::Fields& Un );
+userFieldOutput( const tk::Fields& U, tk::Centering c );
 
 } // inciter::
 

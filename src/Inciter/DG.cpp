@@ -1383,25 +1383,15 @@ DG::extractFieldOutput(
   m_outmesh.bface = bface;
   m_outmesh.nodeCommMap = nodeCommMap;
 
-  auto d = Disc();
   const auto& inpoel = std::get< 0 >( chunk );
   auto nelem = inpoel.size() / 4;
 
   // Evaluate element solution on incoming mesh
   auto [ue,pe,un,pn] = evalSolution( inpoel, coord, addedTets );
 
-  // Collect element field solutions
-  tk::destroy(m_elemfields);
-  auto geoElem = tk::genGeoElemTet( inpoel, coord );
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  std::array< std::vector< tk::real >, 3 > coorde{
-    geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
-  auto vole = geoElem.extract(0,0);
-  for (const auto& eq : g_dgpde) {
-    auto eo = eq.fieldOutput( d->T(), d->meshvol(), nelem, rdof, vole,
-                              coorde, ue, pe );
-    m_elemfields.insert( end(m_elemfields), begin(eo), end(eo) );
-  }
+  // Collect field output requested by user
+  m_elemfields = userFieldOutput( ue, tk::Centering::ELEM );
+  m_nodefields = userFieldOutput( un, tk::Centering::NODE );
 
   // Add adaptive indicator array to element-centered field output
   std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
@@ -1409,9 +1399,6 @@ DG::extractFieldOutput(
   for (const auto& [child,parent] : addedTets)
     ndof[child] = m_ndof[parent];
   m_elemfields.push_back( ndof );
-
-  // Collect node field solutions
-  m_nodefields = userFieldOutput( un );
 
   // Send node fields contributions to neighbor chares
   if (nodeCommMap.empty())
@@ -2197,13 +2184,9 @@ DG::writeFields( CkCallback c )
     }
   }
 
-  // Query fields names from all PDEs integrated
-  std::vector< std::string > elemfieldnames;
-  for (const auto& eq : g_dgpde) {
-    auto ef = eq.fieldNames();
-    elemfieldnames.insert( end(elemfieldnames), begin(ef), end(ef) );
-  }
-  auto nodefieldnames = userFieldNames();
+  // Query fields names requested by user
+  auto elemfieldnames = userFieldNames( tk::Centering::ELEM );
+  auto nodefieldnames = userFieldNames( tk::Centering::NODE );
 
   if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );

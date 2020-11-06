@@ -20,29 +20,33 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 
 std::vector< std::string >
-userFieldNames()
+userFieldNames( tk::Centering c )
 // *****************************************************************************
 // Collect field output names based on user input
+//! \param[in] c Extract variable names only with this centering
 //! \return Output field names requested by user
 // *****************************************************************************
 {
   // Get list of output variables requested by user
   const auto& outvar = g_inputdeck.get< tag::cmd, tag::io, tag::outvar >();
 
-  std::vector< std::string > nf;
-  for (const auto& v : outvar) {
-    std::stringstream s;
-    s << v;
-    nf.push_back( s.str() );
-  }
+  std::vector< std::string > f;
+  for (const auto& v : outvar)
+    if (v.centering == c) {
+      std::stringstream s;
+      s << v;
+      f.push_back( s.str() );
+    }
 
-  return nf;
+  return f;
 }
 
 std::vector< std::vector< tk::real > >
-userFieldOutput( const tk::Fields& Un )
+userFieldOutput( const tk::Fields& U, tk::Centering c )
 // *****************************************************************************
 // Collect field output from solution based on user input
+//! \param[in] U Solution data to extract from
+//! \param[in] c Extract variables only with this centering
 //! \return Output fields requested by user
 // *****************************************************************************
 {
@@ -53,11 +57,12 @@ userFieldOutput( const tk::Fields& Un )
   const auto& offset =
     g_inputdeck.get< tag::component >().offsetmap( g_inputdeck );
 
-  std::vector< std::vector< tk::real > > nf;
+  std::vector< std::vector< tk::real > > f;
   for (const auto& v : outvar)
-    nf.push_back( Un.extract( v.field, tk::cref_find(offset,v.var) ) );
+    if (v.centering == c)
+      f.push_back( U.extract( v.field, tk::cref_find(offset,v.var) ) );
 
-  return nf;
+  return f;
 }
 
 } // inciter::
