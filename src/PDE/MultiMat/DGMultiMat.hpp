@@ -41,7 +41,6 @@
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "Problem/FieldOutput.hpp"
-#include "FieldOutputUtil.hpp"
 
 namespace inciter {
 
@@ -835,32 +834,20 @@ class MultiMat {
     //! \param[in] t Physical time
     //! \param[in] V Total mesh volume
     //! \param[in] coord Node coordinates
-    //! \param[in] inpoel Mesh connectivity
-    //! \param[in] esup Elements surrounding points
     //! \param[in] geoElem Element geometry array
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] P Primitive variable vector at recent time step
+    //! \param[in] Un Node solution vector at recent time step
+    //! \param[in] Pn Node primitive variable vector at recent time step
     //! \return Vector of vectors to be output to file
     std::vector< std::vector< tk::real > >
     nodeFieldOutput( tk::real t,
                      tk::real V,
                      const tk::UnsMesh::Coords& coord,
-                     const std::vector< std::size_t >& inpoel,
-                     const std::pair< std::vector< std::size_t >,
-                                      std::vector< std::size_t > >& esup,
                      const tk::Fields& geoElem,
-                     const tk::Fields& U,
-                     const tk::Fields& P ) const
+                     const tk::Fields& Un,
+                     const tk::Fields& Pn ) const
     {
-      // Evaluate solution in nodes
-      auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      auto [Un,Pn] =
-        tk::nodeEval( m_offset, ndof, rdof, coord, inpoel, esup, U, P );
-      // Extract nodal fields
-      auto f = fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
-                            coord, Un, Pn );
-      return f;
+      return fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
+                          coord, Un, Pn );
     }
 
     //! Return surface field output going to file
