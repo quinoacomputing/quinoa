@@ -715,7 +715,12 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
       // Push outvar based on depvar: use first char of matched token as
-      // OutVar::var, OutVar::name = "" by default.
+      // OutVar::var, OutVar::name = "" by default. OutVar::name being
+      // empty will be used to differentiate a depvar-based outvar from a
+      // human-readable outvar. Depvar-based outvars can directly access
+      // solution arrays using their field. Human-readable outvars need a
+      // mechanism (a function) to read and compute their variables from
+      // solution arrays.
       using inciter::deck::centering;
       vars.emplace_back( tk::ctr::OutVar(in.string()[0], field, centering) );
       // reset default field
@@ -732,7 +737,11 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
       // Push outvar based on human readable string: OutVar::var = '0',
-      // OutVar::name = matched token.
+      // OutVar::name = matched token. OutVar::name being not empty will be
+      // used to differentiate a depvar-based outvar from a human-readable
+      // outvar. Depvar-based outvars can directly access solution arrays using
+      // their field. Human-readable outvars need a mechanism (a function) to
+      // read and compute their variables from solution arrays.
       using inciter::deck::centering;
       vars.emplace_back( tk::ctr::OutVar('0', 0, centering, in.string()) );
     }

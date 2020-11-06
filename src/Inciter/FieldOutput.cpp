@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/FieldOutput.hpp
+  \file      src/Inciter/FieldOutput.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
@@ -58,9 +58,15 @@ userFieldOutput( const tk::Fields& U, tk::Centering c )
     g_inputdeck.get< tag::component >().offsetmap( g_inputdeck );
 
   std::vector< std::vector< tk::real > > f;
-  for (const auto& v : outvar)
-    if (v.centering == c)
-      f.push_back( U.extract( v.field, tk::cref_find(offset,v.var) ) );
+  for (const auto& v : outvar) {
+    if (v.centering == c) {
+      if (v.name.empty()) {     // depvar-based direct access
+        f.push_back( U.extract( v.field, tk::cref_find(offset,v.var) ) );
+      } else {                  // human-readable via custom function
+        //f.push_back( v.getvar(U) );
+      }
+    }
+  }
 
   return f;
 }
