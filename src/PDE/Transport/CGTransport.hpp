@@ -70,12 +70,9 @@ class Transport {
     }
 
     //! Determine nodes that lie inside the user-defined IC box
-    std::unordered_set< std::size_t >
-      IcBoxNodes( const tk::UnsMesh::Coords& ) const
-    {
-      std::unordered_set< std::size_t > inbox;
-      return inbox;
-    }
+    void IcBoxNodes( const tk::UnsMesh::Coords&,
+      std::unordered_set< std::size_t >& ) const
+    {}
 
     //! Initalize the transport equations using problem policy
     //! \param[in] coord Mesh node coordinates

@@ -125,9 +125,10 @@ class DGPDE {
     { return self->nprim(); }
 
     //! Public interface to determine elements that lie inside the IC box
-    std::unordered_set< std::size_t > IcBoxElems( const tk::Fields& geoElem,
-      std::size_t nielem ) const
-    { return self->IcBoxElems( geoElem, nielem ); }
+    void IcBoxElems( const tk::Fields& geoElem,
+      std::size_t nielem,
+      std::unordered_set< std::size_t >& inbox ) const
+    { self->IcBoxElems( geoElem, nielem, inbox ); }
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const tk::Fields& L,
@@ -281,8 +282,9 @@ class DGPDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual std::size_t nprim() const = 0;
-      virtual std::unordered_set< std::size_t > IcBoxElems( const tk::Fields&,
-        std::size_t ) const = 0;
+      virtual void IcBoxElems( const tk::Fields&,
+        std::size_t,
+        std::unordered_set< std::size_t >& ) const = 0;
       virtual void initialize( const tk::Fields&,
                                const std::vector< std::size_t >&,
                                const tk::UnsMesh::Coords&,
@@ -376,9 +378,10 @@ class DGPDE {
       Concept* copy() const override { return new Model( *this ); }
       std::size_t nprim() const override
       { return data.nprim(); }
-      std::unordered_set< std::size_t > IcBoxElems( const tk::Fields& geoElem,
-        std::size_t nielem )
-      const override { return data.IcBoxElems( geoElem, nielem ); }
+      void IcBoxElems( const tk::Fields& geoElem,
+        std::size_t nielem,
+        std::unordered_set< std::size_t >& inbox )
+      const override { data.IcBoxElems( geoElem, nielem, inbox ); }
       void initialize( const tk::Fields& L,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
