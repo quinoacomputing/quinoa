@@ -1175,28 +1175,32 @@ using precision = keyword< precision_info, TAOCPP_PEGTL_STRING("precision") >;
 struct elem_info {
   static std::string name() { return "elem"; }
   static std::string shortDescription() { return
-    "Specify elem-centering for PDF output"; }
+    "Specify elem-centering for output"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select
-    element-centering for the probability values on the sample space
-    grid for file output of probability density functions (PDFs). Example:
-    "centering elem", which selects element-centered values. Valid options
-    are 'elem' and 'node', denoting cell-centered and point-centered output,
-    respectively.)"; }
+    R"(This keyword is used to select elem-centering for variable output. In
+    walker for example, this is used to configure probability values on the
+    sample space grid for file output of probability density functions (PDFs).
+    Example: "centering elem", which selects element-centered values. Valid
+    options are 'elem' and 'node', denoting cell-centered and point-centered
+    output, respectively. In inciter this keyword is used in output variable
+    specification blocks, prefixing variable names by either 'node' or 'elem',
+    to specify their centering for output to file.)"; }
 };
 using elem = keyword< elem_info, TAOCPP_PEGTL_STRING("elem") >;
 
 struct node_info {
   static std::string name() { return "node"; }
   static std::string shortDescription() { return
-    "Specify node-centering for PDF output"; }
+    "Specify node-centering for output"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select
-    node-centering for the probability values on the sample space grid for
-    file output of probability density functions (PDFs). Example: "centering
-    elem", which selects element-centered values. Valid options are 'elem'
-    and 'node', denoting cell-centered and point-centered output,
-    respectively.)"; }
+    R"(This keyword is used to select node-centering for variable output. In
+    walker for example, this is used to configure probability values on the
+    sample space grid for file output of probability density functions (PDFs).
+    Example: "centering elem", which selects element-centered values. Valid
+    options are 'elem' and 'node', denoting cell-centered and point-centered
+    output, respectively. In inciter this keyword is used in output variable
+    specification blocks, prefixing variable names by either 'node' or 'elem',
+    to specify their centering for output to file.)"; }
 };
 using node = keyword< node_info, TAOCPP_PEGTL_STRING("node") >;
 

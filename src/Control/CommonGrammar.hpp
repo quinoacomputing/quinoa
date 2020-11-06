@@ -1451,7 +1451,8 @@ namespace grm {
   //!   exactly matches 'keyword', apply 'actions'
   template< class keyword, class... actions >
   struct exact_scan :
-         pegtl::pad< act< pegtl::until< keyword, pegtl::space >, actions... >,
+         pegtl::pad< act< pegtl::until< typename keyword::pegtl_string,
+                                        pegtl::space >, actions... >,
                      pegtl::blank,
                      pegtl::space > {};
 
@@ -1503,7 +1504,8 @@ namespace grm {
                               insert >,
                          pegtl::one< rbound > > {};
 
-  //! Process 'keyword' and call its 'insert' action if matches 'kw_type'
+  //! \brief Process 'keyword' and if matches, parse following token (expecting
+  //!   'kw_type' and call 'insert' action on it
   template< class keyword, class insert, class kw_type = pegtl::digit >
   struct process :
          pegtl::if_must<

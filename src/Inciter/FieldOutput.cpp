@@ -32,7 +32,7 @@ userFieldNames()
   std::vector< std::string > nf;
   for (const auto& v : outvar) {
     std::stringstream s;
-    v.print( s );
+    s << v;
     nf.push_back( s.str() );
   }
 

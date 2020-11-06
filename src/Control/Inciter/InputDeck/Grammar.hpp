@@ -49,6 +49,9 @@ namespace deck {
   //!    can be required to be unique.
   static std::set< std::string > pointnames;
 
+  //! Parser-lifetime storage of elem or node centering
+  static tk::Centering centering = tk::Centering::NODE;
+
 } // ::deck
 } // ::inciter
 
@@ -704,17 +707,17 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tk::Centering >
   struct push_outvar : pegtl::success {};
   //! Add matched outvar based on depvar into vector of vector of outvars
-  template< tk::Centering centering >
-  struct action< push_outvar< centering > > {
+  template<>
+  struct action< push_outvar > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       // Use a shorthand of reference to vector to push_back to
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
       // Push outvar based on depvar: use first char of matched token as
       // OutVar::var, OutVar::name = "" by default.
+      using inciter::deck::centering;
       vars.emplace_back( tk::ctr::OutVar(in.string()[0], field, centering) );
       // reset default field
       field = 0;
@@ -722,17 +725,17 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tk::Centering >
   struct push_outvar_human : pegtl::success {};
   //! Add matched outvar based on depvar into vector of vector of outvars
-  template< tk::Centering centering >
-  struct action< push_outvar_human< centering > > {
+  template<>
+  struct action< push_outvar_human > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       // Use a shorthand of reference to vector to push_back to
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
       // Push outvar based on human readable string: OutVar::var = '0',
       // OutVar::name = matched token.
+      using inciter::deck::centering;
       vars.emplace_back( tk::ctr::OutVar('0', 0, centering, in.string()) );
     }
   };
@@ -769,6 +772,18 @@ namespace grm {
                        ( OutVarBounds( stack, inbounds ) );
       if (!inbounds)
         Message< Stack, ERROR, MsgKey::NOSUCHCOMPONENT >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
+  struct set_centering : pegtl::success {};
+  //! Set variable centering in parser's state
+  template<>
+  struct action< set_centering > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& ) {
+      inciter::deck::centering =
+        (in.string() == "node") ? tk::Centering::NODE : tk::Centering::ELEM;
     }
   };
 
@@ -1317,14 +1332,19 @@ namespace deck {
   //! Match an output variable in a human readable form: var must be a keyword
   template< class var >
   struct outvar_human :
-      tk::grm::exact_scan< typename use< var >::pegtl_string,
-        tk::grm::push_outvar_human< tk::Centering::NODE > > {};
+      tk::grm::exact_scan< use< var >, tk::grm::push_outvar_human > {};
 
   //! Match an output variable based on depvar defined upstream of input file
   struct outvar_depvar :
          tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
-           tk::grm::match_depvar< tk::grm::push_outvar< tk::Centering::NODE > >,
+           tk::grm::match_depvar< tk::grm::push_outvar >,
            tk::grm::check_outvar > {};
+
+  //! Parse a centering token and if matches, set centering in parser's state
+  struct outvar_centering :
+         pegtl::sor<
+           tk::grm::exact_scan< use< kw::node >, tk::grm::set_centering >,
+           tk::grm::exact_scan< use< kw::elem >, tk::grm::set_centering > > {};
 
   //! outvar ... end block
   struct outvar_block :
@@ -1332,6 +1352,7 @@ namespace deck {
            tk::grm::readkw< use< kw::outvar >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
+             outvar_centering,
              outvar_depvar,
              outvar_human< kw::outvar_density >,
              outvar_human< kw::outvar_momentum >,

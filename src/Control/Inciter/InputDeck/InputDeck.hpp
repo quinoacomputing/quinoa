@@ -56,190 +56,192 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
   public:
     //! \brief Inciter input deck keywords
     //! \see tk::grm::use and its documentation
-    using keywords = brigand::set< kw::title,
-                                   kw::nstep,
-                                   kw::term,
-                                   kw::t0,
-                                   kw::dt,
-                                   kw::ttyi,
-                                   kw::transport,
-                                   kw::end,
-                                   kw::shear_diff,
-                                   kw::slot_cyl,
-                                   kw::problem,
-                                   kw::field_output,
-                                   kw::refined,
-                                   kw::interval,
-                                   kw::partitioning,
-                                   kw::algorithm,
-                                   kw::rcb,
-                                   kw::rib,
-                                   kw::hsfc,
-                                   kw::phg,
-                                   kw::inciter,
-                                   kw::ncomp,
-                                   kw::nmat,
-                                   kw::pde_diffusivity,
-                                   kw::pde_lambda,
-                                   kw::pde_u0,
-                                   kw::bc_dirichlet,
-                                   kw::sideset,
-                                   kw::compflow,
-                                   kw::multimat,
-                                   kw::ic,
-                                   kw::box,
-                                   kw::lua,
-                                   kw::mass,
-                                   kw::density,
-                                   kw::velocity,
-                                   kw::initiate,
-                                   kw::impulse,
-                                   kw::linear,
-                                   kw::pressure,
-                                   kw::energy,
-                                   kw::energy_content,
-                                   kw::temperature,
-                                   kw::xmin,
-                                   kw::xmax,
-                                   kw::ymin,
-                                   kw::ymax,
-                                   kw::zmin,
-                                   kw::zmax,
-                                   kw::txt_float_format,
-                                   kw::txt_float_default,
-                                   kw::txt_float_fixed,
-                                   kw::txt_float_scientific,
-                                   kw::precision,
-                                   kw::diagnostics,
-                                   kw::history_output,
-                                   kw::material,
-                                   kw::id,
-                                   kw::mat_gamma,
-                                   kw::mat_pstiff,
-                                   kw::mat_mu,
-                                   kw::mat_cv,
-                                   kw::mat_k,
-                                   kw::npar,
-                                   kw::physics,
-                                   kw::advection,
-                                   kw::advdiff,
-                                   kw::navierstokes,
-                                   kw::euler,
-                                   kw::veleq,
-                                   kw::user_defined,
-                                   kw::vortical_flow,
-                                   kw::pde_alpha,
-                                   kw::pde_beta,
-                                   kw::pde_p0,
-                                   kw::ctau,
-                                   kw::cfl,
-                                   kw::mj,
-                                   kw::depvar,
-                                   kw::outvar,
-                                   kw::outvar_density,
-                                   kw::outvar_momentum,
-                                   kw::outvar_total_energy,
-                                   kw::outvar_velocity,
-                                   kw::outvar_pressure,
-                                   kw::nl_energy_growth,
-                                   kw::pde_betax,
-                                   kw::pde_betay,
-                                   kw::pde_betaz,
-                                   kw::pde_ce,
-                                   kw::pde_kappa,
-                                   kw::pde_r0,
-                                   kw::rayleigh_taylor,
-                                   kw::taylor_green,
-                                   kw::filetype,
-                                   kw::exodusii,
-                                   kw::root,
-                                   kw::error,
-                                   kw::l2,
-                                   kw::linf,
-                                   kw::fct,
-                                   kw::fctclip,
-                                   kw::fcteps,
-                                   kw::sysfct,
-                                   kw::sysfctvar,
-                                   kw::pelocal_reorder,
-                                   kw::operator_reorder,
-                                   kw::steady_state,
-                                   kw::residual,
-                                   kw::rescomp,
-                                   kw::amr,
-                                   kw::amr_t0ref,
-                                   kw::amr_dtref,
-                                   kw::amr_dtref_uniform,
-                                   kw::amr_dtfreq,
-                                   kw::amr_initial,
-                                   kw::amr_uniform,
-                                   kw::amr_uniform_derefine,
-                                   kw::amr_initial_conditions,
-                                   kw::amr_coords,
-                                   kw::amr_error,
-                                   kw::amr_jump,
-                                   kw::amr_hessian,
-                                   kw::amr_refvar,
-                                   kw::amr_tolref,
-                                   kw::amr_tolderef,
-                                   kw::amr_edgelist,
-                                   kw::amr_xminus,
-                                   kw::amr_xplus,
-                                   kw::amr_yminus,
-                                   kw::amr_yplus,
-                                   kw::amr_zminus,
-                                   kw::amr_zplus,
-                                   kw::pref,
-                                   kw::pref_indicator,
-                                   kw::pref_spectral_decay,
-                                   kw::pref_non_conformity,
-                                   kw::pref_ndofmax,
-                                   kw::pref_tolref,
-                                   kw::scheme,
-                                   kw::diagcg,
-                                   kw::alecg,
-                                   kw::dg,
-                                   kw::p0p1,
-                                   kw::dgp1,
-                                   kw::dgp2,
-                                   kw::pdg,
-                                   kw::flux,
-                                   kw::laxfriedrichs,
-                                   kw::hllc,
-                                   kw::upwind,
-                                   kw::ausm,
-                                   kw::hll,
-                                   kw::limiter,
-                                   kw::cweight,
-                                   kw::nolimiter,
-                                   kw::wenop1,
-                                   kw::superbeep1,
-                                   kw::vertexbasedp1,
-                                   kw::prelax,
-                                   kw::prelax_timescale,
-                                   kw::bc_sym,
-                                   kw::bc_inlet,
-                                   kw::bc_outlet,
-                                   kw::bc_farfield,
-                                   kw::bc_extrapolate,
-                                   kw::bc_stag,
-                                   kw::bc_skip,
-                                   kw::point,
-                                   kw::radius,
-                                   kw::gauss_hump,
-                                   kw::rotated_sod_shocktube,
-                                   kw::cyl_advect,
-                                   kw::shedding_flow,
-                                   kw::sod_shocktube,
-                                   kw::sedov_blastwave,
-                                   kw::interface_advection,
-                                   kw::gauss_hump_compflow,
-                                   kw::waterair_shocktube,
-                                   kw::triple_point,
-                                   kw::gas_impact,
-                                   kw::gas_impact_4mat,
-                                   kw::shock_hebubble,
-                                   kw::underwater_ex >;
+    using keywords = brigand::set< kw::title
+                                 , kw::nstep
+                                 , kw::term
+                                 , kw::t0
+                                 , kw::dt
+                                 , kw::ttyi
+                                 , kw::transport
+                                 , kw::end
+                                 , kw::shear_diff
+                                 , kw::slot_cyl
+                                 , kw::problem
+                                 , kw::field_output
+                                 , kw::refined
+                                 , kw::interval
+                                 , kw::partitioning
+                                 , kw::algorithm
+                                 , kw::rcb
+                                 , kw::rib
+                                 , kw::hsfc
+                                 , kw::phg
+                                 , kw::inciter
+                                 , kw::ncomp
+                                 , kw::nmat
+                                 , kw::pde_diffusivity
+                                 , kw::pde_lambda
+                                 , kw::pde_u0
+                                 , kw::bc_dirichlet
+                                 , kw::sideset
+                                 , kw::compflow
+                                 , kw::multimat
+                                 , kw::ic
+                                 , kw::box
+                                 , kw::lua
+                                 , kw::mass
+                                 , kw::density
+                                 , kw::velocity
+                                 , kw::initiate
+                                 , kw::impulse
+                                 , kw::linear
+                                 , kw::pressure
+                                 , kw::energy
+                                 , kw::energy_content
+                                 , kw::temperature
+                                 , kw::xmin
+                                 , kw::xmax
+                                 , kw::ymin
+                                 , kw::ymax
+                                 , kw::zmin
+                                 , kw::zmax
+                                 , kw::txt_float_format
+                                 , kw::txt_float_default
+                                 , kw::txt_float_fixed
+                                 , kw::txt_float_scientific
+                                 , kw::precision
+                                 , kw::diagnostics
+                                 , kw::history_output
+                                 , kw::material
+                                 , kw::id
+                                 , kw::mat_gamma
+                                 , kw::mat_pstiff
+                                 , kw::mat_mu
+                                 , kw::mat_cv
+                                 , kw::mat_k
+                                 , kw::npar
+                                 , kw::physics
+                                 , kw::advection
+                                 , kw::advdiff
+                                 , kw::navierstokes
+                                 , kw::euler
+                                 , kw::veleq
+                                 , kw::user_defined
+                                 , kw::vortical_flow
+                                 , kw::pde_alpha
+                                 , kw::pde_beta
+                                 , kw::pde_p0
+                                 , kw::ctau
+                                 , kw::cfl
+                                 , kw::mj
+                                 , kw::elem
+                                 , kw::node
+                                 , kw::depvar
+                                 , kw::outvar
+                                 , kw::outvar_density
+                                 , kw::outvar_momentum
+                                 , kw::outvar_total_energy
+                                 , kw::outvar_velocity
+                                 , kw::outvar_pressure
+                                 , kw::nl_energy_growth
+                                 , kw::pde_betax
+                                 , kw::pde_betay
+                                 , kw::pde_betaz
+                                 , kw::pde_ce
+                                 , kw::pde_kappa
+                                 , kw::pde_r0
+                                 , kw::rayleigh_taylor
+                                 , kw::taylor_green
+                                 , kw::filetype
+                                 , kw::exodusii
+                                 , kw::root
+                                 , kw::error
+                                 , kw::l2
+                                 , kw::linf
+                                 , kw::fct
+                                 , kw::fctclip
+                                 , kw::fcteps
+                                 , kw::sysfct
+                                 , kw::sysfctvar
+                                 , kw::pelocal_reorder
+                                 , kw::operator_reorder
+                                 , kw::steady_state
+                                 , kw::residual
+                                 , kw::rescomp
+                                 , kw::amr
+                                 , kw::amr_t0ref
+                                 , kw::amr_dtref
+                                 , kw::amr_dtref_uniform
+                                 , kw::amr_dtfreq
+                                 , kw::amr_initial
+                                 , kw::amr_uniform
+                                 , kw::amr_uniform_derefine
+                                 , kw::amr_initial_conditions
+                                 , kw::amr_coords
+                                 , kw::amr_error
+                                 , kw::amr_jump
+                                 , kw::amr_hessian
+                                 , kw::amr_refvar
+                                 , kw::amr_tolref
+                                 , kw::amr_tolderef
+                                 , kw::amr_edgelist
+                                 , kw::amr_xminus
+                                 , kw::amr_xplus
+                                 , kw::amr_yminus
+                                 , kw::amr_yplus
+                                 , kw::amr_zminus
+                                 , kw::amr_zplus
+                                 , kw::pref
+                                 , kw::pref_indicator
+                                 , kw::pref_spectral_decay
+                                 , kw::pref_non_conformity
+                                 , kw::pref_ndofmax
+                                 , kw::pref_tolref
+                                 , kw::scheme
+                                 , kw::diagcg
+                                 , kw::alecg
+                                 , kw::dg
+                                 , kw::p0p1
+                                 , kw::dgp1
+                                 , kw::dgp2
+                                 , kw::pdg
+                                 , kw::flux
+                                 , kw::laxfriedrichs
+                                 , kw::hllc
+                                 , kw::upwind
+                                 , kw::ausm
+                                 , kw::hll
+                                 , kw::limiter
+                                 , kw::cweight
+                                 , kw::nolimiter
+                                 , kw::wenop1
+                                 , kw::superbeep1
+                                 , kw::vertexbasedp1
+                                 , kw::prelax
+                                 , kw::prelax_timescale
+                                 , kw::bc_sym
+                                 , kw::bc_inlet
+                                 , kw::bc_outlet
+                                 , kw::bc_farfield
+                                 , kw::bc_extrapolate
+                                 , kw::bc_stag
+                                 , kw::bc_skip
+                                 , kw::point
+                                 , kw::radius
+                                 , kw::gauss_hump
+                                 , kw::rotated_sod_shocktube
+                                 , kw::cyl_advect
+                                 , kw::shedding_flow
+                                 , kw::sod_shocktube
+                                 , kw::sedov_blastwave
+                                 , kw::interface_advection
+                                 , kw::gauss_hump_compflow
+                                 , kw::waterair_shocktube
+                                 , kw::triple_point
+                                 , kw::gas_impact
+                                 , kw::gas_impact_4mat
+                                 , kw::shock_hebubble
+                                 , kw::underwater_ex >;
 
     //! Set of tags to ignore when printing this InputDeck
     using ignore = CmdLine::ignore;
@@ -340,13 +342,14 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
     }
 
     //! Extract field output variable names the user wants to save
+    //! \param[in] c Extract variables only with this centering
     //! \return Unique set of field output variable names user wants
     //! \note This returns an ordered set so the order of the variable names
     //!   are alphabetical and unique.
-    std::set< tk::ctr::OutVar > outvars() const {
+    std::set< tk::ctr::OutVar > outvars( tk::Centering c ) const {
       std::set< tk::ctr::OutVar > vars;
       for (const auto& s : get< tag::cmd, tag::io, tag::outvar >()) {
-        vars.insert( s );
+        if (s.centering == c) vars.insert( s );
       }
       return vars;
     }

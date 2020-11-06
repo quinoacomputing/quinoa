@@ -312,10 +312,14 @@ Transporter::info( const InciterPrint& print )
 
   // Print output variables: fields and surfaces
   const auto outsets = g_inputdeck.outsets();
-  const auto outvars = g_inputdeck.outvars();
-  if (!outsets.empty() || !outvars.empty()) print.section( "Output fields" );
-  if (!outvars.empty())
-    print.item( "Field(s)", tk::parameters(outvars) );
+  const auto nodeoutvars = g_inputdeck.outvars( tk::Centering::NODE );
+  const auto elemoutvars = g_inputdeck.outvars( tk::Centering::ELEM );
+  if (!nodeoutvars.empty() || !elemoutvars.empty() || !outsets.empty())
+     print.section( "Output fields" );
+  if (!nodeoutvars.empty())
+    print.item( "Node field(s)", tk::parameters(nodeoutvars) );
+  if (!elemoutvars.empty())
+    print.item( "Elem field(s)", tk::parameters(elemoutvars) );
   if (!outsets.empty())
     print.item( "Surface side set(s)", tk::parameters(outsets) );
 
