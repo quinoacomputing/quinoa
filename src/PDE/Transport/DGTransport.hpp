@@ -90,12 +90,10 @@ class Transport {
     }
 
     //! Determine elements that lie inside the user-defined IC box
-    std::unordered_set< std::size_t > IcBoxElems( const tk::Fields&,
-      std::size_t ) const
-    {
-      std::unordered_set< std::size_t > inbox;
-      return inbox;
-    }
+    void IcBoxElems( const tk::Fields&,
+      std::size_t,
+      std::unordered_set< std::size_t >& ) const
+    {}
 
     //! Initalize the transport equations for DG
     //! \param[in] L Element mass matrix

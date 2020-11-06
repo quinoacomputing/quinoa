@@ -94,12 +94,10 @@ class MultiMat {
     }
 
     //! Determine elements that lie inside the user-defined IC box
-    std::unordered_set< std::size_t > IcBoxElems( const tk::Fields&,
-      std::size_t ) const
-    {
-      std::unordered_set< std::size_t > inbox;
-      return inbox;
-    }
+    void IcBoxElems( const tk::Fields&,
+      std::size_t,
+      std::unordered_set< std::size_t >& ) const
+    {}
 
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix

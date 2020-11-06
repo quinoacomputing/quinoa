@@ -107,9 +107,9 @@ class CGPDE {
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
     //! Public interface to determining which nodes are in IC box
-    std::unordered_set< std::size_t>
-    IcBoxNodes( const tk::UnsMesh::Coords& coord )
-    { return self->IcBoxNodes( coord ); }
+    void IcBoxNodes( const tk::UnsMesh::Coords& coord,
+      std::unordered_set< std::size_t>& inbox )
+    { self->IcBoxNodes( coord, inbox ); }
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< real >, 3 >& coord,
@@ -270,8 +270,8 @@ class CGPDE {
       Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual std::unordered_set< std::size_t >
-        IcBoxNodes( const tk::UnsMesh::Coords& ) = 0;
+      virtual void IcBoxNodes( const tk::UnsMesh::Coords&,
+        std::unordered_set< std::size_t >& inbox ) = 0;
       virtual void initialize( const std::array< std::vector< real >, 3 >&,
                                tk::Fields&,
                                real,
@@ -372,9 +372,9 @@ class CGPDE {
     struct Model : Concept {
       explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      std::unordered_set< std::size_t >
-        IcBoxNodes( const tk::UnsMesh::Coords& coord )
-      override { return data.IcBoxNodes( coord ); }
+      void IcBoxNodes( const tk::UnsMesh::Coords& coord,
+        std::unordered_set< std::size_t >& inbox )
+      override { data.IcBoxNodes( coord, inbox ); }
       void initialize( const std::array< std::vector< real >, 3 >& coord,
                        tk::Fields& unk,
                        real t,
