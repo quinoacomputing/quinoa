@@ -713,7 +713,6 @@ namespace grm {
   struct action< push_outvar > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      // Use a shorthand of reference to vector to push_back to
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
       // Push outvar based on depvar: use first char of matched token as
       // OutVar::var, OutVar::name = "" by default.
@@ -731,12 +730,24 @@ namespace grm {
   struct action< push_outvar_human > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      // Use a shorthand of reference to vector to push_back to
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
       // Push outvar based on human readable string: OutVar::var = '0',
       // OutVar::name = matched token.
       using inciter::deck::centering;
       vars.emplace_back( tk::ctr::OutVar('0', 0, centering, in.string()) );
+    }
+  };
+
+  //! Rule used to trigger action
+  struct set_outvar_alias : pegtl::success {};
+  //! Set alias of last pushed output variable
+  template<>
+  struct action< set_outvar_alias > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
+      // Set alias of last pushed outvar
+      vars.back().alias = in.string();
     }
   };
 
@@ -1329,16 +1340,25 @@ namespace deck {
                          >,
            tk::grm::check_pref_errors > {};
 
+  //! Match output variable optionally followed by its quoted alias
+  template< class match >
+  struct outvar_alias :
+         pegtl::sor<
+           pegtl::seq< match, tk::grm::quoted< tk::grm::set_outvar_alias > >,
+           match > {};
+
   //! Match an output variable in a human readable form: var must be a keyword
   template< class var >
   struct outvar_human :
-      tk::grm::exact_scan< use< var >, tk::grm::push_outvar_human > {};
+         outvar_alias<
+           tk::grm::exact_scan< use< var >, tk::grm::push_outvar_human > > {};
 
   //! Match an output variable based on depvar defined upstream of input file
   struct outvar_depvar :
-         tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
-           tk::grm::match_depvar< tk::grm::push_outvar >,
-           tk::grm::check_outvar > {};
+         outvar_alias<
+           tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
+             tk::grm::match_depvar< tk::grm::push_outvar >,
+             tk::grm::check_outvar > > {};
 
   //! Parse a centering token and if matches, set centering in parser's state
   struct outvar_centering :
@@ -1351,14 +1371,16 @@ namespace deck {
          pegtl::if_must<
            tk::grm::readkw< use< kw::outvar >::pegtl_string >,
            tk::grm::block<
-             use< kw::end >,
-             outvar_centering,
-             outvar_depvar,
-             outvar_human< kw::outvar_density >,
-             outvar_human< kw::outvar_momentum >,
-             outvar_human< kw::outvar_total_energy >,
-             outvar_human< kw::outvar_velocity >,
-             outvar_human< kw::outvar_pressure > > > {};
+             use< kw::end >
+           , outvar_centering
+           , outvar_depvar
+           , outvar_human< kw::outvar_density >
+           , outvar_human< kw::outvar_momentum >
+           , outvar_human< kw::outvar_total_energy >
+           , outvar_human< kw::outvar_velocity >
+           , outvar_human< kw::outvar_pressure >
+           , outvar_human< kw::outvar_analytic >
+           > > {};
 
   //! field_output ... end block
   struct field_output :

@@ -25,7 +25,8 @@ struct OutVar {
   char var;             //!< Variable name
   ncomp_t field;        //!< Field ID
   Centering centering;  //!< Centering
-  std::string name;     //!< Human readable name
+  std::string name;     //!< Human readable name (inciter knows it)
+  std::string alias;    //!< Alias (only user knows it)
 
   /** @name Pack/Unpack: Serialize OutVar object for Charm++ */
   ///@{
@@ -36,6 +37,7 @@ struct OutVar {
     p | field;
     p | centering;
     p | name;
+    p | alias;
   }
   //! Pack/Unpack serialize operator|
   //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -47,11 +49,13 @@ struct OutVar {
   //! \param[in] v Variable name
   //! \param[in] f Field ID
   //! \param[in] n Human readable name
+  //! \param[in] a Alias
   explicit OutVar( char v = 0,
                    ncomp_t f = 0,
                    Centering c = Centering::NODE,
-                   const std::string& n = {} ) :
-    var(v), field(f), centering(c), name(n) {}
+                   const std::string& n = {},
+                   const std::string& a = {} ) :
+    var(v), field(f), centering(c), name(n), alias(a) {}
 
   //! \brief Less-than operator for ordering, used by, e.g., std::set::insert
   //! \param[in] outvar OutVar to compare
@@ -66,6 +70,10 @@ struct OutVar {
       return true;
     else if (var == outvar.var && field == outvar.field &&
              centering == outvar.centering && name < outvar.name)
+      return true;
+    else if (var == outvar.var && field == outvar.field &&
+             centering == outvar.centering && name == outvar.name &&
+             alias < outvar.alias)
       return true;
     else
       return false;

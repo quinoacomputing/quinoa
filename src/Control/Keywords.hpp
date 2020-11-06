@@ -1929,6 +1929,17 @@ struct outvar_pressure_info {
 using outvar_pressure =
   keyword< outvar_pressure_info, TAOCPP_PEGTL_STRING("pressure") >;
 
+struct outvar_analytic_info {
+  static std::string name() { return "analytic"; }
+  static std::string shortDescription() { return "Request analytic solution"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the analytic solution (if exist) as an
+    output variable.)";
+  }
+};
+using outvar_analytic =
+  keyword< outvar_analytic_info, TAOCPP_PEGTL_STRING("analytic") >;
+
 struct outvar_info {
   static std::string name() { return "outvar"; }
   static std::string shortDescription() { return
@@ -1942,7 +1953,8 @@ struct outvar_info {
     + outvar_momentum::string()+ "\', \'"
     + outvar_total_energy::string() + "\', \'"
     + outvar_velocity::string() + "\', \'"
-    + outvar_pressure::string() + "\'.";
+    + outvar_pressure::string() + "\', \'"
+    + outvar_analytic::string() + "\'.";
   }
 };
 using outvar = keyword< outvar_info, TAOCPP_PEGTL_STRING("var") >;

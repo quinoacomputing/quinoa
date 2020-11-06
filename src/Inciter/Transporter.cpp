@@ -311,15 +311,18 @@ Transporter::info( const InciterPrint& print )
               g_inputdeck.get< tag::cmd, tag::rsfreq >() );
 
   // Print output variables: fields and surfaces
-  const auto outsets = g_inputdeck.outsets();
   const auto nodeoutvars = g_inputdeck.outvars( tk::Centering::NODE );
   const auto elemoutvars = g_inputdeck.outvars( tk::Centering::ELEM );
+  const auto aliases = g_inputdeck.outvar_aliases();
+  const auto outsets = g_inputdeck.outsets();
   if (!nodeoutvars.empty() || !elemoutvars.empty() || !outsets.empty())
      print.section( "Output fields" );
   if (!nodeoutvars.empty())
     print.item( "Node field(s)", tk::parameters(nodeoutvars) );
   if (!elemoutvars.empty())
     print.item( "Elem field(s)", tk::parameters(elemoutvars) );
+  if (!aliases.empty())
+    print.item( "Alias(es)", tk::parameters(aliases) );
   if (!outsets.empty())
     print.item( "Surface side set(s)", tk::parameters(outsets) );
 

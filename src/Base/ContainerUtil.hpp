@@ -256,6 +256,17 @@ void concat( std::unordered_set< Key, Hash,Eq >&& src,
   }
 }
 
+//! Operator << for writing value_type of a standard map to output streams
+//! \param[in,out] os Output stream to write to
+//! \param[in] v value_type entry of a map
+//! \return Updated output stream
+template< class Key, class Value >
+std::ostream&
+operator<< ( std::ostream& os, const std::pair< const Key, Value  >& v ) {
+  os << v.first << ':' << v.second;
+  return os;
+}
+
 //! \brief Convert and return values from container as string
 //! \tparam V Container range for works on
 //! \param[in] v Container whose components to return as a string

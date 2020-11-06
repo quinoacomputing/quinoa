@@ -143,6 +143,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::outvar_total_energy
                                  , kw::outvar_velocity
                                  , kw::outvar_pressure
+                                 , kw::outvar_analytic
                                  , kw::nl_energy_growth
                                  , kw::pde_betax
                                  , kw::pde_betay
@@ -348,10 +349,24 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
     //!   are alphabetical and unique.
     std::set< tk::ctr::OutVar > outvars( tk::Centering c ) const {
       std::set< tk::ctr::OutVar > vars;
-      for (const auto& s : get< tag::cmd, tag::io, tag::outvar >()) {
-        if (s.centering == c) vars.insert( s );
+      for (const auto& v : get< tag::cmd, tag::io, tag::outvar >()) {
+        if (v.centering == c) vars.insert( v );
       }
       return vars;
+    }
+
+    //! Extract field output variable names and aliases the user configured
+    //! \return MAp of field output variable names and alias for all
+    //!    output variables the user configured
+    std::map< std::string, std::string > outvar_aliases() const {
+      std::map< std::string, std::string > aliases;
+      for (const auto& v : get< tag::cmd, tag::io, tag::outvar >())
+         if (!v.alias.empty()) {
+           std::stringstream s;
+           s << v;
+           aliases[ s.str() ] = v.alias;
+         }
+      return aliases;
     }
 
     //! Query special point BC configuration
