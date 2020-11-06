@@ -20,10 +20,10 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 
 std::vector< std::string >
-nodeFieldNames()
+userFieldNames()
 // *****************************************************************************
-// Collect node field output names based on user input
-//! \return Node output field names requested by user
+// Collect field output names based on user input
+//! \return Output field names requested by user
 // *****************************************************************************
 {
   // Get list of output variables requested by user
@@ -40,10 +40,10 @@ nodeFieldNames()
 }
 
 std::vector< std::vector< tk::real > >
-nodeFieldOutput( const tk::Fields& Un )
+userFieldOutput( const tk::Fields& Un )
 // *****************************************************************************
-// Collect node field output from solution based on user input
-//! \return Node output fields requested by user
+// Collect field output from solution based on user input
+//! \return Output fields requested by user
 // *****************************************************************************
 {
   // Get list of output variables requested by user

@@ -1411,7 +1411,7 @@ DG::extractFieldOutput(
   m_elemfields.push_back( ndof );
 
   // Collect node field solutions
-  m_nodefields = nodeFieldOutput( un );
+  m_nodefields = userFieldOutput( un );
 
   // Send node fields contributions to neighbor chares
   if (nodeCommMap.empty())
@@ -2203,7 +2203,7 @@ DG::writeFields( CkCallback c )
     auto ef = eq.fieldNames();
     elemfieldnames.insert( end(elemfieldnames), begin(ef), end(ef) );
   }
-  auto nodefieldnames = nodeFieldNames();
+  auto nodefieldnames = userFieldNames();
 
   if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );

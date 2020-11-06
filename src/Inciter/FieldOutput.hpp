@@ -17,13 +17,13 @@
 
 namespace inciter {
 
-//! Collect node field output names based on user input
+//! Collect field output names based on user input
 std::vector< std::string >
-nodeFieldNames();
+userFieldNames();
 
-//! Collect node field output from solution based on user input
+//! Collect field output from solution based on user input
 std::vector< std::vector< tk::real > >
-nodeFieldOutput( const tk::Fields& Un );
+userFieldOutput( const tk::Fields& Un );
 
 } // inciter::
 
