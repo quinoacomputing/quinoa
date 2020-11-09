@@ -100,13 +100,14 @@ class CompFlow {
       const auto eps = std::numeric_limits< tk::real >::epsilon();
 
       // Determine which nodes lie in the IC box
-      for (ncomp_t i=0; i<x.size(); ++i) {
-        if ( std::any_of( begin(box), end(box), [=](auto p)
-          {return abs(p) > eps;} ) &&
-          x[i]>box[0] && x[i]<box[1] && y[i]>box[2] && y[i]<box[3] &&
-          z[i]>box[4] && z[i]<box[5] )
-        {
-          inbox.insert( i );
+      if ( std::any_of( begin(box), end(box), [=](auto p)
+        {return abs(p) > eps;} )) {
+        for (ncomp_t i=0; i<x.size(); ++i) {
+          if ( x[i]>box[0] && x[i]<box[1] && y[i]>box[2] && y[i]<box[3] &&
+            z[i]>box[4] && z[i]<box[5] )
+          {
+            inbox.insert( i );
+          }
         }
       }
     }
@@ -137,6 +138,9 @@ class CompFlow {
                 icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
       auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
         (boxdim[5]-boxdim[4]);
+      const auto eps = 1000.0 * std::numeric_limits< tk::real >::epsilon();
+      // if an ic box was not specified, avoid division by zero by setting V
+      if (V_ex < eps) V = 1.0;
       const auto& bgpreic = ic.get< tag::pressure >();
       const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
 
