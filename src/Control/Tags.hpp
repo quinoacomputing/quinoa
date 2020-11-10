@@ -135,6 +135,7 @@ struct dt { static std::string name() { return "dt"; } };
 struct cfl { static std::string name() { return "cfl"; } };
 struct fct { static std::string name() { return "fct"; } };
 struct fctclip { static std::string name() { return "fctclip"; } };
+struct sys { static std::string name() { return "sys"; } };
 struct sysfct { static std::string name() { return "sysfct"; } };
 struct sysfctvar { static std::string name() { return "sysfctvar"; } };
 struct fcteps { static std::string name() { return "fcteps"; } };

@@ -40,6 +40,7 @@ using InputDeckMembers = brigand::list<
   , tag::prec,       precision
   , tag::flformat,   floatformat
   , tag::component,  ncomps
+  , tag::sys,        std::map< tk::ctr::ncomp_t, tk::ctr::ncomp_t >
   , tag::interval,   intervals
   , tag::param,      parameters
   , tag::diag,       diagnostics
