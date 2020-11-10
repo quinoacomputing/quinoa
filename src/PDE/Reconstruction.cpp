@@ -630,7 +630,7 @@ tk::THINCReco( std::size_t system,
   [[maybe_unused]] const std::vector< real >& vfmax,
   std::vector< real >& state )
 // *****************************************************************************
-//  Compute THINC reconstructions near material interfaces
+//  Compute THINC reconstructions for multi-material flows
 // *****************************************************************************
 {
   using inciter::volfracDofIdx;
@@ -652,140 +652,30 @@ tk::THINCReco( std::size_t system,
 
   // interface detection
   std::vector< std::size_t > matInt(nmat, 0);
-  auto intInd = inciter::interfaceIndicator(nmat, offset, rdof, e, U, matInt);
-
-  // determine number of materials with interfaces in this cell
-  auto epsl(1e-4), epsh(1e-1), bred(1.25), bmod(bparam);
-  std::size_t nIntMat(0);
+  std::vector< tk::real > alAvg(nmat, 0.0);
   for (std::size_t k=0; k<nmat; ++k)
-  {
-    auto alk = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-    if (alk > epsl)
-    {
-      ++nIntMat;
-      if ((alk > epsl) && (alk < epsh))
-        bmod = std::min(bmod,
-          (alk-epsl)/(epsh-epsl) * (bred - bparam) + bparam);
-      else if (alk > epsh)
-        bmod = bred;
+    alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+
+  // Step-1: Perform THINC reconstruction
+  // create a vector of volume-fractions and pass it to the THINC function
+  Fields alSol(1, rdof*nmat);
+  std::vector< real > alReco(nmat, 0.0);
+  for (std::size_t k=0; k<nmat; ++k) {
+    auto mark = k*rdof;
+    for (std::size_t i=0; i<rdof; ++i) {
+      alSol(0,mark+i,0) = U(e, volfracDofIdx(nmat,k,rdof,i), offset);
     }
+    // initialize with TVD reconstructions which will be modified if near
+    // material interface
+    alReco[k] = state[volfracIdx(nmat,k)];
   }
+  THINCFunction(rdof, nmat, e, inpoel, coord, ref_xp, geoElem(e,0,0), bparam,
+    alSol, intInd, matInt, alReco);
 
-  if (nIntMat > 2) bparam = bmod;
-
-  // compression parameter
-  auto beta = bparam/std::cbrt(6.0*geoElem(e,0,0));
-
+  // Step-2: Perform consistent reconstruction on other conserved quantities
   if (intInd)
   {
-    // Compute Jacobian matrix for converting Dubiner dofs to derivatives
-    const auto& cx = coord[0];
-    const auto& cy = coord[1];
-    const auto& cz = coord[2];
-
-    std::array< std::array< real, 3>, 4 > coordel {{
-      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-    }};
-
-    auto jacInv =
-      tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
-
-    auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
-
-    std::array< real, 3 > nInt;
-    std::vector< std::array< real, 3 > > ref_n(nmat, {{0.0, 0.0, 0.0}});
-    auto almax(0.0);
-    std::size_t kmax(0);
-
-    // Step-1: Get unit normals to material interface
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      // Get derivatives from moments in Dubiner space
-      for (std::size_t i=0; i<3; ++i)
-        nInt[i] = dBdx[i][1] * U(e, volfracDofIdx(nmat,k,rdof,1), offset)
-          + dBdx[i][2] * U(e, volfracDofIdx(nmat,k,rdof,2), offset)
-          + dBdx[i][3] * U(e, volfracDofIdx(nmat,k,rdof,3), offset);
-
-      auto nMag = std::sqrt(tk::dot(nInt, nInt)) + 1e-14;
-
-      // determine index of material present in majority
-      auto alk = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-      if (alk > almax)
-      {
-        almax = alk;
-        kmax = k;
-      }
-
-      for (std::size_t i=0; i<3; ++i)
-        nInt[i] /= nMag;
-
-      // project interface normal onto local/reference coordinate system
-      for (std::size_t i=0; i<3; ++i)
-      {
-        std::array< real, 3 > axis{
-          coordel[i+1][0]-coordel[0][0],
-          coordel[i+1][1]-coordel[0][1],
-          coordel[i+1][2]-coordel[0][2] };
-        ref_n[k][i] = tk::dot(nInt, axis);
-      }
-    }
-
-    // Step-2: THINC reconstruction
-    std::vector< real > alReco(nmat, 0.0);
-    auto alsum(0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      if (matInt[k])
-      {
-        // get location of material interface (volume fraction 0.5) from the
-        // assumed tanh volume fraction distribution, and cell-averaged
-        // volume fraction
-        auto alCC = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-        auto Ac(0.0), Bc(0.0), Qc(0.0);
-        if ((std::fabs(ref_n[k][0]) > std::fabs(ref_n[k][1]))
-          && (std::fabs(ref_n[k][0]) > std::fabs(ref_n[k][2])))
-        {
-          Ac = std::exp(0.5*beta*ref_n[k][0]);
-          Bc = std::exp(0.5*beta*(ref_n[k][1]+ref_n[k][2]));
-          Qc = std::exp(0.5*beta*ref_n[k][0]*(2.0*alCC-1.0));
-        }
-        else if ((std::fabs(ref_n[k][1]) > std::fabs(ref_n[k][0]))
-          && (std::fabs(ref_n[k][1]) > std::fabs(ref_n[k][2])))
-        {
-          Ac = std::exp(0.5*beta*ref_n[k][1]);
-          Bc = std::exp(0.5*beta*(ref_n[k][0]+ref_n[k][2]));
-          Qc = std::exp(0.5*beta*ref_n[k][1]*(2.0*alCC-1.0));
-        }
-        else
-        {
-          Ac = std::exp(0.5*beta*ref_n[k][2]);
-          Bc = std::exp(0.5*beta*(ref_n[k][0]+ref_n[k][1]));
-          Qc = std::exp(0.5*beta*ref_n[k][2]*(2.0*alCC-1.0));
-        }
-        auto d = std::log((1.0-Ac*Qc) / (Ac*Bc*(Qc-Ac))) / (2.0*beta);
-
-        // THINC reconstruction
-        auto al_c = 0.5 * (1.0 + std::tanh(beta*(tk::dot(ref_n[k], ref_xp) + d)));
-
-        alReco[k] = std::min(1.0-1e-14, std::max(1e-14, al_c));
-      }
-      else
-      {
-        // TVD reconstruction for materials without an interface close-by
-        alReco[k] = state[volfracIdx(nmat,k)];
-      }
-
-      alsum += alReco[k];
-    }
-
-    // ensure unit sum
-    alReco[kmax] += 1.0 - alsum;
-    alsum = 1.0;
-
-    // Step-3: Perform consistent reconstruction on other conserved quantities
     auto rhobCC(0.0), rhobHO(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
@@ -814,6 +704,205 @@ tk::THINCReco( std::size_t system,
         * U(e, momentumDofIdx(nmat,i,rdof,0), offset)/rhobCC;
       state[ncomp+velocityIdx(nmat,i)] =
         P(e, velocityDofIdx(nmat,i,rdof,0), offset);
+    }
+  }
+}
+
+void
+tk::THINCRecoTransport( std::size_t system,
+  std::size_t offset,
+  std::size_t rdof,
+  std::size_t,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const std::array< real, 3 >& ref_xp,
+  const Fields& U,
+  [[maybe_unused]] const Fields& P,
+  [[maybe_unused]] const std::vector< real >& vfmin,
+  [[maybe_unused]] const std::vector< real >& vfmax,
+  std::vector< real >& state )
+// *****************************************************************************
+//  Compute THINC reconstructions for linear advection (transport)
+// *****************************************************************************
+{
+  auto bparam = inciter::g_inputdeck.get< tag::param, tag::transport,
+    tag::intsharp_param >()[system];
+  auto ncomp = U.nprop()/rdof;
+
+  // interface detection
+  std::vector< std::size_t > matInt(ncomp, 0);
+  std::vector< tk::real > alAvg(ncomp, 0.0);
+  for (std::size_t k=0; k<ncomp; ++k)
+    alAvg[k] = U(e, k*rdof, offset);
+  auto intInd = inciter::interfaceIndicator(ncomp, alAvg, matInt);
+
+  // create a vector of volume-fractions and pass it to the THINC function
+  Fields alSol(1, rdof*ncomp);
+  // initialize with TVD reconstructions (modified if near interface)
+  auto alReco = state;
+  for (std::size_t k=0; k<ncomp; ++k) {
+    auto mark = k*rdof;
+    for (std::size_t i=0; i<rdof; ++i) {
+      alSol(0,mark+i,0) = U(e,mark+i,offset);
+    }
+  }
+  THINCFunction(rdof, ncomp, e, inpoel, coord, ref_xp, geoElem(e,0,0), bparam,
+    alSol, intInd, matInt, alReco);
+
+  state = alReco;
+}
+
+void
+tk::THINCFunction( std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const std::array< real, 3 >& ref_xp,
+  real vol,
+  real bparam,
+  const Fields& alSol,
+  bool intInd,
+  const std::vector< std::size_t >& matInt,
+  std::vector< real >& alReco )
+// *****************************************************************************
+//  THINC reconstruction function for volume fractions near interfaces
+// *****************************************************************************
+{
+  // determine number of materials with interfaces in this cell
+  auto epsl(1e-4), epsh(1e-1), bred(1.25), bmod(bparam);
+  std::size_t nIntMat(0);
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    auto alk = alSol(0, k*rdof, 0);
+    if (alk > epsl)
+    {
+      ++nIntMat;
+      if ((alk > epsl) && (alk < epsh))
+        bmod = std::min(bmod,
+          (alk-epsl)/(epsh-epsl) * (bred - bparam) + bparam);
+      else if (alk > epsh)
+        bmod = bred;
+    }
+  }
+
+  if (nIntMat > 2) bparam = bmod;
+
+  // compression parameter
+  auto beta = bparam/std::cbrt(6.0*vol);
+
+  if (intInd)
+  {
+    // 1. Get unit normals to material interface
+
+    // Compute Jacobian matrix for converting Dubiner dofs to derivatives
+    const auto& cx = coord[0];
+    const auto& cy = coord[1];
+    const auto& cz = coord[2];
+
+    std::array< std::array< real, 3>, 4 > coordel {{
+      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+    }};
+
+    auto jacInv =
+      tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+    auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+
+    std::array< real, 3 > nInt;
+    std::vector< std::array< real, 3 > > ref_n(nmat, {{0.0, 0.0, 0.0}});
+    auto almax(0.0);
+    std::size_t kmax(0);
+
+    // Get normals
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // Get derivatives from moments in Dubiner space
+      for (std::size_t i=0; i<3; ++i)
+        nInt[i] = dBdx[i][1] * alSol(0, k*rdof+1, 0)
+          + dBdx[i][2] * alSol(0, k*rdof+2, 0)
+          + dBdx[i][3] * alSol(0, k*rdof+3, 0);
+
+      auto nMag = std::sqrt(tk::dot(nInt, nInt)) + 1e-14;
+
+      // determine index of material present in majority
+      auto alk = alSol(0, k*rdof, 0);
+      if (alk > almax)
+      {
+        almax = alk;
+        kmax = k;
+      }
+
+      for (std::size_t i=0; i<3; ++i)
+        nInt[i] /= nMag;
+
+      // project interface normal onto local/reference coordinate system
+      for (std::size_t i=0; i<3; ++i)
+      {
+        std::array< real, 3 > axis{
+          coordel[i+1][0]-coordel[0][0],
+          coordel[i+1][1]-coordel[0][1],
+          coordel[i+1][2]-coordel[0][2] };
+        ref_n[k][i] = tk::dot(nInt, axis);
+      }
+    }
+
+    // 2. Reconstruct volume fractions using THINC
+    auto alsum(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      if (matInt[k])
+      {
+        // get location of material interface (volume fraction 0.5) from the
+        // assumed tanh volume fraction distribution, and cell-averaged
+        // volume fraction
+        auto alCC(alSol(0, k*rdof, 0));
+        auto Ac(0.0), Bc(0.0), Qc(0.0);
+        if ((std::fabs(ref_n[k][0]) > std::fabs(ref_n[k][1]))
+          && (std::fabs(ref_n[k][0]) > std::fabs(ref_n[k][2])))
+        {
+          Ac = std::exp(0.5*beta*ref_n[k][0]);
+          Bc = std::exp(0.5*beta*(ref_n[k][1]+ref_n[k][2]));
+          Qc = std::exp(0.5*beta*ref_n[k][0]*(2.0*alCC-1.0));
+        }
+        else if ((std::fabs(ref_n[k][1]) > std::fabs(ref_n[k][0]))
+          && (std::fabs(ref_n[k][1]) > std::fabs(ref_n[k][2])))
+        {
+          Ac = std::exp(0.5*beta*ref_n[k][1]);
+          Bc = std::exp(0.5*beta*(ref_n[k][0]+ref_n[k][2]));
+          Qc = std::exp(0.5*beta*ref_n[k][1]*(2.0*alCC-1.0));
+        }
+        else
+        {
+          Ac = std::exp(0.5*beta*ref_n[k][2]);
+          Bc = std::exp(0.5*beta*(ref_n[k][0]+ref_n[k][1]));
+          Qc = std::exp(0.5*beta*ref_n[k][2]*(2.0*alCC-1.0));
+        }
+        auto d = std::log((1.0-Ac*Qc) / (Ac*Bc*(Qc-Ac))) / (2.0*beta);
+
+        // THINC reconstruction
+        auto al_c = 0.5 * (1.0 + std::tanh(beta*(tk::dot(ref_n[k], ref_xp) + d)));
+
+        alReco[k] = std::min(1.0-1e-14, std::max(1e-14, al_c));
+      }
+      //else
+      //{
+      //  // TVD reconstruction for materials without an interface close-by
+      //  alReco[k] = state[volfracIdx(nmat,k)];
+      //}
+
+      alsum += alReco[k];
+    }
+
+    // ensure unit sum
+    if (nmat > 1) {
+      alReco[kmax] += 1.0 - alsum;
+      alsum = 1.0;
     }
   }
 }

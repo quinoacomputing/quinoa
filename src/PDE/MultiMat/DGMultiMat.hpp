@@ -534,7 +534,10 @@ class MultiMat {
       for (std::size_t e=0; e<nelem; ++e)
       {
         std::vector< std::size_t > matInt(nmat, 0);
-        auto intInd = interfaceIndicator(nmat, m_offset, rdof, e, U, matInt);
+        std::vector< tk::real > alAvg(nmat, 0.0);
+        for (std::size_t k=0; k<nmat; ++k)
+          alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
+        auto intInd = interfaceIndicator(nmat, alAvg, matInt);
         if ((intsharp > 0) && intInd)
         {
           // Reconstruct second-order dofs of volume-fractions in Taylor space

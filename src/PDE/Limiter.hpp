@@ -59,6 +59,18 @@ SuperbeeMultiMat_P1(
   tk::Fields& P,
   std::size_t nmat );
 
+//! Kuzmin's vertex-based limiter for transport DGP1
+void
+VertexBasedTransport_P1(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U );
+
 //! Kuzmin's vertex-based limiter for single-material DGP1
 void
 VertexBased_P1(
@@ -134,10 +146,7 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
 //! Interface indicator function, which checks element for material interface
 bool
 interfaceIndicator( std::size_t nmat,
-  std::size_t offset,
-  std::size_t rdof,
-  std::size_t e,
-  const tk::Fields& U,
+  const std::vector< tk::real >& al,
   std::vector< std::size_t >& matInt );
 
 } // inciter::

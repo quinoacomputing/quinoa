@@ -5428,31 +5428,6 @@ struct bc_outlet_info {
 using bc_outlet =
   keyword< bc_outlet_info, TAOCPP_PEGTL_STRING("bc_outlet") >;
 
-struct transport_info {
-  static std::string name() { return "Transport"; }
-  static std::string shortDescription() { return
-    "Start configuration block for an transport equation"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce an transport ... end block, used to
-    specify the configuration for a transport equation type. Keywords allowed
-    in an transport ... end block: )" + std::string("\'")
-    + depvar::string() + "\', \'"
-    + ncomp::string() + "\', \'"
-    + problem::string() + "\', \'"
-    + physics::string() + "\', \'"
-    + pde_diffusivity::string() + "\', \'"
-    + pde_lambda::string() + "\', \'"
-    + bc_dirichlet::string() + "\', \'"
-    + bc_sym::string() + "\', \'"
-    + bc_inlet::string() + "\', \'"
-    + bc_outlet::string() + "\', \'"
-    + pde_u0::string() + "\'. "
-    + R"(For an example transport ... end block, see
-      doc/html/inicter_example_transport.html.)";
-  }
-};
-using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
-
 struct bc_farfield_info {
   static std::string name() { return "Farfield boundary condition"; }
   static std::string shortDescription() { return
@@ -5544,9 +5519,9 @@ struct intsharp_info {
   static std::string shortDescription() { return
     "Turn multi-material interface sharpening on/off"; }
   static std::string longDescription() { return
-    R"(This keyword is used to turn interface sharpening on/off. It is used
-       only for the multi-material solver, and has no effect when used for the
-       other PDE types.)";
+    R"(This keyword is used to turn interface sharpening on/off. It is used for
+       the multi-material and the transport solver, and has no effect when used
+       for the other PDE types.)";
   }
   struct expect {
     using type = int;
@@ -5564,7 +5539,8 @@ struct intsharp_param_info {
     R"(This keyword is used to specify the parameter for the interface
        sharpening. The default value is 1.0. This parameter affects how many
        cells the material interfaces span, after the use of sharpening. It is
-       used only for multimat, and has no effect for the other PDE types.)";
+       used for multimat and transport, and has no effect for the other PDE
+       types.)";
   }
   struct expect {
     using type = tk::real;
@@ -5670,6 +5646,33 @@ struct material_info {
   }
 };
 using material = keyword< material_info, TAOCPP_PEGTL_STRING("material") >;
+
+struct transport_info {
+  static std::string name() { return "Transport"; }
+  static std::string shortDescription() { return
+    "Start configuration block for an transport equation"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an transport ... end block, used to
+    specify the configuration for a transport equation type. Keywords allowed
+    in an transport ... end block: )" + std::string("\'")
+    + depvar::string() + "\', \'"
+    + ncomp::string() + "\', \'"
+    + problem::string() + "\', \'"
+    + physics::string() + "\', \'"
+    + pde_diffusivity::string() + "\', \'"
+    + pde_lambda::string() + "\', \'"
+    + bc_dirichlet::string() + "\', \'"
+    + bc_sym::string() + "\', \'"
+    + bc_inlet::string() + "\', \'"
+    + bc_outlet::string() + "\', \'"
+    + pde_u0::string() + "\'. "
+    + intsharp::string() + "\', \'"
+    + intsharp_param::string() + "\', \'"
+    + R"(For an example transport ... end block, see
+      doc/html/inicter_example_transport.html.)";
+  }
+};
+using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
 
 struct compflow_info {
   static std::string name() { return "Compressible single-material flow"; }

@@ -153,6 +153,17 @@ namespace grm {
       const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
       for (const auto& s : bc)
         if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+
+      // If interface compression is not specified, default to 'false'
+      auto& intsharp = stack.template get< param, eq, tag::intsharp >();
+      if (intsharp.empty() || intsharp.size() != neq.get< eq >())
+        intsharp.push_back( 0 );
+
+      // If interface compression parameter is not specified, default to 1.0
+      auto& intsharp_p = stack.template get< param, eq,
+                                            tag::intsharp_param >();
+      if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
+        intsharp_p.push_back( 1.0 );
     }
   };
 
@@ -1259,7 +1270,13 @@ namespace deck {
                            bc< kw::bc_inlet, tag::transport, tag::bcinlet >,
                            bc< kw::bc_outlet, tag::transport, tag::bcoutlet >,
                            bc< kw::bc_extrapolate, tag::transport,
-                               tag::bcextrapolate > >,
+                               tag::bcextrapolate >,
+                           parameter< tag::transport,
+                                      kw::intsharp_param,
+                                      tag::intsharp_param >,
+                           parameter< tag::transport,
+                                      kw::intsharp,
+                                      tag::intsharp > >,
            check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow

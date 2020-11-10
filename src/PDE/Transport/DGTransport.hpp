@@ -142,6 +142,7 @@ class Transport {
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
@@ -150,7 +151,8 @@ class Transport {
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
                       const inciter::FaceData& fd,
-                      const std::map< std::size_t, std::vector< std::size_t > >&,
+                      const std::map< std::size_t, std::vector< std::size_t > >&
+                        esup,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
@@ -159,6 +161,8 @@ class Transport {
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
+      const auto intsharp = g_inputdeck.get< tag::param, tag::transport,
+        tag::intsharp >()[m_system];
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -190,6 +194,22 @@ class Transport {
       // 3. solve 3x3 least-squares system
       tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
 
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        std::vector< std::size_t > matInt(m_ncomp, 0);
+        std::vector< tk::real > alAvg(m_ncomp, 0.0);
+        for (std::size_t k=0; k<m_ncomp; ++k)
+          alAvg[k] = U(e, k*rdof, m_offset);
+        auto intInd = interfaceIndicator(m_ncomp, alAvg, matInt);
+        if ((intsharp > 0) && intInd)
+        {
+          // Reconstruct second-order dofs of volume-fractions in Taylor space
+          // using nodal-stencils, for a good interface-normal estimate
+          tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+            U, {0, m_ncomp-1} );
+        }
+      }
+
       // 4. transform reconstructed derivatives to Dubiner dofs
       tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
     }
@@ -199,6 +219,7 @@ class Transport {
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] esup Elements surrounding points
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
@@ -207,7 +228,7 @@ class Transport {
                 [[maybe_unused]] const tk::Fields& geoFace,
                 [[maybe_unused]] const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
-                const std::map< std::size_t, std::vector< std::size_t > >&,
+                const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
@@ -220,6 +241,9 @@ class Transport {
         WENO_P1( fd.Esuel(), m_offset, U );
       else if (limiter == ctr::LimiterType::SUPERBEEP1)
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
+        VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
+          m_system, m_offset, coord, U );
     }
 
     //! Compute right hand side
@@ -248,6 +272,8 @@ class Transport {
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto intsharp = g_inputdeck.get< tag::param, tag::transport,
+        tag::intsharp >()[m_system];
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -271,10 +297,10 @@ class Transport {
       std::vector< std::vector < tk::real > > riemannDeriv;
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
+      tk::surfInt( m_system, m_ncomp, m_offset, ndof, rdof, inpoel, coord,
                    fd, geoFace, geoElem, Upwind::flux,
                    Problem::prescribedVelocity, U, P, VolFracMax, ndofel, R,
-                   riemannDeriv );
+                   riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
@@ -284,10 +310,10 @@ class Transport {
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
+        tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, rdof, b.first, fd,
           geoFace, geoElem, inpoel, coord, t, Upwind::flux,
           Problem::prescribedVelocity, b.second, U, P, VolFracMax, ndofel, R,
-          riemannDeriv );
+          riemannDeriv, intsharp );
     }
 
     //! Compute the minimum time step size

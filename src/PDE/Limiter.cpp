@@ -258,7 +258,10 @@ SuperbeeMultiMat_P1(
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
-      auto intInd = interfaceIndicator(nmat, offset, rdof, e, U, matInt);
+      std::vector< tk::real > alAvg(nmat, 0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+      auto intInd = interfaceIndicator(nmat, alAvg, matInt);
       if ((intsharp > 0) && intInd)
       {
         for (std::size_t k=0; k<nmat; ++k)
@@ -286,6 +289,88 @@ SuperbeeMultiMat_P1(
         P(e, mark+1, offset) = phip[c] * P(e, mark+1, offset);
         P(e, mark+2, offset) = phip[c] * P(e, mark+2, offset);
         P(e, mark+3, offset) = phip[c] * P(e, mark+3, offset);
+      }
+    }
+  }
+}
+
+void
+VertexBasedTransport_P1(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U )
+// *****************************************************************************
+//  Kuzmin's vertex-based limiter for transport DGP1
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element connectivity
+//! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in] nelem Number of elements
+//! \param[in] system Index for equation systems
+//! \param[in] offset Index for equation systems
+//! \param[in] coord Array of nodal coordinates
+//! \param[in,out] U High-order solution vector which gets limited
+//! \details This vertex-based limiter function should be called for transport.
+//!   For details see: Kuzmin, D. (2010). A vertex-based hierarchical slope
+//!   limiter for p-adaptive discontinuous Galerkin methods. Journal of
+//!   computational and applied mathematics, 233(12), 3077-3085.
+// *****************************************************************************
+{
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::transport,
+    tag::intsharp >()[system];
+  std::size_t ncomp = U.nprop()/rdof;
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // If an rDG method is set up (P0P1), then, currently we compute the P1
+    // basis functions and solutions by default. This implies that P0P1 is
+    // unsupported in the p-adaptive DG (PDG). This is a workaround until we
+    // have rdofel, which is needed to distinguish between ndofs and rdofs per
+    // element for pDG.
+    std::size_t dof_el;
+    if (rdof > ndof)
+    {
+      dof_el = rdof;
+    }
+    else
+    {
+      dof_el = ndofel[e];
+    }
+
+    if (dof_el > 1)
+    {
+      // limit conserved quantities
+      auto phi = VertexBasedFunction(U, esup, inpoel, coord, e, rdof, dof_el,
+        offset, ncomp);
+
+      // limits under which compression is to be performed
+      std::vector< std::size_t > matInt(ncomp, 0);
+      std::vector< tk::real > alAvg(ncomp, 0.0);
+      for (std::size_t k=0; k<ncomp; ++k)
+        alAvg[k] = U(e,k*rdof,offset);
+      auto intInd = interfaceIndicator(ncomp, alAvg, matInt);
+      if ((intsharp > 0) && intInd)
+      {
+        for (std::size_t k=0; k<ncomp; ++k)
+        {
+          if (matInt[k])
+            phi[volfracIdx(ncomp,k)] = 1.0;
+        }
+      }
+
+      // apply limiter function
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*rdof;
+        U(e, mark+1, offset) = phi[c] * U(e, mark+1, offset);
+        U(e, mark+2, offset) = phi[c] * U(e, mark+2, offset);
+        U(e, mark+3, offset) = phi[c] * U(e, mark+3, offset);
       }
     }
   }
@@ -419,7 +504,10 @@ VertexBasedMultiMat_P1(
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
-      auto intInd = interfaceIndicator(nmat, offset, rdof, e, U, matInt);
+      std::vector< tk::real > alAvg(nmat, 0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+      auto intInd = interfaceIndicator(nmat, alAvg, matInt);
       if ((intsharp > 0) && intInd)
       {
         for (std::size_t k=0; k<nmat; ++k)
@@ -945,18 +1033,12 @@ void consistentMultiMatLimiting_P1(
 
 bool
 interfaceIndicator( std::size_t nmat,
-  std::size_t offset,
-  std::size_t rdof,
-  std::size_t e,
-  const tk::Fields& U,
+  const std::vector< tk::real >& al,
   std::vector< std::size_t >& matInt )
 // *****************************************************************************
 //  Interface indicator function, which checks element for material interface
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Index for equation system
-//! \param[in] rdof Total number of reconstructed dofs
-//! \param[in] e Element being checked for material interface
-//! \param[in] U Second-order solution vector
+//! \param[in] al Cell-averaged volume fractions
 //! \param[in] matInt Array indicating which material has an interface
 //! \return Boolean which indicates if the element contains a material interface
 // *****************************************************************************
@@ -971,10 +1053,9 @@ interfaceIndicator( std::size_t nmat,
   auto almax = 0.0;
   for (std::size_t k=0; k<nmat; ++k)
   {
-    auto alk = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-    almax = std::max(almax, alk);
+    almax = std::max(almax, al[k]);
     matInt[k] = 0;
-    if ((alk > loLim) && (alk < hiLim)) matInt[k] = 1;
+    if ((al[k] > loLim) && (al[k] < hiLim)) matInt[k] = 1;
   }
 
   if ((almax > loLim) && (almax < hiLim)) intInd = true;

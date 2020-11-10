@@ -220,9 +220,9 @@ class DG : public CBase_DG {
       p | m_u;
       p | m_un;
       p | m_p;
-      p | m_vfm;
       p | m_geoFace;
       p | m_geoElem;
+      p | m_vfm;
       p | m_lhs;
       p | m_rhs;
       p | m_nfac;
@@ -305,12 +305,12 @@ class DG : public CBase_DG {
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
-    //! Vector of maximum volume fraction for each mesh element
-    tk::Fields m_vfm;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
     tk::Fields m_geoElem;
+    //! Vector of maximum volume fraction for each mesh element
+    tk::Fields m_vfm;
     //! Left-hand side mass-matrix which is a diagonal matrix
     tk::Fields m_lhs;
     //! Vector of right-hand side

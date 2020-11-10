@@ -146,6 +146,38 @@ THINCReco( std::size_t system,
   const std::vector< real >& vfmax,
   std::vector< real >& state );
 
+//! Compute THINC reconstructions for linear advection (transport)
+void
+THINCRecoTransport( std::size_t system,
+  std::size_t offset,
+  std::size_t rdof,
+  std::size_t,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const std::array< real, 3 >& ref_xp,
+  const Fields& U,
+  [[maybe_unused]] const Fields& P,
+  [[maybe_unused]] const std::vector< real >& vfmin,
+  [[maybe_unused]] const std::vector< real >& vfmax,
+  std::vector< real >& state );
+
+//! THINC reconstruction function for volume fractions near interfaces
+void
+THINCFunction( std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const std::array< real, 3 >& ref_xp,
+  real vol,
+  real bparam,
+  const Fields& alSol,
+  bool intInd,
+  const std::vector< std::size_t >& matInt,
+  std::vector< real >& alReco );
+
 //! Compute safe reconstructions near material interfaces
 void
 safeReco( std::size_t offset,

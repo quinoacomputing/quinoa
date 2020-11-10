@@ -193,23 +193,27 @@ tk::surfInt( ncomp_t system,
       state[0].insert(state[0].end(), sprim[0].begin(), sprim[0].end());
       state[1].insert(state[1].end(), sprim[1].begin(), sprim[1].end());
 
-      if ((nmat > 1) && (intsharp > 0))
+      if (intsharp > 0)
       {
         std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
 
-        for (std::size_t k=0; k<nmat; ++k) {
-          vfmin[k] = VolFracMax(el, 2*k, 0);
-          vfmax[k] = VolFracMax(el, 2*k+1, 0);
-        }
-        tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord, geoElem,
-          ref_gp_l, U, P, vfmin, vfmax, state[0]);
+        //for (std::size_t k=0; k<nmat; ++k) {
+        //  vfmin[k] = VolFracMax(el, 2*k, 0);
+        //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
+        //}
+        //tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord, geoElem,
+        //  ref_gp_l, U, P, vfmin, vfmax, state[0]);
+        tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel, coord,
+          geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
 
-        for (std::size_t k=0; k<nmat; ++k) {
-          vfmin[k] = VolFracMax(er, 2*k, 0);
-          vfmax[k] = VolFracMax(er, 2*k+1, 0);
-        }
-        tk::THINCReco(system, offset, rdof, nmat, er, inpoel, coord, geoElem,
-          ref_gp_r, U, P, vfmin, vfmax, state[1]);
+        //for (std::size_t k=0; k<nmat; ++k) {
+        //  vfmin[k] = VolFracMax(er, 2*k, 0);
+        //  vfmax[k] = VolFracMax(er, 2*k+1, 0);
+        //}
+        //tk::THINCReco(system, offset, rdof, nmat, er, inpoel, coord, geoElem,
+        //  ref_gp_r, U, P, vfmin, vfmax, state[1]);
+        tk::THINCRecoTransport(system, offset, rdof, nmat, er, inpoel, coord,
+          geoElem, ref_gp_r, U, P, vfmin, vfmax, state[1]);
       }
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "

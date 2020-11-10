@@ -87,6 +87,18 @@ infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< transport >(c) ) );
 
+  auto intsharp = g_inputdeck.get< tag::param, tag::transport,
+    tag::intsharp >()[c];
+  nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
+
+  if (intsharp)
+  {
+    auto intsharp_param =
+      g_inputdeck.get< tag::param, tag::transport, tag::intsharp_param >()[c];
+    nfo.emplace_back( "interface sharpening parameter",
+                      std::to_string( intsharp_param ) );
+  }
+
   auto ncomp = g_inputdeck.get< tag::component >().get< transport >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 

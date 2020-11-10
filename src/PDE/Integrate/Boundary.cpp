@@ -171,16 +171,18 @@ tk::bndSurfInt( ncomp_t system,
           // consolidate primitives into state vector
           ugp.insert(ugp.end(), pgp.begin(), pgp.end());
 
-          if ((nmat > 1) && (intsharp > 0))
+          if (intsharp > 0)
           {
             std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
 
-            for (std::size_t k=0; k<nmat; ++k) {
-              vfmin[k] = VolFracMax(el, 2*k, 0);
-              vfmax[k] = VolFracMax(el, 2*k+1, 0);
-            }
-            tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord,
-              geoElem, ref_gp_l, U, P, vfmin, vfmax, ugp);
+            //for (std::size_t k=0; k<nmat; ++k) {
+            //  vfmin[k] = VolFracMax(el, 2*k, 0);
+            //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
+            //}
+            //tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord,
+            //  geoElem, ref_gp_l, U, P, vfmin, vfmax, ugp);
+            tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel,
+              coord, geoElem, ref_gp_l, U, P, vfmin, vfmax, ugp);
           }
 
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
