@@ -21,8 +21,11 @@
 #include "Inciter/Options/PDE.hpp"
 #include "FunctionPrototypes.hpp"
 #include "ContainerUtil.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
 
 //! Register compressible flow PDEs into PDE factory
 void
@@ -107,13 +110,19 @@ momentumOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
 //! \return Pressure ready to be output to file
 static tk::GetVarFn::result_type
 pressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
-  auto r = U.extract( 0, offset ), u = U.extract( 1, offset ),
-       v = U.extract( 2, offset ), w = U.extract( 3, offset ),
+  using tk::operator/=;
+  auto r = U.extract( 0, offset ),
+       u = U.extract( 1, offset ),
+       v = U.extract( 2, offset ),
+       w = U.extract( 3, offset ),
        re = U.extract( 4, offset );
+  u /= r;
+  v /= r;
+  w /= r;
   auto p = r;
-  //for (std::size_t i=0; i<U.nunk(); ++i) {
-  //  p[i] = eos_pressure<tag::compflow>( system, r[i], u[i], v[i], w[i], re[i] );
-  //}
+  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
+  for (std::size_t i=0; i<U.nunk(); ++i)
+    p[i] = eos_pressure<tag::compflow>( sys, r[i], u[i], v[i], w[i], re[i] );
   return p;
 }
 
