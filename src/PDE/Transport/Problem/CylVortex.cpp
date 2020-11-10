@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Transport/Problem/GaussHump.cpp
+  \file      src/PDE/Transport/Problem/CylVortex.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
@@ -15,7 +15,7 @@
 */
 // *****************************************************************************
 
-#include "GaussHump.hpp"
+#include "CylVortex.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
@@ -24,50 +24,66 @@ extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
-using inciter::TransportProblemGaussHump;
+using inciter::TransportProblemCylVortex;
 
 std::vector< tk::real >
-TransportProblemGaussHump::initialize( ncomp_t system, ncomp_t ncomp,
+TransportProblemCylVortex::solution( ncomp_t system, ncomp_t ncomp,
           tk::real x, tk::real y, tk::real, tk::real t )
 // *****************************************************************************
-//  Evaluate analytical solution at (x,y,t) for all components
+//  Evaluate initial solution at (x,y,t) for all components
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of components in this transport equation system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
-//! \return Values of all components evaluated at (x,y,t)
+//! \return Values of all components evaluated at (x,y,t=0)
+//! \details This function only gives the initial condition for the cylinder,
+//!   and not the solution at any time t>0.
 // *****************************************************************************
 {
   const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0, t );
 
-  std::vector< tk::real > s( ncomp, 0.0 );
-  for (ncomp_t c=0; c<ncomp; ++c)
-  {
-    // center of the hump
-    auto x0 = 0.25 + vel[c][0]*t;
-    auto y0 = 0.25 + vel[c][1]*t;
+  if (ncomp != 5) Throw("Cylinder deformation in vortex is only set up for 4 "
+    "components");
 
-    // hump
-    s[c] = 1.0 * exp( -((x-x0)*(x-x0) + (y-y0)*(y-y0))/(2.0 * 0.005) );
+  std::vector< tk::real > s( ncomp, 0.0 );
+
+  // center of the cylinder
+  auto x0 = 0.5;
+  auto y0 = 0.75;
+  auto r = sqrt((x-x0)*(x-x0) + (y-y0)*(y-y0));
+
+  if (r<0.15) {
+    if (x<x0 && y>=y0) s[0] = 1.0;
+    else if (x>=x0 && y>=y0) s[1] = 1.0;
+    else if (x>=x0 && y<y0) s[2] = 1.0;
+    else if (x<x0 && y<y0) s[3] = 1.0;
   }
+
   return s;
 }
 
 std::vector< std::array< tk::real, 3 > >
-TransportProblemGaussHump::prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real,
-                                               tk::real, tk::real, tk::real )
+TransportProblemCylVortex::prescribedVelocity( ncomp_t, ncomp_t ncomp,
+  tk::real x, tk::real y, tk::real, tk::real t )
 // *****************************************************************************
 //! Assign prescribed velocity at a point
 //! \param[in] ncomp Number of components in this transport equation
+//! \param[in] x x coordinate at which to assign velocity
+//! \param[in] y y coordinate at which to assign velocity
+//! \param[in] t time at which to assign velocity
 //! \return Velocity assigned to all vertices of a tetrehedron, size:
 //!   ncomp * ndim = [ncomp][3]
 // *****************************************************************************
 {
   std::vector< std::array< tk::real, 3 > > vel( ncomp );
 
-  for (ncomp_t c=0; c<ncomp; ++c)
-    vel[c] = {{ 0.1, 0.1, 0.0 }};
+  auto pi = 4.0 * std::atan(1.0);
+  for (ncomp_t c=0; c<ncomp; ++c) {
+    vel[c][0] = 0.0;
+    vel[c][1] = 0.0;
+    vel[c][2] = 0.0;
+  }
 
   return vel;
 }

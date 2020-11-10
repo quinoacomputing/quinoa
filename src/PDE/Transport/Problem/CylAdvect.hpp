@@ -49,7 +49,8 @@ class TransportProblemCylAdvect {
 
     //! Assign prescribed velocity at a point
     static std::vector< std::array< tk::real, 3 > >
-    prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real );
+    prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real,
+      tk::real );
 
     //! Return problem type
     static ctr::ProblemType type() noexcept

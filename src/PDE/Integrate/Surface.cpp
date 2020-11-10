@@ -24,6 +24,7 @@ void
 tk::surfInt( ncomp_t system,
              std::size_t nmat,
              ncomp_t offset,
+             real t,
              const std::size_t ndof,
              const std::size_t rdof,
              const std::vector< std::size_t >& inpoel,
@@ -45,6 +46,7 @@ tk::surfInt( ncomp_t system,
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] inpoel Element-node connectivity
@@ -222,7 +224,7 @@ tk::surfInt( ncomp_t system,
               "appended boundary state vector" );
 
       // evaluate prescribed velocity (if any)
-      auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
+      auto v = vel( system, ncomp, gp[0], gp[1], gp[2], t );
 
       // compute flux
       auto fl =

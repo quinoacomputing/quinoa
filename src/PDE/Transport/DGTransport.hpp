@@ -297,14 +297,14 @@ class Transport {
       std::vector< std::vector < tk::real > > riemannDeriv;
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, ndof, rdof, inpoel, coord,
+      tk::surfInt( m_system, m_ncomp, m_offset, t, ndof, rdof, inpoel, coord,
                    fd, geoFace, geoElem, Upwind::flux,
                    Problem::prescribedVelocity, U, P, VolFracMax, ndofel, R,
                    riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, ndof, fd.Esuel().size()/4,
+        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, fd.Esuel().size()/4,
                     inpoel, coord, geoElem, flux, Problem::prescribedVelocity,
                     U, ndofel, R );
 

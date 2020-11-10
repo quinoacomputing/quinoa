@@ -241,6 +241,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::gauss_hump
                                  , kw::rotated_sod_shocktube
                                  , kw::cyl_advect
+                                 , kw::cyl_vortex
                                  , kw::shedding_flow
                                  , kw::sod_shocktube
                                  , kw::sedov_blastwave

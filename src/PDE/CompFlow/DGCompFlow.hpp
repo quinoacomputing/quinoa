@@ -340,11 +340,12 @@ class CompFlow {
                 const std::vector< std::array< tk::real, 3 > >& v )
               { return m_riemann.flux( fn, u, v ); };
       // configure a no-op lambda for prescribed velocity
-      auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
+      auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real,
+        tk::real ){
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord,
+      tk::surfInt( m_system, 1, m_offset, t, ndof, rdof, inpoel, coord,
                    fd, geoFace, geoElem, rieflxfn, velfn, U, P, VolFracMax,
                    ndofel, R, riemannDeriv );
 
@@ -354,7 +355,7 @@ class CompFlow {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, ndof, fd.Esuel().size()/4,
+        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, fd.Esuel().size()/4,
                     inpoel, coord, geoElem, flux, velfn, U, ndofel, R );
 
       // compute boundary surface flux integrals

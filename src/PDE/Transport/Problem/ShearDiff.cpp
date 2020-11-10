@@ -92,7 +92,8 @@ TransportProblemShearDiff::errchk( ncomp_t system, ncomp_t ncomp ) const
 
 std::vector< std::array< tk::real, 3 > >
 TransportProblemShearDiff::prescribedVelocity( ncomp_t system, ncomp_t ncomp,
-                                              tk::real, tk::real y, tk::real z )
+                                               tk::real, tk::real y, tk::real z,
+                                               tk::real )
 // *****************************************************************************
 //  Assign prescribed shear velocity at a point
 //! \param[in] system Equation system index, i.e., which transport equation

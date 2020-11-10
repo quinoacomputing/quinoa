@@ -191,7 +191,7 @@ tk::bndSurfInt( ncomp_t system,
           // Compute the numerical flux
           auto fl = flux( fn,
                       state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn ),
-                      vel( system, ncomp, gp[0], gp[1], gp[2] ) );
+                      vel( system, ncomp, gp[0], gp[1], gp[2], t ) );
 
           // Add the surface integration term to the rhs
           update_rhs_bc( ncomp, nmat, offset, ndof, ndofel[el], wt, fn, el, fl,

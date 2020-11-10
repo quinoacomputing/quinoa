@@ -4569,6 +4569,23 @@ struct cyl_advect_info {
 };
 using cyl_advect = keyword< cyl_advect_info, TAOCPP_PEGTL_STRING("cyl_advect") >;
 
+struct cyl_vortex_info {
+  using code = Code< D >;
+  static std::string name() { return "Deformation of cylinder in a vortex"; }
+  static std::string shortDescription() { return
+    "Select deformation of cylinder in a vortex test problem"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the test problem which deforms a cylinder
+    in a vortical velocity field. The initial and boundary conditions are
+    specified to set up the test problem suitable to exercise and test the
+    advection terms of the scalar transport equation.
+    Example: "problem cyl_vortex".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using cyl_vortex = keyword< cyl_vortex_info, TAOCPP_PEGTL_STRING("cyl_vortex") >;
+
 struct vortical_flow_info {
   using code = Code< V >;
   static std::string name() { return "Vortical flow"; }
@@ -4908,6 +4925,7 @@ struct problem_info {
                   + slot_cyl::string() + "\' | \'"
                   + gauss_hump::string() + "\' | \'"
                   + cyl_advect::string() + "\' | \'"
+                  + cyl_vortex::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
                   + rayleigh_taylor::string() + "\' | \'"

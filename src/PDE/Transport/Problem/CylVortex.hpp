@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Transport/Problem/GaussHump.hpp
+  \file      src/PDE/Transport/Problem/CylVortex.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
@@ -14,8 +14,8 @@
     classes for cg::Transport and dg::Transport.
 */
 // *****************************************************************************
-#ifndef TransportProblemGaussHump_h
-#define TransportProblemGaussHump_h
+#ifndef TransportProblemCylVortex_h
+#define TransportProblemCylVortex_h
 
 #include <vector>
 #include <array>
@@ -26,41 +26,32 @@
 
 namespace inciter {
 
-//! Transport PDE problem: advection of two-dimensional Gaussian hump
-class TransportProblemGaussHump {
+//! Transport PDE problem: deformation of cylinder in a vortex
+class TransportProblemCylVortex {
   private:
     using ncomp_t = tk::ctr::ncomp_t;
     using eq = tag::transport;
 
   public:
-    //! Initialize numerical solution
+    //! Evaluate analytical solution at (x,y,t) for all components
     static std::vector< tk::real >
-    initialize( ncomp_t system, ncomp_t ncomp,
-                tk::real x, tk::real y, tk::real, tk::real t );
-
-    //! Evaluate analytical solution at (x,y,z,t) for all components
-    static std::vector< tk::real >
-    analyticSolution( ncomp_t system, ncomp_t ncomp,  tk::real x, tk::real y,
-                      tk::real z, tk::real t )
-    { return initialize( system, ncomp, x, y, z, t ); }
+    solution( ncomp_t system, ncomp_t ncomp,
+              tk::real x, tk::real y, tk::real, tk::real t );
 
     //! Do error checking on PDE parameters
     void errchk( ncomp_t, ncomp_t ) const {}
 
     //! Assign prescribed velocity at a point
     static std::vector< std::array< tk::real, 3 > >
-    prescribedVelocity( ncomp_t,
-                        ncomp_t ncomp,
-                        tk::real,
-                        tk::real,
-                        tk::real,
-                        tk::real );
+    prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real x, tk::real y,
+      tk::real,
+      tk::real t );
 
     //! Return problem type
     static ctr::ProblemType type() noexcept
-    { return ctr::ProblemType::GAUSS_HUMP; }
+    { return ctr::ProblemType::CYL_VORTEX; }
 };
 
 } // inciter::
 
-#endif // TransportProblemGaussHump_h
+#endif // TransportProblemCylVortex_h

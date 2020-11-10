@@ -21,6 +21,7 @@ void
 tk::volInt( ncomp_t system,
             ncomp_t ncomp,
             ncomp_t offset,
+            real t,
             const std::size_t ndof,
             const std::size_t nelem,
             const std::vector< std::size_t >& inpoel,
@@ -36,6 +37,7 @@ tk::volInt( ncomp_t system,
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] nelem Maximum number of elements
 //! \param[in] inpoel Element-node connectivity
@@ -102,7 +104,7 @@ tk::volInt( ncomp_t system,
         auto state = eval_state( ncomp, offset, ndof, ndofel[e], e, U, B );
 
         // evaluate prescribed velocity (if any)
-        auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
+        auto v = vel( system, ncomp, gp[0], gp[1], gp[2], t );
 
         // comput flux
         auto fl = flux( system, ncomp, state, v );
