@@ -8,8 +8,9 @@ target_include_directories(TransportProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}
                            ${QUINOA_SOURCE_DIR}/Base
                            ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/Control/Inciter
                            ${QUINOA_SOURCE_DIR}/Mesh
-                           #${QUINOA_SOURCE_DIR}/PDE
+                           ${QUINOA_SOURCE_DIR}/PDE
                            ${PROJECT_BINARY_DIR}/../Main
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}

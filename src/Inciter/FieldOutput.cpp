@@ -34,7 +34,7 @@ userFieldNames( tk::Centering c )
   for (const auto& v : outvar)
     if (v.centering == c) {
       std::stringstream s;
-      s << v;
+      if (v.alias.empty()) s << v; else s << v.alias;
       f.push_back( s.str() );
     }
 
@@ -52,7 +52,6 @@ userFieldOutput( const tk::Fields& U, tk::Centering c )
 {
   // Get list of output variables requested by user
   const auto& outvar = g_inputdeck.get< tag::cmd, tag::io, tag::outvar >();
-
   // Get offset map
   const auto& offset =
     g_inputdeck.get< tag::component >().offsetmap( g_inputdeck );
@@ -63,7 +62,8 @@ userFieldOutput( const tk::Fields& U, tk::Centering c )
       if (v.name.empty()) {     // depvar-based direct access
         f.push_back( U.extract( v.field, tk::cref_find(offset,v.var) ) );
       } else {                  // human-readable via custom function
-        //f.push_back( v.getvar(U) );
+        Assert( v.getvar, "getvar() not configured for " + v.name );
+        f.push_back( v.getvar( U, tk::cref_find(offset,v.var) ) );
       }
     }
   }

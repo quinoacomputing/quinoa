@@ -9,6 +9,7 @@ add_library(PDE
             ConfigureTransport.cpp
             ConfigureCompFlow.cpp
             ConfigureMultiMat.cpp
+            ConfigureOutVar.cpp
             CGPDE.cpp
             DGPDE.cpp
             CompFlow/RiemannFactory.cpp

@@ -709,41 +709,62 @@ namespace grm {
   //! Rule used to trigger action
   struct push_outvar : pegtl::success {};
   //! Add matched outvar based on depvar into vector of vector of outvars
+  //! \details Push outvar based on depvar: use first char of matched token as
+  //! OutVar::var, OutVar::name = "" by default. OutVar::name being empty will
+  //! be used to differentiate a depvar-based outvar from a human-readable
+  //! outvar. Depvar-based outvars can directly access solution arrays using
+  //! their field. Human-readable outvars need a mechanism (a function) to read
+  //! and compute their variables from solution arrays. The 'getvar' function,
+  //! used to compute a physics variable from the numerical solution is assigned
+  //! after initial migration and thus not assigned here (during parsing).
   template<>
   struct action< push_outvar > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
-      // Push outvar based on depvar: use first char of matched token as
-      // OutVar::var, OutVar::name = "" by default. OutVar::name being
-      // empty will be used to differentiate a depvar-based outvar from a
-      // human-readable outvar. Depvar-based outvars can directly access
-      // solution arrays using their field. Human-readable outvars need a
-      // mechanism (a function) to read and compute their variables from
-      // solution arrays.
       using inciter::deck::centering;
-      vars.emplace_back( tk::ctr::OutVar(in.string()[0], field, centering) );
-      // reset default field
-      field = 0;
+      using inciter::ctr::OutVar;
+      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
+      vars.emplace_back(OutVar(in.string()[0], field, centering));
+      field = 0;        // reset default field
     }
   };
 
   //! Rule used to trigger action
   struct push_outvar_human : pegtl::success {};
   //! Add matched outvar based on depvar into vector of vector of outvars
+  //! \details Push outvar based on human readable string for which
+  //! OutVar::name = matched token. OutVar::name being not empty will be used to
+  //! differentiate a depvar-based outvar from a human-readable outvar.
+  //! Depvar-based outvars can directly access solution arrays using their
+  //! field.  Human-readable outvars need a mechanism (a function) to read and
+  //! compute their variables from solution arrays. The 'getvar' function, used
+  //! to compute a physics variable from the numerical solution is assigned
+  //! after initial migration and thus not assigned here (during parsing). Since
+  //! human-readable outvars do not necessarily have any reference to the depvar
+  //! of their system they refer to, nor which system they refer to, we
+  //! configure them for all of the systems they are preceded by. If there is
+  //! only a single system of the type the outvar is configured, we simply look
+  //! up the depvar and use that as OutVar::var. If there are multiple systems
+  //! configured upstream to which the outvar could refer to, we configure an
+  //! outvar for all systems configured, and postfix the human-readable
+  //! OutVar::name with '_' + depvar. This also means the code below must deal
+  //! account for all equation types.
   template<>
   struct action< push_outvar_human > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
-      // Push outvar based on human readable string: OutVar::var = '0',
-      // OutVar::name = matched token. OutVar::name being not empty will be
-      // used to differentiate a depvar-based outvar from a human-readable
-      // outvar. Depvar-based outvars can directly access solution arrays using
-      // their field. Human-readable outvars need a mechanism (a function) to
-      // read and compute their variables from solution arrays.
       using inciter::deck::centering;
-      vars.emplace_back( tk::ctr::OutVar('0', 0, centering, in.string()) );
+      using inciter::ctr::OutVar;
+      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
+      const auto& compflow_depvar =
+        stack.template get< tag::param, tag::compflow, tag::depvar >();
+      if (compflow_depvar.size() == 1)
+        vars.emplace_back(
+          OutVar( compflow_depvar[0], 0, centering, in.string() ) );
+      else
+        for (auto d : compflow_depvar)
+          vars.emplace_back(
+           OutVar( d, 0, centering, in.string() + '_' + d ) );
     }
   };
 
@@ -754,8 +775,8 @@ namespace grm {
   struct action< set_outvar_alias > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
+      // Set alias of last pushed outvar:
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
-      // Set alias of last pushed outvar
       vars.back().alias = in.string();
     }
   };
@@ -770,13 +791,13 @@ namespace grm {
     template< typename U > void operator()( brigand::type_<U> ) {
       const auto& depvar = stack.template get< tag::param, U, tag::depvar >();
       const auto& ncomp = stack.template get< tag::component, U >();
-      const auto& outvar = stack.template get<tag::cmd, tag::io, tag::outvar>();
       Assert( depvar.size() == ncomp.size(), "Size mismatch" );
       // called after matching each outvar, so only check the last one
-      const auto& var = outvar.back();
-      const auto& v = static_cast<char>( std::tolower(var.var) );
+      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
+      const auto& last_outvar = vars.back();
+      const auto& v = static_cast<char>( std::tolower(last_outvar.var) );
       for (std::size_t e=0; e<depvar.size(); ++e)
-        if (v == depvar[e] && var.field < ncomp[e]) inbounds = true;
+        if (v == depvar[e] && last_outvar.field < ncomp[e]) inbounds = true;
     }
   };
 
@@ -1349,25 +1370,20 @@ namespace deck {
                          >,
            tk::grm::check_pref_errors > {};
 
-  //! Match output variable optionally followed by its quoted alias
-  template< class match >
+  //! Match output variable alias
   struct outvar_alias :
-         pegtl::sor<
-           pegtl::seq< match, tk::grm::quoted< tk::grm::set_outvar_alias > >,
-           match > {};
+         tk::grm::quoted< tk::grm::set_outvar_alias > {};
 
   //! Match an output variable in a human readable form: var must be a keyword
   template< class var >
   struct outvar_human :
-         outvar_alias<
-           tk::grm::exact_scan< use< var >, tk::grm::push_outvar_human > > {};
+         tk::grm::exact_scan< use< var >, tk::grm::push_outvar_human > {};
 
   //! Match an output variable based on depvar defined upstream of input file
   struct outvar_depvar :
-         outvar_alias<
            tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
              tk::grm::match_depvar< tk::grm::push_outvar >,
-             tk::grm::check_outvar > > {};
+             tk::grm::check_outvar > {};
 
   //! Parse a centering token and if matches, set centering in parser's state
   struct outvar_centering :
@@ -1383,6 +1399,7 @@ namespace deck {
              use< kw::end >
            , outvar_centering
            , outvar_depvar
+           , outvar_alias
            , outvar_human< kw::outvar_density >
            , outvar_human< kw::outvar_momentum >
            , outvar_human< kw::outvar_total_energy >

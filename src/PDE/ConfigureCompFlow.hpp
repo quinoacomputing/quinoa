@@ -19,6 +19,7 @@
 #include "PDEFactory.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/PDE.hpp"
+#include "FunctionPrototypes.hpp"
 
 namespace inciter {
 
@@ -32,6 +33,21 @@ registerCompFlow( CGFactory& cf,
 //! Return information on the compressible flow PDE
 std::vector< std::pair< std::string, std::string > >
 infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt );
+
+//! \brief Assign function that computes physics variables from the
+//!   numerical solution for CompFlow
+void
+assignCompFlowOutVar( const std::string& name, tk::GetVarFn& f );
+
+/** @name Functions that compute physics variables from the numerical solution for CompFlow */
+///@{
+
+//! Compute density for output to file
+//! \note Must follow the signature in tk::GetVarFn
+tk::GetVarFn::result_type
+densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset );
+
+//@}
 
 } // inciter::
 

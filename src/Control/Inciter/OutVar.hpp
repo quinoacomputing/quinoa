@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Control/OutVar.hpp
+  \file      src/Control/Inciter/OutVar.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
@@ -14,36 +14,24 @@
 
 #include "Keywords.hpp"
 #include "Centering.hpp"
+#include "Fields.hpp"
+#include "FunctionPrototypes.hpp"
+#include "ConfigureOutVar.hpp"
 
-namespace tk {
+namespace inciter {
 namespace ctr {
 
 //! Output variable
 struct OutVar {
   using ncomp_t = kw::ncomp::info::expect::type;
-
-  char var;             //!< Variable name
-  ncomp_t field;        //!< Field ID
-  Centering centering;  //!< Centering
-  std::string name;     //!< Human readable name (inciter knows it)
-  std::string alias;    //!< Alias (only user knows it)
-
-  /** @name Pack/Unpack: Serialize OutVar object for Charm++ */
-  ///@{
-  //! Pack/Unpack serialize member function
-  //! \param[in,out] p Charm++'s PUP::er serializer object reference
-  void pup( PUP::er& p ) {
-    p | var;
-    p | field;
-    p | centering;
-    p | name;
-    p | alias;
-  }
-  //! Pack/Unpack serialize operator|
-  //! \param[in,out] p Charm++'s PUP::er serializer object reference
-  //! \param[in,out] v OutVar object reference
-  friend void operator|( PUP::er& p, OutVar& v ) { v.pup(p); }
-  ///@}
+  using Centering = tk::Centering;
+  
+  char var;            //!< Variable name
+  ncomp_t field;       //!< Field ID
+  Centering centering; //!< Centering
+  std::string name;    //!< Human readable name (built-in, code knows it)
+  std::string alias;   //!< Alias (only user knows it)
+  tk::GetVarFn getvar; //!< Function to compute variable from numerical solution
 
   //! Constructor: initialize all state data
   //! \param[in] v Variable name
@@ -55,7 +43,26 @@ struct OutVar {
                    Centering c = Centering::NODE,
                    const std::string& n = {},
                    const std::string& a = {} ) :
-    var(v), field(f), centering(c), name(n), alias(a) {}
+    var(v), field(f), centering(c), name(n), alias(a),
+    getvar(assignGetVar(name)) {}
+
+  /** @name Pack/Unpack: Serialize OutVar object for Charm++ */
+  ///@{
+  //! Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er& p ) {
+    p | var;
+    p | field;
+    p | centering;
+    p | name;
+    p | alias;
+    if (p.isUnpacking()) getvar = assignGetVar( name );
+  }
+  //! Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] v OutVar object reference
+  friend void operator|( PUP::er& p, OutVar& v ) { v.pup(p); }
+  ///@}
 
   //! \brief Less-than operator for ordering, used by, e.g., std::set::insert
   //! \param[in] outvar OutVar to compare
@@ -107,6 +114,6 @@ static std::ostream& operator<< ( std::ostream& os, const OutVar& outvar ) {
 #endif
 
 } // ctr::
-} // tk::
+} // inciter::
 
 #endif // OutVar_h

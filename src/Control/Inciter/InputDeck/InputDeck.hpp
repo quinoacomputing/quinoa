@@ -26,6 +26,7 @@
 #include "Inciter/Components.hpp"
 
 namespace inciter {
+
 namespace ctr {
 
 //! Member data for tagged tuple
@@ -347,8 +348,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
     //! \return Unique set of field output variable names user wants
     //! \note This returns an ordered set so the order of the variable names
     //!   are alphabetical and unique.
-    std::set< tk::ctr::OutVar > outvars( tk::Centering c ) const {
-      std::set< tk::ctr::OutVar > vars;
+    std::set< OutVar > outvars( tk::Centering c ) const {
+      std::set< OutVar > vars;
       for (const auto& v : get< tag::cmd, tag::io, tag::outvar >()) {
         if (v.centering == c) vars.insert( v );
       }
@@ -356,7 +357,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
     }
 
     //! Extract field output variable names and aliases the user configured
-    //! \return MAp of field output variable names and alias for all
+    //! \return Map of field output variable names and alias for all
     //!    output variables the user configured
     std::map< std::string, std::string > outvar_aliases() const {
       std::map< std::string, std::string > aliases;

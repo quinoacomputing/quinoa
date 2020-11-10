@@ -309,4 +309,28 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   return nfo;
 }
 
+void
+assignCompFlowOutVar( const std::string& name, tk::GetVarFn& f )
+// *****************************************************************************
+// Assign functions that compute physics variables from the numerical solution
+// for CompFlow
+//! \param[in] name Name of variable whose tk::GetVarFn is to be assigned
+//! \param[in,out] f Function assigned
+// *****************************************************************************
+{
+  if (name.find("density") != std::string::npos) f = densityOutVar;
+}
+
+tk::GetVarFn::result_type
+densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset )
+// *****************************************************************************
+// Compute density for output to file
+//! \param[in] U Numerical solution
+//! \param[in] offset System offset specifying the position of the CompFlow
+//!   equation system among other systems
+// *****************************************************************************
+{
+  return U.extract( 0, offset );
+}
+
 }  // inciter::
