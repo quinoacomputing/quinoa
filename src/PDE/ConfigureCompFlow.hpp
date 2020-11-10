@@ -99,6 +99,24 @@ momentumOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
   return U.extract( dir+1, offset );
 }
 
+//! Compute pressure for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \param[in] U Numerical solution
+//! \param[in] offset System offset specifying the position of the CompFlow
+//!   equation system among other systems
+//! \return Pressure ready to be output to file
+static tk::GetVarFn::result_type
+pressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
+  auto r = U.extract( 0, offset ), u = U.extract( 1, offset ),
+       v = U.extract( 2, offset ), w = U.extract( 3, offset ),
+       re = U.extract( 4, offset );
+  auto p = r;
+  //for (std::size_t i=0; i<U.nunk(); ++i) {
+  //  p[i] = eos_pressure<tag::compflow>( system, r[i], u[i], v[i], w[i], re[i] );
+  //}
+  return p;
+}
+
 #if defined(__clang__)
   #pragma clang diagnostic pop
 #endif

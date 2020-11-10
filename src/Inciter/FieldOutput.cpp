@@ -59,11 +59,12 @@ userFieldOutput( const tk::Fields& U, tk::Centering c )
   std::vector< std::vector< tk::real > > f;
   for (const auto& v : outvar) {
     if (v.centering == c) {
+      auto o = tk::cref_find( offset, v.var );
       if (v.name.empty()) {     // depvar-based direct access
-        f.push_back( U.extract( v.field, tk::cref_find(offset,v.var) ) );
+        f.push_back( U.extract( v.field, o ) );
       } else {                  // human-readable via custom function
         Assert( v.getvar, "getvar() not configured for " + v.name );
-        f.push_back( v.getvar( U, tk::cref_find(offset,v.var) ) );
+        f.push_back( v.getvar( U, o ) );
       }
     }
   }

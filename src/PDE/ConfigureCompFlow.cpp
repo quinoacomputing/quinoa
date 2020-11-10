@@ -334,6 +334,8 @@ assignCompFlowOutVar( const std::string& name, tk::GetVarFn& f )
     f = momentumOutVar< 1 >;
   else if (name.find("z-momentum") != std::string::npos)
     f = momentumOutVar< 2 >;
+  else if (name.find("pressure") != std::string::npos)
+    f = pressureOutVar;
 }
 
 }  // inciter::
