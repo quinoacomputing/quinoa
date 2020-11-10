@@ -20,6 +20,7 @@
 #include "SystemComponents.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "FunctionPrototypes.hpp"
+#include "ContainerUtil.hpp"
 
 namespace inciter {
 
@@ -42,10 +43,41 @@ assignCompFlowOutVar( const std::string& name, tk::GetVarFn& f );
 /** @name Functions that compute physics variables from the numerical solution for CompFlow */
 ///@{
 
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
 //! Compute density for output to file
 //! \note Must follow the signature in tk::GetVarFn
+//! \param[in] U Numerical solution
+//! \param[in] offset System offset specifying the position of the CompFlow
+//!   equation system among other systems
+//! \return Fluid density ready to be output to file
+static tk::GetVarFn::result_type
+densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
+  return U.extract( 0, offset );
+}
+
+//! Compute velocity component for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \tparam dir Physical direction, encoded as 0:x, 1:y, 2:z
+//! \param[in] U Numerical solution
+//! \param[in] offset System offset specifying the position of the CompFlow
+//!   equation system among other systems
+//! \return velocity component ready to be output to file
+template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
-densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset );
+velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
+  using tk::operator/=;
+  auto r = U.extract( 0, offset ), u = U.extract( dir, offset );
+  u /= r;
+  return u;
+}
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
 
 //@}
 

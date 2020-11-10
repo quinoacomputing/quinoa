@@ -103,7 +103,7 @@ using ElemGradFn = std::function<
                                             std::vector< tk::real > >&,
                           const tk::Fields& ) >;
 
-//! Prototype for functions to compute variable from numerical solution
+//! Prototype for functions to compute a variable from the numerical solution
 using GetVarFn =
   std::function< std::vector< real >( const tk::Fields&, ncomp_t ) >;
 

@@ -1907,16 +1907,38 @@ struct outvar_total_energy_info {
 using outvar_total_energy =
   keyword< outvar_total_energy_info, TAOCPP_PEGTL_STRING("total_energy") >;
 
-struct outvar_velocity_info {
-  static std::string name() { return "velocity"; }
-  static std::string shortDescription() { return "Request velocity"; }
+struct outvar_xvelocity_info {
+  static std::string name() { return "x-velocity"; }
+  static std::string shortDescription() { return "Request x-velocity"; }
   static std::string longDescription() { return
-    R"(This keyword is used to request the fluid velocity as an output
+    R"(This keyword is used to request the fluid x-velocity as an output
        variable.)";
   }
 };
-using outvar_velocity =
-  keyword< outvar_velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
+using outvar_xvelocity =
+  keyword< outvar_xvelocity_info, TAOCPP_PEGTL_STRING("x-velocity") >;
+
+struct outvar_yvelocity_info {
+  static std::string name() { return "y-velocity"; }
+  static std::string shortDescription() { return "Request y-velocity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid y-velocity as an output
+       variable.)";
+  }
+};
+using outvar_yvelocity =
+  keyword< outvar_yvelocity_info, TAOCPP_PEGTL_STRING("y-velocity") >;
+
+struct outvar_zvelocity_info {
+  static std::string name() { return "z-velocity"; }
+  static std::string shortDescription() { return "Request z-velocity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid z-velocity as an output
+       variable.)";
+  }
+};
+using outvar_zvelocity =
+  keyword< outvar_zvelocity_info, TAOCPP_PEGTL_STRING("z-velocity") >;
 
 struct outvar_pressure_info {
   static std::string name() { return "pressure"; }
@@ -1952,7 +1974,9 @@ struct outvar_info {
     + outvar_density::string()+ "\', \'"
     + outvar_momentum::string()+ "\', \'"
     + outvar_total_energy::string() + "\', \'"
-    + outvar_velocity::string() + "\', \'"
+    + outvar_xvelocity::string() + "\', \'"
+    + outvar_yvelocity::string() + "\', \'"
+    + outvar_zvelocity::string() + "\', \'"
     + outvar_pressure::string() + "\', \'"
     + outvar_analytic::string() + "\'.";
   }

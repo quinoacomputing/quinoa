@@ -318,19 +318,14 @@ assignCompFlowOutVar( const std::string& name, tk::GetVarFn& f )
 //! \param[in,out] f Function assigned
 // *****************************************************************************
 {
-  if (name.find("density") != std::string::npos) f = densityOutVar;
-}
-
-tk::GetVarFn::result_type
-densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset )
-// *****************************************************************************
-// Compute density for output to file
-//! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the CompFlow
-//!   equation system among other systems
-// *****************************************************************************
-{
-  return U.extract( 0, offset );
+  if (name.find("density") != std::string::npos)
+    f = densityOutVar;
+  else if (name.find("x-velocity") != std::string::npos)
+    f = velocityOutVar< 0 >;
+  else if (name.find("y-velocity") != std::string::npos)
+    f = velocityOutVar< 1 >;
+  else if (name.find("z-velocity") != std::string::npos)
+    f = velocityOutVar< 2 >;
 }
 
 }  // inciter::
