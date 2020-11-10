@@ -65,7 +65,7 @@ densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
 //! \param[in] U Numerical solution
 //! \param[in] offset System offset specifying the position of the CompFlow
 //!   equation system among other systems
-//! \return velocity component ready to be output to file
+//! \return Velocity component ready to be output to file
 template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
 velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
@@ -73,6 +73,30 @@ velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
   auto r = U.extract( 0, offset ), u = U.extract( dir, offset );
   u /= r;
   return u;
+}
+
+//! Compute total specific energy for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \param[in] U Numerical solution
+//! \param[in] offset System offset specifying the position of the CompFlow
+//!   equation system among other systems
+//! \return Total specific energy ready to be output to file
+static tk::GetVarFn::result_type
+energyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
+  return U.extract( 4, offset );
+}
+
+//! Compute momentum component for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \tparam dir Physical direction, encoded as 0:x, 1:y, 2:z
+//! \param[in] U Numerical solution
+//! \param[in] offset System offset specifying the position of the CompFlow
+//!   equation system among other systems
+//! \return Momentum component ready to be output to file
+template< tk::ctr::ncomp_t dir >
+tk::GetVarFn::result_type
+momentumOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
+  return U.extract( dir+1, offset );
 }
 
 #if defined(__clang__)

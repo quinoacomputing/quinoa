@@ -1885,16 +1885,38 @@ struct outvar_density_info {
 using outvar_density =
   keyword< outvar_density_info, TAOCPP_PEGTL_STRING("density") >;
 
-struct outvar_momentum_info {
-  static std::string name() { return "momentum"; }
-  static std::string shortDescription() { return "Request momentum"; }
+struct outvar_xmomentum_info {
+  static std::string name() { return "x-momentum"; }
+  static std::string shortDescription() { return "Request x-momentum"; }
   static std::string longDescription() { return
-    R"(This keyword is used to request the fluid momentum as an output
+    R"(This keyword is used to request the fluid x-momentum as an output
        variable.)";
   }
 };
-using outvar_momentum =
-  keyword< outvar_momentum_info, TAOCPP_PEGTL_STRING("momentum") >;
+using outvar_xmomentum =
+  keyword< outvar_xmomentum_info, TAOCPP_PEGTL_STRING("x-momentum") >;
+
+struct outvar_ymomentum_info {
+  static std::string name() { return "y-momentum"; }
+  static std::string shortDescription() { return "Request y-momentum"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid y-momentum as an output
+       variable.)";
+  }
+};
+using outvar_ymomentum =
+  keyword< outvar_ymomentum_info, TAOCPP_PEGTL_STRING("y-momentum") >;
+
+struct outvar_zmomentum_info {
+  static std::string name() { return "z-momentum"; }
+  static std::string shortDescription() { return "Request z-momentum"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid z-momentum as an output
+       variable.)";
+  }
+};
+using outvar_zmomentum =
+  keyword< outvar_zmomentum_info, TAOCPP_PEGTL_STRING("z-momentum") >;
 
 struct outvar_total_energy_info {
   static std::string name() { return "total_energy"; }
@@ -1972,7 +1994,9 @@ struct outvar_info {
        in an outvar ... end block:)"
     + std::string("\'")
     + outvar_density::string()+ "\', \'"
-    + outvar_momentum::string()+ "\', \'"
+    + outvar_xmomentum::string()+ "\', \'"
+    + outvar_ymomentum::string()+ "\', \'"
+    + outvar_zmomentum::string()+ "\', \'"
     + outvar_total_energy::string() + "\', \'"
     + outvar_xvelocity::string() + "\', \'"
     + outvar_yvelocity::string() + "\', \'"

@@ -1401,7 +1401,9 @@ namespace deck {
            , outvar_depvar
            , outvar_alias
            , outvar_human< kw::outvar_density >
-           , outvar_human< kw::outvar_momentum >
+           , outvar_human< kw::outvar_xmomentum >
+           , outvar_human< kw::outvar_ymomentum >
+           , outvar_human< kw::outvar_zmomentum >
            , outvar_human< kw::outvar_total_energy >
            , outvar_human< kw::outvar_xvelocity >
            , outvar_human< kw::outvar_yvelocity >

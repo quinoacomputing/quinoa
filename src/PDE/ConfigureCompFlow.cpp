@@ -326,6 +326,14 @@ assignCompFlowOutVar( const std::string& name, tk::GetVarFn& f )
     f = velocityOutVar< 1 >;
   else if (name.find("z-velocity") != std::string::npos)
     f = velocityOutVar< 2 >;
+  else if (name.find("total_energy") != std::string::npos)
+    f = energyOutVar;
+  else if (name.find("x-momentum") != std::string::npos)
+    f = momentumOutVar< 0 >;
+  else if (name.find("y-momentum") != std::string::npos)
+    f = momentumOutVar< 1 >;
+  else if (name.find("z-momentum") != std::string::npos)
+    f = momentumOutVar< 2 >;
 }
 
 }  // inciter::
