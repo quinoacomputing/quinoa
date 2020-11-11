@@ -25,6 +25,7 @@
 #include "Mesh/Around.hpp"
 #include "Reconstruction.hpp"
 #include "Problem/FieldOutput.hpp"
+#include "Problem/BoxInitialization.hpp"
 #include "Riemann/Rusanov.hpp"
 #include "NodeBC.hpp"
 #include "EoS/EoS.hpp"
@@ -79,27 +80,78 @@ class CompFlow {
        "Number of CompFlow PDE components must be " + std::to_string(m_ncomp) );
     }
 
-    //! Initalize the compressible flow equations, prepare for time integration
+    //! Determine nodes that lie inside the user-defined IC box
     //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in] t Physical time
     //! \param[in,out] inbox List of nodes at which box user ICs are set
-    void initialize( const std::array< std::vector< real >, 3 >& coord,
-                     tk::Fields& unk,
-                     real t,
-                     std::vector< std::size_t >& inbox ) const
+    void IcBoxNodes( const tk::UnsMesh::Coords& coord,
+      std::unordered_set< std::size_t >& inbox ) const
     {
-      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
 
+      // Detect if user has configured a box IC
+      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      std::vector< tk::real >
+        box{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
+             icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
+             icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
+      const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+      // Determine which nodes lie in the IC box
+      if ( std::any_of( begin(box), end(box), [=](auto p)
+        {return abs(p) > eps;} )) {
+        for (ncomp_t i=0; i<x.size(); ++i) {
+          if ( x[i]>box[0] && x[i]<box[1] && y[i]>box[2] && y[i]<box[3] &&
+            z[i]>box[4] && z[i]<box[5] )
+          {
+            inbox.insert( i );
+          }
+        }
+      }
+    }
+
+    //! Initalize the compressible flow equations, prepare for time integration
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in,out] unk Array of unknowns
+    //! \param[in] t Physical time
+    //! \param[in] V Discrete volume of user-defined IC box
+    //! \param[in] inbox List of nodes at which box user ICs are set
+    void initialize( const std::array< std::vector< real >, 3 >& coord,
+                     tk::Fields& unk,
+                     real t,
+                     real V,
+                     const std::unordered_set< std::size_t >& inbox ) const
+    {
+      Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
+
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      std::array< tk::real, 6 >
+        boxdim{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
+                icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
+                icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
+      auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
+        (boxdim[5]-boxdim[4]);
+      const auto eps = 1000.0 * std::numeric_limits< tk::real >::epsilon();
+      // if an ic box was not specified, avoid division by zero by setting V
+      if (V_ex < eps) V = 1.0;
+      const auto& bgpreic = ic.get< tag::pressure >();
+      const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
+
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
-        int boxed = 0;
-        const auto s =
-          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t, boxed );
-        if (boxed) inbox.push_back( i );
+        auto s = Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t );
+
+        // initialize the user-defined box IC
+        if (inbox.find(i) != inbox.end())
+          initializeBox(m_system, V_ex/V, t, icbox, bgpreic, cv, s);
+
         unk(i,0,m_offset) = s[0]; // rho
         if (!skipPoint(x[i],y[i],z[i]) && stagPoint(x[i],y[i],z[i])) {
           unk(i,1,m_offset) = unk(i,2,m_offset) = unk(i,3,m_offset) = 0.0;
@@ -112,160 +164,6 @@ class CompFlow {
       }
     }
 
-    //! Set user-defined box IC nodes
-    //! \param[in] V Total box volume
-    //! \param[in] t Physical time
-    //! \param[in] boxnodes Mesh node ids within user-defined box
-//    //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] unk Array of unknowns
-    //! \param[in,out] boxnodes_set Box nodes that have been set
-    //! \details This function sets the fluid density and total specific energy
-    //!   within a box initial condition, configured by the user. If the user
-    //!   is specified a box where mass is specified, we also assume here that
-    //!   internal energy content (energy per unit volume) is also
-    //!   specified. Specific internal energy (energy per unit mass) is then
-    //!   computed here (and added to the kinetic energy) from the internal
-    //!   energy per unit volume by multiplying it with the total box volume
-    //!   and dividing it by the total mass of the material in the box.
-    //!   Example (SI) units of the quantities involved:
-    //!    * internal energy content (energy per unit volume): J/m^3
-    //!    * specific energy (internal energy per unit mass): J/kg
-    void box( real V,
-              real t,
-              const std::vector< std::size_t >& boxnodes,
-              const std::array< std::vector< real >, 3 >& /*coord*/,
-              tk::Fields& unk,
-              std::unordered_set< std::size_t >& boxnodes_set ) const
-    {
-      if (boxnodes_set.size() == boxnodes.size()) return;
-
-      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
-      const auto& icbox = ic.get< tag::box >();
-      const auto& initiate = icbox.get< tag::initiate >();
-      const auto& inittype = initiate.get< tag::init >();
-
-      const auto& boxrho = icbox.get< tag::density >();
-      const auto& boxvel = icbox.get< tag::velocity >();
-      const auto& boxpre = icbox.get< tag::pressure >();
-      const auto& boxene = icbox.get< tag::energy >();
-      const auto& boxtem = icbox.get< tag::temperature >();
-      const auto& boxmas = icbox.get< tag::mass >();
-      const auto& boxenc = icbox.get< tag::energy_content >();
-
-      tk::real rho = 0.0, ru = 0.0, rv = 0.0, rw = 0.0, re = 0.0, spi = 0.0;
-      bool boxmassic = false;
-      if (boxmas.size() > m_system && !boxmas[m_system].empty()) {
-
-        Assert( boxenc.size() > m_system && !boxenc[m_system].empty(),
-          "Box energy content unspecified in input file" );
-        std::vector< tk::real >
-          boxdim{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
-                  icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
-                  icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
-        auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
-          (boxdim[5]-boxdim[4]);
-        rho = boxmas[m_system][0] / V_ex;
-        spi = boxenc[m_system][0] * V_ex / (V * rho);
-        boxmassic = true;
-
-      } else {
-
-        if (boxrho.size() > m_system && !boxrho[m_system].empty()) {
-          rho = boxrho[m_system][0];
-        }
-        if (boxvel.size() > m_system && boxvel[m_system].size() > 2) {
-          ru = rho * boxvel[m_system][0];
-          rv = rho * boxvel[m_system][1];
-          rw = rho * boxvel[m_system][2];
-        }
-        if (boxpre.size() > m_system && !boxpre[m_system].empty()) {
-          re = eos_totalenergy< eq >
-                 ( m_system, rho, ru/rho, rv/rho, rw/rho, boxpre[m_system][0] );
-        }
-        if (boxene.size() > m_system && !boxene[m_system].empty()) {
-          const auto ux = ru/rho, uy = rv/rho, uz = rw/rho;
-          const auto ke = 0.5*(ux*ux + uy*uy + uz*uz);
-          re = rho * (boxene[m_system][0] + ke);
-        }
-        if (boxtem.size() > m_system && !boxtem[m_system].empty())
-        {
-          const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
-          re = rho * boxtem[m_system][0] * cv.at(m_system).at(0);
-        }
-
-      }
-
-      // Initiate type 'impulse' simply assigns the prescribed values to all
-      // nodes within a box.
-      if (inittype[m_system] == ctr::InitiateType::IMPULSE) {
-
-        for (auto i : boxnodes) {
-          // superimpose on existing velocity field
-          const auto u = unk(i,1,m_offset) / unk(i,0,m_offset),
-                     v = unk(i,2,m_offset) / unk(i,0,m_offset),
-                     w = unk(i,3,m_offset) / unk(i,0,m_offset);
-          const auto ke = 0.5*(u*u + v*v + w*w);
-          unk(i,0,m_offset) = rho;
-          if (boxmassic) {
-            unk(i,1,m_offset) = rho * u;
-            unk(i,2,m_offset) = rho * v;
-            unk(i,3,m_offset) = rho * w;
-            unk(i,4,m_offset) = rho * (spi + ke);
-          } else {
-            unk(i,1,m_offset) = ru;
-            unk(i,2,m_offset) = rv;
-            unk(i,3,m_offset) = rw;
-            unk(i,4,m_offset) = re;
-          }
-        }
-        boxnodes_set.insert( begin(boxnodes), end(boxnodes) );
-      }
-
-      // Initiate type 'linear' assigns the prescribed values to all
-      // nodes within a box. This is followed by adding a time-dependent energy
-      // source term representing a planar wave-front propagating along the
-      // z-direction with a velocity specified in the IC linear...end block.
-      // The wave front is smoothed out to include a couple of mesh nodes.
-      // see boxSrc() for further details.
-      else if (inittype[m_system] == ctr::InitiateType::LINEAR && t < 1e-12) {
-
-        for (auto i : boxnodes) {
-
-          // superimpose on existing velocity field
-          const auto u = unk(i,1,m_offset)/unk(i,0,m_offset),
-                     v = unk(i,2,m_offset)/unk(i,0,m_offset),
-                     w = unk(i,3,m_offset)/unk(i,0,m_offset);
-          const auto ke = 0.5*(u*u + v*v + w*w);
-
-          const auto& bgpreic = ic.get< tag::pressure >();
-
-          // The linear-propagating source initialization can be done only based
-          // on background pressure (not on temperature): The IC box can have a
-          // different density than the background, while having the same
-          // pressure and temperature as the background. This means, the
-          // material in the box has a different specific heat (Cv) than the
-          // background material. If such a box has to be initialized based
-          // on temperature, the Cv of the box will have to be specified
-          // separately. This is not currently supported.
-          if (bgpreic.size() > m_system && !bgpreic[m_system].empty()) {
-            // energy based on box density and background pressure
-            spi = eos_totalenergy< eq >( m_system, rho, u, v, w,
-                                          bgpreic[m_system][0] )/rho;
-          }
-          else Throw("Background pressure must be specified for box-IC with "
-                     "linear propagating source");
-
-          unk(i,0,m_offset) = rho;
-          unk(i,1,m_offset) = rho * u;
-          unk(i,2,m_offset) = rho * v;
-          unk(i,3,m_offset) = rho * w;
-          unk(i,4,m_offset) = rho * (spi + ke);
-          boxnodes_set.insert( i );       // mark node as set
-        }
-
-      } else Throw( "IC box initiate type not implemented" );
-    }
-
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate
@@ -275,8 +173,7 @@ class CompFlow {
     std::vector< real >
     analyticSolution( real xi, real yi, real zi, real t ) const
     {
-      int inbox = 0;
-      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
+      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
     }
 
     //! Compute right hand side for DiagCG (CG+FCT)
@@ -563,7 +460,7 @@ class CompFlow {
               const std::vector< real >& vol,
               const std::vector< std::size_t >& edgenode,
               const std::vector< std::size_t >& edgeid,
-              const std::vector< std::size_t >& boxnodes,
+              const std::unordered_set< std::size_t >& boxnodes,
               const tk::Fields& G,
               const tk::Fields& U,
               const std::vector< tk::real >& tp,
@@ -1480,7 +1377,7 @@ class CompFlow {
       const std::vector< std::size_t >& inpoel,
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& esup,
-      const std::vector< std::size_t >& boxnodes,
+      const std::unordered_set< std::size_t >& boxnodes,
       const std::array< std::vector< real >, 3 >& coord,
       tk::Fields& R ) const
     {

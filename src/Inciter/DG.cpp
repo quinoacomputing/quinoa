@@ -103,7 +103,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_elemfields(),
   m_nodefields(),
   m_nodefieldsc(),
-  m_outmesh()
+  m_outmesh(),
+  m_boxelems()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -1180,18 +1181,23 @@ DG::setup()
   // Compute left-hand side of discrete PDEs
   lhs();
 
-  // Set initial conditions for all PDEs
-  for (const auto& eq : g_dgpde) 
-  {
-    eq.initialize( m_lhs, m_inpoel, m_coord, m_u, d->T(),
-                   m_fd.Esuel().size()/4 );
-    eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
-  }
+  // Determine elements inside user-defined IC box
+  for (auto& eq : g_dgpde)
+    eq.IcBoxElems( m_geoElem, m_fd.Esuel().size()/4, m_boxelems );
 
   // Compute volume of user-defined box IC
   d->boxvol( {} );      // punt for now
 
-  m_un = m_u;
+  // Query time history field output labels from all PDEs integrated
+  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+  if (!hist_points.empty()) {
+    std::vector< std::string > histnames;
+    for (const auto& eq : g_dgpde) {
+      auto n = eq.histNames();
+      histnames.insert( end(histnames), begin(n), end(n) );
+    }
+    d->histheader( std::move(histnames) );
+  }
 }
 
 void
@@ -1201,8 +1207,20 @@ DG::box( tk::real v )
 //! \param[in] v Total volume within user-specified box
 // *****************************************************************************
 {
+  auto d = Disc();
+
   // Store user-defined box IC volume
-  Disc()->Boxvol() = v;
+  d->Boxvol() = v;
+
+  // Set initial conditions for all PDEs
+  for (const auto& eq : g_dgpde)
+  {
+    eq.initialize( m_lhs, m_inpoel, m_coord, m_boxelems, m_u, d->T(),
+                   m_fd.Esuel().size()/4 );
+    eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
+  }
+
+  m_un = m_u;
 
   // Output initial conditions to file (regardless of whether it was requested)
   startFieldOutput( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
@@ -1953,8 +1971,8 @@ DG::solve( tk::real newdt )
   if (m_stage == 0) m_un = m_u;
 
   for (const auto& eq : g_dgpde)
-    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_inpoel, m_coord, m_u,
-            m_p, m_ndof, m_rhs );
+    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_inpoel, m_boxelems, m_coord,
+            m_u, m_p, m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<m_nunk; ++e)
@@ -2116,6 +2134,17 @@ DG::fieldOutput() const
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Output time history if we hit its output frequency
+  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
+  if ( !((d->It()) % histfreq) ) {
+    std::vector< std::vector< tk::real > > hist;
+    for (const auto& eq : g_dgpde) {
+      auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u );
+      hist.insert( end(hist), begin(h), end(h) );
+    }
+    d->history( std::move(hist) );
+  }
 
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();

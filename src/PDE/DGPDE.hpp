@@ -32,6 +32,7 @@
 #include "UnsMesh.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "FunctionPrototypes.hpp"
+#include "History.hpp"
 
 namespace inciter {
 
@@ -124,14 +125,21 @@ class DGPDE {
     std::size_t nprim() const
     { return self->nprim(); }
 
+    //! Public interface to determine elements that lie inside the IC box
+    void IcBoxElems( const tk::Fields& geoElem,
+      std::size_t nielem,
+      std::unordered_set< std::size_t >& inbox ) const
+    { self->IcBoxElems( geoElem, nielem, inbox ); }
+
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
+                     const std::unordered_set< std::size_t >& inbox,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
-    { self->initialize( L, inpoel, coord, unk, t, nielem ); }
+    { self->initialize( L, inpoel, coord, inbox, unk, t, nielem ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
@@ -186,13 +194,15 @@ class DGPDE {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
+              const std::unordered_set< std::size_t >& boxelems,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
-      self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, P, ndofel, R );
+      self->rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P, ndofel,
+        R );
     }
 
     //! Public interface for computing the minimum time step size
@@ -213,6 +223,9 @@ class DGPDE {
     //! Public interface to returning field output labels
     std::vector< std::string > nodalFieldNames() const
     { return self->nodalFieldNames(); }
+
+    //! Public interface to returning time history field output labels
+    std::vector< std::string > histNames() const { return self->histNames(); }
 
     //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
@@ -245,6 +258,14 @@ class DGPDE {
                 tk::Fields& U ) const
     { return self->surfOutput( bnd, U ); }
 
+    //! Public interface to return point history output
+    std::vector< std::vector< tk::real > >
+    histOutput( const std::vector< HistData >& h,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      const tk::Fields& U ) const
+    { return self->histOutput( h, inpoel, coord, U ); }
+
     //! Public interface to returning analytic solution
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
@@ -269,9 +290,13 @@ class DGPDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual std::size_t nprim() const = 0;
+      virtual void IcBoxElems( const tk::Fields&,
+        std::size_t,
+        std::unordered_set< std::size_t >& ) const = 0;
       virtual void initialize( const tk::Fields&,
                                const std::vector< std::size_t >&,
                                const tk::UnsMesh::Coords&,
+                               const std::unordered_set< std::size_t >&,
                                tk::Fields&,
                                tk::real,
                                const std::size_t nielem ) const = 0;
@@ -309,6 +334,7 @@ class DGPDE {
                         const tk::Fields&,
                         const inciter::FaceData&,
                         const std::vector< std::size_t >&,
+                        const std::unordered_set< std::size_t >&,
                         const tk::UnsMesh::Coords&,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -325,6 +351,7 @@ class DGPDE {
                            const std::size_t ) const = 0;
       virtual std::vector< std::string > fieldNames() const = 0;
       virtual std::vector< std::string > nodalFieldNames() const = 0;
+      virtual std::vector< std::string > histNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > fieldOutput(
         tk::real,
@@ -345,6 +372,11 @@ class DGPDE {
       virtual std::vector< std::vector< tk::real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
         tk::Fields& ) const = 0;
+      virtual std::vector< std::vector< tk::real > > histOutput(
+        const std::vector< HistData >&,
+        const std::vector< std::size_t >&,
+        const tk::UnsMesh::Coords&,
+        const tk::Fields& ) const = 0;
       virtual std::vector< tk::real > analyticSolution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
@@ -357,13 +389,19 @@ class DGPDE {
       Concept* copy() const override { return new Model( *this ); }
       std::size_t nprim() const override
       { return data.nprim(); }
+      void IcBoxElems( const tk::Fields& geoElem,
+        std::size_t nielem,
+        std::unordered_set< std::size_t >& inbox )
+      const override { data.IcBoxElems( geoElem, nielem, inbox ); }
       void initialize( const tk::Fields& L,
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
+                       const std::unordered_set< std::size_t >& inbox,
                        tk::Fields& unk,
                        tk::real t,
                        const std::size_t nielem )
-      const override { data.initialize( L, inpoel, coord, unk, t, nielem ); }
+      const override { data.initialize( L, inpoel, coord, inbox, unk, t,
+        nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void updatePrimitives( const tk::Fields& unk,
@@ -407,13 +445,15 @@ class DGPDE {
                 const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
                 const std::vector< std::size_t >& inpoel,
+                const std::unordered_set< std::size_t >& boxelems,
                 const tk::UnsMesh::Coords& coord,
                 const tk::Fields& U,
                 const tk::Fields& P,
                 const std::vector< std::size_t >& ndofel,
                 tk::Fields& R ) const override
       {
-        data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, P, ndofel, R );
+        data.rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
+          ndofel, R );
       }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
@@ -429,6 +469,8 @@ class DGPDE {
       { return data.fieldNames(); }
       std::vector< std::string > nodalFieldNames() const override
       { return data.nodalFieldNames(); }
+      std::vector< std::string > histNames() const override
+      { return data.histNames(); }
       std::vector< std::string > names() const override
       { return data.names(); }
       std::vector< std::vector< tk::real > > fieldOutput(
@@ -453,6 +495,12 @@ class DGPDE {
         const std::map< int, std::vector< std::size_t > >& bnd,
         tk::Fields& U ) const override
       { return data.surfOutput( bnd, U ); }
+      std::vector< std::vector< tk::real > > histOutput(
+        const std::vector< HistData >& h,
+        const std::vector< std::size_t >& inpoel,
+        const tk::UnsMesh::Coords& coord,
+        const tk::Fields& U ) const override
+      { return data.histOutput( h, inpoel, coord, U ); }
       std::vector< tk::real >
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }

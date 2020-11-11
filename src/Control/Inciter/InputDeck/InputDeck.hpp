@@ -316,6 +316,15 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::interval, tag::field >() = 1;
       get< tag::interval, tag::diag >() = 1;
       get< tag::interval, tag::history >() = 1;
+
+      auto& icbox = get< tag::param, tag::compflow, tag::ic, tag::box >();
+      icbox.get< tag::xmin >() = 0.0;
+      icbox.get< tag::xmax >() = 0.0;
+      icbox.get< tag::ymin >() = 0.0;
+      icbox.get< tag::ymax >() = 0.0;
+      icbox.get< tag::zmin >() = 0.0;
+      icbox.get< tag::zmax >() = 0.0;
+
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       brigand::for_each< keywords >( ctrinfoFill );

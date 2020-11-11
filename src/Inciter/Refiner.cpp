@@ -797,6 +797,10 @@ Refiner::writeMesh( const std::string& basefilename,
   const auto centering = ctr::Scheme().centering( scheme );
   auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
 
+  // list of nodes/elements at which box ICs are defined
+  std::unordered_set< std::size_t > inbox;
+  tk::real V = 1.0;
+
   // Prepare node or element fields for output to file
   if (centering == tk::Centering::NODE) {
 
@@ -806,8 +810,7 @@ Refiner::writeMesh( const std::string& basefilename,
 
     // Evaluate initial conditions on current mesh at t0
     tk::Fields u( m_coord[0].size(), nprop );
-    std::vector< std::size_t > inbox;
-    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, inbox );
+    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox );
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
@@ -829,7 +832,7 @@ Refiner::writeMesh( const std::string& basefilename,
     // Evaluate initial conditions on current mesh at t0
     auto u = lhs;
     for (const auto& eq : g_dgpde)
-      eq.initialize( lhs, m_inpoel, m_coord, u, t0, m_inpoel.size()/4 );
+      eq.initialize( lhs, m_inpoel, m_coord, inbox, u, t0, m_inpoel.size()/4 );
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
@@ -1329,11 +1332,14 @@ Refiner::nodeinit( std::size_t npoin,
   // Evaluate ICs differently depending on nodal or cell-centered discretization
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
+  // list of nodes/elements at which box ICs are defined
+  std::unordered_set< std::size_t > inbox;
+  tk::real V = 1.0;
+
   if (centering == tk::Centering::NODE) {
 
     // Evaluate ICs for all scalar components integrated
-    std::vector< std::size_t > inbox;
-    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, inbox );
+    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox );
 
   } else if (centering == tk::Centering::ELEM) {
 
@@ -1345,7 +1351,7 @@ Refiner::nodeinit( std::size_t npoin,
     for (const auto& eq : g_dgpde)
       eq.lhs( geoElem, lhs );
     for (const auto& eq : g_dgpde)
-      eq.initialize( lhs, m_inpoel, m_coord, ue, t0, esuel.size()/4 );
+      eq.initialize( lhs, m_inpoel, m_coord, inbox, ue, t0, esuel.size()/4 );
 
     // Transfer initial conditions from cells to nodes
     for (std::size_t p=0; p<npoin; ++p) {    // for all mesh nodes on this chare

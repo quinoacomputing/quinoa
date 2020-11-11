@@ -90,7 +90,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_symbctri(),
   m_stage( 0 ),
   m_boxnodes(),
-  m_boxnodes_set(),
   m_edgenode(),
   m_edgeid(),
   m_dtp( m_u.nunk(), 0.0 ),
@@ -376,8 +375,8 @@ ALECG::setup()
 {
   auto d = Disc();
 
-  // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
+  // Determine nodes inside user-defined IC box
+  for (auto& eq : g_cgpde) eq.IcBoxNodes( d->Coord(), m_boxnodes );
 
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );
@@ -406,11 +405,9 @@ ALECG::box( tk::real v )
   // Store user-defined box IC volume
   d->Boxvol() = v;
 
-  // Set user-defined IC box conditions
-  for (const auto& eq : g_cgpde)
-    eq.box( d->Boxvol(), d->T(), m_boxnodes, d->Coord(), m_u, m_boxnodes_set );
-  //if (m_boxnodes_set.size() != m_boxnodes.size())
-  //  std::cout << thisIndex << ':' << m_boxnodes.size() - m_boxnodes_set.size() << '\n';
+  // Set initial conditions for all PDEs
+  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
+    m_boxnodes );
 
   // Compute left-hand side of PDEs
   lhs();
@@ -940,13 +937,6 @@ ALECG::solve()
   // Apply farfield BCs on new solution
   for (const auto& eq : g_cgpde)
     eq.farfieldbc( m_u, d->Coord(), m_bnorm, m_farfieldbcnodes );
-
-  // Set user-defined IC box conditions
-  for (const auto& eq : g_cgpde)
-    eq.box( d->Boxvol(), d->T()+d->Dt(), m_boxnodes, d->Coord(), m_u,
-            m_boxnodes_set );
-  //if (m_boxnodes_set.size() != m_boxnodes.size())
-  //  std::cout << thisIndex << ':' << m_boxnodes.size() - m_boxnodes_set.size() << '\n';
 
   //! [Continue after solve]
   if (m_stage < 2) {

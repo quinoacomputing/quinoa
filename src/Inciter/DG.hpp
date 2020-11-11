@@ -250,6 +250,7 @@ class DG : public CBase_DG {
       p | m_nodefields;
       p | m_nodefieldsc;
       p | m_outmesh;
+      p | m_boxelems;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -394,6 +395,8 @@ class DG : public CBase_DG {
         tk::destroy( nodeCommMap );
       }
     } m_outmesh;
+    //! Element ids at which box ICs are defined by user
+    std::unordered_set< std::size_t > m_boxelems;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

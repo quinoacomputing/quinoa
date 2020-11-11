@@ -29,7 +29,7 @@ using inciter::TransportProblemSlotCyl;
 
 std::vector< tk::real >
 TransportProblemSlotCyl::solution( ncomp_t, ncomp_t ncomp, tk::real x,
-  tk::real y, tk::real, tk::real t, int& )
+  tk::real y, tk::real, tk::real t )
 // *****************************************************************************
 //  Evaluate analytical solution at (x,y,t) for all components
 //! \param[in] ncomp Number of components in this transport equation system

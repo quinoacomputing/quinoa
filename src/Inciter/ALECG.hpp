@@ -220,7 +220,6 @@ class ALECG : public CBase_ALECG {
       p | m_symbctri;
       p | m_stage;
       p | m_boxnodes;
-      p | m_boxnodes_set;
       p | m_edgenode;
       p | m_edgeid;
       p | m_dtp;
@@ -322,9 +321,7 @@ class ALECG : public CBase_ALECG {
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Mesh node ids at which user-defined box ICs are defined
-    std::vector< std::size_t > m_boxnodes;
-    //! Box nodes that have been set
-    std::unordered_set< std::size_t > m_boxnodes_set;
+    std::unordered_set< std::size_t > m_boxnodes;
     //! Local node IDs of edges
     std::vector< std::size_t > m_edgenode;
     //! Edge ids in the order of access

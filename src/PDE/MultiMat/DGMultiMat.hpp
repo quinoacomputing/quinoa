@@ -92,16 +92,24 @@ class MultiMat {
       return (nmat+3);
     }
 
+    //! Determine elements that lie inside the user-defined IC box
+    void IcBoxElems( const tk::Fields&,
+      std::size_t,
+      std::unordered_set< std::size_t >& ) const
+    {}
+
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+//    //! \param[in,out] inbox List of elements at which box user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
+                     const std::unordered_set< std::size_t >& /*inbox*/,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
@@ -515,6 +523,7 @@ class MultiMat {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
+              const std::unordered_set< std::size_t >&,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
@@ -798,6 +807,13 @@ class MultiMat {
       return MultiMatFieldNames(nmat);
     }
 
+    //! Return time history field names to be output to file
+    //! \return Vector of strings labelling time history fields output in file
+    std::vector< std::string > histNames() const {
+      std::vector< std::string > s; // punt for now
+      return s;
+    }
+
     //! Return field output going to file
     //! \param[in] nunk Number of unknowns
     //! \param[in] vol Volumes associated to elements (or nodes)
@@ -850,6 +866,18 @@ class MultiMat {
       return s;
     }
 
+    //! Return time history field output evaluated at time history points
+    //! \param[in] h History point data
+    std::vector< std::vector< tk::real > >
+    histOutput( const std::vector< HistData >& h,
+                const std::vector< std::size_t >&,
+                const tk::UnsMesh::Coords&,
+                const tk::Fields& ) const
+    {
+      std::vector< std::vector< tk::real > > Up(h.size()); //punt for now
+      return Up;
+    }
+
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names() const
@@ -864,8 +892,7 @@ class MultiMat {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      int inbox = 0;
-      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
+      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
     }
 
   private:
@@ -976,8 +1003,7 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      int inbox = 0;
-      auto ur = Problem::solution( system, ncomp, x, y, z, t, inbox );
+      auto ur = Problem::solution( system, ncomp, x, y, z, t );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );
 
       ur.resize(ul.size());

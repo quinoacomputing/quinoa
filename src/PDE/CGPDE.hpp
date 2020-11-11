@@ -106,19 +106,18 @@ class CGPDE {
       self( std::make_unique< Model<T> >(
               std::move( x( std::forward<Args>(args)... ) ) ) ) {}
 
+    //! Public interface to determining which nodes are in IC box
+    void IcBoxNodes( const tk::UnsMesh::Coords& coord,
+      std::unordered_set< std::size_t>& inbox )
+    { self->IcBoxNodes( coord, inbox ); }
+
     //! Public interface to setting the initial conditions for the diff eq
     void initialize( const std::array< std::vector< real >, 3 >& coord,
                      tk::Fields& unk,
                      real t,
-                     std::vector< std::size_t >& inbox )
-    { self->initialize( coord, unk, t, inbox ); }
-
-    //! Public interface to updating the initial conditions in box ICs
-    void box( real v, real t, const std::vector< std::size_t >& boxnodes,
-              const std::array< std::vector< real >, 3 >& coord,
-              tk::Fields& unk,
-              std::unordered_set< std::size_t >& boxnodes_set ) const
-    { self->box( v, t, boxnodes, coord, unk, boxnodes_set ); }
+                     real V,
+                     const std::unordered_set< std::size_t >& inbox )
+    { self->initialize( coord, unk, t, V, inbox ); }
 
     //! Public interface to computing the nodal gradients for ALECG
     void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
@@ -158,7 +157,7 @@ class CGPDE {
       const std::vector< real >& vol,
       const std::vector< std::size_t >& edgenode,
       const std::vector< std::size_t >& edgeid,
-      const std::vector< std::size_t >& boxnodes,
+      const std::unordered_set< std::size_t >& boxnodes,
       const tk::Fields& G,
       const tk::Fields& U,
       const std::vector< real >& tp,
@@ -271,15 +270,13 @@ class CGPDE {
       Concept( const Concept& ) = default;
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
+      virtual void IcBoxNodes( const tk::UnsMesh::Coords&,
+        std::unordered_set< std::size_t >& inbox ) = 0;
       virtual void initialize( const std::array< std::vector< real >, 3 >&,
                                tk::Fields&,
                                real,
-                               std::vector< std::size_t >& inbox ) = 0;
-      virtual void box(
-        real, real, const std::vector< std::size_t >&,
-        const std::array< std::vector< real >, 3 >&,
-        tk::Fields& unk,
-        std::unordered_set< std::size_t >& boxnodes_set ) const = 0;
+                               real,
+                               const std::unordered_set< std::size_t >& ) = 0;
       virtual void chBndGrad( const std::array< std::vector< real >, 3 >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
@@ -311,7 +308,7 @@ class CGPDE {
         const std::vector< real >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
-        const std::vector< std::size_t >&,
+        const std::unordered_set< std::size_t >&,
         const tk::Fields&,
         const tk::Fields&,
         const std::vector< real >&,
@@ -375,16 +372,15 @@ class CGPDE {
     struct Model : Concept {
       explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
+      void IcBoxNodes( const tk::UnsMesh::Coords& coord,
+        std::unordered_set< std::size_t >& inbox )
+      override { data.IcBoxNodes( coord, inbox ); }
       void initialize( const std::array< std::vector< real >, 3 >& coord,
                        tk::Fields& unk,
                        real t,
-                       std::vector< std::size_t >& inbox )
-      override { data.initialize( coord, unk, t, inbox ); }
-      void box( real v, real t, const std::vector< std::size_t >& boxnodes,
-                const std::array< std::vector< real >, 3 >& coord,
-                tk::Fields& unk,
-                std::unordered_set< std::size_t >& boxnodes_set ) const override
-      { data.box( v, t, boxnodes, coord, unk, boxnodes_set ); }
+                       real V,
+                       const std::unordered_set< std::size_t >& inbox )
+      override { data.initialize( coord, unk, t, V, inbox ); }
       void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
         const std::vector< std::size_t >& inpoel,
         const std::vector< std::size_t >& bndel,
@@ -418,7 +414,7 @@ class CGPDE {
         const std::vector< real >& vol,
         const std::vector< std::size_t >& edgenode,
         const std::vector< std::size_t >& edgeid,
-        const std::vector< std::size_t >& boxnodes,
+        const std::unordered_set< std::size_t >& boxnodes,
         const tk::Fields& G,
         const tk::Fields& U,
         const std::vector< real >& tp,
