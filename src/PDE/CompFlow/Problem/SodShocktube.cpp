@@ -73,21 +73,6 @@ CompFlowProblemSodShocktube::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-std::vector< std::string >
-CompFlowProblemSodShocktube::fieldNames( ncomp_t ) const
-// *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
-// *****************************************************************************
-{
-  auto n = CompFlowFieldNames();
-
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
-  if (pref) n.push_back( "number of degrees of freedom" );
-
-  return n;
-}
-
 std::vector< std::vector< tk::real > >
 CompFlowProblemSodShocktube::fieldOutput(
   ncomp_t system,

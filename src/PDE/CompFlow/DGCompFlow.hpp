@@ -734,7 +734,7 @@ class CompFlow {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
+      return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t );
     }
 
     //! Compute nodal field output

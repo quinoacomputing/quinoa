@@ -44,17 +44,50 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
   using tag::param; using std::sin; using std::cos;
 
   // density
-  const tk::real r = 1.0;
+  auto r = 1.0;
   // pressure
-  const tk::real p = 10.0 + r/4.0*(cos(2.0*M_PI*x) + cos(2.0*M_PI*y));
+  auto p = 10.0 + r/4.0*(cos(2.0*M_PI*x) + cos(2.0*M_PI*y));
   // velocity
-  const tk::real u =  sin(M_PI*x) * cos(M_PI*y);
-  const tk::real v = -cos(M_PI*x) * sin(M_PI*y);
-  const tk::real w = 0.0;
+  auto u =  sin(M_PI*x) * cos(M_PI*y);
+  auto v = -cos(M_PI*x) * sin(M_PI*y);
+  auto w = 0.0;
   // total specific energy
-  const tk::real rE = eos_totalenergy< eq >( system, r, u, v, w, p );
+  auto rE = eos_totalenergy< eq >( system, r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
+}
+
+tk::SolutionFn::result_type
+CompFlowProblemTaylorGreen::analyticSolution( ncomp_t system,
+                                              ncomp_t,
+                                              tk::real x,
+                                              tk::real y,
+                                              tk::real,
+                                              tk::real )
+// *****************************************************************************
+//! Evaluate analytical solution at (x,y,z,t) for all components
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
+//! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
+//! \return Values of all components evaluated at (x)
+//! \note The function signature must follow tk::SolutionFn
+// *****************************************************************************
+{
+  using tag::param; using std::sin; using std::cos;
+
+  // density
+  auto r = 1.0;
+  // pressure
+  auto p = 10.0 + r/4.0*(cos(2.0*M_PI*x) + cos(2.0*M_PI*y));
+  // velocity
+  auto u =  sin(M_PI*x) * cos(M_PI*y);
+  auto v = -cos(M_PI*x) * sin(M_PI*y);
+  auto w = 0.0;
+  // total specific energy
+  auto E = eos_totalenergy< eq >( system, r, u, v, w, p ) / r;
+
+  return {{ r, u, v, w, E }};
 }
 
 std::vector< std::string >
@@ -68,12 +101,9 @@ CompFlowProblemTaylorGreen::fieldNames( ncomp_t ) const
 
   n.push_back( "density_analytical" );
   n.push_back( "x-velocity_analytical" );
-  n.push_back( "err(u)" );
   n.push_back( "y-velocity_analytical" );
-  n.push_back( "err(v)" );
   n.push_back( "z-velocity_analytical" );
   n.push_back( "specific_total_energy_analytical" );
-  n.push_back( "err(E)" );
   n.push_back( "pressure_analytical" );
 
   return n;

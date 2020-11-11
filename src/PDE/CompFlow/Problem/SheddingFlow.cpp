@@ -54,23 +54,6 @@ CompFlowProblemSheddingFlow::solution( ncomp_t system,
   return {{ r, r*u[0], r*u[1], r*u[2], rE }};
 }
 
-std::vector< std::string >
-CompFlowProblemSheddingFlow::fieldNames( ncomp_t ) const
-// *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
-// *****************************************************************************
-{
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
-
-  auto n = CompFlowFieldNames();
-
-  if(pref)
-    n.push_back( "number of degree of freedom" );
-
-  return n;
-}
-
 std::vector< std::vector< tk::real > >
 CompFlowProblemSheddingFlow::fieldOutput(
   ncomp_t system,

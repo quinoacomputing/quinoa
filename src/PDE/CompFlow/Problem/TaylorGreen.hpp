@@ -45,6 +45,11 @@ class CompFlowProblemTaylorGreen {
     solution( ncomp_t system, ncomp_t ncomp,
               tk::real x, tk::real y, tk::real, tk::real );
 
+    //! Evaluate analytical solution at (x,y,z,t) for all components
+    static tk::SolutionFn::result_type
+    analyticSolution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+                      tk::real z, tk::real t );
+
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! \param[in] x X coordinate where to evaluate the source
     //! \param[in] y Y coordinate where to evaluate the source

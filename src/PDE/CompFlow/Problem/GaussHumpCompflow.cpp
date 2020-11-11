@@ -70,6 +70,49 @@ CompFlowProblemGaussHump::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
+tk::SolutionFn::result_type
+CompFlowProblemGaussHump::analyticSolution( ncomp_t system,
+                                            ncomp_t ncomp,
+                                            tk::real x,
+                                            tk::real y,
+                                            tk::real,
+                                            tk::real t )
+// *****************************************************************************
+//! Evaluate analytical solution at (x,y,z,t) for all components
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
+//! \param[in] t Time where to evaluate the solution
+//! \return Values of all components evaluated at (x)
+//! \note The function signature must follow tk::SolutionFn
+// *****************************************************************************
+{
+  Assert( ncomp == 5, "Number of scalar components must be 5" );
+
+  using tag::param;
+
+  const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0 );
+
+  // center of the hump
+  auto x0 = 0.25 + vel[0][0]*t;
+  auto y0 = 0.25 + vel[0][1]*t;
+
+  // density
+  auto r = 1.0 + exp( -((x-x0)*(x-x0) + (y-y0)*(y-y0))/(2.0 * 0.005) );
+  // pressure
+  auto p = 1.0;
+  // velocity
+  auto u = 1.0;
+  auto v = 1.0;
+  auto w = 0.0;
+  // total specific energy
+  auto E = eos_totalenergy< eq >( system, r, u, v, w, p ) / r;
+
+  return {{ r, u, v, w, E, p }};
+}
+
 std::vector< std::string >
 CompFlowProblemGaussHump::fieldNames( ncomp_t ) const
 // *****************************************************************************
@@ -77,15 +120,13 @@ CompFlowProblemGaussHump::fieldNames( ncomp_t ) const
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
-  auto n = CompFlowFieldNames();
-
+  std::vector< std::string > n;
   n.push_back( "density_analytical" );
   n.push_back( "x-velocity_analytical" );
   n.push_back( "y-velocity_analytical" );
   n.push_back( "z-velocity_analytical" );
   n.push_back( "specific_total_energy_analytical" );
   n.push_back( "pressure_analytical" );
-  n.push_back( "err(rho)" );
 
   return n;
 }

@@ -38,6 +38,11 @@ class CompFlowProblemSedovBlastwave {
     solution( ncomp_t system, ncomp_t ncomp,
               tk::real x, tk::real y, tk::real, tk::real );
 
+    //! Evaluate analytical solution at (x,y,z,t) for all components
+    static tk::SolutionFn::result_type
+    analyticSolution( ncomp_t, ncomp_t, tk::real, tk::real,  tk::real,
+                      tk::real ) { return {}; }
+
     //! Compute and return source term for this problem
     //! \param[in,out] r Density source
     //! \param[in,out] ru X momentum source
@@ -51,7 +56,7 @@ class CompFlowProblemSedovBlastwave {
     { r = ru = rv = rw = re = 0.0; }
 
     //! Return field names to be output to file
-    std::vector< std::string > fieldNames( ncomp_t ) const;
+    std::vector< std::string > fieldNames( ncomp_t ) const { return {}; }
 
     //! Return field output going to file
     std::vector< std::vector< tk::real > >

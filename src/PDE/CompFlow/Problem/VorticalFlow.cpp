@@ -45,20 +45,57 @@ CompFlowProblemVorticalFlow::solution( ncomp_t system,
   using tag::param; using tag::compflow;
 
   // manufactured solution parameters
-  const auto& a =
-    g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
-  const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
-  const auto& p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ system ];
+  auto a = g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
+  auto b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
+  auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ system ];
   // ratio of specific heats
-  tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
+  auto g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
   // velocity
-  const tk::real ru = a*x - b*y;
-  const tk::real rv = b*x + a*y;
-  const tk::real rw = -2.0*a*z;
+  auto ru = a*x - b*y;
+  auto rv = b*x + a*y;
+  auto rw = -2.0*a*z;
   // total specific energy
-  const tk::real rE = (ru*ru+rv*rv+rw*rw)/2.0 + (p0-2.0*a*a*z*z)/(g-1.0);
+  auto rE = (ru*ru+rv*rv+rw*rw)/2.0 + (p0-2.0*a*a*z*z)/(g-1.0);
   // pressure
-  const tk::real p = p0 - 2.0*a*a*z*z;
+  auto p = p0 - 2.0*a*a*z*z;
+
+  return {{ 1.0, ru, rv, rw, rE, p }};
+}
+
+tk::SolutionFn::result_type
+CompFlowProblemVorticalFlow::analyticSolution( ncomp_t system,
+                                               ncomp_t,
+                                               tk::real x,
+                                               tk::real y,
+                                               tk::real z,
+                                               tk::real )
+// *****************************************************************************
+//! Evaluate analytical solution at (x,y,z,t) for all components
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
+//! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
+//! \param[in] z Z coordinate where to evaluate the solution
+//! \return Values of all components evaluated at (x)
+//! \note The function signature must follow tk::SolutionFn
+// *****************************************************************************
+{
+  using tag::param; using tag::compflow;
+
+  // manufactured solution parameters
+  auto a = g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
+  auto b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
+  auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ system ];
+  // ratio of specific heats
+  auto g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
+  // velocity
+  auto ru = a*x - b*y;
+  auto rv = b*x + a*y;
+  auto rw = -2.0*a*z;
+  // total specific energy
+  auto rE = (ru*ru+rv*rv+rw*rw)/2.0 + (p0-2.0*a*a*z*z)/(g-1.0);
+  // pressure
+  auto p = p0 - 2.0*a*a*z*z;
 
   return {{ 1.0, ru, rv, rw, rE, p }};
 }
@@ -70,8 +107,6 @@ CompFlowProblemVorticalFlow::fieldNames( ncomp_t ) const
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
-  //auto n = CompFlowFieldNames();
-
   std::vector< std::string > n;
   n.push_back( "density_analytical" );
   n.push_back( "x-velocity_analytical" );

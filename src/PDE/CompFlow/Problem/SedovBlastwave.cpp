@@ -71,22 +71,6 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-std::vector< std::string >
-CompFlowProblemSedovBlastwave::fieldNames( ncomp_t ) const
-// *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
-// *****************************************************************************
-{
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
-
-  auto n = CompFlowFieldNames();
-
-  if(pref) n.push_back( "NDOF" );
-
-  return n;
-}
-
 std::vector< std::vector< tk::real > >
 CompFlowProblemSedovBlastwave::fieldOutput(
   ncomp_t system,

@@ -37,6 +37,11 @@ class CompFlowProblemUserDefined {
     static tk::SolutionFn::result_type
     solution( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real );
 
+    //! Evaluate analytical solution at (x,y,z,t) for all components
+    static tk::SolutionFn::result_type
+    analyticSolution( ncomp_t, ncomp_t, tk::real, tk::real,  tk::real,
+                      tk::real ) { return {}; }
+
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! \param[in,out] r Density source
     //! \param[in,out] ru X momentum source

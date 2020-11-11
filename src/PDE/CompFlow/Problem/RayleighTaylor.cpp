@@ -70,6 +70,52 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
+tk::SolutionFn::result_type
+CompFlowProblemRayleighTaylor::analyticSolution( ncomp_t system,
+                                                 ncomp_t,
+                                                 tk::real x,
+                                                 tk::real y,
+                                                 tk::real z,
+                                                 tk::real t )
+// *****************************************************************************
+//! Evaluate analytical solution at (x,y,z,t) for all components
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
+//! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
+//! \param[in] z Z coordinate where to evaluate the solution
+//! \param[in] t Time where to evaluate the solution
+//! \return Values of all components evaluated at (x,y,z,t)
+//! \note The function signature must follow tk::SolutionFn
+// *****************************************************************************
+{
+  using tag::param; using std::sin; using std::cos;
+
+  // manufactured solution parameters
+  auto a = g_inputdeck.get< param, eq, tag::alpha >()[system];
+  auto bx = g_inputdeck.get< param, eq, tag::betax >()[system];
+  auto by = g_inputdeck.get< param, eq, tag::betay >()[system];
+  auto bz = g_inputdeck.get< param, eq, tag::betaz >()[system];
+  auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[system];
+  auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[system];
+  auto k = g_inputdeck.get< param, eq, tag::kappa >()[system];
+  // spatial component of density and pressure fields
+  auto gx = bx*x*x + by*y*y + bz*z*z;
+  // density
+  auto r = r0 - gx;
+  // pressure
+  auto p = p0 + a*gx;
+  // velocity
+  auto ft = cos(k*M_PI*t);
+  auto u = ft*z*sin(M_PI*x);
+  auto v = ft*z*cos(M_PI*y);
+  auto w = ft*(-0.5*M_PI*z*z*(cos(M_PI*x)-sin(M_PI*y)));
+  // total specific energy
+  auto E = eos_totalenergy< eq >( system, r, u, v, w, p ) / r;
+
+  return {{ r, u, v, w, E, p }};
+}
+
 std::vector< std::string >
 CompFlowProblemRayleighTaylor::fieldNames( ncomp_t ) const
 // *****************************************************************************
@@ -77,7 +123,7 @@ CompFlowProblemRayleighTaylor::fieldNames( ncomp_t ) const
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
-  auto n = CompFlowFieldNames();
+  std::vector< std::string > n;
 
   n.push_back( "density_analytical" );
   n.push_back( "x-velocity_analytical" );
@@ -85,12 +131,6 @@ CompFlowProblemRayleighTaylor::fieldNames( ncomp_t ) const
   n.push_back( "z-velocity_analytical" );
   n.push_back( "specific_total_energy_analytical" );
   n.push_back( "pressure_analytical" );
-  n.push_back( "err(rho)" );
-  n.push_back( "err(e)" );
-  n.push_back( "err(p)" );
-  n.push_back( "err(u)" );
-  n.push_back( "err(v)" );
-  n.push_back( "err(w)" );
 
   return n;
 }
