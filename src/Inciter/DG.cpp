@@ -2145,17 +2145,6 @@ DG::fieldOutput() const
 {
   auto d = Disc();
 
-  // Output time history if we hit its output frequency
-  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
-  if ( !((d->It()) % histfreq) ) {
-    std::vector< std::vector< tk::real > > hist;
-    for (const auto& eq : g_dgpde) {
-      auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u );
-      hist.insert( end(hist), begin(h), end(h) );
-    }
-    d->history( std::move(hist) );
-  }
-
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
@@ -2187,6 +2176,17 @@ DG::writeFields( CkCallback c )
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Output time history if we hit its output frequency
+  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
+  if ( !((d->It()) % histfreq) ) {
+    std::vector< std::vector< tk::real > > hist;
+    for (const auto& eq : g_dgpde) {
+      auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u );
+      hist.insert( end(hist), begin(h), end(h) );
+    }
+    d->history( std::move(hist) );
+  }
 
   const auto& inpoel = std::get< 0 >( m_outmesh.chunk );
   auto esup = tk::genEsup( inpoel, 4 );
