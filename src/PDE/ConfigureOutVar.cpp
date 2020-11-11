@@ -27,8 +27,9 @@ inciter::assignGetVar( const std::string& name )
 
   assignCompFlowOutVar( name, f );
 
-  // At this point all human-readable outvars must have a getvar fn assigned
-  if (!name.empty())
+  // At this point all non-analytic human-readable outvars must have a getvar
+  // function assigned
+  if (!name.empty() && name.find("analytic") == std::string::npos)
     ErrChk( f, "OutVar::getvar() not assigned for output variable: " + name );
 
   return f;

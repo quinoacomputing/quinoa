@@ -1407,9 +1407,19 @@ DG::extractFieldOutput(
   // Evaluate element solution on incoming mesh
   auto [ue,pe,un,pn] = evalSolution( inpoel, coord, addedTets );
 
-  // Collect field output requested by user
-  m_elemfields = userFieldOutput( ue, tk::Centering::ELEM );
-  m_nodefields = userFieldOutput( un, tk::Centering::NODE );
+  // Collect field output from numerical solution requested by user
+  m_elemfields = numericFieldOutput( ue, tk::Centering::ELEM );
+  m_nodefields = numericFieldOutput( un, tk::Centering::NODE );
+
+  // Collect field output from analytical solutions (if exist)
+  auto geoElem = tk::genGeoElemTet( inpoel, coord );
+  auto t = Disc()->T();
+  for (const auto& eq : g_dgpde) {
+    analyticFieldOutput( eq, tk::Centering::ELEM, geoElem.extract(1,0),
+      geoElem.extract(2,0), geoElem.extract(3,0), t, m_elemfields );
+    analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1], coord[2],
+      t, m_nodefields );
+  }
 
   // Add adaptive indicator array to element-centered field output
   std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
@@ -2214,8 +2224,8 @@ DG::writeFields( CkCallback c )
   }
 
   // Query fields names requested by user
-  auto elemfieldnames = userFieldNames( tk::Centering::ELEM );
-  auto nodefieldnames = userFieldNames( tk::Centering::NODE );
+  auto elemfieldnames = fieldNames( tk::Centering::ELEM );
+  auto nodefieldnames = fieldNames( tk::Centering::NODE );
 
   if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );

@@ -85,6 +85,10 @@ struct OutVar {
     else
       return false;
   }
+
+  //! Query if outvar is a request for an analytic solution
+  //! \return True if outvar is a request for an analytic solution
+  bool analytic() const { return name.find("analytic") != std::string::npos; }
 };
 
 //! \brief Pack/Unpack: Namespace-scope serialize OutVar object for Charm++

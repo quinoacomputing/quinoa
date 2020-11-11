@@ -15,16 +15,50 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "Centering.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
+extern ctr::InputDeck g_inputdeck;
+
 //! Collect field output names based on user input
 std::vector< std::string >
-userFieldNames( tk::Centering c );
+fieldNames( tk::Centering c );
 
-//! Collect field output from solution based on user input
+//! Collect field output from numerical solution based on user input
 std::vector< std::vector< tk::real > >
-userFieldOutput( const tk::Fields& U, tk::Centering c );
+numericFieldOutput( const tk::Fields& U, tk::Centering c );
+
+//! Collect field output from analytic solutions based on user input
+//! \param[in] eq PDE whose analytic solution to output
+//! \param[in] c Extract variables only with this centering
+//! \param[in] x x coordinates at which to evaluate the analytic solution
+//! \param[in] y y coordinates at which to evaluate the analytic solution
+//! \param[in] z z coordinates at which to evaluate the analytic solution
+//! \param[in] t Physical time at which to evaluate the analytic solution
+//! \param[in,out] f Output fields augmented by analytic solutions requested
+template< class PDE >
+void
+analyticFieldOutput( const PDE& eq,
+                     tk::Centering c,
+                     const std::vector< tk::real >& x,
+                     const std::vector< tk::real >& y,
+                     const std::vector< tk::real >& z,
+                     tk::real t,
+                     std::vector< std::vector< tk::real > >& f )
+{
+  for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >()) {
+    if (v.centering == c && v.analytic()) {
+      auto ncomp = eq.analyticSolution( x[0], y[0], z[0], t ).size();
+      f.resize( f.size() + ncomp, std::vector< tk::real >( x.size() ) );
+      for (std::size_t i=0; i<x.size(); ++i) {
+        auto s = eq.analyticSolution( x[i], y[i], z[i], t );
+        auto& n = f[ f.size() - ncomp ];
+        for (std::size_t j=0; j<ncomp; ++j) n[i] = s[j];
+      }
+    }
+  }
+}
 
 } // inciter::
 

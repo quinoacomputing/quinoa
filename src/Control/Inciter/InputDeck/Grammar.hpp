@@ -729,6 +729,35 @@ namespace grm {
     }
   };
 
+  //! Function object for adding a human-readable output variable
+  //! \details Since human-readable outvars do not necessarily have any
+  //! reference to the depvar of their system they refer to, nor which system
+  //! they refer to, we configure them for all of the systems they are preceded
+  //! by. If there is only a single system of the type the outvar is configured,
+  //! we simply look up the depvar and use that as OutVar::var. If there are
+  //! multiple systems configured upstream to which the outvar could refer to,
+  //! we configure an outvar for all systems configured, and postfix the
+  //! human-readable OutVar::name with '_' + depvar. Hence this function object
+  //! so the code below can be invoked for all equation types.
+  template< typename Stack >
+  struct AddOutVarHuman {
+    Stack& stack;
+    const std::string& in_string;
+    explicit AddOutVarHuman( Stack& s, const std::string& ins )
+      : stack(s), in_string(ins) {}
+    template< typename Eq > void operator()( brigand::type_<Eq> ) {
+      using inciter::deck::centering;
+      using inciter::ctr::OutVar;
+      const auto& depvar = stack.template get< tag::param, Eq, tag::depvar >();
+      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
+      if (depvar.size() == 1)
+        vars.emplace_back( OutVar( depvar[0], 0, centering, in_string ) );
+      else
+        for (auto d : depvar)
+          vars.emplace_back( OutVar( d, 0, centering, in_string + '_' + d ) );
+    }
+  };
+
   //! Rule used to trigger action
   struct push_outvar_human : pegtl::success {};
   //! Add matched outvar based on depvar into vector of vector of outvars
@@ -736,35 +765,16 @@ namespace grm {
   //! OutVar::name = matched token. OutVar::name being not empty will be used to
   //! differentiate a depvar-based outvar from a human-readable outvar.
   //! Depvar-based outvars can directly access solution arrays using their
-  //! field.  Human-readable outvars need a mechanism (a function) to read and
+  //! field. Human-readable outvars need a mechanism (a function) to read and
   //! compute their variables from solution arrays. The 'getvar' function, used
   //! to compute a physics variable from the numerical solution is assigned
-  //! after initial migration and thus not assigned here (during parsing). Since
-  //! human-readable outvars do not necessarily have any reference to the depvar
-  //! of their system they refer to, nor which system they refer to, we
-  //! configure them for all of the systems they are preceded by. If there is
-  //! only a single system of the type the outvar is configured, we simply look
-  //! up the depvar and use that as OutVar::var. If there are multiple systems
-  //! configured upstream to which the outvar could refer to, we configure an
-  //! outvar for all systems configured, and postfix the human-readable
-  //! OutVar::name with '_' + depvar. This also means the code below must deal
-  //! account for all equation types.
+  //! after initial migration and thus not assigned here (during parsing).
   template<>
   struct action< push_outvar_human > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      using inciter::deck::centering;
-      using inciter::ctr::OutVar;
-      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
-      const auto& compflow_depvar =
-        stack.template get< tag::param, tag::compflow, tag::depvar >();
-      if (compflow_depvar.size() == 1)
-        vars.emplace_back(
-          OutVar( compflow_depvar[0], 0, centering, in.string() ) );
-      else
-        for (auto d : compflow_depvar)
-          vars.emplace_back(
-           OutVar( d, 0, centering, in.string() + '_' + d ) );
+      brigand::for_each< inciter::ctr::parameters::Keys >
+                       ( AddOutVarHuman( stack, in.string() ) );
     }
   };
 
