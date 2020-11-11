@@ -865,8 +865,7 @@ class MultiMat {
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
       int inbox = 0;
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
-      return std::vector< tk::real >( begin(s), end(s) );
+      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
     }
 
   private:
