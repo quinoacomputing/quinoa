@@ -144,7 +144,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::outvar_xmomentum
                                  , kw::outvar_ymomentum
                                  , kw::outvar_zmomentum
-                                 , kw::outvar_total_energy
+                                 , kw::outvar_specific_total_energy
+                                 , kw::outvar_volumetric_total_energy
                                  , kw::outvar_xvelocity
                                  , kw::outvar_yvelocity
                                  , kw::outvar_zvelocity

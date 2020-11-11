@@ -79,7 +79,6 @@ add_regression_test(compflow_euler_vorticalflow_dg_lf ${INCITER_EXECUTABLE}
                     BIN_BASELINE vortical_flow_dg_lf.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
-                    BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_dg_lf.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg

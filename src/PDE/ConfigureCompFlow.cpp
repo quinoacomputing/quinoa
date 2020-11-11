@@ -318,23 +318,29 @@ assignCompFlowOutVar( const std::string& name, tk::GetVarFn& f )
 //! \param[in,out] f Function assigned
 // *****************************************************************************
 {
-  if (name.find("density") != std::string::npos)
+  auto match = [&]( const std::string& keyword ){
+    return name.find(keyword) != std::string::npos;
+  };
+
+  if (match(kw::outvar_density::string()))
     f = densityOutVar;
-  else if (name.find("x-velocity") != std::string::npos)
+  else if (match(kw::outvar_xvelocity::string()))
     f = velocityOutVar< 0 >;
-  else if (name.find("y-velocity") != std::string::npos)
+  else if (match(kw::outvar_yvelocity::string()))
     f = velocityOutVar< 1 >;
-  else if (name.find("z-velocity") != std::string::npos)
+  else if (match(kw::outvar_zvelocity::string()))
     f = velocityOutVar< 2 >;
-  else if (name.find("total_energy") != std::string::npos)
-    f = energyOutVar;
-  else if (name.find("x-momentum") != std::string::npos)
+  else if (match(kw::outvar_specific_total_energy::string()))
+    f = specificTotalEnergyOutVar;
+  else if (match(kw::outvar_volumetric_total_energy::string()))
+    f = volumetricTotalEnergyOutVar;
+  else if (match(kw::outvar_xmomentum::string()))
     f = momentumOutVar< 0 >;
-  else if (name.find("y-momentum") != std::string::npos)
+  else if (match(kw::outvar_ymomentum::string()))
     f = momentumOutVar< 1 >;
-  else if (name.find("z-momentum") != std::string::npos)
+  else if (match(kw::outvar_zmomentum::string()))
     f = momentumOutVar< 2 >;
-  else if (name.find("pressure") != std::string::npos)
+  else if (match(kw::outvar_pressure::string()))
     f = pressureOutVar;
 }
 

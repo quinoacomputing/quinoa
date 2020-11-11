@@ -57,8 +57,10 @@ CompFlowProblemVorticalFlow::solution( ncomp_t system,
   const tk::real rw = -2.0*a*z;
   // total specific energy
   const tk::real rE = (ru*ru+rv*rv+rw*rw)/2.0 + (p0-2.0*a*a*z*z)/(g-1.0);
+  // pressure
+  const tk::real p = p0 - 2.0*a*a*z*z;
 
-  return {{ 1.0, ru, rv, rw, rE }};
+  return {{ 1.0, ru, rv, rw, rE, p }};
 }
 
 std::vector< std::string >
@@ -76,7 +78,7 @@ CompFlowProblemVorticalFlow::fieldNames( ncomp_t ) const
   n.push_back( "y-velocity_analytical" );
   n.push_back( "z-velocity_analytical" );
   n.push_back( "specific_total_energy_analytical" );
-  //n.push_back( "pressure_analytical" );
+  n.push_back( "pressure_analytical" );
 
   return n;
 }

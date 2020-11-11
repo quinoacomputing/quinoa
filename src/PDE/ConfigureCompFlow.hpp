@@ -73,20 +73,34 @@ template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
 velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
   using tk::operator/=;
-  auto r = U.extract( 0, offset ), u = U.extract( dir, offset );
+  auto r = U.extract( 0, offset ), u = U.extract( dir+1, offset );
   u /= r;
   return u;
 }
 
-//! Compute total specific energy for output to file
+//! Compute volumetric total energy (energy per unit volume) for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
 //! \param[in] offset System offset specifying the position of the CompFlow
 //!   equation system among other systems
-//! \return Total specific energy ready to be output to file
+//! \return Volumetric total energy ready to be output to file
 static tk::GetVarFn::result_type
-energyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
+volumetricTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
   return U.extract( 4, offset );
+}
+
+//! Compute specific total energy (energy per unit mass) for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \param[in] U Numerical solution
+//! \param[in] offset System offset specifying the position of the CompFlow
+//!   equation system among other systems
+//! \return Specific total energy ready to be output to file
+static tk::GetVarFn::result_type
+specificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
+  using tk::operator/=;
+  auto r = U.extract( 0, offset ), e = U.extract( 4, offset );
+  e /= r;
+  return e;
 }
 
 //! Compute momentum component for output to file

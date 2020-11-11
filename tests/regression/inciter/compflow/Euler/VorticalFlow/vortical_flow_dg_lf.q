@@ -40,6 +40,16 @@ inciter
   end
 
   field_output
+    var
+      elem
+      analytic
+      density "density_numerical"
+      x-velocity "x-velocity_numerical"
+      y-velocity "y-velocity_numerical"
+      z-velocity "z-velocity_numerical"
+      specific_total_energy "specific_total_energy_numerical"
+      pressure "pressure_numerical"
+    end
     interval 10
   end
 

@@ -130,7 +130,7 @@ tk::update_rhs( ncomp_t ncomp,
 // *****************************************************************************
 {
   Assert( B.size() == ndof, "Size mismatch for basis function" );
-  Assert( s.size() == ncomp, "Size mismatch for source term" );
+  Assert( s.size() >= ncomp, "Size mismatch for source term" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {

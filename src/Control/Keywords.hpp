@@ -1918,16 +1918,31 @@ struct outvar_zmomentum_info {
 using outvar_zmomentum =
   keyword< outvar_zmomentum_info, TAOCPP_PEGTL_STRING("z-momentum") >;
 
-struct outvar_total_energy_info {
-  static std::string name() { return "total_energy"; }
-  static std::string shortDescription() { return "Request total energy"; }
+struct outvar_specific_total_energy_info {
+  static std::string name() { return "specific_total_energy"; }
+  static std::string shortDescription() {
+    return "Request total specific energy"; }
   static std::string longDescription() { return
-    R"(This keyword is used to request the fluid total energy as an output
+    R"(This keyword is used to request the specific total energy as an output
        variable.)";
   }
 };
-using outvar_total_energy =
-  keyword< outvar_total_energy_info, TAOCPP_PEGTL_STRING("total_energy") >;
+using outvar_specific_total_energy =
+  keyword< outvar_specific_total_energy_info,
+           TAOCPP_PEGTL_STRING("specific_total_energy") >;
+
+struct outvar_volumetric_total_energy_info {
+  static std::string name() { return "volumetric_total_energy"; }
+  static std::string shortDescription() {
+    return "Request total volumetric energy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the volumetric total energy as an output
+       variable.)";
+  }
+};
+using outvar_volumetric_total_energy =
+  keyword< outvar_volumetric_total_energy_info,
+           TAOCPP_PEGTL_STRING("volumetric_total_energy") >;
 
 struct outvar_xvelocity_info {
   static std::string name() { return "x-velocity"; }
@@ -1997,7 +2012,8 @@ struct outvar_info {
     + outvar_xmomentum::string()+ "\', \'"
     + outvar_ymomentum::string()+ "\', \'"
     + outvar_zmomentum::string()+ "\', \'"
-    + outvar_total_energy::string() + "\', \'"
+    + outvar_specific_total_energy::string() + "\', \'"
+    + outvar_volumetric_total_energy::string() + "\', \'"
     + outvar_xvelocity::string() + "\', \'"
     + outvar_yvelocity::string() + "\', \'"
     + outvar_zvelocity::string() + "\', \'"
