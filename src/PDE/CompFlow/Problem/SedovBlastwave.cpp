@@ -26,7 +26,7 @@ using inciter::CompFlowProblemSedovBlastwave;
 
 tk::SolutionFn::result_type
 CompFlowProblemSedovBlastwave::solution( ncomp_t system,
-                                         [[maybe_unused]] ncomp_t ncomp,
+                                         ncomp_t,
                                          tk::real x,
                                          tk::real y,
                                          tk::real z,
@@ -36,16 +36,12 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == ncomp, "Number of scalar components must be " +
-                          std::to_string(ncomp) );
-
   tk::real r=0, p=0, u=0, v=0, w=0, rE=0;
 
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();

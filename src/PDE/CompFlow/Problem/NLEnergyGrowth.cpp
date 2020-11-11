@@ -59,7 +59,7 @@ CompFlowProblemNLEnergyGrowth::ec( tk::real ce, tk::real kappa, tk::real t,
 
 tk::SolutionFn::result_type
 CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
-                                         [[maybe_unused]] ncomp_t ncomp,
+                                         ncomp_t,
                                          tk::real x,
                                          tk::real y,
                                          tk::real z,
@@ -70,7 +70,6 @@ CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
@@ -78,8 +77,6 @@ CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == ncomp, "Number of scalar components must be " +
-                          std::to_string(ncomp) );
   using tag::param;
 
   // manufactured solution parameters

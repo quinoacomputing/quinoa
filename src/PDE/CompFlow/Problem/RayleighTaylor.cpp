@@ -26,7 +26,7 @@ using inciter::CompFlowProblemRayleighTaylor;
 
 tk::SolutionFn::result_type
 CompFlowProblemRayleighTaylor::solution( ncomp_t system,
-                                         [[maybe_unused]] ncomp_t ncomp,
+                                         ncomp_t,
                                          tk::real x,
                                          tk::real y,
                                          tk::real z,

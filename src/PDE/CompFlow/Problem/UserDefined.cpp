@@ -28,7 +28,7 @@ using inciter::CompFlowProblemUserDefined;
 
 tk::SolutionFn::result_type
 CompFlowProblemUserDefined::solution( ncomp_t system,
-                                      [[maybe_unused]] ncomp_t ncomp,
+                                      ncomp_t ncomp,
                                       [[maybe_unused]] tk::real x,
                                       [[maybe_unused]] tk::real y,
                                       [[maybe_unused]] tk::real z,
@@ -48,9 +48,6 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
 {
-  Assert( ncomp == ncomp, "Number of scalar components must be " +
-                          std::to_string(ncomp) );
-
   tk::SolutionFn::result_type u( ncomp, 0.0 );
 
   // Set background ICs
