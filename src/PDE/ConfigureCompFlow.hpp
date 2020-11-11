@@ -73,7 +73,8 @@ template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
 velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
   using tk::operator/=;
-  auto r = U.extract( 0, offset ), u = U.extract( dir+1, offset );
+  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  auto r = U.extract( 0, offset ), u = U.extract( (dir+1)*rdof, offset );
   u /= r;
   return u;
 }
@@ -86,7 +87,8 @@ velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
 //! \return Volumetric total energy ready to be output to file
 static tk::GetVarFn::result_type
 volumetricTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
-  return U.extract( 4, offset );
+  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  return U.extract( 4*rdof, offset );
 }
 
 //! Compute specific total energy (energy per unit mass) for output to file
@@ -98,7 +100,8 @@ volumetricTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
 static tk::GetVarFn::result_type
 specificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
   using tk::operator/=;
-  auto r = U.extract( 0, offset ), e = U.extract( 4, offset );
+  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  auto r = U.extract( 0, offset ), e = U.extract( 4*rdof, offset );
   e /= r;
   return e;
 }
@@ -113,7 +116,8 @@ specificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
 template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
 momentumOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
-  return U.extract( dir+1, offset );
+  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  return U.extract( (dir+1)*rdof, offset );
 }
 
 //! Compute pressure for output to file
@@ -125,11 +129,12 @@ momentumOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
 static tk::GetVarFn::result_type
 pressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
   using tk::operator/=;
+  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   auto r = U.extract( 0, offset ),
-       u = U.extract( 1, offset ),
-       v = U.extract( 2, offset ),
-       w = U.extract( 3, offset ),
-       re = U.extract( 4, offset );
+       u = U.extract( 1*rdof, offset ),
+       v = U.extract( 2*rdof, offset ),
+       w = U.extract( 3*rdof, offset ),
+       re = U.extract( 4*rdof, offset );
   u /= r;
   v /= r;
   w /= r;
