@@ -2224,8 +2224,14 @@ DG::writeFields( CkCallback c )
   }
 
   // Query fields names requested by user
-  auto elemfieldnames = fieldNames( tk::Centering::ELEM );
-  auto nodefieldnames = fieldNames( tk::Centering::NODE );
+  auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
+  auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
+
+  // Collect field output names for analytical solutions
+  for (const auto& eq : g_dgpde) {
+    analyticFieldNames( eq, tk::Centering::ELEM, elemfieldnames );
+    analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
+  }
 
   if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );

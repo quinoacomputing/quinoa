@@ -68,14 +68,15 @@ CompFlowProblemVorticalFlow::fieldNames( ncomp_t ) const
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
-  auto n = CompFlowFieldNames();
+  //auto n = CompFlowFieldNames();
 
+  std::vector< std::string > n;
   n.push_back( "density_analytical" );
   n.push_back( "x-velocity_analytical" );
   n.push_back( "y-velocity_analytical" );
   n.push_back( "z-velocity_analytical" );
   n.push_back( "specific_total_energy_analytical" );
-  n.push_back( "pressure_analytical" );
+  //n.push_back( "pressure_analytical" );
 
   return n;
 }

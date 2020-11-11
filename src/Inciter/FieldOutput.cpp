@@ -16,16 +16,16 @@
 namespace inciter {
 
 std::vector< std::string >
-fieldNames( tk::Centering c )
+numericFieldNames( tk::Centering c )
 // *****************************************************************************
-// Collect field output names based on user input
+// Collect field output names from numerical solution based on user input
 //! \param[in] c Extract variable names only with this centering
 //! \return Output field names requested by user
 // *****************************************************************************
 {
   std::vector< std::string > f;
   for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >()) {
-    if (v.centering == c) {
+    if (v.centering == c && !v.analytic()) {
       std::stringstream s;
       if (v.alias.empty()) s << v; else s << v.alias;
       f.push_back( s.str() );
