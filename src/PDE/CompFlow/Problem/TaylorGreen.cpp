@@ -24,13 +24,13 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::CompFlowProblemTaylorGreen;
 
-tk::SolutionFn::result_type
-CompFlowProblemTaylorGreen::solution( ncomp_t system,
-                                      ncomp_t,
-                                      tk::real x,
-                                      tk::real y,
-                                      tk::real,
-                                      tk::real )
+tk::InitializeFn::result_type
+CompFlowProblemTaylorGreen::initialize( ncomp_t system,
+                                        ncomp_t,
+                                        tk::real x,
+                                        tk::real y,
+                                        tk::real,
+                                        tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -38,7 +38,7 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
   using tag::param; using std::sin; using std::cos;
@@ -57,7 +57,7 @@ CompFlowProblemTaylorGreen::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-tk::SolutionFn::result_type
+tk::InitializeFn::result_type
 CompFlowProblemTaylorGreen::analyticSolution( ncomp_t system,
                                               ncomp_t,
                                               tk::real x,
@@ -71,7 +71,7 @@ CompFlowProblemTaylorGreen::analyticSolution( ncomp_t system,
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
   using tag::param; using std::sin; using std::cos;

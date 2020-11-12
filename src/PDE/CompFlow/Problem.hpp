@@ -24,7 +24,7 @@
     - Must define the function _names()_, returning the names of integral
       variables to be output to diagnostics file.
 
-    - Must define the static function _solution()_, used for initialization of
+    - Must define the static function _initialize()_, used for initialization of
       the computed fields at time t.
 
     - Must define the static function _analyticSolution()_, used for

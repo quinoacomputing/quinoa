@@ -146,7 +146,7 @@ class CompFlow {
 
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
-        auto s = Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t );
+        auto s = Problem::initialize( m_system, m_ncomp, x[i], y[i], z[i], t );
 
         // initialize the user-defined box IC
         if (inbox.find(i) != inbox.end())
@@ -173,7 +173,7 @@ class CompFlow {
     std::vector< real >
     analyticSolution( real xi, real yi, real zi, real t ) const
     {
-      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
+      return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t );
     }
 
     //! Compute right hand side for DiagCG (CG+FCT)
@@ -669,7 +669,7 @@ class CompFlow {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               if (steady) { t = tp[n]; deltat = dtp[n]; }
               auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
-                               t, deltat, Problem::solution );
+                               t, deltat, Problem::initialize );
               bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
                          {true,s[4]} }};
             }

@@ -44,7 +44,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //!   (x,y,z) for all components
 std::vector< tk::real >
 solinc( tk::ncomp_t system, tk::ncomp_t ncomp, tk::real x, tk::real y,
-        tk::real z, tk::real t, tk::real dt, tk::SolutionFn solution );
+        tk::real z, tk::real t, tk::real dt, tk::InitializeFn solution );
 
 //! Compute boundary point normals
 std::unordered_map< int,
@@ -248,7 +248,7 @@ class CGPDE {
     { return self->histOutput( h, inpoel, U ); }
 
     //! Public interface to returning analytic solution
-    std::vector< real >
+    tk::InitializeFn::result_type
     analyticSolution( real xi, real yi, real zi, real t ) const
     { return self->analyticSolution( xi, yi, zi, t ); }
 
@@ -362,7 +362,7 @@ class CGPDE {
         const std::vector< HistData >&,
         const std::vector< std::size_t >&,
         const tk::Fields& ) const = 0;
-      virtual std::vector< real > analyticSolution(
+      virtual tk::InitializeFn::result_type analyticSolution(
         real xi, real yi, real zi, real t ) const = 0;
     };
 
@@ -482,7 +482,7 @@ class CGPDE {
         const std::vector< std::size_t >& inpoel,
         const tk::Fields& U ) const override
       { return data.histOutput( h, inpoel, U ); }
-      std::vector< real >
+      tk::InitializeFn::result_type
       analyticSolution( real xi, real yi, real zi, real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }
       T data;

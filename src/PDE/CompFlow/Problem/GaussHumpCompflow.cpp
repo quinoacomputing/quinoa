@@ -24,13 +24,13 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::CompFlowProblemGaussHump;
 
-tk::SolutionFn::result_type
-CompFlowProblemGaussHump::solution( ncomp_t system,
-                                    ncomp_t ncomp,
-                                    tk::real x,
-                                    tk::real y,
-                                    tk::real,
-                                    tk::real t )
+tk::InitializeFn::result_type
+CompFlowProblemGaussHump::initialize( ncomp_t system,
+                                      ncomp_t ncomp,
+                                      tk::real x,
+                                      tk::real y,
+                                      tk::real,
+                                      tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -40,7 +40,7 @@ CompFlowProblemGaussHump::solution( ncomp_t system,
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
   Assert( ncomp == 5, "Number of scalar components must be 5" );
@@ -70,7 +70,7 @@ CompFlowProblemGaussHump::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-tk::SolutionFn::result_type
+tk::InitializeFn::result_type
 CompFlowProblemGaussHump::analyticSolution( ncomp_t system,
                                             ncomp_t ncomp,
                                             tk::real x,
@@ -86,7 +86,7 @@ CompFlowProblemGaussHump::analyticSolution( ncomp_t system,
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
   Assert( ncomp == 5, "Number of scalar components must be 5" );
@@ -177,7 +177,7 @@ CompFlowProblemGaussHump::fieldOutput(
 
   auto er = r, p = r;
   for (std::size_t i=0; i<nunk; ++i) {
-    auto s = solution( system, ncomp, x[i], y[i], z[i], t );
+    auto s = initialize( system, ncomp, x[i], y[i], z[i], t );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
     r[i] = s[0];
     u[i] = s[1]/s[0];

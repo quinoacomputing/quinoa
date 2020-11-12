@@ -26,12 +26,11 @@ namespace tk {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! Function prototype for Problem::solution() functions
-//! \details Functions of this type are used to evaluate known (e.g.,
-//!    analytical) solutions or setting initial conditions
-//! \see e.g., inciter::CompFlowProblemVorticalFlow::solution
+//! Function prototype for Problem::intiialize() functions
+//! \details Functions of this type are used to initialize the computed fields
+//! \see e.g., inciter::CompFlowProblemVorticalFlow::initialize
 //! \note Used for both continuous and discontinuous Galerkin discretizations
-using SolutionFn = std::function<
+using InitializeFn = std::function<
   std::vector< real >( ncomp_t, ncomp_t, real, real, real, real ) >;
 
 //! Function prototype for Riemann flux functions

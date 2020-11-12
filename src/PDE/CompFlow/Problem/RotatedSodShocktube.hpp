@@ -25,10 +25,10 @@ namespace inciter {
 class CompFlowProblemRotatedSodShocktube : public CompFlowProblemSodShocktube {
 
   public:
-    //! Evaluate analytical solution at (x,y,0) for all components
-    static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real t );
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+                tk::real z, tk::real t );
 
     //! Return problem type
     static ctr::ProblemType type() noexcept

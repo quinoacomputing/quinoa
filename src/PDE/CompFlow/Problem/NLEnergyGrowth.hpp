@@ -47,13 +47,13 @@ class CompFlowProblemNLEnergyGrowth {
                         tk::real p );
 
   public:
-    //! Evaluate analytical solution at (x,y,z,t) for all components
-    static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real t );
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+                tk::real z, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
-    static tk::SolutionFn::result_type
+    static tk::InitializeFn::result_type
     analyticSolution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
                       tk::real z, tk::real t );
 

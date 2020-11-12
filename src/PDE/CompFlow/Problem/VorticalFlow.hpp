@@ -41,13 +41,13 @@ class CompFlowProblemVorticalFlow {
     using eq = tag::compflow;
 
   public:
-    //! Evaluate analytical solution at (x,y,z) for all components
-    static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real );
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+                tk::real z, tk::real );
 
     //! Evaluate analytical solution at (x,y,z) for all components
-    static tk::SolutionFn::result_type
+    static tk::InitializeFn::result_type
     analyticSolution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
                       tk::real z, tk::real );
 
@@ -76,7 +76,7 @@ class CompFlowProblemVorticalFlow {
       // ratio of specific heats
       tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
       // evaluate solution at x,y,z
-      auto s = solution( system, 5, x, y, z, 0.0 );
+      auto s = initialize( system, 5, x, y, z, 0.0 );
 
       // density source
       r = 0.0;

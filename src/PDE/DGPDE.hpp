@@ -267,7 +267,7 @@ class DGPDE {
     { return self->histOutput( h, inpoel, coord, U ); }
 
     //! Public interface to returning analytic solution
-    std::vector< tk::real >
+    tk::InitializeFn::result_type
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     { return self->analyticSolution( xi, yi, zi, t ); }
 
@@ -377,7 +377,7 @@ class DGPDE {
         const std::vector< std::size_t >&,
         const tk::UnsMesh::Coords&,
         const tk::Fields& ) const = 0;
-      virtual std::vector< tk::real > analyticSolution(
+      virtual tk::InitializeFn::result_type analyticSolution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
 
@@ -501,7 +501,7 @@ class DGPDE {
         const tk::UnsMesh::Coords& coord,
         const tk::Fields& U ) const override
       { return data.histOutput( h, inpoel, coord, U ); }
-      std::vector< tk::real >
+      tk::InitializeFn::result_type
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }
       T data;

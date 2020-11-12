@@ -39,13 +39,13 @@ class CompFlowProblemRayleighTaylor {
     using eq = tag::compflow;
 
   public:
-    //! Evaluate analytical solution at (x,y,z,t) for all components
-    static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real t );
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+                tk::real z, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
-    static tk::SolutionFn::result_type
+    static tk::InitializeFn::result_type
     analyticSolution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
                       tk::real z, tk::real t );
 
@@ -79,7 +79,7 @@ class CompFlowProblemRayleighTaylor {
       tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system][0];
 
       // evaluate solution at x,y,z,t
-      auto s = solution( system, 5, x, y, z, t );
+      auto s = initialize( system, 5, x, y, z, t );
 
       // density, velocity, energy, pressure
       auto rho = s[0];

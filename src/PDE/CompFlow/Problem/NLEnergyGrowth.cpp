@@ -57,13 +57,13 @@ CompFlowProblemNLEnergyGrowth::ec( tk::real ce, tk::real kappa, tk::real t,
   return std::pow( -3.0*(ce + kappa*h*h*t), p );
 }
 
-tk::SolutionFn::result_type
-CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
-                                         ncomp_t,
-                                         tk::real x,
-                                         tk::real y,
-                                         tk::real z,
-                                         tk::real t )
+tk::InitializeFn::result_type
+CompFlowProblemNLEnergyGrowth::initialize( ncomp_t system,
+                                           ncomp_t,
+                                           tk::real x,
+                                           tk::real y,
+                                           tk::real z,
+                                           tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -73,7 +73,7 @@ CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
 //! \param[in] z Z coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
 //! \return Values of all components evaluated at (x,y,z,t)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
   using tag::param;
@@ -102,7 +102,7 @@ CompFlowProblemNLEnergyGrowth::solution( ncomp_t system,
   return {{ r, 0.0, 0.0, 0.0, re, p }};
 }
 
-tk::SolutionFn::result_type
+tk::InitializeFn::result_type
 CompFlowProblemNLEnergyGrowth::analyticSolution( ncomp_t system,
                                                  ncomp_t,
                                                  tk::real x,
@@ -118,7 +118,7 @@ CompFlowProblemNLEnergyGrowth::analyticSolution( ncomp_t system,
 //! \param[in] z Z coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
 //! \return Values of all components evaluated at (x,y,z,t)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
   using tag::param;
@@ -211,7 +211,7 @@ CompFlowProblemNLEnergyGrowth::fieldOutput(
 
   auto er = r, ee = r, p = r;
   for (std::size_t i=0; i<nunk; ++i) {
-    auto s = solution( system, ncomp, x[i], y[i], z[i], t );
+    auto s = initialize( system, ncomp, x[i], y[i], z[i], t );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
     ee[i] = std::pow( E[i] - s[4]/s[0], 2.0 ) * vol[i] / V;
     r[i] = s[0];

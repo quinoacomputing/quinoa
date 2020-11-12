@@ -111,7 +111,7 @@ class Transport {
                      const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, unk, t, nielem );
+                      Problem::initialize, unk, t, nielem );
     }
 
     //! Compute the left hand side mass matrix
@@ -383,10 +383,8 @@ class Transport {
 
       // evaluate analytic solution at time t
       auto E = U;
-      for (std::size_t i=0; i<nunk; ++i)
-      {
-        auto s =
-          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t );
+      for (std::size_t i=0; i<nunk; ++i) {
+        auto s = Problem::initialize( m_system, m_ncomp, x[i], y[i], z[i], t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
           E( i, c*rdof, m_offset ) = s[c];
       }
@@ -428,9 +426,7 @@ class Transport {
     //! \return Vector of analytic solution at given spatial location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    {
-      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
-    }
+    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
 
     //! Compute nodal field output
     //! \param[in] t Physical time
@@ -558,7 +554,7 @@ class Transport {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
+      return {{ ul, Problem::initialize( system, ncomp, x, y, z, t ) }};
     }
 };
 

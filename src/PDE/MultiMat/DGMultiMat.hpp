@@ -115,7 +115,7 @@ class MultiMat {
                      const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, unk, t, nielem );
+                      Problem::initialize, unk, t, nielem );
     }
 
     //! Compute the left hand side block-diagonal mass matrix
@@ -892,7 +892,7 @@ class MultiMat {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
-      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
+      return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t );
     }
 
   private:
@@ -1003,7 +1003,7 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      auto ur = Problem::solution( system, ncomp, x, y, z, t );
+      auto ur = Problem::initialize( system, ncomp, x, y, z, t );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );
 
       ur.resize(ul.size());

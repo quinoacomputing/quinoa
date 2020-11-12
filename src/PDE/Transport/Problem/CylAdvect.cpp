@@ -27,7 +27,7 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::TransportProblemCylAdvect;
 
 std::vector< tk::real >
-TransportProblemCylAdvect::solution( ncomp_t system, ncomp_t ncomp,
+TransportProblemCylAdvect::initialize( ncomp_t system, ncomp_t ncomp,
           tk::real x, tk::real y, tk::real, tk::real t )
 // *****************************************************************************
 //  Evaluate analytical solution at (x,y,t) for all components

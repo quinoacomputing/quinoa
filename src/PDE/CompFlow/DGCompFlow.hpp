@@ -139,7 +139,7 @@ class CompFlow {
                      const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, unk, t, nielem );
+                      Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
@@ -833,7 +833,7 @@ class CompFlow {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
+      return {{ ul, Problem::initialize( system, ncomp, x, y, z, t ) }};
     }
 
     //! \brief Boundary state function providing the left and right state of a

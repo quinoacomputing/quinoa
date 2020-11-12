@@ -19,13 +19,13 @@
 
 using inciter::MultiMatProblemInterfaceAdvection;
 
-tk::SolutionFn::result_type
-MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
-                                             ncomp_t ncomp,
-                                             tk::real x,
-                                             tk::real y,
-                                             tk::real /*z*/,
-                                             tk::real t )
+tk::InitializeFn::result_type
+MultiMatProblemInterfaceAdvection::initialize( ncomp_t system,
+                                               ncomp_t ncomp,
+                                               tk::real x,
+                                               tk::real y,
+                                               tk::real /*z*/,
+                                               tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -35,7 +35,7 @@ MultiMatProblemInterfaceAdvection::solution( ncomp_t system,
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
   auto nmat =

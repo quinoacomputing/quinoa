@@ -24,20 +24,20 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::CompFlowProblemSheddingFlow;
 
-tk::SolutionFn::result_type
-CompFlowProblemSheddingFlow::solution( ncomp_t system,
-                                       ncomp_t,
-                                       tk::real,
-                                       tk::real,
-                                       tk::real,
-                                       tk::real )
+tk::InitializeFn::result_type
+CompFlowProblemSheddingFlow::initialize( ncomp_t system,
+                                         ncomp_t,
+                                         tk::real,
+                                         tk::real,
+                                         tk::real,
+                                         tk::real )
 // *****************************************************************************
 //! Evaluate initial solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] x X coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
   using tag::param;

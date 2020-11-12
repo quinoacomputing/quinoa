@@ -89,8 +89,7 @@ class Transport {
       const auto& y = coord[1];
       const auto& z = coord[2];
       for (ncomp_t i=0; i<x.size(); ++i) {
-        const auto s =
-          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t );
+        auto s = Problem::initialize( m_system, m_ncomp, x[i], y[i], z[i], t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
           unk( i, c, m_offset ) = s[c];
       }
@@ -104,10 +103,7 @@ class Transport {
     //! \return Vector of analytic solution at given location and time
     std::vector< real >
     analyticSolution( real xi, real yi, real zi, real t ) const
-    {
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
-      return std::vector< real >( begin(s), end(s) );
-    }
+    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
 
     //! Compute nodal gradients of primitive variables for ALECG
     //! \param[in] coord Mesh node coordinates
@@ -464,7 +460,7 @@ class Transport {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               if (steady) { t = tp[n]; deltat = dtp[n]; }
               const auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
-                                     t, deltat, Problem::solution );
+                                     t, deltat, Problem::initialize );
               auto& nbc = bc[n] = NodeBC( m_ncomp );
               for (ncomp_t c=0; c<m_ncomp; ++c)
                 nbc[c] = { true, s[c] };

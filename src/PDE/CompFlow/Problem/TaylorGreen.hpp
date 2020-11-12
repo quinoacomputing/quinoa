@@ -40,13 +40,13 @@ class CompFlowProblemTaylorGreen {
     static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
-    //! Evaluate analytical solution at (x,y,0) for all components
-    static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp,
-              tk::real x, tk::real y, tk::real, tk::real );
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t system, ncomp_t ncomp,
+                tk::real x, tk::real y, tk::real, tk::real );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
-    static tk::SolutionFn::result_type
+    static tk::InitializeFn::result_type
     analyticSolution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
                       tk::real z, tk::real t );
 

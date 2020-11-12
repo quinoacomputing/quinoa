@@ -24,13 +24,13 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::CompFlowProblemRayleighTaylor;
 
-tk::SolutionFn::result_type
-CompFlowProblemRayleighTaylor::solution( ncomp_t system,
-                                         ncomp_t,
-                                         tk::real x,
-                                         tk::real y,
-                                         tk::real z,
-                                         tk::real t )
+tk::InitializeFn::result_type
+CompFlowProblemRayleighTaylor::initialize( ncomp_t system,
+                                           ncomp_t,
+                                           tk::real x,
+                                           tk::real y,
+                                           tk::real z,
+                                           tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -40,7 +40,7 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
 //! \param[in] z Z coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
 //! \return Values of all components evaluated at (x,y,z,t)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
   using tag::param; using std::sin; using std::cos;
@@ -70,7 +70,7 @@ CompFlowProblemRayleighTaylor::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-tk::SolutionFn::result_type
+tk::InitializeFn::result_type
 CompFlowProblemRayleighTaylor::analyticSolution( ncomp_t system,
                                                  ncomp_t,
                                                  tk::real x,
@@ -86,7 +86,7 @@ CompFlowProblemRayleighTaylor::analyticSolution( ncomp_t system,
 //! \param[in] z Z coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
 //! \return Values of all components evaluated at (x,y,z,t)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
   using tag::param; using std::sin; using std::cos;
@@ -181,7 +181,7 @@ CompFlowProblemRayleighTaylor::fieldOutput(
 
   auto er = r, ee = r, ep = r, eu = r, ev = r, ew = r, p = r;
   for (std::size_t i=0; i<nunk; ++i) {
-    auto s = solution( system, ncomp, x[i], y[i], z[i], t );
+    auto s = initialize( system, ncomp, x[i], y[i], z[i], t );
     er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
     ee[i] = std::pow( E[i] - s[4]/s[0], 2.0 ) * vol[i] / V;
     eu[i] = std::pow( u[i] - s[1]/s[0], 2.0 ) * vol[i] / V;
