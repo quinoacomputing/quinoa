@@ -847,9 +847,17 @@ class MultiMat {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    {
-      return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t );
-    }
+    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+
+    //! Return analytic solution for conserved variables
+    //! \param[in] xi X-coordinate at which to evaluate the analytic solution
+    //! \param[in] yi Y-coordinate at which to evaluate the analytic solution
+    //! \param[in] zi Z-coordinate at which to evaluate the analytic solution
+    //! \param[in] t Physical time at which to evaluate the analytic solution
+    //! \return Vector of analytic solution at given location and time
+    std::vector< tk::real >
+    solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
 
   private:
     //! Equation system index

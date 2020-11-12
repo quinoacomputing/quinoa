@@ -242,6 +242,11 @@ class CGPDE {
     analyticSolution( real xi, real yi, real zi, real t ) const
     { return self->analyticSolution( xi, yi, zi, t ); }
 
+    //! Public interface to returning the analytic solution for conserved vars
+    tk::InitializeFn::result_type
+    solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return self->solution( xi, yi, zi, t ); }
+
     //! Copy assignment
     CGPDE& operator=( const CGPDE& x )
     { CGPDE tmp(x); *this = std::move(tmp); return *this; }
@@ -346,6 +351,8 @@ class CGPDE {
         const tk::Fields& ) const = 0;
       virtual tk::InitializeFn::result_type analyticSolution(
         real xi, real yi, real zi, real t ) const = 0;
+      virtual tk::InitializeFn::result_type solution(
+        tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -458,6 +465,9 @@ class CGPDE {
       tk::InitializeFn::result_type
       analyticSolution( real xi, real yi, real zi, real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }
+      tk::InitializeFn::result_type
+      solution( real xi, real yi, real zi, real t )
+       const override { return data.solution( xi, yi, zi, t ); }
       T data;
     };
 

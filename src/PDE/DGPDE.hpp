@@ -246,6 +246,11 @@ class DGPDE {
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     { return self->analyticSolution( xi, yi, zi, t ); }
 
+    //! Public interface to returning the analytic solution for conserved vars
+    tk::InitializeFn::result_type
+    solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return self->solution( xi, yi, zi, t ); }
+
     //! Copy assignment
     DGPDE& operator=( const DGPDE& x )
     { DGPDE tmp(x); *this = std::move(tmp); return *this; }
@@ -336,6 +341,8 @@ class DGPDE {
         const tk::UnsMesh::Coords&,
         const tk::Fields& ) const = 0;
       virtual tk::InitializeFn::result_type analyticSolution(
+        tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
+      virtual tk::InitializeFn::result_type solution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
 
@@ -443,6 +450,9 @@ class DGPDE {
       tk::InitializeFn::result_type
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }
+      tk::InitializeFn::result_type
+      solution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
+       const override { return data.solution( xi, yi, zi, t ); }
       T data;
     };
 

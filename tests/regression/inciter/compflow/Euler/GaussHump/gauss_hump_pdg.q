@@ -47,6 +47,7 @@ inciter
   field_output
     interval 5
     var elem
+      analytic
       density "density_numerical"
       x-velocity "x-velocity_numerical"
       y-velocity "y-velocity_numerical"
