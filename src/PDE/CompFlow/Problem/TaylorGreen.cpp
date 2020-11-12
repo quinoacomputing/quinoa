@@ -85,9 +85,9 @@ CompFlowProblemTaylorGreen::analyticSolution( ncomp_t system,
   auto v = -cos(M_PI*x) * sin(M_PI*y);
   auto w = 0.0;
   // total specific energy
-  auto E = eos_totalenergy< eq >( system, r, u, v, w, p ) / r;
+  auto E = eos_totalenergy< eq >( system, r, u, v, w, p );
 
-  return {{ r, u, v, w, E }};
+  return {{ r, u, v, w, E, p }};
 }
 
 std::vector< std::string >

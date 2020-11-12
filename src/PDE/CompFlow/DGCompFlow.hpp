@@ -705,9 +705,7 @@ class CompFlow {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    {
-      return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t );
-    }
+    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
 
   private:
     //! Physics policy
