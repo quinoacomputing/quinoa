@@ -309,17 +309,10 @@ class Transport {
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
-      const auto& depvar =
-      g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
-      // will output numerical solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) + "_numerical" );
+      auto depvar = g_inputdeck.get< tag::param, eq, tag::depvar >()[m_system];
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_analytic" );
-      // will output error for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) + "_error" );
       return n;
     }
 

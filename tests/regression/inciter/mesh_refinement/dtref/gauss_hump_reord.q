@@ -50,6 +50,7 @@ inciter
 
   field_output
     interval 1
+    var elem analytic C1 "c0_numerical" end
   end
 
 end

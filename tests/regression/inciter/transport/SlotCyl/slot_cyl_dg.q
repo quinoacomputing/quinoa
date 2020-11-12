@@ -21,6 +21,9 @@ inciter
   end
 
   field_output
+    var
+      elem analytic C1 "c0_numerical"
+    end
     interval 1
   end
 
