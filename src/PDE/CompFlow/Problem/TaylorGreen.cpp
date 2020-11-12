@@ -91,14 +91,13 @@ CompFlowProblemTaylorGreen::analyticSolution( ncomp_t system,
 }
 
 std::vector< std::string >
-CompFlowProblemTaylorGreen::fieldNames( ncomp_t ) const
+CompFlowProblemTaylorGreen::analyticFieldNames( ncomp_t ) const
 // *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
+// Return analytic field names to be output to file
+//! \return Vector of strings labelling analytic fields output in file
 // *****************************************************************************
 {
-  auto n = CompFlowFieldNames();
-
+  std::vector< std::string > n;
   n.push_back( "density_analytical" );
   n.push_back( "x-velocity_analytical" );
   n.push_back( "y-velocity_analytical" );
@@ -107,89 +106,6 @@ CompFlowProblemTaylorGreen::fieldNames( ncomp_t ) const
   n.push_back( "pressure_analytical" );
 
   return n;
-}
-
-std::vector< std::vector< tk::real > >
-CompFlowProblemTaylorGreen::fieldOutput(
-  ncomp_t system,
-  ncomp_t,
-  ncomp_t offset,
-  std::size_t nunk,
-  std::size_t rdof,
-  tk::real,
-  tk::real V,
-  const std::vector< tk::real >& vol,
-  const std::array< std::vector< tk::real >, 3 >& coord,
-  const tk::Fields& U ) const
-// *****************************************************************************
-//  Return field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
-//! \param[in] nunk Number of unknowns to extract
-//! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
-//!   the number of scalar components to shift when extracting scalar
-//!   components.
-//! \param[in] V Total mesh volume (across the whole problem)
-//! \param[in] vol Nodal mesh volumes
-//! \param[in] coord Mesh point coordinates
-//! \param[in] U Solution vector at recent time step
-//! \return Vector of vectors to be output to file
-// *****************************************************************************
-{
-  auto out = CompFlowFieldOutput( system, offset, nunk, rdof, U );
-
-  const auto r  = U.extract( 0*rdof, offset );
-  const auto ru = U.extract( 1*rdof, offset );
-  const auto rv = U.extract( 2*rdof, offset );
-  const auto re = U.extract( 4*rdof, offset );
-
-  // mesh node coordinates
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-
-  out.push_back( std::vector< tk::real >( nunk, 1.0 ) );
-
-  std::vector< tk::real > ua( nunk );
-  for (std::size_t i=0; i<nunk; ++i)
-    ua[i] = std::sin(M_PI*x[i]) * std::cos(M_PI*y[i]);
-  out.push_back( ua );
-
-  // error in x-velocity
-  std::vector< tk::real > err( nunk );
-  for (std::size_t i=0; i<nunk; ++i)
-    err[i] = std::pow( ua[i] - ru[i], 2.0 ) * vol[i] / V;
-  out.push_back( err );
-
-  std::vector< tk::real > va( nunk );
-  for (std::size_t i=0; i<nunk; ++i)
-    va[i] = -std::cos(M_PI*x[i]) * std::sin(M_PI*y[i]);
-  out.push_back( va );
-
-  // error in v-velocity
-  for (std::size_t i=0; i<nunk; ++i)
-    err[i] = std::pow( va[i] - rv[i], 2.0 ) * vol[i] / V;
-  out.push_back( err );
-
-  out.push_back( std::vector< tk::real >( nunk, 0.0 ) );
-
-  std::vector< tk::real > Ea( nunk ), Pa( nunk );
-  for (std::size_t i=0; i<nunk; ++i) {
-    Pa[i] = 10.0 + r[i]/4.0*(std::cos(2.0*M_PI*x[i]) + std::cos(2.0*M_PI*y[i]));
-    Ea[i] = eos_totalenergy< eq >( system, r[i], ua[i]/r[i], va[i]/r[i],
-                                   0.0, Pa[i]/r[i] );
-  }
-  out.push_back( Ea );
-
-  // error in total specific energy
-  for (std::size_t i=0; i<nunk; ++i)
-    err[i] = std::pow( Ea[i] - re[i], 2.0 ) * vol[i] / V;
-  out.push_back( err );
-
-  out.push_back( Pa );
-
-  return out;
 }
 
 std::vector< std::string >

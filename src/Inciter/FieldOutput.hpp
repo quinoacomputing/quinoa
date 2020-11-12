@@ -43,7 +43,7 @@ analyticFieldNames( const PDE& eq,
 {
   for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >())
     if (v.centering == c && v.analytic())
-      tk::concat( eq.fieldNames(), f );
+      tk::concat( eq.analyticFieldNames(), f );
 }
 
 //! Collect field output from analytic solutions based on user input

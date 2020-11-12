@@ -56,20 +56,8 @@ class CompFlowProblemUserDefined {
     { r = ru = rv = rw = re = 0.0; }
 
     //! Return field names to be output to file
-    std::vector< std::string > fieldNames( ncomp_t ) const;
-
-    //! Return field output going to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t,
-                 ncomp_t,
-                 ncomp_t offset,
-                 std::size_t nunk,
-                 std::size_t rdof,
-                 tk::real,
-                 tk::real,
-                 const std::vector< tk::real >&,
-                 const std::array< std::vector< tk::real >, 3 >&,
-                 const tk::Fields& U ) const;
+    std::vector< std::string > analyticFieldNames( ncomp_t ) const
+    { return {}; }
 
     //! Return names of integral variables to be output to diagnostics file
     std::vector< std::string > names( ncomp_t ) const;

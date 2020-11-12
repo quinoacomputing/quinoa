@@ -55,21 +55,8 @@ class CompFlowProblemGaussHump {
          tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
     { r = ru = rv = rw = re = 0.0; }
 
-    //! Return field names to be output to file
-    std::vector< std::string > fieldNames( ncomp_t ) const;
-
-    //! Return field output going to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t system,
-                 ncomp_t ncomp,
-                 ncomp_t offset,
-                 std::size_t nunk,
-                 std::size_t rdof,
-                 tk::real t,
-                 tk::real V,
-                 const std::vector< tk::real >& vol,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const tk::Fields& U ) const;
+    //! Return analytic field names to be output to file
+    std::vector< std::string > analyticFieldNames( ncomp_t ) const;
 
     //! Return names of integral variables to be output to diagnostics file
     std::vector< std::string > names( ncomp_t ) const;

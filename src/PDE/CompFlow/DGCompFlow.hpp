@@ -619,43 +619,15 @@ class CompFlow {
       return v;
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > fieldNames() const
-    { return m_problem.fieldNames( m_ncomp ); }
-
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > nodalFieldNames() const
-    { return fieldNames(); }
+    //! Return analytic field names to be output to file
+    //! \return Vector of strings labelling analytic fields output in file
+    std::vector< std::string > analyticFieldNames() const
+    { return m_problem.analyticFieldNames( m_ncomp ); }
 
     //! Return time history field names to be output to file
     //! \return Vector of strings labeling time history fields output in file
     std::vector< std::string > histNames() const
     { return CompFlowHistNames(); }
-
-    //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] nunk Number of unknowns to extract
-    //! \param[in] rdof Number of reconstructed degrees of freedom. This used as
-    //!   the number of scalar components to shift when extracting scalar
-    //!   components.
-    //! \param[in,out] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
-                 std::size_t nunk,
-                 std::size_t rdof,
-                 const std::vector< tk::real >& vol,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const tk::Fields& U,
-                 [[maybe_unused]] const tk::Fields& = tk::Fields() ) const
-    {
-      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, rdof,
-                                    t, V, vol, coord, U );
-    }
 
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
@@ -735,25 +707,6 @@ class CompFlow {
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     {
       return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t );
-    }
-
-    //! Compute nodal field output
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] coord Node coordinates
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] Un Node solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    nodeFieldOutput( tk::real t,
-                     tk::real V,
-                     const tk::UnsMesh::Coords& coord,
-                     const tk::Fields& geoElem,
-                     const tk::Fields& Un,
-                     const tk::Fields& ) const
-    {
-      return fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
-                          coord, Un );
     }
 
   private:

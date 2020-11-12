@@ -101,10 +101,10 @@ CompFlowProblemVorticalFlow::analyticSolution( ncomp_t system,
 }
 
 std::vector< std::string >
-CompFlowProblemVorticalFlow::fieldNames( ncomp_t ) const
+CompFlowProblemVorticalFlow::analyticFieldNames( ncomp_t ) const
 // *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
+// Return analytic field names to be output to file
+//! \return Vector of strings labelling analytic fields output in file
 // *****************************************************************************
 {
   std::vector< std::string > n;
@@ -116,82 +116,6 @@ CompFlowProblemVorticalFlow::fieldNames( ncomp_t ) const
   n.push_back( "pressure_analytical" );
 
   return n;
-}
-
-std::vector< std::vector< tk::real > >
-CompFlowProblemVorticalFlow::fieldOutput(
-  ncomp_t system,
-  ncomp_t,
-  ncomp_t offset,
-  std::size_t nunk,
-  std::size_t rdof,
-  tk::real,
-  tk::real,
-  const std::vector< tk::real >&,
-  const std::array< std::vector< tk::real >, 3 >& coord,
-  const tk::Fields& U ) const
-// *****************************************************************************
-//  Return field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
-//! \param[in] nunk Number of unknowns to extract
-//! \param[in] coord Mesh node coordinates
-//! \param[in] U Solution vector at recent time step
-//! \return Vector of vectors to be output to file
-// *****************************************************************************
-{
-   // manufactured solution parameters
-   const auto& a =
-     g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[system];
-   const auto& b =
-     g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[system];
-   const auto& p0 =
-     g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[system];
-   // ratio of specific heats
-   tk::real g =
-     g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system][0];
-
-   auto out = CompFlowFieldOutput( system, offset, nunk, rdof, U );
-
-   const auto r  = U.extract( 0*rdof, offset );
-   const auto ru = U.extract( 1*rdof, offset );
-   const auto rv = U.extract( 2*rdof, offset );
-   const auto rw = U.extract( 3*rdof, offset );
-   const auto re = U.extract( 4*rdof, offset );
-
-   // mesh node coordinates
-   const auto& x = coord[0];
-   const auto& y = coord[1];
-   const auto& z = coord[2];
-
-   out.push_back( std::vector< tk::real >( nunk, 1.0 ) );
-
-   std::vector< tk::real > u = ru;
-   for (std::size_t i=0; i<nunk; ++i) u[i] = a*x[i] - b*y[i];
-   out.push_back( u );
-
-   std::vector< tk::real > v = rv;
-   for (std::size_t i=0; i<nunk; ++i) v[i] = b*x[i] + a*y[i];
-   out.push_back( v );
-
-   std::vector< tk::real > w = rw;
-   for (std::size_t i=0; i<nunk; ++i) w[i] = -2.0*a*z[i];
-   out.push_back( w );
-
-   std::vector< tk::real > E = re;
-   for (std::size_t i=0; i<nunk; ++i)
-     E[i] = 0.5*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i]) +
-            (p0 - 2.0*a*a*z[i]*z[i])/(g-1.0);
-   out.push_back( E );
-
-   std::vector< tk::real > P( nunk, 0.0 );
-   for (std::size_t i=0; i<nunk; ++i)
-     P[i] = p0 - 2.0*a*a*z[i]*z[i];
-   out.push_back( P );
-
-   return out;
 }
 
 std::vector< std::string >

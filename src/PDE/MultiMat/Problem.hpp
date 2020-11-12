@@ -36,12 +36,6 @@
     - Must define the static function _dirbc()_,  used to query Dirichlet
       boundary condition value on a given side set for all components in the PDE
       system.
-
-    - Must define the static function _fieldNames()_, used to provide the field
-      names to be output to file.
-
-    - Must define the static function _fieldOutput()_, used to provide the field
-      output.
 */
 // *****************************************************************************
 #ifndef MultiMatProblem_h

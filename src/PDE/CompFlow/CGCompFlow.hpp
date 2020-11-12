@@ -775,10 +775,10 @@ class CompFlow {
             }
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > fieldNames() const
-    { return m_problem.fieldNames( m_ncomp ); }
+    //! Return analytic field names to be output to file
+    //! \return Vector of strings labelling analytic fields output in file
+    std::vector< std::string > analyticFieldNames() const
+    { return m_problem.analyticFieldNames( m_ncomp ); }
 
     //! Return surface field names to be output to file
     //! \return Vector of strings labelling surface fields output in file
@@ -789,26 +789,6 @@ class CompFlow {
     //! \return Vector of strings labelling time history fields output in file
     std::vector< std::string > histNames() const
     { return CompFlowHistNames(); }
-
-    //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] v Nodal mesh volumes
-    //! \param[in,out] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
-                 std::size_t nunk,
-                 std::size_t,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< tk::real >& v,
-                 tk::Fields& U ) const
-    {
-      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, 1, t,
-                                    V, v, coord, U );
-    }
 
     //! Return surface field output going to file
     std::vector< std::vector< real > >

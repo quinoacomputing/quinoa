@@ -33,6 +33,7 @@
 #include "Around.hpp"
 #include "CGPDE.hpp"
 #include "Integrate/Mass.hpp"
+#include "FieldOutput.hpp"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.hpp"
@@ -1119,32 +1120,28 @@ ALECG::writeFields( CkCallback c ) const
 
     auto d = Disc();
 
+    // Query fields names requested by user
+    auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
+    // Collect field output from numerical solution requested by user
+    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
+    // Collect field output names for analytical solutions
+    for (const auto& eq : g_cgpde)
+      analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
+
     // Query and collect block and surface field names from PDEs integrated
-    std::vector< std::string > nodefieldnames;
     std::vector< std::string > nodesurfnames;
     for (const auto& eq : g_cgpde) {
-      auto n = eq.fieldNames();
-      nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
       auto s = eq.surfNames();
       nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
     }
 
     // Collect node block and surface field solution
     auto u = m_u;
-    std::vector< std::vector< tk::real > > nodefields;
     std::vector< std::vector< tk::real > > nodesurfs;
     for (const auto& eq : g_cgpde) {
-      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord()[0].size(),
-                               1, d->Coord(), d->V(), u );
-      nodefields.insert( end(nodefields), begin(o), end(o) );
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
-
-    // nodefieldnames.push_back( "initiated" );
-    // std::vector< tk::real > initiated( m_u.nunk(), 0.0 );
-    // for (auto i : m_boxnodes_set) initiated[i] = 1.0;
-    // nodefields.push_back( initiated );
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 

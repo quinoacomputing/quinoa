@@ -211,8 +211,9 @@ class CGPDE {
                 const std::unordered_set< std::size_t >& nodes ) const
     { self->farfieldbc( U, coord, bnorm, nodes ); }
 
-    //! Public interface to returning field output labels
-    std::vector< std::string > fieldNames() const { return self->fieldNames(); }
+    //! Public interface to returning analytic field output labels
+    std::vector< std::string > analyticFieldNames() const
+    { return self->analyticFieldNames(); }
 
     //! Public interface to returning surface field output labels
     std::vector< std::string > surfNames() const { return self->surfNames(); }
@@ -222,17 +223,6 @@ class CGPDE {
 
     //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
-
-    //! Public interface to returning field output
-    std::vector< std::vector< real > > fieldOutput(
-      real t,
-      real V,
-      std::size_t nunk,
-      std::size_t,
-      const std::array< std::vector< real >, 3 >& coord,
-      const std::vector< real >& v,
-      tk::Fields& U ) const
-    { return self->fieldOutput( t, V, nunk, 1, coord, v, U ); }
 
     //! Public interface to returning surface field output
     std::vector< std::vector< real > >
@@ -343,18 +333,10 @@ class CGPDE {
                 std::unordered_map< std::size_t,
                   std::array< real, 4 > > >&,
         const std::unordered_set< std::size_t >& ) const = 0;
-      virtual std::vector< std::string > fieldNames() const = 0;
+      virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
-      virtual std::vector< std::vector< real > > fieldOutput(
-        real,
-        real,
-        std::size_t,
-        std::size_t,
-        const std::array< std::vector< real >, 3 >&,
-        const std::vector< real >&,
-        tk::Fields& ) const = 0;
       virtual std::vector< std::vector< real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
         tk::Fields& ) const = 0;
@@ -456,23 +438,14 @@ class CGPDE {
                   std::array< real, 4 > > >& bnorm,
         const std::unordered_set< std::size_t >& nodes ) const override
       { data.farfieldbc( U, coord, bnorm, nodes ); }
-      std::vector< std::string > fieldNames() const override
-      { return data.fieldNames(); }
+      std::vector< std::string > analyticFieldNames() const override
+      { return data.analyticFieldNames(); }
       std::vector< std::string > surfNames() const override
       { return data.surfNames(); }
       std::vector< std::string > histNames() const override
       { return data.histNames(); }
       std::vector< std::string > names() const override
       { return data.names(); }
-      std::vector< std::vector< real > > fieldOutput(
-        real t,
-        real V,
-        std::size_t nunk,
-        std::size_t,
-        const std::array< std::vector< real >, 3 >& coord,
-        const std::vector< real >& v,
-        tk::Fields& U ) const override
-      { return data.fieldOutput( t, V, nunk, 1, coord, v, U ); }
       std::vector< std::vector< real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
         tk::Fields& U ) const override

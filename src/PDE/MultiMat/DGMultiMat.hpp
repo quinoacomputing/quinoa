@@ -787,10 +787,9 @@ class MultiMat {
       return v;
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > fieldNames() const
-    {
+    //! Return analytic field names to be output to file
+    //! \return Vector of strings labelling analytic fields output in file
+    std::vector< std::string > analyticFieldNames() const {
       auto nmat =
         g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
 
@@ -812,49 +811,6 @@ class MultiMat {
     std::vector< std::string > histNames() const {
       std::vector< std::string > s; // punt for now
       return s;
-    }
-
-    //! Return field output going to file
-    //! \param[in] nunk Number of unknowns
-    //! \param[in] vol Volumes associated to elements (or nodes)
-    //! \param[in] coord Coordinates at which to evaluate the solution
-    //! \param[in,out] U Solution vector at recent time step
-    //! \param[in] P Vector of primitive quantities at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real,
-                 tk::real,
-                 std::size_t nunk,
-                 std::size_t rdof,
-                 const std::vector< tk::real >& vol,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const tk::Fields& U,
-                 const tk::Fields& P ) const
-    {
-      // number of materials
-      auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-      return MultiMatFieldOutput( m_system, nmat, m_offset, nunk, rdof, vol,
-                                  coord, U, P );
-    }
-
-    //! Compute nodal field output
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] coord Node coordinates
-    //! \param[in] geoElem Element geometry array
-    //! \param[in] Un Node solution vector at recent time step
-    //! \param[in] Pn Node primitive variable vector at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    nodeFieldOutput( tk::real t,
-                     tk::real V,
-                     const tk::UnsMesh::Coords& coord,
-                     const tk::Fields& geoElem,
-                     const tk::Fields& Un,
-                     const tk::Fields& Pn ) const
-    {
-      return fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
-                          coord, Un, Pn );
     }
 
     //! Return surface field output going to file

@@ -38,11 +38,8 @@
       boundary condition value on a given side set for all components in the PDE
       system.
 
-    - Must define the function _fieldNames()_, used to provide the field
+    - Must define the function _analyticFieldNames()_, used to provide the field
       names to be output to file.
-
-    - Must define the function _fieldOutput()_, used to provide the field
-      output.
 */
 // *****************************************************************************
 #ifndef CompFlowProblem_h

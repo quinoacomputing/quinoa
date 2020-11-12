@@ -33,6 +33,7 @@
 #include "Refiner.hpp"
 #include "Reorder.hpp"
 #include "Integrate/Mass.hpp"
+#include "FieldOutput.hpp"
 
 namespace inciter {
 
@@ -656,32 +657,30 @@ DiagCG::writeFields( CkCallback c ) const
 
     auto d = Disc();
 
+    // Query fields names requested by user
+    auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
+    // Collect field output from numerical solution requested by user
+    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
+    // Collect field output names for analytical solutions
+    for (const auto& eq : g_cgpde)
+      analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
+
     // Query and collect block and surface field names from PDEs integrated
-    std::vector< std::string > nodefieldnames;
     std::vector< std::string > nodesurfnames;
     for (const auto& eq : g_cgpde) {
-      auto n = eq.fieldNames();
-      nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
       auto s = eq.surfNames();
       nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
     }
 
     // Collect node field solution
     auto u = m_u;
-    std::vector< std::vector< tk::real > > nodefields;
     std::vector< std::vector< tk::real > > nodesurfs;
     for (const auto& eq : g_cgpde) {
-      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord()[0].size(), 1,
-                               d->Coord(), d->V(), u );
-      nodefields.insert( end(nodefields), begin(o), end(o) );
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
-
-    std::vector< std::string > elemfieldnames;
-    std::vector< std::vector< tk::real > > elemfields;
 
     // Query refinement data
     auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
@@ -692,20 +691,18 @@ DiagCG::writeFields( CkCallback c ) const
                 std::vector< std::vector< tk::real > > > r;
     if (dtref) r = d->Ref()->refinementFields();
 
-    const auto& refinement_elemfieldnames = std::get< 0 >( r );
-    const auto& refinement_elemfields = std::get< 1 >( r );
-    const auto& refinement_nodefieldnames = std::get< 2 >( r );
-    const auto& refinement_nodefields = std::get< 3 >( r );
+    auto& refinement_elemfieldnames = std::get< 0 >( r );
+    auto& refinement_elemfields = std::get< 1 >( r );
+    auto& refinement_nodefieldnames = std::get< 2 >( r );
+    auto& refinement_nodefields = std::get< 3 >( r );
 
     nodefieldnames.insert( end(nodefieldnames),
       begin(refinement_nodefieldnames), end(refinement_nodefieldnames) );
     nodefields.insert( end(nodefields),
       begin(refinement_nodefields), end(refinement_nodefields) );
 
-    elemfieldnames.insert( end(elemfieldnames),
-      begin(refinement_elemfieldnames), end(refinement_elemfieldnames) );
-    elemfields.insert( end(elemfields),
-      begin(refinement_elemfields), end(refinement_elemfields) );
+    auto elemfieldnames = std::move(refinement_elemfieldnames);
+    auto elemfields = std::move(refinement_elemfields);
 
     // Collect FCT field data (for debugging)
     auto f = d->FCT()->fields();

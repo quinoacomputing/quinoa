@@ -305,12 +305,9 @@ class Transport {
       return mindt;
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    //! \details This functions should be written in conjunction with
-    //!   fieldOutput(), which provides the vector of fields to be output
-    std::vector< std::string > fieldNames() const {
-      const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+    //! Return analytic field names to be output to file
+    //! \return Vector of strings labelling analytic fields output in file
+    std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
       const auto& depvar =
       g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
@@ -323,15 +320,8 @@ class Transport {
       // will output error for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_error" );
-      if(pref)           // Adaptive DG on
-        n.push_back( "ndof" );
       return n;
     }
-
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > nodalFieldNames() const
-    { return fieldNames(); }
 
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
@@ -347,63 +337,6 @@ class Transport {
     std::vector< std::string > histNames() const {
       std::vector< std::string > s; // punt for now
       return s;
-    }
-
-    //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] nunk Number of unknowns to extract
-    //! \param[in] vol Volumes associated to elements (or nodes)
-    //! \param[in] coord Coordinates at which to evaluate the solution
-    //! \param[in,out] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    //! \details This functions should be written in conjunction with names(),
-    //!   which provides the vector of field names
-    //! \note U is overwritten
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real,
-                 std::size_t nunk,
-                 std::size_t rdof,
-                 const std::vector< tk::real >& vol,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const tk::Fields& U,
-                 [[maybe_unused]] const tk::Fields& = tk::Fields() ) const
-    {
-      Assert( U.nunk() >= nunk, "Size mismatch" );
-      std::vector< std::vector< tk::real > > out;
-
-      // will output numerical solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c*rdof, m_offset ) );
-
-      // mesh node coordinates
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-
-      // evaluate analytic solution at time t
-      auto E = U;
-      for (std::size_t i=0; i<nunk; ++i) {
-        auto s = Problem::initialize( m_system, m_ncomp, x[i], y[i], z[i], t );
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          E( i, c*rdof, m_offset ) = s[c];
-      }
-
-      // will output analytic solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( E.extract( c*rdof, m_offset ) );
-
-      // will output error for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) {
-        auto mark = c*rdof;
-        auto u = U.extract( mark, m_offset );
-        auto e = E.extract( mark, m_offset );
-        for (std::size_t i=0; i<nunk; ++i)
-          e[i] = std::pow( e[i] - u[i], 2.0 ) * vol[i];
-        out.push_back( e );
-      }
-
-      return out;
     }
 
     //! Return names of integral variables to be output to diagnostics file
@@ -427,25 +360,6 @@ class Transport {
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
-
-    //! Compute nodal field output
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] coord Node coordinates
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] Un Node solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    nodeFieldOutput( tk::real t,
-                     tk::real V,
-                     const tk::UnsMesh::Coords& coord,
-                     const tk::Fields& geoElem,
-                     const tk::Fields& Un,
-                     const tk::Fields& ) const
-    {
-      return fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
-                          coord, Un );
-    }
 
     //! Return time history field output evaluated at time history points
     //! \param[in] h History point data

@@ -488,11 +488,9 @@ class Transport {
                 std::array< real, 4 > > >&,
       const std::unordered_set< std::size_t >& ) const {}
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    //! \details This functions should be written in conjunction with
-    //!   fieldOutput(), which provides the vector of fields to be output
-    std::vector< std::string > fieldNames() const {
+    //! Return analytic field names to be output to file
+    //! \return Vector of strings labelling analytic fields output in file
+    std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
       const auto& depvar =
         g_inputdeck.get< tag::param, tag::transport, tag::depvar >().
@@ -542,49 +540,6 @@ class Transport {
     {
       std::vector< std::vector< real > > s; // punt for now
       return s;
-    }
-
-    //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] v Nodal volumes
-    //! \param[in,out] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    //! \details This functions should be written in conjunction with names(),
-    //!   which provides the vector of field names
-    //! \note U is overwritten
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
-                 std::size_t,
-                 std::size_t,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< tk::real >& v,
-                 tk::Fields& U ) const
-    {
-      std::vector< std::vector< real > > out;
-      // will output numerical solution for all components
-      auto E = U;
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c, m_offset ) );
-      // evaluate analytic solution at time t
-      std::unordered_set< std::size_t > inbox;
-      initialize( coord, U, t, V, inbox );
-      // will output analytic solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c, m_offset ) );
-      // will output error for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) {
-        auto u = U.extract( c, m_offset );
-        auto e = E.extract( c, m_offset );
-        Assert( u.size() == e.size(), "Size mismatch" );
-        Assert( u.size() == v.size(), "Size mismatch" );
-        for (std::size_t i=0; i<u.size(); ++i)
-          e[i] = std::pow( e[i] - u[i], 2.0 ) * v[i] / V;
-        out.push_back( e );
-      }
-      return out;
     }
 
     //! Return names of integral variables to be output to diagnostics file
