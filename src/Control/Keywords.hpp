@@ -2002,11 +2002,11 @@ using outvar_analytic =
 struct outvar_info {
   static std::string name() { return "outvar"; }
   static std::string shortDescription() { return
-    "Start of outvar ... end input block"; }
+    "Start of var ... end input block"; }
   static std::string longDescription() { return
     R"(This keyword is used to start a block in the input file containing a
        list of physics variables for output. The following keywords are allowed
-       in an outvar ... end block:)"
+       in an var ... end block:)"
     + std::string("\'")
     + outvar_density::string()+ "\', \'"
     + outvar_xmomentum::string()+ "\', \'"
