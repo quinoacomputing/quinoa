@@ -359,8 +359,7 @@ VertexBasedTransport_P1(
       {
         for (std::size_t k=0; k<ncomp; ++k)
         {
-          if (matInt[k])
-            phi[volfracIdx(ncomp,k)] = 1.0;
+          if (matInt[k]) phi[k] = 1.0;
         }
       }
 

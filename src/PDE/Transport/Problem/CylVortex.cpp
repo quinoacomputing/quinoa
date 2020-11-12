@@ -27,7 +27,7 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::TransportProblemCylVortex;
 
 std::vector< tk::real >
-TransportProblemCylVortex::solution( ncomp_t system, ncomp_t ncomp,
+TransportProblemCylVortex::initialize( ncomp_t system, ncomp_t ncomp,
           tk::real x, tk::real y, tk::real, tk::real t )
 // *****************************************************************************
 //  Evaluate initial solution at (x,y,t) for all components
@@ -43,7 +43,7 @@ TransportProblemCylVortex::solution( ncomp_t system, ncomp_t ncomp,
 {
   const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0, t );
 
-  if (ncomp != 5) Throw("Cylinder deformation in vortex is only set up for 4 "
+  if (ncomp != 4) Throw("Cylinder deformation in vortex is only set up for 4 "
     "components");
 
   std::vector< tk::real > s( ncomp, 0.0 );
@@ -53,7 +53,7 @@ TransportProblemCylVortex::solution( ncomp_t system, ncomp_t ncomp,
   auto y0 = 0.75;
   auto r = sqrt((x-x0)*(x-x0) + (y-y0)*(y-y0));
 
-  if (r<0.15) {
+  if (r<=0.15) {
     if (x<x0 && y>=y0) s[0] = 1.0;
     else if (x>=x0 && y>=y0) s[1] = 1.0;
     else if (x>=x0 && y<y0) s[2] = 1.0;
@@ -80,8 +80,10 @@ TransportProblemCylVortex::prescribedVelocity( ncomp_t, ncomp_t ncomp,
 
   auto pi = 4.0 * std::atan(1.0);
   for (ncomp_t c=0; c<ncomp; ++c) {
-    vel[c][0] = 0.0;
-    vel[c][1] = 0.0;
+    vel[c][0] = - 2.0*std::cos(t*pi/4.0) * std::pow(std::sin(pi*x), 2)
+      * std::sin(pi*y) * std::cos(pi*y);
+    vel[c][1] = 2.0*std::cos(t*pi/4.0) * std::pow(std::sin(pi*y), 2)
+      * std::sin(pi*x) * std::cos(pi*x);
     vel[c][2] = 0.0;
   }
 
