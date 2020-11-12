@@ -41,7 +41,7 @@ class CompFlowProblemSedovBlastwave {
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
     analyticSolution( ncomp_t, ncomp_t, tk::real, tk::real,  tk::real,
-                      tk::real ) { return {}; }
+                      tk::real );
 
     //! Compute and return source term for this problem
     //! \param[in,out] r Density source
@@ -56,8 +56,7 @@ class CompFlowProblemSedovBlastwave {
     { r = ru = rv = rw = re = 0.0; }
 
     //! Return analytic field names to be output to file
-    std::vector< std::string > analyticFieldNames( ncomp_t ) const
-    { return {}; }
+    std::vector< std::string > analyticFieldNames( ncomp_t ) const;
 
     //! Return names of integral variables to be output to diagnostics file
     std::vector< std::string > names( ncomp_t ) const;

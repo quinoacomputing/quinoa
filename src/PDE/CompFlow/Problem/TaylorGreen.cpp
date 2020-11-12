@@ -32,7 +32,7 @@ CompFlowProblemTaylorGreen::initialize( ncomp_t system,
                                         tk::real,
                                         tk::real )
 // *****************************************************************************
-//! Evaluate analytical solution at (x,y,z,t) for all components
+//! Initialize numerical solution
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] x X coordinate where to evaluate the solution
@@ -65,7 +65,7 @@ CompFlowProblemTaylorGreen::analyticSolution( ncomp_t system,
                                               tk::real,
                                               tk::real )
 // *****************************************************************************
-//! Evaluate analytical solution at (x,y,z,t) for all components
+//  Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] x X coordinate where to evaluate the solution
