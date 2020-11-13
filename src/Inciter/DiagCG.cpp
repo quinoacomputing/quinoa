@@ -656,6 +656,7 @@ DiagCG::writeFields( CkCallback c ) const
   } else {
 
     auto d = Disc();
+    const auto& coord = d->Coord();
 
     // Query fields names requested by user
     auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
@@ -664,6 +665,12 @@ DiagCG::writeFields( CkCallback c ) const
     // Collect field output names for analytical solutions
     for (const auto& eq : g_cgpde)
       analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
+
+    // Collect field output from analytical solutions (if exist)
+    auto t = d->T();
+    for (const auto& eq : g_cgpde)
+      analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1],
+                           coord[2], t, nodefields );
 
     // Query and collect block and surface field names from PDEs integrated
     std::vector< std::string > nodesurfnames;
@@ -679,8 +686,6 @@ DiagCG::writeFields( CkCallback c ) const
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
-
-    Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
     // Query refinement data
     auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
@@ -722,8 +727,11 @@ DiagCG::writeFields( CkCallback c ) const
     elemfields.insert( end(elemfields),
       begin(fct_elemfields), end(fct_elemfields) );
 
+    Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
+    Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
+
     // Send mesh and fields data (solution dump) for output to file
-    d->write( d->Inpoel(), d->Coord(), m_bface, tk::remap( m_bnode,d->Lid() ),
+    d->write( d->Inpoel(), coord, m_bface, tk::remap( m_bnode,d->Lid() ),
               m_triinpoel, elemfieldnames, nodefieldnames, nodesurfnames,
               elemfields, nodefields, nodesurfs, c );
 

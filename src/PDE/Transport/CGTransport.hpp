@@ -48,6 +48,7 @@ class Transport {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
     using real = tk::real;
+    using eq = tag::transport;
 
     static constexpr real muscl_eps = 1.0e-9;
     static constexpr real muscl_const = 1.0/3.0;
@@ -71,8 +72,7 @@ class Transport {
 
     //! Determine nodes that lie inside the user-defined IC box
     void IcBoxNodes( const tk::UnsMesh::Coords&,
-      std::unordered_set< std::size_t >& ) const
-    {}
+                     std::unordered_set< std::size_t >& ) const {}
 
     //! Initalize the transport equations using problem policy
     //! \param[in] coord Mesh node coordinates
@@ -502,18 +502,9 @@ class Transport {
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
-      const auto& depvar =
-        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().
-        at(m_system);
-      // will output numerical solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) + "_numerical" );
-      // will output analytic solution for all components
+      auto depvar = g_inputdeck.get< tag::param, eq, tag::depvar >()[m_system];
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_analytic" );
-      // will output error for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) + "_error" );
       return n;
     }
 
@@ -521,36 +512,22 @@ class Transport {
     //! \return Vector of strings labelling surface fields output in file
     //! \details This functions should be written in conjunction with
     //!   surfOutput(), which provides the vector of surface fields to be output
-    std::vector< std::string > surfNames() const {
-      std::vector< std::string > n;     // punt for now
-      return n;
-    }
+    std::vector< std::string > surfNames() const { return {}; }
 
     //! Return surface field output going to file
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >&,
-                tk::Fields& ) const
-    {
-      std::vector< std::vector< real > > s; // punt for now
-      return s;
-    }
+                tk::Fields& ) const { return {}; }
 
     //! Return time history field names to be output to file
     //! \return Vector of strings labelling time history fields output in file
-    std::vector< std::string > histNames() const {
-      std::vector< std::string > s; // punt for now
-      return s;
-    }
+    std::vector< std::string > histNames() const { return {}; }
 
     //! Return time history field output evaluated at time history points
     std::vector< std::vector< real > >
     histOutput( const std::vector< HistData >&,
                 const std::vector< std::size_t >&,
-                const tk::Fields& ) const
-    {
-      std::vector< std::vector< real > > s; // punt for now
-      return s;
-    }
+                const tk::Fields& ) const { return {}; }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output

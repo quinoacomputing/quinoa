@@ -310,7 +310,6 @@ class Transport {
     std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
       auto depvar = g_inputdeck.get< tag::param, eq, tag::depvar >()[m_system];
-      // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_analytic" );
       return n;

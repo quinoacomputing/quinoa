@@ -1119,6 +1119,7 @@ ALECG::writeFields( CkCallback c ) const
   } else {
 
     auto d = Disc();
+    const auto& coord = d->Coord();
 
     // Query fields names requested by user
     auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
@@ -1127,6 +1128,12 @@ ALECG::writeFields( CkCallback c ) const
     // Collect field output names for analytical solutions
     for (const auto& eq : g_cgpde)
       analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
+
+    // Collect field output from analytical solutions (if exist)
+    auto t = d->T();
+    for (const auto& eq : g_cgpde)
+      analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1],
+                           coord[2], t, nodefields );
 
     // Query and collect block and surface field names from PDEs integrated
     std::vector< std::string > nodesurfnames;
@@ -1146,7 +1153,7 @@ ALECG::writeFields( CkCallback c ) const
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
     // Send mesh and fields data (solution dump) for output to file
-    d->write( d->Inpoel(), d->Coord(), m_bface, tk::remap(m_bnode,d->Lid()),
+    d->write( d->Inpoel(), coord, m_bface, tk::remap(m_bnode,d->Lid()),
               m_triinpoel, {}, nodefieldnames, nodesurfnames, {}, nodefields,
               nodesurfs, c );
 
