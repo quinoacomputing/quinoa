@@ -56,10 +56,8 @@ CompFlowProblemVorticalFlow::initialize( ncomp_t system,
   auto rw = -2.0*a*z;
   // total specific energy
   auto rE = (ru*ru+rv*rv+rw*rw)/2.0 + (p0-2.0*a*a*z*z)/(g-1.0);
-  // pressure
-  auto p = p0 - 2.0*a*a*z*z;
 
-  return {{ 1.0, ru, rv, rw, rE, p }};
+  return {{ 1.0, ru, rv, rw, rE }};
 }
 
 tk::InitializeFn::result_type
