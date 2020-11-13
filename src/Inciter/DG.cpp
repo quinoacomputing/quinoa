@@ -1422,11 +1422,13 @@ DG::extractFieldOutput(
   }
 
   // Add adaptive indicator array to element-centered field output
-  std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
-  ndof.resize( nelem );
-  for (const auto& [child,parent] : addedTets)
-    ndof[child] = m_ndof[parent];
-  m_elemfields.push_back( ndof );
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
+    ndof.resize( nelem );
+    for (const auto& [child,parent] : addedTets)
+      ndof[child] = m_ndof[parent];
+    m_elemfields.push_back( ndof );
+  }
 
   // Send node fields contributions to neighbor chares
   if (nodeCommMap.empty())
@@ -2235,6 +2237,9 @@ DG::writeFields( CkCallback c )
 
   if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );
+
+  Assert( elemfieldnames.size() == m_elemfields.size(), "Size mismatch" );
+  Assert( nodefieldnames.size() == m_nodefields.size(), "Size mismatch" );
 
   // Output chare mesh and fields metadata to file
   const auto& triinpoel = m_outmesh.triinpoel;
