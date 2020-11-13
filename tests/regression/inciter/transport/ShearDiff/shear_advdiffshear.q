@@ -33,6 +33,7 @@ inciter
 
   field_output
     interval 5
+    var analytic C1 "c0_numerical" end
   end
 
 end
