@@ -96,10 +96,8 @@ CompFlowProblemNLEnergyGrowth::initialize( ncomp_t system,
   auto r = r0 + ft*gx;
   // energy
   auto re = r*ec(ce,k,t,h,-1.0/3.0);
-  // pressure
-  auto p = eos_pressure< eq >( system, r, 0.0, 0.0, 0.0, re );
 
-  return {{ r, 0.0, 0.0, 0.0, re, p }};
+  return {{ r, 0.0, 0.0, 0.0, re }};
 }
 
 tk::InitializeFn::result_type

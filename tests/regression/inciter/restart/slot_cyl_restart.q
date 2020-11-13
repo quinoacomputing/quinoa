@@ -20,6 +20,7 @@ inciter
   field_output
     interval 1
     filetype exodusii
+    var analytic C1 "c0_numerical" end
   end
 
 end

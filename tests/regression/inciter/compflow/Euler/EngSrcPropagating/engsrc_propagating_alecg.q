@@ -55,6 +55,11 @@ inciter
 
   field_output
     interval 25
+    var
+      density "density_numerical"
+      specific_total_energy "specific_total_energy_numerical"
+      pressure "pressure_numerical"
+    end
   end
 
   diagnostics
