@@ -86,6 +86,8 @@ namespace grm {
     NOSOLVE,            //!< Dependent variable to solve for has not been spec'd
     NOSUCHDEPVAR,       //!< Dependent variable has not been previously selected
     NOSUCHCOMPONENT,    //!< No such scalar component
+    NOSUCHOUTVAR,       //!< Output variable label not acceptable
+    NOSUCHMULTIMATVAR,  //!< Variable not acceptable for multi-material output
     POSITIVECOMPONENT,  //!< Scalar component must be positive
     NOTALPHA,           //!< Variable must be alphanumeric
     NOTERMS,            //!< Statistic need a variable
@@ -193,6 +195,12 @@ namespace grm {
       "which the number of components are not configurable with the 'ncomp' "
       "keyword, instead their ncomp is assumed known, e.g., for compflow ncomp "
       "= 5." },
+    { MsgKey::NOSUCHOUTVAR, "Scalar component label is not acceptable as a "
+      "request for an output variable. Did you mean it as upper case (as a "
+      "request for an instantaneous) quantity?" },
+    { MsgKey::NOSUCHMULTIMATVAR, "Scalar component label is not acceptable "
+      "requesting a multi-material output variable. Did you mean it as upper "
+      "case (as a request for an instantaneous) quantity?" },
     { MsgKey::POSITIVECOMPONENT, "Scalar component must be positive." },
     { MsgKey::NOTALPHA, "Variable not alphanumeric." },
     { MsgKey::HEIGHTSPIKES, "The sum of all spike heights given in the "

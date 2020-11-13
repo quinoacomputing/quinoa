@@ -52,6 +52,27 @@ namespace deck {
   //! Parser-lifetime storage of elem or node centering
   static tk::Centering centering = tk::Centering::NODE;
 
+  //! Accepted multimat output variable labels
+  //! \details List of characters accepted as lables for denoting output
+  //! variables (depvar-style) used for multi-material variable output. We use a
+  //! case- insesitive comparitor, since when this set is used we only care
+  //! about whether the variable is selected or not and not whether it denotes a
+  //! full variable (upper case) or a fluctuation (lower case). This is true for
+  //! both inserting variables into the set as well as at matching terms of
+  //! products in parsing requested statistics (for turbulence).
+  static std::set< char, tk::ctr::CaseInsensitiveCharLess > multimatvars{
+      'd'       // density
+    , 'f'       // volume fraction
+    , 'l'       // x momentum
+    , 'm'       // y momentum
+    , 'n'       // z momentum
+    , 'e'       // specific total energy
+    , 'u'       // x velocity
+    , 'v'       // y velocity
+    , 'w'       // z velocity
+    , 'p'       // material pressure
+  };
+
 } // ::deck
 } // ::inciter
 
@@ -819,8 +840,27 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       bool inbounds;
-      brigand::for_each< inciter::ctr::parameters::Keys >
+      using EqTypesExceptMultiMat =
+        brigand::remove< inciter::ctr::parameters::Keys, tag::multimat >;
+      brigand::for_each< EqTypesExceptMultiMat>
                        ( OutVarBounds( stack, inbounds ) );
+
+      // Since multimat outvars are configured based on an acceptable character
+      // label (see inciter::deck::multimatvars), and a material index (instead
+      // of a depvar + a component index), multimat inbounds is checked below.
+      using inciter::deck::neq;
+      using inciter::deck::multimatvars;
+      if (neq.get< tag::multimat >() > 0) {    // if multimat
+        auto nmat =
+          stack.template get< tag::param, tag::multimat, tag::nmat >().back();
+        // called after matching each outvar, so only check the last one
+        auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
+        const auto& last_outvar = vars.back();
+        const auto& v = static_cast<char>( std::tolower(last_outvar.var) );
+        if (multimatvars.find(v) != end(multimatvars) &&
+            last_outvar.field < nmat) inbounds = true;
+      }
+
       if (!inbounds)
         Message< Stack, ERROR, MsgKey::NOSUCHCOMPONENT >( stack, in );
     }
@@ -835,6 +875,33 @@ namespace grm {
     static void apply( const Input& in, Stack& ) {
       inciter::deck::centering =
         (in.string() == "node") ? tk::Centering::NODE : tk::Centering::ELEM;
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename push > struct match_outvar : pegtl::success {};
+  //! Match output variable based on depvar
+  template< class push >
+  struct action< match_outvar< push > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::deck::neq;
+      using inciter::deck::multimatvars;
+      // convert matched string to char
+      auto var = stack.template convert< char >( in.string() );
+      if (neq.get< tag::multimat >() == 0) {    // if not multimat
+        // find matched variable in set of selected ones
+        if (depvars.find(var) != end(depvars))
+          action< push >::apply( in, stack );
+        else  // error out if matched var is not selected
+          Message< Stack, ERROR, MsgKey::NOSUCHOUTVAR >( stack, in );
+      } else {    // if multimat
+        // find matched variable in set accepted for multimat
+        if (multimatvars.find(var) != end(multimatvars))
+          action< push >::apply( in, stack );
+        else
+          Message< Stack, ERROR, MsgKey::NOSUCHMULTIMATVAR >( stack, in );
+      }
     }
   };
 
@@ -1392,7 +1459,7 @@ namespace deck {
   //! Match an output variable based on depvar defined upstream of input file
   struct outvar_depvar :
            tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
-             tk::grm::match_depvar< tk::grm::push_outvar >,
+             tk::grm::match_outvar< tk::grm::push_outvar >,
              tk::grm::check_outvar > {};
 
   //! Parse a centering token and if matches, set centering in parser's state
