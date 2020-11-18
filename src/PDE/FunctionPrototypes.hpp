@@ -106,6 +106,11 @@ using ElemGradFn = std::function<
 using GetVarFn =
   std::function< std::vector< real >( const tk::Fields&, ncomp_t ) >;
 
+//! Prototype for functions to a compute multi-material index
+using MultiMatDofIdxFn =
+  std::function< std::size_t( std::size_t, std::size_t,
+                              std::size_t, std::size_t ) >;
+
 } // tk::
 
 #endif // FunctionPrototypes_h

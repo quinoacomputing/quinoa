@@ -5,9 +5,9 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Assign functions to compute output variables from numerical
+  \brief     Assign functions to compute output variables from the numerical
                solution
-  \details   Assign functions to compute output variables from numerical
+  \details   Assign functions to compute output variables from the numerical
                solution.
 */
 // *****************************************************************************
@@ -20,9 +20,22 @@
 
 namespace inciter {
 
-//! Assign function that computes output variables from numerical solution
+//! \brief Assign all functions that compute output variables from the
+//!   numerical solution
 tk::GetVarFn
-assignGetVar( const std::string& name );
+assignGetVars( const std::string& name );
+
+//! Assign a function to compute an output variable from the numerical solution
+//! \tparam Keyword Keyword used to match to variable name whose fn to assign
+//! \param[in] name Name of variable whose OutVar::GetVarFn is to be assigned
+//! \param[in] src Function to assign if there is a match
+//! \param[in,out] dst Function to assign to if there is a match
+//! \note This is used to configure human-readable output variables only.
+template< class Keyword >
+void
+assign( const std::string& name, const tk::GetVarFn& src, tk::GetVarFn& dst ) {
+  if (name.find(Keyword::string()) != std::string::npos) dst = src;
+}
 
 } // inciter::
 

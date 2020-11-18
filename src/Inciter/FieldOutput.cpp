@@ -36,11 +36,13 @@ numericFieldNames( tk::Centering c )
 }
 
 std::vector< std::vector< tk::real > >
-numericFieldOutput( const tk::Fields& U, tk::Centering c )
+numericFieldOutput( const tk::Fields& U, tk::Centering c,
+                    const tk::Fields& P )
 // *****************************************************************************
 // Collect field output from numerical solution based on user input
 //! \param[in] U Solution data to extract from
 //! \param[in] c Extract variables only with this centering
+//! \param[in] P Optional primitive variable solution data to extract from
 //! \return Output fields requested by user
 // *****************************************************************************
 {
@@ -48,15 +50,19 @@ numericFieldOutput( const tk::Fields& U, tk::Centering c )
   const auto& offset =
     g_inputdeck.get< tag::component >().offsetmap( g_inputdeck );
 
+  // will not use P if empty
+  const auto& p = P.empty() ? U : P;
+
   std::vector< std::vector< tk::real > > f;
   for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >()) {
     if (v.centering == c) {
       auto o = tk::cref_find( offset, v.var );
+      const auto& F = v.primitive() ? p : U;
       if (v.name.empty()) {        // depvar-based direct access
-        f.push_back( U.extract( v.field, o ) );
+        f.push_back( F.extract( v.field, o ) );
       } else if (!v.analytic()) {  // human-readable non-analytic via custom fn
         Assert( v.getvar, "getvar() not configured for " + v.name );
-        f.push_back( v.getvar( U, o ) );
+        f.push_back( v.getvar( F, o ) );
       }
     }
   }

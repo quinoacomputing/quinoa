@@ -1521,6 +1521,15 @@ namespace grm {
            scan< pegtl::sor< kw_type, msg< ERROR, MsgKey::MISSING > >,
                  insert > > {};
 
+  //! \brief Process 'keyword' and if matches, parse following token (expecting
+  //!   pegtl::alpha and call zero or more actions on it
+  template< class keyword, class... actions >
+  struct process_alpha :
+         pegtl::if_must<
+           readkw< typename keyword::pegtl_string >,
+           scan< pegtl::sor< pegtl::alpha, msg< ERROR, MsgKey::MISSING > >,
+                 actions... > > {};
+
   //! \brief Process command line 'keyword' and call its 'insert' action if
   //!   matches 'kw_type'
   template< template< class > class use, class keyword, class insert,

@@ -41,7 +41,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt );
 //! \brief Assign function that computes physics variables from the
 //!   numerical solution for CompFlow
 void
-assignCompFlowOutVar( const std::string& name, tk::GetVarFn& f );
+assignCompFlowGetVars( const std::string& name, tk::GetVarFn& f );
 
 /** @name Functions that compute physics variables from the numerical solution for CompFlow */
 ///@{
@@ -50,6 +50,8 @@ assignCompFlowOutVar( const std::string& name, tk::GetVarFn& f );
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wunused-function"
 #endif
+
+namespace compflow {
 
 //! Compute density for output to file
 //! \note Must follow the signature in tk::GetVarFn
@@ -144,6 +146,8 @@ pressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
     p[i] = eos_pressure<tag::compflow>( sys, r[i], u[i], v[i], w[i], re[i] );
   return p;
 }
+
+} // compflow::
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

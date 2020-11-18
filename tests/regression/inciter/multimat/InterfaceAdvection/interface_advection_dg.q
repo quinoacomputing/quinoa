@@ -43,6 +43,17 @@ inciter
 
   field_output
     interval 25
+    var elem
+	F1 "volfrac1_numerical"
+	F2 "volfrac2_numerical"
+	F3 "volfrac3_numerical"
+	density "density_numerical" # bulk density
+	x-velocity "x-velocity_numerical"
+	y-velocity "y-velocity_numerical"
+	z-velocity "z-velocity_numerical"
+	pressure "pressure_numerical" # bulk presssure
+	specific_total_energy "total_energy_density_numerical"  # bulk specific total energy
+    end
   end
 
 end

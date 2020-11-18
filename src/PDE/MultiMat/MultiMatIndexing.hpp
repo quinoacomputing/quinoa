@@ -15,6 +15,11 @@
 
 namespace inciter {
 
+/** @name Functions that compute indices for physics variables for MultiMat */
+///@{
+
+// The functions below must follow the signature of MultiMatIdxFn.
+
 //! Get the index of the required material volume fraction
 //! \param[in] kmat Index of required material
 //! \return Index of the required material volume fraction
@@ -144,6 +149,8 @@ inline std::size_t velocityDofIdx( std::size_t nmat, std::size_t idir,
 inline std::size_t pressureDofIdx( std::size_t nmat, std::size_t kmat,
   std::size_t ndof, std::size_t idof )
 { return pressureIdx(nmat, kmat)*ndof+idof; }
+
+//@}
 
 } //inciter::
 

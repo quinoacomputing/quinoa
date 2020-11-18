@@ -31,6 +31,7 @@ struct OutVar {
   Centering centering; //!< Centering
   std::string name;    //!< Human readable name (built-in, code knows it)
   std::string alias;   //!< Alias (only user knows it)
+  std::string matvar;  //!< Material-based physics label + material id
   tk::GetVarFn getvar; //!< Function to compute variable from numerical solution
 
   //! Constructor: initialize all state data
@@ -42,9 +43,10 @@ struct OutVar {
                    ncomp_t f = 0,
                    Centering c = Centering::NODE,
                    const std::string& n = {},
-                   const std::string& a = {} ) :
-    var(v), field(f), centering(c), name(n), alias(a),
-    getvar(assignGetVar(name)) {}
+                   const std::string& a = {},
+                   const std::string& m = {} ) :
+    var(v), field(f), centering(c), name(n), alias(a), matvar(m),
+    getvar(assignGetVars(name)) {}
 
   /** @name Pack/Unpack: Serialize OutVar object for Charm++ */
   ///@{
@@ -56,7 +58,8 @@ struct OutVar {
     p | centering;
     p | name;
     p | alias;
-    if (p.isUnpacking()) getvar = assignGetVar( name );
+    p | matvar;
+    getvar = assignGetVars(name);
   }
   //! Pack/Unpack serialize operator|
   //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -82,6 +85,10 @@ struct OutVar {
              centering == outvar.centering && name == outvar.name &&
              alias < outvar.alias)
       return true;
+    else if (var == outvar.var && field == outvar.field &&
+             centering == outvar.centering && name == outvar.name &&
+             alias == outvar.alias && matvar < outvar.matvar)
+      return true;
     else
       return false;
   }
@@ -89,6 +96,18 @@ struct OutVar {
   //! Query if outvar is a request for an analytic solution
   //! \return True if outvar is a request for an analytic solution
   bool analytic() const { return name.find("analytic") != std::string::npos; }
+
+  //! Query if outvar is a request for a (multimat) primitive variable
+  //! \return True if outvar should be extracted from primitive variable data
+  //! \see deck::inciter::multimatvars
+  bool primitive() const {
+    return matvar.find('u') != std::string::npos ||
+           matvar.find('U') != std::string::npos ||
+           matvar.find('p') != std::string::npos ||
+           matvar.find('P') != std::string::npos ||
+           name.find("pressure") != std::string::npos ||
+           name.find("velocity") != std::string::npos;
+  }
 };
 
 //! \brief Pack/Unpack: Namespace-scope serialize OutVar object for Charm++
@@ -106,9 +125,12 @@ inline void pup( PUP::er& p, OutVar& v ) { v.pup(p); }
 //! \param[in] outvar OutVar to write
 //! \return Updated output stream
 static std::ostream& operator<< ( std::ostream& os, const OutVar& outvar ) {
-  if (outvar.name.empty())
-    os << outvar.var << outvar.field+1;
-  else
+  if (outvar.name.empty()) {
+    if (outvar.matvar.empty())  // depvar
+      os << outvar.var << outvar.field+1;
+    else                        // matvar
+      os << outvar.matvar;
+  } else                        // humanvar
     os << outvar.name;
   return os;
 }

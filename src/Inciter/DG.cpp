@@ -1408,8 +1408,8 @@ DG::extractFieldOutput(
   auto [ue,pe,un,pn] = evalSolution( inpoel, coord, addedTets );
 
   // Collect field output from numerical solution requested by user
-  m_elemfields = numericFieldOutput( ue, tk::Centering::ELEM );
-  m_nodefields = numericFieldOutput( un, tk::Centering::NODE );
+  m_elemfields = numericFieldOutput( ue, tk::Centering::ELEM, pe );
+  m_nodefields = numericFieldOutput( un, tk::Centering::NODE, pn );
 
   // Collect field output from analytical solutions (if exist)
   auto geoElem = tk::genGeoElemTet( inpoel, coord );

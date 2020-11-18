@@ -310,7 +310,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 }
 
 void
-assignCompFlowOutVar( const std::string& name, tk::GetVarFn& f )
+assignCompFlowGetVars( const std::string& name, tk::GetVarFn& f )
 // *****************************************************************************
 // Assign functions that compute physics variables from the numerical solution
 // for CompFlow
@@ -318,30 +318,20 @@ assignCompFlowOutVar( const std::string& name, tk::GetVarFn& f )
 //! \param[in,out] f Function assigned
 // *****************************************************************************
 {
-  auto match = [&]( const std::string& keyword ){
-    return name.find(keyword) != std::string::npos;
-  };
+  using namespace kw;
+  using namespace compflow;
 
-  if (match(kw::outvar_density::string()))
-    f = densityOutVar;
-  else if (match(kw::outvar_xvelocity::string()))
-    f = velocityOutVar< 0 >;
-  else if (match(kw::outvar_yvelocity::string()))
-    f = velocityOutVar< 1 >;
-  else if (match(kw::outvar_zvelocity::string()))
-    f = velocityOutVar< 2 >;
-  else if (match(kw::outvar_specific_total_energy::string()))
-    f = specificTotalEnergyOutVar;
-  else if (match(kw::outvar_volumetric_total_energy::string()))
-    f = volumetricTotalEnergyOutVar;
-  else if (match(kw::outvar_xmomentum::string()))
-    f = momentumOutVar< 0 >;
-  else if (match(kw::outvar_ymomentum::string()))
-    f = momentumOutVar< 1 >;
-  else if (match(kw::outvar_zmomentum::string()))
-    f = momentumOutVar< 2 >;
-  else if (match(kw::outvar_pressure::string()))
-    f = pressureOutVar;
+  assign< outvar_density >( name, densityOutVar, f );
+  assign< outvar_xvelocity >( name, velocityOutVar<0>, f );
+  assign< outvar_yvelocity >( name, velocityOutVar<1>, f );
+  assign< outvar_zvelocity >( name, velocityOutVar<2>, f );
+  assign< outvar_specific_total_energy >( name, specificTotalEnergyOutVar, f );
+  assign< outvar_volumetric_total_energy >
+        ( name, volumetricTotalEnergyOutVar, f );
+  assign< outvar_xmomentum >( name, momentumOutVar<0>, f );
+  assign< outvar_ymomentum >( name, momentumOutVar<1>, f );
+  assign< outvar_zmomentum >( name, momentumOutVar<2>, f );
+  assign< outvar_pressure >( name, pressureOutVar, f );
 }
 
 }  // inciter::

@@ -22,6 +22,7 @@
 #include "Keywords.hpp"
 #include "ContainerUtil.hpp"
 #include "Centering.hpp"
+#include "PDE/MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
@@ -52,25 +53,26 @@ namespace deck {
   //! Parser-lifetime storage of elem or node centering
   static tk::Centering centering = tk::Centering::NODE;
 
-  //! Accepted multimat output variable labels
-  //! \details List of characters accepted as lables for denoting output
-  //! variables (depvar-style) used for multi-material variable output. We use a
-  //! case- insesitive comparitor, since when this set is used we only care
-  //! about whether the variable is selected or not and not whether it denotes a
-  //! full variable (upper case) or a fluctuation (lower case). This is true for
-  //! both inserting variables into the set as well as at matching terms of
-  //! products in parsing requested statistics (for turbulence).
-  static std::set< char, tk::ctr::CaseInsensitiveCharLess > multimatvars{
-      'd'       // density
-    , 'f'       // volume fraction
-    , 'l'       // x momentum
-    , 'm'       // y momentum
-    , 'n'       // z momentum
-    , 'e'       // specific total energy
-    , 'u'       // x velocity
-    , 'v'       // y velocity
-    , 'w'       // z velocity
-    , 'p'       // material pressure
+  //! Accepted multimat output variable labels and associated index functions
+  //! \details The keys are a list of characters accepted as labels for
+  //! denoting (matvar-style) output variables used for multi-material variable
+  //! output. We use a case- insesitive comparitor, since when this set is used
+  //! we only care about whether the variable is selected or not and not whether
+  //! it denotes a full variable (upper case) or a fluctuation (lower case).
+  //! This is true when matching these labels for output variables with
+  //! instantaenous variables as well terms of products in parsing requested
+  //! statistics (for turbulence). The values are associated indexing functions
+  //! used to index into the state of the multimaterial system, all must follow
+  //! the same signature.
+  static std::map< char, tk::MultiMatDofIdxFn,
+                   tk::ctr::CaseInsensitiveCharLess >
+    multimatvars{
+      { 'd', densityDofIdx }       // density
+    , { 'f', volfracDofIdx }       // volume fraction
+    , { 'm', momentumDofIdx }      // momentum
+    , { 'e', energyDofIdx }        // specific total energy
+    , { 'u', velocityDofIdx }      // velocity (primitive)
+    , { 'p', pressureDofIdx }      // material pressure (primitive)
   };
 
 } // ::deck
@@ -381,6 +383,11 @@ namespace grm {
       using inciter::deck::neq;
       using tag::param;
 
+      // Error out if no dependent variable has been selected
+      auto& depvar = stack.template get< param, eq, tag::depvar >();
+      if (depvar.empty() || depvar.size() != neq.get< eq >())
+        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
+
       // If physics type is not given, default to 'veleq'
       auto& physics = stack.template get< param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
@@ -510,6 +517,43 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  struct configure_scheme : pegtl::success {};
+  //! Configure scheme selected by user
+  //! \details This grammar action configures the number of degrees of freedom
+  //! (NDOF) used for DG methods. For finite volume (or DGP0), the DOF are the
+  //! cell-averages. This implies ndof=1 for DGP0. Similarly, ndof=4 and 10 for
+  //! DGP1 and DGP2 respectively, since they evolve higher (>1) order solution
+  //! information (e.g. gradients) as well. "rdof" includes degrees of freedom
+  //! that are both, evolved and reconstructed. For rDGPnPm methods (e.g. P0P1
+  //! and P1P2), "n" denotes the evolved solution-order and "m" denotes the
+  //! reconstructed solution-order; i.e. P0P1 has ndof=1 and rdof=4, whereas
+  //! P1P2 has ndof=4 and rdof=10. For a pure DG method without reconstruction
+  //! (DGP0, DGP1, DGP2), rdof=ndof. For more information about rDGPnPm methods,
+  //! ref. Luo, H. et al. (2013).  A reconstructed discontinuous Galerkin method
+  //! based on a hierarchical WENO reconstruction for compressible flows on
+  //! tetrahedral grids. Journal of Computational Physics, 236, 477-492.
+  template<> struct action< configure_scheme > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      using inciter::ctr::SchemeType;
+      auto& discr = stack.template get< tag::discr >();
+      auto& ndof = discr.template get< tag::ndof >();
+      auto& rdof = discr.template get< tag::rdof >();
+      auto scheme = discr.template get< tag::scheme >();
+      if (scheme == SchemeType::P0P1) {
+        ndof = 1; rdof = 4;
+      } else if (scheme == SchemeType::DGP1) {
+        ndof = rdof = 4;
+      } else if (scheme == SchemeType::DGP2) {
+        ndof = rdof = 10;
+      } else if (scheme == SchemeType::PDG) {
+        ndof = rdof = 10;
+        stack.template get< tag::pref, tag::pref >() = true;
+      }
+    }
+  };
+
+  //! Rule used to trigger action
   struct check_inciter : pegtl::success {};
   //! \brief Do error checking on the inciter block
   template<> struct action< check_inciter > {
@@ -517,6 +561,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
       using inciter::g_inputdeck_defaults;
+
       // Error out if no dt policy has been selected
       const auto& dt = stack.template get< tag::discr, tag::dt >();
       const auto& cfl = stack.template get< tag::discr, tag::cfl >();
@@ -525,59 +570,13 @@ namespace grm {
           std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) <
             std::numeric_limits< tk::real >::epsilon() )
         Message< Stack, ERROR, MsgKey::NODT >( stack, in );
+
       // If both dt and cfl are given, warn that dt wins over cfl
       if ( std::abs(dt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) >
             std::numeric_limits< tk::real >::epsilon() &&
           std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
             std::numeric_limits< tk::real >::epsilon() )
         Message< Stack, WARNING, MsgKey::MULDT >( stack, in );
-
-      // "ndof" are the degrees of freedom that are evolved in the numerical
-      // method. For finite volume (or DGP0), these are the cell-averages. This
-      // implies that ndof=1 for DGP0. Similarly, ndof=4 and 10 for DGP1 and
-      // DGP2 respectively, since they evolve higher (>1) order solution
-      // information (e.g. gradients) as well.
-      // "rdof" include degrees of freedom that are both, evolved and
-      // reconstructed. For rDGPnPm methods (e.g. P0P1 and P1P2), "n" denotes
-      // the evolved solution-order and "m" denotes the reconstructed
-      // solution-order; i.e. P0P1 has ndof=1 and rdof=4, whereas P1P2 has
-      // ndof=4 and rdof=10. For a pure DG method without reconstruction (DGP0,
-      // DGP1, DGP2), rdof=ndof.
-      // For more information about rDGPnPm methods, ref. Luo, H. et al. (2013).
-      // A reconstructed discontinuous Galerkin method based on a hierarchical
-      // WENO reconstruction for compressible flows on tetrahedral grids.
-      // Journal of Computational Physics, 236, 477-492.
-
-      // if P0P1 is configured, set ndofs to be 1 and rdofs to be 4
-      if (stack.template get< tag::discr, tag::scheme >() ==
-           inciter::ctr::SchemeType::P0P1)
-      {
-        stack.template get< tag::discr, tag::ndof >() = 1;
-        stack.template get< tag::discr, tag::rdof >() = 4;
-      }
-      // if DGP1 is configured, set ndofs and rdofs to be 4
-      if (stack.template get< tag::discr, tag::scheme >() ==
-           inciter::ctr::SchemeType::DGP1)
-      {
-        stack.template get< tag::discr, tag::ndof >() = 4;
-        stack.template get< tag::discr, tag::rdof >() = 4;
-      }
-      // if DGP2 is configured, set ndofs and rdofs to be 10
-      if (stack.template get< tag::discr, tag::scheme >() ==
-           inciter::ctr::SchemeType::DGP2)
-      {
-        stack.template get< tag::discr, tag::ndof >() = 10;
-        stack.template get< tag::discr, tag::rdof >() = 10;
-      }
-      // if pDG is configured, set ndofs and rdofs to be 10 and the adaptive
-      // indicator pref set to be true
-      if (stack.template get< tag::discr, tag::scheme >() ==
-           inciter::ctr::SchemeType::PDG)
-      {
-        stack.template get< tag::discr, tag::ndof >() = 10;
-        stack.template get< tag::discr, tag::rdof >() = 10;
-        stack.template get< tag::pref, tag::pref >() = true;
-      }
 
       // Do error checking on time history points
       const auto& hist = stack.template get< tag::history, tag::point >();
@@ -728,8 +727,8 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct push_outvar : pegtl::success {};
-  //! Add matched outvar based on depvar into vector of vector of outvars
+  struct push_depvar : pegtl::success {};
+  //! Add matched outvar based on depvar into vector of outvars
   //! \details Push outvar based on depvar: use first char of matched token as
   //! OutVar::var, OutVar::name = "" by default. OutVar::name being empty will
   //! be used to differentiate a depvar-based outvar from a human-readable
@@ -739,14 +738,57 @@ namespace grm {
   //! used to compute a physics variable from the numerical solution is assigned
   //! after initial migration and thus not assigned here (during parsing).
   template<>
-  struct action< push_outvar > {
+  struct action< push_depvar > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::centering;
       using inciter::ctr::OutVar;
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
       vars.emplace_back(OutVar(in.string()[0], field, centering));
-      field = 0;        // reset default field
+      field = 0;        // reset field
+    }
+  };
+
+  //! Rule used to trigger action
+  struct push_matvar : pegtl::success {};
+  //! Add matched outvar based on matvar into vector of outvars
+  //! \details Push outvar based on matvar: use depvar char as OutVar::var,
+  //! OutVar::name = "" by default. Matvar-based outvars are similar to
+  //! depvar-base outvars, in that the OutVar has empty name and the OutVar::var
+  //! is a depvar, but instead of having the user try to guess the field id, the
+  //! grammar accepts a physics label (accepted multimatvars) and a material
+  //! index, which are then converted to a depvar + field index.
+  template<>
+  struct action< push_matvar > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using tag::param;
+      using tag::multimat;
+      using inciter::deck::centering;
+      using inciter::deck::multimatvars;
+      using inciter::ctr::OutVar;
+      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
+      auto nmat = stack.template get< param, multimat, tag::nmat >().back();
+      auto depvar = stack.template get< param, multimat, tag::depvar >().back();
+      auto rdof = stack.template get< tag::discr, tag::rdof >();
+      // first char of matched token: accepted multimatvar label char
+      char v = static_cast<char>( in.string()[0] );
+      // Since multimat outvars are configured based on an acceptable character
+      // label (see inciter::deck::multimatvars, denoting a physics variable),
+      // and a material index (instead of a depvar + a component index),
+      // multimat material bouds are checked here. Note that for momentum and
+      // velocity, the field id is the spatial direction not the material id.
+      // Also note that field (in grammar's state) starts from 0.
+      if ( ((v=='u'||v=='U'||v=='m'||v=='M') && field>3) ||
+           ((v!='u'&&v!='U'&&v!='m'&&v!='M') && field>=nmat) )
+        Message< Stack, ERROR, MsgKey::NOSUCHCOMPONENT >( stack, in );
+      // field contains material id, compute multiat component index
+      auto comp = tk::cref_find( multimatvars, v )( nmat, field, rdof, 0 );
+      // save depvar + component index based on physics label + material id,
+      // also save physics label + material id as matvar
+      vars.emplace_back(
+        OutVar(depvar, comp, centering, {}, {}, v+std::to_string(field+1)) );
+      field = 0;        // reset field
     }
   };
 
@@ -780,7 +822,7 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct push_outvar_human : pegtl::success {};
+  struct push_humanvar : pegtl::success {};
   //! Add matched outvar based on depvar into vector of vector of outvars
   //! \details Push outvar based on human readable string for which
   //! OutVar::name = matched token. OutVar::name being not empty will be used to
@@ -791,7 +833,7 @@ namespace grm {
   //! to compute a physics variable from the numerical solution is assigned
   //! after initial migration and thus not assigned here (during parsing).
   template<>
-  struct action< push_outvar_human > {
+  struct action< push_humanvar > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       brigand::for_each< inciter::ctr::parameters::Keys >
@@ -820,6 +862,7 @@ namespace grm {
     explicit OutVarBounds( const Stack& s, bool& i )
       : stack(s), inbounds(i) { inbounds = false; }
     template< typename U > void operator()( brigand::type_<U> ) {
+      if (std::is_same_v< U, tag::multimat >) inbounds = true;  // skip multimat
       const auto& depvar = stack.template get< tag::param, U, tag::depvar >();
       const auto& ncomp = stack.template get< tag::component, U >();
       Assert( depvar.size() == ncomp.size(), "Size mismatch" );
@@ -840,27 +883,8 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       bool inbounds;
-      using EqTypesExceptMultiMat =
-        brigand::remove< inciter::ctr::parameters::Keys, tag::multimat >;
-      brigand::for_each< EqTypesExceptMultiMat>
+      brigand::for_each< inciter::ctr::parameters::Keys >
                        ( OutVarBounds( stack, inbounds ) );
-
-      // Since multimat outvars are configured based on an acceptable character
-      // label (see inciter::deck::multimatvars), and a material index (instead
-      // of a depvar + a component index), multimat inbounds is checked below.
-      using inciter::deck::neq;
-      using inciter::deck::multimatvars;
-      if (neq.get< tag::multimat >() > 0) {    // if multimat
-        auto nmat =
-          stack.template get< tag::param, tag::multimat, tag::nmat >().back();
-        // called after matching each outvar, so only check the last one
-        auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
-        const auto& last_outvar = vars.back();
-        const auto& v = static_cast<char>( std::tolower(last_outvar.var) );
-        if (multimatvars.find(v) != end(multimatvars) &&
-            last_outvar.field < nmat) inbounds = true;
-      }
-
       if (!inbounds)
         Message< Stack, ERROR, MsgKey::NOSUCHCOMPONENT >( stack, in );
     }
@@ -879,10 +903,10 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename push > struct match_outvar : pegtl::success {};
+  struct match_outvar : pegtl::success {};
   //! Match output variable based on depvar
-  template< class push >
-  struct action< match_outvar< push > > {
+  template<>
+  struct action< match_outvar > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
@@ -892,13 +916,13 @@ namespace grm {
       if (neq.get< tag::multimat >() == 0) {    // if not multimat
         // find matched variable in set of selected ones
         if (depvars.find(var) != end(depvars))
-          action< push >::apply( in, stack );
+          action< push_depvar >::apply( in, stack );
         else  // error out if matched var is not selected
           Message< Stack, ERROR, MsgKey::NOSUCHOUTVAR >( stack, in );
       } else {    // if multimat
         // find matched variable in set accepted for multimat
         if (multimatvars.find(var) != end(multimatvars))
-          action< push >::apply( in, stack );
+          action< push_matvar >::apply( in, stack );
         else
           Message< Stack, ERROR, MsgKey::NOSUCHMULTIMATVAR >( stack, in );
       }
@@ -974,7 +998,12 @@ namespace deck {
                              tk::grm::Store< tag::discr, tag::steady_state >,
                              pegtl::alpha >,
            tk::grm::interval< use< kw::ttyi >, tag::tty >,
-           discroption< use, kw::scheme, inciter::ctr::Scheme, tag::scheme >,
+           tk::grm::process_alpha< use< kw::scheme >,
+                                   tk::grm::store_inciter_option<
+                                     inciter::ctr::Scheme,
+                                     tag::discr,
+                                     tag::scheme >,
+                                   tk::grm::configure_scheme >,
            discroption< use, kw::limiter, inciter::ctr::Limiter, tag::limiter >,
            tk::grm::discrparam< use, kw::cweight, tag::cweight >
          > {};
@@ -1454,13 +1483,12 @@ namespace deck {
   //! Match an output variable in a human readable form: var must be a keyword
   template< class var >
   struct outvar_human :
-         tk::grm::exact_scan< use< var >, tk::grm::push_outvar_human > {};
+         tk::grm::exact_scan< use< var >, tk::grm::push_humanvar > {};
 
   //! Match an output variable based on depvar defined upstream of input file
   struct outvar_depvar :
            tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
-             tk::grm::match_outvar< tk::grm::push_outvar >,
-             tk::grm::check_outvar > {};
+             tk::grm::match_outvar, tk::grm::check_outvar > {};
 
   //! Parse a centering token and if matches, set centering in parser's state
   struct outvar_centering :
