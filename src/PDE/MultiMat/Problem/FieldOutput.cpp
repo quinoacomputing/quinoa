@@ -54,8 +54,9 @@ MultiMatFieldOutput(
   ncomp_t offset,
   std::size_t nunk,
   std::size_t rdof,
-  const tk::Fields& geoElem,
-  tk::Fields& U,
+  const std::vector< tk::real >&,
+  const std::array< std::vector< tk::real >, 3 >&,
+  const tk::Fields& U,
   const tk::Fields& P )
 // *****************************************************************************
 //  Return field output going to file
@@ -158,28 +159,28 @@ MultiMatFieldOutput(
   }
 
   // time-step
-  for (std::size_t i=0; i<nunk; ++i) {
-    // advection velocity
-    auto u = U(i, velocityDofIdx(nmat,0,rdof,0), offset);
-    auto v = U(i, velocityDofIdx(nmat,1,rdof,0), offset);
-    auto w = U(i, velocityDofIdx(nmat,2,rdof,0), offset);
+  //for (std::size_t i=0; i<nunk; ++i) {
+  //  // advection velocity
+  //  auto u = U(i, velocityDofIdx(nmat,0,rdof,0), offset);
+  //  auto v = U(i, velocityDofIdx(nmat,1,rdof,0), offset);
+  //  auto w = U(i, velocityDofIdx(nmat,2,rdof,0), offset);
 
-    auto vn = std::sqrt(tk::dot({{u, v, w}}, {{u, v, w}}));
+  //  auto vn = std::sqrt(tk::dot({{u, v, w}}, {{u, v, w}}));
 
-    // acoustic speed
-    auto a = 0.0;
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      if (U(i, volfracDofIdx(nmat,k,rdof,0), offset) > 1.0e-04) {
-        a = std::max( a, eos_soundspeed< tag::multimat >( 0,
-          U(i, densityDofIdx(nmat,k,rdof,0), offset),
-          P(i, pressureDofIdx(nmat,k,rdof,0), offset),
-          U(i, volfracDofIdx(nmat,k,rdof,0), offset), k ) );
-      }
-    }
+  //  // acoustic speed
+  //  auto a = 0.0;
+  //  for (std::size_t k=0; k<nmat; ++k)
+  //  {
+  //    if (U(i, volfracDofIdx(nmat,k,rdof,0), offset) > 1.0e-04) {
+  //      a = std::max( a, eos_soundspeed< tag::multimat >( 0,
+  //        U(i, densityDofIdx(nmat,k,rdof,0), offset),
+  //        P(i, pressureDofIdx(nmat,k,rdof,0), offset),
+  //        U(i, volfracDofIdx(nmat,k,rdof,0), offset), k ) );
+  //    }
+  //  }
 
-    out[4*nmat+7][i] = geoElem(i,4,0) / (std::fabs(vn) + a);
-  }
+  //  out[4*nmat+7][i] = geoElem(i,4,0) / (std::fabs(vn) + a);
+  //}
 
   return out;
 }

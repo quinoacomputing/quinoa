@@ -16,6 +16,19 @@ add_regression_test(compflow_euler_gauss_hump_pdg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
                     LABELS dg)
 
+add_regression_test(compflow_euler_gauss_hump_pdg_outref ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES gauss_hump_pdg_outref.q unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_pdg_outref.q -i unitsquare_01_3.6k.exo -v
+                    BIN_BASELINE gauss_hump_pdg_outref.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_pdg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
+                    LABELS dg)
+
 # Parallel + no virtualization
 
 add_regression_test(compflow_euler_gauss_hump_pdg ${INCITER_EXECUTABLE}

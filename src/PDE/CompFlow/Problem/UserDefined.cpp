@@ -32,8 +32,7 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
                                       [[maybe_unused]] tk::real x,
                                       [[maybe_unused]] tk::real y,
                                       [[maybe_unused]] tk::real z,
-                                      [[maybe_unused]] tk::real,
-                                      int& inbox )
+                                      [[maybe_unused]] tk::real t )
 // *****************************************************************************
 //! Set initial conditions
 //! \param[in] system Equation system index, i.e., which compressible
@@ -42,8 +41,6 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in,out] inbox 1 If box ICs are applied and point fell into box
 //! \return Values of all components
 //! \note The function signature must follow tk::SolutionFn
 // *****************************************************************************
@@ -70,7 +67,7 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
   u[3] = u[0] * bgvelic.at(system).at(2);
 
   if (bgpreic.size() > system && !bgpreic[system].empty()) {
-    u[4] = eos_totalenergy< eq >( system, u[0], u[1], u[2], u[3],
+    u[4] = eos_totalenergy< eq >( system, u[0], u[1]/u[0], u[2]/u[0], u[3]/u[0],
                                   bgpreic.at(system).at(0) );
   } else if (bgenic.size() > system && !bgenic[system].empty()) {
     u[4] = u[0] * bgenic[system][0];
@@ -79,19 +76,6 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
     u[4] = u[0] * bgtempic[system][0] * cv.at(system).at(0);
   } else Throw( "IC background energy cannot be computed. User must specify "
                 "one of background pressure, energy, or velocity." );
-
-  // Detect if user has configured a box IC
-  const auto& icbox = ic.get< tag::box >();
-  std::vector< tk::real >
-    box{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
-         icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
-         icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  if ( std::any_of( begin(box), end(box), [=](auto p){return abs(p) > eps;} ) &&
-       x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5] )
-  {
-    inbox = 1;
-  }
 
   return u;
 }
@@ -112,11 +96,12 @@ CompFlowProblemUserDefined::fieldOutput(
   ncomp_t,
   ncomp_t offset,
   std::size_t nunk,
+  std::size_t rdof,
   tk::real,
   tk::real,
   const std::vector< tk::real >&,
   const std::array< std::vector< tk::real >, 3 >&,
-  tk::Fields& U ) const
+  const tk::Fields& U ) const
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
@@ -124,11 +109,14 @@ CompFlowProblemUserDefined::fieldOutput(
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
 //! \param[in] nunk Number of unknowns to extract
+//! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
+//!   the number of scalar components to shift when extracting scalar
+//!   components.
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors of solution fields to be output to file
 // *****************************************************************************
 {
-  return CompFlowFieldOutput( system, offset, nunk, U );
+  return CompFlowFieldOutput( system, offset, nunk, rdof, U );
 }
 
 std::vector< std::string >

@@ -50,7 +50,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
                 const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_initial( 1 ),
-  m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
   m_nnorm( 0 ),
@@ -75,7 +74,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_farfieldbcnodes(),
   m_diag(),
   m_boxnodes(),
-  m_boxnodes_set(),
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 )
@@ -293,17 +291,9 @@ DiagCG::setup()
 // *****************************************************************************
 {
   auto d = Disc();
-  const auto& coord = d->Coord();
 
-  // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde) eq.initialize( coord, m_u, d->T(), m_boxnodes );
-
-  // Apply symmetry BCs on initial conditions
-  for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, coord, m_bnorm, m_symbcnodes );
-  // Apply farfield BCs on initial conditions
-  for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+  // Determine nodes inside user-defined IC box
+  for (auto& eq : g_cgpde) eq.IcBoxNodes( d->Coord(), m_boxnodes );
 
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );
@@ -328,13 +318,21 @@ DiagCG::box( tk::real v )
 // *****************************************************************************
 {
   auto d = Disc();
+  const auto& coord = d->Coord();
 
   // Store user-defined box IC volume
   d->Boxvol() = v;
 
-  // Set user-defined IC box conditions
+  // Set initial conditions for all PDEs
+  for (auto& eq : g_cgpde) eq.initialize( coord, m_u, d->T(), d->Boxvol(),
+    m_boxnodes );
+
+  // Apply symmetry BCs on initial conditions
   for (const auto& eq : g_cgpde)
-    eq.box( d->Boxvol(), d->T(), m_boxnodes, d->Coord(), m_u, m_boxnodes_set );
+    eq.symbc( m_u, coord, m_bnorm, m_symbcnodes );
+  // Apply farfield BCs on initial conditions
+  for (const auto& eq : g_cgpde)
+    eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields( CkCallback(CkIndex_DiagCG::init(), thisProxy[thisIndex]) );
@@ -461,7 +459,7 @@ DiagCG::dt()
 
     // find the minimum dt across all PDEs integrated
     for (const auto& eq : g_cgpde) {
-      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
+      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), d->T(), m_u );
       if (eqdt < mindt) mindt = eqdt;
     }
 
@@ -673,7 +671,7 @@ DiagCG::writeFields( CkCallback c ) const
     std::vector< std::vector< tk::real > > nodefields;
     std::vector< std::vector< tk::real > > nodesurfs;
     for (const auto& eq : g_cgpde) {
-      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord()[0].size(),
+      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord()[0].size(), 1,
                                d->Coord(), d->V(), u );
       nodefields.insert( end(nodefields), begin(o), end(o) );
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );

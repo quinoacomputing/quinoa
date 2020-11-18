@@ -69,6 +69,11 @@ class Transport {
       m_problem.errchk( m_system, m_ncomp );
     }
 
+    //! Determine nodes that lie inside the user-defined IC box
+    void IcBoxNodes( const tk::UnsMesh::Coords&,
+      std::unordered_set< std::size_t >& ) const
+    {}
+
     //! Initalize the transport equations using problem policy
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
@@ -76,25 +81,20 @@ class Transport {
     void initialize( const std::array< std::vector< real >, 3 >& coord,
                      tk::Fields& unk,
                      real t,
-                     std::vector< std::size_t >& ) const
+                     real,
+                     const std::unordered_set< std::size_t >& ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
       for (ncomp_t i=0; i<x.size(); ++i) {
-        int inbox = 0;
         const auto s =
-          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t, inbox );
+          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
           unk( i, c, m_offset ) = s[c];
       }
     }
-
-    //! Set initial condition in user-defined box IC nodes (no-op for Transport)
-    void box( real, real, const std::vector< std::size_t >&,
-              const std::array< std::vector< real >, 3 >&, tk::Fields&,
-              std::unordered_set< std::size_t >& ) const {}
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
@@ -105,8 +105,7 @@ class Transport {
     std::vector< real >
     analyticSolution( real xi, real yi, real zi, real t ) const
     {
-      int inbox = 0;
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
+      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
       return std::vector< real >( begin(s), end(s) );
     }
 
@@ -208,9 +207,11 @@ class Transport {
       const std::vector< real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >& edgeid,
+      const std::unordered_set< std::size_t >&,
       const tk::Fields& G,
       const tk::Fields& U,
       const std::vector< tk::real >&,
+      real,
       tk::Fields& R ) const
     {
       Assert( G.nprop() == m_ncomp*3,
@@ -365,6 +366,7 @@ class Transport {
     //! \return Minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
+             tk::real,
              const tk::Fields& U ) const
     {
       using tag::transport;
@@ -560,6 +562,7 @@ class Transport {
     fieldOutput( tk::real t,
                  tk::real V,
                  std::size_t,
+                 std::size_t,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< tk::real >& v,
                  tk::Fields& U ) const
@@ -570,8 +573,8 @@ class Transport {
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );
       // evaluate analytic solution at time t
-      std::vector< std::size_t > inbox;
-      initialize( coord, U, t, inbox );
+      std::unordered_set< std::size_t > inbox;
+      initialize( coord, U, t, V, inbox );
       // will output analytic solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         out.push_back( U.extract( c, m_offset ) );

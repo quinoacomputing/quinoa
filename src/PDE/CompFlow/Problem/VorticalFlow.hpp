@@ -44,7 +44,7 @@ class CompFlowProblemVorticalFlow {
     //! Evaluate analytical solution at (x,y,z) for all components
     static tk::SolutionFn::result_type
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real, int& );
+              tk::real );
 
     //! Compute and return source term for vortical flow manufactured solution
     //! \param[in] system Equation system index, i.e., which compressible
@@ -71,8 +71,7 @@ class CompFlowProblemVorticalFlow {
       // ratio of specific heats
       tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
       // evaluate solution at x,y,z
-      int inbox = 0;
-      auto s = solution( system, 5, x, y, z, 0.0, inbox );
+      auto s = solution( system, 5, x, y, z, 0.0 );
 
       // density source
       r = 0.0;
@@ -93,11 +92,12 @@ class CompFlowProblemVorticalFlow {
                  ncomp_t,
                  ncomp_t offset,
                  std::size_t nunk,
+                 std::size_t rdof,
                  tk::real,
                  tk::real,
                  const std::vector< tk::real >&,
                  const std::array< std::vector< tk::real >, 3 >& coord,
-                 tk::Fields& U ) const;
+                 const tk::Fields& U ) const;
 
     //! Return names of integral variables to be output to diagnostics file
     std::vector< std::string > names( ncomp_t ) const;

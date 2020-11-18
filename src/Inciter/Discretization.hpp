@@ -111,31 +111,22 @@ class Discretization : public CBase_Discretization {
     void stat( tk::real mesh_volume );
 
     //! Compute total box IC volume
-    void boxvol( const std::vector< std::size_t >& boxnodes );
+    void boxvol( const std::unordered_set< std::size_t >& boxnodes );
 
     /** @name Accessors */
     ///@{
     //! Coordinates accessors as const-ref
     const tk::UnsMesh::Coords& Coord() const{ return m_coord; }
-    //! Coordinates accessors as non-const ref
-    tk::UnsMesh::Coords& Coord() { return m_coord; }
 
     //! Global ids accessors as const-ref
     const std::vector< std::size_t >& Gid() const { return m_gid; }
-    //! Global ids accessors as non-const-ref
-    std::vector< std::size_t >& Gid() { return m_gid; }
 
     //! Local ids accessors as const-ref
      const std::unordered_map< std::size_t, std::size_t >& Lid() const
     { return m_lid; }
-    //! Local ids accessors as non-const-ref
-    std::unordered_map< std::size_t, std::size_t >& Lid() { return m_lid; }
 
     //! Tetrahedron element connectivity (with local ids) accessors as const-ref
     const std::vector< std::size_t >& Inpoel() const { return m_inpoel; }
-    //! \brief Tetrahedron element connectivity (with local ids) accessors as
-    //!    non-const-ref
-    std::vector< std::size_t >& Inpoel() { return m_inpoel; }
 
     //! Mesh chunk accessor as const-ref
     const tk::UnsMesh::Chunk& Chunk() const { return m_el; }
@@ -145,13 +136,9 @@ class Discretization : public CBase_Discretization {
 
     //! Nodal mesh volume accessors const-ref
     const std::vector< tk::real >& V() const { return m_v; }
-    //! Nodal mesh volume accessors non-const-ref
-    std::vector< tk::real >& V() { return m_v; }
 
     //! Nodal mesh volumes accessors as const-ref
     const std::vector< tk::real >& Vol() const { return m_vol; }
-    //! Nodal mesh volumes accessors as non-const-ref
-    std::vector< tk::real >& Vol() { return m_vol; }
 
     //! History points data accessor as const-ref
     const std::vector< HistData >& Hist() const { return m_histdata; }
@@ -205,18 +192,12 @@ class Discretization : public CBase_Discretization {
     //! Boundary node ids accessor as const-ref
     const std::unordered_map< std::size_t, std::size_t >& Bid() const
     { return m_bid; }
-    //! Boundary node ids accessor as non-const-ref
-    std::unordered_map< std::size_t, std::size_t >& Bid() { return m_bid; }
 
     //! Node communication map accessor as const-ref
     const tk::NodeCommMap& NodeCommMap() const { return m_nodeCommMap; }
-    //! Node communication map accessor as non-const-ref
-    tk::NodeCommMap& NodeCommMap() { return m_nodeCommMap; }
 
     //! Edge communication map accessor as const-ref
     const tk::EdgeCommMap& EdgeCommMap() const { return m_edgeCommMap; }
-    //! Edge communication map accessor as non-const-ref
-    tk::EdgeCommMap& EdgeCommMap() { return m_edgeCommMap; }
     //@}
 
     //! Set time step size
@@ -314,6 +295,9 @@ class Discretization : public CBase_Discretization {
         BCNodes< BCType >( bface, triinpoel, nodes ) );
       return nodes;
     }
+
+    //! Find elements along our mesh chunk boundary
+    std::vector< std::size_t > bndel() const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

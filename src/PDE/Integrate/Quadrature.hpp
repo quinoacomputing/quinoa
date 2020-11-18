@@ -15,6 +15,7 @@
 
 #include <array>
 #include <vector>
+#include <stdexcept>
 
 #include "Types.hpp"
 #include "Exception.hpp"

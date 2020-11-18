@@ -50,7 +50,7 @@ class CompFlowProblemNLEnergyGrowth {
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::SolutionFn::result_type
     solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real t, int& );
+              tk::real t );
 
     //! Compute and return source term for NLEG manufactured solution
     //! \param[in] system Equation system index, i.e., which compressible
@@ -125,11 +125,12 @@ class CompFlowProblemNLEnergyGrowth {
                  ncomp_t ncomp,
                  ncomp_t offset,
                  std::size_t nunk,
+                 std::size_t rdof,
                  tk::real t,
                  tk::real V,
                  const std::vector< tk::real >& vol,
                  const std::array< std::vector< tk::real >, 3 >& coord,
-                 tk::Fields& U ) const;
+                 const tk::Fields& U ) const;
 
     //! Return names of integral variables to be output to diagnostics file
     std::vector< std::string > names( ncomp_t ) const;
