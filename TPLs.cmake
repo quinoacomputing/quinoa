@@ -176,7 +176,6 @@ if (ENABLE_EXAM2M)
   endif()
 endif()
 
-
 message(STATUS "------------------------------------------")
 
 # Function to print a list of missing library names
