@@ -5,6 +5,10 @@ project(Inciter CXX)
 # Include function for adding Charm++ modules
 include(charm)
 
+if(HAS_EXAM2M)
+  set(CHARMMESH CharmMesh.cpp)
+endif()
+
 add_library(Inciter
             Transporter.cpp
             Partitioner.cpp
@@ -21,6 +25,7 @@ add_library(Inciter
             NodeDiagnostics.cpp
             ElemDiagnostics.cpp
             PrefIndicator.cpp
+            ${CHARMMESH}
             NodeBC.cpp)
 
 target_include_directories(Inciter PUBLIC
@@ -48,6 +53,7 @@ target_include_directories(Inciter PUBLIC
                            ${PROJECT_BINARY_DIR}/../Inciter
                            ${PROJECT_BINARY_DIR}/../Base
                            ${PROJECT_BINARY_DIR}/../IO
+                           ${PROJECT_BINARY_DIR}/../Mesh
                            ${PROJECT_BINARY_DIR}/../Main)
 
 add_library(MeshRefinement
@@ -105,6 +111,10 @@ add_dependencies( "discretizationCharmModule" "meshwriterCharmModule" )
 set_target_properties(Inciter PROPERTIES LIBRARY_OUTPUT_NAME quinoa_inciter)
 set_target_properties(MeshRefinement PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_mesh_refinement)
+
+if(HAS_EXAM2M)
+  addCharmModule( "charmmesh" "Mesh" )
+endif()
 
 INSTALL(TARGETS Inciter
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime

@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Mesh/charmmesh.ci
+  \file      src/Inciter/charmmesh.ci
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
@@ -12,23 +12,21 @@
 
 module charmmesh {
 
-  //include "UnsMesh.hpp";
+  include "Fields.hpp";
 
-  namespace tk {
+  namespace inciter {
 
     array [1D] CharmMesh {
-      entry CharmMesh(
-        const std::vector< std::size_t >& inpoel,
-        const tk::UnsMesh::Coords& coord,
-        const std::map< int, std::vector< std::size_t > >& bface,
-        const std::vector< std::size_t >& triinpoel,
-        const std::map< int, std::vector< std::size_t > >& bnode );
+      entry CharmMesh( const std::vector< std::size_t >& inpoel,
+                       const tk::UnsMesh::Coords& coord,
+                       const tk::Fields& u,
+                       int nchare );
 
       entry void solutionFound();
       entry void transferSource();
       entry void transferDest();
     }
 
-  } // tk::
+  } // inciter::
 
 }

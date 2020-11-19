@@ -141,6 +141,13 @@ Discretization::Discretization(
     m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
+  #ifdef EXAM2M
+  // Establish bridge to ExaM2M mesh-transfer lib
+  tk::Fields u;
+  m_m2m = CProxy_CharmMesh:ckNew( m_inpoel, m_coord, m_nchare, u,
+                                  CkArrayOptions().bindTo(thisProxy) );
+  #endif
+
   // Tell the RTS that the Discretization chares have been created and compute
   // the total number of mesh points across whole problem
   contribute( sizeof(std::size_t), &npoin, CkReduction::sum_ulong,

@@ -55,7 +55,7 @@
 //  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #endif
 
-#include "../Mesh/charmmesh.decl.h"
+#include "../Inciter/charmmesh.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

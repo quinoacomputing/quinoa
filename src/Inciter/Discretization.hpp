@@ -26,6 +26,10 @@
 #include "History.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
+#ifdef HAS_EXAM2M
+  #include "CharmMesh.hpp"
+#endif
+
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
 
@@ -435,6 +439,10 @@ class Discretization : public CBase_Discretization {
     int m_nrestart;
     //! Data at history point locations
     std::vector< HistData > m_histdata;
+    #ifdef HAS_EXAM2M
+    //! Bridge to ExaM2M, mesh transfer library
+    CProxy_CharmMesh m_m2m;
+    #endif
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
