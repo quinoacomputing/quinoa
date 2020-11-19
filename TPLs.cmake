@@ -168,6 +168,15 @@ else()
   set(LUA_INCLUDE_DIR "")
 endif()
 
+# ExaM2M
+if (ENABLE_EXAM2M)
+  find_package(ExaM2M)
+  if(ExaM2M_FOUND)
+    set(HAS_EXAM2M true)  # will become compiler define in Main/QuinoaConfig.h
+  endif()
+endif()
+
+
 message(STATUS "------------------------------------------")
 
 # Function to print a list of missing library names
