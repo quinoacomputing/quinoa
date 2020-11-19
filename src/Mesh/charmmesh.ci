@@ -1,0 +1,34 @@
+// *****************************************************************************
+/*!
+  \file      src/Mesh/charmmesh.ci
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019-2020 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
+  \brief     Charm++ module interface file for holding part of a mesh
+  \details   Charm++ module interface file for holding part of a mesh.
+*/
+// *****************************************************************************
+
+module charmmesh {
+
+  //include "UnsMesh.hpp";
+
+  namespace tk {
+
+    array [1D] CharmMesh {
+      entry CharmMesh(
+        const std::vector< std::size_t >& inpoel,
+        const tk::UnsMesh::Coords& coord,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::vector< std::size_t >& triinpoel,
+        const std::map< int, std::vector< std::size_t > >& bnode );
+
+      entry void solutionFound();
+      entry void transferSource();
+      entry void transferDest();
+    }
+
+  } // tk::
+
+}
