@@ -20,7 +20,7 @@ module transporter {
 
     chare [migratable] Transporter {
       entry Transporter();
-      entry [reductiontarget] void load( std::size_t nelem );
+      entry [reductiontarget] void load( int n, std::size_t neoffset[n] );
       entry [reductiontarget] void distributed();
       entry [reductiontarget] void refinserted( int error );
       entry [reductiontarget] void discinserted();

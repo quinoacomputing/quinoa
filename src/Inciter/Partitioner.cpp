@@ -68,7 +68,9 @@ Partitioner::Partitioner(
   m_chtriinpoel(),
   m_chbnode(),
   m_bface(),
-  m_bnode()
+  m_bnode(),
+  m_nodeoffset({0}),
+  m_elemoffset({0})
 // *****************************************************************************
 //  Constructor
 //! \param[in] cbp Charm++ callbacks for Partitioner
@@ -109,6 +111,10 @@ Partitioner::Partitioner(
     decltype(m_bnode) bn = bnode;
     ownBndNodes( lid, bn );
 
+    // Store node and elem offsets for next mesh
+    m_nodeoffset.push_back( m_nodeoffset.back() + coord[0].size() );
+    m_elemoffset.push_back( m_elemoffset.back() + inpoel.size()/4 );
+
     // Concatenate mesh data
     tk::concat( std::move(ginpoel), m_ginpoel );
     tk::concat( std::move(inpoel), m_inpoel );
@@ -121,10 +127,13 @@ Partitioner::Partitioner(
     for (auto&& [k,v] : bn) tk::concat( std::move(v), m_bnode[k] );
   }
 
-  // Compute number of cells across whole problem
-  std::size_t nelem = m_ginpoel.size()/4;
-  contribute( sizeof(std::size_t), &nelem, CkReduction::sum_ulong,
-              m_cbp.get< tag::load >() );
+  // Sum node and elem offsets across whole problem
+  std::vector< std::size_t > offsets = m_nodeoffset;
+  offsets.reserve( offsets.size() + m_elemoffset.size() );
+  std::move( std::begin(m_elemoffset), std::end(m_elemoffset),
+             std::back_inserter(offsets) );
+  contribute( offsets.size() * sizeof(std::size_t), offsets.data(),
+              CkReduction::sum_ulong, m_cbp.get< tag::load >() );
 }
 
 void

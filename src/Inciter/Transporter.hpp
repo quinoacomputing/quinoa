@@ -76,7 +76,7 @@ class Transporter : public CBase_Transporter {
     explicit Transporter( CkMigrateMessage* m );
 
     //! Reduction target: the mesh has been read from file on all PEs
-    void load( std::size_t nelem );
+    void load( int n, std::size_t* neoffset );
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
@@ -241,7 +241,7 @@ class Transporter : public CBase_Transporter {
     tk::CProxy_MeshWriter m_meshwriter;  //!< Mesh writer nodegroup proxy
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::size_t m_nelem;                 //!< Number of mesh elements
-    std::size_t m_npoin;                 //!< Total number mesh points
+    std::size_t m_npoin;                 //!< Total number of mesh points
     int m_finished;                      //!< True if finished with timestepping
     //! Total mesh volume
     tk::real m_meshvol;

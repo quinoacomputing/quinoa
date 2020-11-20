@@ -492,19 +492,40 @@ Transporter::createPartitioner()
 }
 
 void
-Transporter::load( std::size_t nelem )
+Transporter::load( int n, std::size_t* neoffset )
 // *****************************************************************************
 // Reduction target: the mesh has been read from file on all PEs
-//! \param[in] nelem Total number of mesh elements (summed across all PEs)
+//! \param[in] n Size of offsets array
+//! \param[in] neoffset Concatenated node and element offsets summed entry-wise
 // *****************************************************************************
 {
+  std::vector< std::size_t > offsets( neoffset, neoffset + n );
+
+  // Separate node and element offsets
+  using diff_type = std::vector< std::size_t >::difference_type;
+  diff_type half = offsets.size()/2;
+  std::vector< std::size_t > nodeoffset( begin(offsets), begin(offsets)+half );
+  std::vector< std::size_t > elemoffset( begin(offsets)+half, end(offsets) );
+
+  // Compute number of elements in each input mesh
+  std::vector< std::size_t > nelem( elemoffset.size()-1, 0 );
+  for (std::size_t i=1; i<elemoffset.size(); ++i)
+    nelem[i-1] = elemoffset[i] - elemoffset[i-1];
+  // Compute number of points in each input mesh
+  std::vector< std::size_t > npoin( nodeoffset.size()-1, 0 );
+  for (std::size_t i=1; i<nodeoffset.size(); ++i)
+    npoin[i-1] = nodeoffset[i] - nodeoffset[i-1];
+
+  // Compute total number of elements across all meshes and PEs
+  auto total_nelem = std::accumulate( begin(nelem), end(nelem), 0UL );
+
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
   uint64_t chunksize, remainder;
   m_nchare = static_cast<int>(
                tk::linearLoadDistributor(
                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
-                 nelem, CkNumPes(), chunksize, remainder ) );
+                 total_nelem, CkNumPes(), chunksize, remainder ) );
 
   auto print = printer();
 
@@ -521,8 +542,14 @@ Transporter::load( std::size_t nelem )
   print.section( "Initial load distribution" );
   print.item( "Virtualization [0.0...1.0]",
               g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  print.item( "Number of tetrahedra", nelem );
-  print.item( "Number of points", m_npoin );
+  if (nelem.size() > 1) {
+    print.item( "Number of tetrahedra (per input mesh)",tk::parameters(nelem) );
+    print.item( "Number of points (per input mesh)", tk::parameters(npoin) );
+    //print.item( "Tetrahedra offsets", tk::parameters(elemoffset) );
+    //print.item( "Point offsets ", tk::parameters(nodeoffset) );
+  }
+  print.item( "Total number of tetrahedra", total_nelem );
+  print.item( "Total number of points", m_npoin );
   print.item( "Number of work units", m_nchare );
 
   print.endsubsection();
@@ -821,8 +848,8 @@ Transporter::disccreated( std::size_t npoin )
 
   if (g_inputdeck.get< tag::amr, tag::t0ref >()) {
     print.section( "Initially (t<0) refined mesh graph statistics" );
-    print.item( "Number of tetrahedra", m_nelem );
-    print.item( "Number of points", m_npoin );
+    print.item( "Total number of tetrahedra", m_nelem );
+    print.item( "Total number of points", m_npoin );
     print.endsubsection();
   }
 
@@ -1029,15 +1056,15 @@ Transporter::stat()
 {
   auto print = printer();
 
-  print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
+  print.diag( "Mesh distribution statistics: min/max/avg(edgelength) = " +
               std::to_string( m_minstat[0] ) + " / " +
               std::to_string( m_maxstat[0] ) + " / " +
               std::to_string( m_avgstat[0] ) );
-  print.diag( "Mesh statistics: min/max/avg(V^{1/3}) = " +
+  print.diag( "Mesh distribution statistics: min/max/avg(V^{1/3}) = " +
               std::to_string( m_minstat[1] ) + " / " +
               std::to_string( m_maxstat[1] ) + " / " +
               std::to_string( m_avgstat[1] ) );
-  print.diag( "Mesh statistics: min/max/avg(ntets) = " +
+  print.diag( "Mesh distribution statistics: min/max/avg(ntets) = " +
               std::to_string( static_cast<std::size_t>(m_minstat[2]) ) + " / " +
               std::to_string( static_cast<std::size_t>(m_maxstat[2]) ) + " / " +
               std::to_string( static_cast<std::size_t>(m_avgstat[2]) ) );
