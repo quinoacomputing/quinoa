@@ -109,6 +109,7 @@ class CompFlow {
       const auto eps = std::numeric_limits< tk::real >::epsilon();
 
       // Determine which elements lie in the IC box
+      tk::real boxvol(0.0);
       for (ncomp_t e=0; e<nielem; ++e) {
         auto x = geoElem(e,1,0);
         auto y = geoElem(e,2,0);
@@ -118,8 +119,12 @@ class CompFlow {
           x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5] )
         {
           inbox.insert( e );
+          boxvol += geoElem(e,0,0);
         }
       }
+
+      std::cout << "IC box volume = " << std::setprecision(18) << boxvol
+        << std::endl;
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
