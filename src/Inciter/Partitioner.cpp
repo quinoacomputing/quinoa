@@ -67,8 +67,8 @@ Partitioner::Partitioner(
   m_chbface(),
   m_chtriinpoel(),
   m_chbnode(),
-  m_bface( bface ),
-  m_bnode( bnode )
+  m_bface(),
+  m_bnode()
 // *****************************************************************************
 //  Constructor
 //! \param[in] cbp Charm++ callbacks for Partitioner
@@ -84,21 +84,42 @@ Partitioner::Partitioner(
 //! \param[in] bnode Node lists of side sets (whole mesh)
 // *****************************************************************************
 {
-  // Create mesh reader
-  tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+  // Read in a list of meshes
+  const auto& inputs = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
+  for (const auto& input_mesh_filename : inputs) {
+    // Create mesh reader
+    tk::MeshReader mr( input_mesh_filename );
 
-  // Read this compute node's chunk of the mesh (graph and coords) from file
-  std::vector< std::size_t > triinpoel;
-  mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_lid, m_coord,
-                   CkNumNodes(), CkMyNode() );
+    // Read this compute node's chunk of the mesh (graph and coords) from file
+    std::vector< std::size_t > triinp;
+    decltype(m_ginpoel) ginpoel;
+    decltype(m_inpoel) inpoel;
+    decltype(m_lid) lid;
+    decltype(m_coord) coord;
+    mr.readMeshPart( ginpoel, inpoel, triinp, lid, coord,
+                     CkNumNodes(), CkMyNode() );
 
-  // Compute triangle connectivity for side sets, reduce boundary face for side
-  // sets to this compute node only and to compute-node-local face ids
-  m_triinpoel = mr.triinpoel( m_bface, faces, m_ginpoel, triinpoel );
+    // Compute triangle connectivity for side sets, reduce boundary face for
+    // side sets to this compute node only and to compute-node-local face ids
+    decltype(m_bface) bf = bface;
+    auto triinpoel = mr.triinpoel( bf, faces, ginpoel, triinp );
 
-  // Reduce boundary node lists (global ids) for side sets to this compute node
-  // only
-  ownBndNodes( m_lid, m_bnode );
+    // Reduce boundary node lists (global ids) for side sets to this compute
+    // node only
+    decltype(m_bnode) bn = bnode;
+    ownBndNodes( lid, bn );
+
+    // Concatenate mesh data
+    tk::concat( std::move(ginpoel), m_ginpoel );
+    tk::concat( std::move(inpoel), m_inpoel );
+    tk::concat( std::move(lid), m_lid );
+    tk::concat( std::move(coord[0]), m_coord[0] );
+    tk::concat( std::move(coord[1]), m_coord[1] );
+    tk::concat( std::move(coord[2]), m_coord[2] );
+    tk::concat( std::move(triinpoel), m_triinpoel );
+    for (auto&& [k,v] : bf) tk::concat( std::move(v), m_bface[k] );
+    for (auto&& [k,v] : bn) tk::concat( std::move(v), m_bnode[k] );
+  }
 
   // Compute number of cells across whole problem
   std::size_t nelem = m_ginpoel.size()/4;
@@ -321,8 +342,6 @@ Partitioner::centroids( const std::vector< std::size_t >& inpoel,
 //! \return Centroids for all cells on this compute node
 // *****************************************************************************
 {
-  Assert( tk::uniquecopy(inpoel).size() == coord[0].size(), "Size mismatch" );
-
   const auto& x = coord[0];
   const auto& y = coord[1];
   const auto& z = coord[2];

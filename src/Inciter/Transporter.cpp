@@ -288,7 +288,9 @@ Transporter::info( const InciterPrint& print )
   }
 
   // Print I/O filenames
-  print.section( "Output filenames and directories" );
+  print.section( "Input/Output filenames and directories" );
+  print.item( "Input mesh(es)", tk::parameters(
+              g_inputdeck.get< tag::cmd, tag::io, tag::input >() ) );
   const auto& of = g_inputdeck.get< tag::cmd, tag::io, tag::output >();
   print.item( "Volume field output file(s)",
               of + ".e-s.<meshid>.<numchares>.<chareid>" );
@@ -390,36 +392,48 @@ Transporter::createPartitioner()
 // Create mesh partitioner AND boundary conditions group
 // *****************************************************************************
 {
-  // Create mesh reader for reading side sets from file
-  tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-
-  // Read out total number of mesh points from mesh file
-  m_npoin = mr.npoin();
+  auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  auto centering = ctr::Scheme().centering( scheme );
+  bool bcs_set = false;
 
   std::map< int, std::vector< std::size_t > > bface;
   std::map< int, std::vector< std::size_t > > faces;
   std::map< int, std::vector< std::size_t > > bnode;
 
-  // Read boundary (side set) data from input file
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  const auto centering = ctr::Scheme().centering( scheme );
+  // Read boundary (side set) data from a list of input mesh files
+  const auto& inputs = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
+  for (const auto& input_mesh_filename : inputs) {
+    // Create mesh reader for reading side sets from file
+    tk::MeshReader mr( input_mesh_filename );
 
-  // Read boundary-face connectivity on side sets
-  mr.readSidesetFaces( bface, faces );
+    // Read out total number of mesh points from mesh file
+    m_npoin += mr.npoin();
 
-  bool bcs_set = false;
-  if (centering == tk::Centering::ELEM) {
+    decltype(bface) bf;
+    decltype(faces) fa;
+    decltype(bnode) bn;
 
-    // Verify boundarty condition (BC) side sets used exist in mesh file
-    bcs_set = matchBCs( bface );
+    // Read boundary-face connectivity on side sets
+    mr.readSidesetFaces( bf, fa );
 
-  } else if (centering == tk::Centering::NODE) {
+    if (centering == tk::Centering::ELEM) {
 
-    // Read node lists on side sets
-    bnode = mr.readSidesetNodes();
-    // Verify boundarty condition (BC) side sets used exist in mesh file
-    bcs_set = matchBCs( bnode );
-    bcs_set = bcs_set || matchBCs( bface );
+      // Verify boundarty condition (BC) side sets used exist in mesh file
+      bcs_set = matchBCs( bf );
+
+    } else if (centering == tk::Centering::NODE) {
+
+      // Read node lists on side sets
+      bn = mr.readSidesetNodes();
+      // Verify boundarty condition (BC) side sets used exist in mesh file
+      bcs_set = matchBCs( bn );
+      bcs_set = bcs_set || matchBCs( bf );
+    }
+
+    // Concatenate mesh side set data
+    for (auto&& [k,v] : bf) tk::concat( std::move(v), bface[k] );
+    for (auto&& [k,v] : fa) tk::concat( std::move(v), faces[k] );
+    for (auto&& [k,v] : bn) tk::concat( std::move(v), bnode[k] );
   }
 
   auto print = printer();

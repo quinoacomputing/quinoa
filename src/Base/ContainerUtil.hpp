@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <iterator>
 #include <unordered_set>
+#include <unordered_map>
 #include <type_traits>
 #include <sstream>
 
@@ -246,6 +247,29 @@ template< class Key,
           class Eq = std::equal_to< Key > >
 void concat( std::unordered_set< Key, Hash,Eq >&& src,
              std::unordered_set< Key, Hash, Eq >& dst )
+{
+  if (dst.empty())
+    dst = std::move(src);
+  else {
+    dst.reserve( dst.size() + src.size() );
+    std::move( std::begin(src), std::end(src), std::inserter(dst,end(dst)) );
+    src.clear();
+  }
+}
+
+//! Concatenate unordered maps overwriting values behind matching values
+//! \tparam Key Map key
+//! \tparam T Mapped type
+//! \tparam Hash Map key hasher
+//! \tparam Eq Map key equality operator
+//! \param[in,out] src Source map (moved from)
+//! \param[in,out] dst Destination map
+template< class Key,
+          class T,
+          class Hash = std::hash< Key >,
+          class Eq = std::equal_to< Key > >
+void concat( std::unordered_map< Key, T, Hash,Eq >&& src,
+             std::unordered_map< Key, T, Hash, Eq >& dst )
 {
   if (dst.empty())
     dst = std::move(src);

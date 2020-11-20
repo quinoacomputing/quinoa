@@ -4039,9 +4039,9 @@ using particles = keyword< particles_info, TAOCPP_PEGTL_STRING("particles") >;
 
 struct input_info {
   static std::string name() { return "input"; }
-  static std::string shortDescription() { return "Specify the input file"; }
+  static std::string shortDescription() { return "Specify the input file(s)"; }
   static std::string longDescription() { return
-    R"(This option is used to define the input file name.)";
+    R"(This option is used to define the name(s) of input file(s).)";
   }
   using alias = Alias< i >;
   struct expect {
