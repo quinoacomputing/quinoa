@@ -173,6 +173,9 @@ if (ENABLE_EXAM2M)
   find_package(ExaM2M)
   if(ExaM2M_FOUND)
     set(HAS_EXAM2M true)  # will become compiler define in Main/QuinoaConfig.h
+  else()
+    set(EXAM2M_LIBRARIES "")
+    set(COLLIDECHARM "")
   endif()
 endif()
 
