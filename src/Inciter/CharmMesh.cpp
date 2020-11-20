@@ -58,7 +58,7 @@ CharmMesh::transferSource()
 // *****************************************************************************
 {
   exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord,
-                         &m_u.data() );
+                         &m_u.vec() );
 }
 
 void
@@ -67,7 +67,7 @@ CharmMesh::transferDest()
 //  Pass Mesh Data to m2m transfer library
 // *****************************************************************************
 {
-  exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, &m_u.data(),
+  exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, &m_u.vec(),
     CkCallback(CkIndex_CharmMesh::solutionFound(), thisProxy[thisIndex]) );
 }
 
