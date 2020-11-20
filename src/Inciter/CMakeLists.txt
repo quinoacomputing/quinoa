@@ -85,6 +85,9 @@ addCharmModule( "diagcg" "Inciter" )
 addCharmModule( "alecg" "Inciter" )
 addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
+if(HAS_EXAM2M)
+  addCharmModule( "charmmesh" "Inciter" )
+endif()
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module
@@ -111,10 +114,6 @@ add_dependencies( "discretizationCharmModule" "meshwriterCharmModule" )
 set_target_properties(Inciter PROPERTIES LIBRARY_OUTPUT_NAME quinoa_inciter)
 set_target_properties(MeshRefinement PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_mesh_refinement)
-
-if(HAS_EXAM2M)
-  addCharmModule( "charmmesh" "Mesh" )
-endif()
 
 INSTALL(TARGETS Inciter
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
