@@ -776,10 +776,10 @@ namespace grm {
       // Since multimat outvars are configured based on an acceptable character
       // label (see inciter::deck::multimatvars, denoting a physics variable),
       // and a material index (instead of a depvar + a component index),
-      // multimat material bouds are checked here. Note that for momentum and
+      // multimat material bounds are checked here. Note that for momentum and
       // velocity, the field id is the spatial direction not the material id.
       // Also note that field (in grammar's state) starts from 0.
-      if ( ((v=='u'||v=='U'||v=='m'||v=='M') && field>3) ||
+      if ( ((v=='u'||v=='U'||v=='m'||v=='M') && field>2) ||
            ((v!='u'&&v!='U'&&v!='m'&&v!='M') && field>=nmat) )
         Message< Stack, ERROR, MsgKey::NOSUCHCOMPONENT >( stack, in );
       // field contains material id, compute multiat component index
