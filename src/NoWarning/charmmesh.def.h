@@ -24,14 +24,9 @@
   #pragma clang diagnostic ignored "-Wcast-qual"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
-//  #pragma GCC diagnostic ignored "-Wredundant-decls"
-//  #pragma GCC diagnostic ignored "-Wlong-long"
-//  #pragma GCC diagnostic ignored "-Wunused-parameter"
-//  #pragma GCC diagnostic ignored "-Wcast-qual"
-//  #pragma GCC diagnostic ignored "-Wpedantic"
-//  #pragma GCC diagnostic ignored "-Wshadow"
-//  #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-//  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+  #pragma GCC diagnostic ignored "-Wunused-variable"
+  #pragma GCC diagnostic ignored "-Wcast-qual"
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
 
 #include "../Inciter/charmmesh.def.h"
