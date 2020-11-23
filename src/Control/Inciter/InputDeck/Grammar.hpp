@@ -862,16 +862,17 @@ namespace grm {
     explicit OutVarBounds( const Stack& s, bool& i )
       : stack(s), inbounds(i) { inbounds = false; }
     template< typename U > void operator()( brigand::type_<U> ) {
-      if (std::is_same_v< U, tag::multimat >) inbounds = true;  // skip multimat
-      const auto& depvar = stack.template get< tag::param, U, tag::depvar >();
-      const auto& ncomp = stack.template get< tag::component, U >();
-      Assert( depvar.size() == ncomp.size(), "Size mismatch" );
-      // called after matching each outvar, so only check the last one
-      auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
-      const auto& last_outvar = vars.back();
-      const auto& v = static_cast<char>( std::tolower(last_outvar.var) );
-      for (std::size_t e=0; e<depvar.size(); ++e)
-        if (v == depvar[e] && last_outvar.field < ncomp[e]) inbounds = true;
+      if (not std::is_same_v< U, tag::multimat >) { // skip multimat
+        const auto& depvar = stack.template get< tag::param, U, tag::depvar >();
+        const auto& ncomp = stack.template get< tag::component, U >();
+        Assert( depvar.size() == ncomp.size(), "Size mismatch" );
+        // called after matching each outvar, so only check the last one
+        auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
+        const auto& last_outvar = vars.back();
+        const auto& v = static_cast<char>( std::tolower(last_outvar.var) );
+        for (std::size_t e=0; e<depvar.size(); ++e)
+          if (v == depvar[e] && last_outvar.field < ncomp[e]) inbounds = true;
+      }
     }
   };
 
