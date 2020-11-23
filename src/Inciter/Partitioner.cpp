@@ -132,8 +132,8 @@ Partitioner::Partitioner(
   offsets.reserve( offsets.size() + m_elemoffset.size() );
   std::move( std::begin(m_elemoffset), std::end(m_elemoffset),
              std::back_inserter(offsets) );
-  contribute( offsets.size() * sizeof(std::size_t), offsets.data(),
-              CkReduction::sum_ulong, m_cbp.get< tag::load >() );
+  contribute(static_cast< int >( offsets.size() * sizeof(std::size_t) ),
+             offsets.data(), CkReduction::sum_ulong, m_cbp.get< tag::load >());
 }
 
 void
