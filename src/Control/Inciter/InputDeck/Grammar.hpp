@@ -64,15 +64,15 @@ namespace deck {
   //! statistics (for turbulence). The values are associated indexing functions
   //! used to index into the state of the multimaterial system, all must follow
   //! the same signature.
-  static std::map< char, tk::MultiMatDofIdxFn,
+  static std::map< char, tk::MultiMatIdxFn,
                    tk::ctr::CaseInsensitiveCharLess >
     multimatvars{
-      { 'd', densityDofIdx }       // density
-    , { 'f', volfracDofIdx }       // volume fraction
-    , { 'm', momentumDofIdx }      // momentum
-    , { 'e', energyDofIdx }        // specific total energy
-    , { 'u', velocityDofIdx }      // velocity (primitive)
-    , { 'p', pressureDofIdx }      // material pressure (primitive)
+      { 'd', densityIdx }       // density
+    , { 'f', volfracIdx }       // volume fraction
+    , { 'm', momentumIdx }      // momentum
+    , { 'e', energyIdx }        // specific total energy
+    , { 'u', velocityIdx }      // velocity (primitive)
+    , { 'p', pressureIdx }      // material pressure (primitive)
   };
 
 } // ::deck
@@ -770,7 +770,6 @@ namespace grm {
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
       auto nmat = stack.template get< param, multimat, tag::nmat >().back();
       auto depvar = stack.template get< param, multimat, tag::depvar >().back();
-      auto rdof = stack.template get< tag::discr, tag::rdof >();
       // first char of matched token: accepted multimatvar label char
       char v = static_cast<char>( in.string()[0] );
       // Since multimat outvars are configured based on an acceptable character
@@ -783,7 +782,7 @@ namespace grm {
            ((v!='u'&&v!='U'&&v!='m'&&v!='M') && field>=nmat) )
         Message< Stack, ERROR, MsgKey::NOSUCHCOMPONENT >( stack, in );
       // field contains material id, compute multiat component index
-      auto comp = tk::cref_find( multimatvars, v )( nmat, field, rdof, 0 );
+      auto comp = tk::cref_find( multimatvars, v )( nmat, field );
       // save depvar + component index based on physics label + material id,
       // also save physics label + material id as matvar
       vars.emplace_back(

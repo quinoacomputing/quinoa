@@ -60,7 +60,8 @@ namespace compflow {
 //!   equation system among other systems
 //! \return Fluid density ready to be output to file
 static tk::GetVarFn::result_type
-densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
+densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t )
+{
   return U.extract( 0, offset );
 }
 
@@ -70,12 +71,13 @@ densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
 //! \param[in] U Numerical solution
 //! \param[in] offset System offset specifying the position of the CompFlow
 //!   equation system among other systems
+//! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Velocity component ready to be output to file
 template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
-velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
+velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
+{
   using tk::operator/=;
-  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   auto r = U.extract( 0, offset ), u = U.extract( (dir+1)*rdof, offset );
   u /= r;
   return u;
@@ -86,10 +88,12 @@ velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
 //! \param[in] U Numerical solution
 //! \param[in] offset System offset specifying the position of the CompFlow
 //!   equation system among other systems
+//! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Volumetric total energy ready to be output to file
 static tk::GetVarFn::result_type
-volumetricTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
-  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+volumetricTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
+                             std::size_t rdof )
+{
   return U.extract( 4*rdof, offset );
 }
 
@@ -98,11 +102,13 @@ volumetricTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
 //! \param[in] U Numerical solution
 //! \param[in] offset System offset specifying the position of the CompFlow
 //!   equation system among other systems
+//! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Specific total energy ready to be output to file
 static tk::GetVarFn::result_type
-specificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
+specificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
+                           std::size_t rdof )
+{
   using tk::operator/=;
-  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   auto r = U.extract( 0, offset ), e = U.extract( 4*rdof, offset );
   e /= r;
   return e;
@@ -114,11 +120,12 @@ specificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
 //! \param[in] U Numerical solution
 //! \param[in] offset System offset specifying the position of the CompFlow
 //!   equation system among other systems
+//! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Momentum component ready to be output to file
 template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
-momentumOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
-  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+momentumOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
+{
   return U.extract( (dir+1)*rdof, offset );
 }
 
@@ -127,11 +134,12 @@ momentumOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
 //! \param[in] U Numerical solution
 //! \param[in] offset System offset specifying the position of the CompFlow
 //!   equation system among other systems
+//! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Pressure ready to be output to file
 static tk::GetVarFn::result_type
-pressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset ) {
+pressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
+{
   using tk::operator/=;
-  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   auto r = U.extract( 0, offset ),
        u = U.extract( 1*rdof, offset ),
        v = U.extract( 2*rdof, offset ),

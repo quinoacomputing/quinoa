@@ -36,7 +36,8 @@ numericFieldNames( tk::Centering c )
 }
 
 std::vector< std::vector< tk::real > >
-numericFieldOutput( const tk::Fields& U, tk::Centering c,
+numericFieldOutput( const tk::Fields& U,
+                    tk::Centering c,
                     const tk::Fields& P )
 // *****************************************************************************
 // Collect field output from numerical solution based on user input
@@ -53,16 +54,19 @@ numericFieldOutput( const tk::Fields& U, tk::Centering c,
   // will not use P if empty
   const auto& p = P.empty() ? U : P;
 
+  auto rdof =
+    c == tk::Centering::NODE ? 1 : g_inputdeck.get< tag::discr, tag::rdof >();
+
   std::vector< std::vector< tk::real > > f;
   for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >()) {
     if (v.centering == c) {
       auto o = tk::cref_find( offset, v.var );
       const auto& F = v.primitive() ? p : U;
       if (v.name.empty()) {        // depvar-based direct access
-        f.push_back( F.extract( v.field, o ) );
+        f.push_back( F.extract( v.field*rdof, o ) );
       } else if (!v.analytic()) {  // human-readable non-analytic via custom fn
         Assert( v.getvar, "getvar() not configured for " + v.name );
-        f.push_back( v.getvar( F, o ) );
+        f.push_back( v.getvar( F, o, rdof ) );
       }
     }
   }
