@@ -32,8 +32,9 @@ inciter
     error linf
   end
 
-  plotvar
+  field_output
     interval 5
+    var analytic C1 "c0_numerical" C2 "c1_numerical" end
   end
 
 end

@@ -40,10 +40,15 @@ class CompFlowProblemTaylorGreen {
     static constexpr ncomp_t m_ncomp = 5;    //!< Number of scalar components
 
   public:
-    //! Evaluate analytical solution at (x,y,0) for all components
-    static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp,
-              tk::real x, tk::real y, tk::real, tk::real );
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t system, ncomp_t ncomp,
+                tk::real x, tk::real y, tk::real, tk::real );
+
+    //! Evaluate analytical solution at (x,y,z,t) for all components
+    static tk::InitializeFn::result_type
+    analyticSolution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+                      tk::real z, tk::real t );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! \param[in] x X coordinate where to evaluate the source
@@ -64,20 +69,7 @@ class CompFlowProblemTaylorGreen {
     }
 
     //! Return field names to be output to file
-    std::vector< std::string > fieldNames( ncomp_t ) const;
-
-    //! Return field output going to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t system,
-                 ncomp_t,
-                 ncomp_t offset,
-                 std::size_t nunk,
-                 std::size_t rdof,
-                 tk::real,
-                 tk::real V,
-                 const std::vector< tk::real >& vol,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const tk::Fields& U ) const;
+    std::vector< std::string > analyticFieldNames( ncomp_t ) const;
 
     //! Return names of integral variables to be output to diagnostics file
     std::vector< std::string > names( ncomp_t ) const;

@@ -36,11 +36,17 @@ class MultiMatProblemWaterAirShocktube {
     using eq = tag::multimat;
 
   public:
-    //! Evaluate analytical solution at (x,y,0) for all components
-    static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
-              tk::real );
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
+                tk::real );
 
+    static std::vector< tk::real >
+    analyticSolution( ncomp_t system, ncomp_t ncomp,  tk::real x, tk::real y,
+                      tk::real z, tk::real t )
+    { return initialize( system, ncomp, x, y, z, t ); }
+
+    //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! Compute and return source term for this problem
     static tk::MultiMatSrcFn::result_type
     src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real )

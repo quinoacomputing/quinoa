@@ -26,13 +26,13 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::MultiMatProblemWaterAirShocktube;
 
-tk::SolutionFn::result_type
-MultiMatProblemWaterAirShocktube::solution( ncomp_t system,
-                                            ncomp_t ncomp,
-                                            tk::real x,
-                                            tk::real,
-                                            tk::real,
-                                            tk::real )
+tk::InitializeFn::result_type
+MultiMatProblemWaterAirShocktube::initialize( ncomp_t system,
+                                              ncomp_t ncomp,
+                                              tk::real x,
+                                              tk::real,
+                                              tk::real,
+                                              tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which multi-material
@@ -40,7 +40,7 @@ MultiMatProblemWaterAirShocktube::solution( ncomp_t system,
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 //! \details This function only initializes the Water-Air shock tube problem,
 //!   but does not actually give the analytical solution at time greater than 0.
 //!   The analytical solution would require an exact Riemann solver for

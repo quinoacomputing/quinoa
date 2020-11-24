@@ -146,7 +146,7 @@ class CompFlow {
 
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
-        auto s = Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t );
+        auto s = Problem::initialize( m_system, m_ncomp, x[i], y[i], z[i], t );
 
         // initialize the user-defined box IC
         if (inbox.find(i) != inbox.end())
@@ -172,10 +172,17 @@ class CompFlow {
     //! \return Vector of analytic solution at given location and time
     std::vector< real >
     analyticSolution( real xi, real yi, real zi, real t ) const
-    {
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
-      return std::vector< real >( std::begin(s), std::end(s) );
-    }
+    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+
+    //! Return analytic solution for conserved variables
+    //! \param[in] xi X-coordinate at which to evaluate the analytic solution
+    //! \param[in] yi Y-coordinate at which to evaluate the analytic solution
+    //! \param[in] zi Z-coordinate at which to evaluate the analytic solution
+    //! \param[in] t Physical time at which to evaluate the analytic solution
+    //! \return Vector of analytic solution at given location and time
+    std::vector< tk::real >
+    solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
 
     //! Compute right hand side for DiagCG (CG+FCT)
     //! \param[in] t Physical time
@@ -670,7 +677,7 @@ class CompFlow {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               if (steady) { t = tp[n]; deltat = dtp[n]; }
               auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
-                               t, deltat, Problem::solution );
+                               t, deltat, Problem::initialize );
               bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
                          {true,s[4]} }};
             }
@@ -776,10 +783,10 @@ class CompFlow {
             }
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > fieldNames() const
-    { return m_problem.fieldNames( m_ncomp ); }
+    //! Return analytic field names to be output to file
+    //! \return Vector of strings labelling analytic fields output in file
+    std::vector< std::string > analyticFieldNames() const
+    { return m_problem.analyticFieldNames( m_ncomp ); }
 
     //! Return surface field names to be output to file
     //! \return Vector of strings labelling surface fields output in file
@@ -790,26 +797,6 @@ class CompFlow {
     //! \return Vector of strings labelling time history fields output in file
     std::vector< std::string > histNames() const
     { return CompFlowHistNames(); }
-
-    //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] v Nodal mesh volumes
-    //! \param[in,out] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
-                 std::size_t nunk,
-                 std::size_t,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< tk::real >& v,
-                 tk::Fields& U ) const
-    {
-      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, 1, t,
-                                    V, v, coord, U );
-    }
 
     //! Return surface field output going to file
     std::vector< std::vector< real > >

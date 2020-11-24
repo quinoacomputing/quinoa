@@ -24,10 +24,13 @@
     - Must define the function _names()_, returning the names of integral
       variables to be output to diagnostics file.
 
-    - Must define the static function _solution()_, used for initialization of
-      the computed fields and/or sampling the analytical solution (if exist) at
-      time t.
+    - Must define the static function _initialize()_, used for initialization of
+      the computed fields at time t.
 
+    - Must define the static function _analyticSolution()_, used for
+      sampling the analytical solution if exist) at time t.
+
+    - Must define the static function _src()_, used for adding source terms to
     - Must define the static function _src()_, used for adding source terms to
       the righ hand side.
 
@@ -35,11 +38,8 @@
       boundary condition value on a given side set for all components in the PDE
       system.
 
-    - Must define the function _fieldNames()_, used to provide the field
+    - Must define the function _analyticFieldNames()_, used to provide the field
       names to be output to file.
-
-    - Must define the function _fieldOutput()_, used to provide the field
-      output.
 */
 // *****************************************************************************
 #ifndef CompFlowProblem_h

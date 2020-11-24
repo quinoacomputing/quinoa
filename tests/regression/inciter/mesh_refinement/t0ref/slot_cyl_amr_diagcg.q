@@ -27,7 +27,7 @@ inciter
     problem slot_cyl
   end
 
-  plotvar
+  field_output
     interval 2
   end
 

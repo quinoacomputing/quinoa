@@ -23,9 +23,11 @@
 
     - Must define the function _errchk()_, doing general error checks.
 
-    - Must define the static function _solution()_, used to evaluate the
-      analytic solution (if defined) and for initialization of the computed
-      fields at time _t_.
+    - Must define the static function _initialize()_, used for initialization of
+      the computed fields at time t.
+
+    - Must define the static function _analyticSolution()_, used for
+      sampling the analytical solution if exist) at time t.
 
     - Must define the static function _prescribedVelocity()_, used to query the
       prescribed velocity at a point.

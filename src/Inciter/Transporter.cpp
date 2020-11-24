@@ -303,18 +303,30 @@ Transporter::info( const InciterPrint& print )
   // Print output intervals
   print.section( "Output intervals" );
   print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
-  print.item( "Field", g_inputdeck.get< tag::interval, tag::field >() );
+  print.item( "Field and surface",
+              g_inputdeck.get< tag::interval, tag::field >() );
   print.item( "Diagnostics",
               g_inputdeck.get< tag::interval, tag::diag >() );
   print.item( "Checkpoint/restart",
               g_inputdeck.get< tag::cmd, tag::rsfreq >() );
 
+  // Print output variables: fields and surfaces
+  const auto nodeoutvars = g_inputdeck.outvars( tk::Centering::NODE );
+  const auto elemoutvars = g_inputdeck.outvars( tk::Centering::ELEM );
+  const auto aliases = g_inputdeck.outvar_aliases();
   const auto outsets = g_inputdeck.outsets();
-  if (!outsets.empty()) {
-    print.section( "Output fields" );
-    print.item( "Surface side set(s)", tk::parameters( outsets ) );
-  }
+  if (!nodeoutvars.empty() || !elemoutvars.empty() || !outsets.empty())
+     print.section( "Output fields" );
+  if (!nodeoutvars.empty())
+    print.item( "Node field(s)", tk::parameters(nodeoutvars) );
+  if (!elemoutvars.empty())
+    print.item( "Elem field(s)", tk::parameters(elemoutvars) );
+  if (!aliases.empty())
+    print.item( "Alias(es)", tk::parameters(aliases) );
+  if (!outsets.empty())
+    print.item( "Surface side set(s)", tk::parameters(outsets) );
 
+  // Print output variables: history
   const auto& pt = g_inputdeck.get< tag::history, tag::point >();
   const auto& id = g_inputdeck.get< tag::history, tag::id >();
   if (!pt.empty()) {

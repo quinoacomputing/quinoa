@@ -17,9 +17,10 @@ inciter
     problem slot_cyl
   end
 
-  plotvar
+  field_output
     interval 1
     filetype root
+    var analytic C1 "c0_numerical" end
   end
 
 end
