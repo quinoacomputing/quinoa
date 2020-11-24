@@ -849,7 +849,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       // Set alias of last pushed outvar:
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
-      vars.back().alias = in.string();
+      if (!vars.empty()) vars.back().alias = in.string();
     }
   };
 
