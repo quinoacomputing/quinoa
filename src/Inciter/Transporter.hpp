@@ -76,7 +76,7 @@ class Transporter : public CBase_Transporter {
     explicit Transporter( CkMigrateMessage* m );
 
     //! Reduction target: the mesh has been read from file on all PEs
-    void load( int n, std::size_t* neoffset );
+    void load( std::size_t nelem );
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution

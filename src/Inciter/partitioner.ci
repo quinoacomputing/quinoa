@@ -27,6 +27,7 @@ module partitioner {
 
     nodegroup [migratable] Partitioner {
       entry Partitioner(
+        const std::string& filename,
         const tk::PartitionerCallback& cbp,
         const tk::RefinerCallback& cbr,
         const tk::SorterCallback& cbs,

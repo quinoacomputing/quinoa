@@ -55,7 +55,8 @@ class Partitioner : public CBase_Partitioner {
 
   public:
     //! Constructor
-    Partitioner( const tk::PartitionerCallback& cbp,
+    Partitioner( const std::string& filename,
+                 const tk::PartitionerCallback& cbp,
                  const tk::RefinerCallback& cbr,
                  const tk::SorterCallback& cbs,
                  const CProxy_Transporter& host,
@@ -129,8 +130,6 @@ class Partitioner : public CBase_Partitioner {
       p | m_bface;
       p | m_triinpoel;
       p | m_bnode;
-      p | m_nodeoffset;
-      p | m_elemoffset;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -202,10 +201,6 @@ class Partitioner : public CBase_Partitioner {
     std::vector< std::size_t > m_triinpoel;
     //! List of boundary nodes associated to side-set IDs
     std::map< int, std::vector< std::size_t > > m_bnode;
-    //! Node offsets for multiple meshes
-    std::vector< std::size_t > m_nodeoffset;
-    //! Elem offsets for multiple meshes
-    std::vector< std::size_t > m_elemoffset;
 
     //! Compute element centroid coordinates
     std::array< std::vector< tk::real >, 3 >

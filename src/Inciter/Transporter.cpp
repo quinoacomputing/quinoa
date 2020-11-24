@@ -471,7 +471,7 @@ Transporter::createPartitioner()
   m_timer[ TimerTag::MESH_READ ];
 
   // Create mesh partitioner Charm++ chare group and start preparing mesh
-  print.diag( "Reading mesh" );
+  print.diag( "Reading mesh(es)" );
 
   // Create empty mesh sorter Charm++ chare array (bound to workers)
   m_sorter = CProxy_Sorter::ckNew( m_scheme.arrayoptions() );
@@ -487,45 +487,24 @@ Transporter::createPartitioner()
 
   // Create mesh partitioner Charm++ chare nodegroup
   m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_refiner, m_sorter,
-                               m_meshwriter, m_scheme, bface, faces, bnode );
+    CProxy_Partitioner::ckNew( inputs[0], cbp, cbr, cbs, thisProxy, m_refiner,
+      m_sorter, m_meshwriter, m_scheme, bface, faces, bnode );
 }
 
 void
-Transporter::load( int n, std::size_t* neoffset )
+Transporter::load( std::size_t nelem )
 // *****************************************************************************
 // Reduction target: the mesh has been read from file on all PEs
-//! \param[in] n Size of offsets array
-//! \param[in] neoffset Concatenated node and element offsets summed entry-wise
+//! \param[in] nelem Total number of mesh elements (summed across all PEs)
 // *****************************************************************************
 {
-  std::vector< std::size_t > offsets( neoffset, neoffset + n );
-
-  // Separate node and element offsets
-  using diff_type = std::vector< std::size_t >::difference_type;
-  diff_type half = offsets.size()/2;
-  std::vector< std::size_t > nodeoffset( begin(offsets), begin(offsets)+half );
-  std::vector< std::size_t > elemoffset( begin(offsets)+half, end(offsets) );
-
-  // Compute number of elements in each input mesh
-  std::vector< std::size_t > nelem( elemoffset.size()-1, 0 );
-  for (std::size_t i=1; i<elemoffset.size(); ++i)
-    nelem[i-1] = elemoffset[i] - elemoffset[i-1];
-  // Compute number of points in each input mesh
-  std::vector< std::size_t > npoin( nodeoffset.size()-1, 0 );
-  for (std::size_t i=1; i<nodeoffset.size(); ++i)
-    npoin[i-1] = nodeoffset[i] - nodeoffset[i-1];
-
-  // Compute total number of elements across all meshes and PEs
-  auto total_nelem = std::accumulate( begin(nelem), end(nelem), 0UL );
-
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
   uint64_t chunksize, remainder;
   m_nchare = static_cast<int>(
                tk::linearLoadDistributor(
                  g_inputdeck.get< tag::cmd, tag::virtualization >(),
-                 total_nelem, CkNumPes(), chunksize, remainder ) );
+                 nelem, CkNumPes(), chunksize, remainder ) );
 
   auto print = printer();
 
@@ -542,14 +521,8 @@ Transporter::load( int n, std::size_t* neoffset )
   print.section( "Initial load distribution" );
   print.item( "Virtualization [0.0...1.0]",
               g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  if (nelem.size() > 1) {
-    print.item( "Number of tetrahedra (per input mesh)",tk::parameters(nelem) );
-    print.item( "Number of points (per input mesh)", tk::parameters(npoin) );
-    //print.item( "Tetrahedra offsets", tk::parameters(elemoffset) );
-    //print.item( "Point offsets ", tk::parameters(nodeoffset) );
-  }
-  print.item( "Total number of tetrahedra", total_nelem );
-  print.item( "Total number of points", m_npoin );
+  print.item( "Number of tetrahedra", nelem );
+  print.item( "Number of points", m_npoin );
   print.item( "Number of work units", m_nchare );
 
   print.endsubsection();

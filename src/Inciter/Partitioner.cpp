@@ -36,6 +36,7 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Partitioner;
 
 Partitioner::Partitioner(
+  const std::string& filename,
   const tk::PartitionerCallback& cbp,
   const tk::RefinerCallback& cbr,
   const tk::SorterCallback& cbs,
@@ -67,12 +68,11 @@ Partitioner::Partitioner(
   m_chbface(),
   m_chtriinpoel(),
   m_chbnode(),
-  m_bface(),
-  m_bnode(),
-  m_nodeoffset({0}),
-  m_elemoffset({0})
+  m_bface( bface ),
+  m_bnode( bnode )
 // *****************************************************************************
 //  Constructor
+//! \param[in] filename Input mesh filename to read from
 //! \param[in] cbp Charm++ callbacks for Partitioner
 //! \param[in] cbr Charm++ callbacks for Refiner
 //! \param[in] cbs Charm++ callbacks for Sorter
@@ -86,54 +86,26 @@ Partitioner::Partitioner(
 //! \param[in] bnode Node lists of side sets (whole mesh)
 // *****************************************************************************
 {
-  // Read in a list of meshes
-  const auto& inputs = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
-  for (const auto& input_mesh_filename : inputs) {
-    // Create mesh reader
-    tk::MeshReader mr( input_mesh_filename );
+  // Create mesh reader
+  tk::MeshReader mr( filename );
 
-    // Read this compute node's chunk of the mesh (graph and coords) from file
-    std::vector< std::size_t > triinp;
-    decltype(m_ginpoel) ginpoel;
-    decltype(m_inpoel) inpoel;
-    decltype(m_lid) lid;
-    decltype(m_coord) coord;
-    mr.readMeshPart( ginpoel, inpoel, triinp, lid, coord,
-                     CkNumNodes(), CkMyNode() );
+  // Read this compute node's chunk of the mesh (graph and coords) from file
+  std::vector< std::size_t > triinpoel;
+  mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_lid, m_coord,
+                   CkNumNodes(), CkMyNode() );
 
-    // Compute triangle connectivity for side sets, reduce boundary face for
-    // side sets to this compute node only and to compute-node-local face ids
-    decltype(m_bface) bf = bface;
-    auto triinpoel = mr.triinpoel( bf, faces, ginpoel, triinp );
+  // Compute triangle connectivity for side sets, reduce boundary face for side
+  // sets to this compute node only and to compute-node-local face ids
+  m_triinpoel = mr.triinpoel( m_bface, faces, m_ginpoel, triinpoel );
 
-    // Reduce boundary node lists (global ids) for side sets to this compute
-    // node only
-    decltype(m_bnode) bn = bnode;
-    ownBndNodes( lid, bn );
+  // Reduce boundary node lists (global ids) for side sets to this compute node
+  // only
+  ownBndNodes( m_lid, m_bnode );
 
-    // Store node and elem offsets for next mesh
-    m_nodeoffset.push_back( m_nodeoffset.back() + coord[0].size() );
-    m_elemoffset.push_back( m_elemoffset.back() + inpoel.size()/4 );
-
-    // Concatenate mesh data
-    tk::concat( std::move(ginpoel), m_ginpoel );
-    tk::concat( std::move(inpoel), m_inpoel );
-    tk::concat( std::move(lid), m_lid );
-    tk::concat( std::move(coord[0]), m_coord[0] );
-    tk::concat( std::move(coord[1]), m_coord[1] );
-    tk::concat( std::move(coord[2]), m_coord[2] );
-    tk::concat( std::move(triinpoel), m_triinpoel );
-    for (auto&& [k,v] : bf) tk::concat( std::move(v), m_bface[k] );
-    for (auto&& [k,v] : bn) tk::concat( std::move(v), m_bnode[k] );
-  }
-
-  // Sum node and elem offsets across whole problem
-  std::vector< std::size_t > offsets = m_nodeoffset;
-  offsets.reserve( offsets.size() + m_elemoffset.size() );
-  std::move( std::begin(m_elemoffset), std::end(m_elemoffset),
-             std::back_inserter(offsets) );
-  contribute(static_cast< int >( offsets.size() * sizeof(std::size_t) ),
-             offsets.data(), CkReduction::sum_ulong, m_cbp.get< tag::load >());
+  // Compute number of cells across whole problem
+  std::size_t nelem = m_ginpoel.size()/4;
+  contribute( sizeof(std::size_t), &nelem, CkReduction::sum_ulong,
+              m_cbp.get< tag::load >() );
 }
 
 void
@@ -351,6 +323,8 @@ Partitioner::centroids( const std::vector< std::size_t >& inpoel,
 //! \return Centroids for all cells on this compute node
 // *****************************************************************************
 {
+  Assert( tk::uniquecopy(inpoel).size() == coord[0].size(), "Size mismatch" );
+
   const auto& x = coord[0];
   const auto& y = coord[1];
   const auto& z = coord[2];
