@@ -177,7 +177,7 @@ const
 
       for (const auto& eq : g_dgpde)
         // cppcheck-suppress useStlAlgorithm
-        s = eq.analyticSolution( gp[0], gp[1], gp[2], d.T()+d.Dt() );
+        s = eq.solution( gp[0], gp[1], gp[2], d.T()+d.Dt() );
 
       for (std::size_t c=0; c<u.nprop()/rdof; ++c)
       {

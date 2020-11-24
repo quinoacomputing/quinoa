@@ -96,13 +96,15 @@ class PDEStack {
     {
       auto c = ++cnt[ eq ];   // count eqs
       --c;                    // used to index vectors starting with 0
-      Assert( c < (g_inputdeck.get< tag::component, EqTag >().size()),
+      const auto& ncomp = g_inputdeck.get< tag::component >();
+      Assert( c < (ncomp.get< EqTag >().size()),
               "The number of scalar components is unspecified for the PDE to "
               "be instantiated. This is most likely a grammar error in the "
               "parser. The parser should not allow the user to select a PDE "
               "without configuring the number of scalar components the "
               "equation consists of. See inciter::deck::check_eq." );
-      if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
+      auto nc = ncomp.get< EqTag >()[c];
+      if ( nc ) {
         // re-create key and search for it
         ctr::PDEKey key{{ eq,
           g_inputdeck.get< tag::param, EqTag, tag::physics >()[c],
@@ -114,7 +116,11 @@ class PDEStack {
                   ctr::Physics().name( key.get< tag::physics >() ) + "', '" +
                   ctr::Problem().name( key.get< tag::problem >() ) +
                   + "') in factory" );
-        return it->second( c );    // instantiate and return PDE object
+        // Associate equation system index (value) to all variable offsets
+        auto offset = ncomp.offset< EqTag >(c);
+        for (ncomp_t i=0; i<nc; ++i) g_inputdeck.get<tag::sys>()[offset+i] = c;
+        // instantiate and return PDE object
+        return it->second( c );
       } else Throw ( "Can't create PDE with zero components" );
     }
 

@@ -14,7 +14,7 @@ add_regression_test(multimat_interface_advection_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF interface_advection_diag.ndiff.cfg
-                    LABELS dg)
+                    LABELS dg multimat)
 
 # Parallel
 
@@ -35,4 +35,4 @@ add_regression_test(multimat_interface_advection_dg ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_dg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF interface_advection_diag.ndiff.cfg
-                    LABELS dg)
+                    LABELS dg multimat)

@@ -31,6 +31,7 @@
 #include "Vector.hpp"
 #include "Around.hpp"
 #include "Integrate/Basis.hpp"
+#include "FieldOutput.hpp"
 
 namespace inciter {
 
@@ -1400,39 +1401,34 @@ DG::extractFieldOutput(
   m_outmesh.bface = bface;
   m_outmesh.nodeCommMap = nodeCommMap;
 
-  auto d = Disc();
   const auto& inpoel = std::get< 0 >( chunk );
   auto nelem = inpoel.size() / 4;
 
   // Evaluate element solution on incoming mesh
   auto [ue,pe,un,pn] = evalSolution( inpoel, coord, addedTets );
 
-  // Collect element field solutions
-  tk::destroy(m_elemfields);
+  // Collect field output from numerical solution requested by user
+  m_elemfields = numericFieldOutput( ue, tk::Centering::ELEM, pe );
+  m_nodefields = numericFieldOutput( un, tk::Centering::NODE, pn );
+
+  // Collect field output from analytical solutions (if exist)
   auto geoElem = tk::genGeoElemTet( inpoel, coord );
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  std::array< std::vector< tk::real >, 3 > coorde{
-    geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
-  auto vole = geoElem.extract(0,0);
+  auto t = Disc()->T();
   for (const auto& eq : g_dgpde) {
-    auto eo = eq.fieldOutput( d->T(), d->meshvol(), nelem, rdof, vole,
-                              coorde, ue, pe );
-    m_elemfields.insert( end(m_elemfields), begin(eo), end(eo) );
+    analyticFieldOutput( eq, tk::Centering::ELEM, geoElem.extract(1,0),
+      geoElem.extract(2,0), geoElem.extract(3,0), t, m_elemfields );
+    analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1], coord[2],
+      t, m_nodefields );
   }
 
   // Add adaptive indicator array to element-centered field output
-  std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
-  ndof.resize( nelem );
-  for (const auto& [child,parent] : addedTets)
-    ndof[child] = m_ndof[parent];
-  m_elemfields.push_back( ndof );
-
-  // Collect node field solutions
-  tk::destroy(m_nodefields);
-  //for (const auto& eq : g_dgpde) {
-  //  auto no = eq.nodeFieldOutput(d->T(), d->meshvol(), coord, geoElem, un, pn);
-  //  m_nodefields.insert( end(m_nodefields), begin(no), end(no) );
-  //}
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
+    ndof.resize( nelem );
+    for (const auto& [child,parent] : addedTets)
+      ndof[child] = m_ndof[parent];
+    m_elemfields.push_back( ndof );
+  }
 
   // Send node fields contributions to neighbor chares
   if (nodeCommMap.empty())
@@ -2151,17 +2147,6 @@ DG::fieldOutput() const
 {
   auto d = Disc();
 
-  // Output time history if we hit its output frequency
-  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
-  if ( !((d->It()) % histfreq) ) {
-    std::vector< std::vector< tk::real > > hist;
-    for (const auto& eq : g_dgpde) {
-      auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u );
-      hist.insert( end(hist), begin(h), end(h) );
-    }
-    d->history( std::move(hist) );
-  }
-
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
@@ -2193,6 +2178,17 @@ DG::writeFields( CkCallback c )
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Output time history if we hit its output frequency
+  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
+  if ( !((d->It()) % histfreq) ) {
+    std::vector< std::vector< tk::real > > hist;
+    for (const auto& eq : g_dgpde) {
+      auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u );
+      hist.insert( end(hist), begin(h), end(h) );
+    }
+    d->history( std::move(hist) );
+  }
 
   const auto& inpoel = std::get< 0 >( m_outmesh.chunk );
   auto esup = tk::genEsup( inpoel, 4 );
@@ -2229,17 +2225,21 @@ DG::writeFields( CkCallback c )
     }
   }
 
-  // Query fields names from all PDEs integrated
-  std::vector< std::string > elemfieldnames, nodefieldnames;
+  // Query fields names requested by user
+  auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
+  auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
+
+  // Collect field output names for analytical solutions
   for (const auto& eq : g_dgpde) {
-    auto ef = eq.fieldNames();
-    elemfieldnames.insert( end(elemfieldnames), begin(ef), end(ef) );
-    //auto nf = eq.nodalFieldNames();
-    //nodefieldnames.insert( end(nodefieldnames), begin(nf), end(nf) );
+    analyticFieldNames( eq, tk::Centering::ELEM, elemfieldnames );
+    analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
   }
 
   if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );
+
+  Assert( elemfieldnames.size() == m_elemfields.size(), "Size mismatch" );
+  Assert( nodefieldnames.size() == m_nodefields.size(), "Size mismatch" );
 
   // Output chare mesh and fields metadata to file
   const auto& triinpoel = m_outmesh.triinpoel;

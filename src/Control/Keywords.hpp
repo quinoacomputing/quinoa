@@ -955,7 +955,7 @@ struct exodusii_info {
     R"(This keyword is used to select the
     ExodusII output file type readable by, e.g., ParaView of either a requested
     probability density function (PDF) within a pdfs ... end block or for
-    mesh-based field output in a plotvar ... end block. Example:
+    mesh-based field output in a field_output ... end block. Example:
     "filetype exodusii", which selects ExodusII file output. For more info on
     ExodusII, see http://sourceforge.net/projects/exodusii.)";
   }
@@ -968,9 +968,9 @@ struct root_info {
     "Select Root output"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the Root output file type readable by the
-    Root framework from CERN for mesh-based field output in a plotvar ... end
-    block. Example: "filetype root", which selects the root file output format.
-    For more info on Root, see https://root.cern.ch.)";
+    Root framework from CERN for mesh-based field output in a field_output ...
+    end block. Example: "filetype root", which selects the root file output
+    format. For more info on Root, see https://root.cern.ch.)";
   }
 };
 using root = keyword< root_info, TAOCPP_PEGTL_STRING("root") >;
@@ -982,11 +982,11 @@ struct filetype_info {
   static std::string longDescription() { return
     R"(This keyword is used to specify the output file type of a requested
     probability density function (PDF) within a pdfs ... end block or for
-    mesh-based field output in a plotvar ... end block. Example:
+    mesh-based field output in a field_output ... end block. Example:
     "filetype exodusii", which selects ExodusII output. Valid options depend on
     which block the keyword is used: in a pdfs ... end the valid choices are
-    'txt', 'gmshtxt', 'gmshbin', and 'exodusii', in a plotvar ... end  block the
-    valid choices are 'exodusii' and 'root'.)"; }
+    'txt', 'gmshtxt', 'gmshbin', and 'exodusii', in a field_output ... end
+    block the valid choices are 'exodusii' and 'root'.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
@@ -1175,28 +1175,32 @@ using precision = keyword< precision_info, TAOCPP_PEGTL_STRING("precision") >;
 struct elem_info {
   static std::string name() { return "elem"; }
   static std::string shortDescription() { return
-    "Specify elem-centering for PDF output"; }
+    "Specify elem-centering for output"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select
-    element-centering for the probability values on the sample space
-    grid for file output of probability density functions (PDFs). Example:
-    "centering elem", which selects element-centered values. Valid options
-    are 'elem' and 'node', denoting cell-centered and point-centered output,
-    respectively.)"; }
+    R"(This keyword is used to select elem-centering for variable output. In
+    walker for example, this is used to configure probability values on the
+    sample space grid for file output of probability density functions (PDFs).
+    Example: "centering elem", which selects element-centered values. Valid
+    options are 'elem' and 'node', denoting cell-centered and point-centered
+    output, respectively. In inciter this keyword is used in output variable
+    specification blocks, prefixing variable names by either 'node' or 'elem',
+    to specify their centering for output to file.)"; }
 };
 using elem = keyword< elem_info, TAOCPP_PEGTL_STRING("elem") >;
 
 struct node_info {
   static std::string name() { return "node"; }
   static std::string shortDescription() { return
-    "Specify node-centering for PDF output"; }
+    "Specify node-centering for output"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select
-    node-centering for the probability values on the sample space grid for
-    file output of probability density functions (PDFs). Example: "centering
-    elem", which selects element-centered values. Valid options are 'elem'
-    and 'node', denoting cell-centered and point-centered output,
-    respectively.)"; }
+    R"(This keyword is used to select node-centering for variable output. In
+    walker for example, this is used to configure probability values on the
+    sample space grid for file output of probability density functions (PDFs).
+    Example: "centering elem", which selects element-centered values. Valid
+    options are 'elem' and 'node', denoting cell-centered and point-centered
+    output, respectively. In inciter this keyword is used in output variable
+    specification blocks, prefixing variable names by either 'node' or 'elem',
+    to specify their centering for output to file.)"; }
 };
 using node = keyword< node_info, TAOCPP_PEGTL_STRING("node") >;
 
@@ -1846,27 +1850,178 @@ struct statistics_info {
 };
 using statistics = keyword< statistics_info, TAOCPP_PEGTL_STRING("statistics") >;
 
-struct history_info {
-  static std::string name() { return "history"; }
+struct history_output_info {
+  static std::string name() { return "history_output"; }
   static std::string shortDescription() { return
-    "Start of history input block"; }
+    "Start of history_output input block"; }
   static std::string longDescription() { return
     R"(This keyword is used to start a block in the input file containing the
     descriptions and settings of requested history output.)";
   }
 };
-using history = keyword< history_info, TAOCPP_PEGTL_STRING("history") >;
+using history_output =
+  keyword< history_output_info, TAOCPP_PEGTL_STRING("history_output") >;
 
-struct plotvar_info {
-  static std::string name() { return "plotvar"; }
+struct field_output_info {
+  static std::string name() { return "field_output"; }
   static std::string shortDescription() { return
-    "Start of plotvar input block"; }
+    "Start of field_output input block"; }
   static std::string longDescription() { return
     R"(This keyword is used to start a block in the input file containing the
     list and settings of requested field output.)";
   }
 };
-using plotvar = keyword< plotvar_info, TAOCPP_PEGTL_STRING("plotvar") >;
+using field_output =
+  keyword< field_output_info, TAOCPP_PEGTL_STRING("field_output") >;
+
+struct outvar_density_info {
+  static std::string name() { return "density"; }
+  static std::string shortDescription() { return "Request density"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid density as an output
+       variable.)";
+  }
+};
+using outvar_density =
+  keyword< outvar_density_info, TAOCPP_PEGTL_STRING("density") >;
+
+struct outvar_xmomentum_info {
+  static std::string name() { return "x-momentum"; }
+  static std::string shortDescription() { return "Request x-momentum"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid x-momentum as an output
+       variable.)";
+  }
+};
+using outvar_xmomentum =
+  keyword< outvar_xmomentum_info, TAOCPP_PEGTL_STRING("x-momentum") >;
+
+struct outvar_ymomentum_info {
+  static std::string name() { return "y-momentum"; }
+  static std::string shortDescription() { return "Request y-momentum"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid y-momentum as an output
+       variable.)";
+  }
+};
+using outvar_ymomentum =
+  keyword< outvar_ymomentum_info, TAOCPP_PEGTL_STRING("y-momentum") >;
+
+struct outvar_zmomentum_info {
+  static std::string name() { return "z-momentum"; }
+  static std::string shortDescription() { return "Request z-momentum"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid z-momentum as an output
+       variable.)";
+  }
+};
+using outvar_zmomentum =
+  keyword< outvar_zmomentum_info, TAOCPP_PEGTL_STRING("z-momentum") >;
+
+struct outvar_specific_total_energy_info {
+  static std::string name() { return "specific_total_energy"; }
+  static std::string shortDescription() {
+    return "Request total specific energy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the specific total energy as an output
+       variable.)";
+  }
+};
+using outvar_specific_total_energy =
+  keyword< outvar_specific_total_energy_info,
+           TAOCPP_PEGTL_STRING("specific_total_energy") >;
+
+struct outvar_volumetric_total_energy_info {
+  static std::string name() { return "volumetric_total_energy"; }
+  static std::string shortDescription() {
+    return "Request total volumetric energy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the volumetric total energy as an output
+       variable.)";
+  }
+};
+using outvar_volumetric_total_energy =
+  keyword< outvar_volumetric_total_energy_info,
+           TAOCPP_PEGTL_STRING("volumetric_total_energy") >;
+
+struct outvar_xvelocity_info {
+  static std::string name() { return "x-velocity"; }
+  static std::string shortDescription() { return "Request x-velocity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid x-velocity as an output
+       variable.)";
+  }
+};
+using outvar_xvelocity =
+  keyword< outvar_xvelocity_info, TAOCPP_PEGTL_STRING("x-velocity") >;
+
+struct outvar_yvelocity_info {
+  static std::string name() { return "y-velocity"; }
+  static std::string shortDescription() { return "Request y-velocity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid y-velocity as an output
+       variable.)";
+  }
+};
+using outvar_yvelocity =
+  keyword< outvar_yvelocity_info, TAOCPP_PEGTL_STRING("y-velocity") >;
+
+struct outvar_zvelocity_info {
+  static std::string name() { return "z-velocity"; }
+  static std::string shortDescription() { return "Request z-velocity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid z-velocity as an output
+       variable.)";
+  }
+};
+using outvar_zvelocity =
+  keyword< outvar_zvelocity_info, TAOCPP_PEGTL_STRING("z-velocity") >;
+
+struct outvar_pressure_info {
+  static std::string name() { return "pressure"; }
+  static std::string shortDescription() { return "Request pressure"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the fluid pressure as an output
+       variable.)";
+  }
+};
+using outvar_pressure =
+  keyword< outvar_pressure_info, TAOCPP_PEGTL_STRING("pressure") >;
+
+struct outvar_analytic_info {
+  static std::string name() { return "analytic"; }
+  static std::string shortDescription() { return "Request analytic solution"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the analytic solution (if exist) as an
+    output variable.)";
+  }
+};
+using outvar_analytic =
+  keyword< outvar_analytic_info, TAOCPP_PEGTL_STRING("analytic") >;
+
+struct outvar_info {
+  static std::string name() { return "outvar"; }
+  static std::string shortDescription() { return
+    "Start of var ... end input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to start a block in the input file containing a
+       list of physics variables for output. The following keywords are allowed
+       in an var ... end block:)"
+    + std::string("\'")
+    + outvar_density::string()+ "\', \'"
+    + outvar_xmomentum::string()+ "\', \'"
+    + outvar_ymomentum::string()+ "\', \'"
+    + outvar_zmomentum::string()+ "\', \'"
+    + outvar_specific_total_energy::string() + "\', \'"
+    + outvar_volumetric_total_energy::string() + "\', \'"
+    + outvar_xvelocity::string() + "\', \'"
+    + outvar_yvelocity::string() + "\', \'"
+    + outvar_zvelocity::string() + "\', \'"
+    + outvar_pressure::string() + "\', \'"
+    + outvar_analytic::string() + "\'.";
+  }
+};
+using outvar = keyword< outvar_info, TAOCPP_PEGTL_STRING("var") >;
 
 struct rngs_info {
   static std::string name() { return "rngs"; }

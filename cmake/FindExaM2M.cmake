@@ -9,7 +9,7 @@
 #
 ################################################################################
 
-#  ExaM2M: https://github.com/ThePhD/sol2
+#  ExaM2M: https://github.com/Charmworks/ExaM2M.git
 #
 #  EXAM2M_FOUND - System has ExaM2M
 #  EXAM2M_INCLUDE_DIRS - The ExaM2M include directory
@@ -28,20 +28,45 @@ if(EXAM2M_INCLUDE_DIRS)
   set (EXAM2M_FIND_QUIETLY TRUE)
 endif()
 
-# stub to force "found" until we have something to find
-# comment this to trigger building ExaM2M
-# set(EXAM2M_INCLUDE_DIR "/tmp/exam2m/exam2m.hpp")
+find_path(EXAM2M_CONTROLLER_DIR NAMES Controller.hpp
+                                HINTS ${EXAM2M_ROOT}
+                                      $ENV{EXAM2M_ROOT}
+                                PATH_SUFFIXES include)
+find_path(EXAM2M_CONTROLLER_DEF_DIR NAMES controller.def.h
+                                    HINTS ${EXAM2M_ROOT}
+                                          $ENV{EXAM2M_ROOT}
+                                    PATH_SUFFIXES include Transfer)
+find_path(EXAM2M_CONTROLLER_DECL_DIR NAMES controller.decl.h
+                                     HINTS ${EXAM2M_ROOT}
+                                           $ENV{EXAM2M_ROOT}
+                                     PATH_SUFFIXES include Transfer)
+find_path(EXAM2M_WORKER_DECL_DIR NAMES worker.decl.h
+                                 HINTS ${EXAM2M_ROOT}
+                                       $ENV{EXAM2M_ROOT}
+                                 PATH_SUFFIXES include Transfer)
+find_path(EXAM2M_WORKER_DEF_DIR NAMES worker.def.h
+                                HINTS ${EXAM2M_ROOT}
+                                      $ENV{EXAM2M_ROOT}
+                                PATH_SUFFIXES include Transfer)
 
-# find_path(EXAM2M_INCLUDE_DIR NAMES exam2m.hpp
-#                              HINTS ${EXAM2M_ROOT}
-#                                    $ENV{EXAM2M_ROOT}
-#                              PATH_SUFFIXES include)
+find_library(EXAM2M_LIBRARY NAMES exam2m_worker
+                            HINTS ${EXAM2M_ROOT}
+                            PATH_SUFFIXES lib)
 
-set(EXAM2M_INCLUDE_DIRS ${EXAM2M_INCLUDE_DIR})
+set(EXAM2M_INCLUDE_DIRS ${EXAM2M_CONTROLLER_DIR}
+                        ${EXAM2M_CONTROLLER_DEF_DIR}
+                        ${EXAM2M_CONTROLLER_DECL_DIR}
+                        ${EXAM2M_WORKER_DECL_DIR}
+                        ${EXAM2M_WORKER_DEF_DIR})
+
+set(EXAM2M_LIBRARIES ${EXAM2M_LIBRARY})
 
 # Handle the QUIETLY and REQUIRED arguments and set EXAM2M_FOUND to TRUE if
 # all listed variables are TRUE.
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(ExaM2M REQUIRED_VARS EXAM2M_INCLUDE_DIRS)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(ExaM2M REQUIRED_VARS EXAM2M_LIBRARIES EXAM2M_INCLUDE_DIRS)
 
-MARK_AS_ADVANCED(EXAM2M_INCLUDE_DIRS)
+# Set extra charmc link flag to include the Charm++ collision detection lib
+set(COLLIDECHARM "-module collidecharm")
+
+MARK_AS_ADVANCED(EXAM2M_LIBRARIES EXAM2M_INCLUDE_DIRS COLLIDECHARM)

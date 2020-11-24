@@ -16,8 +16,7 @@ namespace tk {
 
 //! Mesh/scheme centering types
 //! \see Control/Inciter/Options/Scheme.h
-enum class Centering : uint8_t { NODE
-                               , ELEM };
+enum class Centering : char { NODE = 'n', ELEM = 'e' };
 
 } // tk::
 

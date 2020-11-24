@@ -86,6 +86,8 @@ namespace grm {
     NOSOLVE,            //!< Dependent variable to solve for has not been spec'd
     NOSUCHDEPVAR,       //!< Dependent variable has not been previously selected
     NOSUCHCOMPONENT,    //!< No such scalar component
+    NOSUCHOUTVAR,       //!< Output variable label not acceptable
+    NOSUCHMULTIMATVAR,  //!< Variable not acceptable for multi-material output
     POSITIVECOMPONENT,  //!< Scalar component must be positive
     NOTALPHA,           //!< Variable must be alphanumeric
     NOTERMS,            //!< Statistic need a variable
@@ -176,19 +178,29 @@ namespace grm {
       "the option must be selected upstream." },
     { MsgKey::EXISTS, "Dependent variable already used." },
     { MsgKey::NOSUCHDEPVAR, "Dependent variable not selected upstream in the "
-      "input file. To request a statistic or PDF involving this variable, use "
-      "this variable as a coefficients policy variable, or use this variable as "
-      "a refinement variable, or use a dependent variable in any way, an "
-      "equation must be specified upstream in the control file assigning this "
-      "variable to an equation to be integrated using the depvar keyword." },
+      "input file. To request an output variable, a statistic, configure a PDF "
+      "a involving this variable, use this variable as a coefficients policy "
+      "variable, use this variable as a refinement variable, or use a "
+      "dependent variable in any way, an equation must be specified upstream "
+      "in the control file assigning this variable to an equation to be "
+      "integrated using the depvar keyword." },
     { MsgKey::NOSUCHCOMPONENT, "Scalar component, used in conjunction with "
-      "dependent variable, does not exist in the preceeding block. This happens "
-      "when referring to a scalar component of a multi-component system of "
-      "equations that has less than the number of total components than the one "
-      "specified. Note that numbering components starts from 1 and their "
-      "maximum value is the number specified by the 'ncomp' keyword, if "
-      "applicable for the equation block the component specification refers "
-      "to." },
+      "dependent variable, does not exist upstream in the input file. This "
+      "happens when referring to a scalar component of a multi-component "
+      "system of equations that has less than the number of total components "
+      "than the one specified. Note that numbering of the components starts "
+      "from 1 and their maximum value is the number specified by the 'ncomp' "
+      "keyword, inclusive, if applicable for the equation block the component "
+      "specification refers to. Note that there are equation system types for "
+      "which the number of components are not configurable with the 'ncomp' "
+      "keyword, instead their ncomp is assumed known, e.g., for compflow ncomp "
+      "= 5." },
+    { MsgKey::NOSUCHOUTVAR, "Scalar component label is not acceptable as a "
+      "request for an output variable. Did you mean it as upper case (as a "
+      "request for an instantaneous) quantity?" },
+    { MsgKey::NOSUCHMULTIMATVAR, "Scalar component label is not acceptable "
+      "requesting a multi-material output variable. Did you mean it as upper "
+      "case (as a request for an instantaneous) quantity?" },
     { MsgKey::POSITIVECOMPONENT, "Scalar component must be positive." },
     { MsgKey::NOTALPHA, "Variable not alphanumeric." },
     { MsgKey::HEIGHTSPIKES, "The sum of all spike heights given in the "
@@ -1423,13 +1435,13 @@ namespace grm {
          pegtl::sor< verbose< keyword >, alias< keyword > > {};
 
   //! \brief Scan input padded by blank at left and space at right and if it
-  //!   matches 'keywords', apply 'actions'
+  //!   matches 'keyword', apply 'actions'
   //! \details As opposed to scan_until this rule, allows multiple actions
   template< class keyword, class... actions >
   struct scan :
-           pegtl::pad< act< trim< keyword, pegtl::space >, actions... >,
-                       pegtl::blank,
-                       pegtl::space > {};
+         pegtl::pad< act< trim< keyword, pegtl::space >, actions... >,
+                     pegtl::blank,
+                     pegtl::space > {};
 
   //! \brief Scan input padded by blank at left and space at right and if it
   //!   matches 'keywords', apply 'action'
@@ -1440,6 +1452,15 @@ namespace grm {
   struct scan_until :
          pegtl::pad< act< trim< keywords, pegtl::sor< pegtl::space, end > >,
                           action >,
+                     pegtl::blank,
+                     pegtl::space > {};
+
+  //! \brief Scan input padded by blank at left and space at right and if it
+  //!   exactly matches 'keyword', apply 'actions'
+  template< class keyword, class... actions >
+  struct exact_scan :
+         pegtl::pad< act< pegtl::until< typename keyword::pegtl_string,
+                                        pegtl::space >, actions... >,
                      pegtl::blank,
                      pegtl::space > {};
 
@@ -1491,13 +1512,23 @@ namespace grm {
                               insert >,
                          pegtl::one< rbound > > {};
 
-  //! Process 'keyword' and call its 'insert' action if matches 'kw_type'
+  //! \brief Process 'keyword' and if matches, parse following token (expecting
+  //!   'kw_type' and call 'insert' action on it
   template< class keyword, class insert, class kw_type = pegtl::digit >
   struct process :
          pegtl::if_must<
            readkw< typename keyword::pegtl_string >,
            scan< pegtl::sor< kw_type, msg< ERROR, MsgKey::MISSING > >,
                  insert > > {};
+
+  //! \brief Process 'keyword' and if matches, parse following token (expecting
+  //!   pegtl::alpha and call zero or more actions on it
+  template< class keyword, class... actions >
+  struct process_alpha :
+         pegtl::if_must<
+           readkw< typename keyword::pegtl_string >,
+           scan< pegtl::sor< pegtl::alpha, msg< ERROR, MsgKey::MISSING > >,
+                 actions... > > {};
 
   //! \brief Process command line 'keyword' and call its 'insert' action if
   //!   matches 'kw_type'

@@ -26,13 +26,13 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::MultiMatProblemShockHeBubble;
 
-tk::SolutionFn::result_type
-MultiMatProblemShockHeBubble::solution( ncomp_t system,
-  ncomp_t ncomp,
-  tk::real x,
-  tk::real y,
-  tk::real z,
-  tk::real )
+tk::InitializeFn::result_type
+MultiMatProblemShockHeBubble::initialize( ncomp_t system,
+                                          ncomp_t ncomp,
+                                          tk::real x,
+                                          tk::real y,
+                                          tk::real z,
+                                          tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which multi-material
@@ -42,7 +42,7 @@ MultiMatProblemShockHeBubble::solution( ncomp_t system,
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 //! \details This function only initializes the shock He-bubble interaction
 //!   problem, but does not actually give the analytical solution at time
 //!   greater than 0.

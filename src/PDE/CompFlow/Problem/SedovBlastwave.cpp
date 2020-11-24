@@ -24,27 +24,24 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::CompFlowProblemSedovBlastwave;
 
-tk::SolutionFn::result_type
-CompFlowProblemSedovBlastwave::solution( ncomp_t system,
-                                         [[maybe_unused]] ncomp_t ncomp,
-                                         tk::real x,
-                                         tk::real y,
-                                         tk::real z,
-                                         tk::real )
+tk::InitializeFn::result_type
+CompFlowProblemSedovBlastwave::initialize( ncomp_t system,
+                                           ncomp_t,
+                                           tk::real x,
+                                           tk::real y,
+                                           tk::real z,
+                                           tk::real )
 // *****************************************************************************
-//! Evaluate analytical solution at (x,y,z,t) for all components
+//  Initialize numerical solution
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
+//! \param[in] z Z coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  Assert( ncomp == ncomp, "Number of scalar components must be " +
-                          std::to_string(ncomp) );
-
   tk::real r=0, p=0, u=0, v=0, w=0, rE=0;
 
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
@@ -75,51 +72,45 @@ CompFlowProblemSedovBlastwave::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-std::vector< std::string >
-CompFlowProblemSedovBlastwave::fieldNames( ncomp_t ) const
+tk::InitializeFn::result_type
+CompFlowProblemSedovBlastwave::analyticSolution( ncomp_t system,
+                                                 ncomp_t,
+                                                 tk::real x,
+                                                 tk::real y,
+                                                 tk::real z,
+                                                 tk::real )
 // *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
+//  Evaluate analytical solution at (x,y,z,t) for all components
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
+//! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
+//! \param[in] z Z coordinate where to evaluate the solution
+//! \return Values of all components evaluated at (x)
+//! \note The function signature must follow tk::InitializeFn
+//! \warning This is NOT the analytic solution at all times, only at t=0
 // *****************************************************************************
 {
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
+  return initialize( system, 0, x, y, z, 0 );
+}
 
-  auto n = CompFlowFieldNames();
-
-  if(pref) n.push_back( "NDOF" );
+std::vector< std::string >
+CompFlowProblemSedovBlastwave::analyticFieldNames( ncomp_t ) const
+// *****************************************************************************
+// Return analytic field names to be output to file
+//! \return Vector of strings labelling analytic fields output in file
+// *****************************************************************************
+{
+  std::vector< std::string > n;
+  n.push_back( "density_analytical" );
+  n.push_back( "x-velocity_analytical" );
+  n.push_back( "y-velocity_analytical" );
+  n.push_back( "z-velocity_analytical" );
+  n.push_back( "specific_total_energy_analytical" );
+  n.push_back( "pressure_analytical" );
 
   return n;
 }
-
-std::vector< std::vector< tk::real > >
-CompFlowProblemSedovBlastwave::fieldOutput(
-  ncomp_t system,
-  ncomp_t,
-  ncomp_t offset,
-  std::size_t nunk,
-  std::size_t rdof,
-  tk::real,
-  tk::real,
-  const std::vector< tk::real >&,
-  const std::array< std::vector< tk::real >, 3 >&,
-  const tk::Fields& U ) const
-// *****************************************************************************
-//  Return field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
-//! \param[in] nunk Number of unknowns to extract
-//! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
-//!   the number of scalar components to shift when extracting scalar
-//!   components.
-//! \param[in] U Solution vector at recent time step
-//! \return Vector of vectors to be output to file
-// *****************************************************************************
-{
-  return CompFlowFieldOutput( system, offset, nunk, rdof, U );
-}
-
 std::vector< std::string >
 CompFlowProblemSedovBlastwave::names( ncomp_t ) const
 // *****************************************************************************

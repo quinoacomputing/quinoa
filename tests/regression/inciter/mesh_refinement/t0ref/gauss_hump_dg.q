@@ -48,8 +48,9 @@ inciter
     error l2
   end
 
-  plotvar
+  field_output
     interval 2
+    var elem analytic C1 "c0_numerical" end
   end
 
 end

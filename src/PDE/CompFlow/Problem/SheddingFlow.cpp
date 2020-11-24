@@ -24,25 +24,22 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::CompFlowProblemSheddingFlow;
 
-tk::SolutionFn::result_type
-CompFlowProblemSheddingFlow::solution( ncomp_t system,
-                                       [[maybe_unused]] ncomp_t ncomp,
-                                       tk::real,
-                                       tk::real,
-                                       tk::real,
-                                       tk::real )
+tk::InitializeFn::result_type
+CompFlowProblemSheddingFlow::initialize( ncomp_t system,
+                                         ncomp_t,
+                                         tk::real,
+                                         tk::real,
+                                         tk::real,
+                                         tk::real )
 // *****************************************************************************
 //! Evaluate initial solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  Assert( ncomp == ncomp, "Number of scalar components must be " +
-                          std::to_string(ncomp) );
   using tag::param;
 
   // Assign uniform initial condition according to the farfield state
@@ -55,52 +52,6 @@ CompFlowProblemSheddingFlow::solution( ncomp_t system,
   auto rE = eos_totalenergy< eq >( system, r, u[0], u[1], u[2], p );
 
   return {{ r, r*u[0], r*u[1], r*u[2], rE }};
-}
-
-std::vector< std::string >
-CompFlowProblemSheddingFlow::fieldNames( ncomp_t ) const
-// *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
-// *****************************************************************************
-{
-  const auto pref = inciter::g_inputdeck.get< tag::pref, tag::pref >();
-
-  auto n = CompFlowFieldNames();
-
-  if(pref)
-    n.push_back( "number of degree of freedom" );
-
-  return n;
-}
-
-std::vector< std::vector< tk::real > >
-CompFlowProblemSheddingFlow::fieldOutput(
-  ncomp_t system,
-  ncomp_t,
-  ncomp_t offset,
-  std::size_t nunk,
-  std::size_t rdof,
-  tk::real,
-  tk::real,
-  const std::vector< tk::real >&,
-  const std::array< std::vector< tk::real >, 3 >&,
-  const tk::Fields& U ) const
-// *****************************************************************************
-//  Return field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
-//! \param[in] nunk Number of unknowns to extract
-//! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
-//!   the number of scalar components to shift when extracting scalar
-//!   components.
-//! \param[in] U Solution vector at recent time step
-//! \return Vector of vectors to be output to file
-// *****************************************************************************
-{
-  return CompFlowFieldOutput( system, offset, nunk, rdof, U );
 }
 
 std::vector< std::string >
