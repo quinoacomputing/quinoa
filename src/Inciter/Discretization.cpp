@@ -33,6 +33,7 @@ extern ctr::InputDeck g_inputdeck_defaults;
 using inciter::Discretization;
 
 Discretization::Discretization(
+  std::size_t meshid,
   const CProxy_DistFCT& fctproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
@@ -40,6 +41,7 @@ Discretization::Discretization(
   const tk::UnsMesh::CoordMap& coordmap,
   const tk::CommMaps& msum,
   int nc ) :
+  m_meshid( meshid ),
   m_nchare( nc ),
   m_it( 0 ),
   m_itr( 0 ),
@@ -68,6 +70,7 @@ Discretization::Discretization(
   m_histdata()
 // *****************************************************************************
 //  Constructor
+//! \param[in] meshid Mesh ID
 //! \param[in] fctproxy Distributed FCT proxy
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] meshwriter Mesh writer proxy

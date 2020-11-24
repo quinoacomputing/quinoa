@@ -559,8 +559,8 @@ Sorter::createDiscWorkers()
   // Create worker array element using Charm++ dynamic chare array element
   // insertion: last arg: PE chare is created on. See also Charm++ manual, Sec.
   // "Dynamic Insertion".
-  m_scheme.disc()[ thisIndex ].insert( m_scheme.fct(), m_host, m_meshwriter,
-    m_ginpoel, m_coordmap, m_msum, m_nchare );
+  m_scheme.disc()[ thisIndex ].insert( m_meshid, m_scheme.fct(), m_host,
+    m_meshwriter, m_ginpoel, m_coordmap, m_msum, m_nchare );
 
   contribute( m_cbs.get< tag::discinserted >() );
 }

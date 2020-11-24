@@ -68,6 +68,7 @@ class Discretization : public CBase_Discretization {
     //! Constructor
     explicit
       Discretization(
+        std::size_t meshid,
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
@@ -308,6 +309,7 @@ class Discretization : public CBase_Discretization {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_meshid;
       p | m_nchare;
       p | m_it;
       p | m_itr;
@@ -352,6 +354,8 @@ class Discretization : public CBase_Discretization {
     // Shorthand for clock, setting an internal clock type
     using Clock = std::chrono::high_resolution_clock;
 
+    //! Mesh ID
+    std::size_t m_meshid;
     //! Total number of Discretization chares
     int m_nchare;
     //! Iteration count

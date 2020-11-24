@@ -66,7 +66,7 @@ Transporter::Transporter() :
   m_ndtrefit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
   m_noutrefit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
   m_noutderefit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
-  m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
+  m_scheme(),
   m_partitioner(),
   m_refiner(),
   m_meshwriter(),
@@ -471,17 +471,21 @@ Transporter::createPartitioner()
     // Warn on no BCs
     if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";
 
+    // Create (discretization) Scheme chare worker array for mesh. All schemes
+    // configure hydro for now.
+    m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >() );
+
     // Create empty mesh refiner chare array (bound to workers)
-    m_refiner.push_back( CProxy_Refiner::ckNew( m_scheme.arrayoptions() ) );
+    m_refiner.push_back(CProxy_Refiner::ckNew(m_scheme.back().arrayoptions()));
 
     // Create empty mesh sorter Charm++ chare array (bound to workers)
-    m_sorter.push_back( CProxy_Sorter::ckNew( m_scheme.arrayoptions() ) );
+    m_sorter.push_back(CProxy_Sorter::ckNew(m_scheme.back().arrayoptions()));
 
     // Create mesh partitioner Charm++ chare nodegroup
     m_partitioner.push_back(
       CProxy_Partitioner::ckNew( meshid++, filename, cbp, cbr, cbs, thisProxy,
-        m_refiner.back(), m_sorter.back(), m_meshwriter, m_scheme, bface, faces,
-        bnode ) );
+        m_refiner.back(), m_sorter.back(), m_meshwriter, m_scheme.back(), bface,
+        faces, bnode ) );
   }
 }
 
@@ -753,7 +757,7 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
     Throw( err.str() );
   }
 
-  if (cb > 0.0) m_scheme.bcast< Scheme::resizeComm >();
+  if (cb > 0.0) m_scheme[0].bcast< Scheme::resizeComm >();
 }
 
 void
@@ -810,8 +814,8 @@ Transporter::resized()
 //! \note Only used for nodal schemes
 // *****************************************************************************
 {
-  m_scheme.disc().vol();
-  m_scheme.bcast< Scheme::lhs >();
+  m_scheme[0].disc().vol();
+  m_scheme[0].bcast< Scheme::lhs >();
 }
 
 void
@@ -821,7 +825,7 @@ Transporter::startEsup()
 //! \note Only used for cell-centered schemes
 // *****************************************************************************
 {
-  m_scheme.bcast< Scheme::nodeNeighSetup >();
+  m_scheme[0].bcast< Scheme::nodeNeighSetup >();
 }
 
 void
@@ -830,7 +834,7 @@ Transporter::discinserted()
 // Reduction target: all Discretization chares have been inserted
 // *****************************************************************************
 {
-  m_scheme.disc().doneInserting();
+  m_scheme[0].disc().doneInserting();
 }
 
 void
@@ -880,10 +884,10 @@ Transporter::disccreated( std::size_t npoin )
 
   m_refiner[0].sendProxy();
 
-  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::DiagCG) m_scheme.fct().doneInserting();
+  if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DiagCG)
+    m_scheme[0].fct().doneInserting();
 
-  m_scheme.disc().vol();
+  m_scheme[0].disc().vol();
 }
 
 void
@@ -893,7 +897,7 @@ Transporter::workinserted()
 // inserted
 // *****************************************************************************
 {
-  m_scheme.bcast< Scheme::doneInserting >();
+  m_scheme[0].bcast< Scheme::doneInserting >();
 }
 
 void
@@ -958,12 +962,12 @@ Transporter::comfinal( int initial )
   if (initial > 0) {
     auto print = printer();
     m_progWork.end( print );
-    m_scheme.bcast< Scheme::setup >();
+    m_scheme[0].bcast< Scheme::setup >();
     // Turn on automatic load balancing
     tk::CProxy_LBSwitch::ckNew();
     print.diag( "Load balancing on (if enabled in Charm++)" );
   } else {
-    m_scheme.bcast< Scheme::lhs >();
+    m_scheme[0].bcast< Scheme::lhs >();
   }
 }
 // [Discretization-specific communication maps]
@@ -980,9 +984,9 @@ Transporter::totalvol( tk::real v, tk::real initial )
   m_meshvol = v;
 
   if (initial > 0.0)
-    m_scheme.disc().stat( m_meshvol );
+    m_scheme[0].disc().stat( m_meshvol );
   else
-    m_scheme.bcast< Scheme::resized >();
+    m_scheme[0].bcast< Scheme::resized >();
 }
 
 void
@@ -1112,7 +1116,7 @@ Transporter::boxvol( tk::real v )
 // *****************************************************************************
 {
   if (v > 0.0) printer().diag( "Box IC volume: " + std::to_string(v) );
-  m_scheme.bcast< Scheme::box >( v );
+  m_scheme[0].bcast< Scheme::box >( v );
 }
 
 void
@@ -1217,7 +1221,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
   // Evaluate whether to continue with next step
-  m_scheme.bcast< Scheme::refine >( l2res );
+  m_scheme[0].bcast< Scheme::refine >( l2res );
 }
 
 void
@@ -1232,7 +1236,7 @@ Transporter::resume()
     // If just restarted from a checkpoint, Main( CkMigrateMessage* msg ) has
     // increased nrestart in g_inputdeck, but only on PE 0, so broadcast.
     auto nrestart = g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
-    m_scheme.bcast< Scheme::evalLB >( nrestart );
+    m_scheme[0].bcast< Scheme::evalLB >( nrestart );
   } else
     mainProxy.finalize();
 }
