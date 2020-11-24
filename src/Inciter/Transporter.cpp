@@ -512,6 +512,7 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
 
   // Store sum of meshids (across all chares, key) for each meshid (value)
   m_meshid[ static_cast<std::size_t>(m_nchare[meshid])*meshid ] = meshid;
+  Assert( meshid < m_nelem.size(), "MeshId indexing out" );
 
   // Partition mesh
   m_partitioner[meshid].partition( m_nchare[meshid] );
@@ -651,7 +652,6 @@ Transporter::matched( std::size_t summeshid,
 // *****************************************************************************
 {
   auto meshid = tk::cref_find( m_meshid, summeshid );
-  Assert( meshid < m_nelem.size(), "MeshId indexing out" );
 
   // If at least a single edge on a chare still needs correction, do correction,
   // otherwise, this mesh refinement step is complete
@@ -776,9 +776,8 @@ Transporter::refined( std::size_t summeshid,
 // *****************************************************************************
 {
   auto meshid = tk::cref_find( m_meshid, summeshid );
-  Assert( meshid < m_nelem.size(), "MeshId indexing out" );
 
-  // Store new number of elements for intiially refined mesh
+  // Store new number of elements for initially refined mesh
   m_nelem[meshid] = nelem;
 
   m_sorter[meshid].doneInserting();
@@ -865,24 +864,26 @@ Transporter::meshstat( const std::string& header ) const
 }
 
 void
-Transporter::disccreated( std::size_t npoin )
+Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
 // *****************************************************************************
 // Reduction target: all Discretization constructors have been called
+//! \param[in] summeshid Mesh id (summed accross all Refiner chares)
 //! \param[in] npoin Total number of mesh points (summed across all PEs). Note
 //!  that as opposed to npoin in refined(), this npoin is not multi-counted, and
 //!  thus should be correct in parallel.
 // *****************************************************************************
 {
-  //m_npoin = npoin;
+  auto meshid = tk::cref_find( m_meshid, summeshid );
 
   auto print = printer();
-
   m_progMesh.end( print );
 
-  if (g_inputdeck.get< tag::amr, tag::t0ref >())
+  if (g_inputdeck.get< tag::amr, tag::t0ref >()) {
+    m_npoin[meshid] = npoin;
     meshstat( "Initially (t<0) refined mesh graph statistics" );
+  }
 
-  m_refiner[0].sendProxy();
+  m_refiner[meshid].sendProxy();
 
   if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DiagCG)
     m_scheme[0].fct().doneInserting();

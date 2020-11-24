@@ -152,8 +152,9 @@ Discretization::Discretization(
   #endif
 
   // Tell the RTS that the Discretization chares have been created and compute
-  // the total number of mesh points across whole problem
-  contribute( sizeof(std::size_t), &npoin, CkReduction::sum_ulong,
+  // the total number of mesh points across the distributed mesh
+  std::vector< std::size_t > meshdata{ m_meshid, npoin };
+  contribute( meshdata, CkReduction::sum_ulong,
     CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
 }
 

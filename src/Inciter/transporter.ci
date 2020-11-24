@@ -26,7 +26,8 @@ module transporter {
       entry [reductiontarget] void refinserted( std::size_t meshid,
                                                 std::size_t error );
       entry [reductiontarget] void discinserted();
-      entry [reductiontarget] void disccreated( std::size_t npoin );
+      entry [reductiontarget] void disccreated( std::size_t summeshid,
+                                                std::size_t npoin );
       entry [reductiontarget] void workinserted();
       entry [reductiontarget] void queriedRef( std::size_t meshid );
       entry [reductiontarget] void respondedRef( std::size_t meshid );
