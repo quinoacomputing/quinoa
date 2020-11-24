@@ -117,7 +117,7 @@ class Transporter : public CBase_Transporter {
     //! Compute surface integral across the whole problem and perform leak-test
     void bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb );
 
-    //! Reduction target: all compute nodes have refined their mesh
+    //! Reduction target: all chares have refined their mesh
     void refined( std::size_t meshid, std::size_t nelem, std::size_t npoin );
 
     //! \brief Reduction target: all worker chares have resized their own data
@@ -325,6 +325,9 @@ class Transporter : public CBase_Transporter {
 
     //! Verify boundary condition (BC) side sets used exist in mesh file
     bool matchBCs( std::map< int, std::vector< std::size_t > >& bnd );
+
+    //! Print out mesh statistics
+    void meshstat( const std::string& header ) const;
 };
 
 } // inciter::

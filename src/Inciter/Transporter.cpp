@@ -521,24 +521,10 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
     print.section( "Mesh partitioning" );
     print.Item< tk::ctr::PartitioningAlgorithm,
                 tag::selected, tag::partitioner >();
-
-    // Print out info on load distribution
-    print.section( "Initial load distribution" );
     print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
-    if (m_nelem.size() > 1) {
-      print.item( "Number of tetrahedra (per mesh)",tk::parameters(m_nelem) );
-      print.item( "Number of points (per mesh)", tk::parameters(m_npoin) );
-      print.item( "Number of work units (per mesh)", tk::parameters(m_nchare) );
-    }
-    print.item( "Total number of tetrahedra",
-                std::accumulate( begin(m_nelem), end(m_nelem), 0UL ) );
-    print.item( "Total number of points",
-                std::accumulate( begin(m_npoin), end(m_npoin), 0UL ) );
-    print.item( "Total number of work units",
-                std::accumulate( begin(m_nchare), end(m_nchare), 0 ) );
-
-    print.endsubsection();
+    // Print out initial mesh statistics
+    meshstat( "Initial load distribution" );
 
     // Tell meshwriter the total number of chares
     m_meshwriter.nchare( m_nchare[0] );
@@ -757,7 +743,7 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
 void
 Transporter::refined( std::size_t meshid, std::size_t nelem, std::size_t npoin )
 // *****************************************************************************
-// Reduction target: all compute nodes have refined their mesh
+// Reduction target: all chares have refined their mesh
 //! \param[in] meshid Mesh id (summed accross all Refiner chares)
 //! \param[in] nelem Total number of elements in mesh summed across the
 //!   distributed mesh
@@ -831,6 +817,33 @@ Transporter::discinserted()
 }
 
 void
+Transporter::meshstat( const std::string& header ) const
+// *****************************************************************************
+// Print out mesh statistics
+//! \param[in] header Section header
+// *****************************************************************************
+{
+  auto print = printer();
+
+  print.section( header );
+
+  if (m_nelem.size() > 1) {
+    print.item( "Number of tetrahedra (per mesh)",tk::parameters(m_nelem) );
+    print.item( "Number of points (per mesh)", tk::parameters(m_npoin) );
+    print.item( "Number of work units (per mesh)", tk::parameters(m_nchare) );
+  }
+
+  print.item( "Total number of tetrahedra",
+              std::accumulate( begin(m_nelem), end(m_nelem), 0UL ) );
+  print.item( "Total number of points",
+              std::accumulate( begin(m_npoin), end(m_npoin), 0UL ) );
+  print.item( "Total number of work units",
+              std::accumulate( begin(m_nchare), end(m_nchare), 0 ) );
+
+  print.endsubsection();
+}
+
+void
 Transporter::disccreated( std::size_t npoin )
 // *****************************************************************************
 // Reduction target: all Discretization constructors have been called
@@ -845,21 +858,8 @@ Transporter::disccreated( std::size_t npoin )
 
   m_progMesh.end( print );
 
-  if (g_inputdeck.get< tag::amr, tag::t0ref >()) {
-    print.section( "Initially (t<0) refined mesh graph statistics" );
-    if (m_nelem.size() > 1) {
-      print.item( "Number of tetrahedra (per mesh)",tk::parameters(m_nelem) );
-      print.item( "Number of points (per mesh)", tk::parameters(m_npoin) );
-      print.item( "Number of work units (per mesh)", tk::parameters(m_nchare) );
-    }
-    print.item( "Total number of tetrahedra",
-                std::accumulate( begin(m_nelem), end(m_nelem), 0UL ) );
-    print.item( "Total number of points",
-                std::accumulate( begin(m_npoin), end(m_npoin), 0UL ) );
-    print.item( "Total number of work units",
-                std::accumulate( begin(m_nchare), end(m_nchare), 0 ) );
-    print.endsubsection();
-  }
+  if (g_inputdeck.get< tag::amr, tag::t0ref >())
+    meshstat( "Initially (t<0) refined mesh graph statistics" );
 
   m_refiner[0].sendProxy();
 
