@@ -998,7 +998,7 @@ Refiner::endt0ref()
 // *****************************************************************************
 {
   // create sorter Charm++ chare array elements using dynamic insertion
-  m_sorter[ thisIndex ].insert( m_host, m_meshwriter, m_cbs, m_scheme,
+  m_sorter[ thisIndex ].insert( m_meshid, m_host, m_meshwriter, m_cbs, m_scheme,
     CkCallback( CkIndex_Refiner::reorder(), thisProxy[thisIndex] ),
     m_ginpoel, m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare );
 

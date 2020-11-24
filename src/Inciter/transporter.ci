@@ -46,8 +46,8 @@ module transporter {
                                             std::size_t npoin );
       entry [reductiontarget] void resized();
       entry [reductiontarget] void startEsup();
-      entry [reductiontarget] void queried();
-      entry [reductiontarget] void responded();
+      entry [reductiontarget] void queried( std::size_t meshid );
+      entry [reductiontarget] void responded( std::size_t meshid );
       entry [reductiontarget] void comfinal( int initial );
       entry [reductiontarget] void totalvol( tk::real v, tk::real initial );
       entry [reductiontarget] void minstat( tk::real d0, tk::real d1,

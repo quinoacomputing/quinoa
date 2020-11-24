@@ -26,7 +26,8 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::Sorter;
 
-Sorter::Sorter( const CProxy_Transporter& transporter,
+Sorter::Sorter( std::size_t meshid,
+                const CProxy_Transporter& transporter,
                 const tk::CProxy_MeshWriter& meshwriter,
                 const tk::SorterCallback& cbs,
                 const Scheme& scheme,
@@ -37,6 +38,7 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
                 const std::vector< std::size_t >& triinpoel,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 int nchare ) :
+  m_meshid( meshid ),
   m_host( transporter ),
   m_meshwriter( meshwriter ),
   m_cbs( cbs ),
@@ -65,6 +67,7 @@ Sorter::Sorter( const CProxy_Transporter& transporter,
   m_upper( 0 )
 // *****************************************************************************
 //  Constructor: prepare owned mesh node IDs for reordering
+//! \param[in] meshid Mesh ID
 //! \param[in] transporter Transporter (host) Charm++ proxy
 //! \param[in] meshwriter Mesh writer Charm++ proxy
 //! \param[in] cbs Charm++ callbacks for Sorter
@@ -159,7 +162,8 @@ Sorter::setup( std::size_t npoin )
   // on the sender side, i.e., this chare.
   m_nbnd = chbnd.size();
   if (m_nbnd == 0)
-    contribute( m_cbs.get< tag::queried >() );
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbs.get< tag::queried >() );
   else
     for (const auto& [ targetchare, bnd ] : chbnd)
       thisProxy[ targetchare ].query( thisIndex, bnd );
@@ -194,7 +198,9 @@ Sorter::recvquery()
 // Receive receipt of boundary node lists to query
 // *****************************************************************************
 {
-  if (--m_nbnd == 0) contribute( m_cbs.get< tag::queried >() );
+  if (--m_nbnd == 0)
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbs.get< tag::queried >() );
 }
 
 void
@@ -232,7 +238,8 @@ Sorter::response()
   // the responses on the sender side, i.e., this chare.
   m_nbnd = exp.size();
   if (m_nbnd == 0)
-    contribute( m_cbs.get< tag::responded >() );
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbs.get< tag::responded >() );
   else
     for (const auto& [ targetchare, maps ] : exp)
       thisProxy[ targetchare ].bnd( thisIndex, maps );
@@ -264,13 +271,15 @@ Sorter::recvbnd()
 // Receive receipt of boundary node communication map
 // *****************************************************************************
 {
-  if (--m_nbnd == 0) contribute( m_cbs.get< tag::responded >() );
+  if (--m_nbnd == 0)
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbs.get< tag::responded >() );
 }
 
 void
 Sorter::start()
 // *****************************************************************************
-//  Start reordering (if enabled it)
+//  Start reordering (if enabled)
 // *****************************************************************************
 {
   // Keep only those edges in edge comm map whose both end-points are in the

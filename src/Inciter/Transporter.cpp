@@ -62,7 +62,6 @@ Transporter::Transporter() :
   m_meshid(),
   m_ncit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
   m_nload( 0 ),
-  m_nref( 0 ),
   m_nt0refit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
   m_ndtrefit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
   m_noutrefit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
@@ -778,30 +777,29 @@ Transporter::refined( std::size_t summeshid,
   // Store new number of elements for intiially refined mesh
   m_nelem[meshid] = nelem;
 
-  if (++m_nref == m_nelem.size()) {     // all meshes have been refined
-    m_nref = 0;
-    // CUTOFF working with multiple meshes
-    m_sorter[0].doneInserting();
-    m_sorter[0].setup( npoin );
-  }
+  m_sorter[meshid].doneInserting();
+  m_sorter[meshid].setup( npoin );
 }
 
 void
-Transporter::queried()
+Transporter::queried( std::size_t meshid )
 // *****************************************************************************
 // Reduction target: all Sorter chares have queried their boundary edges
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_sorter[0].response();
+  m_sorter[meshid].response();
 }
 
 void
-Transporter::responded()
+Transporter::responded( std::size_t meshid )
 // *****************************************************************************
 // Reduction target: all Sorter chares have responded with their boundary edges
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_sorter[0].start();
+  // CUTOFF working with multiple meshes
+  if (meshid == 0) m_sorter[0].start();
 }
 
 void

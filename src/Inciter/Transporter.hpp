@@ -128,9 +128,9 @@ class Transporter : public CBase_Transporter {
     void startEsup();
 
     //! Reduction target: all Sorter chares have queried their boundary edges
-    void queried();
+    void queried( std::size_t meshid );
     //! Reduction target: all Sorter chares have setup their boundary edges
-    void responded();
+    void responded( std::size_t meshid );
 
     //! Non-reduction target for receiving progress report on partitioning mesh
     void pepartitioned() { m_progMesh.inc< PART >( printer() ); }
@@ -206,7 +206,6 @@ class Transporter : public CBase_Transporter {
       p | m_nchare;
       p | m_meshid;
       p | m_nload;
-      p | m_nref;
       p | m_ncit;
       p | m_nt0refit;
       p | m_ndtrefit;
@@ -241,8 +240,6 @@ class Transporter : public CBase_Transporter {
     std::vector< std::size_t > m_ncit;
     //! Number of meshes loaded
     std::size_t m_nload;
-    //! Number of meshes refined
-    std::size_t m_nref;
     //! Number of t0ref mesh ref iters (one per mesh)
     std::vector< std::size_t > m_nt0refit;
     //! Number of dtref mesh ref iters (one per mesh)
