@@ -60,6 +60,7 @@ using inciter::Transporter;
 Transporter::Transporter() :
   m_nchare( 0 ),
   m_ncit( 0 ),
+  m_nload( 0 ),
   m_nt0refit( 0 ),
   m_ndtrefit( 0 ),
   m_noutrefit( 0 ),
@@ -69,8 +70,8 @@ Transporter::Transporter() :
   m_refiner(),
   m_meshwriter(),
   m_sorter(),
-  m_nelem( 0 ),
-  m_npoin( 0 ),
+  m_nelem( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size() ),
+  m_npoin(),
   m_finished( 0 ),
   m_meshvol( 0.0 ),
   m_minstat( {{ 0.0, 0.0, 0.0 }} ),
@@ -394,52 +395,7 @@ Transporter::createPartitioner()
 {
   auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   auto centering = ctr::Scheme().centering( scheme );
-  bool bcs_set = false;
-
-  std::map< int, std::vector< std::size_t > > bface;
-  std::map< int, std::vector< std::size_t > > faces;
-  std::map< int, std::vector< std::size_t > > bnode;
-
-  // Read boundary (side set) data from a list of input mesh files
-  const auto& inputs = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
-  for (const auto& input_mesh_filename : inputs) {
-    // Create mesh reader for reading side sets from file
-    tk::MeshReader mr( input_mesh_filename );
-
-    // Read out total number of mesh points from mesh file
-    m_npoin += mr.npoin();
-
-    decltype(bface) bf;
-    decltype(faces) fa;
-    decltype(bnode) bn;
-
-    // Read boundary-face connectivity on side sets
-    mr.readSidesetFaces( bf, fa );
-
-    if (centering == tk::Centering::ELEM) {
-
-      // Verify boundarty condition (BC) side sets used exist in mesh file
-      bcs_set = matchBCs( bf );
-
-    } else if (centering == tk::Centering::NODE) {
-
-      // Read node lists on side sets
-      bn = mr.readSidesetNodes();
-      // Verify boundarty condition (BC) side sets used exist in mesh file
-      bcs_set = matchBCs( bn );
-      bcs_set = bcs_set || matchBCs( bf );
-    }
-
-    // Concatenate mesh side set data
-    for (auto&& [k,v] : bf) tk::concat( std::move(v), bface[k] );
-    for (auto&& [k,v] : fa) tk::concat( std::move(v), faces[k] );
-    for (auto&& [k,v] : bn) tk::concat( std::move(v), bnode[k] );
-  }
-
   auto print = printer();
-
-  // Warn on no BCs
-  if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";
 
   // Create partitioner callbacks (order important)
   tk::PartitionerCallback cbp {{
@@ -467,10 +423,10 @@ Transporter::createPartitioner()
     , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
   }};
 
-  // Start timer measuring preparation of the mesh for partitioning
+  // Start timer measuring preparation of mesh(es) for partitioning
   m_timer[ TimerTag::MESH_READ ];
 
-  // Create mesh partitioner Charm++ chare group and start preparing mesh
+  // Start preparing mesh(es)
   print.diag( "Reading mesh(es)" );
 
   // Create empty mesh sorter Charm++ chare array (bound to workers)
@@ -485,61 +441,114 @@ Transporter::createPartitioner()
                     centering,
                     g_inputdeck.get< tag::cmd, tag::benchmark >() );
 
-  // Create mesh partitioner Charm++ chare nodegroup
-  m_partitioner.push_back(
-    CProxy_Partitioner::ckNew( inputs[0], cbp, cbr, cbs, thisProxy, m_refiner,
-      m_sorter, m_meshwriter, m_scheme, bface, faces, bnode ) );
+  // Read boundary (side set) data from a list of input mesh files
+  const auto& inputs = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
+  std::size_t meshid = 0;
+  for (const auto& filename : inputs) {
+    // Create mesh reader for reading side sets from file
+    tk::MeshReader mr( filename );
+
+    // Read out total number of mesh points from mesh file
+    m_npoin.push_back( mr.npoin() );
+
+    std::map< int, std::vector< std::size_t > > bface;
+    std::map< int, std::vector< std::size_t > > faces;
+    std::map< int, std::vector< std::size_t > > bnode;
+
+    // Read boundary-face connectivity on side sets
+    mr.readSidesetFaces( bface, faces );
+
+    bool bcs_set = false;
+    if (centering == tk::Centering::ELEM) {
+
+      // Verify boundarty condition (BC) side sets used exist in mesh file
+      bcs_set = matchBCs( bface );
+
+    } else if (centering == tk::Centering::NODE) {
+
+      // Read node lists on side sets
+      bnode = mr.readSidesetNodes();
+      // Verify boundarty condition (BC) side sets used exist in mesh file
+      bcs_set = matchBCs( bnode );
+      bcs_set = bcs_set || matchBCs( bface );
+    }
+
+    // Warn on no BCs
+    if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";
+
+    // Create mesh partitioner Charm++ chare nodegroup
+    m_partitioner.push_back(
+      CProxy_Partitioner::ckNew( meshid++, filename, cbp, cbr, cbs, thisProxy,
+        m_refiner, m_sorter, m_meshwriter, m_scheme, bface, faces, bnode ) );
+  }
 }
 
 void
-Transporter::load( std::size_t nelem )
+Transporter::load( std::size_t meshid, std::size_t nelem )
 // *****************************************************************************
 // Reduction target: the mesh has been read from file on all PEs
-//! \param[in] nelem Total number of mesh elements (summed across all PEs)
+//! \param[in] meshid Mesh id (summed accross all compute nodes)
+//! \param[in] nelem Number of mesh elements per mesh (summed across all
+//!    compute nodes)
 // *****************************************************************************
 {
-  // Compute load distribution given total work (nelem) and user-specified
-  // virtualization
-  uint64_t chunksize, remainder;
-  m_nchare = static_cast<int>(
-               tk::linearLoadDistributor(
-                 g_inputdeck.get< tag::cmd, tag::virtualization >(),
-                 nelem, CkNumPes(), chunksize, remainder ) );
+  meshid /= static_cast< std::size_t >( CkNumNodes() );
+  Assert( meshid < m_nelem.size(), "MeshId indexing out" );
+  m_nelem[meshid] = nelem;
 
-  auto print = printer();
+  if (++m_nload == m_nelem.size()) {     // all meshes have been loaded
 
-  // Start timer measuring preparation of the mesh for partitioning
-  const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
-  print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
+    m_nload = 0;
 
-  // Print out mesh partitioning configuration
-  print.section( "Mesh partitioning" );
-  print.Item< tk::ctr::PartitioningAlgorithm,
-              tag::selected, tag::partitioner >();
+    // Compute load distribution given total work (nelem) and user-specified
+    // virtualization
+    uint64_t chunksize, remainder;
+    m_nchare = static_cast<int>(
+                 tk::linearLoadDistributor(
+                   g_inputdeck.get< tag::cmd, tag::virtualization >(),
+                   m_nelem[0], CkNumPes(), chunksize, remainder ) );
 
-  // Print out info on load distribution
-  print.section( "Initial load distribution" );
-  print.item( "Virtualization [0.0...1.0]",
-              g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  print.item( "Number of tetrahedra", nelem );
-  print.item( "Number of points", m_npoin );
-  print.item( "Number of work units", m_nchare );
+    auto print = printer();
 
-  print.endsubsection();
+    // Start timer measuring preparation of the mesh for partitioning
+    const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
+    print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
 
-  // Tell meshwriter the total number of chares
-  m_meshwriter.nchare( m_nchare );
+    // Print out mesh partitioning configuration
+    print.section( "Mesh partitioning" );
+    print.Item< tk::ctr::PartitioningAlgorithm,
+                tag::selected, tag::partitioner >();
 
-  // Query number of initial mesh refinement steps
-  int nref = 0;
-  if (g_inputdeck.get< tag::amr, tag::t0ref >())
-    nref = static_cast<int>( g_inputdeck.get< tag::amr, tag::init >().size() );
+    // Print out info on load distribution
+    print.section( "Initial load distribution" );
+    print.item( "Virtualization [0.0...1.0]",
+                g_inputdeck.get< tag::cmd, tag::virtualization >() );
+    if (m_nelem.size() > 1) {
+      print.item( "Number of tetrahedra (per mesh)",tk::parameters(m_nelem) );
+      print.item( "Number of points (per mesh)", tk::parameters(m_npoin) );
+    }
+    print.item( "Total number of tetrahedra",
+                std::accumulate( begin(m_nelem), end(m_nelem), 0UL ) );
+    print.item( "Total number of points",
+                std::accumulate( begin(m_npoin), end(m_npoin), 0UL ) );
+    print.item( "Number of work units", m_nchare );
 
-  m_progMesh.start( print, "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
-    m_nchare, m_nchare, m_nchare, m_nchare }} );
+    print.endsubsection();
 
-  // Partition the mesh
-  m_partitioner[0].partition( m_nchare );
+    // Tell meshwriter the total number of chares
+    m_meshwriter.nchare( m_nchare );
+
+    // Query number of initial mesh refinement steps
+    int nref = 0;
+    if (g_inputdeck.get< tag::amr, tag::t0ref >())
+      nref = static_cast<int>(g_inputdeck.get< tag::amr, tag::init >().size());
+
+    m_progMesh.start( print, "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
+      m_nchare, m_nchare, m_nchare, m_nchare }} );
+
+    // Partition the mesh
+    m_partitioner[0].partition( m_nchare );
+  }
 }
 
 void
@@ -750,7 +759,7 @@ Transporter::refined( std::size_t nelem, std::size_t npoin )
 {
   m_sorter.doneInserting();
 
-  m_nelem = nelem;
+  //m_nelem = nelem;
 
   m_sorter.setup( npoin );
 }
@@ -813,7 +822,7 @@ Transporter::disccreated( std::size_t npoin )
 //!  thus should be correct in parallel.
 // *****************************************************************************
 {
-  m_npoin = npoin;
+  //m_npoin = npoin;
 
   auto print = printer();
 
@@ -821,8 +830,15 @@ Transporter::disccreated( std::size_t npoin )
 
   if (g_inputdeck.get< tag::amr, tag::t0ref >()) {
     print.section( "Initially (t<0) refined mesh graph statistics" );
-    print.item( "Total number of tetrahedra", m_nelem );
-    print.item( "Total number of points", m_npoin );
+    if (m_nelem.size() > 1) {
+      print.item( "Number of tetrahedra (per mesh)",tk::parameters(m_nelem) );
+      print.item( "Number of points (per mesh)", tk::parameters(m_npoin) );
+    }
+    print.item( "Total number of tetrahedra",
+                std::accumulate( begin(m_nelem), end(m_nelem), 0UL ) );
+    print.item( "Total number of points",
+                std::accumulate( begin(m_npoin), end(m_npoin), 0UL ) );
+    print.item( "Number of work units", m_nchare );
     print.endsubsection();
   }
 

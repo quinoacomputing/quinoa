@@ -36,6 +36,7 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Partitioner;
 
 Partitioner::Partitioner(
+  std::size_t meshid,
   const std::string& filename,
   const tk::PartitionerCallback& cbp,
   const tk::RefinerCallback& cbr,
@@ -102,10 +103,9 @@ Partitioner::Partitioner(
   // only
   ownBndNodes( m_lid, m_bnode );
 
-  // Compute number of cells across whole problem
-  std::size_t nelem = m_ginpoel.size()/4;
-  contribute( sizeof(std::size_t), &nelem, CkReduction::sum_ulong,
-              m_cbp.get< tag::load >() );
+  // Sum number of cells across distributed mesh
+  std::vector< std::size_t > meshdata{ meshid, m_ginpoel.size()/4 };
+  contribute( meshdata, CkReduction::sum_ulong, m_cbp.get< tag::load >() );
 }
 
 void

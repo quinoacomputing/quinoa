@@ -55,7 +55,8 @@ class Partitioner : public CBase_Partitioner {
 
   public:
     //! Constructor
-    Partitioner( const std::string& filename,
+    Partitioner( std::size_t meshid,
+                 const std::string& filename,
                  const tk::PartitionerCallback& cbp,
                  const tk::RefinerCallback& cbr,
                  const tk::SorterCallback& cbs,
