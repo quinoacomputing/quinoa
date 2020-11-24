@@ -775,11 +775,13 @@ Transporter::refined( std::size_t summeshid,
   auto meshid = tk::cref_find( m_meshid, summeshid );
   Assert( meshid < m_nelem.size(), "MeshId indexing out" );
 
+  // Store new number of elements for intiially refined mesh
+  m_nelem[meshid] = nelem;
+
   if (++m_nref == m_nelem.size()) {     // all meshes have been refined
     m_nref = 0;
     // CUTOFF working with multiple meshes
     m_sorter[0].doneInserting();
-    //m_nelem = nelem;
     m_sorter[0].setup( npoin );
   }
 }
