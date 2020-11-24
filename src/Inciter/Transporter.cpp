@@ -59,12 +59,14 @@ using inciter::Transporter;
 
 Transporter::Transporter() :
   m_nchare( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size() ),
-  m_ncit( 0 ),
+  m_meshid(),
+  m_ncit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
   m_nload( 0 ),
-  m_nt0refit( 0 ),
-  m_ndtrefit( 0 ),
-  m_noutrefit( 0 ),
-  m_noutderefit( 0 ),
+  m_nref( 0 ),
+  m_nt0refit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
+  m_ndtrefit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
+  m_noutrefit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
+  m_noutderefit( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size(), 0 ),
   m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
   m_partitioner(),
   m_refiner(),
@@ -505,11 +507,13 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
        g_inputdeck.get< tag::cmd, tag::virtualization >(),
        m_nelem[meshid], CkNumPes(), chunksize, remainder ) );
 
+  // Store sum of meshids (across all chares, key) for each meshid (value)
+  m_meshid[ static_cast<std::size_t>(m_nchare[meshid])*meshid ] = meshid;
+
   // Partition mesh
   m_partitioner[meshid].partition( m_nchare[meshid] );
 
   if (++m_nload == m_nelem.size()) {     // all meshes have been loaded
-
     m_nload = 0;
     auto print = printer();
 
@@ -584,51 +588,57 @@ Transporter::refinserted( std::size_t meshid, std::size_t error )
 }
 
 void
-Transporter::queriedRef()
+Transporter::queriedRef( std::size_t meshid )
 // *****************************************************************************
-// Reduction target: all mesh Refiner chares have queried their boundary edges
+// Reduction target: all Refiner chares have queried their boundary edges
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_refiner[0].response();
+  m_refiner[meshid].response();
 }
 
 void
-Transporter::respondedRef()
+Transporter::respondedRef( std::size_t meshid )
 // *****************************************************************************
-// Reduction target: all mesh Refiner chares have setup their boundary edges
+// Reduction target: all Refiner chares have setup their boundary edges
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_refiner[0].refine();
+  m_refiner[meshid].refine();
 }
 
 void
-Transporter::compatibility( int modified )
+Transporter::compatibility( std::size_t meshid, std::size_t modified )
 // *****************************************************************************
-// Reduction target: all mesh refiner chares have received a round of edges,
-// and ran their compatibility algorithm
-//! \param[in] modified Sum acorss all workers, if nonzero, mesh is modified
+// Reduction target: all Refiner chares have received a round of edges,
+// and have run their compatibility algorithm
+//! \param[in] meshid Mesh id (aggregated across all chares using operator max)
+//! \param[in] modified Modified flag, aggregated across all chares using
+//!   operator max), if nonzero, mesh is modified
 //! \details This is called iteratively, until convergence by Refiner. At this
 //!   point all Refiner chares have received a round of edge data (tags whether
 //!   an edge needs to be refined, etc.), and applied the compatibility
 //!   algorithm independent of other Refiner chares. We keep going until the
-//!   mesh is no longer modified by the compatibility algorithm (based on a new
+//!   mesh is no longer modified by the compatibility algorithm, based on a new
 //!   round of edge data communication started in Refiner::comExtra().
 // *****************************************************************************
 {
   if (modified)
-    m_refiner[0].comExtra();
+    m_refiner[meshid].comExtra();
   else
-    m_refiner[0].correctref();
+    m_refiner[meshid].correctref();
 }
 
 void
-Transporter::matched( std::size_t nextra,
+Transporter::matched( std::size_t summeshid,
+                      std::size_t nextra,
                       std::size_t nref,
                       std::size_t nderef,
                       std::size_t sumrefmode )
 // *****************************************************************************
-// Reduction target: all mesh refiner chares have matched/corrected the tagging
+// Reduction target: all Refiner chares have matched/corrected the tagging
 // of chare-boundary edges, all chares are ready to perform refinement.
+//! \param[in] summeshid Mesh id (summed across all chares)
 //! \param[in] nextra Sum (across all chares) of the number of edges on each
 //!   chare that need correction along chare boundaries
 //! \param[in] nref Sum of number of refined tetrahedra across all chares.
@@ -637,12 +647,15 @@ Transporter::matched( std::size_t nextra,
 //!   refinement mode of operation.
 // *****************************************************************************
 {
+  auto meshid = tk::cref_find( m_meshid, summeshid );
+  Assert( meshid < m_nelem.size(), "MeshId indexing out" );
+
   // If at least a single edge on a chare still needs correction, do correction,
   // otherwise, this mesh refinement step is complete
   if (nextra > 0) {
 
-    ++m_ncit;
-    m_refiner[0].comExtra();
+    ++m_ncit[meshid];
+    m_refiner[meshid].comExtra();
 
   } else {
 
@@ -650,55 +663,59 @@ Transporter::matched( std::size_t nextra,
 
     // decode refmode
     auto refmode = static_cast< Refiner::RefMode >(
-                     sumrefmode / static_cast<std::size_t>(m_nchare[0]) );
+                     sumrefmode / static_cast<std::size_t>(m_nchare[meshid]) );
 
     if (refmode == Refiner::RefMode::T0REF) {
 
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
         const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
         ctr::AMRInitial opt;
-        print.diag( { "t0ref", "type", "nref", "nderef", "ncorr" },
-                    { std::to_string(m_nt0refit),
-                      opt.code(initref[m_nt0refit]),
+        print.diag( { "meshid", "t0ref", "type", "nref", "nderef", "ncorr" },
+                    { std::to_string(meshid),
+                      std::to_string(m_nt0refit[meshid]),
+                      opt.code(initref[m_nt0refit[meshid]]),
                       std::to_string(nref),
                       std::to_string(nderef),
-                      std::to_string(m_ncit) } );
-        ++m_nt0refit;
+                      std::to_string(m_ncit[meshid]) } );
+        ++m_nt0refit[meshid];
       }
       m_progMesh.inc< REFINE >( print );
 
     } else if (refmode == Refiner::RefMode::DTREF) {
 
       auto dtref_uni = g_inputdeck.get< tag::amr, tag::dtref_uniform >();
-      print.diag( { "dtref", "type", "nref", "nderef", "ncorr" },
-                  { std::to_string(++m_ndtrefit),
+      print.diag( { "meshid", "dtref", "type", "nref", "nderef", "ncorr" },
+                  { std::to_string(meshid),
+                    std::to_string(++m_ndtrefit[meshid]),
                     (dtref_uni?"uniform":"error"),
                     std::to_string(nref),
                     std::to_string(nderef),
-                    std::to_string(m_ncit) },
+                    std::to_string(m_ncit[meshid]) },
                   false );
 
     } else if (refmode == Refiner::RefMode::OUTREF) {
 
-      print.diag( { "outref", "nref", "nderef", "ncorr" },
-                  { std::to_string(++m_noutrefit),
+      print.diag( { "meshid", "outref", "nref", "nderef", "ncorr" },
+                  { std::to_string(meshid),
+                    std::to_string(++m_noutrefit[meshid]),
                     std::to_string(nref),
                     std::to_string(nderef),
-                    std::to_string(m_ncit) }, false );
+                    std::to_string(m_ncit[meshid]) }, false );
 
     } else if (refmode == Refiner::RefMode::OUTDEREF) {
 
-      print.diag( { "outderef", "nref", "nderef", "ncorr" },
-                  { std::to_string(++m_noutderefit),
+      print.diag( { "meshid", "outderef", "nref", "nderef", "ncorr" },
+                  { std::to_string(meshid),
+                    std::to_string(++m_noutderefit[meshid]),
                     std::to_string(nref),
                     std::to_string(nderef),
-                    std::to_string(m_ncit) },
+                    std::to_string(m_ncit[meshid]) },
                   false );
 
     } else Throw( "RefMode not implemented" );
 
-    m_ncit = 0;
-    m_refiner[0].perform();
+    m_ncit[meshid] = 0;
+    m_refiner[meshid].perform();
 
   }
 }
@@ -741,10 +758,12 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
 }
 
 void
-Transporter::refined( std::size_t meshid, std::size_t nelem, std::size_t npoin )
+Transporter::refined( std::size_t summeshid,
+                      std::size_t nelem,
+                      std::size_t npoin )
 // *****************************************************************************
 // Reduction target: all chares have refined their mesh
-//! \param[in] meshid Mesh id (summed accross all Refiner chares)
+//! \param[in] summeshid Mesh id (summed accross all Refiner chares)
 //! \param[in] nelem Total number of elements in mesh summed across the
 //!   distributed mesh
 //! \param[in] npoin Total number of mesh points summed across the distributed
@@ -753,16 +772,14 @@ Transporter::refined( std::size_t meshid, std::size_t nelem, std::size_t npoin )
 //!   an equal or larger than npoin for Sorter::setup, so this is okay.
 // *****************************************************************************
 {
-  //meshid /= static_cast< std::size_t >( CkNumNodes() );
-  //Assert( meshid < m_nelem.size(), "MeshId indexing out" );
-  std::cout << meshid << '\n';
+  auto meshid = tk::cref_find( m_meshid, summeshid );
+  Assert( meshid < m_nelem.size(), "MeshId indexing out" );
 
-  if (meshid == 0) {
-    // cutoff working with multiple meshes here
+  if (++m_nref == m_nelem.size()) {     // all meshes have been refined
+    m_nref = 0;
+    // CUTOFF working with multiple meshes
     m_sorter[0].doneInserting();
-
     //m_nelem = nelem;
-
     m_sorter[0].setup( npoin );
   }
 }

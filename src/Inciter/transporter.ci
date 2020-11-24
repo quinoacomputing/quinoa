@@ -28,10 +28,12 @@ module transporter {
       entry [reductiontarget] void discinserted();
       entry [reductiontarget] void disccreated( std::size_t npoin );
       entry [reductiontarget] void workinserted();
-      entry [reductiontarget] void queriedRef();
-      entry [reductiontarget] void respondedRef();
-      entry [reductiontarget] void compatibility( int modified );
-      entry [reductiontarget] void matched( std::size_t nextra,
+      entry [reductiontarget] void queriedRef( std::size_t meshid );
+      entry [reductiontarget] void respondedRef( std::size_t meshid );
+      entry [reductiontarget] void compatibility( std::size_t meshid,
+                                                  std::size_t modified );
+      entry [reductiontarget] void matched( std::size_t summeshid,
+                                            std::size_t nextra,
                                             std::size_t nref,
                                             std::size_t nderef,
                                             std::size_t initial );

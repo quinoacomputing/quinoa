@@ -374,7 +374,8 @@ Refiner::bndEdges()
   // Send edges in bins to chares that will compute shared edges
   m_nbnd = chbedges.size();
   if (m_nbnd == 0)
-    contribute( m_cbr.get< tag::queried >() );
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbr.get< tag::queried >() );
   else
     for (const auto& [ targetchare, bndedges ] : chbedges)
       thisProxy[ targetchare ].query( thisIndex, bndedges );
@@ -402,7 +403,9 @@ Refiner::recvquery()
 // Receive receipt of boundary edge lists to query
 // *****************************************************************************
 {
-  if (--m_nbnd == 0) contribute( m_cbr.get< tag::queried >() );
+  if (--m_nbnd == 0)
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbr.get< tag::queried >() );
 }
 
 void
@@ -432,7 +435,8 @@ Refiner::response()
   // the responses on the sender side, i.e., this chare.
   m_nbnd = exp.size();
   if (m_nbnd == 0)
-    contribute( m_cbr.get< tag::responded >() );
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbr.get< tag::responded >() );
   else
     for (const auto& [ targetchare, bndedges ] : exp)
       thisProxy[ targetchare ].bnd( thisIndex, bndedges );
@@ -459,7 +463,9 @@ Refiner::recvbnd()
 // Receive receipt of shared boundary edges
 // *****************************************************************************
 {
-  if (--m_nbnd == 0) contribute( m_cbr.get< tag::responded >() );
+  if (--m_nbnd == 0)
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbr.get< tag::responded >() );
 }
 
 void
@@ -586,10 +592,12 @@ Refiner::addRefBndEdges(
     // Update edge data from mesh refiner
     updateEdgeData();
     // If refiner lib modified our edges, need to recommunicate
-    int modified = (localedges_orig != m_localEdgeData ? 1 : 0);
+    auto modified = static_cast< std::size_t >(
+                      localedges_orig != m_localEdgeData ? 1 : 0 );
     //int modified = ( (localedges_orig != m_localEdgeData ||
     //                  intermediates_orig != m_intermediates) ? 1 : 0 );
-    contribute( sizeof(int), &modified, CkReduction::sum_int,
+    std::vector< std::size_t > meshdata{ m_meshid, modified };
+    contribute( meshdata, CkReduction::max_ulong,
                 m_cbr.get< tag::compatibility >() );
   }
 }
@@ -673,7 +681,8 @@ Refiner::correctref()
   // refinement/derefinement statistics
   const auto& tet_store = m_refiner.tet_store;
   std::vector< std::size_t >
-    m{ m_extra,
+    m{ m_meshid,
+       m_extra,
        tet_store.marked_refinements.size(),
        tet_store.marked_derefinements.size(),
        static_cast< std::underlying_type_t< RefMode > >( m_mode ) };

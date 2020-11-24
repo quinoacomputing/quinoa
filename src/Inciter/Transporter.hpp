@@ -87,9 +87,9 @@ class Transporter : public CBase_Transporter {
     void distributed( std::size_t meshid );
 
     //! Reduction target: all Refiner chares have queried their boundary edges
-    void queriedRef();
+    void queriedRef( std::size_t meshid );
     //! Reduction target: all Refiner chares have setup their boundary edges
-    void respondedRef();
+    void respondedRef( std::size_t meshid );
 
     //! Reduction target: all compute nodes have created the mesh refiners
     void refinserted( std::size_t meshid, std::size_t error );
@@ -104,15 +104,15 @@ class Transporter : public CBase_Transporter {
     //!   been inserted
     void workinserted();
 
-    //! \brief Reduction target: all mesh refiner chares have received a round
-    //!   of edges, and ran their compatibility algorithm
-    void compatibility( int modified );
+    //! \brief Reduction target: all Refiner chares have received a round
+    //!   of edges, and have run their compatibility algorithm
+    void compatibility( std::size_t meshid, std::size_t modified );
 
-    //! \brief Reduction target: all mesh refiner chares have matched/corrected
+    //! \brief Reduction target: all Refiner chares have matched/corrected
     //!   the tagging of chare-boundary edges, all chares are ready to perform
     //!   refinement.
-    void matched( std::size_t nextra, std::size_t nref, std::size_t nderef,
-                  std::size_t initial );
+    void matched( std::size_t summeshid, std::size_t nextra, std::size_t nref,
+                  std::size_t nderef, std::size_t initial );
 
     //! Compute surface integral across the whole problem and perform leak-test
     void bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb );
@@ -204,7 +204,9 @@ class Transporter : public CBase_Transporter {
     //!    checkpoint/restart.
     void pup( PUP::er &p ) override {
       p | m_nchare;
+      p | m_meshid;
       p | m_nload;
+      p | m_nref;
       p | m_ncit;
       p | m_nt0refit;
       p | m_ndtrefit;
@@ -233,13 +235,24 @@ class Transporter : public CBase_Transporter {
   private:
     //! Number of worker chares (one per mesh)
     std::vector< int > m_nchare;
-    std::size_t m_ncit;                  //!< Number of mesh ref corr iter
-    std::size_t m_nload;                 //!< Number of meshes loaded
-    std::size_t m_nt0refit;              //!< Number of t0ref mesh ref iters
-    std::size_t m_ndtrefit;              //!< Number of dtref mesh ref iters
-    std::size_t m_noutrefit;             //!< Number of outref mesh ref iters
-    std::size_t m_noutderefit;           //!< Number of outderef mesh ref iters
-    Scheme m_scheme;                     //!< Discretization scheme
+    //! Sum of mesh ids (across all chares, key) for each meshid (value)
+    std::unordered_map< std::size_t, std::size_t > m_meshid;
+    //! Number of mesh ref corr iter (one per mesh)
+    std::vector< std::size_t > m_ncit;
+    //! Number of meshes loaded
+    std::size_t m_nload;
+    //! Number of meshes refined
+    std::size_t m_nref;
+    //! Number of t0ref mesh ref iters (one per mesh)
+    std::vector< std::size_t > m_nt0refit;
+    //! Number of dtref mesh ref iters (one per mesh)
+    std::vector< std::size_t > m_ndtrefit;
+    //! Number of outref mesh ref iters (one per mesh)
+    std::vector< std::size_t > m_noutrefit;
+    //! Number of outderef mesh ref iters (one per mesh)
+    std::vector< std::size_t > m_noutderefit;
+    //! Discretization scheme
+    Scheme m_scheme;
     //! Partitioner nodegroup proxies (one per mesh)
     std::vector< CProxy_Partitioner > m_partitioner;
     //! Mesh refiner array proxies (one per mesh)
