@@ -38,7 +38,8 @@ extern std::vector< DGPDE > g_dgpde;
 
 using inciter::Refiner;
 
-Refiner::Refiner( const CProxy_Transporter& transporter,
+Refiner::Refiner( std::size_t meshid,
+                  const CProxy_Transporter& transporter,
                   const CProxy_Sorter& sorter,
                   const tk::CProxy_MeshWriter& meshwriter,
                   const Scheme& scheme,
@@ -50,6 +51,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
                   const std::vector< std::size_t >& triinpoel,
                   const std::map< int, std::vector< std::size_t > >& bnode,
                   int nchare ) :
+  m_meshid( meshid ),
   m_host( transporter ),
   m_sorter( sorter ),
   m_meshwriter( meshwriter ),
@@ -99,6 +101,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_outref_triinpoel()
 // *****************************************************************************
 //  Constructor
+//! \param[in] meshid Mesh ID
 //! \param[in] transporter Transporter (host) proxy
 //! \param[in] sorter Mesh reordering (sorter) proxy
 //! \param[in] meshwriter Mesh writer proxy
@@ -991,9 +994,9 @@ Refiner::endt0ref()
     m_ginpoel, m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare );
 
   // Compute final number of cells across whole problem
-  std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,
-                                        m_coord[0].size() }};
-  contribute( meshsize, CkReduction::sum_ulong, m_cbr.get< tag::refined >() );
+  std::vector< std::size_t >
+    meshdata{ m_meshid, m_ginpoel.size()/4, m_coord[0].size() };
+  contribute( meshdata, CkReduction::sum_ulong, m_cbr.get< tag::refined >() );
 
   // // Free up memory if no dtref
   // if (!g_inputdeck.get< tag::amr, tag::dtref >()) {

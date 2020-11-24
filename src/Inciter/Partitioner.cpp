@@ -74,6 +74,7 @@ Partitioner::Partitioner(
   m_bnode( bnode )
 // *****************************************************************************
 //  Constructor
+//! \param[in] meshid Mesh ID
 //! \param[in] filename Input mesh filename to read from
 //! \param[in] cbp Charm++ callbacks for Partitioner
 //! \param[in] cbr Charm++ callbacks for Refiner
@@ -267,7 +268,7 @@ Partitioner::refine()
 {
   auto dist = distribution( m_nchare );
 
-  int error = 0;
+  std::size_t error = 0;
   if (m_chinpoel.size() < static_cast<std::size_t>(dist[1])) {
 
     error = 1;
@@ -278,7 +279,8 @@ Partitioner::refine()
       // compute chare ID
       auto cid = CkMyNode() * dist[0] + c;
       // create refiner Charm++ chare array element using dynamic insertion
-      m_refiner[ cid ].insert( m_host,
+      m_refiner[ cid ].insert( m_meshid,
+                               m_host,
                                m_sorter,
                                m_meshwriter,
                                m_scheme,
@@ -311,8 +313,8 @@ Partitioner::refine()
   tk::destroy( m_triinpoel );
   tk::destroy( m_bnode );
 
-  contribute( sizeof(int), &error, CkReduction::max_int,
-              m_cbp.get< tag::refinserted >() );
+  std::vector< std::size_t > meshdata{ m_meshid, error };
+  contribute( meshdata, CkReduction::max_ulong, m_cbp.get<tag::refinserted>() );
 }
 
 std::array< std::vector< tk::real >, 3 >

@@ -429,9 +429,6 @@ Transporter::createPartitioner()
   // Start preparing mesh(es)
   print.diag( "Reading mesh(es)" );
 
-  // Create empty mesh sorter Charm++ chare array (bound to workers)
-  m_sorter = CProxy_Sorter::ckNew( m_scheme.arrayoptions() );
-
   // Create MeshWriter chare group
   m_meshwriter = tk::CProxy_MeshWriter::ckNew(
                     g_inputdeck.get< tag::selected, tag::filetype >(),
@@ -476,10 +473,13 @@ Transporter::createPartitioner()
     // Create empty mesh refiner chare array (bound to workers)
     m_refiner.push_back( CProxy_Refiner::ckNew( m_scheme.arrayoptions() ) );
 
+    // Create empty mesh sorter Charm++ chare array (bound to workers)
+    m_sorter.push_back( CProxy_Sorter::ckNew( m_scheme.arrayoptions() ) );
+
     // Create mesh partitioner Charm++ chare nodegroup
     m_partitioner.push_back(
       CProxy_Partitioner::ckNew( meshid++, filename, cbp, cbr, cbs, thisProxy,
-        m_refiner.back(), m_sorter, m_meshwriter, m_scheme, bface, faces,
+        m_refiner.back(), m_sorter.back(), m_meshwriter, m_scheme, bface, faces,
         bnode ) );
   }
 }
@@ -561,21 +561,24 @@ Transporter::distributed( std::size_t meshid )
 //! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  // cutoff working with multiple meshes here
-  if (meshid == 0) m_partitioner[0].refine();
+  m_partitioner[meshid].refine();
 }
 
 void
-Transporter::refinserted( int error )
+Transporter::refinserted( std::size_t meshid, std::size_t error )
 // *****************************************************************************
-// Reduction target: all PEs have created the mesh refiners
-//! \param[in] error aggregated across all PEs with operator max
+// Reduction target: all compute nodes have created the mesh refiners
+//! \param[in] meshid Mesh id (aggregated across all compute nodes with operator
+//!   max)
+//! \param[in] error Error code (aggregated across all compute nodes with
+//!   operator max)
 // *****************************************************************************
 {
   if (error) {
 
     printer() << "\n>>> ERROR: A worker chare was not assigned any mesh "
-              "elements. This can happen in SMP-mode with a large +ppn "
+              "elements after distributing mesh " + std::to_string(meshid) +
+              ". This can happen in SMP-mode with a large +ppn "
               "parameter (number of worker threads per logical node) and is "
               "most likely the fault of the mesh partitioning algorithm not "
               "tolerating the case when it is asked to divide the "
@@ -585,12 +588,11 @@ Transporter::refinserted( int error )
               "with +ppn larger than 1. Solution 1: Try a different "
               "partitioning algorithm (e.g., rcb instead of mj). Solution 2: "
               "Decrease +ppn.";
-
     finish();
 
   } else {
 
-     m_refiner[0].doneInserting();
+     m_refiner[meshid].doneInserting();
 
   }
 }
@@ -753,20 +755,30 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
 }
 
 void
-Transporter::refined( std::size_t nelem, std::size_t npoin )
+Transporter::refined( std::size_t meshid, std::size_t nelem, std::size_t npoin )
 // *****************************************************************************
-// Reduction target: all PEs have refined their mesh
-//! \param[in] nelem Total number of elements in mesh across the whole problem
-//! \param[in] npoin Total number of mesh points (summed across all PEs). Note
-//!    that in parallel this is larger than the total number of points in the
-//!    mesh, because the boundary nodes are multi-counted.
+// Reduction target: all compute nodes have refined their mesh
+//! \param[in] meshid Mesh id (summed accross all Refiner chares)
+//! \param[in] nelem Total number of elements in mesh summed across the
+//!   distributed mesh
+//! \param[in] npoin Total number of mesh points summed across the distributed
+//!   mesh. Note that in parallel this is larger than the number of points in
+//!   the mesh, because the boundary nodes are multi-counted. But we only need
+//!   an equal or larger than npoin for Sorter::setup, so this is okay.
 // *****************************************************************************
 {
-  m_sorter.doneInserting();
+  //meshid /= static_cast< std::size_t >( CkNumNodes() );
+  //Assert( meshid < m_nelem.size(), "MeshId indexing out" );
+  std::cout << meshid << '\n';
 
-  //m_nelem = nelem;
+  if (meshid == 0) {
+    // cutoff working with multiple meshes here
+    m_sorter[0].doneInserting();
 
-  m_sorter.setup( npoin );
+    //m_nelem = nelem;
+
+    m_sorter[0].setup( npoin );
+  }
 }
 
 void
@@ -775,7 +787,7 @@ Transporter::queried()
 // Reduction target: all Sorter chares have queried their boundary edges
 // *****************************************************************************
 {
-  m_sorter.response();
+  m_sorter[0].response();
 }
 
 void
@@ -784,7 +796,7 @@ Transporter::responded()
 // Reduction target: all Sorter chares have responded with their boundary edges
 // *****************************************************************************
 {
-  m_sorter.start();
+  m_sorter[0].start();
 }
 
 void
@@ -1072,7 +1084,7 @@ Transporter::stat()
     {{ m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0] }} );
 
   // Create "derived-class" workers
-  m_sorter.createWorkers();
+  m_sorter[0].createWorkers();
 }
 
 void

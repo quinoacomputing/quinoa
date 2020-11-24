@@ -91,8 +91,8 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: all Refiner chares have setup their boundary edges
     void respondedRef();
 
-    //! Reduction target: all PEs have created the mesh refiners
-    void refinserted( int error );
+    //! Reduction target: all compute nodes have created the mesh refiners
+    void refinserted( std::size_t meshid, std::size_t error );
 
     //! Reduction target: all Discretization chares have been inserted
     void discinserted();
@@ -117,8 +117,8 @@ class Transporter : public CBase_Transporter {
     //! Compute surface integral across the whole problem and perform leak-test
     void bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb );
 
-    //! Reduction target: all PEs have optionally refined their mesh
-    void refined( std::size_t nelem, std::size_t npoin );
+    //! Reduction target: all compute nodes have refined their mesh
+    void refined( std::size_t meshid, std::size_t nelem, std::size_t npoin );
 
     //! \brief Reduction target: all worker chares have resized their own data
     //!   after mesh refinement
@@ -245,7 +245,8 @@ class Transporter : public CBase_Transporter {
     //! Mesh refiner array proxies (one per mesh)
     std::vector< CProxy_Refiner > m_refiner;
     tk::CProxy_MeshWriter m_meshwriter;  //!< Mesh writer nodegroup proxy
-    CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
+    //! Mesh sorter array proxy (one per mesh)
+    std::vector< CProxy_Sorter > m_sorter;
     std::vector< std::size_t > m_nelem;  //!< Number of mesh elements (per mesh)
     std::vector< std::size_t > m_npoin;  //!< Number of mesh points (per mesh)
     int m_finished;                      //!< True if finished with timestepping

@@ -23,7 +23,8 @@ module transporter {
       entry [reductiontarget] void load( std::size_t meshid,
                                          std::size_t nelem );
       entry [reductiontarget] void distributed( std::size_t meshid );
-      entry [reductiontarget] void refinserted( int error );
+      entry [reductiontarget] void refinserted( std::size_t meshid,
+                                                std::size_t error );
       entry [reductiontarget] void discinserted();
       entry [reductiontarget] void disccreated( std::size_t npoin );
       entry [reductiontarget] void workinserted();
@@ -38,7 +39,8 @@ module transporter {
                                            tk::real sy,
                                            tk::real sz,
                                            tk::real cb );
-      entry [reductiontarget] void refined( std::size_t nelem,
+      entry [reductiontarget] void refined( std::size_t meshid,
+                                            std::size_t nelem,
                                             std::size_t npoin );
       entry [reductiontarget] void resized();
       entry [reductiontarget] void startEsup();

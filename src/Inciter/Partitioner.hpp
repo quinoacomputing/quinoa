@@ -140,7 +140,7 @@ class Partitioner : public CBase_Partitioner {
     //@}
 
   private:
-    //! Mesh id
+    //! Mesh ID
     std::size_t m_meshid;
     //! Charm++ callbacks associated to compile-time tags for partitioner
     tk::PartitionerCallback m_cbp;
