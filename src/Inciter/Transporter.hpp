@@ -82,8 +82,9 @@ class Transporter : public CBase_Transporter {
     //!   chares they will recieve contributions from during linear solution
     void partition();
 
-    //! Reduction target: all PEs have distrbuted their mesh after partitioning
-    void distributed();
+    //! \brief Reduction target: all compute nodes have distrbuted their mesh
+    //!   after partitioning
+    void distributed( std::size_t meshid );
 
     //! Reduction target: all Refiner chares have queried their boundary edges
     void queriedRef();
@@ -230,7 +231,8 @@ class Transporter : public CBase_Transporter {
     //@}
 
   private:
-    int m_nchare;                        //!< Number of worker chares
+    //! Number of worker chares (one per mesh)
+    std::vector< int > m_nchare;
     std::size_t m_ncit;                  //!< Number of mesh ref corr iter
     std::size_t m_nload;                 //!< Number of meshes loaded
     std::size_t m_nt0refit;              //!< Number of t0ref mesh ref iters
@@ -238,9 +240,10 @@ class Transporter : public CBase_Transporter {
     std::size_t m_noutrefit;             //!< Number of outref mesh ref iters
     std::size_t m_noutderefit;           //!< Number of outderef mesh ref iters
     Scheme m_scheme;                     //!< Discretization scheme
-    //! Partitioner nodegroup proxy
+    //! Partitioner nodegroup proxies (one per mesh)
     std::vector< CProxy_Partitioner > m_partitioner;
-    CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy
+    //! Mesh refiner array proxies (one per mesh)
+    std::vector< CProxy_Refiner > m_refiner;
     tk::CProxy_MeshWriter m_meshwriter;  //!< Mesh writer nodegroup proxy
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
     std::vector< std::size_t > m_nelem;  //!< Number of mesh elements (per mesh)

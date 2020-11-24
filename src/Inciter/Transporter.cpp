@@ -58,7 +58,7 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Transporter;
 
 Transporter::Transporter() :
-  m_nchare( 0 ),
+  m_nchare( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size() ),
   m_ncit( 0 ),
   m_nload( 0 ),
   m_nt0refit( 0 ),
@@ -432,9 +432,6 @@ Transporter::createPartitioner()
   // Create empty mesh sorter Charm++ chare array (bound to workers)
   m_sorter = CProxy_Sorter::ckNew( m_scheme.arrayoptions() );
 
-  // Create empty mesh refiner chare array (bound to workers)
-  m_refiner = CProxy_Refiner::ckNew( m_scheme.arrayoptions() );
-
   // Create MeshWriter chare group
   m_meshwriter = tk::CProxy_MeshWriter::ckNew(
                     g_inputdeck.get< tag::selected, tag::filetype >(),
@@ -476,10 +473,14 @@ Transporter::createPartitioner()
     // Warn on no BCs
     if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";
 
+    // Create empty mesh refiner chare array (bound to workers)
+    m_refiner.push_back( CProxy_Refiner::ckNew( m_scheme.arrayoptions() ) );
+
     // Create mesh partitioner Charm++ chare nodegroup
     m_partitioner.push_back(
       CProxy_Partitioner::ckNew( meshid++, filename, cbp, cbr, cbs, thisProxy,
-        m_refiner, m_sorter, m_meshwriter, m_scheme, bface, faces, bnode ) );
+        m_refiner.back(), m_sorter, m_meshwriter, m_scheme, bface, faces,
+        bnode ) );
   }
 }
 
@@ -496,18 +497,20 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
   Assert( meshid < m_nelem.size(), "MeshId indexing out" );
   m_nelem[meshid] = nelem;
 
+  // Compute load distribution given total work (nelem) and user-specified
+  // virtualization
+  uint64_t chunksize, remainder;
+  m_nchare[meshid] = static_cast<int>(
+    tk::linearLoadDistributor(
+       g_inputdeck.get< tag::cmd, tag::virtualization >(),
+       m_nelem[meshid], CkNumPes(), chunksize, remainder ) );
+
+  // Partition mesh
+  m_partitioner[meshid].partition( m_nchare[meshid] );
+
   if (++m_nload == m_nelem.size()) {     // all meshes have been loaded
 
     m_nload = 0;
-
-    // Compute load distribution given total work (nelem) and user-specified
-    // virtualization
-    uint64_t chunksize, remainder;
-    m_nchare = static_cast<int>(
-                 tk::linearLoadDistributor(
-                   g_inputdeck.get< tag::cmd, tag::virtualization >(),
-                   m_nelem[0], CkNumPes(), chunksize, remainder ) );
-
     auto print = printer();
 
     // Start timer measuring preparation of the mesh for partitioning
@@ -526,17 +529,19 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
     if (m_nelem.size() > 1) {
       print.item( "Number of tetrahedra (per mesh)",tk::parameters(m_nelem) );
       print.item( "Number of points (per mesh)", tk::parameters(m_npoin) );
+      print.item( "Number of work units (per mesh)", tk::parameters(m_nchare) );
     }
     print.item( "Total number of tetrahedra",
                 std::accumulate( begin(m_nelem), end(m_nelem), 0UL ) );
     print.item( "Total number of points",
                 std::accumulate( begin(m_npoin), end(m_npoin), 0UL ) );
-    print.item( "Number of work units", m_nchare );
+    print.item( "Total number of work units",
+                std::accumulate( begin(m_nchare), end(m_nchare), 0 ) );
 
     print.endsubsection();
 
     // Tell meshwriter the total number of chares
-    m_meshwriter.nchare( m_nchare );
+    m_meshwriter.nchare( m_nchare[0] );
 
     // Query number of initial mesh refinement steps
     int nref = 0;
@@ -544,20 +549,20 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
       nref = static_cast<int>(g_inputdeck.get< tag::amr, tag::init >().size());
 
     m_progMesh.start( print, "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
-      m_nchare, m_nchare, m_nchare, m_nchare }} );
-
-    // Partition the mesh
-    m_partitioner[0].partition( m_nchare );
+      m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0] }} );
   }
 }
 
 void
-Transporter::distributed()
+Transporter::distributed( std::size_t meshid )
 // *****************************************************************************
-// Reduction target: all PEs have distrbuted their mesh after partitioning
+// Reduction target: all compute nodes have distrbuted their mesh after
+// partitioning
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_partitioner[0].refine();
+  // cutoff working with multiple meshes here
+  if (meshid == 0) m_partitioner[0].refine();
 }
 
 void
@@ -585,7 +590,7 @@ Transporter::refinserted( int error )
 
   } else {
 
-     m_refiner.doneInserting();
+     m_refiner[0].doneInserting();
 
   }
 }
@@ -596,7 +601,7 @@ Transporter::queriedRef()
 // Reduction target: all mesh Refiner chares have queried their boundary edges
 // *****************************************************************************
 {
-  m_refiner.response();
+  m_refiner[0].response();
 }
 
 void
@@ -605,7 +610,7 @@ Transporter::respondedRef()
 // Reduction target: all mesh Refiner chares have setup their boundary edges
 // *****************************************************************************
 {
-  m_refiner.refine();
+  m_refiner[0].refine();
 }
 
 void
@@ -623,9 +628,9 @@ Transporter::compatibility( int modified )
 // *****************************************************************************
 {
   if (modified)
-    m_refiner.comExtra();
+    m_refiner[0].comExtra();
   else
-    m_refiner.correctref();
+    m_refiner[0].correctref();
 }
 
 void
@@ -649,7 +654,7 @@ Transporter::matched( std::size_t nextra,
   if (nextra > 0) {
 
     ++m_ncit;
-    m_refiner.comExtra();
+    m_refiner[0].comExtra();
 
   } else {
 
@@ -657,7 +662,7 @@ Transporter::matched( std::size_t nextra,
 
     // decode refmode
     auto refmode = static_cast< Refiner::RefMode >(
-                     sumrefmode / static_cast<std::size_t>(m_nchare) );
+                     sumrefmode / static_cast<std::size_t>(m_nchare[0]) );
 
     if (refmode == Refiner::RefMode::T0REF) {
 
@@ -705,7 +710,7 @@ Transporter::matched( std::size_t nextra,
     } else Throw( "RefMode not implemented" );
 
     m_ncit = 0;
-    m_refiner.perform();
+    m_refiner[0].perform();
 
   }
 }
@@ -833,16 +838,18 @@ Transporter::disccreated( std::size_t npoin )
     if (m_nelem.size() > 1) {
       print.item( "Number of tetrahedra (per mesh)",tk::parameters(m_nelem) );
       print.item( "Number of points (per mesh)", tk::parameters(m_npoin) );
+      print.item( "Number of work units (per mesh)", tk::parameters(m_nchare) );
     }
     print.item( "Total number of tetrahedra",
                 std::accumulate( begin(m_nelem), end(m_nelem), 0UL ) );
     print.item( "Total number of points",
                 std::accumulate( begin(m_npoin), end(m_npoin), 0UL ) );
-    print.item( "Number of work units", m_nchare );
+    print.item( "Total number of work units",
+                std::accumulate( begin(m_nchare), end(m_nchare), 0 ) );
     print.endsubsection();
   }
 
-  m_refiner.sendProxy();
+  m_refiner[0].sendProxy();
 
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   if (sch == ctr::SchemeType::DiagCG) m_scheme.fct().doneInserting();
@@ -1062,7 +1069,7 @@ Transporter::stat()
   inthead( print );
 
   m_progWork.start( print, "Preparing workers",
-                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
+    {{ m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0] }} );
 
   // Create "derived-class" workers
   m_sorter.createWorkers();

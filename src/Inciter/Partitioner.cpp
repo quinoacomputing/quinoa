@@ -49,6 +49,7 @@ Partitioner::Partitioner(
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& faces,
   const std::map< int, std::vector< std::size_t > >& bnode ) :
+  m_meshid( meshid ),
   m_cbp( cbp ),
   m_cbr( cbr ),
   m_cbs( cbs ),
@@ -253,7 +254,8 @@ Partitioner::recvMesh()
 {
   if (--m_ndist == 0) {
     if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.pedistributed();
-    contribute( m_cbp.get< tag::distributed >() );
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbp.get< tag::distributed >() );
   }
 }
 
@@ -544,7 +546,8 @@ Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
   // Export chare IDs and mesh we do not own to fellow compute nodes
   if (exp.empty()) {
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pedistributed();
-    contribute( m_cbp.get< tag::distributed >() );
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbp.get< tag::distributed >() );
   } else {
      m_ndist += exp.size();
      for (const auto& [ targetchare, chunk ] : exp)

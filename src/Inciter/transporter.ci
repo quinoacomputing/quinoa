@@ -22,7 +22,7 @@ module transporter {
       entry Transporter();
       entry [reductiontarget] void load( std::size_t meshid,
                                          std::size_t nelem );
-      entry [reductiontarget] void distributed();
+      entry [reductiontarget] void distributed( std::size_t meshid );
       entry [reductiontarget] void refinserted( int error );
       entry [reductiontarget] void discinserted();
       entry [reductiontarget] void disccreated( std::size_t npoin );
