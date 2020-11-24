@@ -236,7 +236,8 @@ class Transporter : public CBase_Transporter {
     std::size_t m_noutrefit;             //!< Number of outref mesh ref iters
     std::size_t m_noutderefit;           //!< Number of outderef mesh ref iters
     Scheme m_scheme;                     //!< Discretization scheme
-    CProxy_Partitioner m_partitioner;    //!< Partitioner nodegroup proxy
+    //! Partitioner nodegroup proxy
+    std::vector< CProxy_Partitioner > m_partitioner;
     CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy
     tk::CProxy_MeshWriter m_meshwriter;  //!< Mesh writer nodegroup proxy
     CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy

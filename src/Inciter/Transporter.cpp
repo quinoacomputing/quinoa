@@ -441,7 +441,7 @@ Transporter::createPartitioner()
   // Warn on no BCs
   if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";
 
-  // Create partitioner callbacks (order matters)
+  // Create partitioner callbacks (order important)
   tk::PartitionerCallback cbp {{
       CkCallback( CkReductionTarget(Transporter,load), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
@@ -449,7 +449,7 @@ Transporter::createPartitioner()
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
   }};
 
-  // Create refiner callbacks (order matters)
+  // Create refiner callbacks (order important)
   tk::RefinerCallback cbr {{
       CkCallback( CkReductionTarget(Transporter,queriedRef), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,respondedRef), thisProxy )
@@ -459,7 +459,7 @@ Transporter::createPartitioner()
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
   }};
 
-  // Create sorter callbacks (order matters)
+  // Create sorter callbacks (order important)
   tk::SorterCallback cbs {{
       CkCallback( CkReductionTarget(Transporter,queried), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,responded), thisProxy )
@@ -486,9 +486,9 @@ Transporter::createPartitioner()
                     g_inputdeck.get< tag::cmd, tag::benchmark >() );
 
   // Create mesh partitioner Charm++ chare nodegroup
-  m_partitioner =
+  m_partitioner.push_back(
     CProxy_Partitioner::ckNew( inputs[0], cbp, cbr, cbs, thisProxy, m_refiner,
-      m_sorter, m_meshwriter, m_scheme, bface, faces, bnode );
+      m_sorter, m_meshwriter, m_scheme, bface, faces, bnode ) );
 }
 
 void
@@ -539,7 +539,7 @@ Transporter::load( std::size_t nelem )
     m_nchare, m_nchare, m_nchare, m_nchare }} );
 
   // Partition the mesh
-  m_partitioner.partition( m_nchare );
+  m_partitioner[0].partition( m_nchare );
 }
 
 void
@@ -548,7 +548,7 @@ Transporter::distributed()
 // Reduction target: all PEs have distrbuted their mesh after partitioning
 // *****************************************************************************
 {
-  m_partitioner.refine();
+  m_partitioner[0].refine();
 }
 
 void
