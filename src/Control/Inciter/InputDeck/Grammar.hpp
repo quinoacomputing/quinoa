@@ -836,7 +836,7 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       brigand::for_each< inciter::ctr::parameters::Keys >
-                       ( AddOutVarHuman( stack, in.string() ) );
+                       ( AddOutVarHuman< Stack >( stack, in.string() ) );
     }
   };
 
@@ -883,7 +883,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       bool inbounds;
       brigand::for_each< inciter::ctr::parameters::Keys >
-                       ( OutVarBounds( stack, inbounds ) );
+                       ( OutVarBounds< Stack >( stack, inbounds ) );
       if (!inbounds)
         Message< Stack, ERROR, MsgKey::NOSUCHCOMPONENT >( stack, in );
     }
