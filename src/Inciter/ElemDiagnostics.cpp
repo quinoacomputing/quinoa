@@ -210,6 +210,10 @@ const
         // Compute max for Linf norm of the numerical-analytic solution
         auto err = std::abs( ugp - s[c] );
         if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
+
+        // Compute sum of the total energy over the entire domain (only the
+        // first entry is used)
+        if (c == u.nprop()/rdof-1) diag[TOTALSOL][0] += wt * ugp;
       }
     }
   }
