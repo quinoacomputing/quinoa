@@ -47,10 +47,15 @@ class CompFlowProblemNLEnergyGrowth {
                         tk::real p );
 
   public:
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+                tk::real z, tk::real t );
+
     //! Evaluate analytical solution at (x,y,z,t) for all components
-    static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real t );
+    static tk::InitializeFn::result_type
+    analyticSolution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+                      tk::real z, tk::real t );
 
     //! Compute and return source term for NLEG manufactured solution
     //! \param[in] system Equation system index, i.e., which compressible
@@ -116,21 +121,8 @@ class CompFlowProblemNLEnergyGrowth {
       re = rho*dedt + ie*drdt;
     }
 
-    //! Return field names to be output to file
-    std::vector< std::string > fieldNames( ncomp_t ) const;
-
-    //! Return field output going to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t system,
-                 ncomp_t ncomp,
-                 ncomp_t offset,
-                 std::size_t nunk,
-                 std::size_t rdof,
-                 tk::real t,
-                 tk::real V,
-                 const std::vector< tk::real >& vol,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const tk::Fields& U ) const;
+    //! Return analytic field names to be output to file
+    std::vector< std::string > analyticFieldNames( ncomp_t ) const;
 
     //! Return names of integral variables to be output to diagnostics file
     std::vector< std::string > names( ncomp_t ) const;

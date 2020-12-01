@@ -26,8 +26,8 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::MultiMatProblemGasImpact;
 
-tk::SolutionFn::result_type
-MultiMatProblemGasImpact::solution( ncomp_t system,
+tk::InitializeFn::result_type
+MultiMatProblemGasImpact::initialize( ncomp_t system,
   ncomp_t ncomp,
   tk::real x,
   tk::real y,
@@ -41,7 +41,7 @@ MultiMatProblemGasImpact::solution( ncomp_t system,
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 //! \details This function only initializes the gas impact problem,
 //!   but does not actually give the analytical solution at time greater than 0.
 // *****************************************************************************

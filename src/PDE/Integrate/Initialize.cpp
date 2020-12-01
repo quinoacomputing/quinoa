@@ -33,7 +33,7 @@ tk::initialize( ncomp_t system,
                 const Fields& L,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
-                const SolutionFn& solution,
+                const InitializeFn& solution,
                 Fields& unk,
                 real t,
                 const std::size_t nielem )
@@ -130,7 +130,7 @@ tk::update_rhs( ncomp_t ncomp,
 // *****************************************************************************
 {
   Assert( B.size() == ndof, "Size mismatch for basis function" );
-  Assert( s.size() == ncomp, "Size mismatch for source term" );
+  Assert( s.size() >= ncomp, "Size mismatch for source term" );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {

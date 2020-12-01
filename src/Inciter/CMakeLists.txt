@@ -26,6 +26,7 @@ add_library(Inciter
             ElemDiagnostics.cpp
             PrefIndicator.cpp
             ${CHARMMESH}
+            FieldOutput.cpp
             NodeBC.cpp)
 
 target_include_directories(Inciter PUBLIC

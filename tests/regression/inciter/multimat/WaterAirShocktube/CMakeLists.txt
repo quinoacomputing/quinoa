@@ -10,8 +10,7 @@ add_regression_test(multimat_waterair_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     BIN_BASELINE waterair_shocktube_p0p1.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
-                    BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF waterair_shocktube_diag.ndiff.cfg
-                    LABELS dg)
+                    LABELS dg multimat)

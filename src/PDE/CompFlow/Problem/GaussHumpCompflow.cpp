@@ -24,13 +24,13 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::CompFlowProblemGaussHump;
 
-tk::SolutionFn::result_type
-CompFlowProblemGaussHump::solution( ncomp_t system,
-                                    ncomp_t ncomp,
-                                    tk::real x,
-                                    tk::real y,
-                                    tk::real,
-                                    tk::real t )
+tk::InitializeFn::result_type
+CompFlowProblemGaussHump::initialize( ncomp_t system,
+                                      ncomp_t ncomp,
+                                      tk::real x,
+                                      tk::real y,
+                                      tk::real,
+                                      tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -40,7 +40,7 @@ CompFlowProblemGaussHump::solution( ncomp_t system,
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] t Time where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
   Assert( ncomp == 5, "Number of scalar components must be 5" );
@@ -70,92 +70,65 @@ CompFlowProblemGaussHump::solution( ncomp_t system,
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
-std::vector< std::string >
-CompFlowProblemGaussHump::fieldNames( ncomp_t ) const
+tk::InitializeFn::result_type
+CompFlowProblemGaussHump::analyticSolution( ncomp_t system,
+                                            ncomp_t ncomp,
+                                            tk::real x,
+                                            tk::real y,
+                                            tk::real,
+                                            tk::real t )
 // *****************************************************************************
-// Return field names to be output to file
+//! Evaluate analytical solution at (x,y,z,t) for all components
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
+//! \param[in] t Time where to evaluate the solution
+//! \return Values of all components evaluated at (x)
+//! \note The function signature must follow tk::InitializeFn
+// *****************************************************************************
+{
+  Assert( ncomp == 5, "Number of scalar components must be 5" );
+
+  using tag::param;
+
+  const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0 );
+
+  // center of the hump
+  auto x0 = 0.25 + vel[0][0]*t;
+  auto y0 = 0.25 + vel[0][1]*t;
+
+  // density
+  auto r = 1.0 + exp( -((x-x0)*(x-x0) + (y-y0)*(y-y0))/(2.0 * 0.005) );
+  // pressure
+  auto p = 1.0;
+  // velocity
+  auto u = 1.0;
+  auto v = 1.0;
+  auto w = 0.0;
+  // total specific energy
+  auto E = eos_totalenergy< eq >( system, r, u, v, w, p ) / r;
+
+  return {{ r, u, v, w, E, p }};
+}
+
+std::vector< std::string >
+CompFlowProblemGaussHump::analyticFieldNames( ncomp_t ) const
+// *****************************************************************************
+// Return analytic field names to be output to file
 //! \return Vector of strings labelling fields output in file
 // *****************************************************************************
 {
-  auto n = CompFlowFieldNames();
-
+  std::vector< std::string > n;
   n.push_back( "density_analytical" );
   n.push_back( "x-velocity_analytical" );
   n.push_back( "y-velocity_analytical" );
   n.push_back( "z-velocity_analytical" );
   n.push_back( "specific_total_energy_analytical" );
   n.push_back( "pressure_analytical" );
-  n.push_back( "err(rho)" );
 
   return n;
-}
-
-std::vector< std::vector< tk::real > >
-CompFlowProblemGaussHump::fieldOutput(
-  ncomp_t system,
-  ncomp_t ncomp,
-  ncomp_t offset,
-  std::size_t nunk,
-  std::size_t rdof,
-  tk::real t,
-  tk::real V,
-  const std::vector< tk::real >& vol,
-  const std::array< std::vector< tk::real >, 3 >& coord,
-  const tk::Fields& U ) const
-// *****************************************************************************
-//  Return field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
-//! \param[in] nunk Number of unknowns to extract
-//! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
-//!   the number of scalar components to shift when extracting scalar
-//!   components.
-//! \param[in] t Physical time
-//! \param[in] V Total mesh volume (across the whole problem)
-//! \param[in] vol Volumes associated to elements (or nodes)
-//! \param[in] coord Coordinates at which to evaluate the solution
-//! \param[in] U Solution vector at recent time step
-//! \return Vector of vectors to be output to file
-// *****************************************************************************
-{
-  auto out = CompFlowFieldOutput( system, offset, nunk, rdof, U );
-
-  auto r = U.extract( 0*rdof, offset );
-  auto u = U.extract( 1*rdof, offset );
-  auto v = U.extract( 2*rdof, offset );
-  auto w = U.extract( 3*rdof, offset );
-  auto e = U.extract( 4*rdof, offset );
-
-  // mesh node coordinates
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
-
-  auto er = r, p = r;
-  for (std::size_t i=0; i<nunk; ++i) {
-    auto s = solution( system, ncomp, x[i], y[i], z[i], t );
-    er[i] = std::pow( r[i] - s[0], 2.0 ) * vol[i] / V;
-    r[i] = s[0];
-    u[i] = s[1]/s[0];
-    v[i] = s[2]/s[0];
-    w[i] = s[3]/s[0];
-    e[i] = s[4]/s[0];
-    p[i] = eos_pressure< eq >( system, r[i], u[i], v[i], w[i], r[i]*e[i] );
-  }
-
-  out.push_back( r );
-  out.push_back( u );
-  out.push_back( v );
-  out.push_back( w );
-  out.push_back( e );
-  out.push_back( p );
-
-  out.push_back( er );
-
-  return out;
 }
 
 std::vector< std::string >

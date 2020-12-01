@@ -139,7 +139,7 @@ class CompFlow {
                      const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, unk, t, nielem );
+                      Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
@@ -619,43 +619,15 @@ class CompFlow {
       return v;
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > fieldNames() const
-    { return m_problem.fieldNames( m_ncomp ); }
-
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > nodalFieldNames() const
-    { return fieldNames(); }
+    //! Return analytic field names to be output to file
+    //! \return Vector of strings labelling analytic fields output in file
+    std::vector< std::string > analyticFieldNames() const
+    { return m_problem.analyticFieldNames( m_ncomp ); }
 
     //! Return time history field names to be output to file
     //! \return Vector of strings labeling time history fields output in file
     std::vector< std::string > histNames() const
     { return CompFlowHistNames(); }
-
-    //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] nunk Number of unknowns to extract
-    //! \param[in] rdof Number of reconstructed degrees of freedom. This used as
-    //!   the number of scalar components to shift when extracting scalar
-    //!   components.
-    //! \param[in,out] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
-                 std::size_t nunk,
-                 std::size_t rdof,
-                 const std::vector< tk::real >& vol,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const tk::Fields& U,
-                 [[maybe_unused]] const tk::Fields& = tk::Fields() ) const
-    {
-      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, rdof,
-                                    t, V, vol, coord, U );
-    }
 
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
@@ -733,29 +705,17 @@ class CompFlow {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    {
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t );
-      return std::vector< tk::real >( std::begin(s), std::end(s) );
-    }
+    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
 
-    //! Compute nodal field output
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] coord Node coordinates
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] Un Node solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    nodeFieldOutput( tk::real t,
-                     tk::real V,
-                     const tk::UnsMesh::Coords& coord,
-                     const tk::Fields& geoElem,
-                     const tk::Fields& Un,
-                     const tk::Fields& ) const
-    {
-      return fieldOutput( t, V, coord[0].size(), 1, geoElem.extract(0,0),
-                          coord, Un );
-    }
+    //! Return analytic solution for conserved variables
+    //! \param[in] xi X-coordinate at which to evaluate the analytic solution
+    //! \param[in] yi Y-coordinate at which to evaluate the analytic solution
+    //! \param[in] zi Z-coordinate at which to evaluate the analytic solution
+    //! \param[in] t Physical time at which to evaluate the analytic solution
+    //! \return Vector of analytic solution at given location and time
+    std::vector< tk::real >
+    solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
 
   private:
     //! Physics policy
@@ -834,7 +794,7 @@ class CompFlow {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t ) }};
+      return {{ ul, Problem::initialize( system, ncomp, x, y, z, t ) }};
     }
 
     //! \brief Boundary state function providing the left and right state of a

@@ -31,7 +31,7 @@ initialize( ncomp_t system,
             const Fields& L,
             const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,
-            const SolutionFn& solution,
+            const InitializeFn& solution,
             Fields& unk,
             real t,
             const std::size_t nielem );

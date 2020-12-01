@@ -41,10 +41,15 @@ class CompFlowProblemVorticalFlow {
     using eq = tag::compflow;
 
   public:
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+                tk::real z, tk::real );
+
     //! Evaluate analytical solution at (x,y,z) for all components
-    static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real z,
-              tk::real );
+    static tk::InitializeFn::result_type
+    analyticSolution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+                      tk::real z, tk::real );
 
     //! Compute and return source term for vortical flow manufactured solution
     //! \param[in] system Equation system index, i.e., which compressible
@@ -71,7 +76,7 @@ class CompFlowProblemVorticalFlow {
       // ratio of specific heats
       tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
       // evaluate solution at x,y,z
-      auto s = solution( system, 5, x, y, z, 0.0 );
+      auto s = initialize( system, 5, x, y, z, 0.0 );
 
       // density source
       r = 0.0;
@@ -83,21 +88,8 @@ class CompFlowProblemVorticalFlow {
       re = (ru*s[1] + rv*s[2])/s[0] + 8.0*a*a*a*z*z/(g-1.0);
     }
 
-    //! Return field names to be output to file
-    std::vector< std::string > fieldNames( ncomp_t ) const;
-
-    //! Return field output going to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t system,
-                 ncomp_t,
-                 ncomp_t offset,
-                 std::size_t nunk,
-                 std::size_t rdof,
-                 tk::real,
-                 tk::real,
-                 const std::vector< tk::real >&,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const tk::Fields& U ) const;
+    //! Return analytic field names to be output to file
+    std::vector< std::string > analyticFieldNames( ncomp_t ) const;
 
     //! Return names of integral variables to be output to diagnostics file
     std::vector< std::string > names( ncomp_t ) const;

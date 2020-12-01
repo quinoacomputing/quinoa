@@ -44,7 +44,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //!   (x,y,z) for all components
 std::vector< tk::real >
 solinc( tk::ncomp_t system, tk::ncomp_t ncomp, tk::real x, tk::real y,
-        tk::real z, tk::real t, tk::real dt, tk::SolutionFn solution );
+        tk::real z, tk::real t, tk::real dt, tk::InitializeFn solution );
 
 //! Compute boundary point normals
 std::unordered_map< int,
@@ -211,8 +211,9 @@ class CGPDE {
                 const std::unordered_set< std::size_t >& nodes ) const
     { self->farfieldbc( U, coord, bnorm, nodes ); }
 
-    //! Public interface to returning field output labels
-    std::vector< std::string > fieldNames() const { return self->fieldNames(); }
+    //! Public interface to returning analytic field output labels
+    std::vector< std::string > analyticFieldNames() const
+    { return self->analyticFieldNames(); }
 
     //! Public interface to returning surface field output labels
     std::vector< std::string > surfNames() const { return self->surfNames(); }
@@ -222,17 +223,6 @@ class CGPDE {
 
     //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
-
-    //! Public interface to returning field output
-    std::vector< std::vector< real > > fieldOutput(
-      real t,
-      real V,
-      std::size_t nunk,
-      std::size_t,
-      const std::array< std::vector< real >, 3 >& coord,
-      const std::vector< real >& v,
-      tk::Fields& U ) const
-    { return self->fieldOutput( t, V, nunk, 1, coord, v, U ); }
 
     //! Public interface to returning surface field output
     std::vector< std::vector< real > >
@@ -248,9 +238,14 @@ class CGPDE {
     { return self->histOutput( h, inpoel, U ); }
 
     //! Public interface to returning analytic solution
-    std::vector< real >
+    tk::InitializeFn::result_type
     analyticSolution( real xi, real yi, real zi, real t ) const
     { return self->analyticSolution( xi, yi, zi, t ); }
+
+    //! Public interface to returning the analytic solution for conserved vars
+    tk::InitializeFn::result_type
+    solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return self->solution( xi, yi, zi, t ); }
 
     //! Copy assignment
     CGPDE& operator=( const CGPDE& x )
@@ -343,18 +338,10 @@ class CGPDE {
                 std::unordered_map< std::size_t,
                   std::array< real, 4 > > >&,
         const std::unordered_set< std::size_t >& ) const = 0;
-      virtual std::vector< std::string > fieldNames() const = 0;
+      virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
-      virtual std::vector< std::vector< real > > fieldOutput(
-        real,
-        real,
-        std::size_t,
-        std::size_t,
-        const std::array< std::vector< real >, 3 >&,
-        const std::vector< real >&,
-        tk::Fields& ) const = 0;
       virtual std::vector< std::vector< real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
         tk::Fields& ) const = 0;
@@ -362,8 +349,10 @@ class CGPDE {
         const std::vector< HistData >&,
         const std::vector< std::size_t >&,
         const tk::Fields& ) const = 0;
-      virtual std::vector< real > analyticSolution(
+      virtual tk::InitializeFn::result_type analyticSolution(
         real xi, real yi, real zi, real t ) const = 0;
+      virtual tk::InitializeFn::result_type solution(
+        tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -456,23 +445,14 @@ class CGPDE {
                   std::array< real, 4 > > >& bnorm,
         const std::unordered_set< std::size_t >& nodes ) const override
       { data.farfieldbc( U, coord, bnorm, nodes ); }
-      std::vector< std::string > fieldNames() const override
-      { return data.fieldNames(); }
+      std::vector< std::string > analyticFieldNames() const override
+      { return data.analyticFieldNames(); }
       std::vector< std::string > surfNames() const override
       { return data.surfNames(); }
       std::vector< std::string > histNames() const override
       { return data.histNames(); }
       std::vector< std::string > names() const override
       { return data.names(); }
-      std::vector< std::vector< real > > fieldOutput(
-        real t,
-        real V,
-        std::size_t nunk,
-        std::size_t,
-        const std::array< std::vector< real >, 3 >& coord,
-        const std::vector< real >& v,
-        tk::Fields& U ) const override
-      { return data.fieldOutput( t, V, nunk, 1, coord, v, U ); }
       std::vector< std::vector< real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
         tk::Fields& U ) const override
@@ -482,9 +462,12 @@ class CGPDE {
         const std::vector< std::size_t >& inpoel,
         const tk::Fields& U ) const override
       { return data.histOutput( h, inpoel, U ); }
-      std::vector< real >
+      tk::InitializeFn::result_type
       analyticSolution( real xi, real yi, real zi, real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }
+      tk::InitializeFn::result_type
+      solution( real xi, real yi, real zi, real t )
+       const override { return data.solution( xi, yi, zi, t ); }
       T data;
     };
 

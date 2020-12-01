@@ -34,7 +34,7 @@ inciter
     initial uniform_derefine
   end
 
-  plotvar
+  field_output
     interval 1
   end
 

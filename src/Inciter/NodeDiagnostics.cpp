@@ -99,7 +99,7 @@ NodeDiagnostics::compute(
       // Query analytic solution for all components of all PDEs integrated
       std::vector< tk::real > a;
       for (const auto& eq : g_cgpde) {
-        auto s = eq.analyticSolution( x[i], y[i], z[i], d.T()+d.Dt() );
+        auto s = eq.solution( x[i], y[i], z[i], d.T()+d.Dt() );
         std::move( begin(s), end(s), std::back_inserter(a) );
       }
       Assert( a.size() == u.nprop(), "Size mismatch" );

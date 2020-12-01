@@ -16,6 +16,7 @@ target_include_directories(CompFlowProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}
                            ${QUINOA_SOURCE_DIR}/Base
                            ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/Control/Inciter
                            ${QUINOA_SOURCE_DIR}/Mesh
                            ${QUINOA_SOURCE_DIR}/PDE
                            ${QUINOA_SOURCE_DIR}/Inciter

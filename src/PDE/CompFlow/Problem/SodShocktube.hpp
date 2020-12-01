@@ -35,10 +35,15 @@ class CompFlowProblemSodShocktube {
     using eq = tag::compflow;
 
   public:
-    //! Evaluate analytical solution at (x,y,0) for all components
-    static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
-              tk::real );
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
+                tk::real );
+
+    //! Evaluate analytical solution at (x,y,z,t) for all components
+    static tk::InitializeFn::result_type
+    analyticSolution( ncomp_t, ncomp_t, tk::real, tk::real,  tk::real,
+                      tk::real );
 
     //! Compute and return source term for this problem
     //! \param[in,out] r Density source
@@ -52,21 +57,8 @@ class CompFlowProblemSodShocktube {
          tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
     { r = ru = rv = rw = re = 0.0; }
 
-    //! Return field names to be output to file
-    std::vector< std::string > fieldNames( ncomp_t ) const;
-
-    //! Return field output going to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t system,
-                 ncomp_t /*ncomp*/,
-                 ncomp_t offset,
-                 std::size_t nunk,
-                 std::size_t rdof,
-                 tk::real,
-                 tk::real /*V*/,
-                 const std::vector< tk::real >& /*vol*/,
-                 const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-                 const tk::Fields& U ) const;
+    //! Return analytic field names to be output to file
+    std::vector< std::string > analyticFieldNames( ncomp_t ) const;
 
     //! Return names of integral variables to be output to diagnostics file
     std::vector< std::string > names( ncomp_t ) const;
