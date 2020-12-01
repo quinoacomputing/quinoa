@@ -26,11 +26,13 @@ using tk::MeshWriter;
 
 MeshWriter::MeshWriter( ctr::FieldFileType filetype,
                         Centering bnd_centering,
-                        bool benchmark ) :
+                        bool benchmark,
+                        std::size_t nmesh ) :
   m_filetype( filetype ),
   m_bndCentering( bnd_centering ),
   m_benchmark( benchmark ),
-  m_nchare( 0 )
+  m_nchare( 0 ),
+  m_nmesh( nmesh )
 // *****************************************************************************
 //  Constructor: set some defaults that stay constant at all times
 //! \param[in] filetype Output file format type
@@ -40,6 +42,7 @@ MeshWriter::MeshWriter( ctr::FieldFileType filetype,
 //! \param[in] benchmark True of benchmark mode. No field output happens in
 //!   benchmark mode. This (and associated if tests) are here so client code
 //!   does not have to deal with this.
+//! \param[in] nmesh Total number of meshes
 // *****************************************************************************
 {
 }
@@ -56,6 +59,7 @@ MeshWriter::nchare( int n )
 
 void
 MeshWriter::write(
+  std::size_t meshid,
   bool meshoutput,
   bool fieldoutput,
   uint64_t itr,
@@ -78,6 +82,7 @@ MeshWriter::write(
   CkCallback c )
 // *****************************************************************************
 //  Output unstructured mesh into file
+//! \param[in] Mesh Id
 //! \param[in] meshoutput True if mesh is to be written
 //! \param[in] fieldoutput True if field data is to be written
 //! \param[in] itr Iteration count since a new mesh. New mesh in this context
@@ -109,7 +114,7 @@ MeshWriter::write(
   if (!m_benchmark) {
 
     // Generate filenames for volume and surface field output
-    auto vf = filename( basefilename, itr, chareid );
+    auto vf = filename( basefilename, meshid, itr, chareid );
   
     if (meshoutput) {
       #ifdef HAS_ROOT
@@ -143,7 +148,7 @@ MeshWriter::write(
 
         // Write surface meshes and surface variable field names
         for (auto s : outsets) {
-          auto sf = filename( basefilename, itr, chareid, s );
+          auto sf = filename( basefilename, meshid, itr, chareid, s );
           ExodusIIMeshWriter es( sf, ExoWriter::CREATE );
           auto b = bface.find(s);
           if (b == end(bface)) {
@@ -211,7 +216,7 @@ MeshWriter::write(
         std::size_t j = 0;
         auto nvar = static_cast< int >( nodesurfnames.size() ) ;
         for (auto s : outsets) {
-          auto sf = filename( basefilename, itr, chareid, s );
+          auto sf = filename( basefilename, meshid, itr, chareid, s );
           ExodusIIMeshWriter es( sf, ExoWriter::OPEN );
           es.writeTimeStamp( itf, time );
           if (bface.find(s) == end(bface)) {
@@ -237,12 +242,14 @@ MeshWriter::write(
 
 std::string
 MeshWriter::filename( const std::string& basefilename,
+                      std::size_t meshid,
                       uint64_t itr,
                       int chareid,
                       int surfid ) const
 // *****************************************************************************
 //  Compute filename
 //! \param[in] basefilename String use as the base filename.
+//! \param[in] Mesh Id
 //! \param[in] itr Iteration count since a new mesh. New mesh in this context
 //!   means that either the mesh is moved and/or its topology has changed.
 //! \param[in] chareid The chare id the write-to-file request is coming from
@@ -267,6 +274,7 @@ MeshWriter::filename( const std::string& basefilename,
 // *****************************************************************************
 {
   return basefilename + (surfid ? "-surf." + std::to_string(surfid) : "")
+         + (m_nmesh > 1 ? '.' + std::to_string(meshid) : "")
          + ".e-s"
          + '.' + std::to_string( itr )        // iteration count with new mesh
          + '.' + std::to_string( m_nchare )   // total number of workers

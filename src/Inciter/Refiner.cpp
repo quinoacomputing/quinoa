@@ -853,7 +853,7 @@ Refiner::writeMesh( const std::string& basefilename,
 
   // Output mesh
   m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-    write( /*meshoutput = */ true, /*fieldoutput = */ true, itr, 1, t,
+    write( m_meshid, /*meshoutput = */ true, /*fieldoutput = */ true, itr, 1, t,
            thisIndex, basefilename, m_inpoel, m_coord, m_bface,
            tk::remap(m_bnode,m_lid), tk::remap(m_triinpoel,m_lid),
            elemfieldnames, nodefieldnames, {}, elemfields, nodefields, {},
@@ -1886,6 +1886,7 @@ Refiner::bndIntegral()
   }
 
   s.push_back( -1.0 );  // negative: no call-back after reduction
+  s.push_back( static_cast< tk::real >( m_meshid ) );
 
   // Send contribution to host summing partial surface integrals
   contribute( s, CkReduction::sum_double, m_cbr.get< tag::bndint >() );

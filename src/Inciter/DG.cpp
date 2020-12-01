@@ -149,6 +149,7 @@ DG::bndIntegral()
   }
 
   s.push_back( 1.0 );  // positive: call-back to resizeComm() after reduction
+  s.push_back( static_cast< tk::real >( Disc()->MeshId() ) );
 
   // Send contribution to host summing partial surface integrals
   contribute( s, CkReduction::sum_double,
@@ -952,8 +953,9 @@ DG::faceAdj()
       Assert( e < m_fd.Esuel().size()/4, "Esup contains tet id greater than "
       + std::to_string(m_fd.Esuel().size()/4-1) +" : "+ std::to_string(e) );
 
-  contribute( CkCallback(CkReductionTarget(Transporter,startEsup),
-    Disc()->Tr()) );
+  auto meshid = Disc()->MeshId();
+  contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
+    CkCallback(CkReductionTarget(Transporter,startEsup), Disc()->Tr()) );
 }
 
 void
@@ -1135,7 +1137,8 @@ DG::adj()
               "Failed to store local tetid as exptected ghost id" );
 
   // Signal the runtime system that all workers have received their adjacency
-  contribute( sizeof(int), &m_initial, CkReduction::sum_int,
+  std::vector< std::size_t > meshdata{ m_initial, Disc()->MeshId() };
+  contribute( meshdata, CkReduction::sum_ulong,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
 
@@ -2336,8 +2339,8 @@ DG::evalRestart()
 
   if ( !benchmark && (d->It()) % rsfreq == 0 ) {
 
-    int finished = 0;
-    d->contribute( sizeof(int), &finished, CkReduction::nop,
+    std::vector< std::size_t > meshdata{ /* finished = */ 0, d->MeshId() };
+    contribute( meshdata, CkReduction::nop,
       CkCallback(CkReductionTarget(Transporter,checkpoint), d->Tr()) );
 
   } else {
@@ -2374,7 +2377,9 @@ DG::step()
  
   } else {
 
-    d->contribute( CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
+    auto meshid = d->MeshId();
+    d->contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
+                   CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
 
   }
 }

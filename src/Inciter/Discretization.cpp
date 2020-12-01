@@ -424,7 +424,7 @@ Discretization::totalvol()
   tk::destroy(m_volc);
 
   // Sum mesh volume to host
-  std::vector< tk::real > tvol{ 0.0, m_initial };
+  std::vector< tk::real > tvol{0.0, m_initial, static_cast<tk::real>(m_meshid)};
   for (auto v : m_v) tvol[0] += v;
   contribute( tvol, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,totalvol), m_transporter) );
@@ -502,6 +502,10 @@ Discretization::stat( tk::real mesh_volume )
   min[2] = max[2] = sum[5] = m_inpoel.size() / 4;
   ntetPDF.add( min[2] );
 
+  min.push_back( static_cast<tk::real>(m_meshid) );
+  max.push_back( static_cast<tk::real>(m_meshid) );
+  sum.push_back( static_cast<tk::real>(m_meshid) );
+
   // Contribute to mesh statistics across all Discretization chares
   contribute( min, CkReduction::min_double,
     CkCallback(CkReductionTarget(Transporter,minstat), m_transporter) );
@@ -511,7 +515,7 @@ Discretization::stat( tk::real mesh_volume )
     CkCallback(CkReductionTarget(Transporter,sumstat), m_transporter) );
 
   // Serialize PDFs to raw stream
-  auto stream = tk::serialize( { edgePDF, volPDF, ntetPDF } );
+  auto stream = tk::serialize( m_meshid, { edgePDF, volPDF, ntetPDF } );
   // Create Charm++ callback function for reduction of PDFs with
   // Transporter::pdfstat() as the final target where the results will appear.
   CkCallback cb( CkIndex_Transporter::pdfstat(nullptr), m_transporter );
@@ -531,7 +535,8 @@ Discretization::boxvol( const std::unordered_set< std::size_t >& nodes )
   for (auto i : nodes) boxvol += m_v[i];
 
   // Sum up box IC volume across all chares
-  contribute( sizeof(tk::real), &boxvol, CkReduction::sum_double,
+  std::vector< tk::real > meshdata{ boxvol, static_cast<tk::real>(m_meshid) };
+  contribute( meshdata, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,boxvol), m_transporter) );
 }
 
@@ -596,7 +601,7 @@ Discretization::write(
   }
 
   m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-    write( meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex,
+    write( m_meshid, meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex,
            g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
            inpoel, coord, bface, bnode, triinpoel, elemfieldnames,
            nodefieldnames, nodesurfnames, elemfields, nodefields, nodesurfs,
@@ -635,14 +640,14 @@ Discretization::grindZero()
 {
   m_prevstatus = std::chrono::high_resolution_clock::now();
 
-  if (thisIndex == 0) {
+  if (thisIndex == 0 && m_meshid == 0) {
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
     const auto& def =
       g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
     tk::Print print( g_inputdeck.get< tag::cmd >().logname( def, m_nrestart ),
                      verbose ? std::cout : std::clog,
                      std::ios_base::app );
-    print.diag( "Starting time stepping" );
+    print.diag( "Starting time stepping ..." );
   }
 }
 
@@ -744,7 +749,7 @@ Discretization::status()
   auto grind_time = duration_cast< ms >(clock::now() - m_prevstatus).count();
   m_prevstatus = clock::now();
 
-  if (thisIndex==0 && !(m_it%tty)) {
+  if (thisIndex==0 && m_meshid == 0 && !(m_it%tty)) {
 
     const auto eps = std::numeric_limits< tk::real >::epsilon();
     const auto term = g_inputdeck.get< tag::discr, tag::term >();

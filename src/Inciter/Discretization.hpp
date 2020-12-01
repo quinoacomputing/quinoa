@@ -151,6 +151,9 @@ class Discretization : public CBase_Discretization {
     //! Box volume accessor
     tk::real& Boxvol() { return m_boxvol; }
 
+    //! Mesh ID accessor
+    std::size_t MeshId() const { return m_meshid; }
+
     //! Time step size accessor
     tk::real Dt() const { return m_dt; }
     //! Physical time accessor

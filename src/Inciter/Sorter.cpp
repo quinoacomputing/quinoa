@@ -562,7 +562,8 @@ Sorter::createDiscWorkers()
   m_scheme.disc()[ thisIndex ].insert( m_meshid, m_scheme.fct(), m_host,
     m_meshwriter, m_ginpoel, m_coordmap, m_msum, m_nchare );
 
-  contribute( m_cbs.get< tag::discinserted >() );
+  contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+              m_cbs.get< tag::discinserted >() );
 }
 
 void
@@ -582,7 +583,8 @@ Sorter::createWorkers()
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
 
-  contribute( m_cbs.get< tag::workinserted >() );
+  contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+              m_cbs.get< tag::workinserted >() );
 
   // Free up some memory
   tk::destroy( m_ginpoel );

@@ -253,8 +253,9 @@ DiagCG::normfinal()
   }
 
   // Signal the runtime system that the workers have been created
-  contribute( sizeof(int), &m_initial, CkReduction::sum_int,
-    CkCallback(CkReductionTarget(Transporter,comfinal), d->Tr()) );
+  std::vector< std::size_t > meshdata{ m_initial, d->MeshId() };
+  contribute( meshdata, CkReduction::sum_ulong,
+    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
 
 void
@@ -853,7 +854,9 @@ DiagCG::resizePostAMR(
   // Resize FCT data structures
   d->FCT()->resize( npoin, nodeCommMap, d->Bid(), d->Lid(), d->Inpoel() );
 
-  contribute( CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
+  auto meshid = d->MeshId();
+  contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
+              CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
 }
 
 void
@@ -939,8 +942,8 @@ DiagCG::evalRestart()
 
   if ( !benchmark && d->It() % rsfreq == 0 ) {
 
-    int finished = 0;
-    d->contribute( sizeof(int), &finished, CkReduction::nop,
+    std::vector< std::size_t > meshdata{ /* finished = */ 0, d->MeshId() };
+    contribute( meshdata, CkReduction::nop,
       CkCallback(CkReductionTarget(Transporter,checkpoint), d->Tr()) );
 
   } else {
@@ -972,7 +975,9 @@ DiagCG::step()
 
   } else {
 
-    d->contribute( CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
+    auto meshid = d->MeshId();
+    d->contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
+                   CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
 
   }
 }

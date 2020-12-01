@@ -25,10 +25,10 @@ module transporter {
       entry [reductiontarget] void distributed( std::size_t meshid );
       entry [reductiontarget] void refinserted( std::size_t meshid,
                                                 std::size_t error );
-      entry [reductiontarget] void discinserted();
+      entry [reductiontarget] void discinserted( std::size_t meshid );
       entry [reductiontarget] void disccreated( std::size_t summeshid,
                                                 std::size_t npoin );
-      entry [reductiontarget] void workinserted();
+      entry [reductiontarget] void workinserted( std::size_t meshid );
       entry [reductiontarget] void queriedRef( std::size_t meshid );
       entry [reductiontarget] void respondedRef( std::size_t meshid );
       entry [reductiontarget] void compatibility( std::size_t meshid,
@@ -41,29 +41,35 @@ module transporter {
       entry [reductiontarget] void bndint( tk::real sx,
                                            tk::real sy,
                                            tk::real sz,
-                                           tk::real cb );
+                                           tk::real cb,
+                                           tk::real summeshid );
       entry [reductiontarget] void refined( std::size_t meshid,
                                             std::size_t nelem,
                                             std::size_t npoin );
-      entry [reductiontarget] void resized();
-      entry [reductiontarget] void startEsup();
+      entry [reductiontarget] void resized( std::size_t meshid );
+      entry [reductiontarget] void startEsup( std::size_t meshid );
       entry [reductiontarget] void queried( std::size_t meshid );
       entry [reductiontarget] void responded( std::size_t meshid );
-      entry [reductiontarget] void comfinal( int initial );
-      entry [reductiontarget] void totalvol( tk::real v, tk::real initial );
+      entry [reductiontarget] void comfinal( std::size_t initial,
+                                             std::size_t summeshid );
+      entry [reductiontarget] void totalvol( tk::real v,
+                                             tk::real initial,
+                                             tk::real summeshid );
       entry [reductiontarget] void minstat( tk::real d0, tk::real d1,
-                                            tk::real d2);
+                                            tk::real d2, tk::real rmeshid );
       entry [reductiontarget] void maxstat( tk::real d0, tk::real d1,
-                                            tk::real d2 );
+                                            tk::real d2, tk::real rmeshid );
       entry [reductiontarget] void sumstat( tk::real d0, tk::real d1,
                                             tk::real d2, tk::real d3,
-                                            tk::real d4, tk::real d5 );
+                                            tk::real d4, tk::real d5,
+                                            tk::real summeshid );
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
-      entry [reductiontarget] void boxvol( tk::real v );
+      entry [reductiontarget] void boxvol( tk::real v, tk::real summeshid );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry void resume();
-      entry [reductiontarget] void checkpoint( int finished );
-      entry [reductiontarget] void finish();
+      entry [reductiontarget] void checkpoint( std::size_t finished,
+                                               std::size_t meshid );
+      entry [reductiontarget] void finish( std::size_t meshid );
 
       entry void pepartitioned();
       entry void pedistributed();
@@ -82,13 +88,19 @@ module transporter {
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       entry void wait4stat() {
-        when minstat_complete(), maxstat_complete(), sumstat_complete(),
-             pdfstat_complete() serial "stat" { stat(); } };
+        forall [meshid] ( 0 : m_nelem.size(), 1 ) {
+          when minstat_complete[meshid]( std::size_t _meshid ),
+               maxstat_complete[meshid]( std::size_t _meshid ),
+               sumstat_complete[meshid]( std::size_t _meshid ),
+               pdfstat_complete[meshid]( std::size_t _meshid )
+          serial "stat" { stat(); }
+        }
+      };
 
-      entry void minstat_complete();
-      entry void maxstat_complete();
-      entry void sumstat_complete();
-      entry void pdfstat_complete();
+      entry void minstat_complete( std::size_t _meshid );
+      entry void maxstat_complete( std::size_t _meshid );
+      entry void sumstat_complete( std::size_t _meshid );
+      entry void pdfstat_complete( std::size_t _meshid );
     }
 
   } // inciter::

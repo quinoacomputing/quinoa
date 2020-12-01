@@ -101,7 +101,7 @@ ElemDiagnostics::compute( Discretization& d,
     diag[DT][0] = d.Dt();
 
     // Contribute to diagnostics
-    auto stream = serialize( diag );
+    auto stream = serialize( d.MeshId(), diag );
     d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 
