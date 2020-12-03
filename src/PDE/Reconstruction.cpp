@@ -564,6 +564,19 @@ tk::findMaxVolfrac( std::size_t offset,
   Fields& VolFracMax )
 // *****************************************************************************
 //  Find maximum volume fractions in the neighborhood of each cell
+//! \param[in] offset Index for equation systems
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] nelem Total number of elements
+//! \param[in] esuel Elements surrounding elements
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] U Solution vector
+//! \param[in,out] VolFracMax Vector containing min/max volume fractions for
+//!   each material
+//! \details This function determines the minimum and maximum volume fractions
+//!   for each material in the neighborhood of a cell. The neighborhood can be
+//!   the face-neighbors or node-neighbors.
 // *****************************************************************************
 {
   using inciter::volfracDofIdx;
@@ -630,7 +643,27 @@ tk::THINCReco( std::size_t system,
   [[maybe_unused]] const std::vector< real >& vfmax,
   std::vector< real >& state )
 // *****************************************************************************
-//  Compute THINC reconstructions for multi-material flows
+//  Compute THINC reconstructions at quadrature point for multi-material flows
+//! \param[in] system Equation system index
+//! \param[in] offset Index for equation systems
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which interface reconstruction is being calculated
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] ref_xp Quadrature point in reference space
+//! \param[in] U Solution vector
+//! \param[in] P Vector of primitives
+//! \param[in] vfmin Vector containing min volume fractions for each material
+//!   in this cell
+//! \param[in] vfmax Vector containing max volume fractions for each material
+//!   in this cell
+//! \param[in,out] state Unknown/state vector at quadrature point, modified
+//!   if near interfaces using THINC
+//! \details This function is an interface for the multimat PDEs that use the
+//!   algebraic multi-material THINC reconstruction. This particular function
+//!   should only be called for multimat.
 // *****************************************************************************
 {
   using inciter::volfracDofIdx;
@@ -724,7 +757,27 @@ tk::THINCRecoTransport( std::size_t system,
   [[maybe_unused]] const std::vector< real >& vfmax,
   std::vector< real >& state )
 // *****************************************************************************
-//  Compute THINC reconstructions for linear advection (transport)
+//  Compute THINC reconstructions at quadrature point for transport
+//! \param[in] system Equation system index
+//! \param[in] offset Index for equation systems
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which interface reconstruction is being calculated
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] ref_xp Quadrature point in reference space
+//! \param[in] U Solution vector
+//! \param[in] P Vector of primitives
+//! \param[in] vfmin Vector containing min volume fractions for each material
+//!   in this cell
+//! \param[in] vfmax Vector containing max volume fractions for each material
+//!   in this cell
+//! \param[in,out] state Unknown/state vector at quadrature point, modified
+//!   if near interfaces using THINC
+//! \details This function is an interface for the transport PDEs that use the
+//!   algebraic multi-material THINC reconstruction. This particular function
+//!   should only be called for transport.
 // *****************************************************************************
 {
   auto bparam = inciter::g_inputdeck.get< tag::param, tag::transport,
@@ -768,7 +821,25 @@ tk::THINCFunction( std::size_t rdof,
   const std::vector< std::size_t >& matInt,
   std::vector< real >& alReco )
 // *****************************************************************************
-//  THINC reconstruction function for volume fractions near interfaces
+//  Multi-Medium THINC reconstruction function for volume fractions
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which interface reconstruction is being calculated
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] ref_xp Quadrature point in reference space
+//! \param[in] vel Element volume
+//! \param[in] bparam User specified Beta for THINC, from the input file
+//! \param[in] alSol Volume fraction solution vector for element e
+//! \param[in] intInd Interface indicator, true if e is interface element
+//! \param[in] matInt Vector indicating materials which constitute interface
+//! \param[in,out] alReco Unknown/state vector at quadrature point, which gets
+//!   modified if near interface using MM-THINC
+//! \details This function computes the interface reconstruction using the
+//!   algebraic multi-material THINC reconstruction for each material at the
+//!   given (ref_xp) quadrature point. This function is based on the following:
+//!   Pandare A. K., Waltz J., & Bakosi J. (2021) Multi-Material Hydrodynamics
+//!   with Algebraic Sharp Interface Capturing. Accepted in Computers & Fluids.
 // *****************************************************************************
 {
   // determine number of materials with interfaces in this cell
@@ -890,11 +961,9 @@ tk::THINCFunction( std::size_t rdof,
 
         alReco[k] = std::min(1.0-1e-14, std::max(1e-14, al_c));
       }
-      //else
-      //{
-      //  // TVD reconstruction for materials without an interface close-by
-      //  alReco[k] = state[volfracIdx(nmat,k)];
-      //}
+      // else, if this material does not have an interface close-by, the TVD
+      // reconstructions must be used for state variables. This is ensured by
+      // initializing the alReco vector as the TVD state.
 
       alsum += alReco[k];
     }
