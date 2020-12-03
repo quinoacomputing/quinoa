@@ -199,23 +199,30 @@ tk::surfInt( ncomp_t system,
       {
         std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
 
-        //for (std::size_t k=0; k<nmat; ++k) {
-        //  vfmin[k] = VolFracMax(el, 2*k, 0);
-        //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
-        //}
-        //tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord, geoElem,
-        //  ref_gp_l, U, P, vfmin, vfmax, state[0]);
-        tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel, coord,
-          geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
+        // Until the appropriate setup for activating THINC with Transport
+        // is ready, the following two chunks of code will need to be commented
+        // for using THINC with Transport
+        for (std::size_t k=0; k<nmat; ++k) {
+          vfmin[k] = VolFracMax(el, 2*k, 0);
+          vfmax[k] = VolFracMax(el, 2*k+1, 0);
+        }
+        tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord, geoElem,
+          ref_gp_l, U, P, vfmin, vfmax, state[0]);
 
-        //for (std::size_t k=0; k<nmat; ++k) {
-        //  vfmin[k] = VolFracMax(er, 2*k, 0);
-        //  vfmax[k] = VolFracMax(er, 2*k+1, 0);
-        //}
-        //tk::THINCReco(system, offset, rdof, nmat, er, inpoel, coord, geoElem,
-        //  ref_gp_r, U, P, vfmin, vfmax, state[1]);
-        tk::THINCRecoTransport(system, offset, rdof, nmat, er, inpoel, coord,
-          geoElem, ref_gp_r, U, P, vfmin, vfmax, state[1]);
+        for (std::size_t k=0; k<nmat; ++k) {
+          vfmin[k] = VolFracMax(er, 2*k, 0);
+          vfmax[k] = VolFracMax(er, 2*k+1, 0);
+        }
+        tk::THINCReco(system, offset, rdof, nmat, er, inpoel, coord, geoElem,
+          ref_gp_r, U, P, vfmin, vfmax, state[1]);
+
+        // Until the appropriate setup for activating THINC with Transport
+        // is ready, the following lines will need to be uncommented for
+        // using THINC with Transport
+        //tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel, coord,
+        //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
+        //tk::THINCRecoTransport(system, offset, rdof, nmat, er, inpoel, coord,
+        //  geoElem, ref_gp_r, U, P, vfmin, vfmax, state[1]);
       }
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "

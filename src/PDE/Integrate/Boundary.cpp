@@ -175,14 +175,21 @@ tk::bndSurfInt( ncomp_t system,
           {
             std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
 
-            //for (std::size_t k=0; k<nmat; ++k) {
-            //  vfmin[k] = VolFracMax(el, 2*k, 0);
-            //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
-            //}
-            //tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord,
-            //  geoElem, ref_gp_l, U, P, vfmin, vfmax, ugp);
-            tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel,
-              coord, geoElem, ref_gp_l, U, P, vfmin, vfmax, ugp);
+            // Until the appropriate setup for activating THINC with Transport
+            // is ready, the following code chunk will need to be commented for
+            // using THINC with Transport
+            for (std::size_t k=0; k<nmat; ++k) {
+              vfmin[k] = VolFracMax(el, 2*k, 0);
+              vfmax[k] = VolFracMax(el, 2*k+1, 0);
+            }
+            tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord,
+              geoElem, ref_gp_l, U, P, vfmin, vfmax, ugp);
+
+            // Until the appropriate setup for activating THINC with Transport
+            // is ready, the following lines will need to be uncommented for
+            // using THINC with Transport
+            //tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel,
+            //  coord, geoElem, ref_gp_l, U, P, vfmin, vfmax, ugp);
           }
 
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "

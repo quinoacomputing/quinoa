@@ -899,11 +899,10 @@ tk::THINCFunction( std::size_t rdof,
       alsum += alReco[k];
     }
 
-    //// ensure unit sum
-    //if (nmat > 1) {
-    //  alReco[kmax] += 1.0 - alsum;
-    //  alsum = 1.0;
-    //}
+    // following lines need to be commented to use THINC with Transport
+    // ensure unit sum
+    alReco[kmax] += 1.0 - alsum;
+    alsum = 1.0;
   }
 }
 
