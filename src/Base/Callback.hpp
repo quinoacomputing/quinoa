@@ -22,6 +22,7 @@ namespace tk {
 using PartitionerCallback =
   tk::TaggedTuple< brigand::list<
       tag::load,           CkCallback
+    , tag::partitioned,    CkCallback
     , tag::distributed,    CkCallback
     , tag::refinserted,    CkCallback
     , tag::refined,        CkCallback

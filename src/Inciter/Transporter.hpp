@@ -78,6 +78,9 @@ class Transporter : public CBase_Transporter {
     //! Reduction target: the mesh has been read from file on all PEs
     void load( std::size_t meshid, std::size_t nelem );
 
+    //! Reduction target: a mesh has been partitioned
+    void partitioned( std::size_t meshid );
+
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
     void partition();
@@ -208,6 +211,7 @@ class Transporter : public CBase_Transporter {
       p | m_nchare;
       p | m_meshid;
       p | m_nload;
+      p | m_npart;
       p | m_nstat;
       p | m_ndisc;
       p | m_nchk;
@@ -247,6 +251,8 @@ class Transporter : public CBase_Transporter {
     std::vector< std::size_t > m_ncit;
     //! Number of meshes loaded
     std::size_t m_nload;
+    //! Number of meshes partitioned
+    std::size_t m_npart;
     //! Number of mesh statistics computed
     std::size_t m_nstat;
     //! Number of Discretization arrays created

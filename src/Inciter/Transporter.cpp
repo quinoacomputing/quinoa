@@ -62,6 +62,7 @@ Transporter::Transporter() :
   m_meshid(),
   m_ncit( m_nchare.size(), 0 ),
   m_nload( 0 ),
+  m_npart( 0 ),
   m_nstat( 0 ),
   m_ndisc( 0 ),
   m_nchk( 0 ),
@@ -417,6 +418,7 @@ Transporter::createPartitioner()
   // Create partitioner callbacks (order important)
   tk::PartitionerCallback cbp {{
       CkCallback( CkReductionTarget(Transporter,load), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,partitioned), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
@@ -532,8 +534,8 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
   m_meshid[ static_cast<std::size_t>(m_nchare[meshid])*meshid ] = meshid;
   Assert( meshid < m_nelem.size(), "MeshId indexing out" );
 
-  // Partition mesh
-  m_partitioner[meshid].partition( m_nchare[meshid] );
+  // Partition first mesh
+  if (meshid == 0) m_partitioner[0].partition( m_nchare[0] );
 
   if (++m_nload == m_nelem.size()) {     // all meshes have been loaded
     m_nload = 0;
@@ -563,6 +565,19 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
     m_progMesh.start( print, "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
       m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0] }} );
   }
+}
+
+void
+Transporter::partitioned( std::size_t meshid )
+// *****************************************************************************
+// Reduction target: a mesh has been partitioned
+//! \param[in] meshid Mesh id
+// *****************************************************************************
+{
+  if (++m_npart == m_nelem.size()) {     // all meshes have been partitioned
+    m_npart = 0;
+  } else // partition next mesh
+    m_partitioner[meshid+1].partition( m_nchare[meshid+1] );
 }
 
 void

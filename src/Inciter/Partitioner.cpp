@@ -163,6 +163,9 @@ Partitioner::partition( int nchare )
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pepartitioned();
 
+  contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+              m_cbp.get< tag::partitioned >() );
+
   Assert( che.size() == gelemid.size(), "Size of ownership array (chare ID "
           "of elements) after mesh partitioning does not equal the number of "
           "mesh graph elements" );
