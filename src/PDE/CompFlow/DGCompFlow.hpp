@@ -91,6 +91,14 @@ class CompFlow {
       return 0;
     }
 
+    //! Find the number of materials set up for this PDE system
+    //! \return The number of materials set up for this PDE system
+    std::size_t nmat() const
+    {
+      // compflow does not need nmat
+      return 0;
+    }
+
     //! Determine elements that lie inside the user-defined IC box
     //! \param[in] geoElem Element geometry array
     //! \param[in] nielem Number of internal elements

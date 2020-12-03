@@ -125,6 +125,10 @@ class DGPDE {
     std::size_t nprim() const
     { return self->nprim(); }
 
+    //! Public interface to find number of materials for the diff eq
+    std::size_t nmat() const
+    { return self->nmat(); }
+
     //! Public interface to determine elements that lie inside the IC box
     void IcBoxElems( const tk::Fields& geoElem,
       std::size_t nielem,
@@ -272,6 +276,7 @@ class DGPDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual std::size_t nprim() const = 0;
+      virtual std::size_t nmat() const = 0;
       virtual void IcBoxElems( const tk::Fields&,
         std::size_t,
         std::unordered_set< std::size_t >& ) const = 0;
@@ -358,6 +363,8 @@ class DGPDE {
       Concept* copy() const override { return new Model( *this ); }
       std::size_t nprim() const override
       { return data.nprim(); }
+      std::size_t nmat() const override
+      { return data.nmat(); }
       void IcBoxElems( const tk::Fields& geoElem,
         std::size_t nielem,
         std::unordered_set< std::size_t >& inbox )

@@ -88,6 +88,13 @@ class Transport {
       return 0;
     }
 
+    //! Find the number of materials set up for this PDE system
+    //! \return The number of materials set up for this PDE system
+    std::size_t nmat() const
+    {
+      return m_ncomp;
+    }
+
     //! Determine elements that lie inside the user-defined IC box
     void IcBoxElems( const tk::Fields&,
       std::size_t,

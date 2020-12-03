@@ -92,6 +92,15 @@ class MultiMat {
       return (nmat+3);
     }
 
+    //! Find the number of materials set up for this PDE system
+    //! \return The number of materials set up for this PDE system
+    std::size_t nmat() const
+    {
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      return nmat;
+    }
+
     //! Determine elements that lie inside the user-defined IC box
     void IcBoxElems( const tk::Fields&,
       std::size_t,
