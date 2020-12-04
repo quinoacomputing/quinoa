@@ -38,10 +38,16 @@ class TransportProblemSlotCyl {
     using eq = tag::transport;
 
   public:
-    //! Evaluate analytical solution at (x,y,t) for all components
+    //! Initialize numerical solution
     static std::vector< tk::real >
-    solution( ncomp_t, ncomp_t ncomp,
-              tk::real x, tk::real y, tk::real, tk::real t, int& );
+    initialize( ncomp_t, ncomp_t ncomp,
+                tk::real x, tk::real y, tk::real, tk::real t );
+
+    //! Evaluate analytical solution at (x,y,z,t) for all components
+    static std::vector< tk::real >
+    analyticSolution( ncomp_t system, ncomp_t ncomp,  tk::real x, tk::real y,
+                      tk::real z, tk::real t )
+    { return initialize( system, ncomp, x, y, z, t ); }
 
     //! Do error checking on PDE parameters
     void errchk( ncomp_t, ncomp_t ) const {}

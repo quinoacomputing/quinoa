@@ -26,13 +26,12 @@ namespace tk {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! Function prototype for Problem::solution() functions
-//! \details Functions of this type are used to evaluate known (e.g.,
-//!    analytical) solutions or setting initial conditions
-//! \see e.g., inciter::CompFlowProblemVorticalFlow::solution
+//! Function prototype for Problem::intiialize() functions
+//! \details Functions of this type are used to initialize the computed fields
+//! \see e.g., inciter::CompFlowProblemVorticalFlow::initialize
 //! \note Used for both continuous and discontinuous Galerkin discretizations
-using SolutionFn = std::function<
-  std::vector< real >( ncomp_t, ncomp_t, real, real, real, real, int& ) >;
+using InitializeFn = std::function<
+  std::vector< real >( ncomp_t, ncomp_t, real, real, real, real ) >;
 
 //! Function prototype for Riemann flux functions
 //! \details Functions of this type are used to compute numerical fluxes across a
@@ -102,6 +101,14 @@ using ElemGradFn = std::function<
                           const std::tuple< std::vector< tk::real >,
                                             std::vector< tk::real > >&,
                           const tk::Fields& ) >;
+
+//! Prototype for functions to compute a variable from the numerical solution
+using GetVarFn =
+  std::function< std::vector<real>( const tk::Fields&, ncomp_t, std::size_t ) >;
+
+//! Prototype for functions to a compute multi-material index
+using MultiMatIdxFn =
+  std::function< std::size_t( std::size_t, std::size_t ) >;
 
 } // tk::
 

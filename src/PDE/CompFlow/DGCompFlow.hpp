@@ -91,22 +91,83 @@ class CompFlow {
       return 0;
     }
 
+    //! Determine elements that lie inside the user-defined IC box
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] nielem Number of internal elements
+    //! \param[in,out] inbox List of nodes at which box user ICs are set
+    void IcBoxElems( const tk::Fields& geoElem,
+      std::size_t nielem,
+      std::unordered_set< std::size_t >& inbox ) const
+    {
+      // Detect if user has configured a box IC
+      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      std::vector< tk::real >
+        box{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
+             icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
+             icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
+      const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+      // Determine which elements lie in the IC box
+      for (ncomp_t e=0; e<nielem; ++e) {
+        auto x = geoElem(e,1,0);
+        auto y = geoElem(e,2,0);
+        auto z = geoElem(e,3,0);
+        if ( std::any_of( begin(box), end(box), [=](auto p)
+          {return abs(p) > eps;} ) &&
+          x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5] )
+        {
+          inbox.insert( e );
+        }
+      }
+    }
+
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+    //! \param[in,out] inbox List of elements at which box user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
+                     const std::unordered_set< std::size_t >& inbox,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, unk, t, nielem );
+                      Problem::initialize, unk, t, nielem );
+
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      const auto& bgpreic = ic.get< tag::pressure >();
+      const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
+
+      // Set initial conditions inside user-defined IC box
+      std::vector< tk::real > s(m_ncomp, 0.0);
+      for (std::size_t e=0; e<nielem; ++e) {
+        if (inbox.find(e) != inbox.end()) {
+          for (std::size_t c=0; c<m_ncomp; ++c) {
+            auto mark = c*rdof;
+            s[c] = unk(e,mark,m_offset);
+
+            // set high-order DOFs to zero
+            for (std::size_t i=1; i<rdof; ++i)
+              unk(e,mark+i,m_offset) = 0.0;
+          }
+          initializeBox(m_system, 1.0, t, icbox, bgpreic, cv, s);
+
+          // store box-initialization in solution vector
+          for (std::size_t c=0; c<m_ncomp; ++c) {
+            auto mark = c*rdof;
+            unk(e,mark,m_offset) = s[c];
+          }
+        }
+      }
     }
 
     //! Compute the left hand side block-diagonal mass matrix
@@ -197,6 +258,7 @@ class CompFlow {
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] esup Elements surrounding points
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
@@ -205,7 +267,7 @@ class CompFlow {
                 [[maybe_unused]] const tk::Fields& geoFace,
                 [[maybe_unused]] const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
-                const std::map< std::size_t, std::vector< std::size_t > >&,
+                const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
@@ -218,6 +280,9 @@ class CompFlow {
         WENO_P1( fd.Esuel(), m_offset, U );
       else if (limiter == ctr::LimiterType::SUPERBEEP1)
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
+        VertexBased_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
+          m_offset, coord, U );
     }
 
     //! Compute right hand side
@@ -226,6 +291,7 @@ class CompFlow {
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] inpoel Element-node connectivity
+    //! \param[in] boxelems Mesh node ids within user-defined box
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
@@ -236,6 +302,7 @@ class CompFlow {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
+              const std::unordered_set< std::size_t >& boxelems,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
@@ -298,6 +365,15 @@ class CompFlow {
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
                         geoFace, inpoel, coord, t, rieflxfn, velfn, b.second, U,
                         P, ndofel, R, vriem, riemannLoc, riemannDeriv );
+
+      // compute external (energy) sources
+      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      const auto& initiate = icbox.get< tag::initiate >();
+      const auto& inittype = initiate.get< tag::init >();
+      if (inittype.size() > m_system)
+        if (inittype[m_system] == ctr::InitiateType::LINEAR)
+          boxSrc( t, inpoel, boxelems, coord, geoElem, ndofel, R );
     }
 
     //! Compute the minimum time step size
@@ -549,53 +625,15 @@ class CompFlow {
       return v;
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > fieldNames() const
-    { return m_problem.fieldNames( m_ncomp ); }
+    //! Return analytic field names to be output to file
+    //! \return Vector of strings labelling analytic fields output in file
+    std::vector< std::string > analyticFieldNames() const
+    { return m_problem.analyticFieldNames( m_ncomp ); }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > nodalFieldNames() const
-    { return {}; }
-
-    //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] nunk Number of unknowns to extract
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
-                 std::size_t,
-                 std::size_t nunk,
-                 const tk::Fields& geoElem,
-                 tk::Fields& U,
-                 const tk::Fields& ) const
-    {
-      std::array< std::vector< tk::real >, 3 > coord{
-        geoElem.extract(1,0), geoElem.extract(2,0), geoElem.extract(3,0) };
-
-      return m_problem.fieldOutput( m_system, m_ncomp, m_offset, nunk, t, V,
-                                    geoElem.extract(0,0), coord, U );
-    }
-
-    //! Nodal field output setup will go here
-    std::vector< std::vector< tk::real > >
-    nodalFieldOutput( tk::real,
-      tk::real,
-      std::size_t,
-      const std::map< std::size_t, std::vector< std::size_t > >&,
-      const tk::Fields&,
-      tk::Fields&,
-      tk::Fields&,
-      tk::Fields&,
-      const tk::Fields& ) const
-    {
-      return {};
-    }
+    //! Return time history field names to be output to file
+    //! \return Vector of strings labeling time history fields output in file
+    std::vector< std::string > histNames() const
+    { return CompFlowHistNames(); }
 
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
@@ -604,6 +642,60 @@ class CompFlow {
     {
       std::vector< std::vector< tk::real > > s; // punt for now
       return s;
+    }
+
+    //! Return time history field output evaluated at time history points
+    //! \param[in] h History point data
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] U Array of unknowns
+    std::vector< std::vector< tk::real > >
+    histOutput( const std::vector< HistData >& h,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const tk::Fields& U ) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      std::vector< std::vector< tk::real > > Up(h.size());
+
+      std::size_t j = 0;
+      for (const auto& p : h) {
+        auto e = p.get< tag::elem >();
+        auto chp = p.get< tag::coord >();
+
+        // Evaluate inverse Jacobian
+        std::array< std::array< tk::real, 3>, 4 > cp{{
+          {{ x[inpoel[4*e  ]], y[inpoel[4*e  ]], z[inpoel[4*e  ]] }},
+          {{ x[inpoel[4*e+1]], y[inpoel[4*e+1]], z[inpoel[4*e+1]] }},
+          {{ x[inpoel[4*e+2]], y[inpoel[4*e+2]], z[inpoel[4*e+2]] }},
+          {{ x[inpoel[4*e+3]], y[inpoel[4*e+3]], z[inpoel[4*e+3]] }} }};
+        auto J = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
+
+        // evaluate solution at history-point
+        std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
+          chp[2]-cp[0][2]}};
+        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc));
+        auto uhp = eval_state(m_ncomp, 0, rdof, rdof, e, U, B);
+
+        // store solution in history output vector
+        Up[j].resize(6, 0.0);
+        Up[j][0] = uhp[0];
+        Up[j][1] = uhp[1]/uhp[0];
+        Up[j][2] = uhp[2]/uhp[0];
+        Up[j][3] = uhp[3]/uhp[0];
+        Up[j][4] = uhp[4]/uhp[0];
+        Up[j][5] = eos_pressure< tag::compflow > (m_system, uhp[0],
+          uhp[1]/uhp[0], uhp[2]/uhp[0], uhp[3]/uhp[0], uhp[4] );
+        ++j;
+      }
+
+      return Up;
     }
 
     //! Return names of integral variables to be output to diagnostics file
@@ -619,11 +711,17 @@ class CompFlow {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    {
-      int inbox = 0;
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
-      return std::vector< tk::real >( std::begin(s), std::end(s) );
-    }
+    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+
+    //! Return analytic solution for conserved variables
+    //! \param[in] xi X-coordinate at which to evaluate the analytic solution
+    //! \param[in] yi Y-coordinate at which to evaluate the analytic solution
+    //! \param[in] zi Z-coordinate at which to evaluate the analytic solution
+    //! \param[in] t Physical time at which to evaluate the analytic solution
+    //! \return Vector of analytic solution at given location and time
+    std::vector< tk::real >
+    solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
 
   private:
     //! Physics policy
@@ -702,8 +800,7 @@ class CompFlow {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      int inbox = 0;
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t, inbox ) }};
+      return {{ ul, Problem::initialize( system, ncomp, x, y, z, t ) }};
     }
 
     //! \brief Boundary state function providing the left and right state of a
@@ -829,6 +926,136 @@ class CompFlow {
                  const std::array< tk::real, 3 >& )
     {
       return {{ ul, ul }};
+    }
+
+    //! Compute sources corresponding to a propagating front in user-defined box
+    //! \param[in] t Physical time
+    //! \param[in] inpoel Element point connectivity
+    //! \param[in] boxelems Mesh node ids within user-defined box
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] ndofel Vector of local number of degrees of freedome
+    //! \param[in] R Right-hand side vector
+    //! \details This function add the energy source corresponding to a planar
+    //!   wave-front propagating along the z-direction with a user-specified
+    //!   velocity, within a box initial condition, configured by the user.
+    //!   Example (SI) units of the quantities involved:
+    //!    * internal energy content (energy per unit volume): J/m^3
+    //!    * specific energy (internal energy per unit mass): J/kg
+    void boxSrc( tk::real t,
+      const std::vector< std::size_t >& inpoel,
+      const std::unordered_set< std::size_t >& boxelems,
+      const tk::UnsMesh::Coords& coord,
+      const tk::Fields& geoElem,
+      const std::vector< std::size_t >& ndofel,
+      tk::Fields& R ) const
+    {
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      const auto& initiate = icbox.get< tag::initiate >();
+
+      const auto& boxenc = icbox.get< tag::energy_content >();
+
+      Assert( boxenc.size() > m_system && !boxenc[m_system].empty(),
+        "Box energy content unspecified in input file" );
+      std::vector< tk::real >
+        boxdim{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
+                icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
+                icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
+      auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
+        (boxdim[5]-boxdim[4]);
+
+      // determine times at which sourcing is initialized and terminated
+      const auto& iv = initiate.get< tag::velocity >()[ m_system ];
+      Assert( iv.size() == 1, "Excess velocities in ic-box block" );
+      auto wFront = 0.1;
+      auto tInit = 0.0;
+      auto tFinal = tInit + (boxdim[5] - boxdim[4] - 2.0*wFront) /
+        std::fabs(iv[0]);
+      auto aBox = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]);
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      if (t >= tInit && t <= tFinal) {
+
+        // The energy front is assumed to have a half-sine-wave shape. The half
+        // wave-length is the width of the front. At t=0, the center of this
+        // front (i.e. the peak of the partial-sine-wave) is at X_0 + W_0.
+        // W_0 is calculated based on the width of the front and the direction
+        // of propagation (which is assumed to be along the z-direction).
+        // If the front propagation velocity is positive, it is assumed that the
+        // initial position of the energy source is the minimum z-coordinate of
+        // the box; whereas if this velocity is negative, the initial position
+        // is the maximum z-coordinate of the box.
+
+        // initial center of front
+        tk::real zInit(boxdim[4]);
+        if (iv[0] < 0.0) zInit = boxdim[5];
+        // current location of front
+        auto z0 = zInit + iv[0]*t;
+        auto z1 = z0 + std::copysign(wFront, iv[0]);
+        tk::real s0(z0), s1(z1);
+        // if velocity of propagation is negative, initial position is z1
+        if (iv[0] < 0.0) {
+          s0 = z1;
+          s1 = z0;
+        }
+        // Sine-wave (positive part of the wave) source term amplitude
+        auto pi = 4.0 * std::atan(1.0);
+        auto amplE = boxenc[m_system][0] * V_ex * pi
+          / (aBox * wFront * 2.0 * (tFinal-tInit));
+        //// Square wave (constant) source term amplitude
+        //auto amplE = boxenc[m_system][0] * V_ex
+        //  / (aBox * wFront * (tFinal-tInit));
+
+        // add source
+        for (auto e : boxelems) {
+          auto zc = geoElem(e,3,0);
+
+          if (zc >= s0 && zc <= s1) {
+            auto ng = tk::NGvol(ndofel[e]);
+
+            // arrays for quadrature points
+            std::array< std::vector< tk::real >, 3 > coordgp;
+            std::vector< tk::real > wgp;
+
+            coordgp[0].resize( ng );
+            coordgp[1].resize( ng );
+            coordgp[2].resize( ng );
+            wgp.resize( ng );
+
+            tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+            // Extract the element coordinates
+            std::array< std::array< tk::real, 3>, 4 > coordel {{
+              {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+              {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+              {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+              {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+            for (std::size_t igp=0; igp<ng; ++igp)
+            {
+              // Compute the coordinates of quadrature point at physical domain
+              auto gp = tk::eval_gp( igp, coordel, coordgp );
+
+              // Compute the basis function
+              auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+                coordgp[2][igp] );
+
+              // Compute the source term variable
+              std::array< tk::real, 5 > s{{0.0, 0.0, 0.0, 0.0, 0.0}};
+              s[4] = amplE * std::sin(pi*(gp[2]-s0)/wFront);
+
+              auto wt = wgp[igp] * geoElem(e, 0, 0);
+
+              tk::update_rhs( m_offset, ndof, ndofel[e], wt, e, B, s, R );
+            }
+          }
+        }
+      }
     }
 };
 

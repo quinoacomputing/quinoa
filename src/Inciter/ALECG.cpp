@@ -33,6 +33,7 @@
 #include "Around.hpp"
 #include "CGPDE.hpp"
 #include "Integrate/Mass.hpp"
+#include "FieldOutput.hpp"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.hpp"
@@ -66,7 +67,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_bnode( bnode ),
   m_bface( bface ),
   m_triinpoel( tk::remap( triinpoel, Disc()->Lid() ) ),
-  m_bndel( bndel() ),
+  m_bndel( Disc()->bndel() ),
   m_dfnorm(),
   m_dfnormc(),
   m_dfn(),
@@ -90,7 +91,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_symbctri(),
   m_stage( 0 ),
   m_boxnodes(),
-  m_boxnodes_set(),
   m_edgenode(),
   m_edgeid(),
   m_dtp( m_u.nunk(), 0.0 ),
@@ -166,32 +166,6 @@ ALECG::norm()
 
   // Compute dual-face normals associated to edges
   dfnorm();
-}
-
-std::vector< std::size_t >
-ALECG::bndel() const
-// *****************************************************************************
-// Find elements along our mesh chunk boundary
-//! \return List of local element ids that have at least a single node
-//!   contributing to a chare boundary
-// *****************************************************************************
-{
-  // Lambda to find out if a mesh node is shared with another chare
-  auto shared = [this]( std::size_t i ){
-    for (const auto& [c,n] : Disc()->NodeCommMap())
-      if (n.find(i) != end(n)) return true;
-    return false;
-  };
-
-  // Find elements along our mesh chunk boundary
-  std::vector< std::size_t > e;
-  const auto& inpoel = Disc()->Inpoel();
-  const auto gid = Disc()->Gid();
-  for (std::size_t n=0; n<inpoel.size(); ++n)
-    if (shared( gid[ inpoel[n] ] )) e.push_back( n/4 );
-  tk::unique( e );
-
-  return e;
 }
 
 std::array< tk::real, 3 >
@@ -402,8 +376,8 @@ ALECG::setup()
 {
   auto d = Disc();
 
-  // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), m_boxnodes );
+  // Determine nodes inside user-defined IC box
+  for (auto& eq : g_cgpde) eq.IcBoxNodes( d->Coord(), m_boxnodes );
 
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );
@@ -432,11 +406,9 @@ ALECG::box( tk::real v )
   // Store user-defined box IC volume
   d->Boxvol() = v;
 
-  // Set user-defined IC box conditions
-  for (const auto& eq : g_cgpde)
-    eq.box( d->Boxvol(), d->T(), m_boxnodes, d->Coord(), m_u, m_boxnodes_set );
-  //if (m_boxnodes_set.size() != m_boxnodes.size())
-  //  std::cout << thisIndex << ':' << m_boxnodes.size() - m_boxnodes_set.size() << '\n';
+  // Set initial conditions for all PDEs
+  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
+    m_boxnodes );
 
   // Compute left-hand side of PDEs
   lhs();
@@ -737,7 +709,7 @@ ALECG::dt()
 
       // find the smallest dt of all equations on this chare
       for (const auto& eq : g_cgpde) {
-        auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
+        auto eqdt = eq.dt( d->Coord(), d->Inpoel(), d->T(), m_u );
         if (eqdt < mindt) mindt = eqdt;
       }
 
@@ -855,8 +827,8 @@ ALECG::rhs()
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
             m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-            m_symbctri, d->Vol(), m_edgenode, m_edgeid, m_chBndGrad, m_u, m_tp,
-            m_rhs );
+            m_symbctri, d->Vol(), m_edgenode, m_edgeid, m_boxnodes, m_chBndGrad,
+            m_u, m_tp, d->Boxvol(), m_rhs );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
@@ -966,13 +938,6 @@ ALECG::solve()
   // Apply farfield BCs on new solution
   for (const auto& eq : g_cgpde)
     eq.farfieldbc( m_u, d->Coord(), m_bnorm, m_farfieldbcnodes );
-
-  // Set user-defined IC box conditions
-  for (const auto& eq : g_cgpde)
-    eq.box( d->Boxvol(), d->T()+d->Dt(), m_boxnodes, d->Coord(), m_u,
-            m_boxnodes_set );
-  //if (m_boxnodes_set.size() != m_boxnodes.size())
-  //  std::cout << thisIndex << ':' << m_boxnodes.size() - m_boxnodes_set.size() << '\n';
 
   //! [Continue after solve]
   if (m_stage < 2) {
@@ -1154,38 +1119,41 @@ ALECG::writeFields( CkCallback c ) const
   } else {
 
     auto d = Disc();
+    const auto& coord = d->Coord();
+
+    // Query fields names requested by user
+    auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
+    // Collect field output from numerical solution requested by user
+    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
+    // Collect field output names for analytical solutions
+    for (const auto& eq : g_cgpde)
+      analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
+
+    // Collect field output from analytical solutions (if exist)
+    auto t = d->T();
+    for (const auto& eq : g_cgpde)
+      analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1],
+                           coord[2], t, nodefields );
 
     // Query and collect block and surface field names from PDEs integrated
-    std::vector< std::string > nodefieldnames;
     std::vector< std::string > nodesurfnames;
     for (const auto& eq : g_cgpde) {
-      auto n = eq.fieldNames();
-      nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
       auto s = eq.surfNames();
       nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
     }
 
     // Collect node block and surface field solution
     auto u = m_u;
-    std::vector< std::vector< tk::real > > nodefields;
     std::vector< std::vector< tk::real > > nodesurfs;
     for (const auto& eq : g_cgpde) {
-      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord()[0].size(),
-                               d->Coord(), d->V(), u );
-      nodefields.insert( end(nodefields), begin(o), end(o) );
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
 
-    // nodefieldnames.push_back( "initiated" );
-    // std::vector< tk::real > initiated( m_u.nunk(), 0.0 );
-    // for (auto i : m_boxnodes_set) initiated[i] = 1.0;
-    // nodefields.push_back( initiated );
-
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
     // Send mesh and fields data (solution dump) for output to file
-    d->write( d->Inpoel(), d->Coord(), m_bface, tk::remap(m_bnode,d->Lid()),
+    d->write( d->Inpoel(), coord, m_bface, tk::remap(m_bnode,d->Lid()),
               m_triinpoel, {}, nodefieldnames, nodesurfnames, {}, nodefields,
               nodesurfs, c );
 

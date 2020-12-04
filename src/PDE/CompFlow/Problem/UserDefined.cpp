@@ -26,32 +26,23 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::CompFlowProblemUserDefined;
 
-tk::SolutionFn::result_type
-CompFlowProblemUserDefined::solution( ncomp_t system,
-                                      [[maybe_unused]] ncomp_t ncomp,
-                                      [[maybe_unused]] tk::real x,
-                                      [[maybe_unused]] tk::real y,
-                                      [[maybe_unused]] tk::real z,
-                                      [[maybe_unused]] tk::real,
-                                      int& inbox )
+tk::InitializeFn::result_type
+CompFlowProblemUserDefined::initialize( ncomp_t system,
+                                        ncomp_t ncomp,
+                                        tk::real,
+                                        tk::real,
+                                        tk::real,
+                                        tk::real )
 // *****************************************************************************
 //! Set initial conditions
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] x X coordinate where to evaluate the solution
-//! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in,out] inbox 1 If box ICs are applied and point fell into box
 //! \return Values of all components
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  Assert( ncomp == ncomp, "Number of scalar components must be " +
-                          std::to_string(ncomp) );
-
-  tk::SolutionFn::result_type u( ncomp, 0.0 );
+  tk::InitializeFn::result_type u( ncomp, 0.0 );
 
   // Set background ICs
   const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
@@ -70,7 +61,7 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
   u[3] = u[0] * bgvelic.at(system).at(2);
 
   if (bgpreic.size() > system && !bgpreic[system].empty()) {
-    u[4] = eos_totalenergy< eq >( system, u[0], u[1], u[2], u[3],
+    u[4] = eos_totalenergy< eq >( system, u[0], u[1]/u[0], u[2]/u[0], u[3]/u[0],
                                   bgpreic.at(system).at(0) );
   } else if (bgenic.size() > system && !bgenic[system].empty()) {
     u[4] = u[0] * bgenic[system][0];
@@ -80,55 +71,7 @@ CompFlowProblemUserDefined::solution( ncomp_t system,
   } else Throw( "IC background energy cannot be computed. User must specify "
                 "one of background pressure, energy, or velocity." );
 
-  // Detect if user has configured a box IC
-  const auto& icbox = ic.get< tag::box >();
-  std::vector< tk::real >
-    box{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
-         icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
-         icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  if ( std::any_of( begin(box), end(box), [=](auto p){return abs(p) > eps;} ) &&
-       x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5] )
-  {
-    inbox = 1;
-  }
-
   return u;
-}
-
-std::vector< std::string >
-CompFlowProblemUserDefined::fieldNames( ncomp_t ) const
-// *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
-// *****************************************************************************
-{
-  return CompFlowFieldNames();
-}
-
-std::vector< std::vector< tk::real > >
-CompFlowProblemUserDefined::fieldOutput(
-  ncomp_t system,
-  ncomp_t,
-  ncomp_t offset,
-  std::size_t nunk,
-  tk::real,
-  tk::real,
-  const std::vector< tk::real >&,
-  const std::array< std::vector< tk::real >, 3 >&,
-  tk::Fields& U ) const
-// *****************************************************************************
-//  Return field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
-//! \param[in] nunk Number of unknowns to extract
-//! \param[in] U Solution vector at recent time step
-//! \return Vector of vectors of solution fields to be output to file
-// *****************************************************************************
-{
-  return CompFlowFieldOutput( system, offset, nunk, U );
 }
 
 std::vector< std::string >

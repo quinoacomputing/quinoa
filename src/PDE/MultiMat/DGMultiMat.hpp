@@ -12,8 +12,8 @@
     discretizations.
 */
 // *****************************************************************************
-#ifndef MultiMatDG_h
-#define MultiMatDG_h
+#ifndef DGMultiMat_h
+#define DGMultiMat_h
 
 #include <cmath>
 #include <algorithm>
@@ -93,22 +93,30 @@ class MultiMat {
       return (nmat+3);
     }
 
+    //! Determine elements that lie inside the user-defined IC box
+    void IcBoxElems( const tk::Fields&,
+      std::size_t,
+      std::unordered_set< std::size_t >& ) const
+    {}
+
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+//    //! \param[in,out] inbox List of elements at which box user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
+                     const std::unordered_set< std::size_t >& /*inbox*/,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, unk, t, nielem );
+                      Problem::initialize, unk, t, nielem );
     }
 
     //! Compute the left hand side block-diagonal mass matrix
@@ -584,6 +592,7 @@ class MultiMat {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
+              const std::unordered_set< std::size_t >&,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
@@ -859,10 +868,9 @@ class MultiMat {
       return v;
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > fieldNames() const
-    {
+    //! Return analytic field names to be output to file
+    //! \return Vector of strings labelling analytic fields output in file
+    std::vector< std::string > analyticFieldNames() const {
       auto nmat =
         g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
 
@@ -879,61 +887,11 @@ class MultiMat {
       return MultiMatFieldNames(nmat);
     }
 
-    //! Return field output going to file
-    //! \param[in] rdof Total number of degrees of freedom
-    //! \param[in] nunk Number of unknowns
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] U Solution vector at recent time step
-    //! \param[in] P Vector of primitive quantities at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real,
-                 tk::real,
-                 std::size_t rdof,
-                 std::size_t nunk,
-                 const tk::Fields& geoElem,
-                 tk::Fields& U,
-                 const tk::Fields& P ) const
-    {
-      // number of materials
-      auto nmat =
-        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-
-      return MultiMatFieldOutput(m_system, nmat, m_offset, nunk, rdof, geoElem,
-        U, P);
-    }
-
-    //! Return nodal field output going to file
-    //! \param[in] npoin Number of nodes
-    //! \param[in] esup Elements surrounding points
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] Unode Nodal solution vector
-    //! \param[in,out] Pnode Nodal vector of primitive quantities
-    //! \param[in,out] U Nodal solution vector at recent time step
-    //! \param[in] P Nodal vector of primitive quantities at recent time step
-    //! \return Vector of vectors to be output to file
-    std::vector< std::vector< tk::real > >
-    nodalFieldOutput( tk::real,
-                 tk::real,
-                 std::size_t npoin,
-                 const std::map< std::size_t, std::vector< std::size_t > >&
-                   esup,
-                 const tk::Fields& geoElem,
-                 tk::Fields& Unode,
-                 tk::Fields& Pnode,
-                 tk::Fields& U,
-                 const tk::Fields& P ) const
-    {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      // number of materials
-      const auto nmat =
-        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-
-      tk::nodeAvg(m_ncomp, nprim(), m_offset, rdof, npoin, esup, U, P, Unode,
-        Pnode);
-
-      return MultiMatFieldOutput(m_system, nmat, m_offset, npoin, 1, geoElem,
-        Unode, Pnode);
+    //! Return time history field names to be output to file
+    //! \return Vector of strings labelling time history fields output in file
+    std::vector< std::string > histNames() const {
+      std::vector< std::string > s; // punt for now
+      return s;
     }
 
     //! Return surface field output going to file
@@ -943,6 +901,18 @@ class MultiMat {
     {
       std::vector< std::vector< tk::real > > s; // punt for now
       return s;
+    }
+
+    //! Return time history field output evaluated at time history points
+    //! \param[in] h History point data
+    std::vector< std::vector< tk::real > >
+    histOutput( const std::vector< HistData >& h,
+                const std::vector< std::size_t >&,
+                const tk::UnsMesh::Coords&,
+                const tk::Fields& ) const
+    {
+      std::vector< std::vector< tk::real > > Up(h.size()); //punt for now
+      return Up;
     }
 
     //! Return names of integral variables to be output to diagnostics file
@@ -958,11 +928,17 @@ class MultiMat {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    {
-      int inbox = 0;
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
-      return std::vector< tk::real >( begin(s), end(s) );
-    }
+    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+
+    //! Return analytic solution for conserved variables
+    //! \param[in] xi X-coordinate at which to evaluate the analytic solution
+    //! \param[in] yi Y-coordinate at which to evaluate the analytic solution
+    //! \param[in] zi Z-coordinate at which to evaluate the analytic solution
+    //! \param[in] t Physical time at which to evaluate the analytic solution
+    //! \return Vector of analytic solution at given location and time
+    std::vector< tk::real >
+    solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
 
   private:
     //! Equation system index
@@ -1072,8 +1048,7 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      int inbox = 0;
-      auto ur = Problem::solution( system, ncomp, x, y, z, t, inbox );
+      auto ur = Problem::initialize( system, ncomp, x, y, z, t );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );
 
       ur.resize(ul.size());
@@ -1288,4 +1263,4 @@ class MultiMat {
 
 } // inciter::
 
-#endif // MultiMatDG_h
+#endif // DGMultiMat_h

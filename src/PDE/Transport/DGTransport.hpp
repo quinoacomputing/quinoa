@@ -88,22 +88,30 @@ class Transport {
       return 0;
     }
 
+    //! Determine elements that lie inside the user-defined IC box
+    void IcBoxElems( const tk::Fields&,
+      std::size_t,
+      std::unordered_set< std::size_t >& ) const
+    {}
+
     //! Initalize the transport equations for DG
     //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+//    //! \param[in,out] inbox List of elements at which box user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
+                     const std::unordered_set< std::size_t >& /*inbox*/,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
-                      Problem::solution, unk, t, nielem );
+                      Problem::initialize, unk, t, nielem );
     }
 
     //! Compute the left hand side mass matrix
@@ -231,6 +239,7 @@ class Transport {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
+              const std::unordered_set< std::size_t >&,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
@@ -301,33 +310,15 @@ class Transport {
       return mindt;
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    //! \details This functions should be written in conjunction with
-    //!   fieldOutput(), which provides the vector of fields to be output
-    std::vector< std::string > fieldNames() const {
-      const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+    //! Return analytic field names to be output to file
+    //! \return Vector of strings labelling analytic fields output in file
+    std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
-      const auto& depvar =
-      g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
-      // will output numerical solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) + "_numerical" );
-      // will output analytic solution for all components
+      auto depvar = g_inputdeck.get< tag::param, eq, tag::depvar >()[m_system];
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_analytic" );
-      // will output error for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) + "_error" );
-      if(pref)           // Adaptive DG on
-        n.push_back( "ndof" );
       return n;
     }
-
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > nodalFieldNames() const
-    { return {}; }
 
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
@@ -338,67 +329,11 @@ class Transport {
       return s;
     }
 
-    //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    //! \details This functions should be written in conjunction with names(),
-    //!   which provides the vector of field names
-    //! \note U is overwritten
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real,
-                 std::size_t,
-                 std::size_t,
-                 const tk::Fields& geoElem,
-                 tk::Fields& U,
-                 const tk::Fields& ) const
-    {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      Assert( geoElem.nunk() == U.nunk(), "Size mismatch" );
-      std::vector< std::vector< tk::real > > out;
-      // will output numerical solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c*rdof, m_offset ) );
-      // evaluate analytic solution at time t
-      auto E = U;
-      for (std::size_t e=0; e<U.nunk(); ++e)
-      {
-        int inbox = 0;
-        auto s = Problem::solution( m_system, m_ncomp, geoElem(e,1,0),
-                                    geoElem(e,2,0), geoElem(e,3,0), t, inbox );
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          E( e, c*rdof, m_offset ) = s[c];
-      }
-      // will output analytic solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( E.extract( c*rdof, m_offset ) );
-      // will output error for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) {
-        auto mark = c*rdof;
-        auto u = U.extract( mark, m_offset );
-        auto e = E.extract( mark, m_offset );
-        for (std::size_t i=0; i<u.size(); ++i)
-          e[i] = std::pow( e[i] - u[i], 2.0 ) * geoElem(i,0,0);
-        out.push_back( e );
-      }
-      return out;
-    }
-
-    //! Nodal field output setup will go here
-    std::vector< std::vector< tk::real > >
-    nodalFieldOutput( tk::real,
-      tk::real,
-      std::size_t,
-      const std::map< std::size_t, std::vector< std::size_t > >&,
-      const tk::Fields&,
-      tk::Fields&,
-      tk::Fields&,
-      tk::Fields&,
-      const tk::Fields& ) const
-    {
-      return {};
+    //! Return time history field names to be output to file
+    //! \return Vector of strings labelling time history fields output in file
+    std::vector< std::string > histNames() const {
+      std::vector< std::string > s; // punt for now
+      return s;
     }
 
     //! Return names of integral variables to be output to diagnostics file
@@ -421,9 +356,28 @@ class Transport {
     //! \return Vector of analytic solution at given spatial location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+
+    //! Return analytic solution for conserved variables
+    //! \param[in] xi X-coordinate at which to evaluate the analytic solution
+    //! \param[in] yi Y-coordinate at which to evaluate the analytic solution
+    //! \param[in] zi Z-coordinate at which to evaluate the analytic solution
+    //! \param[in] t Physical time at which to evaluate the analytic solution
+    //! \return Vector of analytic solution at given location and time
+    std::vector< tk::real >
+    solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
+
+    //! Return time history field output evaluated at time history points
+    //! \param[in] h History point data
+    std::vector< std::vector< tk::real > >
+    histOutput( const std::vector< HistData >& h,
+                const std::vector< std::size_t >&,
+                const tk::UnsMesh::Coords&,
+                const tk::Fields& ) const
     {
-      int inbox = 0;
-      return Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
+      std::vector< std::vector< tk::real > > Up(h.size()); //punt for now
+      return Up;
     }
 
   private:
@@ -521,8 +475,7 @@ class Transport {
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >& )
     {
-      int inbox = 0;
-      return {{ ul, Problem::solution( system, ncomp, x, y, z, t, inbox ) }};
+      return {{ ul, Problem::initialize( system, ncomp, x, y, z, t ) }};
     }
 };
 

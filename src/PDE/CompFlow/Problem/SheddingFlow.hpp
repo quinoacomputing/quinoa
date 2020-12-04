@@ -33,10 +33,15 @@ class CompFlowProblemSheddingFlow {
     using eq = tag::compflow;
 
   public:
-    //! Evaluate analytical solution at (x,y,0) for all components
-    static tk::SolutionFn::result_type
-    solution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
-              tk::real, int& );
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
+                tk::real );
+
+    //! Evaluate analytical solution at (x,y,z,t) for all components
+    static tk::InitializeFn::result_type
+    analyticSolution( ncomp_t, ncomp_t, tk::real, tk::real,  tk::real,
+                      tk::real ) { return {}; }
 
     //! Compute and return source term for this problem
     //! \param[in,out] r Density source
@@ -54,20 +59,8 @@ class CompFlowProblemSheddingFlow {
     //!   in this PDE system
     void side( std::unordered_set< int >& conf ) const;
 
-    //! Return field names to be output to file
-    std::vector< std::string > fieldNames( ncomp_t ) const;
-
-    //! Return field output going to file
-    std::vector< std::vector< tk::real > >
-    fieldOutput( ncomp_t system,
-                 ncomp_t /*ncomp*/,
-                 ncomp_t offset,
-                 std::size_t nunk,
-                 tk::real,
-                 tk::real /*V*/,
-                 const std::vector< tk::real >& /*vol*/,
-                 const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-                 tk::Fields& U ) const;
+    //! Return analytic field names to be output to file
+    std::vector< std::string > analyticFieldNames( ncomp_t ) const { return {}; }
 
     //! Return names of integral variables to be output to diagnostics file
     std::vector< std::string > names( ncomp_t ) const;

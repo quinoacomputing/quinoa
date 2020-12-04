@@ -149,6 +149,12 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
+    //! \brief Receive nodal solution (ofor field output) contributions from
+    //!   neighboring chares
+    void comnodeout( const std::vector< std::size_t >& gid,
+                     const std::vector< std::size_t >& nesup,
+                     const std::vector< std::vector< tk::real > >& L );
+
     //! Optionally refine/derefine mesh
     void refine( const std::vector< tk::real >& l2res );
 
@@ -164,8 +170,8 @@ class DG : public CBase_DG {
       const std::map< int, std::vector< std::size_t > >& /* bnode */,
       const std::vector< std::size_t >& triinpoel );
 
-    //! Receive new field output mesh from Refiner
-    void writePostAMR(
+    //! Extract field output going to file
+    void extractFieldOutput(
       const std::vector< std::size_t >& /* ginpoel */,
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,
@@ -183,10 +189,6 @@ class DG : public CBase_DG {
 
     //! Compute left hand side
     void lhs();
-
-    //! Const-ref access to current solution
-    //! \param[in,out] u Reference to update with current solution
-    void solution( tk::Fields& u ) const { u = m_u; }
 
     //! Unused in DG
     void resized() {}
@@ -209,20 +211,21 @@ class DG : public CBase_DG {
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
+      p | m_nnod;
       p | m_nreco;
+      p | m_inpoel;
+      p | m_coord;
       p | m_fd;
       p | m_u;
       p | m_un;
       p | m_p;
-      p | m_Unode;
-      p | m_Pnode;
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
       p | m_rhs;
       p | m_nfac;
       p | m_nunk;
-      p | m_ncoord;
+      p | m_npoin;
       p | m_ipface;
       p | m_bndFace;
       p | m_ghostData;
@@ -243,6 +246,11 @@ class DG : public CBase_DG {
       p | m_infaces;
       p | m_esup;
       p | m_esupc;
+      p | m_elemfields;
+      p | m_nodefields;
+      p | m_nodefieldsc;
+      p | m_outmesh;
+      p | m_boxelems;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -274,10 +282,18 @@ class DG : public CBase_DG {
     //! \brief Counter signaling that we have received all our solution ghost
     //!    data during setup
     std::size_t m_ninitsol;
-    //! Counter signaling that we have received all our limiter function ghost data
+    //! \brief Counter signaling that we have received all our limiter function
+    //!   ghost data
     std::size_t m_nlim;
+    //! \brief Counter signaling that we have received all our node solution
+    //!   contributions
+    std::size_t m_nnod;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
+    //! Mesh connectivity extended
+    std::vector< std::size_t > m_inpoel;
+    //! Node coordinates extended
+    tk::UnsMesh::Coords m_coord;
     //! Face data
     FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
@@ -286,10 +302,6 @@ class DG : public CBase_DG {
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
-    //! Vector of unknown/solution at each mesh node
-    tk::Fields m_Unode;
-    //! Vector of primitive quantities at each mesh node
-    tk::Fields m_Pnode;
     //! Face geometry
     tk::Fields m_geoFace;
     //! Element geometry
@@ -303,7 +315,7 @@ class DG : public CBase_DG {
     //! Counter for number of unknowns on this chare (including ghosts)
     std::size_t m_nunk;
     //! Counter for number of nodes on this chare excluding ghosts
-    std::size_t m_ncoord;
+    std::size_t m_npoin;
     //! Internal + physical boundary faces (inverse of inpofa)
     tk::UnsMesh::FaceSet m_ipface;
     //! Face & tet IDs associated to global node IDs of the face for each chare
@@ -352,6 +364,39 @@ class DG : public CBase_DG {
     std::map< std::size_t, std::vector< std::size_t > > m_esup;
     //! Communication buffer for esup data-structure
     std::map< std::size_t, std::vector< std::size_t > > m_esupc;
+    //! Elem output fields
+    std::vector< std::vector< tk::real > > m_elemfields;
+    //! Node output fields
+    std::vector< std::vector< tk::real > > m_nodefields;
+    //! Receive buffer for communication of node output fields
+    //! \details Key: global node id, value: output fields and number of
+    //!   elements surrounding the node
+    std::unordered_map< std::size_t, std::pair< std::vector< tk::real >,
+                                                std::size_t > > m_nodefieldsc;
+    //! Storage for refined mesh used for field output
+    struct {
+      tk::UnsMesh::Chunk chunk;
+      tk::UnsMesh::Coords coord;
+      std::vector< std::size_t > triinpoel;
+      std::map< int, std::vector< std::size_t > > bface;
+      tk::NodeCommMap nodeCommMap;
+      void pup( PUP::er& p ) {
+        p|chunk; p|coord; p|triinpoel; p|bface; p|nodeCommMap;
+      }
+      void destroy() {
+        tk::destroy( std::get<0>(chunk) );
+        tk::destroy( std::get<1>(chunk) );
+        tk::destroy( std::get<2>(chunk) );
+        tk::destroy( coord[0] );
+        tk::destroy( coord[1] );
+        tk::destroy( coord[2] );
+        tk::destroy( triinpoel );
+        tk::destroy( bface );
+        tk::destroy( nodeCommMap );
+      }
+    } m_outmesh;
+    //! Element ids at which box ICs are defined by user
+    std::unordered_set< std::size_t > m_boxelems;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -405,10 +450,7 @@ class DG : public CBase_DG {
     void addGeoFace( const tk::UnsMesh::Face& t,
                      const std::array< std::size_t, 2 >& id );
 
-    //! Output mesh and particle fields to files
-    void out();
-
-    //! Start preparing mesh-based fields for output to file
+    //! Output mesh field data
     void writeFields( CkCallback c );
 
     //! Compute solution reconstructions
@@ -429,11 +471,21 @@ class DG : public CBase_DG {
     //! p-refine all elements that are adjacent to p-refined elements
     void propagate_ndof();
 
-    //! Evaluate solution on refined (field-output) mesh
-    std::tuple< tk::Fields, tk::Fields >
-    solref( const std::vector< std::size_t >& inpoel,
-            const tk::UnsMesh::Coords& coord,
-            const std::unordered_map< std::size_t, std::size_t >& addedTets );
+    //! Evaluate solution on incomping (a potentially refined) mesh
+    std::tuple< tk::Fields, tk::Fields, tk::Fields, tk::Fields >
+    evalSolution(
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      const std::unordered_map< std::size_t, std::size_t >& addedTets );
+
+    //! Decide wether to output field data
+    bool fieldOutput() const;
+
+    //! Decide if we write field output using a refined mesh
+    bool refinedOutput() const;
+
+    //! Start preparing fields for output to file
+    void startFieldOutput( CkCallback c );
 };
 
 } // inciter::

@@ -24,56 +24,88 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::CompFlowProblemVorticalFlow;
 
-tk::SolutionFn::result_type
-CompFlowProblemVorticalFlow::solution( ncomp_t system,
-                                       [[maybe_unused]] ncomp_t ncomp,
-                                       tk::real x,
-                                       tk::real y,
-                                       tk::real z,
-                                       tk::real,
-                                       int& )
+tk::InitializeFn::result_type
+CompFlowProblemVorticalFlow::initialize( ncomp_t system,
+                                         ncomp_t,
+                                         tk::real x,
+                                         tk::real y,
+                                         tk::real z,
+                                         tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
-//! \note The function signature must follow tk::SolutionFn
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  Assert( ncomp == ncomp, "Number of scalar components must be " +
-                          std::to_string(ncomp) );
   using tag::param; using tag::compflow;
 
   // manufactured solution parameters
-  const auto& a =
-    g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
-  const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
-  const auto& p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ system ];
+  auto a = g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
+  auto b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
+  auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ system ];
   // ratio of specific heats
-  tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
+  auto g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
   // velocity
-  const tk::real ru = a*x - b*y;
-  const tk::real rv = b*x + a*y;
-  const tk::real rw = -2.0*a*z;
+  auto ru = a*x - b*y;
+  auto rv = b*x + a*y;
+  auto rw = -2.0*a*z;
   // total specific energy
-  const tk::real rE = (ru*ru+rv*rv+rw*rw)/2.0 + (p0-2.0*a*a*z*z)/(g-1.0);
+  auto rE = (ru*ru+rv*rv+rw*rw)/2.0 + (p0-2.0*a*a*z*z)/(g-1.0);
 
   return {{ 1.0, ru, rv, rw, rE }};
 }
 
-std::vector< std::string >
-CompFlowProblemVorticalFlow::fieldNames( ncomp_t ) const
+tk::InitializeFn::result_type
+CompFlowProblemVorticalFlow::analyticSolution( ncomp_t system,
+                                               ncomp_t,
+                                               tk::real x,
+                                               tk::real y,
+                                               tk::real z,
+                                               tk::real )
 // *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
+//! Evaluate analytical solution at (x,y,z,t) for all components
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
+//! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
+//! \param[in] z Z coordinate where to evaluate the solution
+//! \return Values of all components evaluated at (x)
+//! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  auto n = CompFlowFieldNames();
+  using tag::param; using tag::compflow;
 
+  // manufactured solution parameters
+  auto a = g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
+  auto b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
+  auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ system ];
+  // ratio of specific heats
+  auto g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
+  // velocity
+  auto ru = a*x - b*y;
+  auto rv = b*x + a*y;
+  auto rw = -2.0*a*z;
+  // total specific energy
+  auto rE = (ru*ru+rv*rv+rw*rw)/2.0 + (p0-2.0*a*a*z*z)/(g-1.0);
+  // pressure
+  auto p = p0 - 2.0*a*a*z*z;
+
+  return {{ 1.0, ru, rv, rw, rE, p }};
+}
+
+std::vector< std::string >
+CompFlowProblemVorticalFlow::analyticFieldNames( ncomp_t ) const
+// *****************************************************************************
+// Return analytic field names to be output to file
+//! \return Vector of strings labelling analytic fields output in file
+// *****************************************************************************
+{
+  std::vector< std::string > n;
   n.push_back( "density_analytical" );
   n.push_back( "x-velocity_analytical" );
   n.push_back( "y-velocity_analytical" );
@@ -82,84 +114,6 @@ CompFlowProblemVorticalFlow::fieldNames( ncomp_t ) const
   n.push_back( "pressure_analytical" );
 
   return n;
-}
-
-std::vector< std::vector< tk::real > >
-CompFlowProblemVorticalFlow::fieldOutput(
-  ncomp_t system,
-  ncomp_t,
-  ncomp_t offset,
-  std::size_t nunk,
-  tk::real,
-  tk::real,
-  const std::vector< tk::real >&,
-  const std::array< std::vector< tk::real >, 3 >& coord,
-  tk::Fields& U ) const
-// *****************************************************************************
-//  Return field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
-//! \param[in] nunk Number of unknowns to extract
-//! \param[in] coord Mesh node coordinates
-//! \param[in] U Solution vector at recent time step
-//! \return Vector of vectors to be output to file
-// *****************************************************************************
-{
-   // manufactured solution parameters
-   const auto& a =
-     g_inputdeck.get< tag::param, tag::compflow, tag::alpha >()[system];
-   const auto& b =
-     g_inputdeck.get< tag::param, tag::compflow, tag::beta >()[system];
-   const auto& p0 =
-     g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[system];
-   // number of degree of freedom
-   const std::size_t rdof =
-     g_inputdeck.get< tag::discr, tag::rdof >();
-   // ratio of specific heats
-   tk::real g =
-     g_inputdeck.get< tag::param, tag::compflow, tag::gamma >()[system][0];
-
-   auto out = CompFlowFieldOutput( system, offset, nunk, U );
-
-   const auto r  = U.extract( 0*rdof, offset );
-   const auto ru = U.extract( 1*rdof, offset );
-   const auto rv = U.extract( 2*rdof, offset );
-   const auto rw = U.extract( 3*rdof, offset );
-   const auto re = U.extract( 4*rdof, offset );
-
-   // mesh node coordinates
-   const auto& x = coord[0];
-   const auto& y = coord[1];
-   const auto& z = coord[2];
-
-   out.push_back( std::vector< tk::real >( r.size(), 1.0 ) );
-
-   std::vector< tk::real > u = ru;
-   for (std::size_t i=0; i<u.size(); ++i) u[i] = a*x[i] - b*y[i];
-   out.push_back( u );
-
-   std::vector< tk::real > v = rv;
-   for (std::size_t i=0; i<v.size(); ++i) v[i] = b*x[i] + a*y[i];
-   out.push_back( v );
-
-   std::vector< tk::real > w = rw;
-   for (std::size_t i=0; i<w.size(); ++i) w[i] = -2.0*a*z[i];
-   out.push_back( w );
-
-   std::vector< tk::real > E = re;
-   for (std::size_t i=0; i<E.size(); ++i)
-     E[i] = 0.5*(u[i]*u[i] + v[i]*v[i] + w[i]*w[i]) +
-            (p0 - 2.0*a*a*z[i]*z[i])/(g-1.0);
-   out.push_back( E );
-
-   std::vector< tk::real > P( r.size(), 0.0 );
-   for (std::size_t i=0; i<P.size(); ++i)
-     P[i] = p0 - 2.0*a*a*z[i]*z[i];
-   out.push_back( P );
-
-   return out;
 }
 
 std::vector< std::string >

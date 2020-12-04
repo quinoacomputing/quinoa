@@ -27,7 +27,7 @@ namespace cg {
 
 std::vector< tk::real >
 solinc( tk::ncomp_t system, tk::ncomp_t ncomp, tk::real x, tk::real y,
-        tk::real z, tk::real t, tk::real dt, tk::SolutionFn solution )
+        tk::real z, tk::real t, tk::real dt, tk::InitializeFn solution )
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
 // for all components
@@ -43,9 +43,8 @@ solinc( tk::ncomp_t system, tk::ncomp_t ncomp, tk::real x, tk::real y,
 //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
 // *****************************************************************************
 {
-  int inbox = 0;
-  auto st1 = solution( system, ncomp, x, y, z, t, inbox );
-  auto st2 = solution( system, ncomp, x, y, z, t+dt, inbox );
+  auto st1 = solution( system, ncomp, x, y, z, t );
+  auto st2 = solution( system, ncomp, x, y, z, t+dt );
 
   std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                   []( tk::real s, tk::real& d ){ return d -= s; } );

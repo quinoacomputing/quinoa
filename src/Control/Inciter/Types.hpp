@@ -32,6 +32,7 @@
 #include "Options/FieldFile.hpp"
 #include "Options/Error.hpp"
 #include "PUPUtil.hpp"
+#include "OutVar.hpp"
 
 namespace inciter {
 namespace ctr {
@@ -147,6 +148,7 @@ using ios = tk::TaggedTuple< brigand::list<
     //! Diagnostics filename
   , tag::diag,      kw::diagnostics_cmd::info::expect::type
   , tag::particles, std::string                     //!< Particles filename
+  , tag::outvar,    std::vector< OutVar >           //!< Output variables
   , tag::restart,   kw::restart::info::expect::type //!< Restart dirname
 > >;
 

@@ -58,6 +58,17 @@ SuperbeeMultiMat_P1(
   tk::Fields& P,
   std::size_t nmat );
 
+//! Kuzmin's vertex-based limiter for single-material DGP1
+void
+VertexBased_P1(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  std::size_t offset,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U );
+
 //! Kuzmin's vertex-based limiter for multi-material DGP1
 void
 VertexBasedMultiMat_P1(

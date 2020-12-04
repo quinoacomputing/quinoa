@@ -277,6 +277,69 @@ SuperbeeMultiMat_P1(
 }
 
 void
+VertexBased_P1(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  std::size_t offset,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U )
+// *****************************************************************************
+//  Kuzmin's vertex-based limiter for single-material DGP1
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element connectivity
+//! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in] nelem Number of elements
+//! \param[in] offset Index for equation systems
+//! \param[in] coord Array of nodal coordinates
+//! \param[in,out] U High-order solution vector which gets limited
+//! \details This vertex-based limiter function should be called for compflow.
+//!   For details see: Kuzmin, D. (2010). A vertex-based hierarchical slope
+//!   limiter for p-adaptive discontinuous Galerkin methods. Journal of
+//!   computational and applied mathematics, 233(12), 3077-3085.
+// *****************************************************************************
+{
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  std::size_t ncomp = U.nprop()/rdof;
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // If an rDG method is set up (P0P1), then, currently we compute the P1
+    // basis functions and solutions by default. This implies that P0P1 is
+    // unsupported in the p-adaptive DG (PDG). This is a workaround until we
+    // have rdofel, which is needed to distinguish between ndofs and rdofs per
+    // element for pDG.
+    std::size_t dof_el;
+    if (rdof > ndof)
+    {
+      dof_el = rdof;
+    }
+    else
+    {
+      dof_el = ndofel[e];
+    }
+
+    if (dof_el > 1)
+    {
+      // limit conserved quantities
+      auto phi = VertexBasedFunction(U, esup, inpoel, coord, e, rdof, dof_el,
+        offset, ncomp);
+
+      // apply limiter function
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*rdof;
+        U(e, mark+1, offset) = phi[c] * U(e, mark+1, offset);
+        U(e, mark+2, offset) = phi[c] * U(e, mark+2, offset);
+        U(e, mark+3, offset) = phi[c] * U(e, mark+3, offset);
+      }
+    }
+  }
+}
+
+void
 VertexBasedMultiMat_P1(
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,

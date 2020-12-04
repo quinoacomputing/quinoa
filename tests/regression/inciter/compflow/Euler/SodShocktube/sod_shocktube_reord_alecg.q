@@ -32,8 +32,16 @@ inciter
     end
   end
 
-  plotvar
+  field_output
     interval 10000
+    var
+      density "density_numerical"
+      x-velocity "x-velocity_numerical"
+      y-velocity "y-velocity_numerical"
+      z-velocity "z-velocity_numerical"
+      specific_total_energy "specific_total_energy_numerical"
+      pressure "pressure_numerical"
+   end
   end
 
   diagnostics
@@ -42,7 +50,7 @@ inciter
     error l2
   end
 
-  history
+  history_output
     point p1 0.1 0.05 0.025 end
     point p2 0.9 0.05 0.025 end
   end

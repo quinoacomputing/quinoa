@@ -36,29 +36,16 @@ class MultiMatProblemUserDefined {
     using eq = tag::multimat;
 
   public:
-    //! Evaluate initial condition solution at (x,y,z,t) for all components
-    //! \param[in] system Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
-    //! \param[in] ncomp Number of scalar components in this PDE system
-    //! \param[in] x X coordinate where to evaluate the solution
-    //! \param[in] y Y coordinate where to evaluate the solution
-    //! \param[in] z Z coordinate where to evaluate the solution
-    //! \param[in] t Physical time at which to evaluate the solution
-    //! \return Values of all components evaluated at (x,y,z,t)
-    //! \note The function signature must follow tk::SolutionFn
-    static tk::SolutionFn::result_type
-    solution( [[maybe_unused]] ncomp_t system,
-              [[maybe_unused]] ncomp_t ncomp,
-              [[maybe_unused]] tk::real x,
-              [[maybe_unused]] tk::real y,
-              [[maybe_unused]] tk::real z,
-              [[maybe_unused]] tk::real t,
-              int& )
-    {
-      Assert( ncomp == ncomp, "Number of scalar components must be " +
-                              std::to_string(ncomp) );
-      return {{ 1.0, 0.0, 0.0, 1.0, 293.0 }};
-    }
+    //! Initialize numerical solution
+    static tk::InitializeFn::result_type
+    initialize( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real )
+    { return { 1.0, 0.0, 0.0, 1.0, 293.0 }; }
+
+    //! Evaluate analytical solution at (x,y,z,t) for all components
+    static std::vector< tk::real >
+    analyticSolution( ncomp_t system, ncomp_t ncomp,  tk::real x, tk::real y,
+                      tk::real z, tk::real t )
+    { return initialize( system, ncomp, x, y, z, t ); }
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! \details No-op for user-deefined problems.

@@ -17,12 +17,14 @@
 #include <iostream>
 
 #include "Vector.hpp"
+#include "Around.hpp"
 #include "Base/HashMapReducer.hpp"
 #include "Reconstruction.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 void
-tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
+tk::lhsLeastSq_P0P1(
+  const inciter::FaceData& fd,
   const Fields& geoElem,
   const Fields& geoFace,
   std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls )
@@ -103,13 +105,14 @@ tk::lhsLeastSq_P0P1( const inciter::FaceData& fd,
 }
 
 void
-tk::intLeastSq_P0P1( ncomp_t ncomp,
-                     ncomp_t offset,
-                     const std::size_t rdof,
-                     const inciter::FaceData& fd,
-                     const Fields& geoElem,
-                     const Fields& W,
-                     std::vector< std::vector< std::array< real, 3 > > >& rhs_ls )
+tk::intLeastSq_P0P1(
+  ncomp_t ncomp,
+  ncomp_t offset,
+  const std::size_t rdof,
+  const inciter::FaceData& fd,
+  const Fields& geoElem,
+  const Fields& W,
+  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls )
 // *****************************************************************************
 //  \brief Compute internal surface contributions to rhs vector of the
 //    least-squares reconstruction
@@ -165,7 +168,8 @@ tk::intLeastSq_P0P1( ncomp_t ncomp,
 }
 
 void
-tk::bndLeastSqConservedVar_P0P1( ncomp_t system,
+tk::bndLeastSqConservedVar_P0P1(
+  ncomp_t system,
   ncomp_t ncomp,
   ncomp_t offset,
   std::size_t rdof,
@@ -257,7 +261,8 @@ tk::bndLeastSqConservedVar_P0P1( ncomp_t system,
 }
 
 void
-tk::bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
+tk::bndLeastSqPrimitiveVar_P0P1(
+  ncomp_t system,
   ncomp_t nprim,
   ncomp_t offset,
   std::size_t rdof,
@@ -354,7 +359,8 @@ tk::bndLeastSqPrimitiveVar_P0P1( ncomp_t system,
 }
 
 void
-tk::solveLeastSq_P0P1( ncomp_t ncomp,
+tk::solveLeastSq_P0P1(
+  ncomp_t ncomp,
   ncomp_t offset,
   const std::size_t rdof,
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
@@ -393,7 +399,8 @@ tk::solveLeastSq_P0P1( ncomp_t ncomp,
 }
 
 void
-tk::recoLeastSqExtStencil( std::size_t rdof,
+tk::recoLeastSqExtStencil(
+  std::size_t rdof,
   std::size_t offset,
   std::size_t nielem,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
@@ -542,71 +549,13 @@ tk::transform_P0P1( ncomp_t ncomp,
 }
 
 void
-tk::nodeAvg( std::size_t ncomp,
-  std::size_t nprim,
-  std::size_t offset,
-  std::size_t rdof,
-  std::size_t npoin,
-  const std::map< std::size_t, std::vector< std::size_t > >& esup,
-  const Fields& U,
-  const Fields& P,
-  Fields& Unode,
-  Fields& Pnode )
-// *****************************************************************************
-//  Compute nodal field outputs
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] nprim Number of primitive quantities stored in this PDE system
-//! \param[in] offset Index for equation systems
-//! \param[in] rdof Total number of reconstructed dofs
-//! \param[in] npoin Total number of nodes
-//! \param[in] esup Elements surrounding points
-//! \param[in] U Vector of cell-averaged unknowns
-//! \param[in] P Vector of cell-averaged primitive quantities
-//! \param[in,out] Unode Vector of unknowns at nodes
-//! \param[in,out] Pnode Vector of primitive quantities at nodes
-// *****************************************************************************
-{
-  Unode.fill(0.0);
-  Pnode.fill(0.0);
-
-  for (std::size_t p=0; p<npoin; ++p)
-  {
-    const auto& pesup = esup.at(p);
-
-    // loop over all the elements surrounding this node p
-    auto denom(0.0);
-    for (auto er : pesup)
-    {
-      denom += 1.0;
-      // average cell-averaged solution to node p
-      for (std::size_t c=0; c<ncomp; ++c)
-      {
-        auto mark = c*rdof;
-        Unode(p,c,offset) += U(er,mark,offset);
-      }
-      for (std::size_t c=0; c<nprim; ++c)
-      {
-        auto mark = c*rdof;
-        Pnode(p,c,offset) += P(er,mark,offset);
-      }
-    }
-
-    // complete the average
-    for (std::size_t c=0; c<ncomp; ++c)
-      Unode(p,c,offset) /= denom;
-    for (std::size_t c=0; c<nprim; ++c)
-      Pnode(p,c,offset) /= denom;
-  }
-}
-
-void
 tk::safeReco( std::size_t offset,
-  std::size_t rdof,
-  std::size_t nmat,
-  std::size_t el,
-  int er,
-  const Fields& U,
-  std::array< std::vector< real >, 2 >& state )
+              std::size_t rdof,
+              std::size_t nmat,
+              std::size_t el,
+              int er,
+              const Fields& U,
+              std::array< std::vector< real >, 2 >& state )
 // *****************************************************************************
 //  Compute safe reconstructions near material interfaces
 //! \param[in] offset Index for equation systems

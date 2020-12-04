@@ -177,7 +177,7 @@ const
 
       for (const auto& eq : g_dgpde)
         // cppcheck-suppress useStlAlgorithm
-        s = eq.analyticSolution( gp[0], gp[1], gp[2], d.T()+d.Dt() );
+        s = eq.solution( gp[0], gp[1], gp[2], d.T()+d.Dt() );
 
       for (std::size_t c=0; c<u.nprop()/rdof; ++c)
       {
@@ -210,6 +210,10 @@ const
         // Compute max for Linf norm of the numerical-analytic solution
         auto err = std::abs( ugp - s[c] );
         if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
+
+        // Compute sum of the total energy over the entire domain (only the
+        // first entry is used)
+        if (c == u.nprop()/rdof-1) diag[TOTALSOL][0] += wt * ugp;
       }
     }
   }

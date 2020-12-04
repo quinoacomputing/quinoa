@@ -152,8 +152,8 @@ class ALECG : public CBase_ALECG {
       const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& triinpoel );
 
-    //! Receive new field output mesh from Refiner
-    void writePostAMR(
+    //! Extract field output to file
+    void extractFieldOutput(
       const std::vector< std::size_t >& /* ginpoel */,
       const tk::UnsMesh::Chunk& /*chunk*/,
       const tk::UnsMesh::Coords& /*coord*/,
@@ -220,7 +220,6 @@ class ALECG : public CBase_ALECG {
       p | m_symbctri;
       p | m_stage;
       p | m_boxnodes;
-      p | m_boxnodes_set;
       p | m_edgenode;
       p | m_edgeid;
       p | m_dtp;
@@ -322,9 +321,7 @@ class ALECG : public CBase_ALECG {
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Mesh node ids at which user-defined box ICs are defined
-    std::vector< std::size_t > m_boxnodes;
-    //! Box nodes that have been set
-    std::unordered_set< std::size_t > m_boxnodes_set;
+    std::unordered_set< std::size_t > m_boxnodes;
     //! Local node IDs of edges
     std::vector< std::size_t > m_edgenode;
     //! Edge ids in the order of access
@@ -348,9 +345,6 @@ class ALECG : public CBase_ALECG {
              const std::unordered_map< tk::UnsMesh::Edge,
                      std::vector< std::size_t >,
                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
-
-    //! Find elements along our mesh chunk boundary
-    std::vector< std::size_t > bndel() const;
 
     //! Compute chare-boundary edges
     void bndEdges();

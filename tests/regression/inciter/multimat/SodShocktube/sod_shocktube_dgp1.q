@@ -42,8 +42,18 @@ inciter
     error l2
   end
 
-  plotvar
+  field_output
     interval 25
+    var elem
+      F1 "volfrac1_numerical"
+      F2 "volfrac2_numerical"
+      density "density_numerical" # bulk density
+      pressure "pressure_numerical" # bulk pressure
+      specific_total_energy "total_energy_density_numerical" # bulk specific total energy
+      x-velocity "x-velocity_numerical"
+      y-velocity "y-velocity_numerical"
+      z-velocity "z-velocity_numerical"
+    end
   end
 
 end

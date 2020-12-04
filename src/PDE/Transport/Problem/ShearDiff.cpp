@@ -27,8 +27,8 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::TransportProblemShearDiff;
 
 std::vector< tk::real >
-TransportProblemShearDiff::solution( ncomp_t system, ncomp_t ncomp,
-          tk::real x, tk::real y, tk::real z, tk::real t, int& )
+TransportProblemShearDiff::initialize( ncomp_t system, ncomp_t ncomp,
+  tk::real x, tk::real y, tk::real z, tk::real t )
 // *****************************************************************************
 //  Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index

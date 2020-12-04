@@ -48,6 +48,7 @@ class Transport {
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
     using real = tk::real;
+    using eq = tag::transport;
 
     static constexpr real muscl_eps = 1.0e-9;
     static constexpr real muscl_const = 1.0/3.0;
@@ -69,6 +70,10 @@ class Transport {
       m_problem.errchk( m_system, m_ncomp );
     }
 
+    //! Determine nodes that lie inside the user-defined IC box
+    void IcBoxNodes( const tk::UnsMesh::Coords&,
+                     std::unordered_set< std::size_t >& ) const {}
+
     //! Initalize the transport equations using problem policy
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
@@ -76,25 +81,19 @@ class Transport {
     void initialize( const std::array< std::vector< real >, 3 >& coord,
                      tk::Fields& unk,
                      real t,
-                     std::vector< std::size_t >& ) const
+                     real,
+                     const std::unordered_set< std::size_t >& ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
       for (ncomp_t i=0; i<x.size(); ++i) {
-        int inbox = 0;
-        const auto s =
-          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t, inbox );
+        auto s = Problem::initialize( m_system, m_ncomp, x[i], y[i], z[i], t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
           unk( i, c, m_offset ) = s[c];
       }
     }
-
-    //! Set initial condition in user-defined box IC nodes (no-op for Transport)
-    void box( real, real, const std::vector< std::size_t >&,
-              const std::array< std::vector< real >, 3 >&, tk::Fields&,
-              std::unordered_set< std::size_t >& ) const {}
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
@@ -104,11 +103,17 @@ class Transport {
     //! \return Vector of analytic solution at given location and time
     std::vector< real >
     analyticSolution( real xi, real yi, real zi, real t ) const
-    {
-      int inbox = 0;
-      auto s = Problem::solution( m_system, m_ncomp, xi, yi, zi, t, inbox );
-      return std::vector< real >( begin(s), end(s) );
-    }
+    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+
+    //! Return analytic solution for conserved variables
+    //! \param[in] xi X-coordinate at which to evaluate the analytic solution
+    //! \param[in] yi Y-coordinate at which to evaluate the analytic solution
+    //! \param[in] zi Z-coordinate at which to evaluate the analytic solution
+    //! \param[in] t Physical time at which to evaluate the analytic solution
+    //! \return Vector of analytic solution at given location and time
+    std::vector< tk::real >
+    solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
+    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
 
     //! Compute nodal gradients of primitive variables for ALECG
     //! \param[in] coord Mesh node coordinates
@@ -208,9 +213,11 @@ class Transport {
       const std::vector< real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >& edgeid,
+      const std::unordered_set< std::size_t >&,
       const tk::Fields& G,
       const tk::Fields& U,
       const std::vector< tk::real >&,
+      real,
       tk::Fields& R ) const
     {
       Assert( G.nprop() == m_ncomp*3,
@@ -365,6 +372,7 @@ class Transport {
     //! \return Minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
+             tk::real,
              const tk::Fields& U ) const
     {
       using tag::transport;
@@ -462,7 +470,7 @@ class Transport {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               if (steady) { t = tp[n]; deltat = dtp[n]; }
               const auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
-                                     t, deltat, Problem::solution );
+                                     t, deltat, Problem::initialize );
               auto& nbc = bc[n] = NodeBC( m_ncomp );
               for (ncomp_t c=0; c<m_ncomp; ++c)
                 nbc[c] = { true, s[c] };
@@ -490,24 +498,13 @@ class Transport {
                 std::array< real, 4 > > >&,
       const std::unordered_set< std::size_t >& ) const {}
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    //! \details This functions should be written in conjunction with
-    //!   fieldOutput(), which provides the vector of fields to be output
-    std::vector< std::string > fieldNames() const {
+    //! Return analytic field names to be output to file
+    //! \return Vector of strings labelling analytic fields output in file
+    std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
-      const auto& depvar =
-        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().
-        at(m_system);
-      // will output numerical solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) + "_numerical" );
-      // will output analytic solution for all components
+      auto depvar = g_inputdeck.get< tag::param, eq, tag::depvar >()[m_system];
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_analytic" );
-      // will output error for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        n.push_back( depvar + std::to_string(c) + "_error" );
       return n;
     }
 
@@ -515,78 +512,22 @@ class Transport {
     //! \return Vector of strings labelling surface fields output in file
     //! \details This functions should be written in conjunction with
     //!   surfOutput(), which provides the vector of surface fields to be output
-    std::vector< std::string > surfNames() const {
-      std::vector< std::string > n;     // punt for now
-      return n;
-    }
+    std::vector< std::string > surfNames() const { return {}; }
 
     //! Return surface field output going to file
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >&,
-                tk::Fields& ) const
-    {
-      std::vector< std::vector< real > > s; // punt for now
-      return s;
-    }
+                tk::Fields& ) const { return {}; }
 
     //! Return time history field names to be output to file
     //! \return Vector of strings labelling time history fields output in file
-    std::vector< std::string > histNames() const {
-      std::vector< std::string > s; // punt for now
-      return s;
-    }
+    std::vector< std::string > histNames() const { return {}; }
 
     //! Return time history field output evaluated at time history points
     std::vector< std::vector< real > >
     histOutput( const std::vector< HistData >&,
                 const std::vector< std::size_t >&,
-                const tk::Fields& ) const
-    {
-      std::vector< std::vector< real > > s; // punt for now
-      return s;
-    }
-
-    //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] V Total mesh volume
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] v Nodal volumes
-    //! \param[in,out] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    //! \details This functions should be written in conjunction with names(),
-    //!   which provides the vector of field names
-    //! \note U is overwritten
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real V,
-                 std::size_t,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< tk::real >& v,
-                 tk::Fields& U ) const
-    {
-      std::vector< std::vector< real > > out;
-      // will output numerical solution for all components
-      auto E = U;
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c, m_offset ) );
-      // evaluate analytic solution at time t
-      std::vector< std::size_t > inbox;
-      initialize( coord, U, t, inbox );
-      // will output analytic solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c, m_offset ) );
-      // will output error for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) {
-        auto u = U.extract( c, m_offset );
-        auto e = E.extract( c, m_offset );
-        Assert( u.size() == e.size(), "Size mismatch" );
-        Assert( u.size() == v.size(), "Size mismatch" );
-        for (std::size_t i=0; i<u.size(); ++i)
-          e[i] = std::pow( e[i] - u[i], 2.0 ) * v[i] / V;
-        out.push_back( e );
-      }
-      return out;
-    }
+                const tk::Fields& ) const { return {}; }
 
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output

@@ -108,7 +108,7 @@ auto extents( const Container& map )
   return {{ x.first->second, x.second->second }};
 }
 
-//! \brief Add all elements of a vector to another one
+//! Add all elements of a vector to those of another one
 //! \param[in,out] dst Destination vector, i.e., left-hand side of v1 += v2
 //! \param[in] src Source vector, i.e., righ-hand side of v1 += v2
 //! \return Destination containing v1[0] += v2[0], v1[1] += v2[1], ...
@@ -125,8 +125,30 @@ operator+=( std::vector< T, Allocator >& dst,
   Assert( src.size() >= dst.size(), "src.size() < dst.size() would loose data "
           "in std::vector<T,Allocator>::operator+=()" );
   dst.resize( src.size() );
-  std::transform( src.begin(), src.end(), dst.begin(), dst.begin(),
+  std::transform( src.cbegin(), src.cend(), dst.begin(), dst.begin(),
                   []( const T& s, T& d ){ return d += s; } );
+  return dst;
+}
+
+//! Divide all elements of a vector with those of another one
+//! \param[in,out] dst Destination vector, i.e., left-hand side of v1 /= v2
+//! \param[in] src Source vector, i.e., righ-hand side of v1 /= v2
+//! \return Destination containing v1[0] /= v2[0], v1[1] /= v2[1], ...
+//! \details If src.size() > dst.size() will grow dst to that of src.size()
+//!   padding with zeros.
+//! \note Will throw exception in DEBUG if src is empty (to warn on no-op), and
+//!   if src.size() < dst.size() (to warn on loosing data).
+template< class T, class Allocator >
+std::vector< T, Allocator >&
+operator/=( std::vector< T, Allocator >& dst,
+            const std::vector< T, Allocator >& src )
+{
+  Assert( !src.empty(), "src empty in std::vector<T,Allocator>::operator/=()" );
+  Assert( src.size() >= dst.size(), "src.size() < dst.size() would loose data "
+          "in std::vector<T,Allocator>::operator/=()" );
+  dst.resize( src.size() );
+  std::transform( src.cbegin(), src.cend(), dst.begin(), dst.begin(),
+                  []( const T& s, T& d ){ return d /= s; } );
   return dst;
 }
 
@@ -254,6 +276,17 @@ void concat( std::unordered_set< Key, Hash,Eq >&& src,
     std::move( std::begin(src), std::end(src), std::inserter(dst,end(dst)) );
     src.clear();
   }
+}
+
+//! Operator << for writing value_type of a standard map to output streams
+//! \param[in,out] os Output stream to write to
+//! \param[in] v value_type entry of a map
+//! \return Updated output stream
+template< class Key, class Value >
+std::ostream&
+operator<< ( std::ostream& os, const std::pair< const Key, Value  >& v ) {
+  os << v.first << ':' << v.second;
+  return os;
 }
 
 //! \brief Convert and return values from container as string

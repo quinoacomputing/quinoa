@@ -40,7 +40,8 @@ std::vector< std::vector< tk::real > >
 CompFlowFieldOutput( ncomp_t system,
                      ncomp_t offset,
                      std::size_t nunk,
-                     tk::Fields& U )
+                     std::size_t rdof,
+                     const tk::Fields& U )
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
@@ -48,13 +49,13 @@ CompFlowFieldOutput( ncomp_t system,
 //! \param[in] offset System offset specifying the position of the system of
 //!   PDEs among other systems
 //! \param[in] nunk Number of unknowns to extract
+//! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
+//!   the number of scalar components to shift when extracting scalar
+//!   components.
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors to be output to file
 // *****************************************************************************
 {
-  // number of degree of freedom
-  const std::size_t rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-
   std::vector< std::vector< tk::real > > out;
   const auto r  = U.extract( 0*rdof, offset );
   const auto ru = U.extract( 1*rdof, offset );
@@ -62,27 +63,27 @@ CompFlowFieldOutput( ncomp_t system,
   const auto rw = U.extract( 3*rdof, offset );
   const auto re = U.extract( 4*rdof, offset );
 
+  Assert( r.size() >= nunk, "Size mismatch" );
+  Assert( ru.size() >= nunk, "Size mismatch" );
+  Assert( rv.size() >= nunk, "Size mismatch" );
+  Assert( rw.size() >= nunk, "Size mismatch" );
+  Assert( re.size() >= nunk, "Size mismatch" );
+
   out.push_back( r );
 
-  Assert( r.size() >= nunk, "Size mismatch" );
-
   std::vector< tk::real > u = ru;
-  Assert( u.size() >= nunk, "Size mismatch" );
   for (std::size_t i=0; i<nunk; ++i) u[i] /= r[i];
   out.push_back( u );
 
   std::vector< tk::real > v = rv;
-  Assert( v.size() >= nunk, "Size mismatch" );
   for (std::size_t i=0; i<nunk; ++i) v[i] /= r[i];
   out.push_back( v );
 
   std::vector< tk::real > w = rw;
-  Assert( w.size() >= nunk, "Size mismatch" );
   for (std::size_t i=0; i<nunk; ++i) w[i] /= r[i];
   out.push_back( w );
 
   std::vector< tk::real > E = re;
-  Assert( E.size() >= nunk, "Size mismatch" );
   for (std::size_t i=0; i<nunk; ++i) E[i] /= r[i];
   out.push_back( E );
 

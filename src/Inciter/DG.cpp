@@ -31,6 +31,7 @@
 #include "Vector.hpp"
 #include "Around.hpp"
 #include "Integrate/Basis.hpp"
+#include "FieldOutput.hpp"
 
 namespace inciter {
 
@@ -57,9 +58,12 @@ DG::DG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
+  m_nnod( 0 ),
   m_nreco( 0 ),
-  m_fd( Disc()->Inpoel(), bface, tk::remap(triinpoel,Disc()->Lid()) ),
-  m_u( Disc()->Inpoel().size()/4,
+  m_inpoel( Disc()->Inpoel() ),
+  m_coord( Disc()->Coord() ),
+  m_fd( m_inpoel, bface, tk::remap(triinpoel,Disc()->Lid()) ),
+  m_u( m_inpoel.size()/4,
        g_inputdeck.get< tag::discr, tag::rdof >()*
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
@@ -67,19 +71,16 @@ DG::DG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::discr, tag::rdof >()*
          std::accumulate( begin(g_dgpde), end(g_dgpde), 0u,
            [](std::size_t s, const DGPDE& eq){ return s + eq.nprim(); } ) ),
-  m_Unode(m_disc[thisIndex].ckLocal()->Gid().size(),
-    m_u.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
-  m_Pnode(m_disc[thisIndex].ckLocal()->Gid().size(),
-    m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
-  m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), Disc()->Coord()) ),
-  m_geoElem( tk::genGeoElemTet( Disc()->Inpoel(), Disc()->Coord() ) ),
+  m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), m_coord) ),
+  m_geoElem( tk::genGeoElemTet( m_inpoel, m_coord ) ),
   m_lhs( m_u.nunk(),
          g_inputdeck.get< tag::discr, tag::ndof >()*
          g_inputdeck.get< tag::component >().nprop() ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
-  m_ncoord( Disc()->Coord()[0].size() ),
+  m_npoin( m_coord[0].size() ),
+  m_ipface(),
   m_bndFace(),
   m_ghostData(),
   m_sendGhost(),
@@ -95,7 +96,15 @@ DG::DG( const CProxy_Discretization& disc,
   m_pc(),
   m_ndofc(),
   m_initial( 1 ),
-  m_expChBndFace()
+  m_expChBndFace(),
+  m_infaces(),
+  m_esup(),
+  m_esupc(),
+  m_elemfields(),
+  m_nodefields(),
+  m_nodefieldsc(),
+  m_outmesh(),
+  m_boxelems()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -109,7 +118,7 @@ DG::DG( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4fac();
 
   // Ensure that mesh partition is not leaky
-  Assert( !tk::leakyPartition(m_fd.Esuel(), Disc()->Inpoel(), Disc()->Coord()),
+  Assert( !tk::leakyPartition(m_fd.Esuel(), m_inpoel, m_coord),
           "Input mesh to DG leaky" );
 
   // Ensure mesh physical boundary for the entire problem not leaky,
@@ -156,12 +165,11 @@ DG::resizeComm()
   auto d = Disc();
 
   const auto& gid = d->Gid();
-  const auto& inpoel = d->Inpoel();
   const auto& inpofa = m_fd.Inpofa();
   const auto& esuel = m_fd.Esuel();
 
   // Perform leak test on mesh partition
-  Assert( !tk::leakyPartition( esuel, inpoel, d->Coord() ),
+  Assert( !tk::leakyPartition( esuel, m_inpoel, m_coord ),
           "Mesh partition leaky" );
 
   // Activate SDAG waits for face adjacency map (ghost data) calculation
@@ -173,6 +181,7 @@ DG::resizeComm()
     thisProxy[ thisIndex ].wait4sol();
     thisProxy[ thisIndex ].wait4reco();
     thisProxy[ thisIndex ].wait4lim();
+    thisProxy[ thisIndex ].wait4nod();
   }
 
   // Invert inpofa to enable searching for faces based on (global) node triplets
@@ -195,9 +204,9 @@ DG::resizeComm()
       if (esuel[mark+f] == -1) {        // if face has no outside-neighbor tet
         // if does not exist among the internal and physical boundary faces,
         // store as a potential chare-boundary face
-        tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
-                              gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
-                              gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
+        tk::UnsMesh::Face t{{ gid[ m_inpoel[ mark + tk::lpofa[f][0] ] ],
+                              gid[ m_inpoel[ mark + tk::lpofa[f][1] ] ],
+                              gid[ m_inpoel[ mark + tk::lpofa[f][2] ] ] }};
         if (m_ipface.find(t) == end(m_ipface)) {
           Assert( m_expChBndFace.insert(t).second,
                   "Store expected chare-boundary face" );
@@ -294,8 +303,6 @@ DG::faceMatch()
 // *****************************************************************************
 {
   const auto& esuf = m_fd.Esuf();
-  const auto& inpoel = Disc()->Inpoel();
-  const auto& coord = Disc()->Coord();
   bool match(true);
 
   auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
@@ -309,13 +316,13 @@ DG::faceMatch()
 
     for (std::size_t i=0; i<4; ++i)
     {
-      auto ip = inpoel[4*el+i];
+      auto ip = m_inpoel[4*el+i];
       for (std::size_t j=0; j<4; ++j)
       {
-        auto jp = inpoel[4*er+j];
-        auto xdiff = std::abs( coord[0][ip] - coord[0][jp] );
-        auto ydiff = std::abs( coord[1][ip] - coord[1][jp] );
-        auto zdiff = std::abs( coord[2][ip] - coord[2][jp] );
+        auto jp = m_inpoel[4*er+j];
+        auto xdiff = std::abs( m_coord[0][ip] - m_coord[0][jp] );
+        auto ydiff = std::abs( m_coord[1][ip] - m_coord[1][jp] );
+        auto zdiff = std::abs( m_coord[2][ip] - m_coord[2][jp] );
 
         if ( xdiff<=eps && ydiff<=eps && zdiff<=eps ) ++count;
       }
@@ -358,7 +365,6 @@ DG::bndFaces()
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) d->Tr().chcomfac();
   const auto& esuel = m_fd.Esuel();
   const auto& gid = d->Gid();
-  const auto& inpoel = d->Inpoel();
 
   for (const auto& in : m_infaces) {
     // Find sender chare among chares we potentially share faces with. Note that
@@ -372,9 +378,9 @@ DG::bndFaces()
       auto mark = e*4;
       for (std::size_t f=0; f<4; ++f) {  // for all cell faces
         if (esuel[mark+f] == -1) {  // if face has no outside-neighbor tet
-          tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
-                                gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
-                                gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
+          tk::UnsMesh::Face t{{ gid[ m_inpoel[ mark + tk::lpofa[f][0] ] ],
+                                gid[ m_inpoel[ mark + tk::lpofa[f][1] ] ],
+                                gid[ m_inpoel[ mark + tk::lpofa[f][2] ] ] }};
           // if found among the incoming faces and if not one of our internal
           // nor physical boundary faces
           if ( in.second.find(t) != end(in.second) &&
@@ -407,9 +413,9 @@ DG::bndFaces()
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f) {  // for all cell faces
       if (esuel[mark+f] == -1) {  // if face has no outside-neighbor tet
-        tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
-                              gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
-                              gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
+        tk::UnsMesh::Face t{{ gid[ m_inpoel[ mark + tk::lpofa[f][0] ] ],
+                              gid[ m_inpoel[ mark + tk::lpofa[f][1] ] ],
+                              gid[ m_inpoel[ mark + tk::lpofa[f][2] ] ] }};
         auto c = findchare( t );
         if (c > -1) {
           auto& lbndface = tk::ref_find( m_bndFace, c );
@@ -459,10 +465,9 @@ DG::receivedChBndFaces()
    std::stringstream msg;
    for (const auto& f : m_expChBndFace)
      if (recvBndFace.find(f) == end(recvBndFace)) {
-       const auto& coord = d->Coord();
-       const auto& x = coord[0];
-       const auto& y = coord[1];
-       const auto& z = coord[2];
+       const auto& x = m_coord[0];
+       const auto& y = m_coord[1];
+       const auto& z = m_coord[2];
        auto A = tk::cref_find( d->Lid(), f[0] );
        auto B = tk::cref_find( d->Lid(), f[1] );
        auto C = tk::cref_find( d->Lid(), f[2] );
@@ -492,8 +497,6 @@ DG::setupGhost()
 {
   auto d = Disc();
   const auto& gid = d->Gid();
-  const auto& inpoel = d->Inpoel();
-  const auto& coord = d->Coord();
 
   // Enlarge elements surrounding faces data structure for ghosts
   m_fd.Esuf().resize( 2*m_nfac, -2 );
@@ -512,9 +515,9 @@ DG::setupGhost()
     auto mark = e*4;
     for (std::size_t f=0; f<4; ++f) {  // for all cell faces
       if (esuel[mark+f] == -1) {  // if face has no outside-neighbor tet
-        tk::UnsMesh::Face t{{ gid[ inpoel[ mark + tk::lpofa[f][0] ] ],
-                              gid[ inpoel[ mark + tk::lpofa[f][1] ] ],
-                              gid[ inpoel[ mark + tk::lpofa[f][2] ] ] }};
+        tk::UnsMesh::Face t{{ gid[ m_inpoel[ mark + tk::lpofa[f][0] ] ],
+                              gid[ m_inpoel[ mark + tk::lpofa[f][1] ] ],
+                              gid[ m_inpoel[ mark + tk::lpofa[f][2] ] ] }};
         auto c = findchare( t );
         // It is possible that we do not find the chare for this face. We are
         // looping through all of our tets and interrogating all faces that do
@@ -532,16 +535,16 @@ DG::setupGhost()
             std::get< 1 >( tuple ) = m_geoElem[ e ];
 
             auto& ncoord = std::get< 2 >( tuple );
-            ncoord[0] = coord[0][ inpoel[ mark+f ] ];
-            ncoord[1] = coord[1][ inpoel[ mark+f ] ];
-            ncoord[2] = coord[2][ inpoel[ mark+f ] ];
+            ncoord[0] = m_coord[0][ m_inpoel[ mark+f ] ];
+            ncoord[1] = m_coord[1][ m_inpoel[ mark+f ] ];
+            ncoord[2] = m_coord[2][ m_inpoel[ mark+f ] ];
 
             std::get< 3 >( tuple ) = f;
 
-            std::get< 4 >( tuple ) = {{ gid[ inpoel[ mark ] ],
-                                        gid[ inpoel[ mark+1 ] ],
-                                        gid[ inpoel[ mark+2 ] ],
-                                        gid[ inpoel[ mark+3 ] ] }};
+            std::get< 4 >( tuple ) = {{ gid[ m_inpoel[ mark ] ],
+                                        gid[ m_inpoel[ mark+1 ] ],
+                                        gid[ m_inpoel[ mark+2 ] ],
+                                        gid[ m_inpoel[ mark+3 ] ] }};
           }
           // (Always) store face node IDs on chare boundary, even if tetid e has
           // already been stored. Thus we store potentially multiple faces along
@@ -634,9 +637,7 @@ DG::comGhost( int fromch, const GhostData& ghost )
   auto d = Disc();
   const auto& lid = d->Lid();
   auto& inpofa = m_fd.Inpofa();
-  auto& inpoel = d->Inpoel();
-  auto& coord = d->Coord();
-  auto ncoord = coord[0].size();
+  auto ncoord = m_coord[0].size();
 
   // nodelist with fromch, currently only used for an assert
   [[maybe_unused]] const auto& nl = tk::cref_find( d->NodeCommMap(), fromch );
@@ -703,16 +704,16 @@ DG::comGhost( int fromch, const GhostData& ghost )
             lp = ncoord;
             ++counter;
           }
-          inpoel.push_back( lp );       // store ghost element connectivity
+          m_inpoel.push_back( lp );       // store ghost element connectivity
         }
         // only a single or no ghost node should be found
         Assert( counter <= 1, "Incorrect number of ghost nodes detected. "
                 "Detected "+ std::to_string(counter) +" ghost nodes" );
         if (counter == 1) {
-          coord[0].push_back( coordg[0] ); // store ghost node coordinate
-          coord[1].push_back( coordg[1] );
-          coord[2].push_back( coordg[2] );
-          Assert( inpoel[ 4*(m_nunk-1)+std::get< 3 >( g.second ) ] == ncoord,
+          m_coord[0].push_back( coordg[0] ); // store ghost node coordinate
+          m_coord[1].push_back( coordg[1] );
+          m_coord[2].push_back( coordg[2] );
+          Assert( m_inpoel[ 4*(m_nunk-1)+std::get< 3 >( g.second ) ] == ncoord,
                   "Mismatch in extended inpoel for ghost element" );
           ++ncoord;                // increase number of nodes on this chare
         }
@@ -740,7 +741,6 @@ DG::nodetripletMatch( const std::array< std::size_t, 2 >& id,
 // *****************************************************************************
 {
   const auto& lid = Disc()->Lid();
-  const auto& inpoel = Disc()->Inpoel();
   const auto& esuf = m_fd.Esuf();
   const auto& inpofa = m_fd.Inpofa();
 
@@ -748,7 +748,7 @@ DG::nodetripletMatch( const std::array< std::size_t, 2 >& id,
   for (std::size_t k=0; k<4; ++k)
   {
     auto el = esuf[ 2*id[0] ];
-    auto ip = inpoel[ 4*static_cast< std::size_t >( el )+k ];
+    auto ip = m_inpoel[ 4*static_cast< std::size_t >( el )+k ];
     Assert( el == static_cast< int >( id[1] ), "Mismatch in id and esuf" );
     for (std::size_t j=0; j<3; ++j)
     {
@@ -811,14 +811,13 @@ DG::addEsuel( const std::array< std::size_t, 2 >& id,
 // *****************************************************************************
 {
   auto d = Disc();
-  const auto& inpoel = d->Inpoel();
   [[maybe_unused]] const auto& esuf = m_fd.Esuf();
   const auto& lid = d->Lid();
 
   std::array< tk::UnsMesh::Face, 4 > face;
   for (std::size_t f = 0; f<4; ++f)
     for (std::size_t i = 0; i<3; ++i)
-      face[f][i] = inpoel[ id[1]*4 + tk::lpofa[f][i] ];
+      face[f][i] = m_inpoel[ id[1]*4 + tk::lpofa[f][i] ];
 
   tk::UnsMesh::Face tl{{ tk::cref_find( lid, t[0] ),
                          tk::cref_find( lid, t[1] ),
@@ -857,16 +856,15 @@ DG::addGeoFace( const tk::UnsMesh::Face& t,
 // *****************************************************************************
 {
   auto d = Disc();
-  const auto& coord = d->Coord();
   const auto& lid = d->Lid();
 
   // get global node IDs reversing order to get outward-pointing normal
   auto A = tk::cref_find( lid, t[2] );
   auto B = tk::cref_find( lid, t[1] );
   auto C = tk::cref_find( lid, t[0] );
-  auto geochf = tk::geoFaceTri( {{coord[0][A], coord[0][B], coord[0][C]}},
-                                {{coord[1][A], coord[1][B], coord[1][C]}},
-                                {{coord[2][A], coord[2][B], coord[2][C]}} );
+  auto geochf = tk::geoFaceTri( {{m_coord[0][A], m_coord[0][B], m_coord[0][C]}},
+                                {{m_coord[1][A], m_coord[1][B], m_coord[1][C]}},
+                                {{m_coord[2][A], m_coord[2][B], m_coord[2][C]}} );
 
   for (std::size_t i=0; i<7; ++i)
     m_geoFace(id[0],i,0) = geochf(0,i,0);
@@ -937,14 +935,14 @@ DG::faceAdj()
       Assert( i < m_fd.Esuel().size()/4, "Sender contains ghost tet id. " );
 
   // Generate and store Esup data-structure in a map
-  auto esup = tk::genEsup(Disc()->Inpoel(), 4);
+  auto esup = tk::genEsup(m_inpoel, 4);
   for (std::size_t p=0; p<Disc()->Gid().size(); ++p)
   {
     for (auto e : tk::Around(esup, p))
     {
       // since inpoel has been augmented with the face-ghost cell previously,
-      // genEsup() also contains cells which are not on this mesh-chunk. Hence
-      // the following test.
+      // esup also contains cells which are not on this mesh-chunk, hence the
+      // following test
       if (e < m_fd.Esuel().size()/4) m_esup[p].push_back(e);
     }
   }
@@ -1066,6 +1064,7 @@ DG::adj()
 //    for problem setup.
 // *****************************************************************************
 {
+  // combine own and communicated contributions to elements surrounding points
   for (auto& [p, elist] : m_esupc)
   {
     auto& pesup = tk::ref_find(m_esup, p);
@@ -1182,18 +1181,23 @@ DG::setup()
   // Compute left-hand side of discrete PDEs
   lhs();
 
-  // Set initial conditions for all PDEs
-  for (const auto& eq : g_dgpde) 
-  {
-    eq.initialize( m_lhs, d->Inpoel(), d->Coord(), m_u, d->T(),
-                   m_fd.Esuel().size()/4 );
-    eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
-  }
+  // Determine elements inside user-defined IC box
+  for (auto& eq : g_dgpde)
+    eq.IcBoxElems( m_geoElem, m_fd.Esuel().size()/4, m_boxelems );
 
   // Compute volume of user-defined box IC
   d->boxvol( {} );      // punt for now
 
-  m_un = m_u;
+  // Query time history field output labels from all PDEs integrated
+  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+  if (!hist_points.empty()) {
+    std::vector< std::string > histnames;
+    for (const auto& eq : g_dgpde) {
+      auto n = eq.histNames();
+      histnames.insert( end(histnames), begin(n), end(n) );
+    }
+    d->histheader( std::move(histnames) );
+  }
 }
 
 void
@@ -1203,11 +1207,23 @@ DG::box( tk::real v )
 //! \param[in] v Total volume within user-specified box
 // *****************************************************************************
 {
+  auto d = Disc();
+
   // Store user-defined box IC volume
-  Disc()->Boxvol() = v;
+  d->Boxvol() = v;
+
+  // Set initial conditions for all PDEs
+  for (const auto& eq : g_dgpde)
+  {
+    eq.initialize( m_lhs, m_inpoel, m_coord, m_boxelems, m_u, d->T(),
+                   m_fd.Esuel().size()/4 );
+    eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
+  }
+
+  m_un = m_u;
 
   // Output initial conditions to file (regardless of whether it was requested)
-  writeFields( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
+  startFieldOutput( CkCallback(CkIndex_DG::start(), thisProxy[thisIndex]) );
 }
 
 void
@@ -1216,12 +1232,49 @@ DG::start()
 //  Start time stepping
 // *****************************************************************************
 {
+  // Free memory storing output mesh
+  m_outmesh.destroy();
+
   // Start timer measuring time stepping wall clock time
   Disc()->Timer().zero();
   // Zero grind-timer
   Disc()->grindZero();
   // Start time stepping by computing the size of the next time step)
   next();
+}
+
+void
+DG::startFieldOutput( CkCallback c )
+// *****************************************************************************
+// Start preparing fields for output to file
+//! \param[in] c Function to continue with after the write
+// *****************************************************************************
+{
+  // No field output in benchmark mode or if field output frequency not hit
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >() || !fieldOutput()) {
+
+    c.send();
+
+  } else {
+
+    // Optionally refine mesh for field output
+    auto d = Disc();
+
+    if (refinedOutput()) {
+
+      const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
+      d->Ref()->outref( m_fd.Bface(), {}, tr, c );
+
+    } else {
+
+      // cut off ghosts from mesh connectivity and coordinates
+      const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
+      extractFieldOutput( {}, d->Chunk(), d->Coord(), {}, {},
+                          d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
+
+    }
+
+  }
 }
 
 void
@@ -1235,7 +1288,7 @@ DG::next()
   auto d = Disc();
 
   if (pref && m_stage == 0 && d->T() > 0)
-    eval_ndof( m_nunk, Disc()->Coord(), Disc()->Inpoel(), m_fd, m_u,
+    eval_ndof( m_nunk, m_coord, m_inpoel, m_fd, m_u,
                g_inputdeck.get< tag::pref, tag::indicator >(),
                g_inputdeck.get< tag::discr, tag::ndof >(),
                g_inputdeck.get< tag::pref, tag::ndofmax >(),
@@ -1319,60 +1372,19 @@ DG::comsol( int fromch,
 }
 
 void
-DG::writeFields( CkCallback c )
-// *****************************************************************************
-// Start preparing mesh-based fields for output to file
-//! \param[in] c Function to continue with after the write
-// *****************************************************************************
-{
-  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
-
-    // No field output in benchmark mode
-    c.send();
-
-  } else {
-
-    // Optionally refine mesh for field output
-    auto d = Disc();
-    const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-
-    if (g_inputdeck.get< tag::cmd, tag::io, tag::refined >() &&
-        scheme != ctr::SchemeType::DG)
-    {
-
-      const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
-      d->Ref()->outref( m_fd.Bface(), {}, tr, c );
-
-    } else {
-
-      // cut off ghosts from mesh connectivity and coordinates
-      const auto& tr = tk::remap( m_fd.Triinpoel(), d->Gid() );
-      auto inpoel = d->Inpoel();
-      inpoel.resize( m_fd.Esuel().size() );
-      auto coord = d->Coord();
-      for (std::size_t i=0; i<3; ++i) coord[i].resize( m_ncoord );
-      writePostAMR( {}, {inpoel,d->Gid(),d->Lid()}, coord, {}, {},
-                    d->NodeCommMap(), m_fd.Bface(), {}, tr, c );
-
-    }
-
-  }
-}
-
-void
-DG::writePostAMR(
+DG::extractFieldOutput(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
   const std::unordered_map< std::size_t, std::size_t >& addedTets,
-  const tk::NodeCommMap& /*nodeCommMap*/,
+  const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
   const std::vector< std::size_t >& triinpoel,
   CkCallback c )
 // *****************************************************************************
-//  Receive new field output mesh from Refiner
+// Extract field output going to file
 //! \param[in] chunk Field-output mesh chunk (connectivity and global<->local
 //!    id maps)
 //! \param[in] coord Field-output mesh node coordinates
@@ -1383,167 +1395,208 @@ DG::writePostAMR(
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  auto d = Disc();
-  const auto& inpoel = std::get< 0 >( chunk );  // refined mesh
+  m_outmesh.chunk = chunk;
+  m_outmesh.coord = coord;
+  m_outmesh.triinpoel = triinpoel;
+  m_outmesh.bface = bface;
+  m_outmesh.nodeCommMap = nodeCommMap;
 
-  // Query fields names from all PDEs integrated
-  std::vector< std::string > elemfieldnames, nodalfieldnames;
-  for (const auto& eq : g_dgpde) {
-    auto n = eq.fieldNames();
-    elemfieldnames.insert( end(elemfieldnames), begin(n), end(n) );
-    //auto nn = eq.nodalFieldNames();
-    //nodalfieldnames.insert( end(nodalfieldnames), begin(nn), end(nn) );
-  }
+  const auto& inpoel = std::get< 0 >( chunk );
+  auto nelem = inpoel.size() / 4;
 
-  // Evaluate solution on refined mesh
-  auto [u,p] = solref( inpoel, coord, addedTets );
+  // Evaluate element solution on incoming mesh
+  auto [ue,pe,un,pn] = evalSolution( inpoel, coord, addedTets );
 
-  // Collect element and nodal field solution
-  std::vector< std::vector< tk::real > > elemfields;
-  std::vector< std::vector< tk::real > > nodefields;
+  // Collect field output from numerical solution requested by user
+  m_elemfields = numericFieldOutput( ue, tk::Centering::ELEM, pe );
+  m_nodefields = numericFieldOutput( un, tk::Centering::NODE, pn );
+
+  // Collect field output from analytical solutions (if exist)
   auto geoElem = tk::genGeoElemTet( inpoel, coord );
-  auto t = d->T();
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  auto t = Disc()->T();
   for (const auto& eq : g_dgpde) {
-    auto eo =
-      eq.fieldOutput( t, d->meshvol(), rdof, inpoel.size()/4, geoElem, u, p );
-    //auto no = eq.nodalFieldOutput( t, d->meshvol(), m_ncoord, m_esup,
-    //    m_geoElem, m_Unode, m_Pnode, m_u, m_p );
-
-    // cut off ghost elements from element output
-    //for (auto& f : eo) f.resize( nielem );
-    elemfields.insert( end(elemfields), begin(eo), end(eo) );
-    //nodefields.insert( end(nodefields), begin(no), end(no) );
+    analyticFieldOutput( eq, tk::Centering::ELEM, geoElem.extract(1,0),
+      geoElem.extract(2,0), geoElem.extract(3,0), t, m_elemfields );
+    analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1], coord[2],
+      t, m_nodefields );
   }
 
   // Add adaptive indicator array to element-centered field output
-  std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
+    ndof.resize( nelem );
+    for (const auto& [child,parent] : addedTets)
+      ndof[child] = m_ndof[parent];
+    m_elemfields.push_back( ndof );
+  }
 
-  ndof.resize( inpoel.size()/4 );
-  for (const auto& [child,parent] : addedTets) ndof[child] = m_ndof[parent];
-  elemfields.push_back( ndof );
+  // Send node fields contributions to neighbor chares
+  if (nodeCommMap.empty())
+    comnodeout_complete();
+  else {
+    const auto& lid = std::get< 2 >( chunk );
+    auto esup = tk::genEsup( inpoel, 4 );
+    for(const auto& [ch,nodes] : nodeCommMap) {
+      // Pack node field data in chare boundary nodes
+      std::vector< std::vector< tk::real > >
+        l( m_nodefields.size(), std::vector< tk::real >( nodes.size() ) );
+      for (std::size_t f=0; f<m_nodefields.size(); ++f) {
+        std::size_t j = 0;
+        for (auto g : nodes)
+          l[f][j++] = m_nodefields[f][ tk::cref_find(lid,g) ];
+      }
+      // Pack (partial) number of elements surrounding chare boundary nodes
+      std::vector< std::size_t > nesup( nodes.size() );
+      std::size_t j = 0;
+      for (auto g : nodes) {
+        auto i = tk::cref_find( lid, g );
+        nesup[j++] = esup.second[i+1] - esup.second[i];
+      }
+      thisProxy[ch].comnodeout(
+        std::vector<std::size_t>(begin(nodes),end(nodes)), nesup, l );
+    }
+  }
 
-  // Output chare mesh and fields metadata to file
-  const auto& lid = std::get< 2 >( chunk );
-  d->write( inpoel, coord, bface, {}, tk::remap(triinpoel,lid),
-    elemfieldnames, nodalfieldnames, {}, elemfields, nodefields, {}, c );
+  ownnod_complete( c );
 }
 
-std::tuple< tk::Fields, tk::Fields >
-DG::solref( const std::vector< std::size_t >& inpoel,
-            const tk::UnsMesh::Coords& coord,
-            const std::unordered_map< std::size_t, std::size_t >& addedTets )
+std::tuple< tk::Fields, tk::Fields, tk::Fields, tk::Fields >
+DG::evalSolution(
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const std::unordered_map< std::size_t, std::size_t >& addedTets )
 // *****************************************************************************
-// Evaluate solution on refined (field-output) mesh
-//! \param[in] inpoel Field-output mesh connectivity
-//! \param[in] coord Field-output mesh node coordinates
+// Evaluate solution on incomping (a potentially refined) mesh
+//! \param[in] inpoel Incoming (potentially refined field-output) mesh
+//!   connectivity
+//! \param[in] coord Incoming (potentially refined Field-output) mesh node
+//!   coordinates
 //! \param[in] addedTets Field-output mesh cells and their parents (local ids)
+//! \details This function evaluates the solution on the incoming mesh. The
+//!   incoming mesh can be refined but can also be just the mesh the numerical
+//!   solution is computed on.
+//! \note If the incoming mesh is refined (for field putput) compared to the
+//!   mesh the numerical solution is computed on, the solution is evaluated in
+//!   cells as wells as in nodes. If the solution is not refined, the solution
+//!   is evaluated in nodes.
+//! \return Solution in cells, primitive variables in cells, solution in nodes,
+//!   primitive variables in nodes of incoming mesh.
 // *****************************************************************************
 {
   using tk::dot;
+  using tk::real;
 
-  auto d = Disc();
   const auto nelem = inpoel.size()/4;
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   const auto uncomp = m_u.nprop() / rdof;
   const auto pncomp = m_p.nprop() / rdof;
-  auto u = m_u; // will store solution on field-output mesh
-  auto p = m_p; // will store primitive variables on field-output mesh
-  u.resize( nelem, uncomp );
-  p.resize( nelem, pncomp );
+  auto ue = m_u;
+  auto pe = m_p;
 
-  for ([[maybe_unused]] const auto& [child,parent] : addedTets) {
-    Assert( child < nelem, "Indexing out of new solution vector" );
-    Assert( parent < d->Inpoel().size()/4,
-            "Indexing out of old solution vector" );
+  // If mesh is not refined for field output, cut off ghosts from element
+  // solution. (No need to output ghosts and writer would error.) If mesh is
+  // refined for field output, resize element solution fields to refined mesh.
+  ue.resize( nelem );
+  pe.resize( nelem );
+
+  auto npoin = coord[0].size();
+  tk::Fields un( npoin, m_u.nprop()/rdof );
+  tk::Fields pn( npoin, m_p.nprop()/rdof );
+  un.fill(0.0);
+  pn.fill(0.0);
+
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // If mesh is not refined for output, evaluate solution in nodes
+  if (addedTets.empty()) {
+
+    for (std::size_t e=0; e<nelem; ++e) {
+      auto e4 = e*4;
+      // Extract element node coordinates
+      std::array< std::array< real, 3>, 4 > ce{{
+        {{ x[inpoel[e4  ]], y[inpoel[e4  ]], z[inpoel[e4  ]] }},
+        {{ x[inpoel[e4+1]], y[inpoel[e4+1]], z[inpoel[e4+1]] }},
+        {{ x[inpoel[e4+2]], y[inpoel[e4+2]], z[inpoel[e4+2]] }},
+        {{ x[inpoel[e4+3]], y[inpoel[e4+3]], z[inpoel[e4+3]] }} }};
+      // Compute inverse Jacobian
+      auto J = tk::inverseJacobian( ce[0], ce[1], ce[2], ce[3] );
+      // Evaluate solution in child nodes
+      for (std::size_t j=0; j<4; ++j) {
+        std::array< real, 3 >
+           h{{ce[j][0]-ce[0][0], ce[j][1]-ce[0][1], ce[j][2]-ce[0][2] }};
+        auto Bn = tk::eval_basis( m_ndof[e],
+                                  dot(J[0],h), dot(J[1],h), dot(J[2],h) );
+        auto u = eval_state( uncomp, 0, rdof, m_ndof[e], e, m_u, Bn );
+        auto p = eval_state( pncomp, 0, rdof, m_ndof[e], e, m_p, Bn );
+        // Assign child node solution
+        for (std::size_t i=0; i<uncomp; ++i) un(inpoel[e4+j],i,0) += u[i];
+        for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[e4+j],i,0) += p[i];
+      }
+    }
+
+  // If mesh is refed for output, evaluate solution in elements and nodes of
+  // refined mesh
+  } else {
+
+    const auto& pinpoel = Disc()->Inpoel();  // unrefined (parent) mesh
+
+    for ([[maybe_unused]] const auto& [child,parent] : addedTets) {
+      Assert( child < nelem, "Indexing out of new solution vector" );
+      Assert( parent < pinpoel.size()/4,
+              "Indexing out of old solution vector" );
+    }
+
+    for (const auto& [child,parent] : addedTets) {
+      // Extract parent element's node coordinates
+      auto p4 = 4*parent;
+      std::array< std::array< real, 3>, 4 > cp{{
+        {{ x[pinpoel[p4  ]], y[pinpoel[p4  ]], z[pinpoel[p4  ]] }},
+        {{ x[pinpoel[p4+1]], y[pinpoel[p4+1]], z[pinpoel[p4+1]] }},
+        {{ x[pinpoel[p4+2]], y[pinpoel[p4+2]], z[pinpoel[p4+2]] }},
+        {{ x[pinpoel[p4+3]], y[pinpoel[p4+3]], z[pinpoel[p4+3]] }} }};
+      // Evaluate inverse Jacobian of the parent
+      auto Jp = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
+      // Compute child cell centroid
+      auto c4 = 4*child;
+      auto cx = (x[inpoel[c4  ]] + x[inpoel[c4+1]] +
+                 x[inpoel[c4+2]] + x[inpoel[c4+3]]) / 4.0;
+      auto cy = (y[inpoel[c4  ]] + y[inpoel[c4+1]] +
+                 y[inpoel[c4+2]] + y[inpoel[c4+3]]) / 4.0;
+      auto cz = (z[inpoel[c4  ]] + z[inpoel[c4+1]] +
+                 z[inpoel[c4+2]] + z[inpoel[c4+3]]) / 4.0;
+      // Compute solution in child centroid
+      std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
+      auto B = tk::eval_basis( m_ndof[parent],
+                               dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
+      auto u = eval_state( uncomp, 0, rdof, m_ndof[parent], parent, m_u, B );
+      auto p = eval_state( pncomp, 0, rdof, m_ndof[parent], parent, m_p, B );
+      // Assign cell center solution from parent to child
+      for (std::size_t i=0; i<uncomp; ++i) ue(child,i*rdof,0) = u[i];
+      for (std::size_t i=0; i<pncomp; ++i) pe(child,i*rdof,0) = p[i];
+      // Extract child element's node coordinates
+      std::array< std::array< real, 3>, 4 > cc{{
+        {{ x[inpoel[c4  ]], y[inpoel[c4  ]], z[inpoel[c4  ]] }},
+        {{ x[inpoel[c4+1]], y[inpoel[c4+1]], z[inpoel[c4+1]] }},
+        {{ x[inpoel[c4+2]], y[inpoel[c4+2]], z[inpoel[c4+2]] }},
+        {{ x[inpoel[c4+3]], y[inpoel[c4+3]], z[inpoel[c4+3]] }} }};
+      // Evaluate solution in child nodes
+      for (std::size_t j=0; j<4; ++j) {
+        std::array< real, 3 >
+           hn{{cc[j][0]-cp[0][0], cc[j][1]-cp[0][1], cc[j][2]-cp[0][2] }};
+        auto Bn = tk::eval_basis( m_ndof[parent],
+                                  dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn) );
+        auto cnu = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_u, Bn);
+        auto cnp = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_p, Bn);
+        // Assign child node solution
+        for (std::size_t i=0; i<uncomp; ++i) un(inpoel[c4+j],i,0) += cnu[i];
+        for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[c4+j],i,0) += cnp[i];
+      }
+    }
   }
 
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-
-  // DG(P0): copy cell center solution
-  if (scheme == ctr::SchemeType::DG) {
-
-    for (const auto& [child,parent] : addedTets) {
-      for (std::size_t i=0; i<uncomp; ++i) u(child,i,0) = m_u(parent,i,0);
-      for (std::size_t i=0; i<pncomp; ++i) p(child,i,0) = m_p(parent,i,0);
-    }
-
-  // DG(P1): Evaluate cell centroid of child in parent tet
-  } else if (scheme == ctr::SchemeType::DGP1) {
-
-    const auto& pinpoel = d->Inpoel();  // unrefined (parent) mesh
-    const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-    const auto& x = coord[0];
-    const auto& y = coord[1];
-    const auto& z = coord[2];
-
-    for (const auto& [child,parent] : addedTets) {
-      // Extract parent element coordinates
-      auto p4 = 4*parent;
-      std::array< std::array< tk::real, 3>, 4 > cp{{
-        {{ x[pinpoel[p4  ]], y[pinpoel[p4  ]], z[pinpoel[p4  ]] }},
-        {{ x[pinpoel[p4+1]], y[pinpoel[p4+1]], z[pinpoel[p4+1]] }},
-        {{ x[pinpoel[p4+2]], y[pinpoel[p4+2]], z[pinpoel[p4+2]] }},
-        {{ x[pinpoel[p4+3]], y[pinpoel[p4+3]], z[pinpoel[p4+3]] }} }};
-      // Evaluate inverse Jacobian of the parent
-      auto J = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
-      // Compute child cell centroid
-      auto c4 = 4*child;
-      auto cx = (x[inpoel[c4  ]] + x[inpoel[c4+1]] +
-                 x[inpoel[c4+2]] + x[inpoel[c4+3]]) / 4.0;
-      auto cy = (y[inpoel[c4  ]] + y[inpoel[c4+1]] +
-                 y[inpoel[c4+2]] + y[inpoel[c4+3]]) / 4.0;
-      auto cz = (z[inpoel[c4  ]] + z[inpoel[c4+1]] +
-                 z[inpoel[c4+2]] + z[inpoel[c4+3]]) / 4.0;
-      // Compute solution in child centroid
-      std::array< tk::real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
-      auto B = tk::eval_basis( ndof, dot(J[0],h), dot(J[1],h), dot(J[2],h) );
-      auto chu = eval_state( uncomp, 0, ndof, ndof, parent, m_u, B );
-      for (std::size_t i=0; i<uncomp; ++i) u(child,i*rdof,0) = chu[i];
-      auto chp = eval_state( pncomp, 0, ndof, ndof, parent, m_p, B );
-      for (std::size_t i=0; i<pncomp; ++i) p(child,i*rdof,0) = chp[i];
-    }
-
-  // p-adaptive DG: Evaluate cell centroid of child in parent tet
-  } else if (scheme == ctr::SchemeType::PDG) {
-
-    const auto& pinpoel = d->Inpoel();  // unrefined (parent) mesh
-    const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-    const auto& x = coord[0];
-    const auto& y = coord[1];
-    const auto& z = coord[2];
-
-    for (const auto& [child,parent] : addedTets) {
-      // Extract parent element coordinates
-      auto p4 = 4*parent;
-      std::array< std::array< tk::real, 3>, 4 > cp{{
-        {{ x[pinpoel[p4  ]], y[pinpoel[p4  ]], z[pinpoel[p4  ]] }},
-        {{ x[pinpoel[p4+1]], y[pinpoel[p4+1]], z[pinpoel[p4+1]] }},
-        {{ x[pinpoel[p4+2]], y[pinpoel[p4+2]], z[pinpoel[p4+2]] }},
-        {{ x[pinpoel[p4+3]], y[pinpoel[p4+3]], z[pinpoel[p4+3]] }} }};
-      // Evaluate inverse Jacobian of the parent
-      auto J = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
-      // Compute child cell centroid
-      auto c4 = 4*child;
-      auto cx = (x[inpoel[c4  ]] + x[inpoel[c4+1]] +
-                 x[inpoel[c4+2]] + x[inpoel[c4+3]]) / 4.0;
-      auto cy = (y[inpoel[c4  ]] + y[inpoel[c4+1]] +
-                 y[inpoel[c4+2]] + y[inpoel[c4+3]]) / 4.0;
-      auto cz = (z[inpoel[c4  ]] + z[inpoel[c4+1]] +
-                 z[inpoel[c4+2]] + z[inpoel[c4+3]]) / 4.0;
-      // Compute solution in child centroid
-      std::array< tk::real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
-      auto B =
-        tk::eval_basis( m_ndof[parent], dot(J[0],h), dot(J[1],h), dot(J[2],h) );
-      auto chu = eval_state( uncomp, 0, ndof, m_ndof[parent], parent, m_u, B );
-      for (std::size_t i=0; i<uncomp; ++i) u(child,i*rdof,0) = chu[i];
-      auto chp = eval_state( pncomp, 0, ndof, m_ndof[parent], parent, m_p, B );
-      for (std::size_t i=0; i<pncomp; ++i) p(child,i*rdof,0) = chp[i];
-    }
-
-  } //else Throw( "Refined field output for scheme not implemented" );
-
-  return { u, p };
+  return { ue, pe, un, pn };
 }
 
 void
@@ -1591,8 +1644,8 @@ DG::reco()
     // if P0P1
     if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1)
       for (const auto& eq : g_dgpde)
-        eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, d->Inpoel(),
-                        d->Coord(), m_u, m_p );
+        eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel,
+                        m_coord, m_u, m_p );
   }
 
   // Send reconstructed solution to neighboring chares
@@ -1700,8 +1753,8 @@ DG::lim()
     auto d = Disc();
 
     for (const auto& eq : g_dgpde)
-      eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, d->Inpoel(),
-                d->Coord(), m_ndof, m_u, m_p );
+      eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel,
+                m_coord, m_ndof, m_u, m_p );
   }
 
 
@@ -1855,7 +1908,7 @@ DG::dt()
       // find the minimum dt across all PDEs integrated
       for (const auto& eq : g_dgpde) {
         auto eqdt =
-          eq.dt( d->Coord(), d->Inpoel(), m_fd, m_geoFace, m_geoElem, m_ndof,
+          eq.dt( m_coord, m_inpoel, m_fd, m_geoFace, m_geoElem, m_ndof,
             m_u, m_p, m_fd.Esuel().size()/4 );
         if (eqdt < mindt) mindt = eqdt;
       }
@@ -1884,6 +1937,7 @@ DG::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4reco();
   thisProxy[ thisIndex ].wait4lim();
+  thisProxy[ thisIndex ].wait4nod();
 
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -1929,8 +1983,8 @@ DG::solve( tk::real newdt )
   if (m_stage == 0) m_un = m_u;
 
   for (const auto& eq : g_dgpde)
-    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, d->Inpoel(), d->Coord(), m_u,
-            m_p, m_ndof, m_rhs );
+    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_inpoel, m_boxelems, m_coord,
+            m_u, m_p, m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<m_nunk; ++e)
@@ -2034,13 +2088,15 @@ DG::resizePostAMR(
   ++d->Itr();
 
   // Save old number of elements
-  [[maybe_unused]] auto old_nelem = d->Inpoel().size()/4;
+  [[maybe_unused]] auto old_nelem = m_inpoel.size()/4;
 
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, nodeCommMap );
 
   // Update state
-  auto nelem = d->Inpoel().size()/4;
+  m_inpoel = d->Inpoel();
+  m_coord = d->Coord();
+  auto nelem = m_inpoel.size()/4;
   auto nprop = m_p.nprop();
   m_p.resize( nelem, nprop );
   nprop = m_u.nprop();
@@ -2049,15 +2105,15 @@ DG::resizePostAMR(
   m_lhs.resize( nelem, nprop );
   m_rhs.resize( nelem, nprop );
 
-  m_fd = FaceData( d->Inpoel(), bface, tk::remap(triinpoel,d->Lid()) );
+  m_fd = FaceData( m_inpoel, bface, tk::remap(triinpoel,d->Lid()) );
 
   m_geoFace =
     tk::Fields( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), coord ) );
-  m_geoElem = tk::Fields( tk::genGeoElemTet( d->Inpoel(), coord ) );
+  m_geoElem = tk::Fields( tk::genGeoElemTet( m_inpoel, coord ) );
 
   m_nfac = m_fd.Inpofa().size()/3;
   m_nunk = nelem;
-  m_ncoord = coord[0].size();
+  m_npoin = coord[0].size();
   m_bndFace.clear();
   m_exptGhost.clear();
   m_sendGhost.clear();
@@ -2084,10 +2140,11 @@ DG::resizePostAMR(
   resizeComm();
 }
 
-void
-DG::out()
+bool
+DG::fieldOutput() const
 // *****************************************************************************
-// Output mesh field data
+// Decide wether to output field data
+//! \return True if field data is output in this step
 // *****************************************************************************
 {
   auto d = Disc();
@@ -2099,11 +2156,128 @@ DG::out()
 
   // output field data if field iteration count is reached or in the last time
   // step, otherwise continue to next time step
-  if ( !((d->It()) % fieldfreq) ||
-       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
-    writeFields( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
-  else
-    step();
+  return !((d->It()) % fieldfreq) ||
+         std::fabs(d->T()-term) < eps ||
+         d->It() >= nstep;
+}
+
+bool
+DG::refinedOutput() const
+// *****************************************************************************
+// Decide if we write field output using a refined mesh
+//! \return True if field output will use a refined mesh
+// *****************************************************************************
+{
+  return g_inputdeck.get< tag::cmd, tag::io, tag::refined >() &&
+         g_inputdeck.get< tag::discr, tag::scheme >() != ctr::SchemeType::DG;
+}
+
+void
+DG::writeFields( CkCallback c )
+// *****************************************************************************
+// Output mesh field data
+//! \param[in] c Function to continue with after the write
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Output time history if we hit its output frequency
+  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
+  if ( !((d->It()) % histfreq) ) {
+    std::vector< std::vector< tk::real > > hist;
+    for (const auto& eq : g_dgpde) {
+      auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u );
+      hist.insert( end(hist), begin(h), end(h) );
+    }
+    d->history( std::move(hist) );
+  }
+
+  const auto& inpoel = std::get< 0 >( m_outmesh.chunk );
+  auto esup = tk::genEsup( inpoel, 4 );
+
+  // Combine own and communicated contributions and finish averaging of node
+  // field output in chare boundary nodes
+  const auto& lid = std::get< 2 >( m_outmesh.chunk );
+  for (const auto& [g,f] : m_nodefieldsc) {
+    Assert( m_nodefields.size() == f.first.size(), "Size mismatch" );
+    auto p = tk::cref_find( lid, g );
+    for (std::size_t i=0; i<f.first.size(); ++i) {
+      m_nodefields[i][p] += f.first[i];
+      m_nodefields[i][p] /= esup.second[p+1] - esup.second[p] + f.second;
+    }
+  }
+  tk::destroy( m_nodefieldsc );
+
+  // Lambda to decide if a node (global id) is on a chare boundary of the field
+  // output mesh. p - global node id, return true if node is on the chare
+  // boundary.
+  auto chbnd = [ this ]( std::size_t p ) {
+    return
+      std::any_of( m_outmesh.nodeCommMap.cbegin(), m_outmesh.nodeCommMap.cend(),
+        [&](const auto& s) { return s.second.find(p) != s.second.cend(); } );
+  };
+
+  // Finish computing node field output averages in internal nodes
+  auto npoin = m_outmesh.coord[0].size();
+  auto& gid = std::get< 1 >( m_outmesh.chunk );
+  for (std::size_t p=0; p<npoin; ++p) {
+    if (!chbnd(gid[p])) {
+      auto n = esup.second[p+1] - esup.second[p];
+      for (auto& f : m_nodefields) f[p] /= n;
+    }
+  }
+
+  // Query fields names requested by user
+  auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
+  auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
+
+  // Collect field output names for analytical solutions
+  for (const auto& eq : g_dgpde) {
+    analyticFieldNames( eq, tk::Centering::ELEM, elemfieldnames );
+    analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
+  }
+
+  if (g_inputdeck.get< tag::pref, tag::pref >())
+    elemfieldnames.push_back( "NDOF" );
+
+  Assert( elemfieldnames.size() == m_elemfields.size(), "Size mismatch" );
+  Assert( nodefieldnames.size() == m_nodefields.size(), "Size mismatch" );
+
+  // Output chare mesh and fields metadata to file
+  const auto& triinpoel = m_outmesh.triinpoel;
+  d->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
+            tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
+            {}, m_elemfields, m_nodefields, {}, c );
+}
+
+void
+DG::comnodeout( const std::vector< std::size_t >& gid,
+                const std::vector< std::size_t >& nesup,
+                const std::vector< std::vector< tk::real > >& L )
+// *****************************************************************************
+//  Receive chare-boundary nodal solution (for field output) contributions from
+//  neighboring chares
+//! \param[in] gid Global mesh node IDs at which we receive contributions
+//! \param[in] nesup Number of elements surrounding points
+//! \param[in] L Partial contributions of node fields to chare-boundary nodes
+// *****************************************************************************
+{
+  Assert( gid.size() == nesup.size(), "Size mismatch" );
+  for (std::size_t f=0; f<L.size(); ++f)
+    Assert( gid.size() == L[f].size(), "Size mismatch" );
+
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    auto& nf = m_nodefieldsc[ gid[i] ];
+    nf.first.resize( L.size() );
+    for (std::size_t f=0; f<L.size(); ++f) nf.first[f] += L[f][i];
+    nf.second += nesup[i];
+  }
+
+  // When we have heard from all chares we communicate with, this chare is done
+  if (++m_nnod == Disc()->NodeCommMap().size()) {
+    m_nnod = 0;
+    comnodeout_complete();
+  }
 }
 
 void
@@ -2116,8 +2290,11 @@ DG::stage()
   ++m_stage;
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
-  // otherwise output field data to file(s)
-  if (m_stage < 3) next(); else out();
+  // otherwise prepare for nodal field output
+  if (m_stage < 3)
+    next();
+  else
+    startFieldOutput( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
 }
 
 void
@@ -2178,6 +2355,9 @@ DG::step()
 // Evaluate wether to continue with next time step
 // *****************************************************************************
 {
+  // Free memory storing output mesh
+  m_outmesh.destroy();
+
   auto d = Disc();
 
   // Output one-liner status report to screen

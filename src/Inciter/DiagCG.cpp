@@ -33,6 +33,7 @@
 #include "Refiner.hpp"
 #include "Reorder.hpp"
 #include "Integrate/Mass.hpp"
+#include "FieldOutput.hpp"
 
 namespace inciter {
 
@@ -50,7 +51,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
                 const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_initial( 1 ),
-  m_nsol( 0 ),
   m_nlhs( 0 ),
   m_nrhs( 0 ),
   m_nnorm( 0 ),
@@ -75,7 +75,6 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_farfieldbcnodes(),
   m_diag(),
   m_boxnodes(),
-  m_boxnodes_set(),
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 )
@@ -293,17 +292,9 @@ DiagCG::setup()
 // *****************************************************************************
 {
   auto d = Disc();
-  const auto& coord = d->Coord();
 
-  // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde) eq.initialize( coord, m_u, d->T(), m_boxnodes );
-
-  // Apply symmetry BCs on initial conditions
-  for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, coord, m_bnorm, m_symbcnodes );
-  // Apply farfield BCs on initial conditions
-  for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+  // Determine nodes inside user-defined IC box
+  for (auto& eq : g_cgpde) eq.IcBoxNodes( d->Coord(), m_boxnodes );
 
   // Compute volume of user-defined box IC
   d->boxvol( m_boxnodes );
@@ -328,13 +319,21 @@ DiagCG::box( tk::real v )
 // *****************************************************************************
 {
   auto d = Disc();
+  const auto& coord = d->Coord();
 
   // Store user-defined box IC volume
   d->Boxvol() = v;
 
-  // Set user-defined IC box conditions
+  // Set initial conditions for all PDEs
+  for (auto& eq : g_cgpde) eq.initialize( coord, m_u, d->T(), d->Boxvol(),
+    m_boxnodes );
+
+  // Apply symmetry BCs on initial conditions
   for (const auto& eq : g_cgpde)
-    eq.box( d->Boxvol(), d->T(), m_boxnodes, d->Coord(), m_u, m_boxnodes_set );
+    eq.symbc( m_u, coord, m_bnorm, m_symbcnodes );
+  // Apply farfield BCs on initial conditions
+  for (const auto& eq : g_cgpde)
+    eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields( CkCallback(CkIndex_DiagCG::init(), thisProxy[thisIndex]) );
@@ -461,7 +460,7 @@ DiagCG::dt()
 
     // find the minimum dt across all PDEs integrated
     for (const auto& eq : g_cgpde) {
-      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), m_u );
+      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), d->T(), m_u );
       if (eqdt < mindt) mindt = eqdt;
     }
 
@@ -657,33 +656,36 @@ DiagCG::writeFields( CkCallback c ) const
   } else {
 
     auto d = Disc();
+    const auto& coord = d->Coord();
+
+    // Query fields names requested by user
+    auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
+    // Collect field output from numerical solution requested by user
+    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
+    // Collect field output names for analytical solutions
+    for (const auto& eq : g_cgpde)
+      analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
+
+    // Collect field output from analytical solutions (if exist)
+    auto t = d->T();
+    for (const auto& eq : g_cgpde)
+      analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1],
+                           coord[2], t, nodefields );
 
     // Query and collect block and surface field names from PDEs integrated
-    std::vector< std::string > nodefieldnames;
     std::vector< std::string > nodesurfnames;
     for (const auto& eq : g_cgpde) {
-      auto n = eq.fieldNames();
-      nodefieldnames.insert( end(nodefieldnames), begin(n), end(n) );
       auto s = eq.surfNames();
       nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
     }
 
     // Collect node field solution
     auto u = m_u;
-    std::vector< std::vector< tk::real > > nodefields;
     std::vector< std::vector< tk::real > > nodesurfs;
     for (const auto& eq : g_cgpde) {
-      auto o = eq.fieldOutput( d->T(), d->meshvol(), d->Coord()[0].size(),
-                               d->Coord(), d->V(), u );
-      nodefields.insert( end(nodefields), begin(o), end(o) );
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
-
-    Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
-
-    std::vector< std::string > elemfieldnames;
-    std::vector< std::vector< tk::real > > elemfields;
 
     // Query refinement data
     auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
@@ -694,20 +696,18 @@ DiagCG::writeFields( CkCallback c ) const
                 std::vector< std::vector< tk::real > > > r;
     if (dtref) r = d->Ref()->refinementFields();
 
-    const auto& refinement_elemfieldnames = std::get< 0 >( r );
-    const auto& refinement_elemfields = std::get< 1 >( r );
-    const auto& refinement_nodefieldnames = std::get< 2 >( r );
-    const auto& refinement_nodefields = std::get< 3 >( r );
+    auto& refinement_elemfieldnames = std::get< 0 >( r );
+    auto& refinement_elemfields = std::get< 1 >( r );
+    auto& refinement_nodefieldnames = std::get< 2 >( r );
+    auto& refinement_nodefields = std::get< 3 >( r );
 
     nodefieldnames.insert( end(nodefieldnames),
       begin(refinement_nodefieldnames), end(refinement_nodefieldnames) );
     nodefields.insert( end(nodefields),
       begin(refinement_nodefields), end(refinement_nodefields) );
 
-    elemfieldnames.insert( end(elemfieldnames),
-      begin(refinement_elemfieldnames), end(refinement_elemfieldnames) );
-    elemfields.insert( end(elemfields),
-      begin(refinement_elemfields), end(refinement_elemfields) );
+    auto elemfieldnames = std::move(refinement_elemfieldnames);
+    auto elemfields = std::move(refinement_elemfields);
 
     // Collect FCT field data (for debugging)
     auto f = d->FCT()->fields();
@@ -727,8 +727,11 @@ DiagCG::writeFields( CkCallback c ) const
     elemfields.insert( end(elemfields),
       begin(fct_elemfields), end(fct_elemfields) );
 
+    Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
+    Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
+
     // Send mesh and fields data (solution dump) for output to file
-    d->write( d->Inpoel(), d->Coord(), m_bface, tk::remap( m_bnode,d->Lid() ),
+    d->write( d->Inpoel(), coord, m_bface, tk::remap( m_bnode,d->Lid() ),
               m_triinpoel, elemfieldnames, nodefieldnames, nodesurfnames,
               elemfields, nodefields, nodesurfs, c );
 
