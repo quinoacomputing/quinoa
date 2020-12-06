@@ -26,6 +26,10 @@
 #include "History.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
+#ifdef HAS_EXAM2M
+  #include "CharmMesh.hpp"
+#endif
+
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
 
@@ -64,6 +68,7 @@ class Discretization : public CBase_Discretization {
     //! Constructor
     explicit
       Discretization(
+        std::size_t meshid,
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
@@ -145,6 +150,9 @@ class Discretization : public CBase_Discretization {
 
     //! Box volume accessor
     tk::real& Boxvol() { return m_boxvol; }
+
+    //! Mesh ID accessor
+    std::size_t MeshId() const { return m_meshid; }
 
     //! Time step size accessor
     tk::real Dt() const { return m_dt; }
@@ -304,6 +312,7 @@ class Discretization : public CBase_Discretization {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_meshid;
       p | m_nchare;
       p | m_it;
       p | m_itr;
@@ -348,6 +357,8 @@ class Discretization : public CBase_Discretization {
     // Shorthand for clock, setting an internal clock type
     using Clock = std::chrono::high_resolution_clock;
 
+    //! Mesh ID
+    std::size_t m_meshid;
     //! Total number of Discretization chares
     int m_nchare;
     //! Iteration count
@@ -387,12 +398,12 @@ class Discretization : public CBase_Discretization {
     //!   IDs.
     tk::UnsMesh::Chunk m_el;
     //! Alias to element connectivity
-    std::vector< std::size_t >& m_inpoel = std::get< 0 >( m_el );
+    std::vector< std::size_t >& m_inpoel = std::get<0>( m_el );
     //! Alias to global node IDs of owned elements
-    std::vector< std::size_t >& m_gid = std::get< 1 >( m_el );
+    std::vector< std::size_t >& m_gid = std::get<1>( m_el );
     //! \brief Alias to local node ids associated to the global ones of owned
     //!    elements
-    std::unordered_map< std::size_t, std::size_t >& m_lid = std::get< 2 >( m_el );
+    std::unordered_map< std::size_t, std::size_t >& m_lid = std::get<2>( m_el );
     //! Mesh point coordinates
     tk::UnsMesh::Coords m_coord;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
@@ -435,6 +446,10 @@ class Discretization : public CBase_Discretization {
     int m_nrestart;
     //! Data at history point locations
     std::vector< HistData > m_histdata;
+    #ifdef HAS_EXAM2M
+    //! Bridge to ExaM2M, mesh transfer library
+    CProxy_CharmMesh m_m2m;
+    #endif
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );

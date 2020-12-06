@@ -27,6 +27,8 @@ module partitioner {
 
     nodegroup [migratable] Partitioner {
       entry Partitioner(
+        std::size_t meshid,
+        const std::string& filename,
         const tk::PartitionerCallback& cbp,
         const tk::RefinerCallback& cbr,
         const tk::SorterCallback& cbs,

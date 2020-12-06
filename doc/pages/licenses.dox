@@ -193,6 +193,12 @@ executable.
   - Web: http://sol2.rtfd.io
   - License: @subpage sol2_license_page
 
+\subsection exam2m_license ExaM2M for mesh-to-mesh solution transfer
+  - Optional
+  - Not searched for by default
+  - Web: https://github.com/Charmworks/ExaM2M.git
+  - License: @subpage exam2m_license_page
+
 -------------------------------------
 
 \section compiler_web Compilers

@@ -55,7 +55,9 @@ class Partitioner : public CBase_Partitioner {
 
   public:
     //! Constructor
-    Partitioner( const tk::PartitionerCallback& cbp,
+    Partitioner( std::size_t meshid,
+                 const std::string& filename,
+                 const tk::PartitionerCallback& cbp,
                  const tk::RefinerCallback& cbr,
                  const tk::SorterCallback& cbs,
                  const CProxy_Transporter& host,
@@ -103,6 +105,7 @@ class Partitioner : public CBase_Partitioner {
     //! \note This is a Charm++ nodegroup, pup() is thus only for
     //!    checkpoint/restart.
     void pup( PUP::er &p ) override {
+      p | m_meshid;
       p | m_cbp;
       p | m_cbr;
       p | m_cbs;
@@ -137,6 +140,8 @@ class Partitioner : public CBase_Partitioner {
     //@}
 
   private:
+    //! Mesh ID
+    std::size_t m_meshid;
     //! Charm++ callbacks associated to compile-time tags for partitioner
     tk::PartitionerCallback m_cbp;
     //! Charm++ callbacks associated to compile-time tags for refiner

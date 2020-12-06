@@ -139,14 +139,10 @@ include(TPLs)
 # Find MPI and get its underlying compilers. If a traditional MPI (e.g.,
 # OpenMPI) is used, the get_mpi_compilers cmake function uses the built-in CMake
 # functionality to find the MPI wrappers and based on the wrappers detects the
-# underyling compilers If Charm++'s Adaptive MPI (AMPI) is used, the Charm++
-# TPL build builds Charm++ as well as AMPI and we use the AMPI wrappers to build
-# MPI libraries.
-if(NOT ENABLE_AMPI)
-  include(MPICompilers)
-  get_mpi_compilers()
-  set(LINKER_COMPILER "${CHARM_COMPILER}")
-else()
+# underyling compilers If Charm++'s Adaptive MPI (AMPI) is found and AMPI is
+# enabled, we use the AMPI wrappers to build MPI libraries.
+if(AMPI_FOUND AND ENABLE_AMPI)  # use Charm++'s AMPI
+  message(STATUS "Charm++ built with AMPI and AMPI enabled")
   set(MPI_C_COMPILER "${AMPI_C_COMPILER}")
   set(MPI_CXX_COMPILER "${AMPI_CXX_COMPILER}")
   set(UNDERLYING_C_COMPILER "${CMAKE_C_COMPILER}")
@@ -154,6 +150,11 @@ else()
   set(LINKER_COMPILER "${AMPI_CXX_COMPILER}")
   set(MPI_CXX_INCLUDE_DIRS "")
   MESSAGE(STATUS "AMPIrun: " ${AMPI_RUN})
+else()  # use MPI
+  message(STATUS "Charm++ not built with AMPI or AMPI disabled")
+  include(MPICompilers)
+  get_mpi_compilers()
+  set(LINKER_COMPILER "${CHARM_COMPILER}")
 endif()
 
 MESSAGE(STATUS "MPI C compiler: " ${MPI_C_COMPILER})

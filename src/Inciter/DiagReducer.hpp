@@ -24,7 +24,8 @@ namespace inciter {
 
 //! Serialize std::vector to raw memory stream
 std::pair< int, std::unique_ptr<char[]> >
-serialize( const std::vector< std::vector< tk::real > >& d );
+serialize( std::size_t meshid,
+           const std::vector< std::vector< tk::real > >& d );
 
 //! Charm++ custom reducer for merging std::vectors during reduction across PEs
 CkReductionMsg*

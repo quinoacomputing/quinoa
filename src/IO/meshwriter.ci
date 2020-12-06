@@ -25,11 +25,13 @@ module meshwriter {
 
       entry MeshWriter( ctr::FieldFileType filetype,
                         Centering bnd_centering,
-                        bool benchmark );
+                        bool benchmark,
+                        std::size_t nmesh );
 
       entry void nchare( int n );
 
       entry void write(
+        std::size_t meshid,
         bool meshoutput,
         bool fieldoutput,
         uint64_t itr,
