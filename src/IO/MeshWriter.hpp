@@ -36,7 +36,8 @@ class MeshWriter : public CBase_MeshWriter {
     //! Constructor: set some defaults that stay constant at all times
     MeshWriter( ctr::FieldFileType filetype,
                 Centering bnd_centering,
-                bool benchmark );
+                bool benchmark,
+                std::size_t nmesh );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -52,7 +53,8 @@ class MeshWriter : public CBase_MeshWriter {
     void nchare( int n );
 
     //! Output unstructured mesh into file
-    void write( bool meshoutput,
+    void write( std::size_t meshid,
+                bool meshoutput,
                 bool fieldoutput,
                 uint64_t itr,
                 uint64_t itf,
@@ -84,6 +86,7 @@ class MeshWriter : public CBase_MeshWriter {
       p | m_bndCentering;
       p | m_benchmark;
       p | m_nchare;
+      p | m_nmesh;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -100,9 +103,12 @@ class MeshWriter : public CBase_MeshWriter {
     bool m_benchmark;
     //! Total number chares across the whole problem
     int m_nchare;
+    //! Total number of meshes
+    std::size_t m_nmesh;
 
     //! Compute filename
     std::string filename( const std::string& basefilename,
+                          std::size_t meshid,
                           uint64_t itr,
                           int chareid,
                           int surfid = 0 ) const;

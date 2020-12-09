@@ -38,7 +38,8 @@ extern std::vector< DGPDE > g_dgpde;
 
 using inciter::Refiner;
 
-Refiner::Refiner( const CProxy_Transporter& transporter,
+Refiner::Refiner( std::size_t meshid,
+                  const CProxy_Transporter& transporter,
                   const CProxy_Sorter& sorter,
                   const tk::CProxy_MeshWriter& meshwriter,
                   const Scheme& scheme,
@@ -50,6 +51,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
                   const std::vector< std::size_t >& triinpoel,
                   const std::map< int, std::vector< std::size_t > >& bnode,
                   int nchare ) :
+  m_meshid( meshid ),
   m_host( transporter ),
   m_sorter( sorter ),
   m_meshwriter( meshwriter ),
@@ -99,6 +101,7 @@ Refiner::Refiner( const CProxy_Transporter& transporter,
   m_outref_triinpoel()
 // *****************************************************************************
 //  Constructor
+//! \param[in] meshid Mesh ID
 //! \param[in] transporter Transporter (host) proxy
 //! \param[in] sorter Mesh reordering (sorter) proxy
 //! \param[in] meshwriter Mesh writer proxy
@@ -371,7 +374,8 @@ Refiner::bndEdges()
   // Send edges in bins to chares that will compute shared edges
   m_nbnd = chbedges.size();
   if (m_nbnd == 0)
-    contribute( m_cbr.get< tag::queried >() );
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbr.get< tag::queried >() );
   else
     for (const auto& [ targetchare, bndedges ] : chbedges)
       thisProxy[ targetchare ].query( thisIndex, bndedges );
@@ -399,7 +403,9 @@ Refiner::recvquery()
 // Receive receipt of boundary edge lists to query
 // *****************************************************************************
 {
-  if (--m_nbnd == 0) contribute( m_cbr.get< tag::queried >() );
+  if (--m_nbnd == 0)
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbr.get< tag::queried >() );
 }
 
 void
@@ -429,7 +435,8 @@ Refiner::response()
   // the responses on the sender side, i.e., this chare.
   m_nbnd = exp.size();
   if (m_nbnd == 0)
-    contribute( m_cbr.get< tag::responded >() );
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbr.get< tag::responded >() );
   else
     for (const auto& [ targetchare, bndedges ] : exp)
       thisProxy[ targetchare ].bnd( thisIndex, bndedges );
@@ -456,7 +463,9 @@ Refiner::recvbnd()
 // Receive receipt of shared boundary edges
 // *****************************************************************************
 {
-  if (--m_nbnd == 0) contribute( m_cbr.get< tag::responded >() );
+  if (--m_nbnd == 0)
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbr.get< tag::responded >() );
 }
 
 void
@@ -583,10 +592,12 @@ Refiner::addRefBndEdges(
     // Update edge data from mesh refiner
     updateEdgeData();
     // If refiner lib modified our edges, need to recommunicate
-    int modified = (localedges_orig != m_localEdgeData ? 1 : 0);
+    auto modified = static_cast< std::size_t >(
+                      localedges_orig != m_localEdgeData ? 1 : 0 );
     //int modified = ( (localedges_orig != m_localEdgeData ||
     //                  intermediates_orig != m_intermediates) ? 1 : 0 );
-    contribute( sizeof(int), &modified, CkReduction::sum_int,
+    std::vector< std::size_t > meshdata{ m_meshid, modified };
+    contribute( meshdata, CkReduction::max_ulong,
                 m_cbr.get< tag::compatibility >() );
   }
 }
@@ -670,7 +681,8 @@ Refiner::correctref()
   // refinement/derefinement statistics
   const auto& tet_store = m_refiner.tet_store;
   std::vector< std::size_t >
-    m{ m_extra,
+    m{ m_meshid,
+       m_extra,
        tet_store.marked_refinements.size(),
        tet_store.marked_derefinements.size(),
        static_cast< std::underlying_type_t< RefMode > >( m_mode ) };
@@ -841,7 +853,7 @@ Refiner::writeMesh( const std::string& basefilename,
 
   // Output mesh
   m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
-    write( /*meshoutput = */ true, /*fieldoutput = */ true, itr, 1, t,
+    write( m_meshid, /*meshoutput = */ true, /*fieldoutput = */ true, itr, 1, t,
            thisIndex, basefilename, m_inpoel, m_coord, m_bface,
            tk::remap(m_bnode,m_lid), tk::remap(m_triinpoel,m_lid),
            elemfieldnames, nodefieldnames, {}, elemfields, nodefields, {},
@@ -986,14 +998,14 @@ Refiner::endt0ref()
 // *****************************************************************************
 {
   // create sorter Charm++ chare array elements using dynamic insertion
-  m_sorter[ thisIndex ].insert( m_host, m_meshwriter, m_cbs, m_scheme,
+  m_sorter[ thisIndex ].insert( m_meshid, m_host, m_meshwriter, m_cbs, m_scheme,
     CkCallback( CkIndex_Refiner::reorder(), thisProxy[thisIndex] ),
     m_ginpoel, m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare );
 
   // Compute final number of cells across whole problem
-  std::vector< std::size_t > meshsize{{ m_ginpoel.size()/4,
-                                        m_coord[0].size() }};
-  contribute( meshsize, CkReduction::sum_ulong, m_cbr.get< tag::refined >() );
+  std::vector< std::size_t >
+    meshdata{ m_meshid, m_ginpoel.size()/4, m_coord[0].size() };
+  contribute( meshdata, CkReduction::sum_ulong, m_cbr.get< tag::refined >() );
 
   // // Free up memory if no dtref
   // if (!g_inputdeck.get< tag::amr, tag::dtref >()) {
@@ -1874,6 +1886,7 @@ Refiner::bndIntegral()
   }
 
   s.push_back( -1.0 );  // negative: no call-back after reduction
+  s.push_back( static_cast< tk::real >( m_meshid ) );
 
   // Send contribution to host summing partial surface integrals
   contribute( s, CkReduction::sum_double, m_cbr.get< tag::bndint >() );

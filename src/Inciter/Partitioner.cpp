@@ -36,6 +36,8 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Partitioner;
 
 Partitioner::Partitioner(
+  std::size_t meshid,
+  const std::string& filename,
   const tk::PartitionerCallback& cbp,
   const tk::RefinerCallback& cbr,
   const tk::SorterCallback& cbs,
@@ -47,6 +49,7 @@ Partitioner::Partitioner(
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& faces,
   const std::map< int, std::vector< std::size_t > >& bnode ) :
+  m_meshid( meshid ),
   m_cbp( cbp ),
   m_cbr( cbr ),
   m_cbs( cbs ),
@@ -71,6 +74,8 @@ Partitioner::Partitioner(
   m_bnode( bnode )
 // *****************************************************************************
 //  Constructor
+//! \param[in] meshid Mesh ID
+//! \param[in] filename Input mesh filename to read from
 //! \param[in] cbp Charm++ callbacks for Partitioner
 //! \param[in] cbr Charm++ callbacks for Refiner
 //! \param[in] cbs Charm++ callbacks for Sorter
@@ -85,7 +90,7 @@ Partitioner::Partitioner(
 // *****************************************************************************
 {
   // Create mesh reader
-  tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+  tk::MeshReader mr( filename );
 
   // Read this compute node's chunk of the mesh (graph and coords) from file
   std::vector< std::size_t > triinpoel;
@@ -100,10 +105,9 @@ Partitioner::Partitioner(
   // only
   ownBndNodes( m_lid, m_bnode );
 
-  // Compute number of cells across whole problem
-  std::size_t nelem = m_ginpoel.size()/4;
-  contribute( sizeof(std::size_t), &nelem, CkReduction::sum_ulong,
-              m_cbp.get< tag::load >() );
+  // Sum number of cells across distributed mesh
+  std::vector< std::size_t > meshdata{ meshid, m_ginpoel.size()/4 };
+  contribute( meshdata, CkReduction::sum_ulong, m_cbp.get< tag::load >() );
 }
 
 void
@@ -158,6 +162,9 @@ Partitioner::partition( int nchare )
                                              nchare );
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pepartitioned();
+
+  contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+              m_cbp.get< tag::partitioned >() );
 
   Assert( che.size() == gelemid.size(), "Size of ownership array (chare ID "
           "of elements) after mesh partitioning does not equal the number of "
@@ -251,7 +258,8 @@ Partitioner::recvMesh()
 {
   if (--m_ndist == 0) {
     if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.pedistributed();
-    contribute( m_cbp.get< tag::distributed >() );
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbp.get< tag::distributed >() );
   }
 }
 
@@ -263,7 +271,7 @@ Partitioner::refine()
 {
   auto dist = distribution( m_nchare );
 
-  int error = 0;
+  std::size_t error = 0;
   if (m_chinpoel.size() < static_cast<std::size_t>(dist[1])) {
 
     error = 1;
@@ -274,7 +282,8 @@ Partitioner::refine()
       // compute chare ID
       auto cid = CkMyNode() * dist[0] + c;
       // create refiner Charm++ chare array element using dynamic insertion
-      m_refiner[ cid ].insert( m_host,
+      m_refiner[ cid ].insert( m_meshid,
+                               m_host,
                                m_sorter,
                                m_meshwriter,
                                m_scheme,
@@ -307,8 +316,8 @@ Partitioner::refine()
   tk::destroy( m_triinpoel );
   tk::destroy( m_bnode );
 
-  contribute( sizeof(int), &error, CkReduction::max_int,
-              m_cbp.get< tag::refinserted >() );
+  std::vector< std::size_t > meshdata{ m_meshid, error };
+  contribute( meshdata, CkReduction::max_ulong, m_cbp.get<tag::refinserted>() );
 }
 
 std::array< std::vector< tk::real >, 3 >
@@ -542,7 +551,8 @@ Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
   // Export chare IDs and mesh we do not own to fellow compute nodes
   if (exp.empty()) {
     if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.pedistributed();
-    contribute( m_cbp.get< tag::distributed >() );
+    contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
+                m_cbp.get< tag::distributed >() );
   } else {
      m_ndist += exp.size();
      for (const auto& [ targetchare, chunk ] : exp)

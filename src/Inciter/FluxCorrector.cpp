@@ -238,9 +238,9 @@ FluxCorrector::verify( std::size_t nchare,
 
     // Tolerance: 10 x the linear solver tolerance for the high order solution.
     if (d.second > 1.0e-7) {
-      const auto& duh = dUh.data();
-      const auto& dul = dUl.data();
-      const auto& u = U.data();
+      const auto& duh = dUh.vec();
+      const auto& dul = dUl.vec();
+      const auto& u = U.vec();
       std::stringstream ss;
       ss << "maximum difference at mesh node " << d.first << ": " << d.second
          << ", dUh:" << duh[d.first] << ", dUl:" << dul[d.first]

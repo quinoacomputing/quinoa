@@ -224,7 +224,7 @@ class DiagCG : public CBase_DiagCG {
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! 1 if starting time stepping, 0 if during time stepping
-    int m_initial;
+    std::size_t m_initial;
     //! Counter for left-hand side matrix (vector) nodes updated
     std::size_t m_nlhs;
     //! Counter for right-hand side vector nodes updated

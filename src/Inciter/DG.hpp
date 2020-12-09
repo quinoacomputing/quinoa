@@ -362,7 +362,7 @@ class DG : public CBase_DG {
     //!   for ghosts only
     std::array< std::vector< std::size_t >, 3 > m_ndofc;
     //! 1 if starting time stepping, 0 if during time stepping
-    int m_initial;
+    std::size_t m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
     tk::UnsMesh::FaceSet m_expChBndFace;
     //! Incoming communication buffer during chare-boundary face communication
