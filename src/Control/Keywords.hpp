@@ -155,7 +155,7 @@
 
 #include "Types.hpp"
 #include "Keyword.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 //! Keywords used by all input deck and command line parsers
 namespace kw {

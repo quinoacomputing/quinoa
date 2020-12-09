@@ -28,7 +28,7 @@
 
 #include "Exception.hpp"
 #include "ProcessException.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 namespace tk {
 

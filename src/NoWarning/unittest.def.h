@@ -13,7 +13,7 @@
 #define nowarning_unittest_def_h
 
 #include "Macro.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 #if defined(__clang__)
   #pragma clang diagnostic push

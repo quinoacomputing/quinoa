@@ -568,7 +568,7 @@ if (NOT EXCEPTIONS_WRITE_TO_CERR)     # set default if not set
   else()
     set(cerr true)
   endif()
-  # will become compiler define in Main/QuinoaConfig.h
+  # will become compiler define in Main/QuinoaBuildConfig.hpp
   set(EXCEPTIONS_WRITE_TO_CERR ${cerr} CACHE BOOL "Exceptions write std::cerr.")
 endif()
 message(STATUS "Exceptions write to cerr: ${EXCEPTIONS_WRITE_TO_CERR}")
@@ -576,6 +576,8 @@ message(STATUS "Exceptions write to cerr: ${EXCEPTIONS_WRITE_TO_CERR}")
 # Configure cmake variables to pass to the build
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.hpp.in"
                 "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.hpp" )
+configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaBuildConfig.hpp.in"
+                "${PROJECT_BINARY_DIR}/Main/QuinoaBuildConfig.hpp" )
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.cpp.in"
                 "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.cpp" ESCAPE_QUOTES)
 

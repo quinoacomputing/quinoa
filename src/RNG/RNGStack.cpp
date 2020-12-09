@@ -29,7 +29,7 @@
 #include "RNGSSE.hpp"
 #include "Options/RNGSSESeqLen.hpp"
 #include "Random123.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 #ifdef HAS_RNGSSE2
   #include <gm19.h>

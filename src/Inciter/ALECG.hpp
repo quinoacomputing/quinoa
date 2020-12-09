@@ -27,7 +27,6 @@
 #include <vector>
 #include <map>
 
-#include "QuinoaConfig.hpp"
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "DerivedData.hpp"

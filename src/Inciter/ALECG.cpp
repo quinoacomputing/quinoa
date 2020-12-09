@@ -15,7 +15,7 @@
 */
 // *****************************************************************************
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 #include "ALECG.hpp"
 #include "Vector.hpp"
 #include "Reader.hpp"

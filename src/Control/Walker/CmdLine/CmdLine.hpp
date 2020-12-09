@@ -16,6 +16,7 @@
 
 #include <brigand/algorithms/for_each.hpp>
 
+#include "QuinoaConfig.hpp"
 #include "TaggedTuple.hpp"
 #include "HelpFactory.hpp"
 #include "Keywords.hpp"

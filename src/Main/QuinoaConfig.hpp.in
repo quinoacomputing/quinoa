@@ -1,14 +1,12 @@
 // *****************************************************************************
 /*!
-  \file      src/Main/QuinoaConfig.h
+  \file      src/Main/QuinoaConfig.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Quinoa configuration macros imported from cmake
-  \details   Quinoa configuration macros inported from cmake. As opposed to
-    Main/QuinoaConfig.C, this file imports cmake variables that are used during
-    compile time.
+  \brief     Quinoa configuration imported from cmake
+  \details   Quinoa configuration inported from cmake.
   \see       src/CMakeListst.txt
  */
 // *****************************************************************************
@@ -17,45 +15,10 @@
 
 #include <iosfwd>
 
+#include "QuinoaBuildConfig.hpp"
+
 namespace tk {
  
-// Compile-time options
-
-// Host OS
-#cmakedefine HOST_OS_ALPINE
-
-// Data layout for particle data
-#cmakedefine PARTICLE_DATA_LAYOUT_AS_PARTICLE_MAJOR
-#cmakedefine PARTICLE_DATA_LAYOUT_AS_EQUATION_MAJOR
-
-// Data layout for mesh data
-#cmakedefine FIELD_DATA_LAYOUT_AS_FIELD_MAJOR
-#cmakedefine FIELD_DATA_LAYOUT_AS_EQUATION_MAJOR
-
-// Optional TPLs
-#cmakedefine HAS_MKL
-#cmakedefine HAS_RNGSSE2
-#cmakedefine HAS_TESTU01
-#cmakedefine HAS_ROOT
-#cmakedefine HAS_BACKWARD
-#cmakedefine HAS_OMEGA_H
-#cmakedefine HAS_LUA
-#cmakedefine HAS_EXAM2M
-
-// Executables optional
-#cmakedefine ENABLE_INCITER
-
-// Backward-cpp config
-#cmakedefine01 BACKWARD_HAS_UNWIND
-#cmakedefine01 BACKWARD_HAS_BACKTRACE
-#cmakedefine01 BACKWARD_HAS_BACKTRACE_SYMBOL
-#cmakedefine01 BACKWARD_HAS_DW
-#cmakedefine01 BACKWARD_HAS_BFD
-#cmakedefine01 BACKWARD_HAS_DWARF
-
-// Exceptions write to std::cerr
-#cmakedefine EXCEPTIONS_WRITE_TO_CERR
-
 // Accessor declarations as strings of configuration values imported from cmake
 
 std::string unittest_executable();

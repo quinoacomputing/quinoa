@@ -14,7 +14,7 @@
 #ifndef Particles_h
 #define Particles_h
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 #include "Data.hpp"
 
 namespace tk {
