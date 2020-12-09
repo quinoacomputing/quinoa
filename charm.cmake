@@ -23,11 +23,10 @@ function(addCharmModule MODULE PARTOF)
   #              Charm++ host file) will link to. Note that the library or
   #              executable PARTOF requires a custom link command as that must
   #              be linked by the charmc wrapper.
-
   # Add custom command generating .decl.h and .def.h from .ci
   add_custom_command(OUTPUT ${MODULE}.decl.h ${MODULE}.def.h
                      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}.ci
-                     COMMAND ${CHARM_COMPILER}
+                     COMMAND ${CHARM_COMPILER} ${ARGN}
                              ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}.ci)
   # Add custom target dependency for Charm++ module
   add_custom_target(${MODULE}CharmModule
