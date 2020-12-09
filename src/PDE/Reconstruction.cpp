@@ -839,7 +839,8 @@ tk::THINCFunction( std::size_t rdof,
 //!   algebraic multi-material THINC reconstruction for each material at the
 //!   given (ref_xp) quadrature point. This function is based on the following:
 //!   Pandare A. K., Waltz J., & Bakosi J. (2021) Multi-Material Hydrodynamics
-//!   with Algebraic Sharp Interface Capturing. Accepted in Computers & Fluids.
+//!   with Algebraic Sharp Interface Capturing. Computers & Fluids,
+//!   doi: https://doi.org/10.1016/j.compfluid.2020.104804.
 // *****************************************************************************
 {
   // determine number of materials with interfaces in this cell

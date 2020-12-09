@@ -5537,9 +5537,13 @@ struct intsharp_info {
   static std::string shortDescription() { return
     "Turn multi-material interface sharpening on/off"; }
   static std::string longDescription() { return
-    R"(This keyword is used to turn interface sharpening on/off. It is used for
-       the multi-material and the transport solver, and has no effect when used
-       for the other PDE types.)";
+    R"(This keyword is used to turn interface sharpening on/off. It uses the
+       multi-material THINC interface reconstruction.
+       Ref. Pandare A. K., Waltz J., & Bakosi J. (2021) Multi-Material
+       Hydrodynamics with Algebraic Sharp Interface Capturing. Computers &
+       Fluids, doi: https://doi.org/10.1016/j.compfluid.2020.104804. It is used
+       for the multi-material and the transport solver, and has no effect when
+       used for the other PDE types.)";
   }
   struct expect {
     using type = int;
