@@ -26,10 +26,6 @@
 #include "History.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
-#ifdef HAS_EXAM2M
-  #include "CharmMesh.hpp"
-#endif
-
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
 
@@ -91,6 +87,12 @@ class Discretization : public CBase_Discretization {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
+    //! \brief Our mesh has been registered with the mesh-to-mesh transfer
+    //!   library (if coupled to other solver)
+    void transferInit();
+    //! Start solution transfer (if coupled)
+    void transfer( const tk::Fields& u, CkCallback c );
+
     //! Resize mesh data structures (e.g., after mesh refinement)
     void resizePostAMR( const tk::UnsMesh::Chunk& chunk,
                         const tk::UnsMesh::Coords& coord,
@@ -121,7 +123,7 @@ class Discretization : public CBase_Discretization {
     /** @name Accessors */
     ///@{
     //! Coordinates accessors as const-ref
-    const tk::UnsMesh::Coords& Coord() const{ return m_coord; }
+    const tk::UnsMesh::Coords& Coord() const { return m_coord; }
 
     //! Global ids accessors as const-ref
     const std::vector< std::size_t >& Gid() const { return m_gid; }
@@ -446,10 +448,6 @@ class Discretization : public CBase_Discretization {
     int m_nrestart;
     //! Data at history point locations
     std::vector< HistData > m_histdata;
-    #ifdef HAS_EXAM2M
-    //! Bridge to ExaM2M, mesh transfer library
-    CProxy_CharmMesh m_m2m;
-    #endif
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );

@@ -408,8 +408,12 @@ ALECG::box( tk::real v )
   d->Boxvol() = v;
 
   // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
-    m_boxnodes );
+  for (auto& eq : g_cgpde)
+    eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes );
+
+  // Initiate IC transfer (if coupled)
+  Disc()->transfer( m_u,
+    CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]) );
 
   // Compute left-hand side of PDEs
   lhs();
@@ -723,7 +727,7 @@ ALECG::dt()
   // Actiavate SDAG waits for next time step stage
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
-  thisProxy[ thisIndex ].wait4stage();
+  thisProxy[ thisIndex ].wait4trans();
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -947,8 +951,8 @@ ALECG::solve()
     thisProxy[ thisIndex ].wait4grad();
     thisProxy[ thisIndex ].wait4rhs();
 
-    // continue with next time step stage
-    stage();
+    // continue to mesh-to-mesh transfer (if coupled)
+    transfer();
 
   } else {
 
@@ -1092,6 +1096,18 @@ ALECG::resized()
 // *****************************************************************************
 {
   resize_complete();
+}
+
+void
+ALECG::transfer()
+// *****************************************************************************
+// Transfer solution to other solver and mesh if coupled
+// *****************************************************************************
+{
+  // Initiate solution transfer (if coupled)
+  //Disc()->transfer( m_u,
+  //  CkCallback(CkIndex_ALECG::stage(), thisProxy[thisIndex]) );
+  thisProxy[thisIndex].stage();
 }
 
 void

@@ -1334,6 +1334,7 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
 
   if (++m_nchk == m_nelem.size()) { // all worker arrays have checkpointed
     m_nchk = 0;
+    #ifndef HAS_EXAM2M
     const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
     if (!benchmark) {
       const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
@@ -1342,6 +1343,9 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
     } else {
       resume();
     }
+    #else
+      resume();
+    #endif
   }
 }
 

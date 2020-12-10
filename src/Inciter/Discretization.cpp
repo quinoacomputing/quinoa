@@ -21,6 +21,11 @@
 #include "Inciter/Options/Scheme.hpp"
 #include "Print.hpp"
 #include "Around.hpp"
+#include "QuinoaBuildConfig.hpp"
+
+#ifdef HAS_EXAM2M
+  #include "Controller.hpp"
+#endif
 
 namespace inciter {
 
@@ -104,22 +109,6 @@ Discretization::Discretization(
   tk::unique( c );
   m_bid = tk::assignLid( c );
 
-  // Lambda to decide if a node is not counted by this chare. If a node is
-  // found in the node communication map and is associated to a lower chare id
-  // than thisIndex, it is counted by another chare (and not thisIndex), hence
-  // a "slave" (for the purpose of this count).
-  auto slave = [ this ]( std::size_t p ) {
-    return
-      std::any_of( m_nodeCommMap.cbegin(), m_nodeCommMap.cend(),
-        [&](const auto& s) {
-          return s.second.find(p) != s.second.cend() && s.first > thisIndex;
-        } );
-  };
-
-  // Compute number of mesh points owned
-  std::size_t npoin = m_gid.size();
-  for (auto g : m_gid) if (slave(g)) --npoin;
-
   // Find host elements of user-specified points where time histories are
   // saved, and save the shape functions evaluated at the point locations
   const auto& pt = g_inputdeck.get< tag::history, tag::point >();
@@ -144,18 +133,70 @@ Discretization::Discretization(
     m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
-  #ifdef EXAM2M
-  // Establish bridge to ExaM2M mesh-transfer lib
-  tk::Fields u;
-  m_m2m = CProxy_CharmMesh:ckNew( m_inpoel, m_coord, m_nchare, u,
-                                  CkArrayOptions().bindTo(thisProxy) );
+  // Register mesh with mesh-transfer lib
+  #ifdef HAS_EXAM2M
+  if (thisIndex == 0) {
+    exam2m::addMesh( thisProxy, m_nchare,
+      CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
+    std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
+  }
+  #else
+  transferInit();
   #endif
+}
+
+void
+Discretization::transferInit()
+// *****************************************************************************
+// Our mesh has been registered with the mesh-to-mesh transfer library (if
+// coupled to other solver)
+// *****************************************************************************
+{
+  // Lambda to decide if a node is not counted by this chare. If a node is
+  // found in the node communication map and is associated to a lower chare id
+  // than thisIndex, it is counted by another chare (and not thisIndex), hence
+  // a "slave" (for the purpose of this count).
+  auto slave = [ this ]( std::size_t p ) {
+    return
+      std::any_of( m_nodeCommMap.cbegin(), m_nodeCommMap.cend(),
+        [&](const auto& s) {
+          return s.second.find(p) != s.second.cend() && s.first > thisIndex;
+        } );
+  };
+
+  // Compute number of mesh points owned
+  std::size_t npoin = m_gid.size();
+  for (auto g : m_gid) if (slave(g)) --npoin;
 
   // Tell the RTS that the Discretization chares have been created and compute
   // the total number of mesh points across the distributed mesh
   std::vector< std::size_t > meshdata{ m_meshid, npoin };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
+}
+
+void
+Discretization::transfer( [[maybe_unused]] const tk::Fields& u,
+                          [[maybe_unused]] CkCallback c )
+// *****************************************************************************
+//  Start solution transfer (if coupled)
+//! \param[in] u Solution to transfer from/to
+//! \param[in] Function to call when solution transfer is complete
+// *****************************************************************************
+{
+  // Pass source and destination meshes to mesh transfer lib (if coupled)
+  #ifdef HAS_EXAM2M
+  if (m_meshid == 0) { // source mesh
+    exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
+    c.send();
+    if (thisIndex==0) std::cout << "Disc: " << m_meshid << " m2m::setSourceTets()\n";
+  } else if (m_meshid == 1) { // destination mesh
+    exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u, c );
+    if (thisIndex==0) std::cout << "Disc: " << m_meshid << " m2m::setDestPoints()\n";
+  }
+  #else
+  c.send();
+  #endif
 }
 
 std::vector< std::size_t >
