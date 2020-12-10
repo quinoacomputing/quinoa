@@ -25,6 +25,7 @@ module discretization {
     array [1D] Discretization {
       entry Discretization(
         std::size_t meshid,
+        const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,

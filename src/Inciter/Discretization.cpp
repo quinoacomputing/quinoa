@@ -39,6 +39,7 @@ using inciter::Discretization;
 
 Discretization::Discretization(
   std::size_t meshid,
+  const std::vector< CProxy_Discretization >& disc,
   const CProxy_DistFCT& fctproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
@@ -47,6 +48,7 @@ Discretization::Discretization(
   const tk::CommMaps& msum,
   int nc ) :
   m_meshid( meshid ),
+  m_disc( disc ),
   m_nchare( nc ),
   m_it( 0 ),
   m_itr( 0 ),
@@ -134,15 +136,19 @@ Discretization::Discretization(
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   // Register mesh with mesh-transfer lib
-  #ifdef HAS_EXAM2M
-  if (thisIndex == 0) {
-    exam2m::addMesh( thisProxy, m_nchare,
-      CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
-    std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
+  if (m_disc.size() == 1) {     // skip transfer if single mesh
+    transferInit();
+  } else {
+    #ifdef HAS_EXAM2M
+    if (thisIndex == 0) {
+      exam2m::addMesh( thisProxy, m_nchare,
+        CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
+      std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
+    }
+    #else
+    transferInit();
+    #endif
   }
-  #else
-  transferInit();
-  #endif
 }
 
 void
@@ -184,19 +190,25 @@ Discretization::transfer( [[maybe_unused]] const tk::Fields& u,
 //! \param[in] Function to call when solution transfer is complete
 // *****************************************************************************
 {
-  // Pass source and destination meshes to mesh transfer lib (if coupled)
-  #ifdef HAS_EXAM2M
-  if (m_meshid == 0) { // source mesh
-    exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
+  if (m_disc.size() == 1) {     // skip transfer if single mesh
     c.send();
-    if (thisIndex==0) std::cout << "Disc: " << m_meshid << " m2m::setSourceTets()\n";
-  } else if (m_meshid == 1) { // destination mesh
-    exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u, c );
-    if (thisIndex==0) std::cout << "Disc: " << m_meshid << " m2m::setDestPoints()\n";
+  } else {
+    // Pass source and destination meshes to mesh transfer lib (if coupled)
+    #ifdef HAS_EXAM2M
+    if (m_meshid == 0) { // source mesh
+      exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
+      c.send();
+      if (thisIndex==0)
+        std::cout << "Disc: " << m_meshid << " m2m::setSourceTets()\n";
+    } else if (m_meshid == 1) { // destination mesh
+      exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u, c );
+      if (thisIndex==0)
+        std::cout << "Disc: " << m_meshid << " m2m::setDestPoints()\n";
+    }
+    #else
+    c.send();
+    #endif
   }
-  #else
-  c.send();
-  #endif
 }
 
 std::vector< std::size_t >

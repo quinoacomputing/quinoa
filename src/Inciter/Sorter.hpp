@@ -64,7 +64,7 @@ class Sorter : public CBase_Sorter {
                      const CProxy_Transporter& transporter,
                      const tk::CProxy_MeshWriter& meshwriter,
                      const tk::SorterCallback& cbs,
-                     const Scheme& scheme,
+                     const std::vector< Scheme >& scheme,
                      CkCallback reorderRefiner,
                      const std::vector< std::size_t >& ginpoel,
                      const tk::UnsMesh::CoordMap& coordmap,
@@ -175,8 +175,8 @@ class Sorter : public CBase_Sorter {
     tk::CProxy_MeshWriter m_meshwriter;
     //! Charm++ callbacks associated to compile-time tags for sorter
     tk::SorterCallback m_cbs;
-    //! Discretization scheme
-    Scheme m_scheme;
+    //! Discretization schemes (one per mesh)
+    std::vector< Scheme > m_scheme;
     //! Callback to use to send reordered mesh to Refiner
     CkCallback m_reorderRefiner;
     //! Tetrtahedron element connectivity of our chunk of the mesh (global ids)

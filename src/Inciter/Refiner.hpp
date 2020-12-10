@@ -76,7 +76,7 @@ class Refiner : public CBase_Refiner {
                       const CProxy_Transporter& transporter,
                       const CProxy_Sorter& sorter,
                       const tk::CProxy_MeshWriter& meshwriter,
-                      const Scheme& scheme,
+                      const std::vector< Scheme >& scheme,
                       const tk::RefinerCallback& cbr,
                       const tk::SorterCallback& cbs,
                       const std::vector< std::size_t >& ginpoel,
@@ -233,8 +233,8 @@ class Refiner : public CBase_Refiner {
     CProxy_Sorter m_sorter;
     //! Mesh writer proxy
     tk::CProxy_MeshWriter m_meshwriter;
-    //! Discretization scheme
-    Scheme m_scheme;
+    //! Discretization schemes (one per mesh)
+    std::vector< Scheme > m_scheme;
     //! Charm++ callbacks associated to compile-time tags for refiner
     tk::RefinerCallback m_cbr;
     //! Charm++ callbacks associated to compile-time tags for sorter

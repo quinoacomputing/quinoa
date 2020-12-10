@@ -65,6 +65,7 @@ class Discretization : public CBase_Discretization {
     explicit
       Discretization(
         std::size_t meshid,
+        const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
@@ -199,6 +200,13 @@ class Discretization : public CBase_Discretization {
       return m_fct[ thisIndex ].ckLocal();
     }
 
+    //! Access Discretization proxy for a mesh
+    CProxy_Discretization coupled( std::size_t meshid ) const {
+      Assert( meshid < m_disc.size(),
+              "No proxy for mesh ID " + std::to_string(meshid) );
+      return m_disc[ meshid ];
+    }
+
     //! Boundary node ids accessor as const-ref
     const std::unordered_map< std::size_t, std::size_t >& Bid() const
     { return m_bid; }
@@ -315,6 +323,7 @@ class Discretization : public CBase_Discretization {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_meshid;
+      p | m_disc;
       p | m_nchare;
       p | m_it;
       p | m_itr;
@@ -361,6 +370,8 @@ class Discretization : public CBase_Discretization {
 
     //! Mesh ID
     std::size_t m_meshid;
+    //! Discretization proxies (one per mesh)
+    std::vector< CProxy_Discretization > m_disc;
     //! Total number of Discretization chares
     int m_nchare;
     //! Iteration count

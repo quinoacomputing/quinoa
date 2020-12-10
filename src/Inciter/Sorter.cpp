@@ -30,7 +30,7 @@ Sorter::Sorter( std::size_t meshid,
                 const CProxy_Transporter& transporter,
                 const tk::CProxy_MeshWriter& meshwriter,
                 const tk::SorterCallback& cbs,
-                const Scheme& scheme,
+                const std::vector< Scheme >& scheme,
                 CkCallback reorderRefiner,
                 const std::vector< std::size_t >& ginpoel,
                 const tk::UnsMesh::CoordMap& coordmap,
@@ -71,7 +71,7 @@ Sorter::Sorter( std::size_t meshid,
 //! \param[in] transporter Transporter (host) Charm++ proxy
 //! \param[in] meshwriter Mesh writer Charm++ proxy
 //! \param[in] cbs Charm++ callbacks for Sorter
-//! \param[in] scheme Discretization scheme
+//! \param[in] scheme Discretization schemes (one per mesh)
 //! \param[in] reorderRefiner Callback to use to send reordered mesh to Refiner
 //! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
 //! \param[in] coordmap Mesh node coordinates (this chare) for global node IDs
@@ -559,8 +559,11 @@ Sorter::createDiscWorkers()
   // Create worker array element using Charm++ dynamic chare array element
   // insertion: last arg: PE chare is created on. See also Charm++ manual, Sec.
   // "Dynamic Insertion".
-  m_scheme.disc()[ thisIndex ].insert( m_meshid, m_scheme.fct(), m_host,
-    m_meshwriter, m_ginpoel, m_coordmap, m_msum, m_nchare );
+  std::vector< CProxy_Discretization > disc;
+  for (auto& d : m_scheme) disc.push_back( d.disc() );
+  m_scheme[m_meshid].disc()[ thisIndex ].insert( m_meshid, disc,
+    m_scheme[m_meshid].fct(), m_host, m_meshwriter, m_ginpoel, m_coordmap,
+    m_msum, m_nchare );
 
   contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
               m_cbs.get< tag::discinserted >() );
@@ -573,13 +576,14 @@ Sorter::createWorkers()
 // *****************************************************************************
 {
   // Make sure (bound) base is already created and accessible
-  Assert( m_scheme.disc()[thisIndex].ckLocal() != nullptr,
+  Assert( m_scheme[m_meshid].disc()[thisIndex].ckLocal() != nullptr,
           "About to pass nullptr" );
 
   // Create worker array element using Charm++ dynamic chare array element
   // insertion: 1st arg: chare id, other args: Discretization's child ctor args.
   // See also Charm++ manual, Sec. "Dynamic Insertion".
-  m_scheme.insert( thisIndex, m_scheme.disc(), m_bface, m_bnode, m_triinpoel );
+  m_scheme[m_meshid].insert( thisIndex, m_scheme[m_meshid].disc(), m_bface,
+                             m_bnode, m_triinpoel );
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
 
