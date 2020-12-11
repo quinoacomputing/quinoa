@@ -638,7 +638,7 @@ tk::THINCReco( std::size_t system,
   const Fields& geoElem,
   const std::array< real, 3 >& ref_xp,
   const Fields& U,
-  [[maybe_unused]] const Fields& P,
+  const Fields& P,
   [[maybe_unused]] const std::vector< real >& vfmin,
   [[maybe_unused]] const std::vector< real >& vfmax,
   std::vector< real >& state )
@@ -692,12 +692,12 @@ tk::THINCReco( std::size_t system,
 
   // Step-1: Perform THINC reconstruction
   // create a vector of volume-fractions and pass it to the THINC function
-  Fields alSol(1, rdof*nmat);
+  std::vector< real > alSol(rdof*nmat, 0.0);
   std::vector< real > alReco(nmat, 0.0);
   for (std::size_t k=0; k<nmat; ++k) {
     auto mark = k*rdof;
     for (std::size_t i=0; i<rdof; ++i) {
-      alSol(0,mark+i,0) = U(e, volfracDofIdx(nmat,k,rdof,i), offset);
+      alSol[mark+i] = U(e, volfracDofIdx(nmat,k,rdof,i), offset);
     }
     // initialize with TVD reconstructions which will be modified if near
     // material interface
@@ -752,7 +752,7 @@ tk::THINCRecoTransport( std::size_t system,
   const Fields& geoElem,
   const std::array< real, 3 >& ref_xp,
   const Fields& U,
-  [[maybe_unused]] const Fields& P,
+  const Fields&,
   [[maybe_unused]] const std::vector< real >& vfmin,
   [[maybe_unused]] const std::vector< real >& vfmax,
   std::vector< real >& state )
@@ -768,7 +768,6 @@ tk::THINCRecoTransport( std::size_t system,
 //! \param[in] geoElem Element geometry array
 //! \param[in] ref_xp Quadrature point in reference space
 //! \param[in] U Solution vector
-//! \param[in] P Vector of primitives
 //! \param[in] vfmin Vector containing min volume fractions for each material
 //!   in this cell
 //! \param[in] vfmax Vector containing max volume fractions for each material
@@ -792,13 +791,13 @@ tk::THINCRecoTransport( std::size_t system,
   auto intInd = inciter::interfaceIndicator(ncomp, alAvg, matInt);
 
   // create a vector of volume-fractions and pass it to the THINC function
-  Fields alSol(1, rdof*ncomp);
+  std::vector< real > alSol(rdof*ncomp, 0.0);
   // initialize with TVD reconstructions (modified if near interface)
   auto alReco = state;
   for (std::size_t k=0; k<ncomp; ++k) {
     auto mark = k*rdof;
     for (std::size_t i=0; i<rdof; ++i) {
-      alSol(0,mark+i,0) = U(e,mark+i,offset);
+      alSol[mark+i] = U(e,mark+i,offset);
     }
   }
   THINCFunction(rdof, ncomp, e, inpoel, coord, ref_xp, geoElem(e,0,0), bparam,
@@ -816,7 +815,7 @@ tk::THINCFunction( std::size_t rdof,
   const std::array< real, 3 >& ref_xp,
   real vol,
   real bparam,
-  const Fields& alSol,
+  const std::vector< real >& alSol,
   bool intInd,
   const std::vector< std::size_t >& matInt,
   std::vector< real >& alReco )
@@ -848,7 +847,7 @@ tk::THINCFunction( std::size_t rdof,
   std::size_t nIntMat(0);
   for (std::size_t k=0; k<nmat; ++k)
   {
-    auto alk = alSol(0, k*rdof, 0);
+    auto alk = alSol[k*rdof];
     if (alk > epsl)
     {
       ++nIntMat;
@@ -896,14 +895,14 @@ tk::THINCFunction( std::size_t rdof,
     {
       // Get derivatives from moments in Dubiner space
       for (std::size_t i=0; i<3; ++i)
-        nInt[i] = dBdx[i][1] * alSol(0, k*rdof+1, 0)
-          + dBdx[i][2] * alSol(0, k*rdof+2, 0)
-          + dBdx[i][3] * alSol(0, k*rdof+3, 0);
+        nInt[i] = dBdx[i][1] * alSol[k*rdof+1]
+          + dBdx[i][2] * alSol[k*rdof+2]
+          + dBdx[i][3] * alSol[k*rdof+3];
 
       auto nMag = std::sqrt(tk::dot(nInt, nInt)) + 1e-14;
 
       // determine index of material present in majority
-      auto alk = alSol(0, k*rdof, 0);
+      auto alk = alSol[k*rdof];
       if (alk > almax)
       {
         almax = alk;
@@ -933,7 +932,7 @@ tk::THINCFunction( std::size_t rdof,
         // get location of material interface (volume fraction 0.5) from the
         // assumed tanh volume fraction distribution, and cell-averaged
         // volume fraction
-        auto alCC(alSol(0, k*rdof, 0));
+        auto alCC(alSol[k*rdof]);
         auto Ac(0.0), Bc(0.0), Qc(0.0);
         if ((std::fabs(ref_n[k][0]) > std::fabs(ref_n[k][1]))
           && (std::fabs(ref_n[k][0]) > std::fabs(ref_n[k][2])))

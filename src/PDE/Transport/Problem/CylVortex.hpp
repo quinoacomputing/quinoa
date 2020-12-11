@@ -7,10 +7,10 @@
              All rights reserved. See the LICENSE file for details.
   \brief     Problem configuration for transport equations
   \details   This file declares a Problem policy class for the transport
-    equations, defined in PDE/Transport/CGTransport.h implementing
-    node-centered continuous Galerkin (CG) and PDE/Transport/DGTransport.h
+    equations, defined in PDE/Transport/CGTransport.hpp implementing
+    node-centered continuous Galerkin (CG) and PDE/Transport/DGTransport.hpp
     implementing cell-centered discontinuous Galerkin (DG) discretizations.
-    See PDE/Transport/Problem.h for general requirements on Problem policy
+    See PDE/Transport/Problem.hpp for general requirements on Problem policy
     classes for cg::Transport and dg::Transport.
 */
 // *****************************************************************************
