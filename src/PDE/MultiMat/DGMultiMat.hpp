@@ -261,22 +261,23 @@ class MultiMat {
           unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
           unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset), almax, kmax);
 
-        // get equilibrium pressure
-        std::vector< tk::real > kmat(nmat, 0.0);
-        tk::real p_target(0.0), ratio(0.0), d_al(0.0), d_arE(0.0);
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          auto arhok = unk(e, densityDofIdx(nmat,k,rdof,0), m_offset);
-          auto alk = unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
-          auto apk = prim(e, pressureDofIdx(nmat,k,rdof,0), m_offset);
-          auto ak = eos_soundspeed< eq >(m_system, arhok, apk, alk, k );
-          kmat[k] = arhok * ak * ak;
+        tk::real p_target(0.0), d_al(0.0), d_arE(0.0);
+        //// get equilibrium pressure
+        //std::vector< tk::real > kmat(nmat, 0.0);
+        //tk::real ratio(0.0);
+        //for (std::size_t k=0; k<nmat; ++k)
+        //{
+        //  auto arhok = unk(e, densityDofIdx(nmat,k,rdof,0), m_offset);
+        //  auto alk = unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
+        //  auto apk = prim(e, pressureDofIdx(nmat,k,rdof,0), m_offset);
+        //  auto ak = eos_soundspeed< eq >(m_system, arhok, apk, alk, k );
+        //  kmat[k] = arhok * ak * ak;
 
-          p_target += alk * apk / kmat[k];
-          ratio += alk * alk / kmat[k];
-        }
-        p_target /= ratio;
-        p_target = std::max(p_target, 1e-14);
+        //  p_target += alk * apk / kmat[k];
+        //  ratio += alk * alk / kmat[k];
+        //}
+        //p_target /= ratio;
+        //p_target = std::max(p_target, 1e-14);
         p_target = std::max(pmax, 1e-14);
 
         // 1. Correct minority materials and store volume/energy changes
@@ -290,9 +291,8 @@ class MultiMat {
           if (alk > 0.0)
           {
             // check if volume fraction is lesser than threshold (al_eps) and
-            // if the material pressure is significantly different from pressure
-            // of material present in majority. If both these conditions are
-            // true, perform pressure relaxation.
+            // if the material (effective) pressure is negative. If either of
+            // these conditions is true, perform pressure relaxation.
             if ((alk < al_eps) || (pk+Pck < 0.0)/*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
             {
               //auto gk =
