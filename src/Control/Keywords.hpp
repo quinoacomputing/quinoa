@@ -1988,6 +1988,18 @@ struct outvar_pressure_info {
 using outvar_pressure =
   keyword< outvar_pressure_info, TAOCPP_PEGTL_STRING("pressure") >;
 
+struct outvar_material_indicator_info {
+  static std::string name() { return "material_indicator"; }
+  static std::string shortDescription() { return "Request material_indicator"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the material indicator function as an
+       output variable.)";
+  }
+};
+using outvar_material_indicator =
+  keyword< outvar_material_indicator_info,
+    TAOCPP_PEGTL_STRING("material_indicator") >;
+
 struct outvar_analytic_info {
   static std::string name() { return "analytic"; }
   static std::string shortDescription() { return "Request analytic solution"; }
@@ -2018,6 +2030,7 @@ struct outvar_info {
     + outvar_yvelocity::string() + "\', \'"
     + outvar_zvelocity::string() + "\', \'"
     + outvar_pressure::string() + "\', \'"
+    + outvar_material_indicator::string() + "\', \'"
     + outvar_analytic::string() + "\'.";
   }
 };
@@ -5559,10 +5572,9 @@ struct intsharp_param_info {
     "Parameter for multi-material interface sharpening"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the parameter for the interface
-       sharpening. The default value is 1.0. This parameter affects how many
-       cells the material interfaces span, after the use of sharpening. It is
-       used for multimat and transport, and has no effect for the other PDE
-       types.)";
+       sharpening. This parameter affects how many cells the material interfaces
+       span, after the use of sharpening. It is used for multimat and transport,
+       and has no effect for the other PDE types.)";
   }
   struct expect {
     using type = tk::real;

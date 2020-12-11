@@ -222,7 +222,7 @@ class DG : public CBase_DG {
       p | m_p;
       p | m_geoFace;
       p | m_geoElem;
-      p | m_vfm;
+      p | m_volfracExtr;
       p | m_lhs;
       p | m_rhs;
       p | m_nfac;
@@ -242,7 +242,7 @@ class DG : public CBase_DG {
       p | m_bid;
       p | m_uc;
       p | m_pc;
-      p | m_vfmc;
+      p | m_volfracExtrc;
       p | m_ndofc;
       p | m_initial;
       p | m_expChBndFace;
@@ -310,7 +310,7 @@ class DG : public CBase_DG {
     //! Element geometry
     tk::Fields m_geoElem;
     //! Vector of maximum volume fraction for each mesh element
-    tk::Fields m_vfm;
+    tk::Fields m_volfracExtr;
     //! Left-hand side mass-matrix which is a diagonal matrix
     tk::Fields m_lhs;
     //! Vector of right-hand side
@@ -357,7 +357,7 @@ class DG : public CBase_DG {
     //! Primitive-variable receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
     //! Volume fraction max receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 3 > m_vfmc;
+    std::array< std::vector< std::vector< tk::real > >, 3 > m_volfracExtrc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
     std::array< std::vector< std::size_t >, 3 > m_ndofc;

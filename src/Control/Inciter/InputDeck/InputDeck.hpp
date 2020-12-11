@@ -150,6 +150,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::outvar_yvelocity
                                  , kw::outvar_zvelocity
                                  , kw::outvar_pressure
+                                 , kw::outvar_material_indicator
                                  , kw::outvar_analytic
                                  , kw::nl_energy_growth
                                  , kw::pde_betax
