@@ -22,6 +22,7 @@ module sorter {
 
     array [1D] Sorter {
       entry Sorter( std::size_t meshid,
+                    const std::vector< Transfer >& t,
                     const CProxy_Transporter& transporter,
                     const tk::CProxy_MeshWriter& meshwriter,
                     const tk::SorterCallback& cbs,

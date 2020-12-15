@@ -39,6 +39,7 @@
 #include "ElemDiagnostics.hpp"
 #include "DiagWriter.hpp"
 #include "Callback.hpp"
+#include "Transfer.hpp"
 #include "CartesianProduct.hpp"
 
 #include "NoWarning/inciter.decl.h"
@@ -455,6 +456,14 @@ Transporter::createPartitioner()
   for ([[maybe_unused]] const auto& filename : inputs)
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >() );
 
+  // Configure solver coupling. This will be exposed to the user eventually.
+  std::vector< Transfer > transfer;
+  if (inputs.size() == 2 ) transfer.emplace_back( 0, 1 );
+  //transfer.emplace_back( 0, 2 );
+  //transfer.emplace_back( 1, 3 );
+  //transfer.emplace_back( 2, 3 );
+  //transfer.emplace_back( 2, 0 );
+
   // Read boundary (side set) data from a list of input mesh files
   std::size_t meshid = 0;
   for (const auto& filename : inputs) {
@@ -505,7 +514,7 @@ Transporter::createPartitioner()
 
     // Create mesh partitioner Charm++ chare nodegroup for all meshes
     m_partitioner.push_back(
-      CProxy_Partitioner::ckNew( meshid, filename, cbp, cbr, cbs,
+      CProxy_Partitioner::ckNew( meshid, transfer, filename, cbp, cbr, cbs,
         thisProxy, m_refiner.back(), m_sorter.back(), m_meshwriter.back(),
         m_scheme, bface, faces, bnode ) );
 

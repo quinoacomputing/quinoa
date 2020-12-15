@@ -73,6 +73,7 @@ class Refiner : public CBase_Refiner {
 
     //! Constructor
     explicit Refiner( std::size_t meshid,
+                      const std::vector< Transfer >& t,
                       const CProxy_Transporter& transporter,
                       const CProxy_Sorter& sorter,
                       const tk::CProxy_MeshWriter& meshwriter,
@@ -163,6 +164,7 @@ class Refiner : public CBase_Refiner {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_meshid;
+      p | m_transfer;
       p | m_host;
       p | m_sorter;
       p | m_meshwriter;
@@ -227,6 +229,8 @@ class Refiner : public CBase_Refiner {
   private:
     //! Mesh ID
     std::size_t m_meshid;
+    //! Solution transfer (coupling) information
+    std::vector< Transfer > m_transfer;
     //! Host proxy
     CProxy_Transporter m_host;
     //! Mesh sorter proxy

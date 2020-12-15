@@ -65,6 +65,7 @@ class Discretization : public CBase_Discretization {
     explicit
       Discretization(
         std::size_t meshid,
+        const std::vector< Transfer >& t,
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
         const CProxy_Transporter& transporter,
@@ -91,8 +92,15 @@ class Discretization : public CBase_Discretization {
     //! \brief Our mesh has been registered with the mesh-to-mesh transfer
     //!   library (if coupled to other solver)
     void transferInit();
+
+    //! Receive a list of callbacks from our own child solver
+    void transferCallback( std::vector< CkCallback >& cb );
+
+    //! Receive mesh transfer callbacks from source mesh/solver
+    void comcb( std::size_t srcmeshid, CkCallback c );
+
     //! Start solution transfer (if coupled)
-    void transfer( const tk::Fields& u, CkCallback c );
+    void transfer( const tk::Fields& u );
 
     //! Resize mesh data structures (e.g., after mesh refinement)
     void resizePostAMR( const tk::UnsMesh::Chunk& chunk,
@@ -206,6 +214,9 @@ class Discretization : public CBase_Discretization {
               "No proxy for mesh ID " + std::to_string(meshid) );
       return m_disc[ meshid ];
     }
+
+    //! Const-ref accessor to solver/mesh transfer configuration
+    const std::vector< Transfer >& Transfers() const { return m_transfer; }
 
     //! Boundary node ids accessor as const-ref
     const std::unordered_map< std::size_t, std::size_t >& Bid() const
@@ -323,6 +334,9 @@ class Discretization : public CBase_Discretization {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_meshid;
+      p | m_transfer_complete;
+      p | m_transfer;
+      p | m_mytransfer;
       p | m_disc;
       p | m_nchare;
       p | m_it;
@@ -357,6 +371,8 @@ class Discretization : public CBase_Discretization {
       p( reinterpret_cast<char*>(&m_prevstatus), sizeof(Clock::time_point) );
       p | m_nrestart;
       p | m_histdata;
+      p | m_nsrc;
+      p | m_ndst;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -370,6 +386,16 @@ class Discretization : public CBase_Discretization {
 
     //! Mesh ID
     std::size_t m_meshid;
+    //! Function to continue with if not coupled to other solver
+    CkCallback m_transfer_complete;
+    //! Solution/mesh transfer (coupling) information
+    //! \details This has the same size with the same src/dst information on
+    //!   all solvers.
+    std::vector< Transfer > m_transfer;
+    //! My solution transfer/mesh (coupling) information
+    //! \details This is a subset of m_transfer, holding only those entries
+    //!   that this solvers is involved in (either a source or a destination).
+    std::vector< Transfer > m_mytransfer;
     //! Discretization proxies (one per mesh)
     std::vector< CProxy_Discretization > m_disc;
     //! Total number of Discretization chares
@@ -459,9 +485,19 @@ class Discretization : public CBase_Discretization {
     int m_nrestart;
     //! Data at history point locations
     std::vector< HistData > m_histdata;
+    //! Number of transfers requested as a source
+    std::size_t m_nsrc;
+    //! Number of transfers requested as a destination
+    std::size_t m_ndst;
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
+
+    //! Determine if communication of mesh transfer callbacks is complete
+    bool transferCallbacksComplete() const;
+
+    //! Finish setting up communication maps and solution transfer callbacks
+    void comfinal();
 };
 
 } // inciter::

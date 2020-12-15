@@ -138,10 +138,22 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   // Activate SDAG wait for initially computing the left-hand side and normals
   thisProxy[ thisIndex ].wait4lhs();
 
-  // Signal the runtime system that the workers have been created
-  std::vector< std::size_t > meshdata{ m_initial, d->MeshId() };
-  contribute( meshdata, CkReduction::sum_ulong,
-    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
+  // Generate callbacks for solution transfers we are involved in
+
+  // Always add a callback to be used when we are not involved in any transfers
+  std::vector< CkCallback > cb;
+  auto c = CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]);
+  cb.push_back( c );
+
+  // Generate a callback for each transfer we are involved in (either as a
+  // source or a destination)
+  auto meshid = d->MeshId();
+  for (const auto& t : d->Transfers())
+    if (meshid == t.src || meshid == t.dst)
+      cb.push_back( c );
+
+  // Send callbacks to base
+  d->transferCallback( cb );
 }
 //! [Constructor]
 
@@ -412,8 +424,7 @@ ALECG::box( tk::real v )
     eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes );
 
   // Initiate IC transfer (if coupled)
-  Disc()->transfer( m_u,
-    CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]) );
+  Disc()->transfer( m_u );
 
   // Compute left-hand side of PDEs
   lhs();
