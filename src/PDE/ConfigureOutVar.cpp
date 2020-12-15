@@ -15,6 +15,7 @@
 #include "ConfigureOutVar.hpp"
 #include "ConfigureCompFlow.hpp"
 #include "ConfigureMultiMat.hpp"
+#include "ConfigureTransport.hpp"
 
 namespace inciter {
 
@@ -52,6 +53,8 @@ inciter::assignGetVars( const std::string& name )
   // in which case we do nothing, but wait for when we are called with the
   // inputdeck populated.
   if (neq) {
+    if (!g_inputdeck.get< tag::param, tag::transport, tag::depvar >().empty())
+      assignTransportGetVars( name, f );
     if (!g_inputdeck.get< tag::param, tag::compflow, tag::depvar >().empty())
       assignCompFlowGetVars( name, f );
     if (!g_inputdeck.get< tag::param, tag::multimat, tag::depvar >().empty())

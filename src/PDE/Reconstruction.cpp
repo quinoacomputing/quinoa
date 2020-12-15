@@ -21,6 +21,12 @@
 #include "Base/HashMapReducer.hpp"
 #include "Reconstruction.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Limiter.hpp"
+
+namespace inciter {
+extern ctr::InputDeck g_inputdeck;
+}
 
 void
 tk::lhsLeastSq_P0P1(
@@ -402,21 +408,24 @@ void
 tk::recoLeastSqExtStencil(
   std::size_t rdof,
   std::size_t offset,
-  std::size_t nielem,
+  std::size_t e,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   const Fields& geoElem,
-  Fields& W )
+  Fields& W,
+  const std::array< std::size_t, 2 >& varRange )
 // *****************************************************************************
 //  \brief Reconstruct the second-order solution using least-squares approach
 //    from an extended stencil involving the node-neighbors
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] nielem Number of internal elements in this mesh chunk
+//! \param[in] e Element whoes solution is being reconstructed
 //! \param[in] esup Elements surrounding points
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] geoElem Element geometry array
 //! \param[in,out] W Solution vector to be reconstructed at recent time step
+//! \param[in] geoElem Element geometry array
+//! \param[in] varRange Range of indices in W, that need to be reconstructed
 //! \details A second-order (piecewise linear) solution polynomial is obtained
 //!   from the first-order (piecewise constant) FV solutions by using a
 //!   least-squares (LS) reconstruction process. This LS reconstruction function
@@ -425,63 +434,58 @@ tk::recoLeastSqExtStencil(
 //!   is solved in the least-squares sense using the normal equations approach.
 // *****************************************************************************
 {
-  const auto ncomp = W.nprop()/rdof;
+  // lhs matrix
+  std::array< std::array< tk::real, 3 >, 3 >
+    lhs_ls( {{ {{0.0, 0.0, 0.0}},
+               {{0.0, 0.0, 0.0}},
+               {{0.0, 0.0, 0.0}} }} );
+  // rhs matrix
+  std::vector< std::array< tk::real, 3 > >
+  rhs_ls( varRange[1]-varRange[0]+1, {{ 0.0, 0.0, 0.0 }} );
 
-  for (std::size_t e=0; e<nielem; ++e)
+  // loop over all nodes of the element e
+  for (std::size_t lp=0; lp<4; ++lp)
   {
-    // lhs matrix
-    std::array< std::array< tk::real, 3 >, 3 >
-      lhs_ls( {{ {{0.0, 0.0, 0.0}},
-                 {{0.0, 0.0, 0.0}},
-                 {{0.0, 0.0, 0.0}} }} );
-    // rhs matrix
-    std::vector< std::array< tk::real, 3 > >
-    rhs_ls( ncomp, {{ 0.0, 0.0, 0.0 }} );
+    auto p = inpoel[4*e+lp];
+    const auto& pesup = cref_find(esup, p);
 
-    // loop over all nodes of the element e
-    for (std::size_t lp=0; lp<4; ++lp)
+    // loop over all the elements surrounding this node p
+    for (auto er : pesup)
     {
-      auto p = inpoel[4*e+lp];
-      const auto& pesup = cref_find(esup, p);
+      // centroid distance
+      std::array< real, 3 > wdeltax{{ geoElem(er,1,0)-geoElem(e,1,0),
+                                      geoElem(er,2,0)-geoElem(e,2,0),
+                                      geoElem(er,3,0)-geoElem(e,3,0) }};
 
-      // loop over all the elements surrounding this node p
-      for (auto er : pesup)
+      // contribute to lhs matrix
+      for (std::size_t idir=0; idir<3; ++idir)
+        for (std::size_t jdir=0; jdir<3; ++jdir)
+          lhs_ls[idir][jdir] += wdeltax[idir] * wdeltax[jdir];
+
+      // compute rhs matrix
+      for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
       {
-        // centroid distance
-        std::array< real, 3 > wdeltax{{ geoElem(er,1,0)-geoElem(e,1,0),
-                                        geoElem(er,2,0)-geoElem(e,2,0),
-                                        geoElem(er,3,0)-geoElem(e,3,0) }};
-
-        // contribute to lhs matrix
+        auto mark = c*rdof;
         for (std::size_t idir=0; idir<3; ++idir)
-          for (std::size_t jdir=0; jdir<3; ++jdir)
-            lhs_ls[idir][jdir] += wdeltax[idir] * wdeltax[jdir];
-
-        // compute rhs matrix
-        for (std::size_t c=0; c<ncomp; ++c)
-        {
-          auto mark = c*rdof;
-          for (std::size_t idir=0; idir<3; ++idir)
-            rhs_ls[c][idir] +=
-              wdeltax[idir] * (W(er,mark,offset)-W(e,mark,offset));
-        }
+          rhs_ls[c][idir] +=
+            wdeltax[idir] * (W(er,mark,offset)-W(e,mark,offset));
       }
     }
+  }
 
-    // solve least-square normal equation system using Cramer's rule
-    for (ncomp_t c=0; c<ncomp; ++c)
-    {
-      auto mark = c*rdof;
+  // solve least-square normal equation system using Cramer's rule
+  for (ncomp_t c=varRange[0]; c<=varRange[1]; ++c)
+  {
+    auto mark = c*rdof;
 
-      auto ux = tk::cramer( lhs_ls, rhs_ls[c] );
+    auto ux = tk::cramer( lhs_ls, rhs_ls[c] );
 
-      // Update the P1 dofs with the reconstructioned gradients.
-      // Since this reconstruction does not affect the cell-averaged solution,
-      // W(e,mark+0,offset) is unchanged.
-      W(e,mark+1,offset) = ux[0];
-      W(e,mark+2,offset) = ux[1];
-      W(e,mark+3,offset) = ux[2];
-    }
+    // Update the P1 dofs with the reconstructioned gradients.
+    // Since this reconstruction does not affect the cell-averaged solution,
+    // W(e,mark+0,offset) is unchanged.
+    W(e,mark+1,offset) = ux[0];
+    W(e,mark+2,offset) = ux[1];
+    W(e,mark+3,offset) = ux[2];
   }
 }
 
@@ -549,6 +553,429 @@ tk::transform_P0P1( ncomp_t ncomp,
 }
 
 void
+tk::findMaxVolfrac( std::size_t offset,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t nelem,
+  const std::vector< int >& esuel,
+  [[maybe_unused]] const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  [[maybe_unused]] const std::vector< std::size_t >& inpoel,
+  const Fields& U,
+  Fields& VolFracMax )
+// *****************************************************************************
+//  Find maximum volume fractions in the neighborhood of each cell
+//! \param[in] offset Index for equation systems
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] nelem Total number of elements
+//! \param[in] esuel Elements surrounding elements
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] U Solution vector
+//! \param[in,out] VolFracMax Vector containing min/max volume fractions for
+//!   each material
+//! \details This function determines the minimum and maximum volume fractions
+//!   for each material in the neighborhood of a cell. The neighborhood can be
+//!   the face-neighbors or node-neighbors.
+// *****************************************************************************
+{
+  using inciter::volfracDofIdx;
+
+  VolFracMax.fill(0.0);
+  for (std::size_t e=0; e<nelem; ++e) {
+    for (std::size_t k=0; k<nmat; ++k) {
+      auto mark = 2*k;
+      VolFracMax(e, mark, 0) = 1.0;
+      VolFracMax(e, mark+1, 0) = 0.0;
+    }
+
+    //// find the maximum volume fraction among node-neighbors of cell e
+    //for (std::size_t lp=0; lp<4; ++lp) {
+    //  auto p = inpoel[4*e+lp];
+    //  const auto& pesup = cref_find(esup, p);
+
+    //  // loop over all the elements surrounding this node p
+    //  for (auto er : pesup) {
+    //    if (er != e) {
+    //      for (std::size_t k=0; k<nmat; ++k) {
+    //        auto mark = 2*k;
+    //        VolFracMax(e, mark, 0) = std::min(VolFracMax(e, k, 0),
+    //          U(er, volfracDofIdx(nmat,k,rdof,0), offset));
+    //        VolFracMax(e, mark+1, 0) = std::max(VolFracMax(e, k, 0),
+    //          U(er, volfracDofIdx(nmat,k,rdof,0), offset));
+    //      }
+    //    }
+    //  }
+    //}
+
+    // find the maximum volume fraction among face-neighbors of cell e
+    for (std::size_t lf=0; lf<4; ++lf) {
+      auto er = esuel[4*e+lf];
+
+      if (er > -1) {
+        auto eR = static_cast< std::size_t >(er);
+
+        for (std::size_t k=0; k<nmat; ++k) {
+          auto mark = 2*k;
+          VolFracMax(e, mark, 0) = std::min(VolFracMax(e, k, 0),
+            U(eR, volfracDofIdx(nmat,k,rdof,0), offset));
+          VolFracMax(e, mark+1, 0) = std::max(VolFracMax(e, k, 0),
+            U(eR, volfracDofIdx(nmat,k,rdof,0), offset));
+        }
+      }
+    }
+  }
+}
+
+void
+tk::THINCReco( std::size_t system,
+  std::size_t offset,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const std::array< real, 3 >& ref_xp,
+  const Fields& U,
+  const Fields& P,
+  [[maybe_unused]] const std::vector< real >& vfmin,
+  [[maybe_unused]] const std::vector< real >& vfmax,
+  std::vector< real >& state )
+// *****************************************************************************
+//  Compute THINC reconstructions at quadrature point for multi-material flows
+//! \param[in] system Equation system index
+//! \param[in] offset Index for equation systems
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which interface reconstruction is being calculated
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] ref_xp Quadrature point in reference space
+//! \param[in] U Solution vector
+//! \param[in] P Vector of primitives
+//! \param[in] vfmin Vector containing min volume fractions for each material
+//!   in this cell
+//! \param[in] vfmax Vector containing max volume fractions for each material
+//!   in this cell
+//! \param[in,out] state Unknown/state vector at quadrature point, modified
+//!   if near interfaces using THINC
+//! \details This function is an interface for the multimat PDEs that use the
+//!   algebraic multi-material THINC reconstruction. This particular function
+//!   should only be called for multimat.
+// *****************************************************************************
+{
+  using inciter::volfracDofIdx;
+  using inciter::densityDofIdx;
+  using inciter::momentumDofIdx;
+  using inciter::energyDofIdx;
+  using inciter::pressureDofIdx;
+  using inciter::velocityDofIdx;
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::energyIdx;
+  using inciter::pressureIdx;
+  using inciter::velocityIdx;
+
+  auto bparam = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::intsharp_param >()[system];
+  const auto ncomp = U.nprop()/rdof;
+
+  // interface detection
+  std::vector< std::size_t > matInt(nmat, 0);
+  std::vector< tk::real > alAvg(nmat, 0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+
+  // Step-1: Perform THINC reconstruction
+  // create a vector of volume-fractions and pass it to the THINC function
+  std::vector< real > alSol(rdof*nmat, 0.0);
+  std::vector< real > alReco(nmat, 0.0);
+  for (std::size_t k=0; k<nmat; ++k) {
+    auto mark = k*rdof;
+    for (std::size_t i=0; i<rdof; ++i) {
+      alSol[mark+i] = U(e, volfracDofIdx(nmat,k,rdof,i), offset);
+    }
+    // initialize with TVD reconstructions which will be modified if near
+    // material interface
+    alReco[k] = state[volfracIdx(nmat,k)];
+  }
+  THINCFunction(rdof, nmat, e, inpoel, coord, ref_xp, geoElem(e,0,0), bparam,
+    alSol, intInd, matInt, alReco);
+
+  // Step-2: Perform consistent reconstruction on other conserved quantities
+  if (intInd)
+  {
+    auto rhobCC(0.0), rhobHO(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      auto alCC = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+      alCC = std::max(1e-14, alCC);
+
+      if (matInt[k])
+      {
+        state[volfracIdx(nmat,k)] = alReco[k];
+        state[densityIdx(nmat,k)] = alReco[k]
+          * U(e, densityDofIdx(nmat,k,rdof,0), offset)/alCC;
+        state[energyIdx(nmat,k)] = alReco[k]
+          * U(e, energyDofIdx(nmat,k,rdof,0), offset)/alCC;
+        state[ncomp+pressureIdx(nmat,k)] = alReco[k]
+          * P(e, pressureDofIdx(nmat,k,rdof,0), offset)/alCC;
+      }
+
+      rhobCC += U(e, densityDofIdx(nmat,k,rdof,0), offset);
+      rhobHO += state[densityIdx(nmat,k)];
+    }
+
+    // consistent reconstruction for bulk momentum
+    for (std::size_t i=0; i<3; ++i)
+    {
+      state[momentumIdx(nmat,i)] = rhobHO
+        * U(e, momentumDofIdx(nmat,i,rdof,0), offset)/rhobCC;
+      state[ncomp+velocityIdx(nmat,i)] =
+        P(e, velocityDofIdx(nmat,i,rdof,0), offset);
+    }
+  }
+}
+
+void
+tk::THINCRecoTransport( std::size_t system,
+  std::size_t offset,
+  std::size_t rdof,
+  std::size_t,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const std::array< real, 3 >& ref_xp,
+  const Fields& U,
+  const Fields&,
+  [[maybe_unused]] const std::vector< real >& vfmin,
+  [[maybe_unused]] const std::vector< real >& vfmax,
+  std::vector< real >& state )
+// *****************************************************************************
+//  Compute THINC reconstructions at quadrature point for transport
+//! \param[in] system Equation system index
+//! \param[in] offset Index for equation systems
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which interface reconstruction is being calculated
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] ref_xp Quadrature point in reference space
+//! \param[in] U Solution vector
+//! \param[in] vfmin Vector containing min volume fractions for each material
+//!   in this cell
+//! \param[in] vfmax Vector containing max volume fractions for each material
+//!   in this cell
+//! \param[in,out] state Unknown/state vector at quadrature point, modified
+//!   if near interfaces using THINC
+//! \details This function is an interface for the transport PDEs that use the
+//!   algebraic multi-material THINC reconstruction. This particular function
+//!   should only be called for transport.
+// *****************************************************************************
+{
+  auto bparam = inciter::g_inputdeck.get< tag::param, tag::transport,
+    tag::intsharp_param >()[system];
+  auto ncomp = U.nprop()/rdof;
+
+  // interface detection
+  std::vector< std::size_t > matInt(ncomp, 0);
+  std::vector< tk::real > alAvg(ncomp, 0.0);
+  for (std::size_t k=0; k<ncomp; ++k)
+    alAvg[k] = U(e, k*rdof, offset);
+  auto intInd = inciter::interfaceIndicator(ncomp, alAvg, matInt);
+
+  // create a vector of volume-fractions and pass it to the THINC function
+  std::vector< real > alSol(rdof*ncomp, 0.0);
+  // initialize with TVD reconstructions (modified if near interface)
+  auto alReco = state;
+  for (std::size_t k=0; k<ncomp; ++k) {
+    auto mark = k*rdof;
+    for (std::size_t i=0; i<rdof; ++i) {
+      alSol[mark+i] = U(e,mark+i,offset);
+    }
+  }
+  THINCFunction(rdof, ncomp, e, inpoel, coord, ref_xp, geoElem(e,0,0), bparam,
+    alSol, intInd, matInt, alReco);
+
+  state = alReco;
+}
+
+void
+tk::THINCFunction( std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const std::array< real, 3 >& ref_xp,
+  real vol,
+  real bparam,
+  const std::vector< real >& alSol,
+  bool intInd,
+  const std::vector< std::size_t >& matInt,
+  std::vector< real >& alReco )
+// *****************************************************************************
+//  Multi-Medium THINC reconstruction function for volume fractions
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which interface reconstruction is being calculated
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] ref_xp Quadrature point in reference space
+//! \param[in] vel Element volume
+//! \param[in] bparam User specified Beta for THINC, from the input file
+//! \param[in] alSol Volume fraction solution vector for element e
+//! \param[in] intInd Interface indicator, true if e is interface element
+//! \param[in] matInt Vector indicating materials which constitute interface
+//! \param[in,out] alReco Unknown/state vector at quadrature point, which gets
+//!   modified if near interface using MM-THINC
+//! \details This function computes the interface reconstruction using the
+//!   algebraic multi-material THINC reconstruction for each material at the
+//!   given (ref_xp) quadrature point. This function is based on the following:
+//!   Pandare A. K., Waltz J., & Bakosi J. (2021) Multi-Material Hydrodynamics
+//!   with Algebraic Sharp Interface Capturing. Computers & Fluids,
+//!   doi: https://doi.org/10.1016/j.compfluid.2020.104804.
+// *****************************************************************************
+{
+  // determine number of materials with interfaces in this cell
+  auto epsl(1e-4), epsh(1e-1), bred(1.25), bmod(bparam);
+  std::size_t nIntMat(0);
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    auto alk = alSol[k*rdof];
+    if (alk > epsl)
+    {
+      ++nIntMat;
+      if ((alk > epsl) && (alk < epsh))
+        bmod = std::min(bmod,
+          (alk-epsl)/(epsh-epsl) * (bred - bparam) + bparam);
+      else if (alk > epsh)
+        bmod = bred;
+    }
+  }
+
+  if (nIntMat > 2) bparam = bmod;
+
+  // compression parameter
+  auto beta = bparam/std::cbrt(6.0*vol);
+
+  if (intInd)
+  {
+    // 1. Get unit normals to material interface
+
+    // Compute Jacobian matrix for converting Dubiner dofs to derivatives
+    const auto& cx = coord[0];
+    const auto& cy = coord[1];
+    const auto& cz = coord[2];
+
+    std::array< std::array< real, 3>, 4 > coordel {{
+      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+    }};
+
+    auto jacInv =
+      tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+    auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+
+    std::array< real, 3 > nInt;
+    std::vector< std::array< real, 3 > > ref_n(nmat, {{0.0, 0.0, 0.0}});
+    auto almax(0.0);
+    std::size_t kmax(0);
+
+    // Get normals
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // Get derivatives from moments in Dubiner space
+      for (std::size_t i=0; i<3; ++i)
+        nInt[i] = dBdx[i][1] * alSol[k*rdof+1]
+          + dBdx[i][2] * alSol[k*rdof+2]
+          + dBdx[i][3] * alSol[k*rdof+3];
+
+      auto nMag = std::sqrt(tk::dot(nInt, nInt)) + 1e-14;
+
+      // determine index of material present in majority
+      auto alk = alSol[k*rdof];
+      if (alk > almax)
+      {
+        almax = alk;
+        kmax = k;
+      }
+
+      for (std::size_t i=0; i<3; ++i)
+        nInt[i] /= nMag;
+
+      // project interface normal onto local/reference coordinate system
+      for (std::size_t i=0; i<3; ++i)
+      {
+        std::array< real, 3 > axis{
+          coordel[i+1][0]-coordel[0][0],
+          coordel[i+1][1]-coordel[0][1],
+          coordel[i+1][2]-coordel[0][2] };
+        ref_n[k][i] = tk::dot(nInt, axis);
+      }
+    }
+
+    // 2. Reconstruct volume fractions using THINC
+    auto alsum(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      if (matInt[k])
+      {
+        // get location of material interface (volume fraction 0.5) from the
+        // assumed tanh volume fraction distribution, and cell-averaged
+        // volume fraction
+        auto alCC(alSol[k*rdof]);
+        auto Ac(0.0), Bc(0.0), Qc(0.0);
+        if ((std::fabs(ref_n[k][0]) > std::fabs(ref_n[k][1]))
+          && (std::fabs(ref_n[k][0]) > std::fabs(ref_n[k][2])))
+        {
+          Ac = std::exp(0.5*beta*ref_n[k][0]);
+          Bc = std::exp(0.5*beta*(ref_n[k][1]+ref_n[k][2]));
+          Qc = std::exp(0.5*beta*ref_n[k][0]*(2.0*alCC-1.0));
+        }
+        else if ((std::fabs(ref_n[k][1]) > std::fabs(ref_n[k][0]))
+          && (std::fabs(ref_n[k][1]) > std::fabs(ref_n[k][2])))
+        {
+          Ac = std::exp(0.5*beta*ref_n[k][1]);
+          Bc = std::exp(0.5*beta*(ref_n[k][0]+ref_n[k][2]));
+          Qc = std::exp(0.5*beta*ref_n[k][1]*(2.0*alCC-1.0));
+        }
+        else
+        {
+          Ac = std::exp(0.5*beta*ref_n[k][2]);
+          Bc = std::exp(0.5*beta*(ref_n[k][0]+ref_n[k][1]));
+          Qc = std::exp(0.5*beta*ref_n[k][2]*(2.0*alCC-1.0));
+        }
+        auto d = std::log((1.0-Ac*Qc) / (Ac*Bc*(Qc-Ac))) / (2.0*beta);
+
+        // THINC reconstruction
+        auto al_c = 0.5 * (1.0 + std::tanh(beta*(tk::dot(ref_n[k], ref_xp) + d)));
+
+        alReco[k] = std::min(1.0-1e-14, std::max(1e-14, al_c));
+      }
+      // else, if this material does not have an interface close-by, the TVD
+      // reconstructions must be used for state variables. This is ensured by
+      // initializing the alReco vector as the TVD state.
+
+      alsum += alReco[k];
+    }
+
+    // following lines need to be commented to use THINC with Transport
+    // ensure unit sum
+    alReco[kmax] += 1.0 - alsum;
+    alsum = 1.0;
+  }
+}
+
+void
 tk::safeReco( std::size_t offset,
               std::size_t rdof,
               std::size_t nmat,
@@ -574,38 +1001,38 @@ tk::safeReco( std::size_t offset,
   using inciter::densityIdx;
   using inciter::densityDofIdx;
 
+  if (er < 0) Throw("safe limiting cannot be called for boundary cells");
+
+  auto eR = static_cast< std::size_t >(er);
+
   // define a lambda for the safe limiting
   auto safeLimit = [&]( std::size_t c, real ul, real ur )
   {
     // find min/max at the face
     auto uMin = std::min(ul, ur);
     auto uMax = std::max(ul, ur);
+    auto uNeg(0.0);
 
     // left-state limiting
-    if ( (state[0][c] < ul) &&
-      (state[0][c] < ur) )
+    uNeg = state[0][c] - ul;
+    if ((state[0][c] < ul) && (state[0][c] < ur) && (uNeg < -1e-2*ul))
     {
       state[0][c] = uMin;
     }
-    else if ( (state[0][c] > ul) &&
-      (state[0][c] > ur) )
+    else if ((state[0][c] > ul) && (state[0][c] > ur) && (uNeg > 1e-2*ul))
     {
       state[0][c] = uMax;
     }
 
     // right-state limiting
-    if (er > -1)
+    uNeg = state[0][c] - ur;
+    if ((state[1][c] < ul) && (state[1][c] < ur) && (uNeg < -1e-2*ur))
     {
-      if ( (state[1][c] < ul) &&
-        (state[1][c] < ur) )
-      {
-        state[1][c] = uMin;
-      }
-      else if ( (state[1][c] > ul) &&
-        (state[1][c] > ur) )
-      {
-        state[1][c] = uMax;
-      }
+      state[1][c] = uMin;
+    }
+    else if ((state[1][c] > ul) && (state[1][c] > ur) && (uNeg > 1e-2*ur))
+    {
+      state[1][c] = uMax;
     }
   };
 
@@ -615,18 +1042,9 @@ tk::safeReco( std::size_t offset,
 
     // establish left- and right-hand states
     ul = U(el, densityDofIdx(nmat, k, rdof, 0), offset);
-    if (er <= -1)
-    {
-      ur = state[1][densityIdx(nmat, k)];
-    }
-    else
-    {
-      auto eR = static_cast< std::size_t >(er);
-      ur = U(eR, densityDofIdx(nmat, k, rdof, 0), offset);
-    }
+    ur = U(eR, densityDofIdx(nmat, k, rdof, 0), offset);
 
     // limit reconstructed density
     safeLimit(densityIdx(nmat,k), ul, ur);
-
   }
 }

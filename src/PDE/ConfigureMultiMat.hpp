@@ -125,6 +125,28 @@ velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
   return U.extract( velocityDofIdx(nmat,dir,rdof,0), offset );
 }
 
+//! Compute material indicator function for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \param[in] U Numerical solution
+//! \param[in] offset System offset specifying the position of the MultiMat
+//!   equation system among other systems
+//! \param[in] rdof Number of reconstructed solution DOFs
+//! \return Material indicator function ready to be output to file
+static tk::GetVarFn::result_type
+matIndicatorOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
+                    std::size_t rdof )
+{
+  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
+  std::vector< tk::real > m(U.nunk(), 0.0);
+  for (std::size_t i=0; i<U.nunk(); ++i) {
+    for (std::size_t k=0; k<nmat; ++k)
+      m[i] += U(i, volfracDofIdx(nmat,k,rdof,0), offset) *
+        static_cast< tk::real >(k+1);
+  }
+  return m;
+}
+
 } // multimat::
 
 #if defined(__clang__)

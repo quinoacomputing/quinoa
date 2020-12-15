@@ -154,6 +154,9 @@ struct nmat { static std::string name() { return "nmat"; } };
 struct prelax { static std::string name() { return "prelax"; } };
 struct prelax_timescale {
   static std::string name() { return "prelax_timescales"; } };
+struct intsharp { static std::string name() { return "intsharp"; } };
+struct intsharp_param {
+  static std::string name() { return "intsharp_param"; } };
 struct tty { static std::string name() { return "tty"; } };
 struct dump {};
 struct plot {};

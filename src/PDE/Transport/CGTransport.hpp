@@ -242,6 +242,7 @@ class Transport {
     }
 
     //! Compute right hand side for DiagCG (CG+FCT)
+    //! \param[in] t Physical time
     //! \param[in] deltat Size of time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
@@ -249,7 +250,7 @@ class Transport {
     //! \param[in,out] Ue Element-centered solution vector at intermediate step
     //!    (used here internally as a scratch array)
     //! \param[in,out] R Right-hand side vector computed
-    void rhs( real,
+    void rhs( real t,
               real deltat,
               const std::array< std::vector< real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
@@ -298,13 +299,13 @@ class Transport {
         // get prescribed velocity
         const std::array< std::vector<std::array<real,3>>, 4 > vel{{
           Problem::prescribedVelocity( m_system, m_ncomp,
-                                       x[N[0]], y[N[0]], z[N[0]] ),
+                                       x[N[0]], y[N[0]], z[N[0]], t ),
           Problem::prescribedVelocity( m_system, m_ncomp,
-                                       x[N[1]], y[N[1]], z[N[1]] ),
+                                       x[N[1]], y[N[1]], z[N[1]], t ),
           Problem::prescribedVelocity( m_system, m_ncomp,
-                                       x[N[2]], y[N[2]], z[N[2]] ),
+                                       x[N[2]], y[N[2]], z[N[2]], t ),
           Problem::prescribedVelocity( m_system, m_ncomp,
-                                       x[N[3]], y[N[3]], z[N[3]] ) }};
+                                       x[N[3]], y[N[3]], z[N[3]], t ) }};
 
         // sum flux (advection) contributions to element
         auto d = deltat/2.0;
@@ -351,7 +352,7 @@ class Transport {
         auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
         auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
         const auto vel =
-          Problem::prescribedVelocity( m_system, m_ncomp, xc, yc, zc );
+          Problem::prescribedVelocity( m_system, m_ncomp, xc, yc, zc, t );
 
         // scatter-add flux contributions to rhs at nodes
         real d = deltat * J/6.0;
@@ -369,10 +370,11 @@ class Transport {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
+    //! \param[in] t Physical time
     //! \return Minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
-             tk::real,
+             tk::real t,
              const tk::Fields& U ) const
     {
       using tag::transport;
@@ -400,13 +402,13 @@ class Transport {
         // get velocity for problem
         const std::array< std::vector<std::array<real,3>>, 4 > vel{{
           Problem::prescribedVelocity( m_system, m_ncomp,
-                                       x[N[0]], y[N[0]], z[N[0]] ),
+                                       x[N[0]], y[N[0]], z[N[0]], t ),
           Problem::prescribedVelocity( m_system, m_ncomp,
-                                       x[N[1]], y[N[1]], z[N[1]] ),
+                                       x[N[1]], y[N[1]], z[N[1]], t ),
           Problem::prescribedVelocity( m_system, m_ncomp,
-                                       x[N[2]], y[N[2]], z[N[2]] ),
+                                       x[N[2]], y[N[2]], z[N[2]], t ),
           Problem::prescribedVelocity( m_system, m_ncomp,
-                                       x[N[3]], y[N[3]], z[N[3]] ) }};
+                                       x[N[3]], y[N[3]], z[N[3]], t ) }};
         // compute the maximum length of the characteristic velocity (advection
         // velocity) across the four element nodes
         real maxvel = 0.0;
@@ -737,7 +739,8 @@ class Transport {
 
           // evaluate prescribed velocity
           auto v =
-            Problem::prescribedVelocity( m_system, m_ncomp, x[p], y[p], z[p] );
+            Problem::prescribedVelocity( m_system, m_ncomp, x[p], y[p], z[p],
+              0.0 );
           // sum donain-edge contributions
           for (auto e : tk::cref_find(esued,{p,q})) {
             const std::array< std::size_t, 4 >
@@ -807,7 +810,8 @@ class Transport {
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
         // evaluate prescribed velocity
         auto v =
-          Problem::prescribedVelocity( m_system, m_ncomp, xp[0], yp[0], zp[0] );
+          Problem::prescribedVelocity( m_system, m_ncomp, xp[0], yp[0], zp[0],
+            0.0 );
         // compute face area
         auto A6 = tk::area( x[N[0]], x[N[1]], x[N[2]],
                             y[N[0]], y[N[1]], y[N[2]],

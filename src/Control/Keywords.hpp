@@ -1988,6 +1988,18 @@ struct outvar_pressure_info {
 using outvar_pressure =
   keyword< outvar_pressure_info, TAOCPP_PEGTL_STRING("pressure") >;
 
+struct outvar_material_indicator_info {
+  static std::string name() { return "material_indicator"; }
+  static std::string shortDescription() { return "Request material_indicator"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the material indicator function as an
+       output variable.)";
+  }
+};
+using outvar_material_indicator =
+  keyword< outvar_material_indicator_info,
+    TAOCPP_PEGTL_STRING("material_indicator") >;
+
 struct outvar_analytic_info {
   static std::string name() { return "analytic"; }
   static std::string shortDescription() { return "Request analytic solution"; }
@@ -2018,6 +2030,7 @@ struct outvar_info {
     + outvar_yvelocity::string() + "\', \'"
     + outvar_zvelocity::string() + "\', \'"
     + outvar_pressure::string() + "\', \'"
+    + outvar_material_indicator::string() + "\', \'"
     + outvar_analytic::string() + "\'.";
   }
 };
@@ -4569,6 +4582,23 @@ struct cyl_advect_info {
 };
 using cyl_advect = keyword< cyl_advect_info, TAOCPP_PEGTL_STRING("cyl_advect") >;
 
+struct cyl_vortex_info {
+  using code = Code< D >;
+  static std::string name() { return "Deformation of cylinder in a vortex"; }
+  static std::string shortDescription() { return
+    "Select deformation of cylinder in a vortex test problem"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the test problem which deforms a cylinder
+    in a vortical velocity field. The initial and boundary conditions are
+    specified to set up the test problem suitable to exercise and test the
+    advection terms of the scalar transport equation.
+    Example: "problem cyl_vortex".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using cyl_vortex = keyword< cyl_vortex_info, TAOCPP_PEGTL_STRING("cyl_vortex") >;
+
 struct vortical_flow_info {
   using code = Code< V >;
   static std::string name() { return "Vortical flow"; }
@@ -4908,6 +4938,7 @@ struct problem_info {
                   + slot_cyl::string() + "\' | \'"
                   + gauss_hump::string() + "\' | \'"
                   + cyl_advect::string() + "\' | \'"
+                  + cyl_vortex::string() + "\' | \'"
                   + vortical_flow::string() + "\' | \'"
                   + nl_energy_growth::string() + "\' | \'"
                   + rayleigh_taylor::string() + "\' | \'"
@@ -5428,31 +5459,6 @@ struct bc_outlet_info {
 using bc_outlet =
   keyword< bc_outlet_info, TAOCPP_PEGTL_STRING("bc_outlet") >;
 
-struct transport_info {
-  static std::string name() { return "Transport"; }
-  static std::string shortDescription() { return
-    "Start configuration block for an transport equation"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce an transport ... end block, used to
-    specify the configuration for a transport equation type. Keywords allowed
-    in an transport ... end block: )" + std::string("\'")
-    + depvar::string() + "\', \'"
-    + ncomp::string() + "\', \'"
-    + problem::string() + "\', \'"
-    + physics::string() + "\', \'"
-    + pde_diffusivity::string() + "\', \'"
-    + pde_lambda::string() + "\', \'"
-    + bc_dirichlet::string() + "\', \'"
-    + bc_sym::string() + "\', \'"
-    + bc_inlet::string() + "\', \'"
-    + bc_outlet::string() + "\', \'"
-    + pde_u0::string() + "\'. "
-    + R"(For an example transport ... end block, see
-      doc/html/inicter_example_transport.html.)";
-  }
-};
-using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
-
 struct bc_farfield_info {
   static std::string name() { return "Farfield boundary condition"; }
   static std::string shortDescription() { return
@@ -5538,6 +5544,46 @@ struct prelax_timescale_info {
 };
 using prelax_timescale = keyword< prelax_timescale_info,
                                   TAOCPP_PEGTL_STRING("prelax_timescale") >;
+
+struct intsharp_info {
+  static std::string name() { return "Interface sharpening"; }
+  static std::string shortDescription() { return
+    "Turn multi-material interface sharpening on/off"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to turn interface sharpening on/off. It uses the
+       multi-material THINC interface reconstruction.
+       Ref. Pandare A. K., Waltz J., & Bakosi J. (2021) Multi-Material
+       Hydrodynamics with Algebraic Sharp Interface Capturing. Computers &
+       Fluids, doi: https://doi.org/10.1016/j.compfluid.2020.104804. It is used
+       for the multi-material and the transport solver, and has no effect when
+       used for the other PDE types.)";
+  }
+  struct expect {
+    using type = int;
+    static std::string description() { return "string"; }
+    static std::string choices() { return "1 | 0"; }
+  };
+};
+using intsharp = keyword< intsharp_info, TAOCPP_PEGTL_STRING("intsharp") >;
+
+struct intsharp_param_info {
+  static std::string name() { return "Interface sharpening parameter"; }
+  static std::string shortDescription() { return
+    "Parameter for multi-material interface sharpening"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the parameter for the interface
+       sharpening. This parameter affects how many cells the material interfaces
+       span, after the use of sharpening. It is used for multimat and transport,
+       and has no effect for the other PDE types.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.1;
+    static std::string description() { return "real"; }
+  };
+};
+using intsharp_param = keyword< intsharp_param_info,
+                                  TAOCPP_PEGTL_STRING("intsharp_param") >;
 
 struct mat_gamma_info {
   static std::string name() { return "gamma"; }
@@ -5635,6 +5681,33 @@ struct material_info {
 };
 using material = keyword< material_info, TAOCPP_PEGTL_STRING("material") >;
 
+struct transport_info {
+  static std::string name() { return "Transport"; }
+  static std::string shortDescription() { return
+    "Start configuration block for an transport equation"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce an transport ... end block, used to
+    specify the configuration for a transport equation type. Keywords allowed
+    in an transport ... end block: )" + std::string("\'")
+    + depvar::string() + "\', \'"
+    + ncomp::string() + "\', \'"
+    + problem::string() + "\', \'"
+    + physics::string() + "\', \'"
+    + pde_diffusivity::string() + "\', \'"
+    + pde_lambda::string() + "\', \'"
+    + bc_dirichlet::string() + "\', \'"
+    + bc_sym::string() + "\', \'"
+    + bc_inlet::string() + "\', \'"
+    + bc_outlet::string() + "\', \'"
+    + pde_u0::string() + "\'. "
+    + intsharp::string() + "\', \'"
+    + intsharp_param::string() + "\', \'"
+    + R"(For an example transport ... end block, see
+      doc/html/inicter_example_transport.html.)";
+  }
+};
+using transport = keyword< transport_info, TAOCPP_PEGTL_STRING("transport") >;
+
 struct compflow_info {
   static std::string name() { return "Compressible single-material flow"; }
   static std::string shortDescription() { return
@@ -5686,6 +5759,8 @@ struct multimat_info {
     + nmat::string() + "\', \'"
     + prelax::string() + "\', \'"
     + prelax_timescale::string() + "\', \'"
+    + intsharp::string() + "\', \'"
+    + intsharp_param::string() + "\', \'"
     + pde_alpha::string() + "\', \'"
     + pde_p0::string() + "\', \'"
     + pde_betax::string() + "\', \'"

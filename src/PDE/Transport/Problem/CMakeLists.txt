@@ -1,5 +1,6 @@
 add_library(TransportProblem
             CylAdvect.cpp
+            CylVortex.cpp
             GaussHump.cpp
             ShearDiff.cpp
             SlotCyl.cpp)

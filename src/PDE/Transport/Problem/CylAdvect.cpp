@@ -39,7 +39,7 @@ TransportProblemCylAdvect::initialize( ncomp_t system, ncomp_t ncomp,
 //! \return Values of all components evaluated at (x,y,t)
 // *****************************************************************************
 {
-  const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0 );
+  const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0, t );
 
   std::vector< tk::real > s( ncomp, 0.0 );
   for (ncomp_t c=0; c<ncomp; ++c)
@@ -61,7 +61,7 @@ TransportProblemCylAdvect::initialize( ncomp_t system, ncomp_t ncomp,
 
 std::vector< std::array< tk::real, 3 > >
 TransportProblemCylAdvect::prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real,
-                                               tk::real, tk::real )
+                                               tk::real, tk::real, tk::real )
 // *****************************************************************************
 //! Assign prescribed velocity at a point
 //! \param[in] ncomp Number of components in this transport equation
