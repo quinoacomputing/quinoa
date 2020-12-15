@@ -190,8 +190,8 @@ Discretization::transferCallback( std::vector< CkCallback >& cb )
 // *****************************************************************************
 // Receive a list of callbacks from our own child solver
 //! \param[in] cb List of callbacks
-//! \details This is called whenever our child solver participates in a mesh
-//!   transfer either as a source or a destination.
+//! \details This is called by our child solver, either when it is coupled to
+//!    another solver or not.
 // *****************************************************************************
 {
   // Store callback for when there is no transfer we are involved in
@@ -248,8 +248,8 @@ Discretization::transferCallbacksComplete() const
 {
   bool c = true;
 
-  // Our callbacks are complete if we all transfers we are involved in as a
-  // destination have exactly 2 callbacks
+  // Our callbacks are complete if all transfers we are involved in as a
+  // destination have exactly two callbacks.
   for (const auto& t : m_transfer)
     if (m_meshid == t.dst && t.cb.size() != 2)
       c = false;
@@ -273,6 +273,7 @@ Discretization::comfinal()
 //  }
 //  std::cout << '\n';
 
+  // Generate own subset of solver/mesh transfer list
   for (const auto& t : m_transfer)
     if (t.src == m_meshid || t.dst == m_meshid)
       m_mytransfer.push_back( t );
@@ -288,7 +289,7 @@ Discretization::comfinal()
 //  std::cout << '\n';
 
   // Signal the runtime system that the workers have been created
-  std::vector< std::size_t > meshdata{ 1, m_meshid };
+  std::vector< std::size_t > meshdata{ /* initial */ 1, m_meshid };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback(CkReductionTarget(Transporter,comfinal), m_transporter) );
 }

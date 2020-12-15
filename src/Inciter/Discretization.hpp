@@ -386,7 +386,7 @@ class Discretization : public CBase_Discretization {
 
     //! Mesh ID
     std::size_t m_meshid;
-    //! Function to continue with if not coupled to other solver
+    //! Function to continue with if not coupled to any other solver
     CkCallback m_transfer_complete;
     //! Solution/mesh transfer (coupling) information
     //! \details This has the same size with the same src/dst information on
@@ -394,7 +394,7 @@ class Discretization : public CBase_Discretization {
     std::vector< Transfer > m_transfer;
     //! My solution transfer/mesh (coupling) information
     //! \details This is a subset of m_transfer, holding only those entries
-    //!   that this solvers is involved in (either a source or a destination).
+    //!   that this solver is involved in (either a source or a destination).
     std::vector< Transfer > m_mytransfer;
     //! Discretization proxies (one per mesh)
     std::vector< CProxy_Discretization > m_disc;

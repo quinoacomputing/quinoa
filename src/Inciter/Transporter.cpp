@@ -458,7 +458,7 @@ Transporter::createPartitioner()
 
   // Configure solver coupling. This will be exposed to the user eventually.
   std::vector< Transfer > transfer;
-  if (inputs.size() == 2 ) transfer.emplace_back( 0, 1 );
+  if (inputs.size() == 2) transfer.emplace_back( 0, 1 );
   //transfer.emplace_back( 0, 2 );
   //transfer.emplace_back( 1, 3 );
   //transfer.emplace_back( 2, 3 );
