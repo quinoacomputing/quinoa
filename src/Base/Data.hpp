@@ -299,13 +299,13 @@ class Data {
       return extract( component, offset, N[0], N[1], N[2] );
     }
 
-    //! Const-ref accessor to underlying raw data
+    //! Const-ref accessor to underlying raw data as a std::vector
     //! \return Constant reference to underlying raw data
-    const std::vector< tk::real >& data() const { return m_vec; }
+    const std::vector< tk::real >& vec() const { return m_vec; }
 
-    //! Non-const-ref accessor to underlying raw data
+    //! Non-const-ref accessor to underlying raw data as a std::vector
     //! \return Non-constant reference to underlying raw data
-    std::vector< tk::real >& data() { return m_vec; }
+    std::vector< tk::real >& vec() { return m_vec; }
 
     //! Compound operator-=
     //! \param[in] rhs Data object to subtract
@@ -313,7 +313,7 @@ class Data {
     Data< Layout >& operator-= ( const Data< Layout >& rhs ) {
       Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
       Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
-      std::transform( rhs.data().cbegin(), rhs.data().cend(),
+      std::transform( rhs.vec().cbegin(), rhs.vec().cend(),
                       m_vec.cbegin(), m_vec.begin(),
                       []( tk::real s, tk::real d ){ return d-s; } );
       return *this;
@@ -331,7 +331,7 @@ class Data {
     Data< Layout >& operator+= ( const Data< Layout >& rhs ) {
       Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
       Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
-      std::transform( rhs.data().cbegin(), rhs.data().cend(),
+      std::transform( rhs.vec().cbegin(), rhs.vec().cend(),
                       m_vec.cbegin(), m_vec.begin(),
                       []( tk::real s, tk::real d ){ return d+s; } );
       return *this;
@@ -349,7 +349,7 @@ class Data {
     Data< Layout >& operator*= ( const Data< Layout >& rhs ) {
       Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
       Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
-      std::transform( rhs.data().cbegin(), rhs.data().cend(),
+      std::transform( rhs.vec().cbegin(), rhs.vec().cend(),
                       m_vec.cbegin(), m_vec.begin(),
                       []( tk::real s, tk::real d ){ return d*s; } );
       return *this;
@@ -382,7 +382,7 @@ class Data {
     Data< Layout >& operator/= ( const Data< Layout >& rhs ) {
       Assert( rhs.nunk() == m_nunk, "Incorrect number of unknowns" );
       Assert( rhs.nprop() == m_nprop, "Incorrect number of properties" );
-      std::transform( rhs.data().cbegin(), rhs.data().cend(),
+      std::transform( rhs.vec().cbegin(), rhs.vec().cend(),
                       m_vec.cbegin(), m_vec.begin(),
                       []( tk::real s, tk::real d ){ return d/s; } );
       return *this;
@@ -633,8 +633,8 @@ Data< Layout > min( const Data< Layout >& a, const Data< Layout >& b ) {
   Assert( a.nunk() == b.nunk(), "Number of unknowns unequal" );
   Assert( a.nprop() == b.nprop(), "Number of properties unequal" );
   Data< Layout > r( a.nunk(), a.nprop() );
-  std::transform( a.data().cbegin(), a.data().cend(),
-                  b.data().cbegin(), r.data().begin(),
+  std::transform( a.vec().cbegin(), a.vec().cend(),
+                  b.vec().cbegin(), r.vec().begin(),
                   []( tk::real s, tk::real d ){ return std::min(s,d); } );
 
   return r;
@@ -654,8 +654,8 @@ Data< Layout > max( const Data< Layout >& a, const Data< Layout >& b ) {
   Assert( a.nunk() == b.nunk(), "Number of unknowns unequal" );
   Assert( a.nprop() == b.nprop(), "Number of properties unequal" );
   Data< Layout > r( a.nunk(), a.nprop() );
-  std::transform( a.data().cbegin(), a.data().cend(),
-                  b.data().cbegin(), r.data().begin(),
+  std::transform( a.vec().cbegin(), a.vec().cend(),
+                  b.vec().cbegin(), r.vec().begin(),
                   []( tk::real s, tk::real d ){ return std::max(s,d); } );
   return r;
 }
@@ -668,9 +668,9 @@ template< uint8_t Layout >
 bool operator== ( const Data< Layout >& lhs, const Data< Layout >& rhs ) {
   Assert( rhs.nunk() == lhs.nunk(), "Incorrect number of unknowns" );
   Assert( rhs.nprop() == lhs.nprop(), "Incorrect number of properties" );
-  auto l = lhs.data().cbegin();
-  auto r = rhs.data().cbegin();
-  while (l != lhs.data().cend()) {
+  auto l = lhs.vec().cbegin();
+  auto r = rhs.vec().cbegin();
+  while (l != lhs.vec().cend()) {
     if (std::abs(*l - *r) > std::numeric_limits< tk::real >::epsilon())
      return false;
     ++l; ++r;
@@ -702,13 +702,13 @@ std::pair< std::size_t, tk::real >
 maxdiff( const Data< Layout >& lhs, const Data< Layout >& rhs ) {
   Assert( lhs.nunk() == rhs.nunk(), "Number of unknowns unequal" );
   Assert( lhs.nprop() == rhs.nprop(), "Number of properties unequal" );
-  auto l = lhs.data().cbegin();
-  auto r = rhs.data().cbegin();
+  auto l = lhs.vec().cbegin();
+  auto r = rhs.vec().cbegin();
   std::pair< std::size_t, tk::real > m( 0, std::abs(*l - *r) );
   ++l; ++r;
-  while (l != lhs.data().cend()) {
+  while (l != lhs.vec().cend()) {
     const auto d = std::abs(*l - *r);
-    if (d > m.second) m = { std::distance(lhs.data().cbegin(),l), d };
+    if (d > m.second) m = { std::distance(lhs.vec().cbegin(),l), d };
     ++l; ++r;
   }
   return m;

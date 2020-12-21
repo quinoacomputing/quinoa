@@ -30,6 +30,7 @@ void
 volInt( ncomp_t system,
         ncomp_t ncomp,
         ncomp_t offset,
+        real t,
         const std::size_t ndof,
         const std::size_t nelem,
         const std::vector< std::size_t >& inpoel,

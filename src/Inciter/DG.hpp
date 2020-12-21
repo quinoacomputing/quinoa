@@ -139,6 +139,7 @@ class DG : public CBase_DG {
                   const std::vector< std::size_t >& tetid,
                   const std::vector< std::vector< tk::real > >& u,
                   const std::vector< std::vector< tk::real > >& prim,
+                  const std::vector< std::vector< tk::real > >& volfm,
                   const std::vector< std::size_t >& ndof );
 
     //! Receive chare-boundary ghost data from neighboring chares
@@ -221,6 +222,7 @@ class DG : public CBase_DG {
       p | m_p;
       p | m_geoFace;
       p | m_geoElem;
+      p | m_volfracExtr;
       p | m_lhs;
       p | m_rhs;
       p | m_nfac;
@@ -240,6 +242,7 @@ class DG : public CBase_DG {
       p | m_bid;
       p | m_uc;
       p | m_pc;
+      p | m_volfracExtrc;
       p | m_ndofc;
       p | m_initial;
       p | m_expChBndFace;
@@ -306,6 +309,8 @@ class DG : public CBase_DG {
     tk::Fields m_geoFace;
     //! Element geometry
     tk::Fields m_geoElem;
+    //! Vector of maximum volume fraction for each mesh element
+    tk::Fields m_volfracExtr;
     //! Left-hand side mass-matrix which is a diagonal matrix
     tk::Fields m_lhs;
     //! Vector of right-hand side
@@ -351,11 +356,13 @@ class DG : public CBase_DG {
     std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
+    //! Volume fraction max receive buffers for ghosts only
+    std::array< std::vector< std::vector< tk::real > >, 3 > m_volfracExtrc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
     std::array< std::vector< std::size_t >, 3 > m_ndofc;
     //! 1 if starting time stepping, 0 if during time stepping
-    int m_initial;
+    std::size_t m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
     tk::UnsMesh::FaceSet m_expChBndFace;
     //! Incoming communication buffer during chare-boundary face communication

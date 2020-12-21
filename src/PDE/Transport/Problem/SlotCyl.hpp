@@ -58,6 +58,7 @@ class TransportProblemSlotCyl {
                         ncomp_t ncomp,
                         tk::real x,
                         tk::real y,
+                        tk::real,
                         tk::real );
 
     //! Return problem type

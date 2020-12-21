@@ -138,7 +138,8 @@ using history = tk::TaggedTuple< brigand::list<
 using ios = tk::TaggedTuple< brigand::list<
     tag::nrestart,  int                             //!< Number of restarts
   , tag::control,   kw::control::info::expect::type //!< Control filename
-  , tag::input,     kw::input::info::expect::type   //!< Input filename
+  //! Input filenames
+  , tag::input,     std::vector< kw::input::info::expect::type >
   , tag::output,    kw::output::info::expect::type  //!< Output filename
     //! Refined output (output field data on a refined mesh)
   , tag::refined,   kw::refined::info::expect::type
@@ -236,6 +237,11 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::u0,            std::vector< std::vector<
                         kw::pde_u0::info::expect::type > >
   , tag::bc,            bc
+  //! interface compression toggle
+  , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
+  //! interface compression parameter
+  , tag::intsharp_param,
+                      std::vector< kw::intsharp_param::info::expect::type >
 > >;
 
 //! Stagnation boundary conditions parameters storage
@@ -362,6 +368,11 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   //! pressure relaxation time scale
   , tag::prelax_timescale,
                       std::vector< kw::prelax_timescale::info::expect::type >
+  //! interface compression toggle
+  , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
+  //! interface compression parameter
+  , tag::intsharp_param,
+                      std::vector< kw::intsharp_param::info::expect::type >
     //! Flux function type
   , tag::flux,          std::vector< FluxType >
 > >;

@@ -91,6 +91,14 @@ class CompFlow {
       return 0;
     }
 
+    //! Find the number of materials set up for this PDE system
+    //! \return The number of materials set up for this PDE system
+    std::size_t nmat() const
+    {
+      // compflow does not need nmat
+      return 0;
+    }
+
     //! Determine elements that lie inside the user-defined IC box
     //! \param[in] geoElem Element geometry array
     //! \param[in] nielem Number of internal elements
@@ -214,7 +222,8 @@ class CompFlow {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P ) const
+                      tk::Fields& P,
+                      tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
@@ -306,6 +315,7 @@ class CompFlow {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
+              const tk::Fields& VolFracMax,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
@@ -343,13 +353,14 @@ class CompFlow {
                 const std::vector< std::array< tk::real, 3 > >& v )
               { return m_riemann.flux( fn, u, v ); };
       // configure a no-op lambda for prescribed velocity
-      auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real ){
+      auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real,
+        tk::real ){
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_offset, ndof, rdof, inpoel, coord, fd,
-                   geoFace, rieflxfn, velfn, U, P, ndofel, R, vriem, riemannLoc,
-                   riemannDeriv );
+      tk::surfInt( m_system, 1, m_offset, t, ndof, rdof, inpoel, coord,
+                   fd, geoFace, geoElem, rieflxfn, velfn, U, P, VolFracMax,
+                   ndofel, R, vriem, riemannLoc, riemannDeriv );
 
       // compute ptional source term
       tk::srcInt( m_system, m_offset, t, ndof, fd.Esuel().size()/4,
@@ -357,14 +368,15 @@ class CompFlow {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, ndof, fd.Esuel().size()/4,
+        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, fd.Esuel().size()/4,
                     inpoel, coord, geoElem, flux, velfn, U, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
-                        geoFace, inpoel, coord, t, rieflxfn, velfn, b.second, U,
-                        P, ndofel, R, vriem, riemannLoc, riemannDeriv );
+                        geoFace, geoElem, inpoel, coord, t, rieflxfn, velfn,
+                        b.second, U, P, VolFracMax, ndofel, R, vriem,
+                        riemannLoc, riemannDeriv );
 
       // compute external (energy) sources
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();

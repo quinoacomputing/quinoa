@@ -201,6 +201,7 @@ SuperbeeMultiMat_P1(
   const std::vector< int >& esuel,
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
+  std::size_t system,
   inciter::ncomp_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
@@ -211,7 +212,8 @@ SuperbeeMultiMat_P1(
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
-//! \param[in] offset Index for equation systems
+//! \param[in] system Index for equation systems
+//! \param[in] offset Offset this PDE system operates from
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -221,6 +223,8 @@ SuperbeeMultiMat_P1(
 {
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::intsharp >()[system];
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -255,7 +259,24 @@ SuperbeeMultiMat_P1(
       if(ndof > 1)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
 
-      consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+      // limits under which compression is to be performed
+      std::vector< std::size_t > matInt(nmat, 0);
+      std::vector< tk::real > alAvg(nmat, 0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+      auto intInd = interfaceIndicator(nmat, alAvg, matInt);
+      if ((intsharp > 0) && intInd)
+      {
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (matInt[k])
+            phic[volfracIdx(nmat,k)] = 1.0;
+        }
+      }
+      else
+      {
+        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+      }
 
       // apply limiter function
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
@@ -271,6 +292,87 @@ SuperbeeMultiMat_P1(
         P(e, mark+1, offset) = phip[c] * P(e, mark+1, offset);
         P(e, mark+2, offset) = phip[c] * P(e, mark+2, offset);
         P(e, mark+3, offset) = phip[c] * P(e, mark+3, offset);
+      }
+    }
+  }
+}
+
+void
+VertexBasedTransport_P1(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U )
+// *****************************************************************************
+//  Kuzmin's vertex-based limiter for transport DGP1
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element connectivity
+//! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in] nelem Number of elements
+//! \param[in] system Index for equation systems
+//! \param[in] offset Index for equation systems
+//! \param[in] coord Array of nodal coordinates
+//! \param[in,out] U High-order solution vector which gets limited
+//! \details This vertex-based limiter function should be called for transport.
+//!   For details see: Kuzmin, D. (2010). A vertex-based hierarchical slope
+//!   limiter for p-adaptive discontinuous Galerkin methods. Journal of
+//!   computational and applied mathematics, 233(12), 3077-3085.
+// *****************************************************************************
+{
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::transport,
+    tag::intsharp >()[system];
+  std::size_t ncomp = U.nprop()/rdof;
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // If an rDG method is set up (P0P1), then, currently we compute the P1
+    // basis functions and solutions by default. This implies that P0P1 is
+    // unsupported in the p-adaptive DG (PDG). This is a workaround until we
+    // have rdofel, which is needed to distinguish between ndofs and rdofs per
+    // element for pDG.
+    std::size_t dof_el;
+    if (rdof > ndof)
+    {
+      dof_el = rdof;
+    }
+    else
+    {
+      dof_el = ndofel[e];
+    }
+
+    if (dof_el > 1)
+    {
+      // limit conserved quantities
+      auto phi = VertexBasedFunction(U, esup, inpoel, coord, e, rdof, dof_el,
+        offset, ncomp);
+
+      // limits under which compression is to be performed
+      std::vector< std::size_t > matInt(ncomp, 0);
+      std::vector< tk::real > alAvg(ncomp, 0.0);
+      for (std::size_t k=0; k<ncomp; ++k)
+        alAvg[k] = U(e,k*rdof,offset);
+      auto intInd = interfaceIndicator(ncomp, alAvg, matInt);
+      if ((intsharp > 0) && intInd)
+      {
+        for (std::size_t k=0; k<ncomp; ++k)
+        {
+          if (matInt[k]) phi[k] = 1.0;
+        }
+      }
+
+      // apply limiter function
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*rdof;
+        U(e, mark+1, offset) = phi[c] * U(e, mark+1, offset);
+        U(e, mark+2, offset) = phi[c] * U(e, mark+2, offset);
+        U(e, mark+3, offset) = phi[c] * U(e, mark+3, offset);
       }
     }
   }
@@ -345,6 +447,7 @@ VertexBasedMultiMat_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
+  std::size_t system,
   std::size_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
@@ -356,7 +459,8 @@ VertexBasedMultiMat_P1(
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
-//! \param[in] offset Index for equation systems
+//! \param[in] system Index for equation systems
+//! \param[in] offset Offset this PDE system operates from
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -369,6 +473,8 @@ VertexBasedMultiMat_P1(
 {
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::intsharp >()[system];
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -401,7 +507,24 @@ VertexBasedMultiMat_P1(
       if(ndof > 1)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
 
-      consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+      // limits under which compression is to be performed
+      std::vector< std::size_t > matInt(nmat, 0);
+      std::vector< tk::real > alAvg(nmat, 0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+      auto intInd = interfaceIndicator(nmat, alAvg, matInt);
+      if ((intsharp > 0) && intInd)
+      {
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (matInt[k])
+            phic[volfracIdx(nmat,k)] = 1.0;
+        }
+      }
+      else
+      {
+        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+      }
 
       // apply limiter function
       for (std::size_t c=0; c<ncomp; ++c)
@@ -1019,6 +1142,38 @@ void BoundPreservingLimiting( std::size_t nmat,
 
   for(std::size_t imat = 0; imat < nmat; imat++)
     phic[imat] = phi_bound[imat] * phic[imat];
+}
+
+bool
+interfaceIndicator( std::size_t nmat,
+  const std::vector< tk::real >& al,
+  std::vector< std::size_t >& matInt )
+// *****************************************************************************
+//  Interface indicator function, which checks element for material interface
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] al Cell-averaged volume fractions
+//! \param[in] matInt Array indicating which material has an interface
+//! \return Boolean which indicates if the element contains a material interface
+// *****************************************************************************
+{
+  bool intInd = false;
+
+  // limits under which compression is to be performed
+  auto al_eps = 1e-08;
+  auto loLim = 2.0 * al_eps;
+  auto hiLim = 1.0 - loLim;
+
+  auto almax = 0.0;
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    almax = std::max(almax, al[k]);
+    matInt[k] = 0;
+    if ((al[k] > loLim) && (al[k] < hiLim)) matInt[k] = 1;
+  }
+
+  if ((almax > loLim) && (almax < hiLim)) intInd = true;
+
+  return intInd;
 }
 
 } // inciter::

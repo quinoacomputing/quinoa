@@ -150,6 +150,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::outvar_yvelocity
                                  , kw::outvar_zvelocity
                                  , kw::outvar_pressure
+                                 , kw::outvar_material_indicator
                                  , kw::outvar_analytic
                                  , kw::nl_energy_growth
                                  , kw::pde_betax
@@ -227,6 +228,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::vertexbasedp1
                                  , kw::prelax
                                  , kw::prelax_timescale
+                                 , kw::intsharp
+                                 , kw::intsharp_param
                                  , kw::bc_sym
                                  , kw::bc_inlet
                                  , kw::bc_outlet
@@ -239,6 +242,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::gauss_hump
                                  , kw::rotated_sod_shocktube
                                  , kw::cyl_advect
+                                 , kw::cyl_vortex
                                  , kw::shedding_flow
                                  , kw::sod_shocktube
                                  , kw::sedov_blastwave

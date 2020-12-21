@@ -58,24 +58,31 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Transporter;
 
 Transporter::Transporter() :
-  m_nchare( 0 ),
-  m_ncit( 0 ),
-  m_nt0refit( 0 ),
-  m_ndtrefit( 0 ),
-  m_noutrefit( 0 ),
-  m_noutderefit( 0 ),
-  m_scheme( g_inputdeck.get< tag::discr, tag::scheme >() ),
+  m_nchare( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size() ),
+  m_meshid(),
+  m_ncit( m_nchare.size(), 0 ),
+  m_nload( 0 ),
+  m_npart( 0 ),
+  m_nstat( 0 ),
+  m_ndisc( 0 ),
+  m_nchk( 0 ),
+  m_ncom( 0 ),
+  m_nt0refit( m_nchare.size(), 0 ),
+  m_ndtrefit( m_nchare.size(), 0 ),
+  m_noutrefit( m_nchare.size(), 0 ),
+  m_noutderefit( m_nchare.size(), 0 ),
+  m_scheme(),
   m_partitioner(),
   m_refiner(),
   m_meshwriter(),
   m_sorter(),
-  m_nelem( 0 ),
-  m_npoin( 0 ),
-  m_finished( 0 ),
-  m_meshvol( 0.0 ),
-  m_minstat( {{ 0.0, 0.0, 0.0 }} ),
-  m_maxstat( {{ 0.0, 0.0, 0.0 }} ),
-  m_avgstat( {{ 0.0, 0.0, 0.0 }} ),
+  m_nelem( m_nchare.size() ),
+  m_npoin(),
+  m_finished( m_nchare.size(), 0 ),
+  m_meshvol( m_nchare.size() ),
+  m_minstat( m_nchare.size() ),
+  m_maxstat( m_nchare.size() ),
+  m_avgstat( m_nchare.size() ),
   m_timer(),
   m_progMesh( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgMeshPrefix, ProgMeshLegend ),
@@ -288,7 +295,9 @@ Transporter::info( const InciterPrint& print )
   }
 
   // Print I/O filenames
-  print.section( "Output filenames and directories" );
+  print.section( "Input/Output filenames and directories" );
+  print.item( "Input mesh(es)", tk::parameters(
+              g_inputdeck.get< tag::cmd, tag::io, tag::input >() ) );
   const auto& of = g_inputdeck.get< tag::cmd, tag::io, tag::output >();
   print.item( "Volume field output file(s)",
               of + ".e-s.<meshid>.<numchares>.<chareid>" );
@@ -402,52 +411,20 @@ Transporter::createPartitioner()
 // Create mesh partitioner AND boundary conditions group
 // *****************************************************************************
 {
-  // Create mesh reader for reading side sets from file
-  tk::MeshReader mr( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-
-  // Read out total number of mesh points from mesh file
-  m_npoin = mr.npoin();
-
-  std::map< int, std::vector< std::size_t > > bface;
-  std::map< int, std::vector< std::size_t > > faces;
-  std::map< int, std::vector< std::size_t > > bnode;
-
-  // Read boundary (side set) data from input file
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  const auto centering = ctr::Scheme().centering( scheme );
-
-  // Read boundary-face connectivity on side sets
-  mr.readSidesetFaces( bface, faces );
-
-  bool bcs_set = false;
-  if (centering == tk::Centering::ELEM) {
-
-    // Verify boundarty condition (BC) side sets used exist in mesh file
-    bcs_set = matchBCs( bface );
-
-  } else if (centering == tk::Centering::NODE) {
-
-    // Read node lists on side sets
-    bnode = mr.readSidesetNodes();
-    // Verify boundarty condition (BC) side sets used exist in mesh file
-    bcs_set = matchBCs( bnode );
-    bcs_set = bcs_set || matchBCs( bface );
-  }
-
+  auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  auto centering = ctr::Scheme().centering( scheme );
   auto print = printer();
 
-  // Warn on no BCs
-  if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";
-
-  // Create partitioner callbacks (order matters)
+  // Create partitioner callbacks (order important)
   tk::PartitionerCallback cbp {{
       CkCallback( CkReductionTarget(Transporter,load), thisProxy )
+    , CkCallback( CkReductionTarget(Transporter,partitioned), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,distributed), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refinserted), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
   }};
 
-  // Create refiner callbacks (order matters)
+  // Create refiner callbacks (order important)
   tk::RefinerCallback cbr {{
       CkCallback( CkReductionTarget(Transporter,queriedRef), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,respondedRef), thisProxy )
@@ -457,7 +434,7 @@ Transporter::createPartitioner()
     , CkCallback( CkReductionTarget(Transporter,refined), thisProxy )
   }};
 
-  // Create sorter callbacks (order matters)
+  // Create sorter callbacks (order important)
   tk::SorterCallback cbs {{
       CkCallback( CkReductionTarget(Transporter,queried), thisProxy )
     , CkCallback( CkReductionTarget(Transporter,responded), thisProxy )
@@ -465,101 +442,170 @@ Transporter::createPartitioner()
     , CkCallback( CkReductionTarget(Transporter,workinserted), thisProxy )
   }};
 
-  // Start timer measuring preparation of the mesh for partitioning
+  // Start timer measuring preparation of mesh(es) for partitioning
   m_timer[ TimerTag::MESH_READ ];
 
-  // Create mesh partitioner Charm++ chare group and start preparing mesh
-  print.diag( "Reading mesh" );
+  // Start preparing mesh(es)
+  print.diag( "Reading mesh(es)" );
 
-  // Create empty mesh sorter Charm++ chare array (bound to workers)
-  m_sorter = CProxy_Sorter::ckNew( m_scheme.arrayoptions() );
+  // Read boundary (side set) data from a list of input mesh files
+  const auto& inputs = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
+  std::size_t meshid = 0;
+  for (const auto& filename : inputs) {
+    // Create mesh reader for reading side sets from file
+    tk::MeshReader mr( filename );
 
-  // Create empty mesh refiner chare array (bound to workers)
-  m_refiner = CProxy_Refiner::ckNew( m_scheme.arrayoptions() );
+    // Read out total number of mesh points from mesh file
+    m_npoin.push_back( mr.npoin() );
 
-  // Create MeshWriter chare group
-  m_meshwriter = tk::CProxy_MeshWriter::ckNew(
-                    g_inputdeck.get< tag::selected, tag::filetype >(),
-                    centering,
-                    g_inputdeck.get< tag::cmd, tag::benchmark >() );
+    std::map< int, std::vector< std::size_t > > bface;
+    std::map< int, std::vector< std::size_t > > faces;
+    std::map< int, std::vector< std::size_t > > bnode;
 
-  // Create mesh partitioner Charm++ chare nodegroup
-  m_partitioner =
-    CProxy_Partitioner::ckNew( cbp, cbr, cbs, thisProxy, m_refiner, m_sorter,
-                               m_meshwriter, m_scheme, bface, faces, bnode );
+    // Read boundary-face connectivity on side sets
+    mr.readSidesetFaces( bface, faces );
+
+    bool bcs_set = false;
+    if (centering == tk::Centering::ELEM) {
+
+      // Verify boundarty condition (BC) side sets used exist in mesh file
+      bcs_set = matchBCs( bface );
+
+    } else if (centering == tk::Centering::NODE) {
+
+      // Read node lists on side sets
+      bnode = mr.readSidesetNodes();
+      // Verify boundarty condition (BC) side sets used exist in mesh file
+      bcs_set = matchBCs( bnode );
+      bcs_set = bcs_set || matchBCs( bface );
+    }
+
+    // Warn on no BCs
+    if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";
+
+    // Create (discretization) Scheme chare worker array for mesh
+    m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >() );
+
+    // Create empty mesh refiner chare array (bound to workers)
+    m_refiner.push_back(CProxy_Refiner::ckNew(m_scheme.back().arrayoptions()));
+
+    // Create empty mesh sorter Charm++ chare array (bound to workers)
+    m_sorter.push_back(CProxy_Sorter::ckNew(m_scheme.back().arrayoptions()));
+
+    // Create MeshWriter chare group for mesh
+    m_meshwriter.push_back(
+      tk::CProxy_MeshWriter::ckNew(
+        g_inputdeck.get< tag::selected, tag::filetype >(),
+        centering,
+        g_inputdeck.get< tag::cmd, tag::benchmark >(),
+        inputs.size() ) );
+
+    // Create mesh partitioner Charm++ chare nodegroup for mesh
+    m_partitioner.push_back(
+      CProxy_Partitioner::ckNew( meshid++, filename, cbp, cbr, cbs, thisProxy,
+        m_refiner.back(), m_sorter.back(), m_meshwriter.back(), m_scheme.back(),
+        bface, faces, bnode ) );
+  }
 }
 
 void
-Transporter::load( std::size_t nelem )
+Transporter::load( std::size_t meshid, std::size_t nelem )
 // *****************************************************************************
 // Reduction target: the mesh has been read from file on all PEs
-//! \param[in] nelem Total number of mesh elements (summed across all PEs)
+//! \param[in] meshid Mesh id (summed accross all compute nodes)
+//! \param[in] nelem Number of mesh elements per mesh (summed across all
+//!    compute nodes)
 // *****************************************************************************
 {
+  meshid /= static_cast< std::size_t >( CkNumNodes() );
+  Assert( meshid < m_nelem.size(), "MeshId indexing out" );
+  m_nelem[meshid] = nelem;
+
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
   uint64_t chunksize, remainder;
-  m_nchare = static_cast<int>(
-               tk::linearLoadDistributor(
-                 g_inputdeck.get< tag::cmd, tag::virtualization >(),
-                 nelem, CkNumPes(), chunksize, remainder ) );
+  m_nchare[meshid] = static_cast<int>(
+    tk::linearLoadDistributor(
+       g_inputdeck.get< tag::cmd, tag::virtualization >(),
+       m_nelem[meshid], CkNumPes(), chunksize, remainder ) );
 
-  auto print = printer();
+  // Store sum of meshids (across all chares, key) for each meshid (value).
+  // This is used to look up the mesh id after collectives that sum their data.
+  m_meshid[ static_cast<std::size_t>(m_nchare[meshid])*meshid ] = meshid;
+  Assert( meshid < m_nelem.size(), "MeshId indexing out" );
 
-  // Start timer measuring preparation of the mesh for partitioning
-  const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
-  print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
+  // Partition first mesh
+  if (meshid == 0) m_partitioner[0].partition( m_nchare[0] );
 
-  // Print out mesh partitioning configuration
-  print.section( "Mesh partitioning" );
-  print.Item< tk::ctr::PartitioningAlgorithm,
-              tag::selected, tag::partitioner >();
+  if (++m_nload == m_nelem.size()) {     // all meshes have been loaded
+    m_nload = 0;
+    auto print = printer();
 
-  // Print out info on load distribution
-  print.section( "Initial load distribution" );
-  print.item( "Virtualization [0.0...1.0]",
-              g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  print.item( "Number of tetrahedra", nelem );
-  print.item( "Number of points", m_npoin );
-  print.item( "Number of work units", m_nchare );
+    // Start timer measuring preparation of the mesh for partitioning
+    const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
+    print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
 
-  print.endsubsection();
+    // Print out mesh partitioning configuration
+    print.section( "Mesh partitioning" );
+    print.Item< tk::ctr::PartitioningAlgorithm,
+                tag::selected, tag::partitioner >();
+    print.item( "Virtualization [0.0...1.0]",
+                g_inputdeck.get< tag::cmd, tag::virtualization >() );
+    // Print out initial mesh statistics
+    meshstat( "Initial load distribution" );
 
-  // Tell meshwriter the total number of chares
-  m_meshwriter.nchare( m_nchare );
+    // Tell meshwriter the total number of chares
+    m_meshwriter[meshid].nchare( m_nchare[meshid] );
 
-  // Query number of initial mesh refinement steps
-  int nref = 0;
-  if (g_inputdeck.get< tag::amr, tag::t0ref >())
-    nref = static_cast<int>( g_inputdeck.get< tag::amr, tag::init >().size() );
+    // Query number of initial mesh refinement steps
+    int nref = 0;
+    if (g_inputdeck.get< tag::amr, tag::t0ref >())
+      nref = static_cast<int>(g_inputdeck.get< tag::amr, tag::init >().size());
 
-  m_progMesh.start( print, "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
-    m_nchare, m_nchare, m_nchare, m_nchare }} );
-
-  // Partition the mesh
-  m_partitioner.partition( m_nchare );
+    m_progMesh.start( print, "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
+      m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0] }} );
+  }
 }
 
 void
-Transporter::distributed()
+Transporter::partitioned( std::size_t meshid )
 // *****************************************************************************
-// Reduction target: all PEs have distrbuted their mesh after partitioning
+// Reduction target: a mesh has been partitioned
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_partitioner.refine();
+  if (++m_npart == m_nelem.size()) {     // all meshes have been partitioned
+    m_npart = 0;
+  } else // partition next mesh
+    m_partitioner[meshid+1].partition( m_nchare[meshid+1] );
 }
 
 void
-Transporter::refinserted( int error )
+Transporter::distributed( std::size_t meshid )
 // *****************************************************************************
-// Reduction target: all PEs have created the mesh refiners
-//! \param[in] error aggregated across all PEs with operator max
+// Reduction target: all compute nodes have distrbuted their mesh after
+// partitioning
+//! \param[in] meshid Mesh id
+// *****************************************************************************
+{
+  m_partitioner[meshid].refine();
+}
+
+void
+Transporter::refinserted( std::size_t meshid, std::size_t error )
+// *****************************************************************************
+// Reduction target: all compute nodes have created the mesh refiners
+//! \param[in] meshid Mesh id (aggregated across all compute nodes with operator
+//!   max)
+//! \param[in] error Error code (aggregated across all compute nodes with
+//!   operator max)
 // *****************************************************************************
 {
   if (error) {
 
     printer() << "\n>>> ERROR: A worker chare was not assigned any mesh "
-              "elements. This can happen in SMP-mode with a large +ppn "
+              "elements after distributing mesh " + std::to_string(meshid) +
+              ". This can happen in SMP-mode with a large +ppn "
               "parameter (number of worker threads per logical node) and is "
               "most likely the fault of the mesh partitioning algorithm not "
               "tolerating the case when it is asked to divide the "
@@ -569,62 +615,67 @@ Transporter::refinserted( int error )
               "with +ppn larger than 1. Solution 1: Try a different "
               "partitioning algorithm (e.g., rcb instead of mj). Solution 2: "
               "Decrease +ppn.";
-
-    finish();
+    finish( meshid );
 
   } else {
 
-     m_refiner.doneInserting();
+     m_refiner[meshid].doneInserting();
 
   }
 }
 
 void
-Transporter::queriedRef()
+Transporter::queriedRef( std::size_t meshid )
 // *****************************************************************************
-// Reduction target: all mesh Refiner chares have queried their boundary edges
+// Reduction target: all Refiner chares have queried their boundary edges
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_refiner.response();
+  m_refiner[meshid].response();
 }
 
 void
-Transporter::respondedRef()
+Transporter::respondedRef( std::size_t meshid )
 // *****************************************************************************
-// Reduction target: all mesh Refiner chares have setup their boundary edges
+// Reduction target: all Refiner chares have setup their boundary edges
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_refiner.refine();
+  m_refiner[meshid].refine();
 }
 
 void
-Transporter::compatibility( int modified )
+Transporter::compatibility( std::size_t meshid, std::size_t modified )
 // *****************************************************************************
-// Reduction target: all mesh refiner chares have received a round of edges,
-// and ran their compatibility algorithm
-//! \param[in] modified Sum acorss all workers, if nonzero, mesh is modified
+// Reduction target: all Refiner chares have received a round of edges,
+// and have run their compatibility algorithm
+//! \param[in] meshid Mesh id (aggregated across all chares using operator max)
+//! \param[in] modified Modified flag, aggregated across all chares using
+//!   operator max), if nonzero, mesh is modified
 //! \details This is called iteratively, until convergence by Refiner. At this
 //!   point all Refiner chares have received a round of edge data (tags whether
 //!   an edge needs to be refined, etc.), and applied the compatibility
 //!   algorithm independent of other Refiner chares. We keep going until the
-//!   mesh is no longer modified by the compatibility algorithm (based on a new
+//!   mesh is no longer modified by the compatibility algorithm, based on a new
 //!   round of edge data communication started in Refiner::comExtra().
 // *****************************************************************************
 {
   if (modified)
-    m_refiner.comExtra();
+    m_refiner[meshid].comExtra();
   else
-    m_refiner.correctref();
+    m_refiner[meshid].correctref();
 }
 
 void
-Transporter::matched( std::size_t nextra,
+Transporter::matched( std::size_t summeshid,
+                      std::size_t nextra,
                       std::size_t nref,
                       std::size_t nderef,
                       std::size_t sumrefmode )
 // *****************************************************************************
-// Reduction target: all mesh refiner chares have matched/corrected the tagging
+// Reduction target: all Refiner chares have matched/corrected the tagging
 // of chare-boundary edges, all chares are ready to perform refinement.
+//! \param[in] summeshid Mesh id (summed across all chares)
 //! \param[in] nextra Sum (across all chares) of the number of edges on each
 //!   chare that need correction along chare boundaries
 //! \param[in] nref Sum of number of refined tetrahedra across all chares.
@@ -633,12 +684,14 @@ Transporter::matched( std::size_t nextra,
 //!   refinement mode of operation.
 // *****************************************************************************
 {
+  auto meshid = tk::cref_find( m_meshid, summeshid );
+
   // If at least a single edge on a chare still needs correction, do correction,
   // otherwise, this mesh refinement step is complete
   if (nextra > 0) {
 
-    ++m_ncit;
-    m_refiner.comExtra();
+    ++m_ncit[meshid];
+    m_refiner[meshid].comExtra();
 
   } else {
 
@@ -646,67 +699,73 @@ Transporter::matched( std::size_t nextra,
 
     // decode refmode
     auto refmode = static_cast< Refiner::RefMode >(
-                     sumrefmode / static_cast<std::size_t>(m_nchare) );
+                     sumrefmode / static_cast<std::size_t>(m_nchare[meshid]) );
 
     if (refmode == Refiner::RefMode::T0REF) {
 
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
         const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
         ctr::AMRInitial opt;
-        print.diag( { "t0ref", "type", "nref", "nderef", "ncorr" },
-                    { std::to_string(m_nt0refit),
-                      opt.code(initref[m_nt0refit]),
+        print.diag( { "meshid", "t0ref", "type", "nref", "nderef", "ncorr" },
+                    { std::to_string(meshid),
+                      std::to_string(m_nt0refit[meshid]),
+                      opt.code(initref[m_nt0refit[meshid]]),
                       std::to_string(nref),
                       std::to_string(nderef),
-                      std::to_string(m_ncit) } );
-        ++m_nt0refit;
+                      std::to_string(m_ncit[meshid]) } );
+        ++m_nt0refit[meshid];
       }
       m_progMesh.inc< REFINE >( print );
 
     } else if (refmode == Refiner::RefMode::DTREF) {
 
       auto dtref_uni = g_inputdeck.get< tag::amr, tag::dtref_uniform >();
-      print.diag( { "dtref", "type", "nref", "nderef", "ncorr" },
-                  { std::to_string(++m_ndtrefit),
+      print.diag( { "meshid", "dtref", "type", "nref", "nderef", "ncorr" },
+                  { std::to_string(meshid),
+                    std::to_string(++m_ndtrefit[meshid]),
                     (dtref_uni?"uniform":"error"),
                     std::to_string(nref),
                     std::to_string(nderef),
-                    std::to_string(m_ncit) },
+                    std::to_string(m_ncit[meshid]) },
                   false );
 
     } else if (refmode == Refiner::RefMode::OUTREF) {
 
-      print.diag( { "outref", "nref", "nderef", "ncorr" },
-                  { std::to_string(++m_noutrefit),
+      print.diag( { "meshid", "outref", "nref", "nderef", "ncorr" },
+                  { std::to_string(meshid),
+                    std::to_string(++m_noutrefit[meshid]),
                     std::to_string(nref),
                     std::to_string(nderef),
-                    std::to_string(m_ncit) }, false );
+                    std::to_string(m_ncit[meshid]) }, false );
 
     } else if (refmode == Refiner::RefMode::OUTDEREF) {
 
-      print.diag( { "outderef", "nref", "nderef", "ncorr" },
-                  { std::to_string(++m_noutderefit),
+      print.diag( { "meshid", "outderef", "nref", "nderef", "ncorr" },
+                  { std::to_string(meshid),
+                    std::to_string(++m_noutderefit[meshid]),
                     std::to_string(nref),
                     std::to_string(nderef),
-                    std::to_string(m_ncit) },
+                    std::to_string(m_ncit[meshid]) },
                   false );
 
     } else Throw( "RefMode not implemented" );
 
-    m_ncit = 0;
-    m_refiner.perform();
+    m_ncit[meshid] = 0;
+    m_refiner[meshid].perform();
 
   }
 }
 
 void
-Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
+Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb,
+                     tk::real summeshid )
 // *****************************************************************************
 // Compute surface integral across the whole problem and perform leak-test
 //! \param[in] sx X component of vector summed
 //! \param[in] sy Y component of vector summed
 //! \param[in] sz Z component of vector summed
 //! \param[in] cb Invoke callback if positive
+//! \param[in] summeshid Mesh id (summed accross all chares)
 //! \details This function aggregates partial surface integrals across the
 //!   boundary faces of the whole problem. After this global sum a
 //!   non-zero vector result indicates a leak, e.g., a hole in the boundary,
@@ -714,6 +773,8 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
 //!   compute the partial surface integrals.
 // *****************************************************************************
 {
+  auto meshid = tk::cref_find( m_meshid, static_cast<std::size_t>(summeshid) );
+
   std::stringstream err;
   if (cb < 0.0) {
     err << "Mesh boundary leaky after mesh refinement step; this is due to a "
@@ -733,113 +794,154 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb )
     Throw( err.str() );
   }
 
-  if (cb > 0.0) m_scheme.bcast< Scheme::resizeComm >();
+  if (cb > 0.0) m_scheme[meshid].bcast< Scheme::resizeComm >();
 }
 
 void
-Transporter::refined( std::size_t nelem, std::size_t npoin )
+Transporter::refined( std::size_t summeshid,
+                      std::size_t nelem,
+                      std::size_t npoin )
 // *****************************************************************************
-// Reduction target: all PEs have refined their mesh
-//! \param[in] nelem Total number of elements in mesh across the whole problem
-//! \param[in] npoin Total number of mesh points (summed across all PEs). Note
-//!    that in parallel this is larger than the total number of points in the
-//!    mesh, because the boundary nodes are multi-counted.
+// Reduction target: all chares have refined their mesh
+//! \param[in] summeshid Mesh id (summed accross all Refiner chares)
+//! \param[in] nelem Total number of elements in mesh summed across the
+//!   distributed mesh
+//! \param[in] npoin Total number of mesh points summed across the distributed
+//!   mesh. Note that in parallel this is larger than the number of points in
+//!   the mesh, because the boundary nodes are multi-counted. But we only need
+//!   an equal or larger than npoin for Sorter::setup, so this is okay.
 // *****************************************************************************
 {
-  m_sorter.doneInserting();
+  auto meshid = tk::cref_find( m_meshid, summeshid );
 
-  m_nelem = nelem;
+  // Store new number of elements for initially refined mesh
+  m_nelem[meshid] = nelem;
 
-  m_sorter.setup( npoin );
+  m_sorter[meshid].doneInserting();
+  m_sorter[meshid].setup( npoin );
 }
 
 void
-Transporter::queried()
+Transporter::queried( std::size_t meshid )
 // *****************************************************************************
 // Reduction target: all Sorter chares have queried their boundary edges
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_sorter.response();
+  m_sorter[meshid].response();
 }
 
 void
-Transporter::responded()
+Transporter::responded( std::size_t meshid )
 // *****************************************************************************
 // Reduction target: all Sorter chares have responded with their boundary edges
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_sorter.start();
+  m_sorter[meshid].start();
 }
 
 void
-Transporter::resized()
+Transporter::resized( std::size_t meshid )
 // *****************************************************************************
 // Reduction target: all worker chares have resized their own data after
 // mesh refinement
+//! \param[in] meshid Mesh id
 //! \note Only used for nodal schemes
 // *****************************************************************************
 {
-  m_scheme.disc().vol();
-  m_scheme.bcast< Scheme::lhs >();
+  m_scheme[meshid].disc().vol();
+  m_scheme[meshid].bcast< Scheme::lhs >();
 }
 
 void
-Transporter::startEsup()
+Transporter::startEsup( std::size_t meshid )
 // *****************************************************************************
 // Reduction target: all worker chares have generated their own esup
+//! \param[in] meshid Mesh id
 //! \note Only used for cell-centered schemes
 // *****************************************************************************
 {
-  m_scheme.bcast< Scheme::nodeNeighSetup >();
+  m_scheme[meshid].bcast< Scheme::nodeNeighSetup >();
 }
 
 void
-Transporter::discinserted()
+Transporter::discinserted( std::size_t meshid )
 // *****************************************************************************
 // Reduction target: all Discretization chares have been inserted
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_scheme.disc().doneInserting();
+  m_scheme[meshid].disc().doneInserting();
 }
 
 void
-Transporter::disccreated( std::size_t npoin )
+Transporter::meshstat( const std::string& header ) const
 // *****************************************************************************
-// Reduction target: all Discretization constructors have been called
-//! \param[in] npoin Total number of mesh points (summed across all PEs). Note
-//!  that as opposed to npoin in refined(), this npoin is not multi-counted, and
-//!  thus should be correct in parallel.
+// Print out mesh statistics
+//! \param[in] header Section header
 // *****************************************************************************
 {
-  m_npoin = npoin;
-
   auto print = printer();
 
-  m_progMesh.end( print );
+  print.section( header );
 
-  if (g_inputdeck.get< tag::amr, tag::t0ref >()) {
-    print.section( "Initially (t<0) refined mesh graph statistics" );
-    print.item( "Number of tetrahedra", m_nelem );
-    print.item( "Number of points", m_npoin );
-    print.endsubsection();
+  if (m_nelem.size() > 1) {
+    print.item( "Number of tetrahedra (per mesh)",tk::parameters(m_nelem) );
+    print.item( "Number of points (per mesh)", tk::parameters(m_npoin) );
+    print.item( "Number of work units (per mesh)", tk::parameters(m_nchare) );
   }
 
-  m_refiner.sendProxy();
+  print.item( "Total number of tetrahedra",
+              std::accumulate( begin(m_nelem), end(m_nelem), 0UL ) );
+  print.item( "Total number of points",
+              std::accumulate( begin(m_npoin), end(m_npoin), 0UL ) );
+  print.item( "Total number of work units",
+              std::accumulate( begin(m_nchare), end(m_nchare), 0 ) );
 
-  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::DiagCG) m_scheme.fct().doneInserting();
-
-  m_scheme.disc().vol();
+  print.endsubsection();
 }
 
 void
-Transporter::workinserted()
+Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
+// *****************************************************************************
+// Reduction target: all Discretization constructors have been called
+//! \param[in] summeshid Mesh id (summed accross all chares)
+//! \param[in] npoin Total number of mesh points (summed across all chares)
+//!  Note that as opposed to npoin in refined(), this npoin is not
+//!  multi-counted, and thus should be correct in parallel.
+// *****************************************************************************
+{
+  auto meshid = tk::cref_find( m_meshid, summeshid );
+
+  // Update number of mesh points for mesh, since it may have been refined
+  if (g_inputdeck.get< tag::amr, tag::t0ref >()) m_npoin[meshid] = npoin;
+
+  if (++m_ndisc == m_nelem.size()) { // all Disc arrays have been created
+    m_ndisc = 0;
+    auto print = printer();
+    m_progMesh.end( print );
+    if (g_inputdeck.get< tag::amr, tag::t0ref >())
+      meshstat( "Initially (t<0) refined mesh graph statistics" );
+  }
+
+  m_refiner[meshid].sendProxy();
+
+  if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DiagCG)
+    m_scheme[meshid].fct().doneInserting();
+
+  m_scheme[meshid].disc().vol();
+}
+
+void
+Transporter::workinserted( std::size_t meshid )
 // *****************************************************************************
 // Reduction target: all worker (derived discretization) chares have been
 // inserted
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_scheme.bcast< Scheme::doneInserting >();
+  m_scheme[meshid].bcast< Scheme::doneInserting >();
 }
 
 void
@@ -893,79 +995,94 @@ Transporter::diagHeader()
 }
 
 void
-Transporter::comfinal( int initial )
+Transporter::comfinal( std::size_t initial, std::size_t summeshid )
 // *****************************************************************************
 // Reduction target indicating that communication maps have been setup
 //! \param[in] initial Sum of contributions from all chares. If larger than
 //!    zero, we are during time stepping and if zero we are during setup.
+//! \param[in] summeshid Mesh id (summed accross the distributed mesh)
 // *****************************************************************************
 // [Discretization-specific communication maps]
 {
+  auto meshid = tk::cref_find( m_meshid, static_cast<std::size_t>(summeshid) );
+
   if (initial > 0) {
-    auto print = printer();
-    m_progWork.end( print );
-    m_scheme.bcast< Scheme::setup >();
+    m_scheme[meshid].bcast< Scheme::setup >();
     // Turn on automatic load balancing
-    tk::CProxy_LBSwitch::ckNew();
-    print.diag( "Load balancing on (if enabled in Charm++)" );
+    if (++m_ncom == m_nelem.size()) { // all worker arrays have finished
+      m_ncom = 0;
+      auto print = printer();
+      m_progWork.end( print );
+      tk::CProxy_LBSwitch::ckNew();
+      print.diag( "Load balancing on (if enabled in Charm++)" );
+    }
   } else {
-    m_scheme.bcast< Scheme::lhs >();
+    m_scheme[meshid].bcast< Scheme::lhs >();
   }
 }
 // [Discretization-specific communication maps]
 
 void
-Transporter::totalvol( tk::real v, tk::real initial )
+Transporter::totalvol( tk::real v, tk::real initial, tk::real summeshid )
 // *****************************************************************************
 // Reduction target summing total mesh volume across all workers
-//! \param[in] v Mesh volume summed across the whole problem
+//! \param[in] v Mesh volume summed across the distributed mesh
 //! \param[in] initial Sum of contributions from all chares. If larger than
 //!    zero, we are during setup, if zero, during time stepping.
+//! \param[in] summeshid Mesh id (summed accross the distributed mesh)
 // *****************************************************************************
 {
-  m_meshvol = v;
+  auto meshid = tk::cref_find( m_meshid, static_cast<std::size_t>(summeshid) );
+
+  m_meshvol[meshid] = v;
 
   if (initial > 0.0)
-    m_scheme.disc().stat( m_meshvol );
+    m_scheme[meshid].disc().stat( v );
   else
-    m_scheme.bcast< Scheme::resized >();
+    m_scheme[meshid].bcast< Scheme::resized >();
 }
 
 void
-Transporter::minstat( tk::real d0, tk::real d1, tk::real d2 )
+Transporter::minstat( tk::real d0, tk::real d1, tk::real d2, tk::real rmeshid )
 // *****************************************************************************
 // Reduction target yielding minimum mesh statistcs across all workers
 //! \param[in] d0 Minimum mesh statistics collected over all chares
 //! \param[in] d1 Minimum mesh statistics collected over all chares
 //! \param[in] d2 Minimum mesh statistics collected over all chares
+//! \param[in] rmeshid Mesh id as a real
 // *****************************************************************************
 {
-  m_minstat[0] = d0;  // minimum edge length
-  m_minstat[1] = d1;  // minimum cell volume cubic root
-  m_minstat[2] = d2;  // minimum number of cells on chare
+  auto meshid = static_cast<std::size_t>(rmeshid);
 
-  minstat_complete();
+  m_minstat[meshid][0] = d0;  // minimum edge length
+  m_minstat[meshid][1] = d1;  // minimum cell volume cubic root
+  m_minstat[meshid][2] = d2;  // minimum number of cells on chare
+
+  minstat_complete(meshid);
 }
 
 void
-Transporter::maxstat( tk::real d0, tk::real d1, tk::real d2 )
+Transporter::maxstat( tk::real d0, tk::real d1, tk::real d2, tk::real rmeshid )
 // *****************************************************************************
 // Reduction target yielding the maximum mesh statistics across all workers
 //! \param[in] d0 Maximum mesh statistics collected over all chares
 //! \param[in] d1 Maximum mesh statistics collected over all chares
 //! \param[in] d2 Maximum mesh statistics collected over all chares
+//! \param[in] rmeshid Mesh id as a real
 // *****************************************************************************
 {
-  m_maxstat[0] = d0;  // maximum edge length
-  m_maxstat[1] = d1;  // maximum cell volume cubic root
-  m_maxstat[2] = d2;  // maximum number of cells on chare
+  auto meshid = static_cast<std::size_t>(rmeshid);
 
-  maxstat_complete();
+  m_maxstat[meshid][0] = d0;  // maximum edge length
+  m_maxstat[meshid][1] = d1;  // maximum cell volume cubic root
+  m_maxstat[meshid][2] = d2;  // maximum number of cells on chare
+
+  maxstat_complete(meshid);
 }
 
 void
 Transporter::sumstat( tk::real d0, tk::real d1, tk::real d2, tk::real d3,
-                      tk::real d4, tk::real d5 )
+                      tk::real d4, tk::real d5, tk::real summeshid )
 // *****************************************************************************
 // Reduction target yielding the sum mesh statistics across all workers
 //! \param[in] d0 Sum mesh statistics collected over all chares
@@ -974,13 +1091,16 @@ Transporter::sumstat( tk::real d0, tk::real d1, tk::real d2, tk::real d3,
 //! \param[in] d3 Sum mesh statistics collected over all chares
 //! \param[in] d4 Sum mesh statistics collected over all chares
 //! \param[in] d5 Sum mesh statistics collected over all chares
+//! \param[in] summeshid Mesh id (summed accross the distributed mesh)
 // *****************************************************************************
 {
-  m_avgstat[0] = d1 / d0;      // average edge length
-  m_avgstat[1] = d3 / d2;      // average cell volume cubic root
-  m_avgstat[2] = d5 / d4;      // average number of cells per chare
+  auto meshid = tk::cref_find( m_meshid, static_cast<std::size_t>(summeshid) );
 
-  sumstat_complete();
+  m_avgstat[meshid][0] = d1 / d0;      // average edge length
+  m_avgstat[meshid][1] = d3 / d2;      // average cell volume cubic root
+  m_avgstat[meshid][2] = d5 / d4;      // average number of cells per chare
+
+  sumstat_complete(meshid);
 }
 
 void
@@ -990,33 +1110,37 @@ Transporter::pdfstat( CkReductionMsg* msg )
 //! \param[in] msg Serialized PDF
 // *****************************************************************************
 {
+  std::size_t meshid;
   std::vector< tk::UniPDF > pdf;
 
   // Deserialize final PDF
   PUP::fromMem creator( msg->getData() );
+  creator | meshid;
   creator | pdf;
   delete msg;
 
+  auto id = std::to_string(meshid);
+
   // Create new PDF file (overwrite if exists)
-  tk::PDFWriter pdfe( "mesh_edge_pdf.txt" );
+  tk::PDFWriter pdfe( "mesh_edge_pdf." + id + ".txt" );
   // Output edgelength PDF
   // cppcheck-suppress containerOutOfBounds
   pdfe.writeTxt( pdf[0],
                  tk::ctr::PDFInfo{ {"PDF"}, {}, {"edgelength"}, 0, 0.0 } );
 
   // Create new PDF file (overwrite if exists)
-  tk::PDFWriter pdfv( "mesh_vol_pdf.txt" );
+  tk::PDFWriter pdfv( "mesh_vol_pdf." + id + ".txt" );
   // Output cell volume cubic root PDF
   pdfv.writeTxt( pdf[1],
                  tk::ctr::PDFInfo{ {"PDF"}, {}, {"V^{1/3}"}, 0, 0.0 } );
 
   // Create new PDF file (overwrite if exists)
-  tk::PDFWriter pdfn( "mesh_ntet_pdf.txt" );
+  tk::PDFWriter pdfn( "mesh_ntet_pdf." + id + ".txt" );
   // Output number of cells PDF
   pdfn.writeTxt( pdf[2],
                  tk::ctr::PDFInfo{ {"PDF"}, {}, {"ntets"}, 0, 0.0 } );
 
-  pdfstat_complete();
+  pdfstat_complete(meshid);
 }
 
 void
@@ -1027,38 +1151,47 @@ Transporter::stat()
 {
   auto print = printer();
 
-  print.diag( "Mesh statistics: min/max/avg(edgelength) = " +
-              std::to_string( m_minstat[0] ) + " / " +
-              std::to_string( m_maxstat[0] ) + " / " +
-              std::to_string( m_avgstat[0] ) );
-  print.diag( "Mesh statistics: min/max/avg(V^{1/3}) = " +
-              std::to_string( m_minstat[1] ) + " / " +
-              std::to_string( m_maxstat[1] ) + " / " +
-              std::to_string( m_avgstat[1] ) );
-  print.diag( "Mesh statistics: min/max/avg(ntets) = " +
-              std::to_string( static_cast<std::size_t>(m_minstat[2]) ) + " / " +
-              std::to_string( static_cast<std::size_t>(m_maxstat[2]) ) + " / " +
-              std::to_string( static_cast<std::size_t>(m_avgstat[2]) ) );
+  if (++m_nstat == m_nelem.size()) {     // stats from all meshes have arrived
+    m_nstat = 0;
+    for (std::size_t i=0; i<m_nelem.size(); ++i) {
+      print.diag(
+        "Mesh " + std::to_string(i) +
+        " distribution statistics: min/max/avg(edgelength) = " +
+        std::to_string( m_minstat[i][0] ) + " / " +
+        std::to_string( m_maxstat[i][0] ) + " / " +
+        std::to_string( m_avgstat[i][0] ) + ", " +
+        "min/max/avg(V^{1/3}) = " +
+        std::to_string( m_minstat[i][1] ) + " / " +
+        std::to_string( m_maxstat[i][1] ) + " / " +
+        std::to_string( m_avgstat[i][1] ) + ", " +
+        "min/max/avg(ntets) = " +
+        std::to_string( static_cast<std::size_t>(m_minstat[i][2]) ) + " / " +
+        std::to_string( static_cast<std::size_t>(m_maxstat[i][2]) ) + " / " +
+        std::to_string( static_cast<std::size_t>(m_avgstat[i][2]) ) );
+    }
 
-  // Print out time integration header to screen
-  inthead( print );
+    // Print out time integration header to screen
+    inthead( print );
 
-  m_progWork.start( print, "Preparing workers",
-                    {{ m_nchare, m_nchare, m_nchare, m_nchare, m_nchare }} );
+    m_progWork.start( print, "Preparing workers",
+      {{ m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0] }} );
 
-  // Create "derived-class" workers
-  m_sorter.createWorkers();
+    // Create "derived-class" workers
+    for (std::size_t i=0; i<m_nelem.size(); ++i) m_sorter[i].createWorkers();
+  }
 }
 
 void
-Transporter::boxvol( tk::real v )
+Transporter::boxvol( tk::real v, tk::real summeshid )
 // *****************************************************************************
 // Reduction target computing total volume of IC box
 //! \param[in] v Total volume within user-specified box IC
+//! \param[in] summeshid Mesh id as a real (summed accross the distributed mesh)
 // *****************************************************************************
 {
+  auto meshid = tk::cref_find( m_meshid, static_cast<std::size_t>(summeshid) );
   if (v > 0.0) printer().diag( "Box IC volume: " + std::to_string(v) );
-  m_scheme.bcast< Scheme::box >( v );
+  m_scheme[meshid].bcast< Scheme::box >( v );
 }
 
 void
@@ -1102,28 +1235,31 @@ Transporter::diagnostics( CkReductionMsg* msg )
 //! \note Only used for nodal schemes
 // *****************************************************************************
 {
+  std::size_t meshid;
   std::vector< std::vector< tk::real > > d;
 
   // Deserialize diagnostics vector
   PUP::fromMem creator( msg->getData() );
+  creator | meshid;
   creator | d;
   delete msg;
 
+  auto id = std::to_string(meshid);
   auto ncomp = g_inputdeck.get< tag::component >().nprop();
 
   Assert( ncomp > 0, "Number of scalar components must be positive");
   Assert( d.size() == NUMDIAG, "Diagnostics vector size mismatch" );
 
   for (std::size_t i=0; i<d.size(); ++i)
-     Assert( d[i].size() == ncomp,
-             "Size mismatch at final stage of diagnostics aggregation" );
+     Assert( d[i].size() == ncomp, "Size mismatch at final stage of "
+             "diagnostics aggregation for mesh " + id );
 
   // Allocate storage for those diagnostics that are always computed
   std::vector< tk::real > diag( ncomp, 0.0 );
 
   // Finish computing diagnostics
   for (std::size_t i=0; i<d[L2SOL].size(); ++i)
-    diag[i] = sqrt( d[L2SOL][i] / m_meshvol );
+    diag[i] = sqrt( d[L2SOL][i] / m_meshvol[meshid] );
   
   // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diag, tag::error >();
@@ -1134,7 +1270,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
     if (e == tk::ctr::ErrorType::L2) {
      // Finish computing the L2 norm of the numerical - analytical solution
      for (std::size_t i=0; i<d[L2ERR].size(); ++i)
-       diag.push_back( sqrt( d[L2ERR][i] / m_meshvol ) );
+       diag.push_back( sqrt( d[L2ERR][i] / m_meshvol[meshid] ) );
     } else if (e == tk::ctr::ErrorType::LINF) {
       // Finish computing the Linf norm of the numerical - analytical solution
       for (std::size_t i=0; i<d[LINFERR].size(); ++i)
@@ -1147,7 +1283,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   std::vector< tk::real > l2res( d[L2RES].size(), 0.0 );
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
-      l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol );
+      l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol[meshid] );
       diag.push_back( l2res[i] );
     }
   }
@@ -1156,14 +1292,16 @@ Transporter::diagnostics( CkReductionMsg* msg )
   diag.push_back( d[TOTALSOL][0] );
 
   // Append diagnostics file at selected times
-  tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
+  auto filename = g_inputdeck.get< tag::cmd, tag::io, tag::diag >();
+  if (m_nelem.size() > 1) filename += '.' + id;
+  tk::DiagWriter dw( filename,
                      g_inputdeck.get< tag::flformat, tag::diag >(),
                      g_inputdeck.get< tag::prec, tag::diag >(),
                      std::ios_base::app );
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
-  // Evaluate whether to continue with next step
-  m_scheme.bcast< Scheme::refine >( l2res );
+  // Continue time step
+  m_scheme[meshid].bcast< Scheme::refine >( l2res );
 }
 
 void
@@ -1174,42 +1312,47 @@ Transporter::resume()
 //!   when the restart (returning from a checkpoint) is complete
 // *****************************************************************************
 {
-  if (not m_finished) {
+  if (std::any_of(begin(m_finished), end(m_finished), [](auto f){return !f;})) {
     // If just restarted from a checkpoint, Main( CkMigrateMessage* msg ) has
     // increased nrestart in g_inputdeck, but only on PE 0, so broadcast.
     auto nrestart = g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
-    m_scheme.bcast< Scheme::evalLB >( nrestart );
+    for (std::size_t i=0; i<m_nelem.size(); ++i)
+      m_scheme[i].bcast< Scheme::evalLB >( nrestart );
   } else
     mainProxy.finalize();
 }
 
 void
-Transporter::checkpoint( int finished )
+Transporter::checkpoint( std::size_t finished, std::size_t meshid )
 // *****************************************************************************
 // Save checkpoint/restart files
-//! \param[in] finished True if finished with time stepping
+//! \param[in] finished Nonzero if finished with time stepping
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  m_finished = finished;
+  m_finished[meshid] = finished;
 
-  const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
-
-  if (!benchmark) {
-    const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
-    CkCallback res( CkIndex_Transporter::resume(), thisProxy );
-    CkStartCheckpoint( restart.c_str(), res );
-  } else {
-    resume();
+  if (++m_nchk == m_nelem.size()) { // all worker arrays have checkpointed
+    m_nchk = 0;
+    const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
+    if (!benchmark) {
+      const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
+      CkCallback res( CkIndex_Transporter::resume(), thisProxy );
+      CkStartCheckpoint( restart.c_str(), res );
+    } else {
+      resume();
+    }
   }
 }
 
 void
-Transporter::finish()
+Transporter::finish( std::size_t meshid )
 // *****************************************************************************
 // Normal finish of time stepping
+//! \param[in] meshid Mesh id
 // *****************************************************************************
 {
-  checkpoint( /* finished = */ 1 );
+  checkpoint( /* finished = */ 1, meshid );
 }
 
 #include "NoWarning/transporter.def.h"

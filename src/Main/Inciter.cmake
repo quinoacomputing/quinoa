@@ -32,6 +32,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       MeshDetect
                       Mesh
                       Statistics
+                      ${EXAM2M_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${ROOT_LIBRARIES}
                       ${Zoltan2_LIBRARIES}

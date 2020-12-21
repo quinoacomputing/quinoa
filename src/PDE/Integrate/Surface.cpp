@@ -18,31 +18,37 @@
 #include "Surface.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
+#include "Reconstruction.hpp"
 
 void
 tk::surfInt( ncomp_t system,
              std::size_t nmat,
              ncomp_t offset,
+             real t,
              const std::size_t ndof,
              const std::size_t rdof,
              const std::vector< std::size_t >& inpoel,
              const UnsMesh::Coords& coord,
              const inciter::FaceData& fd,
              const Fields& geoFace,
+             const Fields& geoElem,
              const RiemannFluxFn& flux,
              const VelFn& vel,
              const Fields& U,
              const Fields& P,
+             const Fields& VolFracMax,
              const std::vector< std::size_t >& ndofel,
              Fields& R,
              std::vector< std::vector< tk::real > >& vriem,
              std::vector< std::vector< tk::real > >& riemannLoc,
-             std::vector< std::vector< tk::real > >& riemannDeriv )
+             std::vector< std::vector< tk::real > >& riemannDeriv,
+             int intsharp )
 // *****************************************************************************
 //  Compute internal surface flux integrals
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] inpoel Element-node connectivity
@@ -62,6 +68,8 @@ tk::surfInt( ncomp_t system,
 //!   computed from the Riemann solver for use in the non-conservative terms.
 //!   These derivatives are used only for multi-material hydro and unused for
 //!   single-material compflow and linear transport.
+//! \param[in] intsharp Interface compression tag, an optional argument, with
+//!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
   const auto& esuf = fd.Esuf();
@@ -165,15 +173,18 @@ tk::surfInt( ncomp_t system,
         dof_er = ndofel[er];
       }
 
+      std::array< tk::real, 3> ref_gp_l{
+        Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+        Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+        Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
+      std::array< tk::real, 3> ref_gp_r{
+        Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
+        Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
+        Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r };
+
       //Compute the basis functions
-      auto B_l = eval_basis( dof_el,
-            Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
-            Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
-            Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
-      auto B_r = eval_basis( dof_er,
-            Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
-            Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
-            Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r );
+      auto B_l = eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
+      auto B_r = eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2] );
 
       auto wt = wgp[igp] * geoFace(f,0,0);
 
@@ -189,13 +200,43 @@ tk::surfInt( ncomp_t system,
       state[0].insert(state[0].end(), sprim[0].begin(), sprim[0].end());
       state[1].insert(state[1].end(), sprim[1].begin(), sprim[1].end());
 
+      if (intsharp > 0)
+      {
+        std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
+
+        // Until the appropriate setup for activating THINC with Transport
+        // is ready, the following two chunks of code will need to be commented
+        // for using THINC with Transport
+        for (std::size_t k=0; k<nmat; ++k) {
+          vfmin[k] = VolFracMax(el, 2*k, 0);
+          vfmax[k] = VolFracMax(el, 2*k+1, 0);
+        }
+        tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord, geoElem,
+          ref_gp_l, U, P, vfmin, vfmax, state[0]);
+
+        for (std::size_t k=0; k<nmat; ++k) {
+          vfmin[k] = VolFracMax(er, 2*k, 0);
+          vfmax[k] = VolFracMax(er, 2*k+1, 0);
+        }
+        tk::THINCReco(system, offset, rdof, nmat, er, inpoel, coord, geoElem,
+          ref_gp_r, U, P, vfmin, vfmax, state[1]);
+
+        // Until the appropriate setup for activating THINC with Transport
+        // is ready, the following lines will need to be uncommented for
+        // using THINC with Transport
+        //tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel, coord,
+        //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
+        //tk::THINCRecoTransport(system, offset, rdof, nmat, er, inpoel, coord,
+        //  geoElem, ref_gp_r, U, P, vfmin, vfmax, state[1]);
+      }
+
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
       Assert( state[1].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
 
       // evaluate prescribed velocity (if any)
-      auto v = vel( system, ncomp, gp[0], gp[1], gp[2] );
+      auto v = vel( system, ncomp, gp[0], gp[1], gp[2], t );
 
       // compute flux
       auto fl = flux( fn, state, v );

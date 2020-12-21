@@ -76,60 +76,65 @@ class Transporter : public CBase_Transporter {
     explicit Transporter( CkMigrateMessage* m );
 
     //! Reduction target: the mesh has been read from file on all PEs
-    void load( std::size_t nelem );
+    void load( std::size_t meshid, std::size_t nelem );
+
+    //! Reduction target: a mesh has been partitioned
+    void partitioned( std::size_t meshid );
 
     //! \brief Reduction target: all Solver (PEs) have computed the number of
     //!   chares they will recieve contributions from during linear solution
     void partition();
 
-    //! Reduction target: all PEs have distrbuted their mesh after partitioning
-    void distributed();
+    //! \brief Reduction target: all compute nodes have distrbuted their mesh
+    //!   after partitioning
+    void distributed( std::size_t meshid );
 
     //! Reduction target: all Refiner chares have queried their boundary edges
-    void queriedRef();
+    void queriedRef( std::size_t meshid );
     //! Reduction target: all Refiner chares have setup their boundary edges
-    void respondedRef();
+    void respondedRef( std::size_t meshid );
 
-    //! Reduction target: all PEs have created the mesh refiners
-    void refinserted( int error );
+    //! Reduction target: all compute nodes have created the mesh refiners
+    void refinserted( std::size_t meshid, std::size_t error );
 
     //! Reduction target: all Discretization chares have been inserted
-    void discinserted();
+    void discinserted( std::size_t meshid );
 
     //! Reduction target: all Discretization constructors have been called
-    void disccreated( std::size_t npoin );
+    void disccreated( std::size_t summeshid, std::size_t npoin );
 
     //! \brief Reduction target: all worker (derived discretization) chares have
     //!   been inserted
-    void workinserted();
+    void workinserted( std::size_t meshid );
 
-    //! \brief Reduction target: all mesh refiner chares have received a round
-    //!   of edges, and ran their compatibility algorithm
-    void compatibility( int modified );
+    //! \brief Reduction target: all Refiner chares have received a round
+    //!   of edges, and have run their compatibility algorithm
+    void compatibility( std::size_t meshid, std::size_t modified );
 
-    //! \brief Reduction target: all mesh refiner chares have matched/corrected
+    //! \brief Reduction target: all Refiner chares have matched/corrected
     //!   the tagging of chare-boundary edges, all chares are ready to perform
     //!   refinement.
-    void matched( std::size_t nextra, std::size_t nref, std::size_t nderef,
-                  std::size_t initial );
+    void matched( std::size_t summeshid, std::size_t nextra, std::size_t nref,
+                  std::size_t nderef, std::size_t initial );
 
     //! Compute surface integral across the whole problem and perform leak-test
-    void bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb );
+    void bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb,
+                 tk::real summeshid );
 
-    //! Reduction target: all PEs have optionally refined their mesh
-    void refined( std::size_t nelem, std::size_t npoin );
+    //! Reduction target: all chares have refined their mesh
+    void refined( std::size_t meshid, std::size_t nelem, std::size_t npoin );
 
     //! \brief Reduction target: all worker chares have resized their own data
     //!   after mesh refinement
-    void resized();
+    void resized( std::size_t meshid );
 
     //! Reduction target: all worker chares have generated their own esup
-    void startEsup();
+    void startEsup( std::size_t meshid );
 
     //! Reduction target: all Sorter chares have queried their boundary edges
-    void queried();
+    void queried( std::size_t meshid );
     //! Reduction target: all Sorter chares have setup their boundary edges
-    void responded();
+    void responded( std::size_t meshid );
 
     //! Non-reduction target for receiving progress report on partitioning mesh
     void pepartitioned() { m_progMesh.inc< PART >( printer() ); }
@@ -156,31 +161,32 @@ class Transporter : public CBase_Transporter {
     void chadj() { m_progWork.inc< ADJ >( printer() ); }
 
     //! Reduction target indicating that the communication maps have been setup
-    void comfinal( int initial );
+    void comfinal( std::size_t initial, std::size_t summeshid );
 
     //! Reduction target summing total mesh volume
-    void totalvol( tk::real v, tk::real initial );
+    void totalvol( tk::real v, tk::real initial, tk::real summeshid );
 
     //! \brief Reduction target yielding the minimum mesh statistics across
     //!   all workers
-    void minstat( tk::real d0, tk::real d1, tk::real d2 );
+    void minstat( tk::real d0, tk::real d1, tk::real d2, tk::real rmeshid );
 
     //! \brief Reduction target yielding the maximum mesh statistics across
     //!   all workers
-    void maxstat( tk::real d0, tk::real d1, tk::real d2 );
+    void maxstat( tk::real d0, tk::real d1, tk::real d2, tk::real rmeshid );
 
     //! \brief Reduction target yielding the sum of mesh statistics across
     //!   all workers
     void sumstat( tk::real d0, tk::real d1,
                   tk::real d2, tk::real d3,
-                  tk::real d4, tk::real d5 );
+                  tk::real d4, tk::real d5,
+                  tk::real summeshid );
 
     //! \brief Reduction target yielding PDF of mesh statistics across all
     //!    workers
     void pdfstat( CkReductionMsg* msg );
 
     //! Reduction target computing total volume of IC box
-    void boxvol( tk::real v );
+    void boxvol( tk::real v, tk::real rmeshid );
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
@@ -190,10 +196,10 @@ class Transporter : public CBase_Transporter {
     void resume();
 
     //! Save checkpoint/restart files
-    void checkpoint( int finished );
+    void checkpoint( std::size_t finished, std::size_t meshid );
 
     //! Normal finish of time stepping
-    void finish();
+    void finish( std::size_t meshid = 0 );
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -203,6 +209,13 @@ class Transporter : public CBase_Transporter {
     //!    checkpoint/restart.
     void pup( PUP::er &p ) override {
       p | m_nchare;
+      p | m_meshid;
+      p | m_nload;
+      p | m_npart;
+      p | m_nstat;
+      p | m_ndisc;
+      p | m_nchk;
+      p | m_ncom;
       p | m_ncit;
       p | m_nt0refit;
       p | m_ndtrefit;
@@ -215,7 +228,8 @@ class Transporter : public CBase_Transporter {
       p | m_sorter;
       p | m_nelem;
       p | m_npoin;
-      if (p.isUnpacking()) m_finished = 0;      // returning from checkpoint
+      // returning from checkpoint
+      if (p.isUnpacking()) m_finished.resize( m_nchare.size(), 0 );
       p | m_meshvol;
       p | m_minstat;
       p | m_maxstat;
@@ -229,28 +243,56 @@ class Transporter : public CBase_Transporter {
     //@}
 
   private:
-    int m_nchare;                        //!< Number of worker chares
-    std::size_t m_ncit;                  //!< Number of mesh ref corr iter
-    std::size_t m_nt0refit;              //!< Number of t0ref mesh ref iters
-    std::size_t m_ndtrefit;              //!< Number of dtref mesh ref iters
-    std::size_t m_noutrefit;             //!< Number of outref mesh ref iters
-    std::size_t m_noutderefit;           //!< Number of outderef mesh ref iters
-    Scheme m_scheme;                     //!< Discretization scheme
-    CProxy_Partitioner m_partitioner;    //!< Partitioner nodegroup proxy
-    CProxy_Refiner m_refiner;            //!< Mesh refiner array proxy
-    tk::CProxy_MeshWriter m_meshwriter;  //!< Mesh writer nodegroup proxy
-    CProxy_Sorter m_sorter;              //!< Mesh sorter array proxy
-    std::size_t m_nelem;                 //!< Number of mesh elements
-    std::size_t m_npoin;                 //!< Total number mesh points
-    int m_finished;                      //!< True if finished with timestepping
-    //! Total mesh volume
-    tk::real m_meshvol;
-    //! Minimum mesh statistics
-    std::array< tk::real, 3 > m_minstat;
-    //! Maximum mesh statistics
-    std::array< tk::real, 3 > m_maxstat;
-    //! Average mesh statistics
-    std::array< tk::real, 3 > m_avgstat;
+    //! Number of worker chares (one per mesh)
+    std::vector< int > m_nchare;
+    //! Sum of mesh ids (across all chares, key) for each meshid (value)
+    std::unordered_map< std::size_t, std::size_t > m_meshid;
+    //! Number of mesh ref corr iter (one per mesh)
+    std::vector< std::size_t > m_ncit;
+    //! Number of meshes loaded
+    std::size_t m_nload;
+    //! Number of meshes partitioned
+    std::size_t m_npart;
+    //! Number of mesh statistics computed
+    std::size_t m_nstat;
+    //! Number of Discretization arrays created
+    std::size_t m_ndisc;
+    //! Number of worker arrays checkpointed
+    std::size_t m_nchk;
+    //! Number of worker arrays have finished setting up their comm maps
+    std::size_t m_ncom;
+    //! Number of t0ref mesh ref iters (one per mesh)
+    std::vector< std::size_t > m_nt0refit;
+    //! Number of dtref mesh ref iters (one per mesh)
+    std::vector< std::size_t > m_ndtrefit;
+    //! Number of outref mesh ref iters (one per mesh)
+    std::vector< std::size_t > m_noutrefit;
+    //! Number of outderef mesh ref iters (one per mesh)
+    std::vector< std::size_t > m_noutderefit;
+    //! Discretization scheme (one per mesh)
+    std::vector< Scheme > m_scheme;
+    //! Partitioner nodegroup proxies (one per mesh)
+    std::vector< CProxy_Partitioner > m_partitioner;
+    //! Mesh refiner array proxies (one per mesh)
+    std::vector< CProxy_Refiner > m_refiner;
+    //! Mesh writer nodegroup proxies (one per mesh)
+    std::vector< tk::CProxy_MeshWriter > m_meshwriter;
+    //! Mesh sorter array proxy (one per mesh)
+    std::vector< CProxy_Sorter > m_sorter;
+    //!< Number of mesh elements (per mesh)
+    std::vector< std::size_t > m_nelem;
+    //!< Number of mesh points (per mesh)
+    std::vector< std::size_t > m_npoin;
+    //!< Nonzero if finished with timestepping (one per mesh)
+    std::vector< std::size_t > m_finished;
+    //! Total mesh volume (one per mesh)
+    std::vector< tk::real > m_meshvol;
+    //! Minimum mesh statistics (one per mesh)
+    std::vector< std::array< tk::real, 3 > > m_minstat;
+    //! Maximum mesh statistics (one per mesh)
+    std::vector< std::array< tk::real, 3 > > m_maxstat;
+    //! Average mesh statistics (one per mesh)
+    std::vector< std::array< tk::real, 3 > > m_avgstat;
     //! Timer tags
     enum class TimerTag { MESH_READ=0 };
     //! Timers
@@ -318,6 +360,9 @@ class Transporter : public CBase_Transporter {
 
     //! Verify boundary condition (BC) side sets used exist in mesh file
     bool matchBCs( std::map< int, std::vector< std::size_t > >& bnd );
+
+    //! Print out mesh statistics
+    void meshstat( const std::string& header ) const;
 };
 
 } // inciter::

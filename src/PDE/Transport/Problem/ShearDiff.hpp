@@ -87,7 +87,8 @@ class TransportProblemShearDiff {
                         ncomp_t ncomp,
                         tk::real,
                         tk::real y,
-                        tk::real z );
+                        tk::real z,
+                        tk::real );
 
     //! Return problem type
     static ctr::ProblemType type() noexcept

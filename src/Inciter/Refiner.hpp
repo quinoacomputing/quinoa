@@ -72,7 +72,8 @@ class Refiner : public CBase_Refiner {
       OUTDEREF };       //!< De-refinement after field output
 
     //! Constructor
-    explicit Refiner( const CProxy_Transporter& transporter,
+    explicit Refiner( std::size_t meshid,
+                      const CProxy_Transporter& transporter,
                       const CProxy_Sorter& sorter,
                       const tk::CProxy_MeshWriter& meshwriter,
                       const Scheme& scheme,
@@ -161,6 +162,7 @@ class Refiner : public CBase_Refiner {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_meshid;
       p | m_host;
       p | m_sorter;
       p | m_meshwriter;
@@ -223,6 +225,8 @@ class Refiner : public CBase_Refiner {
     //@}
 
   private:
+    //! Mesh ID
+    std::size_t m_meshid;
     //! Host proxy
     CProxy_Transporter m_host;
     //! Mesh sorter proxy

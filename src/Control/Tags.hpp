@@ -124,6 +124,7 @@ struct t0ref { static std::string name() { return "t0ref"; } };
 struct dtref { static std::string name() { return "dtref"; } };
 struct dtref_uniform { static std::string name() { return "dtref_uniform"; } };
 struct partitioner { static std::string name() { return "partitioner"; } };
+struct partitioned { static std::string name() { return "partitioned"; } };
 struct scheme { static std::string name() { return "scheme"; } };
 struct initpolicy { static std::string name() { return "initpolicy"; } };
 struct coeffpolicy { static std::string name() { return "coeffpolicy"; } };
@@ -153,6 +154,9 @@ struct nmat { static std::string name() { return "nmat"; } };
 struct prelax { static std::string name() { return "prelax"; } };
 struct prelax_timescale {
   static std::string name() { return "prelax_timescales"; } };
+struct intsharp { static std::string name() { return "intsharp"; } };
+struct intsharp_param {
+  static std::string name() { return "intsharp_param"; } };
 struct tty { static std::string name() { return "tty"; } };
 struct dump {};
 struct plot {};

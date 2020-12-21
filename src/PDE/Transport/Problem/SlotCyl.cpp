@@ -112,7 +112,8 @@ TransportProblemSlotCyl::initialize( ncomp_t, ncomp_t ncomp, tk::real x,
 
 std::vector< std::array< tk::real, 3 > >
 TransportProblemSlotCyl::prescribedVelocity( ncomp_t, ncomp_t ncomp,
-                                             tk::real x, tk::real y, tk::real )
+                                             tk::real x, tk::real y, tk::real,
+                                             tk::real )
 // *****************************************************************************
 //  Assign prescribed shear velocity at a point
 //! \param[in] ncomp Number of components in this transport equation
