@@ -14,6 +14,12 @@
 */
 // *****************************************************************************
 
+#ifdef HAS_MKL
+  #include <mkl_lapacke.h>
+#else
+  #include <lapacke.h>
+#endif
+
 #include "MultiMatTerms.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
@@ -506,8 +512,13 @@ solvevriem( std::size_t nelem,
         for(std::size_t i = 0; i < numgp; i++)
           u[k] += A[i][k] * vel[i];
  
-      // Solve the 4x4 linear system by LU method
+      // Solve the 4x4 linear system
       LU(4, AA_T, u, x);
+
+      //int info;
+      //tk::real IPIV[4];
+      //tk::real Work[4];
+      //LAPACKE_dsysv( LAPACK_ROW_MAJOR, 'U', 4, 4, AA_T, 4, IPIV, u, 4, Work, 4, info);
 
       auto idirmark = idir * 4;
       for(std::size_t k = 0; k < 4; k++)
