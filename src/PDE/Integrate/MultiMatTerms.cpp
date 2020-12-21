@@ -276,8 +276,7 @@ updateRhsNonCons(
     }
 
     // Update rhs with distributions from the rest of the equatons
-    //for (std::size_t c=energyIdx(nmat,0); c<energyIdx(nmat,nmat); ++c)
-    for (ncomp_t c=nmat; c<ncomp; ++c)
+    for (std::size_t c=energyIdx(nmat,0); c<energyIdx(nmat,nmat); ++c)
     {
       auto mark = c*ndof;
       for(std::size_t idof = 1; idof < ndof; idof++)
