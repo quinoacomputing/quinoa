@@ -977,6 +977,10 @@ void BoundPreservingLimiting( std::size_t nmat,
     // get quadrature point weights and coordinates for triangle
     tk::GaussQuadratureTri( ng, coordgp, wgp );
 
+    // Compute the upper and lower bound for volume fraction
+    tk::real min = 1e-14;
+    tk::real max = 1.0 - min;
+
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
     {
@@ -998,14 +1002,14 @@ void BoundPreservingLimiting( std::size_t nmat,
         if(al > 1.0)
         {
           phi = std::fabs(
-                  (1.0 - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
+                  (max - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
                 / (al  - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset)) );
         }
         else if(al < 1e-14)
         {
           phi = std::fabs(
-                    (1e-14 - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
-                  / (al    - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset)) );
+                    (min - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
+                  / (al  - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset)) );
         }
 
         phi_bound[imat] = std::min( phi_bound[imat], phi );
