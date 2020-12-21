@@ -45,7 +45,7 @@ nonConservativeInt( ncomp_t system,
 
 //! Update the rhs by adding the non-conservative term integrals
 void
-update_rhs_ncn( ncomp_t ncomp,
+updateRhsNonCons( ncomp_t ncomp,
                 ncomp_t offset,
                 const std::size_t nmat,
                 const std::size_t ndof,
@@ -74,7 +74,7 @@ pressureRelaxationInt( ncomp_t system,
 
 //! Update the rhs by adding the pressure relaxation integrals
 void
-update_rhs_pre(
+updateRhsPre(
   ncomp_t ncomp,
   ncomp_t offset,
   const std::size_t ndof,

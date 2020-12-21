@@ -192,8 +192,9 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
         }
 
         // evaluate non-conservative term for volume fraction equation
-        ncf[volfracIdx(nmat, k)][0] = ugp[volfracIdx(nmat, k)]
-                                    * riemannDeriv[3*nmat][e];
+        for(std::size_t idof=0; idof<ndof; ++idof)
+          ncf[volfracIdx(nmat, k)][idof] = ugp[volfracIdx(nmat, k)]
+                                         * riemannDeriv[3*nmat][e] * B[idof];
 
         // evaluate the non-conservative term for volume fraction equation in
         // high order discretization. The following code compuetes the
@@ -201,18 +202,18 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
         //      alpha * (d(u*B)/dx) = alpha * (u*dBdx + B*dudx)
         if(ndof > 1)
          for(std::size_t idof=1; idof<ndof; ++idof)
-            ncf[volfracIdx(nmat, k)][idof] = ugp[volfracIdx(nmat, k)] *
-              (riemannDeriv[3*nmat][e] * B[idof] + vriem[0] * dBdx[0][idof]
-              + vriem[1] * dBdx[1][idof] + vriem[2] * dBdx[2][idof]);
+          for(std::size_t idir=0; idir<3; ++idir)
+            ncf[volfracIdx(nmat, k)][idof] += ugp[volfracIdx(nmat, k)] *
+              vriem[idir] * dBdx[idir][idof];
       }
 
-      update_rhs_ncn( ncomp, offset, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
+      updateRhsNonCons( ncomp, offset, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
     }
   }
 }
 
 void
-update_rhs_ncn(
+updateRhsNonCons(
   ncomp_t ncomp,
   ncomp_t offset,
   const std::size_t nmat,
@@ -239,6 +240,9 @@ update_rhs_ncn(
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
+  using inciter::volfracIdx;
+  using inciter::energyIdx;
+
   //Assert( dBdx[0].size() == ndof_el,
   //        "Size mismatch for basis function derivatives" );
   //Assert( dBdx[1].size() == ndof_el,
@@ -258,7 +262,7 @@ update_rhs_ncn(
   if( ndof_el > 1)
   {
     // Update rhs with distributions from volume fraction equations
-    for (std::size_t k=0; k<nmat; ++k)
+    for (std::size_t k=volfracIdx(nmat,0); k<volfracIdx(nmat,nmat); ++k)
     {
       auto mark = k*ndof;
       for(std::size_t idof = 1; idof < ndof; idof++)
@@ -266,6 +270,7 @@ update_rhs_ncn(
     }
 
     // Update rhs with distributions from the rest of the equatons
+    //for (std::size_t c=energyIdx(nmat,0); c<energyIdx(nmat,nmat); ++c)
     for (ncomp_t c=nmat; c<ncomp; ++c)
     {
       auto mark = c*ndof;
@@ -401,13 +406,13 @@ pressureRelaxationInt( ncomp_t system,
         s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
       }
 
-      update_rhs_pre( ncomp, offset, ndof, dof_el, wt, e, B, s_prelax, R );
+      updateRhsPre( ncomp, offset, ndof, dof_el, wt, e, B, s_prelax, R );
     }
   }
 }
 
 void
-update_rhs_pre(
+updateRhsPre(
   ncomp_t ncomp,
   ncomp_t offset,
   const std::size_t ndof,
