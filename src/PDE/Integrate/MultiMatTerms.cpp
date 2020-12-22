@@ -14,6 +14,8 @@
 */
 // *****************************************************************************
 
+#include "QuinoaConfig.hpp"
+
 #ifdef HAS_MKL
   #include <mkl_lapacke.h>
 #else
