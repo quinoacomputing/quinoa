@@ -492,16 +492,18 @@ solvevriem( std::size_t nelem,
       A[k][3] = riemannLoc[e][mark+2];
     }
 
-    std::vector< std::vector< tk::real > > AA_T(4, std::vector<tk::real>(4, 0.0));
-    for(std::size_t i = 0; i < 4; i++)
-      for(std::size_t j = 0; j < 4; j++)
-        for(std::size_t k = 0; k < numgp; k++)
-          AA_T[i][j] += A[k][i] * A[k][j];
-
     for(std::size_t idir = 0; idir < 3; idir++)
     {
-      std::vector<tk::real> x(4, 0.0);
-      std::vector<tk::real> u(4, 0.0);
+      double AA_T[4*4], u[4];
+
+      for(std::size_t i = 0; i < 4; i++)
+        for(std::size_t j = 0; j < 4; j++)
+        {
+          auto id = 4 * i + j;
+          AA_T[id] = 0;
+          for(std::size_t k = 0; k < numgp; k++)
+            AA_T[id] += A[k][i] * A[k][j];
+        }
 
       std::vector<tk::real> vel(numgp, 1.0);
       for(std::size_t k = 0; k < numgp; k++)
@@ -510,20 +512,22 @@ solvevriem( std::size_t nelem,
         vel[k] = vriem[e][mark];
       }
       for(std::size_t k = 0; k < 4; k++)
+      {
+        u[k] = 0;
         for(std::size_t i = 0; i < numgp; i++)
           u[k] += A[i][k] * vel[i];
+      }
  
-      // Solve the 4x4 linear system
-      LU(4, AA_T, u, x);
-
-      //int info;
-      //tk::real IPIV[4];
-      //tk::real Work[4];
-      //LAPACKE_dsysv( LAPACK_ROW_MAJOR, 'U', 4, 4, AA_T, 4, IPIV, u, 4, Work, 4, info);
+      int IPIV[4];
+      #ifndef NDEBUG
+      int info =
+      #endif
+        LAPACKE_dsysv( LAPACK_ROW_MAJOR, 'U', 4, 1, AA_T, 4, IPIV, u, 1 );
+      Assert( info == 0, "Error in linear system solver" );
 
       auto idirmark = idir * 4;
       for(std::size_t k = 0; k < 4; k++)
-        vriempoly[e][idirmark+k] = x[k];
+        vriempoly[e][idirmark+k] = u[k];
     }
   }
   return vriempoly;

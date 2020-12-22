@@ -336,47 +336,6 @@ cramer( const std::array< std::array< tk::real, 3 >, 3>& a,
   return x;
 }
 
-
-//!  Solve a nxn system of equations using LU method
-//!   \param[in] n Dimension of the linear system
-//!   \param[in] A nxn lhs matrix
-//!   \param[in] b nx1 rhs matrix
-//!   \param[in,out] x Vector of solutions
-inline void
-LU( const std::size_t n,
-    const std::vector< std::vector< tk::real > >& A,
-    const std::vector< tk::real >& b,
-    std::vector< tk::real >& x )
-{
-  std::vector< std::vector< tk::real > >L(n, std::vector<tk::real>(n,0.0));
-  auto U = A;
-
-  for (std::size_t j = 0; j < n-1; j++)
-  {
-    for (std::size_t i = j+1; i < n; i++)
-    {
-      L[i][j] = U[i][j] / U[j][j];
-      for (std::size_t k = j+1; k < n; k++ )
-        U[i][k] = U[i][k] - L[i][j] * U[j][k];
-    }
-  }
-
-  auto y = b;
-
-  for ( std::size_t i = 0; i < n; i++ )
-    for (std::size_t j = 0; j < i; j++ )
-      y[i] = y[i] - L[i][j] * y[j];
-
-  for ( std::size_t i = n; i > 0; i-- )
-  {
-    x[i-1] = y[i-1];
-
-    for ( std::size_t j = i; j < n; j++ )
-      x[i-1] = x[i-1] - U[i-1][j] * x[j];
-    x[i-1] = x[i-1] / U[i-1][i-1];
-  }
-}
-
 } // tk::
 
 #endif // Vector_h
