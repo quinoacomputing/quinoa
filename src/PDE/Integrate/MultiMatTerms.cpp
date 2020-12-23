@@ -518,9 +518,9 @@ solvevriem( std::size_t nelem,
           u[k] += A[i][k] * vel[i];
       }
  
-      int IPIV[4];
+      lapack_int IPIV[4];
       #ifndef NDEBUG
-      int info =
+      lapack_int info =
       #endif
         LAPACKE_dsysv( LAPACK_ROW_MAJOR, 'U', 4, 1, AA_T, 4, IPIV, u, 1 );
       Assert( info == 0, "Error in linear system solver" );
