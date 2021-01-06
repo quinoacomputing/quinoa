@@ -1,0 +1,11 @@
+namespace inciter {
+/*!
+ \page      inciter_dg Single-material DG hydrodynamics
+
+@tableofcontents{xml}
+
+@ref inciter_main supports multiple hydrodynamics schemes. This page describes
+the `DG` method for single-material flows.
+
+*/
+} // inciter::

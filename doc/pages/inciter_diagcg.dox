@@ -1,0 +1,13 @@
+namespace inciter {
+/*!
+  \page      inciter_diagcg DiagCG hydrodynamics
+
+@tableofcontents{xml}
+
+@ref inciter_main supports multiple hydrodynamics schemes. This page describes
+the `DiagCG` method.
+
+DiagCG is the first hydrodynamics method that was implemented in @ref inciter_main.
+
+*/
+} // inciter::
