@@ -50,6 +50,10 @@ Inciter currently has three different family of fluid dynamics algorithms:
    and @ref papers_inciter "Inciter papers" for more details.
 
 @section inciter_pages Related pages
+- @ref inciter_diagcg "DiagCG hydrodynamics"
+- @ref inciter_alecg "ALECG hydrodynamics"
+- @ref inciter_dg "Single-material DG hydrodynamics"
+- @ref inciter_mm "Multi-material DG hydrodynamics"
 - @ref inciter_cmd "Command line arguments"
 - @ref inciter_ctr "Control file keywords"
 - @ref papers_inciter "Publications"
@@ -58,10 +62,6 @@ Inciter currently has three different family of fluid dynamics algorithms:
 - @ref inciter_design "Software design"
 - @ref inciter_newscheme "How to add a new scheme"
 - @ref inciter_newpde "How to add a new PDE type"
-- @ref inciter_diagcg "DiagCG hydrodynamics"
-- @ref inciter_alecg "ALECG hydrodynamics"
-- @ref inciter_dg "Single-material DG hydrodynamics"
-- @ref inciter_mm "Multi-material DG hydrodynamics"
 - @ref layout "Data layout"
 - @ref inciter_examples "Examples"
 */

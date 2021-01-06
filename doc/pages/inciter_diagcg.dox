@@ -5,9 +5,313 @@ namespace inciter {
 @tableofcontents{xml}
 
 @ref inciter_main supports multiple hydrodynamics schemes. This page describes
-the `DiagCG` method.
+the `DiagCG` method at a high level, for more details, see @ref papers_inciter
+"Inciter papers".
 
-DiagCG is the first hydrodynamics method that was implemented in @ref inciter_main.
+@section diagcg_euler The equations of compressible flow
+
+The governing equations solved are the 3D unsteady Euler equations, governing
+inviscid compressible flow, written here in the flux-conservative form
+\f[ \begin{split}
+\frac{\partial U}{\partial t} + \frac{\partial F_j}{\partial x_j} = S,\qquad
+U = \begin{Bmatrix} \rho \\ \rho u_i \\ \rho E \end{Bmatrix}, \enskip F_j =
+\begin{Bmatrix} \rho u_j \\ \rho u_iu_j + p\delta_{ij} \\ u_j(\rho E + p)
+\end{Bmatrix}, \enskip
+S = \begin{Bmatrix} S_\rho \\ S_{u,i} \\ S_E \end{Bmatrix},
+\end{split} \f]
+where the summation convention on repeated indices has been applied, and
+\f$\rho\f$ is the density, \f$u_i\f$ the velocity vector, \f$E=u_iu_i/2+e\f$ is
+the specific total energy, \f$e\f$ is the specific internal energy, and \f$p\f$
+is the pressure.  \f$S_\rho\f$, \f$S_{u,i}\f$, and \f$S_E\f$ are source terms
+that arise from the application of the method of manufactured solutions, used
+for verification; these source terms are zero when computing practical
+engineering problems. The system is closed with the ideal gas law equation of
+state
+\f[ \begin{split}
+p = \rho e (\gamma - 1),
+\end{split} \f]
+where \f$\gamma\f$ is the ratio of specific heats. The exact form of the
+equation of state is of secondary importance, in principle any analytic
+equation of state could be used.
+
+@section diagcg_solver The flow solver
+
+This section describes discretization in space and time, and flux-corrected
+transport. The method is based on a continuous Galerkin finite element method
+for linear tetrahedra.
+
+@subsection diagcg_space Discretization in space
+To arrive at a continuous Galerkin finite element method we start from the weak
+form of the governing equations above,
+\f[ \begin{split}
+\int_{\Omega} N^v \left(\frac{\partial U}{\partial t} + \frac{\partial
+F_j}{\partial x_j} - S\right)\mathrm{d}\Omega = 0, \quad v=1,2,\dots,n,
+\end{split} \f]
+which requires that the error in the numerical solution, sampled at \f$n\f$
+discrete points, \f$v\f$, using the weighting functions \f$N^v\f$, vanish on
+the whole domain, \f$\Omega\f$, in an integral sense. Numerically approximating
+the solution as \f$U \approx N^w \hat{U}_w\f$, where \f$\hat{U}_w\f$ denotes
+the unknowns at the discrete node \f$w\f$, leads to the Galerkin weak statement
+\f[ \begin{split}
+\int_{\Omega} N^v \bigg[N^w\frac{\partial\hat{U}_w}{\partial t} +
+\frac{\partial}{\partial x_j}F_j(N^w \hat{U}_w) -
+S(N^w\hat{U}_w)\bigg]\mathrm{d}\Omega = 0.
+\end{split} \f]
+Integrating the flux term by parts, neglecting the resulting boundary integral
+(assuming zero flux on the problem boundary), and applying \f$F_j(N^w
+\hat{U}_w) \approx N^w F_j(\hat{U}_w)\f$ and \f$S(N^w \hat{U}_w) \approx N^w
+S(\hat{U}_w)\f$, see @ref papers_inciter "Inciter papers", yields the final weak
+form for the whole domain, \f$\Omega\f$,
+\f[ \begin{split}
+\int_{\Omega} N^v N^w \mathrm{d}\Omega \frac{\partial\hat{U}_w}{\partial t} -
+\int_{\Omega} N^w \mathrm{d}\Omega \frac{\partial N^v}{\partial x_j}
+F_j(\hat{U}_w) - \int_{\Omega} N^v N^w \mathrm{d}\Omega \enskip S(\hat{U}_w) = 0.
+\end{split} \f]
+All integrals above are evaluated by breaking up the domain, \f$\Omega\f$, into
+sub-domains as a sum over integrals over discrete elements, \f$\Omega_e\f$,
+\f[ \begin{split}
+\sum_{\Omega_e \in v} \sum_{w \in \Omega_e} \int_{\Omega_e} N^v N^w
+\mathrm{d}\Omega_e \frac{\partial\hat{U}_w}{\partial t} & = \\ \sum_{\Omega_e \in
+v} \sum_{w \in \Omega_e} \int_{\Omega_e} N^w & \mathrm{d}\Omega_e \frac{\partial
+N^v}{\partial x_j} F_j(\hat{U}_w) + \sum_{\Omega_e \in v} \sum_{w \in \Omega_e}
+\int_{\Omega} N^v N^w \mathrm{d}\Omega \enskip S(\hat{U}_w),
+\end{split} \f]
+where the inner summation is over points \f$w\f$ forming \f$\Omega_e\f$
+(gather) and the outer summation is over tetrahedra \f$\Omega_e\f$ connected to
+point \f$v\f$ (scatter). The above equations result in the following
+semi-discrete system of equations
+\f[ \begin{split}
+{\mbox{\boldmath$M$}}_c \mbox{\boldmath$\hat{U}$},_{t} =
+{\mbox{\boldmath$r$}}({\mbox{\boldmath$\hat{U}$}}),
+\end{split} \f]
+where the comma denotes a derivative. The size of the consistent mass matrix
+\f$M_c\f$ is \f$n \times n\f$, where \f$n\f$ is the number of nodes of the
+computational mesh. According to the sum above, only those elements contribute
+to a given row \f$v\f$ of \f${\mbox{\boldmath$M$}}_c\f$ which contain node
+\f$v\f$ (scatter), thus \f${\mbox{\boldmath$M$}}_c\f$ is sparse.
+
+@subsection diagcg_time Discretization in time
+
+The equation above is discretized in time using a Lax-Wendroff
+(Taylor-Galerkin) scheme, see @ref papers_inciter "Inciter papers", implemented
+using two stages:
+\f[ \begin{split}\begin{aligned}
+U^{n+1/2} & = U^n + \frac{\Delta t}{2} U^n_{,t} = U^n - \frac{\Delta t}{2}
+\frac{\partial}{\partial x_j} F_j(U^n) + \frac{\Delta t}{2} S(U^n), \\
+\Delta U & = U^{n+1} - U^n = \Delta t U^{n+1/2}_{,t} = -\Delta t
+\frac{\partial}{\partial x_j} F_j(U^{n+1/2}) + \Delta t S(U^{n+1/2}).
+\end{aligned}\end{split} \f]
+The above scheme combined with linear shape functions is identical to a
+two-stage Runge-Kutta Galerkin finite element method, and thus central
+differencing without damping. Stabilization is obtained by using constant shape
+functions for the half step solution where the gather results in element
+quantities, followed by a scatter step using linear shape functions resulting
+in nodal quantities. Assuming linear tetrahedra, the combined spatial and
+temporal discretization that achieves this yields the following staggered
+scheme, see also @ref papers_inciter "Inciter papers":
+\f[ \begin{split}\begin{aligned}
+U^{n+1/2}_e & = \frac{1}{4}\sum_{w=1}^4 \hat{U}^n_w - \frac{\Delta t}{2}
+\sum_{w=1}^4 \frac{\partial N^w}{\partial x_j} F_j(\hat{U}^n_w) + \frac{\Delta
+t}{2} \frac{1}{4} \sum_{w=1}^4 S(\hat{U}^n_w),\\
+\sum_{\Omega_e \in v} \sum_{w \in \Omega_e} \int_{\Omega_e} N^v N^w
+\mathrm{d}\Omega_e \Delta \hat{U}_w & = \Delta t \int_{\Omega_e} \frac{\partial
+N^v}{\partial x_j} F_j(U_e^{n+1/2}) \mathrm{d}\Omega_e + \Delta t
+\int_{\Omega_e} N^v S(U_e^{n+1/2}) \mathrm{d}\Omega_e \\
+\end{aligned}\end{split} \f]
+where \f$U_e^{n+1/2}\f$ is the vector of element-centered solutions at the half
+step. Note that the first step discretizes the flux integral _before_
+integration by parts, while the second one _after_ integration by parts, hence
+the difference in sign.
+
+@subsection diagcg_fct Flux-corrected transport
+
+Flux-corrected transport (FCT) is a solution to circumvent the consequence of
+Godunov's theorem, see @ref papers_inciter "Inciter papers", which states that
+no linear scheme of order greater than 1 will yield monotonic solutions.
+Accordingly, FCT is a nonlinear scheme that combines a high-, and a low-order
+scheme using limiting.
+
+In the FCT scheme we use, the high-order solution at the new time step can be
+written as
+\f[ \begin{split}
+{\mbox{\boldmath$U$}}^{n+1} = {\mbox{\boldmath$U$}}^n +
+\Delta{\mbox{\boldmath$U$}}^h = {\mbox{\boldmath$U$}}^n +
+\Delta{\mbox{\boldmath$U$}}^l + (\Delta{\mbox{\boldmath$U$}}^h -
+\Delta{\mbox{\boldmath$U$}}^l) = {\mbox{\boldmath$U$}}^l +
+(\Delta{\mbox{\boldmath$U$}}^h - \Delta{\mbox{\boldmath$U$}}^l),
+\end{split} \f]
+where \f$\Delta {\mbox{\boldmath$U$}}^h\f$ and \f$\Delta
+{\mbox{\boldmath$U$}}^l\f$ denote the solution increments of the high-, and
+low-order schemes, respectively. In the equations above it is the last term
+that is limited in a way to avoid spurious oscillations as
+\f[ \begin{split}
+{\mbox{\boldmath$U$}}^{n+1} = {\mbox{\boldmath$U$}}^l +
+\mathrm{lim}(\Delta{\mbox{\boldmath$U$}}^h - \Delta{\mbox{\boldmath$U$}}^l),
+\end{split} \f]
+The high-order scheme scheme, given above is symbolically written as
+\f[ \begin{split}
+{\mbox{\boldmath$M$}}_c \Delta{\mbox{\boldmath$U$}}^h = {\mbox{\boldmath$r$}}.
+\end{split} \f]
+From the equation above we construct a low order scheme by lumping the mass
+matrix and adding mass diffusion
+\f[ \begin{split}
+{\mbox{\boldmath$M$}}_l \Delta{\mbox{\boldmath$U$}}^l = {\mbox{\boldmath$r$}} +
+{\mbox{\boldmath$d$}} = {\mbox{\boldmath$r$}} - c_\tau({\mbox{\boldmath$M$}}_l -
+{\mbox{\boldmath$M$}}_c) {\mbox{\boldmath$U$}}
+\end{split} \f]
+where \f${\mbox{\boldmath$M$}}_l\f$ is the lumped mass matrix and \f$c_\tau\f$
+is a diffusion coefficient. Using \f$c_\tau=1\f$ guarantees a monotone low
+order solution, see @ref papers_inciter "Inciter papers". If we rewrite the
+above equation as
+\f[ \begin{split}
+{\mbox{\boldmath$M$}}_l\Delta {\mbox{\boldmath$U$}}^h = {\mbox{\boldmath$r$}} +
+({\mbox{\boldmath$M$}}_l - {\mbox{\boldmath$M$}}_c) \Delta
+{\mbox{\boldmath$U$}}^h
+\end{split} \f]
+the difference between the right hand sides of the high and low order
+schemes can be recognized as
+\f[ \begin{split}
+\mathrm{AEC} = \Delta {\mbox{\boldmath$U$}}^h - \Delta {\mbox{\boldmath$U$}}^l
+= {\mbox{\boldmath$M$}}_l^{-1} ({\mbox{\boldmath$M$}}_l -
+{\mbox{\boldmath$M$}}_c)(c_\tau{\mbox{\boldmath$U$}}^n +
+\Delta{\mbox{\boldmath$U$}}^h),
+\end{split} \f]
+also called as the anti-diffusive element contributions (AEC). The AEC is then
+limited, \f$C_e\cdot\mathrm{AEC}\f$, and applied to advance the solution to the
+next time step using the equation above, where \f$0 \le C_e \le 1\f$ is the
+limit coefficient for a given element \f$e\f$.
+
+@subsection diagcg_limiting The limiting procedure
+
+The limiting procedure to compute \f$C_e\f$ closely follows the procedure
+discussed in the @ref papers_inciter "Inciter papers".  The description here is
+given in terms of how the algorithm is broken up into computational tasks.
+
+Task _Left-hand side_ \f$\textbf{(\texttt{LHS})}\f$.
+The weak sum above shows that the LHS is the consistent mass matrix.
+\f${\mbox{\boldmath$M$}}_c\f$ is lumped by summing the rows to the diagonals.
+Inverting \f${\mbox{\boldmath$M$}}_c\f$ distributed across computers would be
+costly. Using a lumped (diagonal) matrix instead reduces computational cost and
+software complexity at the cost of some additional numerical error but does not
+reduce the order of accuracy of the method, see @ref papers_inciter
+"Inciter papers". If the mesh does not move and its topology does not change,
+the LHS needs no update between time steps. The limiting procedure to compute
+\f$C_e\f$ closely follows the procedure discussed in the @ref papers_inciter
+"Inciter papers". The description here is given in terms of how the algorithm
+is broken up into computational tasks.
+
+Task _Right-hand side_ \f$\textbf{(\texttt{RHS})}\f$.
+The high-order right hand side is computed by the two-step procedure given
+above.  Since the two steps are staggered, the gather takes information from
+nodes to cell centers, followed by a scatter, moving information from cells to
+nodes, both steps are contained within a single right hand side calculation
+within a time step. Within the two steps there is no need for parallel
+communication as an element always resides on a given mesh partition and only
+mesh nodes are shared between processing elements (PEs).
+
+Task _Diffusion_ \f$\textbf{(\texttt{DIF})}\f$.
+A step of the limiting procedure is to compute the mass diffusion term. Using
+linear tetrahedra, this is given for each element by
+\f[ \begin{split}
+- \big[c_\tau({\mbox{\boldmath$M$}}_l - {\mbox{\boldmath$M$}}_c)\big]_e =
+  -\frac{c_\tau J_e}{120}
+  \begin{bmatrix}
+    \phantom{-}3 & -1 & -1 & -1 \\
+    -1 & \phantom{-}3 & -1 & -1 \\
+    -1 & -1 & \phantom{-}3 & -1 \\
+    -1 & -1 & -1 & \phantom{-}3 \\
+  \end{bmatrix},
+\end{split} \f]
+where \f$J_e=\overrightarrow{BA} \cdot (\overrightarrow{CA} \times
+\overrightarrow{DA})\f$ is the element Jacobian, computed from the triple
+product of the edge vectors of the tetrahedron given by vertices \f$A,B,C\f$,
+and \f$D\f$.
+
+Task _Anti-diffusive element contributions_ \f$\textbf{(\texttt{AEC})}\f$.
+Another step is to compute the anti-diffusive element contributions for each
+element. For this \f${\mbox{\boldmath$M$}}_l-{\mbox{\boldmath$M$}}_c\f$ is
+given above, and the inverse of the lumped mass matrix,
+\f${\mbox{\boldmath$M$}}_l^{-1}\f$ is obtained from the nodal cell volumes,
+computed by summing the quarter of each tetrahedron element volume to nodes.
+Once the AECs are computed for each element, the next immediate step is to sum
+all positive (negative) anti-diffusive element contributions to node \f$i\f$
+\f[ \begin{split}
+P_i^{\pm} = \sum_e \begin{Bmatrix} \max \\ \min \end{Bmatrix} (0,\mathrm{AEC}_e)
+\end{split} \f]
+
+Task _Allowed limits_ \f$\textbf{(\texttt{ALW})}\f$.
+The limiting procedure requires the maximum and minimum nodal values of the
+low-order solution, \f${\mbox{\boldmath$U$}}^l\f$, and the previous solution,
+\f${\mbox{\boldmath$U$}}^n\f$,
+\f[ \begin{split}
+{\mbox{\boldmath$U$}}_i^* = \begin{Bmatrix} \max \\ \min \end{Bmatrix}
+({\mbox{\boldmath$U$}}^l_i,{\mbox{\boldmath$U$}}^n).
+\end{split} \f]
+Another alternative is to only consider the low order solution,
+\f${\mbox{\boldmath$U$}}_l\f$,
+when computing the allowed solution bounds, which leads to the so-called
+'clipping limiter' in place of the equation above: \f${\mbox{\boldmath$U$}}_i^*
+= {\mbox{\boldmath$U$}}^l_i\f$. This is followed by computing the maximum and
+minimum nodal values of all elements,
+\f[ \begin{split}
+{\mbox{\boldmath$U$}}_e^* = \begin{Bmatrix} \max \\ \min \end{Bmatrix}
+({\mbox{\boldmath$U$}}^*_A,{\mbox{\boldmath$U$}}^*_B,{\mbox{\boldmath$U$}}^*_C,{\mbox{\boldmath$U$}}^*_D),
+\end{split} \f]
+then computing the maximum and minimum unknowns of the elements surrounding
+each node,
+\f[ \begin{split}
+{\mbox{\boldmath$U$}}_i^{\tiny\begin{matrix} \max \\ \min \end{matrix}} =
+\begin{Bmatrix} \max \\ \min \end{Bmatrix}
+({\mbox{\boldmath$U$}}^*_1,{\mbox{\boldmath$U$}}^*_2,\dots,{\mbox{\boldmath$U$}}^*_m).
+\end{split} \f]
+The limit coefficients will be computed (see below) based on \f$P_i^{\pm}\f$
+and the maximum and minimum increments and decrements the nodal solution values
+are allowed to achieve,
+\f[ \begin{split}
+Q_i^{\pm} = {\mbox{\boldmath$U$}}_i^{\tiny\begin{matrix} \max \\ \min
+\end{matrix}} - {\mbox{\boldmath$U$}}^l.
+\end{split} \f]
+
+Task _Limit coefficients_ \f$\textbf{(\texttt{LIM})}\f$.
+Defining the ratios of positive and negative element contributions for each
+node \f$i\f$ that ensure monotonicity as
+\f[ \begin{split}
+R_i^{\pm} = \left\{\begin{matrix} \min(1,Q_i^{\pm}/P_i^{\pm}) & P_i^+ > 0 >
+P_i^- \\ 1 & \mathrm{otherwise} \end{matrix} \right.,
+\end{split} \f]
+the limit coefficient for each element is taken as the most conservative ratio
+\f[ \begin{split}
+C_e = \min_{i \in \Omega_e}
+\left\{\begin{matrix} R_i^+ & \mathrm{AEC}>0 \\ R_i^- & \mathrm{AEC}<0
+\end{matrix}\right..
+\end{split} \f]
+The limited AEC is then scatter-added to nodes
+\f[ \begin{split}
+A_i = \sum_{i \in \Omega_e} C_e \cdot \mathrm{AEC}.
+\end{split} \f]
+
+Task _Applying the limiter_ \f$\textbf{(\texttt{APPLY})}\f$.
+The limited AEC is applied to the low-order solution according to the equation
+above,
+\f[ \begin{split}
+U_i^{n+1} = U_i^l + A_i.
+\end{split} \f]
+
+The above procedure is general, works on the numerical solution (instead on
+fluxes or slopes), and written as the same procedure for each scalar for a
+system of equations. This works well for independent scalars, but for coupled
+system of equations additional techniques have been developed to reflect the
+coupled nature of the equations in the limiting procedure. See also @ref
+papers_inciter "Inciter papers". In particular, we have experimented with
+Lohner's 'indicator variable' approach, which designates a physical variable,
+e.g., density, whose limit coefficient other variables inherit in a cell, as
+well as applying a minimum of the limit coefficient for all or some of the
+conserved variables.  These techniques tend to produce better results for some
+problems while worse for others -- in any case, such a priori knowledge of the
+problem computed is beneficial towards obtaining improved numerical solutions.
+
+@note See @ref papers_inciter "Inciter papers" for a description on how the
+above algorithm is implemented using a task-parallel paradigm in Charm++.
 
 */
 } // inciter::
