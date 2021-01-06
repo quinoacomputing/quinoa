@@ -151,6 +151,7 @@
 
 #include <limits>
 
+#undef I
 #include <pegtl/contrib/alphabet.hpp>
 
 #include "Types.hpp"

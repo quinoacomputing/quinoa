@@ -1227,7 +1227,7 @@ DG::box( tk::real v )
   {
     eq.initialize( m_lhs, m_inpoel, m_coord, m_boxelems, m_u, d->T(),
                    m_fd.Esuel().size()/4 );
-    eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
+    eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
   }
 
   m_un = m_u;
@@ -2014,12 +2014,14 @@ DG::solve( tk::real newdt )
         m_u(e, rmark, 0) =  rkcoef[0][m_stage] * m_un(e, rmark, 0)
           + rkcoef[1][m_stage] * ( m_u(e, rmark, 0)
             + d->Dt() * m_rhs(e, mark, 0)/m_lhs(e, mark, 0) );
+        if(fabs(m_u(e, rmark, 0)) < 1e-16)
+          m_u(e, rmark, 0) = 0;
       }
 
   // Update primitives based on the evolved solution
   for (const auto& eq : g_dgpde)
   {
-    eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
+    eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
     eq.cleanTraceMaterial( m_geoElem, m_u, m_p, m_fd.Esuel().size()/4 );
   }
 

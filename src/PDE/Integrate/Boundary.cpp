@@ -19,6 +19,8 @@
 #include "Boundary.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
+#include "MultiMatTerms.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 
 void
@@ -42,6 +44,8 @@ tk::bndSurfInt( ncomp_t system,
                 const Fields& VolFracMax,
                 const std::vector< std::size_t >& ndofel,
                 Fields& R,
+                std::vector< std::vector< tk::real > >& vriem,
+                std::vector< std::vector< tk::real > >& riemannLoc,
                 std::vector< std::vector< tk::real > >& riemannDeriv,
                 int intsharp )
 // *****************************************************************************
@@ -68,6 +72,9 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] vriem Vector of the riemann velocity
+//! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data
+//!   is available
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms.
 //!   These derivatives are used only for multi-material hydro and unused for
@@ -195,14 +202,20 @@ tk::bndSurfInt( ncomp_t system,
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                   "appended boundary state vector" );
 
+          auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn );
+
           // Compute the numerical flux
-          auto fl = flux( fn,
-                      state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn ),
-                      vel( system, ncomp, gp[0], gp[1], gp[2], t ) );
+          auto fl = flux( fn, var, vel( system, ncomp, gp[0], gp[1], gp[2], t ) );
 
           // Add the surface integration term to the rhs
           update_rhs_bc( ncomp, nmat, offset, ndof, ndofel[el], wt, fn, el, fl,
                          B_l, R, riemannDeriv );
+
+          // Store the riemann velocity and coordinates data of quadrature point
+          // used for velocity reconstruction if MulMat scheme is selected
+          if (nmat > 1 && ndof > 1)
+            tk::evaluRiemann( ncomp, esuf[2*f], esuf[2*f+1], nmat, fl, fn, gp,
+                              var, vriem, riemannLoc );
         }
       }
     }

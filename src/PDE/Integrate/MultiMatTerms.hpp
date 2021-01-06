@@ -39,19 +39,22 @@ nonConservativeInt( ncomp_t system,
                     const Fields& U,
                     const Fields& P,
                     const std::vector< std::vector< tk::real > >& riemannDeriv,
+                    const std::vector< std::vector< tk::real > >& vriempoly,
                     const std::vector< std::size_t >& ndofel,
                     Fields& R );
 
 //! Update the rhs by adding the non-conservative term integrals
 void
-update_rhs_ncn( ncomp_t ncomp,
+updateRhsNonCons( ncomp_t ncomp,
                 ncomp_t offset,
+                const std::size_t nmat,
                 const std::size_t ndof,
                 const std::size_t ndof_el,
                 const tk::real wt,
                 const std::size_t e,
+                const std::vector<tk::real>& B,
                 const std::array< std::vector<tk::real>, 3 >& dBdx,
-                const std::vector< tk::real >& ncf,
+                const std::vector< std::vector< tk::real > >& ncf,
                 Fields& R );
 
 //! Compute volume integrals of pressure relaxation terms in multi-material DG
@@ -69,6 +72,36 @@ pressureRelaxationInt( ncomp_t system,
                        const tk::real ct,
                        Fields& R );
 
+//! Update the rhs by adding the pressure relaxation integrals
+void
+updateRhsPre(
+  ncomp_t ncomp,
+  ncomp_t offset,
+  const std::size_t ndof,
+  const std::size_t ndof_el,
+  const tk::real wt,
+  const std::size_t e,
+  const std::vector< tk::real >& B,
+  std::vector< tk::real >& ncf,
+  Fields& R );
+
+//! Solve the reconstruct velocity used for volume fraction equation
+std::vector< std::vector< tk::real > >
+solvevriem( std::size_t nelem,
+            const std::vector< std::vector< tk::real > >& vriem,
+            const std::vector< std::vector< tk::real > >& riemannLoc );
+
+//! Compute the riemann velociry at the interface
+void evaluRiemann( ncomp_t ncomp,
+                   const int e_left,
+                   const int e_right,
+                   const std::size_t nmat,
+                   const std::vector< tk::real >& fl,
+                   const std::array< tk::real, 3 >& fn,
+                   const std::array< tk::real, 3 >& gp,
+                   const std::array< std::vector< tk::real >, 2 >& state,
+                   std::vector< std::vector< tk::real > >& vriem,
+                   std::vector< std::vector< tk::real > >& riemannLoc );
 } // tk::
 
 #endif // MultiMatTerms_h

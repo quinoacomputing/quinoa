@@ -133,6 +133,8 @@ class Transport {
     //! \details This function computes and stores the dofs for primitive
     //!   quantities, which are currently unused for transport.
     void updatePrimitives( const tk::Fields&,
+                           const tk::Fields&,
+                           const tk::Fields&,
                            tk::Fields&,
                            std::size_t ) const {}
 
@@ -303,11 +305,14 @@ class Transport {
       // system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
+      std::vector< std::vector< tk::real > > vriem;
+      std::vector< std::vector< tk::real > > riemannLoc;
+
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, m_offset, t, ndof, rdof, inpoel, coord,
                    fd, geoFace, geoElem, Upwind::flux,
                    Problem::prescribedVelocity, U, P, VolFracMax, ndofel, R,
-                   riemannDeriv, intsharp );
+                   vriem, riemannLoc, riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
@@ -320,7 +325,7 @@ class Transport {
         tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, rdof, b.first, fd,
           geoFace, geoElem, inpoel, coord, t, Upwind::flux,
           Problem::prescribedVelocity, b.second, U, P, VolFracMax, ndofel, R,
-          riemannDeriv, intsharp );
+          vriem, riemannLoc, riemannDeriv, intsharp );
     }
 
     //! Compute the minimum time step size

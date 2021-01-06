@@ -25,6 +25,7 @@
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
+#include "../MultiMat/MultiMatIndexing.hpp"
 
 namespace tk {
 
@@ -71,7 +72,6 @@ eval_state ( ncomp_t ncomp,
              const std::size_t e,
              const Fields& U,
              const std::vector< tk::real >& B );
-
 } // tk::
 
 #endif // Basis_h

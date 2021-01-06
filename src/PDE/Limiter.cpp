@@ -256,6 +256,9 @@ SuperbeeMultiMat_P1(
       auto phip = SuperbeeFunction(P, esuel, inpoel, coord, e, ndof, rdof,
                     dof_el, offset, nprim, beta_lim);
 
+      if(ndof > 1)
+        BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
+
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
       std::vector< tk::real > alAvg(nmat, 0.0);
@@ -500,6 +503,9 @@ VertexBasedMultiMat_P1(
       // limit primitive quantities
       auto phip = VertexBasedFunction(P, esup, inpoel, coord, e, rdof, dof_el,
         offset, nprim);
+
+      if(ndof > 1)
+        BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -1028,6 +1034,114 @@ void consistentMultiMatLimiting_P1(
     for (std::size_t k=0; k<nmat; ++k)
       phic[volfracIdx(nmat, k)] = phi_al;
   }
+}
+
+void BoundPreservingLimiting( std::size_t nmat,
+                              ncomp_t offset,
+                              std::size_t ndof,
+                              std::size_t e,
+                              const std::vector< std::size_t >& inpoel,
+                              const tk::UnsMesh::Coords& coord,
+                              const tk::Fields& U,
+                              std::vector< tk::real >& phic )
+// *****************************************************************************
+//  Bound preserving limiter for P1 dofs when MulMat scheme is selected
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] offset Index for equation system
+//! \param[in] ndof Total number of reconstructed dofs
+//! \param[in] e Element being checked for consistency
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in,out] U Second-order solution vector which gets modified near
+//!   material interfaces for consistency
+//! \param[in,out] phic Vector of limiter functions for the conserved quantities
+// *****************************************************************************
+{
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  // Extract the element coordinates
+  std::array< std::array< tk::real, 3>, 4 > coordel {{
+    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+  // Compute the determinant of Jacobian matrix
+  auto detT =
+    tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+  std::vector< tk::real > phi_bound(nmat, 1.0);
+
+  // loop over all faces of the element e
+  for (std::size_t lf=0; lf<4; ++lf)
+  {
+    // Extract the face coordinates
+    std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
+                                             inpoel[4*e+tk::lpofa[lf][1]],
+                                             inpoel[4*e+tk::lpofa[lf][2]] }};
+
+    std::array< std::array< tk::real, 3>, 3 > coordfa {{
+      {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
+      {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
+      {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
+
+    auto ng = tk::NGfa(ndof);
+
+    // arrays for quadrature points
+    std::array< std::vector< tk::real >, 2 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    wgp.resize( ng );
+
+    // get quadrature point weights and coordinates for triangle
+    tk::GaussQuadratureTri( ng, coordgp, wgp );
+
+    // Compute the upper and lower bound for volume fraction
+    tk::real min = 1e-14;
+    tk::real max = 1.0 - min;
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      // Compute the coordinates of quadrature point at physical domain
+      auto gp = tk::eval_gp( igp, coordfa, coordgp );
+
+      //Compute the basis functions
+      auto B = tk::eval_basis( ndof,
+            tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+
+      auto state = eval_state( U.nprop()/ndof, offset, ndof, ndof, e, U, B );
+
+      for(std::size_t imat = 0; imat < nmat; imat++)
+      {
+        tk::real phi(1.0);
+        auto al = state[volfracIdx(nmat, imat)];
+        if(al > 1.0)
+        {
+          phi = std::fabs(
+                  (max - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
+                / (al  - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset)) );
+        }
+        else if(al < 1e-14)
+        {
+          phi = std::fabs(
+                    (min - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset))
+                  / (al  - U(e,volfracDofIdx(nmat, imat, ndof, 0),offset)) );
+        }
+
+        phi_bound[imat] = std::min( phi_bound[imat], phi );
+      }
+    }
+  }
+
+  for(std::size_t imat = 0; imat < nmat; imat++)
+    phic[imat] = phi_bound[imat] * phic[imat];
 }
 
 bool

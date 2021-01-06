@@ -143,6 +143,16 @@ void consistentMultiMatLimiting_P1( std::size_t nmat,
                                     std::vector< tk::real >& phic,
                                     std::vector< tk::real >& phip );
 
+//! Bound preserving limiter for the P1 dofs of volume fractions
+void BoundPreservingLimiting( std::size_t nmat,
+                              ncomp_t offset,
+                              std::size_t ndof,
+                              std::size_t e,
+                              const std::vector< std::size_t >& inpoel,
+                              const tk::UnsMesh::Coords& coord,
+                              const tk::Fields& U,
+                              std::vector< tk::real >& phic );
+
 //! Interface indicator function, which checks element for material interface
 bool
 interfaceIndicator( std::size_t nmat,

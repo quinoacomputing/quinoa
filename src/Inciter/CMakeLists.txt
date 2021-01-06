@@ -25,7 +25,6 @@ add_library(Inciter
             NodeDiagnostics.cpp
             ElemDiagnostics.cpp
             PrefIndicator.cpp
-            ${CHARMMESH}
             FieldOutput.cpp
             NodeBC.cpp)
 
