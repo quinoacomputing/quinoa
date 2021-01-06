@@ -39,6 +39,8 @@ tk::surfInt( ncomp_t system,
              const Fields& VolFracMax,
              const std::vector< std::size_t >& ndofel,
              Fields& R,
+             std::vector< std::vector< tk::real > >& vriem,
+             std::vector< std::vector< tk::real > >& riemannLoc,
              std::vector< std::vector< tk::real > >& riemannDeriv,
              int intsharp )
 // *****************************************************************************
@@ -59,6 +61,9 @@ tk::surfInt( ncomp_t system,
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] vriem Vector of the riemann velocity
+//! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data
+//!   is available
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms.
 //!   These derivatives are used only for multi-material hydro and unused for
@@ -234,12 +239,18 @@ tk::surfInt( ncomp_t system,
       auto v = vel( system, ncomp, gp[0], gp[1], gp[2], t );
 
       // compute flux
-      auto fl =
-         flux( fn, state, v );
+      auto fl = flux( fn, state, v );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, offset, ndof, ndofel[el], ndofel[er], wt, fn,
                      el, er, fl, B_l, B_r, R, riemannDeriv );
+
+      // Store the riemann velocity and coordinates data of quadrature point
+      // used for velocity reconstruction if MulMat scheme is selected
+      if (nmat > 1 && ndof > 1)
+        tk::evaluRiemann( ncomp, esuf[2*f], esuf[2*f+1], nmat, fl, fn, gp,
+                          state, vriem, riemannLoc );
+
     }
   }
 }

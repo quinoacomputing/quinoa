@@ -151,9 +151,11 @@ class DGPDE {
 
     //! Public interface to updating the primitives for the diff eq
     void updatePrimitives( const tk::Fields& unk,
+                           const tk::Fields& L,
+                           const tk::Fields& geoElem,
                            tk::Fields& prim,
                            std::size_t nielem ) const
-    { self->updatePrimitives( unk, prim, nielem ); }
+    { self->updatePrimitives( unk, L, geoElem, prim, nielem ); }
 
     //! Public interface to cleaning up trace materials for the diff eq
     void cleanTraceMaterial( const tk::Fields& geoElem,
@@ -289,6 +291,8 @@ class DGPDE {
                                const std::size_t nielem ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void updatePrimitives( const tk::Fields&,
+                                     const tk::Fields&,
+                                     const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t ) const = 0;
       virtual void cleanTraceMaterial( const tk::Fields&,
@@ -381,9 +385,11 @@ class DGPDE {
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void updatePrimitives( const tk::Fields& unk,
+                             const tk::Fields& L,
+                             const tk::Fields& geoElem,
                              tk::Fields& prim,
                              std::size_t nielem )
-      const override { data.updatePrimitives( unk, prim, nielem ); }
+      const override { data.updatePrimitives( unk, L, geoElem, prim, nielem ); }
       void cleanTraceMaterial( const tk::Fields& geoElem,
                                tk::Fields& unk,
                                tk::Fields& prim,

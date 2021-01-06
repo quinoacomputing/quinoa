@@ -20,6 +20,7 @@
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
+#include "MultiMatTerms.hpp"
 #include "FunctionPrototypes.hpp"
 
 namespace tk {
@@ -47,6 +48,8 @@ surfInt( ncomp_t system,
          const Fields& VolFracMax,
          const std::vector< std::size_t >& ndofel,
          Fields& R,
+         std::vector< std::vector< tk::real > >& vriem,
+         std::vector< std::vector< tk::real > >& xcoord,
          std::vector< std::vector< tk::real > >& riemannDeriv,
          int intcompr=0 );
 

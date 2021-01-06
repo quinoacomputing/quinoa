@@ -192,6 +192,8 @@ class CompFlow {
     //!   requires primitive variables for example, this would be the place to
     //!   add the computation of the primitive variables.
     void updatePrimitives( const tk::Fields&,
+                           const tk::Fields&,
+                           const tk::Fields&,
                            tk::Fields&,
                            std::size_t ) const {}
 
@@ -341,6 +343,9 @@ class CompFlow {
       // terms in the system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
+      std::vector< std::vector< tk::real > > vriem;
+      std::vector< std::vector< tk::real > > riemannLoc;
+
       // configure Riemann flux function
       auto rieflxfn =
         [this]( const std::array< tk::real, 3 >& fn,
@@ -355,7 +360,7 @@ class CompFlow {
       // compute internal surface flux integrals
       tk::surfInt( m_system, 1, m_offset, t, ndof, rdof, inpoel, coord,
                    fd, geoFace, geoElem, rieflxfn, velfn, U, P, VolFracMax,
-                   ndofel, R, riemannDeriv );
+                   ndofel, R, vriem, riemannLoc, riemannDeriv );
 
       // compute ptional source term
       tk::srcInt( m_system, m_offset, t, ndof, fd.Esuel().size()/4,
@@ -370,7 +375,8 @@ class CompFlow {
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
                         geoFace, geoElem, inpoel, coord, t, rieflxfn, velfn,
-                        b.second, U, P, VolFracMax, ndofel, R, riemannDeriv );
+                        b.second, U, P, VolFracMax, ndofel, R, vriem,
+                        riemannLoc, riemannDeriv );
 
       // compute external (energy) sources
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();

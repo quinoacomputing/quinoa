@@ -14,6 +14,7 @@
 
 #include <array>
 #include <cmath>
+#include <vector>
 
 #include "Types.hpp"
 #include "Exception.hpp"
