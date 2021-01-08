@@ -52,12 +52,12 @@ CSR::CSR( std::size_t DOF,
 }
 
 tk::real&
-CSR::rel( std::size_t row, std::size_t column, std::size_t i )
+CSR::operator()( std::size_t row, std::size_t col, std::size_t i )
 // *****************************************************************************
 // Return non-const reference to sparse matrix entry at a position specified
 // using relative addressing
 //! \param[in] row Block row
-//! \param[in] columnd Block column
+//! \param[in] col Block column
 //! \param[in] i Position in block
 //! \return Non-const reference to matrix entry at position specified
 // *****************************************************************************
@@ -65,25 +65,8 @@ CSR::rel( std::size_t row, std::size_t column, std::size_t i )
   auto rdof = row * dof;
 
   for (std::size_t n=0, j=ia[rdof+i]-1; j<=ia[rdof+i+1]-2; ++j, ++n)
-    if (column*dof+i+1 == ja[j])
+    if (col*dof+i+1 == ja[j])
       return a[ia[rdof+i]-1+n];
-
-  Throw("Sparse matrix index not found");
-}
-
-tk::real&
-CSR::abs( std::size_t row, std::size_t column )
-// *****************************************************************************
-// Return non-const reference to sparse matrix entry at a position specified
-// using relative addressing
-//! \param[in] row Block row
-//! \param[in] columnd Block column
-//! \return Non-const reference to matrix entry at position specified
-// *****************************************************************************
-{
-  for (std::size_t n=0, j=ia[row]-1; j<=ia[row+1]-2; ++j, ++n)
-    if (column+1 == ja[j])
-      return a[ia[row]-1+n];
 
   Throw("Sparse matrix index not found");
 }

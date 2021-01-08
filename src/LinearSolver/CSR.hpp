@@ -33,13 +33,8 @@ class CSR {
                   const std::pair< std::vector< std::size_t >,
                                    std::vector< std::size_t > >& psup );
 
-    //! \brief Return non-const reference to sparse matrix entry at a position
-    //!   specified using relative addressing
-    tk::real& rel( std::size_t row, std::size_t column, std::size_t i );
-
-    //! \brief Return non-const reference to sparse matrix entry at a position
-    //!   specified using absolute addressing
-    tk::real& abs( std::size_t row, std::size_t column );
+    //! Return non-const reference to sparse matrix entry at a position
+    tk::real& operator()( std::size_t row, std::size_t col, std::size_t i=0 );
 
   private:
     std::size_t dof;                    //!< Number of degrees of freedom
