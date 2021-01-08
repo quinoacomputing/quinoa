@@ -13,6 +13,7 @@
 #define CSR_h
 
 #include <vector>
+#include <ostream>
 
 #include "Types.hpp"
 
@@ -22,14 +23,9 @@ namespace tk {
 class CSR {
 
   public:
-    //! \brief Constructor: Create a CSR matrix for a size x size sparse
-    //!   symmetric matrix with DOF degrees of freedom, storing only the upper
-    //!   triangular part.
-    //! \param[in] DOF Number of scalar components (degrees of freedom)
-    //! \param[in] size Number of scalar components (degrees of freedom)
-    //! \param[in] psup Points surrounding points of mesh graph, see tk::genPsup
+    //! \brief Constructor: Create a CSR symmetric matrix with DOF degrees of
+    //!   freedom, storing only the upper triangular part.
     explicit CSR( std::size_t DOF,
-                  std::size_t size,
                   const std::pair< std::vector< std::size_t >,
                                    std::vector< std::size_t > >& psup );
 
@@ -46,6 +42,15 @@ class CSR {
                static_cast< const CSR& >( *this ).operator()( row, col, pos ) );
     }
 
+    //! Write out CSR as stored
+    std::ostream& write_as_stored( std::ostream &os ) const;
+    //! Write out CSR nonzero structure
+    std::ostream& write_as_structure( std::ostream &os ) const;
+    //! Write out CSR as a real matrix
+    std::ostream& write_as_matrix( std::ostream &os ) const;
+    //! Write out CSR in Matlab/Octave format
+    std::ostream& write_as_matlab( std::ostream &os ) const;
+
   private:
     std::size_t dof;                    //!< Number of degrees of freedom
     std::vector< std::size_t > rnz;     //!< Number of nonzeros of each row
@@ -56,4 +61,4 @@ class CSR {
 
 } // tk::
 
-#endif // Around_h
+#endif // CSR_h
