@@ -1,0 +1,163 @@
+namespace inciter {
+/*!
+  \page      inciter_alecg ALECG hydrodynamics
+
+@tableofcontents{xml}
+
+@ref inciter_main supports multiple hydrodynamics schemes. This page describes
+the `ALECG` method at a high level, for more details, see @ref papers_inciter
+"Inciter papers".
+
+The basic ALECG algorithm is an edge-based finite element method for
+unstructured meshes, composed of tetrahedral cells, intended for the
+mathematical modelling of energetic, high-speed, compressible flows. This is an
+implementation of the method developed by Waltz and coworkers, see @ref
+papers_inciter "Inciter papers", to solve the governing equations of
+compressible flow to use an asynchronous-by-default, distributed-memory,
+task-parallel programming paradigm using the Charm++ runtime system.
+
+@section alecg_euler The equations of compressible flow
+
+The equations solved are the 3D unsteady Euler equations, governing inviscid
+compressible flow,
+
+\f[ \begin{split}
+  \frac{\partial U}{\partial t} + \frac{\partial F_j}{\partial x_j} = S,\qquad
+  U = \begin{Bmatrix} \rho \\ \rho u_i \\ \rho E \end{Bmatrix}, \enskip F_j =
+  \begin{Bmatrix} \rho u_j \\ \rho u_iu_j + p\delta_{ij} \\ u_j(\rho E + p)
+  \end{Bmatrix}, \enskip
+  S = \begin{Bmatrix} S_\rho \\ S_{u,i} \\ S_E \end{Bmatrix},
+\end{split} \f]
+where the summation convention on repeated indices has been applied, \f$\rho\f$
+is the density, \f$u_i\f$ is the velocity vector, \f$E=u_iu_i/2+e\f$ is the
+specific total energy, \f$e\f$ is the specific internal energy, and \f$p\f$ is
+the pressure. \f$S_\rho\f$, \f$S_{u,i}\f$, and \f$S_E\f$ are source terms that
+arise from the application of the method of manufactured solutions, used for
+verification; these source terms are zero when computing practical engineering
+problems. The system is closed with the ideal gas law equation of state
+\f[ \begin{split}
+  p = \rho e (\gamma - 1),
+\end{split} \f]
+where \f$\gamma\f$ is the ratio of specific heats. Although the ideal gas law
+is used most frequently, any arbitrary (i.e. analytic or tabulated) equation of
+state can be used to relate density and internal energy to pressure.
+
+@section alecg_method The numerical method
+
+The above system is solved using an edge-based finite-element method for linear
+tetrahedra. Using this particular approach, the unknown solution quantities are
+the conserved variables \f$U\f$ and are located at the nodes of the mesh. The
+solution at any point within the computational domain is represented as
+\f[ \begin{split}
+  U(\vec{x}) = \sum_{v \in \Omega_h} N^v(\vec{x}) U^v
+\end{split} \f]
+where \f$\Omega_h\f$ is the tetrahedron containing the point \f$\vec{x}\f$,
+\f$U^v\f$ is the solution at vertex \f$v\f$, and \f$N^v(\vec{x})\f$ is a linear
+basis function associated with vertex \f$v\f$ and element \f$\Omega_h\f$.
+
+Applying a Galerkin, lumped-mass approximation to Euler equations gives the
+following semi-discrete form of the governing equations for a vertex \f$v\f$:
+\f[ \begin{split}
+  \frac{\text{d}U^v}{\text{d}t} = - \frac{1}{V^v} \sum_j \left[  \sum_{ vw\in
+  v} D^{vw}_j F^{vw}_j +  \sum_{vw\in v} B^{vw}_j \left( F^v_j + F^w_j\right) +
+  B^v_j F^v_j \right]
+\end{split} \f]
+where \f$vw\f$ represent all edges connected to \f$v\f$, \f$V\f$ is the volume
+surrounding \f$v\f$, \f$F^{vw}_j\f$ numerical flux between \f$v\f$ and \f$w\f$.
+The first term on the right-hand-side above is evaluated for all vertices
+within the domain. The last two terms are only evaluated for vertices \f$v\f$
+and surrounding edges \f$vw\f$ that lie on the domain boundary. As such,
+\f$F^v_j\f$ denotes the boundary flux.
+
+The term \f$D^{vw}_j\f$ is effectively the area-weighted normal to the dual
+face separating \f$v\f$ and \f$w\f$. It is calculated as
+\f[ \begin{split}
+  D^{vw}_j = \frac{1}{2} \sum_{\Omega_h \in vw} \int_{\Omega_h} \left( N^v
+  \frac{\partial N^w}{\partial x_j} - N^w \frac{\partial N^v}{\partial x_j}
+  \right) \, \text{d} \Omega
+\end{split} \f]
+where \f$\Omega_h \in vw\f$ represents all elements attached to an edge
+\f$vw\f$. The described numerical scheme is guaranteed conservative since
+\f$D^{vw}_j\f$ is antisymmetric.
+
+The boundary terms \f$B^{vw}_j\f$ and \f$B^v_j\f$ are defined by the following:
+\f[ \begin{split}
+  B^{vw}_j &= \frac{1}{2} \sum_{\Gamma_h \in vw} \int_{\Gamma_h} N^v N^w n_j
+  \, \text{d} \Gamma \\
+  B^v_j &= \sum_{\Gamma_h \in v} \int_{\Gamma_h} N^v N^v n_j  \, \text{d}
+  \Gamma
+\end{split} \f]
+
+For the derivation and other details, see @ref papers_inciter "Inciter papers".
+
+@section alecg_flux Numerical flux
+
+The numerical flux \f$F^{vw}_j\f$ is evaluated at the midpoint between \f$v\f$
+and \f$w\f$. Here we used the Rusanov flux which approximates the flux between
+\f$v\f$ and \f$w\f$ as
+\f[ \begin{split}
+  D^{vw}_j F^{vw}_j = D^{vw}_j \left( F^v_j + F^w_j \right) + \left| D^{vw}_j
+  \right| \lambda^{vw} \left( U^w - U^v \right)
+\end{split} \f]
+where \f$\lambda^{vw}=\max (\lambda_v, \lambda_w)\f$ is the maximum wavespeed,
+defined as
+\f[ \begin{split}
+  \lambda_v = \left| u_j \frac{D^{vw}_j}{\left|D^{vw}_j\right|} \right| + c^v
+\end{split} \f]
+where \f$c^v\f$ is the speed of sound at vertex \f$v\f$.
+
+@section alecg_reconstruction Solution reconstruction
+
+The inputs to the flux function above are approximated using a piecewise
+limited solution reconstruction of the primitive variables. The reconstruction
+is performed component-wise for each edge \f$vw\f$ as follows:
+\f[ \begin{split}
+  \hat{u}^v &= u^v + \frac{1}{4} \left[ (1-k) \phi(r^v) \delta_1 +
+    (1+k)\phi\left(\frac{1}{r^v}\right)\delta_2 \right]\\
+  \hat{u}^w &= u^w - \frac{1}{4} \left[ (1-k) \phi(r^w) \delta_3 +
+    (1+k)\phi\left(\frac{1}{r^w}\right)\delta_2 \right]
+ \end{split} \f]
+with
+\f[ \begin{split}
+  \delta_1 &= 2x_i^{vw} \frac{\partial u^v}{\partial x_i} - \delta_2 \\
+  \delta_2 &= u^w - u^v \\
+  \delta_3 &= 2x_i^{vw} \frac{\partial u^w}{\partial x_i} - \delta_2
+\end{split} \f]
+where \f$x_i^{vw}=x_i^w - x_i^v\f$ and
+\f[ \begin{split}
+  r^v &= \frac{\delta_2}{\delta_1} \\
+  r^w &= \frac{\delta_2}{\delta_3}
+\end{split} \f]
+This scheme corresponds to a piecewise linear reconstruction for \f$k=-1\f$ and
+a piecewise parabolic reconstruction for \f$k=1/3\f$. The function \f$\phi\f$
+can be any total variation diminishing limiter function. We use the Van Leer
+and minmod functions.
+
+@section alecg_time Time integration
+
+The solution is advanced using a multi-stage explicit scheme of the form:
+\f[ \begin{split}
+  U^{v,k} = U^{v,0} - \alpha^k \Delta t \cdot \left.
+  \frac{\text{d}U^v}{\text{d}t}\right|^{k-1}
+\end{split} \f]
+where \f$k\f$ is the current stage, \f$m\f$ is the total number of stages,
+\f$\Delta t\f$ is the time step, and
+\f[ \begin{split}
+  \alpha^k = \frac{1} {1+m-k}
+\end{split} \f]
+The explicit Euler time marching scheme is obtained for \f$m=1\f$ and the
+classical 2nd-order Runge-Kutta method is obtained with \f$m=2\f$.
+
+The global time step is obtained by finding the minimum value for all edges in
+the domain. The time step for an edge \f$vw\f$ is calculated as
+\f[ \begin{split}
+  \Delta t^{vw} = \frac{\text{C}l^{vw}}{\lambda^{vw}}
+\end{split} \f]
+where \f$\text{C} \leq 1\f$ is the Courant number, and \f$l^{vw}\f$ is the
+legnth of an edge \f$vw\f$. The global time step is thus
+\f[ \begin{split}
+  \Delta t = \min_{\forall vw} \left( \Delta t^{vw}  \right).
+\end{split} \f]
+
+*/
+} // inciter::
