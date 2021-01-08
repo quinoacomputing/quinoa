@@ -33,8 +33,18 @@ class CSR {
                   const std::pair< std::vector< std::size_t >,
                                    std::vector< std::size_t > >& psup );
 
+    //! Return const reference to sparse matrix entry at a position
+    const tk::real&
+    operator()( std::size_t row, std::size_t col, std::size_t pos=0 ) const;
+
     //! Return non-const reference to sparse matrix entry at a position
-    tk::real& operator()( std::size_t row, std::size_t col, std::size_t i=0 );
+    //! \see "Avoid Duplication in const and Non-const Member Function," and
+    //!   "Use const whenever possible," Scott Meyers, Effective C++, 3d ed.
+    tk::real&
+    operator()( std::size_t row, std::size_t col, std::size_t pos=0 ) {
+      return const_cast< tk::real& >(
+               static_cast< const CSR& >( *this ).operator()( row, col, pos ) );
+    }
 
   private:
     std::size_t dof;                    //!< Number of degrees of freedom
