@@ -1,0 +1,148 @@
+namespace inciter {
+/*!
+  \page      inciter_mm Multi-material DG hydrodynamics
+
+@tableofcontents{xml}
+
+@ref inciter_main supports multiple hydrodynamics schemes. This page describes
+governing equations and the `DG` method for multi-material flows.
+
+@section goveqns Governing equations for multi-material hydrodynamics
+The stiff velocity equilibrium multi-material hydrodynamic equations are
+considered in this work. In this system, although all the materials are advected
+with the same velocity \f$u_j\f$, they possess different pressures and internal
+energies. Finite pressure relaxation source terms are added to the material
+volume fraction and material total energy equations based on the material
+bulk-modulii. The Eulerian form of this multi-material system of equations is,
+\f[ \begin{split}
+\frac{\partial \boldsymbol{U}}{\partial t} 
++ \frac{\partial \boldsymbol{F}_j}{\partial x_j} 
++ \boldsymbol{D} = \boldsymbol{S},
+\end{split} \f]
+where,
+\f[ \begin{split}
+& \boldsymbol{U} =
+\begin{bmatrix}
+\alpha_k \\
+\alpha_k \rho_k \\
+\overline{\rho} u_i \\
+\alpha_k \rho_k E_k
+\end{bmatrix}, \quad
+\boldsymbol{F}_j =
+\begin{bmatrix}
+0 \\
+\alpha_k \rho_k u_j \\
+\overline{\rho} u_i u_j + \overline{p} \delta_{ij} \\
+\alpha_k \rho_k H_k u_j
+\end{bmatrix}, \\
+& \boldsymbol{D} =
+\begin{bmatrix}
+u_j \frac{\partial \alpha_k}{\partial x_j} \\
+0 \\
+0 \\
+Y_k u_j \frac{\partial \overline{p}}{\partial x_j}
+  - u_j \frac{\partial (\alpha_k p_k)}{\partial x_j}
+\end{bmatrix}, \quad
+\boldsymbol{S} =
+\begin{bmatrix}
+S_{\alpha,k} \\
+0 \\
+0 \\
+-\overline{p} S_{\alpha,k}
+\end{bmatrix}.
+\end{split} \f]
+where \f$k=1,2,...,m\f$ and \f$m\f$ is the number of materials. \f$\alpha_k\f$
+is the volume-fraction of material-\f$k\f$. Bulk properties such as density
+\f$\overline{\rho}\f$, pressure \f$\overline{p}\f$, and internal energy
+\f$\overline{\rho e}\f$ are defined as,
+\f[ \begin{split}
+\overline{\phi} = \sum_k \alpha_k \phi_k,
+\end{split} \f]
+where \f$\phi_k\f$ is the material density \f$\rho_k\f$, material pressure
+\f$p_k\f$, or material internal energy \f$\rho_k e_k\f$ as required. The
+specific total energy of material-\f$k\f$ is, \f$E_k = e_k + u_j u_j/2\f$, and
+its specific total enthalpy is, \f$H_k = E_k + p_k/\rho_k\f$,
+where \f$e_k\f$ is the specific internal energy of the material.
+\f$Y_k = \alpha_k \rho_k/\overline{\rho}\f$ is the mass fraction of
+material-\f$k\f$. The source term \f$S_{\alpha,k}\f$ consists of the finite
+pressure relaxation. Note that although the
+material total energy equations are written in a non-conservative form, the
+mixture total energy equation (\f$\rho E = \sum_k \alpha_k \rho_k E_k\f$) is a
+conservative equation (non-conservative terms cancel when summed over all
+materials). Thus, total energy of the system is conserved. The system is closed
+by specifying equations of state for each material, usually
+in the form of \f$p_k = p_k(\rho_k, e_k)\f$.
+
+@section prelax Finite-rate pressure relaxation
+A mixed-cell pressure closure \f$S_{\alpha,k}\f$ has to be specified for the
+above system of equations to be complete. This term accounts for volume
+fraction redistribution due to differential compaction. This term attempts to
+model the different amount of compression in materials caused by unequal
+material compressibilities, by redistributing pressure-induced volume changes
+based on material bulk modulii. This redistribution of volume fractions results
+in a finite amount of relaxation between material pressures. The functional form
+is similar to Tipton's closure. The volume redistribution is given by,
+\f[ \begin{split}
+S_{\alpha,k} = \frac{1}{\tau} (p_k-p^*)\frac{\alpha_k}{\mathcal{K}_k},
+\end{split} \f]
+where \f$p^*\f$ is the equilibrium pressure that the multi-material cell is
+expected to reach after sufficient time:
+\f[ \begin{split}
+p^* = \frac{\sum_k \left( p_k \frac{\alpha_k}{\mathcal{K}_k} \right)}
+  {\sum_k \frac{\alpha_k}{\mathcal{K}_k}},
+\end{split} \f]
+\f$\mathcal{K}_k = \rho_k a_{k}^2\f$ is the material's bulk modulus,
+and \f$\tau\f$ is the pressure-equilibration time-scale,
+\f[ \begin{split}
+\tau = c_{\tau} \max_k \left( \frac{h}{a_k} \right).
+\end{split} \f]
+The constant \f$c_{\tau}\f$ adjusts the pressure equilibration rate of the
+materials in mixed cells. It controls how fast the pressure relaxation takes
+place in a mixed cell, as compared to the sound-crossing speed in that cell
+\f$(h/a_k)\f$. The value of \f$c_{\tau}\f$ can be specified in the input file.
+
+@section eos Equations of state
+Currently, the stiffened-gas equation of state (SG-EoS) is used to close the PDE
+system. This EoS can be used to describe materials ranging from ideal gases to
+stiff liquid-like fluids. The internal energy, temperature and speed of sound
+for material-\f$k\f$ using the SG-EoS are:
+\f[ \begin{split}
+\rho_k e_k &= \frac{p_k+P_{\text{c}_k}}{\gamma_k-1} + P_{\text{c}_k}, \\
+T_k &= \left( \frac{\gamma_k}{\gamma_k-1} \right) \frac{p_k+P_{\text{c}_k}}{\rho_k C_{\text{p}_k}}, \\
+a_k &= \sqrt{\gamma_k \frac{p_k+P_{\text{c}_k}}{\rho_k}},
+\end{split} \f]
+where \f$P_{\text{c}_k}\f$, \f$\gamma_k\f$, \f$C_{\text{p}_k}\f$, and \f$T_k\f$
+are the stiffness parameter, heat capacity ratio, specific heat at constant
+pressure, and temperature for material-$k$ respectively.
+
+More complex equations of state are a topic of future work.
+
+@section tmpdiscr Temporal discretization
+The temporal and spatial derivatives are discretized separately resulting in a
+method of lines. A 3rd order total variation diminishing (TVD) Runge-Kutta
+scheme is used to discretize the time derivatives.
+
+@section spcdiscr Spatial discretization
+A modal Reconstructed Discontinuous Galerkin (rDG) method is used to discretize
+the multi-material system in space. The specific rDG method implemented in
+Quinoa uses Dubiner's orthogonal basis functions (see the @ref inciter_dg
+"DG page" for more details). Reconstruction to higher order
+is via a least-squares procedure based on node-neighbors. Fluxes through
+cell-faces are calculated using multi-material Riemann solvers. Non-linear
+instabilities are suppresed using a vertex-based limiter. Further details can be
+found in the @ref papers_inciter "Inciter papers".
+
+@section intreco Algebraic interface reconstruction
+Tangent of Hyperbola for INterface Capturing (THINC) is used to algebraically
+reconstruct material interfaces in the domain. THINC assumes a smooth
+distribution of volume fractions across the interface, using the \f$\tanh\f$
+function. This results in sharp interface capturing, without expensive geometric
+procedures. The THINC scheme can be tuned to capture material interfaces in 2-4
+cells. Due to the smooth nature of the \f$\tanh\f$ function, stability concerns
+are mitigated.
+
+For further details about the numerical method, see @ref papers_inciter
+"Inciter papers".
+
+*/
+} // inciter::

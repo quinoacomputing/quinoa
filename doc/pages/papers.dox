@@ -62,11 +62,20 @@ implemented in Quinoa. The papers are grouped by executables.
 @section papers_inciter Inciter
 
 - @m_div{m-text m-strong}
+  A. Pandare, J. Waltz, J. Bakosi, **[Multi-material hydrodynamics with algebraic sharp interface capturing](https://doi.org/10.1016/j.compfluid.2020.104804)**, Computers & Fluids, 215, 104804, 2021.
+  @m_enddiv
+
+  This paper describes a finite volume method for multi-material flows in 3D
+  with sharp interface capturing, implemented in Quinoa's @ref inciter_main
+  under the `DG` hydro scheme.
+
+- @m_div{m-text m-strong}
   A. Pandare, J. Waltz, J. Bakosi, **[A reconstructed discontinuous Galerkin method for multi‐material hydrodynamics with sharp interfaces](https://doi.org/10.1002/fld.4810)**, International Journal for Numerical Methods in Fluids, 2020: 1–25.
   @m_enddiv
 
   This paper describes a discontinuous Galerkin method for multi-material flows
-  in 1D, whose 3D version is currently being implemented in Quinoa.
+  in 1D, whose 3D version is implemented in Quinoa's @ref inciter_main under the
+  `DG` hydro scheme.
 
 - @m_div{m-text m-strong}
   J. Waltz, N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, **[A three-dimensional finite element arbitrary Lagrangian–Eulerian method for shock hydrodynamics on unstructured grids](https://doi.org/10.1016/j.compfluid.2013.12.021)**, Computers & Fluids, 92: 172-187, 2014.
