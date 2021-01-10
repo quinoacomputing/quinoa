@@ -35,6 +35,18 @@ class cmd_keywords {
     using aliases = brigand::set< alias<T>... >;
 };
 
+//! Helper to ensure uniqueness of policy codes for keywords
+//! \details This ensures that a compile-error is generated if the policy codes
+//!    of the keywords passed in as T... are not unique.
+template< typename... T >
+class unique_codes {
+  public:
+    using list = brigand::list< T... >;
+  private:
+    template< typename K > using code = typename K::info::code::type;
+    using set = brigand::set< code<T>... >;
+};
+
 } // tk::
 
 namespace kw {

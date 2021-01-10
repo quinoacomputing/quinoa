@@ -54,29 +54,29 @@ class Problem : public tk::Toggle< ProblemType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::user_defined
-                                  , kw::shear_diff
-                                  , kw::vortical_flow
-                                  , kw::nl_energy_growth
-                                  , kw::rayleigh_taylor
-                                  , kw::taylor_green
-                                  , kw::slot_cyl
-                                  , kw::gauss_hump
-                                  , kw::cyl_advect
-                                  , kw::cyl_vortex
-                                  , kw::shedding_flow
-                                  , kw::sod_shocktube
-                                  , kw::rotated_sod_shocktube
-                                  , kw::sedov_blastwave
-                                  , kw::interface_advection
-                                  , kw::gauss_hump_compflow
-                                  , kw::waterair_shocktube
-                                  , kw::triple_point
-                                  , kw::gas_impact
-                                  , kw::gas_impact_4mat
-                                  , kw::shock_hebubble
-                                  , kw::underwater_ex
-                                  >;
+    using keywords = tk::unique_codes< kw::user_defined
+                                     , kw::shear_diff
+                                     , kw::vortical_flow
+                                     , kw::nl_energy_growth
+                                     , kw::rayleigh_taylor
+                                     , kw::taylor_green
+                                     , kw::slot_cyl
+                                     , kw::gauss_hump
+                                     , kw::cyl_advect
+                                     , kw::cyl_vortex
+                                     , kw::shedding_flow
+                                     , kw::sod_shocktube
+                                     , kw::rotated_sod_shocktube
+                                     , kw::sedov_blastwave
+                                     , kw::interface_advection
+                                     , kw::gauss_hump_compflow
+                                     , kw::waterair_shocktube
+                                     , kw::triple_point
+                                     , kw::gas_impact
+                                     , kw::gas_impact_4mat
+                                     , kw::shock_hebubble
+                                     , kw::underwater_ex
+                                     >::list;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -147,7 +147,7 @@ class Problem : public tk::Toggle< ProblemType > {
             ProblemType::UNDERWATER_EX }
         } )
     {
-       brigand::for_each< keywords >( assertPolicyCodes() );
+      brigand::for_each< keywords >( assertPolicyCodes() );
     }
 
     //! \brief Return policy code based on Enum
