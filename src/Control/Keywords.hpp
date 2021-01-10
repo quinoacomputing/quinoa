@@ -4584,7 +4584,7 @@ struct cyl_advect_info {
 using cyl_advect = keyword< cyl_advect_info, TAOCPP_PEGTL_STRING("cyl_advect") >;
 
 struct cyl_vortex_info {
-  using code = Code< D >;
+  using code = Code< X >;
   static std::string name() { return "Deformation of cylinder in a vortex"; }
   static std::string shortDescription() { return
     "Select deformation of cylinder in a vortex test problem"; }
@@ -4822,7 +4822,7 @@ using waterair_shocktube =
   keyword< waterair_shocktube_info, TAOCPP_PEGTL_STRING("waterair_shocktube") >;
 
 struct triple_point_info {
-  using code = Code< T >;
+  using code = Code< K >;
   static std::string name() { return "Triple point problem"; }
   static std::string shortDescription() { return
     "Select the triple point test problem "; }
@@ -4842,7 +4842,7 @@ using triple_point =
   keyword< triple_point_info, TAOCPP_PEGTL_STRING("triple_point") >;
 
 struct gas_impact_info {
-  using code = Code< T >;
+  using code = Code< P >;
   static std::string name() { return "Gas impact problem"; }
   static std::string shortDescription() { return
     "Select the gas impact test problem "; }
@@ -4863,7 +4863,7 @@ using gas_impact =
   keyword< gas_impact_info, TAOCPP_PEGTL_STRING("gas_impact") >;
 
 struct gas_impact_4mat_info {
-  using code = Code< T >;
+  using code = Code< L >;
   static std::string name() { return "Gas impacting with two slabs problem"; }
   static std::string shortDescription() { return
     "Select the gas impacting with two slabs test problem "; }
@@ -4882,7 +4882,7 @@ using gas_impact_4mat =
   keyword< gas_impact_4mat_info, TAOCPP_PEGTL_STRING("gas_impact_4mat") >;
 
 struct shock_hebubble_info {
-  using code = Code< T >;
+  using code = Code< E >;
   static std::string name() { return "Shock He-bubble problem"; }
   static std::string shortDescription() { return
     "Select the shock He-bubble test problem "; }
@@ -4901,7 +4901,7 @@ using shock_hebubble =
   keyword< shock_hebubble_info, TAOCPP_PEGTL_STRING("shock_hebubble") >;
 
 struct underwater_ex_info {
-  using code = Code< T >;
+  using code = Code< D >;
   static std::string name() { return "Underwater explosion problem"; }
   static std::string shortDescription() { return
     "Select the underwater explosion test problem "; }
