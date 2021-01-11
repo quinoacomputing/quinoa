@@ -6592,6 +6592,70 @@ struct flux_info {
 };
 using flux = keyword< flux_info, TAOCPP_PEGTL_STRING("flux") >;
 
+struct none_info {
+  static std::string name() { return "none"; }
+  static std::string shortDescription() { return "Select none option"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the 'none' option from a list of
+    configuration options.)"; }
+};
+using none = keyword< none_info, TAOCPP_PEGTL_STRING("none") >;
+
+struct fluid_info {
+  static std::string name() { return "fluid"; }
+  static std::string shortDescription() { return
+    "Select the fluid velocity for ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the 'fluid' velocity as the mesh velocity
+       for Arbitrary-Lagrangian-Eulerian (ALE) mesh motion.)"; }
+};
+using fluid = keyword< fluid_info, TAOCPP_PEGTL_STRING("fluid") >;
+
+struct helmholtz_info {
+  static std::string name() { return "Helmholtz"; }
+  static std::string shortDescription() { return
+    "Select the Helmholtz velocity for ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the a velocity, computed from the
+       Helmholtz-decomposition as the mesh velocity for
+       Arbitrary-Lagrangian-Eulerian (ALE) mesh motion. See J. Bakosi, J. Waltz,
+       N. Morgan, Improved ALE mesh velocities for complex flows, Int. J. Numer.
+       Meth. Fl., 1-10, 2017, https://doi.org/10.1002/fld.4403.)"; }
+};
+using helmholtz = keyword< helmholtz_info, TAOCPP_PEGTL_STRING("helmholtz") >;
+
+struct meshvelocity_info {
+  static std::string name() { return "Mesh velocity"; }
+  static std::string shortDescription() { return
+    "Select mesh velocity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a mesh velocity option, used for
+       Arbitrary-Lagrangian-Eulerian (ALE) mesh motion.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + none::string() + "\' | \'"
+                  + fluid::string() + "\' | \'"
+                  + helmholtz::string() + '\'';
+    }
+  };
+};
+using meshvelocity =
+  keyword< meshvelocity_info, TAOCPP_PEGTL_STRING("mesh_velocity") >;
+
+struct ale_info {
+  static std::string name() { return "ALE"; }
+  static std::string shortDescription() { return "Start configuration block "
+    "configuring ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the ale ... end block, used to
+    configure arbitrary Lagrangian-Eulerian (ALE) mesh movement. Keywords
+    allowed in this block: )" + std::string("\'")
+    + meshvelocity::string() + "\'.";
+  }
+};
+using ale = keyword< ale_info, TAOCPP_PEGTL_STRING("ale") >;
+
 struct nolimiter_info {
   static std::string name() { return "No limiter"; }
   static std::string shortDescription() { return

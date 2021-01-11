@@ -630,13 +630,14 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct enable_amr : pegtl::success {};
+  template< typename Feature >
+  struct enable : pegtl::success {};
   //! Enable adaptive mesh refinement (AMR)
-  template<>
-  struct action< enable_amr > {
+  template< typename Feature >
+  struct action< enable< Feature > > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
-      stack.template get< tag::amr, tag::amr >() = true;
+      stack.template get< Feature, Feature >() = true;
     }
   };
 
@@ -1446,7 +1447,8 @@ namespace deck {
   struct amr :
          pegtl::if_must<
            tk::grm::readkw< use< kw::amr >::pegtl_string >,
-           tk::grm::enable_amr, // enable AMR if amr...end block encountered
+           // enable AMR if amr...end block encountered
+           tk::grm::enable< tag::amr >,
            tk::grm::block< use< kw::end >,
                            refvars,
                            edgelist,
@@ -1486,6 +1488,21 @@ namespace deck {
                              pegtl::digit >
                          >,
            tk::grm::check_amr_errors > {};
+
+  //! Arbitrary-Lagrangian-Eulerian (ALE) ale...end block
+  struct ale :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::ale >::pegtl_string >,
+           // enable ALE if ale ...end block encountered
+           tk::grm::enable< tag::ale >,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::process<
+                             use< kw::meshvelocity >,
+                             tk::grm::store_inciter_option<
+                               ctr::MeshVelocity,
+                               tag::ale, tag::meshvelocity >,
+                             pegtl::alpha >
+                         > > {};
 
   //! p-adaptive refinement (pref) ...end block
   struct pref :
@@ -1612,6 +1629,7 @@ namespace deck {
                            discretization,
                            equations,
                            amr,
+                           ale,
                            pref,
                            partitioning,
                            field_output,

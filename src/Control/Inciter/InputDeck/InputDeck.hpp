@@ -35,6 +35,7 @@ using InputDeckMembers = brigand::list<
   , tag::title,      kw::title::info::expect::type
   , tag::selected,   selects
   , tag::amr,        amr
+  , tag::ale,        ale
   , tag::pref,       pref
   , tag::discr,      discretization
   , tag::prec,       precision
@@ -178,6 +179,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::residual
                                  , kw::rescomp
                                  , kw::amr
+                                 , kw::ale
+                                 , kw::meshvelocity
+                                 , kw::none
+                                 , kw::fluid
+                                 , kw::helmholtz
                                  , kw::amr_t0ref
                                  , kw::amr_dtref
                                  , kw::amr_dtref_uniform
@@ -308,6 +314,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::yplus >() = -rmax;
       get< tag::amr, tag::zminus >() = rmax;
       get< tag::amr, tag::zplus >() = -rmax;
+      // Default ALE settings
+      get< tag::ale, tag::ale >() = false;
+      get< tag::ale, tag::meshvelocity >() = MeshVelocityType::NONE;
       // Default p-refinement settings
       get< tag::pref, tag::pref >() = false;
       get< tag::pref, tag::indicator >() = PrefIndicatorType::SPECTRAL_DECAY;

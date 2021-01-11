@@ -294,6 +294,13 @@ Transporter::info( const InciterPrint& print )
                 g_inputdeck.get< tag::amr, tag::tolderef >() );
   }
 
+  // Print out ALE configuration
+  const auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  if (ale) {
+    print.section( "Arbitrary Lagrangian-Eulerian (ALE) mesh motion" );
+    print.Item< ctr::MeshVelocity, tag::ale, tag::meshvelocity >();
+  }
+
   // Print I/O filenames
   print.section( "Input/Output filenames and directories" );
   print.item( "Input mesh(es)", tk::parameters(
