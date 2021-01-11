@@ -2,14 +2,23 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(LinearSolver CXX)
 
+# Include function for adding Charm++ modules
+include(charm)
+
 add_library(LinearSolver
-            CSR.cpp)
+            CSR.cpp
+            ConjugateGradients.cpp)
 
 target_include_directories(LinearSolver PUBLIC
-                           ${QUINOA_SOURCE_DIR}/Base)
+                           ${QUINOA_SOURCE_DIR}
+                           ${QUINOA_SOURCE_DIR}/Base
+                           ${CHARM_INCLUDE_DIRS}
+                           ${PROJECT_BINARY_DIR}/../LinearSolver)
 
 set_target_properties(LinearSolver PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_linearsolver)
+
+addCharmModule( "conjugategradients" "LinearSolver" )
 
 INSTALL(TARGETS LinearSolver
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
