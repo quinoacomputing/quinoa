@@ -16,6 +16,7 @@ module discretization {
   extern module transporter;
   extern module meshwriter;
   extern module distfct;
+  extern module conjugategradients;
 
   include "UnsMesh.hpp";
   include "CommMap.hpp";
@@ -26,6 +27,7 @@ module discretization {
       entry Discretization(
         std::size_t meshid,
         const CProxy_DistFCT& fctproxy,
+        const tk::CProxy_ConjugateGradients& cgproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
         const std::vector< std::size_t >& ginpoel,

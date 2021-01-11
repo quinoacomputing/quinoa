@@ -490,8 +490,14 @@ Transporter::createPartitioner()
     // Warn on no BCs
     if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";
 
+    auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+    auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+    bool linearsolver = false;
+    if (ale && meshvel != ctr::MeshVelocityType::NONE) linearsolver = true;
+
     // Create (discretization) Scheme chare worker array for mesh
-    m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >() );
+    m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
+                           linearsolver );
 
     // Create empty mesh refiner chare array (bound to workers)
     m_refiner.push_back(CProxy_Refiner::ckNew(m_scheme.back().arrayoptions()));

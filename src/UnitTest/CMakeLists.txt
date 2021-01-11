@@ -33,6 +33,7 @@ target_include_directories(UnitTest PUBLIC
                            ${PROJECT_BINARY_DIR}/../IO
                            ${PROJECT_BINARY_DIR}/../LinSys
                            ${PROJECT_BINARY_DIR}/../LoadBalance
+                           ${PROJECT_BINARY_DIR}/../LinearSolver
                            ${PROJECT_BINARY_DIR}/../UnitTest)
 
 addCharmModule( "charmchild" "UnitTest" )

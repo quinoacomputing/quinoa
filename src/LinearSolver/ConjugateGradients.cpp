@@ -15,9 +15,11 @@
 
 using tk::ConjugateGradients;
 
-ConjugateGradients::ConjugateGradients()
+ConjugateGradients::ConjugateGradients( std::size_t size ) :
+  m_r( size, 0.0 )
 // *****************************************************************************
 //  Constructor
+//! \param[in] size Number of unknowns (rows) on this chare
 // *****************************************************************************
 {
 }

@@ -35,6 +35,7 @@ using inciter::Discretization;
 Discretization::Discretization(
   std::size_t meshid,
   const CProxy_DistFCT& fctproxy,
+  const tk::CProxy_ConjugateGradients& cgproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
   const std::vector< std::size_t >& ginpoel,
@@ -52,6 +53,7 @@ Discretization::Discretization(
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_nvol( 0 ),
   m_fct( fctproxy ),
+  m_cg( cgproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
@@ -72,6 +74,7 @@ Discretization::Discretization(
 //  Constructor
 //! \param[in] meshid Mesh ID
 //! \param[in] fctproxy Distributed FCT proxy
+//! \param[in] cgproxy Distributed Conjugrate Gradients linear solver proxy
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] meshwriter Mesh writer proxy
 //! \param[in] ginpoel Vector of mesh element connectivity owned (global IDs)
@@ -143,6 +146,12 @@ Discretization::Discretization(
   if (sch == ctr::SchemeType::DiagCG)
     m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
+
+  // Insert ConjugrateGradients chare array element if CG is needed
+  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  if (ale && meshvel != ctr::MeshVelocityType::NONE)
+    m_cg[ thisIndex ].insert( m_gid.size() );
 
   #ifdef EXAM2M
   // Establish bridge to ExaM2M mesh-transfer lib

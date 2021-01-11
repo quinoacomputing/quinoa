@@ -21,6 +21,8 @@
 #ifndef ConjugateGradients_h
 #define ConjugateGradients_h
 
+#include "Types.hpp"
+
 #include "NoWarning/conjugategradients.decl.h"
 
 namespace tk {
@@ -35,7 +37,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //ConjugateGradients_SDAG_CODE
 
     //! Constructor
-    explicit ConjugateGradients();
+    explicit ConjugateGradients( std::size_t size );
 
     //! Migrate constructor
     //explicit ConjugateGradients( CkMigrateMessage* ) {}
@@ -45,6 +47,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_r;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -53,6 +56,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     ///@}
 
   private:
+   std::vector< tk::real > m_r;
 };
 
 } // tk::
