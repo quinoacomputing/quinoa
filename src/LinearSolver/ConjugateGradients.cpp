@@ -15,8 +15,16 @@
 
 using tk::ConjugateGradients;
 
-ConjugateGradients::ConjugateGradients( std::size_t size ) :
-  m_r( size, 0.0 )
+ConjugateGradients::ConjugateGradients(
+  std::size_t size,
+  std::size_t dof,
+  const std::pair< std::vector< std::size_t >,
+                   std::vector< std::size_t > >& psup ) :
+  m_A( dof, psup ),
+  m_x( size, 0.0 ),
+  m_r( size, 0.0 ),
+  m_p( size, 0.0 ),
+  m_q( size, 0.0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] size Number of unknowns (rows) on this chare

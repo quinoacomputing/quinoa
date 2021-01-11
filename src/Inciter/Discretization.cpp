@@ -150,8 +150,10 @@ Discretization::Discretization(
   // Insert ConjugrateGradients chare array element if CG is needed
   auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-  if (ale && meshvel != ctr::MeshVelocityType::NONE)
-    m_cg[ thisIndex ].insert( m_gid.size() );
+  if (ale && meshvel != ctr::MeshVelocityType::NONE) {
+    m_cg[ thisIndex ].insert( m_gid.size(), nprop,
+      tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) );
+  }
 
   #ifdef EXAM2M
   // Establish bridge to ExaM2M mesh-transfer lib

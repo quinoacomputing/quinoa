@@ -15,6 +15,8 @@
 #include <vector>
 #include <ostream>
 
+#include "NoWarning/pup_stl.hpp"
+
 #include "Types.hpp"
 
 namespace tk {
@@ -50,6 +52,23 @@ class CSR {
     std::ostream& write_as_matrix( std::ostream &os ) const;
     //! Write out CSR in Matlab/Octave format
     std::ostream& write_as_matlab( std::ostream &os ) const;
+
+    /** @name Pack/unpack (Charm++ serialization) routines */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er &p ) {
+      p | dof;
+      p | rnz;
+      p | ia;
+      p | ja;
+      p | a;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] c CSR object reference
+    friend void operator|( PUP::er& p, CSR& c ) { c.pup(p); }
+    ///@}
 
   private:
     std::size_t dof;                    //!< Number of degrees of freedom

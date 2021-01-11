@@ -17,7 +17,11 @@ module conjugategradients {
   namespace tk {
 
     array [1D] ConjugateGradients {
-      entry ConjugateGradients( std::size_t size );
+      entry ConjugateGradients(
+              std::size_t size,
+              std::size_t dof,
+              const std::pair< std::vector< std::size_t >,
+                               std::vector< std::size_t > >& psup );
     };
 
   } // tk::

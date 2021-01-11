@@ -22,6 +22,7 @@
 #define ConjugateGradients_h
 
 #include "Types.hpp"
+#include "CSR.hpp"
 
 #include "NoWarning/conjugategradients.decl.h"
 
@@ -37,7 +38,11 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //ConjugateGradients_SDAG_CODE
 
     //! Constructor
-    explicit ConjugateGradients( std::size_t size );
+    explicit ConjugateGradients(
+     std::size_t size,
+     std::size_t dof,
+     const std::pair< std::vector< std::size_t >,
+                      std::vector< std::size_t > >& psup );
 
     //! Migrate constructor
     //explicit ConjugateGradients( CkMigrateMessage* ) {}
@@ -47,7 +52,11 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_A;
+      p | m_x;
       p | m_r;
+      p | m_p;
+      p | m_q;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -56,7 +65,11 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     ///@}
 
   private:
-   std::vector< tk::real > m_r;
+   CSR m_A;                             //!< Sparse matrix
+   std::vector< tk::real > m_x;         //!< Solution/unknown
+   std::vector< tk::real > m_r;         //!< Auxiliary vector for CG solve
+   std::vector< tk::real > m_p;         //!< Auxiliary vector for CG solve
+   std::vector< tk::real > m_q;         //!< Auxiliary vector for CG solve
 };
 
 } // tk::
