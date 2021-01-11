@@ -23,6 +23,10 @@ module conjugategradients {
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& psup,
               const std::vector< tk::real >& b );
+      entry void dot( const std::vector< tk::real >& a,
+                      const std::vector< tk::real >& b,
+                      CkCallback c );
+      entry [reductiontarget] void normb( tk::real n );
     };
 
   } // tk::

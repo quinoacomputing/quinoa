@@ -11,6 +11,9 @@
 */
 // *****************************************************************************
 
+#include <numeric>
+#include <iostream>     // NOT NEEDED
+
 #include "Exception.hpp"
 #include "ConjugateGradients.hpp"
 
@@ -38,7 +41,8 @@ ConjugateGradients::ConjugateGradients(
   Assert( b.size() == size*dof, "Size mismatch" );
   Assert( m_A.rsize() == size*dof, "Size mismatch" );
 
-  // NEXT: Write distributed dot product and matrix-vector multiply.
+  // compute norm of right hand side
+  dot(b, b, CkCallback(CkReductionTarget(ConjugateGradients,normb),thisProxy));
 
   // // compute initial residual and norm of right hand side
   // tk::real normb = 0.0;
@@ -50,6 +54,31 @@ ConjugateGradients::ConjugateGradients(
   //     A->r[i] -= A->a[j] * x[A->ja[j]-1];
   // }
   // normb = sqrt( normb );
+}
+
+void
+ConjugateGradients::dot( const std::vector< tk::real >& a,
+                         const std::vector< tk::real >& b,
+                         CkCallback c )
+// *****************************************************************************
+//  Initiate computation of dot product of two vectors
+//! \param[in] a 1st vector of dot product
+//! \param[in] b 2nd vector of dot product
+// *****************************************************************************
+{
+  Assert( a.size() == b.size(), "Size mismatch" );
+  auto d = std::inner_product( begin(a), end(a), begin(b), 0.0 );
+  contribute( sizeof(tk::real), &d, CkReduction::sum_double, c );
+}
+
+void
+ConjugateGradients::normb( tk::real n )
+// *****************************************************************************
+// Compute the norm of the right hand side
+//! \param[in] n Norm of right hand side (aggregated across all chares)
+// *****************************************************************************
+{
+  std::cout << thisIndex << " normb: " << std::sqrt(n) << '\n';
 }
 
 #include "NoWarning/conjugategradients.def.h"

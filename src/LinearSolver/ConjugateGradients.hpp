@@ -33,10 +33,6 @@ namespace tk {
 class ConjugateGradients : public CBase_ConjugateGradients {
 
   public:
-    // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
-    // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-    //ConjugateGradients_SDAG_CODE
-
     //! Constructor
     explicit ConjugateGradients(
      std::size_t size,
@@ -47,6 +43,14 @@ class ConjugateGradients : public CBase_ConjugateGradients {
 
     //! Migrate constructor
     //explicit ConjugateGradients( CkMigrateMessage* ) {}
+
+    //! Initiate computationa of dot product of two vectors
+    void dot( const std::vector< tk::real >& a,
+              const std::vector< tk::real >& b,
+              CkCallback c );
+
+    //! Compute the norm of the right hand side
+    void normb( tk::real n );
 
     /** @name Pack/unpack (Charm++ serialization) routines */
     ///@{
