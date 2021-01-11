@@ -40,16 +40,16 @@ While for the compressible Euler equations, the conservative vector
 
 \f[
 \begin{split}
-  \boldsymbol{U} = \begin{bmatrix}
-		                 \rho \\
-			               \rho u_i \\
-		                 \rho E
-		               \end{bmatrix}, \quad
-  \boldsymbol{F} = \begin{bmatrix}
-				            \rho u \\
-				            \rho u_i u_j + p \delta_{ij} \\
-				            (\rho E+p) u_j
-			            \end{bmatrix}
+\boldsymbol{U} = \begin{bmatrix}
+\rho \\
+\rho u_i \\
+\rho E
+\end{bmatrix}, \quad
+\boldsymbol{F} = \begin{bmatrix}
+\rho u \\
+\rho u_i u_j + p \delta_{ij} \\
+(\rho E+p) u_j
+\end{bmatrix}
 \end{split}
 \f]
 
