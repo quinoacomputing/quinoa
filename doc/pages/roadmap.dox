@@ -91,7 +91,10 @@ We have two kinds of CG algorithms implemented for unstructured 3D meshes: (1)
 `DiagCG`, is a node-centered method, combining flux-corrected transport with
 Lax-Wendroff time stepping, and (2) `ALECG`, is also a node-centered method,
 featuring Riemann solvers and MUSCL reconstruction on cell-edges, combined with
-Runge-Kutta time stepping. See @ref inciter_main for more details.
+Runge-Kutta time stepping. Note that the ALECG algorithm can be viewed as
+either an edge-based finite element method on tetrahedron meshes or a
+node-centered finite volume method (on the dual mesh, consisting of arbitrary
+polyhedra).  See @ref inciter_main for more details.
 
 We have been using ALECG in production, and are adding adaptive mesh refinement
 and ALE mesh motion. Both CG algorithms need more testing, especially with AMR,
