@@ -270,6 +270,24 @@ void CSR_object::test< 7 >() {
   ensure_equals( "CSR write_as_matlab incorrect", ss.str(), correct );
 }
 
+//! Test rsize
+template<> template<>
+void CSR_object::test< 8 >() {
+  set_test_name( "rsize" );
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+  // Generate points surrounding points
+  auto psup = tk::genPsup( inpoel, 4, tk::genEsup(inpoel,4) );
+
+  tk::CSR c( 1, psup );
+  ensure_equals( "CSR::rsize (dof=1) incorrect", c.rsize(),
+                 psup.second.size()-1 );
+  tk::CSR d( 3, psup );
+  ensure_equals( "CSR::rsize (dof=3) incorrect", d.rsize(),
+                 (psup.second.size()-1)*3 );
+}
+
 #if defined(STRICT_GNUC)
   #pragma GCC diagnostic pop
 #endif

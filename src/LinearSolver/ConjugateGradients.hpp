@@ -42,7 +42,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
      std::size_t size,
      std::size_t dof,
      const std::pair< std::vector< std::size_t >,
-                      std::vector< std::size_t > >& psup );
+                      std::vector< std::size_t > >& psup,
+     const std::vector< tk::real >& b );
 
     //! Migrate constructor
     //explicit ConjugateGradients( CkMigrateMessage* ) {}

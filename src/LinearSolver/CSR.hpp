@@ -44,6 +44,9 @@ class CSR {
                static_cast< const CSR& >( *this ).operator()( row, col, pos ) );
     }
 
+    //! Access real size of matrix
+    std::size_t rsize() const { return rnz.size()*dof; }
+
     //! Write out CSR as stored
     std::ostream& write_as_stored( std::ostream &os ) const;
     //! Write out CSR nonzero structure

@@ -151,8 +151,9 @@ Discretization::Discretization(
   auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
   if (ale && meshvel != ctr::MeshVelocityType::NONE) {
-    m_cg[ thisIndex ].insert( m_gid.size(), nprop,
-      tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) );
+    auto psup = tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) );
+    std::vector< tk::real > b( m_gid.size()*nprop, 0.0 );
+    m_cg[ thisIndex ].insert( m_gid.size(), nprop, psup, b );
   }
 
   #ifdef EXAM2M
