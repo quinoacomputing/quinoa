@@ -87,15 +87,19 @@ implementing a DG algorithm for multi-material compressible flows.
 
 @subsection roadmap_inciter_cg Continuous Galerkin (CG) methods
 
-We also have a CG algorithm implemented for unstructured 3D meshes that uses
-continuous Galerkin finite elements and combines flux-corrected transport with
-explicit Lax-Wendroff-type time stepping for the single-material Euler and
-Navier-Stokes equations.
+We have two kinds of CG algorithms implemented for unstructured 3D meshes: (1)
+`DiagCG`, is a node-centered method, combining flux-corrected transport with
+Lax-Wendroff time stepping, and (2) `ALECG`, is also a node-centered method,
+featuring Riemann solvers and MUSCL reconstruction on cell-edges, combined with
+Runge-Kutta time stepping. Note that the ALECG algorithm can be viewed as
+either an edge-based finite element method on tetrahedron meshes or a
+node-centered finite volume method (on the dual mesh, consisting of arbitrary
+polyhedra).  See @ref inciter_main for more details.
 
-We are _not_ currently actively working on the CG algorithm but it needs more
-testing, especially with AMR, equations of state other than ideal gas, and more
-@ref inciter_examples "examples" exercising more complex-geometry domains,
-using inviscid and viscous flows.
+We have been using ALECG in production, and are adding adaptive mesh refinement
+and ALE mesh motion. Both CG algorithms need more testing, especially with AMR,
+equations of state other than ideal gas, and more @ref inciter_examples
+"examples" exercising more complex-geometry domains.
 
 @subsection roadmap_vnv Verification and validation (V&V)
 
@@ -141,33 +145,11 @@ fileconv_main is currently used to convert data between ROOT and ExodusII
 formats. However, a better way to do this is to incorporate the functionality
 in FileConv to @ref meshconv_main.
 
-@subsection roadmap_inciter_omegah Add reading of side sets from Omega_H meshes
-
-Inciter can also read [Omega_H](https://github.com/SNLComputation/omega_h) mesh
-files. This is implemented in `src/IO/Omega_h_MeshReader.[hc]pp`. Currently
-only reading of domain elements (tetrahedra) are implemented. To make this
-functionality more useful for practical purposes, sidesets and surface elements
-should also be read from Omega_H files, which allow specifying boundary
-conditions.
-
 @subsection roadmap_inciter_eos Equations of state (EOS)
 
 Currently, equations of state for ideal gases are implemented. It would be
 great to implement some more advanced EOSs, including coupling libraries with
 EOS tables. A good starting point for this is under `PDE/EoS/`.
-
-@subsection roadmap_inciter_fieldoutput Unified field output
-
-Field output in Inciter is currently implemented by collecting the computed
-fields (where it is available) and passed to tk::MeshWriter, which then
-asynchronously writes the files in parallel, one output stream per compute node
-(which may be less than the number of CPUs or the number of work units).
-
-A way to improve on this is to put in code to query user input on which fields
-(and possibly how: in cells or in nodes of the mesh) are to be output and
-assemble the fields for tk::MeshWriter by a single class that is responsible
-for only that task. This would make the code more user-friendly, more
-featureful, and would also better reuse code.
 
 @section roadmap_rngtest RNGTest
 
