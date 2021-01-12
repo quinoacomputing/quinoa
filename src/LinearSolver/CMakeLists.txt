@@ -12,7 +12,11 @@ add_library(LinearSolver
 target_include_directories(LinearSolver PUBLIC
                            ${QUINOA_SOURCE_DIR}
                            ${QUINOA_SOURCE_DIR}/Base
+                           ${QUINOA_SOURCE_DIR}/Mesh
+                           ${QUINOA_SOURCE_DIR}/Control
+                           ${QUINOA_SOURCE_DIR}/LinearSolver
                            ${CHARM_INCLUDE_DIRS}
+                           ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../LinearSolver)
 
 set_target_properties(LinearSolver PROPERTIES LIBRARY_OUTPUT_NAME

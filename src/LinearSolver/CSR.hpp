@@ -31,6 +31,9 @@ class CSR {
                   const std::pair< std::vector< std::size_t >,
                                    std::vector< std::size_t > >& psup );
 
+    //! Empty constructor for Charm++
+    explicit CSR() = default;
+
     //! Return const reference to sparse matrix entry at a position
     const tk::real&
     operator()( std::size_t row, std::size_t col, std::size_t pos=0 ) const;
@@ -44,8 +47,15 @@ class CSR {
                static_cast< const CSR& >( *this ).operator()( row, col, pos ) );
     }
 
+    //! Multiply CSR matrix with vector from the right: r = A * x
+    void mult( const std::vector< tk::real >& x,
+               std::vector< tk::real >& r ) const;
+
     //! Access real size of matrix
     std::size_t rsize() const { return rnz.size()*dof; }
+
+    //! Access DOF
+    std::size_t DOF() const { return dof; }
 
     //! Write out CSR as stored
     std::ostream& write_as_stored( std::ostream &os ) const;
@@ -78,7 +88,7 @@ class CSR {
     std::vector< std::size_t > rnz;     //!< Number of nonzeros of each row
     std::vector< std::size_t > ia;      //!< Row pointers
     std::vector< std::size_t > ja;      //!< Column indices
-    std::vector< tk::real > a;          //!< Nonzero values
+    std::vector< tk::real > a;          //!< Nonzero matrix values
 };
 
 } // tk::

@@ -455,6 +455,10 @@ class Discretization : public CBase_Discretization {
     CProxy_CharmMesh m_m2m;
     #endif
 
+    //! Generate {A,x,b} for Laplacian mesh velocity smoother
+    std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
+    LaplacianSmoother() const;
+
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
 };

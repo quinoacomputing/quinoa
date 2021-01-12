@@ -33,33 +33,51 @@ namespace tk {
 class ConjugateGradients : public CBase_ConjugateGradients {
 
   public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wunused-parameter"
+    #endif
+    // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
+    // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+    ConjugateGradients_SDAG_CODE
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
+
     //! Constructor
     explicit ConjugateGradients(
-     std::size_t size,
      std::size_t dof,
-     const std::pair< std::vector< std::size_t >,
-                      std::vector< std::size_t > >& psup,
+     const std::vector< std::size_t >& gid,
+     const std::unordered_map< std::size_t, std::size_t >& lid,
+     const NodeCommMap& nodecommmap,
+     const CSR& A,
+     const std::vector< tk::real >& x,
      const std::vector< tk::real >& b );
 
     //! Migrate constructor
     //explicit ConjugateGradients( CkMigrateMessage* ) {}
 
-    //! Initiate computationa of dot product of two vectors
-    void dot( const std::vector< tk::real >& a,
-              const std::vector< tk::real >& b,
-              CkCallback c );
-
     //! Compute the norm of the right hand side
     void normb( tk::real n );
+
+    //! Receive contributions to matrix-vector multiply on chare-boundaries
+    void comres( const std::vector< std::size_t >& gid,
+                 const std::vector< std::vector< tk::real > >& rc );
 
     /** @name Pack/unpack (Charm++ serialization) routines */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_gid;
+      p | m_lid;
+      p | m_nodeCommMap;
       p | m_A;
       p | m_x;
+      p | m_b;
       p | m_r;
+      p | m_rc;
+      p | m_nr;
       p | m_p;
       p | m_q;
     }
@@ -70,11 +88,39 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     ///@}
 
   private:
-   CSR m_A;                             //!< Sparse matrix
-   std::vector< tk::real > m_x;         //!< Solution/unknown
-   std::vector< tk::real > m_r;         //!< Auxiliary vector for CG solve
-   std::vector< tk::real > m_p;         //!< Auxiliary vector for CG solve
-   std::vector< tk::real > m_q;         //!< Auxiliary vector for CG solve
+    //! Global node IDs
+    std::vector< std::size_t > m_gid;
+    //! Local node IDs associated to global ones
+    std::unordered_map< std::size_t, std::size_t > m_lid;
+    //! Global mesh node IDs shared with other chares associated to chare IDs
+    NodeCommMap m_nodeCommMap;
+    //! Sparse matrix
+    CSR m_A;
+    //! Solution/unknown
+    std::vector< tk::real > m_x;
+    //! Right hand side
+    std::vector< tk::real > m_b;
+    //! Auxiliary vector for CG solve
+    std::vector< tk::real > m_r;
+    //! Receive buffer for communication of matrix-vector multiply
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_rc;
+    //! Counter for assembling m_r
+    std::size_t m_nr;
+    //! Auxiliary vector for CG solve
+    std::vector< tk::real > m_p;
+    //! Auxiliary vector for CG solve
+    std::vector< tk::real > m_q;
+
+    //! Initiate computationa of dot product of two vectors
+    void dot( const std::vector< tk::real >& a,
+              const std::vector< tk::real >& b,
+              CkCallback c );
+
+    //! Initiate A * x for computing the initial residual, r = b - A * x
+    void residual();
+
+    //! Compute the initial residual, r = b - A * x
+    void initres();
 };
 
 } // tk::

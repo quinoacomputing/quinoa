@@ -107,21 +107,9 @@ Discretization::Discretization(
   tk::unique( c );
   m_bid = tk::assignLid( c );
 
-  // Lambda to decide if a node is not counted by this chare. If a node is
-  // found in the node communication map and is associated to a lower chare id
-  // than thisIndex, it is counted by another chare (and not thisIndex), hence
-  // a "slave" (for the purpose of this count).
-  auto slave = [ this ]( std::size_t p ) {
-    return
-      std::any_of( m_nodeCommMap.cbegin(), m_nodeCommMap.cend(),
-        [&](const auto& s) {
-          return s.second.find(p) != s.second.cend() && s.first > thisIndex;
-        } );
-  };
-
   // Compute number of mesh points owned
   std::size_t npoin = m_gid.size();
-  for (auto g : m_gid) if (slave(g)) --npoin;
+  for (auto g : m_gid) if (tk::slave(m_nodeCommMap,g,thisIndex)) --npoin;
 
   // Find host elements of user-specified points where time histories are
   // saved, and save the shape functions evaluated at the point locations
@@ -147,13 +135,13 @@ Discretization::Discretization(
     m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
-  // Insert ConjugrateGradients chare array element if CG is needed
+  // Insert ConjugrateGradients solver chare array element if needed
   auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
   if (ale && meshvel != ctr::MeshVelocityType::NONE) {
-    auto psup = tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) );
-    std::vector< tk::real > b( m_gid.size()*nprop, 0.0 );
-    m_cg[ thisIndex ].insert( m_gid.size(), nprop, psup, b );
+    // Configure Laplacian smoother for ALE mesh velocity
+    const auto& [A,x,b] = LaplacianSmoother();
+    m_cg[ thisIndex ].insert( 1, m_gid, m_lid, m_nodeCommMap, A, x, b );
   }
 
   #ifdef EXAM2M
@@ -168,6 +156,58 @@ Discretization::Discretization(
   std::vector< std::size_t > meshdata{ m_meshid, npoin };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
+}
+
+std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
+Discretization::LaplacianSmoother() const
+// *****************************************************************************
+// Generate {A,x,b} for Laplacian mesh velocity smoother
+//! \return {A,x,b} for Laplacian mesh velocity smoother
+// *****************************************************************************
+{
+  tk::CSR A( 1, tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) );
+
+  const auto& X = m_coord[0];
+  const auto& Y = m_coord[1];
+  const auto& Z = m_coord[2];
+
+  // fill matrix with Laplacian
+  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+    // access node IDs
+    const std::array< std::size_t, 4 >
+      N{{ m_inpoel[e*4+0], m_inpoel[e*4+1], m_inpoel[e*4+2], m_inpoel[e*4+3] }};
+    // compute element Jacobi determinant
+    const std::array< tk::real, 3 >
+      ba{{ X[N[1]]-X[N[0]], Y[N[1]]-Y[N[0]], Z[N[1]]-Z[N[0]] }},
+      ca{{ X[N[2]]-X[N[0]], Y[N[2]]-Y[N[0]], Z[N[2]]-Z[N[0]] }},
+      da{{ X[N[3]]-X[N[0]], Y[N[3]]-Y[N[0]], Z[N[3]]-Z[N[0]] }};
+    const auto J = tk::triple( ba, ca, da );        // J = 6V
+    Assert( J > 0, "Element Jacobian non-positive" );
+
+    // shape function derivatives, nnode*ndim [4][3]
+    std::array< std::array< tk::real, 3 >, 4 > grad;
+    grad[1] = tk::crossdiv( ca, da, J );
+    grad[2] = tk::crossdiv( da, ba, J );
+    grad[3] = tk::crossdiv( ba, ca, J );
+    for (std::size_t i=0; i<3; ++i)
+      grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+
+    for (std::size_t a=0; a<4; ++a)
+      for (std::size_t k=0; k<3; ++k)
+         for (std::size_t b=0; b<4; ++b)
+           A(N[a],N[b]) += J/6 * grad[a][k] * grad[b][k];
+  }
+
+  std::vector< tk::real > b( m_gid.size(), 0.0 );
+  auto x = b;
+
+  // put is some nonzero values in to b and x
+  for (std::size_t i=0; i<b.size(); ++i) {
+    b[i] = x[i] = m_gid[i];
+    //std::cout << thisIndex << ":b " << b[i] << '\n';
+  }
+
+  return { A, x, b };
 }
 
 std::vector< std::size_t >

@@ -14,19 +14,34 @@
 
 module conjugategradients {
 
+  include "CSR.hpp";
+  include "CommMap.hpp";
+
   namespace tk {
 
     array [1D] ConjugateGradients {
       entry ConjugateGradients(
-              std::size_t size,
               std::size_t dof,
-              const std::pair< std::vector< std::size_t >,
-                               std::vector< std::size_t > >& psup,
+              const std::vector< std::size_t >& gid,
+              const std::unordered_map< std::size_t, std::size_t >& lid,
+              const NodeCommMap& nodecommmap,
+              const CSR& A,
+              const std::vector< tk::real >& x,
               const std::vector< tk::real >& b );
-      entry void dot( const std::vector< tk::real >& a,
-                      const std::vector< tk::real >& b,
-                      CkCallback c );
       entry [reductiontarget] void normb( tk::real n );
+      entry void comres( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& rc );
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      entry void wait4res() {
+        when ownres_complete(), comres_complete() serial "res" { initres(); }
+      }
+
+      entry void ownres_complete();
+      entry void comres_complete();
+
     };
 
   } // tk::

@@ -16,44 +16,52 @@
 
 #include "Exception.hpp"
 #include "ConjugateGradients.hpp"
+#include "Vector.hpp"
 
 using tk::ConjugateGradients;
 
 ConjugateGradients::ConjugateGradients(
-  std::size_t size,
   std::size_t dof,
-  const std::pair< std::vector< std::size_t >,
-                   std::vector< std::size_t > >& psup,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& lid,
+  const NodeCommMap& nodecommmap,
+  const CSR& A,
+  const std::vector< tk::real >& x,
   const std::vector< tk::real >& b ) :
-  m_A( dof, psup ),
-  m_x( size*dof, 0.0 ),
-  m_r( size*dof, 0.0 ),
-  m_p( size*dof, 0.0 ),
-  m_q( size*dof, 0.0 )
+  m_gid( gid ),
+  m_lid( lid ),
+  m_nodeCommMap( nodecommmap ),
+  m_A( A ),
+  m_x( x ),
+  m_b( b ),
+  m_r( gid.size()*dof, 0.0 ),
+  m_rc(),
+  m_nr( 0 ),
+  m_p( gid.size()*dof, 0.0 ),
+  m_q( gid.size()*dof, 0.0 )
 // *****************************************************************************
 //  Constructor
-//! \param[in] size Number of unknowns on this chare
 //! \param[in] dof Number of scalars per unknown (degrees of freedom, DOF)
-//! \param[in] psup Points surrounding points
-//! \param[in] b Right hand side in Ax=b
+//! \param[in] gid Global node ids
+//! \param[in] lid Local node ids associated to global ones
+//! \param[in] nodecommmap Global mesh node IDs shared with other chares
+//!   associated to their chare IDs
+//! \param[in] b Right hand side of the linear system to solve in Ax=b
 // *****************************************************************************
 {
-  Assert( b.size() == size*dof, "Size mismatch" );
-  Assert( m_A.rsize() == size*dof, "Size mismatch" );
+  Assert( m_A.rsize() == gid.size()*dof, "Size mismatch" );
+  Assert( m_x.size() == gid.size()*dof, "Size mismatch" );
+  Assert( m_b.size() == gid.size()*dof, "Size mismatch" );
 
   // compute norm of right hand side
-  dot(b, b, CkCallback(CkReductionTarget(ConjugateGradients,normb),thisProxy));
+  CkCallback normb( CkReductionTarget(ConjugateGradients,normb),thisProxy );
+  dot( m_b, m_b, normb );
 
-  // // compute initial residual and norm of right hand side
-  // tk::real normb = 0.0;
-  // for (std::size_t i=0; i<m_A.rsize(); ++i) {
-  //   normb += b[i] * b[i];
-  //   // r = b - A * x
-  //   A->r[i] = b[i];
-  //   for (std::size_t j=A->ia[i]-1; j<A->ia[i+1]-1; ++j)
-  //     A->r[i] -= A->a[j] * x[A->ja[j]-1];
-  // }
-  // normb = sqrt( normb );
+  // compute A * x (for the initial residual)
+  thisProxy[ thisIndex ].wait4res();
+  residual();
+
+  m_A.write_as_matlab( std::cout );
 }
 
 void
@@ -64,10 +72,16 @@ ConjugateGradients::dot( const std::vector< tk::real >& a,
 //  Initiate computation of dot product of two vectors
 //! \param[in] a 1st vector of dot product
 //! \param[in] b 2nd vector of dot product
+//! \param[in] c Callback to target with the final result
 // *****************************************************************************
 {
   Assert( a.size() == b.size(), "Size mismatch" );
-  auto d = std::inner_product( begin(a), end(a), begin(b), 0.0 );
+
+  tk::real d = 0.0;
+  for (std::size_t i=0; i<a.size(); ++i)
+    if (!slave(m_nodeCommMap,m_gid[i],thisIndex))
+      d += a[i]*b[i];
+
   contribute( sizeof(tk::real), &d, CkReduction::sum_double, c );
 }
 
@@ -79,6 +93,79 @@ ConjugateGradients::normb( tk::real n )
 // *****************************************************************************
 {
   std::cout << thisIndex << " normb: " << std::sqrt(n) << '\n';
+}
+
+void
+ConjugateGradients::residual()
+// *****************************************************************************
+//  Initiate A * x for computing the initial residual, r = b - A * x
+// *****************************************************************************
+{
+  // Compute own contribution to r = A * x
+  m_A.mult( m_x, m_r );
+
+  // Send partial product on chare-boundary nodes to fellow chares
+  if (m_nodeCommMap.empty())
+    comres_complete();
+  else {
+    auto dof = m_A.DOF();
+    for (const auto& [c,n] : m_nodeCommMap) {
+      std::vector< std::vector< tk::real > > rc( n.size() );
+      std::size_t j = 0;
+      for (auto g : n) {
+        std::vector< tk::real > nr( dof );
+        auto lid = tk::cref_find( m_lid, g );
+        for (std::size_t d=0; d<dof; ++d) nr[d] = m_r[ lid*dof+d ];
+        rc[j++] = std::move(nr);
+      }
+      thisProxy[c].comres( std::vector<std::size_t>(begin(n),end(n)), rc );
+    }
+  }
+
+  ownres_complete();
+}
+
+void
+ConjugateGradients::comres( const std::vector< std::size_t >& gid,
+                            const std::vector< std::vector< tk::real > >& rc )
+// *****************************************************************************
+//  Receive contributions to A * x on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive contributions
+//! \param[in] rc Partial contributions at chare-boundary nodes
+// *****************************************************************************
+{
+  Assert( rc.size() == gid.size(), "Size mismatch" );
+
+  using tk::operator+=;
+
+  for (std::size_t i=0; i<gid.size(); ++i)
+    m_rc[ gid[i] ] += rc[i];
+
+  if (++m_nr == m_nodeCommMap.size()) {
+    m_nr = 0;
+    comres_complete();
+  }
+}
+
+void
+ConjugateGradients::initres()
+// *****************************************************************************
+// Compute the initial residual, r = b - A * x
+// *****************************************************************************
+{
+  // Combine own and communicated contributions to r = A * x
+  auto dof = m_A.DOF();
+  for (const auto& [gid,r] : m_rc) {
+    auto lid = tk::cref_find( m_lid, gid );
+    for (std::size_t c=0; c<dof; ++c) m_r[lid*dof+c] += r[c];
+  }
+
+  // Finish computing initial residual, r = b - A * x
+  for (auto& r : m_r) r *= -1.0;
+  m_r += m_b;
+
+  std::size_t j=0;
+  for (auto r : m_r) std::cout << thisIndex << ", " << m_gid[j++] << ": " << r << '\n';
 }
 
 #include "NoWarning/conjugategradients.def.h"

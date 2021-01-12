@@ -102,6 +102,19 @@ CSR::operator()( std::size_t row, std::size_t col, std::size_t pos ) const
   Throw("Sparse matrix index not found");
 }
 
+void
+CSR::mult( const std::vector< tk::real >& x, std::vector< tk::real >& r ) const
+// *****************************************************************************
+//  Multiply CSR matrix with vector from the right: r = A * x
+//! \param[in] x Vector to multiply matrix with from the right
+//! \param[in] r Result vector of product r = A * x
+// *****************************************************************************
+{
+  for (std::size_t i=0; i<rnz.size()*dof; ++i)
+    for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j)
+      r[i] += a[j] * x[ja[j]-1];
+}
+
 std::ostream&
 CSR::write_as_stored( std::ostream& os ) const
 // *****************************************************************************

@@ -943,6 +943,11 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
   if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DiagCG)
     m_scheme[meshid].fct().doneInserting();
 
+  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  if (ale && meshvel != ctr::MeshVelocityType::NONE)
+    m_scheme[meshid].cg().doneInserting();
+
   m_scheme[meshid].disc().vol();
 }
 
