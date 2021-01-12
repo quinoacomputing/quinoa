@@ -44,12 +44,23 @@
   #pragma clang diagnostic ignored "-Wcast-align"
   #pragma clang diagnostic ignored "-Wshadow"
   #pragma clang diagnostic ignored "-Wnon-virtual-dtor"
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wcast-qual"
+  #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+  #pragma GCC diagnostic ignored "-Wunused-parameter"
+  #pragma GCC diagnostic ignored "-Wshadow"
+  #pragma GCC diagnostic ignored "-Wfloat-equal"
+  #pragma GCC diagnostic ignored "-Wredundant-decls"
+  #pragma GCC diagnostic ignored "-Wextra"
 #endif
 
 #include "../LinearSolver/conjugategradients.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
 #endif
 
 #endif // nowarning_conjugategradients_decl_h

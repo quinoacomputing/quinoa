@@ -36,12 +36,17 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wunused-parameter"
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wunused-parameter"
     #endif
     // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
     // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
     ConjugateGradients_SDAG_CODE
     #if defined(__clang__)
       #pragma clang diagnostic pop
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic pop
     #endif
 
     //! Constructor
