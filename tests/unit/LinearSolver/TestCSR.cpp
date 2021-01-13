@@ -73,7 +73,7 @@ static CSR_group CSR( "LinearSolver/CSR" );
 
 //! Test definitions for group
 
-//! Test if constructor does not throw on positive dof and non-empty psup
+//! Test if constructor does not throw on positive DOF and non-empty psup
 template<> template<>
 void CSR_object::test< 1 >() {
   set_test_name( "ctor doesn't throw on positive DOF and valid psup" );
@@ -300,7 +300,7 @@ void CSR_object::test< 9 >() {
   tk::shiftToZero( inpoel );
   // Generate points surrounding points
   auto psup = tk::genPsup( inpoel, 4, tk::genEsup(inpoel,4) );
-
+  // Query number of nodes in mesh
   auto npoin = psup.second.size()-1;
 
   tk::CSR A( 1, psup );

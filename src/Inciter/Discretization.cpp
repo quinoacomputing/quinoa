@@ -141,7 +141,7 @@ Discretization::Discretization(
   if (ale && meshvel != ctr::MeshVelocityType::NONE) {
     // Configure Laplacian smoother for ALE mesh velocity
     const auto& [A,x,b] = LaplacianSmoother();
-    m_cg[ thisIndex ].insert( 1, m_gid, m_lid, m_nodeCommMap, A, x, b );
+    m_cg[ thisIndex ].insert( A, x, b, m_gid, m_lid, m_nodeCommMap );
   }
 
   #ifdef EXAM2M

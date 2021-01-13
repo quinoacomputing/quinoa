@@ -51,13 +51,12 @@ class ConjugateGradients : public CBase_ConjugateGradients {
 
     //! Constructor
     explicit ConjugateGradients(
-     std::size_t dof,
-     const std::vector< std::size_t >& gid,
-     const std::unordered_map< std::size_t, std::size_t >& lid,
-     const NodeCommMap& nodecommmap,
      const CSR& A,
      const std::vector< tk::real >& x,
-     const std::vector< tk::real >& b );
+     const std::vector< tk::real >& b,
+     const std::vector< std::size_t >& gid,
+     const std::unordered_map< std::size_t, std::size_t >& lid,
+     const NodeCommMap& nodecommmap );
 
     //! Migrate constructor
     //explicit ConjugateGradients( CkMigrateMessage* ) {}
@@ -74,12 +73,12 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
-      p | m_gid;
-      p | m_lid;
-      p | m_nodeCommMap;
       p | m_A;
       p | m_x;
       p | m_b;
+      p | m_gid;
+      p | m_lid;
+      p | m_nodeCommMap;
       p | m_r;
       p | m_rc;
       p | m_nr;
@@ -93,18 +92,18 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     ///@}
 
   private:
-    //! Global node IDs
-    std::vector< std::size_t > m_gid;
-    //! Local node IDs associated to global ones
-    std::unordered_map< std::size_t, std::size_t > m_lid;
-    //! Global mesh node IDs shared with other chares associated to chare IDs
-    NodeCommMap m_nodeCommMap;
     //! Sparse matrix
     CSR m_A;
     //! Solution/unknown
     std::vector< tk::real > m_x;
     //! Right hand side
     std::vector< tk::real > m_b;
+    //! Global node IDs
+    std::vector< std::size_t > m_gid;
+    //! Local node IDs associated to global ones
+    std::unordered_map< std::size_t, std::size_t > m_lid;
+    //! Global mesh node IDs shared with other chares associated to chare IDs
+    NodeCommMap m_nodeCommMap;
     //! Auxiliary vector for CG solve
     std::vector< tk::real > m_r;
     //! Receive buffer for communication of matrix-vector multiply

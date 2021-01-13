@@ -21,27 +21,25 @@
 using tk::ConjugateGradients;
 
 ConjugateGradients::ConjugateGradients(
-  std::size_t dof,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& lid,
-  const NodeCommMap& nodecommmap,
   const CSR& A,
   const std::vector< tk::real >& x,
-  const std::vector< tk::real >& b ) :
-  m_gid( gid ),
-  m_lid( lid ),
-  m_nodeCommMap( nodecommmap ),
+  const std::vector< tk::real >& b,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& lid,
+  const NodeCommMap& nodecommmap ) :
   m_A( A ),
   m_x( x ),
   m_b( b ),
-  m_r( gid.size()*dof, 0.0 ),
+  m_gid( gid ),
+  m_lid( lid ),
+  m_nodeCommMap( nodecommmap ),
+  m_r( gid.size()*A.DOF(), 0.0 ),
   m_rc(),
   m_nr( 0 ),
-  m_p( gid.size()*dof, 0.0 ),
-  m_q( gid.size()*dof, 0.0 )
+  m_p( gid.size()*A.DOF(), 0.0 ),
+  m_q( gid.size()*A.DOF(), 0.0 )
 // *****************************************************************************
 //  Constructor
-//! \param[in] dof Number of scalars per unknown (degrees of freedom, DOF)
 //! \param[in] gid Global node ids
 //! \param[in] lid Local node ids associated to global ones
 //! \param[in] nodecommmap Global mesh node IDs shared with other chares
@@ -49,9 +47,9 @@ ConjugateGradients::ConjugateGradients(
 //! \param[in] b Right hand side of the linear system to solve in Ax=b
 // *****************************************************************************
 {
-  Assert( m_A.rsize() == gid.size()*dof, "Size mismatch" );
-  Assert( m_x.size() == gid.size()*dof, "Size mismatch" );
-  Assert( m_b.size() == gid.size()*dof, "Size mismatch" );
+  Assert( m_A.rsize() == gid.size()*A.DOF(), "Size mismatch" );
+  Assert( m_x.size() == gid.size()*A.DOF(), "Size mismatch" );
+  Assert( m_b.size() == gid.size()*A.DOF(), "Size mismatch" );
 
   // compute norm of right hand side
   CkCallback normb( CkReductionTarget(ConjugateGradients,normb),thisProxy );
