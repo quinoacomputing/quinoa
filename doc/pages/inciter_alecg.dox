@@ -16,6 +16,10 @@ papers_inciter "Inciter papers", to solve the governing equations of
 compressible flow to use an asynchronous-by-default, distributed-memory,
 task-parallel programming paradigm using the Charm++ runtime system.
 
+Note that the ALECG algorithm can be viewed as either an edge-based finite
+element method on tetrahedron meshes or a node-centered finite volume method
+(on the dual mesh, consisting of arbitrary polyhedra).
+
 @section alecg_euler The equations of compressible flow
 
 The equations solved are the 3D unsteady Euler equations, governing inviscid
