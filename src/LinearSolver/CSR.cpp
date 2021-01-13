@@ -110,6 +110,8 @@ CSR::mult( const std::vector< tk::real >& x, std::vector< tk::real >& r ) const
 //! \param[in] r Result vector of product r = A * x
 // *****************************************************************************
 {
+  std::fill( begin(r), end(r), 0.0 );
+
   for (std::size_t i=0; i<rnz.size()*dof; ++i)
     for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j)
       r[i] += a[j] * x[ja[j]-1];

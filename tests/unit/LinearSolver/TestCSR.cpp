@@ -16,6 +16,7 @@
 #include "CSR.hpp"
 #include "Reorder.hpp"
 #include "DerivedData.hpp"
+#include "Vector.hpp"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 
@@ -54,6 +55,12 @@ struct CSR_common {
                                       7,  10, 13, 12,
                                       14,  4, 13,  9,
                                       14,  1,  9, 11 };
+
+  // Mesh node coordinates for simple tet mesh above
+  std::array< std::vector< tk::real >, 3 > coord {{
+    {{ 0, 1, 1, 0, 0, 1, 1, 0, 0.5, 0.5, 0.5, 1,   0.5, 0 }},
+    {{ 0, 0, 1, 1, 0, 0, 1, 1, 0.5, 0.5, 0,   0.5, 1,   0.5 }},
+    {{ 0, 0, 0, 0, 1, 1, 1, 1, 0,   1,   0.5, 0.5, 0.5, 0.5 }} }};
 };
 
 //! Test group shortcuts
@@ -243,12 +250,8 @@ void CSR_object::test< 7 >() {
 
   std::stringstream ss;
   c.write_as_matlab( ss );
-  //std::cout << ss.str();
 
   auto s = ss.str();
-
-  // remove white space for easier comparison
-  //s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
 
   auto correct = R"(A = [ 4 0 0 0 0 0 0 0 0 0 0 0 0 0 ;
 0 4 0 0 0 0 0 0 0 0 0 0 0 0 ;
@@ -286,6 +289,70 @@ void CSR_object::test< 8 >() {
   tk::CSR d( 3, psup );
   ensure_equals( "CSR::rsize (dof=3) incorrect", d.rsize(),
                  (psup.second.size()-1)*3 );
+}
+
+//! Test matrix-vector multiply
+template<> template<>
+void CSR_object::test< 9 >() {
+  set_test_name( "matrix-vector multiply" );
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+  // Generate points surrounding points
+  auto psup = tk::genPsup( inpoel, 4, tk::genEsup(inpoel,4) );
+
+  auto npoin = psup.second.size()-1;
+
+  tk::CSR A( 1, psup );
+
+  const auto& X = coord[0];
+  const auto& Y = coord[1];
+  const auto& Z = coord[2];
+
+  // fill matrix with Laplacian
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+    // access node IDs
+    const std::array< std::size_t, 4 >
+      N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
+    // compute element Jacobi determinant
+    const std::array< tk::real, 3 >
+      ba{{ X[N[1]]-X[N[0]], Y[N[1]]-Y[N[0]], Z[N[1]]-Z[N[0]] }},
+      ca{{ X[N[2]]-X[N[0]], Y[N[2]]-Y[N[0]], Z[N[2]]-Z[N[0]] }},
+      da{{ X[N[3]]-X[N[0]], Y[N[3]]-Y[N[0]], Z[N[3]]-Z[N[0]] }};
+    const auto J = tk::triple( ba, ca, da );        // J = 6V
+    Assert( J > 0, "Element Jacobian non-positive" );
+
+    // shape function derivatives, nnode*ndim [4][3]
+    std::array< std::array< tk::real, 3 >, 4 > grad;
+    grad[1] = tk::crossdiv( ca, da, J );
+    grad[2] = tk::crossdiv( da, ba, J );
+    grad[3] = tk::crossdiv( ba, ca, J );
+    for (std::size_t i=0; i<3; ++i)
+      grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+
+    for (std::size_t a=0; a<4; ++a)
+      for (std::size_t k=0; k<3; ++k)
+         for (std::size_t b=0; b<4; ++b)
+           A(N[a],N[b]) += J/6 * grad[a][k] * grad[b][k];
+  }
+
+  std::vector< tk::real > x( npoin );
+  std::iota( begin(x), end(x), 0.0 );
+  auto r = x;
+
+  A.mult( x, r );
+
+  std::vector< tk::real > correct{
+    -6.124999999999999, -5.25, -5.041666666666666, -5, -4.166666666666666,
+    -3.291666666666666, -3.083333333333333, -3.041666666666666,
+     2.916666666666672, 1.083333333333338, 5.500000000000007,
+    7.833333333333343,6.833333333333341,10.83333333333334 };
+
+  tk::real prec = std::numeric_limits< tk::real >::epsilon()*100;
+
+  for (std::size_t i=0; i<r.size(); ++i)
+    ensure_equals( "incorrect matrix-vector product",
+                   r[i], correct[i], prec );
 }
 
 #if defined(STRICT_GNUC)
