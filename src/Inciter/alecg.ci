@@ -57,6 +57,7 @@ module alecg {
       entry void lhs();
       entry void step();
       entry void next();
+      entry void stage();
       entry void evalLB( int nrestart );
       //! [Entry methods]
 
@@ -67,8 +68,9 @@ module alecg {
       entry void wait4lhs() {
         when ownlhs_complete(), comlhs_complete(),
              ownnorm_complete(), comnorm_complete(),
-             owndfnorm_complete(), comdfnorm_complete() serial "lhs" {
-        lhsmerge(); } }
+             owndfnorm_complete(), comdfnorm_complete(),
+             transfer_complete() serial "lhs"
+        { lhsmerge(); } }
 
       entry void wait4grad() {
         when owngrad_complete(), comgrad_complete() serial "grad" { rhs(); } }
@@ -76,8 +78,8 @@ module alecg {
       entry void wait4rhs() {
         when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } }
 
-      entry void wait4stage() {
-        when lhs_complete(), resize_complete() serial "stage" { stage(); } }
+      entry void wait4trans() {
+        when lhs_complete(), resize_complete() serial "trans" { transfer(); } }
 
       entry void ownnorm_complete();
       entry void comnorm_complete();
@@ -85,6 +87,7 @@ module alecg {
       entry void comdfnorm_complete();
       entry void ownlhs_complete();
       entry void comlhs_complete();
+      entry void transfer_complete();
       entry void ownrhs_complete();
       entry void comrhs_complete();
       entry void owngrad_complete();

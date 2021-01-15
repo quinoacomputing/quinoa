@@ -28,7 +28,7 @@
 #include "ExodusIIMeshWriter.hpp"
 #include "DerivedData.hpp"
 #include "Reorder.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 #ifdef HAS_OMEGA_H
   #include "Omega_h_MeshReader.hpp"

@@ -25,7 +25,7 @@
 #include "Timer.hpp"
 #include "Types.hpp"
 #include "Init.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 #include "Tags.hpp"
 #include "ProcessException.hpp"
 #include "RNG.hpp"

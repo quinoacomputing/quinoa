@@ -16,7 +16,7 @@
 
 #include <brigand/sequences/list.hpp>
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 #ifdef HAS_MKL
   #include <mkl_vsl_defines.h>

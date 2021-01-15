@@ -28,6 +28,7 @@ module partitioner {
     nodegroup [migratable] Partitioner {
       entry Partitioner(
         std::size_t meshid,
+        const std::vector< Transfer >& t,
         const std::string& filename,
         const tk::PartitionerCallback& cbp,
         const tk::RefinerCallback& cbr,
@@ -36,7 +37,7 @@ module partitioner {
         const CProxy_Refiner& refiner,
         const CProxy_Sorter& sorter,
         const tk::CProxy_MeshWriter& meshwriter,
-        const Scheme& scheme,
+        const std::vector< Scheme >& scheme,
         const std::map< int, std::vector< std::size_t > >& belem,
         const std::map< int, std::vector< std::size_t > >& faces,
         const std::map< int, std::vector< std::size_t > >& bnode );

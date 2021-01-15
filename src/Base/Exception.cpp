@@ -17,7 +17,7 @@
 #include <sstream>
 #include <iostream>
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 #include "Exception.hpp"
 
 #ifdef HAS_BACKWARD

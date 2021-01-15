@@ -27,7 +27,6 @@
 #include <vector>
 #include <map>
 
-#include "QuinoaConfig.hpp"
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "DerivedData.hpp"
@@ -177,6 +176,9 @@ class ALECG : public CBase_ALECG {
 
     // Evaluate whether to do load balancing
     void evalLB( int nrestart );
+
+    //! Evaluate whether to continue with next time step stage
+    void stage();
 
     //! Continue to next time step
     void next();
@@ -385,8 +387,8 @@ class ALECG : public CBase_ALECG {
     //! Compute time step size
     void dt();
 
-    //! Evaluate whether to continue with next time step stage
-    void stage();
+    //! Transfer solution to other solver and mesh if coupled
+    void transfer();
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();

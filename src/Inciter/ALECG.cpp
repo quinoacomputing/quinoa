@@ -15,7 +15,7 @@
 */
 // *****************************************************************************
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 #include "ALECG.hpp"
 #include "Vector.hpp"
 #include "Reader.hpp"
@@ -138,10 +138,22 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   // Activate SDAG wait for initially computing the left-hand side and normals
   thisProxy[ thisIndex ].wait4lhs();
 
-  // Signal the runtime system that the workers have been created
-  std::vector< std::size_t > meshdata{ m_initial, d->MeshId() };
-  contribute( meshdata, CkReduction::sum_ulong,
-    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
+  // Generate callbacks for solution transfers we are involved in
+
+  // Always add a callback to be used when we are not involved in any transfers
+  std::vector< CkCallback > cb;
+  auto c = CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]);
+  cb.push_back( c );
+
+  // Generate a callback for each transfer we are involved in (either as a
+  // source or a destination)
+  auto meshid = d->MeshId();
+  for (const auto& t : d->Transfers())
+    if (meshid == t.src || meshid == t.dst)
+      cb.push_back( c );
+
+  // Send callbacks to base
+  d->transferCallback( cb );
 }
 //! [Constructor]
 
@@ -408,8 +420,11 @@ ALECG::box( tk::real v )
   d->Boxvol() = v;
 
   // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde) eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
-    m_boxnodes );
+  for (auto& eq : g_cgpde)
+    eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes );
+
+  // Initiate IC transfer (if coupled)
+  Disc()->transfer( m_u );
 
   // Compute left-hand side of PDEs
   lhs();
@@ -723,7 +738,7 @@ ALECG::dt()
   // Actiavate SDAG waits for next time step stage
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
-  thisProxy[ thisIndex ].wait4stage();
+  thisProxy[ thisIndex ].wait4trans();
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -947,8 +962,8 @@ ALECG::solve()
     thisProxy[ thisIndex ].wait4grad();
     thisProxy[ thisIndex ].wait4rhs();
 
-    // continue with next time step stage
-    stage();
+    // continue to mesh-to-mesh transfer (if coupled)
+    transfer();
 
   } else {
 
@@ -1092,6 +1107,18 @@ ALECG::resized()
 // *****************************************************************************
 {
   resize_complete();
+}
+
+void
+ALECG::transfer()
+// *****************************************************************************
+// Transfer solution to other solver and mesh if coupled
+// *****************************************************************************
+{
+  // Initiate solution transfer (if coupled)
+  //Disc()->transfer( m_u,
+  //  CkCallback(CkIndex_ALECG::stage(), thisProxy[thisIndex]) );
+  thisProxy[thisIndex].stage();
 }
 
 void

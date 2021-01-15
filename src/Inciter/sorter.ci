@@ -22,10 +22,11 @@ module sorter {
 
     array [1D] Sorter {
       entry Sorter( std::size_t meshid,
+                    const std::vector< Transfer >& t,
                     const CProxy_Transporter& transporter,
                     const tk::CProxy_MeshWriter& meshwriter,
                     const tk::SorterCallback& cbs,
-                    const Scheme& scheme,
+                    const std::vector< Scheme >& scheme,
                     CkCallback reorderRefiner,
                     const std::vector< std::size_t >& ginpoel,
                     const tk::UnsMesh::CoordMap& coordmap,

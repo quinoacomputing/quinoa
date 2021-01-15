@@ -14,6 +14,7 @@
 
 #include "NoWarning/tut.hpp"
 
+#include "QuinoaConfig.hpp"
 #include "TUTConfig.hpp"
 #include "DerivedData.hpp"
 #include "Reorder.hpp"

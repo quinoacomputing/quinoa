@@ -21,7 +21,7 @@
 #include "TestU01Stack.hpp"
 #include "TestU01Wrappers.hpp"
 #include "RNGTest/InputDeck/InputDeck.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 extern "C" {
   #include <svaria.h>

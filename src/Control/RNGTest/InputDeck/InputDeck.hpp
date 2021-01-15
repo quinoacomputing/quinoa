@@ -18,7 +18,7 @@
 
 #include "NoWarning/set.hpp"
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 #include "TaggedTuple.hpp"
 #include "RNGTest/CmdLine/CmdLine.hpp"
 

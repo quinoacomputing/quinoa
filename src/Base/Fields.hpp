@@ -15,7 +15,7 @@
 #ifndef Fields_h
 #define Fields_h
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 #include "Data.hpp"
 
 namespace tk {

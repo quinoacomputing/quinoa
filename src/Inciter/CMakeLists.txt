@@ -5,10 +5,6 @@ project(Inciter CXX)
 # Include function for adding Charm++ modules
 include(charm)
 
-if(HAS_EXAM2M)
-  set(CHARMMESH CharmMesh.cpp)
-endif()
-
 add_library(Inciter
             Transporter.cpp
             Partitioner.cpp
@@ -48,6 +44,7 @@ target_include_directories(Inciter PUBLIC
                            ${HYPRE_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${ROOT_INCLUDE_DIRS}
+                           ${EXAM2M_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
                            ${PROJECT_BINARY_DIR}/../Inciter
@@ -85,9 +82,6 @@ addCharmModule( "diagcg" "Inciter" )
 addCharmModule( "alecg" "Inciter" )
 addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
-if(HAS_EXAM2M)
-  addCharmModule( "charmmesh" "Inciter" )
-endif()
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module

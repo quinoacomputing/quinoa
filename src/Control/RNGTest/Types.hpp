@@ -21,7 +21,7 @@
 #include "RNGParam.hpp"
 #include "RNGTest/Options/Battery.hpp"
 #include "Options/RNG.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 namespace rngtest {
 namespace ctr {

@@ -56,6 +56,7 @@ class Partitioner : public CBase_Partitioner {
   public:
     //! Constructor
     Partitioner( std::size_t meshid,
+                 const std::vector< Transfer >& t,
                  const std::string& filename,
                  const tk::PartitionerCallback& cbp,
                  const tk::RefinerCallback& cbr,
@@ -64,7 +65,7 @@ class Partitioner : public CBase_Partitioner {
                  const CProxy_Refiner& refiner,
                  const CProxy_Sorter& sorter,
                  const tk::CProxy_MeshWriter& meshwriter,
-                 const Scheme& scheme,
+                 const std::vector< Scheme >& scheme,
                  const std::map< int, std::vector< std::size_t > >& bface,
                  const std::map< int, std::vector< std::size_t > >& faces,
                  const std::map< int, std::vector< std::size_t > >& bnode );
@@ -106,6 +107,7 @@ class Partitioner : public CBase_Partitioner {
     //!    checkpoint/restart.
     void pup( PUP::er &p ) override {
       p | m_meshid;
+      p | m_transfer;
       p | m_cbp;
       p | m_cbr;
       p | m_cbs;
@@ -142,6 +144,8 @@ class Partitioner : public CBase_Partitioner {
   private:
     //! Mesh ID
     std::size_t m_meshid;
+    //! Solution transfer (coupling) information
+    std::vector< Transfer > m_transfer;
     //! Charm++ callbacks associated to compile-time tags for partitioner
     tk::PartitionerCallback m_cbp;
     //! Charm++ callbacks associated to compile-time tags for refiner
@@ -156,8 +160,8 @@ class Partitioner : public CBase_Partitioner {
     CProxy_Sorter m_sorter;
     //! Mesh writer proxy
     tk::CProxy_MeshWriter m_meshwriter;
-    //! Discretization scheme
-    Scheme m_scheme;
+    //! Discretization schemes (one per mesh)
+    std::vector< Scheme > m_scheme;
     //! Element connectivity of this compute node's mesh chunk (global ids)
     std::vector< std::size_t > m_ginpoel;
     //! Coordinates of mesh nodes of this compute node's mesh chunk

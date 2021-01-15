@@ -25,7 +25,7 @@
 #include "RNG.hpp"
 #include "RNGParam.hpp"
 #include "Options/RNG.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 namespace tk {
 

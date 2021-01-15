@@ -26,7 +26,7 @@
 #include "Options/RNG.hpp"
 #include "RNGTest/Options/Battery.hpp"
 #include "NoWarning/rngtest.decl.h"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 extern CProxy_Main mainProxy;
 
