@@ -27,6 +27,7 @@ module conjugategradients {
               const std::vector< std::size_t >& gid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
               const NodeCommMap& nodecommmap );
+      entry void init( CkCallback c );
       entry [reductiontarget] void normb( tk::real n );
       entry void comres( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& rc );
@@ -35,12 +36,13 @@ module conjugategradients {
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       entry void wait4res() {
-        when ownres_complete(), comres_complete() serial "res" { initres(); }
+        when ownres_complete(), comres_complete(), normb_complete()
+        serial "res" { initres(); }
       }
 
       entry void ownres_complete();
       entry void comres_complete();
-
+      entry void normb_complete();
     };
 
   } // tk::

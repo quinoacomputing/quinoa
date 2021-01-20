@@ -92,6 +92,9 @@ class Discretization : public CBase_Discretization {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
+    //! Initialize Conjugrate Gradients linear solver
+    void cginit();
+
     //! Resize mesh data structures (e.g., after mesh refinement)
     void resizePostAMR( const tk::UnsMesh::Chunk& chunk,
                         const tk::UnsMesh::Coords& coord,

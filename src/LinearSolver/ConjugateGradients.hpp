@@ -51,15 +51,18 @@ class ConjugateGradients : public CBase_ConjugateGradients {
 
     //! Constructor
     explicit ConjugateGradients(
-     const CSR& A,
-     const std::vector< tk::real >& x,
-     const std::vector< tk::real >& b,
-     const std::vector< std::size_t >& gid,
-     const std::unordered_map< std::size_t, std::size_t >& lid,
-     const NodeCommMap& nodecommmap );
+      const CSR& A,
+      const std::vector< tk::real >& x,
+      const std::vector< tk::real >& b,
+      const std::vector< std::size_t >& gid,
+      const std::unordered_map< std::size_t, std::size_t >& lid,
+      const NodeCommMap& nodecommmap );
 
     //! Migrate constructor
     //explicit ConjugateGradients( CkMigrateMessage* ) {}
+
+    //! Initialize solver
+    void init( CkCallback c );
 
     //! Compute the norm of the right hand side
     void normb( tk::real n );
@@ -84,6 +87,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_nr;
       p | m_p;
       p | m_q;
+      p | m_initcomplete;
+      p | m_normb;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -114,6 +119,10 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     std::vector< tk::real > m_p;
     //! Auxiliary vector for CG solve
     std::vector< tk::real > m_q;
+    //! Charm++ callback to continue with when the initialization is complete
+    CkCallback m_initcomplete;
+    //! L2 norm of the right hand side
+    tk::real m_normb;
 
     //! Initiate computationa of dot product of two vectors
     void dot( const std::vector< tk::real >& a,

@@ -107,10 +107,6 @@ Discretization::Discretization(
   tk::unique( c );
   m_bid = tk::assignLid( c );
 
-  // Compute number of mesh points owned
-  std::size_t npoin = m_gid.size();
-  for (auto g : m_gid) if (tk::slave(m_nodeCommMap,g,thisIndex)) --npoin;
-
   // Find host elements of user-specified points where time histories are
   // saved, and save the shape functions evaluated at the point locations
   const auto& pt = g_inputdeck.get< tag::history, tag::point >();
@@ -151,11 +147,30 @@ Discretization::Discretization(
                                   CkArrayOptions().bindTo(thisProxy) );
   #endif
 
+  // Compute number of mesh points owned
+  std::size_t npoin = m_gid.size();
+  for (auto g : m_gid) if (tk::slave(m_nodeCommMap,g,thisIndex)) --npoin;
+
   // Tell the RTS that the Discretization chares have been created and compute
   // the total number of mesh points across the distributed mesh
   std::vector< std::size_t > meshdata{ m_meshid, npoin };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
+}
+
+void
+Discretization::cginit()
+// *****************************************************************************
+//  Initialize Conjugrate Gradients linear solver
+// *****************************************************************************
+{
+  // Reinitialize ConjugrateGradients solver chare array element if needed
+  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  if (ale && meshvel != ctr::MeshVelocityType::NONE) {
+    m_cg[ thisIndex ].init(
+     CkCallback(CkIndex_Discretization::vol(), thisProxy[thisIndex]) );
+  } else vol();
 }
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >

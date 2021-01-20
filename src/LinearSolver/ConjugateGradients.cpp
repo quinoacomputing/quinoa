@@ -37,29 +37,40 @@ ConjugateGradients::ConjugateGradients(
   m_rc(),
   m_nr( 0 ),
   m_p( gid.size()*A.DOF(), 0.0 ),
-  m_q( gid.size()*A.DOF(), 0.0 )
+  m_q( gid.size()*A.DOF(), 0.0 ),
+  m_normb( 0.0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] gid Global node ids
 //! \param[in] lid Local node ids associated to global ones
 //! \param[in] nodecommmap Global mesh node IDs shared with other chares
 //!   associated to their chare IDs
+//! \param[in] A Left hand side matrix of the linear system to solve in Ax=b
+//! \param[in] x Solution (initial guess) of the linear system to solve in Ax=b
 //! \param[in] b Right hand side of the linear system to solve in Ax=b
 // *****************************************************************************
 {
   Assert( m_A.rsize() == gid.size()*A.DOF(), "Size mismatch" );
   Assert( m_x.size() == gid.size()*A.DOF(), "Size mismatch" );
   Assert( m_b.size() == gid.size()*A.DOF(), "Size mismatch" );
+}
 
-  // compute norm of right hand side
-  CkCallback normb( CkReductionTarget(ConjugateGradients,normb),thisProxy );
-  dot( m_b, m_b, normb );
+void
+ConjugateGradients::init( CkCallback c )
+// *****************************************************************************
+//  Initialize solver
+//! \param[in] c Call to continue with after initialization is complete
+// *****************************************************************************
+{
+  m_initcomplete = c;
 
-  // compute A * x (for the initial residual)
+  // initiate computing A * x (for the initial residual)
   thisProxy[ thisIndex ].wait4res();
   residual();
 
-  m_A.write_as_matlab( std::cout );
+  // initiate computing norm of right hand side
+  dot( m_b, m_b,
+       CkCallback( CkReductionTarget(ConjugateGradients,normb), thisProxy ) );
 }
 
 void
@@ -90,7 +101,8 @@ ConjugateGradients::normb( tk::real n )
 //! \param[in] n Norm of right hand side (aggregated across all chares)
 // *****************************************************************************
 {
-  std::cout << thisIndex << " normb: " << std::sqrt(n) << '\n';
+  m_normb = std::sqrt(n);
+  normb_complete();
 }
 
 void
@@ -103,9 +115,9 @@ ConjugateGradients::residual()
   m_A.mult( m_x, m_r );
 
   // Send partial product on chare-boundary nodes to fellow chares
-  if (m_nodeCommMap.empty())
+  if (m_nodeCommMap.empty()) {
     comres_complete();
-  else {
+  } else {
     auto dof = m_A.DOF();
     for (const auto& [c,n] : m_nodeCommMap) {
       std::vector< std::vector< tk::real > > rc( n.size() );
@@ -162,8 +174,7 @@ ConjugateGradients::initres()
   for (auto& r : m_r) r *= -1.0;
   m_r += m_b;
 
-  std::size_t j=0;
-  for (auto r : m_r) std::cout << thisIndex << ", " << m_gid[j++] << ": " << r << '\n';
+  m_initcomplete.send();
 }
 
 #include "NoWarning/conjugategradients.def.h"

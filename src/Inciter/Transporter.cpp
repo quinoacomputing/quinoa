@@ -948,7 +948,7 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
   if (ale && meshvel != ctr::MeshVelocityType::NONE)
     m_scheme[meshid].cg().doneInserting();
 
-  m_scheme[meshid].disc().vol();
+  m_scheme[meshid].disc().cginit();
 }
 
 void
