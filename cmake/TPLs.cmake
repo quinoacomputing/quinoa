@@ -52,9 +52,9 @@ endif()
 #### TUT
 find_package(TUT)
 
-#### PStreams
+#### Pstreams
 set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
-find_package(PStreams)
+find_package(Pstreams)
 
 #### PugiXML
 set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours
