@@ -11,8 +11,8 @@ target_include_directories(${FILECONV_EXECUTABLE} PUBLIC
 config_executable(${FILECONV_EXECUTABLE})
 
 target_link_libraries(${FILECONV_EXECUTABLE}
-                      ExodusIIMeshIO
                       ${ROOTMESHIO}
+                      ExodusIIMeshIO
                       Mesh
                       FileConvControl
                       Base
