@@ -168,7 +168,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
     # Zero coverage counters
     COMMAND ${FASTCOV} --zerocounters
     # Run all test suites
-    COMMAND ${unittestrunner} ${unittestrunner_ncpus_arg} ${ManyPEs} Main/${UNITTEST_EXECUTABLE} -v
+    COMMAND ${unittestrunner} ${unittestrunner_ncpus_arg} ${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
     COMMAND ${CMAKE_CTEST_COMMAND} -j${PROCESSOR_COUNT}
     # Process gcov output for genhtml
     COMMAND ${FASTCOV} --branch-coverage --exceptional-branch-coverage --lcov -o ${OUTPUT}.info --exclude tests/ c++/ include/ boost/ charm/ decl.h def.h openmpi pstreams Random123 pegtl tut/ highwayhash/ moduleinit
