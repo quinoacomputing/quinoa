@@ -464,6 +464,9 @@ class Discretization : public CBase_Discretization {
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
+
+   //! Query if ALE mesh motion is enabled by the user
+   bool ALE() const;
 };
 
 } // inciter::

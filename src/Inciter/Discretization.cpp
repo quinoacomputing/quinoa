@@ -132,10 +132,7 @@ Discretization::Discretization(
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   // Insert ConjugrateGradients solver chare array element if needed
-  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-  if (ale && meshvel != ctr::MeshVelocityType::NONE) {
-    // Configure Laplacian smoother for ALE mesh velocity
+  if (ALE()) {
     const auto& [A,x,b] = LaplacianSmoother();
     m_cg[ thisIndex ].insert( A, x, b, m_gid, m_lid, m_nodeCommMap );
   }
@@ -158,6 +155,22 @@ Discretization::Discretization(
     CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
 }
 
+bool
+Discretization::ALE() const
+// *****************************************************************************
+//! Query if ALE mesh motion is enabled by the user
+//! \return True if ALE is configured
+// *****************************************************************************
+{
+  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+
+  if (ale && meshvel != ctr::MeshVelocityType::NONE)
+    return true;
+  else
+    return false;
+}
+
 void
 Discretization::cginit()
 // *****************************************************************************
@@ -165,9 +178,7 @@ Discretization::cginit()
 // *****************************************************************************
 {
   // Reinitialize ConjugrateGradients solver chare array element if needed
-  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-  if (ale && meshvel != ctr::MeshVelocityType::NONE) {
+  if (ALE()) {
     m_cg[ thisIndex ].init(
      CkCallback(CkIndex_Discretization::vol(), thisProxy[thisIndex]) );
   } else vol();
