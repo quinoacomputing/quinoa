@@ -64,6 +64,9 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //! Initialize solver
     void init( CkCallback c );
 
+    //! Solve linear system
+    void solve( CkCallback c );
+
     //! Compute the norm of the right hand side
     void normb( tk::real n );
 
@@ -87,7 +90,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_nr;
       p | m_p;
       p | m_q;
-      p | m_initcomplete;
+      p | m_initialized;
+      p | m_solved;
       p | m_normb;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -120,7 +124,9 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //! Auxiliary vector for CG solve
     std::vector< tk::real > m_q;
     //! Charm++ callback to continue with when the initialization is complete
-    CkCallback m_initcomplete;
+    CkCallback m_initialized;
+    //! Charm++ callback to continue with when the solve is complete
+    CkCallback m_solved;
     //! L2 norm of the right hand side
     tk::real m_normb;
 

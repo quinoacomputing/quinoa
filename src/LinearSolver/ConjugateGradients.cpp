@@ -38,6 +38,8 @@ ConjugateGradients::ConjugateGradients(
   m_nr( 0 ),
   m_p( gid.size()*A.DOF(), 0.0 ),
   m_q( gid.size()*A.DOF(), 0.0 ),
+  m_initialized(),
+  m_solved(),
   m_normb( 0.0 )
 // *****************************************************************************
 //  Constructor
@@ -62,7 +64,7 @@ ConjugateGradients::init( CkCallback c )
 //! \param[in] c Call to continue with after initialization is complete
 // *****************************************************************************
 {
-  m_initcomplete = c;
+  m_initialized = c;
 
   // initiate computing A * x (for the initial residual)
   thisProxy[ thisIndex ].wait4res();
@@ -174,7 +176,21 @@ ConjugateGradients::initres()
   for (auto& r : m_r) r *= -1.0;
   m_r += m_b;
 
-  m_initcomplete.send();
+  m_initialized.send();
 }
+
+void
+ConjugateGradients::solve( CkCallback c )
+// *****************************************************************************
+//  Solve linear system
+//! \param[in] c Call to continue with after solve is complete
+// *****************************************************************************
+{
+  m_solved = c;
+
+  std::cout << thisIndex << " solved\n";
+  m_solved.send();
+}
+
 
 #include "NoWarning/conjugategradients.def.h"

@@ -180,6 +180,18 @@ Discretization::cginit()
   // Reinitialize ConjugrateGradients solver chare array element if needed
   if (ALE()) {
     m_cg[ thisIndex ].init(
+     CkCallback(CkIndex_Discretization::cgsolve(), thisProxy[thisIndex]) );
+  } else vol();
+}
+
+void
+Discretization::cgsolve()
+// *****************************************************************************
+//  Solve using Conjugrate Gradients
+// *****************************************************************************
+{
+  if (ALE()) {
+    m_cg[ thisIndex ].solve(
      CkCallback(CkIndex_Discretization::vol(), thisProxy[thisIndex]) );
   } else vol();
 }

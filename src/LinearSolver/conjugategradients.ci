@@ -28,6 +28,7 @@ module conjugategradients {
               const std::unordered_map< std::size_t, std::size_t >& lid,
               const NodeCommMap& nodecommmap );
       entry void init( CkCallback c );
+      entry void solve( CkCallback c );
       entry [reductiontarget] void normb( tk::real n );
       entry void comres( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& rc );
