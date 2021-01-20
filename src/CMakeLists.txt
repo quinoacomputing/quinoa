@@ -764,7 +764,7 @@ if(CODE_COVERAGE AND ENABLE_TESTS)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(unit doc/html unittest_coverage ${RUNNER}
                             TESTRUNNER_ARGS ${RUNNER_NCPUS_ARG}
-                                            ${PROCESSOR_COUNT}
+                                            ${ManyPEs}
                                             ${RUNNER_ARGS}
                                             Main/${UNITTEST_EXECUTABLE} -v
                             DEPENDS ${NONTEST_EXECUTABLES}
