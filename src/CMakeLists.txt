@@ -621,8 +621,6 @@ else()
   PrintMissing(Control "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
 endif()
 
-add_subdirectory(Main)
-
 if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND Zoltan2_FOUND)
   add_subdirectory(LoadBalance)
 else()
@@ -641,7 +639,8 @@ else()
   PrintMissing(Statistics "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
 endif()
 
-if ((ENABLE_MESHCONV OR ENABLE_INCITER) AND BRIGAND_FOUND AND HIGHWAYHASH_FOUND)
+if ((ENABLE_MESHCONV OR ENABLE_INCITER OR ENABLE_FILECONV) AND
+    BRIGAND_FOUND AND HIGHWAYHASH_FOUND)
   add_subdirectory(Mesh)
   add_subdirectory(IO)
 endif()
@@ -663,6 +662,8 @@ endif()
 if (ENABLE_RNGTEST)
   add_subdirectory(RNGTest)
 endif()
+
+add_subdirectory(Main)
 
 # Conditionally enforce static link for all executables. This must be after all
 # add_executable() calls creating the targets for executables in EXECUTABLES.
@@ -764,7 +765,7 @@ if(CODE_COVERAGE AND ENABLE_TESTS)
   # Setup test coverage target. Make it dependend on all quinoa executables.
   setup_target_for_coverage(unit doc/html unittest_coverage ${RUNNER}
                             TESTRUNNER_ARGS ${RUNNER_NCPUS_ARG}
-                                            ${ManyPEs}
+                                            ${PROCESSOR_COUNT}
                                             ${RUNNER_ARGS}
                                             Main/${UNITTEST_EXECUTABLE} -v
                             DEPENDS ${NONTEST_EXECUTABLES}
