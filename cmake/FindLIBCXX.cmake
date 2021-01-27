@@ -1,6 +1,6 @@
 ################################################################################
 #
-# \file      FindLibCXX.cmake
+# \file      FindLIBCXX.cmake
 # \copyright 2012-2015 J. Bakosi,
 #            2016-2018 Los Alamos National Security, LLC.,
 #            2019-2020 Triad National Security, LLC.
@@ -22,7 +22,7 @@
 #  Usage:
 #
 #  set(LIBCXX_ROOT "/path/to/custom/libc++") # prefer over system
-#  find_package(LibCXX)
+#  find_package(LIBCXX)
 #  if(LIBCXX_FOUND)
 #    target_link_libraries (TARGET ${LIBCXX_LIBRARIES} ${LIBCXXABI_LIBRARIES})
 #  endif()
