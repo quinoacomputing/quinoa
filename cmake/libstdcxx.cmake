@@ -18,7 +18,7 @@ set(__libstdcxx YES)
 # More infor: libstdc++: http://gcc.gnu.org/libstdc++,
 # libc++: http://libcxx.llvm.org.
 if (NOT NO_SYSTEM_LIBCXX AND NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  find_package(LibCXX)
+  find_package(LIBCXX)
 endif()
 
 #### If libc++ found, offer switch between libstdc++ and libc++.
