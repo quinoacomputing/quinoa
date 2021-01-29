@@ -825,12 +825,19 @@ namespace AMR {
             {
                 //if (!check_allowed_derefinement(tet_store,parent_id)) return;
 
-                // Figure out which edge is the one that we want to have the
-                // split along
+                // will have 5 edges set to deref; Figure out which edge is the
+                // one that is not set to deref
                 size_t edge_A = 0;
                 size_t edge_B = 0;
 
-                // will have 5 edges set to deref, find the one that's not
+                // Do number of points
+                std::unordered_set<size_t> derefine_node_set;
+
+                // Find the set of nodes which are not in the parent
+                std::unordered_set<size_t> non_parent_nodes =
+                  child_exclusive_nodes(tet_store, parent_id);
+
+                // determine non_parent_nodes set and derefine_node_set
                 child_id_list_t children = tet_store.data(parent_id).children;
                 for (size_t i = 0; i < children.size(); i++)
                 {
@@ -839,18 +846,43 @@ namespace AMR {
                     for (size_t k = 0; k < NUM_TET_EDGES; k++)
                     {
                         edge_t edge = edge_list[k];
+                        // TODO: where do we makr the edges that need to be derefed? parent of child?
                         if (tet_store.edge_store.get(edge).needs_derefining)
                         {
-                            continue;
-                        }
-                        else
-                        {
-                            // found the non-deref
-                            edge_A = std::min( edge.first(), edge.second() );
-                            edge_B = std::max( edge.first(), edge.second() );
-                            //std::cout << "A " << edge_A << " B " << edge_B << std::endl;
+                            // Check each node, see if its an intermediate
+                            size_t A = edge.first();
+                            size_t B = edge.second();
+                            trace_out << "Needs deref " << A << " - " << B << std::endl;
+
+                            //if (tet_store.is_intermediate(A))
+                            if (non_parent_nodes.count(A) )
+                            {
+                                trace_out << "Adding " << A << std::endl;
+                                derefine_node_set.insert(A);
+                            }
+
+                            //if (tet_store.is_intermediate(B))
+                            if (non_parent_nodes.count(B))
+                            {
+                                trace_out << "Adding " << B << std::endl;
+                                derefine_node_set.insert(B);
+                            }
                         }
                     }
+                }
+
+                // from the above non_parent_nodes set and derefine_node_set,
+                // figureout which node should be removed
+                for (auto npn:non_parent_nodes) {
+                  if (derefine_node_set.count(npn) == 0) {
+                    // we've found the node that should not be removed, now we
+                    // need to find the edge it belongs to
+                    auto nonderef_edge = node_connectivity.get(npn);
+                    edge_A = nonderef_edge[0];
+                    edge_B = nonderef_edge[1];
+                    //std::cout << "do-not-deref-APAN " << "A " << edge_A
+                    //        << " B " << edge_B << std::endl;
+                  }
                 }
 
                 derefine_eight_to_one(tet_store, node_connectivity, parent_id);
@@ -985,6 +1017,38 @@ namespace AMR {
                 }
             }
 
+
+            std::unordered_set<size_t> child_exclusive_nodes(tet_store_t& tet_store,
+              size_t tet_id)
+            {
+              std::unordered_set<size_t> non_parent_nodes;
+
+              // array
+              auto parent_tet = tet_store.get(tet_id);
+
+              // convert to set
+              std::unordered_set<size_t> parent_set(begin(parent_tet), end(parent_tet));
+
+              child_id_list_t children = tet_store.data(tet_id).children;
+              for (size_t i = 0; i < children.size(); i++)
+              {
+                      auto child_tet = tet_store.get( children[i] );
+
+                      // Look at nodes, if not present add to set
+                      for (std::size_t j = 0; j < NUM_TET_NODES; j++)
+                      {
+                              auto node = child_tet[j];
+                              if (parent_set.count(node) == 0)
+                              {
+                                      non_parent_nodes.insert(node);
+                              }
+                      }
+              }
+
+              trace_out <<" Found " << non_parent_nodes.size() << " non parent nodes " << std::endl;
+              return non_parent_nodes;
+
+            }
     };
 }
 

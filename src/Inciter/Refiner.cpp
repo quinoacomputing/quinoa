@@ -125,7 +125,7 @@ Refiner::Refiner( std::size_t meshid,
             tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) ),
             m_inpoel, m_coord ),
           "Input mesh to Refiner leaky" );
-  Assert( tk::conforming( m_inpoel, m_coord ),
+  Assert( tk::conforming( m_inpoel, m_coord, true, m_rid ),
           "Input mesh to Refiner not conforming" );
 
   // Generate local -> refiner lib node id map and its inverse
@@ -1400,7 +1400,7 @@ Refiner::updateMesh()
   // Get refined mesh connectivity
   const auto& refinpoel = m_refiner.tet_store.get_active_inpoel();
   Assert( refinpoel.size()%4 == 0, "Inconsistent refined mesh connectivity" );
-  Assert( tk::conforming( m_inpoel, m_coord ),
+  Assert( tk::conforming( m_inpoel, m_coord, true, m_rid ),
           "Mesh not conforming after refinement" );
 
   // Generate unique node lists of old and refined mesh using local ids
@@ -1439,14 +1439,14 @@ Refiner::updateMesh()
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
           "Refined mesh cell Jacobian non-positive" );
 
+  Assert( tk::conforming( m_inpoel, m_coord, true, m_rid ),
+          "Mesh not conforming after updating mesh after mesh refinement" );
+
   // Perform leak test on new mesh
   Assert( !tk::leakyPartition(
             tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) ),
             m_inpoel, m_coord ),
           "Refined mesh partition leaky" );
-
-  Assert( tk::conforming( m_inpoel, m_coord ),
-          "Mesh not conforming after updating mesh after mesh refinement" );
 }
 
 void

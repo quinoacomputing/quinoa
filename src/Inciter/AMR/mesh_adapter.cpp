@@ -1087,37 +1087,6 @@ namespace AMR {
         }
     }
 
-    std::unordered_set<size_t> mesh_adapter_t::child_exclusive_nodes(size_t tet_id)
-    {
-        std::unordered_set<size_t> non_parent_nodes;
-
-        // array
-        auto parent_tet = tet_store.get(tet_id);
-
-        // convert to set
-        std::unordered_set<size_t> parent_set(begin(parent_tet), end(parent_tet));
-
-        child_id_list_t children = tet_store.data(tet_id).children;
-        for (size_t i = 0; i < children.size(); i++)
-        {
-            auto child_tet = tet_store.get( children[i] );
-
-            // Look at nodes, if not present add to set
-            for (std::size_t j = 0; j < NUM_TET_NODES; j++)
-            {
-                auto node = child_tet[j];
-                if (parent_set.count(node) == 0)
-                {
-                    non_parent_nodes.insert(node);
-                }
-            }
-        }
-
-        trace_out <<" Found " << non_parent_nodes.size() << " non parent nodes " << std::endl;
-        return non_parent_nodes;
-
-    }
-
     void mesh_adapter_t::mark_derefinement()
     {
         const size_t max_num_rounds = AMR_MAX_ROUNDS;
@@ -1134,9 +1103,14 @@ namespace AMR {
             {
                 size_t tet_id = kv.first;
 
-                // Skip tets which have no children
+                // Skip tets which have no children or which are grand-parents
                 child_id_list_t children = tet_store.data(tet_id).children;
-                if (children.size() <= 0) { continue; }
+                bool grandparent = false;
+                for (const auto& ch : children) {
+                  if (tet_store.data(ch).children.size()) grandparent = true;
+                }
+                if ((children.size() <= 0) || grandparent) { continue; }
+
 
                 // This is useful for later inspection
                 //edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
@@ -1148,7 +1122,8 @@ namespace AMR {
                 AMR::Refinement_Case refinement_case = tet_store.get_refinement_case(tet_id);
 
                 // Find the set of nodes which are not in the parent
-                std::unordered_set<size_t> non_parent_nodes = child_exclusive_nodes(tet_id);
+                std::unordered_set<size_t> non_parent_nodes =
+                  refiner.child_exclusive_nodes(tet_store, tet_id);
 
 
                 // Look at children
@@ -1355,21 +1330,27 @@ namespace AMR {
                 {
                     case AMR::Derefinement_Case::two_to_one:
                         refiner.derefine_two_to_one(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 2:1 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::four_to_one:
                         refiner.derefine_four_to_one(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 4:1 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::four_to_two:
                         refiner.derefine_four_to_two(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 4:2 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::eight_to_one:
                         refiner.derefine_eight_to_one(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 8:1 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::eight_to_two:
                         refiner.derefine_eight_to_two(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 8:2 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::eight_to_four:
                         refiner.derefine_eight_to_four(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 8:4 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::skip:
                         // What do we do with skip?

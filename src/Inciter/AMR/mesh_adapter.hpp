@@ -95,8 +95,6 @@ namespace AMR {
                     size_t num_edges_to_derefine,
                     AMR::Refinement_Case  refinement_case);
 
-            std::unordered_set<size_t> child_exclusive_nodes(size_t tet_id);
-
     };
 }
 
