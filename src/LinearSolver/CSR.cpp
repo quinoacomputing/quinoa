@@ -10,8 +10,8 @@
 */
 // *****************************************************************************
 
-#include "CSR.hpp"
 #include "Exception.hpp"
+#include "CSR.hpp"
 
 using tk::CSR;
 
@@ -32,8 +32,8 @@ try :
   Assert( dof > 0, "Sparse matrix DOF must be positive" );
   Assert( rnz.size() > 0, "Sparse matrix size must be positive" );
 
-  auto& psup1 = psup.first;
-  auto& psup2 = psup.second;
+  const auto& psup1 = psup.first;
+  const auto& psup2 = psup.second;
 
   // Calculate number of nonzeros in each block row (rnz), total number of
   // nonzeros (nnz), and fill in row indices (ia)
@@ -52,7 +52,7 @@ try :
       ia[i*DOF+k+1] = ia[i*DOF+k] + rnz[i];
   }
 
-  // Allocate storage for matrix values and column indices
+  // Allocate storage for matrix values, column indices, and contributionflags
   a.resize( nnz, 0.0 );
   ja.resize( nnz );
 
@@ -103,7 +103,48 @@ CSR::operator()( std::size_t row, std::size_t col, std::size_t pos ) const
 }
 
 void
-CSR::mult( const std::vector< tk::real >& x, std::vector< tk::real >& r ) const
+CSR::dirichlet( std::size_t g,
+                const std::unordered_map< std::size_t, std::size_t >& lid,
+                const NodeCommMap& nodecommap )
+// *****************************************************************************
+//  Set Dirichlet boundary condition at a node
+//! \param[in] g Global id at which to set Dirichlet BC
+//! \param[in] lid Local->global node id map
+//! \param[in] nodecommap Node communication map
+//! \details In parallel there can be multiple contributions to a single node
+//!   on the mesh, and correspondingly, a single matrix row can be partially
+//!   represented on multiple partitions. Setting a Dirichlet BC entails
+//!   zeroing out the row of the matrix and putting 1/N into the diagonal entry,
+//!   where N is the number of partitions that contribute to the mesh node
+//!   (matrix row). As a result, when the matrix participates in a matrix-vector
+//!   product, where the partial contributions across all partitions are
+//!   aggregated, the diagonal will contain 1 after the sum across partitions.
+//! \note Both lid and nodecommap are optional - unused in serial.
+// *****************************************************************************
+{
+  // Lambda to count the number of contributions to a node at which to set BC
+  auto count = [&]( std::size_t node ){
+    return 1.0 + std::count_if( nodecommap.cbegin(), nodecommap.cend(),
+                   [&](const auto& s) {
+                     return s.second.find(node) != s.second.cend(); } ); };
+
+  std::size_t i = g;
+  tk::real diag = 1.0;
+
+  if (!lid.empty()) {
+    auto it = lid.find( g );
+    if (it != end(lid)) {
+      i = it->second;
+      diag = 1.0 / count( g );
+    }
+  }
+
+  for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j)
+    if (i+1==ja[j]) a[j] = diag; else a[j] = 0.0;
+}
+
+void
+CSR::mult( const std::vector< real >& x, std::vector< real >& r ) const
 // *****************************************************************************
 //  Multiply CSR matrix with vector from the right: r = A * x
 //! \param[in] x Vector to multiply matrix with from the right
@@ -118,7 +159,7 @@ CSR::mult( const std::vector< tk::real >& x, std::vector< tk::real >& r ) const
 }
 
 std::ostream&
-CSR::write_as_stored( std::ostream& os ) const
+CSR::write_stored( std::ostream& os ) const
 // *****************************************************************************
 //  Write out CSR as stored
 //! \param[in,out] os Output stream to write to
@@ -153,7 +194,7 @@ CSR::write_as_stored( std::ostream& os ) const
 }
 
 std::ostream&
-CSR::write_as_structure( std::ostream& os ) const
+CSR::write_structure( std::ostream& os ) const
 // *****************************************************************************
 //  Write out CSR nonzero structure
 //! \param[in,out] os Output stream to write to
@@ -170,7 +211,7 @@ CSR::write_as_structure( std::ostream& os ) const
       // nonzero
       os << "o ";
     }
-     // trailing zeros
+    // trailing zeros
     for (std::size_t j=ja[ia[i+1]-2]; j<rnz.size()*dof; ++j) os << ". ";
     os << '\n';
   }
@@ -179,7 +220,7 @@ CSR::write_as_structure( std::ostream& os ) const
 }
 
 std::ostream&
-CSR::write_as_matrix( std::ostream& os ) const
+CSR::write_matrix( std::ostream& os ) const
 // *****************************************************************************
 //  Write out CSR as a real matrix
 //! \param[in,out] os Output stream to write to
@@ -201,7 +242,7 @@ CSR::write_as_matrix( std::ostream& os ) const
 }
 
 std::ostream&
-CSR::write_as_matlab( std::ostream& os ) const
+CSR::write_matlab( std::ostream& os ) const
 // *****************************************************************************
 //  Write out CSR in Matlab/Octave format
 //! \param[in,out] os Output stream to write to

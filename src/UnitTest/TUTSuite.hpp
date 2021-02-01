@@ -69,6 +69,7 @@ class TUTSuite : public CBase_TUTSuite {
       , { "Base/PUPUtil", 14 }
       , { "Base/Timer", 1 }
       , { "Inciter/Scheme", 3 }
+      , { "LinearSolver/ConjugateGradients", 6 }
     };
 
     // Tests that must be run on PE 0
@@ -77,6 +78,7 @@ class TUTSuite : public CBase_TUTSuite {
     const std::unordered_set< std::string > m_fromPE0 {
         { "LoadBalance/LinearMap"}
       , { "LoadBalance/UnsMeshMap" }
+      , { "LinearSolver/ConjugateGradients" }
       , { "Inciter/Scheme" }
     };
 

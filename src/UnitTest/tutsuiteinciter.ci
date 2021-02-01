@@ -49,6 +49,8 @@ module tutsuiteinciter {
   extern module linearmap;
   extern module unsmeshmap;
   extern module testarray;
+  extern module conjugategradients;
+  extern module cgreceiver;
 
   namespace unittest {
 

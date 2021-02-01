@@ -148,7 +148,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 void
 ALECG::norm()
 // *****************************************************************************
-// Start (re-)computing boundare point-, and dual-face normals
+// Start (re-)computing boundary point-, and dual-face normals
 // *****************************************************************************
 {
   auto d = Disc();

@@ -27,8 +27,7 @@ bool slave( const NodeCommMap& map, std::size_t node, int chare )
   return
     std::any_of( map.cbegin(), map.cend(),
       [&](const auto& s) {
-        return s.second.find(node) != s.second.cend() && s.first > chare;
-      } );
+        return s.second.find(node) != s.second.cend() && s.first > chare; } );
 }
 
 } // tk::

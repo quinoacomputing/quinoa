@@ -24,14 +24,21 @@ module conjugategradients {
               const CSR& A,
               const std::vector< tk::real >& x,
               const std::vector< tk::real >& b,
+              std::size_t maxit,
+              tk::real stop_tol,
               const std::vector< std::size_t >& gid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
               const NodeCommMap& nodecommmap );
       entry void init( CkCallback c );
       entry void solve( CkCallback c );
       entry [reductiontarget] void normb( tk::real n );
+      entry [reductiontarget] void rho( tk::real r );
+      entry [reductiontarget] void pq( tk::real n );
+      entry [reductiontarget] void normres( tk::real r );
       entry void comres( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& rc );
+      entry void comq( const std::vector< std::size_t >& gid,
+                       const std::vector< std::vector< tk::real > >& qc );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -41,9 +48,15 @@ module conjugategradients {
         serial "res" { initres(); }
       }
 
+      entry void wait4q() {
+        when ownq_complete(), comq_complete() serial "q" { q(); }
+      }
+
       entry void ownres_complete();
       entry void comres_complete();
       entry void normb_complete();
+      entry void ownq_complete();
+      entry void comq_complete();
     };
 
   } // tk::

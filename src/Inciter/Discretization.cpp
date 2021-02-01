@@ -134,7 +134,8 @@ Discretization::Discretization(
   // Insert ConjugrateGradients solver chare array element if needed
   if (ALE()) {
     const auto& [A,x,b] = LaplacianSmoother();
-    m_cg[ thisIndex ].insert( A, x, b, m_gid, m_lid, m_nodeCommMap );
+    m_cg[ thisIndex ].insert( A, x, b, 10, 1.0e-3,
+                              m_gid, m_lid, m_nodeCommMap );
   }
 
   #ifdef EXAM2M
@@ -180,19 +181,20 @@ Discretization::cginit()
   // Reinitialize ConjugrateGradients solver chare array element if needed
   if (ALE()) {
     m_cg[ thisIndex ].init(
-     CkCallback(CkIndex_Discretization::cgsolve(), thisProxy[thisIndex]) );
+      CkCallback( CkIndex_Discretization::cgsolve(nullptr),
+                  thisProxy[thisIndex]) );
   } else vol();
 }
 
 void
-Discretization::cgsolve()
+Discretization::cgsolve( [[maybe_unused]] CkDataMsg* msg )
 // *****************************************************************************
 //  Solve using Conjugrate Gradients
 // *****************************************************************************
 {
   if (ALE()) {
     m_cg[ thisIndex ].solve(
-     CkCallback(CkIndex_Discretization::vol(), thisProxy[thisIndex]) );
+     CkCallback(CkIndex_Discretization::vol(nullptr), thisProxy[thisIndex]) );
   } else vol();
 }
 
@@ -203,7 +205,7 @@ Discretization::LaplacianSmoother() const
 //! \return {A,x,b} for Laplacian mesh velocity smoother
 // *****************************************************************************
 {
-  tk::CSR A( 1, tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) );
+  tk::CSR A( /* DOF= */ 1, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
 
   const auto& X = m_coord[0];
   const auto& Y = m_coord[1];
@@ -236,14 +238,11 @@ Discretization::LaplacianSmoother() const
            A(N[a],N[b]) += J/6 * grad[a][k] * grad[b][k];
   }
 
-  std::vector< tk::real > b( m_gid.size(), 0.0 );
-  auto x = b;
+  auto npoin = m_gid.size();
+  std::vector< tk::real > b(npoin,1.0), x(npoin,0.0);
 
-  // put is some nonzero values in to b and x
-  for (std::size_t i=0; i<b.size(); ++i) {
-    b[i] = x[i] = m_gid[i];
-    //std::cout << thisIndex << ":b " << b[i] << '\n';
-  }
+  // Grab a node (gid=0) as Dirichlet BC
+  A.dirichlet( 0, m_lid, m_nodeCommMap );
 
   return { A, x, b };
 }
@@ -413,7 +412,7 @@ Discretization::setRefiner( const CProxy_Refiner& ref )
 }
 
 void
-Discretization::vol()
+Discretization::vol( [[maybe_unused]] CkDataMsg* msg )
 // *****************************************************************************
 // Sum mesh volumes to nodes, start communicating them on chare-boundaries
 // *****************************************************************************

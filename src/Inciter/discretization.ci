@@ -35,12 +35,12 @@ module discretization {
         const tk::CommMaps& msum,
         int nchare );
       initnode void registerReducers();
-      entry void vol();
+      entry void vol( CkDataMsg* msg = nullptr );
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
       entry void stat( tk::real mesh_volume );
       entry void cginit();
-      entry void cgsolve();
+      entry void cgsolve( CkDataMsg* msg );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

@@ -127,10 +127,10 @@ void CSR_object::test< 3 >() {
   }
 }
 
-//! Test write_as_stored()
+//! Test write_stored()
 template<> template<>
 void CSR_object::test< 4 >() {
-  set_test_name("write_as_stored" );
+  set_test_name("write_stored" );
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -140,7 +140,7 @@ void CSR_object::test< 4 >() {
   tk::CSR c( 1, psup );
 
   std::stringstream ss;
-  c.write_as_stored( ss );
+  c.write_stored( ss );
 
   auto correct = R"(size (npoin) = 14
 dof = 1
@@ -152,13 +152,13 @@ ja[nnz=112] = { 1, 2, 4, 5, 9, 11, 14, 1, 2, 3, 6, 9, 11, 12, 2, 3, 4, 7, 9, 12,
 a[nnz=112] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 )";
 
-  ensure_equals( "CSR write_as_stored incorrect", ss.str(), correct );
+  ensure_equals( "CSR write_stored incorrect", ss.str(), correct );
 }
 
-//! Test write_as_structure()
+//! Test write_structure()
 template<> template<>
 void CSR_object::test< 5 >() {
-  set_test_name("write_as_structure" );
+  set_test_name("write_structure" );
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -168,7 +168,7 @@ void CSR_object::test< 5 >() {
   tk::CSR c( 1, psup );
 
   std::stringstream ss;
-  c.write_as_structure( ss );
+  c.write_structure( ss );
 
   auto correct = R"(o o . o o . . . o . o . . o 
 o o o . . o . . o . o o . . 
@@ -186,13 +186,13 @@ o o . . o o . . o o o o . o
 o . . o o . . o o o o o o o 
 )";
 
-  ensure_equals( "CSR write_as_structure incorrect", ss.str(), correct );
+  ensure_equals( "CSR write_structure incorrect", ss.str(), correct );
 }
 
-//! Test write_as_matrix()
+//! Test write_matrix()
 template<> template<>
 void CSR_object::test< 6 >() {
-  set_test_name("write_as_matrix" );
+  set_test_name("write_matrix" );
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -214,20 +214,20 @@ void CSR_object::test< 6 >() {
   }
 
   std::stringstream ss;
-  c.write_as_matrix( ss );
+  c.write_matrix( ss );
   auto s = ss.str();
 
   // remove white space for easier comparison
   s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
 
   auto correct = "4000000000000004000000000000004000000000000004000000000000004000000000000004000000000000004000000000000004000000000000001000000000000000100000000000000010000000000000001200000000000000100000000000000012";
-  ensure_equals( "CSR write_as_matrix incorrect", s, correct );
+  ensure_equals( "CSR write_matrix incorrect", s, correct );
 }
 
-//! Test write_as_matlab()
+//! Test write_matlab()
 template<> template<>
 void CSR_object::test< 7 >() {
-  set_test_name("write_as_matlab" );
+  set_test_name("write_matlab" );
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -249,7 +249,7 @@ void CSR_object::test< 7 >() {
   }
 
   std::stringstream ss;
-  c.write_as_matlab( ss );
+  c.write_matlab( ss );
 
   auto s = ss.str();
 
@@ -270,7 +270,7 @@ void CSR_object::test< 7 >() {
 ]
 )";
 
-  ensure_equals( "CSR write_as_matlab incorrect", ss.str(), correct );
+  ensure_equals( "CSR write_matlab incorrect", ss.str(), correct );
 }
 
 //! Test rsize

@@ -54,6 +54,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       const CSR& A,
       const std::vector< tk::real >& x,
       const std::vector< tk::real >& b,
+      std::size_t maxit,
+      tk::real stop_tol,
       const std::vector< std::size_t >& gid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const NodeCommMap& nodecommmap );
@@ -70,9 +72,22 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //! Compute the norm of the right hand side
     void normb( tk::real n );
 
-    //! Receive contributions to matrix-vector multiply on chare-boundaries
+    //! Compute rho = (r,r)
+    void rho( tk::real r );
+
+    //! Receive contributions to r = b - A * x on chare-boundaries
     void comres( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& rc );
+
+    //! Receive contributions to q = A * p on chare-boundaries
+    void comq( const std::vector< std::size_t >& gid,
+               const std::vector< std::vector< tk::real > >& qc );
+
+    //! Compute the dot product (p,q)
+    void pq( tk::real n );
+
+    //! Compute the norm of the residual: (r,r)
+    void normres( tk::real r );
 
     /** @name Pack/unpack (Charm++ serialization) routines */
     ///@{
@@ -90,9 +105,17 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_nr;
       p | m_p;
       p | m_q;
+      p | m_qc;
+      p | m_nq;
       p | m_initialized;
       p | m_solved;
       p | m_normb;
+      p | m_it;
+      p | m_maxit;
+      p | m_tol;
+      p | m_rho;
+      p | m_rho0;
+      p | m_alpha;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -115,7 +138,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     NodeCommMap m_nodeCommMap;
     //! Auxiliary vector for CG solve
     std::vector< tk::real > m_r;
-    //! Receive buffer for communication of matrix-vector multiply
+    //! Receive buffer for communication of r = b - A * x
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rc;
     //! Counter for assembling m_r
     std::size_t m_nr;
@@ -123,12 +146,28 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     std::vector< tk::real > m_p;
     //! Auxiliary vector for CG solve
     std::vector< tk::real > m_q;
+    //! Receive buffer for communication of q = A * p
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_qc;
+    //! Counter for assembling m_q
+    std::size_t m_nq;
     //! Charm++ callback to continue with when the initialization is complete
     CkCallback m_initialized;
     //! Charm++ callback to continue with when the solve is complete
     CkCallback m_solved;
     //! L2 norm of the right hand side
     tk::real m_normb;
+    //! Iteration count
+    std::size_t m_it;
+    //! Max iteration count
+    std::size_t m_maxit;
+    //! Stop tolerance
+    tk::real m_tol;
+    //! Helper scalar for CG algorithm
+    tk::real m_rho;
+    //! Helper scalar for CG algorithm
+    tk::real m_rho0;
+    //! Helper scalar for CG algorithm
+    tk::real m_alpha;
 
     //! Initiate computationa of dot product of two vectors
     void dot( const std::vector< tk::real >& a,
@@ -137,9 +176,16 @@ class ConjugateGradients : public CBase_ConjugateGradients {
 
     //! Initiate A * x for computing the initial residual, r = b - A * x
     void residual();
-
     //! Compute the initial residual, r = b - A * x
     void initres();
+
+    //! Initiate computing q = A * p
+    void qAp();
+    //! Finish computing q = A * p
+    void q();
+
+    //! Start next linear solver iteration
+    void next();
 };
 
 } // tk::

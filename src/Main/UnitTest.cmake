@@ -51,6 +51,7 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/LoadBalance/TestLoadDistributor.cpp
                ../../tests/unit/LoadBalance/TestUnsMeshMap.cpp
                ../../tests/unit/LinearSolver/TestCSR.cpp
+               ../../tests/unit/LinearSolver/TestConjugateGradients.cpp
                ../../tests/unit/Mesh/TestAround.cpp
                ../../tests/unit/Mesh/TestDerivedData.cpp
                ../../tests/unit/Mesh/TestDerivedData_MPISingle.cpp

@@ -96,7 +96,7 @@ class Discretization : public CBase_Discretization {
     void cginit();
 
     //! Solve using Conjugrate Gradients linear solver
-    void cgsolve();
+    void cgsolve( CkDataMsg* msg );
 
     //! Resize mesh data structures (e.g., after mesh refinement)
     void resizePostAMR( const tk::UnsMesh::Chunk& chunk,
@@ -107,7 +107,7 @@ class Discretization : public CBase_Discretization {
     void startvol();
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
-    void vol();
+    void vol( CkDataMsg* msg = nullptr );
 
     //! Set Refiner Charm++ proxy
     void setRefiner( const CProxy_Refiner& ref );

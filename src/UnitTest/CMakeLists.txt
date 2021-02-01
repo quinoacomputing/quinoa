@@ -39,6 +39,7 @@ target_include_directories(UnitTest PUBLIC
 addCharmModule( "charmchild" "UnitTest" )
 addCharmModule( "charmtimer" "UnitTest" )
 addCharmModule( "testarray" "UnitTest" )
+addCharmModule( "cgreceiver" "UnitTest" )
 addCharmModule( "migrated_base" "UnitTest" )
 addCharmModule( "quietcerr" "UnitTest" )
 

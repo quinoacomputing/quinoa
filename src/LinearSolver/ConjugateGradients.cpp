@@ -8,6 +8,8 @@
   \brief     Charm++ chare array for distributed conjugate gradients.
   \details   Charm++ chare array for asynchronous distributed
     conjugate gradients linear solver.
+  \see Y. Saad, Iterative Methods for Sparse Linear Systems: Second Edition,
+    ISBN 9780898718003, 2003, Algorithm 6.18
 */
 // *****************************************************************************
 
@@ -24,6 +26,8 @@ ConjugateGradients::ConjugateGradients(
   const CSR& A,
   const std::vector< tk::real >& x,
   const std::vector< tk::real >& b,
+  std::size_t maxit,
+  tk::real tol,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& lid,
   const NodeCommMap& nodecommmap ) :
@@ -33,28 +37,45 @@ ConjugateGradients::ConjugateGradients(
   m_gid( gid ),
   m_lid( lid ),
   m_nodeCommMap( nodecommmap ),
-  m_r( gid.size()*A.DOF(), 0.0 ),
+  m_r( m_A.rsize(), 0.0 ),
   m_rc(),
   m_nr( 0 ),
-  m_p( gid.size()*A.DOF(), 0.0 ),
-  m_q( gid.size()*A.DOF(), 0.0 ),
+  m_p( m_A.rsize(), 0.0 ),
+  m_q( m_A.rsize(), 0.0 ),
+  m_qc(),
+  m_nq( 0 ),
   m_initialized(),
   m_solved(),
-  m_normb( 0.0 )
+  m_normb( 0.0 ),
+  m_it( 0 ),
+  m_maxit( maxit ),
+  m_tol( tol ),
+  m_rho( 0.0 ),
+  m_rho0( 0.0 ),
+  m_alpha( 0.0 )
 // *****************************************************************************
 //  Constructor
+//! \param[in] A Left hand side matrix of the linear system to solve in Ax=b
+//! \param[in] x Solution (initial guess) of the linear system to solve in Ax=b
+//! \param[in] b Right hand side of the linear system to solve in Ax=b
+//! \param[in] maxit Max iteration count
+//! \param[in] tol Stop tolerance
 //! \param[in] gid Global node ids
 //! \param[in] lid Local node ids associated to global ones
 //! \param[in] nodecommmap Global mesh node IDs shared with other chares
 //!   associated to their chare IDs
-//! \param[in] A Left hand side matrix of the linear system to solve in Ax=b
-//! \param[in] x Solution (initial guess) of the linear system to solve in Ax=b
-//! \param[in] b Right hand side of the linear system to solve in Ax=b
 // *****************************************************************************
 {
-  Assert( m_A.rsize() == gid.size()*A.DOF(), "Size mismatch" );
-  Assert( m_x.size() == gid.size()*A.DOF(), "Size mismatch" );
-  Assert( m_b.size() == gid.size()*A.DOF(), "Size mismatch" );
+  // Fill in gid and lid for serial solve
+  if (gid.empty() || lid.empty() || nodecommmap.empty()) {
+    m_gid.resize( m_x.size() );
+    std::iota( begin(m_gid), end(m_gid), 0 );
+    for (auto g : m_gid) m_lid[g] = g;
+  }
+
+  Assert( m_A.rsize() == m_gid.size()*A.DOF(), "Size mismatch" );
+  Assert( m_x.size() == m_gid.size()*A.DOF(), "Size mismatch" );
+  Assert( m_b.size() == m_gid.size()*A.DOF(), "Size mismatch" );
 }
 
 void
@@ -171,12 +192,13 @@ ConjugateGradients::initres()
     auto lid = tk::cref_find( m_lid, gid );
     for (std::size_t c=0; c<dof; ++c) m_r[lid*dof+c] += r[c];
   }
+  tk::destroy( m_rc );
 
   // Finish computing initial residual, r = b - A * x
   for (auto& r : m_r) r *= -1.0;
   m_r += m_b;
 
-  m_initialized.send();
+  m_initialized.send( CkDataMsg::buildNew( sizeof(tk::real), &m_normb ) );
 }
 
 void
@@ -187,9 +209,156 @@ ConjugateGradients::solve( CkCallback c )
 // *****************************************************************************
 {
   m_solved = c;
+  m_it = 0;
+  next();
+}
 
-  std::cout << thisIndex << " solved\n";
-  m_solved.send();
+void
+ConjugateGradients::next()
+// *****************************************************************************
+//  Start next linear solver iteration
+// *****************************************************************************
+{
+  // initiate computing rho = (r,r)
+  dot( m_r, m_r,
+       CkCallback( CkReductionTarget(ConjugateGradients,rho), thisProxy ) );
+}
+
+void
+ConjugateGradients::rho( tk::real r )
+// *****************************************************************************
+// Compute rho = (r,r)
+//! \param[in] r Dot product, rho = (r,r) (aggregated across all chares)
+// *****************************************************************************
+{
+  m_rho = r;
+  if (m_it == 0) m_alpha = 0.0; else m_alpha = m_rho/m_rho0;
+  m_rho0 = m_rho;
+
+  // compute p = r + alpha * p
+  for (std::size_t i=0; i<m_p.size(); ++i) m_p[i] = m_r[i] + m_alpha * m_p[i];
+
+  // initiate computing q = A * p
+  thisProxy[ thisIndex ].wait4q();
+  qAp();
+}
+
+
+void
+ConjugateGradients::qAp()
+// *****************************************************************************
+//  Initiate computing q = A * p
+// *****************************************************************************
+{
+  // Compute own contribution to q = A * p
+  m_A.mult( m_p, m_q );
+
+  // Send partial product on chare-boundary nodes to fellow chares
+  if (m_nodeCommMap.empty()) {
+    comq_complete();
+  } else {
+    auto dof = m_A.DOF();
+    for (const auto& [c,n] : m_nodeCommMap) {
+      std::vector< std::vector< tk::real > > qc( n.size() );
+      std::size_t j = 0;
+      for (auto g : n) {
+        std::vector< tk::real > nq( dof );
+        auto lid = tk::cref_find( m_lid, g );
+        for (std::size_t d=0; d<dof; ++d) nq[d] = m_q[ lid*dof+d ];
+        qc[j++] = std::move(nq);
+      }
+      thisProxy[c].comq( std::vector<std::size_t>(begin(n),end(n)), qc );
+    }
+  }
+
+  ownq_complete();
+}
+
+void
+ConjugateGradients::comq( const std::vector< std::size_t >& gid,
+                          const std::vector< std::vector< tk::real > >& qc )
+// *****************************************************************************
+//  Receive contributions to q = A * p on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive contributions
+//! \param[in] qc Partial contributions at chare-boundary nodes
+// *****************************************************************************
+{
+  Assert( qc.size() == gid.size(), "Size mismatch" );
+
+  using tk::operator+=;
+
+  for (std::size_t i=0; i<gid.size(); ++i)
+    m_qc[ gid[i] ] += qc[i];
+
+  if (++m_nq == m_nodeCommMap.size()) {
+    m_nq = 0;
+    comq_complete();
+  }
+}
+
+void
+ConjugateGradients::q()
+// *****************************************************************************
+// Finish computing q = A * p
+// *****************************************************************************
+{
+  // Combine own and communicated contributions to r = A * x
+  auto dof = m_A.DOF();
+  for (const auto& [gid,q] : m_qc) {
+    auto lid = tk::cref_find( m_lid, gid );
+    for (std::size_t c=0; c<dof; ++c) m_q[lid*dof+c] += q[c];
+  }
+  tk::destroy( m_qc );
+
+  // initiate computing (p,q)
+  dot( m_p, m_q,
+       CkCallback( CkReductionTarget(ConjugateGradients,pq), thisProxy ) );
+}
+
+void
+ConjugateGradients::pq( tk::real d )
+// *****************************************************************************
+// Compute the dot product (p,q)
+//! \param[in] d Dot product of (p,q) (aggregated across all chares)
+// *****************************************************************************
+{
+  Assert( d > 1.0e-14, "Conjugate Gradients: (p,q) orthogonal, wrong/no BC?" );
+
+  m_alpha = m_rho / d;
+
+  // compute r = r - alpha * q
+  for (std::size_t i=0; i<m_r.size(); ++i) m_r[i] -= m_alpha * m_q[i];
+
+  // initiate computing norm of residual: (r,r)
+  dot( m_r, m_r,
+       CkCallback( CkReductionTarget(ConjugateGradients,normres), thisProxy ) );
+}
+
+void
+ConjugateGradients::normres( tk::real r )
+// *****************************************************************************
+// Compute norm of residual: (r,r)
+//! \param[in] r Dot product, (r,r) (aggregated across all chares)
+// *****************************************************************************
+{
+  auto norm = std::sqrt( r );
+
+  // advance solution: x = x + alpha * p
+  for (std::size_t i=0; i<m_x.size(); ++i) m_x[i] += m_alpha * m_p[i];
+
+  ++m_it;
+
+  if (m_it < m_maxit && norm > m_tol*m_normb) {
+    //std::cout << "ch:" << thisIndex << ", it:" << m_it << ": " << norm << " >? " << m_tol*m_normb << '\n';
+    next();
+  } else {
+     //std::cout << thisIndex << "x: ";
+     ////std::size_t j=0; for (auto i : m_x) std::cout << m_gid[j++] << ':' << i << ' ';
+     //for (auto i : m_x) std::cout << i << ' ';
+     //std::cout << '\n';
+     //std::cout << "ch:" << thisIndex << ", it:" << m_it << ": " << norm << '\n';
+     m_solved.send( CkDataMsg::buildNew( sizeof(tk::real), &norm ) );
+  }
 }
 
 
