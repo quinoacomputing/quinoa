@@ -20,17 +20,17 @@
   #pragma clang diagnostic ignored "-Wextra-semi"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wunused-parameter"
-//#elif defined(STRICT_GNUC)
-//  #pragma GCC diagnostic push
-//  #pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
 #include "../UnitTest/cgreceiver.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-//#elif defined(STRICT_GNUC)
-//  #pragma GCC diagnostic pop
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
 #endif
 
 #endif // nowarning_cgreceiver_decl_h

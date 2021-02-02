@@ -23,17 +23,19 @@
   #pragma clang diagnostic ignored "-Wcast-qual"
   #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wshorten-64-to-32"
-//#elif defined(STRICT_GNUC)
-//  #pragma GCC diagnostic push
-//  #pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wcast-qual"
+  #pragma GCC diagnostic ignored "-Wunused-variable"
+  #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
 
 #include "../UnitTest/cgreceiver.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
-//#elif defined(STRICT_GNUC)
-//  #pragma GCC diagnostic pop
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
 #endif
 
 #endif // nowarning_cgreceiver_def_h
