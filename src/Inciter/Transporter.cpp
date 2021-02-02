@@ -877,8 +877,7 @@ Transporter::resized( std::size_t meshid )
 //! \note Only used for nodal schemes
 // *****************************************************************************
 {
-  tk::real a = 0.0;
-  m_scheme[meshid].disc().vol( CkDataMsg::buildNew( sizeof(tk::real), &a ) );
+  m_scheme[meshid].disc().vol();
   m_scheme[meshid].bcast< Scheme::lhs >();
 }
 

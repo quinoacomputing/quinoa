@@ -38,12 +38,13 @@ module discretization {
         const tk::CommMaps& msum,
         int nchare );
       initnode void registerReducers();
-      entry void vol( CkDataMsg* msg );
+      entry void vol();
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
       entry void stat( tk::real mesh_volume );
       entry void cginit();
       entry void cgsolve( CkDataMsg* msg );
+      entry void cgdone( CkDataMsg* msg );
       entry void transferInit();
       entry void comcb( std::size_t srcmeshid, CkCallback c );
 

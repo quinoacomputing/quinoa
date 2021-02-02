@@ -96,6 +96,9 @@ class Discretization : public CBase_Discretization {
     //! Solve using Conjugrate Gradients linear solver
     void cgsolve( CkDataMsg* msg );
 
+    //! Conjugrate Gradients linear solver converged
+    void cgdone( CkDataMsg* msg );
+
     //! \brief Our mesh has been registered with the mesh-to-mesh transfer
     //!   library (if coupled to other solver)
     void transferInit();
@@ -118,7 +121,7 @@ class Discretization : public CBase_Discretization {
     void startvol();
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
-    void vol( CkDataMsg* msg = nullptr );
+    void vol();
 
     //! Set Refiner Charm++ proxy
     void setRefiner( const CProxy_Refiner& ref );

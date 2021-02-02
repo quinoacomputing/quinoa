@@ -216,13 +216,21 @@ Discretization::cginit()
 void
 Discretization::cgsolve( [[maybe_unused]] CkDataMsg* msg )
 // *****************************************************************************
-//  Solve using Conjugrate Gradients
+//  Solve linear system using Conjugrate Gradients
 // *****************************************************************************
 {
-  if (ALE()) {
-    m_cg[ thisIndex ].solve(
-     CkCallback(CkIndex_Discretization::vol(nullptr), thisProxy[thisIndex]) );
-  } else vol();
+  m_cg[ thisIndex ].solve(
+    CkCallback( CkIndex_Discretization::cgdone(nullptr),
+                thisProxy[thisIndex] ) );
+}
+
+void
+Discretization::cgdone( [[maybe_unused]] CkDataMsg* msg )
+// *****************************************************************************
+//  Conjugrate Gradients linear solver converged
+// *****************************************************************************
+{
+  vol();
 }
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
@@ -583,7 +591,7 @@ Discretization::setRefiner( const CProxy_Refiner& ref )
 }
 
 void
-Discretization::vol( [[maybe_unused]] CkDataMsg* msg )
+Discretization::vol()
 // *****************************************************************************
 // Sum mesh volumes to nodes, start communicating them on chare-boundaries
 // *****************************************************************************
