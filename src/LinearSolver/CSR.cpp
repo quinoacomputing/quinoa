@@ -52,7 +52,7 @@ try :
       ia[i*DOF+k+1] = ia[i*DOF+k] + rnz[i];
   }
 
-  // Allocate storage for matrix values, column indices, and contributionflags
+  // Allocate storage for matrix values and column indices
   a.resize( nnz, 0.0 );
   ja.resize( nnz );
 
@@ -60,7 +60,7 @@ try :
   for (i=0; i<rnz.size(); ++i)
     for (std::size_t k=0; k<dof; ++k) {
       auto itmp = i*dof+k;
-      ja[ia[itmp]-1] = itmp+1;  // put in column index of main diagonal
+      ja[ia[itmp]-1] = itmp+1;  // put in column index of diagonal
       for (std::size_t n=1, j=psup2[i]+1; j<=psup2[i+1]; ++j) {
         // put in column index of an off-diagonal
 	ja[ia[itmp]-1+(n++)] = psup1[j]*DOF+k+1;
@@ -85,7 +85,7 @@ try :
 const tk::real&
 CSR::operator()( std::size_t row, std::size_t col, std::size_t pos ) const
 // *****************************************************************************
-//  Return non-const reference to sparse matrix entry at a position specified
+//  Return const reference to sparse matrix entry at a position specified
 //  using relative addressing
 //! \param[in] row Block row
 //! \param[in] col Block column
@@ -119,7 +119,8 @@ CSR::dirichlet( std::size_t g,
 //!   (matrix row). As a result, when the matrix participates in a matrix-vector
 //!   product, where the partial contributions across all partitions are
 //!   aggregated, the diagonal will contain 1 after the sum across partitions.
-//! \note Both lid and nodecommap are optional - unused in serial.
+//! \note Both lid and nodecommap are optional - unused in serial. If lid is
+//!   empty, serial is assumed.
 // *****************************************************************************
 {
   // Lambda to count the number of contributions to a node at which to set BC

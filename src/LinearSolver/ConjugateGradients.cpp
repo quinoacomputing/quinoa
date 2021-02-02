@@ -14,7 +14,7 @@
 // *****************************************************************************
 
 #include <numeric>
-#include <iostream>     // NOT NEEDED
+#include <iostream>     // NOT NEEDED AFTER DEBUGGED, LEAVE FOR NOW
 
 #include "Exception.hpp"
 #include "ConjugateGradients.hpp"
