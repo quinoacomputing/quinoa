@@ -28,6 +28,7 @@
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 522 )
+  #pragma warning( disable: 2196 )
 #endif
 
 #include <TFile.h>

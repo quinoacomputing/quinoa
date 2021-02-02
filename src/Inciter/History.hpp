@@ -12,7 +12,10 @@
 #ifndef History_h
 #define History_h
 
+#include <brigand/sequences/list.hpp>
+
 #include "Tags.hpp"
+#include "TaggedTuple.hpp"
 
 namespace inciter {
 

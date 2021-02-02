@@ -93,17 +93,15 @@ class Scheme {
 
   private:
     //! Variant type listing all chare proxy types modeling the same concept
-    using Proxy =
-      std::variant< CProxy_DiagCG
-                  , CProxy_DG
-                  , CProxy_ALECG >;
+    using Proxy = std::variant< CProxy_DiagCG
+                              , CProxy_DG
+                              , CProxy_ALECG >;
 
   public:
     //! Variant type listing all chare element proxy types
-    using ProxyElem =
-      std::variant< CProxy_DiagCG::element_t
-                  , CProxy_DG::element_t
-                  , CProxy_ALECG::element_t >;
+    using ProxyElem = std::variant< CProxy_DiagCG::element_t
+                                  , CProxy_DG::element_t
+                                  , CProxy_ALECG::element_t >;
 
     //! Empty constructor for Charm++
     explicit Scheme() {}
@@ -185,15 +183,15 @@ class Scheme {
         }, proxy );
     }
 
-    //! Entry method tags for specific Scheme classes to use with ckLocal()
+    //! Function tags for specific Scheme classes to use with ckLocal()
     struct resizePostAMR {};
     struct extractFieldOutput {};
     struct solution {};
-    //! Call Scheme entry method via Charm++ chare array element's ckLocal()
-    //! \tparam Fn Function tag identifying the entry method to call
-    //! \tparam Args Types of arguments to pass to entry method
+    //! Call Scheme function via Charm++ chare array element's ckLocal()
+    //! \tparam Fn Function tag identifying the function to call
+    //! \tparam Args Types of arguments to pass to function
     //! \param[in] x Chare array element index
-    //! \param[in] args Arguments to member function entry method to be called
+    //! \param[in] args Arguments to member function function to be called
     //! \details This function calls a member function via Charm++'s ckLocal()
     //!    behind the element proxy configured, indexed by the array index x.
     //!    Since the call is behind ckLocal(), the member function does not have
@@ -245,10 +243,9 @@ class Scheme {
     std::size_t index() const noexcept { return proxy.index(); }
 
     //! Query underlying proxy element type
-    //! \return Zero-based index into the set of types of ProxyElem
-    std::size_t index_element() const noexcept {
-      return element( 0 ).index();
-    }
+    //! \return Zero-based index that can be used, e.g., indexing into the set
+    //!   of types of ProxyElem
+    std::size_t index_element() const noexcept { return element(0).index(); }
 
     //! Charm++ array options accessor for binding external proxies
     //! \return Charm++ array options object reference

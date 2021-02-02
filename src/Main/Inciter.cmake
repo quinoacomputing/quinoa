@@ -55,7 +55,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${LIBCXXABI_LIBRARIES}) # only for static link with libc++
 
 # Add custom dependencies for Inciter's main Charm++ module
-addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
+addCharmModule( "inciter" "${INCITER_EXECUTABLE}" "-I${PROJECT_BINARY_DIR}")
 addCharmModule( "lbswitch" "inciterCharmModule" )
 
 add_dependencies( "inciterCharmModule" "charestatecollectorCharmModule" )

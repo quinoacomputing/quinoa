@@ -32,7 +32,6 @@
 #include <map>
 #include <unordered_set>
 
-#include "QuinoaConfig.hpp"
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "DerivedData.hpp"

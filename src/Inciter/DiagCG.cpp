@@ -17,7 +17,6 @@
 */
 // *****************************************************************************
 
-#include "QuinoaConfig.hpp"
 #include "DiagCG.hpp"
 #include "Vector.hpp"
 #include "Reader.hpp"

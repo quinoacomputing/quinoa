@@ -39,10 +39,11 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Refiner;
 
 Refiner::Refiner( std::size_t meshid,
+                  const std::vector< Transfer >& t,
                   const CProxy_Transporter& transporter,
                   const CProxy_Sorter& sorter,
                   const tk::CProxy_MeshWriter& meshwriter,
-                  const Scheme& scheme,
+                  const std::vector< Scheme >& scheme,
                   const tk::RefinerCallback& cbr,
                   const tk::SorterCallback& cbs,
                   const std::vector< std::size_t >& ginpoel,
@@ -52,6 +53,7 @@ Refiner::Refiner( std::size_t meshid,
                   const std::map< int, std::vector< std::size_t > >& bnode,
                   int nchare ) :
   m_meshid( meshid ),
+  m_transfer( t ),
   m_host( transporter ),
   m_sorter( sorter ),
   m_meshwriter( meshwriter ),
@@ -105,7 +107,7 @@ Refiner::Refiner( std::size_t meshid,
 //! \param[in] transporter Transporter (host) proxy
 //! \param[in] sorter Mesh reordering (sorter) proxy
 //! \param[in] meshwriter Mesh writer proxy
-//! \param[in] scheme Discretization scheme
+//! \param[in] scheme Discretization schemes (one per mesh)
 //! \param[in] cbr Charm++ callbacks for Refiner
 //! \param[in] cbs Charm++ callbacks for Sorter
 //! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
@@ -188,11 +190,11 @@ Refiner::sendProxy()
 // *****************************************************************************
 {
   // Make sure (bound) Discretization chare is already created and accessible
-  Assert( m_scheme.disc()[thisIndex].ckLocal() != nullptr,
+  Assert( m_scheme[m_meshid].disc()[thisIndex].ckLocal() != nullptr,
           "About to dereference nullptr" );
 
   // Pass Refiner Charm++ chare proxy to fellow (bound) Discretization object
-  m_scheme.disc()[thisIndex].ckLocal()->setRefiner( thisProxy );
+  m_scheme[m_meshid].disc()[thisIndex].ckLocal()->setRefiner( thisProxy );
 }
 
 void
@@ -942,8 +944,8 @@ Refiner::next()
     }
 
     // Send new mesh, solution, and communication data back to PDE worker
-    m_scheme.ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel, m_el,
-      m_coord, m_addedNodes, m_addedTets, m_nodeCommMap, m_bface, m_bnode,
+    m_scheme[m_meshid].ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel,
+      m_el, m_coord, m_addedNodes, m_addedTets, m_nodeCommMap, m_bface, m_bnode,
       m_triinpoel );
 
   } else if (m_mode == RefMode::OUTREF) {
@@ -979,10 +981,10 @@ Refiner::next()
   } else if (m_mode == RefMode::OUTDEREF) {
 
     // Send field output mesh to PDE worker
-    m_scheme.ckLocal< Scheme::extractFieldOutput >( thisIndex, m_outref_ginpoel,
-      m_outref_el, m_outref_coord, m_outref_addedNodes, m_outref_addedTets,
-      m_outref_nodeCommMap, m_outref_bface, m_outref_bnode, m_outref_triinpoel,
-      m_writeCallback );
+    m_scheme[m_meshid].ckLocal< Scheme::extractFieldOutput >( thisIndex,
+      m_outref_ginpoel, m_outref_el, m_outref_coord, m_outref_addedNodes,
+      m_outref_addedTets, m_outref_nodeCommMap, m_outref_bface, m_outref_bnode,
+      m_outref_triinpoel, m_writeCallback );
 
   } else Throw( "RefMode not implemented" );
 }
@@ -998,9 +1000,10 @@ Refiner::endt0ref()
 // *****************************************************************************
 {
   // create sorter Charm++ chare array elements using dynamic insertion
-  m_sorter[ thisIndex ].insert( m_meshid, m_host, m_meshwriter, m_cbs, m_scheme,
-    CkCallback( CkIndex_Refiner::reorder(), thisProxy[thisIndex] ),
-    m_ginpoel, m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare );
+  m_sorter[ thisIndex ].insert( m_meshid, m_transfer, m_host, m_meshwriter,
+    m_cbs, m_scheme,
+    CkCallback(CkIndex_Refiner::reorder(), thisProxy[thisIndex]), m_ginpoel,
+    m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare );
 
   // Compute final number of cells across whole problem
   std::vector< std::size_t >
@@ -1134,7 +1137,7 @@ Refiner::solution( std::size_t npoin,
   } else if (m_mode == RefMode::DTREF) {
 
     // Query current solution
-    u = m_scheme.ckLocal< Scheme::solution >( thisIndex );
+    u = m_scheme[m_meshid].ckLocal< Scheme::solution >( thisIndex );
  
     const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
     const auto centering = ctr::Scheme().centering( scheme );
@@ -1414,7 +1417,8 @@ Refiner::updateMesh()
   if ( m_mode == RefMode::DTREF ||
        m_mode == RefMode::OUTREF ||
        m_mode == RefMode::OUTDEREF ) {
-    m_nodeCommMap = m_scheme.disc()[thisIndex].ckLocal()->NodeCommMap();
+    m_nodeCommMap =
+      m_scheme[m_meshid].disc()[thisIndex].ckLocal()->NodeCommMap();
   }
 
   // Update mesh and solution after refinement

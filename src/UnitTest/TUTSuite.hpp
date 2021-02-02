@@ -24,7 +24,6 @@
 #include "UnitTestPrint.hpp"
 #include "UnitTest/CmdLine/CmdLine.hpp"
 
-#include "QuinoaConfig.hpp"
 #include "NoWarning/tutsuite.decl.h"
 #include "NoWarning/mpirunner.decl.h"
 

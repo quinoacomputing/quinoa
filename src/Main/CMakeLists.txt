@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 2.8.5)
-
 project(quinoa CXX)
 
 ### Quinoa executables build configuration #####################################
@@ -52,14 +50,6 @@ if (BRIGAND_FOUND)
 endif()
 
 # Configure cmake variables for optional components in executables
-
-if (HAS_ROOT)
-  set(ROOTMESHIO "RootMeshIO")
-endif()
-
-if (HAS_OMEGA_H)
-  set(OMEGAHMESHIO "OmegaHMeshIO")
-endif()
 
 if (ENABLE_INCITER)
   set(TestError "../../tests/unit/Inciter/AMR/TestError.cpp")

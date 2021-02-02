@@ -19,7 +19,7 @@
 
 #include "NoWarning/set.hpp"
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 #include "TaggedTuple.hpp"
 #include "HelpFactory.hpp"
 #include "Walker/CmdLine/CmdLine.hpp"

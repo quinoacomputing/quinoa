@@ -13,7 +13,7 @@
 */
 // *****************************************************************************
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 #include "MeshWriter.hpp"
 #include "Reorder.hpp"
 #include "ExodusIIMeshWriter.hpp"

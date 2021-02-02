@@ -14,7 +14,7 @@
 
 #include <brigand/sequences/list.hpp>
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 #include "Toggle.hpp"
 #include "Keywords.hpp"
 #include "PUPUtil.hpp"

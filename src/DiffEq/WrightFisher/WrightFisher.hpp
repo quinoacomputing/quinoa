@@ -19,7 +19,7 @@
 #include <vector>
 #include <iomanip>
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 #ifdef HAS_MKL
   #include <mkl_lapacke.h>

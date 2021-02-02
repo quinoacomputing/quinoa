@@ -18,7 +18,6 @@
 #include "Print.hpp"
 #include "Timer.hpp"
 #include "Types.hpp"
-#include "QuinoaConfig.hpp"
 #include "Init.hpp"
 #include "Tags.hpp"
 #include "FileConvDriver.hpp"

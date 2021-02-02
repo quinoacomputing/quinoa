@@ -9,7 +9,7 @@
 #
 ################################################################################
 
-cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.1)
 
 project(QUINOA C CXX)
 
@@ -568,7 +568,7 @@ if (NOT EXCEPTIONS_WRITE_TO_CERR)     # set default if not set
   else()
     set(cerr true)
   endif()
-  # will become compiler define in Main/QuinoaConfig.h
+  # will become compiler define in Main/QuinoaBuildConfig.hpp
   set(EXCEPTIONS_WRITE_TO_CERR ${cerr} CACHE BOOL "Exceptions write std::cerr.")
 endif()
 message(STATUS "Exceptions write to cerr: ${EXCEPTIONS_WRITE_TO_CERR}")
@@ -576,6 +576,8 @@ message(STATUS "Exceptions write to cerr: ${EXCEPTIONS_WRITE_TO_CERR}")
 # Configure cmake variables to pass to the build
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.hpp.in"
                 "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.hpp" )
+configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaBuildConfig.hpp.in"
+                "${PROJECT_BINARY_DIR}/Main/QuinoaBuildConfig.hpp" )
 configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.cpp.in"
                 "${PROJECT_BINARY_DIR}/Main/QuinoaConfig.cpp" ESCAPE_QUOTES)
 
@@ -619,8 +621,6 @@ else()
   PrintMissing(Control "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
 endif()
 
-add_subdirectory(Main)
-
 if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND Zoltan2_FOUND)
   add_subdirectory(LoadBalance)
 else()
@@ -639,7 +639,8 @@ else()
   PrintMissing(Statistics "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
 endif()
 
-if ((ENABLE_MESHCONV OR ENABLE_INCITER) AND BRIGAND_FOUND AND HIGHWAYHASH_FOUND)
+if ((ENABLE_MESHCONV OR ENABLE_INCITER OR ENABLE_FILECONV) AND
+    BRIGAND_FOUND AND HIGHWAYHASH_FOUND)
   add_subdirectory(Mesh)
   add_subdirectory(IO)
 endif()
@@ -662,6 +663,8 @@ endif()
 if (ENABLE_RNGTEST)
   add_subdirectory(RNGTest)
 endif()
+
+add_subdirectory(Main)
 
 # Conditionally enforce static link for all executables. This must be after all
 # add_executable() calls creating the targets for executables in EXECUTABLES.

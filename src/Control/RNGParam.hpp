@@ -16,7 +16,7 @@
 #include "Tags.hpp"
 #include "Options/RNG.hpp"
 #include "Options/RNGSSESeqLen.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 #ifdef HAS_MKL
   #include "Options/MKLUniformMethod.hpp"

@@ -17,7 +17,6 @@
 #include <set>
 #include <algorithm>
 
-#include "QuinoaConfig.hpp"
 #include "ContainerUtil.hpp"
 #include "DistFCT.hpp"
 

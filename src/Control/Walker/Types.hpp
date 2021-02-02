@@ -31,7 +31,7 @@
 #include "Options/VelocityVariant.hpp"
 #include "Options/Normalization.hpp"
 #include "Options/RNG.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 namespace walker {
 namespace ctr {

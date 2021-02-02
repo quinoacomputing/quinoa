@@ -77,7 +77,7 @@
 #include <vector>
 #include <cmath>
 
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 #ifdef HAS_MKL
   #include <mkl_lapacke.h>

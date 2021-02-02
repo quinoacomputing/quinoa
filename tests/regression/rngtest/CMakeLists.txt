@@ -60,7 +60,7 @@ if (CHARM_SMP)
 endif()
 
 add_regression_test(Crush_r123_threefry ${RNGTEST_EXECUTABLE}
-                    NUMPES ${ManyPEs}
+                    NUMPES ${PROCESSOR_COUNT}
                     INPUTFILES Crush_r123_threefry.q
                     ARGS -c Crush_r123_threefry.q -v
                     LABELS extreme stringent)

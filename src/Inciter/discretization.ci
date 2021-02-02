@@ -20,12 +20,15 @@ module discretization {
 
   include "UnsMesh.hpp";
   include "CommMap.hpp";
+  include "Transfer.hpp";
 
   namespace inciter {
 
     array [1D] Discretization {
       entry Discretization(
         std::size_t meshid,
+        const std::vector< Transfer >& t,
+        const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
         const tk::CProxy_ConjugateGradients& cgproxy,
         const CProxy_Transporter& transporter,
@@ -35,12 +38,14 @@ module discretization {
         const tk::CommMaps& msum,
         int nchare );
       initnode void registerReducers();
-      entry void vol( CkDataMsg* msg = nullptr );
+      entry void vol( CkDataMsg* msg );
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
       entry void stat( tk::real mesh_volume );
       entry void cginit();
       entry void cgsolve( CkDataMsg* msg );
+      entry void transferInit();
+      entry void comcb( std::size_t srcmeshid, CkCallback c );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

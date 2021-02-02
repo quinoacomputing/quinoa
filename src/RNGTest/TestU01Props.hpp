@@ -24,7 +24,7 @@
 #include "TestU01Util.hpp"
 #include "TestStack.hpp"
 #include "TestU01Wrappers.hpp"
-#include "QuinoaConfig.hpp"
+#include "QuinoaBuildConfig.hpp"
 
 namespace rngtest {
 

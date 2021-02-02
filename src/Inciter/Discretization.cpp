@@ -21,6 +21,11 @@
 #include "Inciter/Options/Scheme.hpp"
 #include "Print.hpp"
 #include "Around.hpp"
+#include "QuinoaBuildConfig.hpp"
+
+#ifdef HAS_EXAM2M
+  #include "Controller.hpp"
+#endif
 
 namespace inciter {
 
@@ -34,6 +39,8 @@ using inciter::Discretization;
 
 Discretization::Discretization(
   std::size_t meshid,
+  const std::vector< Transfer >& t,
+  const std::vector< CProxy_Discretization >& disc,
   const CProxy_DistFCT& fctproxy,
   const tk::CProxy_ConjugateGradients& cgproxy,
   const CProxy_Transporter& transporter,
@@ -43,6 +50,8 @@ Discretization::Discretization(
   const tk::CommMaps& msum,
   int nc ) :
   m_meshid( meshid ),
+  m_transfer( t ),
+  m_disc( disc ),
   m_nchare( nc ),
   m_it( 0 ),
   m_itr( 0 ),
@@ -69,7 +78,9 @@ Discretization::Discretization(
   m_refined( 0 ),
   m_prevstatus( std::chrono::high_resolution_clock::now() ),
   m_nrestart( 0 ),
-  m_histdata()
+  m_histdata(),
+  m_nsrc( 0 ),
+  m_ndst( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID
@@ -138,13 +149,29 @@ Discretization::Discretization(
                               m_gid, m_lid, m_nodeCommMap );
   }
 
-  #ifdef EXAM2M
-  // Establish bridge to ExaM2M mesh-transfer lib
-  tk::Fields u;
-  m_m2m = CProxy_CharmMesh:ckNew( m_inpoel, m_coord, m_nchare, u,
-                                  CkArrayOptions().bindTo(thisProxy) );
-  #endif
+  // Register mesh with mesh-transfer lib
+  if (m_disc.size() == 1) {     // skip transfer if single mesh
+    transferInit();
+  } else {
+    #ifdef HAS_EXAM2M
+    if (thisIndex == 0) {
+      exam2m::addMesh( thisProxy, m_nchare,
+        CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
+      //std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
+    }
+    #else
+    transferInit();
+    #endif
+  }
+}
 
+void
+Discretization::transferInit()
+// *****************************************************************************
+// Our mesh has been registered with the mesh-to-mesh transfer library (if
+// coupled to other solver)
+// *****************************************************************************
+{
   // Compute number of mesh points owned
   std::size_t npoin = m_gid.size();
   for (auto g : m_gid) if (tk::slave(m_nodeCommMap,g,thisIndex)) --npoin;
@@ -245,6 +272,150 @@ Discretization::LaplacianSmoother() const
   A.dirichlet( 0, m_lid, m_nodeCommMap );
 
   return { A, x, b };
+}
+
+void
+Discretization::transferCallback( std::vector< CkCallback >& cb )
+// *****************************************************************************
+// Receive a list of callbacks from our own child solver
+//! \param[in] cb List of callbacks
+//! \details This is called by our child solver, either when it is coupled to
+//!    another solver or not.
+// *****************************************************************************
+{
+  // Store callback for when there is no transfer we are involved in
+  m_transfer_complete = cb.back();
+  cb.pop_back();
+
+  // Distribute callbacks
+  for (auto& t : m_transfer) {
+    // If we are a source of a transfer, send callback to the destination solver
+    if (m_meshid == t.src) {
+      Assert( !cb.empty(), "Insufficient number of src callbacks, meshid: " +
+                           std::to_string(m_meshid) );
+      m_disc[ t.dst ][ thisIndex ].comcb( m_meshid, cb.back() );
+      cb.pop_back();
+    // If we are a destination of a callback, store it
+    } else if (m_meshid == t.dst) {
+      Assert( !cb.empty(), "Insufficient number of dst callbacks, meshid: " +
+                           std::to_string(m_meshid) );
+      t.cb.push_back( cb.back() );
+      cb.pop_back();
+      //t.cbs.push_back( m_meshid );    // only for debugging
+    }
+  }
+  Assert( cb.empty(), "Not all callbacks have been processed" );
+
+  if (transferCallbacksComplete()) comfinal();
+}
+
+void
+Discretization::comcb( std::size_t srcmeshid, CkCallback c )
+// *****************************************************************************
+// Receive mesh transfer callbacks from source mesh/solver
+//! \param[in] srcmeshid Source mesh (solver) id
+//! \param[in] c Callback received
+// *****************************************************************************
+{
+  // Store received mesh transfer callback from source mesh/solver
+  for (auto& t : m_transfer)
+    if (srcmeshid == t.src && m_meshid == t.dst) {
+      t.cb.push_back( c );
+      //t.cbs.push_back( srcmeshid );   // only for debugging
+    }
+
+  if (transferCallbacksComplete()) comfinal();
+}
+
+bool
+Discretization::transferCallbacksComplete() const
+// *****************************************************************************
+// Determine if communication of mesh transfer callbacks is complete
+//! \return True if communication of mesh transfer callbacks have been
+//!   completed on this solver
+// *****************************************************************************
+{
+  bool c = true;
+
+  // Our callbacks are complete if all transfers we are involved in as a
+  // destination have exactly two callbacks.
+  for (const auto& t : m_transfer)
+    if (m_meshid == t.dst && t.cb.size() != 2)
+      c = false;
+
+  return c;
+}
+
+void
+Discretization::comfinal()
+// *****************************************************************************
+// Finish setting up communication maps and solution transfer callbacks
+// *****************************************************************************
+{
+//  std::cout << "m:" << m_meshid << ": transfer: ";
+//  for (const auto& t : m_transfer) {
+//    std::cout << t.src << "->" << t.dst << ' ';
+//    if (t.cb.size() > 0) {
+//      std::cout << "cb: ";
+//      for (auto m : t.cbs) std::cout << m << ' ';
+//    }
+//  }
+//  std::cout << '\n';
+
+  // Generate own subset of solver/mesh transfer list
+  for (const auto& t : m_transfer)
+    if (t.src == m_meshid || t.dst == m_meshid)
+      m_mytransfer.push_back( t );
+
+//  std::cout << "m:" << m_meshid << ": mytransfer: ";
+//  for (const auto& t : m_mytransfer) {
+//    std::cout << t.src << "->" << t.dst << ' ';
+//    if (t.cb.size() > 0) {
+//      std::cout << "cb: ";
+//      for (auto m : t.cbs) std::cout << m << ' ';
+//    }
+//  }
+//  std::cout << '\n';
+
+  // Signal the runtime system that the workers have been created
+  std::vector< std::size_t > meshdata{ /* initial */ 1, m_meshid };
+  contribute( meshdata, CkReduction::sum_ulong,
+    CkCallback(CkReductionTarget(Transporter,comfinal), m_transporter) );
+}
+
+void
+Discretization::transfer( [[maybe_unused]] const tk::Fields& u )
+// *****************************************************************************
+//  Start solution transfer (if coupled)
+//! \param[in] u Solution to transfer from/to
+// *****************************************************************************
+{
+  if (m_mytransfer.empty()) {     // skip transfer if single mesh
+    m_transfer_complete.send();
+  } else {
+    // Pass source and destination meshes to mesh transfer lib (if coupled)
+    #ifdef HAS_EXAM2M
+    Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
+    if (m_mytransfer[m_nsrc].src == m_meshid) {
+      exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
+      ++m_nsrc;
+      //std::cout << m_meshid << " src\n";
+    } else {
+      m_nsrc = 0;
+    }
+    Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
+    if (m_mytransfer[m_ndst].dst == m_meshid) {
+      exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
+                             m_mytransfer[m_ndst].cb );
+      ++m_ndst;
+      //std::cout << m_meshid << " dst\n";
+    } else {
+      m_ndst = 0;
+    }
+    #else
+    m_transfer_complete.send();
+    #endif
+  }
 }
 
 std::vector< std::size_t >
