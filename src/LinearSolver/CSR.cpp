@@ -128,19 +128,22 @@ CSR::dirichlet( std::size_t g,
                    [&](const auto& s) {
                      return s.second.find(node) != s.second.cend(); } ); };
 
-  std::size_t i = g;
-  tk::real diag = 1.0;
+  if (lid.empty()) {	// serial
 
-  if (!lid.empty()) {
+    for (std::size_t j=ia[g]-1; j<ia[g+1]-1; ++j)
+      if (g+1==ja[j]) a[j] = 1.0; else a[j] = 0.0;
+
+  } else {		// parallel
+
     auto it = lid.find( g );
-    if (it != end(lid)) {
-      i = it->second;
-      diag = 1.0 / count( g );
+    if (it != end(lid)) { // if row with global id g exists on this partition
+      auto i = it->second;
+      auto diag = 1.0 / count( g );
+      for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j)
+        if (i+1==ja[j]) a[j] = diag; else a[j] = 0.0;
     }
-  }
 
-  for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j)
-    if (i+1==ja[j]) a[j] = diag; else a[j] = 0.0;
+  }
 }
 
 void
