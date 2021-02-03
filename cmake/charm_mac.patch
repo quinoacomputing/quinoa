@@ -1,0 +1,28 @@
+diff --git a/src/scripts/charmc b/src/scripts/charmc
+index 3955143b6..a94978196 100755
+--- a/src/scripts/charmc
++++ b/src/scripts/charmc
+@@ -445,6 +445,12 @@ do
+ 		SKIP_MODULEINIT="yes"
+ 		;;
+ 
++        "-isysroot")
++                # Ignore -isysroot and the following argument (macOS SDK path),
++                # which charmc can not parse (Bug #2495).
++                shift
++                ;;
++
+ 	"-language")
+ 		# Parse out some fake languages (that are actually modules)
+ 		case "$1" in
+@@ -735,6 +741,10 @@ do
+ 		shift
+ 		;;
+ 
++        *.tbd)
++            OPTS="$OPTS $arg"
++            ;;
++
+ 	-D*|-I*)
+ 		if echo "$arg" | grep ' '  > /dev/null 2>/dev/null
+ 		then
