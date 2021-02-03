@@ -6656,6 +6656,59 @@ struct ale_info {
 };
 using ale = keyword< ale_info, TAOCPP_PEGTL_STRING("ale") >;
 
+struct filename_info {
+  static std::string name() { return "filename"; }
+  static std::string shortDescription() { return "Set filename"; }
+  static std::string longDescription() { return
+    R"(Set filename, e.g., mesh filename for solver coupling.)";
+  }
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using filename = keyword< filename_info, TAOCPP_PEGTL_STRING("filename") >;
+
+struct location_info {
+  static std::string name() { return "location"; }
+  static std::string shortDescription() { return "Configure location"; }
+  static std::string longDescription() { return
+    R"(Configure location of a mesh relative to another, e.g., for solver
+       coupling.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using location = keyword< location_info, TAOCPP_PEGTL_STRING("location") >;
+
+struct orientation_info {
+  static std::string name() { return "orientation"; }
+  static std::string shortDescription() { return "Configure orientation"; }
+  static std::string longDescription() { return
+    R"(Configure orientation of a mesh relative to another, e.g., for solver
+       coupling.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using orientation =
+  keyword< orientation_info, TAOCPP_PEGTL_STRING("orientation") >;
+
+struct mesh_info {
+  static std::string name() { return "Mesh specification block"; }
+  static std::string shortDescription() { return
+    "Start configuration block assigning a mesh to a solver"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a mesh ... end block, used to
+    assign and configure a mesh to a solver.)";
+  }
+};
+using mesh = keyword< material_info, TAOCPP_PEGTL_STRING("mesh") >;
+
 struct nolimiter_info {
   static std::string name() { return "No limiter"; }
   static std::string shortDescription() { return

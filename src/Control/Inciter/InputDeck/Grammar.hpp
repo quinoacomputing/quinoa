@@ -1237,6 +1237,18 @@ namespace deck {
              material_property< eq, kw::mat_cv, tag::cv >,
              material_property< eq, kw::mat_k, tag::k > > > {};
 
+  //! Mesh ... end block
+  template< class eq >
+  struct mesh :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::mesh >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+             tk::grm::filename< use, tag::param, eq, tag::mesh, tag::filename >
+           , pde_parameter_vector< kw::location, eq, tag::mesh, tag::location >
+           , pde_parameter_vector< kw::orientation, eq, tag::mesh,
+                                   tag::orientation >
+           > > {};
+
   //! transport equation for scalars
   struct transport :
          pegtl::if_must<
@@ -1255,6 +1267,7 @@ namespace deck {
                            tk::grm::depvar< use,
                                             tag::transport,
                                             tag::depvar >,
+                           mesh< tag::transport >,
                            tk::grm::component< use< kw::ncomp >,
                                                tag::transport >,
                            pde_parameter_vector< kw::pde_diffusivity,
@@ -1298,6 +1311,7 @@ namespace deck {
                            tk::grm::depvar< use,
                                             tag::compflow,
                                             tag::depvar >,
+                           mesh< tag::compflow >,
                            tk::grm::process<
                              use< kw::flux >,
                                tk::grm::store_back_option< use,
@@ -1365,6 +1379,7 @@ namespace deck {
                            tk::grm::depvar< use,
                                             tag::multimat,
                                             tag::depvar >,
+                           mesh< tag::multimat >,
                            parameter< tag::multimat,
                                       kw::nmat,
                                       tag::nmat >,

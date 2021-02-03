@@ -1512,6 +1512,13 @@ namespace grm {
                               insert >,
                          pegtl::one< rbound > > {};
 
+  //! Read and store a filename between quotes
+  template< template< class > class use, class tag, class... tags >
+  struct filename :
+          pegtl::if_must<
+            readkw< typename use< kw::filename >::pegtl_string >,
+            quoted< Store_back< tag, tags... > > > {};
+
   //! \brief Process 'keyword' and if matches, parse following token (expecting
   //!   'kw_type' and call 'insert' action on it
   template< class keyword, class insert, class kw_type = pegtl::digit >

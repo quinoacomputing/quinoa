@@ -232,9 +232,19 @@ using bc = tk::TaggedTuple< brigand::list<
                               kw::sideset::info::expect::type > >
 > >;
 
+//! Mesh assignment and configuration
+using mesh = tk::TaggedTuple< brigand::list<
+    tag::filename,    std::vector< std::string >
+  , tag::location,    std::vector<
+                        std::vector< kw::location::info::expect::type > >
+  , tag::orientation, std::vector<
+                        std::vector< kw::orientation::info::expect::type > >
+> >;
+
 //! Transport equation parameters storage
 using TransportPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
+  , tag::mesh,          mesh
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::diffusivity,   std::vector< std::vector<
@@ -270,6 +280,7 @@ using SkipBCParameters = tk::TaggedTuple< brigand::list<
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
+  , tag::mesh,          mesh
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
@@ -331,6 +342,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
 //! Compressible flow equation parameters storage
 using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
+  , tag::mesh,          mesh
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
