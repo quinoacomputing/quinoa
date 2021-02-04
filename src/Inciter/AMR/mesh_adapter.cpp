@@ -1325,6 +1325,15 @@ namespace AMR {
                         {
                             // Accept as 8:4 derefinement
                             trace_out << "Accept as 8:4" << std::endl;
+
+                            // create a vector of node-array-pairs to mark edges
+                            // for refinement 1:4
+                            std::vector< std::array< std::size_t, 2 > > ref_edges;
+                            for (auto n:inactive_node_set) {
+                              ref_edges.push_back(node_connectivity.get(n));
+                            }
+
+                            tet_store.edge_store.mark_edges_for_refinement(ref_edges);
                             //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
                             tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_four);
                         }
@@ -1372,6 +1381,16 @@ namespace AMR {
                               tet_store.edge_store.get(edge).needs_derefining = false;
                           }
                         }
+
+                        // create a vector of node-array-pairs to mark edges
+                        // for refinement 1:4
+                        inactive_node_set.insert(same_face.second);
+                        std::vector< std::array< std::size_t, 2 > > ref_edges;
+                        for (auto n:inactive_node_set) {
+                          ref_edges.push_back(node_connectivity.get(n));
+                        }
+
+                        tet_store.edge_store.mark_edges_for_refinement(ref_edges);
 
                         // Accept as 8:4 derefinement
                         trace_out << "Accept as 8:4" << std::endl;

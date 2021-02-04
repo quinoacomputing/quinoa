@@ -884,11 +884,27 @@ Refiner::perform()
       m_oldTets.insert( tet );
   }
 
+  if (m_mode == RefMode::T0REF) {
+
+    // Refine mesh based on next initial refinement type
+    if (!m_initref.empty()) {
+      auto r = m_initref.back();    // consume (reversed) list from its back
+      if (r == ctr::AMRInitialType::UNIFORM_DEREFINE)
+        m_refiner.perform_derefinement();
+      else
+        m_refiner.perform_refinement();
+    }
+
+  } else if (m_mode == RefMode::DTREF) {
+
+    // TODO: does not work yet, fix as above
+    m_refiner.perform_derefinement();
+    m_refiner.perform_refinement();
+  }
+
   //auto& tet_store = m_refiner.tet_store;
   //std::cout << "before ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
-  m_refiner.perform_refinement();
   //std::cout << "after ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
-  m_refiner.perform_derefinement();
   //std::cout << "after deref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
 
   // Update volume and boundary mesh
