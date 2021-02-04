@@ -47,6 +47,86 @@ namespace AMR {
     //}
 #endif
 
+    std::pair< bool, std::size_t > mesh_adapter_t::check_same_face(
+      std::size_t tet_id,
+      const std::unordered_set<std::size_t>& inactive_nodes)
+    {
+       edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
+
+       Assert(inactive_nodes.size()==3 || inactive_nodes.size()==2,
+         "Incorrectly sized inactive nodes set");
+
+       // for a tet ABCD, the keys (edges) are ordered
+       // A-B, A-C, A-D, B-C, B-D, C-D
+       // 0-1, 0-2, 0-3, 1-2, 1-3, 2-3
+
+       std::array< std::array< std::size_t, 3 >, 4 >
+         edges_on_face;
+
+       // A-B-C
+       edges_on_face[0][0] =
+         tk::cref_find(node_connectivity.data(),edge_list[0].get_data());
+       edges_on_face[0][1] =
+         tk::cref_find(node_connectivity.data(),edge_list[1].get_data());
+       edges_on_face[0][2] =
+         tk::cref_find(node_connectivity.data(),edge_list[3].get_data());
+
+       // A-B-D
+       edges_on_face[1][0] =
+         tk::cref_find(node_connectivity.data(),edge_list[0].get_data());
+       edges_on_face[1][1] =
+         tk::cref_find(node_connectivity.data(),edge_list[2].get_data());
+       edges_on_face[1][2] =
+         tk::cref_find(node_connectivity.data(),edge_list[4].get_data());
+
+       // B-C-D
+       edges_on_face[2][0] =
+         tk::cref_find(node_connectivity.data(),edge_list[3].get_data());
+       edges_on_face[2][1] =
+         tk::cref_find(node_connectivity.data(),edge_list[4].get_data());
+       edges_on_face[2][2] =
+         tk::cref_find(node_connectivity.data(),edge_list[5].get_data());
+
+       // A-C-D
+       edges_on_face[3][0] =
+         tk::cref_find(node_connectivity.data(),edge_list[1].get_data());
+       edges_on_face[3][1] =
+         tk::cref_find(node_connectivity.data(),edge_list[2].get_data());
+       edges_on_face[3][2] =
+         tk::cref_find(node_connectivity.data(),edge_list[5].get_data());
+
+       //Iterate over edges to determine if inactive_nodes are all part of a face
+       bool same_face(false), tnode_set(false);
+       std::size_t third_node = 0;
+       for(const auto& face : edges_on_face)
+       {
+         std::size_t icount = 0;
+         for (const auto& np_node : face) {
+           if (inactive_nodes.count(np_node) || inactive_nodes.count(np_node)
+             || inactive_nodes.count(np_node)) ++icount;
+         }
+         if (inactive_nodes.size() == icount) {
+           same_face = true;
+           // if the two inactive_nodes being checked are on the same parent
+           // face, determine the third node on that face
+           if (inactive_nodes.size() == 2) {
+             for (auto fn:face) {
+               if (inactive_nodes.count(fn) == 0) {
+                 third_node = fn;
+                 tnode_set = true;
+                 break;
+               }
+             }
+           }
+         }
+       }
+
+       if (inactive_nodes.size() == 2)
+         Assert(tnode_set, "Third node on face not set in derefine");
+
+       return {same_face, third_node};
+    }
+
     /** @brief Consume an existing mesh, and turn it into the AMRs
      * representations of tets and nodes
      *
@@ -1228,9 +1308,20 @@ namespace AMR {
                     //else if (refinement_case == AMR::Refinement_Case::one_to_eight)
                     else if (children.size() == 8)
                     {
-                        bool same_face = false; // TODO: This
+                        // we have a list of (non-parent) nodes that is marked
+                        // for derefinement. First, determine the nodes that are
+                        // unmarked for derefinement (or inactive_nodes). Then,
+                        // determine if these are on a single face.
+                        std::unordered_set<size_t> inactive_node_set;
+                        for (auto npn : non_parent_nodes) {
+                          if (derefine_node_set.count(npn) == 0)
+                            inactive_node_set.insert(npn);
+                        }
+                        Assert(inactive_node_set.size() == 3, "Incorrectly "
+                          "sized inactive-node set");
+                        auto same_face = check_same_face(tet_id, inactive_node_set);
                         // If inactive points lie on same face
-                        if (same_face == true)
+                        if (same_face.first == true)
                         {
                             // Accept as 8:4 derefinement
                             trace_out << "Accept as 8:4" << std::endl;
@@ -1251,12 +1342,36 @@ namespace AMR {
                 else if (num_to_derefine == 4)
                 //else if (children.size() == 4)
                 {
-                    // If inactive points lie on the same face
-                    bool same_face = false; // TODO: This
-                    if (same_face == true)
+                    // we have a list of (non-parent) nodes that is marked
+                    // for derefinement. First, determine the nodes that are
+                    // unmarked for derefinement (or inactive_nodes). Then,
+                    // determine if these are on a single face.
+                    std::unordered_set<size_t> inactive_node_set;
+                    for (auto npn : non_parent_nodes) {
+                      if (derefine_node_set.count(npn) == 0)
+                        inactive_node_set.insert(npn);
+                    }
+                    Assert(inactive_node_set.size() == 2, "Incorrectly "
+                      "sized inactive-node set");
+                    // Check if the inactive point belong to the same parent
+                    // face and deactivate the third point on that face
+                    auto same_face = check_same_face(tet_id, inactive_node_set);
+
+                    if (same_face.first == true)
                     {
-                        // Deactivate third point of face
-                        // TODO: Deactivate third face
+                        // deactivate the edges associated with same_face.second
+                        for (size_t i = 0; i < children.size(); i++)
+                        {
+                          edge_list_t edge_list = tet_store.generate_edge_keys(children[i]);
+                          for (size_t k = 0; k < NUM_TET_EDGES; k++)
+                          {
+                            edge_t edge = edge_list[k];
+                            size_t A = edge.first();
+                            size_t B = edge.second();
+                            if (A == same_face.second || B == same_face.second)
+                              tet_store.edge_store.get(edge).needs_derefining = false;
+                          }
+                        }
 
                         // Accept as 8:4 derefinement
                         trace_out << "Accept as 8:4" << std::endl;

@@ -51,6 +51,8 @@ namespace AMR {
 
             AMR::refinement_t refiner;
 
+            std::pair< bool, std::size_t > check_same_face(std::size_t tet_id,
+              const std::unordered_set<std::size_t>& inactive_nodes);
             void consume_tets(const std::vector<std::size_t>& tetinpoel );
 
             void evaluate_error_estimate();
