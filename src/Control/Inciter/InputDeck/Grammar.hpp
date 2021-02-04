@@ -103,6 +103,46 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< class eq > struct check_mesh : pegtl::success {};
+  //! \brief Check mesh ... end block for correctness
+  template< class eq >
+  struct action< check_mesh< eq > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::deck::neq;
+      auto& mesh = stack.template get< tag::param, eq, tag::mesh >();
+      auto& mesh_ref = mesh.template get< tag::reference >();
+      // if no mesh reference given by user
+      if (mesh_ref.empty() || mesh_ref.size() != neq.get< eq >()) {
+        // put in '-', meaning no reference
+        mesh_ref.push_back('-');
+        auto& location = mesh.template get< tag::location >();
+        // if no location, put in the origin
+        if (location.size() != neq.get< eq >())
+          location.push_back( { 0.0, 0.0, 0.0 } );
+        else    // reference was not given, but location was, overwrite
+          location.back() = { 0.0, 0.0, 0.0 };
+        auto& orientation = mesh.template get< tag::orientation >();
+        if (orientation.size() != neq.get< eq >())
+          orientation.push_back( { 0.0, 0.0, 0.0 } );
+        else    // reference was not given, but orientation was, overwrite
+          orientation.back() = { 0.0, 0.0, 0.0 };
+      }
+      // Ensure the number of depvars and the number of mesh references equal
+      const auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
+      Assert( depvar.size() == mesh_ref.size(), "Mesh ref size mismatch" );
+      // Ensure mesh ref var is not the same as the current depvar and is
+      // defined upstream in input file (by another solver)
+      if ( mesh_ref.back() != '-' &&
+           (mesh_ref.back() == depvar.back() ||
+            depvars.find(mesh_ref.back()) == end(depvars)) )
+      {
+        Message< Stack, ERROR, MsgKey::DEPVAR_AS_MESHREF >( stack, in );
+      }
+    }
+  };
+
+  //! Rule used to trigger action
   template< class eq > struct check_transport : pegtl::success {};
   //! \brief Set defaults and do error checking on the transport equation block
   //! \details This is error checking that only the transport equation block
@@ -976,6 +1016,8 @@ namespace deck {
          pegtl::seq<
            // register differential equation block
            tk::grm::register_inciter_eq< eq >,
+           // check mesh ... end block
+           tk::grm::check_mesh< eq >,
            // do error checking on this block
            eqchecker< eq > > {};
 

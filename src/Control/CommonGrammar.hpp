@@ -83,6 +83,7 @@ namespace grm {
     NOTSELECTED,        //!< Option not selected upstream
     EXISTS,             //!< Variable already used
     NODEPVAR,           //!< Dependent variable has not been specified
+    DEPVAR_AS_MESHREF,  //!< Depvar upstream of meshref has not been specified
     NOSOLVE,            //!< Dependent variable to solve for has not been spec'd
     NOSUCHDEPVAR,       //!< Dependent variable has not been previously selected
     NOSUCHCOMPONENT,    //!< No such scalar component
@@ -212,6 +213,13 @@ namespace grm {
     { MsgKey::NODEPVAR, "Dependent variable not specified within the block "
       "preceding this position. This is mandatory for the preceding block. Use "
       "the keyword 'depvar' to specify the dependent variable." },
+    { MsgKey::DEPVAR_AS_MESHREF, "Error in the preceding solver-configuration "
+       "block. Dependent variable, attempted to be used as a mesh reference "
+       "variable (to couple to another solver) not specified in a solver "
+       "upstream. To be able to couple a solver to another one, a dependent "
+       "variable of a solver, defined upstream in the input file, can be "
+       "selected. This also means that the current depvar cannot be used as "
+       "the mesh reference variable." },
     { MsgKey::NOSOLVE, "Dependent variable to solve for not specified within "
       "the block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'solve' to specify the type of the dependent "
