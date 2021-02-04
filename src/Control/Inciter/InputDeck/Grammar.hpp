@@ -513,28 +513,27 @@ namespace grm {
   //! \details This is instantiated using a Cartesian product of all PDE types
   //!    and all BC types at compile time. It goes through all side sets
   //!    configured by the user and triggers an error if a side set is assigned
-  //!    a BC more than once.
+  //!    a BC more than once (within a solver).
   template< typename Input, typename Stack >
   struct ensure_disjoint {
     const Input& m_input;
     Stack& m_stack;
-    std::unordered_set< int >& m_bcset;
-    explicit ensure_disjoint( const Input& in,
-                              Stack& stack,
-                              std::unordered_set< int >& bcset ) :
-      m_input( in ), m_stack( stack ), m_bcset( bcset ) {}
+    explicit ensure_disjoint( const Input& in, Stack& stack ) :
+      m_input( in ), m_stack( stack ) {}
     template< typename U > void operator()( brigand::type_<U> ) {
       using Eq = typename brigand::front< U >;
       using BC = typename brigand::back< U >;
       const auto& bc = m_stack.template get< tag::param, Eq, tag::bc, BC >();
-      for (const auto& eq : bc)
+      for (const auto& eq : bc) {
+        std::unordered_set< int > bcset;
         for (const auto& s : eq) {
           auto id = std::stoi(s);
-          if (m_bcset.find(id) != end(m_bcset))
+          if (bcset.find(id) != end(bcset))
             Message< Stack, ERROR, MsgKey::NONDISJOINTBC >( m_stack, m_input );
           else
-            m_bcset.insert( id );
+            bcset.insert( id );
         }
+      }
     }
   };
 
@@ -617,9 +616,8 @@ namespace grm {
       // Ensure no different BC types are assigned to the same side set
       using PDETypes = inciter::ctr::parameters::Keys;
       using BCTypes = inciter::ctr::bc::Keys;
-      std::unordered_set< int > bcset;
       brigand::for_each< tk::cartesian_product< PDETypes, BCTypes > >(
-        ensure_disjoint< Input, Stack >( in, stack, bcset ) );
+        ensure_disjoint< Input, Stack >( in, stack ) );
 
       // Do error checking on time history point names (this is a programmer
       // error if triggers, hence assert)
