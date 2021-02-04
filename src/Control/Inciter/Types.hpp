@@ -239,6 +239,7 @@ using mesh = tk::TaggedTuple< brigand::list<
                         std::vector< kw::location::info::expect::type > >
   , tag::orientation, std::vector<
                         std::vector< kw::orientation::info::expect::type > >
+  , tag::reference,   std::vector< char >
 > >;
 
 //! Transport equation parameters storage

@@ -119,6 +119,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::filename
                                  , kw::location
                                  , kw::orientation
+                                 , kw::reference
                                  , kw::material
                                  , kw::id
                                  , kw::mat_gamma

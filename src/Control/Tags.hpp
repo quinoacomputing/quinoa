@@ -82,6 +82,7 @@ struct filetype { static std::string name() { return "filetype"; } };
 struct filename { static std::string name() { return "filename"; } };
 struct location { static std::string name() { return "location"; } };
 struct orientation { static std::string name() { return "orientation"; } };
+struct reference { static std::string name() { return "reference"; } };
 struct pdfpolicy { static std::string name() { return "pdfpolicy"; } };
 struct pdfctr { static std::string name() { return "pdfctr"; } };
 struct pdfnames { static std::string name() { return "pdfnames"; } };

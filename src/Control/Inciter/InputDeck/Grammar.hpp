@@ -1247,6 +1247,10 @@ namespace deck {
            , pde_parameter_vector< kw::location, eq, tag::mesh, tag::location >
            , pde_parameter_vector< kw::orientation, eq, tag::mesh,
                                    tag::orientation >
+           , tk::grm::process<
+               use< kw::reference >,
+               tk::grm::Store_back< tag::param, eq, tag::mesh, tag::reference >,
+               pegtl::alpha >
            > > {};
 
   //! transport equation for scalars
