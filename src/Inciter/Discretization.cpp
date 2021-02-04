@@ -150,14 +150,15 @@ Discretization::Discretization(
   }
 
   // Register mesh with mesh-transfer lib
-  if (m_disc.size() == 1) {     // skip transfer if single mesh
+  if (m_disc.size() == 1 || m_transfer.empty()) {
+    // skip transfer if single mesh or if not involved in coupling
     transferInit();
   } else {
     #ifdef HAS_EXAM2M
     if (thisIndex == 0) {
       exam2m::addMesh( thisProxy, m_nchare,
         CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
-      //std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
+      std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
     }
     #else
     transferInit();
@@ -398,7 +399,7 @@ Discretization::transfer( [[maybe_unused]] const tk::Fields& u )
 //! \param[in] u Solution to transfer from/to
 // *****************************************************************************
 {
-  if (m_mytransfer.empty()) {     // skip transfer if single mesh
+  if (m_mytransfer.empty()) {   // skip transfer if not involved in coupling
     m_transfer_complete.send();
   } else {
     // Pass source and destination meshes to mesh transfer lib (if coupled)
