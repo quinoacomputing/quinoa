@@ -128,9 +128,11 @@ namespace grm {
         else    // reference was not given, but orientation was, overwrite
           orientation.back() = { 0.0, 0.0, 0.0 };
       }
+
       // Ensure the number of depvars and the number of mesh references equal
       const auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
       Assert( depvar.size() == mesh_ref.size(), "Mesh ref size mismatch" );
+
       // Ensure mesh ref var is not the same as the current depvar and is
       // defined upstream in input file (by another solver)
       if ( mesh_ref.back() != '-' &&
@@ -577,6 +579,22 @@ namespace grm {
     }
   };
 
+  //! Function object to count the number of meshes assigned to solvers
+  //! \details This is instantiated for all PDE types at compile time. It goes
+  //!   through all configured solvers (equation system configuration blocks)
+  //!   and counts the number of mesh filenames configured.
+  template< typename Stack >
+  struct count_meshes {
+    const Stack& stack;
+    std::size_t& count;
+    explicit
+    count_meshes( const Stack& s, std::size_t& c ) : stack(s), count(c) {}
+    template< typename eq > void operator()( brigand::type_<eq> ) {
+      count +=
+        stack.template get< tag::param, eq, tag::mesh, tag::filename >().size();
+    }
+  };
+
   //! Rule used to trigger action
   struct configure_scheme : pegtl::success {};
   //! Configure scheme selected by user
@@ -664,6 +682,13 @@ namespace grm {
       Assert(
         (stack.template get< tag::history, tag::id >().size() == hist.size()),
         "Number of history points and ids must equal" );
+
+      // If at least a mesh filename is assigned to a solver, all solvers must
+      // have a mesh filename assigned
+      std::size_t nmesh = 0;
+      brigand::for_each< PDETypes >( count_meshes< Stack >( stack, nmesh ) );
+      if (nmesh > 0 && nmesh != depvars.size())
+        Message< Stack, ERROR, MsgKey::MULTIMESH >( stack, in );
     }
   };
 

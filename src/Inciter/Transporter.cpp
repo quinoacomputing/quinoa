@@ -59,7 +59,8 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Transporter;
 
 Transporter::Transporter() :
-  m_nchare( g_inputdeck.get< tag::cmd, tag::io, tag::input >().size() ),
+  m_input( input() ),
+  m_nchare( m_input.size() ),
   m_meshid(),
   m_ncit( m_nchare.size(), 0 ),
   m_nload( 0 ),
@@ -136,6 +137,43 @@ Transporter::Transporter( CkMigrateMessage* m ) :
    print.diag( "Restarted from checkpoint" );
    info( print );
    inthead( print );
+}
+
+std::vector< std::string >
+Transporter::input()
+// *****************************************************************************
+// Generate list of input mesh filenames configured by the user
+//! \return List of input mesh filenames configured by the user
+//! \details If the input file is given on the command line, a single solver
+//!   will be instantiated on the single mesh, solving potentially multiple
+//!   systems of (potentially coupled) equations. If the input file is not given
+//!   on the command line, the mesh files are expected to be configured in the
+//!   control/input file, associating a potentially different mesh to each
+//!   solver. Both configurations allow the solution of coupled systems, but the
+//!   first one solves all equations on the same mesh, while the latter can
+//!   couple solutions computed on multiple different meshes.
+// *****************************************************************************
+{
+  // Query input mesh filename specified on the command line
+  const auto& cmdinput = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
+
+  // Extract mesh filenames specified in the control file (assigned to solvers)
+  using PDETypes = inciter::ctr::parameters::Keys;
+  std::vector< std::string > ctrinput;
+  brigand::for_each< PDETypes >( Meshes( g_inputdeck, ctrinput ) );
+
+  Assert( !cmdinput.empty() || !ctrinput.empty(),
+    "Either a single input mesh must be given on the command line or multiple "
+    "meshes must be configured in the control file." );
+
+   // Prepend control file path to mesh filenames in given in control file
+  if (!ctrinput.empty()) {
+     const auto& ctr = g_inputdeck.get< tag::cmd, tag::io, tag::control >();
+     auto path = ctr.substr( 0, ctr.find_last_of("/")+1 );
+     for (auto& f : ctrinput) f = path + f;
+  }
+
+  if (cmdinput.empty()) return ctrinput; else return { cmdinput };
 }
 
 void
@@ -304,8 +342,7 @@ Transporter::info( const InciterPrint& print )
 
   // Print I/O filenames
   print.section( "Input/Output filenames and directories" );
-  print.item( "Input mesh(es)", tk::parameters(
-              g_inputdeck.get< tag::cmd, tag::io, tag::input >() ) );
+  print.item( "Input mesh(es)", tk::parameters( m_input ) );
   const auto& of = g_inputdeck.get< tag::cmd, tag::io, tag::output >();
   print.item( "Volume field output file(s)",
               of + ".e-s.<meshid>.<numchares>.<chareid>" );
@@ -457,21 +494,19 @@ Transporter::createPartitioner()
   print.diag( "Reading mesh(es)" );
 
   // Query input mesh file names
-  const auto& inputs = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
-
   auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
   bool linearsolver = false;
   if (ale && meshvel != ctr::MeshVelocityType::NONE) linearsolver = true;
 
   // Create (discretization) Scheme chare worker arrays for all meshes
-  for ([[maybe_unused]] const auto& filename : inputs)
+  for ([[maybe_unused]] const auto& filename : m_input)
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
 			   linearsolver );
 
   // Configure solver coupling. This will be exposed to the user eventually.
   std::vector< Transfer > transfer;
-  if (inputs.size() == 2) transfer.emplace_back( 0, 1 );
+  if (m_input.size() == 2) transfer.emplace_back( 0, 1 );
   //transfer.emplace_back( 0, 2 );
   //transfer.emplace_back( 1, 3 );
   //transfer.emplace_back( 2, 3 );
@@ -479,7 +514,7 @@ Transporter::createPartitioner()
 
   // Read boundary (side set) data from a list of input mesh files
   std::size_t meshid = 0;
-  for (const auto& filename : inputs) {
+  for (const auto& filename : m_input) {
     // Create mesh reader for reading side sets from file
     tk::MeshReader mr( filename );
 
@@ -523,7 +558,7 @@ Transporter::createPartitioner()
         g_inputdeck.get< tag::selected, tag::filetype >(),
         centering,
         g_inputdeck.get< tag::cmd, tag::benchmark >(),
-        inputs.size() ) );
+        m_input.size() ) );
 
     // Create mesh partitioner Charm++ chare nodegroup for all meshes
     m_partitioner.push_back(

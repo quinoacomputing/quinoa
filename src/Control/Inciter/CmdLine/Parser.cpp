@@ -127,10 +127,4 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
           "Mandatory control file not specified. "
           "Use '--" + kw::control().string() + " <filename>'" +
           ( ctralias ? " or '-" + *ctralias + " <filename>'" : "" ) + '.' );
-
-  auto inpalias = kw::input().alias();
-  ErrChk( !(cmdline.get< tag::io, tag::input >().empty()),
-          "Mandatory input file not specified. "
-          "Use '--" + kw::input().string() + " <filename>'" +
-          ( inpalias ? " or '-" + *inpalias + " <filename>'" : "" ) + '.' );
 }

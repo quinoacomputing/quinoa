@@ -82,9 +82,11 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
 
   const auto& mesh = g_inputdeck.get< tag::param, eq, tag::mesh >();
-  nfo.emplace_back( "mesh", mesh.get< tag::filename >()[c] );
+  const auto& mesh_filename = mesh.get< tag::filename >();
+  if (mesh_filename.size() > c)
+    nfo.emplace_back( "mesh", mesh.get< tag::filename >()[c] );
   const auto& mesh_reference = mesh.get< tag::reference >();
-  if (mesh_reference.at(c) != '-') {    // only if reference is configured
+  if (mesh_reference.size() > c && mesh_reference[c] != '-') {
     nfo.emplace_back( "mesh reference", std::string( 1, mesh_reference[c] ) );
     const auto& mesh_location = mesh.get< tag::location >();
     if (mesh_location.size() > c)

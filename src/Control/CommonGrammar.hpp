@@ -84,6 +84,7 @@ namespace grm {
     EXISTS,             //!< Variable already used
     NODEPVAR,           //!< Dependent variable has not been specified
     DEPVAR_AS_MESHREF,  //!< Depvar upstream of meshref has not been specified
+    MULTIMESH,          //!< If meshes are assigned, all solvers must have one
     NOSOLVE,            //!< Dependent variable to solve for has not been spec'd
     NOSUCHDEPVAR,       //!< Dependent variable has not been previously selected
     NOSUCHCOMPONENT,    //!< No such scalar component
@@ -220,6 +221,9 @@ namespace grm {
        "variable of a solver, defined upstream in the input file, can be "
        "selected. This also means that the current depvar cannot be used as "
        "the mesh reference variable." },
+    { MsgKey::MULTIMESH, "If a solver is assigned a mesh in the input/control "
+       "file, all solvers must have a mesh assigned. If no solver has a mesh "
+       "assigned, the (single) mesh must be specified on the command line." },
     { MsgKey::NOSOLVE, "Dependent variable to solve for not specified within "
       "the block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'solve' to specify the type of the dependent "

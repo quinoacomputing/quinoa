@@ -145,8 +145,7 @@ using history = tk::TaggedTuple< brigand::list<
 using ios = tk::TaggedTuple< brigand::list<
     tag::nrestart,  int                             //!< Number of restarts
   , tag::control,   kw::control::info::expect::type //!< Control filename
-  //! Input filenames
-  , tag::input,     std::vector< kw::input::info::expect::type >
+  , tag::input,     kw::input::info::expect::type   //!< Input filename
   , tag::output,    kw::output::info::expect::type  //!< Output filename
     //! Refined output (output field data on a refined mesh)
   , tag::refined,   kw::refined::info::expect::type

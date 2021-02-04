@@ -208,6 +208,7 @@ class Transporter : public CBase_Transporter {
     //! \note This is a Charm++ mainchare, pup() is thus only for
     //!    checkpoint/restart.
     void pup( PUP::er &p ) override {
+      p | m_input;
       p | m_nchare;
       p | m_meshid;
       p | m_nload;
@@ -243,6 +244,8 @@ class Transporter : public CBase_Transporter {
     //@}
 
   private:
+    //! List of mesh files to be used for potentially multiple solvers
+    std::vector< std::string > m_input;
     //! Number of worker chares (one per mesh)
     std::vector< int > m_nchare;
     //! Sum of mesh ids (across all chares, key) for each meshid (value)
@@ -358,11 +361,31 @@ class Transporter : public CBase_Transporter {
       }
     };
 
+    //! Function object to extract the mesh filenames assigned to solvers
+    //! \details This is instantiated for all PDE types at compile time. It goes
+    //!   through all configured solvers (equation system configuration blocks)
+    //!   and builds a list of all mesh filenames associated to all solvers in
+    //!   the input file.
+    struct Meshes {
+      const ctr::InputDeck& inputdeck;
+      std::vector< std::string >& filenames;
+      explicit Meshes( const ctr::InputDeck& i, std::vector< std::string >& f )
+        : inputdeck(i), filenames(f) {}
+      template< typename eq > void operator()( brigand::type_<eq> ) {
+        const auto& eq_mesh_filename =
+           inputdeck.get< tag::param, eq, tag::mesh, tag::filename >();
+        for (const auto& f : eq_mesh_filename) filenames.push_back( f );
+      }
+    };
+
     //! Verify boundary condition (BC) side sets used exist in mesh file
     bool matchBCs( std::map< int, std::vector< std::size_t > >& bnd );
 
     //! Print out mesh statistics
     void meshstat( const std::string& header ) const;
+
+    //! Generate list of input mesh filenames configured by the user
+    std::vector< std::string > input();
 };
 
 } // inciter::
