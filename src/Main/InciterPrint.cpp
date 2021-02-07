@@ -79,8 +79,6 @@ InciterPrint::couple( const std::vector< Transfer >& transfer,
 {
   if (!transfer.empty()) {
 
-    Assert( transfer.size() == depvar.size(), "Size mismatch" );
-
     endsubsection();
     subsection( "Solver coupling" );
     std::stringstream steps;

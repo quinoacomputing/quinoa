@@ -55,6 +55,31 @@ struct Transfer {
     os << t.src << '>' << t.dst;
     return os;
   }
+
+  //! \brief Equal operator for, e.g., finding unique elements, used by, e.g.,
+  //!    std::unique().
+  //! \details Test on src and dst only.
+  //! \param[in] transfer Transfer object to compare
+  //! \return Boolean indicating if term equals 'this'
+  bool operator== ( const Transfer& transfer) const {
+    if (src == transfer.src && dst == transfer.dst)
+      return true;
+    else
+      return false;
+  }
+
+  //! Less-than operator for ordering, used by, e.g., std::sort().
+  //! \details Test on src and dst only.
+  //! \param[in] transfer Transfer object to compare
+  //! \return Boolean indicating if term is less than 'this'
+  bool operator< ( const Transfer& transfer ) const {
+    if (src < transfer.src)
+      return true;
+    else if (src == transfer.src && dst < transfer.dst)
+      return true;
+    else
+      return false;
+  }
 };
 
 } // inciter::

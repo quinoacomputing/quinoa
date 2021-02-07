@@ -708,6 +708,9 @@ namespace grm {
       if (nmesh > 0 && nmesh != depvars.size())
         Message< Stack, ERROR, MsgKey::MULTIMESH >( stack, in );
 
+      // Remove duplicate transfer steps
+      tk::unique( stack.template get< tag::couple, tag::transfer >() );
+
       // Now that the inciter ... end block is finished, assign mesh ids to
       // solvers configured
       std::size_t meshid = 0;
