@@ -595,6 +595,24 @@ namespace grm {
     }
   };
 
+  //! Function object to assign mesh ids to solvers
+  //! \details This is instantiated for all PDE types at compile time. It goes
+  //!   through all configured solvers (equation system configuration blocks)
+  //!   and assigns a new mesh id to all solvers configured in the input file.
+  template< typename Stack >
+  struct assign_meshid {
+    Stack& stack;
+    std::size_t& meshid;
+    explicit assign_meshid( Stack& s, std::size_t& m ) : stack(s), meshid(m) {}
+    template< typename eq > void operator()( brigand::type_<eq> ) {
+      const auto& eq_mesh_filename =
+        stack.template get< tag::param, eq, tag::mesh, tag::filename >();
+      auto& id = stack.template get< tag::param, eq, tag::mesh, tag::id >();
+      for (std::size_t i=0; i<eq_mesh_filename.size(); ++i)
+        id.push_back( meshid++ );
+    }
+  };
+
   //! Rule used to trigger action
   struct configure_scheme : pegtl::success {};
   //! Configure scheme selected by user
@@ -689,6 +707,12 @@ namespace grm {
       brigand::for_each< PDETypes >( count_meshes< Stack >( stack, nmesh ) );
       if (nmesh > 0 && nmesh != depvars.size())
         Message< Stack, ERROR, MsgKey::MULTIMESH >( stack, in );
+
+      // Now that the inciter ... end block is finished, assign mesh ids to
+      // solvers configured
+      std::size_t meshid = 0;
+      brigand::for_each< PDETypes >( assign_meshid< Stack >( stack, meshid ) );
+      Assert( meshid == nmesh, "Not all meshes configured have mesh ids" );
     }
   };
 
@@ -1011,6 +1035,39 @@ namespace grm {
         else
           Message< Stack, ERROR, MsgKey::NOSUCHMULTIMATVAR >( stack, in );
       }
+    }
+  };
+
+  // Store mesh/solver id as a source of a transfer
+  template< typename Stack > struct store_transfer_src {
+    store_transfer_src( Stack& stack, std::size_t i ) {
+      stack.template get< tag::couple, tag::transfer >().emplace_back( i, 0 );
+    }
+  };
+
+  // Store mesh/solver id as a destination of a transfer
+  template< typename Stack > struct store_transfer_dst {
+    store_transfer_dst( Stack& stack, std::size_t i ) {
+      stack.template get< tag::couple, tag::transfer >().back().dst = i;
+    }
+  };
+
+  //! Rule used to trigger action
+  template< template< class > class StoreTransfer >
+  struct push_transfer : pegtl::success {};
+  //! Add matched value as a source or destination of solution transfer
+  //! \tparam StoreTransfer Type of action to invoke: source or destination
+  template< template< class > class StoreTransfer >
+  struct action< push_transfer< StoreTransfer > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      // Extract dependent variables for solvers configured
+      auto depvar = stack.depvar();
+      // Store index of parsed depvar of transfer being configured
+      auto c = in.string()[0];
+      for (std::size_t i=0; i<depvar.size(); ++i)
+        if (depvar[i] == c)
+          StoreTransfer< Stack >( stack, i );
     }
   };
 
@@ -1588,6 +1645,24 @@ namespace deck {
                              pegtl::alpha >
                          > > {};
 
+  //! \brief Match a depvar, defined upstream of control file, coupling a
+  //!   solver and store
+  template< template< class > class action >
+  struct coupled_solver :
+         tk::grm::scan_until<
+            pegtl::lower,
+            tk::grm::match_depvar< tk::grm::push_transfer< action > > > {};
+
+  //! Couple ... end block (used to configure solver coupling)
+  struct couple :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::couple >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+             pegtl::seq<
+               coupled_solver< tk::grm::store_transfer_src >,
+               pegtl::one<'>'>,
+               coupled_solver< tk::grm::store_transfer_dst > > > > {};
+
   //! p-adaptive refinement (pref) ...end block
   struct pref :
          pegtl::if_must<
@@ -1716,6 +1791,7 @@ namespace deck {
                            ale,
                            pref,
                            partitioning,
+                           couple,
                            field_output,
                            history_output,
                            tk::grm::diagnostics<

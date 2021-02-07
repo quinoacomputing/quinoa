@@ -361,23 +361,6 @@ class Transporter : public CBase_Transporter {
       }
     };
 
-    //! Function object to extract the mesh filenames assigned to solvers
-    //! \details This is instantiated for all PDE types at compile time. It goes
-    //!   through all configured solvers (equation system configuration blocks)
-    //!   and builds a list of all mesh filenames associated to all solvers in
-    //!   the input file.
-    struct Meshes {
-      const ctr::InputDeck& inputdeck;
-      std::vector< std::string >& filenames;
-      explicit Meshes( const ctr::InputDeck& i, std::vector< std::string >& f )
-        : inputdeck(i), filenames(f) {}
-      template< typename eq > void operator()( brigand::type_<eq> ) {
-        const auto& eq_mesh_filename =
-           inputdeck.get< tag::param, eq, tag::mesh, tag::filename >();
-        for (const auto& f : eq_mesh_filename) filenames.push_back( f );
-      }
-    };
-
     //! Verify boundary condition (BC) side sets used exist in mesh file
     bool matchBCs( std::map< int, std::vector< std::size_t > >& bnd );
 

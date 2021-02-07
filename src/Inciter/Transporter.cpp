@@ -39,7 +39,6 @@
 #include "ElemDiagnostics.hpp"
 #include "DiagWriter.hpp"
 #include "Callback.hpp"
-#include "Transfer.hpp"
 #include "CartesianProduct.hpp"
 
 #include "NoWarning/inciter.decl.h"
@@ -158,9 +157,7 @@ Transporter::input()
   const auto& cmdinput = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
 
   // Extract mesh filenames specified in the control file (assigned to solvers)
-  using PDETypes = inciter::ctr::parameters::Keys;
-  std::vector< std::string > ctrinput;
-  brigand::for_each< PDETypes >( Meshes( g_inputdeck, ctrinput ) );
+  auto ctrinput = g_inputdeck.mesh();
 
   Assert( !cmdinput.empty() || !ctrinput.empty(),
     "Either a single input mesh must be given on the command line or multiple "
@@ -260,6 +257,10 @@ Transporter::info( const InciterPrint& print )
 
   // Print out info on settings of selected partial differential equations
   print.pdes( "Partial differential equations integrated", stack.info() );
+
+  // Print out solver coupling info
+  print.couple( g_inputdeck.get< tag::couple, tag::transfer >(),
+                g_inputdeck.depvar() );
 
   // Print out adaptive polynomial refinement configuration
   if (scheme == ctr::SchemeType::PDG) {
@@ -504,14 +505,6 @@ Transporter::createPartitioner()
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
 			   linearsolver );
 
-  // Configure solver coupling. This will be exposed to the user eventually.
-  std::vector< Transfer > transfer;
-  if (m_input.size() == 2) transfer.emplace_back( 0, 1 );
-  //transfer.emplace_back( 0, 2 );
-  //transfer.emplace_back( 1, 3 );
-  //transfer.emplace_back( 2, 3 );
-  //transfer.emplace_back( 2, 0 );
-
   // Read boundary (side set) data from a list of input mesh files
   std::size_t meshid = 0;
   for (const auto& filename : m_input) {
@@ -562,7 +555,7 @@ Transporter::createPartitioner()
 
     // Create mesh partitioner Charm++ chare nodegroup for all meshes
     m_partitioner.push_back(
-      CProxy_Partitioner::ckNew( meshid, transfer, filename, cbp, cbr, cbs,
+      CProxy_Partitioner::ckNew( meshid, filename, cbp, cbr, cbs,
         thisProxy, m_refiner.back(), m_sorter.back(), m_meshwriter.back(),
         m_scheme, bface, faces, bnode ) );
 

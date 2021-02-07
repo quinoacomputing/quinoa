@@ -39,7 +39,6 @@ using inciter::Discretization;
 
 Discretization::Discretization(
   std::size_t meshid,
-  const std::vector< Transfer >& t,
   const std::vector< CProxy_Discretization >& disc,
   const CProxy_DistFCT& fctproxy,
   const tk::CProxy_ConjugateGradients& cgproxy,
@@ -50,7 +49,8 @@ Discretization::Discretization(
   const tk::CommMaps& msum,
   int nc ) :
   m_meshid( meshid ),
-  m_transfer( t ),
+  m_transfer_complete(),
+  m_transfer( g_inputdeck.get< tag::couple, tag::transfer >() ),
   m_disc( disc ),
   m_nchare( nc ),
   m_it( 0 ),

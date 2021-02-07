@@ -34,6 +34,7 @@
 #include "Options/Error.hpp"
 #include "PUPUtil.hpp"
 #include "OutVar.hpp"
+#include "Transfer.hpp"
 
 namespace inciter {
 namespace ctr {
@@ -231,9 +232,15 @@ using bc = tk::TaggedTuple< brigand::list<
                               kw::sideset::info::expect::type > >
 > >;
 
+//! Solver coupling
+using couple = tk::TaggedTuple< brigand::list<
+    tag::transfer,  std::vector< Transfer >     //!< List of mesh transfers
+> >;
+
 //! Mesh assignment and configuration
 using mesh = tk::TaggedTuple< brigand::list<
-    tag::filename,    std::vector< std::string >
+    tag::id,          std::vector< std::size_t >
+  , tag::filename,    std::vector< std::string >
   , tag::location,    std::vector<
                         std::vector< kw::location::info::expect::type > >
   , tag::orientation, std::vector<

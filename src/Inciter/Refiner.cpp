@@ -39,7 +39,6 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Refiner;
 
 Refiner::Refiner( std::size_t meshid,
-                  const std::vector< Transfer >& t,
                   const CProxy_Transporter& transporter,
                   const CProxy_Sorter& sorter,
                   const tk::CProxy_MeshWriter& meshwriter,
@@ -53,7 +52,6 @@ Refiner::Refiner( std::size_t meshid,
                   const std::map< int, std::vector< std::size_t > >& bnode,
                   int nchare ) :
   m_meshid( meshid ),
-  m_transfer( t ),
   m_host( transporter ),
   m_sorter( sorter ),
   m_meshwriter( meshwriter ),
@@ -1000,8 +998,7 @@ Refiner::endt0ref()
 // *****************************************************************************
 {
   // create sorter Charm++ chare array elements using dynamic insertion
-  m_sorter[ thisIndex ].insert( m_meshid, m_transfer, m_host, m_meshwriter,
-    m_cbs, m_scheme,
+  m_sorter[ thisIndex ].insert( m_meshid, m_host, m_meshwriter, m_cbs, m_scheme,
     CkCallback(CkIndex_Refiner::reorder(), thisProxy[thisIndex]), m_ginpoel,
     m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare );
 

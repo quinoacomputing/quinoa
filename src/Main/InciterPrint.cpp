@@ -16,6 +16,7 @@
 
 #include "CGPDE.hpp"
 #include "InciterPrint.hpp"
+#include "Transfer.hpp"
 
 using inciter::InciterPrint;
 
@@ -64,6 +65,50 @@ InciterPrint::pdes( const std::string& t, const std::vector< std::vector<
                     % info[e][l].first % info[e][l].second;
       if (e < info.size()-1) endsubsection();
     }
+  }
+}
+
+void
+InciterPrint::couple( const std::vector< Transfer >& transfer,
+                      const std::vector< char >& depvar ) const
+// *****************************************************************************
+//  Print out info on solver coupling
+//! \param[in] transfer List of solution transfer steps, describing coupling
+//! \param[in] depvar List of dependent variables assigned to solvers
+// *****************************************************************************
+{
+  if (!transfer.empty()) {
+
+    Assert( transfer.size() == depvar.size(), "Size mismatch" );
+
+    endsubsection();
+    subsection( "Solver coupling" );
+    std::stringstream steps;
+    std::map< char, std::vector< char > > src, dst;
+
+    for (const auto& t : transfer) {
+      auto sd = depvar[t.src];
+      auto dd = depvar[t.dst];
+      steps << sd << '>' << dd << ' ';
+      src[ sd ].push_back( dd );
+      dst[ dd ].push_back( sd );
+    }
+
+    item( "Transfer steps (" + std::to_string(transfer.size()) + ')',
+          steps.str() );
+
+    for (const auto& [s,m] : src) {
+      std::stringstream name;
+      name << "Solver " << s << " is source to";
+      item( name.str(), tk::parameters(m) );
+    }
+
+    for (const auto& [d,m] : dst) {
+      std::stringstream name;
+      name << "Solver " << d << " is destination to";
+      item( name.str(), tk::parameters(m) );
+    }
+
   }
 }
 

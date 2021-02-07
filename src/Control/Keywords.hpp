@@ -6730,6 +6730,17 @@ struct reference_info {
 };
 using reference = keyword< reference_info, TAOCPP_PEGTL_STRING("reference") >;
 
+struct couple_info {
+  static std::string name() { return "Couple solvers"; }
+  static std::string shortDescription() { return
+    "Specify coupling of solvers on different meshes"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a couple ... end block, used to
+       specify coupling of solvers operating on different meshes.)";
+  }
+};
+using couple = keyword< couple_info, TAOCPP_PEGTL_STRING("couple") >;
+
 struct nolimiter_info {
   static std::string name() { return "No limiter"; }
   static std::string shortDescription() { return

@@ -78,6 +78,8 @@ struct nchare {};
 struct bounds {};
 struct meshvelocity { static std::string name() { return "meshvelocity"; } };
 struct mesh { static std::string name() { return "mesh"; } };
+struct couple { static std::string name() { return "couple"; } };
+struct transfer { static std::string name() { return "transfer"; } };
 struct filetype { static std::string name() { return "filetype"; } };
 struct filename { static std::string name() { return "filename"; } };
 struct location { static std::string name() { return "location"; } };

@@ -14,6 +14,8 @@
 #ifndef Transfer_h
 #define Transfer_h
 
+#include "NoWarning/charm++.hpp"
+
 namespace inciter {
 
 //! \brief Description of solution transfer between two solvers holding
@@ -44,6 +46,15 @@ struct Transfer {
   //! \param[in,out] t Transfer object reference
   friend void operator|( PUP::er& p, Transfer& t ) { t.pup(p); }
   ///@}
+
+  //! \brief Operator << for writing a Transfer object to output streams
+  //! \param[in,out] os Output stream to write to
+  //! \param[in] t Transfer object to write
+  //! \return Updated output stream
+  friend std::ostream& operator<<( std::ostream& os, const Transfer& t ) {
+    os << t.src << '>' << t.dst;
+    return os;
+  }
 };
 
 } // inciter::

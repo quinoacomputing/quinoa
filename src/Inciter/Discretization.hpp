@@ -65,7 +65,6 @@ class Discretization : public CBase_Discretization {
     explicit
       Discretization(
         std::size_t meshid,
-        const std::vector< Transfer >& t,
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
         const tk::CProxy_ConjugateGradients& cgproxy,
