@@ -504,7 +504,7 @@ VertexBasedMultiMat_P1(
       auto phip = VertexBasedFunction(P, esup, inpoel, coord, e, rdof, dof_el,
         offset, nprim);
 
-      if(ndof > 1)
+      if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
 
       // limits under which compression is to be performed

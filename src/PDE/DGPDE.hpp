@@ -140,10 +140,11 @@ class DGPDE {
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      const std::unordered_set< std::size_t >& inbox,
+                     std::vector< std::size_t >& numEqDof,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
-    { self->initialize( L, inpoel, coord, inbox, unk, t, nielem ); }
+    { self->initialize( L, inpoel, coord, inbox, numEqDof, unk, t, nielem ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
@@ -173,11 +174,13 @@ class DGPDE {
                         esup,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
+                      const std::vector< std::size_t >& numEqDof,
                       tk::Fields& U,
                       tk::Fields& P,
                       tk::Fields& VolFracMax ) const
     {
-      self->reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P, VolFracMax );
+      self->reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, numEqDof,
+        U, P, VolFracMax );
     }
 
     //! Public interface to limiting the second-order solution
@@ -286,6 +289,7 @@ class DGPDE {
                                const std::vector< std::size_t >&,
                                const tk::UnsMesh::Coords&,
                                const std::unordered_set< std::size_t >&,
+                               std::vector< std::size_t >&,
                                tk::Fields&,
                                tk::real,
                                const std::size_t nielem ) const = 0;
@@ -307,6 +311,7 @@ class DGPDE {
                                   std::vector< std::size_t > >&,
                                 const std::vector< std::size_t >&,
                                 const tk::UnsMesh::Coords&,
+                                const std::vector< std::size_t >&,
                                 tk::Fields&,
                                 tk::Fields&,
                                 tk::Fields& ) const = 0;
@@ -377,11 +382,12 @@ class DGPDE {
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
                        const std::unordered_set< std::size_t >& inbox,
+                       std::vector< std::size_t >& numEqDof,
                        tk::Fields& unk,
                        tk::real t,
                        const std::size_t nielem )
-      const override { data.initialize( L, inpoel, coord, inbox, unk, t,
-        nielem ); }
+      const override { data.initialize( L, inpoel, coord, inbox, numEqDof, unk,
+        t, nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void updatePrimitives( const tk::Fields& unk,
@@ -403,11 +409,13 @@ class DGPDE {
                           std::vector< std::size_t > >& esup,
                         const std::vector< std::size_t >& inpoel,
                         const tk::UnsMesh::Coords& coord,
+                        const std::vector< std::size_t >& numEqDof,
                         tk::Fields& U,
                         tk::Fields& P,
                         tk::Fields& VolFracMax ) const override
       {
-        data.reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P, VolFracMax );
+        data.reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, numEqDof,
+          U, P, VolFracMax );
       }
       void limit( tk::real t,
                   const tk::Fields& geoFace,

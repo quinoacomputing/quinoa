@@ -845,8 +845,10 @@ Refiner::writeMesh( const std::string& basefilename,
 
     // Evaluate initial conditions on current mesh at t0
     auto u = lhs;
+    std::vector< std::size_t > numEqDof;
     for (const auto& eq : g_dgpde)
-      eq.initialize( lhs, m_inpoel, m_coord, inbox, u, t0, m_inpoel.size()/4 );
+      eq.initialize( lhs, m_inpoel, m_coord, inbox, numEqDof, u, t0,
+        m_inpoel.size()/4 );
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
@@ -1378,11 +1380,13 @@ Refiner::nodeinit( std::size_t npoin,
     // Initialize cell-based unknowns
     tk::Fields ue( m_inpoel.size()/4, nprop );
     auto lhs = ue;
+    std::vector< std::size_t > numEqDof;
     auto geoElem = tk::genGeoElemTet( m_inpoel, m_coord );
     for (const auto& eq : g_dgpde)
       eq.lhs( geoElem, lhs );
     for (const auto& eq : g_dgpde)
-      eq.initialize( lhs, m_inpoel, m_coord, inbox, ue, t0, esuel.size()/4 );
+      eq.initialize( lhs, m_inpoel, m_coord, inbox, numEqDof, ue, t0,
+        esuel.size()/4 );
 
     // Transfer initial conditions from cells to nodes
     for (std::size_t p=0; p<npoin; ++p) {    // for all mesh nodes on this chare
