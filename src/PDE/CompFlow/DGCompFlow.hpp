@@ -225,7 +225,6 @@ class CompFlow {
                       const std::map< std::size_t, std::vector< std::size_t > >&,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
-                      const std::vector< std::size_t >&,
                       tk::Fields& U,
                       tk::Fields& P,
                       tk::Fields& ) const
@@ -381,8 +380,8 @@ class CompFlow {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, fd.Esuel().size()/4,
-                    inpoel, coord, geoElem, flux, velfn, U, ndofel, R );
+        tk::volInt( m_system, 1, m_offset, t, ndof, rdof, fd.Esuel().size()/4,
+                    inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)

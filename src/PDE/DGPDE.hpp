@@ -174,13 +174,12 @@ class DGPDE {
                         esup,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
-                      const std::vector< std::size_t >& numEqDof,
                       tk::Fields& U,
                       tk::Fields& P,
                       tk::Fields& VolFracMax ) const
     {
-      self->reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, numEqDof,
-        U, P, VolFracMax );
+      self->reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P,
+        VolFracMax );
     }
 
     //! Public interface to limiting the second-order solution
@@ -311,7 +310,6 @@ class DGPDE {
                                   std::vector< std::size_t > >&,
                                 const std::vector< std::size_t >&,
                                 const tk::UnsMesh::Coords&,
-                                const std::vector< std::size_t >&,
                                 tk::Fields&,
                                 tk::Fields&,
                                 tk::Fields& ) const = 0;
@@ -409,13 +407,12 @@ class DGPDE {
                           std::vector< std::size_t > >& esup,
                         const std::vector< std::size_t >& inpoel,
                         const tk::UnsMesh::Coords& coord,
-                        const std::vector< std::size_t >& numEqDof,
                         tk::Fields& U,
                         tk::Fields& P,
                         tk::Fields& VolFracMax ) const override
       {
-        data.reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, numEqDof,
-          U, P, VolFracMax );
+        data.reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P,
+          VolFracMax );
       }
       void limit( tk::real t,
                   const tk::Fields& geoFace,

@@ -179,6 +179,25 @@ THINCFunction( std::size_t rdof,
   const std::vector< std::size_t >& matInt,
   std::vector< real >& alReco );
 
+//! Evaluate polynomial solution at quadrature point
+std::vector< tk::real >
+evalPolynomialSol(std::size_t system,
+  std::size_t offset,
+  int intsharp,
+  std::size_t ncomp,
+  std::size_t nprim,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  std::size_t dof_e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const std::array< real, 3 >& ref_gp,
+  const std::vector< real >& B,
+  const Fields& U,
+  const Fields& P);
+
 //! Compute safe reconstructions near material interfaces
 void
 safeReco( std::size_t offset,

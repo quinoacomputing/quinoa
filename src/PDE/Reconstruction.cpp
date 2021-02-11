@@ -977,6 +977,78 @@ tk::THINCFunction( std::size_t rdof,
   }
 }
 
+std::vector< tk::real >
+tk::evalPolynomialSol(std::size_t system,
+  std::size_t offset,
+  int intsharp,
+  std::size_t ncomp,
+  std::size_t nprim,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  std::size_t dof_e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const std::array< real, 3 >& ref_gp,
+  const std::vector< real >& B,
+  const Fields& U,
+  const Fields& P)
+// *****************************************************************************
+//  Evaluate polynomial solution at quadrature point
+//! \param[in] system Equation system index
+//! \param[in] offset Index for equation systems
+//! \param[in] intsharp Interface reconstruction indicator
+//! \param[in] ncomp Number of components in the PDE system
+//! \param[in] nprim Number of primitive quantities
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which polynomial solution is being evaluated
+//! \param[in] dof_e Degrees of freedom for element
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] ref_gp Quadrature point in reference space
+//! \param[in] B Basis function at given quadrature point
+//! \param[in] U Solution vector
+//! \param[in] P Vector of primitives
+//! \return High-order unknown/state vector at quadrature point, modified
+//!   if near interfaces using THINC
+// *****************************************************************************
+{
+  std::vector< real > state;
+  std::vector< real > sprim;
+
+  state = eval_state( ncomp, offset, rdof, dof_e, e, U, B );
+  sprim = eval_state( nprim, offset, rdof, dof_e, e, P, B );
+
+  // consolidate primitives into state vector
+  state.insert(state.end(), sprim.begin(), sprim.end());
+
+  if (intsharp > 0)
+  {
+    std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
+
+    // Until the appropriate setup for activating THINC with Transport
+    // is ready, the following two chunks of code will need to be commented
+    // for using THINC with Transport
+    //for (std::size_t k=0; k<nmat; ++k) {
+    //  vfmin[k] = VolFracMax(el, 2*k, 0);
+    //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
+    //}
+    tk::THINCReco(system, offset, rdof, nmat, e, inpoel, coord, geoElem,
+      ref_gp, U, P, vfmin, vfmax, state);
+
+    // Until the appropriate setup for activating THINC with Transport
+    // is ready, the following lines will need to be uncommented for
+    // using THINC with Transport
+    //tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel, coord,
+    //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
+  }
+
+  return state;
+}
+
 void
 tk::safeReco( std::size_t offset,
               std::size_t rdof,

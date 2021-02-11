@@ -1654,7 +1654,7 @@ DG::reco()
     // Reconstruct second-order solution and primitive quantities
     for (const auto& eq : g_dgpde)
       eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel,
-                      m_coord, m_numEqDof, m_u, m_p, m_volfracExtr );
+                      m_coord, m_u, m_p, m_volfracExtr );
   }
 
   // Send reconstructed solution to neighboring chares

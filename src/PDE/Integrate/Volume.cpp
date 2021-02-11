@@ -16,13 +16,15 @@
 #include "Volume.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
+#include "Reconstruction.hpp"
 
 void
 tk::volInt( ncomp_t system,
-            ncomp_t ncomp,
+            std::size_t nmat,
             ncomp_t offset,
             real t,
             const std::size_t ndof,
+            const std::size_t rdof,
             const std::size_t nelem,
             const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,
@@ -30,15 +32,18 @@ tk::volInt( ncomp_t system,
             const FluxFn& flux,
             const VelFn& vel,
             const Fields& U,
+            const Fields& P,
             const std::vector< std::size_t >& ndofel,
-            Fields& R )
+            Fields& R,
+            int intsharp )
 // *****************************************************************************
 //  Compute volume integrals for DG
 //! \param[in] system Equation system index
-//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Total number of degrees of freedom included reconstructed ones
 //! \param[in] nelem Maximum number of elements
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
@@ -46,13 +51,19 @@ tk::volInt( ncomp_t system,
 //! \param[in] flux Flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector added to
+//! \param[in] intsharp Interface compression tag, an optional argument, with
+//!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
 
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
@@ -101,7 +112,9 @@ tk::volInt( ncomp_t system,
 
         auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-        auto state = eval_state( ncomp, offset, ndof, ndofel[e], e, U, B );
+        auto state = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+          rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
+          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
         // evaluate prescribed velocity (if any)
         auto v = vel( system, ncomp, gp[0], gp[1], gp[2], t );

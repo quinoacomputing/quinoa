@@ -168,7 +168,6 @@ class Transport {
                         esup,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
-                      const std::vector< std::size_t >&,
                       tk::Fields& U,
                       tk::Fields& P,
                       tk::Fields& ) const
@@ -328,9 +327,9 @@ class Transport {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, fd.Esuel().size()/4,
-                    inpoel, coord, geoElem, flux, Problem::prescribedVelocity,
-                    U, ndofel, R );
+        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, rdof,
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
+                    Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)

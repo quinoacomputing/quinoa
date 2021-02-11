@@ -41,7 +41,7 @@ tk::bndSurfInt( ncomp_t system,
                 const StateFn& state,
                 const Fields& U,
                 const Fields& P,
-                const Fields& VolFracMax,
+                [[maybe_unused]] const Fields& VolFracMax,
                 const std::vector< std::size_t >& ndofel,
                 Fields& R,
                 std::vector< std::vector< tk::real > >& vriem,
@@ -172,32 +172,8 @@ tk::bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0,0);
 
           // Compute the state variables at the left element
-          auto ugp = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
-          auto pgp = eval_state( nprim, offset, rdof, dof_el, el, P, B_l );
-
-          // consolidate primitives into state vector
-          ugp.insert(ugp.end(), pgp.begin(), pgp.end());
-
-          if (intsharp > 0)
-          {
-            std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
-
-            // Until the appropriate setup for activating THINC with Transport
-            // is ready, the following code chunk will need to be commented for
-            // using THINC with Transport
-            for (std::size_t k=0; k<nmat; ++k) {
-              vfmin[k] = VolFracMax(el, 2*k, 0);
-              vfmax[k] = VolFracMax(el, 2*k+1, 0);
-            }
-            tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord,
-              geoElem, ref_gp_l, U, P, vfmin, vfmax, ugp);
-
-            // Until the appropriate setup for activating THINC with Transport
-            // is ready, the following lines will need to be uncommented for
-            // using THINC with Transport
-            //tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel,
-            //  coord, geoElem, ref_gp_l, U, P, vfmin, vfmax, ugp);
-          }
+          auto ugp = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+            rdof, nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
 
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                   "appended boundary state vector" );

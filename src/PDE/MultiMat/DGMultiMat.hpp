@@ -532,7 +532,6 @@ class MultiMat {
     //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
-    //! \param[in] numEqDof Array storing number of Dofs for each PDE equation
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
     void reconstruct( tk::real t,
@@ -543,7 +542,6 @@ class MultiMat {
                         esup,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
-                      const std::vector< std::size_t >& numEqDof,
                       tk::Fields& U,
                       tk::Fields& P,
                       tk::Fields& VolFracMax ) const
@@ -801,8 +799,8 @@ class MultiMat {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, nelem, inpoel, coord,
-                    geoElem, flux, velfn, U, ndofel, R );
+        tk::volInt( m_system, nmat, m_offset, t, ndof, rdof, nelem, inpoel,
+                    coord, geoElem, flux, velfn, U, P, ndofel, R, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
@@ -825,14 +823,16 @@ class MultiMat {
 
       std::vector< std::vector< tk::real > >
         vriempoly( U.nunk(), std::vector<tk::real>(12,0.0) );
-      // get the polynomial solution of Riemann velocity at the interface
-      if(ndof > 1)
+      // get the polynomial solution of Riemann velocity at the interface.
+      // not required if interface reconstruction is used, since then volfrac
+      // equation is discretized using p0p1.
+      if (ndof > 1 && intsharp == 0)
         vriempoly = tk::solvevriem(nelem, vriem, riemannLoc);
 
       // compute volume integrals of non-conservative terms
       tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
-                              vriempoly, ndofel, R );
+                              vriempoly, ndofel, R, intsharp );
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
@@ -840,7 +840,8 @@ class MultiMat {
         const auto ct = g_inputdeck.get< tag::param, tag::multimat,
                                          tag::prelax_timescale >()[m_system];
         tk::pressureRelaxationInt( m_system, nmat, m_offset, ndof, rdof, nelem,
-                                   geoElem, U, P, ndofel, ct, R );
+                                   inpoel, coord, geoElem, U, P, ndofel, ct, R,
+                                   intsharp );
       }
     }
 
@@ -1116,7 +1117,7 @@ class MultiMat {
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
-      Assert( ugp.size() == ncomp, "Size mismatch" );
+      //Assert( ugp.size() == ncomp, "Size mismatch" );
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
@@ -1137,7 +1138,7 @@ class MultiMat {
         p += apk[k];
       }
 
-      std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
+      std::vector< std::array< tk::real, 3 > > fl( ncomp );
 
       // conservative part of momentum flux
       fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
