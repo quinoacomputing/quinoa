@@ -306,6 +306,7 @@ VertexBasedTransport_P1(
   std::size_t system,
   std::size_t offset,
   const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
   tk::Fields& U )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for transport DGP1
@@ -348,8 +349,12 @@ VertexBasedTransport_P1(
 
     if (dof_el > 1)
     {
+      std::vector< std::vector< tk::real > > unk;
+      unk.resize(ncomp, std::vector< tk::real >(dof_el, 0.0));
+      TransformBasis(ncomp, offset, e, dof_el, U, inpoel, coord, unk);
+
       // limit conserved quantities
-      auto phi = VertexBasedFunction(U, esup, inpoel, coord, e, rdof, dof_el,
+      auto phi = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e, rdof, dof_el,
         offset, ncomp);
 
       // limits under which compression is to be performed
@@ -386,6 +391,7 @@ VertexBased_P1(
   std::size_t nelem,
   std::size_t offset,
   const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
   tk::Fields& U )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for single-material DGP1
@@ -406,6 +412,11 @@ VertexBased_P1(
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
 
+  // Copy field data U to U_lim. U_lim will store the limited solution
+  // temperally to avoid the limited solution will be used when finding
+  // the min/max bounds for the limiting function
+  auto U_lim = U;
+
   for (std::size_t e=0; e<nelem; ++e)
   {
     // If an rDG method is set up (P0P1), then, currently we compute the P1
@@ -425,17 +436,75 @@ VertexBased_P1(
 
     if (dof_el > 1)
     {
+      // The vector used to store the numerical solution with Taylor basis
+      std::vector< std::vector< tk::real > > unk;
+      unk.resize(ncomp, std::vector< tk::real >(dof_el, 0.0));
+
+      // Transform the solution with Dubiner basis to Taylor basis so that the
+      // limiting function could be applied to physical derivatives in a
+      // hierarchical manner
+      TransformBasis(ncomp, offset, e, dof_el, U, inpoel, coord, unk);
+
+      // The vector of limiting coefficients for P1 and P2 coefficients
+      std::vector< tk::real > phic_p1(ncomp, 1.0);
+      std::vector< tk::real > phic_p2(ncomp, 1.0);
+
+      // If DGP2 is applied, apply the limiter function to the first derivative
+      // to obtain the limiting coefficient for P2 coefficients
+      if(dof_el > 4)
+        phic_p2 = VertexBasedFunction_P2(unk, U, esup, inpoel, coord, geoElem, e, rdof, dof_el,
+          offset, ncomp);
+
       // limit conserved quantities
-      auto phi = VertexBasedFunction(U, esup, inpoel, coord, e, rdof, dof_el,
+      auto phi = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e, rdof, dof_el,
         offset, ncomp);
 
-      // apply limiter function
+      if(dof_el > 4)
+        for (std::size_t c=0; c<ncomp; ++c)
+          phic_p1[c] = std::max(phic_p1[c], phic_p2[c]);
+
+      // apply limiter function to the solution with Taylor basis
       for (std::size_t c=0; c<ncomp; ++c)
       {
-        auto mark = c*rdof;
-        U(e, mark+1, offset) = phi[c] * U(e, mark+1, offset);
-        U(e, mark+2, offset) = phi[c] * U(e, mark+2, offset);
-        U(e, mark+3, offset) = phi[c] * U(e, mark+3, offset);
+        unk[c][1] = phic_p1[c] * unk[c][1];
+        unk[c][2] = phic_p1[c] * unk[c][2];
+        unk[c][3] = phic_p1[c] * unk[c][3];
+      }
+      if(dof_el > 4)
+      {
+        for (std::size_t c=0; c<ncomp; ++c)
+        {
+          unk[c][4] = phic_p2[c] * unk[c][4];
+          unk[c][5] = phic_p2[c] * unk[c][5];
+          unk[c][6] = phic_p2[c] * unk[c][6];
+          unk[c][7] = phic_p2[c] * unk[c][7];
+          unk[c][8] = phic_p2[c] * unk[c][8];
+          unk[c][9] = phic_p2[c] * unk[c][9];
+        }
+      }
+
+      // Convert the solution with Taylor basis to the solution with Dubiner basis
+      InverseBasis(ncomp, offset, e, dof_el, inpoel, coord, geoElem, U_lim, unk);
+    }
+  }
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    for (std::size_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*rdof;
+      U(e, mark+1, offset) = U_lim(e, mark+1, offset);
+      U(e, mark+2, offset) = U_lim(e, mark+2, offset);
+      U(e, mark+3, offset) = U_lim(e, mark+3, offset);
+
+      if(ndof > 4)
+      {
+        U(e, mark+4, offset) = U_lim(e, mark+4, offset);
+        U(e, mark+5, offset) = U_lim(e, mark+5, offset);
+        U(e, mark+6, offset) = U_lim(e, mark+6, offset);
+        U(e, mark+7, offset) = U_lim(e, mark+7, offset);
+        U(e, mark+8, offset) = U_lim(e, mark+8, offset);
+        U(e, mark+9, offset) = U_lim(e, mark+9, offset);
       }
     }
   }
@@ -450,6 +519,7 @@ VertexBasedMultiMat_P1(
   std::size_t system,
   std::size_t offset,
   const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat )
@@ -497,12 +567,16 @@ VertexBasedMultiMat_P1(
 
     if (dof_el > 1)
     {
+      std::vector< std::vector< tk::real > > unk;
+      unk.resize(ncomp, std::vector< tk::real >(dof_el, 0.0));
+      TransformBasis(ncomp, offset, e, dof_el, U, inpoel, coord, unk);
+
       // limit conserved quantities
-      auto phic = VertexBasedFunction(U, esup, inpoel, coord, e, rdof, dof_el,
-        offset, ncomp);
+      auto phic = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e,
+        rdof, dof_el, offset, ncomp);
       // limit primitive quantities
-      auto phip = VertexBasedFunction(P, esup, inpoel, coord, e, rdof, dof_el,
-        offset, nprim);
+      auto phip = VertexBasedFunction(unk, P, esup, inpoel, coord, geoElem, e,
+        rdof, dof_el, offset, nprim);
 
       if(ndof > 1)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
@@ -816,10 +890,12 @@ SuperbeeFunction( const tk::Fields& U,
 }
 
 std::vector< tk::real >
-VertexBasedFunction( const tk::Fields& U,
+VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
+  const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
   std::size_t e,
   std::size_t rdof,
   std::size_t dof_el,
@@ -892,15 +968,18 @@ VertexBasedFunction( const tk::Fields& U,
 
     // ----- Step-2: compute the limiter function at this node
 
+    // The nodal and central coordinates
+    std::array< tk::real, 3 > x{cx[p], cy[p], cz[p]};
+    std::array< tk::real, 3 > x_c{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
+
     // compute the basis functions
-    std::array< tk::real, 3 > gp{cx[p], cy[p], cz[p]};
-    auto B_p = tk::eval_basis( rdof,
-          tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
-          tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
-          tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+    auto B_p = eval_TaylorBasis( rdof, x, x_c, coordel );
 
     // find high-order solution
-    auto state = tk::eval_state( ncomp, offset, rdof, dof_el, e, U, B_p );
+    std::vector< tk::real > state( ncomp, 0.0 );
+    for (ncomp_t c=0; c<ncomp; ++c)
+      for(std::size_t idof = 0; idof < 4; idof++)
+        state[c] += unk[c][idof] * B_p[idof];
 
     Assert( state.size() == ncomp, "Size mismatch" );
 
@@ -932,6 +1011,273 @@ VertexBasedFunction( const tk::Fields& U,
 
   return phi;
 }
+
+std::vector< tk::real >
+VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
+  const tk::Fields& U,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
+  std::size_t e,
+  std::size_t rdof,
+  [[maybe_unused]] std::size_t dof_el,
+  std::size_t offset,
+  std::size_t ncomp )
+// *****************************************************************************
+//  Kuzmin's vertex-based limiter function calculation for P2 dofs
+//! \param[in] U High-order solution vector which is to be limited
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] e Id of element whose solution is to be limited
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] dof_el Local number of degrees of freedom
+//! \param[in] offset Index for equation systems
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \return phi Limiter function for solution in element e
+// *****************************************************************************
+{
+    // Prepare for calculating Basis functions
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  // Extract the element coordinates
+  std::array< std::array< tk::real, 3>, 4 > coordel {{
+    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+  std::vector< tk::real > phi(ncomp, 1.0);
+  std::vector< std::vector< tk::real > > uMin, uMax;
+  uMin.resize( ncomp, std::vector<tk::real>(3, 0.0) );
+  uMax.resize( ncomp, std::vector<tk::real>(3, 0.0) );
+
+  // The coordinates of centroid in the reference domain
+  std::vector< tk::real > center{0.25, 0.25, 0.25};
+
+  // loop over all nodes of the element e
+  for (std::size_t lp=0; lp<4; ++lp)
+  {
+    for (std::size_t c=0; c<ncomp; ++c)
+    {
+      for (std::size_t idir=1; idir < 4; ++idir)
+      {
+        uMin[c][idir-1] = unk[c][idir];
+        uMax[c][idir-1] = unk[c][idir];
+      }
+    }
+
+    auto p = inpoel[4*e+lp];
+    const auto& pesup = tk::cref_find(esup, p);
+
+    // Step-1: find min/max first order derivative at the centroid in the
+    // neighborhood of node p
+    for (auto er : pesup)
+    {
+      // Coordinates of the neighboring element
+      std::array< std::array< tk::real, 3>, 4 > coorder {{
+       {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
+       {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
+       {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
+       {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
+
+      std::array< std::array< tk::real, 3 >, 3 > jacInv_er;
+
+      jacInv_er[0][0] = geoElem(er, 5, 0);
+      jacInv_er[1][0] = geoElem(er, 6, 0);
+      jacInv_er[2][0] = geoElem(er, 7, 0);
+
+      jacInv_er[0][1] = geoElem(er, 8, 0);
+      jacInv_er[1][1] = geoElem(er, 9, 0);
+      jacInv_er[2][1] = geoElem(er, 10, 0);
+
+      jacInv_er[0][2] = geoElem(er, 11, 0);
+      jacInv_er[1][2] = geoElem(er, 12, 0);
+      jacInv_er[2][2] = geoElem(er, 13, 0);
+
+
+      // Compute the derivatives of basis function for DG(P1)
+      auto dBdx_er = tk::eval_dBdx_p1( rdof, jacInv_er );
+
+      if(rdof > 4)
+      {
+        auto db5dxi1 = 12.0 * center[0] + 6.0 * center[1]
+                     +  6.0 * center[2] - 6.0;
+        auto db5dxi2 =  6.0 * center[0] + 2.0 * center[1]
+                     +  2.0 * center[2] - 2.0;
+        auto db5dxi3 =  6.0 * center[0] + 2.0 * center[1]
+                     +  2.0 * center[2] - 2.0;
+
+        auto db6dxi1 = 10.0 * center[1] +  2.0 * center[2] - 2.0;
+        auto db6dxi2 = 10.0 * center[0] + 10.0 * center[1]
+                     +  6.0 * center[2] - 6.0;
+        auto db6dxi3 =  2.0 * center[0] +  6.0 * center[1]
+                     +  2.0 * center[2] - 2.0;
+
+        auto db7dxi1 = 12.0 * center[2] - 2.0;
+        auto db7dxi2 =  6.0 * center[2] - 1.0;
+        auto db7dxi3 = 12.0 * center[0] + 6.0 * center[1]
+                     + 12.0 * center[2] - 7.0;
+
+        auto db8dxi1 =  0;
+        auto db8dxi2 = 20.0 * center[1] + 8.0 * center[2] - 8.0;
+        auto db8dxi3 =  8.0 * center[1] + 2.0 * center[2] - 2.0;
+
+        auto db9dxi1 =  0;
+        auto db9dxi2 = 18.0 * center[2] -  3.0;
+        auto db9dxi3 = 18.0 * center[1] + 12.0 * center[2] - 7.0;
+
+        auto db10dxi1 =  0;
+        auto db10dxi2 =  0;
+        auto db10dxi3 = 30.0 * center[2] - 10.0;
+
+        dBdx_er[0][4] =  db5dxi1 * jacInv_er[0][0]
+                    + db5dxi2 * jacInv_er[1][0]
+                    + db5dxi3 * jacInv_er[2][0];
+
+        dBdx_er[1][4] =  db5dxi1 * jacInv_er[0][1]
+                    + db5dxi2 * jacInv_er[1][1]
+                    + db5dxi3 * jacInv_er[2][1];
+
+        dBdx_er[2][4] =  db5dxi1 * jacInv_er[0][2]
+                    + db5dxi2 * jacInv_er[1][2]
+                    + db5dxi3 * jacInv_er[2][2];
+
+        dBdx_er[0][5] =  db6dxi1 * jacInv_er[0][0]
+                    + db6dxi2 * jacInv_er[1][0]
+                    + db6dxi3 * jacInv_er[2][0];
+
+        dBdx_er[1][5] =  db6dxi1 * jacInv_er[0][1]
+                    + db6dxi2 * jacInv_er[1][1]
+                    + db6dxi3 * jacInv_er[2][1];
+
+        dBdx_er[2][5] =  db6dxi1 * jacInv_er[0][2]
+                    + db6dxi2 * jacInv_er[1][2]
+                    + db6dxi3 * jacInv_er[2][2];
+
+        dBdx_er[0][6] =  db7dxi1 * jacInv_er[0][0]
+                    + db7dxi2 * jacInv_er[1][0]
+                    + db7dxi3 * jacInv_er[2][0];
+
+        dBdx_er[1][6] =  db7dxi1 * jacInv_er[0][1]
+                    + db7dxi2 * jacInv_er[1][1]
+                    + db7dxi3 * jacInv_er[2][1];
+
+        dBdx_er[2][6] =  db7dxi1 * jacInv_er[0][2]
+                    + db7dxi2 * jacInv_er[1][2]
+                    + db7dxi3 * jacInv_er[2][2];
+
+        dBdx_er[0][7] =  db8dxi1 * jacInv_er[0][0]
+                    + db8dxi2 * jacInv_er[1][0]
+                    + db8dxi3 * jacInv_er[2][0];
+
+        dBdx_er[1][7] =  db8dxi1 * jacInv_er[0][1]
+                    + db8dxi2 * jacInv_er[1][1]
+                    + db8dxi3 * jacInv_er[2][1];
+
+        dBdx_er[2][7] =  db8dxi1 * jacInv_er[0][2]
+                    + db8dxi2 * jacInv_er[1][2]
+                    + db8dxi3 * jacInv_er[2][2];
+
+        dBdx_er[0][8] =  db9dxi1 * jacInv_er[0][0]
+                    + db9dxi2 * jacInv_er[1][0]
+                    + db9dxi3 * jacInv_er[2][0];
+
+        dBdx_er[1][8] =  db9dxi1 * jacInv_er[0][1]
+                    + db9dxi2 * jacInv_er[1][1]
+                    + db9dxi3 * jacInv_er[2][1];
+
+        dBdx_er[2][8] =  db9dxi1 * jacInv_er[0][2]
+                    + db9dxi2 * jacInv_er[1][2]
+                    + db9dxi3 * jacInv_er[2][2];
+
+        dBdx_er[0][9] =  db10dxi1 * jacInv_er[0][0]
+                    + db10dxi2 * jacInv_er[1][0]
+                    + db10dxi3 * jacInv_er[2][0];
+
+        dBdx_er[1][9] =  db10dxi1 * jacInv_er[0][1]
+                    + db10dxi2 * jacInv_er[1][1]
+                    + db10dxi3 * jacInv_er[2][1];
+
+        dBdx_er[2][9] =  db10dxi1 * jacInv_er[0][2]
+                    + db10dxi2 * jacInv_er[1][2]
+                    + db10dxi3 * jacInv_er[2][2];
+      }
+
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*rdof;
+        for (std::size_t idir=0; idir < 3; ++idir)
+        {
+          // The first order derivative at the centroid of element er
+          tk::real slope_er(0.0);
+          for(std::size_t idof = 1; idof < rdof; idof++)
+            slope_er += U(er, mark+idof, offset) * dBdx_er[idir][idof];
+
+          uMin[c][idir] = std::min(uMin[c][idir], slope_er);
+          uMax[c][idir] = std::max(uMax[c][idir], slope_er);
+
+        }
+      }
+    }
+
+    //Step-2: compute the limiter function at this node
+    std::array< tk::real, 3 > node{cx[p], cy[p], cz[p]};
+    std::array< tk::real, 3 >
+      centroid_physical{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
+
+    // find high-order solution
+    std::vector< std::vector< tk::real > > state;
+    state.resize( ncomp, std::vector<tk::real>(3, 0.0) );
+
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      auto dx = node[0] - centroid_physical[0];
+      auto dy = node[1] - centroid_physical[1];
+      auto dz = node[2] - centroid_physical[2];
+
+      state[c][0] = unk[c][1] + unk[c][4] * dx + unk[c][7] * dy + unk[c][8] * dz;
+      state[c][1] = unk[c][2] + unk[c][5] * dy + unk[c][7] * dx + unk[c][9] * dz;
+      state[c][2] = unk[c][3] + unk[c][6] * dz + unk[c][8] * dx + unk[c][9] * dy;
+    }
+
+    // compute the limiter function
+    for (std::size_t c=0; c<ncomp; ++c)
+    {
+      tk::real phi_node(1.0), phi_dir(1.0);
+      for (std::size_t idir=1; idir < 3; ++idir)
+      {
+        phi_dir = 1.0;
+        auto uNeg = state[c][idir-1] - unk[c][idir];
+        if (uNeg > 1.0e-14)
+        {
+          uNeg = std::max(uNeg, 1.0e-08);
+          phi_dir =
+            std::min( 1.0, ( uMax[c][idir-1] - unk[c][idir])/uNeg );
+        }
+        else if (uNeg < -1.0e-14)
+        {
+          uNeg = std::min(uNeg, -1.0e-08);
+          phi_dir =
+            std::min( 1.0, ( uMin[c][idir-1] - unk[c][idir])/uNeg );
+        }
+        else
+        {
+          phi_dir = 1.0;
+        }
+
+        phi[c] = std::min( phi[c], phi_dir );
+      }
+    }
+  }
+
+  return phi;
+}
+
+
 
 void consistentMultiMatLimiting_P1(
   std::size_t nmat,
@@ -1174,6 +1520,434 @@ interfaceIndicator( std::size_t nmat,
   if ((almax > loLim) && (almax < hiLim)) intInd = true;
 
   return intInd;
+}
+
+void TransformBasis( ncomp_t ncomp,
+                     ncomp_t offset,
+                     const std::size_t e,
+                     const std::size_t ndof,
+                     const tk::Fields& U,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::UnsMesh::Coords& coord,
+                     std::vector< std::vector< tk::real > >& unk)
+{
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  std::vector< tk::real > center{0.25, 0.25, 0.25};
+
+  // Evaluate the cell center solution
+  for(ncomp_t icomp = 0; icomp < ncomp; icomp++)
+  {
+    auto mark = icomp * ndof;
+    unk[icomp][0] = U(e, mark, offset);
+  }
+
+  // Evaluate the first order derivative
+  std::array< std::array< tk::real, 3>, 4 > coordel {{
+    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+  }};
+
+  auto jacInv =
+              tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+  // Compute the derivatives of basis function for DG(P1)
+  auto dBdx = tk::eval_dBdx_p1( ndof, jacInv );
+
+  if(ndof > 4)
+  {
+    auto db5dxi1 = 12.0 * center[0] + 6.0 * center[1]
+                 +  6.0 * center[2] - 6.0;
+    auto db5dxi2 =  6.0 * center[0] + 2.0 * center[1]
+                 +  2.0 * center[2] - 2.0;
+    auto db5dxi3 =  6.0 * center[0] + 2.0 * center[1]
+                 +  2.0 * center[2] - 2.0;
+
+    auto db6dxi1 = 10.0 * center[1] +  2.0 * center[2] - 2.0;
+    auto db6dxi2 = 10.0 * center[0] + 10.0 * center[1]
+                 +  6.0 * center[2] - 6.0;
+    auto db6dxi3 =  2.0 * center[0] +  6.0 * center[1]
+                 +  2.0 * center[2] - 2.0;
+
+    auto db7dxi1 = 12.0 * center[2] - 2.0;
+    auto db7dxi2 =  6.0 * center[2] - 1.0;
+    auto db7dxi3 = 12.0 * center[0] + 6.0 * center[1]
+                 + 12.0 * center[2] - 7.0;
+
+    auto db8dxi1 =  0;
+    auto db8dxi2 = 20.0 * center[1] + 8.0 * center[2] - 8.0;
+    auto db8dxi3 =  8.0 * center[1] + 2.0 * center[2] - 2.0;
+
+    auto db9dxi1 =  0;
+    auto db9dxi2 = 18.0 * center[2] -  3.0;
+    auto db9dxi3 = 18.0 * center[1] + 12.0 * center[2] - 7.0;
+
+    auto db10dxi1 =  0;
+    auto db10dxi2 =  0;
+    auto db10dxi3 = 30.0 * center[2] - 10.0;
+
+    dBdx[0][4] =  db5dxi1 * jacInv[0][0]
+                + db5dxi2 * jacInv[1][0]
+                + db5dxi3 * jacInv[2][0];
+
+    dBdx[1][4] =  db5dxi1 * jacInv[0][1]
+                + db5dxi2 * jacInv[1][1]
+                + db5dxi3 * jacInv[2][1];
+
+    dBdx[2][4] =  db5dxi1 * jacInv[0][2]
+                + db5dxi2 * jacInv[1][2]
+                + db5dxi3 * jacInv[2][2];
+
+    dBdx[0][5] =  db6dxi1 * jacInv[0][0]
+                + db6dxi2 * jacInv[1][0]
+                + db6dxi3 * jacInv[2][0];
+
+    dBdx[1][5] =  db6dxi1 * jacInv[0][1]
+                + db6dxi2 * jacInv[1][1]
+                + db6dxi3 * jacInv[2][1];
+
+    dBdx[2][5] =  db6dxi1 * jacInv[0][2]
+                + db6dxi2 * jacInv[1][2]
+                + db6dxi3 * jacInv[2][2];
+
+    dBdx[0][6] =  db7dxi1 * jacInv[0][0]
+                + db7dxi2 * jacInv[1][0]
+                + db7dxi3 * jacInv[2][0];
+
+    dBdx[1][6] =  db7dxi1 * jacInv[0][1]
+                + db7dxi2 * jacInv[1][1]
+                + db7dxi3 * jacInv[2][1];
+
+    dBdx[2][6] =  db7dxi1 * jacInv[0][2]
+                + db7dxi2 * jacInv[1][2]
+                + db7dxi3 * jacInv[2][2];
+
+    dBdx[0][7] =  db8dxi1 * jacInv[0][0]
+                + db8dxi2 * jacInv[1][0]
+                + db8dxi3 * jacInv[2][0];
+
+    dBdx[1][7] =  db8dxi1 * jacInv[0][1]
+                + db8dxi2 * jacInv[1][1]
+                + db8dxi3 * jacInv[2][1];
+
+    dBdx[2][7] =  db8dxi1 * jacInv[0][2]
+                + db8dxi2 * jacInv[1][2]
+                + db8dxi3 * jacInv[2][2];
+
+    dBdx[0][8] =  db9dxi1 * jacInv[0][0]
+                + db9dxi2 * jacInv[1][0]
+                + db9dxi3 * jacInv[2][0];
+
+    dBdx[1][8] =  db9dxi1 * jacInv[0][1]
+                + db9dxi2 * jacInv[1][1]
+                + db9dxi3 * jacInv[2][1];
+
+    dBdx[2][8] =  db9dxi1 * jacInv[0][2]
+                + db9dxi2 * jacInv[1][2]
+                + db9dxi3 * jacInv[2][2];
+
+    dBdx[0][9] =  db10dxi1 * jacInv[0][0]
+                + db10dxi2 * jacInv[1][0]
+                + db10dxi3 * jacInv[2][0];
+
+    dBdx[1][9] =  db10dxi1 * jacInv[0][1]
+                + db10dxi2 * jacInv[1][1]
+                + db10dxi3 * jacInv[2][1];
+
+    dBdx[2][9] =  db10dxi1 * jacInv[0][2]
+                + db10dxi2 * jacInv[1][2]
+                + db10dxi3 * jacInv[2][2];
+  }
+
+  for(ncomp_t icomp = 0; icomp < ncomp; icomp++)
+  {
+    auto mark = icomp * ndof;
+    for(std::size_t idir = 0; idir < 3; idir++)
+    {
+      unk[icomp][idir+1] = 0;
+
+      for(std::size_t idof = 1; idof < ndof; idof++)
+        unk[icomp][idir+1] += U(e, mark+idof, offset) * dBdx[idir][idof];
+    }
+  }
+
+  // Evaluate the second order derivative if DGP2 is applied
+  if(ndof > 4)
+  {
+    std::array< std::array< tk::real, 6 >, 6 > dB2dxi2;
+    dB2dxi2[0][0] = 12.0;
+    dB2dxi2[1][0] =  2.0;
+    dB2dxi2[2][0] =  2.0;
+    dB2dxi2[3][0] =  6.0;
+    dB2dxi2[4][0] =  6.0;
+    dB2dxi2[5][0] =  2.0;
+
+    dB2dxi2[0][1] =  0.0;
+    dB2dxi2[1][1] = 10.0;
+    dB2dxi2[2][1] =  2.0;
+    dB2dxi2[3][1] = 10.0;
+    dB2dxi2[4][1] =  2.0;
+    dB2dxi2[5][1] =  6.0;
+
+    dB2dxi2[0][2] =  0.0;
+    dB2dxi2[1][2] =  0.0;
+    dB2dxi2[2][2] = 12.0;
+    dB2dxi2[3][2] =  0.0;
+    dB2dxi2[4][2] = 12.0;
+    dB2dxi2[5][2] =  6.0;
+
+    dB2dxi2[0][3] =  0.0;
+    dB2dxi2[1][3] = 20.0;
+    dB2dxi2[2][3] =  2.0;
+    dB2dxi2[3][3] =  0.0;
+    dB2dxi2[4][3] =  0.0;
+    dB2dxi2[5][3] =  8.0;
+
+    dB2dxi2[0][4] =  0.0;
+    dB2dxi2[1][4] =  0.0;
+    dB2dxi2[2][4] = 12.0;
+    dB2dxi2[3][4] =  0.0;
+    dB2dxi2[4][4] =  0.0;
+    dB2dxi2[5][4] = 18.0;
+
+    dB2dxi2[0][5] =  0.0;
+    dB2dxi2[1][5] =  0.0;
+    dB2dxi2[2][5] = 30.0;
+    dB2dxi2[3][5] =  0.0;
+    dB2dxi2[4][5] =  0.0;
+    dB2dxi2[5][5] =  0.0;
+
+    std::vector< std::vector< tk::real > > d2Bdx2;
+    d2Bdx2.resize(6, std::vector< tk::real>(6,0.0) );
+    for(std::size_t ibasis = 0; ibasis < 6; ibasis++)
+    {
+      for(std::size_t idir = 0; idir < 3; idir++)
+        d2Bdx2[idir][ibasis] += dB2dxi2[0][ibasis] * jacInv[0][idir] * jacInv[0][idir]
+                              + dB2dxi2[1][ibasis] * jacInv[1][idir] * jacInv[1][idir]
+                              + dB2dxi2[2][ibasis] * jacInv[2][idir] * jacInv[2][idir]
+                              + 2.0 * ( dB2dxi2[3][ibasis] * jacInv[0][idir] * jacInv[1][idir]
+                                      + dB2dxi2[4][ibasis] * jacInv[0][idir] * jacInv[2][idir]
+                                      + dB2dxi2[5][ibasis] * jacInv[1][idir] * jacInv[2][idir] );
+      d2Bdx2[3][ibasis] += dB2dxi2[0][ibasis] * jacInv[0][0] * jacInv[0][1]
+                         + dB2dxi2[1][ibasis] * jacInv[1][0] * jacInv[1][1]
+                         + dB2dxi2[2][ibasis] * jacInv[2][0] * jacInv[2][1]
+                         + dB2dxi2[3][ibasis] * (jacInv[0][0] * jacInv[1][1] + jacInv[1][0] * jacInv[0][1])
+                         + dB2dxi2[4][ibasis] * (jacInv[0][0] * jacInv[2][1] + jacInv[2][0] * jacInv[0][1])
+                         + dB2dxi2[5][ibasis] * (jacInv[1][0] * jacInv[2][1] + jacInv[2][0] * jacInv[1][1]);
+      d2Bdx2[4][ibasis] += dB2dxi2[0][ibasis] * jacInv[0][0] * jacInv[0][2]
+                         + dB2dxi2[1][ibasis] * jacInv[1][0] * jacInv[1][2]
+                         + dB2dxi2[2][ibasis] * jacInv[2][0] * jacInv[2][2]
+                         + dB2dxi2[3][ibasis] * (jacInv[0][0] * jacInv[1][2] + jacInv[1][0] * jacInv[0][2])
+                         + dB2dxi2[4][ibasis] * (jacInv[0][0] * jacInv[2][2] + jacInv[2][0] * jacInv[0][2])
+                         + dB2dxi2[5][ibasis] * (jacInv[1][0] * jacInv[2][2] + jacInv[2][0] * jacInv[1][2]);
+      d2Bdx2[5][ibasis] += dB2dxi2[0][ibasis] * jacInv[0][1] * jacInv[0][2]
+                         + dB2dxi2[1][ibasis] * jacInv[1][1] * jacInv[1][2]
+                         + dB2dxi2[2][ibasis] * jacInv[2][1] * jacInv[2][2]
+                         + dB2dxi2[3][ibasis] * (jacInv[0][1] * jacInv[1][2] + jacInv[1][1] * jacInv[0][2])
+                         + dB2dxi2[4][ibasis] * (jacInv[0][1] * jacInv[2][2] + jacInv[2][1] * jacInv[0][2])
+                         + dB2dxi2[5][ibasis] * (jacInv[1][1] * jacInv[2][2] + jacInv[2][1] * jacInv[1][2]);
+    }
+
+    for(ncomp_t icomp = 0; icomp < ncomp; icomp++)
+    {
+      auto mark = icomp * ndof;
+      for(std::size_t idir = 0; idir < 6; idir++)
+      {
+        unk[icomp][idir+4] = 0;
+        for(std::size_t ibasis = 0; ibasis < 6; ibasis++)
+          unk[icomp][idir+4] += U(e, mark+4+ibasis, offset) * d2Bdx2[idir][ibasis];
+      }
+    }
+  }
+}
+
+void InverseBasis( ncomp_t ncomp,
+                   ncomp_t offset,
+                   std::size_t e,
+                   std::size_t ndof,
+                   const std::vector< std::size_t >& inpoel,
+                   const tk::UnsMesh::Coords& coord,
+                   const tk::Fields& geoElem,
+                   tk::Fields& U,
+                   std::vector< std::vector< tk::real > >& unk )
+{
+  std::vector< tk::real > L(ndof, 0.0);
+
+  tk::real vol = 1.0 / 6.0;
+
+  L[0] = vol;
+
+  L[1] = vol / 10.0;
+  L[2] = vol * 3.0/10.0;
+  L[3] = vol * 3.0/5.0;
+
+  if(ndof > 4)
+  {
+    L[4] = vol / 35.0;
+    L[5] = vol / 21.0;
+    L[6] = vol / 14.0;
+    L[7] = vol / 7.0;
+    L[8] = vol * 3.0/14.0;
+    L[9] = vol * 3.0/7.0;
+  }
+
+  std::array< tk::real, 3 > x_c{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0),};
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  std::array< std::array< tk::real, 3>, 4 > coordel {{
+    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+  }};
+
+  // Number of quadrature points for volume integration
+  auto ng = tk::NGvol(ndof);
+
+  // arrays for quadrature points
+  std::array< std::vector< tk::real >, 3 > coordgp;
+  std::vector< tk::real > wgp;
+
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  coordgp[2].resize( ng );
+  wgp.resize( ng );
+
+  // get quadrature point weights and coordinates for triangle
+  tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+  // right hand side vector
+  std::vector< tk::real > R( ncomp*ndof, 0.0 );
+
+  // Gaussian quadrature
+  for (std::size_t igp=0; igp<ng; ++igp)
+  {
+    auto wt = wgp[igp] * vol;
+
+    auto gp = tk::eval_gp( igp, coordel, coordgp );
+
+    auto B_taylor = eval_TaylorBasis( ndof, gp, x_c, coordel);
+
+    std::vector< tk::real > state( ncomp, 0.0 );
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      state[c] = unk[c][0];
+      state[c] += unk[c][1] * B_taylor[1] + unk[c][2] * B_taylor[2] + unk[c][3] * B_taylor[3];
+
+      if(ndof > 4)
+        state[c] += unk[c][4] * B_taylor[4] + unk[c][5] * B_taylor[5] + unk[c][6] * B_taylor[6]
+                  + unk[c][7] * B_taylor[7] + unk[c][8] * B_taylor[8] + unk[c][9] * B_taylor[9];
+    }
+
+    auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*ndof;
+      R[mark] += wt * state[c];
+
+      if(ndof > 1)
+      {
+        R[mark+1] += wt * state[c] * B[1];
+        R[mark+2] += wt * state[c] * B[2];
+        R[mark+3] += wt * state[c] * B[3];
+
+        if(ndof > 4)
+        {
+          R[mark+4] += wt * state[c] * B[4];
+          R[mark+5] += wt * state[c] * B[5];
+          R[mark+6] += wt * state[c] * B[6];
+          R[mark+7] += wt * state[c] * B[7];
+          R[mark+8] += wt * state[c] * B[8];
+          R[mark+9] += wt * state[c] * B[9];
+        }
+      }
+    }
+  }
+
+  for (ncomp_t c=0; c<ncomp; ++c)
+  {
+    auto mark = c*ndof;
+    U(e, mark, offset) = R[mark] / L[0];
+
+    if(ndof > 1)
+    {
+      U(e, mark+1, offset) = R[mark+1] / L[1];
+      U(e, mark+2, offset) = R[mark+2] / L[2];
+      U(e, mark+3, offset) = R[mark+3] / L[3];
+
+      if(ndof > 4)
+      {
+        U(e, mark+4, offset) = R[mark+4] / L[4];
+        U(e, mark+5, offset) = R[mark+5] / L[5];
+        U(e, mark+6, offset) = R[mark+6] / L[6];
+        U(e, mark+7, offset) = R[mark+7] / L[7];
+        U(e, mark+8, offset) = R[mark+8] / L[8];
+        U(e, mark+9, offset) = R[mark+9] / L[9];
+      }
+    }
+  }
+}
+
+std::vector< tk::real >
+eval_TaylorBasis( const std::size_t ndof,
+                  const std::array< tk::real, 3 >& x,
+                  const std::array< tk::real, 3 >& x_c,
+                  const std::array< std::array< tk::real, 3>, 4 >& coordel )
+{
+  std::vector< tk::real > avg( 6, 0.0 );
+  if(ndof > 4)
+  {
+    auto ng = tk::NGvol(ndof);
+
+    std::array< std::vector< tk::real >, 3 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      // Compute the coordinates of quadrature point at physical domain
+      auto gp = tk::eval_gp( igp, coordel, coordgp );
+
+      avg[0] += wgp[igp] * (gp[0] - x_c[0]) * (gp[0] - x_c[0]) * 0.5;
+      avg[1] += wgp[igp] * (gp[1] - x_c[1]) * (gp[1] - x_c[1]) * 0.5;
+      avg[2] += wgp[igp] * (gp[2] - x_c[2]) * (gp[2] - x_c[2]) * 0.5;
+      avg[3] += wgp[igp] * (gp[0] - x_c[0]) * (gp[1] - x_c[1]);
+      avg[4] += wgp[igp] * (gp[0] - x_c[0]) * (gp[2] - x_c[2]);
+      avg[5] += wgp[igp] * (gp[1] - x_c[1]) * (gp[2] - x_c[2]);
+    }
+  }
+
+  std::vector< tk::real > B( ndof, 1.0 );
+
+  B[1] = x[0] - x_c[0];
+  B[2] = x[1] - x_c[1];
+  B[3] = x[2] - x_c[2];
+
+  if( ndof > 4 )
+  {
+    B[4] = B[1] * B[1] * 0.5 - avg[0];
+    B[5] = B[2] * B[2] * 0.5 - avg[1];
+    B[6] = B[3] * B[3] * 0.5 - avg[2];
+    B[7] = B[1] * B[2] - avg[3];
+    B[8] = B[1] * B[3] - avg[4];
+    B[9] = B[2] * B[3] - avg[5];
+  }
+
+  return B;
 }
 
 } // inciter::

@@ -291,7 +291,7 @@ class CompFlow {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
         VertexBased_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_offset, coord, U );
+          m_offset, coord, geoElem, U );
     }
 
     //! Compute right hand side

@@ -660,7 +660,7 @@ class MultiMat {
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, coord, U, P, nmat );
+          m_system, m_offset, coord, geoElem, U, P, nmat );
       }
       else if (limiter == ctr::LimiterType::WENOP1)
       {
