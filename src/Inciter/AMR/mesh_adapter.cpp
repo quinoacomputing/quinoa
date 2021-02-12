@@ -1189,7 +1189,42 @@ namespace AMR {
                 for (const auto& ch : children) {
                   if (tet_store.data(ch).children.size()) grandparent = true;
                 }
-                if ((children.size() <= 0) || grandparent) { continue; }
+                if (children.size() <= 0) { continue; }
+                else if (grandparent) {
+                  trace_out << "grandparent: " << tet_id
+                    << " unmarking children from deref" << std::endl;
+                  // go over grandparent's children and lock its edges, only if
+                  // that edge does not belong to a grandchild. The following
+                  // does this in a simple but 'hacky' way
+                  std::map< edge_t, std::size_t > edge_derefmark;
+
+                  for (auto child_id : children) {
+                    auto grandchildren = tet_store.data(child_id).children;
+                  // 1. store the grandchildren's edge-markings
+                    for (auto gchild_id : grandchildren) {
+                      auto edges = tet_store.generate_edge_keys(gchild_id);
+                      for (const auto& edge_key : edges) {
+                        edge_derefmark[edge_key] =
+                          tet_store.edge_store.get(edge_key).needs_derefining;
+                      }
+                    }
+
+                  // 2. go thru the children, and unmark their edges for deref
+                    auto edges = tet_store.generate_edge_keys(child_id);
+                    for (const auto& edge_key : edges) {
+                      tet_store.edge_store.get(edge_key).needs_derefining = false;
+                    }
+                  }
+
+                  // 3. go thru the grandparents again and reinstate their edge
+                  // derefinement markings
+                  for (const auto& e_key : edge_derefmark) {
+                    tet_store.edge_store.get(e_key.first).needs_derefining =
+                      e_key.second;
+                  }
+
+                  continue;
+                }
 
 
                 // This is useful for later inspection
