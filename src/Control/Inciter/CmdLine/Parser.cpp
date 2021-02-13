@@ -90,6 +90,14 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
     print.mandatory< tk::QUIET >(
      "The '--" + kw::input().string() + " <filename>' and the "
      "'--" + kw::control().string() + " <filename>' arguments are mandatory." );
+    print.usage< tk::QUIET >(
+      tk::inciter_executable(),
+      "charmrun +p4 " + tk::inciter_executable() + " -" +
+        *kw::verbose().alias() + " -" + *kw::control().alias() +
+        " vort.q -" + *kw::input().alias() + " unitcube.exo",
+      "will execute the simulation configured in the control file 'vort.q' "
+      "using the mesh in 'unitcube.exo' on 4 CPUs producing verbose screen "
+      "output" );
   }
 
   // Print out help on all control file keywords if they were requested

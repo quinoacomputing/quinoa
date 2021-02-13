@@ -83,6 +83,12 @@ CmdLineParser::CmdLineParser( int argc,
     print.mandatory< tk::QUIET >(
      "The '--" + kw::input().string() + " <filename>' and the "
      "'--" + kw::output().string() + " <filename>' arguments are mandatory." );
+    print.usage< tk::QUIET >(
+      tk::meshconv_executable(),
+      tk::meshconv_executable() + " -" + *kw::input().alias() + " in.msh -" +
+        *kw::output().alias() + " out.exo",
+      "will read data from 'in.msh' (in Gmsh format) and output it to "
+      "out.exo' (in ExodusII format)" );
   }
 
   // Print out verbose help for a single keyword if requested
