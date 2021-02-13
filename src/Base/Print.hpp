@@ -471,17 +471,18 @@ class Print {
                   const std::string& ver,
                   const std::string& commit,
                   const std::string& copyright ) const
-    {
-      stream<s>() << m_version_fmt % executable % ver % commit % copyright;
-    }
+    { stream<s>() << m_version_fmt % executable % ver % commit % copyright; }
 
     //! Print license information
     template< Style s = VERBOSE >
     void license( const std::string& executable,
                   const std::string& lic ) const
-    {
-      stream<s>() << m_license_fmt % executable % lic;
-    }
+    { stream<s>() << m_license_fmt % executable % lic; }
+
+    //! Print mandatory arguments information
+    template< Style s = VERBOSE >
+    void mandatory( const std::string& args ) const
+    { stream<s>() << m_mandatory_fmt % args; }
 
     //! Print lower and upper bounds for a keyword if defined
     template< Style s = VERBOSE, typename Info >
@@ -811,6 +812,7 @@ class Print {
     mutable format m_version_fmt =
               format("\nQuinoa::%s, version %s (SHA1: %s)\n%s\n\n");
     mutable format m_license_fmt = format("\nQuinoa::%s\n\n%s\n\n");
+    mutable format m_mandatory_fmt = format("\n%s\n\n");
 
     // Stream objects
     std::stringstream m_null;   //!< Default verbose stream

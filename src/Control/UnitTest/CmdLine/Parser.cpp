@@ -74,10 +74,12 @@ CmdLineParser::CmdLineParser( int argc,
 
   // Print out help on all command-line arguments if requested
   const auto helpcmd = cmdline.get< tag::help >();
-  if (helpcmd)
+  if (helpcmd) {
     print.help< tk::QUIET >( tk::unittest_executable(),
                              cmdline.get< tag::cmdinfo >(),
                              "Command-line Parameters:", "-" );
+   print.mandatory< tk::QUIET >( "None of the arguments are mandatory." );
+  }
 
   // Print out verbose help for a single keyword if requested
   const auto helpkw = cmdline.get< tag::helpkw >();

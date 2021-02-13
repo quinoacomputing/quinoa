@@ -82,10 +82,13 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   // Print out help on all command-line arguments if the executable was invoked
   // without arguments or the help was requested
   const auto helpcmd = cmdline.get< tag::help >();
-  if (argc == 1 || helpcmd)
+  if (argc == 1 || helpcmd) {
     print.help< tk::QUIET >( tk::walker_executable(),
                              cmdline.get< tag::cmdinfo >(),
                              "Command-line Parameters:", "-" );
+    print.mandatory< tk::QUIET >( "The '--" + kw::control().string() +
+                                  " <filename>' argument is mandatory." );
+  }
 
   // Print out help on all control file keywords if they were requested
   const auto helpctr = cmdline.get< tag::helpctr >();

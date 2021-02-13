@@ -76,10 +76,14 @@ CmdLineParser::CmdLineParser( int argc,
   // Print out help on all command-line arguments if the executable was invoked
   // without arguments or the help was requested
   const auto helpcmd = cmdline.get< tag::help >();
-  if (argc == 1 || helpcmd)
+  if (argc == 1 || helpcmd) {
     print.help< tk::QUIET >( tk::meshconv_executable(),
                              cmdline.get< tag::cmdinfo >(),
                              "Command-line Parameters:", "-" );
+    print.mandatory< tk::QUIET >(
+     "The '--" + kw::input().string() + " <filename>' and the "
+     "'--" + kw::output().string() + " <filename>' arguments are mandatory." );
+  }
 
   // Print out verbose help for a single keyword if requested
   const auto helpkw = cmdline.get< tag::helpkw >();
