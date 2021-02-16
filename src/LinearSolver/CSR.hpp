@@ -26,9 +26,9 @@ namespace tk {
 class CSR {
 
   public:
-    //! \brief Constructor: Create a CSR symmetric matrix with DOF degrees of
-    //!   freedom, storing only the upper triangular part.
-    explicit CSR( std::size_t DOF,
+    //! \brief Constructor: Create a CSR symmetric matrix with ncomp scalar
+    //!   components, storing only the upper triangular part
+    explicit CSR( std::size_t nc,
                   const std::pair< std::vector< std::size_t >,
                                    std::vector< std::size_t > >& psup );
 
@@ -58,10 +58,10 @@ class CSR {
     void mult( const std::vector< real >& x, std::vector< real >& r ) const;
 
     //! Access real size of matrix
-    std::size_t rsize() const { return rnz.size()*dof; }
+    std::size_t rsize() const { return rnz.size()*ncomp; }
 
-    //! Access DOF
-    std::size_t DOF() const { return dof; }
+    //! Access the number of scalar components per non-zero matrix entry
+    std::size_t Ncomp() const { return ncomp; }
 
     //! Write out CSR as stored
     std::ostream& write_stored( std::ostream &os ) const;
@@ -79,7 +79,7 @@ class CSR {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      p | dof;
+      p | ncomp;
       p | rnz;
       p | ia;
       p | ja;
@@ -92,7 +92,7 @@ class CSR {
     ///@}
 
   private:
-    std::size_t dof;                    //!< Number of degrees of freedom
+    std::size_t ncomp;                  //!< Number of scalars per non-zero
     std::vector< std::size_t > rnz;     //!< Number of nonzeros in each row
     std::vector< std::size_t > ia;      //!< Row pointers
     std::vector< std::size_t > ja;      //!< Column indices

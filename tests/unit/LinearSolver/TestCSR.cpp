@@ -73,10 +73,10 @@ static CSR_group CSR( "LinearSolver/CSR" );
 
 //! Test definitions for group
 
-//! Test if constructor does not throw on positive DOF and non-empty psup
+//! Test if constructor does not throw on positive ncomp and non-empty psup
 template<> template<>
 void CSR_object::test< 1 >() {
-  set_test_name( "ctor doesn't throw on positive DOF and valid psup" );
+  set_test_name( "ctor doesn't throw on positive ncomp and valid psup" );
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -89,7 +89,7 @@ void CSR_object::test< 1 >() {
 //! Test if constructor does not throw on positive size
 template<> template<>
 void CSR_object::test< 2 >() {
-  set_test_name( "ctor throws on zero DOF" );
+  set_test_name( "ctor throws on zero ncomp" );
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );
@@ -107,7 +107,7 @@ void CSR_object::test< 2 >() {
     // if any other type of exception is thrown, test fails with except
     // find out if exception was thrown due to the correct reason
     ensure( std::string("wrong exception thrown: ") + e.what(),
-            std::string( e.what() ).find( "DOF must be positive" ) !=
+            std::string( e.what() ).find( "ncomp must be positive" ) !=
               std::string::npos );
   }
 }
@@ -143,8 +143,8 @@ void CSR_object::test< 4 >() {
   c.write_stored( ss );
 
   auto correct = R"(size (npoin) = 14
-dof = 1
-rsize (size*dof) = 14
+ncomp = 1
+rsize (size*ncomp) = 14
 nnz = 112
 rnz[npoin=14] = { 7, 7, 7, 7, 7, 7, 7, 7, 9, 9, 9, 10, 9, 10 }
 ia[rsize+1=15] = { 1, 8, 15, 22, 29, 36, 43, 50, 57, 66, 75, 84, 94, 103, 113 }
@@ -284,10 +284,10 @@ void CSR_object::test< 8 >() {
   auto psup = tk::genPsup( inpoel, 4, tk::genEsup(inpoel,4) );
 
   tk::CSR c( 1, psup );
-  ensure_equals( "CSR::rsize (dof=1) incorrect", c.rsize(),
+  ensure_equals( "CSR::rsize (ncomp=1) incorrect", c.rsize(),
                  psup.second.size()-1 );
   tk::CSR d( 3, psup );
-  ensure_equals( "CSR::rsize (dof=3) incorrect", d.rsize(),
+  ensure_equals( "CSR::rsize (ncomp=3) incorrect", d.rsize(),
                  (psup.second.size()-1)*3 );
 }
 
