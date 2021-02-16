@@ -467,7 +467,7 @@ Transporter::createPartitioner()
   // Create (discretization) Scheme chare worker arrays for all meshes
   for ([[maybe_unused]] const auto& filename : inputs)
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
-			   linearsolver );
+                           linearsolver );
 
   // Configure solver coupling. This will be exposed to the user eventually.
   std::vector< Transfer > transfer;
@@ -960,9 +960,9 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
   auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
   if (ale && meshvel != ctr::MeshVelocityType::NONE)
-    m_scheme[meshid].cg().doneInserting();
+    m_scheme[meshid].conjugategradients().doneInserting();
 
-  m_scheme[meshid].disc().cginit();
+  m_scheme[meshid].disc().ConjugateGradientsInit();
 }
 
 void

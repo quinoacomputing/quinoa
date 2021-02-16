@@ -42,7 +42,7 @@ Discretization::Discretization(
   const std::vector< Transfer >& t,
   const std::vector< CProxy_Discretization >& disc,
   const CProxy_DistFCT& fctproxy,
-  const tk::CProxy_ConjugateGradients& cgproxy,
+  const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
   const std::vector< std::size_t >& ginpoel,
@@ -62,7 +62,7 @@ Discretization::Discretization(
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_nvol( 0 ),
   m_fct( fctproxy ),
-  m_cg( cgproxy ),
+  m_conjugategradients( conjugategradientsproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
@@ -85,7 +85,8 @@ Discretization::Discretization(
 //  Constructor
 //! \param[in] meshid Mesh ID
 //! \param[in] fctproxy Distributed FCT proxy
-//! \param[in] cgproxy Distributed Conjugrate Gradients linear solver proxy
+//! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
+//!   solver proxy
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] meshwriter Mesh writer proxy
 //! \param[in] ginpoel Vector of mesh element connectivity owned (global IDs)
@@ -145,8 +146,8 @@ Discretization::Discretization(
   // Insert ConjugrateGradients solver chare array element if needed
   if (ALE()) {
     const auto& [A,x,b] = LaplacianSmoother();
-    m_cg[ thisIndex ].insert( A, x, b, 10, 1.0e-3,
-                              m_gid, m_lid, m_nodeCommMap );
+    m_conjugategradients[ thisIndex ].insert( A, x, b, 10, 1.0e-3,
+                                              m_gid, m_lid, m_nodeCommMap );
   }
 
   // Register mesh with mesh-transfer lib
@@ -200,32 +201,32 @@ Discretization::ALE() const
 }
 
 void
-Discretization::cginit()
+Discretization::ConjugateGradientsInit()
 // *****************************************************************************
 //  Initialize Conjugrate Gradients linear solver
 // *****************************************************************************
 {
   // Reinitialize ConjugrateGradients solver chare array element if needed
   if (ALE()) {
-    m_cg[ thisIndex ].init(
-      CkCallback( CkIndex_Discretization::cgsolve(nullptr),
+    m_conjugategradients[ thisIndex ].init(
+      CkCallback( CkIndex_Discretization::ConjugateGradientsSolve(nullptr),
                   thisProxy[thisIndex]) );
   } else vol();
 }
 
 void
-Discretization::cgsolve( [[maybe_unused]] CkDataMsg* msg )
+Discretization::ConjugateGradientsSolve( [[maybe_unused]] CkDataMsg* msg )
 // *****************************************************************************
 //  Solve linear system using Conjugrate Gradients
 // *****************************************************************************
 {
-  m_cg[ thisIndex ].solve(
-    CkCallback( CkIndex_Discretization::cgdone(nullptr),
+  m_conjugategradients[ thisIndex ].solve(
+    CkCallback( CkIndex_Discretization::ConjugateGradientsDone(nullptr),
                 thisProxy[thisIndex] ) );
 }
 
 void
-Discretization::cgdone( [[maybe_unused]] CkDataMsg* msg )
+Discretization::ConjugateGradientsDone( [[maybe_unused]] CkDataMsg* msg )
 // *****************************************************************************
 //  Conjugrate Gradients linear solver converged
 // *****************************************************************************
@@ -238,6 +239,9 @@ Discretization::LaplacianSmoother() const
 // *****************************************************************************
 // Generate {A,x,b} for Laplacian mesh velocity smoother
 //! \return {A,x,b} for Laplacian mesh velocity smoother
+//! \see Waltz, et al. "A three-dimensional finite element arbitrary
+//!   Lagrangian-Eulerian method for shock hydrodynamics on unstructured
+//!   grids", Computers& Fluids, 2013.
 // *****************************************************************************
 {
   tk::CSR A( /* DOF= */ 1, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );

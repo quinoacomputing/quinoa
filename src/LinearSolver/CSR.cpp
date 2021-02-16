@@ -153,6 +153,9 @@ CSR::mult( const std::vector< real >& x, std::vector< real >& r ) const
 //  Multiply CSR matrix with vector from the right: r = A * x
 //! \param[in] x Vector to multiply matrix with from the right
 //! \param[in] r Result vector of product r = A * x
+//! \note This is only complete in serial. In paralell, this computes the own
+//!   contributions to the product, so it must be followed by communication
+//!   combining the rows stored on multiple partitions.
 // *****************************************************************************
 {
   std::fill( begin(r), end(r), 0.0 );

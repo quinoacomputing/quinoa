@@ -133,7 +133,8 @@ class Scheme {
       } else if (scheme == ctr::SchemeType::ALECG) {
         proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(bound) );
       } else Throw( "Unknown discretization scheme" );
-      if (linearsolver) cgproxy = tk::CProxy_ConjugateGradients::ckNew(bound);
+      if (linearsolver)
+        conjugategradientsproxy = tk::CProxy_ConjugateGradients::ckNew(bound);
     }
 
     //! Entry method tags for specific Scheme classes to use with bcast()
@@ -231,7 +232,8 @@ class Scheme {
 
     //! Get reference to ConjugateGradients proxy
     //! \return ConjugateGradients Charm++ chare array proxy
-    tk::CProxy_ConjugateGradients& cg() noexcept { return cgproxy; }
+    tk::CProxy_ConjugateGradients& conjugategradients() noexcept
+    { return conjugategradientsproxy; }
 
     //! Get reference to scheme proxy
     //! Get reference to scheme proxy
@@ -258,7 +260,7 @@ class Scheme {
       p | proxy;
       p | discproxy;
       p | fctproxy;
-      p | cgproxy;
+      p | conjugategradientsproxy;
       p | bound;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -275,7 +277,7 @@ class Scheme {
     //! Charm++ proxy to flux-corrected transport (FCT) driver class
     CProxy_DistFCT fctproxy;
     //! Charm++ proxy to conjugate gradients linear solver class
-    tk::CProxy_ConjugateGradients cgproxy;
+    tk::CProxy_ConjugateGradients conjugategradientsproxy;
     //! Charm++ array options for binding chares
     CkArrayOptions bound;
 

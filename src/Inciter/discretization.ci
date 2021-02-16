@@ -30,7 +30,7 @@ module discretization {
         const std::vector< Transfer >& t,
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
-        const tk::CProxy_ConjugateGradients& cgproxy,
+        const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
         const std::vector< std::size_t >& ginpoel,
@@ -42,9 +42,9 @@ module discretization {
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
       entry void stat( tk::real mesh_volume );
-      entry void cginit();
-      entry void cgsolve( CkDataMsg* msg );
-      entry void cgdone( CkDataMsg* msg );
+      entry void ConjugateGradientsInit();
+      entry void ConjugateGradientsSolve( CkDataMsg* msg );
+      entry void ConjugateGradientsDone( CkDataMsg* msg );
       entry void transferInit();
       entry void comcb( std::size_t srcmeshid, CkCallback c );
 
