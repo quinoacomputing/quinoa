@@ -74,10 +74,17 @@ CmdLineParser::CmdLineParser( int argc,
 
   // Print out help on all command-line arguments if requested
   const auto helpcmd = cmdline.get< tag::help >();
-  if (helpcmd)
+  if (helpcmd) {
     print.help< tk::QUIET >( tk::unittest_executable(),
                              cmdline.get< tag::cmdinfo >(),
                              "Command-line Parameters:", "-" );
+   print.mandatory< tk::QUIET >( "None of the arguments are mandatory." );
+    print.usage< tk::QUIET >(
+      tk::unittest_executable(),
+      "charmrun +p4 " + tk::unittest_executable() + " -" +
+        *kw::verbose().alias(),
+      "will execute all unit tests on 4 CPUs producing verbose screen output" );
+  }
 
   // Print out verbose help for a single keyword if requested
   const auto helpkw = cmdline.get< tag::helpkw >();

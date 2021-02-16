@@ -82,10 +82,19 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   // Print out help on all command-line arguments if the executable was invoked
   // without arguments or the help was requested
   const auto helpcmd = cmdline.get< tag::help >();
-  if (argc == 1 || helpcmd)
+  if (argc == 1 || helpcmd) {
     print.help< tk::QUIET >( tk::walker_executable(),
                              cmdline.get< tag::cmdinfo >(),
                              "Command-line Parameters:", "-" );
+    print.mandatory< tk::QUIET >( "The '--" + kw::control().string() +
+                                  " <filename>' argument is mandatory." );
+    print.usage< tk::QUIET >(
+      tk::walker_executable(),
+      "charmrun +p4 " + tk::walker_executable() + " -" +
+        *kw::verbose().alias() + " -" + *kw::control().alias() + " mixdir.q",
+      "will execute the simulation configured in the control file 'mixdir.q' "
+      "on 4 CPUs producing verbose screen output" );
+  }
 
   // Print out help on all control file keywords if they were requested
   const auto helpctr = cmdline.get< tag::helpctr >();

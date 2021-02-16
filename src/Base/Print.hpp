@@ -466,22 +466,40 @@ class Print {
     }
 
     //! Print version information
+    //! \param[in] executable Name of executable to output license for
+    //! \param[in] ver Version to output
+    //! \param[in] commit Commit to output
+    //! \param[in] copyright Copyright info to output
     template< Style s = VERBOSE >
     void version( const std::string& executable,
                   const std::string& ver,
                   const std::string& commit,
                   const std::string& copyright ) const
-    {
-      stream<s>() << m_version_fmt % executable % ver % commit % copyright;
-    }
+    { stream<s>() << m_version_fmt % executable % ver % commit % copyright; }
 
     //! Print license information
+    //! \param[in] executable Name of executable to output license for
+    //! \param[in] lic License info to output
     template< Style s = VERBOSE >
     void license( const std::string& executable,
                   const std::string& lic ) const
-    {
-      stream<s>() << m_license_fmt % executable % lic;
-    }
+    { stream<s>() << m_license_fmt % executable % lic; }
+
+    //! Print mandatory arguments information
+    //! \param[in] args Mandaatory-arguments infor to output
+    template< Style s = VERBOSE >
+    void mandatory( const std::string& args ) const
+    { stream<s>() << m_mandatory_fmt % args; }
+
+    //! Print example usage information
+    //! \param[in] executable Name of executable to output usage info for
+    //! \param[in] example Example command line to output
+    //! \param[in] msg Message to output after example
+    template< Style s = VERBOSE >
+    void usage( const std::string& executable,
+                const std::string& example,
+                const std::string& msg ) const
+    { stream<s>() << m_usage_fmt % executable % example % msg; }
 
     //! Print lower and upper bounds for a keyword if defined
     template< Style s = VERBOSE, typename Info >
@@ -811,6 +829,9 @@ class Print {
     mutable format m_version_fmt =
               format("\nQuinoa::%s, version %s (SHA1: %s)\n%s\n\n");
     mutable format m_license_fmt = format("\nQuinoa::%s\n\n%s\n\n");
+    mutable format m_mandatory_fmt = format("\n%s\n");
+    mutable format m_usage_fmt =
+              format("\n%s example usage:\n\n$ %s\n\n%s\n\n");
 
     // Stream objects
     std::stringstream m_null;   //!< Default verbose stream

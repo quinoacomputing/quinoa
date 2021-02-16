@@ -76,10 +76,20 @@ CmdLineParser::CmdLineParser( int argc,
   // Print out help on all command-line arguments if the executable was invoked
   // without arguments or the help was requested
   const auto helpcmd = cmdline.get< tag::help >();
-  if (argc == 1 || helpcmd)
+  if (argc == 1 || helpcmd) {
     print.help< tk::QUIET >( tk::fileconv_executable(),
                              cmdline.get< tag::cmdinfo >(),
                              "Command-line Parameters:", "-" );
+    print.mandatory< tk::QUIET >(
+     "The '--" + kw::input().string() + " <filename>' and the "
+     "'--" + kw::output().string() + " <filename>' arguments are mandatory." );
+    print.usage< tk::QUIET >(
+      tk::fileconv_executable(),
+      tk::fileconv_executable() + " -" + *kw::input().alias() + " in.root -" +
+        *kw::output().alias() + " out.exo",
+      "will read data from 'in.root' (in ROOT format) and output it to "
+      "out.exo' (in ExodusII format)" );
+   }
 
   // Print out verbose help for a single keyword if requested
   const auto helpkw = cmdline.get< tag::helpkw >();
