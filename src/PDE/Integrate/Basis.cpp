@@ -361,3 +361,117 @@ tk::eval_state ( ncomp_t ncomp,
 
   return state;
 }
+
+void
+tk::evaldBdx_p2(  const std::vector< tk::real >& coord,
+                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+                  std::array< std::vector<tk::real>, 3 >& dBdx )
+// *****************************************************************************
+//  Compute the derivatives of basis function in physical domain
+//! \param[in] coord point coordinates for tetrahedron element
+//! \param[in] jacInv Array of the inverse of Jacobian
+//! \param[in,out] dBdx Array of the derivatives of basis function
+// *****************************************************************************
+{
+  auto db5dxi1 = 12.0 * coord[0] + 6.0 * coord[1]
+               +  6.0 * coord[2] - 6.0;
+  auto db5dxi2 =  6.0 * coord[0] + 2.0 * coord[1]
+               +  2.0 * coord[2] - 2.0;
+  auto db5dxi3 =  6.0 * coord[0] + 2.0 * coord[1]
+               +  2.0 * coord[2] - 2.0;
+
+  auto db6dxi1 = 10.0 * coord[1] +  2.0 * coord[2] - 2.0;
+  auto db6dxi2 = 10.0 * coord[0] + 10.0 * coord[1]
+               +  6.0 * coord[2] - 6.0;
+  auto db6dxi3 =  2.0 * coord[0] +  6.0 * coord[1]
+               +  2.0 * coord[2] - 2.0;
+
+  auto db7dxi1 = 12.0 * coord[2] - 2.0;
+  auto db7dxi2 =  6.0 * coord[2] - 1.0;
+  auto db7dxi3 = 12.0 * coord[0] + 6.0 * coord[1]
+               + 12.0 * coord[2] - 7.0;
+
+  auto db8dxi1 =  0;
+  auto db8dxi2 = 20.0 * coord[1] + 8.0 * coord[2] - 8.0;
+  auto db8dxi3 =  8.0 * coord[1] + 2.0 * coord[2] - 2.0;
+
+  auto db9dxi1 =  0;
+  auto db9dxi2 = 18.0 * coord[2] -  3.0;
+  auto db9dxi3 = 18.0 * coord[1] + 12.0 * coord[2] - 7.0;
+
+  auto db10dxi1 =  0;
+  auto db10dxi2 =  0;
+  auto db10dxi3 = 30.0 * coord[2] - 10.0;
+
+  dBdx[0][4] = db5dxi1 * jacInv[0][0]
+             + db5dxi2 * jacInv[1][0]
+             + db5dxi3 * jacInv[2][0];
+
+  dBdx[1][4] = db5dxi1 * jacInv[0][1]
+             + db5dxi2 * jacInv[1][1]
+             + db5dxi3 * jacInv[2][1];
+
+  dBdx[2][4] = db5dxi1 * jacInv[0][2]
+             + db5dxi2 * jacInv[1][2]
+             + db5dxi3 * jacInv[2][2];
+
+  dBdx[0][5] = db6dxi1 * jacInv[0][0]
+             + db6dxi2 * jacInv[1][0]
+             + db6dxi3 * jacInv[2][0];
+
+  dBdx[1][5] = db6dxi1 * jacInv[0][1]
+             + db6dxi2 * jacInv[1][1]
+             + db6dxi3 * jacInv[2][1];
+
+  dBdx[2][5] = db6dxi1 * jacInv[0][2]
+             + db6dxi2 * jacInv[1][2]
+             + db6dxi3 * jacInv[2][2];
+
+  dBdx[0][6] = db7dxi1 * jacInv[0][0]
+             + db7dxi2 * jacInv[1][0]
+             + db7dxi3 * jacInv[2][0];
+
+  dBdx[1][6] = db7dxi1 * jacInv[0][1]
+             + db7dxi2 * jacInv[1][1]
+             + db7dxi3 * jacInv[2][1];
+
+  dBdx[2][6] = db7dxi1 * jacInv[0][2]
+             + db7dxi2 * jacInv[1][2]
+             + db7dxi3 * jacInv[2][2];
+
+  dBdx[0][7] = db8dxi1 * jacInv[0][0]
+             + db8dxi2 * jacInv[1][0]
+             + db8dxi3 * jacInv[2][0];
+
+  dBdx[1][7] = db8dxi1 * jacInv[0][1]
+             + db8dxi2 * jacInv[1][1]
+             + db8dxi3 * jacInv[2][1];
+
+  dBdx[2][7] = db8dxi1 * jacInv[0][2]
+             + db8dxi2 * jacInv[1][2]
+             + db8dxi3 * jacInv[2][2];
+
+  dBdx[0][8] = db9dxi1 * jacInv[0][0]
+             + db9dxi2 * jacInv[1][0]
+             + db9dxi3 * jacInv[2][0];
+
+  dBdx[1][8] = db9dxi1 * jacInv[0][1]
+             + db9dxi2 * jacInv[1][1]
+             + db9dxi3 * jacInv[2][1];
+
+  dBdx[2][8] = db9dxi1 * jacInv[0][2]
+             + db9dxi2 * jacInv[1][2]
+             + db9dxi3 * jacInv[2][2];
+
+  dBdx[0][9] = db10dxi1 * jacInv[0][0]
+             + db10dxi2 * jacInv[1][0]
+             + db10dxi3 * jacInv[2][0];
+
+  dBdx[1][9] = db10dxi1 * jacInv[0][1]
+             + db10dxi2 * jacInv[1][1]
+             + db10dxi3 * jacInv[2][1];
+
+  dBdx[2][9] = db10dxi1 * jacInv[0][2]
+             + db10dxi2 * jacInv[1][2]
+             + db10dxi3 * jacInv[2][2];
+}

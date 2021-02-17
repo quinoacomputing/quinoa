@@ -72,6 +72,12 @@ eval_state ( ncomp_t ncomp,
              const std::size_t e,
              const Fields& U,
              const std::vector< tk::real >& B );
+
+//! Compute the derivatives of basis function in physical domain
+void
+evaldBdx_p2(  const std::vector< tk::real >& coordgp,
+              const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+              std::array< std::vector<tk::real>, 3 >& dBdx );
 } // tk::
 
 #endif // Basis_h

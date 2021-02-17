@@ -456,7 +456,7 @@ VertexBased_P1(
           offset, ncomp);
 
       // limit conserved quantities
-      auto phi = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e, rdof, dof_el,
+      phic_p1 = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e, rdof, dof_el,
         offset, ncomp);
 
       if(dof_el > 4)
@@ -969,11 +969,11 @@ VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
     // ----- Step-2: compute the limiter function at this node
 
     // The nodal and central coordinates
-    std::array< tk::real, 3 > x{cx[p], cy[p], cz[p]};
-    std::array< tk::real, 3 > x_c{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
+    std::array< tk::real, 3 > node{cx[p], cy[p], cz[p]};
+    std::array< tk::real, 3 > x_center{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
 
     // compute the basis functions
-    auto B_p = eval_TaylorBasis( rdof, x, x_c, coordel );
+    auto B_p = eval_TaylorBasis( rdof, node, x_center, coordel );
 
     // find high-order solution
     std::vector< tk::real > state( ncomp, 0.0 );
@@ -1044,11 +1044,11 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
   const auto& cz = coord[2];
 
   // Extract the element coordinates
-  std::array< std::array< tk::real, 3>, 4 > coordel {{
-    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+  //std::array< std::array< tk::real, 3>, 4 > coordel {{
+  //  {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+  //  {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+  //  {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+  //  {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
 
   std::vector< tk::real > phi(ncomp, 1.0);
   std::vector< std::vector< tk::real > > uMin, uMax;
@@ -1078,11 +1078,11 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
     for (auto er : pesup)
     {
       // Coordinates of the neighboring element
-      std::array< std::array< tk::real, 3>, 4 > coorder {{
-       {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
-       {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
-       {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
-       {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
+      //std::array< std::array< tk::real, 3>, 4 > coorder {{
+      // {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
+      // {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
+      // {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
+      // {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
 
       std::array< std::array< tk::real, 3 >, 3 > jacInv_er;
 
@@ -1099,113 +1099,11 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
       jacInv_er[2][2] = geoElem(er, 13, 0);
 
 
-      // Compute the derivatives of basis function for DG(P1)
+      // Compute the derivatives of basis function in the physical domain
       auto dBdx_er = tk::eval_dBdx_p1( rdof, jacInv_er );
 
       if(rdof > 4)
-      {
-        auto db5dxi1 = 12.0 * center[0] + 6.0 * center[1]
-                     +  6.0 * center[2] - 6.0;
-        auto db5dxi2 =  6.0 * center[0] + 2.0 * center[1]
-                     +  2.0 * center[2] - 2.0;
-        auto db5dxi3 =  6.0 * center[0] + 2.0 * center[1]
-                     +  2.0 * center[2] - 2.0;
-
-        auto db6dxi1 = 10.0 * center[1] +  2.0 * center[2] - 2.0;
-        auto db6dxi2 = 10.0 * center[0] + 10.0 * center[1]
-                     +  6.0 * center[2] - 6.0;
-        auto db6dxi3 =  2.0 * center[0] +  6.0 * center[1]
-                     +  2.0 * center[2] - 2.0;
-
-        auto db7dxi1 = 12.0 * center[2] - 2.0;
-        auto db7dxi2 =  6.0 * center[2] - 1.0;
-        auto db7dxi3 = 12.0 * center[0] + 6.0 * center[1]
-                     + 12.0 * center[2] - 7.0;
-
-        auto db8dxi1 =  0;
-        auto db8dxi2 = 20.0 * center[1] + 8.0 * center[2] - 8.0;
-        auto db8dxi3 =  8.0 * center[1] + 2.0 * center[2] - 2.0;
-
-        auto db9dxi1 =  0;
-        auto db9dxi2 = 18.0 * center[2] -  3.0;
-        auto db9dxi3 = 18.0 * center[1] + 12.0 * center[2] - 7.0;
-
-        auto db10dxi1 =  0;
-        auto db10dxi2 =  0;
-        auto db10dxi3 = 30.0 * center[2] - 10.0;
-
-        dBdx_er[0][4] =  db5dxi1 * jacInv_er[0][0]
-                    + db5dxi2 * jacInv_er[1][0]
-                    + db5dxi3 * jacInv_er[2][0];
-
-        dBdx_er[1][4] =  db5dxi1 * jacInv_er[0][1]
-                    + db5dxi2 * jacInv_er[1][1]
-                    + db5dxi3 * jacInv_er[2][1];
-
-        dBdx_er[2][4] =  db5dxi1 * jacInv_er[0][2]
-                    + db5dxi2 * jacInv_er[1][2]
-                    + db5dxi3 * jacInv_er[2][2];
-
-        dBdx_er[0][5] =  db6dxi1 * jacInv_er[0][0]
-                    + db6dxi2 * jacInv_er[1][0]
-                    + db6dxi3 * jacInv_er[2][0];
-
-        dBdx_er[1][5] =  db6dxi1 * jacInv_er[0][1]
-                    + db6dxi2 * jacInv_er[1][1]
-                    + db6dxi3 * jacInv_er[2][1];
-
-        dBdx_er[2][5] =  db6dxi1 * jacInv_er[0][2]
-                    + db6dxi2 * jacInv_er[1][2]
-                    + db6dxi3 * jacInv_er[2][2];
-
-        dBdx_er[0][6] =  db7dxi1 * jacInv_er[0][0]
-                    + db7dxi2 * jacInv_er[1][0]
-                    + db7dxi3 * jacInv_er[2][0];
-
-        dBdx_er[1][6] =  db7dxi1 * jacInv_er[0][1]
-                    + db7dxi2 * jacInv_er[1][1]
-                    + db7dxi3 * jacInv_er[2][1];
-
-        dBdx_er[2][6] =  db7dxi1 * jacInv_er[0][2]
-                    + db7dxi2 * jacInv_er[1][2]
-                    + db7dxi3 * jacInv_er[2][2];
-
-        dBdx_er[0][7] =  db8dxi1 * jacInv_er[0][0]
-                    + db8dxi2 * jacInv_er[1][0]
-                    + db8dxi3 * jacInv_er[2][0];
-
-        dBdx_er[1][7] =  db8dxi1 * jacInv_er[0][1]
-                    + db8dxi2 * jacInv_er[1][1]
-                    + db8dxi3 * jacInv_er[2][1];
-
-        dBdx_er[2][7] =  db8dxi1 * jacInv_er[0][2]
-                    + db8dxi2 * jacInv_er[1][2]
-                    + db8dxi3 * jacInv_er[2][2];
-
-        dBdx_er[0][8] =  db9dxi1 * jacInv_er[0][0]
-                    + db9dxi2 * jacInv_er[1][0]
-                    + db9dxi3 * jacInv_er[2][0];
-
-        dBdx_er[1][8] =  db9dxi1 * jacInv_er[0][1]
-                    + db9dxi2 * jacInv_er[1][1]
-                    + db9dxi3 * jacInv_er[2][1];
-
-        dBdx_er[2][8] =  db9dxi1 * jacInv_er[0][2]
-                    + db9dxi2 * jacInv_er[1][2]
-                    + db9dxi3 * jacInv_er[2][2];
-
-        dBdx_er[0][9] =  db10dxi1 * jacInv_er[0][0]
-                    + db10dxi2 * jacInv_er[1][0]
-                    + db10dxi3 * jacInv_er[2][0];
-
-        dBdx_er[1][9] =  db10dxi1 * jacInv_er[0][1]
-                    + db10dxi2 * jacInv_er[1][1]
-                    + db10dxi3 * jacInv_er[2][1];
-
-        dBdx_er[2][9] =  db10dxi1 * jacInv_er[0][2]
-                    + db10dxi2 * jacInv_er[1][2]
-                    + db10dxi3 * jacInv_er[2][2];
-      }
+        evaldBdx_p2(center, jacInv_er, dBdx_er);
 
       for (std::size_t c=0; c<ncomp; ++c)
       {
@@ -1530,6 +1428,17 @@ void TransformBasis( ncomp_t ncomp,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      std::vector< std::vector< tk::real > >& unk)
+// *****************************************************************************
+//  Transform the solution with Dubiner basis to the solution with Taylor basis
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] offset Index for equation systems
+//! \param[in] e Id of element whose solution is to be limited
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] U High-order solution vector with Dubiner basis
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] unk High-order solution vector with Taylor basis
+// *****************************************************************************
 {
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -1559,109 +1468,7 @@ void TransformBasis( ncomp_t ncomp,
   auto dBdx = tk::eval_dBdx_p1( ndof, jacInv );
 
   if(ndof > 4)
-  {
-    auto db5dxi1 = 12.0 * center[0] + 6.0 * center[1]
-                 +  6.0 * center[2] - 6.0;
-    auto db5dxi2 =  6.0 * center[0] + 2.0 * center[1]
-                 +  2.0 * center[2] - 2.0;
-    auto db5dxi3 =  6.0 * center[0] + 2.0 * center[1]
-                 +  2.0 * center[2] - 2.0;
-
-    auto db6dxi1 = 10.0 * center[1] +  2.0 * center[2] - 2.0;
-    auto db6dxi2 = 10.0 * center[0] + 10.0 * center[1]
-                 +  6.0 * center[2] - 6.0;
-    auto db6dxi3 =  2.0 * center[0] +  6.0 * center[1]
-                 +  2.0 * center[2] - 2.0;
-
-    auto db7dxi1 = 12.0 * center[2] - 2.0;
-    auto db7dxi2 =  6.0 * center[2] - 1.0;
-    auto db7dxi3 = 12.0 * center[0] + 6.0 * center[1]
-                 + 12.0 * center[2] - 7.0;
-
-    auto db8dxi1 =  0;
-    auto db8dxi2 = 20.0 * center[1] + 8.0 * center[2] - 8.0;
-    auto db8dxi3 =  8.0 * center[1] + 2.0 * center[2] - 2.0;
-
-    auto db9dxi1 =  0;
-    auto db9dxi2 = 18.0 * center[2] -  3.0;
-    auto db9dxi3 = 18.0 * center[1] + 12.0 * center[2] - 7.0;
-
-    auto db10dxi1 =  0;
-    auto db10dxi2 =  0;
-    auto db10dxi3 = 30.0 * center[2] - 10.0;
-
-    dBdx[0][4] =  db5dxi1 * jacInv[0][0]
-                + db5dxi2 * jacInv[1][0]
-                + db5dxi3 * jacInv[2][0];
-
-    dBdx[1][4] =  db5dxi1 * jacInv[0][1]
-                + db5dxi2 * jacInv[1][1]
-                + db5dxi3 * jacInv[2][1];
-
-    dBdx[2][4] =  db5dxi1 * jacInv[0][2]
-                + db5dxi2 * jacInv[1][2]
-                + db5dxi3 * jacInv[2][2];
-
-    dBdx[0][5] =  db6dxi1 * jacInv[0][0]
-                + db6dxi2 * jacInv[1][0]
-                + db6dxi3 * jacInv[2][0];
-
-    dBdx[1][5] =  db6dxi1 * jacInv[0][1]
-                + db6dxi2 * jacInv[1][1]
-                + db6dxi3 * jacInv[2][1];
-
-    dBdx[2][5] =  db6dxi1 * jacInv[0][2]
-                + db6dxi2 * jacInv[1][2]
-                + db6dxi3 * jacInv[2][2];
-
-    dBdx[0][6] =  db7dxi1 * jacInv[0][0]
-                + db7dxi2 * jacInv[1][0]
-                + db7dxi3 * jacInv[2][0];
-
-    dBdx[1][6] =  db7dxi1 * jacInv[0][1]
-                + db7dxi2 * jacInv[1][1]
-                + db7dxi3 * jacInv[2][1];
-
-    dBdx[2][6] =  db7dxi1 * jacInv[0][2]
-                + db7dxi2 * jacInv[1][2]
-                + db7dxi3 * jacInv[2][2];
-
-    dBdx[0][7] =  db8dxi1 * jacInv[0][0]
-                + db8dxi2 * jacInv[1][0]
-                + db8dxi3 * jacInv[2][0];
-
-    dBdx[1][7] =  db8dxi1 * jacInv[0][1]
-                + db8dxi2 * jacInv[1][1]
-                + db8dxi3 * jacInv[2][1];
-
-    dBdx[2][7] =  db8dxi1 * jacInv[0][2]
-                + db8dxi2 * jacInv[1][2]
-                + db8dxi3 * jacInv[2][2];
-
-    dBdx[0][8] =  db9dxi1 * jacInv[0][0]
-                + db9dxi2 * jacInv[1][0]
-                + db9dxi3 * jacInv[2][0];
-
-    dBdx[1][8] =  db9dxi1 * jacInv[0][1]
-                + db9dxi2 * jacInv[1][1]
-                + db9dxi3 * jacInv[2][1];
-
-    dBdx[2][8] =  db9dxi1 * jacInv[0][2]
-                + db9dxi2 * jacInv[1][2]
-                + db9dxi3 * jacInv[2][2];
-
-    dBdx[0][9] =  db10dxi1 * jacInv[0][0]
-                + db10dxi2 * jacInv[1][0]
-                + db10dxi3 * jacInv[2][0];
-
-    dBdx[1][9] =  db10dxi1 * jacInv[0][1]
-                + db10dxi2 * jacInv[1][1]
-                + db10dxi3 * jacInv[2][1];
-
-    dBdx[2][9] =  db10dxi1 * jacInv[0][2]
-                + db10dxi2 * jacInv[1][2]
-                + db10dxi3 * jacInv[2][2];
-  }
+    tk::evaldBdx_p2(center, jacInv, dBdx);
 
   for(ncomp_t icomp = 0; icomp < ncomp; icomp++)
   {
@@ -1669,7 +1476,6 @@ void TransformBasis( ncomp_t ncomp,
     for(std::size_t idir = 0; idir < 3; idir++)
     {
       unk[icomp][idir+1] = 0;
-
       for(std::size_t idof = 1; idof < ndof; idof++)
         unk[icomp][idir+1] += U(e, mark+idof, offset) * dBdx[idir][idof];
     }
@@ -1774,7 +1580,18 @@ void InverseBasis( ncomp_t ncomp,
                    const tk::Fields& geoElem,
                    tk::Fields& U,
                    std::vector< std::vector< tk::real > >& unk )
+// *****************************************************************************
+//  Convert the solution with Taylor basis to the solution with Dubiner basis
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] e Id of element whose solution is to be limited
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] U High-order solution vector with Dubiner basis
+//! \param[in] unk High-order solution vector with Taylor basis
+// *****************************************************************************
 {
+  // The diagonal of mass matrix
   std::vector< tk::real > L(ndof, 0.0);
 
   tk::real vol = 1.0 / 6.0;
@@ -1795,6 +1612,7 @@ void InverseBasis( ncomp_t ncomp,
     L[9] = vol * 3.0/7.0;
   }
 
+  // Coordinates of the centroid in physical domain
   std::array< tk::real, 3 > x_c{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0),};
 
   const auto& cx = coord[0];
@@ -1835,6 +1653,7 @@ void InverseBasis( ncomp_t ncomp,
 
     auto B_taylor = eval_TaylorBasis( ndof, gp, x_c, coordel);
 
+    // Compute high order solution at gauss point
     std::vector< tk::real > state( ncomp, 0.0 );
     for (ncomp_t c=0; c<ncomp; ++c)
     {
@@ -1901,6 +1720,13 @@ eval_TaylorBasis( const std::size_t ndof,
                   const std::array< tk::real, 3 >& x,
                   const std::array< tk::real, 3 >& x_c,
                   const std::array< std::array< tk::real, 3>, 4 >& coordel )
+// *****************************************************************************
+//  Evaluate the Taylor basis at points
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] x Nodal coordinates
+//! \param[in] x_c Coordinates of the centroid
+//! \param[in] coordel Array of nodal coordinates for the tetrahedron
+// *****************************************************************************
 {
   std::vector< tk::real > avg( 6, 0.0 );
   if(ndof > 4)
