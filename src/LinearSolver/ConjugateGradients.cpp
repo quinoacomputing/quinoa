@@ -9,7 +9,17 @@
   \details   Charm++ chare array for asynchronous distributed
     conjugate gradients linear solver.
   \see Y. Saad, Iterative Methods for Sparse Linear Systems: Second Edition,
-    ISBN 9780898718003, 2003, Algorithm 6.18
+    ISBN 9780898718003, 2003, Algorithm 6.18, conjugate gradients to solve the
+    linear system A * x = b, reproduced here:
+
+    Compute r0:=b-A*x0, p0:=r0                  see residual(), normb()
+    For j=0,1,..., until convergence, do
+      alpha_j := (r_j,r_j) / (Ap_j,p_j)         see next(), qAp(), q(), pq()
+      x_{j+1} := x_j + alpha_j p_j              see normres()
+      r_{j+1} := r_j - alpha_j A p_j            see pq()
+      beta_j := (r_{j+1},r_{j+1}) / (r_j,r_j)   see normres()
+      p_{j+1} := r_{j+1} + beta_j p_j           see rho()
+    end
 */
 // *****************************************************************************
 
