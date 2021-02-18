@@ -295,6 +295,13 @@ Transporter::info( const InciterPrint& print )
                 g_inputdeck.get< tag::amr, tag::tolderef >() );
   }
 
+  // Print out ALE configuration
+  const auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  if (ale) {
+    print.section( "Arbitrary Lagrangian-Eulerian (ALE) mesh motion" );
+    print.Item< ctr::MeshVelocity, tag::ale, tag::meshvelocity >();
+  }
+
   // Print I/O filenames
   print.section( "Input/Output filenames and directories" );
   print.item( "Input mesh(es)", tk::parameters(
@@ -452,9 +459,15 @@ Transporter::createPartitioner()
   // Query input mesh file names
   const auto& inputs = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
 
+  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  bool linearsolver = false;
+  if (ale && meshvel != ctr::MeshVelocityType::NONE) linearsolver = true;
+
   // Create (discretization) Scheme chare worker arrays for all meshes
   for ([[maybe_unused]] const auto& filename : inputs)
-    m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >() );
+    m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
+                           linearsolver );
 
   // Configure solver coupling. This will be exposed to the user eventually.
   std::vector< Transfer > transfer;
@@ -944,7 +957,12 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
   if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DiagCG)
     m_scheme[meshid].fct().doneInserting();
 
-  m_scheme[meshid].disc().vol();
+  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  if (ale && meshvel != ctr::MeshVelocityType::NONE)
+    m_scheme[meshid].conjugategradients().doneInserting();
+
+  m_scheme[meshid].disc().ConjugateGradientsInit();
 }
 
 void

@@ -558,16 +558,16 @@ Sorter::createDiscWorkers()
 //!   operate on.
 // *****************************************************************************
 {
+  std::vector< CProxy_Discretization > disc;
+  for (auto& d : m_scheme) disc.push_back( d.disc() );
+
   // Create worker array element using Charm++ dynamic chare array element
   // insertion: last arg: PE chare is created on. See also Charm++ manual, Sec.
   // "Dynamic Insertion".
 
-  std::vector< CProxy_Discretization > disc;
-  for (auto& d : m_scheme) disc.push_back( d.disc() );
-
   m_scheme[m_meshid].disc()[ thisIndex ].insert( m_meshid, m_transfer, disc,
-    m_scheme[m_meshid].fct(), m_host, m_meshwriter, m_ginpoel, m_coordmap, m_msum,
-    m_nchare );
+    m_scheme[m_meshid].fct(), m_scheme[m_meshid].conjugategradients(), m_host,
+    m_meshwriter, m_ginpoel, m_coordmap, m_msum, m_nchare );
 
   contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
               m_cbs.get< tag::discinserted >() );

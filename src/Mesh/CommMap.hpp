@@ -49,6 +49,9 @@ using AllCommMaps =
 //! \details All types of communication maps bundled and associated to chare IDs
 using CommMaps = std::map< int, AllCommMaps >;
 
+//! Decide if a node is not counted by a chare
+bool slave( const NodeCommMap& map, std::size_t node, int chare );
+
 } // tk::
 
 #endif // CommMap_h

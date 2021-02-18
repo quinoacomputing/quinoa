@@ -27,6 +27,7 @@
 #include "Inciter/Options/AMRInitial.hpp"
 #include "Inciter/Options/AMRError.hpp"
 #include "Inciter/Options/PrefIndicator.hpp"
+#include "Inciter/Options/MeshVelocity.hpp"
 #include "Options/PartitioningAlgorithm.hpp"
 #include "Options/TxtFloatFormat.hpp"
 #include "Options/FieldFile.hpp"
@@ -73,6 +74,12 @@ using amr = tk::TaggedTuple< brigand::list<
   , tag::zminus,  kw::amr_zminus::info::expect::type
   //! Refinement tagging edges with end-point coordinates higher than z coord
   , tag::zplus,  kw::amr_zplus::info::expect::type
+> >;
+
+//! ALE mesh motion options
+using ale = tk::TaggedTuple< brigand::list<
+    tag::ale,           bool                  //!< ALE on/off
+  , tag::meshvelocity,  MeshVelocityType      //!< Mesh velocity option
 > >;
 
 //! p-adaptive refinement options
