@@ -9,7 +9,17 @@
   \details   Charm++ chare array for asynchronous distributed
     conjugate gradients linear solver.
   \see Y. Saad, Iterative Methods for Sparse Linear Systems: Second Edition,
-    ISBN 9780898718003, 2003, Algorithm 6.18
+    ISBN 9780898718003, 2003, Algorithm 6.18, conjugate gradients to solve the
+    linear system A * x = b, reproduced here:
+
+    Compute r0:=b-A*x0, p0:=r0                  see residual(), normb()
+    For j=0,1,..., until convergence, do
+      alpha_j := (r_j,r_j) / (Ap_j,p_j)         see next(), qAp(), q(), pq()
+      x_{j+1} := x_j + alpha_j p_j              see normres()
+      r_{j+1} := r_j - alpha_j A p_j            see pq()
+      beta_j := (r_{j+1},r_{j+1}) / (r_j,r_j)   see normres()
+      p_{j+1} := r_{j+1} + beta_j p_j           see rho()
+    end
 */
 // *****************************************************************************
 
@@ -73,9 +83,9 @@ ConjugateGradients::ConjugateGradients(
     for (auto g : m_gid) m_lid[g] = g;
   }
 
-  Assert( m_A.rsize() == m_gid.size()*A.DOF(), "Size mismatch" );
-  Assert( m_x.size() == m_gid.size()*A.DOF(), "Size mismatch" );
-  Assert( m_b.size() == m_gid.size()*A.DOF(), "Size mismatch" );
+  Assert( m_A.rsize() == m_gid.size()*A.Ncomp(), "Size mismatch" );
+  Assert( m_x.size() == m_gid.size()*A.Ncomp(), "Size mismatch" );
+  Assert( m_b.size() == m_gid.size()*A.Ncomp(), "Size mismatch" );
 }
 
 void
@@ -141,7 +151,7 @@ ConjugateGradients::residual()
   if (m_nodeCommMap.empty()) {
     comres_complete();
   } else {
-    auto dof = m_A.DOF();
+    auto dof = m_A.Ncomp();
     for (const auto& [c,n] : m_nodeCommMap) {
       std::vector< std::vector< tk::real > > rc( n.size() );
       std::size_t j = 0;
@@ -187,7 +197,7 @@ ConjugateGradients::initres()
 // *****************************************************************************
 {
   // Combine own and communicated contributions to r = A * x
-  auto dof = m_A.DOF();
+  auto dof = m_A.Ncomp();
   for (const auto& [gid,r] : m_rc) {
     auto lid = tk::cref_find( m_lid, gid );
     for (std::size_t c=0; c<dof; ++c) m_r[lid*dof+c] += r[c];
@@ -257,7 +267,7 @@ ConjugateGradients::qAp()
   if (m_nodeCommMap.empty()) {
     comq_complete();
   } else {
-    auto dof = m_A.DOF();
+    auto dof = m_A.Ncomp();
     for (const auto& [c,n] : m_nodeCommMap) {
       std::vector< std::vector< tk::real > > qc( n.size() );
       std::size_t j = 0;
@@ -303,7 +313,7 @@ ConjugateGradients::q()
 // *****************************************************************************
 {
   // Combine own and communicated contributions to r = A * x
-  auto dof = m_A.DOF();
+  auto dof = m_A.Ncomp();
   for (const auto& [gid,q] : m_qc) {
     auto lid = tk::cref_find( m_lid, gid );
     for (std::size_t c=0; c<dof; ++c) m_q[lid*dof+c] += q[c];

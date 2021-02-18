@@ -15,21 +15,21 @@
 
 using tk::CSR;
 
-CSR::CSR( std::size_t DOF,
+CSR::CSR( std::size_t nc,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& psup )
 try :
-  dof( DOF ),
+  ncomp( nc ),
   rnz( psup.second.size()-1 ),
-  ia( rnz.size()*DOF+1 )
+  ia( rnz.size()*ncomp+1 )
 // *****************************************************************************
-//  Constructor: Create a CSR symmetric matrix with DOF degrees of freedom,
-//  storing only the upper triangular part.
-//! \param[in] DOF Number of scalar components (degrees of freedom)
+//  Constructor: Create a CSR symmetric matrix with ncomp scalar components per
+//  non-zero matrix entry, storing only the upper triangular part
+//! \param[in] ncomp Number of scalar components (degrees of freedom)
 //! \param[in] psup Points surrounding points of mesh graph, see tk::genPsup
 // *****************************************************************************
 {
-  Assert( dof > 0, "Sparse matrix DOF must be positive" );
+  Assert( ncomp > 0, "Sparse matrix ncomp must be positive" );
   Assert( rnz.size() > 0, "Sparse matrix size must be positive" );
 
   const auto& psup1 = psup.first;
@@ -45,11 +45,11 @@ try :
       ++rnz[i];
 
     // add up total number of nonzeros
-    nnz += rnz[i] * DOF;
+    nnz += rnz[i] * ncomp;
 
     // fill up row index
-    for (std::size_t k=0; k<DOF; ++k)
-      ia[i*DOF+k+1] = ia[i*DOF+k] + rnz[i];
+    for (std::size_t k=0; k<ncomp; ++k)
+      ia[i*ncomp+k+1] = ia[i*ncomp+k] + rnz[i];
   }
 
   // Allocate storage for matrix values and column indices
@@ -58,23 +58,23 @@ try :
 
   // fill column indices
   for (i=0; i<rnz.size(); ++i)
-    for (std::size_t k=0; k<dof; ++k) {
-      auto itmp = i*dof+k;
+    for (std::size_t k=0; k<ncomp; ++k) {
+      auto itmp = i*ncomp+k;
       ja[ia[itmp]-1] = itmp+1;  // put in column index of diagonal
       for (std::size_t n=1, j=psup2[i]+1; j<=psup2[i+1]; ++j) {
         // put in column index of an off-diagonal
-	ja[ia[itmp]-1+(n++)] = psup1[j]*DOF+k+1;
+	ja[ia[itmp]-1+(n++)] = psup1[j]*ncomp+k+1;
       }
     }
 
   // (bubble-)sort column indices
   for (i=0; i<rnz.size(); ++i)
-    for (std::size_t k=0; k<dof; ++k)
+    for (std::size_t k=0; k<ncomp; ++k)
       for (std::size_t j=psup2[i]+1; j<=psup2[i+1]; ++j)
          for (std::size_t l=1; l<rnz[i]; ++l)   // sort column indices of row i
             for (std::size_t e=0; e<rnz[i]-l; ++e)
-              if (ja[ia[i*dof+k]-1+e] > ja[ia[i*dof+k]+e])
-	        std::swap( ja[ia[i*dof+k]-1+e], ja[ia[i*dof+k]+e] );
+              if (ja[ia[i*ncomp+k]-1+e] > ja[ia[i*ncomp+k]+e])
+	        std::swap( ja[ia[i*ncomp+k]-1+e], ja[ia[i*ncomp+k]+e] );
 
 } // Catch std::exception
   catch (std::exception& se) {
@@ -93,11 +93,11 @@ CSR::operator()( std::size_t row, std::size_t col, std::size_t pos ) const
 //! \return Const reference to matrix entry at position specified
 // *****************************************************************************
 {
-  auto rdof = row * dof;
+  auto rncomp = row * ncomp;
 
-  for (std::size_t n=0, j=ia[rdof+pos]-1; j<=ia[rdof+pos+1]-2; ++j, ++n)
-    if (col*dof+pos+1 == ja[j])
-      return a[ia[rdof+pos]-1+n];
+  for (std::size_t n=0, j=ia[rncomp+pos]-1; j<=ia[rncomp+pos+1]-2; ++j, ++n)
+    if (col*ncomp+pos+1 == ja[j])
+      return a[ia[rncomp+pos]-1+n];
 
   Throw("Sparse matrix index not found");
 }
@@ -153,11 +153,14 @@ CSR::mult( const std::vector< real >& x, std::vector< real >& r ) const
 //  Multiply CSR matrix with vector from the right: r = A * x
 //! \param[in] x Vector to multiply matrix with from the right
 //! \param[in] r Result vector of product r = A * x
+//! \note This is only complete in serial. In paralell, this computes the own
+//!   contributions to the product, so it must be followed by communication
+//!   combining the rows stored on multiple partitions.
 // *****************************************************************************
 {
   std::fill( begin(r), end(r), 0.0 );
 
-  for (std::size_t i=0; i<rnz.size()*dof; ++i)
+  for (std::size_t i=0; i<rnz.size()*ncomp; ++i)
     for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j)
       r[i] += a[j] * x[ja[j]-1];
 }
@@ -172,8 +175,8 @@ CSR::write_stored( std::ostream& os ) const
 // *****************************************************************************
 {
   os << "size (npoin) = " << rnz.size() << '\n';
-  os << "dof = " << dof << '\n';;
-  os << "rsize (size*dof) = " << rnz.size() * dof << '\n';
+  os << "ncomp = " << ncomp << '\n';;
+  os << "rsize (size*ncomp) = " << rnz.size() * ncomp << '\n';
   os << "nnz = " << a.size() << '\n';
 
   std::size_t i;
@@ -182,7 +185,7 @@ CSR::write_stored( std::ostream& os ) const
   for (i=0; i<rnz.size()-1; ++i) os << rnz[i] << ", ";
   os << rnz[i] << " }\n";
 
-  os << "ia[rsize+1=" << rnz.size()*dof+1 << "] = { ";
+  os << "ia[rsize+1=" << rnz.size()*ncomp+1 << "] = { ";
   for (i=0; i<ia.size()-1; ++i) os << ia[i] << ", ";
   os << ia[i] << " }\n";
 
@@ -206,7 +209,7 @@ CSR::write_structure( std::ostream& os ) const
 //! \return Updated output stream
 // *****************************************************************************
 {
-  for (std::size_t i=0; i<rnz.size()*dof; ++i) {
+  for (std::size_t i=0; i<rnz.size()*ncomp; ++i) {
     // leading zeros
     for (std::size_t j=1; j<ja[ia[i]-1]; ++j) os << ". ";
     for (std::size_t n=ia[i]-1; n<ia[i+1]-1; ++n) {
@@ -216,7 +219,7 @@ CSR::write_structure( std::ostream& os ) const
       os << "o ";
     }
     // trailing zeros
-    for (std::size_t j=ja[ia[i+1]-2]; j<rnz.size()*dof; ++j) os << ". ";
+    for (std::size_t j=ja[ia[i+1]-2]; j<rnz.size()*ncomp; ++j) os << ". ";
     os << '\n';
   }
 
@@ -232,13 +235,13 @@ CSR::write_matrix( std::ostream& os ) const
 //! \return Updated output stream
 // *****************************************************************************
 {
-  for (std::size_t i=0; i<rnz.size()*dof; ++i) {
+  for (std::size_t i=0; i<rnz.size()*ncomp; ++i) {
     for (std::size_t j=1; j<ja[ia[i]-1]; ++j) os << "0\t";
     for (std::size_t n=ia[i]-1; n<ia[i+1]-1; ++n) {
       if (n>ia[i]-1) for (std::size_t j=ja[n-1]; j<ja[n]-1; ++j ) os << "0\t";
       os << a[n] << '\t';
     }
-    for (std::size_t j=ja[ia[i+1]-2]; j<rnz.size()*dof; ++j) os << "0\t";
+    for (std::size_t j=ja[ia[i+1]-2]; j<rnz.size()*ncomp; ++j) os << "0\t";
     os << '\n';
   }
 

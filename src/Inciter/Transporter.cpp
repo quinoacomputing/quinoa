@@ -503,7 +503,7 @@ Transporter::createPartitioner()
   // Create (discretization) Scheme chare worker arrays for all meshes
   for ([[maybe_unused]] const auto& filename : m_input)
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
-			   linearsolver );
+                           linearsolver );
 
   // Read boundary (side set) data from a list of input mesh files
   std::size_t meshid = 0;
@@ -988,9 +988,9 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
   auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
   if (ale && meshvel != ctr::MeshVelocityType::NONE)
-    m_scheme[meshid].cg().doneInserting();
+    m_scheme[meshid].conjugategradients().doneInserting();
 
-  m_scheme[meshid].disc().cginit();
+  m_scheme[meshid].disc().ConjugateGradientsInit();
 }
 
 void

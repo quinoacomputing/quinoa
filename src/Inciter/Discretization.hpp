@@ -67,7 +67,7 @@ class Discretization : public CBase_Discretization {
         std::size_t meshid,
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
-        const tk::CProxy_ConjugateGradients& cgproxy,
+        const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
         const std::vector< std::size_t >& ginpoel,
@@ -90,13 +90,13 @@ class Discretization : public CBase_Discretization {
     static void registerReducers();
 
     //! Initialize Conjugrate Gradients linear solver
-    void cginit();
+    void ConjugateGradientsInit();
 
     //! Solve using Conjugrate Gradients linear solver
-    void cgsolve( CkDataMsg* msg );
+    void ConjugateGradientsSolve( CkDataMsg* msg );
 
     //! Conjugrate Gradients linear solver converged
-    void cgdone( CkDataMsg* msg );
+    void ConjugateGradientsDone( CkDataMsg* msg );
 
     //! \brief Our mesh has been registered with the mesh-to-mesh transfer
     //!   library (if coupled to other solver)
@@ -357,7 +357,7 @@ class Discretization : public CBase_Discretization {
       p | m_dt;
       p | m_nvol;
       p | m_fct;
-      p | m_cg;
+      p | m_conjugategradients;
       p | m_transporter;
       p | m_meshwriter;
       p | m_refiner;
@@ -435,7 +435,7 @@ class Discretization : public CBase_Discretization {
     //! Distributed FCT proxy
     CProxy_DistFCT m_fct;
     //! Distributed conjugrate gradients solver proxy
-    tk::CProxy_ConjugateGradients m_cg;
+    tk::CProxy_ConjugateGradients m_conjugategradients;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
     //! Mesh writer proxy
