@@ -22,6 +22,7 @@
   #pragma clang diagnostic ignored "-Wunused-variable"
   #pragma clang diagnostic ignored "-Wcast-qual"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wshadow"
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #elif defined(STRICT_GNUC)
