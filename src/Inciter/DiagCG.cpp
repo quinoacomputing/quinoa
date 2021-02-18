@@ -688,7 +688,7 @@ DiagCG::writeFields( CkCallback c ) const
     }
 
     // Query refinement data
-    auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+    //auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
 
     std::tuple< std::vector< std::string >,
                 std::vector< std::vector< tk::real > >,
