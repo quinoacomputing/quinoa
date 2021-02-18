@@ -175,7 +175,7 @@ CSR::write_stored( std::ostream& os ) const
 // *****************************************************************************
 {
   os << "size (npoin) = " << rnz.size() << '\n';
-  os << "ncomp = " << ncomp << '\n';;
+  os << "ncomp = " << ncomp << '\n';
   os << "rsize (size*ncomp) = " << rnz.size() * ncomp << '\n';
   os << "nnz = " << a.size() << '\n';
 

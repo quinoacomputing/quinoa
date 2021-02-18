@@ -14,6 +14,7 @@ target_include_directories(LinearSolver PUBLIC
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/LinearSolver
                            ${CHARM_INCLUDE_DIRS}
+                           ${BRIGAND_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../LinearSolver)
 
