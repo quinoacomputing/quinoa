@@ -5,8 +5,8 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Charm++ module interface for distributed flux-corrected transport
-  \details   Charm++ module interface file for asynchronous distributed
+  \brief     Charm++ chare array for distributed flux-corrected transport
+  \details   Charm++ chare array for asynchronous distributed
     flux-corrected transport (FCT).
 
     There are a potentially large number of DistFCT Charm++ chares created by
@@ -18,8 +18,6 @@
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
     discussed in the Charm++ interface file src/Inciter/distfct.ci.
-
-  \see DistFCT.[Ch] and FluxCorrector.[Ch] for more info.
 */
 // *****************************************************************************
 #ifndef DistFCT_h

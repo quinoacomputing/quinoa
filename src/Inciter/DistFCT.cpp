@@ -5,10 +5,9 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Charm++ module interface for distributed flux-corrected transport
-  \details   Charm++ module interface file for asynchronous distributed
+  \brief     Charm++ chare array for distributed flux-corrected transport
+  \details   Charm++ chare array for asynchronous distributed
     flux-corrected transport (FCT).
-  \see       DistFCT.[Ch] and FluxCorrector.[Ch] for more info.
 */
 // *****************************************************************************
 

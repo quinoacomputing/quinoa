@@ -257,13 +257,10 @@ class DiagCG : public CBase_DiagCG {
     std::unordered_map< std::size_t,
       std::vector< std::pair< bool, tk::real > > > m_bcdir;
     //! Receive buffer for communication of the left hand side
-    //! \details Key: chare id, value: lhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_lhsc;
     //! Receive buffer for communication of the right hand side
-    //! \details Key: chare id, value: rhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
     //! Receive buffer for communication of mass diffusion on the hand side
-    //! \details Key: chare id, value: dif for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_difc;
     //! Total mesh volume
     tk::real m_vol;
