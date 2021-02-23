@@ -3,7 +3,7 @@
   \file      src/PDE/Riemann/Rusanov.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Rusanov Riemann flux function
   \details   This file implements the Rusanov Riemann solver, specific to ALECG.

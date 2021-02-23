@@ -3,7 +3,7 @@
   \file      src/LinearSolver/CSR.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Compressed sparse row (CSR) storage for a sparse matrix
   \details   Compressed sparse row (CSR) storage for a sparse matrix.
@@ -175,7 +175,7 @@ CSR::write_stored( std::ostream& os ) const
 // *****************************************************************************
 {
   os << "size (npoin) = " << rnz.size() << '\n';
-  os << "ncomp = " << ncomp << '\n';;
+  os << "ncomp = " << ncomp << '\n';
   os << "rsize (size*ncomp) = " << rnz.size() * ncomp << '\n';
   os << "nnz = " << a.size() << '\n';
 
