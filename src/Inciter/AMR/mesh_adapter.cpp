@@ -1267,7 +1267,9 @@ namespace AMR {
                     // "Else
                     else {
                         // Deactivate all points"
-                        deactivate_tet_edges(tet_id);
+                        for (auto child_id : children) {
+                          deactivate_tet_edges(child_id);
+                        }
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                         trace_out << "giving up on deref decision. deactivate near 2:1 ntd = 1" << std::endl;
                     }
@@ -1289,7 +1291,9 @@ namespace AMR {
                     // "Else
                     else {
                         // Deactivate all points"
-                        deactivate_tet_edges(tet_id);
+                        for (auto child_id : children) {
+                          deactivate_tet_edges(child_id);
+                        }
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                         trace_out << "giving up on deref decision. deactivate near 4:2 ntd = 2" << std::endl;
                     }
@@ -1343,7 +1347,9 @@ namespace AMR {
                         // "Else
                         else {
                             // Deactivate all points"
-                            deactivate_tet_edges(tet_id);
+                            for (auto child_id : children) {
+                              deactivate_tet_edges(child_id);
+                            }
                             tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                             trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 3" << std::endl;
                         }
@@ -1404,7 +1410,9 @@ namespace AMR {
                     // "Else
                     else {
                         // Deactivate all points"
-                        deactivate_tet_edges(tet_id);
+                        for (auto child_id : children) {
+                          deactivate_tet_edges(child_id);
+                        }
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                         trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 4" << std::endl;
                     }
