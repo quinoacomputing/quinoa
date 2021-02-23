@@ -94,6 +94,8 @@ namespace AMR {
             {
                 //trace_out << "get edge " << key << std::endl;
                 // cppcheck-suppress assertWithSideEffect
+                //if (!exists(key)) trace_out << "key not found " << key.first()
+                //  << " - " << key.second() << std::endl;
                 assert( exists(key) );
                 return edges[key];
             }
@@ -105,6 +107,8 @@ namespace AMR {
 
             void erase(edge_t key)
             {
+                //trace_out << "Deref removing edge: " << key.first() << " - "
+                //  << key.second() << std::endl;
                 edges.erase(key);
             }
 

@@ -122,7 +122,7 @@ namespace AMR {
          }
        }
 
-       if (inactive_nodes.size() == 2)
+       if (same_face && inactive_nodes.size() == 2)
          Assert(tnode_set, "Third node on face not set in derefine");
 
        return {same_face, third_node};
@@ -1231,72 +1231,15 @@ namespace AMR {
                 //edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
                 std::size_t num_to_derefine = 0; // Nodes
 
-                // Do number of points
-                std::unordered_set<size_t> derefine_node_set,
-                  unmarked_deref_node_set, final_deref_node_set;
-
                 AMR::Refinement_Case refinement_case = tet_store.get_refinement_case(tet_id);
 
+                auto derefine_node_set = refiner.find_derefine_node_set(tet_store, tet_id);
                 // Find the set of nodes which are not in the parent
                 std::unordered_set<size_t> non_parent_nodes =
                   refiner.child_exclusive_nodes(tet_store, tet_id);
 
-
-                // Look at children
-                trace_out << tet_id << " Looping over " << children.size() << "children" << std::endl;
-                for (size_t i = 0; i < children.size(); i++)
-                {
-                    // TODO: Is this in element or tet ids?
-                    edge_list_t edge_list = tet_store.generate_edge_keys(children[i]);
-                    for (size_t k = 0; k < NUM_TET_EDGES; k++)
-                    {
-                        edge_t edge = edge_list[k];
-                        // TODO: where do we makr the edges that need to be derefed? parent of child?
-                        // Check each node, see if its an intermediate
-                        size_t A = edge.first();
-                        size_t B = edge.second();
-                        trace_out << "Needs deref " << A << " - " << B << std::endl;
-
-                        //if (tet_store.is_intermediate(A))
-                        if (non_parent_nodes.count(A) )
-                        {
-                          if (tet_store.edge_store.get(edge).needs_derefining) {
-                            trace_out << "Adding " << A << std::endl;
-                            derefine_node_set.insert(A);
-                          }
-                          else {
-                            unmarked_deref_node_set.insert(A);
-                            trace_out << "NOT added " << A << std::endl;
-                          }
-                        }
-
-                        //if (tet_store.is_intermediate(B))
-                        if (non_parent_nodes.count(B))
-                        {
-                          if (tet_store.edge_store.get(edge).needs_derefining) {
-                            trace_out << "Adding " << B << std::endl;
-                            derefine_node_set.insert(B);
-                          }
-                          else {
-                            unmarked_deref_node_set.insert(B);
-                            trace_out << "NOT added " << B << std::endl;
-                          }
-                        }
-                    }
-                }
-
-                trace_out << "marked for deref: " << derefine_node_set.size() << std::endl;
-                trace_out << "NOT marked for deref: " << unmarked_deref_node_set.size() << std::endl;
-
-                // remove nodes that are unmarked for derefinement
-                for (auto drnode : derefine_node_set) {
-                  if (unmarked_deref_node_set.count(drnode) == 0)
-                    final_deref_node_set.insert(drnode);
-                }
-                derefine_node_set = final_deref_node_set;
-
-                for (auto drnode: derefine_node_set)
-                  trace_out << "derefine node: " << drnode << std::endl;
+                //for (auto drnode: derefine_node_set)
+                //  trace_out << "derefine node: " << drnode << std::endl;
 
                 num_to_derefine = derefine_node_set.size();
 
@@ -1325,6 +1268,7 @@ namespace AMR {
                     else {
                         // Deactivate all points"
                         deactivate_tet_edges(tet_id);
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                         trace_out << "giving up on deref decision. deactivate near 2:1 ntd = 1" << std::endl;
                     }
                 }
@@ -1346,6 +1290,7 @@ namespace AMR {
                     else {
                         // Deactivate all points"
                         deactivate_tet_edges(tet_id);
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                         trace_out << "giving up on deref decision. deactivate near 4:2 ntd = 2" << std::endl;
                     }
                 }
@@ -1399,6 +1344,7 @@ namespace AMR {
                         else {
                             // Deactivate all points"
                             deactivate_tet_edges(tet_id);
+                            tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                             trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 3" << std::endl;
                         }
 
@@ -1459,7 +1405,8 @@ namespace AMR {
                     else {
                         // Deactivate all points"
                         deactivate_tet_edges(tet_id);
-                    trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 4" << std::endl;
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
+                        trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 4" << std::endl;
                     }
                 }
 
@@ -1482,6 +1429,7 @@ namespace AMR {
                 }
 
                 else {
+                    tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                     trace_out << "giving up with no deref decision" << std::endl;
                 }
             }
@@ -1552,6 +1500,7 @@ namespace AMR {
         }
 
         node_connectivity.print();
+        refiner.delete_intermediates_of_children(tet_store);
         tet_store.process_delete_list();
         tet_store.print_node_types();
 
