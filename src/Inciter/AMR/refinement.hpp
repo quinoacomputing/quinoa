@@ -892,7 +892,6 @@ namespace AMR {
              * @brief Deletes the intermediate edge in the delete list for derefinement
              *
              * @param tet_store Tet store to use
-             * @param tet_id Tet id being processed
              */
             void delete_intermediates_of_children(tet_store_t& tet_store)
             {
@@ -1032,17 +1031,25 @@ namespace AMR {
               return nd_edge;
             }
 
+            /**
+             * @brief function to detect what intermediate/non-parent nodes are
+             *   marked for derefinement
+             *
+             * @param tet_store Tet store to use
+             * @param tet_id Id of the tet which will be de-refined
+             *
+             * @return Set of nodes of marked for derefinement
+             */
             std::unordered_set< size_t > find_derefine_node_set(
               tet_store_t& tet_store,
               size_t tet_id)
             {
-              // Find the set of nodes which are not in the parent
+              // Set of nodes which are not in the parent
               std::unordered_set<size_t> non_parent_nodes =
                 child_exclusive_nodes(tet_store, tet_id);
               std::unordered_set<size_t> derefine_node_set, unmarked_deref_node_set,
                 final_deref_node_set;
 
-              // determine non_parent_nodes set and derefine_node_set
               child_id_list_t children = tet_store.data(tet_id).children;
 
               // Look at children

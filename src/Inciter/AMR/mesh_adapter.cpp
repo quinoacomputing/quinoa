@@ -781,6 +781,22 @@ namespace AMR {
     }
 
     /**
+     * @brief Unmarks edges of given tet for derefinement only
+     *
+     * @param tet_id The id of the given tet
+     */
+    void mesh_adapter_t::deactivate_deref_tet_edges(size_t tet_id) {
+        edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
+        for (size_t k = 0; k < NUM_TET_EDGES; k++)
+        {
+            edge_t key = edge_list[k];
+
+            trace_out << "Deactivating " << key << std::endl;
+            tet_store.edge_store.get(key).needs_derefining = false;
+        }
+    }
+
+    /**
      * @brief An implementation of "Algorithm 2" from the paper
      *
      * @param edge_list The list of edges for the given tet
@@ -1194,6 +1210,7 @@ namespace AMR {
                 }
                 if (children.size() <= 0) { continue; }
                 else if (grandparent) {
+                  //TODO: this needs to be done only at the first iteration
                   trace_out << "grandparent: " << tet_id
                     << " unmarking children from deref" << std::endl;
                   // go over grandparent's children and lock its edges, only if
@@ -1203,17 +1220,29 @@ namespace AMR {
 
                   for (auto child_id : children) {
                     auto grandchildren = tet_store.data(child_id).children;
+                    // get child_id's nodes
+                    auto child_nodes = tet_store.get(child_id);
+                    std::unordered_set<size_t> child_node_set{
+                      std::begin(child_nodes), std::end(child_nodes)};
                   // 1. store the grandchildren's edge-markings
                     for (auto gchild_id : grandchildren) {
                       auto edges = tet_store.generate_edge_keys(gchild_id);
                       for (const auto& edge_key : edges) {
-                        edge_derefmark[edge_key] =
-                          tet_store.edge_store.get(edge_key).needs_derefining;
+                        // retaining this edge's deref marking only if one of
+                        // the nodes of this edge does not belong to the parent
+                        // of gchild_id (which is child_id), i.e. nonparent node.
+                        // basically, keep deref-decisions only for the edges
+                        // that have been split
+                        if (child_node_set.count(edge_key.first())==0 ||
+                          child_node_set.count(edge_key.second())==0) {
+                          edge_derefmark[edge_key] =
+                            tet_store.edge_store.get(edge_key).needs_derefining;
+                        }
                       }
                     }
 
                   // 2. go thru the children, and unmark their edges for deref
-                    deactivate_tet_edges(child_id);
+                    deactivate_deref_tet_edges(child_id);
                   }
 
                   // 3. go thru the grandparents again and reinstate their edge
@@ -1268,7 +1297,7 @@ namespace AMR {
                     else {
                         // Deactivate all points"
                         for (auto child_id : children) {
-                          deactivate_tet_edges(child_id);
+                          deactivate_deref_tet_edges(child_id);
                         }
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                         trace_out << "giving up on deref decision. deactivate near 2:1 ntd = 1" << std::endl;
@@ -1292,7 +1321,7 @@ namespace AMR {
                     else {
                         // Deactivate all points"
                         for (auto child_id : children) {
-                          deactivate_tet_edges(child_id);
+                          deactivate_deref_tet_edges(child_id);
                         }
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                         trace_out << "giving up on deref decision. deactivate near 4:2 ntd = 2" << std::endl;
@@ -1348,7 +1377,7 @@ namespace AMR {
                         else {
                             // Deactivate all points"
                             for (auto child_id : children) {
-                              deactivate_tet_edges(child_id);
+                              deactivate_deref_tet_edges(child_id);
                             }
                             tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                             trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 3" << std::endl;
@@ -1411,7 +1440,7 @@ namespace AMR {
                     else {
                         // Deactivate all points"
                         for (auto child_id : children) {
-                          deactivate_tet_edges(child_id);
+                          deactivate_deref_tet_edges(child_id);
                         }
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                         trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 4" << std::endl;
@@ -1436,9 +1465,14 @@ namespace AMR {
                     tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_one);
                 }
 
+                // "If nderefine = 0
                 else {
                     tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
-                    trace_out << "giving up with no deref decision" << std::endl;
+                    // Deactivate all points"
+                    for (auto child_id : children) {
+                      deactivate_deref_tet_edges(child_id);
+                    }
+                    trace_out << "giving up with no deref decision because nderefine = 0" << std::endl;
                 }
             }
 
