@@ -1224,9 +1224,12 @@ namespace AMR {
                     auto child_nodes = tet_store.get(child_id);
                     std::unordered_set<size_t> child_node_set{
                       std::begin(child_nodes), std::end(child_nodes)};
+                    trace_out << "looking at child: " << child_id <<
+                      " which has " << grandchildren.size() << " children" << std::endl;
                   // 1. store the grandchildren's edge-markings
                     for (auto gchild_id : grandchildren) {
                       auto edges = tet_store.generate_edge_keys(gchild_id);
+                      trace_out << "looking at grandchild: " << gchild_id << std::endl;
                       for (const auto& edge_key : edges) {
                         // retaining this edge's deref marking only if one of
                         // the nodes of this edge does not belong to the parent

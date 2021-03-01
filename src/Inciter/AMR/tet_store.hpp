@@ -641,8 +641,8 @@ namespace AMR {
                     size_t A = edge.first();
                     size_t B = edge.second();
 
-                    Edge_Refinement er = Edge_Refinement(A, B, 0.0, false,
-                            false, false, Edge_Lock_Case::unlocked);
+                    Edge_Refinement er = Edge_Refinement(A, B, false,
+                            false, Edge_Lock_Case::unlocked);
 
                     edge_store.add(edge, er);
                 }

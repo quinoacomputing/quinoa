@@ -860,29 +860,23 @@ namespace AMR {
             void determine_deletelist_of_intermediates(tet_store_t& tet_store, size_t parent_id)
             {
                 Refinement_State& parent = tet_store.data(parent_id);
+                auto parent_edges = tet_store.generate_edge_keys(parent_id);
+                std::set< edge_t > parent_edge_set;
+                for (auto pe:parent_edges) parent_edge_set.insert(pe);
                 for (auto c : parent.children)
                 {
-                    addto_deletelist_intermediates(tet_store,c);
-                }
-            }
-
-            /**
-             * @brief Adds the intermediate edge to the delete list for derefinement
-             *
-             * @param tet_store Tet store to use
-             * @param tet_id Tet id being processed
-             */
-            void addto_deletelist_intermediates(tet_store_t& tet_store, size_t tet_id)
-            {
-                edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
-                for (size_t k = 0; k < NUM_TET_EDGES; k++)
-                {
-                    edge_t edge = edge_list[k];
-                    // accept this code may try delete an edge which has already gone
-                    if (tet_store.edge_store.exists(edge)) {
-                        if (tet_store.edge_store.get(edge).lock_case == Edge_Lock_Case::intermediate)
-                        {
-                            delete_list.push_back(edge);
+                    edge_list_t edge_list = tet_store.generate_edge_keys(c);
+                    for (size_t k = 0; k < NUM_TET_EDGES; k++)
+                    {
+                        edge_t edge = edge_list[k];
+                        // accept this code may try delete an edge which has already gone
+                        if (tet_store.edge_store.exists(edge)) {
+                            if (parent_edge_set.count(edge) == 0)
+                            {
+                                trace_out << "child " << c << " adding to delete list: "
+                                  << edge.first() << " - " << edge.second() << std::endl;
+                                delete_list.push_back(edge);
+                            }
                         }
                     }
                 }
@@ -898,6 +892,8 @@ namespace AMR {
               for (const auto& edge : delete_list) {
                 tet_store.edge_store.erase(edge);
               }
+
+              delete_list.clear();
             }
 
             /**

@@ -68,8 +68,7 @@ namespace AMR {
                 // Generate key
                 edge_t keyAB = nodes_to_key(A, B);
                 //Create refined edge
-                Edge_Refinement edgeAB = Edge_Refinement(A, B, 0.00, false,
-                        false, false, lc);
+                Edge_Refinement edgeAB = Edge_Refinement(A, B, false, false, lc);
                 // Add edge to store
                 add(keyAB, edgeAB);
             }
@@ -94,8 +93,8 @@ namespace AMR {
             {
                 //trace_out << "get edge " << key << std::endl;
                 // cppcheck-suppress assertWithSideEffect
-                //if (!exists(key)) trace_out << "key not found " << key.first()
-                //  << " - " << key.second() << std::endl;
+                if (!exists(key)) trace_out << "key not found " << key.first()
+                  << " - " << key.second() << std::endl;
                 assert( exists(key) );
                 return edges[key];
             }
@@ -107,8 +106,8 @@ namespace AMR {
 
             void erase(edge_t key)
             {
-                //trace_out << "Deref removing edge: " << key.first() << " - "
-                //  << key.second() << std::endl;
+                trace_out << "Deref removing edge: " << key.first() << " - "
+                  << key.second() << std::endl;
                 edges.erase(key);
             }
 
@@ -285,8 +284,7 @@ namespace AMR {
                 for (const auto& kv : edges)
                 {
                     trace_out << "edge " << kv.first << " between " <<
-                        kv.second.A << " and " << kv.second.B << " val " <<
-                        kv.second.refinement_criteria <<
+                        kv.second.A << " and " << kv.second.B <<
                     std::endl;
                 }
             }
