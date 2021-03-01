@@ -103,8 +103,7 @@ namespace AMR {
        {
          std::size_t icount = 0;
          for (const auto& np_node : face) {
-           if (inactive_nodes.count(np_node) || inactive_nodes.count(np_node)
-             || inactive_nodes.count(np_node)) ++icount;
+           if (inactive_nodes.count(np_node)) ++icount;
          }
          if (inactive_nodes.size() == icount) {
            same_face = true;
