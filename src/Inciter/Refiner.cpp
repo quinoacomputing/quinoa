@@ -895,7 +895,7 @@ Refiner::perform()
         m_refiner.perform_refinement();
     }
 
-  } else if (m_mode == RefMode::DTREF) {
+  } else {
 
     // TODO: does not work yet, fix as above
     m_refiner.perform_derefinement();
