@@ -688,13 +688,13 @@ DiagCG::writeFields( CkCallback c ) const
     }
 
     // Query refinement data
-    auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+    //auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
 
     std::tuple< std::vector< std::string >,
                 std::vector< std::vector< tk::real > >,
                 std::vector< std::string >,
                 std::vector< std::vector< tk::real > > > r;
-    if (dtref) r = d->Ref()->refinementFields();
+    /*if (dtref)*/ r = d->Ref()->refinementFields();
 
     auto& refinement_elemfieldnames = std::get< 0 >( r );
     auto& refinement_elemfields = std::get< 1 >( r );

@@ -47,6 +47,86 @@ namespace AMR {
     //}
 #endif
 
+    std::pair< bool, std::size_t > mesh_adapter_t::check_same_face(
+      std::size_t tet_id,
+      const std::unordered_set<std::size_t>& inactive_nodes)
+    {
+       edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
+
+       Assert(inactive_nodes.size()==3 || inactive_nodes.size()==2,
+         "Incorrectly sized inactive nodes set");
+
+       // for a tet ABCD, the keys (edges) are ordered
+       // A-B, A-C, A-D, B-C, B-D, C-D
+       // 0-1, 0-2, 0-3, 1-2, 1-3, 2-3
+
+       std::array< std::array< std::size_t, 3 >, 4 >
+         edges_on_face;
+
+       // A-B-C
+       edges_on_face[0][0] =
+         tk::cref_find(node_connectivity.data(),edge_list[0].get_data());
+       edges_on_face[0][1] =
+         tk::cref_find(node_connectivity.data(),edge_list[1].get_data());
+       edges_on_face[0][2] =
+         tk::cref_find(node_connectivity.data(),edge_list[3].get_data());
+
+       // A-B-D
+       edges_on_face[1][0] =
+         tk::cref_find(node_connectivity.data(),edge_list[0].get_data());
+       edges_on_face[1][1] =
+         tk::cref_find(node_connectivity.data(),edge_list[2].get_data());
+       edges_on_face[1][2] =
+         tk::cref_find(node_connectivity.data(),edge_list[4].get_data());
+
+       // B-C-D
+       edges_on_face[2][0] =
+         tk::cref_find(node_connectivity.data(),edge_list[3].get_data());
+       edges_on_face[2][1] =
+         tk::cref_find(node_connectivity.data(),edge_list[4].get_data());
+       edges_on_face[2][2] =
+         tk::cref_find(node_connectivity.data(),edge_list[5].get_data());
+
+       // A-C-D
+       edges_on_face[3][0] =
+         tk::cref_find(node_connectivity.data(),edge_list[1].get_data());
+       edges_on_face[3][1] =
+         tk::cref_find(node_connectivity.data(),edge_list[2].get_data());
+       edges_on_face[3][2] =
+         tk::cref_find(node_connectivity.data(),edge_list[5].get_data());
+
+       //Iterate over edges to determine if inactive_nodes are all part of a face
+       bool same_face(false);
+       [[maybe_unused]] bool tnode_set(false);
+       std::size_t third_node = 0;
+       for(const auto& face : edges_on_face)
+       {
+         std::size_t icount = 0;
+         for (const auto& np_node : face) {
+           if (inactive_nodes.count(np_node)) ++icount;
+         }
+         if (inactive_nodes.size() == icount) {
+           same_face = true;
+           // if the two inactive_nodes being checked are on the same parent
+           // face, determine the third node on that face
+           if (inactive_nodes.size() == 2) {
+             for (auto fn:face) {
+               if (inactive_nodes.count(fn) == 0) {
+                 third_node = fn;
+                 tnode_set = true;
+                 break;
+               }
+             }
+           }
+         }
+       }
+
+       if (same_face && inactive_nodes.size() == 2)
+         Assert(tnode_set, "Third node on face not set in derefine");
+
+       return {same_face, third_node};
+    }
+
     /** @brief Consume an existing mesh, and turn it into the AMRs
      * representations of tets and nodes
      *
@@ -120,8 +200,11 @@ namespace AMR {
           auto e = edge_store.edges.find(tetedge);
           if (e != end(edge_store.edges)) {
             auto& local = e->second;
-            if (local.lock_case == Edge_Lock_Case::unlocked)
+            //if (local.lock_case == Edge_Lock_Case::unlocked) {
               local.needs_derefining = 1;
+            //  trace_out << "edge marked for deref: " << local.A << " - "
+            //    << local.B << std::endl;
+            //}
           }
         }
       }
@@ -692,7 +775,22 @@ namespace AMR {
 
             tet_store.edge_store.unmark_for_refinement(key);
             trace_out << "Deactivating " << key << std::endl;
-            // TODO: Should this also set something to not need derefining?
+            tet_store.edge_store.get(key).needs_derefining = false;
+        }
+    }
+
+    /**
+     * @brief Unmarks edges of given tet for derefinement only
+     *
+     * @param tet_id The id of the given tet
+     */
+    void mesh_adapter_t::deactivate_deref_tet_edges(size_t tet_id) {
+        edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
+        for (size_t k = 0; k < NUM_TET_EDGES; k++)
+        {
+            edge_t key = edge_list[k];
+
+            trace_out << "Deactivating " << key << std::endl;
             tet_store.edge_store.get(key).needs_derefining = false;
         }
     }
@@ -1087,37 +1185,6 @@ namespace AMR {
         }
     }
 
-    std::unordered_set<size_t> mesh_adapter_t::child_exclusive_nodes(size_t tet_id)
-    {
-        std::unordered_set<size_t> non_parent_nodes;
-
-        // array
-        auto parent_tet = tet_store.get(tet_id);
-
-        // convert to set
-        std::unordered_set<size_t> parent_set(begin(parent_tet), end(parent_tet));
-
-        child_id_list_t children = tet_store.data(tet_id).children;
-        for (size_t i = 0; i < children.size(); i++)
-        {
-            auto child_tet = tet_store.get( children[i] );
-
-            // Look at nodes, if not present add to set
-            for (std::size_t j = 0; j < NUM_TET_NODES; j++)
-            {
-                auto node = child_tet[j];
-                if (parent_set.count(node) == 0)
-                {
-                    non_parent_nodes.insert(node);
-                }
-            }
-        }
-
-        trace_out <<" Found " << non_parent_nodes.size() << " non parent nodes " << std::endl;
-        return non_parent_nodes;
-
-    }
-
     void mesh_adapter_t::mark_derefinement()
     {
         const size_t max_num_rounds = AMR_MAX_ROUNDS;
@@ -1134,56 +1201,76 @@ namespace AMR {
             {
                 size_t tet_id = kv.first;
 
-                // Skip tets which have no children
+                // Skip tets which have no children or which are grand-parents
                 child_id_list_t children = tet_store.data(tet_id).children;
+                bool grandparent = false;
+                for (const auto& ch : children) {
+                  if (tet_store.data(ch).children.size()) grandparent = true;
+                }
                 if (children.size() <= 0) { continue; }
+                else if (grandparent) {
+                  //TODO: this needs to be done only at the first iteration
+                  trace_out << "grandparent: " << tet_id
+                    << " unmarking children from deref" << std::endl;
+                  // go over grandparent's children and lock its edges, only if
+                  // that edge does not belong to a grandchild. The following
+                  // does this in a simple but 'hacky' way
+                  std::map< edge_t, std::size_t > edge_derefmark;
+
+                  for (auto child_id : children) {
+                    auto grandchildren = tet_store.data(child_id).children;
+                    // get child_id's nodes
+                    auto child_nodes = tet_store.get(child_id);
+                    std::unordered_set<size_t> child_node_set{
+                      std::begin(child_nodes), std::end(child_nodes)};
+                    trace_out << "looking at child: " << child_id <<
+                      " which has " << grandchildren.size() << " children" << std::endl;
+                  // 1. store the grandchildren's edge-markings
+                    for (auto gchild_id : grandchildren) {
+                      auto edges = tet_store.generate_edge_keys(gchild_id);
+                      trace_out << "looking at grandchild: " << gchild_id << std::endl;
+                      for (const auto& edge_key : edges) {
+                        // retaining this edge's deref marking only if one of
+                        // the nodes of this edge does not belong to the parent
+                        // of gchild_id (which is child_id), i.e. nonparent node.
+                        // basically, keep deref-decisions only for the edges
+                        // that have been split
+                        if (child_node_set.count(edge_key.first())==0 ||
+                          child_node_set.count(edge_key.second())==0) {
+                          edge_derefmark[edge_key] =
+                            tet_store.edge_store.get(edge_key).needs_derefining;
+                        }
+                      }
+                    }
+
+                  // 2. go thru the children, and unmark their edges for deref
+                    deactivate_deref_tet_edges(child_id);
+                  }
+
+                  // 3. go thru the grandparents again and reinstate their edge
+                  // derefinement markings
+                  for (const auto& e_key : edge_derefmark) {
+                    tet_store.edge_store.get(e_key.first).needs_derefining =
+                      e_key.second;
+                  }
+
+                  continue;
+                }
+
 
                 // This is useful for later inspection
                 //edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
                 std::size_t num_to_derefine = 0; // Nodes
 
-                // Do number of points
-                std::unordered_set<size_t> derefine_node_set;
-
                 AMR::Refinement_Case refinement_case = tet_store.get_refinement_case(tet_id);
 
+                auto derefine_node_set = refiner.find_derefine_node_set(tet_store, tet_id);
                 // Find the set of nodes which are not in the parent
-                std::unordered_set<size_t> non_parent_nodes = child_exclusive_nodes(tet_id);
+                std::unordered_set<size_t> non_parent_nodes =
+                  refiner.child_exclusive_nodes(tet_store, tet_id);
 
-
-                // Look at children
-                trace_out << tet_id << " Looping over " << children.size() << "children" << std::endl;
-                for (size_t i = 0; i < children.size(); i++)
-                {
-                    // TODO: Is this in element or tet ids?
-                    edge_list_t edge_list = tet_store.generate_edge_keys(children[i]);
-                    for (size_t k = 0; k < NUM_TET_EDGES; k++)
-                    {
-                        edge_t edge = edge_list[k];
-                        // TODO: where do we makr the edges that need to be derefed? parent of child?
-                        if (tet_store.edge_store.get(edge).needs_derefining)
-                        {
-                            // Check each node, see if its an intermediate
-                            size_t A = edge.first();
-                            size_t B = edge.second();
-                            trace_out << "Needs deref " << A << " - " << B << std::endl;
-
-                            //if (tet_store.is_intermediate(A))
-                            if (non_parent_nodes.count(A) )
-                            {
-                                trace_out << "Adding " << A << std::endl;
-                                derefine_node_set.insert(A);
-                            }
-
-                            //if (tet_store.is_intermediate(B))
-                            if (non_parent_nodes.count(B))
-                            {
-                                trace_out << "Adding " << B << std::endl;
-                                derefine_node_set.insert(B);
-                            }
-                        }
-                    }
-                }
+                //for (auto drnode: derefine_node_set)
+                //  trace_out << "derefine node: " << drnode << std::endl;
 
                 num_to_derefine = derefine_node_set.size();
 
@@ -1211,7 +1298,10 @@ namespace AMR {
                     // "Else
                     else {
                         // Deactivate all points"
-                        deactivate_tet_edges(tet_id);
+                        for (auto child_id : children) {
+                          deactivate_deref_tet_edges(child_id);
+                        }
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                         trace_out << "giving up on deref decision. deactivate near 2:1 ntd = 1" << std::endl;
                     }
                 }
@@ -1232,7 +1322,10 @@ namespace AMR {
                     // "Else
                     else {
                         // Deactivate all points"
-                        deactivate_tet_edges(tet_id);
+                        for (auto child_id : children) {
+                          deactivate_deref_tet_edges(child_id);
+                        }
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                         trace_out << "giving up on deref decision. deactivate near 4:2 ntd = 2" << std::endl;
                     }
                 }
@@ -1253,19 +1346,42 @@ namespace AMR {
                     //else if (refinement_case == AMR::Refinement_Case::one_to_eight)
                     else if (children.size() == 8)
                     {
-                        bool same_face = false; // TODO: This
+                        // we have a list of (non-parent) nodes that is marked
+                        // for derefinement. First, determine the nodes that are
+                        // unmarked for derefinement (or inactive_nodes). Then,
+                        // determine if these are on a single face.
+                        std::unordered_set<size_t> inactive_node_set;
+                        for (auto npn : non_parent_nodes) {
+                          if (derefine_node_set.count(npn) == 0)
+                            inactive_node_set.insert(npn);
+                        }
+                        Assert(inactive_node_set.size() == 3, "Incorrectly "
+                          "sized inactive-node set");
+                        auto same_face = check_same_face(tet_id, inactive_node_set);
                         // If inactive points lie on same face
-                        if (same_face == true)
+                        if (same_face.first == true)
                         {
                             // Accept as 8:4 derefinement
                             trace_out << "Accept as 8:4" << std::endl;
+
+                            // create a vector of node-array-pairs to mark edges
+                            // for refinement 1:4
+                            std::vector< std::array< std::size_t, 2 > > ref_edges;
+                            for (auto n:inactive_node_set) {
+                              ref_edges.push_back(node_connectivity.get(n));
+                            }
+
+                            tet_store.edge_store.mark_edges_for_refinement(ref_edges);
                             //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
                             tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_four);
                         }
                         // "Else
                         else {
                             // Deactivate all points"
-                            deactivate_tet_edges(tet_id);
+                            for (auto child_id : children) {
+                              deactivate_deref_tet_edges(child_id);
+                            }
+                            tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                             trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 3" << std::endl;
                         }
 
@@ -1276,12 +1392,46 @@ namespace AMR {
                 else if (num_to_derefine == 4)
                 //else if (children.size() == 4)
                 {
-                    // If inactive points lie on the same face
-                    bool same_face = false; // TODO: This
-                    if (same_face == true)
+                    // we have a list of (non-parent) nodes that is marked
+                    // for derefinement. First, determine the nodes that are
+                    // unmarked for derefinement (or inactive_nodes). Then,
+                    // determine if these are on a single face.
+                    std::unordered_set<size_t> inactive_node_set;
+                    for (auto npn : non_parent_nodes) {
+                      if (derefine_node_set.count(npn) == 0)
+                        inactive_node_set.insert(npn);
+                    }
+                    Assert(inactive_node_set.size() == 2, "Incorrectly "
+                      "sized inactive-node set");
+                    // Check if the inactive point belong to the same parent
+                    // face and deactivate the third point on that face
+                    auto same_face = check_same_face(tet_id, inactive_node_set);
+
+                    if (same_face.first == true)
                     {
-                        // Deactivate third point of face
-                        // TODO: Deactivate third face
+                        // deactivate the edges associated with same_face.second
+                        for (size_t i = 0; i < children.size(); i++)
+                        {
+                          edge_list_t edge_list = tet_store.generate_edge_keys(children[i]);
+                          for (size_t k = 0; k < NUM_TET_EDGES; k++)
+                          {
+                            edge_t edge = edge_list[k];
+                            size_t A = edge.first();
+                            size_t B = edge.second();
+                            if (A == same_face.second || B == same_face.second)
+                              tet_store.edge_store.get(edge).needs_derefining = false;
+                          }
+                        }
+
+                        // create a vector of node-array-pairs to mark edges
+                        // for refinement 1:4
+                        inactive_node_set.insert(same_face.second);
+                        std::vector< std::array< std::size_t, 2 > > ref_edges;
+                        for (auto n:inactive_node_set) {
+                          ref_edges.push_back(node_connectivity.get(n));
+                        }
+
+                        tet_store.edge_store.mark_edges_for_refinement(ref_edges);
 
                         // Accept as 8:4 derefinement
                         trace_out << "Accept as 8:4" << std::endl;
@@ -1291,8 +1441,11 @@ namespace AMR {
                     // "Else
                     else {
                         // Deactivate all points"
-                        deactivate_tet_edges(tet_id);
-                    trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 4" << std::endl;
+                        for (auto child_id : children) {
+                          deactivate_deref_tet_edges(child_id);
+                        }
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
+                        trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 4" << std::endl;
                     }
                 }
 
@@ -1300,10 +1453,8 @@ namespace AMR {
                 else if (num_to_derefine == 5)
                 {
                     // Accept as 8:2 derefine"
-                    // TODO: MAKE THIS 8:2 NOT 8:1
                     trace_out << "Accept as 8:2 " << std::endl;
                     //refiner.derefine_eight_to_two(tet_store,  node_connectivity, tet_id);
-                    //tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_two);
                     tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_two);
                 }
 
@@ -1316,8 +1467,14 @@ namespace AMR {
                     tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_one);
                 }
 
+                // "If nderefine = 0
                 else {
-                    trace_out << "giving up with no deref decision" << std::endl;
+                    tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
+                    // Deactivate all points"
+                    for (auto child_id : children) {
+                      deactivate_deref_tet_edges(child_id);
+                    }
+                    trace_out << "giving up with no deref decision because nderefine = 0" << std::endl;
                 }
             }
 
@@ -1355,21 +1512,27 @@ namespace AMR {
                 {
                     case AMR::Derefinement_Case::two_to_one:
                         refiner.derefine_two_to_one(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 2:1 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::four_to_one:
                         refiner.derefine_four_to_one(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 4:1 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::four_to_two:
                         refiner.derefine_four_to_two(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 4:2 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::eight_to_one:
                         refiner.derefine_eight_to_one(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 8:1 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::eight_to_two:
                         refiner.derefine_eight_to_two(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 8:2 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::eight_to_four:
                         refiner.derefine_eight_to_four(tet_store,node_connectivity,tet_id);
+                        trace_out << "Completed derefine 8:4 of " << tet_id << std::endl;
                         break;
                     case AMR::Derefinement_Case::skip:
                         // What do we do with skip?
@@ -1381,6 +1544,7 @@ namespace AMR {
         }
 
         node_connectivity.print();
+        refiner.delete_intermediates_of_children(tet_store);
         tet_store.process_delete_list();
         tet_store.print_node_types();
 

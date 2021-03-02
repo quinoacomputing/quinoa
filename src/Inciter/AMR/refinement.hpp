@@ -22,6 +22,8 @@ namespace AMR {
 
             size_t DEFAULT_REFINEMENT_LEVEL = 0; //TODO: Is this in the right place?
             size_t MIN_REFINEMENT_LEVEL = DEFAULT_REFINEMENT_LEVEL;
+            // list of "intermediate" edges to be deleted
+            std::vector< edge_t > delete_list;
 
         public:
 
@@ -768,7 +770,9 @@ namespace AMR {
             void derefine_two_to_one(tet_store_t& tet_store, node_connectivity_t&, size_t parent_id)
             {
                 //if (!check_allowed_derefinement(tet_store,parent_id)) return;
-                delete_intermediates_of_children( tet_store, parent_id);
+                // build a delete-list of edges/intermediates first, mesh_adapter
+                // deletes edges from this list later
+                determine_deletelist_of_intermediates(tet_store, parent_id);
                 generic_derefine(tet_store,parent_id);
             }
 
@@ -781,7 +785,9 @@ namespace AMR {
             void derefine_four_to_one(tet_store_t& tet_store, node_connectivity_t&, size_t parent_id)
             {
                 //if (!check_allowed_derefinement(tet_store,parent_id)) return;
-                delete_intermediates_of_children(tet_store, parent_id);
+                // build a delete-list of edges/intermediates first, mesh_adapter
+                // deletes edges from this list later
+                determine_deletelist_of_intermediates(tet_store, parent_id);
                 generic_derefine(tet_store,parent_id);
             }
 
@@ -807,7 +813,9 @@ namespace AMR {
                 for (auto c : parent.children)
                 {
                     edge_list_t child_edges = tet_store.generate_edge_keys(c);
-                    delete_non_matching_edges( tet_store, child_edges, parent_edges);
+                    // build a delete-list of non-matching edges first, then
+                    // mesh_adapter deletes edges from this list later
+                    determine_deletelist_of_non_matching_edges(child_edges, parent_edges);
                 }
             }
 
@@ -815,9 +823,11 @@ namespace AMR {
             void derefine_four_to_two(tet_store_t& tet_store, node_connectivity_t& node_connectivity, size_t parent_id)
             {
                 //if (!check_allowed_derefinement(tet_store,parent_id)) return;
+                auto edge = find_edge_not_derefined(tet_store,
+                  node_connectivity, parent_id);
                 derefine_four_to_one(tet_store, node_connectivity, parent_id);
-                // TODO: actually do the refinement
-                refine_one_to_two( tet_store, node_connectivity, parent_id);
+                refine_one_to_two( tet_store, node_connectivity, parent_id,
+                  edge.first(), edge.second() );
             }
 
             // TODO: Document This.
@@ -825,36 +835,11 @@ namespace AMR {
             {
                 //if (!check_allowed_derefinement(tet_store,parent_id)) return;
 
-                // Figure out which edge is the one that we want to have the
-                // split along
-                size_t edge_A = 0;
-                size_t edge_B = 0;
-
-                // will have 5 edges set to deref, find the one that's not
-                child_id_list_t children = tet_store.data(parent_id).children;
-                for (size_t i = 0; i < children.size(); i++)
-                {
-                    // TODO: Is this in element or tet ids?
-                    edge_list_t edge_list = tet_store.generate_edge_keys(children[i]);
-                    for (size_t k = 0; k < NUM_TET_EDGES; k++)
-                    {
-                        edge_t edge = edge_list[k];
-                        if (tet_store.edge_store.get(edge).needs_derefining)
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            // found the non-deref
-                            edge_A = std::min( edge.first(), edge.second() );
-                            edge_B = std::max( edge.first(), edge.second() );
-                            //std::cout << "A " << edge_A << " B " << edge_B << std::endl;
-                        }
-                    }
-                }
-
+                auto edge = find_edge_not_derefined(tet_store,
+                  node_connectivity, parent_id);
                 derefine_eight_to_one(tet_store, node_connectivity, parent_id);
-                refine_one_to_two( tet_store, node_connectivity, parent_id, edge_A, edge_B );
+                refine_one_to_two( tet_store, node_connectivity, parent_id,
+                  edge.first(), edge.second() );
             }
 
             // TODO: Document This.
@@ -867,51 +852,59 @@ namespace AMR {
             }
 
             /**
-             * @brief Loop over children and delete all intermediate edges
+             * @brief Loop over children and determine delete-list of all intermediate edges
              *
              * @param tet_store Tet store to use
              * @param parent_id Id of parent
              */
-            void delete_intermediates_of_children( tet_store_t& tet_store, size_t parent_id)
+            void determine_deletelist_of_intermediates(tet_store_t& tet_store, size_t parent_id)
             {
                 Refinement_State& parent = tet_store.data(parent_id);
+                auto parent_edges = tet_store.generate_edge_keys(parent_id);
+                std::set< edge_t > parent_edge_set;
+                for (auto pe:parent_edges) parent_edge_set.insert(pe);
                 for (auto c : parent.children)
                 {
-                    delete_intermediates(tet_store,c);
-                }
-            }
-
-            /**
-             * @brief TODO: Document this!
-             *
-             * @param tet_store Tet store to use
-             * @param tet_id TODO: document this!
-             */
-            void delete_intermediates( tet_store_t& tet_store, size_t tet_id)
-            {
-                edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
-                for (size_t k = 0; k < NUM_TET_EDGES; k++)
-                {
-                    edge_t edge = edge_list[k];
-                    // accept this code may try delete an edge which has already gone
-                    if (tet_store.edge_store.exists(edge)) {
-                        if (tet_store.edge_store.get(edge).lock_case == Edge_Lock_Case::intermediate)
-                        {
-                            tet_store.edge_store.erase(edge);
+                    edge_list_t edge_list = tet_store.generate_edge_keys(c);
+                    for (size_t k = 0; k < NUM_TET_EDGES; k++)
+                    {
+                        edge_t edge = edge_list[k];
+                        // accept this code may try delete an edge which has already gone
+                        if (tet_store.edge_store.exists(edge)) {
+                            if (parent_edge_set.count(edge) == 0)
+                            {
+                                trace_out << "child " << c << " adding to delete list: "
+                                  << edge.first() << " - " << edge.second() << std::endl;
+                                delete_list.push_back(edge);
+                            }
                         }
                     }
                 }
             }
 
             /**
-             * @brief If edge in candidate is not present in basis, delete the
-             * edge (candidate) from the main edge store
+             * @brief Deletes the intermediate edge in the delete list for derefinement
              *
              * @param tet_store Tet store to use
+             */
+            void delete_intermediates_of_children(tet_store_t& tet_store)
+            {
+              for (const auto& edge : delete_list) {
+                tet_store.edge_store.erase(edge);
+              }
+
+              delete_list.clear();
+            }
+
+            /**
+             * @brief If edge in candidate is not present in basis, add edge
+             * (candidate) to delete list
+             *
              * @param candidate The edge list which is to be searched and deleted
              * @param basis The edge list to check against
              */
-            void delete_non_matching_edges( tet_store_t& tet_store, edge_list_t candidate, edge_list_t basis)
+            void determine_deletelist_of_non_matching_edges(edge_list_t candidate,
+              edge_list_t basis)
             {
                 trace_out << "Looking for edges to delete" << std::endl;
 
@@ -939,7 +932,8 @@ namespace AMR {
                     if (!found_it)
                     {
                         // Delete it
-                        tet_store.edge_store.erase(search_key);
+                        //tet_store.edge_store.erase(search_key);
+                        delete_list.push_back(search_key);
                     }
                 }
             }
@@ -985,6 +979,163 @@ namespace AMR {
                 }
             }
 
+            /**
+             * @brief function to detect which edge should not get derefined
+             *
+             * @param tet_store Tet store to use
+             * @param node_connectivity Node connectivity to use
+             * @param tet_id Id the of the tet which will be de-refined
+             *
+             * @return Array of size two containing nodes of required edge
+             */
+            edge_t find_edge_not_derefined(
+              tet_store_t& tet_store,
+              node_connectivity_t& node_connectivity,
+              size_t tet_id)
+            {
+              // 2 nonparent nodes set to derefine for a 4:2
+              // 5 nonparent nodes set to derefine for an 8:2
+              // will have 2 or 5 nonparent nodes set to deref; Figure out which
+              // edge is the one that is not set to deref
+
+              auto derefine_node_set = find_derefine_node_set(tet_store, tet_id);
+
+              //// Do number of points
+              //std::unordered_set<size_t> derefine_node_set;
+
+              // Find the set of nodes which are not in the parent
+              std::unordered_set<size_t> non_parent_nodes =
+                child_exclusive_nodes(tet_store, tet_id);
+
+              // from the above non_parent_nodes set and derefine_node_set,
+              // figureout which node should be removed
+              std::size_t ed_A(0), ed_B(0);
+              for (auto npn:non_parent_nodes) {
+                if (derefine_node_set.count(npn) == 0) {
+                  // we've found the node that should not be removed, now we
+                  // need to find the edge it belongs to
+                  auto nonderef_edge = node_connectivity.get(npn);
+                  ed_A = nonderef_edge[0];
+                  ed_B = nonderef_edge[1];
+                  //std::cout << "do-not-deref-APAN " << "A " << nd_edge[0]
+                  //        << " B " << nd_edge[1] << std::endl;
+                }
+              }
+
+              assert(ed_A!=ed_B);
+              edge_t nd_edge(ed_A, ed_B);
+              return nd_edge;
+            }
+
+            /**
+             * @brief function to detect what intermediate/non-parent nodes are
+             *   marked for derefinement
+             *
+             * @param tet_store Tet store to use
+             * @param tet_id Id of the tet which will be de-refined
+             *
+             * @return Set of nodes of marked for derefinement
+             */
+            std::unordered_set< size_t > find_derefine_node_set(
+              tet_store_t& tet_store,
+              size_t tet_id)
+            {
+              // Set of nodes which are not in the parent
+              std::unordered_set<size_t> non_parent_nodes =
+                child_exclusive_nodes(tet_store, tet_id);
+              std::unordered_set<size_t> derefine_node_set, unmarked_deref_node_set,
+                final_deref_node_set;
+
+              child_id_list_t children = tet_store.data(tet_id).children;
+
+              // Look at children
+              trace_out << tet_id << " Looping over " << children.size() << "children" << std::endl;
+              for (size_t i = 0; i < children.size(); i++)
+              {
+                  trace_out << "child: " << children[i] << std::endl;
+                  // TODO: Is this in element or tet ids?
+                  edge_list_t edge_list = tet_store.generate_edge_keys(children[i]);
+                  for (size_t k = 0; k < NUM_TET_EDGES; k++)
+                  {
+                      edge_t edge = edge_list[k];
+                      // TODO: where do we makr the edges that need to be derefed? parent of child?
+                      // Check each node, see if its an intermediate
+                      size_t A = edge.first();
+                      size_t B = edge.second();
+                      trace_out << "checking edge for deref " << A << " - " << B << std::endl;
+
+                      //if (tet_store.is_intermediate(A))
+                      if (non_parent_nodes.count(A) )
+                      {
+                        if (tet_store.edge_store.get(edge).needs_derefining) {
+                          trace_out << "Adding " << A << std::endl;
+                          derefine_node_set.insert(A);
+                        }
+                        else {
+                          unmarked_deref_node_set.insert(A);
+                          //trace_out << "NOT added " << A << std::endl;
+                        }
+                      }
+
+                      //if (tet_store.is_intermediate(B))
+                      if (non_parent_nodes.count(B))
+                      {
+                        if (tet_store.edge_store.get(edge).needs_derefining) {
+                          trace_out << "Adding " << B << std::endl;
+                          derefine_node_set.insert(B);
+                        }
+                        else {
+                          unmarked_deref_node_set.insert(B);
+                          //trace_out << "NOT added " << B << std::endl;
+                        }
+                      }
+                  }
+              }
+
+              //trace_out << "marked for deref: " << derefine_node_set.size() << std::endl;
+              //trace_out << "NOT marked for deref: " << unmarked_deref_node_set.size() << std::endl;
+
+              // remove nodes that are unmarked for derefinement
+              for (auto drnode : derefine_node_set) {
+                if (unmarked_deref_node_set.count(drnode) == 0)
+                  final_deref_node_set.insert(drnode);
+              }
+              derefine_node_set = final_deref_node_set;
+              return derefine_node_set;
+            }
+
+
+            std::unordered_set<size_t> child_exclusive_nodes(tet_store_t& tet_store,
+              size_t tet_id)
+            {
+              std::unordered_set<size_t> non_parent_nodes;
+
+              // array
+              auto parent_tet = tet_store.get(tet_id);
+
+              // convert to set
+              std::unordered_set<size_t> parent_set(begin(parent_tet), end(parent_tet));
+
+              child_id_list_t children = tet_store.data(tet_id).children;
+              for (size_t i = 0; i < children.size(); i++)
+              {
+                      auto child_tet = tet_store.get( children[i] );
+
+                      // Look at nodes, if not present add to set
+                      for (std::size_t j = 0; j < NUM_TET_NODES; j++)
+                      {
+                              auto node = child_tet[j];
+                              if (parent_set.count(node) == 0)
+                              {
+                                      non_parent_nodes.insert(node);
+                              }
+                      }
+              }
+
+              trace_out <<" Found " << non_parent_nodes.size() << " non parent nodes " << std::endl;
+              return non_parent_nodes;
+
+            }
     };
 }
 

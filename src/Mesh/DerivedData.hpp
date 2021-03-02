@@ -254,7 +254,8 @@ leakyPartition( const std::vector< int >& esueltet,
 bool
 conforming( const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,
-            bool cerr = true );
+            bool cerr = true,
+            const std::vector< std::size_t >& rid={} );
 
 //! Determine if a point is in a tetrahedron
 bool
