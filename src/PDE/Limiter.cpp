@@ -1103,7 +1103,7 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
       auto dBdx_er = tk::eval_dBdx_p1( rdof, jacInv_er );
 
       if(rdof > 4)
-        evaldBdx_p2(center, jacInv_er, dBdx_er);
+        tk::evaldBdx_p2(center, jacInv_er, dBdx_er);
 
       for (std::size_t c=0; c<ncomp; ++c)
       {
