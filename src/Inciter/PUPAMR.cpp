@@ -38,10 +38,8 @@ void PUP::pup( PUP::er &p, AMR::Edge_Refinement& e )
 {
   p | e.A;
   p | e.B;
-  p | e.refinement_criteria;
   p | e.needs_refining;
   p | e.needs_derefining;
-  p | e.is_dead;
   p | e.lock_case;
 }
 

@@ -205,6 +205,24 @@ add_regression_test(amr_t0ref_uudd_trans ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     LABELS amr)
 
+add_regression_test(amr_t0ref_iid_trans ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES slot_cyl_iid.q unitsquare_01_141.exo
+                    ARGS -c slot_cyl_iid.q -i unitsquare_01_141.exo -v
+                    BIN_BASELINE slot_cyl_iid_t0ref.e-s.0.1.0
+                                 slot_cyl_iid_t0ref.e-s.1.1.0
+                                 slot_cyl_iid_t0ref.e-s.2.1.0
+                                 slot_cyl_iid_t0ref.e-s.3.1.0
+                                 slot_cyl_iid.std.exo
+                    BIN_RESULT t0ref.e-s.0.1.0
+                               t0ref.e-s.1.1.0
+                               t0ref.e-s.2.1.0
+                               t0ref.e-s.3.1.0
+                               out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    LABELS amr)
+
 # Parallel, no virtualization
 
 add_regression_test(amr_t0ref_u_trans_diagcg ${INCITER_EXECUTABLE}

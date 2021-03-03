@@ -45,20 +45,16 @@ enum Edge_Lock_Case {unlocked = 0, locked, intermediate, temporary};
 struct Edge_Refinement {
     size_t A;
     size_t B;
-    real_t refinement_criteria;
     int needs_refining; // TODO: This could possibly be deduced implicitly
     bool needs_derefining; // TODO: Marge this with needs_refining
-    bool is_dead;
     Edge_Lock_Case lock_case; // TODO: Refactor this to match _ style?
 
     // Explicit Empty Constructor
     Edge_Refinement() :
         A(0),
         B(0),
-        refinement_criteria(0.0),
         needs_refining(0),
         needs_derefining(false),
-        is_dead(false),
         lock_case(Edge_Lock_Case::unlocked)
     {
         // Empty
@@ -79,18 +75,14 @@ struct Edge_Refinement {
     Edge_Refinement(
             size_t A_in,
             size_t B_in,
-            real_t refinement_criteria_in,
             int needs_refining_in,
             bool needs_derefining_in,
-            bool is_dead_in,
             Edge_Lock_Case lock_case_in
             ) :
         A(A_in),
         B(B_in),
-        refinement_criteria(refinement_criteria_in),
         needs_refining(needs_refining_in),
         needs_derefining(needs_derefining_in),
-        is_dead(is_dead_in),
         lock_case(lock_case_in)
     {
         // Empty, all implicit.
