@@ -17,7 +17,7 @@ module charestatecollector {
 
     group [migratable] ChareStateCollector {
       entry ChareStateCollector();
-      initproc void registerReducers();
+      initnode void registerReducers();
       entry void collect( bool error, CkCallback cb );
     };
 
