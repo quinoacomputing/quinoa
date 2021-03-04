@@ -159,7 +159,7 @@ Transporter::input()
   // Extract mesh filenames specified in the control file (assigned to solvers)
   auto ctrinput = g_inputdeck.mesh();
 
-  Assert( !cmdinput.empty() || !ctrinput.empty(),
+  ErrChk( !cmdinput.empty() || !ctrinput.empty(),
     "Either a single input mesh must be given on the command line or multiple "
     "meshes must be configured in the control file." );
 
@@ -504,6 +504,8 @@ Transporter::createPartitioner()
   for ([[maybe_unused]] const auto& filename : m_input)
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
                            linearsolver );
+
+  ErrChk( !m_input.empty(), "No input mesh" );
 
   // Read boundary (side set) data from a list of input mesh files
   std::size_t meshid = 0;
