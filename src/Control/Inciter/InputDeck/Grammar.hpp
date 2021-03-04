@@ -120,13 +120,13 @@ namespace grm {
         // if no location, put in the origin
         if (location.size() != neq.get< eq >())
           location.push_back( { 0.0, 0.0, 0.0 } );
-        else    // reference was not given, but location was, overwrite
-          location.back() = { 0.0, 0.0, 0.0 };
+        else    // reference was not given, but location was, error out
+          Message< Stack, ERROR, MsgKey::LOC_NOMESHREF >( stack, in );
         auto& orientation = mesh.template get< tag::orientation >();
         if (orientation.size() != neq.get< eq >())
           orientation.push_back( { 0.0, 0.0, 0.0 } );
-        else    // reference was not given, but orientation was, overwrite
-          orientation.back() = { 0.0, 0.0, 0.0 };
+        else    // reference was not given, but orientation was, error out
+          Message< Stack, ERROR, MsgKey::ORI_NOMESHREF >( stack, in );
       }
 
       // Ensure the number of depvars and the number of mesh references equal
