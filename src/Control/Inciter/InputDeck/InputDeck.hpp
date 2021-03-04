@@ -460,7 +460,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       }
     };
 
-    //! Function object to extract the mesh filenames assigned to solvers
+    //! Function object to extract the dependent variables assigned to solvers
     //! \details This is instantiated for all PDE types at compile time. It goes
     //!   through all configured solvers (equation system configuration blocks)
     //!   and builds a list of all dependent variables associated to all solvers
