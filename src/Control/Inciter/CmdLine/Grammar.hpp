@@ -70,13 +70,6 @@ namespace cmd {
                                pegtl::any,
                                tag::io, io_tag > {};
 
-  //! Match and store an input (filename)
-  struct input :
-         tk::grm::process_cmd< use, kw::input,
-                               tk::grm::Store_back< tag::io, tag::input >,
-                               pegtl::any,
-                               tag::io, tag::input > {};
-
   //! Match help on command-line parameters
   struct help :
          tk::grm::process_cmd_switch< use, kw::help,
@@ -147,7 +140,7 @@ namespace cmd {
                      version,
                      license,
                      io< kw::control, tag::control >,
-                     input,
+                     io< kw::input, tag::input >,
                      io< kw::output, tag::output >,
                      io< kw::diagnostics_cmd, tag::diag >,
                      io< kw::screen, tag::screen >,
