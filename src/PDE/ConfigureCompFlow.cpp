@@ -29,6 +29,7 @@
 #include "CompFlow/CGCompFlow.hpp"
 #include "CompFlow/DGCompFlow.hpp"
 #include "CompFlow/Problem.hpp"
+#include "InfoMesh.hpp"
 
 namespace inciter {
 
@@ -80,6 +81,8 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
+
+  infoMesh< eq >( c, nfo );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
     g_inputdeck.get< tag::param, eq, tag::physics >()[c] ) );

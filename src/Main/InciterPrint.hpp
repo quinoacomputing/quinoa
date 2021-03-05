@@ -143,6 +143,10 @@ class InciterPrint : public tk::Print {
       const std::vector< std::vector< std::pair< std::string, std::string > > >&
         info ) const;
 
+    //! Print out info on solver coupling
+    void couple( const std::vector< Transfer >& transfer,
+                 const std::vector< char >& depvar ) const;
+
     //! Print time integration header
     void inthead( const std::string& t, const std::string& name,
                   const std::string& legend, const std::string& head ) const;

@@ -61,7 +61,6 @@ class Sorter : public CBase_Sorter {
   public:
     //! Constructor
     explicit Sorter( std::size_t meshid,
-                     const std::vector< Transfer >& t,
                      const CProxy_Transporter& transporter,
                      const tk::CProxy_MeshWriter& meshwriter,
                      const tk::SorterCallback& cbs,
@@ -134,7 +133,6 @@ class Sorter : public CBase_Sorter {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_meshid;
-      p | m_transfer;
       p | m_host;
       p | m_meshwriter;
       p | m_cbs;
@@ -171,8 +169,6 @@ class Sorter : public CBase_Sorter {
   private:
     //! Mesh ID
     std::size_t m_meshid;
-    //! Solution transfer (coupling) information
-    std::vector< Transfer > m_transfer;
     //! Host proxy
     CProxy_Transporter m_host;
     //! MeshWriter proxy

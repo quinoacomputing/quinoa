@@ -2903,6 +2903,10 @@ struct depvar_info {
     "Select dependent variable (in a relevant block)"; }
   static std::string longDescription() { return
     R"(Dependent variable, e.g, in differential equations.)"; }
+  struct expect {
+    using type = char;
+    static std::string description() { return "character"; }
+  };
 };
 using depvar = keyword< depvar_info, TAOCPP_PEGTL_STRING("depvar") >;
 
@@ -3751,7 +3755,7 @@ struct position_info {
   static std::string shortDescription() { return
     "Introduce the (particle) position equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used in different ways: (1) To introduce a position ...
+    R"(This keyword is used to introduce a position ...
     end block, used to specify the configuration of a system of deterministic or
     stochastic differential equations, governing particle positions usually in
     conjunction with velocity model, e.g, the Langevin, model. Note that the
@@ -3777,7 +3781,7 @@ struct dissipation_info {
   static std::string shortDescription() { return
     "Introduce the (particle) dissipation equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used in different ways: (1) To introduce a dissipation
+    R"(This keyword is used to introduce a dissipation
     ... end block, used to specify the configuration of a system of
     deterministic or stochastic differential equations, governing a particle
     quantity that models the dissipation rate of turbulent kinetic energy, used
@@ -3805,7 +3809,7 @@ struct velocitysde_info {
   static std::string shortDescription() { return
     "Introduce the velocity equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used in different ways: (1) To introduce a velocity ...
+    R"(This keyword is used to introduce a velocity ...
     end block, used to specify the configuration of a system of stochastic
     differential equations (SDEs), governed by the Langevin model for the
     fluctuating velocity in homogeneous variable-density turbulence. For more
@@ -6655,6 +6659,87 @@ struct ale_info {
   }
 };
 using ale = keyword< ale_info, TAOCPP_PEGTL_STRING("ale") >;
+
+struct filename_info {
+  static std::string name() { return "filename"; }
+  static std::string shortDescription() { return "Set filename"; }
+  static std::string longDescription() { return
+    R"(Set filename, e.g., mesh filename for solver coupling.)";
+  }
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using filename = keyword< filename_info, TAOCPP_PEGTL_STRING("filename") >;
+
+struct location_info {
+  static std::string name() { return "location"; }
+  static std::string shortDescription() { return "Configure location"; }
+  static std::string longDescription() { return
+    R"(Configure location of a mesh relative to another, e.g., for solver
+       coupling.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using location = keyword< location_info, TAOCPP_PEGTL_STRING("location") >;
+
+struct orientation_info {
+  static std::string name() { return "orientation"; }
+  static std::string shortDescription() { return "Configure orientation"; }
+  static std::string longDescription() { return
+    R"(Configure orientation of a mesh relative to another, e.g., for solver
+       coupling.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using orientation =
+  keyword< orientation_info, TAOCPP_PEGTL_STRING("orientation") >;
+
+struct mesh_info {
+  static std::string name() { return "Mesh specification block"; }
+  static std::string shortDescription() { return
+    "Start configuration block assigning a mesh to a solver"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a mesh ... end block, used to
+    assign and configure a mesh to a solver.)";
+  }
+};
+using mesh = keyword< mesh_info, TAOCPP_PEGTL_STRING("mesh") >;
+
+struct reference_info {
+  static std::string name() { return "Mesh transformation"; }
+  static std::string shortDescription() { return
+    "Specify mesh transformation relative to a mesh of another solver"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a solver, given with a dependent
+       variable, configured upstream in the input file, whose mesh is used as a
+       reference to which the mesh being configured is transformed relative
+       to.)";
+  }
+  struct expect {
+    using type = char;
+    static std::string description() { return "character"; }
+  };
+};
+using reference = keyword< reference_info, TAOCPP_PEGTL_STRING("reference") >;
+
+struct couple_info {
+  static std::string name() { return "Couple solvers"; }
+  static std::string shortDescription() { return
+    "Specify coupling of solvers on different meshes"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a couple ... end block, used to
+       specify coupling of solvers operating on different meshes.)";
+  }
+};
+using couple = keyword< couple_info, TAOCPP_PEGTL_STRING("couple") >;
 
 struct nolimiter_info {
   static std::string name() { return "No limiter"; }
