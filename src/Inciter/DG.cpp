@@ -32,6 +32,7 @@
 #include "Around.hpp"
 #include "Integrate/Basis.hpp"
 #include "FieldOutput.hpp"
+#include "ChareStateCollector.hpp"
 
 namespace inciter {
 
@@ -44,6 +45,8 @@ static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
 } // inciter::
+
+extern tk::CProxy_ChareStateCollector stateProxy;
 
 using inciter::DG;
 
@@ -117,6 +120,11 @@ DG::DG( const CProxy_Discretization& disc,
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "DG" );
+
   usesAtSync = true;    // enable migration at AtSync
 
   // Enable SDAG wait for setting up chare boundary faces
@@ -348,6 +356,11 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 //! \param[in] infaces Unique set of faces we potentially share with fromch
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "comfac" );
+
   // Buffer up incoming data
   m_infaces[ fromch ] = infaces;
 
@@ -596,6 +609,11 @@ DG::reqGhost()
 // Receive requests for ghost data
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "reqGhost" );
+
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
   if (++m_ghostReq == Disc()->NodeCommMap().size()) {
@@ -610,6 +628,11 @@ DG::sendGhost()
 // Send all of our ghost data to fellow chares
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "sendGhost" );
+
   for (const auto& c : m_ghostData)
     thisProxy[ c.first ].comGhost( thisIndex, c.second );
 
@@ -640,6 +663,11 @@ DG::comGhost( int fromch, const GhostData& ghost )
 //! \param[in] ghost Ghost data, see Inciter/FaceData.h for the type
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "comGhost" );
+
   auto d = Disc();
   const auto& lid = d->Lid();
   auto& inpofa = m_fd.Inpofa();
@@ -1183,6 +1211,11 @@ DG::setup()
 // Set initial conditions, generate lhs, output mesh
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "setup" );
+
   auto d = Disc();
 
   // Basic error checking on sizes of element geometry data and connectivity

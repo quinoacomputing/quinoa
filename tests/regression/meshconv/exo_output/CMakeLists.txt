@@ -94,6 +94,20 @@ add_regression_test(stitchexo2exo ${MESHCONV_EXECUTABLE}
                     BIN_RESULT out.exo
                     BIN_DIFF_PROG_CONF exodiff_stitch.cfg)
 
+add_regression_test(arm2exo ${MESHCONV_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES test.1.arm test.crd
+                               test.default.tet4.bottom.tri3.ebc
+                               test.default.tet4.cnn
+                               test.default.tet4.inlet.tri3.ebc
+                               test.default.tet4.outlet.tri3.ebc
+                               test.default.tet4.sides.tri3.ebc
+                               test.default.tet4.top.tri3.ebc
+                    ARGS -i test.1.arm -o test.exo -v
+                    BIN_BASELINE test.exo.std
+                    BIN_RESULT test.exo
+                    BIN_DIFF_PROG_CONF exodiff.cfg)
+
 # With reordering
 
 add_regression_test(asc2reordexo ${MESHCONV_EXECUTABLE}

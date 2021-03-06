@@ -159,7 +159,7 @@ void dumpstate( const CmdLine& cmdline,
     if (error) state.erase( it );
 
     // pretty-print collected chare state (only if user requested it or
-    // quiescence was detected which is and indication of a logic error)
+    // quiescence was detected which is an indication of a logic error)
     if (cmdline.template get< tag::chare >() || error) {
       tk::Print print( cmdline.logname( def, nrestart ),
         cmdline.template get< tag::verbose >() ? std::cout : std::clog,
@@ -169,7 +169,7 @@ void dumpstate( const CmdLine& cmdline,
 
     // exit differently depending on how we were called
     if (error)
-      Throw( "Quiescence detected" );
+      Throw( "Quiescence or another error detected" );
     else
       CkExit(); // tell the Charm++ runtime system to exit with zero exit code
 
@@ -211,12 +211,12 @@ void finalize( const CmdLine& cmdline,
 
     // if quiescence detection is on or user requested it, collect chare state
     if ( cmdline.template get< tag::chare >() ||
-         cmdline.template get< tag::quiescence >() ) {
-      state.collect( /* error = */ false, dumpstateTarget );
+         cmdline.template get< tag::quiescence >() )
+    {
+      state.collect( /* error = */ not clean, dumpstateTarget );
+    } else { // tell the ++ runtime system to exit with the correct exit code
+      if (clean) CkExit(); else CkAbort("Failed");
     }
-
-    // tell the Charm++ runtime system to exit with the correct exit code
-    if (clean) CkExit(); else CkAbort("Failed");
 
   } catch (...) { tk::processExceptionCharm(); }
 }
