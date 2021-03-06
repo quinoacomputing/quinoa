@@ -27,7 +27,6 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::Sorter;
 
 Sorter::Sorter( std::size_t meshid,
-                const std::vector< Transfer >& t,
                 const CProxy_Transporter& transporter,
                 const tk::CProxy_MeshWriter& meshwriter,
                 const tk::SorterCallback& cbs,
@@ -40,7 +39,6 @@ Sorter::Sorter( std::size_t meshid,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 int nchare ) :
   m_meshid( meshid ),
-  m_transfer( t ),
   m_host( transporter ),
   m_meshwriter( meshwriter ),
   m_cbs( cbs ),
@@ -565,7 +563,7 @@ Sorter::createDiscWorkers()
   // insertion: last arg: PE chare is created on. See also Charm++ manual, Sec.
   // "Dynamic Insertion".
 
-  m_scheme[m_meshid].disc()[ thisIndex ].insert( m_meshid, m_transfer, disc,
+  m_scheme[m_meshid].disc()[ thisIndex ].insert( m_meshid, disc,
     m_scheme[m_meshid].fct(), m_scheme[m_meshid].conjugategradients(), m_host,
     m_meshwriter, m_ginpoel, m_coordmap, m_msum, m_nchare );
 

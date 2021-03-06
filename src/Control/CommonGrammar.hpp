@@ -83,6 +83,10 @@ namespace grm {
     NOTSELECTED,        //!< Option not selected upstream
     EXISTS,             //!< Variable already used
     NODEPVAR,           //!< Dependent variable has not been specified
+    DEPVAR_AS_MESHREF,  //!< Depvar upstream of meshref has not been specified
+    LOC_NOMESHREF,      //!< Mesh location without reference mesh
+    ORI_NOMESHREF,      //!< Mesh orientation without reference mesh
+    MULTIMESH,          //!< If meshes are assigned, all solvers must have one
     NOSOLVE,            //!< Dependent variable to solve for has not been spec'd
     NOSUCHDEPVAR,       //!< Dependent variable has not been previously selected
     NOSUCHCOMPONENT,    //!< No such scalar component
@@ -212,6 +216,22 @@ namespace grm {
     { MsgKey::NODEPVAR, "Dependent variable not specified within the block "
       "preceding this position. This is mandatory for the preceding block. Use "
       "the keyword 'depvar' to specify the dependent variable." },
+    { MsgKey::DEPVAR_AS_MESHREF, "Error in the preceding solver-configuration "
+       "block. Dependent variable, attempted to be used as a mesh reference "
+       "variable (to couple to another solver) not specified in a solver "
+       "upstream. To be able to couple a solver to another one, a dependent "
+       "variable of a solver, defined upstream in the input file, can be "
+       "selected. This also means that the current depvar cannot be used as "
+       "the mesh reference variable." },
+    { MsgKey::LOC_NOMESHREF, "Location was configured without reference mesh. "
+       "This is insufficient: which mesh the location should be used with? "
+       "Either remove the location or add a reference mesh." },
+    { MsgKey::ORI_NOMESHREF, "Orientation was configured without reference "
+       "mesh. This is insufficient: which mesh the orientation should be used "
+       "with? Either remove the orientation or add a reference mesh." },
+    { MsgKey::MULTIMESH, "If a solver is assigned a mesh in the input/control "
+       "file, all solvers must have a mesh assigned. If no solver has a mesh "
+       "assigned, the (single) mesh must be specified on the command line." },
     { MsgKey::NOSOLVE, "Dependent variable to solve for not specified within "
       "the block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'solve' to specify the type of the dependent "
@@ -1511,6 +1531,13 @@ namespace grm {
                                           unknown< ERROR, MsgKey::QUOTED > >,
                               insert >,
                          pegtl::one< rbound > > {};
+
+  //! Read and store a filename between quotes
+  template< template< class > class use, class tag, class... tags >
+  struct filename :
+          pegtl::if_must<
+            readkw< typename use< kw::filename >::pegtl_string >,
+            quoted< Store_back< tag, tags... > > > {};
 
   //! \brief Process 'keyword' and if matches, parse following token (expecting
   //!   'kw_type' and call 'insert' action on it

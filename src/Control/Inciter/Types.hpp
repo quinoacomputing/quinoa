@@ -34,6 +34,7 @@
 #include "Options/Error.hpp"
 #include "PUPUtil.hpp"
 #include "OutVar.hpp"
+#include "Transfer.hpp"
 
 namespace inciter {
 namespace ctr {
@@ -145,8 +146,7 @@ using history = tk::TaggedTuple< brigand::list<
 using ios = tk::TaggedTuple< brigand::list<
     tag::nrestart,  int                             //!< Number of restarts
   , tag::control,   kw::control::info::expect::type //!< Control filename
-  //! Input filenames
-  , tag::input,     std::vector< kw::input::info::expect::type >
+  , tag::input,     kw::input::info::expect::type   //!< Input filename
   , tag::output,    kw::output::info::expect::type  //!< Output filename
     //! Refined output (output field data on a refined mesh)
   , tag::refined,   kw::refined::info::expect::type
@@ -232,9 +232,26 @@ using bc = tk::TaggedTuple< brigand::list<
                               kw::sideset::info::expect::type > >
 > >;
 
+//! Solver coupling
+using couple = tk::TaggedTuple< brigand::list<
+    tag::transfer,  std::vector< Transfer >     //!< List of mesh transfers
+> >;
+
+//! Mesh assignment and configuration
+using mesh = tk::TaggedTuple< brigand::list<
+    tag::id,          std::vector< std::size_t >
+  , tag::filename,    std::vector< std::string >
+  , tag::location,    std::vector<
+                        std::vector< kw::location::info::expect::type > >
+  , tag::orientation, std::vector<
+                        std::vector< kw::orientation::info::expect::type > >
+  , tag::reference,   std::vector< char >
+> >;
+
 //! Transport equation parameters storage
 using TransportPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
+  , tag::mesh,          mesh
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::diffusivity,   std::vector< std::vector<
@@ -270,6 +287,7 @@ using SkipBCParameters = tk::TaggedTuple< brigand::list<
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
+  , tag::mesh,          mesh
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
@@ -331,6 +349,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
 //! Compressible flow equation parameters storage
 using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
+  , tag::mesh,          mesh
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
