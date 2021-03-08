@@ -400,6 +400,7 @@ add_regression_test(compflow_euler_vorticalflow_dgp1_u0.90 ${INCITER_EXECUTABLE}
                     INPUTFILES vortical_flow_dgp1.q unitcube_1k.exo
                                diag_dgp1.std
                     ARGS -c vortical_flow_dgp1.q -i unitcube_1k.exo -v -u 0.90
+                         -S
                     TEXT_BASELINE diag_dgp1.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF vortical_flow_diag.ndiff.cfg
