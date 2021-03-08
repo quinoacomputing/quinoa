@@ -102,6 +102,25 @@ class MultiMat {
       return nmat;
     }
 
+    //! Assign number of DOFs per equation in the PDE system
+    //! \param[in,out] numEqDof Array storing number of Dofs for each PDE
+    //!   equation
+    void numEquationDofs(std::vector< std::size_t >& numEqDof) const
+    {
+      // all equation-dofs initialized to ndofs first
+      for (std::size_t i=0; i<m_ncomp; ++i) {
+        numEqDof.push_back(g_inputdeck.get< tag::discr, tag::ndof >());
+      }
+
+      // volume fractions are P0Pm (ndof = 1) if interface reconstruction is used
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >
+          ()[m_system] > 0) numEqDof[volfracIdx(nmat, k)] = 1;
+      }
+    }
+
     //! Determine elements that lie inside the user-defined IC box
     void IcBoxElems( const tk::Fields&,
       std::size_t,
@@ -122,19 +141,10 @@ class MultiMat {
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      const std::unordered_set< std::size_t >& /*inbox*/,
-                     std::vector< std::size_t >& numEqDof,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
     {
-      numEqDof.resize(m_ncomp, g_inputdeck.get< tag::discr, tag::ndof >());
-      const auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-      // volume fractions are P0Pm (ndof = 1) if interface reconstruction is used
-      for (std::size_t k=0; k<nmat; ++k)
-        if (g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >
-          ()[m_system] > 0) numEqDof[volfracIdx(nmat, k)] = 1;
-
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
     }

@@ -126,6 +126,11 @@ DG::DG( const CProxy_Discretization& disc,
     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
                                         "DG" );
 
+  // assign number of dofs for each equation in all pde systems
+  for (const auto& eq : g_dgpde) {
+    eq.numEquationDofs(m_numEqDof);
+  }
+
   usesAtSync = true;    // enable migration at AtSync
 
   // Enable SDAG wait for setting up chare boundary faces
@@ -1259,8 +1264,8 @@ DG::box( tk::real v )
   // Set initial conditions for all PDEs
   for (const auto& eq : g_dgpde)
   {
-    eq.initialize( m_lhs, m_inpoel, m_coord, m_boxelems, m_numEqDof, m_u,
-                   d->T(), m_fd.Esuel().size()/4 );
+    eq.initialize( m_lhs, m_inpoel, m_coord, m_boxelems, m_u, d->T(),
+      m_fd.Esuel().size()/4 );
     eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
   }
 

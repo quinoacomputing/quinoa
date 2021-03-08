@@ -99,6 +99,17 @@ class CompFlow {
       return 0;
     }
 
+    //! Assign number of DOFs per equation in the PDE system
+    //! \param[in,out] numEqDof Array storing number of Dofs for each PDE
+    //!   equation
+    void numEquationDofs(std::vector< std::size_t >& numEqDof) const
+    {
+      // all equation-dofs initialized to ndof
+      for (std::size_t i=0; i<m_ncomp; ++i) {
+        numEqDof.push_back(g_inputdeck.get< tag::discr, tag::ndof >());
+      }
+    }
+
     //! Determine elements that lie inside the user-defined IC box
     //! \param[in] geoElem Element geometry array
     //! \param[in] nielem Number of internal elements
@@ -135,8 +146,6 @@ class CompFlow {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] inbox List of elements at which box user ICs are set
-    //! \param[in,out] numEqDof Array storing number of Dofs for each PDE
-    //!   equation
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
@@ -144,12 +153,10 @@ class CompFlow {
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      const std::unordered_set< std::size_t >& inbox,
-                     std::vector< std::size_t >& numEqDof,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
     {
-      numEqDof.resize(m_ncomp, g_inputdeck.get< tag::discr, tag::ndof >());
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 

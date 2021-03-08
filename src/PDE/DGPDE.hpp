@@ -129,6 +129,10 @@ class DGPDE {
     std::size_t nmat() const
     { return self->nmat(); }
 
+    //! Public interface to find Dofs for each equation in pde system
+    void numEquationDofs(std::vector< std::size_t >& numEqDof) const
+    { return self->numEquationDofs(numEqDof); }
+
     //! Public interface to determine elements that lie inside the IC box
     void IcBoxElems( const tk::Fields& geoElem,
       std::size_t nielem,
@@ -140,11 +144,10 @@ class DGPDE {
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
                      const std::unordered_set< std::size_t >& inbox,
-                     std::vector< std::size_t >& numEqDof,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
-    { self->initialize( L, inpoel, coord, inbox, numEqDof, unk, t, nielem ); }
+    { self->initialize( L, inpoel, coord, inbox, unk, t, nielem ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
@@ -281,6 +284,7 @@ class DGPDE {
       virtual Concept* copy() const = 0;
       virtual std::size_t nprim() const = 0;
       virtual std::size_t nmat() const = 0;
+      virtual void numEquationDofs(std::vector< std::size_t >&) const = 0;
       virtual void IcBoxElems( const tk::Fields&,
         std::size_t,
         std::unordered_set< std::size_t >& ) const = 0;
@@ -288,7 +292,6 @@ class DGPDE {
                                const std::vector< std::size_t >&,
                                const tk::UnsMesh::Coords&,
                                const std::unordered_set< std::size_t >&,
-                               std::vector< std::size_t >&,
                                tk::Fields&,
                                tk::real,
                                const std::size_t nielem ) const = 0;
@@ -372,6 +375,8 @@ class DGPDE {
       { return data.nprim(); }
       std::size_t nmat() const override
       { return data.nmat(); }
+      void numEquationDofs(std::vector< std::size_t >& numEqDof) const override
+      { data.numEquationDofs(numEqDof); }
       void IcBoxElems( const tk::Fields& geoElem,
         std::size_t nielem,
         std::unordered_set< std::size_t >& inbox )
@@ -380,12 +385,11 @@ class DGPDE {
                        const std::vector< std::size_t >& inpoel,
                        const tk::UnsMesh::Coords& coord,
                        const std::unordered_set< std::size_t >& inbox,
-                       std::vector< std::size_t >& numEqDof,
                        tk::Fields& unk,
                        tk::real t,
                        const std::size_t nielem )
-      const override { data.initialize( L, inpoel, coord, inbox, numEqDof, unk,
-        t, nielem ); }
+      const override { data.initialize( L, inpoel, coord, inbox, unk, t,
+        nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void updatePrimitives( const tk::Fields& unk,
