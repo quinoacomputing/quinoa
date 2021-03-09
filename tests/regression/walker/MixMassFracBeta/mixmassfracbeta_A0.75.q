@@ -16,7 +16,7 @@ walker
   ttyi  1      # TTY output interval
 
   rngs
-    rngsse_mrg32k3a end
+    r123_threefry end
 #    mkl_mcg59
 #      beta_method cja
 #    end
@@ -240,7 +240,7 @@ walker
     #S          2.0 1.0 0.0  0.0  0.0 end
     S          1.0 1.0 4.0  0.0  0.0 end
     #rng mkl_mcg59
-    rng rngsse_mrg32k3a
+    rng r123_threefry
 
     #rho2 1.105263158 1.105263158 1.105263158 1.105263158 1.105263158 end # A = 0.05
     #rho2 3.0 3.0 3.0 3.0 3.0 end # A = 0.5
