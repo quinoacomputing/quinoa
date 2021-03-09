@@ -132,7 +132,6 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
 //    //! \param[in,out] inbox List of elements at which box user ICs are set
-    //! \param[in,out] numEqDof Array storing number of Dofs for each PDE
     //!   equation
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
