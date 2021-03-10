@@ -98,6 +98,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_diag(),
   m_stage( 0 ),
   m_ndof(),
+  m_numEqDof(),
   m_bid(),
   m_uc(),
   m_pc(),
@@ -124,6 +125,11 @@ DG::DG( const CProxy_Discretization& disc,
       g_inputdeck.get< tag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
                                         "DG" );
+
+  // assign number of dofs for each equation in all pde systems
+  for (const auto& eq : g_dgpde) {
+    eq.numEquationDofs(m_numEqDof);
+  }
 
   usesAtSync = true;    // enable migration at AtSync
 
@@ -1259,7 +1265,7 @@ DG::box( tk::real v )
   for (const auto& eq : g_dgpde)
   {
     eq.initialize( m_lhs, m_inpoel, m_coord, m_boxelems, m_u, d->T(),
-                   m_fd.Esuel().size()/4 );
+      m_fd.Esuel().size()/4 );
     eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
   }
 
@@ -1684,11 +1690,9 @@ DG::reco()
     auto d = Disc();
 
     // Reconstruct second-order solution and primitive quantities
-    // if P0P1
-    if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1)
-      for (const auto& eq : g_dgpde)
-        eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel,
-                        m_coord, m_u, m_p, m_volfracExtr );
+    for (const auto& eq : g_dgpde)
+      eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel,
+                      m_coord, m_u, m_p, m_volfracExtr );
   }
 
   // Send reconstructed solution to neighboring chares
@@ -2040,7 +2044,7 @@ DG::solve( tk::real newdt )
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<m_nunk; ++e)
     for(std::size_t c=0; c<neq; ++c)
-      for (std::size_t k=0; k<ndof; ++k)
+      for (std::size_t k=0; k<m_numEqDof[c]; ++k)
       {
         auto rmark = c*rdof+k;
         auto mark = c*ndof+k;

@@ -99,6 +99,17 @@ class CompFlow {
       return 0;
     }
 
+    //! Assign number of DOFs per equation in the PDE system
+    //! \param[in,out] numEqDof Array storing number of Dofs for each PDE
+    //!   equation
+    void numEquationDofs(std::vector< std::size_t >& numEqDof) const
+    {
+      // all equation-dofs initialized to ndof
+      for (std::size_t i=0; i<m_ncomp; ++i) {
+        numEqDof.push_back(g_inputdeck.get< tag::discr, tag::ndof >());
+      }
+    }
+
     //! Determine elements that lie inside the user-defined IC box
     //! \param[in] geoElem Element geometry array
     //! \param[in] nielem Number of internal elements
@@ -226,40 +237,48 @@ class CompFlow {
                       tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto nelem = fd.Esuel().size()/4;
 
-      Assert( U.nprop() == rdof*5, "Number of components in solution "
-              "vector must equal "+ std::to_string(rdof*5) );
-      Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
-              "Mismatch in inpofa size" );
+      // do reconstruction only if P0P1
+      if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1) {
+        const auto nelem = fd.Esuel().size()/4;
 
-      // allocate and initialize matrix and vector for reconstruction
-      std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-        lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
-                          {{0.0, 0.0, 0.0}},
-                          {{0.0, 0.0, 0.0}} }} );
-      std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhs_ls( nelem, std::vector< std::array< tk::real, 3 > >
-          ( m_ncomp,
-            {{ 0.0, 0.0, 0.0 }} ) );
+        Assert( U.nprop() == rdof*5, "Number of components in solution "
+                "vector must equal "+ std::to_string(rdof*5) );
+        Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
+                "Mismatch in inpofa size" );
 
-      // reconstruct x,y,z-derivatives of unknowns
-      // 0. get lhs matrix, which is only geometry dependent
-      tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
+        // allocate and initialize matrix and vector for reconstruction
+        std::vector< std::array< std::array< tk::real, 3 >, 3 > >
+          lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
+                            {{0.0, 0.0, 0.0}},
+                            {{0.0, 0.0, 0.0}} }} );
+        std::vector< std::vector< std::array< tk::real, 3 > > >
+          rhs_ls( nelem, std::vector< std::array< tk::real, 3 > >
+            ( m_ncomp,
+              {{ 0.0, 0.0, 0.0 }} ) );
 
-      // 1. internal face contributions
-      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U, rhs_ls );
+        // reconstruct x,y,z-derivatives of unknowns
+        // 0. get lhs matrix, which is only geometry dependent
+        tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
-      // 2. boundary face contributions
-      for (const auto& b : m_bc)
-        tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
-          b.first, fd, geoFace, geoElem, t, b.second, P, U, rhs_ls );
+        // 1. internal face contributions
+        tk::intLeastSq_P0P1( m_offset, rdof, fd, geoElem, U, rhs_ls,
+          {0, m_ncomp-1} );
 
-      // 3. solve 3x3 least-squares system
-      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
+        // 2. boundary face contributions
+        for (const auto& b : m_bc)
+          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
+            b.first, fd, geoFace, geoElem, t, b.second, P, U, rhs_ls,
+            {0, m_ncomp-1} );
 
-      // 4. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
+        // 3. solve 3x3 least-squares system
+        tk::solveLeastSq_P0P1( m_offset, rdof, lhs_ls, rhs_ls, U,
+          {0, m_ncomp-1} );
+
+        // 4. transform reconstructed derivatives to Dubiner dofs
+        tk::transform_P0P1( m_offset, rdof, nelem, inpoel, coord, U,
+          {0, m_ncomp-1} );
+      }
     }
 
     //! Limit second-order solution
@@ -368,8 +387,8 @@ class CompFlow {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, fd.Esuel().size()/4,
-                    inpoel, coord, geoElem, flux, velfn, U, ndofel, R );
+        tk::volInt( m_system, 1, m_offset, t, ndof, rdof, fd.Esuel().size()/4,
+                    inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)

@@ -102,6 +102,25 @@ class MultiMat {
       return nmat;
     }
 
+    //! Assign number of DOFs per equation in the PDE system
+    //! \param[in,out] numEqDof Array storing number of Dofs for each PDE
+    //!   equation
+    void numEquationDofs(std::vector< std::size_t >& numEqDof) const
+    {
+      // all equation-dofs initialized to ndofs first
+      for (std::size_t i=0; i<m_ncomp; ++i) {
+        numEqDof.push_back(g_inputdeck.get< tag::discr, tag::ndof >());
+      }
+
+      // volume fractions are P0Pm (ndof = 1) if interface reconstruction is used
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >
+          ()[m_system] > 0) numEqDof[volfracIdx(nmat, k)] = 1;
+      }
+    }
+
     //! Determine elements that lie inside the user-defined IC box
     void IcBoxElems( const tk::Fields&,
       std::size_t,
@@ -113,6 +132,7 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
 //    //! \param[in,out] inbox List of elements at which box user ICs are set
+    //!   equation
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
@@ -536,90 +556,128 @@ class MultiMat {
                       tk::Fields& VolFracMax ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto nelem = fd.Esuel().size()/4;
-      const auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
       const auto intsharp =
         g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >()[m_system];
 
-      Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
-              "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
-              "Mismatch in inpofa size" );
+      bool is_p0p1(false);
+      if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1)
+        is_p0p1 = true;
 
-      // allocate and initialize matrix and vector for reconstruction:
-      // lhs_ls is the left-hand side matrix for solving the least-squares
-      // system using the normal equation approach, for each mesh element.
-      // It is indexed as follows:
-      // The first index is the element id;
-      // the second index is the row id of the 3-by-3 matrix;
-      // the third index is the column id of the 3-by-3 matrix.
-      std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-        lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
-                          {{0.0, 0.0, 0.0}},
-                          {{0.0, 0.0, 0.0}} }} );
-      // rhs_ls is the right-hand side vector for solving the least-squares
-      // system using the normal equation approach, for each element.
-      // It is indexed as follows:
-      // The first index is the element id;
-      // the second index is the scalar equation which is being reconstructed;
-      // the third index is the row id of the rhs vector.
-      // two rhs_ls vectors are needed for reconstructing conserved and
-      // primitive quantites separately
-      std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhsu_ls( nelem, std::vector< std::array< tk::real, 3 > >
-          ( m_ncomp,
-            {{ 0.0, 0.0, 0.0 }} ) );
-      std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhsp_ls( nelem, std::vector< std::array< tk::real, 3 > >
-          ( nprim(),
-            {{ 0.0, 0.0, 0.0 }} ) );
+      // do reconstruction only if P0P1 or if interface reconstruction is active
+      if (is_p0p1 || (intsharp > 0)) {
+        const auto nelem = fd.Esuel().size()/4;
+        const auto nmat =
+          g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-      // reconstruct x,y,z-derivatives of unknowns. For multimat, conserved and
-      // primitive quantities are reconstructed separately.
-      // 0. get lhs matrix, which is only geometry dependent
-      tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
+        Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
+                "vector must equal "+ std::to_string(rdof*m_ncomp) );
+        Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
+                "Mismatch in inpofa size" );
 
-      // 1. internal face contributions
-      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U, rhsu_ls );
-      tk::intLeastSq_P0P1( nprim(), m_offset, rdof, fd, geoElem, P, rhsp_ls );
+        // allocate and initialize matrix and vector for reconstruction:
+        // lhs_ls is the left-hand side matrix for solving the least-squares
+        // system using the normal equation approach, for each mesh element.
+        // It is indexed as follows:
+        // The first index is the element id;
+        // the second index is the row id of the 3-by-3 matrix;
+        // the third index is the column id of the 3-by-3 matrix.
+        std::vector< std::array< std::array< tk::real, 3 >, 3 > >
+          lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
+                            {{0.0, 0.0, 0.0}},
+                            {{0.0, 0.0, 0.0}} }} );
 
-      // 2. boundary face contributions
-      for (const auto& b : m_bc)
-      {
-        tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
-          b.first, fd, geoFace, geoElem, t, b.second, P, U, rhsu_ls, nprim() );
-        tk::bndLeastSqPrimitiveVar_P0P1( m_system, nprim(), m_offset, rdof,
-          b.first, fd, geoFace, geoElem, t, b.second, P, U, rhsp_ls, m_ncomp );
-      }
+        //----- reconstruction of conserved quantities -----
+        //--------------------------------------------------
+        // specify how many variables need to be reconstructed
+        std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
+        if (!is_p0p1)
+          varRange = {{volfracIdx(nmat, 0), volfracIdx(nmat, nmat-1)}};
 
-      // 3. solve 3x3 least-squares system
-      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhsu_ls, U );
-      tk::solveLeastSq_P0P1( nprim(), m_offset, rdof, lhs_ls, rhsp_ls, P );
+        // rhs_ls is the right-hand side vector for solving the least-squares
+        // system using the normal equation approach, for each element.
+        // It is indexed as follows:
+        // The first index is the element id;
+        // the second index is the scalar equation which is being reconstructed;
+        // the third index is the row id of the rhs vector.
+        // two rhs_ls vectors are needed for reconstructing conserved and
+        // primitive quantites separately
+        std::vector< std::vector< std::array< tk::real, 3 > > >
+          rhsu_ls( nelem, std::vector< std::array< tk::real, 3 > >
+            ( varRange[1]-varRange[0]+1,
+              {{ 0.0, 0.0, 0.0 }} ) );
 
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        std::vector< std::size_t > matInt(nmat, 0);
-        std::vector< tk::real > alAvg(nmat, 0.0);
-        for (std::size_t k=0; k<nmat; ++k)
-          alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
-        auto intInd = interfaceIndicator(nmat, alAvg, matInt);
-        if ((intsharp > 0) && intInd)
+        // reconstruct x,y,z-derivatives of unknowns.
+        // 0. get lhs matrix, which is only geometry dependent
+        tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
+
+        // 1. internal face contributions
+        tk::intLeastSq_P0P1(m_offset, rdof, fd, geoElem, U, rhsu_ls, varRange);
+
+        // 2. boundary face contributions
+        for (const auto& b : m_bc)
         {
-          // Reconstruct second-order dofs of volume-fractions in Taylor space
-          // using nodal-stencils, for a good interface-normal estimate
-          tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
-            U, {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)} );
+          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
+            b.first, fd, geoFace, geoElem, t, b.second, P, U, rhsu_ls, varRange,
+            nprim() );
+        }
+
+        // 3. solve 3x3 least-squares system
+        tk::solveLeastSq_P0P1(m_offset, rdof, lhs_ls, rhsu_ls, U, varRange);
+
+        for (std::size_t e=0; e<nelem; ++e)
+        {
+          std::vector< std::size_t > matInt(nmat, 0);
+          std::vector< tk::real > alAvg(nmat, 0.0);
+          for (std::size_t k=0; k<nmat; ++k)
+            alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
+          auto intInd = interfaceIndicator(nmat, alAvg, matInt);
+          if ((intsharp > 0) && intInd)
+          {
+            // Reconstruct second-order dofs of volume-fractions in Taylor space
+            // using nodal-stencils, for a good interface-normal estimate
+            tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+              U, varRange );
+          }
+        }
+
+        // 4. transform reconstructed derivatives to Dubiner dofs
+        tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, U, varRange);
+
+        // 5. Find the maximum volume fraction in the neighborhood of each cell
+        tk::findMaxVolfrac( m_offset, rdof, nmat, nelem, fd.Esuel(), esup, inpoel,
+          U, VolFracMax );
+
+        //----- reconstruction of primitive quantities -----
+        //--------------------------------------------------
+        // For multimat, conserved and primitive quantities are reconstructed
+        // separately.
+        if (is_p0p1) {
+          std::vector< std::vector< std::array< tk::real, 3 > > >
+            rhsp_ls( nelem, std::vector< std::array< tk::real, 3 > >
+              ( nprim(),
+                {{ 0.0, 0.0, 0.0 }} ) );
+
+          // 1.
+          tk::intLeastSq_P0P1(m_offset, rdof, fd, geoElem, P, rhsp_ls,
+            {0, nprim()-1});
+
+          // 2.
+          for (const auto& b : m_bc)
+          {
+            tk::bndLeastSqPrimitiveVar_P0P1(m_system, nprim(), m_offset, rdof,
+              b.first, fd, geoFace, geoElem, t, b.second, P, U, rhsp_ls,
+              m_ncomp);
+          }
+
+          // 3.
+          tk::solveLeastSq_P0P1(m_offset, rdof, lhs_ls, rhsp_ls, P,
+            {0, nprim()-1});
+
+          // 4.
+          tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, P,
+            {0, nprim()-1});
         }
       }
-
-      // 4. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
-      tk::transform_P0P1( nprim(), m_offset, rdof, nelem, inpoel, coord, P );
-
-      // 5. Find the maximum volume fraction in the neighborhood of each cell
-      tk::findMaxVolfrac( m_offset, rdof, nmat, nelem, fd.Esuel(), esup, inpoel,
-        U, VolFracMax );
     }
 
     //! Limit second-order solution, and primitive quantities separately
@@ -750,8 +808,8 @@ class MultiMat {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, nelem, inpoel, coord,
-                    geoElem, flux, velfn, U, ndofel, R );
+        tk::volInt( m_system, nmat, m_offset, t, ndof, rdof, nelem, inpoel,
+                    coord, geoElem, flux, velfn, U, P, ndofel, R, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
@@ -774,14 +832,16 @@ class MultiMat {
 
       std::vector< std::vector< tk::real > >
         vriempoly( U.nunk(), std::vector<tk::real>(12,0.0) );
-      // get the polynomial solution of Riemann velocity at the interface
-      if(ndof > 1)
+      // get the polynomial solution of Riemann velocity at the interface.
+      // not required if interface reconstruction is used, since then volfrac
+      // equation is discretized using p0p1.
+      if (ndof > 1 && intsharp == 0)
         vriempoly = tk::solvevriem(nelem, vriem, riemannLoc);
 
       // compute volume integrals of non-conservative terms
       tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
-                              vriempoly, ndofel, R );
+                              vriempoly, ndofel, R, intsharp );
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
@@ -789,7 +849,8 @@ class MultiMat {
         const auto ct = g_inputdeck.get< tag::param, tag::multimat,
                                          tag::prelax_timescale >()[m_system];
         tk::pressureRelaxationInt( m_system, nmat, m_offset, ndof, rdof, nelem,
-                                   geoElem, U, P, ndofel, ct, R );
+                                   inpoel, coord, geoElem, U, P, ndofel, ct, R,
+                                   intsharp );
       }
     }
 
@@ -1065,7 +1126,7 @@ class MultiMat {
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
-      Assert( ugp.size() == ncomp, "Size mismatch" );
+      //Assert( ugp.size() == ncomp, "Size mismatch" );
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
@@ -1086,7 +1147,7 @@ class MultiMat {
         p += apk[k];
       }
 
-      std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
+      std::vector< std::array< tk::real, 3 > > fl( ncomp );
 
       // conservative part of momentum flux
       fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;

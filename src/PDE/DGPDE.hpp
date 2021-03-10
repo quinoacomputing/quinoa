@@ -129,6 +129,10 @@ class DGPDE {
     std::size_t nmat() const
     { return self->nmat(); }
 
+    //! Public interface to find Dofs for each equation in pde system
+    void numEquationDofs(std::vector< std::size_t >& numEqDof) const
+    { return self->numEquationDofs(numEqDof); }
+
     //! Public interface to determine elements that lie inside the IC box
     void IcBoxElems( const tk::Fields& geoElem,
       std::size_t nielem,
@@ -177,7 +181,8 @@ class DGPDE {
                       tk::Fields& P,
                       tk::Fields& VolFracMax ) const
     {
-      self->reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P, VolFracMax );
+      self->reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P,
+        VolFracMax );
     }
 
     //! Public interface to limiting the second-order solution
@@ -279,6 +284,7 @@ class DGPDE {
       virtual Concept* copy() const = 0;
       virtual std::size_t nprim() const = 0;
       virtual std::size_t nmat() const = 0;
+      virtual void numEquationDofs(std::vector< std::size_t >&) const = 0;
       virtual void IcBoxElems( const tk::Fields&,
         std::size_t,
         std::unordered_set< std::size_t >& ) const = 0;
@@ -369,6 +375,8 @@ class DGPDE {
       { return data.nprim(); }
       std::size_t nmat() const override
       { return data.nmat(); }
+      void numEquationDofs(std::vector< std::size_t >& numEqDof) const override
+      { data.numEquationDofs(numEqDof); }
       void IcBoxElems( const tk::Fields& geoElem,
         std::size_t nielem,
         std::unordered_set< std::size_t >& inbox )
@@ -407,7 +415,8 @@ class DGPDE {
                         tk::Fields& P,
                         tk::Fields& VolFracMax ) const override
       {
-        data.reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P, VolFracMax );
+        data.reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P,
+          VolFracMax );
       }
       void limit( tk::real t,
                   const tk::Fields& geoFace,

@@ -28,10 +28,11 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! Compute volume integrals for DG
 void
 volInt( ncomp_t system,
-        ncomp_t ncomp,
+        std::size_t nmat,
         ncomp_t offset,
         real t,
         const std::size_t ndof,
+        const std::size_t rdof,
         const std::size_t nelem,
         const std::vector< std::size_t >& inpoel,
         const UnsMesh::Coords& coord,
@@ -39,8 +40,10 @@ volInt( ncomp_t system,
         const FluxFn& flux,
         const VelFn& vel,
         const Fields& U,
+        const Fields& P,
         const std::vector< std::size_t >& ndofel,
-        Fields& R );
+        Fields& R,
+        int intsharp=0 );
 
 //! Update the rhs by adding the source term integrals
 void

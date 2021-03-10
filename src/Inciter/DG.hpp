@@ -239,6 +239,7 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_stage;
       p | m_ndof;
+      p | m_numEqDof;
       p | m_bid;
       p | m_uc;
       p | m_pc;
@@ -350,6 +351,8 @@ class DG : public CBase_DG {
     std::size_t m_stage;
     //! Vector of local number of degrees of freedom for each element
     std::vector< std::size_t > m_ndof;
+    //! Vector of number of degrees of freedom for each PDE equation/component
+    std::vector< std::size_t > m_numEqDof;
     //! Map local ghost tet ids (value) and zero-based boundary ids (key)
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Solution receive buffers for ghosts only

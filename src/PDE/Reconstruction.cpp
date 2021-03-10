@@ -112,23 +112,23 @@ tk::lhsLeastSq_P0P1(
 
 void
 tk::intLeastSq_P0P1(
-  ncomp_t ncomp,
   ncomp_t offset,
   const std::size_t rdof,
   const inciter::FaceData& fd,
   const Fields& geoElem,
   const Fields& W,
-  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls )
+  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
+  const std::array< std::size_t, 2 >& varRange )
 // *****************************************************************************
 //  \brief Compute internal surface contributions to rhs vector of the
 //    least-squares reconstruction
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoElem Element geometry array
 //! \param[in] W Solution vector to be reconstructed at recent time step
 //! \param[in,out] rhs_ls RHS reconstruction vector
+//! \param[in] varRange Range of indices in W, that need to be reconstructed
 //! \details This function computing the internal face contributions to the rhs
 //!   vector for reconstruction, is common for primitive and conserved
 //!   quantities. If `W` == `U`, compute internal face contributions for the
@@ -160,7 +160,7 @@ tk::intLeastSq_P0P1(
     for (std::size_t idir=0; idir<3; ++idir)
     {
       // rhs vector
-      for (ncomp_t c=0; c<ncomp; ++c)
+      for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
       {
         auto mark = c*rdof;
         rhs_ls[el][c][idir] +=
@@ -188,6 +188,7 @@ tk::bndLeastSqConservedVar_P0P1(
   const Fields& P,
   const Fields& U,
   std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
+  const std::array< std::size_t, 2 >& varRange,
   std::size_t nprim )
 // *****************************************************************************
 //  \brief Compute boundary surface contributions to rhs vector of the
@@ -206,6 +207,7 @@ tk::bndLeastSqConservedVar_P0P1(
 //! \param[in] P Primitive vector to be reconstructed at recent time step
 //! \param[in] U Solution vector to be reconstructed at recent time step
 //! \param[in,out] rhs_ls RHS reconstruction vector
+//! \param[in] varRange Range of indices in W, that need to be reconstructed
 //! \param[in] nprim This is the number of primitive quantities stored for this
 //!   PDE system. This is necessary to extend the state vector to the right
 //!   size, so that correct boundary conditions are obtained.
@@ -257,7 +259,7 @@ tk::bndLeastSqConservedVar_P0P1(
         for (std::size_t idir=0; idir<3; ++idir)
         {
           // rhs vector
-          for (ncomp_t c=0; c<ncomp; ++c)
+          for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
             rhs_ls[el][c][idir] +=
               wdeltax[idir] * (ustate[1][c]-ustate[0][c]);
         }
@@ -366,20 +368,20 @@ tk::bndLeastSqPrimitiveVar_P0P1(
 
 void
 tk::solveLeastSq_P0P1(
-  ncomp_t ncomp,
   ncomp_t offset,
   const std::size_t rdof,
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
-  Fields& W )
+  Fields& W,
+  const std::array< std::size_t, 2 >& varRange )
 // *****************************************************************************
 //  Solve the 3x3 linear system for least-squares reconstruction
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] lhs LHS reconstruction matrix
 //! \param[in] rhs RHS reconstruction vector
 //! \param[in,out] W Solution vector to be reconstructed at recent time step
+//! \param[in] varRange Range of indices in W, that need to be reconstructed
 //! \details Solves the 3x3 linear system for each element, individually. For
 //!   systems that require reconstructions of primitive quantities, this should
 //!   be called twice, once with the argument 'W' as U (conserved), and again
@@ -390,7 +392,7 @@ tk::solveLeastSq_P0P1(
 
   for (std::size_t e=0; e<nelem; ++e)
   {
-    for (ncomp_t c=0; c<ncomp; ++c)
+    for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
     {
       auto mark = c*rdof;
 
@@ -490,16 +492,15 @@ tk::recoLeastSqExtStencil(
 }
 
 void
-tk::transform_P0P1( ncomp_t ncomp,
-                    ncomp_t offset,
+tk::transform_P0P1( ncomp_t offset,
                     std::size_t rdof,
                     std::size_t nelem,
                     const std::vector< std::size_t >& inpoel,
                     const UnsMesh::Coords& coord,
-                    Fields& W )
+                    Fields& W,
+                    const std::array< std::size_t, 2 >& varRange )
 // *****************************************************************************
 //  Transform the reconstructed P1-derivatives to the Dubiner dofs
-//! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nelem Total number of elements
@@ -507,6 +508,7 @@ tk::transform_P0P1( ncomp_t ncomp,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] W Second-order reconstructed vector which gets transformed to
 //!   the Dubiner reference space
+//! \param[in] varRange Range of indices in W, that need to be reconstructed
 //! \details Since the DG solution (and the primitive quantities) are assumed to
 //!   be stored in the Dubiner space, this transformation from Taylor
 //!   coefficients to Dubiner coefficients is necessary.
@@ -532,7 +534,7 @@ tk::transform_P0P1( ncomp_t ncomp,
     // Compute the derivatives of basis function for DG(P1)
     auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
 
-    for (ncomp_t c=0; c<ncomp; ++c)
+    for (ncomp_t c=varRange[0]; c<=varRange[1]; ++c)
     {
       auto mark = c*rdof;
 
@@ -973,6 +975,78 @@ tk::THINCFunction( std::size_t rdof,
     alReco[kmax] += 1.0 - alsum;
     alsum = 1.0;
   }
+}
+
+std::vector< tk::real >
+tk::evalPolynomialSol(std::size_t system,
+  std::size_t offset,
+  int intsharp,
+  std::size_t ncomp,
+  std::size_t nprim,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  std::size_t dof_e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const std::array< real, 3 >& ref_gp,
+  const std::vector< real >& B,
+  const Fields& U,
+  const Fields& P)
+// *****************************************************************************
+//  Evaluate polynomial solution at quadrature point
+//! \param[in] system Equation system index
+//! \param[in] offset Index for equation systems
+//! \param[in] intsharp Interface reconstruction indicator
+//! \param[in] ncomp Number of components in the PDE system
+//! \param[in] nprim Number of primitive quantities
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which polynomial solution is being evaluated
+//! \param[in] dof_e Degrees of freedom for element
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] ref_gp Quadrature point in reference space
+//! \param[in] B Basis function at given quadrature point
+//! \param[in] U Solution vector
+//! \param[in] P Vector of primitives
+//! \return High-order unknown/state vector at quadrature point, modified
+//!   if near interfaces using THINC
+// *****************************************************************************
+{
+  std::vector< real > state;
+  std::vector< real > sprim;
+
+  state = eval_state( ncomp, offset, rdof, dof_e, e, U, B );
+  sprim = eval_state( nprim, offset, rdof, dof_e, e, P, B );
+
+  // consolidate primitives into state vector
+  state.insert(state.end(), sprim.begin(), sprim.end());
+
+  if (intsharp > 0)
+  {
+    std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
+
+    // Until the appropriate setup for activating THINC with Transport
+    // is ready, the following two chunks of code will need to be commented
+    // for using THINC with Transport
+    //for (std::size_t k=0; k<nmat; ++k) {
+    //  vfmin[k] = VolFracMax(el, 2*k, 0);
+    //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
+    //}
+    tk::THINCReco(system, offset, rdof, nmat, e, inpoel, coord, geoElem,
+      ref_gp, U, P, vfmin, vfmax, state);
+
+    // Until the appropriate setup for activating THINC with Transport
+    // is ready, the following lines will need to be uncommented for
+    // using THINC with Transport
+    //tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel, coord,
+    //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
+  }
+
+  return state;
 }
 
 void
