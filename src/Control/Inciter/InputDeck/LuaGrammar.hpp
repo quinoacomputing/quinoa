@@ -39,26 +39,31 @@ void box( const sol::table& tbl, ctr::box& icbox ) {
     Assert( xmin.size() == zmin.size(), "Size mismatch" );
     Assert( xmin.size() == zmax.size(), "Size mismatch" );
 
-    for (std::size_t b=0; b<xmin.size(); ++b) {   // for all boxes configured
+    xmin.push_back( boxlua.get_or( kw::xmin::string(), 0.0 ) );
+    xmax.push_back( boxlua.get_or( kw::xmax::string(), 0.0 ) );
+    ymin.push_back( boxlua.get_or( kw::ymin::string(), 0.0 ) );
+    ymax.push_back( boxlua.get_or( kw::ymax::string(), 0.0 ) );
+    zmin.push_back( boxlua.get_or( kw::zmin::string(), 0.0 ) );
+    zmax.push_back( boxlua.get_or( kw::zmax::string(), 0.0 ) );
 
-      xmin[b] = boxlua.get_or( kw::xmin::string(), 0.0 );
-      xmax[b] = boxlua.get_or( kw::xmax::string(), 0.0 );
-      ymin[b] = boxlua.get_or( kw::ymin::string(), 0.0 );
-      ymax[b] = boxlua.get_or( kw::ymax::string(), 0.0 );
-      zmin[b] = boxlua.get_or( kw::zmin::string(), 0.0 );
-      zmax[b] = boxlua.get_or( kw::zmax::string(), 0.0 );
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
+    if (std::abs(xmin.back()) < eps) xmin.pop_back();
+    if (std::abs(xmax.back()) < eps) xmax.pop_back();
+    if (std::abs(ymin.back()) < eps) ymin.pop_back();
+    if (std::abs(ymax.back()) < eps) ymax.pop_back();
+    if (std::abs(zmin.back()) < eps) zmin.pop_back();
+    if (std::abs(zmax.back()) < eps) zmax.pop_back();
 
-      icbox.template get< tag::density >().back() =
-        boxlua.get_or< v >( kw::density::string(), {} );
-      icbox.template get< tag::velocity >().back() =
-        boxlua.get_or< v >( kw::velocity::string(), {} );
-      icbox.template get< tag::pressure >().back() =
-        boxlua.get_or< v >( kw::pressure::string(), {} );
-      icbox.template get< tag::energy >().back() =
-        boxlua.get_or< v >( kw::energy::string(), {} );
-      icbox.template get< tag::temperature >().back() =
-        boxlua.get_or< v >( kw::temperature::string(), {} );
-    }
+    icbox.template get< tag::density >().back() =
+      boxlua.get_or< v >( kw::density::string(), {} );
+    icbox.template get< tag::velocity >().back() =
+      boxlua.get_or< v >( kw::velocity::string(), {} );
+    icbox.template get< tag::pressure >().back() =
+      boxlua.get_or< v >( kw::pressure::string(), {} );
+    icbox.template get< tag::energy >().back() =
+      boxlua.get_or< v >( kw::energy::string(), {} );
+    icbox.template get< tag::temperature >().back() =
+      boxlua.get_or< v >( kw::temperature::string(), {} );
   }
 }
 

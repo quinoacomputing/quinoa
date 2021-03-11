@@ -158,35 +158,37 @@ class CompFlow {
       Assert( xmin.size() == zmin.size(), "Size mismatch" );
       Assert( xmin.size() == zmax.size(), "Size mismatch" );
 
-      for (std::size_t b=0; b<xmin.size(); ++b) {   // for all boxes configured
+      tk::real V_ex = 0.0;
+      if (!xmin.empty()) {      // box 0 only for now
         std::array< tk::real, 6 > boxdim
-          { xmin[b], xmax[b], ymin[b], ymax[b], zmin[b], zmax[b] };
-        auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
+          { xmin[0], xmax[0], ymin[0], ymax[0], zmin[0], zmax[0] };
+        V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
           (boxdim[5]-boxdim[4]);
-        const auto eps = 1000.0 * std::numeric_limits< tk::real >::epsilon();
-        // if an ic box was not specified, avoid division by zero by setting V
-        if (V_ex < eps) V = 1.0;
-        const auto& bgpreic = ic.get< tag::pressure >();
-        const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
+      }
 
-        // Set initial and boundary conditions using problem policy
-        for (ncomp_t i=0; i<x.size(); ++i) {
-          auto s = Problem::initialize( m_system, m_ncomp, x[i], y[i], z[i], t );
+      const auto eps = 1000.0 * std::numeric_limits< tk::real >::epsilon();
+      // if an ic box was not specified, avoid division by zero by setting V
+      if (V_ex < eps) V = 1.0;
+      const auto& bgpreic = ic.get< tag::pressure >();
+      const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
 
-          // initialize the user-defined box IC
-          if (inbox.find(i) != inbox.end())
-            initializeBox(m_system, V_ex/V, t, icbox, bgpreic, cv, s);
+      // Set initial and boundary conditions using problem policy
+      for (ncomp_t i=0; i<x.size(); ++i) {
+        auto s = Problem::initialize( m_system, m_ncomp, x[i], y[i], z[i], t );
 
-          unk(i,0,m_offset) = s[0]; // rho
-          if (!skipPoint(x[i],y[i],z[i]) && stagPoint(x[i],y[i],z[i])) {
-            unk(i,1,m_offset) = unk(i,2,m_offset) = unk(i,3,m_offset) = 0.0;
-          } else {
-            unk(i,1,m_offset) = s[1]; // rho * u
-            unk(i,2,m_offset) = s[2]; // rho * v
-            unk(i,3,m_offset) = s[3]; // rho * w
-          }
-          unk(i,4,m_offset) = s[4]; // rho * e, e: total = kinetic + internal
+        // initialize the user-defined box IC
+        if (inbox.find(i) != inbox.end())
+          initializeBox(m_system, V_ex/V, t, icbox, bgpreic, cv, s);
+
+        unk(i,0,m_offset) = s[0]; // rho
+        if (!skipPoint(x[i],y[i],z[i]) && stagPoint(x[i],y[i],z[i])) {
+          unk(i,1,m_offset) = unk(i,2,m_offset) = unk(i,3,m_offset) = 0.0;
+        } else {
+          unk(i,1,m_offset) = s[1]; // rho * u
+          unk(i,2,m_offset) = s[2]; // rho * v
+          unk(i,3,m_offset) = s[3]; // rho * w
         }
+        unk(i,4,m_offset) = s[4]; // rho * e, e: total = kinetic + internal
       }
     }
 
