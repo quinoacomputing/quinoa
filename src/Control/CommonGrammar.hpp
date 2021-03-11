@@ -1713,10 +1713,11 @@ namespace grm {
                   pegtl::alnum > {};
 
   //! Match control parameter, enforce bounds if defined
-  template< typename keyword, class kw_type, typename... tags >
+  template< typename keyword, class kw_type, template< class... > class store,
+            typename... tags >
   struct control :
          pegtl::if_must<
-           process< keyword, Store< tags... >, kw_type >,
+           process< keyword, store< tags... >, kw_type >,
            typename std::conditional<
              tk::HasVar_expect_lower< typename keyword::info >::value,
              check_lower_bound< keyword, tags... >,
@@ -1729,7 +1730,7 @@ namespace grm {
   //! Match discretization control parameter
   template< template< class > class use, typename keyword, typename Tag >
   struct discrparam :
-           control< use< keyword >, pegtl::digit, tag::discr, Tag > {};
+           control< use< keyword >, pegtl::digit, Store, tag::discr, Tag > {};
 
   //! Match component control parameter
   template< typename keyword, typename Tag >
@@ -1741,7 +1742,7 @@ namespace grm {
   //! Match interval control parameter
   template< typename keyword, typename Tag >
   struct interval :
-         control< keyword, pegtl::digit, tag::interval, Tag > {};
+         control< keyword, pegtl::digit, Store, tag::interval, Tag > {};
 
   //! Parse statistics ... end block
   template< template< class > class use, template< class... Ts > class store >
@@ -1789,7 +1790,7 @@ namespace grm {
   //! Match model parameter
   template< typename keyword, typename kw_type, typename model, typename Tag >
   struct parameter :
-         control< keyword, kw_type, tag::param, model, Tag > {};
+         control< keyword, kw_type, Store, tag::param, model, Tag > {};
 
   //! Match rng parameter
   template< template< class > class use, typename keyword,

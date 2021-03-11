@@ -1241,7 +1241,8 @@ namespace deck {
   //! xminus configuring coordinate-based edge tagging for mesh refinement
   template< typename keyword, typename Tag >
   struct half_world :
-         tk::grm::control< use< keyword >, pegtl::digit, tag::amr, Tag > {};
+         tk::grm::control< use< keyword >, pegtl::digit, tk::grm::Store,
+                           tag::amr, Tag > {};
 
   //! coords ... end block
   struct coords :
@@ -1262,16 +1263,22 @@ namespace deck {
            tk::grm::readkw< use< kw::box >::pegtl_string >,
            tk::grm::block< use< kw::end >,
              tk::grm::control< use< kw::xmin >, tk::grm::number,
+                               tk::grm::Store_back,
                                tag::param, eq, tag::ic, tag::box, tag::xmin >,
              tk::grm::control< use< kw::xmax >, tk::grm::number,
+                               tk::grm::Store_back,
                                tag::param, eq, tag::ic, tag::box, tag::xmax >,
              tk::grm::control< use< kw::ymin >, tk::grm::number,
+                               tk::grm::Store_back,
                                tag::param, eq, tag::ic, tag::box, tag::ymin >,
              tk::grm::control< use< kw::ymax >, tk::grm::number,
+                               tk::grm::Store_back,
                                tag::param, eq, tag::ic, tag::box, tag::ymax >,
              tk::grm::control< use< kw::zmin >, tk::grm::number,
+                               tk::grm::Store_back,
                                tag::param, eq, tag::ic, tag::box, tag::zmin >,
              tk::grm::control< use< kw::zmax >, tk::grm::number,
+                               tk::grm::Store_back,
                                tag::param, eq, tag::ic, tag::box, tag::zmax >,
              pegtl::sor<
                pde_parameter_vector< kw::density,
@@ -1612,10 +1619,12 @@ namespace deck {
                              pegtl::alpha >,
                            tk::grm::control< use< kw::amr_tolref >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::amr,
                                              tag::tolref >,
                            tk::grm::control< use< kw::amr_tolderef >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::amr,
                                              tag::tolderef >,
                            tk::grm::process< use< kw::amr_t0ref >,
@@ -1673,10 +1682,12 @@ namespace deck {
            tk::grm::block< use< kw::end >,
                            tk::grm::control< use< kw::pref_tolref >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::pref,
                                              tag::tolref  >,
                            tk::grm::control< use< kw::pref_ndofmax >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::pref,
                                              tag::ndofmax >,
                            tk::grm::process<

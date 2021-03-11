@@ -2836,7 +2836,7 @@ struct linear_info {
 using linear = keyword< linear_info, TAOCPP_PEGTL_STRING("linear") >;
 
 struct initiate_info {
-  static std::string name() { return "IC box initiate type"; }
+  static std::string name() { return "initiate type"; }
   static std::string shortDescription() { return "Initiation/assignemt type"; }
   static std::string longDescription() { return
     R"(This keyword is used to select an initiation type to configure how

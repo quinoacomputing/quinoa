@@ -27,29 +27,38 @@ void box( const sol::table& tbl, ctr::box& icbox ) {
   if (boxlua != sol::lua_nil) {      // if table 'box' exists in table
     using v = std::vector< tk::real >;
 
-    icbox.template get< tag::xmin >() =
-      boxlua.get_or( kw::xmin::string(), 0.0 );
-    icbox.template get< tag::xmax >() =
-      boxlua.get_or( kw::xmax::string(), 0.0 );
-    icbox.template get< tag::ymin >() =
-      boxlua.get_or( kw::ymin::string(), 0.0 );
-    icbox.template get< tag::ymax >() =
-      boxlua.get_or( kw::ymax::string(), 0.0 );
-    icbox.template get< tag::zmin >() =
-      boxlua.get_or( kw::zmin::string(), 0.0 );
-    icbox.template get< tag::zmax >() =
-      boxlua.get_or( kw::zmax::string(), 0.0 );
+    auto& xmin = icbox.template get< tag::xmin >();
+    auto& xmax = icbox.template get< tag::xmax >();
+    auto& ymin = icbox.template get< tag::ymin >();
+    auto& ymax = icbox.template get< tag::ymax >();
+    auto& zmin = icbox.template get< tag::zmin >();
+    auto& zmax = icbox.template get< tag::zmax >();
+    Assert( xmin.size() == xmax.size(), "Size mismatch" );
+    Assert( xmin.size() == ymin.size(), "Size mismatch" );
+    Assert( xmin.size() == ymax.size(), "Size mismatch" );
+    Assert( xmin.size() == zmin.size(), "Size mismatch" );
+    Assert( xmin.size() == zmax.size(), "Size mismatch" );
 
-    icbox.template get< tag::density >().back() =
-      boxlua.get_or< v >( kw::density::string(), {} );
-    icbox.template get< tag::velocity >().back() =
-      boxlua.get_or< v >( kw::velocity::string(), {} );
-    icbox.template get< tag::pressure >().back() =
-      boxlua.get_or< v >( kw::pressure::string(), {} );
-    icbox.template get< tag::energy >().back() =
-      boxlua.get_or< v >( kw::energy::string(), {} );
-    icbox.template get< tag::temperature >().back() =
-      boxlua.get_or< v >( kw::temperature::string(), {} );
+    for (std::size_t b=0; b<xmin.size(); ++b) {   // for all boxes configured
+
+      xmin[b] = boxlua.get_or( kw::xmin::string(), 0.0 );
+      xmax[b] = boxlua.get_or( kw::xmax::string(), 0.0 );
+      ymin[b] = boxlua.get_or( kw::ymin::string(), 0.0 );
+      ymax[b] = boxlua.get_or( kw::ymax::string(), 0.0 );
+      zmin[b] = boxlua.get_or( kw::zmin::string(), 0.0 );
+      zmax[b] = boxlua.get_or( kw::zmax::string(), 0.0 );
+
+      icbox.template get< tag::density >().back() =
+        boxlua.get_or< v >( kw::density::string(), {} );
+      icbox.template get< tag::velocity >().back() =
+        boxlua.get_or< v >( kw::velocity::string(), {} );
+      icbox.template get< tag::pressure >().back() =
+        boxlua.get_or< v >( kw::pressure::string(), {} );
+      icbox.template get< tag::energy >().back() =
+        boxlua.get_or< v >( kw::energy::string(), {} );
+      icbox.template get< tag::temperature >().back() =
+        boxlua.get_or< v >( kw::temperature::string(), {} );
+    }
   }
 }
 

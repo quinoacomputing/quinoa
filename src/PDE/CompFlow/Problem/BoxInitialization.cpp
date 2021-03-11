@@ -54,109 +54,121 @@ void initializeBox( std::size_t system,
   const auto& boxtem = icbox.get< tag::temperature >();
   const auto& boxmas = icbox.get< tag::mass >();
   const auto& boxenc = icbox.get< tag::energy_content >();
-  std::array< tk::real, 6 >
-    boxdim{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
-            icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
-            icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
 
-  tk::real rho = 0.0, ru = 0.0, rv = 0.0, rw = 0.0, re = 0.0, spi = 0.0;
-  bool boxmassic = false;
-  if (boxmas.size() > system && !boxmas[system].empty()) {
+  const auto& xmin = icbox.get< tag::xmin >();
+  const auto& xmax = icbox.get< tag::xmax >();
+  const auto& ymin = icbox.get< tag::ymin >();
+  const auto& ymax = icbox.get< tag::ymax >();
+  const auto& zmin = icbox.get< tag::zmin >();
+  const auto& zmax = icbox.get< tag::zmax >();
+  Assert( xmin.size() == xmax.size(), "Size mismatch" );
+  Assert( xmin.size() == ymin.size(), "Size mismatch" );
+  Assert( xmin.size() == ymax.size(), "Size mismatch" );
+  Assert( xmin.size() == zmin.size(), "Size mismatch" );
+  Assert( xmin.size() == zmax.size(), "Size mismatch" );
+  for (std::size_t b=0; b<xmin.size(); ++b) {   // for all boxes configured
+    std::array< tk::real, 6 > boxdim
+      { xmin[b], xmax[b], ymin[b], ymax[b], zmin[b], zmax[b] };
 
-    Assert( boxenc.size() > system && !boxenc[system].empty(),
-      "Box energy content unspecified in input file" );
-    auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
-      (boxdim[5]-boxdim[4]);
-    rho = boxmas[system][0] / V_ex;
-    spi = boxenc[system][0] * VRatio / rho;
-    boxmassic = true;
+    tk::real rho = 0.0, ru = 0.0, rv = 0.0, rw = 0.0, re = 0.0, spi = 0.0;
+    bool boxmassic = false;
+    if (boxmas.size() > system && !boxmas[system].empty()) {
 
-  } else {
+      Assert( boxenc.size() > system && !boxenc[system].empty(),
+        "Box energy content unspecified in input file" );
+      auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
+        (boxdim[5]-boxdim[4]);
+      rho = boxmas[system][0] / V_ex;
+      spi = boxenc[system][0] * VRatio / rho;
+      boxmassic = true;
 
-    if (boxrho.size() > system && !boxrho[system].empty()) {
-      rho = boxrho[system][0];
+    } else {
+
+      if (boxrho.size() > system && !boxrho[system].empty()) {
+        rho = boxrho[system][0];
+      }
+      if (boxvel.size() > system && boxvel[system].size() > 2) {
+        ru = rho * boxvel[system][0];
+        rv = rho * boxvel[system][1];
+        rw = rho * boxvel[system][2];
+      }
+      if (boxpre.size() > system && !boxpre[system].empty()) {
+        re = eos_totalenergy< tag::compflow >
+               ( system, rho, ru/rho, rv/rho, rw/rho, boxpre[system][0] );
+      }
+      if (boxene.size() > system && !boxene[system].empty()) {
+        const auto ux = ru/rho, uy = rv/rho, uz = rw/rho;
+        const auto ke = 0.5*(ux*ux + uy*uy + uz*uz);
+        re = rho * (boxene[system][0] + ke);
+      }
+      if (boxtem.size() > system && !boxtem[system].empty())
+      {
+        re = rho * boxtem[system][0] * cv.at(system).at(0);
+      }
+
     }
-    if (boxvel.size() > system && boxvel[system].size() > 2) {
-      ru = rho * boxvel[system][0];
-      rv = rho * boxvel[system][1];
-      rw = rho * boxvel[system][2];
-    }
-    if (boxpre.size() > system && !boxpre[system].empty()) {
-      re = eos_totalenergy< tag::compflow >
-             ( system, rho, ru/rho, rv/rho, rw/rho, boxpre[system][0] );
-    }
-    if (boxene.size() > system && !boxene[system].empty()) {
-      const auto ux = ru/rho, uy = rv/rho, uz = rw/rho;
-      const auto ke = 0.5*(ux*ux + uy*uy + uz*uz);
-      re = rho * (boxene[system][0] + ke);
-    }
-    if (boxtem.size() > system && !boxtem[system].empty())
-    {
-      re = rho * boxtem[system][0] * cv.at(system).at(0);
+
+    // Initiate type 'impulse' simply assigns the prescribed values to all
+    // nodes within a box.
+    if (inittype[system] == ctr::InitiateType::IMPULSE) {
+
+      // superimpose on existing velocity field
+      const auto u = s[1] / s[0],
+                 v = s[2] / s[0],
+                 w = s[3] / s[0];
+      const auto ke = 0.5*(u*u + v*v + w*w);
+      s[0] = rho;
+      if (boxmassic) {
+        s[1] = rho * u;
+        s[2] = rho * v;
+        s[3] = rho * w;
+        s[4] = rho * (spi + ke);
+      } else {
+        s[1] = ru;
+        s[2] = rv;
+        s[3] = rw;
+        s[4] = re;
+      }
     }
 
-  }
+    // Initiate type 'linear' assigns the prescribed values to all
+    // nodes within a box. This is followed by adding a time-dependent energy
+    // source term representing a planar wave-front propagating along the
+    // z-direction with a velocity specified in the IC linear...end block.
+    // The wave front is smoothed out to include a couple of mesh nodes.
+    // see boxSrc() for further details.
+    else if (inittype[system] == ctr::InitiateType::LINEAR && t < 1e-12) {
 
-  // Initiate type 'impulse' simply assigns the prescribed values to all
-  // nodes within a box.
-  if (inittype[system] == ctr::InitiateType::IMPULSE) {
+      // superimpose on existing velocity field
+      const auto u = s[1]/s[0],
+                 v = s[2]/s[0],
+                 w = s[3]/s[0];
+      const auto ke = 0.5*(u*u + v*v + w*w);
 
-    // superimpose on existing velocity field
-    const auto u = s[1] / s[0],
-               v = s[2] / s[0],
-               w = s[3] / s[0];
-    const auto ke = 0.5*(u*u + v*v + w*w);
-    s[0] = rho;
-    if (boxmassic) {
+      // The linear-propagating source initialization can be done only based
+      // on background pressure (not on temperature): The IC box can have a
+      // different density than the background, while having the same
+      // pressure and temperature as the background. This means, the
+      // material in the box has a different specific heat (Cv) than the
+      // background material. If such a box has to be initialized based
+      // on temperature, the Cv of the box will have to be specified
+      // separately. This is not currently supported.
+      if (bgpreic.size() > system && !bgpreic[system].empty()) {
+        // energy based on box density and background pressure
+        spi = eos_totalenergy< tag::compflow >( system, rho, u, v, w,
+          bgpreic[system][0] )/rho;
+      }
+      else Throw("Background pressure must be specified for box-IC with "
+                 "linear propagating source");
+
+      s[0] = rho;
       s[1] = rho * u;
       s[2] = rho * v;
       s[3] = rho * w;
       s[4] = rho * (spi + ke);
-    } else {
-      s[1] = ru;
-      s[2] = rv;
-      s[3] = rw;
-      s[4] = re;
-    }
+
+    } else Throw( "IC box initiate type not implemented" );
   }
-
-  // Initiate type 'linear' assigns the prescribed values to all
-  // nodes within a box. This is followed by adding a time-dependent energy
-  // source term representing a planar wave-front propagating along the
-  // z-direction with a velocity specified in the IC linear...end block.
-  // The wave front is smoothed out to include a couple of mesh nodes.
-  // see boxSrc() for further details.
-  else if (inittype[system] == ctr::InitiateType::LINEAR && t < 1e-12) {
-
-    // superimpose on existing velocity field
-    const auto u = s[1]/s[0],
-               v = s[2]/s[0],
-               w = s[3]/s[0];
-    const auto ke = 0.5*(u*u + v*v + w*w);
-
-    // The linear-propagating source initialization can be done only based
-    // on background pressure (not on temperature): The IC box can have a
-    // different density than the background, while having the same
-    // pressure and temperature as the background. This means, the
-    // material in the box has a different specific heat (Cv) than the
-    // background material. If such a box has to be initialized based
-    // on temperature, the Cv of the box will have to be specified
-    // separately. This is not currently supported.
-    if (bgpreic.size() > system && !bgpreic[system].empty()) {
-      // energy based on box density and background pressure
-      spi = eos_totalenergy< tag::compflow >( system, rho, u, v, w,
-        bgpreic[system][0] )/rho;
-    }
-    else Throw("Background pressure must be specified for box-IC with "
-               "linear propagating source");
-
-    s[0] = rho;
-    s[1] = rho * u;
-    s[2] = rho * v;
-    s[3] = rho * w;
-    s[4] = rho * (spi + ke);
-
-  } else Throw( "IC box initiate type not implemented" );
 }
 
 } //inciter::

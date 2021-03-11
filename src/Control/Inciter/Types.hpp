@@ -178,12 +178,12 @@ using InitiateParameters = tk::TaggedTuple< brigand::list<
 
 //! Box, given by coordinates, specifying physics variables
 using box = tk::TaggedTuple< brigand::list<
-    tag::xmin,          kw::xmin::info::expect::type
-  , tag::xmax,          kw::xmax::info::expect::type
-  , tag::ymin,          kw::ymin::info::expect::type
-  , tag::ymax,          kw::ymax::info::expect::type
-  , tag::zmin,          kw::zmin::info::expect::type
-  , tag::zmax,          kw::zmax::info::expect::type
+    tag::xmin,         std::vector< kw::xmin::info::expect::type >
+  , tag::xmax,         std::vector< kw::xmax::info::expect::type >
+  , tag::ymin,         std::vector< kw::ymin::info::expect::type >
+  , tag::ymax,         std::vector< kw::ymax::info::expect::type >
+  , tag::zmin,         std::vector< kw::zmin::info::expect::type >
+  , tag::zmax,         std::vector< kw::zmax::info::expect::type >
   , tag::mass,         std::vector<
                           std::vector< kw::mass::info::expect::type > >
   , tag::density,       std::vector<

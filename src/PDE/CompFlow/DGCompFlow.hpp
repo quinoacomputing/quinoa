@@ -121,22 +121,35 @@ class CompFlow {
       // Detect if user has configured a box IC
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
-      std::vector< tk::real >
-        box{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
-             icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
-             icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
-      const auto eps = std::numeric_limits< tk::real >::epsilon();
 
-      // Determine which elements lie in the IC box
-      for (ncomp_t e=0; e<nielem; ++e) {
-        auto x = geoElem(e,1,0);
-        auto y = geoElem(e,2,0);
-        auto z = geoElem(e,3,0);
-        if ( std::any_of( begin(box), end(box), [=](auto p)
-          {return abs(p) > eps;} ) &&
-          x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5] )
-        {
-          inbox.insert( e );
+      const auto& xmin = icbox.get< tag::xmin >();
+      const auto& xmax = icbox.get< tag::xmax >();
+      const auto& ymin = icbox.get< tag::ymin >();
+      const auto& ymax = icbox.get< tag::ymax >();
+      const auto& zmin = icbox.get< tag::zmin >();
+      const auto& zmax = icbox.get< tag::zmax >();
+      Assert( xmin.size() == xmax.size(), "Size mismatch" );
+      Assert( xmin.size() == ymin.size(), "Size mismatch" );
+      Assert( xmin.size() == ymax.size(), "Size mismatch" );
+      Assert( xmin.size() == zmin.size(), "Size mismatch" );
+      Assert( xmin.size() == zmax.size(), "Size mismatch" );
+
+      for (std::size_t b=0; b<xmin.size(); ++b) {   // for all boxes configured
+        std::vector< tk::real > box
+          { xmin[b], xmax[b], ymin[b], ymax[b], zmin[b], zmax[b] };
+        const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+        // Determine which elements lie in the IC box
+        for (ncomp_t e=0; e<nielem; ++e) {
+          auto x = geoElem(e,1,0);
+          auto y = geoElem(e,2,0);
+          auto z = geoElem(e,3,0);
+          if ( std::any_of( begin(box), end(box), [=](auto p)
+            {return abs(p) > eps;} ) &&
+            x>box[0] && x<box[1] && y>box[2] && y<box[3] && z>box[4] && z<box[5] )
+          {
+            inbox.insert( e );
+          }
         }
       }
     }
@@ -990,99 +1003,113 @@ class CompFlow {
 
       Assert( boxenc.size() > m_system && !boxenc[m_system].empty(),
         "Box energy content unspecified in input file" );
-      std::vector< tk::real >
-        boxdim{ icbox.get< tag::xmin >(), icbox.get< tag::xmax >(),
-                icbox.get< tag::ymin >(), icbox.get< tag::ymax >(),
-                icbox.get< tag::zmin >(), icbox.get< tag::zmax >() };
-      auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
-        (boxdim[5]-boxdim[4]);
 
-      // determine times at which sourcing is initialized and terminated
-      const auto& iv = initiate.get< tag::velocity >()[ m_system ];
-      Assert( iv.size() == 1, "Excess velocities in ic-box block" );
-      auto wFront = 0.1;
-      auto tInit = 0.0;
-      auto tFinal = tInit + (boxdim[5] - boxdim[4] - 2.0*wFront) /
-        std::fabs(iv[0]);
-      auto aBox = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]);
+      const auto& xmin = icbox.get< tag::xmin >();
+      const auto& xmax = icbox.get< tag::xmax >();
+      const auto& ymin = icbox.get< tag::ymin >();
+      const auto& ymax = icbox.get< tag::ymax >();
+      const auto& zmin = icbox.get< tag::zmin >();
+      const auto& zmax = icbox.get< tag::zmax >();
+      Assert( xmin.size() == xmax.size(), "Size mismatch" );
+      Assert( xmin.size() == ymin.size(), "Size mismatch" );
+      Assert( xmin.size() == ymax.size(), "Size mismatch" );
+      Assert( xmin.size() == zmin.size(), "Size mismatch" );
+      Assert( xmin.size() == zmax.size(), "Size mismatch" );
 
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
+      for (std::size_t b=0; b<xmin.size(); ++b) {   // for all boxes
+        std::vector< tk::real > boxdim
+          { xmin[b], xmax[b], ymin[b], ymax[b], zmin[b], zmax[b] };
+        auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
+          (boxdim[5]-boxdim[4]);
 
-      if (t >= tInit && t <= tFinal) {
+        // determine times at which sourcing is initialized and terminated
+        const auto& iv = initiate.get< tag::velocity >()[ m_system ];
+        Assert( iv.size() == 1, "Excess velocities in ic-box block" );
+        auto wFront = 0.1;
+        auto tInit = 0.0;
+        auto tFinal = tInit + (boxdim[5] - boxdim[4] - 2.0*wFront) /
+          std::fabs(iv[0]);
+        auto aBox = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]);
 
-        // The energy front is assumed to have a half-sine-wave shape. The half
-        // wave-length is the width of the front. At t=0, the center of this
-        // front (i.e. the peak of the partial-sine-wave) is at X_0 + W_0.
-        // W_0 is calculated based on the width of the front and the direction
-        // of propagation (which is assumed to be along the z-direction).
-        // If the front propagation velocity is positive, it is assumed that the
-        // initial position of the energy source is the minimum z-coordinate of
-        // the box; whereas if this velocity is negative, the initial position
-        // is the maximum z-coordinate of the box.
+        const auto& cx = coord[0];
+        const auto& cy = coord[1];
+        const auto& cz = coord[2];
 
-        // initial center of front
-        tk::real zInit(boxdim[4]);
-        if (iv[0] < 0.0) zInit = boxdim[5];
-        // current location of front
-        auto z0 = zInit + iv[0]*t;
-        auto z1 = z0 + std::copysign(wFront, iv[0]);
-        tk::real s0(z0), s1(z1);
-        // if velocity of propagation is negative, initial position is z1
-        if (iv[0] < 0.0) {
-          s0 = z1;
-          s1 = z0;
-        }
-        // Sine-wave (positive part of the wave) source term amplitude
-        auto pi = 4.0 * std::atan(1.0);
-        auto amplE = boxenc[m_system][0] * V_ex * pi
-          / (aBox * wFront * 2.0 * (tFinal-tInit));
-        //// Square wave (constant) source term amplitude
-        //auto amplE = boxenc[m_system][0] * V_ex
-        //  / (aBox * wFront * (tFinal-tInit));
+        if (t >= tInit && t <= tFinal) {
 
-        // add source
-        for (auto e : boxelems) {
-          auto zc = geoElem(e,3,0);
+          // The energy front is assumed to have a half-sine-wave shape. The
+          // half wave-length is the width of the front. At t=0, the center of
+          // this front (i.e. the peak of the partial-sine-wave) is at X_0 +
+          // W_0.  W_0 is calculated based on the width of the front and the
+          // direction of propagation (which is assumed to be along the
+          // z-direction).  If the front propagation velocity is positive, it
+          // is assumed that the initial position of the energy source is the
+          // minimum z-coordinate of the box; whereas if this velocity is
+          // negative, the initial position is the maximum z-coordinate of the
+          // box.
 
-          if (zc >= s0 && zc <= s1) {
-            auto ng = tk::NGvol(ndofel[e]);
+          // initial center of front
+          tk::real zInit(boxdim[4]);
+          if (iv[0] < 0.0) zInit = boxdim[5];
+          // current location of front
+          auto z0 = zInit + iv[0]*t;
+          auto z1 = z0 + std::copysign(wFront, iv[0]);
+          tk::real s0(z0), s1(z1);
+          // if velocity of propagation is negative, initial position is z1
+          if (iv[0] < 0.0) {
+            s0 = z1;
+            s1 = z0;
+          }
+          // Sine-wave (positive part of the wave) source term amplitude
+          auto pi = 4.0 * std::atan(1.0);
+          auto amplE = boxenc[m_system][0] * V_ex * pi
+            / (aBox * wFront * 2.0 * (tFinal-tInit));
+          //// Square wave (constant) source term amplitude
+          //auto amplE = boxenc[m_system][0] * V_ex
+          //  / (aBox * wFront * (tFinal-tInit));
 
-            // arrays for quadrature points
-            std::array< std::vector< tk::real >, 3 > coordgp;
-            std::vector< tk::real > wgp;
+          // add source
+          for (auto e : boxelems) {
+            auto zc = geoElem(e,3,0);
 
-            coordgp[0].resize( ng );
-            coordgp[1].resize( ng );
-            coordgp[2].resize( ng );
-            wgp.resize( ng );
+            if (zc >= s0 && zc <= s1) {
+              auto ng = tk::NGvol(ndofel[e]);
 
-            tk::GaussQuadratureTet( ng, coordgp, wgp );
+              // arrays for quadrature points
+              std::array< std::vector< tk::real >, 3 > coordgp;
+              std::vector< tk::real > wgp;
 
-            // Extract the element coordinates
-            std::array< std::array< tk::real, 3>, 4 > coordel {{
-              {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-              {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-              {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-              {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+              coordgp[0].resize( ng );
+              coordgp[1].resize( ng );
+              coordgp[2].resize( ng );
+              wgp.resize( ng );
 
-            for (std::size_t igp=0; igp<ng; ++igp)
-            {
-              // Compute the coordinates of quadrature point at physical domain
-              auto gp = tk::eval_gp( igp, coordel, coordgp );
+              tk::GaussQuadratureTet( ng, coordgp, wgp );
 
-              // Compute the basis function
-              auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
-                coordgp[2][igp] );
+              // Extract the element coordinates
+              std::array< std::array< tk::real, 3>, 4 > coordel{{
+                {{ cx[inpoel[4*e  ]], cy[inpoel[4*e  ]], cz[inpoel[4*e  ]] }},
+                {{ cx[inpoel[4*e+1]], cy[inpoel[4*e+1]], cz[inpoel[4*e+1]] }},
+                {{ cx[inpoel[4*e+2]], cy[inpoel[4*e+2]], cz[inpoel[4*e+2]] }},
+                {{ cx[inpoel[4*e+3]], cy[inpoel[4*e+3]], cz[inpoel[4*e+3]] }}}};
 
-              // Compute the source term variable
-              std::array< tk::real, 5 > s{{0.0, 0.0, 0.0, 0.0, 0.0}};
-              s[4] = amplE * std::sin(pi*(gp[2]-s0)/wFront);
+              for (std::size_t igp=0; igp<ng; ++igp)
+              {
+                // Compute the coordinates of quadrature point at physical domain
+                auto gp = tk::eval_gp( igp, coordel, coordgp );
 
-              auto wt = wgp[igp] * geoElem(e, 0, 0);
+                // Compute the basis function
+                auto B = tk::eval_basis( ndofel[e], coordgp[0][igp],
+                                         coordgp[1][igp], coordgp[2][igp] );
 
-              tk::update_rhs( m_offset, ndof, ndofel[e], wt, e, B, s, R );
+                // Compute the source term variable
+                std::array< tk::real, 5 > s{{0.0, 0.0, 0.0, 0.0, 0.0}};
+                s[4] = amplE * std::sin(pi*(gp[2]-s0)/wFront);
+
+                auto wt = wgp[igp] * geoElem(e, 0, 0);
+
+                tk::update_rhs( m_offset, ndof, ndofel[e], wt, e, B, s, R );
+              }
             }
           }
         }
