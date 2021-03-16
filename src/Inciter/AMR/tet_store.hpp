@@ -227,10 +227,7 @@ namespace AMR {
 
                 //std::cout << "id " << id << " parent " << parent_id << std::endl;
 
-                add(id, nodes, refinement_case);
-
-                // Set parent id
-                master_elements.get(id).parent_id = parent_id;
+                add_to_master(id, nodes, refinement_case, parent_id, true);
 
                 master_elements.get(id).refinement_level =
                     master_elements.get(parent_id).refinement_level+1;
@@ -250,24 +247,28 @@ namespace AMR {
              * @param refinement_case The refinement case which caused this tet
              * to be generated
             */
-            void add(size_t id, const tet_t& nodes, Refinement_Case refinement_case)
+            void add_to_master(size_t id, const tet_t& nodes,
+              Refinement_Case refinement_case, size_t parent_id=0,
+              bool has_parent=false)
             {
                 store_tet(id, nodes);
 
                 size_t refinement_level = 0;
-                size_t parent_id = 0;
 
                 // Add to master list
-                master_elements.add(id, refinement_case, refinement_level, parent_id);
+                master_elements.add(id, refinement_case, refinement_level, parent_id, has_parent);
 
                 // The new master element should start as active
                 active_elements.add(id);
             }
 
+            /**
+             * @brief Interface to add a tet from the original mesh (no parent)
+            */
             void add(const tet_t& nodes, Refinement_Case refinement_case)
             {
                 size_t id = id_generator.get_next_tet_id();
-                add(id, nodes, refinement_case);
+                add_to_master(id, nodes, refinement_case);
             }
 
             void add(
