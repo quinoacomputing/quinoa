@@ -45,8 +45,9 @@ It is not responsible for performing the derefinement, but instead marks what a 
 
 In short, it:
 
-- Iterates over the children of a tet, to find which non-parent-points are safe to remove and are surrounded by edges who are marked for derefinement 
-- It skips tets which are ineligible to derefine, because they themselves have children (TODO: how did we handle grandchildren again?)
+- It only loops through the active mesh, and then queries the parent of the active tet under consideration for derefinement compatibility
+- Iterates over the children of this parent tet (siblings of active tet), to find which non-parent-points are safe to remove and are surrounded by edges who are marked for derefinement 
+- It skips tets which are ineligible to derefine, because they do not have parents, i.e. are a part of the original mesh
 
 It uses the count of these points to implement Algorithm 4 from the paper. The functions for this are implemented in `refinement.hpp`
 
