@@ -275,6 +275,84 @@ namespace AMR {
             }
 
             /**
+             * @brief Method which takes a tet id, and deduces the other
+             * parameters needed to perform a 1:4, as a part of an 8:4 deref
+             *
+             * @param tet_store Tet store to use
+             * @param node_connectivity Mesh node connectivity (graph)
+             * @param tet_id The id to refine 1:4
+            */
+            void deref_refine_one_to_four( tet_store_t& tet_store,
+                    node_connectivity_t& node_connectivity, size_t tet_id)
+            {
+                trace_out << "do refine 1:4 " << std::endl;
+                //bool face_refine = false;
+                size_t face_refine_id = 0; // FIXME: Does this need a better default
+                face_list_t face_list = tet_store.generate_face_lists(tet_id);
+
+                // Iterate over each face
+                for (size_t face = 0; face < NUM_TET_FACES; face++)
+                {
+                    int num_face_refine_edges = 0;
+
+                    face_ids_t face_ids = face_list[face];
+                    trace_out << "face ids " <<
+                        face_ids[0] << ", " <<
+                        face_ids[1] << ", " <<
+                        face_ids[2] << ", " <<
+                        std::endl;
+
+                    edge_list_t face_edge_list = AMR::edge_store_t::generate_keys_from_face_ids(face_ids);
+                    // For this face list, see which ones need refining
+                    trace_out << "Looping to " << NUM_FACE_NODES << std::endl;
+                    for (size_t k = 0; k < NUM_FACE_NODES; k++)
+                    {
+                        trace_out << "nodes " << k << std::endl;
+
+                        edge_t edge = face_edge_list[k];
+                        if (tet_store.edge_store.get(edge).needs_refining == 2)
+                        {
+                            num_face_refine_edges++;
+                            trace_out << "Ref " << edge << " Num face => " << num_face_refine_edges << std::endl;
+                        }
+
+                        // Check for locked edges
+                            // This case only cares about faces with no locks
+                        if (tet_store.edge_store.lock_case(edge) != Edge_Lock_Case::unlocked)
+                        {
+                            // Abort this face
+                            trace_out << "Face has lock it's not this one " << face << std::endl;
+                            num_face_refine_edges = 0;
+                            break;
+                        }
+                        trace_out << "Num face => " << num_face_refine_edges << std::endl;
+                    }
+                    if (num_face_refine_edges >= 2)
+                    {
+                        assert(num_face_refine_edges < 4);
+                        //face_refine = true;
+                        trace_out << "Accepting face " << face << std::endl;
+                        face_refine_id = face;
+                        break;
+                    }
+                }
+
+                tet_t tet = tet_store.get(tet_id);
+                size_t opposite_offset = AMR::node_connectivity_t::face_list_opposite(face_list, face_refine_id);
+                size_t opposite_id = tet[opposite_offset];
+
+                trace_out << "1:4 tet mark id " << tet_id << std::endl;
+                trace_out << "opposite offset " << opposite_offset << std::endl;
+                trace_out << "opposite id " << opposite_id << std::endl;
+                trace_out << "face refine id " << face_refine_id << std::endl;
+                trace_out << "face list 0 " << face_list[face_refine_id][0] << std::endl;
+                trace_out << "face list 1 " << face_list[face_refine_id][1] << std::endl;
+                trace_out << "face list 2 " << face_list[face_refine_id][2] << std::endl;
+
+                refine_one_to_four(tet_store, node_connectivity, tet_id, face_list[face_refine_id], opposite_id);
+            }
+
+            /**
              * @brief Refine a given tet id into 4 children.
              * NOTE: Does not do any validity checking (currently?)
              *
@@ -848,7 +926,7 @@ namespace AMR {
                 //if (!check_allowed_derefinement(tet_store,parent_id)) return;
                 // TODO: think about if the logic for these derefs are right
                 derefine_eight_to_one(tet_store, node_connectivity, parent_id);
-                refine_one_to_four( tet_store, node_connectivity, parent_id);
+                deref_refine_one_to_four( tet_store, node_connectivity, parent_id);
             }
 
             /**

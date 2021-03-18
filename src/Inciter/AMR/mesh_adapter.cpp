@@ -425,7 +425,7 @@ namespace AMR {
                             // Count edges which need refining
                             //  We check in here as we won't refine a
                             //  locked edge and will thus ignore it
-                            if (tet_store.edge_store.get(key).needs_refining)
+                            if (tet_store.edge_store.get(key).needs_refining == 1)
                             {
                                 num_to_refine++;
                                 trace_out << "key needs ref " << key << std::endl;
@@ -952,7 +952,7 @@ namespace AMR {
             }
 
             // Count number of marked for refinement
-            if (tet_store.edge_store.get(key).needs_refining)
+            if (tet_store.edge_store.get(key).needs_refining == 1)
             {
                 trace_out << "found refine" << std::endl;
                 num_to_refine++;
@@ -1367,9 +1367,9 @@ namespace AMR {
                     //if (refinement_case == AMR::Refinement_Case::one_to_four)
                     if (children.size() == 4)
                     {
-                        // Accept as 4:2 derefine"
+                        // Accept as 4:1 derefine"
                         trace_out << "Accept as 4:1" << std::endl;
-                        //refiner.derefine_four_to_two(tet_store,  node_connectivity, tet_id);
+                        //refiner.derefine_four_to_one(tet_store,  node_connectivity, tet_id);
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::four_to_one);
                     }
                     // "Else if icase = 1:8
@@ -1401,7 +1401,7 @@ namespace AMR {
                               ref_edges.push_back(node_connectivity.get(n));
                             }
 
-                            tet_store.edge_store.mark_edges_for_refinement(ref_edges);
+                            tet_store.edge_store.mark_edges_for_deref_ref(ref_edges);
                             //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
                             tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_four);
                         }
@@ -1461,7 +1461,7 @@ namespace AMR {
                           ref_edges.push_back(node_connectivity.get(n));
                         }
 
-                        tet_store.edge_store.mark_edges_for_refinement(ref_edges);
+                        tet_store.edge_store.mark_edges_for_deref_ref(ref_edges);
 
                         // Accept as 8:4 derefinement
                         trace_out << "Accept as 8:4" << std::endl;
