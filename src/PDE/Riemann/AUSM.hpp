@@ -65,7 +65,7 @@ struct AUSM {
     for (std::size_t k=0; k<nmat; ++k)
     {
       al_l[k] = u[0][volfracIdx(nmat, k)];
-      pml[k] = u[0][ncomp+pressureIdx(nmat, k)];
+      pml[k] = (matExists(al_l[k])) ? u[0][ncomp+pressureIdx(nmat, k)] : 0.0;
       pl += pml[k];
       hml[k] = u[0][energyIdx(nmat, k)] + pml[k];
       amatl = eos_soundspeed< tag::multimat >( 0,
@@ -73,7 +73,7 @@ struct AUSM {
                                                pml[k], al_l[k], k );
 
       al_r[k] = u[1][volfracIdx(nmat, k)];
-      pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
+      pmr[k] = (matExists(al_l[k])) ? u[1][ncomp+pressureIdx(nmat, k)] : 0.0;
       pr += pmr[k];
       hmr[k] = u[1][energyIdx(nmat, k)] + pmr[k];
       amatr = eos_soundspeed< tag::multimat >( 0,

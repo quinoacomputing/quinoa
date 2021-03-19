@@ -365,7 +365,7 @@ class MultiMat {
           auto Pck =
             g_inputdeck.get< tag::param, eq, tag::pstiff >()[ m_system ][k];
           // for positive volume fractions
-          if (alk > 0.0)
+          if (matExists(alk))
           {
             // check if volume fraction is lesser than threshold (al_eps) and
             // if the material (effective) pressure is negative. If either of
@@ -418,6 +418,14 @@ class MultiMat {
             unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14
               * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14 *
+              p_target;
+          }
+          else {
+            auto rhok = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) / alk;
+            // update state of trace material
+            unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = alk
+              * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
+            prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk *
               p_target;
           }
         }
@@ -974,12 +982,12 @@ class MultiMat {
           ct, geoElem(e,4,0)/2.0, state);
 
         tk::real t_pr = std::numeric_limits< tk::real >::max();
-        //for (std::size_t k=0; k<nmat; ++k)
-        //{
-        //  if (volfracIdx(nmat, k) > 1.0e-04)
-        //    t_pr = std::min(t_pr,
-        //      0.05*state[volfracIdx(nmat, k)]/(std::fabs(s_alpha[k])+1e-12));
-        //}
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (volfracIdx(nmat, k) > 1.0e-04)
+            t_pr = std::min(t_pr,
+              0.05*state[volfracIdx(nmat, k)]/(std::fabs(s_alpha[k])+1e-12));
+        }
 
         mindt = std::min( mindt, std::min(geoElem(e,0,0)/delt[e], t_pr) );
       }

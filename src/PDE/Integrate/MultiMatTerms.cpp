@@ -80,6 +80,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
   using inciter::momentumIdx;
   using inciter::energyIdx;
   using inciter::velocityIdx;
+  using inciter::matExists;
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -198,9 +199,11 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
         for(std::size_t idof=0; idof<ndof; ++idof)
         {
           ncf[densityIdx(nmat, k)][idof] = 0.0;
-          for (std::size_t idir=0; idir<3; ++idir)
-            ncf[energyIdx(nmat, k)][idof] -= vel[idir] * ( ymat[k]*dap[idir]
-                                                  - riemannDeriv[3*k+idir][e] );
+          if (matExists(state[volfracIdx(nmat,k)])) {
+            for (std::size_t idir=0; idir<3; ++idir)
+              ncf[energyIdx(nmat, k)][idof] -= vel[idir] * ( ymat[k]*dap[idir]
+                                                    - riemannDeriv[3*k+idir][e] );
+          }
         }
 
         // evaluate non-conservative term for volume fraction equation
@@ -339,6 +342,7 @@ pressureRelaxationInt( ncomp_t system,
   using inciter::energyIdx;
   using inciter::pressureIdx;
   using inciter::velocityIdx;
+  using inciter::matExists;
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
@@ -403,8 +407,10 @@ pressureRelaxationInt( ncomp_t system,
       std::vector< real > s_prelax(ncomp, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
       {
-        s_prelax[volfracIdx(nmat, k)] = s_alpha[k];
-        s_prelax[energyIdx(nmat, k)] = - pb*s_alpha[k];
+        if (matExists(state[volfracIdx(nmat,k)])) {
+          s_prelax[volfracIdx(nmat, k)] = s_alpha[k];
+          s_prelax[energyIdx(nmat, k)] = - pb*s_alpha[k];
+        }
       }
 
       updateRhsPre( ncomp, offset, ndof, dof_el, wt, e, B, s_prelax, R );
