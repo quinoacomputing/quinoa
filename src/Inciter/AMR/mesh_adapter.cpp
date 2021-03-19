@@ -1229,65 +1229,6 @@ namespace AMR {
 
                 child_id_list_t children = tet_store.data(tet_id).children;
 
-                // the following piece of code is necessary only when this
-                // mark-deref loop is over ALL generations of tets (entire
-                // tet_store). The above if-tests avoid this by only going over
-                // active tets.
-
-                //// Skip tets which have no children or which are grand-parents
-                //bool grandparent = false;
-                //for (const auto& ch : children) {
-                //  if (tet_store.data(ch).children.size()) grandparent = true;
-                //}
-                //if (children.size() <= 0) { continue; }
-                //else if (grandparent) {
-                //  trace_out << "grandparent: " << tet_id
-                //    << " unmarking children from deref" << std::endl;
-                //  // go over grandparent's children and lock its edges, only if
-                //  // that edge does not belong to a grandchild. The following
-                //  // does this in a simple but 'hacky' way
-                //  std::map< edge_t, std::size_t > edge_derefmark;
-
-                //  for (auto child_id : children) {
-                //    auto grandchildren = tet_store.data(child_id).children;
-                //    // get child_id's nodes
-                //    auto child_nodes = tet_store.get(child_id);
-                //    std::unordered_set<size_t> child_node_set{
-                //      std::begin(child_nodes), std::end(child_nodes)};
-                //    trace_out << "looking at child: " << child_id <<
-                //      " which has " << grandchildren.size() << " children" << std::endl;
-                //  // 1. store the grandchildren's edge-markings
-                //    for (auto gchild_id : grandchildren) {
-                //      auto edges = tet_store.generate_edge_keys(gchild_id);
-                //      trace_out << "looking at grandchild: " << gchild_id << std::endl;
-                //      for (const auto& edge_key : edges) {
-                //        // retaining this edge's deref marking only if one of
-                //        // the nodes of this edge does not belong to the parent
-                //        // of gchild_id (which is child_id), i.e. nonparent node.
-                //        // basically, keep deref-decisions only for the edges
-                //        // that have been split
-                //        if (child_node_set.count(edge_key.first())==0 ||
-                //          child_node_set.count(edge_key.second())==0) {
-                //          edge_derefmark[edge_key] =
-                //            tet_store.edge_store.get(edge_key).needs_derefining;
-                //        }
-                //      }
-                //    }
-
-                //  // 2. go thru the children, and unmark their edges for deref
-                //    deactivate_deref_tet_edges(child_id);
-                //  }
-
-                //  // 3. go thru the grandparents again and reinstate their edge
-                //  // derefinement markings
-                //  for (const auto& e_key : edge_derefmark) {
-                //    tet_store.edge_store.get(e_key.first).needs_derefining =
-                //      e_key.second;
-                //  }
-
-                //  continue;
-                //}
-
                 // This is useful for later inspection
                 //edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
                 std::size_t num_to_derefine = 0; // Nodes
