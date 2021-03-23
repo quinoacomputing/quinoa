@@ -485,8 +485,8 @@ namespace AMR {
 
                     } // if num_to_refine
                     else {
-                            // If we got here, we don't want to refine this guy
-                            //tet_store.marked_refinements.add(tet_id, AMR::Refinement_Case::none);
+                        // If we got here, we don't want to refine this guy
+                        tet_store.marked_refinements.add(tet_id, AMR::Refinement_Case::none);
                     }
                 } // if active
                 else {
@@ -589,6 +589,9 @@ namespace AMR {
                 std::cout << "num children " << element.children.size() << std::endl;
                 assert(0);
             }
+            // remove tets and edges marked for deletion above
+            refiner.delete_intermediates_of_children(tet_store);
+            tet_store.process_delete_list();
 
             refiner.refine_one_to_eight(tet_store,node_connectivity,i);
 
