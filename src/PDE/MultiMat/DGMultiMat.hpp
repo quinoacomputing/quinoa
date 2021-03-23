@@ -396,15 +396,27 @@ class MultiMat {
               auto rhoEmat = eos_totalenergy< eq >(m_system, rhomat, u, v, w,
                 p_target, k);
 
+              auto d_Ek = (unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset)
+                - alk_new * rhoEmat);
+              auto d_Elim = 0.1*
+                unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset);
+
+              if (std::fabs(d_Ek) > d_Elim) {
+                d_Ek = std::copysign(d_Elim,d_Ek);
+              }
+
               // volume-fraction and total energy flux into majority material
               d_al += (alk - alk_new);
-              d_arE += (unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset)
-                - alk_new * rhoEmat);
+              d_arE += d_Ek;
 
               // update state of trace material
               unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset) = alk_new;
-              unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = alk_new*rhoEmat;
-              prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk_new*p_target;
+              unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) -= d_Ek;
+              prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
+                eos_pressure< eq >(m_system,
+                unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset), u, v, w,
+                unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset),
+                unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset), k);
             }
           }
           // check for unbounded volume fractions
@@ -420,7 +432,8 @@ class MultiMat {
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14 *
               p_target;
           }
-          else {
+          else
+          {
             auto rhok = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) / alk;
             // update state of trace material
             unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = alk
