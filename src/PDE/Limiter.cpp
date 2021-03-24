@@ -910,14 +910,13 @@ VertexBasedFunction( const tk::Fields& U,
       auto phi_gp = 1.0;
       auto mark = c*rdof;
       auto uNeg = state[c] - U(e, mark, offset);
-      if (uNeg > 1.0e-14)
+      auto uref = std::max(std::fabs(U(e,mark,offset)), 1e-14);
+      if (uNeg > 1.0e-06*uref)
       {
-        uNeg = std::max(uNeg, 1.0e-08);
         phi_gp = std::min( 1.0, (uMax[c]-U(e, mark, offset))/uNeg );
       }
-      else if (uNeg < -1.0e-14)
+      else if (uNeg < -1.0e-06*uref)
       {
-        uNeg = std::min(uNeg, -1.0e-08);
         phi_gp = std::min( 1.0, (uMin[c]-U(e, mark, offset))/uNeg );
       }
       else
