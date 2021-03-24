@@ -398,9 +398,13 @@ class MultiMat {
 
               auto d_Ek = (unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset)
                 - alk_new * rhoEmat);
+
+              // limit energy change in each material to 10% for stability.
+              // as a result of this limitation, complete pressure equilibrium
+              // will not be reached. instead, this step will bring the material
+              // pressure closer to target pressure
               auto d_Elim = 0.1*
                 unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset);
-
               if (std::fabs(d_Ek) > d_Elim) {
                 d_Ek = std::copysign(d_Elim,d_Ek);
               }
@@ -890,8 +894,8 @@ class MultiMat {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-      const auto ct = g_inputdeck.get< tag::param, tag::multimat,
-        tag::prelax_timescale >()[m_system];
+      //const auto ct = g_inputdeck.get< tag::param, tag::multimat,
+      //  tag::prelax_timescale >()[m_system];
 
       const auto& esuf = fd.Esuf();
 
@@ -990,17 +994,17 @@ class MultiMat {
         auto state = ugp;
         state.insert(state.end(), pgp.begin(), pgp.end());
 
-        // pressure relaxation volume change
-        auto s_alpha = tk::getRelaxationVolumeChange(m_system, m_ncomp, nmat,
-          ct, geoElem(e,4,0)/2.0, state);
+        //// pressure relaxation volume change
+        //auto s_alpha = tk::getRelaxationVolumeChange(m_system, m_ncomp, nmat,
+        //  ct, geoElem(e,4,0)/2.0, state);
 
         tk::real t_pr = std::numeric_limits< tk::real >::max();
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          if (volfracIdx(nmat, k) > 1.0e-04)
-            t_pr = std::min(t_pr,
-              0.05*state[volfracIdx(nmat, k)]/(std::fabs(s_alpha[k])+1e-12));
-        }
+        //for (std::size_t k=0; k<nmat; ++k)
+        //{
+        //  if (volfracIdx(nmat, k) > 1.0e-04)
+        //    t_pr = std::min(t_pr,
+        //      0.05*state[volfracIdx(nmat, k)]/(std::fabs(s_alpha[k])+1e-12));
+        //}
 
         mindt = std::min( mindt, std::min(geoElem(e,0,0)/delt[e], t_pr) );
       }
