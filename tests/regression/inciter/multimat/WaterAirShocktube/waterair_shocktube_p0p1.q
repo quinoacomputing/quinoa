@@ -7,10 +7,10 @@ title "Water-air shock-tube"
 inciter
 
   nstep 25
-  dt 1.0e-8
+  cfl 0.8
   ttyi 10     # TTY output interval
   scheme p0p1
-  limiter superbeep1
+  limiter vertexbasedp1
 
   partitioning
     algorithm mj

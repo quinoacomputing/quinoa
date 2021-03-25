@@ -10,7 +10,7 @@ inciter
   dt   1.0e-3 # Time step size
   ttyi 10     # TTY output interval
   scheme p0p1
-  limiter superbeep1
+  limiter vertexbasedp1
 
   partitioning
     algorithm mj
