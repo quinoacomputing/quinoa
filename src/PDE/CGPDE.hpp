@@ -108,15 +108,16 @@ class CGPDE {
 
     //! Public interface to determining which nodes are in IC box
     void IcBoxNodes( const tk::UnsMesh::Coords& coord,
-      std::unordered_set< std::size_t>& inbox )
+      std::vector< std::unordered_set< std::size_t > >& inbox )
     { self->IcBoxNodes( coord, inbox ); }
 
     //! Public interface to setting the initial conditions for the diff eq
-    void initialize( const std::array< std::vector< real >, 3 >& coord,
-                     tk::Fields& unk,
-                     real t,
-                     real V,
-                     const std::unordered_set< std::size_t >& inbox )
+    void initialize(
+      const std::array< std::vector< real >, 3 >& coord,
+      tk::Fields& unk,
+      real t,
+      real V,
+      const std::vector< std::unordered_set< std::size_t > >& inbox )
     { self->initialize( coord, unk, t, V, inbox ); }
 
     //! Public interface to computing the nodal gradients for ALECG
@@ -157,7 +158,7 @@ class CGPDE {
       const std::vector< real >& vol,
       const std::vector< std::size_t >& edgenode,
       const std::vector< std::size_t >& edgeid,
-      const std::unordered_set< std::size_t >& boxnodes,
+      const std::vector< std::unordered_set< std::size_t > >& boxnodes,
       const tk::Fields& G,
       const tk::Fields& U,
       const std::vector< real >& tp,
@@ -266,12 +267,13 @@ class CGPDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void IcBoxNodes( const tk::UnsMesh::Coords&,
-        std::unordered_set< std::size_t >& inbox ) = 0;
-      virtual void initialize( const std::array< std::vector< real >, 3 >&,
-                               tk::Fields&,
-                               real,
-                               real,
-                               const std::unordered_set< std::size_t >& ) = 0;
+        std::vector< std::unordered_set< std::size_t > >& inbox ) = 0;
+      virtual void initialize(
+        const std::array< std::vector< real >, 3 >&,
+        tk::Fields&,
+        real,
+        real,
+        const std::vector< std::unordered_set< std::size_t > >& ) = 0;
       virtual void chBndGrad( const std::array< std::vector< real >, 3 >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
@@ -303,7 +305,7 @@ class CGPDE {
         const std::vector< real >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
-        const std::unordered_set< std::size_t >&,
+        const std::vector< std::unordered_set< std::size_t > >&,
         const tk::Fields&,
         const tk::Fields&,
         const std::vector< real >&,
@@ -362,13 +364,14 @@ class CGPDE {
       explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       void IcBoxNodes( const tk::UnsMesh::Coords& coord,
-        std::unordered_set< std::size_t >& inbox )
+        std::vector< std::unordered_set< std::size_t > >& inbox )
       override { data.IcBoxNodes( coord, inbox ); }
-      void initialize( const std::array< std::vector< real >, 3 >& coord,
-                       tk::Fields& unk,
-                       real t,
-                       real V,
-                       const std::unordered_set< std::size_t >& inbox )
+      void initialize(
+        const std::array< std::vector< real >, 3 >& coord,
+        tk::Fields& unk,
+        real t,
+        real V,
+        const std::vector< std::unordered_set< std::size_t > >& inbox )
       override { data.initialize( coord, unk, t, V, inbox ); }
       void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
         const std::vector< std::size_t >& inpoel,
@@ -403,7 +406,7 @@ class CGPDE {
         const std::vector< real >& vol,
         const std::vector< std::size_t >& edgenode,
         const std::vector< std::size_t >& edgeid,
-        const std::unordered_set< std::size_t >& boxnodes,
+        const std::vector< std::unordered_set< std::size_t > >& boxnodes,
         const tk::Fields& G,
         const tk::Fields& U,
         const std::vector< real >& tp,

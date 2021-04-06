@@ -797,15 +797,16 @@ Discretization::stat( tk::real mesh_volume )
 }
 
 void
-Discretization::boxvol( const std::unordered_set< std::size_t >& nodes )
+Discretization::boxvol(
+  const std::vector< std::unordered_set< std::size_t > >& nodes )
 // *****************************************************************************
 // Compute total box IC volume
-//! \param[in] nodes Node list contributing to box IC volume
+//! \param[in] nodes Node list contributing to box IC volume (for each IC box)
 // *****************************************************************************
 {
-  // Compute partial box IC volume
+  // Compute partial box IC volume (just add up all boxes)
   tk::real boxvol = 0.0;
-  for (auto i : nodes) boxvol += m_v[i];
+  for (const auto& b : nodes) for (auto i : b) boxvol += m_v[i];
 
   // Sum up box IC volume across all chares
   std::vector< tk::real > meshdata{ boxvol, static_cast<tk::real>(m_meshid) };

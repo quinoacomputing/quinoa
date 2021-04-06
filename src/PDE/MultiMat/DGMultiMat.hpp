@@ -124,22 +124,20 @@ class MultiMat {
     //! Determine elements that lie inside the user-defined IC box
     void IcBoxElems( const tk::Fields&,
       std::size_t,
-      std::unordered_set< std::size_t >& ) const
+      std::vector< std::unordered_set< std::size_t > >& ) const
     {}
 
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
-//    //! \param[in,out] inbox List of elements at which box user ICs are set
-    //!   equation
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
     void initialize( const tk::Fields& L,
                      const std::vector< std::size_t >& inpoel,
                      const tk::UnsMesh::Coords& coord,
-                     const std::unordered_set< std::size_t >& /*inbox*/,
+                     const std::vector< std::unordered_set< std::size_t > >&,
                      tk::Fields& unk,
                      tk::real t,
                      const std::size_t nielem ) const
@@ -742,7 +740,7 @@ class MultiMat {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
-              const std::unordered_set< std::size_t >&,
+              const std::vector< std::unordered_set< std::size_t > >&,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,

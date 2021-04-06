@@ -113,15 +113,18 @@ class CompFlow {
     //! Determine elements that lie inside the user-defined IC box
     //! \param[in] geoElem Element geometry array
     //! \param[in] nielem Number of internal elements
-    //! \param[in,out] inbox List of nodes at which box user ICs are set
+    //! \param[in,out] inbox List of nodes at which box user ICs are set for
+    //!    each IC box
     void IcBoxElems( const tk::Fields& geoElem,
       std::size_t nielem,
-      std::unordered_set< std::size_t >& inbox ) const
+      std::vector< std::unordered_set< std::size_t > >& inbox ) const
     {
      // Detect if user has configured a IC boxes
       const auto& icbox = g_inputdeck.get<tag::param, eq, tag::ic, tag::box>();
       if (icbox.size() > m_system) {
+        std::size_t bcnt = 0;
         for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
+         inbox.emplace_back();
           std::vector< tk::real > box
             { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
               b.template get< tag::ymin >(), b.template get< tag::ymax >(),
@@ -139,9 +142,10 @@ class CompFlow {
                  y>box[2] && y<box[3] &&
                  z>box[4] && z<box[5] )
             {
-              inbox.insert( e );
+              inbox[bcnt].insert( e );
             }
           }
+          ++bcnt;
         }
       }
     }
@@ -150,17 +154,19 @@ class CompFlow {
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
-    //! \param[in,out] inbox List of elements at which box user ICs are set
+    //! \param[in,out] inbox List of elements at which box user ICs are set for
+    //!    each IC box
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
-    void initialize( const tk::Fields& L,
-                     const std::vector< std::size_t >& inpoel,
-                     const tk::UnsMesh::Coords& coord,
-                     const std::unordered_set< std::size_t >& inbox,
-                     tk::Fields& unk,
-                     tk::real t,
-                     const std::size_t nielem ) const
+    void
+    initialize( const tk::Fields& L,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const std::vector< std::unordered_set< std::size_t > >& inbox,
+                tk::Fields& unk,
+                tk::real t,
+                const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
@@ -174,25 +180,28 @@ class CompFlow {
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
       for (std::size_t e=0; e<nielem; ++e) {
-        if (inbox.find(e) != inbox.end() && icbox.size() > m_system) {
+        if (icbox.size() > m_system) {
           std::size_t bcnt = 0;
-          for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
-            for (std::size_t c=0; c<m_ncomp; ++c) {
-              auto mark = c*rdof;
-              s[c] = unk(e,mark,m_offset);
-              // set high-order DOFs to zero
-              for (std::size_t i=1; i<rdof; ++i)
-                unk(e,mark+i,m_offset) = 0.0;
+          for (const auto& b : icbox[m_system]) {   // for all boxes
+            if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
+            {
+              for (std::size_t c=0; c<m_ncomp; ++c) {
+                auto mark = c*rdof;
+                s[c] = unk(e,mark,m_offset);
+                // set high-order DOFs to zero
+                for (std::size_t i=1; i<rdof; ++i)
+                  unk(e,mark+i,m_offset) = 0.0;
+              }
+              initializeBox( m_system, 1.0, t, b, bgpreic[m_system][0],
+                             cv[m_system][0], s );
+              // store box-initialization in solution vector
+              for (std::size_t c=0; c<m_ncomp; ++c) {
+                auto mark = c*rdof;
+                unk(e,mark,m_offset) = s[c];
+              }
             }
-            initializeBox( m_system, 1.0, t, b, bgpreic[m_system][bcnt],
-                           cv[m_system][0], s );
-            // store box-initialization in solution vector
-            for (std::size_t c=0; c<m_ncomp; ++c) {
-              auto mark = c*rdof;
-              unk(e,mark,m_offset) = s[c];
-            }
+            ++bcnt;
           }
-          ++bcnt;
         }
       }
     }
@@ -327,7 +336,7 @@ class CompFlow {
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] inpoel Element-node connectivity
-    //! \param[in] boxelems Mesh node ids within user-defined box
+    //! \param[in] boxelems Mesh node ids within user-defined IC boxes
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
@@ -338,7 +347,7 @@ class CompFlow {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
-              const std::unordered_set< std::size_t >& boxelems,
+              const std::vector< std::unordered_set< std::size_t > >& boxelems,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
@@ -409,7 +418,8 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      if (icbox.size() > m_system) {
+      if (icbox.size() > m_system && !boxelems.empty()) {
+        std::size_t bcnt = 0;
         for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
           std::vector< tk::real > box
            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
@@ -418,8 +428,10 @@ class CompFlow {
 
           const auto& initiate = b.template get< tag::initiate >();
           auto inittype = initiate.template get< tag::init >();
-          if (inittype == ctr::InitiateType::LINEAR)
-            boxSrc( t, inpoel, boxelems, coord, geoElem, ndofel, R );
+          if (inittype == ctr::InitiateType::LINEAR) {
+            boxSrc( t, inpoel, boxelems[bcnt], coord, geoElem, ndofel, R );
+          }
+          ++bcnt;
         }
       }
     }

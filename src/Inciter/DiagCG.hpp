@@ -283,8 +283,8 @@ class DiagCG : public CBase_DiagCG {
     std::unordered_set< std::size_t > m_farfieldbcnodes;
     //! Diagnostics object
     NodeDiagnostics m_diag;
-    //! Mesh node ids at which user-defined box ICs are defined
-    std::unordered_set< std::size_t > m_boxnodes;
+    //! Mesh node ids at which user-defined box ICs are defined (multiple boxes)
+    std::vector< std::unordered_set< std::size_t > > m_boxnodes;
     //! Time step size for each mesh node
     std::vector< tk::real > m_dtp;
     //! Physical time for each mesh node

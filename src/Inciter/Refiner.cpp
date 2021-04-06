@@ -811,7 +811,7 @@ Refiner::writeMesh( const std::string& basefilename,
   auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
 
   // list of nodes/elements at which box ICs are defined
-  std::unordered_set< std::size_t > inbox;
+  std::vector< std::unordered_set< std::size_t > > inbox;
   tk::real V = 1.0;
 
   // Prepare node or element fields for output to file
@@ -1362,7 +1362,7 @@ Refiner::nodeinit( std::size_t npoin,
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
   // list of nodes/elements at which box ICs are defined
-  std::unordered_set< std::size_t > inbox;
+  std::vector< std::unordered_set< std::size_t > > inbox;
   tk::real V = 1.0;
 
   if (centering == tk::Centering::NODE) {

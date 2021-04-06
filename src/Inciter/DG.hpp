@@ -405,8 +405,8 @@ class DG : public CBase_DG {
         tk::destroy( nodeCommMap );
       }
     } m_outmesh;
-    //! Element ids at which box ICs are defined by user
-    std::unordered_set< std::size_t > m_boxelems;
+    //! Element ids at which box ICs are defined by user (multiple boxes)
+    std::vector< std::unordered_set< std::size_t > > m_boxelems;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

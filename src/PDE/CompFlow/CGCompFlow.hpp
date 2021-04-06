@@ -82,9 +82,10 @@ class CompFlow {
 
     //! Determine nodes that lie inside the user-defined IC box
     //! \param[in] coord Mesh node coordinates
-    //! \param[in,out] inbox List of nodes at which box user ICs are set
+    //! \param[in,out] inbox List of nodes at which box user ICs are set for
+    //!    each IC box
     void IcBoxNodes( const tk::UnsMesh::Coords& coord,
-      std::unordered_set< std::size_t >& inbox ) const
+      std::vector< std::unordered_set< std::size_t > >& inbox ) const
     {
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -93,7 +94,9 @@ class CompFlow {
       // Detect if user has configured a IC boxes
       const auto& icbox = g_inputdeck.get<tag::param, eq, tag::ic, tag::box>();
       if (icbox.size() > m_system) {
+        std::size_t bcnt = 0;
         for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
+          inbox.emplace_back();
           std::vector< tk::real > box
             { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
               b.template get< tag::ymin >(), b.template get< tag::ymax >(),
@@ -108,10 +111,11 @@ class CompFlow {
               if ( x[i]>box[0] && x[i]<box[1] && y[i]>box[2] && y[i]<box[3] &&
                 z[i]>box[4] && z[i]<box[5] )
               {
-                inbox.insert( i );
+                inbox[bcnt].insert( i );
               }
             }
           }
+          ++bcnt;
         }
       }
     }
@@ -121,12 +125,14 @@ class CompFlow {
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] V Discrete volume of user-defined IC box
-    //! \param[in] inbox List of nodes at which box user ICs are set
-    void initialize( const std::array< std::vector< real >, 3 >& coord,
-                     tk::Fields& unk,
-                     real t,
-                     real V,
-                     const std::unordered_set< std::size_t >& inbox ) const
+    //! \param[in] inbox List of nodes at which box user ICs are set (for each
+    //!    box IC)
+    void initialize(
+      const std::array< std::vector< real >, 3 >& coord,
+      tk::Fields& unk,
+      real t,
+      real V,
+      const std::vector< std::unordered_set< std::size_t > >& inbox ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
 
@@ -148,17 +154,20 @@ class CompFlow {
         auto s = Problem::initialize( m_system, m_ncomp, x[i], y[i], z[i], t );
 
         // initialize the user-defined box IC
-        if (inbox.find(i) != inbox.end() && icbox.size() > m_system) {
+        if (icbox.size() > m_system) {
           std::size_t bcnt = 0;
-          for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
-            std::vector< tk::real > box
+          for (const auto& b : icbox[m_system]) { // for all boxes
+            if (inbox.size() > bcnt && inbox[bcnt].find(i) != inbox[bcnt].end())
+            {
+              std::vector< tk::real > box
               { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
                 b.template get< tag::ymin >(), b.template get< tag::ymax >(),
                 b.template get< tag::zmin >(), b.template get< tag::zmax >() };
-            auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
-            if (V_ex < eps) V = 1.0;
-            initializeBox( m_system, V_ex/V, t, b, bgpreic[m_system][bcnt],
-                           cv[m_system][0], s );
+              auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
+              if (V_ex < eps) V = 1.0;
+              initializeBox( m_system, V_ex/V, t, b, bgpreic[m_system][0],
+                             cv[m_system][0], s );
+            }
             ++bcnt;
           }
         }
@@ -457,7 +466,7 @@ class CompFlow {
     //! \param[in] vol Nodal volumes
     //! \param[in] edgenode Local node IDs of edges
     //! \param[in] edgeid Edge ids in the order of access
-    //! \param[in] boxnodes Mesh node ids within user-defined box
+    //! \param[in] boxnodes Mesh node ids within user-defined IC boxes
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
     //! \param[in] tp Physical time for each mesh node
@@ -479,7 +488,7 @@ class CompFlow {
               const std::vector< real >& vol,
               const std::vector< std::size_t >& edgenode,
               const std::vector< std::size_t >& edgeid,
-              const std::unordered_set< std::size_t >& boxnodes,
+              const std::vector< std::unordered_set< std::size_t > >& boxnodes,
               const tk::Fields& G,
               const tk::Fields& U,
               const std::vector< tk::real >& tp,
@@ -510,7 +519,8 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      if (icbox.size() > m_system) {
+      if (icbox.size() > m_system && !boxnodes.empty()) {
+        std::size_t bcnt = 0;
         for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
           std::vector< tk::real > box
            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
@@ -519,8 +529,10 @@ class CompFlow {
 
           const auto& initiate = b.template get< tag::initiate >();
           auto inittype = initiate.template get< tag::init >();
-          if (inittype == ctr::InitiateType::LINEAR)
-            boxSrc( V, t, inpoel, esup, boxnodes, coord, R );
+          if (inittype == ctr::InitiateType::LINEAR) {
+            boxSrc( V, t, inpoel, esup, boxnodes[bcnt], coord, R );
+          }
+          ++bcnt;
         }
       }
 
