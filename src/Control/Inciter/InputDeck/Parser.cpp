@@ -74,11 +74,15 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   tao::pegtl::parse< deck::read_file, tk::grm::action >( in, id );
 
 #ifdef HAS_LUA
-  // Parse lua ... end block(s) as Lua code using Sol2
-  sol::state lua;
-  lua.script( id.get< tag::param, tag::compflow, tag::lua >() );
-  // Interpret ic ... end block within lua block
-  lua::ic< tag::compflow >( lua, id );
+  // Parse multiple lua ... end blocks as Lua code using Sol2
+  std::size_t cnt = 0;
+  for (const auto& l : id.get< tag::param, tag::compflow, tag::lua >()) {
+    sol::state lua;
+    lua.script( l );
+    // Interpret ic ... end block within lua block
+    lua::ic< tag::compflow >( lua, cnt, id );
+    ++cnt;
+  }
 #endif
 
   // Echo errors and warnings accumulated during parsing

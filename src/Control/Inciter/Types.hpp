@@ -167,37 +167,27 @@ using diagnostics = tk::TaggedTuple< brigand::list<
 
 //! Initiation configuration for box IC
 using InitiateParameters = tk::TaggedTuple< brigand::list<
-    tag::init,          std::vector< InitiateType >
-  , tag::point,         std::vector<
-                          std::vector< kw::point::info::expect::type > >
-  , tag::radius,        std::vector<
-                          std::vector< kw::radius::info::expect::type > >
-  , tag::velocity,      std::vector<
-                          std::vector< kw::velocity::info::expect::type > >
+    tag::init,          InitiateType
+  , tag::point,         std::vector< kw::point::info::expect::type >
+  , tag::radius,        kw::radius::info::expect::type
+  , tag::velocity,      kw::velocity::info::expect::type
 > >;
 
 //! Box, given by coordinates, specifying physics variables
 using box = tk::TaggedTuple< brigand::list<
-    tag::xmin,         std::vector< kw::xmin::info::expect::type >
-  , tag::xmax,         std::vector< kw::xmax::info::expect::type >
-  , tag::ymin,         std::vector< kw::ymin::info::expect::type >
-  , tag::ymax,         std::vector< kw::ymax::info::expect::type >
-  , tag::zmin,         std::vector< kw::zmin::info::expect::type >
-  , tag::zmax,         std::vector< kw::zmax::info::expect::type >
-  , tag::mass,         std::vector<
-                          std::vector< kw::mass::info::expect::type > >
-  , tag::density,       std::vector<
-                          std::vector< kw::density::info::expect::type > >
-  , tag::velocity,      std::vector<
-                          std::vector< kw::velocity::info::expect::type > >
-  , tag::pressure,      std::vector<
-                          std::vector< kw::pressure::info::expect::type > >
-  , tag::energy,        std::vector<
-                          std::vector< kw::energy::info::expect::type > >
-  , tag::energy_content,std::vector< std::vector<
-                          kw::energy_content::info::expect::type > >
-  , tag::temperature,   std::vector<
-                          std::vector< kw::temperature::info::expect::type > >
+    tag::xmin,          kw::xmin::info::expect::type
+  , tag::xmax,          kw::xmax::info::expect::type
+  , tag::ymin,          kw::ymin::info::expect::type
+  , tag::ymax,          kw::ymax::info::expect::type
+  , tag::zmin,          kw::zmin::info::expect::type
+  , tag::zmax,          kw::zmax::info::expect::type
+  , tag::mass,          kw::mass::info::expect::type
+  , tag::density,       kw::density::info::expect::type
+  , tag::velocity,      std::vector< kw::velocity::info::expect::type >
+  , tag::pressure,      kw::pressure::info::expect::type
+  , tag::energy,        kw::energy::info::expect::type
+  , tag::energy_content,kw::energy_content::info::expect::type
+  , tag::temperature,   kw::temperature::info::expect::type
   , tag::initiate,      InitiateParameters
 > >;
 
@@ -213,7 +203,7 @@ using ic = tk::TaggedTuple< brigand::list<
                           std::vector< kw::energy::info::expect::type > >
   , tag::temperature,   std::vector<
                           std::vector< kw::temperature::info::expect::type > >
-  , tag::box,           box
+  , tag::box,           std::vector< std::vector< box > >
 > >;
 
 //! Boundary condition configuration
@@ -342,8 +332,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::npar,          std::vector< kw::npar::info::expect::type >
     //! Flux function type
   , tag::flux,          std::vector< FluxType >
-    //! Lua code
-  , tag::lua,           std::string
+    //! Lua code (multiple blocks)
+  , tag::lua,           std::vector< std::string >
 > >;
 
 //! Compressible flow equation parameters storage

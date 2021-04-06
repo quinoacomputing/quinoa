@@ -90,35 +90,26 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      // Detect if user has configured a box IC
-      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
-      const auto& icbox = ic.get< tag::box >();
+      // Detect if user has configured a IC boxes
+      const auto& icbox = g_inputdeck.get<tag::param, eq, tag::ic, tag::box>();
+      if (icbox.size() > m_system) {
+        for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
+          std::vector< tk::real > box
+            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+              b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+              b.template get< tag::zmin >(), b.template get< tag::zmax >() };
 
-      const auto& xmin = icbox.get< tag::xmin >();
-      const auto& xmax = icbox.get< tag::xmax >();
-      const auto& ymin = icbox.get< tag::ymin >();
-      const auto& ymax = icbox.get< tag::ymax >();
-      const auto& zmin = icbox.get< tag::zmin >();
-      const auto& zmax = icbox.get< tag::zmax >();
-      Assert( xmin.size() == xmax.size(), "Size mismatch" );
-      Assert( xmin.size() == ymin.size(), "Size mismatch" );
-      Assert( xmin.size() == ymax.size(), "Size mismatch" );
-      Assert( xmin.size() == zmin.size(), "Size mismatch" );
-      Assert( xmin.size() == zmax.size(), "Size mismatch" );
-
-      for (std::size_t b=0; b<xmin.size(); ++b) {   // for all boxes configured
-        std::vector< tk::real > box
-          { xmin[b], xmax[b], ymin[b], ymax[b], zmin[b], zmax[b] };
-        const auto eps = std::numeric_limits< tk::real >::epsilon();
-        // Determine which nodes lie in the IC box
-        if ( std::any_of( begin(box), end(box), [=](auto p)
-                          { return abs(p) > eps; } ) )
-        {
-          for (ncomp_t i=0; i<x.size(); ++i) {
-            if ( x[i]>box[0] && x[i]<box[1] && y[i]>box[2] && y[i]<box[3] &&
-              z[i]>box[4] && z[i]<box[5] )
-            {
-              inbox.insert( i );
+          const auto eps = std::numeric_limits< tk::real >::epsilon();
+          // Determine which nodes lie in the IC box
+          if ( std::any_of( begin(box), end(box), [=](auto p)
+                            { return abs(p) > eps; } ) )
+          {
+            for (ncomp_t i=0; i<x.size(); ++i) {
+              if ( x[i]>box[0] && x[i]<box[1] && y[i]>box[2] && y[i]<box[3] &&
+                z[i]>box[4] && z[i]<box[5] )
+              {
+                inbox.insert( i );
+              }
             }
           }
         }
@@ -146,29 +137,9 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      const auto& xmin = icbox.get< tag::xmin >();
-      const auto& xmax = icbox.get< tag::xmax >();
-      const auto& ymin = icbox.get< tag::ymin >();
-      const auto& ymax = icbox.get< tag::ymax >();
-      const auto& zmin = icbox.get< tag::zmin >();
-      const auto& zmax = icbox.get< tag::zmax >();
-      Assert( xmin.size() == xmax.size(), "Size mismatch" );
-      Assert( xmin.size() == ymin.size(), "Size mismatch" );
-      Assert( xmin.size() == ymax.size(), "Size mismatch" );
-      Assert( xmin.size() == zmin.size(), "Size mismatch" );
-      Assert( xmin.size() == zmax.size(), "Size mismatch" );
-
-      tk::real V_ex = 0.0;
-      if (!xmin.empty()) {      // box 0 only for now
-        std::array< tk::real, 6 > boxdim
-          { xmin[0], xmax[0], ymin[0], ymax[0], zmin[0], zmax[0] };
-        V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
-          (boxdim[5]-boxdim[4]);
-      }
-
       const auto eps = 1000.0 * std::numeric_limits< tk::real >::epsilon();
+
       // if an ic box was not specified, avoid division by zero by setting V
-      if (V_ex < eps) V = 1.0;
       const auto& bgpreic = ic.get< tag::pressure >();
       const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
 
@@ -177,8 +148,20 @@ class CompFlow {
         auto s = Problem::initialize( m_system, m_ncomp, x[i], y[i], z[i], t );
 
         // initialize the user-defined box IC
-        if (inbox.find(i) != inbox.end())
-          initializeBox(m_system, V_ex/V, t, icbox, bgpreic, cv, s);
+        if (inbox.find(i) != inbox.end() && icbox.size() > m_system) {
+          std::size_t bcnt = 0;
+          for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
+            std::vector< tk::real > box
+              { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+                b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+                b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+            auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
+            if (V_ex < eps) V = 1.0;
+            initializeBox( m_system, V_ex/V, t, b, bgpreic[m_system][bcnt],
+                           cv[m_system][0], s );
+            ++bcnt;
+          }
+        }
 
         unk(i,0,m_offset) = s[0]; // rho
         if (!skipPoint(x[i],y[i],z[i]) && stagPoint(x[i],y[i],z[i])) {
@@ -526,11 +509,20 @@ class CompFlow {
       // compute external (energy) sources
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
-      const auto& initiate = icbox.get< tag::initiate >();
-      const auto& inittype = initiate.get< tag::init >();
-      if (inittype.size() > m_system)
-        if (inittype[m_system] == ctr::InitiateType::LINEAR)
-          boxSrc( V, t, inpoel, esup, boxnodes, coord, R );
+
+      if (icbox.size() > m_system) {
+        for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
+          std::vector< tk::real > box
+           { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+             b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+             b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+
+          const auto& initiate = b.template get< tag::initiate >();
+          auto inittype = initiate.template get< tag::init >();
+          if (inittype == ctr::InitiateType::LINEAR)
+            boxSrc( V, t, inpoel, esup, boxnodes, coord, R );
+        }
+      }
 
       // compute optional source integral
       src( coord, inpoel, t, tp, R );
@@ -553,9 +545,6 @@ class CompFlow {
       // energy source propagation time and velocity
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
-      const auto& initiate = icbox.get< tag::initiate >();
-      const auto& iv = initiate.get< tag::velocity >()[ m_system ];
-      const auto& inittype = initiate.get< tag::init >();
 
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -590,34 +579,28 @@ class CompFlow {
           auto c = eos_soundspeed< eq >( m_system, r, p );
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
 
-          // energy source propagation velocity
-          if (inittype.size() > m_system)
-            if (inittype[m_system] == ctr::InitiateType::LINEAR) {
-              const auto& xmin = icbox.get< tag::xmin >();
-              const auto& xmax = icbox.get< tag::xmax >();
-              const auto& ymin = icbox.get< tag::ymin >();
-              const auto& ymax = icbox.get< tag::ymax >();
-              const auto& zmin = icbox.get< tag::zmin >();
-              const auto& zmax = icbox.get< tag::zmax >();
-              Assert( xmin.size() == xmax.size(), "Size mismatch" );
-              Assert( xmin.size() == ymin.size(), "Size mismatch" );
-              Assert( xmin.size() == ymax.size(), "Size mismatch" );
-              Assert( xmin.size() == zmin.size(), "Size mismatch" );
-              Assert( xmin.size() == zmax.size(), "Size mismatch" );
-
-              for (std::size_t b=0; b<xmin.size(); ++b) {   // for all boxes
-                std::vector< tk::real > boxdim
-                  { xmin[b], xmax[b], ymin[b], ymax[b], zmin[b], zmax[b] };
+          // energy source propagation velocity (in all IC boxes configured)
+          if (icbox.size() > m_system) {
+            for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
+              const auto& initiate = b.template get< tag::initiate >();
+              auto iv = initiate.template get< tag::velocity >();
+              auto inittype = initiate.template get< tag::init >();
+              if (inittype == ctr::InitiateType::LINEAR) {
+                auto zmin = b.template get< tag::zmin >();
+                auto zmax = b.template get< tag::zmax >();
                 auto wFront = 0.08;
                 auto tInit = 0.0;
-                auto tFinal = tInit + (boxdim[5] - boxdim[4] - 2.0*wFront) /
-                  std::fabs(iv[0]);
+                auto tFinal = tInit + (zmax - zmin - 2.0*wFront) /
+                  std::fabs(iv);
                 if (t >= tInit && t <= tFinal)
-                  v = std::max(v, std::fabs(iv[0]));
+                  v = std::max(v, std::fabs(iv));
               }
             }
+          }
+
           if (v > maxvel) maxvel = v;
         }
+
         // compute element dt for the Euler equations
         auto euler_dt = L / maxvel;
         // compute element dt based on the viscous force
@@ -1402,114 +1385,99 @@ class CompFlow {
     //!    * internal energy content (energy per unit volume): J/m^3
     //!    * specific energy (internal energy per unit mass): J/kg
     void boxSrc( real V,
-      real t,
-      const std::vector< std::size_t >& inpoel,
-      const std::pair< std::vector< std::size_t >,
-                       std::vector< std::size_t > >& esup,
-      const std::unordered_set< std::size_t >& boxnodes,
-      const std::array< std::vector< real >, 3 >& coord,
-      tk::Fields& R ) const
+                 real t,
+                 const std::vector< std::size_t >& inpoel,
+                 const std::pair< std::vector< std::size_t >,
+                                  std::vector< std::size_t > >& esup,
+                 const std::unordered_set< std::size_t >& boxnodes,
+                 const std::array< std::vector< real >, 3 >& coord,
+                 tk::Fields& R ) const
     {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
-      const auto& initiate = icbox.get< tag::initiate >();
 
-      const auto& boxenc = icbox.get< tag::energy_content >();
+      if (icbox.size() > m_system) {
+        for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
+          std::vector< tk::real > box
+           { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+             b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+             b.template get< tag::zmin >(), b.template get< tag::zmax >() };
 
-      Assert( boxenc.size() > m_system && !boxenc[m_system].empty(),
-        "Box energy content unspecified in input file" );
+          auto boxenc = b.template get< tag::energy_content >();
+          Assert( boxenc > 0.0, "Box energy content must be nonzero" );
 
-      const auto& xmin = icbox.get< tag::xmin >();
-      const auto& xmax = icbox.get< tag::xmax >();
-      const auto& ymin = icbox.get< tag::ymin >();
-      const auto& ymax = icbox.get< tag::ymax >();
-      const auto& zmin = icbox.get< tag::zmin >();
-      const auto& zmax = icbox.get< tag::zmax >();
-      Assert( xmin.size() == xmax.size(), "Size mismatch" );
-      Assert( xmin.size() == ymin.size(), "Size mismatch" );
-      Assert( xmin.size() == ymax.size(), "Size mismatch" );
-      Assert( xmin.size() == zmin.size(), "Size mismatch" );
-      Assert( xmin.size() == zmax.size(), "Size mismatch" );
+          auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
 
-      for (std::size_t b=0; b<xmin.size(); ++b) {   // for all boxes
-        std::vector< tk::real > boxdim
-          { xmin[b], xmax[b], ymin[b], ymax[b], zmin[b], zmax[b] };
-        auto V_ex = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]) *
-          (boxdim[5]-boxdim[4]);
+          // determine times at which sourcing is initialized and terminated
+          auto iv = b.template get< tag::initiate, tag::velocity >();
+          auto wFront = 0.08;
+          auto tInit = 0.0;
+          auto tFinal = tInit + (box[5] - box[4] - 2.0*wFront) / std::fabs(iv);
+          auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
 
-        // determine times at which sourcing is initialized and terminated
-        const auto& iv = initiate.get< tag::velocity >()[ m_system ];
-        Assert( iv.size() == 1, "Excess velocities in ic-box block" );
-        auto wFront = 0.08;
-        auto tInit = 0.0;
-        auto tFinal = tInit + (boxdim[5] - boxdim[4] - 2.0*wFront) /
-          std::fabs(iv[0]);
-        auto aBox = (boxdim[1]-boxdim[0]) * (boxdim[3]-boxdim[2]);
+          const auto& x = coord[0];
+          const auto& y = coord[1];
+          const auto& z = coord[2];
 
-        const auto& x = coord[0];
-        const auto& y = coord[1];
-        const auto& z = coord[2];
+          if (t >= tInit && t <= tFinal) {
+            // The energy front is assumed to have a half-sine-wave shape. The
+            // half wave-length is the width of the front. At t=0, the center of
+            // this front (i.e. the peak of the partial-sine-wave) is at X_0 +
+            // W_0.  W_0 is calculated based on the width of the front and the
+            // direction of propagation (which is assumed to be along the
+            // z-direction).  If the front propagation velocity is positive, it
+            // is assumed that the initial position of the energy source is the
+            // minimum z-coordinate of the box; whereas if this velocity is
+            // negative, the initial position is the maximum z-coordinate of the
+            // box.
 
-        if (t >= tInit && t <= tFinal) {
+            // initial center of front
+            tk::real zInit(box[4]);
+            if (iv < 0.0) zInit = box[5];
+            // current location of front
+            auto z0 = zInit + iv*t;
+            auto z1 = z0 + std::copysign(wFront, iv);
+            tk::real s0(z0), s1(z1);
+            // if velocity of propagation is negative, initial position is z1
+            if (iv < 0.0) {
+              s0 = z1;
+              s1 = z0;
+            }
+            // Sine-wave (positive part of the wave) source term amplitude
+            auto pi = 4.0 * std::atan(1.0);
+            auto amplE = boxenc * V_ex * pi
+              / (aBox * wFront * 2.0 * (tFinal-tInit));
+            //// Square wave (constant) source term amplitude
+            //auto amplE = boxenc * V_ex
+            //  / (aBox * wFront * (tFinal-tInit));
+            amplE *= V_ex / V;
 
-          // The energy front is assumed to have a half-sine-wave shape. The
-          // half wave-length is the width of the front. At t=0, the center of
-          // this front (i.e. the peak of the partial-sine-wave) is at X_0 +
-          // W_0.  W_0 is calculated based on the width of the front and the
-          // direction of propagation (which is assumed to be along the
-          // z-direction).  If the front propagation velocity is positive, it
-          // is assumed that the initial position of the energy source is the
-          // minimum z-coordinate of the box; whereas if this velocity is
-          // negative, the initial position is the maximum z-coordinate of the
-          // box.
-
-          // initial center of front
-          tk::real zInit(boxdim[4]);
-          if (iv[0] < 0.0) zInit = boxdim[5];
-          // current location of front
-          auto z0 = zInit + iv[0]*t;
-          auto z1 = z0 + std::copysign(wFront, iv[0]);
-          tk::real s0(z0), s1(z1);
-          // if velocity of propagation is negative, initial position is z1
-          if (iv[0] < 0.0) {
-            s0 = z1;
-            s1 = z0;
-          }
-          // Sine-wave (positive part of the wave) source term amplitude
-          auto pi = 4.0 * std::atan(1.0);
-          auto amplE = boxenc[m_system][0] * V_ex * pi
-            / (aBox * wFront * 2.0 * (tFinal-tInit));
-          //// Square wave (constant) source term amplitude
-          //auto amplE = boxenc[m_system][0] * V_ex
-          //  / (aBox * wFront * (tFinal-tInit));
-          amplE *= V_ex / V;
-
-          // add source
-          for (auto p : boxnodes) {
-            if (z[p] >= s0 && z[p] <= s1) {
-              auto S = amplE * std::sin(pi*(z[p]-s0)/wFront);
-              for (auto e : tk::Around(esup,p)) {
-                // access node IDs
-                std::size_t N[4] =
-                  {inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3]};
-                // compute element Jacobi determinant, J = 6V
-                real bax = x[N[1]]-x[N[0]];
-                real bay = y[N[1]]-y[N[0]];
-                real baz = z[N[1]]-z[N[0]];
-                real cax = x[N[2]]-x[N[0]];
-                real cay = y[N[2]]-y[N[0]];
-                real caz = z[N[2]]-z[N[0]];
-                real dax = x[N[3]]-x[N[0]];
-                real day = y[N[3]]-y[N[0]];
-                real daz = z[N[3]]-z[N[0]];
-                auto J =
-                  tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
-                auto J24 = J/24.0;
-                R(p,4,m_offset) += J24 * S;
+            // add source
+            for (auto p : boxnodes) {
+              if (z[p] >= s0 && z[p] <= s1) {
+                auto S = amplE * std::sin(pi*(z[p]-s0)/wFront);
+                for (auto e : tk::Around(esup,p)) {
+                  // access node IDs
+                  std::size_t N[4] =
+                    {inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3]};
+                  // compute element Jacobi determinant, J = 6V
+                  real bax = x[N[1]]-x[N[0]];
+                  real bay = y[N[1]]-y[N[0]];
+                  real baz = z[N[1]]-z[N[0]];
+                  real cax = x[N[2]]-x[N[0]];
+                  real cay = y[N[2]]-y[N[0]];
+                  real caz = z[N[2]]-z[N[0]];
+                  real dax = x[N[3]]-x[N[0]];
+                  real day = y[N[3]]-y[N[0]];
+                  real daz = z[N[3]]-z[N[0]];
+                  auto J =
+                    tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+                  auto J24 = J/24.0;
+                  R(p,4,m_offset) += J24 * S;
+                }
               }
             }
           }
-
         }
       }
     }

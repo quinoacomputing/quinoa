@@ -70,6 +70,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 {
   using eq = tag::compflow;
+  using tk::parameter;
   using tk::parameters;
 
   auto c = ++cnt[ ctr::PDEType::COMPFLOW ];       // count eqs
@@ -91,38 +92,38 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     g_inputdeck.get< tag::param, eq, tag::problem >()[c] ) );
 
   auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
-  nfo.emplace_back( "number of components", std::to_string( ncomp ) );
+  nfo.emplace_back( "number of components", parameter( ncomp ) );
 
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme != ctr::SchemeType::DiagCG && scheme != ctr::SchemeType::ALECG)
     nfo.emplace_back( "flux", ctr::Flux().name(
       g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
 
-  nfo.emplace_back( "start offset in unknowns array", std::to_string(
+  nfo.emplace_back( "start offset in unknowns array", parameter(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
 
   const auto& gamma = g_inputdeck.get< tag::param, eq, tag::gamma >()[c];
   if (!gamma.empty())
-    nfo.emplace_back( "ratio of specific heats", std::to_string( gamma[0] )) ;
+    nfo.emplace_back( "ratio of specific heats", parameter( gamma[0] )) ;
 
   const auto& pstiff = g_inputdeck.get< tag::param, eq, tag::pstiff >()[c];
   if (!pstiff.empty())
-    nfo.emplace_back( "material stiffness", std::to_string( pstiff[0] ) );
+    nfo.emplace_back( "material stiffness", parameter( pstiff[0] ) );
 
   // Viscosity is optional: the outer vector may be empty
   const auto& mu = g_inputdeck.get< tag::param, eq, tag::mu >();
   if (mu.size() > c)
-    nfo.emplace_back( "dynamic viscosity", std::to_string( mu[c][0] ) );
+    nfo.emplace_back( "dynamic viscosity", parameter( mu[c][0] ) );
 
   const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >()[c];
   if (!cv.empty())
     nfo.emplace_back( "specific heat at constant volume",
-                      std::to_string(cv[0]) );
+                      parameter(cv[0]) );
 
   // Heat conductivity is optional: the outer vector may be empty
   const auto& k = g_inputdeck.get< tag::param, eq, tag::k >();
   if (k.size() > c)
-    nfo.emplace_back( "heat conductivity", std::to_string( k[c][0] ) );
+    nfo.emplace_back( "heat conductivity", parameter( k[c][0] ) );
 
   const auto& npar = g_inputdeck.get< tag::param, eq, tag::npar >();
   if (!npar.empty())
@@ -164,7 +165,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   const auto& bgdensityic = ic.get< tag::density >();
   if (bgdensityic.size() > c && !bgdensityic[c].empty())
     nfo.emplace_back( "IC background density",
-                      std::to_string( bgdensityic[c][0] ) );
+                      parameter( bgdensityic[c][0] ) );
   const auto& bgvelocityic = ic.get< tag::velocity >();
   if (bgvelocityic.size() > c && !bgvelocityic[c].empty())
     nfo.emplace_back( "IC background velocity",
@@ -172,86 +173,56 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   const auto& bgpressureic = ic.get< tag::pressure >();
   if (bgpressureic.size() > c && !bgpressureic[c].empty())
     nfo.emplace_back( "IC background pressure",
-                      std::to_string( bgpressureic[c][0] ) );
+                      parameter( bgpressureic[c][0] ) );
   const auto& bgenergyic = ic.get< tag::energy >();
   if (bgenergyic.size() > c && !bgenergyic[c].empty())
     nfo.emplace_back( "IC background energy",
-                      std::to_string( bgenergyic[c][0] ) );
+                      parameter( bgenergyic[c][0] ) );
   const auto& bgtemperatureic = ic.get< tag::temperature >();
   if (bgtemperatureic.size() > c && !bgtemperatureic[c].empty())
     nfo.emplace_back( "IC background temperature",
-                      std::to_string( bgtemperatureic[c][0] ) );
+                      parameter( bgtemperatureic[c][0] ) );
 
   const auto& icbox = ic.get< tag::box >();
-  const auto& xmin = icbox.get< tag::xmin >();
-  const auto& xmax = icbox.get< tag::xmax >();
-  const auto& ymin = icbox.get< tag::ymin >();
-  const auto& ymax = icbox.get< tag::ymax >();
-  const auto& zmin = icbox.get< tag::zmin >();
-  const auto& zmax = icbox.get< tag::zmax >();
-  Assert( xmin.size() == xmax.size(), "Size mismatch" );
-  Assert( xmin.size() == ymin.size(), "Size mismatch" );
-  Assert( xmin.size() == ymax.size(), "Size mismatch" );
-  Assert( xmin.size() == zmin.size(), "Size mismatch" );
-  Assert( xmin.size() == zmax.size(), "Size mismatch" );
-  for (std::size_t b=0; b<xmin.size(); ++b) {   // for all boxes configured
-    std::vector< tk::real > box
-      { xmin[b], xmax[b], ymin[b], ymax[b], zmin[b], zmax[b] };
-    const auto eps = std::numeric_limits< tk::real >::epsilon();
-    if (std::any_of( begin(box), end(box),
-          [=]( tk::real p ){ return std::abs(p) > eps; }))
-    {
-      std::string boxname = "IC box " + std::to_string(b);
+  if (icbox.size() > c) {
+    std::size_t bcnt = 0;
+    for (const auto& b : icbox[c]) {   // for all boxes configured for this eq
+      std::vector< tk::real > box
+        { b.get< tag::xmin >(), b.get< tag::xmax >(),
+          b.get< tag::ymin >(), b.get< tag::ymax >(),
+          b.get< tag::zmin >(), b.get< tag::zmax >() };
+
+      std::string boxname = "IC box " + parameter(bcnt);
       nfo.emplace_back( boxname, parameters( box ) );
 
-      const auto& boxdensityic = icbox.get< tag::density >();
-      if (boxdensityic.size() > c && !boxdensityic[c].empty())
-        nfo.emplace_back( boxname + " density",
-                          std::to_string( boxdensityic[c][0] ) );
-      const auto& boxvelocityic = icbox.get< tag::velocity >();
-      if (boxvelocityic.size() > c && !boxvelocityic[c].empty())
-        nfo.emplace_back( boxname + " velocity",
-                          parameters( boxvelocityic[c] ) );
-      const auto& boxpressureic = icbox.get< tag::pressure >();
-      if (boxpressureic.size() > c && !boxpressureic[c].empty())
-        nfo.emplace_back( boxname + " pressure",
-                          std::to_string( boxpressureic[c][0] ) );
-      const auto& boxenergyic = icbox.get< tag::energy >();
-      if (boxenergyic.size() > c && !boxenergyic[c].empty())
-        nfo.emplace_back( boxname + " internal energy per unit mass",
-                          std::to_string( boxenergyic[c][0] ) );
-      const auto& boxmassic = icbox.get< tag::mass >();
-      if (boxmassic.size() > c && !boxmassic[c].empty())
-        nfo.emplace_back( boxname + " mass", std::to_string( boxmassic[c][0] ) );
-      const auto& boxenergy_content_ic = icbox.get< tag::energy_content >();
-      if (boxenergy_content_ic.size() > c && !boxenergy_content_ic[c].empty())
-        nfo.emplace_back( boxname + " internal energy per unit volume",
-                          std::to_string( boxenergy_content_ic[c][0] ) );
-      const auto& boxtemperatureic = icbox.get< tag::temperature >();
-      if (boxtemperatureic.size() > c && !boxtemperatureic[c].empty())
-        nfo.emplace_back( boxname + " temperature",
-                          std::to_string( boxtemperatureic[c][0] ) );
+      nfo.emplace_back( boxname + " density",
+                        parameter( b.get< tag::density >() ) );
+      nfo.emplace_back( boxname + " velocity",
+                        parameters( b.get< tag::velocity >() ) );
+      nfo.emplace_back( boxname + " pressure",
+                        parameter( b.get< tag::pressure >() ) );
+      nfo.emplace_back( boxname + " internal energy per unit mass",
+                        parameter( b.get< tag::energy >() ) );
+      nfo.emplace_back( boxname + " mass",
+                        parameter( b.get< tag::mass >() ) );
+      nfo.emplace_back( boxname + " internal energy per unit volume",
+                        parameter( b.get< tag::energy_content >() ) );
+      nfo.emplace_back( boxname + " temperature",
+                        parameter( b.get< tag::temperature >() ) );
 
-      const auto& initiate = icbox.get< tag::initiate >();
+      const auto& initiate = b.get< tag::initiate >();
       const auto& inittype = initiate.get< tag::init >();
-      if (inittype.size() > c) {
-        auto opt = ctr::Initiate();
-        nfo.emplace_back( boxname + ' ' + opt.group(), opt.name(inittype[c]) );
-        if (inittype[c] == ctr::InitiateType::LINEAR) {
-          const auto& linpoint = initiate.get< tag::point >();
-          if (linpoint.size() > c)
-            nfo.emplace_back( boxname + " initiate linear point(s)",
-                              parameters( linpoint[c] ) );
-          const auto& linradius = initiate.get< tag::radius >();
-          if (linradius.size() > c)
-            nfo.emplace_back( boxname + " initiate linear radii",
-                              parameters( linradius[c] ) );
-          const auto& linvelocity = initiate.get< tag::velocity >();
-          if (linvelocity.size() > c)
-            nfo.emplace_back( boxname + " initiate linear velocity",
-                              parameters( linvelocity[c] ) );
-        }
+      auto opt = ctr::Initiate();
+      nfo.emplace_back( boxname + ' ' + opt.group(), opt.name(inittype) );
+      if (inittype == ctr::InitiateType::LINEAR) {
+        nfo.emplace_back( boxname + " initiate linear point(s)",
+                          parameters( initiate.get< tag::point >() ) );
+        nfo.emplace_back( boxname + " initiate linear radius",
+                          parameter( initiate.get< tag::radius >() ) );
+        nfo.emplace_back( boxname + " initiate linear velocity",
+                          parameter( initiate.get< tag::velocity >() ) );
       }
+      ++bcnt;
     }
   }
 

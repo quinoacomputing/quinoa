@@ -30,8 +30,8 @@ inciter
         xmin  0.5 xmax 1.5
         ymin -0.5 ymax 0.5
         zmin -0.5 zmax 0.5
-        density 0.125 end
-        pressure 0.1 end
+        density 0.125
+        pressure 0.1
       end
     end
 

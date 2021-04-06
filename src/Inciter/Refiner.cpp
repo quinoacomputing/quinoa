@@ -142,6 +142,7 @@ Refiner::Refiner( std::size_t meshid,
   else
     endt0ref();
 }
+
 void
 Refiner::libmap()
 // *****************************************************************************

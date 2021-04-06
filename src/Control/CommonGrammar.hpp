@@ -722,6 +722,85 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< typename target, typename tag, typename... tags >
+  struct Back_back_store : pegtl::success {};
+  //! \brief Convert and store value to vector of vector in state at position
+  //!   given by tags and target
+  //! \details This struct and its apply function are used as a functor-like
+  //!    wrapper for calling the store_back member function of the underlying
+  //!    grammar stack. tag and tags... address a vector of vectors, whose
+  //!    inner value_type is a tagged tuple to which we store here after
+  //!    conversion, indexed by target.
+  template< typename target, typename tag, typename...tags >
+  struct action< Back_back_store< target, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template get< tag, tags... >().back().back().template
+        store< target >( in.string() );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename target, typename subtarget, typename tag,
+            typename... tags >
+  struct Back_back_deep_store : pegtl::success {};
+  //! \brief Convert and store value to vector of vector in state at position
+  //!   given by tags and target
+  //! \details This struct and its apply function are used as a functor-like
+  //!    wrapper for calling the store_back member function of the underlying
+  //!    grammar stack. tag and tags... address a vector of vectors, whose
+  //!    inner value_type is a tagged tuple to which we store here after
+  //!    conversion, indexed by target and subtarget (hence deep).
+  template< typename target, typename subtarget, typename tag, typename...tags >
+  struct action< Back_back_deep_store< target, subtarget, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template get< tag, tags... >().back().back().template
+        store< target, subtarget >( in.string() );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename target, typename tag, typename... tags >
+  struct Back_back_store_back : pegtl::success {};
+  //! \brief Convert and store value to vector of vector in state at position
+  //!   given by tags and target
+  //! \details This struct and its apply function are used as a functor-like
+  //!    wrapper for calling the store_back member function of the underlying
+  //!    grammar stack. tag and tags... address a vector of vectors, whose
+  //!    inner value_type is a tagged tuple to which we store_back here after
+  //!    conversion, indexed by target.
+  template< typename target, typename tag, typename...tags >
+  struct action< Back_back_store_back< target, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template get< tag, tags... >().back().back().template
+        store_back< target >( in.string() );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename target, typename subtarget, typename tag,
+            typename... tags >
+  struct Back_back_deep_store_back : pegtl::success {};
+  //! \brief Convert and store value to vector of vector in state at position
+  //!   given by tags and target
+  //! \details This struct and its apply function are used as a functor-like
+  //!    wrapper for calling the store_back member function of the underlying
+  //!    grammar stack. tag and tags... address a vector of vectors, whose
+  //!    inner value_type is a tagged tuple to which we store_back here after
+  //!    conversion, indexed by target and subtarget (hence deep).
+  template< typename target, typename subtarget, typename tag, typename...tags >
+  struct action< Back_back_deep_store_back< target, subtarget, tag, tags... > >
+  {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template get< tag, tags... >().back().back().template
+        store_back< target, subtarget >( in.string() );
+    }
+  };
+
+  //! Rule used to trigger action
   template< typename... tags >
   struct Invert_switch : pegtl::success {};
   //! Invert bool in switch at position given by tags
@@ -791,6 +870,43 @@ namespace grm {
       if (opt.exist(in.string())) {
         stack.template get<tag,tags...>().back().
               push_back( opt.value( in.string() ) );
+      } else {
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
+      }
+      // trigger error at compile-time if any of the expected option values
+      // is not in the keywords pool of the grammar
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename target, typename subtarget, template < class > class use,
+            class Option, typename tag, typename... tags >
+  struct back_back_store_option : pegtl::success {};
+  //! \brief Push back option to vector of back of vector in state at position
+  //!   given by tags
+  //! \details This struct and its apply function are used as a functor-like
+  //!   wrapper for storing an option (an object deriving from tk::Toggle) in
+  //!   a place in the stack. tag and tags... address a vector of vectors, whose
+  //!   inner value_type is a nested tagged tuple whose field in where we store
+  //!   here after conversion, indexed by target and subtarget.
+  //!   See walker::ctr::DiffEq for an example specialization of tk::Toggle to
+  //!   see how an option is created from tk::Toggle. We also do a simple sanity
+  //!   check here testing if the desired option value exist for the particular
+  //!   option type and error out if there is a problem. Errors and warnings are
+  //!   accumulated during parsing and diagnostics are given after the parsing
+  //!   is finished.
+  template< typename target, typename subtarget, template < class > class use,
+            class Option, typename tag, typename... tags >
+  struct action< back_back_store_option< target, subtarget, use, Option,
+                 tag, tags... > >
+  {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      Option opt;
+      if (opt.exist(in.string())) {
+        stack.template get< tag, tags... >().back().back().template
+          get< target, subtarget >() = opt.value( in.string() );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
       }
@@ -1040,7 +1156,7 @@ namespace grm {
   struct action< start_vector< tag, tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
-      stack.template get< tag, tags... >().push_back( {} );
+      stack.template get< tag, tags... >().emplace_back();
     }
   };
 
@@ -1053,7 +1169,20 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
       // no arg: use default ctor
-      stack.template get< tag, tags... >().back().push_back( {} );
+      stack.template get< tag, tags... >().back().emplace_back();
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename tag, typename... tags >
+  struct start_vector_back_back : pegtl::success {};
+  //! Start new vector in back of a vector
+  template< class tag, class... tags >
+  struct action< start_vector_back_back< tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input&, Stack& stack ) {
+      // no arg: use default ctor
+      stack.template get< tag, tags... >().back().back().emplace_back();
     }
   };
 
@@ -1377,7 +1506,7 @@ namespace grm {
   struct action< store_lua< Tag, Tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      stack.template get< Tag, Tags..., tag::lua >() += in.string();
+      stack.template get< Tag, Tags..., tag::lua >().back() += in.string();
     }
   };
 
@@ -1784,6 +1913,7 @@ namespace grm {
   struct lua :
          pegtl::if_must<
            readkw< typename use< kw::lua >::pegtl_string >,
+           start_vector< Tag, Tags..., tag::lua >,
            pegtl::until< readkw< typename use< kw::end >::pegtl_string >,
                           act< pegtl::any, store_lua< Tag, Tags... > > > > {};
 
