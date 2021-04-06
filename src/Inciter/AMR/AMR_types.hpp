@@ -45,7 +45,7 @@ enum Edge_Lock_Case {unlocked = 0, locked, intermediate, temporary};
 struct Edge_Refinement {
     size_t A;
     size_t B;
-    int needs_refining; // TODO: This could possibly be deduced implicitly
+    int needs_refining; // value of 1= refinement; 2= deref-ref (as in for 8:4)
     bool needs_derefining; // TODO: Marge this with needs_refining
     Edge_Lock_Case lock_case; // TODO: Refactor this to match _ style?
 

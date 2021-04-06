@@ -897,8 +897,8 @@ Refiner::perform()
   } else {
 
     // TODO: does not work yet, fix as above
-    m_refiner.perform_derefinement();
     m_refiner.perform_refinement();
+    m_refiner.perform_derefinement();
   }
 
   //auto& tet_store = m_refiner.tet_store;
@@ -1203,8 +1203,8 @@ Refiner::errorRefine()
       tagged_edges.push_back( { edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ),
                                 edge_tag::REFINE } );
     } else if (e.second < tolderef) {
-      //tagged_edges.push_back( { edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ),
-      //                          edge_tag::DEREFINE } );
+      tagged_edges.push_back( { edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ),
+                                edge_tag::DEREFINE } );
     }
   }
 

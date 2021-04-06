@@ -28,6 +28,7 @@ namespace AMR {
              * this element
              * @param refinement_level The level of refinement
              * @param parent_id The id of the parent element
+             * @param has_parent True if element has a parent, default is true
              *
              * @return The id of the added element
             */
@@ -35,42 +36,24 @@ namespace AMR {
             // current none reliance on default input values is nice, as it
             // means that we don't have to do any checks on if a valid value
             // was passed for the base case..
-            size_t add
-            (
+            size_t add(
                  size_t element_number,
                  Refinement_Case refinement_case,
                  size_t refinement_level,
-                 size_t parent_id
+                 size_t parent_id,
+                 bool has_parent=true
             )
             {
                 Refinement_State d = Refinement_State(
                         element_number,
                         refinement_case,
                         refinement_level,
-                        parent_id
+                        parent_id,
+                        has_parent
                 );
 
                 master_elements.insert( std::pair<size_t, Refinement_State>(element_number, d));
 
-                return element_number;
-            }
-
-            /**
-             * @brief Add a master element, with a default parent_id (0) and
-             * default refinement level (0)
-             *
-             * @param element_number The element number to add
-             * @param refinement_case The refinement_case which gave rise to
-             * this element
-             *
-             * @return The id of the added element
-            */
-            size_t add(
-                 size_t element_number,
-                 Refinement_Case refinement_case
-            )
-            {
-                add(element_number, refinement_case, 0, 0);
                 return element_number;
             }
 

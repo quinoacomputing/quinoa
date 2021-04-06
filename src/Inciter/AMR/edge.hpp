@@ -38,15 +38,39 @@ class edge_t {
             // Piggy back underlying edge_ type where possible
         bool operator==(const edge_t& rhs) const
         {
-            return (this->data==rhs.get_data());
+          // ensure entries of rhs and this are in ascending order
+          auto this_copy = this->data;
+          this_copy[0] = std::min(this->data[0], this->data[1]);
+          this_copy[1] = std::max(this->data[0], this->data[1]);
+          std::array< std::size_t, 2 > rhs_copy;
+          rhs_copy[0] = std::min(rhs.get_data()[0], rhs.get_data()[1]);
+          rhs_copy[1] = std::max(rhs.get_data()[0], rhs.get_data()[1]);
+
+          if (this_copy[0] == rhs_copy[0] && this_copy[1] == rhs_copy[1])
+            return true;
+          else
+            return false;
         }
-        bool operator>(const edge_t& rhs) const
-        {
-          return (data > rhs.get_data());
-        }
+        //bool operator>(const edge_t& rhs) const
+        //{
+        //  return (data > rhs.get_data());
+        //}
         bool operator<(const edge_t& rhs) const
         {
-          return (data < rhs.get_data());
+          // ensure entries of rhs and this are in ascending order
+          auto this_copy = this->data;
+          this_copy[0] = std::min(this->data[0], this->data[1]);
+          this_copy[1] = std::max(this->data[0], this->data[1]);
+          std::array< std::size_t, 2 > rhs_copy;
+          rhs_copy[0] = std::min(rhs.get_data()[0], rhs.get_data()[1]);
+          rhs_copy[1] = std::max(rhs.get_data()[0], rhs.get_data()[1]);
+
+          if (this_copy[0] < rhs_copy[0])
+            return true;
+          else if (this_copy[0] == rhs_copy[0] && this_copy[1] < rhs_copy[1])
+            return true;
+          else
+            return false;
         }
 
         size_t first() const

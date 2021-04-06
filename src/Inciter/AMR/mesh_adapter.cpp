@@ -425,7 +425,7 @@ namespace AMR {
                             // Count edges which need refining
                             //  We check in here as we won't refine a
                             //  locked edge and will thus ignore it
-                            if (tet_store.edge_store.get(key).needs_refining)
+                            if (tet_store.edge_store.get(key).needs_refining == 1)
                             {
                                 num_to_refine++;
                                 trace_out << "key needs ref " << key << std::endl;
@@ -485,8 +485,8 @@ namespace AMR {
 
                     } // if num_to_refine
                     else {
-                            // If we got here, we don't want to refine this guy
-                            //tet_store.marked_refinements.add(tet_id, AMR::Refinement_Case::none);
+                        // If we got here, we don't want to refine this guy
+                        tet_store.marked_refinements.add(tet_id, AMR::Refinement_Case::none);
                     }
                 } // if active
                 else {
@@ -589,6 +589,9 @@ namespace AMR {
                 std::cout << "num children " << element.children.size() << std::endl;
                 assert(0);
             }
+            // remove tets and edges marked for deletion above
+            refiner.delete_intermediates_of_children(tet_store);
+            tet_store.process_delete_list();
 
             refiner.refine_one_to_eight(tet_store,node_connectivity,i);
 
@@ -952,7 +955,7 @@ namespace AMR {
             }
 
             // Count number of marked for refinement
-            if (tet_store.edge_store.get(key).needs_refining)
+            if (tet_store.edge_store.get(key).needs_refining == 1)
             {
                 trace_out << "found refine" << std::endl;
                 num_to_refine++;
@@ -1196,67 +1199,38 @@ namespace AMR {
         {
             tet_store.marked_derefinements.get_state_changed() = false;
 
+            // set of elements which have been considered for derefinement
+            std::unordered_set< size_t > done_deref_marking;
+
             // Loop over tets
             for (const auto& kv : tet_store.tets)
             {
-                size_t tet_id = kv.first;
-
-                // Skip tets which have no children or which are grand-parents
-                child_id_list_t children = tet_store.data(tet_id).children;
-                bool grandparent = false;
-                for (const auto& ch : children) {
-                  if (tet_store.data(ch).children.size()) grandparent = true;
-                }
-                if (children.size() <= 0) { continue; }
-                else if (grandparent) {
-                  //TODO: this needs to be done only at the first iteration
-                  trace_out << "grandparent: " << tet_id
-                    << " unmarking children from deref" << std::endl;
-                  // go over grandparent's children and lock its edges, only if
-                  // that edge does not belong to a grandchild. The following
-                  // does this in a simple but 'hacky' way
-                  std::map< edge_t, std::size_t > edge_derefmark;
-
-                  for (auto child_id : children) {
-                    auto grandchildren = tet_store.data(child_id).children;
-                    // get child_id's nodes
-                    auto child_nodes = tet_store.get(child_id);
-                    std::unordered_set<size_t> child_node_set{
-                      std::begin(child_nodes), std::end(child_nodes)};
-                    trace_out << "looking at child: " << child_id <<
-                      " which has " << grandchildren.size() << " children" << std::endl;
-                  // 1. store the grandchildren's edge-markings
-                    for (auto gchild_id : grandchildren) {
-                      auto edges = tet_store.generate_edge_keys(gchild_id);
-                      trace_out << "looking at grandchild: " << gchild_id << std::endl;
-                      for (const auto& edge_key : edges) {
-                        // retaining this edge's deref marking only if one of
-                        // the nodes of this edge does not belong to the parent
-                        // of gchild_id (which is child_id), i.e. nonparent node.
-                        // basically, keep deref-decisions only for the edges
-                        // that have been split
-                        if (child_node_set.count(edge_key.first())==0 ||
-                          child_node_set.count(edge_key.second())==0) {
-                          edge_derefmark[edge_key] =
-                            tet_store.edge_store.get(edge_key).needs_derefining;
-                        }
-                      }
-                    }
-
-                  // 2. go thru the children, and unmark their edges for deref
-                    deactivate_deref_tet_edges(child_id);
-                  }
-
-                  // 3. go thru the grandparents again and reinstate their edge
-                  // derefinement markings
-                  for (const auto& e_key : edge_derefmark) {
-                    tet_store.edge_store.get(e_key.first).needs_derefining =
-                      e_key.second;
-                  }
-
+                // this loop only runs for active tets
+                if (!tet_store.is_active(kv.first)) {
+                  deactivate_deref_tet_edges(kv.first);
                   continue;
                 }
+                size_t activetet_id = kv.first;
 
+                // check if activetet_id has a parent (assign to tet_id)
+                // if it does not, activetet_id is not a derefinement candidate
+                size_t tet_id;
+                const auto& activetet_data = tet_store.data(activetet_id);
+                if (!activetet_data.has_parent) {
+                  deactivate_deref_tet_edges(activetet_id);
+                  continue;
+                }
+                else {
+                  tet_id = activetet_data.parent_id;
+                }
+
+                // if already considered for deref, do not reconsider
+                if (done_deref_marking.count(tet_id) > 0) {
+                  continue;
+                }
+                done_deref_marking.insert(tet_id);
+
+                child_id_list_t children = tet_store.data(tet_id).children;
 
                 // This is useful for later inspection
                 //edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
@@ -1337,9 +1311,9 @@ namespace AMR {
                     //if (refinement_case == AMR::Refinement_Case::one_to_four)
                     if (children.size() == 4)
                     {
-                        // Accept as 4:2 derefine"
+                        // Accept as 4:1 derefine"
                         trace_out << "Accept as 4:1" << std::endl;
-                        //refiner.derefine_four_to_two(tet_store,  node_connectivity, tet_id);
+                        //refiner.derefine_four_to_one(tet_store,  node_connectivity, tet_id);
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::four_to_one);
                     }
                     // "Else if icase = 1:8
@@ -1371,7 +1345,7 @@ namespace AMR {
                               ref_edges.push_back(node_connectivity.get(n));
                             }
 
-                            tet_store.edge_store.mark_edges_for_refinement(ref_edges);
+                            tet_store.edge_store.mark_edges_for_deref_ref(ref_edges);
                             //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
                             tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_four);
                         }
@@ -1431,7 +1405,7 @@ namespace AMR {
                           ref_edges.push_back(node_connectivity.get(n));
                         }
 
-                        tet_store.edge_store.mark_edges_for_refinement(ref_edges);
+                        tet_store.edge_store.mark_edges_for_deref_ref(ref_edges);
 
                         // Accept as 8:4 derefinement
                         trace_out << "Accept as 8:4" << std::endl;
@@ -1485,6 +1459,8 @@ namespace AMR {
                 break;
             }
             trace_out << "End iter " << iter << std::endl;
+            // clear out set of elements considered during this iteration
+            done_deref_marking.clear();
         }
         trace_out << "Deref Loop took " << iter << " rounds." << std::endl;
     }
