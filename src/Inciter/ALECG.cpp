@@ -76,6 +76,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
+  m_w( m_u.nunk(), 0.0 ),
   m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
@@ -408,6 +409,30 @@ ALECG::setup()
 }
 
 void
+ALECG::volumetric( tk::Fields& u )
+// *****************************************************************************
+//  Multiply solution with mesh volume
+//! \param[in,out] u Solution vector
+// *****************************************************************************
+{
+  for (std::size_t i=0; i<u.nunk(); ++i)
+    for (ncomp_t c=0; c<u.nprop(); ++c)
+      u(i,c,0) *= Disc()->Vol()[i];
+}
+
+void
+ALECG::conserved( tk::Fields& u )
+// *****************************************************************************
+//  Divide solution with mesh volume
+//! \param[in,out] u Solution vector
+// *****************************************************************************
+{
+  for (std::size_t i=0; i<u.nunk(); ++i)
+    for (ncomp_t c=0; c<u.nprop(); ++c)
+      u(i,c,0) /= Disc()->Vol()[i];
+}
+
+void
 ALECG::box( tk::real v )
 // *****************************************************************************
 // Receive total box IC volume and set conditions in box
@@ -422,6 +447,9 @@ ALECG::box( tk::real v )
   // Set initial conditions for all PDEs
   for (auto& eq : g_cgpde)
     eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes );
+
+  // Multiply conserved variables with mesh volume
+  volumetric( m_u );
 
   // Initiate IC transfer (if coupled)
   Disc()->transfer( m_u );
@@ -601,8 +629,10 @@ ALECG::normfinal()
   for (const auto& eq : g_cgpde)
     eq.symbc( m_u, d->Coord(), m_bnorm, m_symbcnodes );
   // Apply farfield BCs on initial conditions
+  conserved( m_u );
   for (const auto& eq : g_cgpde)
     eq.farfieldbc( m_u, d->Coord(), m_bnorm, m_farfieldbcnodes );
+  volumetric( m_u );
 
   // Prepare boundary nodes contiguously accessible from a triangle-face loop
   m_symbctri.resize( m_triinpoel.size()/3, 0 );
@@ -712,6 +742,7 @@ ALECG::dt()
   } else {      // compute dt based on CFL
 
     //! [Find the minimum dt across all PDEs integrated]
+    conserved( m_u );
     if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
 
       // compute new dt for each mesh point
@@ -730,6 +761,7 @@ ALECG::dt()
       }
 
     }
+    volumetric( m_u );
     //! [Find the minimum dt across all PDEs integrated]
 
   }
@@ -772,9 +804,11 @@ ALECG::chBndGrad()
   auto d = Disc();
 
   // Compute own portion of gradients for all equations
+  conserved( m_u );
   for (const auto& eq : g_cgpde)
-    eq.chBndGrad(d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u,
-      m_chBndGrad);
+    eq.chBndGrad( d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u,
+                  m_chBndGrad );
+  volumetric( m_u );
 
   // Communicate gradients to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
@@ -840,11 +874,13 @@ ALECG::rhs()
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] += prev_rkcoef * m_dtp[p];
+  conserved( m_u );
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
             m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
             m_symbctri, d->Vol(), m_edgenode, m_edgeid, m_boxnodes, m_chBndGrad,
             m_u, m_tp, d->Boxvol(), m_rhs );
+  volumetric( m_u );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
@@ -922,7 +958,7 @@ ALECG::solve()
       if (bc[c].first) {
         m_lhs(b,c,0) = 1.0;
         auto deltat = steady ? m_dtp[b] : d->Dt();
-        m_rhs(b,c,0) = bc[c].second / deltat / rkcoef[m_stage];
+        m_rhs(b,c,0) = d->Vol()[b] * bc[c].second / deltat / rkcoef[m_stage];
       }
 
   // Update Un
@@ -934,11 +970,11 @@ ALECG::solve()
     for (std::size_t i=0; i<m_u.nunk(); ++i)
       for (ncomp_t c=0; c<m_u.nprop(); ++c)
         m_u(i,c,0) = m_un(i,c,0)
-          + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c,0) / m_lhs(i,c,0);
+          + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c,0) ;// m_lhs(i,c,0);
 
   } else {
 
-    m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
+    m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs ;// m_lhs;
 
   }
 
@@ -952,8 +988,10 @@ ALECG::solve()
   for (const auto& eq : g_cgpde)
     eq.symbc( m_u, d->Coord(), m_bnorm, m_symbcnodes );
   // Apply farfield BCs on new solution
+  conserved( m_u );
   for (const auto& eq : g_cgpde)
     eq.farfieldbc( m_u, d->Coord(), m_bnorm, m_farfieldbcnodes );
+  volumetric( m_u );
 
   //! [Continue after solve]
   if (m_stage < 2) {
@@ -968,8 +1006,12 @@ ALECG::solve()
   } else {
 
     // Compute diagnostics, e.g., residuals
+    conserved( m_u );
+    conserved( m_un );
     auto diag_computed =
       m_diag.compute( *d, m_u, m_un, m_bnorm, m_symbcnodes, m_farfieldbcnodes );
+    volumetric( m_u );
+    volumetric( m_un );
     // Increase number of iterations and physical time
     d->next();
     // Advance physical time for local time stepping
@@ -1136,7 +1178,7 @@ ALECG::stage()
 }
 
 void
-ALECG::writeFields( CkCallback c ) const
+ALECG::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] c Function to continue with after the write
@@ -1154,7 +1196,9 @@ ALECG::writeFields( CkCallback c ) const
     // Query fields names requested by user
     auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
     // Collect field output from numerical solution requested by user
+    conserved( m_u );
     auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
+    volumetric( m_u );
     // Collect field output names for analytical solutions
     for (const auto& eq : g_cgpde)
       analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
@@ -1175,6 +1219,7 @@ ALECG::writeFields( CkCallback c ) const
     // Collect node block and surface field solution
     auto u = m_u;
     std::vector< std::vector< tk::real > > nodesurfs;
+    conserved( u );
     for (const auto& eq : g_cgpde) {
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
@@ -1202,10 +1247,12 @@ ALECG::out()
   const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
   if ( !((d->It()) % histfreq) ) {
     std::vector< std::vector< tk::real > > hist;
+    conserved( m_u );
     for (const auto& eq : g_cgpde) {
       auto h = eq.histOutput( d->Hist(), d->Inpoel(), m_u );
       hist.insert( end(hist), begin(h), end(h) );
     }
+    volumetric( m_u );
     d->history( std::move(hist) );
   }
 

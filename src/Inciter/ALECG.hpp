@@ -207,6 +207,7 @@ class ALECG : public CBase_ALECG {
       p | m_psup;
       p | m_u;
       p | m_un;
+      p | m_w;
       p | m_lhs;
       p | m_rhs;
       p | m_chBndGrad;
@@ -277,6 +278,8 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes at previous time
     tk::Fields m_un;
+    //! Mesh velocity for ALE mesh motion
+    std::vector< tk::real > m_w;
     //! Lumped lhs mass matrix
     tk::Fields m_lhs;
     //! Right-hand side vector (for the high order system)
@@ -370,7 +373,7 @@ class ALECG : public CBase_ALECG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( CkCallback c ) const;
+    void writeFields( CkCallback c );
 
     //! Combine own and communicated contributions to left hand side
     void lhsmerge();
@@ -392,6 +395,12 @@ class ALECG : public CBase_ALECG {
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
+
+    //! Multiply solution with mesh volume
+    void volumetric( tk::Fields& u );
+
+    //! Divide solution with mesh volume
+    void conserved( tk::Fields& u );
 };
 
 } // inciter::
