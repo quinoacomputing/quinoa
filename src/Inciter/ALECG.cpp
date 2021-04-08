@@ -59,7 +59,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_disc( disc ),
   m_initial( 1 ),
   m_nsol( 0 ),
-  m_nlhs( 0 ),
   m_ngrad( 0 ),
   m_nrhs( 0 ),
   m_nbnorm( 0 ),
@@ -77,11 +76,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_w( m_u.nunk(), 0.0 ),
-  m_lhs( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_bcdir(),
-  m_lhsc(),
   m_chBndGradc(),
   m_rhsc(),
   m_diag(),
@@ -136,8 +133,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
     tk::remap( m_triinpoel, map );
   }
 
-  // Activate SDAG wait for initially computing the left-hand side and normals
-  thisProxy[ thisIndex ].wait4lhs();
+  // Activate SDAG wait for initially computing normals
+  thisProxy[ thisIndex ].wait4norm();
 
   // Generate callbacks for solution transfers we are involved in
 
@@ -474,7 +471,7 @@ ALECG::start()
 }
 //! [start]
 
-//! [Compute own and send lhs on chare-boundary]
+//! [Compute own and send contributions to normals on chare-boundary]
 void
 ALECG::lhs()
 // *****************************************************************************
@@ -482,94 +479,32 @@ ALECG::lhs()
 //! \details Also (re-)compute all data structures if the mesh changed.
 // *****************************************************************************
 {
-  auto d = Disc();
-
-  // Compute lumped mass lhs
-  m_lhs = tk::lump( m_u.nprop(), d->Coord(), d->Inpoel() );
-
-  if (d->NodeCommMap().empty())        // in serial we are done
-    comlhs_complete();
-  else // send contributions of lhs to chare-boundary nodes to fellow chares
-    for (const auto& [c,n] : d->NodeCommMap()) {
-      std::vector< std::vector< tk::real > > l( n.size() );
-      std::size_t j = 0;
-      for (auto i : n) l[ j++ ] = m_lhs[ tk::cref_find(d->Lid(),i) ];
-      thisProxy[c].comlhs( std::vector<std::size_t>(begin(n),end(n)), l );
-    }
-
-  ownlhs_complete();
+  // No need for LHS in ALECG
 
   // (Re-)compute boundary point-, and dual-face normals
   norm();
 }
-//! [Compute own and send lhs on chare-boundary]
+//! [Compute own and send contributions to normals on chare-boundary]
 
-//! [Receive lhs on chare-boundary]
+//! [Merge normals and continue]
 void
-ALECG::comlhs( const std::vector< std::size_t >& gid,
-               const std::vector< std::vector< tk::real > >& L )
-// *****************************************************************************
-//  Receive contributions to left-hand side diagonal matrix on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive LHS contributions
-//! \param[in] L Partial contributions of LHS to chare-boundary nodes
-//! \details This function receives contributions to m_lhs, which stores the
-//!   diagonal (lumped) mass matrix at mesh nodes. While m_lhs stores
-//!   own contributions, m_lhsc collects the neighbor chare contributions during
-//!   communication. This way work on m_lhs and m_lhsc is overlapped. The two
-//!   are combined in lhsmerge().
-// *****************************************************************************
-{
-  Assert( L.size() == gid.size(), "Size mismatch" );
-
-  using tk::operator+=;
-
-  auto d = Disc();
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    m_lhsc[ gid[i] ] += L[i];
-  }
-
-  // When we have heard from all chares we communicate with, this chare is done
-  if (++m_nlhs == d->NodeCommMap().size()) {
-    m_nlhs = 0;
-    comlhs_complete();
-  }
-}
-//! [Receive lhs on chare-boundary]
-
-//! [Merge lhs and continue]
-void
-ALECG::lhsmerge()
+ALECG::merge()
 // *****************************************************************************
 // The own and communication portion of the left-hand side is complete
 // *****************************************************************************
 {
-  // Combine own and communicated contributions to left hand side
-  auto d = Disc();
-
-  // Combine own and communicated contributions to LHS and ICs
-  for (const auto& b : m_lhsc) {
-    auto lid = tk::cref_find( d->Lid(), b.first );
-    for (ncomp_t c=0; c<m_lhs.nprop(); ++c)
-      m_lhs(lid,c,0) += b.second[c];
-  }
-
-  // Clear receive buffer
-  tk::destroy(m_lhsc);
-
   // Combine own and communicated contributions of normals and apply boundary
   // conditions on the initial conditions
   normfinal();
 
-  // Continue after lhs is complete
   if (m_initial) {
     // Output initial conditions to file
     writeFields( CkCallback(CkIndex_ALECG::start(), thisProxy[thisIndex]) );
   } else {
-    lhs_complete();
+    norm_complete();
   }
 }
-//! [Merge lhs and continue]
+//! [Merge normals and continue]
 
 void
 ALECG::normfinal()
@@ -952,11 +887,10 @@ ALECG::solve()
 
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
 
-  // Set Dirichlet BCs for lhs and rhs
+  // Set Dirichlet BCs
   for (const auto& [b,bc] : m_bcdir)
     for (ncomp_t c=0; c<ncomp; ++c)
       if (bc[c].first) {
-        m_lhs(b,c,0) = 1.0;
         auto deltat = steady ? m_dtp[b] : d->Dt();
         m_rhs(b,c,0) = d->Vol()[b] * bc[c].second / deltat / rkcoef[m_stage];
       }
@@ -969,12 +903,11 @@ ALECG::solve()
 
     for (std::size_t i=0; i<m_u.nunk(); ++i)
       for (ncomp_t c=0; c<m_u.nprop(); ++c)
-        m_u(i,c,0) = m_un(i,c,0)
-          + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c,0) ;// m_lhs(i,c,0);
+        m_u(i,c,0) = m_un(i,c,0) + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c,0);
 
   } else {
 
-    m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs ;// m_lhs;
+    m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs;
 
   }
 
@@ -1061,8 +994,8 @@ ALECG::refine( const std::vector< tk::real >& l2res )
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
-    // Activate SDAG waits for re-computing the left-hand side
-    thisProxy[ thisIndex ].wait4lhs();
+    // Activate SDAG waits for re-computing the normals
+    thisProxy[ thisIndex ].wait4norm();
 
     d->startvol();
     d->Ref()->dtref( {}, m_bnode, {} );
@@ -1071,7 +1004,7 @@ ALECG::refine( const std::vector< tk::real >& l2res )
   } else {      // do not refine
 
     d->refined() = 0;
-    lhs_complete();
+    norm_complete();
     resized();
 
   }
@@ -1122,7 +1055,6 @@ ALECG::resizePostAMR(
   auto nprop = m_u.nprop();
   m_u.resize( npoin, nprop );
   m_un.resize( npoin, nprop );
-  m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
   m_chBndGrad.resize( d->Bid().size(), nprop*3 );
 
