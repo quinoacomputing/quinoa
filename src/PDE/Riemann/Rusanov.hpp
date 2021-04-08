@@ -61,15 +61,16 @@ struct Rusanov {
         real mx, real my, real mz,
         real rL, real ruL, real rvL, real rwL, real reL,
         real rR, real ruR, real rvR, real rwR, real reR,
+        real w1L, real w2L, real w3L, real w1R, real w2R, real w3R,
         real& fr, real& fru, real& frv, real& frw, real& fre )
   {
-    auto ul = ruL/rL;
-    auto vl = rvL/rL;
-    auto wl = rwL/rL;
+    auto ul = ruL/rL - w1L;
+    auto vl = rvL/rL - w2L;
+    auto wl = rwL/rL - w3L;
 
-    auto ur = ruR/rR;
-    auto vr = rvR/rR;
-    auto wr = rwR/rR;
+    auto ur = ruR/rR - w1R;
+    auto vr = rvR/rR - w2R;
+    auto wr = rwR/rR - w3R;
 
     auto pl = eos_pressure< tag::compflow >( 0, rL, ul, vl, wl, reL );
     auto pr = eos_pressure< tag::compflow >( 0, rR, ur, vr, wr, reR );

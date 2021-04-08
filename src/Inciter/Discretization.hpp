@@ -141,8 +141,10 @@ class Discretization : public CBase_Discretization {
 
     /** @name Accessors */
     ///@{
-    //! Coordinates accessors as const-ref
+    //! Coordinates accessor as const-ref
     const tk::UnsMesh::Coords& Coord() const { return m_coord; }
+    //! Coordinates accessor as reference
+    tk::UnsMesh::Coords& Coord() { return m_coord; }
 
     //! Global ids accessors as const-ref
     const std::vector< std::size_t >& Gid() const { return m_gid; }

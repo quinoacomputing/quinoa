@@ -161,11 +161,12 @@ class CGPDE {
       const std::vector< std::unordered_set< std::size_t > >& boxnodes,
       const tk::Fields& G,
       const tk::Fields& U,
+      const tk::Fields& W,
       const std::vector< real >& tp,
       real V,
       tk::Fields& R ) const
     { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
-                 symbctri, vol, edgenode, edgeid, boxnodes, G, U, tp, V, R ); }
+            symbctri, vol, edgenode, edgeid, boxnodes, G, U, W, tp, V, R ); }
 
     //! Public interface for computing the minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
@@ -308,6 +309,7 @@ class CGPDE {
         const std::vector< std::unordered_set< std::size_t > >&,
         const tk::Fields&,
         const tk::Fields&,
+        const tk::Fields&,
         const std::vector< real >&,
         real,
         tk::Fields& ) const = 0;
@@ -409,11 +411,12 @@ class CGPDE {
         const std::vector< std::unordered_set< std::size_t > >& boxnodes,
         const tk::Fields& G,
         const tk::Fields& U,
+        const tk::Fields& W,
         const std::vector< real >& tp,
         real V,
         tk::Fields& R ) const override
       { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
-                  symbctri, vol, edgenode, edgeid, boxnodes, G, U, tp, V, R ); }
+             symbctri, vol, edgenode, edgeid, boxnodes, G, U, W, tp, V, R ); }
       real dt( const std::array< std::vector< real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
                tk::real t,

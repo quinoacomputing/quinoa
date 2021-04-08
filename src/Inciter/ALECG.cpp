@@ -75,7 +75,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
-  m_w( m_u.nunk(), 0.0 ),
+  m_w( m_u.nunk(), 3 ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_bcdir(),
@@ -106,6 +106,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   usesAtSync = true;    // enable migration at AtSync
 
   auto d = Disc();
+
+  // Zero ALE mesh velocity
+  m_w.fill( 0.0 );
 
   // Perform optional operator-access-pattern mesh node reordering
   if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
@@ -738,11 +741,13 @@ ALECG::chBndGrad()
 {
   auto d = Disc();
 
-  // Compute own portion of gradients for all equations
+  // Divide solution with mesh volume
   conserved( m_u );
+  // Compute own portion of gradients for all equations
   for (const auto& eq : g_cgpde)
     eq.chBndGrad( d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u,
                   m_chBndGrad );
+  // Multiply solution with mesh volume
   volumetric( m_u );
 
   // Communicate gradients to other chares on chare-boundary
@@ -814,7 +819,7 @@ ALECG::rhs()
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
             m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
             m_symbctri, d->Vol(), m_edgenode, m_edgeid, m_boxnodes, m_chBndGrad,
-            m_u, m_tp, d->Boxvol(), m_rhs );
+            m_u, m_w, m_tp, d->Boxvol(), m_rhs );
   volumetric( m_u );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
@@ -869,7 +874,7 @@ ALECG::comrhs( const std::vector< std::size_t >& gid,
 void
 ALECG::solve()
 // *****************************************************************************
-//  Solve low and high order diagonal systems
+//  Solve linear systems
 // *****************************************************************************
 {
   const auto ncomp = m_rhs.nprop();
@@ -898,16 +903,32 @@ ALECG::solve()
   // Update Un
   if (m_stage == 0) m_un = m_u;
 
+  bool ale = false;
+
   // Solve the sytem
   if (steady) {
 
+    // Advance solution
     for (std::size_t i=0; i<m_u.nunk(); ++i)
       for (ncomp_t c=0; c<m_u.nprop(); ++c)
         m_u(i,c,0) = m_un(i,c,0) + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c,0);
 
   } else {
 
-    m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs;
+    auto adt = rkcoef[m_stage] * d->Dt();
+
+    // Advance solution
+    m_u = m_un + adt * m_rhs;
+
+    // Advance mesh
+    auto& coord = d->Coord();
+    for (std::size_t i=0; i<coord[0].size(); ++i) {
+      coord[0][i] += adt * m_w(i,0,0);
+      coord[1][i] += adt * m_w(i,1,0);
+      coord[2][i] += adt * m_w(i,2,0);
+    }
+
+    ale = true;
 
   }
 
@@ -937,6 +958,14 @@ ALECG::solve()
     transfer();
 
   } else {
+
+    // Ensure new field output file if mesh moved
+    if (ale) {
+      // Zero field output iteration count if mesh moved
+      d->Itf() = 0;
+      // Increase number of iterations with a change in the mesh
+      ++d->Itr();
+    }
 
     // Compute diagnostics, e.g., residuals
     conserved( m_u );

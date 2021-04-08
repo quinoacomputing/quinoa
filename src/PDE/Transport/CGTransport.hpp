@@ -197,6 +197,7 @@ class Transport {
     //! \param[in] edgeid Local node id pair -> edge id map
     //! \param[in] G Nodal gradients in chare-boundary nodes
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] W Mesh velocity
     //! \param[in,out] R Right-hand side vector computed
     void rhs(
       real,
@@ -218,6 +219,7 @@ class Transport {
       const std::vector< std::unordered_set< std::size_t > >&,
       const tk::Fields& G,
       const tk::Fields& U,
+      [[maybe_unused]] const tk::Fields& W,
       const std::vector< tk::real >&,
       real,
       tk::Fields& R ) const

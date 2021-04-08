@@ -469,6 +469,7 @@ class CompFlow {
     //! \param[in] boxnodes Mesh node ids within user-defined IC boxes
     //! \param[in] G Nodal gradients
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] W Mesh velocity
     //! \param[in] tp Physical time for each mesh node
     //! \param[in] V Total box volume
     //! \param[in,out] R Right-hand side vector computed
@@ -491,6 +492,7 @@ class CompFlow {
               const std::vector< std::unordered_set< std::size_t > >& boxnodes,
               const tk::Fields& G,
               const tk::Fields& U,
+              const tk::Fields& W,
               const std::vector< tk::real >& tp,
               real V,
               tk::Fields& R ) const
@@ -502,6 +504,7 @@ class CompFlow {
       Assert( R.nunk() == coord[0].size(),
               "Number of unknowns and/or number of components in right-hand "
               "side vector incorrect" );
+      Assert( W.nunk() == coord[0].size(), "Size mismatch " );
 
       // compute/assemble gradients in points
       auto Grad = nodegrad( coord, inpoel, lid, bid, vol, esup, U, G );
@@ -510,10 +513,10 @@ class CompFlow {
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
 
       // compute domain-edge integral
-      domainint( coord, gid, edgenode, edgeid, psup, dfn, U, Grad, R );
+      domainint( coord, gid, edgenode, edgeid, psup, dfn, U, W, Grad, R );
 
       // compute boundary integrals
-      bndint( coord, triinpoel, symbctri, U, R );
+      bndint( coord, triinpoel, symbctri, U, W, R );
 
       // compute external (energy) sources
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
@@ -908,7 +911,8 @@ class CompFlow {
     //!    global node ids (key)
     //! \param[in] vol Nodal volumes
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] G Nodal gradients of primitive variables in chare-boundary nodes
+    //! \param[in] G Nodal gradients of primitive variables in chare-boundary
+    //!    nodes
     //! \return Gradients of primitive variables in all mesh points
     tk::Fields
     nodegrad( const std::array< std::vector< real >, 3 >& coord,
@@ -1003,6 +1007,7 @@ class CompFlow {
     //! \param[in] psup Points surrounding points
     //! \param[in] dfn Dual-face normals
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] W Mesh velocity
     //! \param[in] G Nodal gradients
     //! \param[in,out] R Right-hand side vector computed
     void domainint( const std::array< std::vector< real >, 3 >& coord,
@@ -1013,6 +1018,7 @@ class CompFlow {
                                      std::vector< std::size_t > >& psup,
                     const std::vector< real >& dfn,
                     const tk::Fields& U,
+                    const tk::Fields& W,
                     const tk::Fields& G,
                     tk::Fields& R ) const
     {
@@ -1035,11 +1041,17 @@ class CompFlow {
         real rvL = U(p,2,m_offset) / rL;
         real rwL = U(p,3,m_offset) / rL;
         real reL = U(p,4,m_offset) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
+        real w1L = W(p,0,0);
+        real w2L = W(p,1,0);
+        real w3L = W(p,2,0);
         real rR  = U(q,0,m_offset);
         real ruR = U(q,1,m_offset) / rR;
         real rvR = U(q,2,m_offset) / rR;
         real rwR = U(q,3,m_offset) / rR;
         real reR = U(q,4,m_offset) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
+        real w1R = W(q,0,0);
+        real w2R = W(q,1,0);
+        real w3R = W(q,2,0);
 
         // apply stagnation BCs to primitive variables
         if ( !skipPoint(x[p],y[p],z[p]) && stagPoint(x[p],y[p],z[p]) )
@@ -1067,6 +1079,7 @@ class CompFlow {
                        dfn[e*6+3], dfn[e*6+4], dfn[e*6+5],
                        rL, ruL, rvL, rwL, reL,
                        rR, ruR, rvR, rwR, reR,
+                       w1L, w2L, w3L, w1R, w2R, w3R,
                        f[0], f[1], f[2], f[3], f[4] );
         // store flux in edges
         for (std::size_t c=0; c<m_ncomp; ++c) dflux[e*m_ncomp+c] = f[c];
@@ -1220,11 +1233,13 @@ class CompFlow {
     //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] W Mesh velocity
     //! \param[in,out] R Right-hand side vector computed
     void bndint( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& triinpoel,
                  const std::vector< int >& symbctri,
                  const tk::Fields& U,
+                 const tk::Fields& W,
                  tk::Fields& R ) const
     {
 
@@ -1257,6 +1272,15 @@ class CompFlow {
         real reA = U(N[0],4,m_offset);
         real reB = U(N[1],4,m_offset);
         real reC = U(N[2],4,m_offset);
+        real w1A = W(N[0],0,0);
+        real w2A = W(N[0],1,0);
+        real w3A = W(N[0],2,0);
+        real w1B = W(N[1],0,0);
+        real w2B = W(N[1],1,0);
+        real w3B = W(N[1],2,0);
+        real w1C = W(N[2],0,0);
+        real w2C = W(N[2],1,0);
+        real w3C = W(N[2],2,0);
         // apply stagnation BCs
         if ( !skipPoint(x[N[0]],y[N[0]],z[N[0]]) &&
              stagPoint(x[N[0]],y[N[0]],z[N[0]]) )
@@ -1283,22 +1307,31 @@ class CompFlow {
         real f[m_ncomp][3];
         real p, vn;
         int sym = symbctri[e];
-        p = eos_pressure< eq >( m_system, rA, ruA/rA, rvA/rA, rwA/rA, reA );
-        vn = sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA) / rA;
+        real auA = ruA/rA - w1A;
+        real avA = rvA/rA - w2A;
+        real awA = rwA/rA - w3A;
+        p = eos_pressure< eq >( m_system, rA, auA, avA, awA, reA );
+        vn = sym ? 0.0 : (nx*auA + ny*avA + nz*awA);
         f[0][0] = rA*vn;
         f[1][0] = ruA*vn + p*nx;
         f[2][0] = rvA*vn + p*ny;
         f[3][0] = rwA*vn + p*nz;
         f[4][0] = (reA + p)*vn;
-        p = eos_pressure< eq >( m_system, rB, ruB/rB, rvB/rB, rwB/rB, reB );
-        vn = sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB) / rB;
+        real auB = ruB/rB - w1B;
+        real avB = rvB/rB - w2B;
+        real awB = rwB/rB - w3B;
+        p = eos_pressure< eq >( m_system, rB, auB, avB, awB, reB );
+        vn = sym ? 0.0 : (nx*auB + ny*avB + nz*awB);
         f[0][1] = rB*vn;
         f[1][1] = ruB*vn + p*nx;
         f[2][1] = rvB*vn + p*ny;
         f[3][1] = rwB*vn + p*nz;
         f[4][1] = (reB + p)*vn;
-        p = eos_pressure< eq >( m_system, rC, ruC/rC, rvC/rC, rwC/rC, reC );
-        vn = sym ? 0.0 : (nx*ruC + ny*rvC + nz*rwC) / rC;
+        real auC = ruC/rC - w1C;
+        real avC = rvC/rC - w2C;
+        real awC = rwC/rC - w3C;
+        p = eos_pressure< eq >( m_system, rC, auC, avC, awC, reC );
+        vn = sym ? 0.0 : (nx*auC + ny*avC + nz*awC);
         f[0][2] = rC*vn;
         f[1][2] = ruC*vn + p*nx;
         f[2][2] = rvC*vn + p*ny;

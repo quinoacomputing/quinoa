@@ -270,7 +270,7 @@ class ALECG : public CBase_ALECG {
     //! Unknown/solution vector at mesh nodes at previous time
     tk::Fields m_un;
     //! Mesh velocity for ALE mesh motion
-    std::vector< tk::real > m_w;
+    tk::Fields m_w;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
     //! Nodal gradients at chare-boundary nodes
@@ -370,7 +370,7 @@ class ALECG : public CBase_ALECG {
     //! Compute righ-hand side vector of transport equations
     void rhs();
 
-    //! Solve low and high order diagonal systems
+    //! Solve linear systems
     void solve();
 
     //! Compute time step size
