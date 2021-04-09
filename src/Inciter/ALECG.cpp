@@ -903,8 +903,6 @@ ALECG::solve()
   // Update Un
   if (m_stage == 0) m_un = m_u;
 
-  bool ale = false;
-
   // Solve the sytem
   if (steady) {
 
@@ -920,15 +918,15 @@ ALECG::solve()
     // Advance solution
     m_u = m_un + adt * m_rhs;
 
-    // Advance mesh
-    auto& coord = d->Coord();
-    for (std::size_t i=0; i<coord[0].size(); ++i) {
-      coord[0][i] += adt * m_w(i,0,0);
-      coord[1][i] += adt * m_w(i,1,0);
-      coord[2][i] += adt * m_w(i,2,0);
+    // Advance mesh if ALE is enabled
+    if (d->ALE()) {
+      auto& coord = d->Coord();
+      for (std::size_t i=0; i<coord[0].size(); ++i) {
+        coord[0][i] += adt * m_w(i,0,0);
+        coord[1][i] += adt * m_w(i,1,0);
+        coord[2][i] += adt * m_w(i,2,0);
+      }
     }
-
-    ale = true;
 
   }
 
@@ -959,14 +957,11 @@ ALECG::solve()
 
   } else {
 
-    // Ensure new field output file if mesh moved
-    // Commented for now to pass regression tests with zero mesh velocity.
-    //if (ale) {
-    //  // Zero field output iteration count if mesh moved
-    //  d->Itf() = 0;
-    //  // Increase number of iterations with a change in the mesh
-    //  ++d->Itr();
-    //}
+    // Ensure new field output file if mesh moved if ALE is enabled
+    if (d->ALE()) {
+      d->Itf() = 0;  // Zero field output iteration count if mesh moved
+      ++d->Itr();    // Increase number of iterations with a change in the mesh
+    }
 
     // Compute diagnostics, e.g., residuals
     conserved( m_u );

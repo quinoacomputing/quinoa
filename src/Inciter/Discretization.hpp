@@ -340,6 +340,9 @@ class Discretization : public CBase_Discretization {
     //! Find elements along our mesh chunk boundary
     std::vector< std::size_t > bndel() const;
 
+   //! Query if ALE mesh motion is enabled by the user
+   bool ALE() const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -511,9 +514,6 @@ class Discretization : public CBase_Discretization {
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
-
-   //! Query if ALE mesh motion is enabled by the user
-   bool ALE() const;
 
     //! Determine if communication of mesh transfer callbacks is complete
     bool transferCallbacksComplete() const;
