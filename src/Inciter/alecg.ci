@@ -75,7 +75,10 @@ module alecg {
         when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } }
 
       entry void wait4trans() {
-        when norm_complete(), resize_complete() serial "trans" { transfer(); } }
+        when norm_complete(), resize_complete() serial "trans" {
+          if (m_state == 0) ale(); else transfer();
+        }
+      }
 
       entry void ownnorm_complete();
       entry void comnorm_complete();

@@ -111,10 +111,14 @@ class Discretization : public CBase_Discretization {
     //! Start solution transfer (if coupled)
     void transfer( const tk::Fields& u );
 
-    //! Resize mesh data structures (e.g., after mesh refinement)
+    //! Resize mesh data structures after mesh refinement
     void resizePostAMR( const tk::UnsMesh::Chunk& chunk,
                         const tk::UnsMesh::Coords& coord,
                         const tk::NodeCommMap& nodeCommMap );
+
+    //! Resize mesh data structures after ALE mesh movement
+    void
+    resizePostALE( const tk::UnsMesh::Coords& coord );
 
     //! Get ready for (re-)computing/communicating nodal volumes
     void startvol();

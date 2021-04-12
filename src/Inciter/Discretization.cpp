@@ -460,15 +460,17 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
                                const tk::UnsMesh::Coords& coord,
                                const tk::NodeCommMap& nodeCommMap )
 // *****************************************************************************
-//  Resize mesh data structures (e.g., after mesh refinement)
+//  Resize mesh data structures after mesh refinement
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
 //! \param[in] nodeCommMap New node communication map
 // *****************************************************************************
 {
   m_el = chunk;         // updates m_inpoel, m_gid, m_lid
-  m_coord = coord;      // update mesh node coordinates
   m_nodeCommMap = nodeCommMap;        // update node communication map
+
+  // Update mesh volume container size
+  m_vol.resize( m_gid.size(), 0.0 );
 
   // Generate local ids for new chare boundary global ids
   std::size_t bid = m_bid.size();
@@ -477,15 +479,23 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
       if (m_bid.find( g ) == end(m_bid))
         m_bid[ g ] = bid++;
 
-  // Clear receive buffer that will be used for collecting nodal volumes
-  m_volc.clear();
+  // Resize mesh data structures after ALE mesh movement
+  resizePostALE( coord );
+}
 
-  // Set flag that indicates that we are during time stepping
+void
+Discretization::resizePostALE( const tk::UnsMesh::Coords& coord )
+// *****************************************************************************
+//  Resize mesh data structures after ALE mesh movement
+//! \param[in] coord New mesh node coordinates
+// *****************************************************************************
+{
+  // update mesh node coordinates
+  m_coord = coord;
+
+  // Set flag that indicates that we are during a mesh refinement step during
+  // time stepping
   m_initial = 0.0;
-
-  // Update mesh volume
-  std::fill( begin(m_vol), end(m_vol), 0.0 );
-  m_vol.resize( m_gid.size(), 0.0 );
 }
 
 void
@@ -496,6 +506,12 @@ Discretization::startvol()
 {
   m_nvol = 0;
   thisProxy[ thisIndex ].wait4vol();
+
+  // Zero out mesh volume container
+  std::fill( begin(m_vol), end(m_vol), 0.0 );
+
+  // Clear receive buffer that will be used for collecting nodal volumes
+  m_volc.clear();
 }
 
 void

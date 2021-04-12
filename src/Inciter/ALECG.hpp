@@ -221,6 +221,7 @@ class ALECG : public CBase_ALECG {
       p | m_dtp;
       p | m_tp;
       p | m_finished;
+      p | m_state;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -323,6 +324,8 @@ class ALECG : public CBase_ALECG {
     std::vector< tk::real > m_tp;
     //! True in the last time step
     int m_finished;
+    //! State indicating the reason we are recomputing the normals
+    int m_state;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -373,6 +376,9 @@ class ALECG : public CBase_ALECG {
     //! Solve linear systems
     void solve();
 
+    //! Continue after ALE mesh movement
+    void ale();
+
     //! Compute time step size
     void dt();
 
@@ -381,6 +387,9 @@ class ALECG : public CBase_ALECG {
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
+
+    //! Apply boundary conditions
+    void BC();
 
     //! Multiply solution with mesh volume
     void volumetric( tk::Fields& u );

@@ -93,7 +93,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_edgeid(),
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
-  m_finished( 0 )
+  m_finished( 0 ),
+  m_state( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -415,6 +416,8 @@ ALECG::volumetric( tk::Fields& u )
 //! \param[in,out] u Solution vector
 // *****************************************************************************
 {
+  Assert( Disc()->Vol().size() == u.nunk(), "Size mismatch" );
+
   for (std::size_t i=0; i<u.nunk(); ++i)
     for (ncomp_t c=0; c<u.nprop(); ++c)
       u(i,c,0) *= Disc()->Vol()[i];
@@ -427,6 +430,8 @@ ALECG::conserved( tk::Fields& u )
 //! \param[in,out] u Solution vector
 // *****************************************************************************
 {
+  Assert( Disc()->Vol().size() == u.nunk(), "Size mismatch" );
+
   for (std::size_t i=0; i<u.nunk(); ++i)
     for (ncomp_t c=0; c<u.nprop(); ++c)
       u(i,c,0) /= Disc()->Vol()[i];
@@ -471,6 +476,10 @@ ALECG::start()
   Disc()->grindZero();
   // Continue to next time step
   next();
+  // Apply BCs on initial conditions
+  BC();
+  // Set flag that indicates that we are during time stepping
+  m_initial = 0;
 }
 //! [start]
 
@@ -563,15 +572,6 @@ ALECG::normfinal()
   // If farfield BC is set on a node, will not also set symmetry BC
   for (auto fn : m_farfieldbcnodes) m_symbcnodes.erase(fn);
 
-  // Apply symmetry BCs on initial conditions
-  for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, d->Coord(), m_bnorm, m_symbcnodes );
-  // Apply farfield BCs on initial conditions
-  conserved( m_u );
-  for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, d->Coord(), m_bnorm, m_farfieldbcnodes );
-  volumetric( m_u );
-
   // Prepare boundary nodes contiguously accessible from a triangle-face loop
   m_symbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
@@ -650,6 +650,32 @@ ALECG::normfinal()
 }
 
 void
+ALECG::BC()
+// *****************************************************************************
+// Apply boundary conditions
+// \details The following BC enforcement changes the initial condition or
+//!   updated solution (dependending on when it is called) to ensure strong
+//!   imposition of the BCs. This is a matter of choice. Another alternative is
+//!   to only apply BCs when computing fluxes at boundary faces, thereby only
+//!   weakly enforcing the BCs. The former is conventionally used in continunous
+//!   Galerkin finite element methods (such as ALECG implements), whereas the
+//!   latter, in finite volume methods.
+// *****************************************************************************
+{
+  const auto& coord = Disc()->Coord();
+
+  // Apply symmetry BCs on initial conditions
+  for (const auto& eq : g_cgpde)
+    eq.symbc( m_u, coord, m_bnorm, m_symbcnodes );
+
+  // Apply farfield BCs on initial conditions
+  conserved( m_u );
+  for (const auto& eq : g_cgpde)
+    eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+  volumetric( m_u );
+}
+
+void
 ALECG::next()
 // *****************************************************************************
 // Continue to next time step
@@ -708,7 +734,6 @@ ALECG::dt()
   // Actiavate SDAG waits for next time step stage
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
-  thisProxy[ thisIndex ].wait4trans();
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -930,21 +955,35 @@ ALECG::solve()
 
   }
 
-  // The following BC enforcement changes the updated solution to ensure strong
-  // imposition of the BCs. This is a matter of choice. Another alternative is
-  // to only apply BCs when computing fluxes at boundary faces, thereby only
-  // weakly enforcing the BCs. The former is conventionally used in finite
-  // element methods, whereas the latter, in finite volume methods.
+  // Apply BCs on new solution
+  BC();
 
-  // Apply symmetry BCs on new solution
-  for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, d->Coord(), m_bnorm, m_symbcnodes );
-  // Apply farfield BCs on new solution
-  conserved( m_u );
-  for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, d->Coord(), m_bnorm, m_farfieldbcnodes );
-  volumetric( m_u );
+  // Activate SDAG waits for re-computing the normals
+  m_state = 0;  // recompute normals after ALE (if enabled)
+  thisProxy[ thisIndex ].wait4norm();
+  thisProxy[ thisIndex ].wait4trans();
 
+  // Recompute mesh volumes if ALE is enabled
+  if (d->ALE()) {
+    transfer_complete();
+    // Resize mesh data structures after mesh movement
+    d->resizePostALE( d->Coord() );
+    d->startvol();
+    auto meshid = d->MeshId();
+    contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
+                CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
+  } else {
+    norm_complete();
+    resized();
+  }
+}
+
+void
+ALECG::ale()
+// *****************************************************************************
+//  Continue after ALE mesh movement
+// *****************************************************************************
+{
   //! [Continue after solve]
   if (m_stage < 2) {
 
@@ -956,6 +995,8 @@ ALECG::solve()
     transfer();
 
   } else {
+
+    auto d = Disc();
 
     // Ensure new field output file if mesh moved if ALE is enabled
     if (d->ALE()) {
@@ -973,7 +1014,8 @@ ALECG::solve()
     // Increase number of iterations and physical time
     d->next();
     // Advance physical time for local time stepping
-    if (steady) for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
+    if (g_inputdeck.get< tag::discr, tag::steady_state >())
+      for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
     // Continue to mesh refinement (if configured)
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
 
@@ -1016,11 +1058,13 @@ ALECG::refine( const std::vector< tk::real >& l2res )
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
 
+  // Activate SDAG waits for re-computing the normals
+  m_state = 1;  // recompute normals after AMR (if enabled)
+  thisProxy[ thisIndex ].wait4norm();
+  thisProxy[ thisIndex ].wait4trans();
+
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
-
-    // Activate SDAG waits for re-computing the normals
-    thisProxy[ thisIndex ].wait4norm();
 
     d->startvol();
     d->Ref()->dtref( {}, m_bnode, {} );
@@ -1063,16 +1107,10 @@ ALECG::resizePostAMR(
 {
   auto d = Disc();
 
-  // Set flag that indicates that we are during time stepping
-  m_initial = 0;
+  d->Itf() = 0;  // Zero field output iteration count if AMR
+  ++d->Itr();    // Increase number of iterations with a change in the mesh
 
-  // Zero field output iteration count between two mesh refinement steps
-  d->Itf() = 0;
-
-  // Increase number of iterations with mesh refinement
-  ++d->Itr();
-
-  // Resize mesh data structures
+  // Resize mesh data structures after mesh refinement
   d->resizePostAMR( chunk, coord, nodeCommMap );
 
   // Resize auxiliary solution vectors
