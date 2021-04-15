@@ -1132,16 +1132,14 @@ class MultiMat {
       for (std::size_t k=0; k<nmat; ++k)
         rho += ugp[densityIdx(nmat, k)];
 
-      auto u = ugp[momentumIdx(nmat, 0)] / rho;
-      auto v = ugp[momentumIdx(nmat, 1)] / rho;
-      auto w = ugp[momentumIdx(nmat, 2)] / rho;
+      auto u = ugp[ncomp+velocityIdx(nmat,0)];
+      auto v = ugp[ncomp+velocityIdx(nmat,1)];
+      auto w = ugp[ncomp+velocityIdx(nmat,2)];
 
       std::vector< tk::real > apk( nmat, 0.0 );
       for (std::size_t k=0; k<nmat; ++k)
       {
-        apk[k] = eos_pressure< tag::multimat >( system,
-          ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
-          ugp[volfracIdx(nmat, k)], k );
+        apk[k] = ugp[ncomp+pressureIdx(nmat,k)];
         p += apk[k];
       }
 
