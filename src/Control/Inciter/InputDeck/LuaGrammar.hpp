@@ -17,66 +17,86 @@
 namespace inciter {
 namespace lua {
 
-//! Interpret inciter box ... end block using Lua
+//! Interpret inciter box ... end blocks using Lua
+//! \tparam eq Equation system index
+//! \param[in] iclua Lua::sol table handle for IC block
+//! \param[in] cnt Lua block counter
+//! \param[in,out] icbox Box configuration tuple in nested vectors to write to
 template< class eq >
-void box( const sol::table& tbl, ctr::box& icbox ) {
+void box( const sol::table& iclua,
+          std::size_t cnt,
+          std::vector< std::vector< ctr::box > >& icbox )
+{
+  const auto& boxlua = iclua[ kw::box::string() ];
+  if (boxlua.valid()) {
+    std::size_t i = 1;
+    do {
 
-  // get access to the 'box' table within the 'tbl' lua table
-  const auto& boxlua = tbl.get_or< sol::table >( kw::box::string(), {} );
+      const auto& s = boxlua[i];
+      if (not s.valid()) break;
+      icbox[cnt].emplace_back();
+      auto& b = icbox[cnt].back();
 
-  if (boxlua != sol::lua_nil) {      // if table 'box' exists in table
-    using v = std::vector< tk::real >;
+      b.template get< tag::xmin >() = s[ kw::xmin::string() ].get_or(0.0);
+      b.template get< tag::xmax >() = s[ kw::xmax::string() ].get_or(0.0);
+      b.template get< tag::ymin >() = s[ kw::ymin::string() ].get_or(0.0);
+      b.template get< tag::ymax >() = s[ kw::ymax::string() ].get_or(0.0);
+      b.template get< tag::zmin >() = s[ kw::zmin::string() ].get_or(0.0);
+      b.template get< tag::zmax >() = s[ kw::zmax::string() ].get_or(0.0);
 
-    icbox.template get< tag::xmin >() =
-      boxlua.get_or( kw::xmin::string(), 0.0 );
-    icbox.template get< tag::xmax >() =
-      boxlua.get_or( kw::xmax::string(), 0.0 );
-    icbox.template get< tag::ymin >() =
-      boxlua.get_or( kw::ymin::string(), 0.0 );
-    icbox.template get< tag::ymax >() =
-      boxlua.get_or( kw::ymax::string(), 0.0 );
-    icbox.template get< tag::zmin >() =
-      boxlua.get_or( kw::zmin::string(), 0.0 );
-    icbox.template get< tag::zmax >() =
-      boxlua.get_or( kw::zmax::string(), 0.0 );
+      b.template get< tag::density >() =
+        s[ kw::density::string() ].get_or( 0.0 );
+      b.template get< tag::pressure >() =
+        s[ kw::pressure::string() ].get_or( 0.0 );
+      b.template get< tag::temperature >() =
+        s[ kw::temperature::string() ].get_or( 0.0 );
+      b.template get< tag::energy >() =
+        s[ kw::energy::string() ].get_or( 0.0 );
+      b.template get< tag::velocity >() =
+        s[ kw::velocity::string() ].get_or< std::vector< tk::real > >( {} );
 
-    icbox.template get< tag::density >().back() =
-      boxlua.get_or< v >( kw::density::string(), {} );
-    icbox.template get< tag::velocity >().back() =
-      boxlua.get_or< v >( kw::velocity::string(), {} );
-    icbox.template get< tag::pressure >().back() =
-      boxlua.get_or< v >( kw::pressure::string(), {} );
-    icbox.template get< tag::energy >().back() =
-      boxlua.get_or< v >( kw::energy::string(), {} );
-    icbox.template get< tag::temperature >().back() =
-      boxlua.get_or< v >( kw::temperature::string(), {} );
+      auto op = ctr::Initiate();
+      auto is = s[ kw::initiate::string() ].
+                  get_or( op.name(ctr::InitiateType::IMPULSE) );
+      b.template get< tag::initiate >().get< tag::init >() = op.value( is );
+
+      // TODO: The contents of table 'linear' is not yet parsed.
+
+      ++i;
+
+    } while (true);
   }
 }
 
 //! Interpret inciter ic ... end block using Lua
+//! \tparam eq Equation system index
+//! \param[in] lua Lua library handle
+//! \param[in] cnt Lua block counter
+//! \param[in,out] deck Input deck to write
 template< class eq >
-void ic( const sol::state& lua, ctr::InputDeck& deck ) {
-
-  // get access to the 'ic' table in lua
+void ic( const sol::state& lua, std::size_t cnt, ctr::InputDeck& deck ) {
+  // process all 'ic' tables in lua
   const auto& iclua = lua.get_or< sol::table >( kw::ic::string(), {} );
 
   if (iclua != sol::lua_nil) {      // if table 'ic' exists in lua
-    using v = std::vector< tk::real >;
     auto& icblock = deck.get< tag::param, eq, tag::ic >();
 
-    icblock.template get< tag::density >().back() =
-      iclua.get_or< v >( kw::density::string(), {} );
-    icblock.template get< tag::velocity >().back() =
-      iclua.get_or< v >( kw::velocity::string(), {} );
-    icblock.template get< tag::pressure >().back() =
-      iclua.get_or< v >( kw::pressure::string(), {} );
-    icblock.template get< tag::energy >().back() =
-      iclua.get_or< v >( kw::energy::string(), {} );
-    icblock.template get< tag::temperature >().back() =
-      iclua.get_or< v >( kw::temperature::string(), {} );
+    // Lambda to read in and store a vector of doubles from Lua
+    auto vec = [&]( const std::string& token,
+                    std::vector< std::vector< tk::real > >& v )
+    {
+      auto r = iclua.get_or< std::vector< tk::real > >( token, {} );
+      if (!r.empty()) v.emplace_back( std::move(r) );
+    };
+
+    vec( kw::density::string(), icblock.template get<tag::density>() );
+    vec( kw::velocity::string(), icblock.template get<tag::velocity>() );
+    vec( kw::pressure::string(), icblock.template get<tag::pressure>() );
+    vec( kw::energy::string(), icblock.template get<tag::energy>() );
+    vec( kw::temperature::string(), icblock.template get<tag::temperature>() );
 
     // interpret 'box' table within 'ic' table
-    box< eq >( iclua, icblock.template get< tag::box >() );
+    box< eq >( iclua, cnt, icblock.template get< tag::box >() );
   }
 }
 

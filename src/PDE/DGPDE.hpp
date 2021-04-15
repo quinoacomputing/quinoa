@@ -136,17 +136,18 @@ class DGPDE {
     //! Public interface to determine elements that lie inside the IC box
     void IcBoxElems( const tk::Fields& geoElem,
       std::size_t nielem,
-      std::unordered_set< std::size_t >& inbox ) const
+      std::vector< std::unordered_set< std::size_t > >& inbox ) const
     { self->IcBoxElems( geoElem, nielem, inbox ); }
 
     //! Public interface to setting the initial conditions for the diff eq
-    void initialize( const tk::Fields& L,
-                     const std::vector< std::size_t >& inpoel,
-                     const tk::UnsMesh::Coords& coord,
-                     const std::unordered_set< std::size_t >& inbox,
-                     tk::Fields& unk,
-                     tk::real t,
-                     const std::size_t nielem ) const
+    void initialize(
+      const tk::Fields& L,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      const std::vector< std::unordered_set< std::size_t > >& inbox,
+      tk::Fields& unk,
+      tk::real t,
+      const std::size_t nielem ) const
     { self->initialize( L, inpoel, coord, inbox, unk, t, nielem ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
@@ -206,7 +207,7 @@ class DGPDE {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
-              const std::unordered_set< std::size_t >& boxelems,
+              const std::vector< std::unordered_set< std::size_t > >& boxelems,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
@@ -287,14 +288,15 @@ class DGPDE {
       virtual void numEquationDofs(std::vector< std::size_t >&) const = 0;
       virtual void IcBoxElems( const tk::Fields&,
         std::size_t,
-        std::unordered_set< std::size_t >& ) const = 0;
-      virtual void initialize( const tk::Fields&,
-                               const std::vector< std::size_t >&,
-                               const tk::UnsMesh::Coords&,
-                               const std::unordered_set< std::size_t >&,
-                               tk::Fields&,
-                               tk::real,
-                               const std::size_t nielem ) const = 0;
+        std::vector< std::unordered_set< std::size_t > >& ) const = 0;
+      virtual void initialize(
+        const tk::Fields&,
+        const std::vector< std::size_t >&,
+        const tk::UnsMesh::Coords&,
+        const std::vector< std::unordered_set< std::size_t > >&,
+        tk::Fields&,
+        tk::real,
+        const std::size_t nielem ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void updatePrimitives( const tk::Fields&,
                                      const tk::Fields&,
@@ -332,7 +334,7 @@ class DGPDE {
                         const tk::Fields&,
                         const inciter::FaceData&,
                         const std::vector< std::size_t >&,
-                        const std::unordered_set< std::size_t >&,
+                        const std::vector< std::unordered_set< std::size_t > >&,
                         const tk::UnsMesh::Coords&,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -379,15 +381,16 @@ class DGPDE {
       { data.numEquationDofs(numEqDof); }
       void IcBoxElems( const tk::Fields& geoElem,
         std::size_t nielem,
-        std::unordered_set< std::size_t >& inbox )
+        std::vector< std::unordered_set< std::size_t > >& inbox )
       const override { data.IcBoxElems( geoElem, nielem, inbox ); }
-      void initialize( const tk::Fields& L,
-                       const std::vector< std::size_t >& inpoel,
-                       const tk::UnsMesh::Coords& coord,
-                       const std::unordered_set< std::size_t >& inbox,
-                       tk::Fields& unk,
-                       tk::real t,
-                       const std::size_t nielem )
+      void initialize(
+        const tk::Fields& L,
+        const std::vector< std::size_t >& inpoel,
+        const tk::UnsMesh::Coords& coord,
+        const std::vector< std::unordered_set< std::size_t > >& inbox,
+        tk::Fields& unk,
+        tk::real t,
+        const std::size_t nielem )
       const override { data.initialize( L, inpoel, coord, inbox, unk, t,
         nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
@@ -432,18 +435,19 @@ class DGPDE {
       {
         data.limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, U, P );
       }
-      void rhs( tk::real t,
-                const tk::Fields& geoFace,
-                const tk::Fields& geoElem,
-                const inciter::FaceData& fd,
-                const std::vector< std::size_t >& inpoel,
-                const std::unordered_set< std::size_t >& boxelems,
-                const tk::UnsMesh::Coords& coord,
-                const tk::Fields& U,
-                const tk::Fields& P,
-                const tk::Fields& VolFracMax,
-                const std::vector< std::size_t >& ndofel,
-                tk::Fields& R ) const override
+      void rhs(
+        tk::real t,
+        const tk::Fields& geoFace,
+        const tk::Fields& geoElem,
+        const inciter::FaceData& fd,
+        const std::vector< std::size_t >& inpoel,
+        const std::vector< std::unordered_set< std::size_t > >& boxelems,
+        const tk::UnsMesh::Coords& coord,
+        const tk::Fields& U,
+        const tk::Fields& P,
+        const tk::Fields& VolFracMax,
+        const std::vector< std::size_t >& ndofel,
+        tk::Fields& R ) const override
       {
         data.rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
           VolFracMax, ndofel, R );

@@ -290,6 +290,17 @@ operator<< ( std::ostream& os, const std::pair< const Key, Value  >& v ) {
   return os;
 }
 
+//! \brief Convert and return value as string
+//! \tparam T Value type for input
+//! \param[in] v Value for input to return as a string
+//! \return String for input value
+template< typename T >
+std::string parameter( const T& v ) {
+  std::stringstream s;
+  s << v;
+  return s.str();
+}
+
 //! \brief Convert and return values from container as string
 //! \tparam V Container range for works on
 //! \param[in] v Container whose components to return as a string

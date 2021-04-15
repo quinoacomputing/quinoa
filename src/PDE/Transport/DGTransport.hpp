@@ -109,24 +109,25 @@ class Transport {
     //! Determine elements that lie inside the user-defined IC box
     void IcBoxElems( const tk::Fields&,
       std::size_t,
-      std::unordered_set< std::size_t >& ) const
+      std::vector< std::unordered_set< std::size_t > >& ) const
     {}
 
     //! Initalize the transport equations for DG
     //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
-//    //! \param[in,out] inbox List of elements at which box user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
-    void initialize( const tk::Fields& L,
-                     const std::vector< std::size_t >& inpoel,
-                     const tk::UnsMesh::Coords& coord,
-                     const std::unordered_set< std::size_t >& /*inbox*/,
-                     tk::Fields& unk,
-                     tk::real t,
-                     const std::size_t nielem ) const
+    void
+    initialize(
+      const tk::Fields& L,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      const std::vector< std::unordered_set< std::size_t > >& /*inbox*/,
+      tk::Fields& unk,
+      tk::real t,
+      const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
@@ -289,7 +290,7 @@ class Transport {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
-              const std::unordered_set< std::size_t >&,
+              const std::vector< std::unordered_set< std::size_t > >&,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,

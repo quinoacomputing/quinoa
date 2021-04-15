@@ -325,8 +325,8 @@ DiagCG::box( tk::real v )
   d->Boxvol() = v;
 
   // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde) eq.initialize( coord, m_u, d->T(), d->Boxvol(),
-    m_boxnodes );
+  for (auto& eq : g_cgpde)
+    eq.initialize( coord, m_u, d->T(), d->Boxvol(), m_boxnodes );
 
   // Apply symmetry BCs on initial conditions
   for (const auto& eq : g_cgpde)

@@ -23,12 +23,12 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Set the solution in the user-defined IC box
 void initializeBox( std::size_t system,
-  tk::real VRatio,
-  tk::real t,
-  const inciter::ctr::box& icbox,
-  const std::vector< std::vector< tk::real > >& bgpreic,
-  const std::vector< std::vector< tk::real > >& cv,
-  std::vector< tk::real >& s );
+                    tk::real VRatio,
+                    tk::real t,
+                    const inciter::ctr::box& icbox,
+                    tk::real bgpreic,
+                    tk::real cv,
+                    std::vector< tk::real >& s );
 
 } //inciter::
 

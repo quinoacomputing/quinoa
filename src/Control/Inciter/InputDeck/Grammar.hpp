@@ -353,14 +353,6 @@ namespace grm {
           Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
         }
 
-        // put in empty vectors for background ICs so client code can directly
-        // index into these vectors using the eq system id
-        bgdensityic.push_back( {} );
-        bgvelocityic.push_back( {} );
-        bgpressureic.push_back( {} );
-        bgenergyic.push_back( {} );
-        bgtemperatureic.push_back( {} );
-
         // Error check Dirichlet boundary condition block for all compflow
         // configurations
         const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
@@ -402,21 +394,6 @@ namespace grm {
         {
           Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
         }
-
-        // Set default inititate type for box ICs
-        auto& icbox = ic.template get< tag::box >();
-        auto& initiate = icbox.template get< tag::initiate >();
-        auto& inittype = initiate.template get< tag::init >();
-        if (inittype.size() != neq.get< eq >())
-          inittype.push_back( inciter::ctr::InitiateType::IMPULSE );
-
-        // put in empty vectors for non-user-defined box ICs so client code can
-        // directly index into these vectors using the eq system id
-        icbox.template get< tag::density >().push_back( {} );
-        icbox.template get< tag::velocity >().push_back( {} );
-        icbox.template get< tag::pressure >().push_back( {} );
-        icbox.template get< tag::energy >().push_back( {} );
-        icbox.template get< tag::temperature >().push_back( {} );
       }
     }
   };
@@ -1165,6 +1142,57 @@ namespace deck {
                                     tk::grm::check_vector,
                                     eq, param, xparams... > {};
 
+   //! Match box parameter
+  template< class eq, typename keyword, typename target >
+  struct box_parameter :
+           pegtl::if_must<
+             tk::grm::readkw< typename use<keyword>::pegtl_string >,
+             tk::grm::scan<
+               pegtl::sor< tk::grm::number,
+                           tk::grm::msg< tk::grm::ERROR,
+                                         tk::grm::MsgKey::MISSING > >,
+               tk::grm::Back_back_store< target,
+                 tag::param, eq, tag::ic, tag::box > > > {};
+
+   //! Match box parameter and store deep
+  template< class eq, typename keyword, typename target, typename subtarget >
+  struct box_deep_parameter :
+           pegtl::if_must<
+             tk::grm::readkw< typename use<keyword>::pegtl_string >,
+             tk::grm::scan<
+               pegtl::sor< tk::grm::number,
+                           tk::grm::msg< tk::grm::ERROR,
+                                         tk::grm::MsgKey::MISSING > >,
+               tk::grm::Back_back_deep_store< target, subtarget,
+                 tag::param, eq, tag::ic, tag::box > > > {};
+
+   //! Match box parameter vector
+  template< class eq, typename keyword, typename target >
+  struct box_vector :
+         tk::grm::vector< use< keyword >,
+                          tk::grm::Back_back_store_back< target,
+                            tag::param, eq, tag::ic, tag::box >,
+                          use< kw::end > > {};
+
+   //! Match box parameter vector and store deep
+  template< class eq, typename keyword, typename target, typename subtarget >
+  struct box_deep_vector :
+         tk::grm::vector< use< keyword >,
+                          tk::grm::Back_back_deep_store_back< target, subtarget,
+                            tag::param, eq, tag::ic, tag::box >,
+                          use< kw::end > > {};
+
+
+   //! Match box option
+  template< class eq, typename Option, typename keyword, typename target,
+            typename subtarget >
+  struct box_option :
+         tk::grm::process<
+           use< keyword >,
+           tk::grm::back_back_store_option< target, subtarget, use, Option,
+             tag::param, eq, tag::ic, tag::box >,
+           pegtl::alpha > {};
+
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename param,
             class kw_type = tk::grm::number >
@@ -1223,7 +1251,8 @@ namespace deck {
              use< kw::end >,
              parameter< eq, kw::pressure, tag::farfield_pressure >,
              parameter< eq, kw::density, tag::farfield_density >,
-             pde_parameter_vector< kw::velocity, eq, tag::farfield_velocity >,
+             pde_parameter_vector< kw::velocity, eq,
+                                   tag::farfield_velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,
@@ -1241,7 +1270,8 @@ namespace deck {
   //! xminus configuring coordinate-based edge tagging for mesh refinement
   template< typename keyword, typename Tag >
   struct half_world :
-         tk::grm::control< use< keyword >, pegtl::digit, tag::amr, Tag > {};
+         tk::grm::control< use< keyword >, pegtl::digit, tk::grm::Store,
+                           tag::amr, Tag > {};
 
   //! coords ... end block
   struct coords :
@@ -1260,70 +1290,32 @@ namespace deck {
   struct box :
          pegtl::if_must<
            tk::grm::readkw< use< kw::box >::pegtl_string >,
-           tk::grm::block< use< kw::end >,
-             tk::grm::control< use< kw::xmin >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::xmin >,
-             tk::grm::control< use< kw::xmax >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::xmax >,
-             tk::grm::control< use< kw::ymin >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::ymin >,
-             tk::grm::control< use< kw::ymax >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::ymax >,
-             tk::grm::control< use< kw::zmin >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::zmin >,
-             tk::grm::control< use< kw::zmax >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::zmax >,
-             pegtl::sor<
-               pde_parameter_vector< kw::density,
-                                     eq, tag::ic, tag::box, tag::density >,
-               pde_parameter_vector< kw::velocity,
-                                     eq, tag::ic, tag::box, tag::velocity >,
-               pde_parameter_vector< kw::pressure,
-                                     eq, tag::ic, tag::box, tag::pressure >,
-               pde_parameter_vector< kw::temperature,
-                                     eq, tag::ic, tag::box, tag::temperature >,
-               pde_parameter_vector< kw::mass,
-                                     eq, tag::ic, tag::box, tag::mass >,
-               pde_parameter_vector< kw::energy_content,
-                                   eq, tag::ic, tag::box, tag::energy_content >,
-               pde_parameter_vector< kw::energy,
-                                     eq, tag::ic, tag::box, tag::energy >,
-               tk::grm::process< use< kw::initiate >,
-                                 tk::grm::store_back_option< use,
-                                                             ctr::Initiate,
-                                                             tag::param,
-                                                             eq,
-                                                             tag::ic,
-                                                             tag::box,
-                                                             tag::initiate,
-                                                             tag::init >,
-                                 pegtl::alpha >,
-               pegtl::if_must<
+           tk::grm::start_vector_back< tag::param, eq, tag::ic, tag::box >,
+           tk::grm::block< use< kw::end >
+             , box_parameter< eq, kw::xmin, tag::xmin >
+             , box_parameter< eq, kw::xmax, tag::xmax >
+             , box_parameter< eq, kw::ymin, tag::ymin >
+             , box_parameter< eq, kw::ymax, tag::ymax >
+             , box_parameter< eq, kw::zmin, tag::zmin >
+             , box_parameter< eq, kw::zmax, tag::zmax >
+             , box_parameter< eq, kw::density, tag::density >
+             , box_parameter< eq, kw::pressure, tag::pressure >
+             , box_parameter< eq, kw::temperature, tag::temperature >
+             , box_parameter< eq, kw::energy_content, tag::energy_content >
+             , box_parameter< eq, kw::energy, tag::energy >
+             , box_parameter< eq, kw::mass, tag::mass >
+             , box_vector< eq, kw::velocity, tag::velocity >
+             , box_option< eq, ctr::Initiate, kw::initiate, tag::initiate,
+                           tag::init >
+             , pegtl::if_must<
                  tk::grm::readkw< use< kw::linear >::pegtl_string >,
-                 tk::grm::block< use< kw::end >,
-                   tk::grm::parameter_vector< use,
-                                              use< kw::point >,
-                                              tk::grm::Store_back_back,
-                                              tk::grm::start_vector,
-                                              tk::grm::check_vector,
-                                              eq,
-                                              tag::ic,
-                                              tag::box,
-                                              tag::initiate,
-                                              tag::point >,
-                   tk::grm::parameter_vector< use,
-                                              use< kw::radius >,
-                                              tk::grm::Store_back_back,
-                                              tk::grm::start_vector,
-                                              tk::grm::check_vector,
-                                              eq,
-                                              tag::ic,
-                                              tag::box,
-                                              tag::initiate,
-                                              tag::radius >,
-                   pde_parameter_vector< kw::velocity,
-                     eq, tag::ic, tag::box, tag::initiate, tag::velocity > > >
-             > > > {};
+                 tk::grm::block< use< kw::end >
+                   , box_deep_vector< eq, kw::point, tag::initiate, tag::point >
+                   , box_deep_parameter< eq, kw::radius, tag::initiate,
+                                         tag::radius >
+                   , box_deep_parameter< eq, kw::velocity, tag::initiate,
+                                         tag::velocity > > >
+             > > {};
 
   //! initial conditions block for compressible flow
   template< class eq >
@@ -1332,16 +1324,16 @@ namespace deck {
            tk::grm::readkw< use< kw::ic >::pegtl_string >,
            tk::grm::block< use< kw::end >,
              pegtl::sor<
-               pde_parameter_vector< kw::density,
-                                     eq, tag::ic, tag::density >,
-               pde_parameter_vector< kw::velocity,
-                                     eq, tag::ic, tag::velocity >,
-               pde_parameter_vector< kw::pressure,
-                                     eq, tag::ic, tag::pressure >,
-               pde_parameter_vector< kw::temperature,
-                                     eq, tag::ic, tag::temperature >,
-               pde_parameter_vector< kw::energy,
-                                     eq, tag::ic, tag::energy > >,
+               pde_parameter_vector< kw::density, eq,
+                                     tag::ic, tag::density >,
+               pde_parameter_vector< kw::velocity, eq,
+                                     tag::ic, tag::velocity >,
+               pde_parameter_vector< kw::pressure, eq,
+                                     tag::ic, tag::pressure >,
+               pde_parameter_vector< kw::temperature, eq,
+                                     tag::ic, tag::temperature >,
+               pde_parameter_vector< kw::energy, eq,
+                                     tag::ic, tag::energy > >,
                pegtl::seq< box< eq > > > > {};
 
   //! put in material property for equation matching keyword
@@ -1370,8 +1362,8 @@ namespace deck {
            tk::grm::block< use< kw::end >,
              tk::grm::filename< use, tag::param, eq, tag::mesh, tag::filename >
            , pde_parameter_vector< kw::location, eq, tag::mesh, tag::location >
-           , pde_parameter_vector< kw::orientation, eq, tag::mesh,
-                                   tag::orientation >
+           , pde_parameter_vector< kw::orientation, eq,
+                                   tag::mesh, tag::orientation >
            , tk::grm::process<
                use< kw::reference >,
                tk::grm::Store_back< tag::param, eq, tag::mesh, tag::reference >,
@@ -1426,6 +1418,7 @@ namespace deck {
   struct compflow :
          pegtl::if_must<
            scan_eq< use< kw::compflow >, tag::compflow >,
+           tk::grm::start_vector<tag::param, tag::compflow, tag::ic, tag::box>,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
                                             use< kw::physics >,
@@ -1612,10 +1605,12 @@ namespace deck {
                              pegtl::alpha >,
                            tk::grm::control< use< kw::amr_tolref >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::amr,
                                              tag::tolref >,
                            tk::grm::control< use< kw::amr_tolderef >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::amr,
                                              tag::tolderef >,
                            tk::grm::process< use< kw::amr_t0ref >,
@@ -1673,10 +1668,12 @@ namespace deck {
            tk::grm::block< use< kw::end >,
                            tk::grm::control< use< kw::pref_tolref >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::pref,
                                              tag::tolref  >,
                            tk::grm::control< use< kw::pref_ndofmax >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::pref,
                                              tag::ndofmax >,
                            tk::grm::process<

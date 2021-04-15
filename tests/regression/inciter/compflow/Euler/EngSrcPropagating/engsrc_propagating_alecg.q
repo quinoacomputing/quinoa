@@ -31,14 +31,14 @@ inciter
         xmin -0.200005 xmax 1.0e-14
         ymin -0.200005 ymax 0.200005
         zmin -0.000005 zmax 6.000005
-        mass 768.48 end
-        energy_content 9.0e+9 end
+        mass 768.48
+        energy_content 9.0e+9
 
         initiate linear
 
         # linear propagation of energy source
         linear
-          velocity -8.2e+3 end  # detonation velocity: 0.82 cm/us = 82e+3 m/s
+          velocity -8.2e+3 # detonation velocity: 0.82 cm/us = 82e+3 m/s
         end
       end
     end
