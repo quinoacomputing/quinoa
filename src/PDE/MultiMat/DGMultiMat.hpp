@@ -365,7 +365,7 @@ class MultiMat {
           auto Pck =
             g_inputdeck.get< tag::param, eq, tag::pstiff >()[ m_system ][k];
           // for positive volume fractions
-          if (alk > 0.0)
+          if (matExists(alk))
           {
             // check if volume fraction is lesser than threshold (al_eps) and
             // if the material (effective) pressure is negative. If either of
@@ -418,6 +418,14 @@ class MultiMat {
             unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14
               * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14 *
+              p_target;
+          }
+          else {
+            auto rhok = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) / alk;
+            // update state of trace material
+            unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = alk
+              * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
+            prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk *
               p_target;
           }
         }
