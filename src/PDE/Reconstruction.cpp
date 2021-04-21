@@ -1047,13 +1047,15 @@ tk::evalPolynomialSol(std::size_t system,
   }
 
   // physical constraints
-  using inciter::pressureIdx;
-  using inciter::volfracIdx;
-  for (std::size_t k=0; k<nmat; ++k) {
-    auto Pck = inciter::g_inputdeck.get< tag::param, tag::multimat,
-      tag::pstiff >()[system][k];
-    state[ncomp+pressureIdx(nmat,k)] = std::max(
-      state[ncomp+pressureIdx(nmat,k)], state[volfracIdx(nmat,k)]*(-Pck+1e-12));
+  if (nmat > 1) {
+    using inciter::pressureIdx;
+    using inciter::volfracIdx;
+    for (std::size_t k=0; k<nmat; ++k) {
+      auto Pck = inciter::g_inputdeck.get< tag::param, tag::multimat,
+        tag::pstiff >()[system][k];
+      state[ncomp+pressureIdx(nmat,k)] = std::max(
+        state[ncomp+pressureIdx(nmat,k)], state[volfracIdx(nmat,k)]*(-Pck+1e-12));
+    }
   }
 
   return state;
