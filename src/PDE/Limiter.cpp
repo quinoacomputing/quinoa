@@ -21,6 +21,7 @@
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Basis.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/PrefIndicator.hpp"
 
 namespace inciter {
 
@@ -434,7 +435,14 @@ VertexBased_P1(
       dof_el = ndofel[e];
     }
 
-    if (dof_el > 1)
+    bool shock_detec(false);
+
+    // Evaluate the shock detection indicator
+    auto Ind = eval_indicator(e, ncomp, dof_el, ndofel, U);
+    if(Ind > 1e-6)
+      shock_detec = true;
+
+    if (dof_el > 1 && shock_detec == true)
     {
       // The vector used to store the numerical solution with Taylor basis
       std::vector< std::vector< tk::real > > unk;
@@ -898,7 +906,7 @@ VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& geoElem,
   std::size_t e,
   std::size_t rdof,
-  std::size_t dof_el,
+  std::size_t ,
   std::size_t offset,
   std::size_t ncomp )
 // *****************************************************************************
@@ -935,8 +943,8 @@ VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
     {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
 
   // Compute the determinant of Jacobian matrix
-  auto detT =
-    tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+  //auto detT =
+  //  tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
   std::vector< tk::real > uMin(ncomp, 0.0), uMax(ncomp, 0.0), phi(ncomp, 1.0);
 
@@ -1145,20 +1153,20 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
     // compute the limiter function
     for (std::size_t c=0; c<ncomp; ++c)
     {
-      tk::real phi_node(1.0), phi_dir(1.0);
+      tk::real phi_dir(1.0);
       for (std::size_t idir=1; idir < 3; ++idir)
       {
         phi_dir = 1.0;
         auto uNeg = state[c][idir-1] - unk[c][idir];
-        if (uNeg > 1.0e-14)
+        if (uNeg > 1.0e-5)
         {
-          uNeg = std::max(uNeg, 1.0e-08);
+          //uNeg = std::max(uNeg, 1.0e-08);
           phi_dir =
             std::min( 1.0, ( uMax[c][idir-1] - unk[c][idir])/uNeg );
         }
-        else if (uNeg < -1.0e-14)
+        else if (uNeg < -1.0e-5)
         {
-          uNeg = std::min(uNeg, -1.0e-08);
+          //uNeg = std::min(uNeg, -1.0e-08);
           phi_dir =
             std::min( 1.0, ( uMin[c][idir-1] - unk[c][idir])/uNeg );
         }
