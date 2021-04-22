@@ -3,7 +3,7 @@
   \file      src/PDE/Integrate/Surface.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing internal surface integrals of a system
      of PDEs in DG methods
@@ -36,7 +36,7 @@ tk::surfInt( ncomp_t system,
              const VelFn& vel,
              const Fields& U,
              const Fields& P,
-             const Fields& VolFracMax,
+             [[maybe_unused]] const Fields& VolFracMax,
              const std::vector< std::size_t >& ndofel,
              Fields& R,
              std::vector< std::vector< tk::real > >& vriem,
@@ -189,46 +189,11 @@ tk::surfInt( ncomp_t system,
       auto wt = wgp[igp] * geoFace(f,0,0);
 
       std::array< std::vector< real >, 2 > state;
-      std::array< std::vector< real >, 2 > sprim;
 
-      state[0] = eval_state( ncomp, offset, rdof, dof_el, el, U, B_l );
-      sprim[0] = eval_state( nprim, offset, rdof, dof_el, el, P, B_l );
-      state[1] = eval_state( ncomp, offset, rdof, dof_er, er, U, B_r );
-      sprim[1] = eval_state( nprim, offset, rdof, dof_er, er, P, B_r );
-
-      // consolidate primitives into state vector
-      state[0].insert(state[0].end(), sprim[0].begin(), sprim[0].end());
-      state[1].insert(state[1].end(), sprim[1].begin(), sprim[1].end());
-
-      if (intsharp > 0)
-      {
-        std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
-
-        // Until the appropriate setup for activating THINC with Transport
-        // is ready, the following two chunks of code will need to be commented
-        // for using THINC with Transport
-        for (std::size_t k=0; k<nmat; ++k) {
-          vfmin[k] = VolFracMax(el, 2*k, 0);
-          vfmax[k] = VolFracMax(el, 2*k+1, 0);
-        }
-        tk::THINCReco(system, offset, rdof, nmat, el, inpoel, coord, geoElem,
-          ref_gp_l, U, P, vfmin, vfmax, state[0]);
-
-        for (std::size_t k=0; k<nmat; ++k) {
-          vfmin[k] = VolFracMax(er, 2*k, 0);
-          vfmax[k] = VolFracMax(er, 2*k+1, 0);
-        }
-        tk::THINCReco(system, offset, rdof, nmat, er, inpoel, coord, geoElem,
-          ref_gp_r, U, P, vfmin, vfmax, state[1]);
-
-        // Until the appropriate setup for activating THINC with Transport
-        // is ready, the following lines will need to be uncommented for
-        // using THINC with Transport
-        //tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel, coord,
-        //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
-        //tk::THINCRecoTransport(system, offset, rdof, nmat, er, inpoel, coord,
-        //  geoElem, ref_gp_r, U, P, vfmin, vfmax, state[1]);
-      }
+      state[0] = evalPolynomialSol(system, offset, intsharp, ncomp, nprim, rdof,
+        nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+      state[1] = evalPolynomialSol(system, offset, intsharp, ncomp, nprim, rdof,
+        nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );

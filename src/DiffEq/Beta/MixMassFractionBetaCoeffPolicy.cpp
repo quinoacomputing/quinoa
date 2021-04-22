@@ -3,7 +3,7 @@
   \file      src/DiffEq/Beta/MixMassFractionBetaCoeffPolicy.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Mass-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the mass-fraction
@@ -464,6 +464,8 @@ MixMassFracBetaCoeffHydroTimeScale(
     names.push_back( "k" + std::to_string(c+1) );
   }
   sw.header( names, {}, {} );
+
+  m_s.resize(ncomp);
 }
 
 void
@@ -513,9 +515,7 @@ walker::MixMassFracBetaCoeffHydroTimeScale::update(
   using tk::ctr::cen3;
   using tk::ctr::Product;
 
-  if (m_it == 0)
-    for (ncomp_t c=0; c<ncomp; ++c)
-       m_s.push_back( S[c] );
+  if (m_it == 0) for (ncomp_t c=0; c<ncomp; ++c) m_s[c] = S[c];
 
   // Extra output besides normal statistics output
   tk::TxtStatWriter sw( m_extra_out_filename,
@@ -668,6 +668,7 @@ walker::MixMassFracBetaCoeffInstVel::MixMassFracBetaCoeffInstVel(
 
   b.resize( bprime.size() );
   k.resize( kprime.size() );
+  m_s.resize(ncomp);
 }
 
 void
@@ -716,11 +717,7 @@ walker::MixMassFracBetaCoeffInstVel::update(
   using tk::ctr::variance;
   using tk::ctr::cen3;
 
-  if (m_it == 0) {
-    for (ncomp_t c=0; c<ncomp; ++c) {
-       m_s.push_back( S[c] );
-    }
-  }
+  if (m_it == 0) for (ncomp_t c=0; c<ncomp; ++c) m_s[c] = S[c];
 
   for (ncomp_t c=0; c<ncomp; ++c) {
 

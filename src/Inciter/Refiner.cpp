@@ -3,7 +3,7 @@
   \file      src/Inciter/Refiner.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Mesh refiner for interfacing the mesh refinement library
   \see       Refiner.h for more info.
@@ -39,7 +39,6 @@ extern std::vector< DGPDE > g_dgpde;
 using inciter::Refiner;
 
 Refiner::Refiner( std::size_t meshid,
-                  const std::vector< Transfer >& t,
                   const CProxy_Transporter& transporter,
                   const CProxy_Sorter& sorter,
                   const tk::CProxy_MeshWriter& meshwriter,
@@ -53,7 +52,6 @@ Refiner::Refiner( std::size_t meshid,
                   const std::map< int, std::vector< std::size_t > >& bnode,
                   int nchare ) :
   m_meshid( meshid ),
-  m_transfer( t ),
   m_host( transporter ),
   m_sorter( sorter ),
   m_meshwriter( meshwriter ),
@@ -125,7 +123,7 @@ Refiner::Refiner( std::size_t meshid,
             tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) ),
             m_inpoel, m_coord ),
           "Input mesh to Refiner leaky" );
-  Assert( tk::conforming( m_inpoel, m_coord ),
+  Assert( tk::conforming( m_inpoel, m_coord, true, m_rid ),
           "Input mesh to Refiner not conforming" );
 
   // Generate local -> refiner lib node id map and its inverse
@@ -144,6 +142,7 @@ Refiner::Refiner( std::size_t meshid,
   else
     endt0ref();
 }
+
 void
 Refiner::libmap()
 // *****************************************************************************
@@ -812,7 +811,7 @@ Refiner::writeMesh( const std::string& basefilename,
   auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
 
   // list of nodes/elements at which box ICs are defined
-  std::unordered_set< std::size_t > inbox;
+  std::vector< std::unordered_set< std::size_t > > inbox;
   tk::real V = 1.0;
 
   // Prepare node or element fields for output to file
@@ -884,11 +883,27 @@ Refiner::perform()
       m_oldTets.insert( tet );
   }
 
+  if (m_mode == RefMode::T0REF) {
+
+    // Refine mesh based on next initial refinement type
+    if (!m_initref.empty()) {
+      auto r = m_initref.back();    // consume (reversed) list from its back
+      if (r == ctr::AMRInitialType::UNIFORM_DEREFINE)
+        m_refiner.perform_derefinement();
+      else
+        m_refiner.perform_refinement();
+    }
+
+  } else {
+
+    // TODO: does not work yet, fix as above
+    m_refiner.perform_refinement();
+    m_refiner.perform_derefinement();
+  }
+
   //auto& tet_store = m_refiner.tet_store;
   //std::cout << "before ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
-  m_refiner.perform_refinement();
   //std::cout << "after ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
-  m_refiner.perform_derefinement();
   //std::cout << "after deref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
 
   // Update volume and boundary mesh
@@ -1000,8 +1015,7 @@ Refiner::endt0ref()
 // *****************************************************************************
 {
   // create sorter Charm++ chare array elements using dynamic insertion
-  m_sorter[ thisIndex ].insert( m_meshid, m_transfer, m_host, m_meshwriter,
-    m_cbs, m_scheme,
+  m_sorter[ thisIndex ].insert( m_meshid, m_host, m_meshwriter, m_cbs, m_scheme,
     CkCallback(CkIndex_Refiner::reorder(), thisProxy[thisIndex]), m_ginpoel,
     m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare );
 
@@ -1189,8 +1203,8 @@ Refiner::errorRefine()
       tagged_edges.push_back( { edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ),
                                 edge_tag::REFINE } );
     } else if (e.second < tolderef) {
-      //tagged_edges.push_back( { edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ),
-      //                          edge_tag::DEREFINE } );
+      tagged_edges.push_back( { edge_t( m_rid[e.first[0]], m_rid[e.first[1]] ),
+                                edge_tag::DEREFINE } );
     }
   }
 
@@ -1348,7 +1362,7 @@ Refiner::nodeinit( std::size_t npoin,
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
   // list of nodes/elements at which box ICs are defined
-  std::unordered_set< std::size_t > inbox;
+  std::vector< std::unordered_set< std::size_t > > inbox;
   tk::real V = 1.0;
 
   if (centering == tk::Centering::NODE) {
@@ -1400,7 +1414,7 @@ Refiner::updateMesh()
   // Get refined mesh connectivity
   const auto& refinpoel = m_refiner.tet_store.get_active_inpoel();
   Assert( refinpoel.size()%4 == 0, "Inconsistent refined mesh connectivity" );
-  Assert( tk::conforming( m_inpoel, m_coord ),
+  Assert( tk::conforming( m_inpoel, m_coord, true, m_rid ),
           "Mesh not conforming after refinement" );
 
   // Generate unique node lists of old and refined mesh using local ids
@@ -1439,14 +1453,14 @@ Refiner::updateMesh()
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
           "Refined mesh cell Jacobian non-positive" );
 
+  Assert( tk::conforming( m_inpoel, m_coord, true, m_rid ),
+          "Mesh not conforming after updating mesh after mesh refinement" );
+
   // Perform leak test on new mesh
   Assert( !tk::leakyPartition(
             tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) ),
             m_inpoel, m_coord ),
           "Refined mesh partition leaky" );
-
-  Assert( tk::conforming( m_inpoel, m_coord ),
-          "Mesh not conforming after updating mesh after mesh refinement" );
 }
 
 void

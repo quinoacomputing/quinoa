@@ -68,8 +68,7 @@ namespace AMR {
                 // Generate key
                 edge_t keyAB = nodes_to_key(A, B);
                 //Create refined edge
-                Edge_Refinement edgeAB = Edge_Refinement(A, B, 0.00, false,
-                        false, false, lc);
+                Edge_Refinement edgeAB = Edge_Refinement(A, B, false, false, lc);
                 // Add edge to store
                 add(keyAB, edgeAB);
             }
@@ -94,6 +93,8 @@ namespace AMR {
             {
                 //trace_out << "get edge " << key << std::endl;
                 // cppcheck-suppress assertWithSideEffect
+                if (!exists(key)) trace_out << "key not found " << key.first()
+                  << " - " << key.second() << std::endl;
                 assert( exists(key) );
                 return edges[key];
             }
@@ -105,6 +106,8 @@ namespace AMR {
 
             void erase(edge_t key)
             {
+                trace_out << "Deref removing edge: " << key.first() << " - "
+                  << key.second() << std::endl;
                 edges.erase(key);
             }
 
@@ -203,6 +206,27 @@ namespace AMR {
             }
 
             /**
+             * @brief function to take a list of edge and mark them all
+             * as needing to be refined as a part of the 8:4 derefinement
+             *
+             * @param ids List of ids to mark for deref-refinement
+             */
+            void mark_edges_for_deref_ref(std::vector<node_pair_t> ids)
+            {
+              for (const auto& id : ids)
+                {
+                  edge_t key = nodes_to_key(id[0], id[1]);
+
+                  // cppcheck-suppress assertWithSideEffect
+                  assert( exists(key) );
+                  // value of 2 for needs_refining indicates part of derefine
+                  get(key).needs_refining = 2;
+
+                  trace_out << get(key).needs_refining << std::endl;
+                }
+            }
+
+            /**
              * @brief Function to unmark and edge as needing refinement
              *
              * @param key The key representing the edge to unmark
@@ -281,8 +305,7 @@ namespace AMR {
                 for (const auto& kv : edges)
                 {
                     trace_out << "edge " << kv.first << " between " <<
-                        kv.second.A << " and " << kv.second.B << " val " <<
-                        kv.second.refinement_criteria <<
+                        kv.second.A << " and " << kv.second.B <<
                     std::endl;
                 }
             }

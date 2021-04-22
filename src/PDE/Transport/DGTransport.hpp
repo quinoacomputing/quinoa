@@ -3,7 +3,7 @@
   \file      src/PDE/Transport/DGTransport.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Scalar transport using disccontinous Galerkin discretization
   \details   This file implements the physics operators governing transported
@@ -95,27 +95,39 @@ class Transport {
       return m_ncomp;
     }
 
+    //! Assign number of DOFs per equation in the PDE system
+    //! \param[in,out] numEqDof Array storing number of Dofs for each PDE
+    //!   equation
+    void numEquationDofs(std::vector< std::size_t >& numEqDof) const
+    {
+      // all equation-dofs initialized to ndofs
+      for (std::size_t i=0; i<m_ncomp; ++i) {
+        numEqDof.push_back(g_inputdeck.get< tag::discr, tag::ndof >());
+      }
+    }
+
     //! Determine elements that lie inside the user-defined IC box
     void IcBoxElems( const tk::Fields&,
       std::size_t,
-      std::unordered_set< std::size_t >& ) const
+      std::vector< std::unordered_set< std::size_t > >& ) const
     {}
 
     //! Initalize the transport equations for DG
     //! \param[in] L Element mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
-//    //! \param[in,out] inbox List of elements at which box user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
-    void initialize( const tk::Fields& L,
-                     const std::vector< std::size_t >& inpoel,
-                     const tk::UnsMesh::Coords& coord,
-                     const std::unordered_set< std::size_t >& /*inbox*/,
-                     tk::Fields& unk,
-                     tk::real t,
-                     const std::size_t nielem ) const
+    void
+    initialize(
+      const tk::Fields& L,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      const std::vector< std::unordered_set< std::size_t > >& /*inbox*/,
+      tk::Fields& unk,
+      tk::real t,
+      const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
@@ -169,58 +181,65 @@ class Transport {
                       tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto nelem = fd.Esuel().size()/4;
-      const auto intsharp = g_inputdeck.get< tag::param, tag::transport,
-        tag::intsharp >()[m_system];
 
-      Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
-              "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
-              "Mismatch in inpofa size" );
+      // do reconstruction only if P0P1
+      if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1) {
+        const auto nelem = fd.Esuel().size()/4;
+        const auto intsharp = g_inputdeck.get< tag::param, tag::transport,
+          tag::intsharp >()[m_system];
 
-      // allocate and initialize matrix and vector for reconstruction
-      std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-        lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
-                          {{0.0, 0.0, 0.0}},
-                          {{0.0, 0.0, 0.0}} }} );
-      std::vector< std::vector< std::array< tk::real, 3 > > >
-        rhs_ls( nelem, std::vector< std::array< tk::real, 3 > >
-          ( m_ncomp,
-            {{ 0.0, 0.0, 0.0 }} ) );
+        Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
+                "vector must equal "+ std::to_string(rdof*m_ncomp) );
+        Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
+                "Mismatch in inpofa size" );
 
-      // reconstruct x,y,z-derivatives of unknowns
-      // 0. get lhs matrix, which is only geometry dependent
-      tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
+        // allocate and initialize matrix and vector for reconstruction
+        std::vector< std::array< std::array< tk::real, 3 >, 3 > >
+          lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
+                            {{0.0, 0.0, 0.0}},
+                            {{0.0, 0.0, 0.0}} }} );
+        // specify how many variables need to be reconstructed
+        std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
 
-      // 1. internal face contributions
-      tk::intLeastSq_P0P1( m_ncomp, m_offset, rdof, fd, geoElem, U, rhs_ls );
+        std::vector< std::vector< std::array< tk::real, 3 > > >
+          rhs_ls( nelem, std::vector< std::array< tk::real, 3 > >
+            ( m_ncomp,
+              {{ 0.0, 0.0, 0.0 }} ) );
 
-      // 2. boundary face contributions
-      for (const auto& b : m_bc)
-        tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
-          b.first, fd, geoFace, geoElem, t, b.second, P, U, rhs_ls );
+        // reconstruct x,y,z-derivatives of unknowns
+        // 0. get lhs matrix, which is only geometry dependent
+        tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
-      // 3. solve 3x3 least-squares system
-      tk::solveLeastSq_P0P1( m_ncomp, m_offset, rdof, lhs_ls, rhs_ls, U );
+        // 1. internal face contributions
+        tk::intLeastSq_P0P1( m_offset, rdof, fd, geoElem, U, rhs_ls, varRange );
 
-      for (std::size_t e=0; e<nelem; ++e)
-      {
-        std::vector< std::size_t > matInt(m_ncomp, 0);
-        std::vector< tk::real > alAvg(m_ncomp, 0.0);
-        for (std::size_t k=0; k<m_ncomp; ++k)
-          alAvg[k] = U(e, k*rdof, m_offset);
-        auto intInd = interfaceIndicator(m_ncomp, alAvg, matInt);
-        if ((intsharp > 0) && intInd)
+        // 2. boundary face contributions
+        for (const auto& b : m_bc)
+          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
+            b.first, fd, geoFace, geoElem, t, b.second, P, U, rhs_ls, varRange );
+
+        // 3. solve 3x3 least-squares system
+        tk::solveLeastSq_P0P1( m_offset, rdof, lhs_ls, rhs_ls, U, varRange );
+
+        for (std::size_t e=0; e<nelem; ++e)
         {
-          // Reconstruct second-order dofs of volume-fractions in Taylor space
-          // using nodal-stencils, for a good interface-normal estimate
-          tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
-            U, {0, m_ncomp-1} );
+          std::vector< std::size_t > matInt(m_ncomp, 0);
+          std::vector< tk::real > alAvg(m_ncomp, 0.0);
+          for (std::size_t k=0; k<m_ncomp; ++k)
+            alAvg[k] = U(e, k*rdof, m_offset);
+          auto intInd = interfaceIndicator(m_ncomp, alAvg, matInt);
+          if ((intsharp > 0) && intInd)
+          {
+            // Reconstruct second-order dofs of volume-fractions in Taylor space
+            // using nodal-stencils, for a good interface-normal estimate
+            tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+              U, varRange );
+          }
         }
-      }
 
-      // 4. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1( m_ncomp, m_offset, rdof, nelem, inpoel, coord, U );
+        // 4. transform reconstructed derivatives to Dubiner dofs
+        tk::transform_P0P1( m_offset, rdof, nelem, inpoel, coord, U, varRange );
+      }
     }
 
     //! Limit second-order solution
@@ -271,7 +290,7 @@ class Transport {
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
-              const std::unordered_set< std::size_t >&,
+              const std::vector< std::unordered_set< std::size_t > >&,
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
@@ -316,9 +335,9 @@ class Transport {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, fd.Esuel().size()/4,
-                    inpoel, coord, geoElem, flux, Problem::prescribedVelocity,
-                    U, ndofel, R );
+        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, rdof,
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
+                    Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)

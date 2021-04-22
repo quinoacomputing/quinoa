@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/InputDeck/InputDeck.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -35,6 +35,7 @@ using InputDeckMembers = brigand::list<
   , tag::title,      kw::title::info::expect::type
   , tag::selected,   selects
   , tag::amr,        amr
+  , tag::ale,        ale
   , tag::pref,       pref
   , tag::discr,      discretization
   , tag::prec,       precision
@@ -43,6 +44,7 @@ using InputDeckMembers = brigand::list<
   , tag::sys,        std::map< tk::ctr::ncomp_t, tk::ctr::ncomp_t >
   , tag::interval,   intervals
   , tag::param,      parameters
+  , tag::couple,     couple
   , tag::diag,       diagnostics
   , tag::error,      std::vector< std::string >
   , tag::history,    history
@@ -114,6 +116,12 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::precision
                                  , kw::diagnostics
                                  , kw::history_output
+                                 , kw::mesh
+                                 , kw::filename
+                                 , kw::location
+                                 , kw::orientation
+                                 , kw::reference
+                                 , kw::couple
                                  , kw::material
                                  , kw::id
                                  , kw::mat_gamma
@@ -178,6 +186,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::residual
                                  , kw::rescomp
                                  , kw::amr
+                                 , kw::ale
+                                 , kw::meshvelocity
+                                 , kw::none
+                                 , kw::fluid
+                                 , kw::helmholtz
                                  , kw::amr_t0ref
                                  , kw::amr_dtref
                                  , kw::amr_dtref_uniform
@@ -308,6 +321,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::yplus >() = -rmax;
       get< tag::amr, tag::zminus >() = rmax;
       get< tag::amr, tag::zplus >() = -rmax;
+      // Default ALE settings
+      get< tag::ale, tag::ale >() = false;
+      get< tag::ale, tag::meshvelocity >() = MeshVelocityType::NONE;
       // Default p-refinement settings
       get< tag::pref, tag::pref >() = false;
       get< tag::pref, tag::indicator >() = PrefIndicatorType::SPECTRAL_DECAY;
@@ -321,15 +337,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::interval, tag::field >() = 1;
       get< tag::interval, tag::diag >() = 1;
       get< tag::interval, tag::history >() = 1;
-
-      auto& icbox = get< tag::param, tag::compflow, tag::ic, tag::box >();
-      icbox.get< tag::xmin >() = 0.0;
-      icbox.get< tag::xmax >() = 0.0;
-      icbox.get< tag::ymin >() = 0.0;
-      icbox.get< tag::ymax >() = 0.0;
-      icbox.get< tag::zmin >() = 0.0;
-      icbox.get< tag::zmax >() = 0.0;
-
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       brigand::for_each< keywords >( ctrinfoFill );
@@ -389,6 +396,22 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       return aliases;
     }
 
+    //! Extract list of mesh filenames (each assigned to a solver)
+    std::vector< std::string > mesh() const {
+      using PDETypes = parameters::Keys;
+      std::vector< std::string > meshes;
+      brigand::for_each< PDETypes >( Meshes( *this, meshes ) );
+      return meshes;
+    }
+
+    //! Extract list of dependent variables (each configuring a solver)
+    std::vector< char > depvar() const {
+      using PDETypes = parameters::Keys;
+      std::vector< char > depvar;
+      brigand::for_each< PDETypes >( Depvar( *this, depvar ) );
+      return depvar;
+    }
+
     //! Query special point BC configuration
     //! \tparam eq PDE type to query
     //! \tparam bc  Special BC type to query, e.g., stagnation, skip
@@ -409,6 +432,40 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       Assert( pnt.size() == 3*rad.size(), "Size mismatch" );
       return { std::move(pnt), std::move(rad) };
     }
+
+  private:
+    //! Function object to extract the mesh filenames assigned to solvers
+    //! \details This is instantiated for all PDE types at compile time. It goes
+    //!   through all configured solvers (equation system configuration blocks)
+    //!   and builds a list of all mesh filenames associated to all solvers in
+    //!   the input file.
+    struct Meshes {
+      const InputDeck& inputdeck;
+      std::vector< std::string >& filenames;
+      explicit Meshes( const InputDeck& i, std::vector< std::string >& f )
+        : inputdeck(i), filenames(f) {}
+      template< typename eq > void operator()( brigand::type_<eq> ) {
+        const auto& eq_mesh_filename =
+           inputdeck.get< tag::param, eq, tag::mesh, tag::filename >();
+        for (const auto& f : eq_mesh_filename) filenames.push_back( f );
+      }
+    };
+
+    //! Function object to extract the dependent variables assigned to solvers
+    //! \details This is instantiated for all PDE types at compile time. It goes
+    //!   through all configured solvers (equation system configuration blocks)
+    //!   and builds a list of all dependent variables associated to all solvers
+    //!   in the input file.
+    struct Depvar {
+      const InputDeck& inputdeck;
+      std::vector< char >& depvar;
+      explicit Depvar( const InputDeck& i, std::vector< char >& d ) :
+        inputdeck(i), depvar(d) {}
+      template< typename eq > void operator()( brigand::type_<eq> ) {
+        const auto& eq_depvar = inputdeck.get< tag::param, eq, tag::depvar >();
+        for (const auto& d : eq_depvar) depvar.push_back( d );
+      }
+    };
 };
 
 } // ctr::

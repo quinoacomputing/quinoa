@@ -3,7 +3,7 @@
 # \file      src/CMakeLists.txt
 # \copyright 2012-2015 J. Bakosi,
 #            2016-2018 Los Alamos National Security, LLC.,
-#            2019-2020 Triad National Security, LLC.
+#            2019-2021 Triad National Security, LLC.
 #            All rights reserved See the LICENSE file for details.
 # \brief     Build Quinoa
 #
@@ -648,6 +648,7 @@ endif()
 if (ENABLE_INCITER AND HIGHWAYHASH_FOUND)
   add_subdirectory(PDE)
   add_subdirectory(Inciter)
+  add_subdirectory(LinearSolver)
 endif()
 
 if (ENABLE_UNITTEST AND ENABLE_TESTS)

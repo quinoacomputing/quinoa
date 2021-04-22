@@ -3,7 +3,7 @@
   \file      src/PDE/Compflow/Problem/BoxInitialization.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     User-defined box initialization
   \details   This file defines functions for initializing solutions for
@@ -23,12 +23,12 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Set the solution in the user-defined IC box
 void initializeBox( std::size_t system,
-  tk::real VRatio,
-  tk::real t,
-  const inciter::ctr::box& icbox,
-  const std::vector< std::vector< tk::real > >& bgpreic,
-  const std::vector< std::vector< tk::real > >& cv,
-  std::vector< tk::real >& s );
+                    tk::real VRatio,
+                    tk::real t,
+                    const inciter::ctr::box& icbox,
+                    tk::real bgpreic,
+                    tk::real cv,
+                    std::vector< tk::real >& s );
 
 } //inciter::
 

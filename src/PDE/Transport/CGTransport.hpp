@@ -3,7 +3,7 @@
   \file      src/PDE/Transport/CGTransport.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Scalar transport using continous Galerkin discretization
   \details   This file implements the physics operators governing transported
@@ -71,18 +71,20 @@ class Transport {
     }
 
     //! Determine nodes that lie inside the user-defined IC box
-    void IcBoxNodes( const tk::UnsMesh::Coords&,
-                     std::unordered_set< std::size_t >& ) const {}
+    void
+    IcBoxNodes( const tk::UnsMesh::Coords&,
+                std::vector< std::unordered_set< std::size_t > >& ) const {}
 
     //! Initalize the transport equations using problem policy
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
-    void initialize( const std::array< std::vector< real >, 3 >& coord,
-                     tk::Fields& unk,
-                     real t,
-                     real,
-                     const std::unordered_set< std::size_t >& ) const
+    void
+    initialize( const std::array< std::vector< real >, 3 >& coord,
+                tk::Fields& unk,
+                real t,
+                real,
+                const std::vector< std::unordered_set< std::size_t > >& ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];
@@ -213,7 +215,7 @@ class Transport {
       const std::vector< real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >& edgeid,
-      const std::unordered_set< std::size_t >&,
+      const std::vector< std::unordered_set< std::size_t > >&,
       const tk::Fields& G,
       const tk::Fields& U,
       const std::vector< tk::real >&,

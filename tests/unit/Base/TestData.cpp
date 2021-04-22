@@ -3,7 +3,7 @@
   \file      tests/unit/Base/TestData.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Unit tests for Base/Data.hpp
   \details   Unit tests for Base/Data.hpp
@@ -38,8 +38,7 @@ static Data_group Data( "Base/Data" );
 
 //! Test definitions for group
 
-//! Test that tk::Data's constructor creates
-//!   correctly sized arrays
+//! Test that tk::Data's constructor creates correctly sized arrays
 template<> template<>
 void Data_object::test< 1 >() {
   set_test_name( "correct size" );
@@ -2032,6 +2031,326 @@ void Data_object::test< 43 >() {
   veceq( "<kEqCompUnk>::extract() array of three reals 0,1:3,5,7 incorrect",
           std::array< tk::real, 3 >{{ 1.4, 1.6, 1.8 }},
             pe.extract( 0, 1, std::array<std::size_t,3>{{3,5,7}} ) );
+}
+
+//! Test that tk::Data's constructor is graceful on zero-size containers
+template<> template<>
+void Data_object::test< 44 >() {
+  set_test_name( "zero ctor args" );
+
+  // Test all template specializations and all callable ways, passing 0 number
+  // of unknowns
+  ensure_equals( "<UnkEqComp>::nunk() returns 0",
+                 tk::Data< tk::UnkEqComp >( 0, 3 ).nunk(), 0 );
+  ensure_equals( "<UnkEqComp>::nprop() returns 3",
+                 tk::Data< tk::UnkEqComp >( 0, 3 ).nprop(), 3 );
+
+  ensure_equals( "<EqCompUnk>::nunk() returns 0",
+                 tk::Data< tk::EqCompUnk >( 0, 3 ).nunk(), 0 );
+  ensure_equals( "<EqCompUnk>::nprop() returns 3",
+                 tk::Data< tk::EqCompUnk >( 0, 3 ).nprop(), 3 );
+
+  // Test all template specializations and all callable ways, passing 0 number
+  // of properties
+  ensure_equals( "<UnkEqComp>::nunk() returns 2",
+                 tk::Data< tk::UnkEqComp >( 2, 0 ).nunk(), 2 );
+  ensure_equals( "<UnkEqComp>::nprop() returns 0",
+                 tk::Data< tk::UnkEqComp >( 2, 0 ).nprop(), 0 );
+
+  ensure_equals( "<EqCompUnk>::nunk() returns 2",
+                 tk::Data< tk::EqCompUnk >( 2, 0 ).nunk(), 2 );
+  ensure_equals( "<EqCompUnk>::nprop() returns 3",
+                 tk::Data< tk::EqCompUnk >( 2, 0 ).nprop(), 0 );
+}
+
+//! Test that tk::Data's operator() throws for for zero-unknowns containers
+template<> template<>
+void Data_object::test< 45 >() {
+  set_test_name( "operator() throws for zero-unknowns containers" );
+
+  tk::Data< tk::UnkEqComp > pp( 0, 5 );
+  tk::Data< tk::EqCompUnk > pe( 0, 5 );
+
+  // Test all template specializations const-ref access
+
+  try {
+    pp( 2, 2, 2 );   // unknown out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pp( 1, 3, 2 );   // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pp( 1, 2, 3 );   // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 2, 2, 2 );   // unknown out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 1, 3, 2 );   // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 1, 2, 3 );   // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  // Test all template specializations non-const-ref access
+
+  try {
+    pp( 2, 2, 2 );  // unknown out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pp( 1, 3, 2 );  // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pp( 1, 2, 3 );  // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 2, 2, 2 );  // unknown out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 1, 3, 2 );  // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 1, 2, 3 );  // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+}
+
+//! Test that tk::Data's operator() throws for for zero-nprop containers
+template<> template<>
+void Data_object::test< 46 >() {
+  set_test_name( "operator() throws for zero-nprop containers" );
+
+  tk::Data< tk::UnkEqComp > pp( 2, 0 );
+  tk::Data< tk::EqCompUnk > pe( 2, 0 );
+
+  // Test all template specializations const-ref access
+
+  try {
+    pp( 2, 2, 2 );   // unknown out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pp( 1, 3, 2 );   // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pp( 1, 2, 3 );   // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 2, 2, 2 );   // unknown out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 1, 3, 2 );   // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 1, 2, 3 );   // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  // Test all template specializations non-const-ref access
+
+  try {
+    pp( 2, 2, 2 );  // unknown out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pp( 1, 3, 2 );  // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pp( 1, 2, 3 );  // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 2, 2, 2 );  // unknown out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 1, 3, 2 );  // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+
+  try {
+    pe( 1, 2, 3 );  // offset+component out of bounds
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
 }
 
 } // tut::

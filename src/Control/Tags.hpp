@@ -3,7 +3,7 @@
   \file      src/Control/Tags.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -76,7 +76,15 @@ struct ordpdf {};
 struct cenpdf {};
 struct nchare {};
 struct bounds {};
+struct meshvelocity { static std::string name() { return "meshvelocity"; } };
+struct mesh { static std::string name() { return "mesh"; } };
+struct couple { static std::string name() { return "couple"; } };
+struct transfer { static std::string name() { return "transfer"; } };
 struct filetype { static std::string name() { return "filetype"; } };
+struct filename { static std::string name() { return "filename"; } };
+struct location { static std::string name() { return "location"; } };
+struct orientation { static std::string name() { return "orientation"; } };
+struct reference { static std::string name() { return "reference"; } };
 struct pdfpolicy { static std::string name() { return "pdfpolicy"; } };
 struct pdfctr { static std::string name() { return "pdfctr"; } };
 struct pdfnames { static std::string name() { return "pdfnames"; } };
@@ -119,6 +127,7 @@ struct tolref { static std::string name() { return "tolref"; } };
 struct ndofmax { static std::string name() { return "ndofmax"; } };
 struct indicator{ static std::string name() { return "indicator"; } };
 struct amr { static std::string name() { return "amr"; } };
+struct ale { static std::string name() { return "ale"; } };
 struct tolderef { static std::string name() { return "tolderef"; } };
 struct t0ref { static std::string name() { return "t0ref"; } };
 struct dtref { static std::string name() { return "dtref"; } };

@@ -3,7 +3,7 @@
   \file      src/Inciter/discretization.ci
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ module interface file for common stuff to discretizations
   \details   Charm++ module interface file for common stuff to discretizations.
@@ -16,19 +16,19 @@ module discretization {
   extern module transporter;
   extern module meshwriter;
   extern module distfct;
+  extern module conjugategradients;
 
   include "UnsMesh.hpp";
   include "CommMap.hpp";
-  include "Transfer.hpp";
 
   namespace inciter {
 
     array [1D] Discretization {
       entry Discretization(
         std::size_t meshid,
-        const std::vector< Transfer >& t,
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
+        const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
         const std::vector< std::size_t >& ginpoel,
@@ -40,6 +40,9 @@ module discretization {
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
       entry void stat( tk::real mesh_volume );
+      entry void ConjugateGradientsInit();
+      entry void ConjugateGradientsSolve( CkDataMsg* msg );
+      entry void ConjugateGradientsDone( CkDataMsg* msg );
       entry void transferInit();
       entry void comcb( std::size_t srcmeshid, CkCallback c );
 

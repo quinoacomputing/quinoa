@@ -3,7 +3,7 @@
   \file      src/Inciter/DiagCG.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     DiagCG for a PDE system with continuous Galerkin without a matrix
   \details   DiagCG advances a system of partial differential equations (PDEs)
@@ -325,8 +325,8 @@ DiagCG::box( tk::real v )
   d->Boxvol() = v;
 
   // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde) eq.initialize( coord, m_u, d->T(), d->Boxvol(),
-    m_boxnodes );
+  for (auto& eq : g_cgpde)
+    eq.initialize( coord, m_u, d->T(), d->Boxvol(), m_boxnodes );
 
   // Apply symmetry BCs on initial conditions
   for (const auto& eq : g_cgpde)
@@ -688,13 +688,13 @@ DiagCG::writeFields( CkCallback c ) const
     }
 
     // Query refinement data
-    auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+    //auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
 
     std::tuple< std::vector< std::string >,
                 std::vector< std::vector< tk::real > >,
                 std::vector< std::string >,
                 std::vector< std::vector< tk::real > > > r;
-    if (dtref) r = d->Ref()->refinementFields();
+    /*if (dtref)*/ r = d->Ref()->refinementFields();
 
     auto& refinement_elemfieldnames = std::get< 0 >( r );
     auto& refinement_elemfields = std::get< 1 >( r );

@@ -3,7 +3,7 @@
   \file      src/Inciter/PUPAMR.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ Pack/UnPack utilities for AMR
   \details   This file contains some extensions to Charm++'s Pack/UnPack
@@ -38,10 +38,8 @@ void PUP::pup( PUP::er &p, AMR::Edge_Refinement& e )
 {
   p | e.A;
   p | e.B;
-  p | e.refinement_criteria;
   p | e.needs_refining;
   p | e.needs_derefining;
-  p | e.is_dead;
   p | e.lock_case;
 }
 

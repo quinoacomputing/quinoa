@@ -3,7 +3,7 @@
   \file      src/Inciter/DG.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
@@ -239,6 +239,7 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_stage;
       p | m_ndof;
+      p | m_numEqDof;
       p | m_bid;
       p | m_uc;
       p | m_pc;
@@ -350,6 +351,8 @@ class DG : public CBase_DG {
     std::size_t m_stage;
     //! Vector of local number of degrees of freedom for each element
     std::vector< std::size_t > m_ndof;
+    //! Vector of number of degrees of freedom for each PDE equation/component
+    std::vector< std::size_t > m_numEqDof;
     //! Map local ghost tet ids (value) and zero-based boundary ids (key)
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Solution receive buffers for ghosts only
@@ -402,8 +405,8 @@ class DG : public CBase_DG {
         tk::destroy( nodeCommMap );
       }
     } m_outmesh;
-    //! Element ids at which box ICs are defined by user
-    std::unordered_set< std::size_t > m_boxelems;
+    //! Element ids at which box ICs are defined by user (multiple boxes)
+    std::vector< std::unordered_set< std::size_t > > m_boxelems;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

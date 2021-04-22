@@ -3,7 +3,7 @@
   \file      src/Inciter/DG.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
   \details   DG advances a system of partial differential equations (PDEs) using
@@ -32,6 +32,7 @@
 #include "Around.hpp"
 #include "Integrate/Basis.hpp"
 #include "FieldOutput.hpp"
+#include "ChareStateCollector.hpp"
 
 namespace inciter {
 
@@ -44,6 +45,8 @@ static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
 } // inciter::
+
+extern tk::CProxy_ChareStateCollector stateProxy;
 
 using inciter::DG;
 
@@ -95,6 +98,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_diag(),
   m_stage( 0 ),
   m_ndof(),
+  m_numEqDof(),
   m_bid(),
   m_uc(),
   m_pc(),
@@ -117,6 +121,16 @@ DG::DG( const CProxy_Discretization& disc,
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "DG" );
+
+  // assign number of dofs for each equation in all pde systems
+  for (const auto& eq : g_dgpde) {
+    eq.numEquationDofs(m_numEqDof);
+  }
+
   usesAtSync = true;    // enable migration at AtSync
 
   // Enable SDAG wait for setting up chare boundary faces
@@ -348,6 +362,11 @@ DG::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 //! \param[in] infaces Unique set of faces we potentially share with fromch
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "comfac" );
+
   // Buffer up incoming data
   m_infaces[ fromch ] = infaces;
 
@@ -596,6 +615,11 @@ DG::reqGhost()
 // Receive requests for ghost data
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "reqGhost" );
+
   // If every chare we communicate with has requested ghost data from us, we may
   // fulfill the requests, but only if we have already setup our ghost data.
   if (++m_ghostReq == Disc()->NodeCommMap().size()) {
@@ -610,6 +634,11 @@ DG::sendGhost()
 // Send all of our ghost data to fellow chares
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "sendGhost" );
+
   for (const auto& c : m_ghostData)
     thisProxy[ c.first ].comGhost( thisIndex, c.second );
 
@@ -640,6 +669,11 @@ DG::comGhost( int fromch, const GhostData& ghost )
 //! \param[in] ghost Ghost data, see Inciter/FaceData.h for the type
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "comGhost" );
+
   auto d = Disc();
   const auto& lid = d->Lid();
   auto& inpofa = m_fd.Inpofa();
@@ -1183,6 +1217,11 @@ DG::setup()
 // Set initial conditions, generate lhs, output mesh
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "setup" );
+
   auto d = Disc();
 
   // Basic error checking on sizes of element geometry data and connectivity
@@ -1226,7 +1265,7 @@ DG::box( tk::real v )
   for (const auto& eq : g_dgpde)
   {
     eq.initialize( m_lhs, m_inpoel, m_coord, m_boxelems, m_u, d->T(),
-                   m_fd.Esuel().size()/4 );
+      m_fd.Esuel().size()/4 );
     eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
   }
 
@@ -1651,11 +1690,9 @@ DG::reco()
     auto d = Disc();
 
     // Reconstruct second-order solution and primitive quantities
-    // if P0P1
-    if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1)
-      for (const auto& eq : g_dgpde)
-        eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel,
-                        m_coord, m_u, m_p, m_volfracExtr );
+    for (const auto& eq : g_dgpde)
+      eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel,
+                      m_coord, m_u, m_p, m_volfracExtr );
   }
 
   // Send reconstructed solution to neighboring chares
@@ -2007,7 +2044,7 @@ DG::solve( tk::real newdt )
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<m_nunk; ++e)
     for(std::size_t c=0; c<neq; ++c)
-      for (std::size_t k=0; k<ndof; ++k)
+      for (std::size_t k=0; k<m_numEqDof[c]; ++k)
       {
         auto rmark = c*rdof+k;
         auto mark = c*ndof+k;

@@ -3,7 +3,7 @@
   \file      src/Inciter/DiagCG.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     DiagCG for a PDE system with continuous Galerkin without a matrix
   \details   DiagCG advances a system of partial differential equations (PDEs)
@@ -257,13 +257,10 @@ class DiagCG : public CBase_DiagCG {
     std::unordered_map< std::size_t,
       std::vector< std::pair< bool, tk::real > > > m_bcdir;
     //! Receive buffer for communication of the left hand side
-    //! \details Key: chare id, value: lhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_lhsc;
     //! Receive buffer for communication of the right hand side
-    //! \details Key: chare id, value: rhs for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
     //! Receive buffer for communication of mass diffusion on the hand side
-    //! \details Key: chare id, value: dif for all scalar components per node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_difc;
     //! Total mesh volume
     tk::real m_vol;
@@ -286,8 +283,8 @@ class DiagCG : public CBase_DiagCG {
     std::unordered_set< std::size_t > m_farfieldbcnodes;
     //! Diagnostics object
     NodeDiagnostics m_diag;
-    //! Mesh node ids at which user-defined box ICs are defined
-    std::unordered_set< std::size_t > m_boxnodes;
+    //! Mesh node ids at which user-defined box ICs are defined (multiple boxes)
+    std::vector< std::unordered_set< std::size_t > > m_boxnodes;
     //! Time step size for each mesh node
     std::vector< tk::real > m_dtp;
     //! Physical time for each mesh node

@@ -3,7 +3,7 @@
   \file      src/Inciter/Discretization.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \details   Data and functionality common to all discretization schemes
      The Discretization class contains data and functionality common to all
@@ -65,9 +65,9 @@ class Discretization : public CBase_Discretization {
     explicit
       Discretization(
         std::size_t meshid,
-        const std::vector< Transfer >& t,
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
+        const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
         const std::vector< std::size_t >& ginpoel,
@@ -88,6 +88,15 @@ class Discretization : public CBase_Discretization {
 
     //! Configure Charm++ reduction types
     static void registerReducers();
+
+    //! Initialize Conjugrate Gradients linear solver
+    void ConjugateGradientsInit();
+
+    //! Solve using Conjugrate Gradients linear solver
+    void ConjugateGradientsSolve( CkDataMsg* msg );
+
+    //! Conjugrate Gradients linear solver converged
+    void ConjugateGradientsDone( CkDataMsg* msg );
 
     //! \brief Our mesh has been registered with the mesh-to-mesh transfer
     //!   library (if coupled to other solver)
@@ -127,7 +136,8 @@ class Discretization : public CBase_Discretization {
     void stat( tk::real mesh_volume );
 
     //! Compute total box IC volume
-    void boxvol( const std::unordered_set< std::size_t >& boxnodes );
+    void
+    boxvol( const std::vector< std::unordered_set< std::size_t > >& boxnodes );
 
     /** @name Accessors */
     ///@{
@@ -348,6 +358,7 @@ class Discretization : public CBase_Discretization {
       p | m_dt;
       p | m_nvol;
       p | m_fct;
+      p | m_conjugategradients;
       p | m_transporter;
       p | m_meshwriter;
       p | m_refiner;
@@ -424,6 +435,8 @@ class Discretization : public CBase_Discretization {
     std::size_t m_nvol;
     //! Distributed FCT proxy
     CProxy_DistFCT m_fct;
+    //! Distributed conjugrate gradients solver proxy
+    tk::CProxy_ConjugateGradients m_conjugategradients;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
     //! Mesh writer proxy
@@ -490,8 +503,15 @@ class Discretization : public CBase_Discretization {
     //! Number of transfers requested as a destination
     std::size_t m_ndst;
 
+    //! Generate {A,x,b} for Laplacian mesh velocity smoother
+    std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
+    LaplacianSmoother() const;
+
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
+
+   //! Query if ALE mesh motion is enabled by the user
+   bool ALE() const;
 
     //! Determine if communication of mesh transfer callbacks is complete
     bool transferCallbacksComplete() const;

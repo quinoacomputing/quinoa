@@ -3,7 +3,7 @@
   \file      src/Inciter/Discretization.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \details   Data and functionality common to all discretization schemes
   \see       Discretization.h and Discretization.C for more info.
@@ -39,9 +39,9 @@ using inciter::Discretization;
 
 Discretization::Discretization(
   std::size_t meshid,
-  const std::vector< Transfer >& t,
   const std::vector< CProxy_Discretization >& disc,
   const CProxy_DistFCT& fctproxy,
+  const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
   const std::vector< std::size_t >& ginpoel,
@@ -49,7 +49,8 @@ Discretization::Discretization(
   const tk::CommMaps& msum,
   int nc ) :
   m_meshid( meshid ),
-  m_transfer( t ),
+  m_transfer_complete(),
+  m_transfer( g_inputdeck.get< tag::couple, tag::transfer >() ),
   m_disc( disc ),
   m_nchare( nc ),
   m_it( 0 ),
@@ -61,6 +62,7 @@ Discretization::Discretization(
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_nvol( 0 ),
   m_fct( fctproxy ),
+  m_conjugategradients( conjugategradientsproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
   m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
@@ -83,6 +85,8 @@ Discretization::Discretization(
 //  Constructor
 //! \param[in] meshid Mesh ID
 //! \param[in] fctproxy Distributed FCT proxy
+//! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
+//!   solver proxy
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] meshwriter Mesh writer proxy
 //! \param[in] ginpoel Vector of mesh element connectivity owned (global IDs)
@@ -139,15 +143,23 @@ Discretization::Discretization(
     m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
+  // Insert ConjugrateGradients solver chare array element if needed
+  if (ALE()) {
+    const auto& [A,x,b] = LaplacianSmoother();
+    m_conjugategradients[ thisIndex ].insert( A, x, b, 10, 1.0e-3,
+                                              m_gid, m_lid, m_nodeCommMap );
+  }
+
   // Register mesh with mesh-transfer lib
-  if (m_disc.size() == 1) {     // skip transfer if single mesh
+  if (m_disc.size() == 1 || m_transfer.empty()) {
+    // skip transfer if single mesh or if not involved in coupling
     transferInit();
   } else {
     #ifdef HAS_EXAM2M
     if (thisIndex == 0) {
       exam2m::addMesh( thisProxy, m_nchare,
         CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
-      //std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
+      std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
     }
     #else
     transferInit();
@@ -162,27 +174,117 @@ Discretization::transferInit()
 // coupled to other solver)
 // *****************************************************************************
 {
-  // Lambda to decide if a node is not counted by this chare. If a node is
-  // found in the node communication map and is associated to a lower chare id
-  // than thisIndex, it is counted by another chare (and not thisIndex), hence
-  // a "slave" (for the purpose of this count).
-  auto slave = [ this ]( std::size_t p ) {
-    return
-      std::any_of( m_nodeCommMap.cbegin(), m_nodeCommMap.cend(),
-        [&](const auto& s) {
-          return s.second.find(p) != s.second.cend() && s.first > thisIndex;
-        } );
-  };
-
   // Compute number of mesh points owned
   std::size_t npoin = m_gid.size();
-  for (auto g : m_gid) if (slave(g)) --npoin;
+  for (auto g : m_gid) if (tk::slave(m_nodeCommMap,g,thisIndex)) --npoin;
 
   // Tell the RTS that the Discretization chares have been created and compute
   // the total number of mesh points across the distributed mesh
   std::vector< std::size_t > meshdata{ m_meshid, npoin };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
+}
+
+bool
+Discretization::ALE() const
+// *****************************************************************************
+//! Query if ALE mesh motion is enabled by the user
+//! \return True if ALE is configured
+// *****************************************************************************
+{
+  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+
+  if (ale && meshvel != ctr::MeshVelocityType::NONE)
+    return true;
+  else
+    return false;
+}
+
+void
+Discretization::ConjugateGradientsInit()
+// *****************************************************************************
+//  Initialize Conjugrate Gradients linear solver
+// *****************************************************************************
+{
+  // Reinitialize ConjugrateGradients solver chare array element if needed
+  if (ALE()) {
+    m_conjugategradients[ thisIndex ].init(
+      CkCallback( CkIndex_Discretization::ConjugateGradientsSolve(nullptr),
+                  thisProxy[thisIndex]) );
+  } else vol();
+}
+
+void
+Discretization::ConjugateGradientsSolve( [[maybe_unused]] CkDataMsg* msg )
+// *****************************************************************************
+//  Solve linear system using Conjugrate Gradients
+// *****************************************************************************
+{
+  m_conjugategradients[ thisIndex ].solve(
+    CkCallback( CkIndex_Discretization::ConjugateGradientsDone(nullptr),
+                thisProxy[thisIndex] ) );
+}
+
+void
+Discretization::ConjugateGradientsDone( [[maybe_unused]] CkDataMsg* msg )
+// *****************************************************************************
+//  Conjugrate Gradients linear solver converged
+// *****************************************************************************
+{
+  vol();
+}
+
+std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
+Discretization::LaplacianSmoother() const
+// *****************************************************************************
+// Generate {A,x,b} for Laplacian mesh velocity smoother
+//! \return {A,x,b} for Laplacian mesh velocity smoother
+//! \see Waltz, et al. "A three-dimensional finite element arbitrary
+//!   Lagrangian-Eulerian method for shock hydrodynamics on unstructured
+//!   grids", Computers& Fluids, 2013.
+// *****************************************************************************
+{
+  tk::CSR A( /* DOF= */ 1, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
+
+  const auto& X = m_coord[0];
+  const auto& Y = m_coord[1];
+  const auto& Z = m_coord[2];
+
+  // fill matrix with Laplacian
+  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+    // access node IDs
+    const std::array< std::size_t, 4 >
+      N{{ m_inpoel[e*4+0], m_inpoel[e*4+1], m_inpoel[e*4+2], m_inpoel[e*4+3] }};
+    // compute element Jacobi determinant
+    const std::array< tk::real, 3 >
+      ba{{ X[N[1]]-X[N[0]], Y[N[1]]-Y[N[0]], Z[N[1]]-Z[N[0]] }},
+      ca{{ X[N[2]]-X[N[0]], Y[N[2]]-Y[N[0]], Z[N[2]]-Z[N[0]] }},
+      da{{ X[N[3]]-X[N[0]], Y[N[3]]-Y[N[0]], Z[N[3]]-Z[N[0]] }};
+    const auto J = tk::triple( ba, ca, da );        // J = 6V
+    Assert( J > 0, "Element Jacobian non-positive" );
+
+    // shape function derivatives, nnode*ndim [4][3]
+    std::array< std::array< tk::real, 3 >, 4 > grad;
+    grad[1] = tk::crossdiv( ca, da, J );
+    grad[2] = tk::crossdiv( da, ba, J );
+    grad[3] = tk::crossdiv( ba, ca, J );
+    for (std::size_t i=0; i<3; ++i)
+      grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
+
+    for (std::size_t a=0; a<4; ++a)
+      for (std::size_t k=0; k<3; ++k)
+         for (std::size_t b=0; b<4; ++b)
+           A(N[a],N[b]) += J/6 * grad[a][k] * grad[b][k];
+  }
+
+  auto npoin = m_gid.size();
+  std::vector< tk::real > b(npoin,1.0), x(npoin,0.0);
+
+  // Grab a node (gid=0) as Dirichlet BC
+  A.dirichlet( 0, m_lid, m_nodeCommMap );
+
+  return { A, x, b };
 }
 
 void
@@ -301,7 +403,7 @@ Discretization::transfer( [[maybe_unused]] const tk::Fields& u )
 //! \param[in] u Solution to transfer from/to
 // *****************************************************************************
 {
-  if (m_mytransfer.empty()) {     // skip transfer if single mesh
+  if (m_mytransfer.empty()) {   // skip transfer if not involved in coupling
     m_transfer_complete.send();
   } else {
     // Pass source and destination meshes to mesh transfer lib (if coupled)
@@ -695,15 +797,16 @@ Discretization::stat( tk::real mesh_volume )
 }
 
 void
-Discretization::boxvol( const std::unordered_set< std::size_t >& nodes )
+Discretization::boxvol(
+  const std::vector< std::unordered_set< std::size_t > >& nodes )
 // *****************************************************************************
 // Compute total box IC volume
-//! \param[in] nodes Node list contributing to box IC volume
+//! \param[in] nodes Node list contributing to box IC volume (for each IC box)
 // *****************************************************************************
 {
-  // Compute partial box IC volume
+  // Compute partial box IC volume (just add up all boxes)
   tk::real boxvol = 0.0;
-  for (auto i : nodes) boxvol += m_v[i];
+  for (const auto& b : nodes) for (auto i : b) boxvol += m_v[i];
 
   // Sum up box IC volume across all chares
   std::vector< tk::real > meshdata{ boxvol, static_cast<tk::real>(m_meshid) };

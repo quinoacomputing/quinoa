@@ -3,7 +3,7 @@
   \file      src/PDE/Integrate/MultiMatTerms.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing volume integrals of multi-material terms
      using DG methods
@@ -41,7 +41,8 @@ nonConservativeInt( ncomp_t system,
                     const std::vector< std::vector< tk::real > >& riemannDeriv,
                     const std::vector< std::vector< tk::real > >& vriempoly,
                     const std::vector< std::size_t >& ndofel,
-                    Fields& R );
+                    Fields& R,
+                    int intsharp );
 
 //! Update the rhs by adding the non-conservative term integrals
 void
@@ -65,12 +66,15 @@ pressureRelaxationInt( ncomp_t system,
                        const std::size_t ndof,
                        const std::size_t rdof,
                        const std::size_t nelem,
+                       const std::vector< std::size_t >& inpoel,
+                       const UnsMesh::Coords& coord,
                        const Fields& geoElem,
                        const Fields& U,
                        const Fields& P,
                        const std::vector< std::size_t >& ndofel,
                        const tk::real ct,
-                       Fields& R );
+                       Fields& R,
+                       int intsharp );
 
 //! Update the rhs by adding the pressure relaxation integrals
 void

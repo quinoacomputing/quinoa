@@ -3,7 +3,7 @@
   \file      src/Inciter/ALECG.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     ALECG for a PDE system with continuous Galerkin + ALE + RK
   \details   ALECG advances a system of partial differential equations (PDEs)
@@ -322,8 +322,8 @@ class ALECG : public CBase_ALECG {
     std::vector< int > m_symbctri;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
-    //! Mesh node ids at which user-defined box ICs are defined
-    std::unordered_set< std::size_t > m_boxnodes;
+    //! Mesh node ids at which user-defined box ICs are defined (multiple boxes)
+    std::vector< std::unordered_set< std::size_t > > m_boxnodes;
     //! Local node IDs of edges
     std::vector< std::size_t > m_edgenode;
     //! Edge ids in the order of access

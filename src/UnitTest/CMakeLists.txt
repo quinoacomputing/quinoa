@@ -18,6 +18,7 @@ target_include_directories(UnitTest PUBLIC
                            ${QUINOA_SOURCE_DIR}/UnitTest
                            ${QUINOA_SOURCE_DIR}/Inciter
                            ${QUINOA_SOURCE_DIR}/Mesh
+                           ${QUINOA_SOURCE_DIR}/LinearSolver
                            ${TUT_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
@@ -30,11 +31,13 @@ target_include_directories(UnitTest PUBLIC
                            ${PROJECT_BINARY_DIR}/../IO
                            ${PROJECT_BINARY_DIR}/../LinSys
                            ${PROJECT_BINARY_DIR}/../LoadBalance
+                           ${PROJECT_BINARY_DIR}/../LinearSolver
                            ${PROJECT_BINARY_DIR}/../UnitTest)
 
 addCharmModule( "charmchild" "UnitTest" )
 addCharmModule( "charmtimer" "UnitTest" )
 addCharmModule( "testarray" "UnitTest" )
+addCharmModule( "cgreceiver" "UnitTest" )
 addCharmModule( "migrated_base" "UnitTest" )
 addCharmModule( "quietcerr" "UnitTest" )
 

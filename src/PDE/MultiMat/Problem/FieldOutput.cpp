@@ -3,7 +3,7 @@
   \file      src/PDE/MultiMat/Problem/FieldOutput.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Field outputs for multi-material equation solver
   \details   This file defines functions for field quantites to be output to

@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/InputDeck/Grammar.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -99,6 +99,48 @@ namespace grm {
     static void apply( const Input&, Stack& ) {
       using inciter::deck::neq;
       ++neq.get< eq >();
+    }
+  };
+
+  //! Rule used to trigger action
+  template< class eq > struct check_mesh : pegtl::success {};
+  //! \brief Check mesh ... end block for correctness
+  template< class eq >
+  struct action< check_mesh< eq > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::deck::neq;
+      auto& mesh = stack.template get< tag::param, eq, tag::mesh >();
+      auto& mesh_ref = mesh.template get< tag::reference >();
+      // if no mesh reference given by user
+      if (mesh_ref.empty() || mesh_ref.size() != neq.get< eq >()) {
+        // put in '-', meaning no reference
+        mesh_ref.push_back('-');
+        auto& location = mesh.template get< tag::location >();
+        // if no location, put in the origin
+        if (location.size() != neq.get< eq >())
+          location.push_back( { 0.0, 0.0, 0.0 } );
+        else    // reference was not given, but location was, error out
+          Message< Stack, ERROR, MsgKey::LOC_NOMESHREF >( stack, in );
+        auto& orientation = mesh.template get< tag::orientation >();
+        if (orientation.size() != neq.get< eq >())
+          orientation.push_back( { 0.0, 0.0, 0.0 } );
+        else    // reference was not given, but orientation was, error out
+          Message< Stack, ERROR, MsgKey::ORI_NOMESHREF >( stack, in );
+      }
+
+      // Ensure the number of depvars and the number of mesh references equal
+      const auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
+      Assert( depvar.size() == mesh_ref.size(), "Mesh ref size mismatch" );
+
+      // Ensure mesh ref var is not the same as the current depvar and is
+      // defined upstream in input file (by another solver)
+      if ( mesh_ref.back() != '-' &&
+           (mesh_ref.back() == depvar.back() ||
+            depvars.find(mesh_ref.back()) == end(depvars)) )
+      {
+        Message< Stack, ERROR, MsgKey::DEPVAR_AS_MESHREF >( stack, in );
+      }
     }
   };
 
@@ -311,14 +353,6 @@ namespace grm {
           Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
         }
 
-        // put in empty vectors for background ICs so client code can directly
-        // index into these vectors using the eq system id
-        bgdensityic.push_back( {} );
-        bgvelocityic.push_back( {} );
-        bgpressureic.push_back( {} );
-        bgenergyic.push_back( {} );
-        bgtemperatureic.push_back( {} );
-
         // Error check Dirichlet boundary condition block for all compflow
         // configurations
         const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
@@ -360,21 +394,6 @@ namespace grm {
         {
           Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
         }
-
-        // Set default inititate type for box ICs
-        auto& icbox = ic.template get< tag::box >();
-        auto& initiate = icbox.template get< tag::initiate >();
-        auto& inittype = initiate.template get< tag::init >();
-        if (inittype.size() != neq.get< eq >())
-          inittype.push_back( inciter::ctr::InitiateType::IMPULSE );
-
-        // put in empty vectors for non-user-defined box ICs so client code can
-        // directly index into these vectors using the eq system id
-        icbox.template get< tag::density >().push_back( {} );
-        icbox.template get< tag::velocity >().push_back( {} );
-        icbox.template get< tag::pressure >().push_back( {} );
-        icbox.template get< tag::energy >().push_back( {} );
-        icbox.template get< tag::temperature >().push_back( {} );
       }
     }
   };
@@ -513,28 +532,61 @@ namespace grm {
   //! \details This is instantiated using a Cartesian product of all PDE types
   //!    and all BC types at compile time. It goes through all side sets
   //!    configured by the user and triggers an error if a side set is assigned
-  //!    a BC more than once.
+  //!    a BC more than once (within a solver).
   template< typename Input, typename Stack >
   struct ensure_disjoint {
     const Input& m_input;
     Stack& m_stack;
-    std::unordered_set< int >& m_bcset;
-    explicit ensure_disjoint( const Input& in,
-                              Stack& stack,
-                              std::unordered_set< int >& bcset ) :
-      m_input( in ), m_stack( stack ), m_bcset( bcset ) {}
+    explicit ensure_disjoint( const Input& in, Stack& stack ) :
+      m_input( in ), m_stack( stack ) {}
     template< typename U > void operator()( brigand::type_<U> ) {
       using Eq = typename brigand::front< U >;
       using BC = typename brigand::back< U >;
       const auto& bc = m_stack.template get< tag::param, Eq, tag::bc, BC >();
-      for (const auto& eq : bc)
+      for (const auto& eq : bc) {
+        std::unordered_set< int > bcset;
         for (const auto& s : eq) {
           auto id = std::stoi(s);
-          if (m_bcset.find(id) != end(m_bcset))
+          if (bcset.find(id) != end(bcset))
             Message< Stack, ERROR, MsgKey::NONDISJOINTBC >( m_stack, m_input );
           else
-            m_bcset.insert( id );
+            bcset.insert( id );
         }
+      }
+    }
+  };
+
+  //! Function object to count the number of meshes assigned to solvers
+  //! \details This is instantiated for all PDE types at compile time. It goes
+  //!   through all configured solvers (equation system configuration blocks)
+  //!   and counts the number of mesh filenames configured.
+  template< typename Stack >
+  struct count_meshes {
+    const Stack& stack;
+    std::size_t& count;
+    explicit
+    count_meshes( const Stack& s, std::size_t& c ) : stack(s), count(c) {}
+    template< typename eq > void operator()( brigand::type_<eq> ) {
+      count +=
+        stack.template get< tag::param, eq, tag::mesh, tag::filename >().size();
+    }
+  };
+
+  //! Function object to assign mesh ids to solvers
+  //! \details This is instantiated for all PDE types at compile time. It goes
+  //!   through all configured solvers (equation system configuration blocks)
+  //!   and assigns a new mesh id to all solvers configured in the input file.
+  template< typename Stack >
+  struct assign_meshid {
+    Stack& stack;
+    std::size_t& meshid;
+    explicit assign_meshid( Stack& s, std::size_t& m ) : stack(s), meshid(m) {}
+    template< typename eq > void operator()( brigand::type_<eq> ) {
+      const auto& eq_mesh_filename =
+        stack.template get< tag::param, eq, tag::mesh, tag::filename >();
+      auto& id = stack.template get< tag::param, eq, tag::mesh, tag::id >();
+      for (std::size_t i=0; i<eq_mesh_filename.size(); ++i)
+        id.push_back( meshid++ );
     }
   };
 
@@ -617,26 +669,42 @@ namespace grm {
       // Ensure no different BC types are assigned to the same side set
       using PDETypes = inciter::ctr::parameters::Keys;
       using BCTypes = inciter::ctr::bc::Keys;
-      std::unordered_set< int > bcset;
       brigand::for_each< tk::cartesian_product< PDETypes, BCTypes > >(
-        ensure_disjoint< Input, Stack >( in, stack, bcset ) );
+        ensure_disjoint< Input, Stack >( in, stack ) );
 
       // Do error checking on time history point names (this is a programmer
       // error if triggers, hence assert)
       Assert(
         (stack.template get< tag::history, tag::id >().size() == hist.size()),
         "Number of history points and ids must equal" );
+
+      // If at least a mesh filename is assigned to a solver, all solvers must
+      // have a mesh filename assigned
+      std::size_t nmesh = 0;
+      brigand::for_each< PDETypes >( count_meshes< Stack >( stack, nmesh ) );
+      if (nmesh > 0 && nmesh != depvars.size())
+        Message< Stack, ERROR, MsgKey::MULTIMESH >( stack, in );
+
+      // Remove duplicate transfer steps
+      tk::unique( stack.template get< tag::couple, tag::transfer >() );
+
+      // Now that the inciter ... end block is finished, assign mesh ids to
+      // solvers configured
+      std::size_t meshid = 0;
+      brigand::for_each< PDETypes >( assign_meshid< Stack >( stack, meshid ) );
+      Assert( meshid == nmesh, "Not all meshes configured have mesh ids" );
     }
   };
 
   //! Rule used to trigger action
-  struct enable_amr : pegtl::success {};
+  template< typename Feature >
+  struct enable : pegtl::success {};
   //! Enable adaptive mesh refinement (AMR)
-  template<>
-  struct action< enable_amr > {
+  template< typename Feature >
+  struct action< enable< Feature > > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& stack ) {
-      stack.template get< tag::amr, tag::amr >() = true;
+      stack.template get< Feature, Feature >() = true;
     }
   };
 
@@ -950,6 +1018,39 @@ namespace grm {
     }
   };
 
+  // Store mesh/solver id as a source of a transfer
+  template< typename Stack > struct store_transfer_src {
+    store_transfer_src( Stack& stack, std::size_t i ) {
+      stack.template get< tag::couple, tag::transfer >().emplace_back( i, 0 );
+    }
+  };
+
+  // Store mesh/solver id as a destination of a transfer
+  template< typename Stack > struct store_transfer_dst {
+    store_transfer_dst( Stack& stack, std::size_t i ) {
+      stack.template get< tag::couple, tag::transfer >().back().dst = i;
+    }
+  };
+
+  //! Rule used to trigger action
+  template< template< class > class StoreTransfer >
+  struct push_transfer : pegtl::success {};
+  //! Add matched value as a source or destination of solution transfer
+  //! \tparam StoreTransfer Type of action to invoke: source or destination
+  template< template< class > class StoreTransfer >
+  struct action< push_transfer< StoreTransfer > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      // Extract dependent variables for solvers configured
+      auto depvar = stack.depvar();
+      // Store index of parsed depvar of transfer being configured
+      auto c = in.string()[0];
+      for (std::size_t i=0; i<depvar.size(); ++i)
+        if (depvar[i] == c)
+          StoreTransfer< Stack >( stack, i );
+    }
+  };
+
 } // ::grm
 } // ::tk
 
@@ -977,6 +1078,8 @@ namespace deck {
          pegtl::seq<
            // register differential equation block
            tk::grm::register_inciter_eq< eq >,
+           // check mesh ... end block
+           tk::grm::check_mesh< eq >,
            // do error checking on this block
            eqchecker< eq > > {};
 
@@ -1039,6 +1142,57 @@ namespace deck {
                                     tk::grm::check_vector,
                                     eq, param, xparams... > {};
 
+   //! Match box parameter
+  template< class eq, typename keyword, typename target >
+  struct box_parameter :
+           pegtl::if_must<
+             tk::grm::readkw< typename use<keyword>::pegtl_string >,
+             tk::grm::scan<
+               pegtl::sor< tk::grm::number,
+                           tk::grm::msg< tk::grm::ERROR,
+                                         tk::grm::MsgKey::MISSING > >,
+               tk::grm::Back_back_store< target,
+                 tag::param, eq, tag::ic, tag::box > > > {};
+
+   //! Match box parameter and store deep
+  template< class eq, typename keyword, typename target, typename subtarget >
+  struct box_deep_parameter :
+           pegtl::if_must<
+             tk::grm::readkw< typename use<keyword>::pegtl_string >,
+             tk::grm::scan<
+               pegtl::sor< tk::grm::number,
+                           tk::grm::msg< tk::grm::ERROR,
+                                         tk::grm::MsgKey::MISSING > >,
+               tk::grm::Back_back_deep_store< target, subtarget,
+                 tag::param, eq, tag::ic, tag::box > > > {};
+
+   //! Match box parameter vector
+  template< class eq, typename keyword, typename target >
+  struct box_vector :
+         tk::grm::vector< use< keyword >,
+                          tk::grm::Back_back_store_back< target,
+                            tag::param, eq, tag::ic, tag::box >,
+                          use< kw::end > > {};
+
+   //! Match box parameter vector and store deep
+  template< class eq, typename keyword, typename target, typename subtarget >
+  struct box_deep_vector :
+         tk::grm::vector< use< keyword >,
+                          tk::grm::Back_back_deep_store_back< target, subtarget,
+                            tag::param, eq, tag::ic, tag::box >,
+                          use< kw::end > > {};
+
+
+   //! Match box option
+  template< class eq, typename Option, typename keyword, typename target,
+            typename subtarget >
+  struct box_option :
+         tk::grm::process<
+           use< keyword >,
+           tk::grm::back_back_store_option< target, subtarget, use, Option,
+             tag::param, eq, tag::ic, tag::box >,
+           pegtl::alpha > {};
+
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename param,
             class kw_type = tk::grm::number >
@@ -1097,7 +1251,8 @@ namespace deck {
              use< kw::end >,
              parameter< eq, kw::pressure, tag::farfield_pressure >,
              parameter< eq, kw::density, tag::farfield_density >,
-             pde_parameter_vector< kw::velocity, eq, tag::farfield_velocity >,
+             pde_parameter_vector< kw::velocity, eq,
+                                   tag::farfield_velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,
@@ -1115,7 +1270,8 @@ namespace deck {
   //! xminus configuring coordinate-based edge tagging for mesh refinement
   template< typename keyword, typename Tag >
   struct half_world :
-         tk::grm::control< use< keyword >, pegtl::digit, tag::amr, Tag > {};
+         tk::grm::control< use< keyword >, pegtl::digit, tk::grm::Store,
+                           tag::amr, Tag > {};
 
   //! coords ... end block
   struct coords :
@@ -1134,70 +1290,32 @@ namespace deck {
   struct box :
          pegtl::if_must<
            tk::grm::readkw< use< kw::box >::pegtl_string >,
-           tk::grm::block< use< kw::end >,
-             tk::grm::control< use< kw::xmin >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::xmin >,
-             tk::grm::control< use< kw::xmax >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::xmax >,
-             tk::grm::control< use< kw::ymin >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::ymin >,
-             tk::grm::control< use< kw::ymax >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::ymax >,
-             tk::grm::control< use< kw::zmin >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::zmin >,
-             tk::grm::control< use< kw::zmax >, tk::grm::number,
-                               tag::param, eq, tag::ic, tag::box, tag::zmax >,
-             pegtl::sor<
-               pde_parameter_vector< kw::density,
-                                     eq, tag::ic, tag::box, tag::density >,
-               pde_parameter_vector< kw::velocity,
-                                     eq, tag::ic, tag::box, tag::velocity >,
-               pde_parameter_vector< kw::pressure,
-                                     eq, tag::ic, tag::box, tag::pressure >,
-               pde_parameter_vector< kw::temperature,
-                                     eq, tag::ic, tag::box, tag::temperature >,
-               pde_parameter_vector< kw::mass,
-                                     eq, tag::ic, tag::box, tag::mass >,
-               pde_parameter_vector< kw::energy_content,
-                                   eq, tag::ic, tag::box, tag::energy_content >,
-               pde_parameter_vector< kw::energy,
-                                     eq, tag::ic, tag::box, tag::energy >,
-               tk::grm::process< use< kw::initiate >,
-                                 tk::grm::store_back_option< use,
-                                                             ctr::Initiate,
-                                                             tag::param,
-                                                             eq,
-                                                             tag::ic,
-                                                             tag::box,
-                                                             tag::initiate,
-                                                             tag::init >,
-                                 pegtl::alpha >,
-               pegtl::if_must<
+           tk::grm::start_vector_back< tag::param, eq, tag::ic, tag::box >,
+           tk::grm::block< use< kw::end >
+             , box_parameter< eq, kw::xmin, tag::xmin >
+             , box_parameter< eq, kw::xmax, tag::xmax >
+             , box_parameter< eq, kw::ymin, tag::ymin >
+             , box_parameter< eq, kw::ymax, tag::ymax >
+             , box_parameter< eq, kw::zmin, tag::zmin >
+             , box_parameter< eq, kw::zmax, tag::zmax >
+             , box_parameter< eq, kw::density, tag::density >
+             , box_parameter< eq, kw::pressure, tag::pressure >
+             , box_parameter< eq, kw::temperature, tag::temperature >
+             , box_parameter< eq, kw::energy_content, tag::energy_content >
+             , box_parameter< eq, kw::energy, tag::energy >
+             , box_parameter< eq, kw::mass, tag::mass >
+             , box_vector< eq, kw::velocity, tag::velocity >
+             , box_option< eq, ctr::Initiate, kw::initiate, tag::initiate,
+                           tag::init >
+             , pegtl::if_must<
                  tk::grm::readkw< use< kw::linear >::pegtl_string >,
-                 tk::grm::block< use< kw::end >,
-                   tk::grm::parameter_vector< use,
-                                              use< kw::point >,
-                                              tk::grm::Store_back_back,
-                                              tk::grm::start_vector,
-                                              tk::grm::check_vector,
-                                              eq,
-                                              tag::ic,
-                                              tag::box,
-                                              tag::initiate,
-                                              tag::point >,
-                   tk::grm::parameter_vector< use,
-                                              use< kw::radius >,
-                                              tk::grm::Store_back_back,
-                                              tk::grm::start_vector,
-                                              tk::grm::check_vector,
-                                              eq,
-                                              tag::ic,
-                                              tag::box,
-                                              tag::initiate,
-                                              tag::radius >,
-                   pde_parameter_vector< kw::velocity,
-                     eq, tag::ic, tag::box, tag::initiate, tag::velocity > > >
-             > > > {};
+                 tk::grm::block< use< kw::end >
+                   , box_deep_vector< eq, kw::point, tag::initiate, tag::point >
+                   , box_deep_parameter< eq, kw::radius, tag::initiate,
+                                         tag::radius >
+                   , box_deep_parameter< eq, kw::velocity, tag::initiate,
+                                         tag::velocity > > >
+             > > {};
 
   //! initial conditions block for compressible flow
   template< class eq >
@@ -1206,16 +1324,16 @@ namespace deck {
            tk::grm::readkw< use< kw::ic >::pegtl_string >,
            tk::grm::block< use< kw::end >,
              pegtl::sor<
-               pde_parameter_vector< kw::density,
-                                     eq, tag::ic, tag::density >,
-               pde_parameter_vector< kw::velocity,
-                                     eq, tag::ic, tag::velocity >,
-               pde_parameter_vector< kw::pressure,
-                                     eq, tag::ic, tag::pressure >,
-               pde_parameter_vector< kw::temperature,
-                                     eq, tag::ic, tag::temperature >,
-               pde_parameter_vector< kw::energy,
-                                     eq, tag::ic, tag::energy > >,
+               pde_parameter_vector< kw::density, eq,
+                                     tag::ic, tag::density >,
+               pde_parameter_vector< kw::velocity, eq,
+                                     tag::ic, tag::velocity >,
+               pde_parameter_vector< kw::pressure, eq,
+                                     tag::ic, tag::pressure >,
+               pde_parameter_vector< kw::temperature, eq,
+                                     tag::ic, tag::temperature >,
+               pde_parameter_vector< kw::energy, eq,
+                                     tag::ic, tag::energy > >,
                pegtl::seq< box< eq > > > > {};
 
   //! put in material property for equation matching keyword
@@ -1236,6 +1354,22 @@ namespace deck {
              material_property< eq, kw::mat_cv, tag::cv >,
              material_property< eq, kw::mat_k, tag::k > > > {};
 
+  //! Mesh ... end block
+  template< class eq >
+  struct mesh :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::mesh >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+             tk::grm::filename< use, tag::param, eq, tag::mesh, tag::filename >
+           , pde_parameter_vector< kw::location, eq, tag::mesh, tag::location >
+           , pde_parameter_vector< kw::orientation, eq,
+                                   tag::mesh, tag::orientation >
+           , tk::grm::process<
+               use< kw::reference >,
+               tk::grm::Store_back< tag::param, eq, tag::mesh, tag::reference >,
+               pegtl::alpha >
+           > > {};
+
   //! transport equation for scalars
   struct transport :
          pegtl::if_must<
@@ -1254,6 +1388,7 @@ namespace deck {
                            tk::grm::depvar< use,
                                             tag::transport,
                                             tag::depvar >,
+                           mesh< tag::transport >,
                            tk::grm::component< use< kw::ncomp >,
                                                tag::transport >,
                            pde_parameter_vector< kw::pde_diffusivity,
@@ -1283,6 +1418,7 @@ namespace deck {
   struct compflow :
          pegtl::if_must<
            scan_eq< use< kw::compflow >, tag::compflow >,
+           tk::grm::start_vector<tag::param, tag::compflow, tag::ic, tag::box>,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
                                             use< kw::physics >,
@@ -1297,6 +1433,7 @@ namespace deck {
                            tk::grm::depvar< use,
                                             tag::compflow,
                                             tag::depvar >,
+                           mesh< tag::compflow >,
                            tk::grm::process<
                              use< kw::flux >,
                                tk::grm::store_back_option< use,
@@ -1364,6 +1501,7 @@ namespace deck {
                            tk::grm::depvar< use,
                                             tag::multimat,
                                             tag::depvar >,
+                           mesh< tag::multimat >,
                            parameter< tag::multimat,
                                       kw::nmat,
                                       tag::nmat >,
@@ -1446,7 +1584,8 @@ namespace deck {
   struct amr :
          pegtl::if_must<
            tk::grm::readkw< use< kw::amr >::pegtl_string >,
-           tk::grm::enable_amr, // enable AMR if amr...end block encountered
+           // enable AMR if amr...end block encountered
+           tk::grm::enable< tag::amr >,
            tk::grm::block< use< kw::end >,
                            refvars,
                            edgelist,
@@ -1466,10 +1605,12 @@ namespace deck {
                              pegtl::alpha >,
                            tk::grm::control< use< kw::amr_tolref >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::amr,
                                              tag::tolref >,
                            tk::grm::control< use< kw::amr_tolderef >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::amr,
                                              tag::tolderef >,
                            tk::grm::process< use< kw::amr_t0ref >,
@@ -1487,6 +1628,39 @@ namespace deck {
                          >,
            tk::grm::check_amr_errors > {};
 
+  //! Arbitrary-Lagrangian-Eulerian (ALE) ale...end block
+  struct ale :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::ale >::pegtl_string >,
+           // enable ALE if ale ...end block encountered
+           tk::grm::enable< tag::ale >,
+           tk::grm::block< use< kw::end >,
+                           tk::grm::process<
+                             use< kw::meshvelocity >,
+                             tk::grm::store_inciter_option<
+                               ctr::MeshVelocity,
+                               tag::ale, tag::meshvelocity >,
+                             pegtl::alpha >
+                         > > {};
+
+  //! \brief Match a depvar, defined upstream of control file, coupling a
+  //!   solver and store
+  template< template< class > class action >
+  struct coupled_solver :
+         tk::grm::scan_until<
+            pegtl::lower,
+            tk::grm::match_depvar< tk::grm::push_transfer< action > > > {};
+
+  //! Couple ... end block (used to configure solver coupling)
+  struct couple :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::couple >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+             pegtl::seq<
+               coupled_solver< tk::grm::store_transfer_src >,
+               pegtl::one<'>'>,
+               coupled_solver< tk::grm::store_transfer_dst > > > > {};
+
   //! p-adaptive refinement (pref) ...end block
   struct pref :
          pegtl::if_must<
@@ -1494,10 +1668,12 @@ namespace deck {
            tk::grm::block< use< kw::end >,
                            tk::grm::control< use< kw::pref_tolref >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::pref,
                                              tag::tolref  >,
                            tk::grm::control< use< kw::pref_ndofmax >,
                                              pegtl::digit,
+                                             tk::grm::Store,
                                              tag::pref,
                                              tag::ndofmax >,
                            tk::grm::process<
@@ -1612,8 +1788,10 @@ namespace deck {
                            discretization,
                            equations,
                            amr,
+                           ale,
                            pref,
                            partitioning,
+                           couple,
                            field_output,
                            history_output,
                            tk::grm::diagnostics<

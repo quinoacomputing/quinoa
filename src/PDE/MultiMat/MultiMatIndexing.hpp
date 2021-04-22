@@ -3,7 +3,7 @@
   \file      src/PDE/MultiMat/MultiMatIndexing.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Multi-material system indexing functions
   \details   This file defines functions that return indices to specific
@@ -149,6 +149,9 @@ inline std::size_t velocityDofIdx( std::size_t nmat, std::size_t idir,
 inline std::size_t pressureDofIdx( std::size_t nmat, std::size_t kmat,
   std::size_t ndof, std::size_t idof )
 { return pressureIdx(nmat, kmat)*ndof+idof; }
+
+inline bool matExists( tk::real volfrac )
+{ return (volfrac > 1e-10) ? true : false; }
 
 //@}
 

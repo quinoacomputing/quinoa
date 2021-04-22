@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/CmdLine/Parser.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     RNGTest's command line parser
   \details   This file defines the command-line argument parser for the random
@@ -84,10 +84,19 @@ CmdLineParser::CmdLineParser( int argc,
   // Print out help on all command-line arguments if the executable was invoked
   // without arguments or the help was requested
   const auto helpcmd = cmdline.get< tag::help >();
-  if (argc == 1 || helpcmd)
+  if (argc == 1 || helpcmd) {
     print.help< tk::QUIET >( tk::rngtest_executable(),
                              cmdline.get< tag::cmdinfo >(),
                              "Command-line Parameters:", "-" );
+    print.mandatory< tk::QUIET >( "The '--" + kw::control().string() +
+                                  " <filename>' argument is mandatory." );
+    print.usage< tk::QUIET >(
+      tk::rngtest_executable(),
+      "charmrun +p4 " + tk::rngtest_executable() + " -" +
+        *kw::verbose().alias() + " -" + *kw::control().alias() + " allmkl.q",
+      "will execute the statistical tests configured in the control file "
+      "'allmkl.q' on 4 CPUs producing verbose screen output" );
+  }
 
   // Print out help on all control file keywords if they were requested
   const auto helpctr = cmdline.get< tag::helpctr >();

@@ -3,7 +3,7 @@
   \file      src/PDE/Limiter.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Limiters for discontiunous Galerkin methods
   \details   This file contains functions that provide limiter function
@@ -586,7 +586,7 @@ VertexBasedMultiMat_P1(
       auto phip = VertexBasedFunction(unk, P, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, nprim);
 
-      if(ndof > 1)
+      if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
 
       // limits under which compression is to be performed
@@ -997,14 +997,13 @@ VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
       auto phi_gp = 1.0;
       auto mark = c*rdof;
       auto uNeg = state[c] - U(e, mark, offset);
-      if (uNeg > 1.0e-14)
+      auto uref = std::max(std::fabs(U(e,mark,offset)), 1e-14);
+      if (uNeg > 1.0e-06*uref)
       {
-        uNeg = std::max(uNeg, 1.0e-08);
         phi_gp = std::min( 1.0, (uMax[c]-U(e, mark, offset))/uNeg );
       }
-      else if (uNeg < -1.0e-14)
+      else if (uNeg < -1.0e-06*uref)
       {
-        uNeg = std::min(uNeg, -1.0e-08);
         phi_gp = std::min( 1.0, (uMin[c]-U(e, mark, offset))/uNeg );
       }
       else

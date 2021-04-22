@@ -3,7 +3,7 @@
   \file      src/Mesh/DerivedData.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -1570,12 +1570,15 @@ leakyPartition( const std::vector< int >& esueltet,
 bool
 conforming( const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,
-            bool cerr )
+            bool cerr,
+            const std::vector< std::size_t >& rid )
 // *****************************************************************************
 // Check if mesh (partition) is conforming
 //! \param[in] inpoel Element connectivity
 //! \param[in] coord Node coordinates
 //! \param[in] cerr True if hanging-node edge data should be output to
+//!   std::cerr (true by default)
+//! \param[in] rid AMR Lib node id map
 //!   std::cerr (true by default)
 //! \return True if mesh (partition) has no hanging nodes and thus the mesh is
 //!   conforming, false if non-conforming.
@@ -1669,6 +1672,8 @@ conforming( const std::vector< std::size_t >& inpoel,
   auto iy = y.cbegin();
   auto iz = z.cbegin();
 
+  bool hanging_node = false;
+
   while (ix != x.cend()) {
     Coord n{{ *ix, *iy, *iz }};
     auto i = edgeNodes.find( n );
@@ -1686,12 +1691,16 @@ conforming( const std::vector< std::size_t >& inpoel,
           << hanging_node_coord[2] << ") of tetrahedron element "
           << tet_id << " with connectivity (" << tet[0] << ','
           << tet[1] << ',' << tet[2] << ',' << tet[3] << ") on edge ("
-          << edge[0] << ',' << edge[1] << ")" << std::endl;
+          << edge[0] << ',' << edge[1] << ")"
+          << "AMR lib node ids for this edge: " << rid[edge[0]] << ','
+          << rid[edge[1]] << std::endl;
       }
-      return false;
+      hanging_node = true;
     }
     ++ix; ++iy; ++iz;
   }
+
+  if (hanging_node) return false;
 
   return true;
 }

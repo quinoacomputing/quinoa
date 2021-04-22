@@ -34,6 +34,7 @@ namespace AMR {
             size_t child_number;
             size_t parent_id;
             bool normal;
+            bool has_parent;
 
             Refinement_State() {}
 
@@ -47,6 +48,7 @@ namespace AMR {
              * @param refinement_level_in The level of refinement
              * @param child_number_in ??  // TODO: What is this?
              * @param parent_id_in Id of parent element
+             * @param has_parent_in True if element has a parent, default is true
             */
             Refinement_State(
                     size_t active_element_number_in,
@@ -54,7 +56,8 @@ namespace AMR {
                     const child_id_list_t& children_in,
                     size_t refinement_level_in,
                     size_t child_number_in,
-                    size_t parent_id_in
+                    size_t parent_id_in,
+                    bool has_parent_in=true
             ) :
                     active_element_number(active_element_number_in),
                     refinement_case(refinement_case_in),
@@ -62,7 +65,8 @@ namespace AMR {
                     refinement_level(refinement_level_in),
                     child_number(child_number_in),
                     parent_id(parent_id_in),
-                    normal(0)
+                    normal(0),
+                    has_parent(has_parent_in)
             {
                 // Empty
             }
@@ -74,19 +78,22 @@ namespace AMR {
              * @param refinement_case_in The refinement case
              * @param refinement_level_in The level of refinement
              * @param parent_id_in Id of parent element
+             * @param has_parent_in True if element has a parent, default is true
              */
             Refinement_State(
                     size_t active_element_number_in,
                     Refinement_Case refinement_case_in,
                     size_t refinement_level_in,
-                    size_t parent_id_in
+                    size_t parent_id_in,
+                    bool has_parent_in=true
             ) :
                     active_element_number(active_element_number_in),
                     refinement_case(refinement_case_in),
                     refinement_level(refinement_level_in),
                     child_number(DEFUALT_CHILD_NUMBER), // Give it default child id
                     parent_id(parent_id_in),
-                    normal(0)
+                    normal(0),
+                    has_parent(has_parent_in)
             {
                 // Set default size of children to be sensible
                 children.reserve(MAX_CHILDREN);

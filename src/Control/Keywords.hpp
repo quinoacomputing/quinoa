@@ -3,7 +3,7 @@
   \file      src/Control/Keywords.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2836,7 +2836,7 @@ struct linear_info {
 using linear = keyword< linear_info, TAOCPP_PEGTL_STRING("linear") >;
 
 struct initiate_info {
-  static std::string name() { return "IC box initiate type"; }
+  static std::string name() { return "initiate type"; }
   static std::string shortDescription() { return "Initiation/assignemt type"; }
   static std::string longDescription() { return
     R"(This keyword is used to select an initiation type to configure how
@@ -2903,6 +2903,10 @@ struct depvar_info {
     "Select dependent variable (in a relevant block)"; }
   static std::string longDescription() { return
     R"(Dependent variable, e.g, in differential equations.)"; }
+  struct expect {
+    using type = char;
+    static std::string description() { return "character"; }
+  };
 };
 using depvar = keyword< depvar_info, TAOCPP_PEGTL_STRING("depvar") >;
 
@@ -3751,7 +3755,7 @@ struct position_info {
   static std::string shortDescription() { return
     "Introduce the (particle) position equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used in different ways: (1) To introduce a position ...
+    R"(This keyword is used to introduce a position ...
     end block, used to specify the configuration of a system of deterministic or
     stochastic differential equations, governing particle positions usually in
     conjunction with velocity model, e.g, the Langevin, model. Note that the
@@ -3777,7 +3781,7 @@ struct dissipation_info {
   static std::string shortDescription() { return
     "Introduce the (particle) dissipation equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used in different ways: (1) To introduce a dissipation
+    R"(This keyword is used to introduce a dissipation
     ... end block, used to specify the configuration of a system of
     deterministic or stochastic differential equations, governing a particle
     quantity that models the dissipation rate of turbulent kinetic energy, used
@@ -3805,7 +3809,7 @@ struct velocitysde_info {
   static std::string shortDescription() { return
     "Introduce the velocity equation input block or coupling"; }
   static std::string longDescription() { return
-    R"(This keyword is used in different ways: (1) To introduce a velocity ...
+    R"(This keyword is used to introduce a velocity ...
     end block, used to specify the configuration of a system of stochastic
     differential equations (SDEs), governed by the Langevin model for the
     fluctuating velocity in homogeneous variable-density turbulence. For more
@@ -4208,9 +4212,9 @@ using particles = keyword< particles_info, TAOCPP_PEGTL_STRING("particles") >;
 
 struct input_info {
   static std::string name() { return "input"; }
-  static std::string shortDescription() { return "Specify the input file(s)"; }
+  static std::string shortDescription() { return "Specify the input file"; }
   static std::string longDescription() { return
-    R"(This option is used to define the name(s) of input file(s).)";
+    R"(This option is used to define the name of input file.)";
   }
   using alias = Alias< i >;
   struct expect {
@@ -6591,6 +6595,151 @@ struct flux_info {
   };
 };
 using flux = keyword< flux_info, TAOCPP_PEGTL_STRING("flux") >;
+
+struct none_info {
+  static std::string name() { return "none"; }
+  static std::string shortDescription() { return "Select none option"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the 'none' option from a list of
+    configuration options.)"; }
+};
+using none = keyword< none_info, TAOCPP_PEGTL_STRING("none") >;
+
+struct fluid_info {
+  static std::string name() { return "fluid"; }
+  static std::string shortDescription() { return
+    "Select the fluid velocity for ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the 'fluid' velocity as the mesh velocity
+       for Arbitrary-Lagrangian-Eulerian (ALE) mesh motion.)"; }
+};
+using fluid = keyword< fluid_info, TAOCPP_PEGTL_STRING("fluid") >;
+
+struct helmholtz_info {
+  static std::string name() { return "Helmholtz"; }
+  static std::string shortDescription() { return
+    "Select the Helmholtz velocity for ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the a velocity, computed from the
+       Helmholtz-decomposition as the mesh velocity for
+       Arbitrary-Lagrangian-Eulerian (ALE) mesh motion. See J. Bakosi, J. Waltz,
+       N. Morgan, Improved ALE mesh velocities for complex flows, Int. J. Numer.
+       Meth. Fl., 1-10, 2017, https://doi.org/10.1002/fld.4403.)"; }
+};
+using helmholtz = keyword< helmholtz_info, TAOCPP_PEGTL_STRING("helmholtz") >;
+
+struct meshvelocity_info {
+  static std::string name() { return "Mesh velocity"; }
+  static std::string shortDescription() { return
+    "Select mesh velocity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a mesh velocity option, used for
+       Arbitrary-Lagrangian-Eulerian (ALE) mesh motion.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + none::string() + "\' | \'"
+                  + fluid::string() + "\' | \'"
+                  + helmholtz::string() + '\'';
+    }
+  };
+};
+using meshvelocity =
+  keyword< meshvelocity_info, TAOCPP_PEGTL_STRING("mesh_velocity") >;
+
+struct ale_info {
+  static std::string name() { return "ALE"; }
+  static std::string shortDescription() { return "Start configuration block "
+    "configuring ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the ale ... end block, used to
+    configure arbitrary Lagrangian-Eulerian (ALE) mesh movement. Keywords
+    allowed in this block: )" + std::string("\'")
+    + meshvelocity::string() + "\'.";
+  }
+};
+using ale = keyword< ale_info, TAOCPP_PEGTL_STRING("ale") >;
+
+struct filename_info {
+  static std::string name() { return "filename"; }
+  static std::string shortDescription() { return "Set filename"; }
+  static std::string longDescription() { return
+    R"(Set filename, e.g., mesh filename for solver coupling.)";
+  }
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using filename = keyword< filename_info, TAOCPP_PEGTL_STRING("filename") >;
+
+struct location_info {
+  static std::string name() { return "location"; }
+  static std::string shortDescription() { return "Configure location"; }
+  static std::string longDescription() { return
+    R"(Configure location of a mesh relative to another, e.g., for solver
+       coupling.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using location = keyword< location_info, TAOCPP_PEGTL_STRING("location") >;
+
+struct orientation_info {
+  static std::string name() { return "orientation"; }
+  static std::string shortDescription() { return "Configure orientation"; }
+  static std::string longDescription() { return
+    R"(Configure orientation of a mesh relative to another, e.g., for solver
+       coupling.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using orientation =
+  keyword< orientation_info, TAOCPP_PEGTL_STRING("orientation") >;
+
+struct mesh_info {
+  static std::string name() { return "Mesh specification block"; }
+  static std::string shortDescription() { return
+    "Start configuration block assigning a mesh to a solver"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a mesh ... end block, used to
+    assign and configure a mesh to a solver.)";
+  }
+};
+using mesh = keyword< mesh_info, TAOCPP_PEGTL_STRING("mesh") >;
+
+struct reference_info {
+  static std::string name() { return "Mesh transformation"; }
+  static std::string shortDescription() { return
+    "Specify mesh transformation relative to a mesh of another solver"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a solver, given with a dependent
+       variable, configured upstream in the input file, whose mesh is used as a
+       reference to which the mesh being configured is transformed relative
+       to.)";
+  }
+  struct expect {
+    using type = char;
+    static std::string description() { return "character"; }
+  };
+};
+using reference = keyword< reference_info, TAOCPP_PEGTL_STRING("reference") >;
+
+struct couple_info {
+  static std::string name() { return "Couple solvers"; }
+  static std::string shortDescription() { return
+    "Specify coupling of solvers on different meshes"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a couple ... end block, used to
+       specify coupling of solvers operating on different meshes.)";
+  }
+};
+using couple = keyword< couple_info, TAOCPP_PEGTL_STRING("couple") >;
 
 struct nolimiter_info {
   static std::string name() { return "No limiter"; }

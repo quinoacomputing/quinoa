@@ -3,7 +3,7 @@
   \file      src/Inciter/Transporter.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Transporter drives the time integration of transport equations
   \details   Transporter drives the time integration of transport equations.
@@ -208,6 +208,7 @@ class Transporter : public CBase_Transporter {
     //! \note This is a Charm++ mainchare, pup() is thus only for
     //!    checkpoint/restart.
     void pup( PUP::er &p ) override {
+      p | m_input;
       p | m_nchare;
       p | m_meshid;
       p | m_nload;
@@ -243,6 +244,8 @@ class Transporter : public CBase_Transporter {
     //@}
 
   private:
+    //! List of mesh files to be used for potentially multiple solvers
+    std::vector< std::string > m_input;
     //! Number of worker chares (one per mesh)
     std::vector< int > m_nchare;
     //! Sum of mesh ids (across all chares, key) for each meshid (value)
@@ -363,6 +366,9 @@ class Transporter : public CBase_Transporter {
 
     //! Print out mesh statistics
     void meshstat( const std::string& header ) const;
+
+    //! Generate list of input mesh filenames configured by the user
+    std::vector< std::string > input();
 };
 
 } // inciter::

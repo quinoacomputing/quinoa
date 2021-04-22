@@ -1,0 +1,81 @@
+namespace inciter {
+/*!
+  \page      inciter_amr Adaptive Mesh Refinement (TetAMR)
+
+@tableofcontents{xml}
+
+This page describes the AMR algorithm implemented in @ref inciter_main.
+
+@section overview Overview
+
+The two key files are `refinement.hpp` and `mesh_adapter.cpp`
+
+The following files store data structures which represent the core data elements:
+
+- `node_connectivity.cpp`: represents nodes and can be used to associate the given node with the edge it splits.
+- `edge_store.cpp`: represents edges and the refinement data associated with them (via `Edge_Refinment`). This includes if the edge needs refining, and which nodes it connects.
+- `tet_store.cpp`: represents the tets and can perform key actions on them, such as `generate_child_ids()`. `tet_store` holds all the tets, i.e. active tets and their ancestors. This holds the `edge_store`, but the `mesh_adapter.hpp` holds the `node_store`. That seems dumb and we should fix it. Similar to the `tet_store`, the `edge_store` stores the "parent edges" *and* "child edges"; i.e. if an edge A-B, has been refined to A-Y-B (Y is the non-parent node resulting from refinement), the `edge_store` contains edges A-B, A-Y, and Y-B. Within `tet_store`, the following members are frequently used:
+    * `tet_store.data(id).children`: holds information about children of `id`.
+- `active_element_store.cpp`: stores the tets in the active mesh.
+
+@section meshadapt Mesh Adapter
+
+`mesh_adapter.cpp` holds the high level interface to user calling code. It has pass-through functions for all major operations, such as `mark_uniform_refinement()`. It is also responsible for calling into the `refiner` via `perform_refinement()` or `perform_derefinement()`, and thus this is where the majority of the paper (at a high-level) is implemented. Most notably it holds:
+
+@subsection markref Mark Refinement
+
+This function is the highest level entry point for Algs 1-3 in the paper, with the help of subsidiary functions (cunning named `refinement_class_one`, `refinement_class_two` and `refinement_class_three`). It operates purely in edge-space.
+
+It is not responsible for performing the refinement, but instead marks what a tet would like to do based on the current world state. The world state is kept coherent via some complex locking, as outlined in the paper.
+
+In short, it:
+
+- Determines the number of active (unlocked and needs refining) edges; and
+- Calculates if these active edges are on shared faces
+
+It uses this information to dispatch to the correct function that implements the different classes of compatability algoirthm (one through three)
+
+This process is done iteratively until it reaches a stable state. 
+
+@subsection markderef Mark Derefinement
+
+This algorithm is more complex that marking refinement, as it needs to operate in both edge- and node-space. 
+
+It is not responsible for performing the derefinement, but instead marks what a tet would like to do based on the current world state. Child-edges are marked for derefinement; because the client code only knows about the active mesh, which only has the child.
+
+In short, it:
+
+- It only loops through the active mesh, and then queries the parent of the active tet under consideration for derefinement compatibility
+- Iterates over the children of this parent tet (siblings of active tet), to find which non-parent-points are safe to remove and are surrounded by edges who are marked for derefinement 
+- It skips tets which are ineligible to derefine, because they do not have parents, i.e. are a part of the original mesh
+
+It uses the count of these points to implement Algorithm 4 from the paper. The functions for this are implemented in `refinement.hpp`
+
+Further, if a tet decides that none of its edges can derefine, it unmarks all of its children's edges. Similarly, if a tet wants to derefine, but cannot find a valid derefine case, it unmarks all of its children's edges, so that no derefinement can happen for those edges.
+
+This process is done iteratively until it reaches a stable state. 
+
+@subsection performref Perform Refinement
+
+This function calls into `refiner` to actually do the refinement based on the decisions made in `mark_refinement()`.
+
+@subsection performderef Perform Derefinement
+
+This function calls into `refiner` to actually do the derefinement based on the decisions made in `mark_derefinement()`.
+
+@section refiner Refiner
+
+`refinement.hpp` implements the core operations required to adapt the mesh. These include:
+
+- `refine_one_to_two`, etc to cover all refinement cases
+- `derefine_eight_to_one`, etc to cover all derefinement cases
+
+These functions are mostly logical, and straightforward, and focus on keeping the various data stores up to date. It is also responsible for making sure the operations (such as refining 1:4) are performed on the correct tet faces
+
+@section debugging Debugging
+Uncomment the `#define ENABLE_TRACE 1` line in `Inciter/AMR/Loggers.hpp` to get the `trace_out` screen-output from the AMR-library.
+
+For further details about the AMR algorithm, see @ref papers_inciter "Inciter papers" (**[Parallel adaptive refinement for unsteady flow calculations on 3D unstructured grids](http://dx.doi.org/10.1002/fld.674)**).
+
+*/
+} // inciter::

@@ -3,7 +3,7 @@
   \file      src/Mesh/CommMap.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Type definitions for communication maps
   \details   Type definitions for communication maps.
@@ -48,6 +48,9 @@ using AllCommMaps =
 //! Communication map bundle type
 //! \details All types of communication maps bundled and associated to chare IDs
 using CommMaps = std::map< int, AllCommMaps >;
+
+//! Decide if a node is not counted by a chare
+bool slave( const NodeCommMap& map, std::size_t node, int chare );
 
 } // tk::
 

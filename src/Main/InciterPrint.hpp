@@ -3,7 +3,7 @@
   \file      src/Main/InciterPrint.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter-specific pretty printer functionality
   \details   Inciter-specific pretty printer functionality.
@@ -142,6 +142,10 @@ class InciterPrint : public tk::Print {
     void pdes( const std::string& t,
       const std::vector< std::vector< std::pair< std::string, std::string > > >&
         info ) const;
+
+    //! Print out info on solver coupling
+    void couple( const std::vector< Transfer >& transfer,
+                 const std::vector< char >& depvar ) const;
 
     //! Print time integration header
     void inthead( const std::string& t, const std::string& name,

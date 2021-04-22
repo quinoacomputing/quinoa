@@ -3,7 +3,7 @@
   \file      src/Base/ContainerUtil.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Various STL container utilities
   \details   Various STL container utilities.
@@ -288,6 +288,17 @@ std::ostream&
 operator<< ( std::ostream& os, const std::pair< const Key, Value  >& v ) {
   os << v.first << ':' << v.second;
   return os;
+}
+
+//! \brief Convert and return value as string
+//! \tparam T Value type for input
+//! \param[in] v Value for input to return as a string
+//! \return String for input value
+template< typename T >
+std::string parameter( const T& v ) {
+  std::stringstream s;
+  s << v;
+  return s.str();
 }
 
 //! \brief Convert and return values from container as string

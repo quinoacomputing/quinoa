@@ -3,7 +3,7 @@
   \file      src/UnitTest/TUTSuite.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Template Unit Test suite class declaration
   \details   Template Unit Test suite class declaration. In principle there can
@@ -68,6 +68,7 @@ class TUTSuite : public CBase_TUTSuite {
       , { "Base/PUPUtil", 14 }
       , { "Base/Timer", 1 }
       , { "Inciter/Scheme", 3 }
+      , { "LinearSolver/ConjugateGradients", 6 }
     };
 
     // Tests that must be run on PE 0
@@ -76,6 +77,7 @@ class TUTSuite : public CBase_TUTSuite {
     const std::unordered_set< std::string > m_fromPE0 {
         { "LoadBalance/LinearMap"}
       , { "LoadBalance/UnsMeshMap" }
+      , { "LinearSolver/ConjugateGradients" }
       , { "Inciter/Scheme" }
     };
 

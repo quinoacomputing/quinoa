@@ -3,7 +3,7 @@
   \file      src/Inciter/Partitioner.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ chare partitioner nodegroup used to perform mesh
              partitioning
@@ -56,7 +56,6 @@ class Partitioner : public CBase_Partitioner {
   public:
     //! Constructor
     Partitioner( std::size_t meshid,
-                 const std::vector< Transfer >& t,
                  const std::string& filename,
                  const tk::PartitionerCallback& cbp,
                  const tk::RefinerCallback& cbr,
@@ -107,7 +106,6 @@ class Partitioner : public CBase_Partitioner {
     //!    checkpoint/restart.
     void pup( PUP::er &p ) override {
       p | m_meshid;
-      p | m_transfer;
       p | m_cbp;
       p | m_cbr;
       p | m_cbs;
@@ -144,8 +142,6 @@ class Partitioner : public CBase_Partitioner {
   private:
     //! Mesh ID
     std::size_t m_meshid;
-    //! Solution transfer (coupling) information
-    std::vector< Transfer > m_transfer;
     //! Charm++ callbacks associated to compile-time tags for partitioner
     tk::PartitionerCallback m_cbp;
     //! Charm++ callbacks associated to compile-time tags for refiner

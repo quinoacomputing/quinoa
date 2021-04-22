@@ -3,7 +3,7 @@
   \file      src/Inciter/Sorter.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Mesh sorter for global distributed mesh reordering
   \details   Mesh sorter is Charm++ chare array and is used to do global
@@ -61,7 +61,6 @@ class Sorter : public CBase_Sorter {
   public:
     //! Constructor
     explicit Sorter( std::size_t meshid,
-                     const std::vector< Transfer >& t,
                      const CProxy_Transporter& transporter,
                      const tk::CProxy_MeshWriter& meshwriter,
                      const tk::SorterCallback& cbs,
@@ -134,7 +133,6 @@ class Sorter : public CBase_Sorter {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_meshid;
-      p | m_transfer;
       p | m_host;
       p | m_meshwriter;
       p | m_cbs;
@@ -171,8 +169,6 @@ class Sorter : public CBase_Sorter {
   private:
     //! Mesh ID
     std::size_t m_meshid;
-    //! Solution transfer (coupling) information
-    std::vector< Transfer > m_transfer;
     //! Host proxy
     CProxy_Transporter m_host;
     //! MeshWriter proxy

@@ -3,7 +3,7 @@
   \file      src/PDE/Integrate/MultiMatTerms.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing volume integrals of multi-material terms
      using DG methods
@@ -27,6 +27,7 @@
 #include "Quadrature.hpp"
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "Reconstruction.hpp"
 
 namespace tk {
 
@@ -45,7 +46,8 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
                     const std::vector< std::vector< tk::real > >& riemannDeriv,
                     const std::vector< std::vector< tk::real > >& vriempoly,
                     const std::vector< std::size_t >& ndofel,
-                    Fields& R )
+                    Fields& R,
+                    int intsharp )
 // *****************************************************************************
 //  Compute volume integrals for multi-material DG
 //! \details This is called for multi-material DG, computing volume integrals of
@@ -70,6 +72,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 //! \param[in] vriempoly Vector of Riemann velocity polynomial
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector added to
+//! \param[in] intsharp Interface reconstruction indicator
 // *****************************************************************************
 {
   using inciter::volfracIdx;
@@ -142,24 +145,25 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-      auto ugp = eval_state( ncomp, offset, rdof, dof_el, e, U, B );
-      auto pgp = eval_state( nprim, offset, rdof, dof_el, e, P, B );
+      auto state = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+        rdof, nmat, e, dof_el, inpoel, coord, geoElem,
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
       // get bulk properties
       tk::real rhob(0.0);
       for (std::size_t k=0; k<nmat; ++k)
-          rhob += ugp[densityIdx(nmat, k)];
+          rhob += state[densityIdx(nmat, k)];
 
       // get the velocity vector
-      std::array< tk::real, 3 > vel{{ pgp[velocityIdx(nmat, 0)],
-                                      pgp[velocityIdx(nmat, 1)],
-                                      pgp[velocityIdx(nmat, 2)] }};
+      std::array< tk::real, 3 > vel{{ state[ncomp+velocityIdx(nmat, 0)],
+                                      state[ncomp+velocityIdx(nmat, 1)],
+                                      state[ncomp+velocityIdx(nmat, 2)] }};
 
       std::vector< tk::real > ymat(nmat, 0.0);
       std::array< tk::real, 3 > dap{{0.0, 0.0, 0.0}};
       for (std::size_t k=0; k<nmat; ++k)
       {
-        ymat[k] = ugp[densityIdx(nmat, k)]/rhob;
+        ymat[k] = state[densityIdx(nmat, k)]/rhob;
 
         for (std::size_t idir=0; idir<3; ++idir)
           dap[idir] += riemannDeriv[3*k+idir][e];
@@ -201,17 +205,17 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 
         // evaluate non-conservative term for volume fraction equation
         for(std::size_t idof=0; idof<ndof; ++idof)
-          ncf[volfracIdx(nmat, k)][idof] = ugp[volfracIdx(nmat, k)]
+          ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
                                          * riemannDeriv[3*nmat][e] * B[idof];
 
         // evaluate the non-conservative term for volume fraction equation in
         // high order discretization. The following code compuetes the
         // non-conservative term:
         //      alpha * (d(u*B)/dx) = alpha * (u*dBdx + B*dudx)
-        if(ndof > 1)
+        if (ndof > 1 && intsharp == 0)
          for(std::size_t idof=1; idof<ndof; ++idof)
           for(std::size_t idir=0; idir<3; ++idir)
-            ncf[volfracIdx(nmat, k)][idof] += ugp[volfracIdx(nmat, k)] *
+            ncf[volfracIdx(nmat, k)][idof] += state[volfracIdx(nmat, k)] *
               vriem[idir] * dBdx[idir][idof];
       }
 
@@ -294,12 +298,15 @@ pressureRelaxationInt( ncomp_t system,
                        const std::size_t ndof,
                        const std::size_t rdof,
                        const std::size_t nelem,
+                       const std::vector< std::size_t >& inpoel,
+                       const UnsMesh::Coords& coord,
                        const Fields& geoElem,
                        const Fields& U,
                        const Fields& P,
                        const std::vector< std::size_t >& ndofel,
                        const tk::real ct,
-                       Fields& R )
+                       Fields& R,
+                       int intsharp )
 // *****************************************************************************
 //  Compute volume integrals of pressure relaxation terms in multi-material DG
 //! \details This is called for multi-material DG to compute volume integrals of
@@ -315,12 +322,15 @@ pressureRelaxationInt( ncomp_t system,
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] nelem Total number of elements
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitive quantities at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in] ct Pressure relaxation time-scale for this system
 //! \param[in,out] R Right-hand side vector added to
+//! \param[in] intsharp Interface reconstruction indicator
 // *****************************************************************************
 {
   using inciter::volfracIdx;
@@ -375,22 +385,23 @@ pressureRelaxationInt( ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-      auto ugp = eval_state( ncomp, offset, rdof, dof_el, e, U, B );
-      auto pgp = eval_state( nprim, offset, rdof, dof_el, e, P, B );
+      auto state = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+        rdof, nmat, e, dof_el, inpoel, coord, geoElem,
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
       // get bulk properties
       real rhob(0.0);
       for (std::size_t k=0; k<nmat; ++k)
-        rhob += ugp[densityIdx(nmat, k)];
+        rhob += state[densityIdx(nmat, k)];
 
       // get pressures and bulk modulii
       real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
       std::vector< real > apmat(nmat, 0.0), kmat(nmat, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
       {
-        real arhomat = ugp[densityIdx(nmat, k)];
-        real alphamat = ugp[volfracIdx(nmat, k)];
-        apmat[k] = pgp[pressureIdx(nmat, k)];
+        real arhomat = state[densityIdx(nmat, k)];
+        real alphamat = state[volfracIdx(nmat, k)];
+        apmat[k] = state[ncomp+pressureIdx(nmat, k)];
         real amat = inciter::eos_soundspeed< tag::multimat >( system, arhomat,
           apmat[k], alphamat, k );
         kmat[k] = arhomat * amat * amat;
@@ -407,8 +418,8 @@ pressureRelaxationInt( ncomp_t system,
       std::vector< real > s_prelax(ncomp, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
       {
-        auto s_alpha = (apmat[k]-p_relax*ugp[volfracIdx(nmat, k)])
-          * (ugp[volfracIdx(nmat, k)]/kmat[k]) / trelax;
+        auto s_alpha = (apmat[k]-p_relax*state[volfracIdx(nmat, k)])
+          * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
         s_prelax[volfracIdx(nmat, k)] = s_alpha;
         s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
       }

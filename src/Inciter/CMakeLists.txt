@@ -33,6 +33,7 @@ target_include_directories(Inciter PUBLIC
                            ${QUINOA_SOURCE_DIR}/Statistics
                            ${QUINOA_SOURCE_DIR}/Inciter
                            ${QUINOA_SOURCE_DIR}/PDE
+                           ${QUINOA_SOURCE_DIR}/LinearSolver
                            ${QUINOA_TPL_DIR}
                            ${SEACASExodus_INCLUDE_DIRS}
                            ${NETCDF_INCLUDES}
@@ -46,6 +47,7 @@ target_include_directories(Inciter PUBLIC
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
                            ${PROJECT_BINARY_DIR}/../Inciter
+                           ${PROJECT_BINARY_DIR}/../LinearSolver
                            ${PROJECT_BINARY_DIR}/../Base
                            ${PROJECT_BINARY_DIR}/../IO
                            ${PROJECT_BINARY_DIR}/../Mesh

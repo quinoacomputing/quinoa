@@ -3,7 +3,7 @@
   \file      src/Control/MeshConv/CmdLine/Parser.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     MeshConv's command line parser
   \details   This file defines the command-line argument parser for the mesh
@@ -76,10 +76,20 @@ CmdLineParser::CmdLineParser( int argc,
   // Print out help on all command-line arguments if the executable was invoked
   // without arguments or the help was requested
   const auto helpcmd = cmdline.get< tag::help >();
-  if (argc == 1 || helpcmd)
+  if (argc == 1 || helpcmd) {
     print.help< tk::QUIET >( tk::meshconv_executable(),
                              cmdline.get< tag::cmdinfo >(),
                              "Command-line Parameters:", "-" );
+    print.mandatory< tk::QUIET >(
+     "The '--" + kw::input().string() + " <filename>' and the "
+     "'--" + kw::output().string() + " <filename>' arguments are mandatory." );
+    print.usage< tk::QUIET >(
+      tk::meshconv_executable(),
+      tk::meshconv_executable() + " -" + *kw::input().alias() + " in.msh -" +
+        *kw::output().alias() + " out.exo",
+      "will read data from 'in.msh' (in Gmsh format) and output it to "
+      "out.exo' (in ExodusII format)" );
+  }
 
   // Print out verbose help for a single keyword if requested
   const auto helpkw = cmdline.get< tag::helpkw >();

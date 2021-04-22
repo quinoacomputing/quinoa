@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/CmdLine/Grammar.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -69,13 +69,6 @@ namespace cmd {
                                tk::grm::Store< tag::io, io_tag >,
                                pegtl::any,
                                tag::io, io_tag > {};
-
-  //! Match and store an input (filename)
-  struct input :
-         tk::grm::process_cmd< use, kw::input,
-                               tk::grm::Store_back< tag::io, tag::input >,
-                               pegtl::any,
-                               tag::io, tag::input > {};
 
   //! Match help on command-line parameters
   struct help :
@@ -147,7 +140,7 @@ namespace cmd {
                      version,
                      license,
                      io< kw::control, tag::control >,
-                     input,
+                     io< kw::input, tag::input >,
                      io< kw::output, tag::output >,
                      io< kw::diagnostics_cmd, tag::diag >,
                      io< kw::screen, tag::screen >,

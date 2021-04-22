@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/Types.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Types for Incitier's parsers
   \details   Types for Incitier's parsers. This file defines the components of
@@ -27,12 +27,14 @@
 #include "Inciter/Options/AMRInitial.hpp"
 #include "Inciter/Options/AMRError.hpp"
 #include "Inciter/Options/PrefIndicator.hpp"
+#include "Inciter/Options/MeshVelocity.hpp"
 #include "Options/PartitioningAlgorithm.hpp"
 #include "Options/TxtFloatFormat.hpp"
 #include "Options/FieldFile.hpp"
 #include "Options/Error.hpp"
 #include "PUPUtil.hpp"
 #include "OutVar.hpp"
+#include "Transfer.hpp"
 
 namespace inciter {
 namespace ctr {
@@ -73,6 +75,12 @@ using amr = tk::TaggedTuple< brigand::list<
   , tag::zminus,  kw::amr_zminus::info::expect::type
   //! Refinement tagging edges with end-point coordinates higher than z coord
   , tag::zplus,  kw::amr_zplus::info::expect::type
+> >;
+
+//! ALE mesh motion options
+using ale = tk::TaggedTuple< brigand::list<
+    tag::ale,           bool                  //!< ALE on/off
+  , tag::meshvelocity,  MeshVelocityType      //!< Mesh velocity option
 > >;
 
 //! p-adaptive refinement options
@@ -138,8 +146,7 @@ using history = tk::TaggedTuple< brigand::list<
 using ios = tk::TaggedTuple< brigand::list<
     tag::nrestart,  int                             //!< Number of restarts
   , tag::control,   kw::control::info::expect::type //!< Control filename
-  //! Input filenames
-  , tag::input,     std::vector< kw::input::info::expect::type >
+  , tag::input,     kw::input::info::expect::type   //!< Input filename
   , tag::output,    kw::output::info::expect::type  //!< Output filename
     //! Refined output (output field data on a refined mesh)
   , tag::refined,   kw::refined::info::expect::type
@@ -160,13 +167,10 @@ using diagnostics = tk::TaggedTuple< brigand::list<
 
 //! Initiation configuration for box IC
 using InitiateParameters = tk::TaggedTuple< brigand::list<
-    tag::init,          std::vector< InitiateType >
-  , tag::point,         std::vector<
-                          std::vector< kw::point::info::expect::type > >
-  , tag::radius,        std::vector<
-                          std::vector< kw::radius::info::expect::type > >
-  , tag::velocity,      std::vector<
-                          std::vector< kw::velocity::info::expect::type > >
+    tag::init,          InitiateType
+  , tag::point,         std::vector< kw::point::info::expect::type >
+  , tag::radius,        kw::radius::info::expect::type
+  , tag::velocity,      kw::velocity::info::expect::type
 > >;
 
 //! Box, given by coordinates, specifying physics variables
@@ -177,20 +181,13 @@ using box = tk::TaggedTuple< brigand::list<
   , tag::ymax,          kw::ymax::info::expect::type
   , tag::zmin,          kw::zmin::info::expect::type
   , tag::zmax,          kw::zmax::info::expect::type
-  , tag::mass,         std::vector<
-                          std::vector< kw::mass::info::expect::type > >
-  , tag::density,       std::vector<
-                          std::vector< kw::density::info::expect::type > >
-  , tag::velocity,      std::vector<
-                          std::vector< kw::velocity::info::expect::type > >
-  , tag::pressure,      std::vector<
-                          std::vector< kw::pressure::info::expect::type > >
-  , tag::energy,        std::vector<
-                          std::vector< kw::energy::info::expect::type > >
-  , tag::energy_content,std::vector< std::vector<
-                          kw::energy_content::info::expect::type > >
-  , tag::temperature,   std::vector<
-                          std::vector< kw::temperature::info::expect::type > >
+  , tag::mass,          kw::mass::info::expect::type
+  , tag::density,       kw::density::info::expect::type
+  , tag::velocity,      std::vector< kw::velocity::info::expect::type >
+  , tag::pressure,      kw::pressure::info::expect::type
+  , tag::energy,        kw::energy::info::expect::type
+  , tag::energy_content,kw::energy_content::info::expect::type
+  , tag::temperature,   kw::temperature::info::expect::type
   , tag::initiate,      InitiateParameters
 > >;
 
@@ -206,7 +203,7 @@ using ic = tk::TaggedTuple< brigand::list<
                           std::vector< kw::energy::info::expect::type > >
   , tag::temperature,   std::vector<
                           std::vector< kw::temperature::info::expect::type > >
-  , tag::box,           box
+  , tag::box,           std::vector< std::vector< box > >
 > >;
 
 //! Boundary condition configuration
@@ -225,9 +222,26 @@ using bc = tk::TaggedTuple< brigand::list<
                               kw::sideset::info::expect::type > >
 > >;
 
+//! Solver coupling
+using couple = tk::TaggedTuple< brigand::list<
+    tag::transfer,  std::vector< Transfer >     //!< List of mesh transfers
+> >;
+
+//! Mesh assignment and configuration
+using mesh = tk::TaggedTuple< brigand::list<
+    tag::id,          std::vector< std::size_t >
+  , tag::filename,    std::vector< std::string >
+  , tag::location,    std::vector<
+                        std::vector< kw::location::info::expect::type > >
+  , tag::orientation, std::vector<
+                        std::vector< kw::orientation::info::expect::type > >
+  , tag::reference,   std::vector< char >
+> >;
+
 //! Transport equation parameters storage
 using TransportPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
+  , tag::mesh,          mesh
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::diffusivity,   std::vector< std::vector<
@@ -263,6 +277,7 @@ using SkipBCParameters = tk::TaggedTuple< brigand::list<
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
+  , tag::mesh,          mesh
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
@@ -317,13 +332,14 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::npar,          std::vector< kw::npar::info::expect::type >
     //! Flux function type
   , tag::flux,          std::vector< FluxType >
-    //! Lua code
-  , tag::lua,           std::string
+    //! Lua code (multiple blocks)
+  , tag::lua,           std::vector< std::string >
 > >;
 
 //! Compressible flow equation parameters storage
 using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
+  , tag::mesh,          mesh
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc

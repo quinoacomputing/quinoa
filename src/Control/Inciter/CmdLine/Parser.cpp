@@ -3,7 +3,7 @@
   \file      src/Control/Inciter/CmdLine/Parser.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Inciter's command line parser
   \details   This file defines the command-line argument parser for the
@@ -83,10 +83,22 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   // Print out help on all command-line arguments if the executable was invoked
   // without arguments or the help was requested
   const auto helpcmd = cmdline.get< tag::help >();
-  if (argc == 1 || helpcmd)
+  if (argc == 1 || helpcmd) {
     print.help< tk::QUIET >( tk::inciter_executable(),
                              cmdline.get< tag::cmdinfo >(),
                              "Command-line Parameters:", "-" );
+    print.mandatory< tk::QUIET >(
+     "The '--" + kw::input().string() + " <filename>' and the "
+     "'--" + kw::control().string() + " <filename>' arguments are mandatory." );
+    print.usage< tk::QUIET >(
+      tk::inciter_executable(),
+      "charmrun +p4 " + tk::inciter_executable() + " -" +
+        *kw::verbose().alias() + " -" + *kw::control().alias() +
+        " vort.q -" + *kw::input().alias() + " unitcube.exo",
+      "will execute the simulation configured in the control file 'vort.q' "
+      "using the mesh in 'unitcube.exo' on 4 CPUs producing verbose screen "
+      "output" );
+  }
 
   // Print out help on all control file keywords if they were requested
   const auto helpctr = cmdline.get< tag::helpctr >();
@@ -127,10 +139,4 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
           "Mandatory control file not specified. "
           "Use '--" + kw::control().string() + " <filename>'" +
           ( ctralias ? " or '-" + *ctralias + " <filename>'" : "" ) + '.' );
-
-  auto inpalias = kw::input().alias();
-  ErrChk( !(cmdline.get< tag::io, tag::input >().empty()),
-          "Mandatory input file not specified. "
-          "Use '--" + kw::input().string() + " <filename>'" +
-          ( inpalias ? " or '-" + *inpalias + " <filename>'" : "" ) + '.' );
 }

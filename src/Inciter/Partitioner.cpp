@@ -3,7 +3,7 @@
   \file      src/Inciter/Partitioner.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Charm++ chare partitioner nodegroup used to perform mesh
              partitioning
@@ -37,7 +37,6 @@ using inciter::Partitioner;
 
 Partitioner::Partitioner(
   std::size_t meshid,
-  const std::vector< Transfer >& t,
   const std::string& filename,
   const tk::PartitionerCallback& cbp,
   const tk::RefinerCallback& cbr,
@@ -51,7 +50,6 @@ Partitioner::Partitioner(
   const std::map< int, std::vector< std::size_t > >& faces,
   const std::map< int, std::vector< std::size_t > >& bnode ) :
   m_meshid( meshid ),
-  m_transfer( t ),
   m_cbp( cbp ),
   m_cbr( cbr ),
   m_cbs( cbs ),
@@ -285,7 +283,6 @@ Partitioner::refine()
       auto cid = CkMyNode() * dist[0] + c;
       // create refiner Charm++ chare array element using dynamic insertion
       m_refiner[ cid ].insert( m_meshid,
-                               m_transfer,
                                m_host,
                                m_sorter,
                                m_meshwriter,

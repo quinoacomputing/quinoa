@@ -4,6 +4,7 @@ add_library(Mesh
             DerivedData.cpp
             Gradients.cpp
             Reorder.cpp
+            CommMap.cpp
             STLMesh.cpp)
 
 target_include_directories(Mesh PUBLIC

@@ -3,7 +3,7 @@
   \file      src/Mesh/DerivedData.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -254,7 +254,8 @@ leakyPartition( const std::vector< int >& esueltet,
 bool
 conforming( const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,
-            bool cerr = true );
+            bool cerr = true,
+            const std::vector< std::size_t >& rid={} );
 
 //! Determine if a point is in a tetrahedron
 bool

@@ -3,7 +3,7 @@
   \file      src/PDE/ConfigureMultiMat.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Register and compile configuration for multi-material compressible
      flow PDE
@@ -28,6 +28,7 @@
 #include "MultiMat/Physics/DG.hpp"
 #include "MultiMat/DGMultiMat.hpp"
 #include "MultiMat/Problem.hpp"
+#include "InfoMesh.hpp"
 
 namespace inciter {
 
@@ -67,6 +68,8 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
+
+  infoMesh< eq >( c, nfo );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
     g_inputdeck.get< tag::param, eq, tag::physics >()[c] ) );

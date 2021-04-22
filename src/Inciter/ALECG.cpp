@@ -3,7 +3,7 @@
   \file      src/Inciter/ALECG.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     ALECG for a PDE system with continuous Galerkin + ALE + RK
   \details   ALECG advances a system of partial differential equations (PDEs)
@@ -160,7 +160,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 void
 ALECG::norm()
 // *****************************************************************************
-// Start (re-)computing boundare point-, and dual-face normals
+// Start (re-)computing boundary point-, and dual-face normals
 // *****************************************************************************
 {
   auto d = Disc();

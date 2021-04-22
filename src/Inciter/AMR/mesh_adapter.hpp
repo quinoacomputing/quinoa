@@ -51,6 +51,8 @@ namespace AMR {
 
             AMR::refinement_t refiner;
 
+            std::pair< bool, std::size_t > check_same_face(std::size_t tet_id,
+              const std::unordered_set<std::size_t>& inactive_nodes);
             void consume_tets(const std::vector<std::size_t>& tetinpoel );
 
             void evaluate_error_estimate();
@@ -78,6 +80,7 @@ namespace AMR {
 
             void lock_tet_edges(size_t tet_id);
             void deactivate_tet_edges(size_t tet_id);
+            void deactivate_deref_tet_edges(size_t tet_id);
             bool check_valid_refinement_case(size_t child_id);
 
             void mark_derefinement();
@@ -94,8 +97,6 @@ namespace AMR {
             size_t convert_derefine_edges_to_points(
                     size_t num_edges_to_derefine,
                     AMR::Refinement_Case  refinement_case);
-
-            std::unordered_set<size_t> child_exclusive_nodes(size_t tet_id);
 
     };
 }

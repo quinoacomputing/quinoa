@@ -3,7 +3,7 @@
   \file      src/PDE/Integrate/Volume.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
-             2019-2020 Triad National Security, LLC.
+             2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Functions for computing volume integrals for a system of PDEs in DG
      methods
@@ -28,10 +28,11 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! Compute volume integrals for DG
 void
 volInt( ncomp_t system,
-        ncomp_t ncomp,
+        std::size_t nmat,
         ncomp_t offset,
         real t,
         const std::size_t ndof,
+        const std::size_t rdof,
         const std::size_t nelem,
         const std::vector< std::size_t >& inpoel,
         const UnsMesh::Coords& coord,
@@ -39,8 +40,10 @@ volInt( ncomp_t system,
         const FluxFn& flux,
         const VelFn& vel,
         const Fields& U,
+        const Fields& P,
         const std::vector< std::size_t >& ndofel,
-        Fields& R );
+        Fields& R,
+        int intsharp=0 );
 
 //! Update the rhs by adding the source term integrals
 void
