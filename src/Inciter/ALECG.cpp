@@ -34,6 +34,7 @@
 #include "CGPDE.hpp"
 #include "Integrate/Mass.hpp"
 #include "FieldOutput.hpp"
+#include "ALE/MeshMotion.hpp"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.hpp"
@@ -72,8 +73,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_dfn(),
   m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
   m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
-  m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
-       g_inputdeck.get< tag::component >().nprop() ),
+  m_u( Disc()->Gid().size(), g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_w( m_u.nunk(), 3 ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
@@ -94,7 +94,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 ),
-  m_state( 0 )
+  m_newmesh( 0 ),
+  m_coordn( Disc()->Coord() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -108,8 +109,14 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 
   auto d = Disc();
 
-  // Zero ALE mesh velocity
+  // Zero ALE mesh velocity by default
   m_w.fill( 0.0 );
+
+  // Assign mesh velocity if configured
+  if (d->ALE())
+    meshvel( g_inputdeck.get< tag::ale, tag::meshvelocity >(),
+             d->Coord(),
+             m_w );
 
   // Perform optional operator-access-pattern mesh node reordering
   if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
@@ -664,14 +671,21 @@ ALECG::BC()
 {
   const auto& coord = Disc()->Coord();
 
-  // Apply symmetry BCs on initial conditions
+  conserved( m_u );
+
+  // Apply Dirichlet BCs
+  for (const auto& [b,bc] : m_bcdir)
+    for (ncomp_t c=0; c<m_u.nprop(); ++c)
+      if (bc[c].first) m_u(b,c,0) = bc[c].second;
+
+  // Apply symmetry BCs
   for (const auto& eq : g_cgpde)
     eq.symbc( m_u, coord, m_bnorm, m_symbcnodes );
 
-  // Apply farfield BCs on initial conditions
-  conserved( m_u );
+  // Apply farfield BCs
   for (const auto& eq : g_cgpde)
     eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+
   volumetric( m_u );
 }
 
@@ -852,7 +866,8 @@ ALECG::rhs()
   // Query and match user-specified boundary conditions to side sets
   if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
-                   m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode );
+                   m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
+                   /* increment = */ false );
   if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
 
   // Communicate rhs to other chares on chare-boundary
@@ -902,36 +917,27 @@ ALECG::solve()
 //  Solve linear systems
 // *****************************************************************************
 {
-  const auto ncomp = m_rhs.nprop();
-
   auto d = Disc();
 
   // Combine own and communicated contributions to rhs
   for (const auto& b : m_rhsc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += b.second[c];
+    for (ncomp_t c=0; c<m_rhs.nprop(); ++c) m_rhs(lid,c,0) += b.second[c];
   }
 
   // clear receive buffer
   tk::destroy(m_rhsc);
 
-  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-
-  // Set Dirichlet BCs
-  for (const auto& [b,bc] : m_bcdir)
-    for (ncomp_t c=0; c<ncomp; ++c)
-      if (bc[c].first) {
-        auto deltat = steady ? m_dtp[b] : d->Dt();
-        m_rhs(b,c,0) = d->Vol()[b] * bc[c].second / deltat / rkcoef[m_stage];
-      }
-
-  // Update Un
-  if (m_stage == 0) m_un = m_u;
+  // Update state at time n
+  if (m_stage == 0) {
+    m_un = m_u;
+    if (d->ALE()) m_coordn = d->Coord();
+  }
 
   // Solve the sytem
-  if (steady) {
+  if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
 
-    // Advance solution
+    // Advance solution, converging to steady state
     for (std::size_t i=0; i<m_u.nunk(); ++i)
       for (ncomp_t c=0; c<m_u.nprop(); ++c)
         m_u(i,c,0) = m_un(i,c,0) + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c,0);
@@ -940,17 +946,15 @@ ALECG::solve()
 
     auto adt = rkcoef[m_stage] * d->Dt();
 
-    // Advance solution
+    // Advance unsteady solution
     m_u = m_un + adt * m_rhs;
 
     // Advance mesh if ALE is enabled
     if (d->ALE()) {
       auto& coord = d->Coord();
-      for (std::size_t i=0; i<coord[0].size(); ++i) {
-        coord[0][i] += adt * m_w(i,0,0);
-        coord[1][i] += adt * m_w(i,1,0);
-        coord[2][i] += adt * m_w(i,2,0);
-      }
+      for (std::size_t j=0; j<3; ++j)
+        for (std::size_t i=0; i<coord[j].size(); ++i)
+          coord[j][i] = m_coordn[j][i] + adt * m_w(i,j,0);
     }
 
   }
@@ -959,9 +963,9 @@ ALECG::solve()
   BC();
 
   // Activate SDAG waits for re-computing the normals
-  m_state = 0;  // recompute normals after ALE (if enabled)
+  m_newmesh = 0;  // recompute normals after ALE (if enabled)
   thisProxy[ thisIndex ].wait4norm();
-  thisProxy[ thisIndex ].wait4trans();
+  thisProxy[ thisIndex ].wait4mesh();
 
   // Recompute mesh volumes if ALE is enabled
   if (d->ALE()) {
@@ -1007,8 +1011,8 @@ ALECG::ale()
     // Compute diagnostics, e.g., residuals
     conserved( m_u );
     conserved( m_un );
-    auto diag_computed =
-      m_diag.compute( *d, m_u, m_un, m_bnorm, m_symbcnodes, m_farfieldbcnodes );
+    auto diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
+                                         m_symbcnodes, m_farfieldbcnodes );
     volumetric( m_u );
     volumetric( m_un );
     // Increase number of iterations and physical time
@@ -1059,9 +1063,9 @@ ALECG::refine( const std::vector< tk::real >& l2res )
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
 
   // Activate SDAG waits for re-computing the normals
-  m_state = 1;  // recompute normals after AMR (if enabled)
+  m_newmesh = 1;  // recompute normals after AMR (if enabled)
   thisProxy[ thisIndex ].wait4norm();
-  thisProxy[ thisIndex ].wait4trans();
+  thisProxy[ thisIndex ].wait4mesh();
 
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
@@ -1194,6 +1198,19 @@ ALECG::writeFields( CkCallback c )
     conserved( m_u );
     auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
     volumetric( m_u );
+
+    // Output mesh velocity if ALE is enabled
+    if (d->ALE()) {
+       nodefieldnames.push_back( "x mesh velocity" );
+       nodefieldnames.push_back( "y mesh velocity" );
+       nodefieldnames.push_back( "z mesh velocity" );
+       nodefieldnames.push_back( "volume" );
+       nodefields.push_back( m_w.extract(0,0) );
+       nodefields.push_back( m_w.extract(1,0) );
+       nodefields.push_back( m_w.extract(2,0) );
+       nodefields.push_back( d->Vol() );
+    }
+
     // Collect field output names for analytical solutions
     for (const auto& eq : g_cgpde)
       analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );

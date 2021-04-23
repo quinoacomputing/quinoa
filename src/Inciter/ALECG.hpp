@@ -221,7 +221,8 @@ class ALECG : public CBase_ALECG {
       p | m_dtp;
       p | m_tp;
       p | m_finished;
-      p | m_state;
+      p | m_newmesh;
+      p | m_coordn;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -325,7 +326,9 @@ class ALECG : public CBase_ALECG {
     //! True in the last time step
     int m_finished;
     //! State indicating the reason we are recomputing the normals
-    int m_state;
+    int m_newmesh;
+    //! Mesh coordinates at the time n for ALE
+    tk::UnsMesh::Coords m_coordn;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

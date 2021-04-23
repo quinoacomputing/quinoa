@@ -687,18 +687,22 @@ class CompFlow {
     //! \param[in] dtp Time step size for each mesh node
     //! \param[in] ss Pair of side set ID and (local) node IDs on the side set
     //! \param[in] coord Mesh node coordinates
+    //! \param[in] increment If true, evaluate the solution increment between
+    //!   t and t+dt for Dirichlet BCs. If false, evlauate the solution instead.
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
-    //!   that instead of the actual boundary condition value, we return the
-    //!   increment between t+deltat and t, since that is what the solution requires
-    //!   as we solve for the soution increments and not the solution itself.
+    //!   that if increment is true, instead of the actual boundary condition
+    //!   value, we return the increment between t+deltat and t, since,
+    //!   depending on client code and solver, that may be what the solution
+    //!   requires.
     std::map< std::size_t, std::vector< std::pair<bool,real> > >
     dirbc( real t,
            real deltat,
            const std::vector< tk::real >& tp,
            const std::vector< tk::real >& dtp,
            const std::pair< const int, std::vector< std::size_t > >& ss,
-           const std::array< std::vector< real >, 3 >& coord ) const
+           const std::array< std::vector< real >, 3 >& coord,
+           bool increment ) const
     {
       using tag::param; using tag::bcdir;
       using NodeBC = std::vector< std::pair< bool, real > >;
@@ -715,8 +719,14 @@ class CompFlow {
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               if (steady) { t = tp[n]; deltat = dtp[n]; }
-              auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
-                               t, deltat, Problem::initialize );
+              auto s = increment ?
+                solinc( m_system, m_ncomp, x[n], y[n], z[n],
+                        t, deltat, Problem::initialize ) :
+                Problem::initialize( m_system, m_ncomp, x[n], y[n], z[n],
+                                     t+deltat );
+              if ( !skipPoint(x[n],y[n],z[n]) && stagPoint(x[n],y[n],z[n]) ) {
+                s[1] = s[2] = s[3] = 0.0;
+              }
               bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
                          {true,s[4]} }};
             }
@@ -1060,8 +1070,8 @@ class CompFlow {
           ruR = rvR = rwR = 0.0;
 
         // compute MUSCL reconstruction in edge-end points
-        muscl( p, q, coord, G, rL, ruL, rvL, rwL, reL,
-               rR, ruR, rvR, rwR, reR );
+        muscl( p, q, coord, G,
+               rL, ruL, rvL, rwL, reL, rR, ruR, rvR, rwR, reR );
 
         // convert back to conserved variables
         reL = (reL + 0.5*(ruL*ruL + rvL*rvL + rwL*rwL)) * rL;
@@ -1074,8 +1084,9 @@ class CompFlow {
         rwR *= rR;
 
         // compute Riemann flux using edge-end point states
-        real f[5];
-        Rusanov::flux( dfn[e*6+0], dfn[e*6+1], dfn[e*6+2],
+        real f[m_ncomp];
+        Rusanov::flux( m_system,
+                       dfn[e*6+0], dfn[e*6+1], dfn[e*6+2],
                        dfn[e*6+3], dfn[e*6+4], dfn[e*6+5],
                        rL, ruL, rvL, rwL, reL,
                        rR, ruR, rvR, rwR, reR,
@@ -1307,36 +1318,30 @@ class CompFlow {
         real f[m_ncomp][3];
         real p, vn;
         int sym = symbctri[e];
-        real auA = ruA/rA - w1A;
-        real avA = rvA/rA - w2A;
-        real awA = rwA/rA - w3A;
-        p = eos_pressure< eq >( m_system, rA, auA, avA, awA, reA );
-        vn = sym ? 0.0 : (nx*auA + ny*avA + nz*awA);
+        p = eos_pressure< eq >( m_system, rA, ruA/rA, rvA/rA, rwA/rA, reA );
+        vn = sym ? (nx*(-w1A) + ny*(-w2A) + nz*(-w3A))
+                 : (nx*(ruA/rA-w1A) + ny*(rvA/rA-w2A) + nz*(rwA/rA-w3A));
         f[0][0] = rA*vn;
         f[1][0] = ruA*vn + p*nx;
         f[2][0] = rvA*vn + p*ny;
         f[3][0] = rwA*vn + p*nz;
-        f[4][0] = (reA + p)*vn;
-        real auB = ruB/rB - w1B;
-        real avB = rvB/rB - w2B;
-        real awB = rwB/rB - w3B;
-        p = eos_pressure< eq >( m_system, rB, auB, avB, awB, reB );
-        vn = sym ? 0.0 : (nx*auB + ny*avB + nz*awB);
+        f[4][0] = reA*vn + p*(sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA)/rA);
+        p = eos_pressure< eq >( m_system, rB, ruB/rB, rvB/rB, rwB/rB, reB );
+        vn = sym ? (nx*(-w1B) + ny*(-w2B) + nz*(-w3B))
+                 : (nx*(ruB/rB-w1B) + ny*(rvB/rB-w2B) + nz*(rwB/rB-w3B));
         f[0][1] = rB*vn;
         f[1][1] = ruB*vn + p*nx;
         f[2][1] = rvB*vn + p*ny;
         f[3][1] = rwB*vn + p*nz;
-        f[4][1] = (reB + p)*vn;
-        real auC = ruC/rC - w1C;
-        real avC = rvC/rC - w2C;
-        real awC = rwC/rC - w3C;
-        p = eos_pressure< eq >( m_system, rC, auC, avC, awC, reC );
-        vn = sym ? 0.0 : (nx*auC + ny*avC + nz*awC);
+        f[4][1] = reB*vn + p*(sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB)/rB);
+        p = eos_pressure< eq >( m_system, rC, ruC/rC, rvC/rC, rwC/rC, reC );
+        vn = sym ? (nx*(-w1C) + ny*(-w2C) + nz*(-w3C))
+                 : (nx*(ruC/rC-w1C) + ny*(rvC/rC-w2C) + nz*(rwC/rC-w3C));
         f[0][2] = rC*vn;
         f[1][2] = ruC*vn + p*nx;
         f[2][2] = rvC*vn + p*ny;
         f[3][2] = rwC*vn + p*nz;
-        f[4][2] = (reC + p)*vn;
+        f[4][2] = reC*vn + p*(sym ? 0.0 : (nx*ruC + ny*rvC + nz*rwC)/rC);
         // compute face area
         auto A6 = tk::area( x[N[0]], x[N[1]], x[N[2]],
                             y[N[0]], y[N[1]], y[N[2]],

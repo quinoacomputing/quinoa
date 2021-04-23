@@ -267,6 +267,11 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   if (sym.size() > c)
     nfo.emplace_back( "Symmetry BC sideset(s)", parameters( sym[c] ) );
 
+  const auto& dir =
+    g_inputdeck.get< tag::param, eq, tag::bc, tag::bcdir >();
+  if (dir.size() > c)
+    nfo.emplace_back( "Dirichlet BC sideset(s)", parameters( dir[c] ) );
+
   // FCT
 
   auto bool_to_string = [](bool B) -> std::string {

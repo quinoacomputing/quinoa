@@ -6605,6 +6605,16 @@ struct none_info {
 };
 using none = keyword< none_info, TAOCPP_PEGTL_STRING("none") >;
 
+struct sine_info {
+  static std::string name() { return "sine"; }
+  static std::string shortDescription() { return
+    "Prescribe sinusoidal mesh velocity for ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to prescribe a sinusoidal mesh velocity
+       for Arbitrary-Lagrangian-Eulerian (ALE) mesh motion.)"; }
+};
+using sine = keyword< sine_info, TAOCPP_PEGTL_STRING("sine") >;
+
 struct fluid_info {
   static std::string name() { return "fluid"; }
   static std::string shortDescription() { return
@@ -6639,6 +6649,7 @@ struct meshvelocity_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + none::string() + "\' | \'"
+                  + sine::string() + "\' | \'"
                   + fluid::string() + "\' | \'"
                   + helmholtz::string() + '\'';
     }

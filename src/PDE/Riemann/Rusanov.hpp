@@ -30,6 +30,7 @@ struct Rusanov {
   using real = tk::real;
 
   //! Rusanov approximate Riemann solver flux function
+  //! \param[in] system Equation system index
   //! \param[in] nx X component of the surface normal
   //! \param[in] ny Y component of the surface normal
   //! \param[in] nz Z component of the surface normal
@@ -44,11 +45,17 @@ struct Rusanov {
   //! \param[in] rvL Left Y momentum
   //! \param[in] rwL Left Z momentum
   //! \param[in] reL Left total specific energy
-  //! \param[in] rL Left density
-  //! \param[in] ruL Left X momentum
-  //! \param[in] rvL Left Y momentum
-  //! \param[in] rwL Left Z momentum
-  //! \param[in] reL Left total specific energy
+  //! \param[in] rL Right density
+  //! \param[in] ruR Right X momentum
+  //! \param[in] rvR Right Y momentum
+  //! \param[in] rwR Right Z momentum
+  //! \param[in] reR Right total specific energy
+  //! \param[in] w1L Left X mesh velocity
+  //! \param[in] w2L Left Y mesh velocity
+  //! \param[in] w3L Left Z mesh velocity
+  //! \param[in] w1R Right X mesh velocity
+  //! \param[in] w2R Right Y mesh velocity
+  //! \param[in] w3R Right Z mesh velocity
   //! \param[in,out] fr Riemann solution for density according to Rusanov
   //! \param[in,out] fru Riemann solution for X momenutm according to Rusanov
   //! \param[in,out] frv Riemann solution for Y momenutm according to Rusanov
@@ -57,7 +64,8 @@ struct Rusanov {
   //!   to Rusanov
   #pragma omp declare simd
   static void
-  flux( real nx, real ny, real nz,
+  flux( std::size_t system,
+        real nx, real ny, real nz,
         real mx, real my, real mz,
         real rL, real ruL, real rvL, real rwL, real reL,
         real rR, real ruR, real rvR, real rwR, real reR,
@@ -72,11 +80,13 @@ struct Rusanov {
     auto vr = rvR/rR - w2R;
     auto wr = rwR/rR - w3R;
 
-    auto pl = eos_pressure< tag::compflow >( 0, rL, ul, vl, wl, reL );
-    auto pr = eos_pressure< tag::compflow >( 0, rR, ur, vr, wr, reR );
+    auto pl =
+      eos_pressure< tag::compflow >( system, rL, ruL/rL, rvL/rL, rwL/rL, reL );
+    auto pr =
+      eos_pressure< tag::compflow >( system, rR, ruR/rR, rvR/rR, rwR/rR, reR );
 
-    auto al = eos_soundspeed< tag::compflow >( 0, rL, pl );
-    auto ar = eos_soundspeed< tag::compflow >( 0, rR, pr );
+    auto al = eos_soundspeed< tag::compflow >( system, rL, pl );
+    auto ar = eos_soundspeed< tag::compflow >( system, rR, pr );
 
     // dissipation
     real len = tk::length( {mx,my,mz} );
@@ -95,7 +105,10 @@ struct Rusanov {
     fru = 0.5*(ruL*vnl + pl*nx + ruR*vnr + pr*nx - smax*(ruR - ruL));
     frv = 0.5*(rvL*vnl + pl*ny + rvR*vnr + pr*ny - smax*(rvR - rvL));
     frw = 0.5*(rwL*vnl + pl*nz + rwR*vnr + pr*nz - smax*(rwR - rwL));
-    fre = 0.5*((reL + pl)*vnl + (reR + pr)*vnr - smax*(reR - reL));
+    fre = 0.5*(reL*vnl + reR*vnr
+               + pl*(ruL*nx + rvL*ny + rwL*nz)/rL
+               + pr*(ruR*nx + rvR*ny + rwR*nz)/rR
+               - smax*(reR - reL));
   }
 
   //! Flux type accessor

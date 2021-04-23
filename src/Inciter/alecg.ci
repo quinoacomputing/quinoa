@@ -74,9 +74,9 @@ module alecg {
       entry void wait4rhs() {
         when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } }
 
-      entry void wait4trans() {
+      entry void wait4mesh() {
         when norm_complete(), resize_complete() serial "trans" {
-          if (m_state == 0) ale(); else transfer();
+          if (m_newmesh == 0) ale(); else transfer();
         }
       }
 

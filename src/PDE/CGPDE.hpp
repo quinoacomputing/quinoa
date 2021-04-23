@@ -165,8 +165,8 @@ class CGPDE {
       const std::vector< real >& tp,
       real V,
       tk::Fields& R ) const
-    { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
-            symbctri, vol, edgenode, edgeid, boxnodes, G, U, W, tp, V, R ); }
+    { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
+        esup, symbctri, vol, edgenode, edgeid, boxnodes, G, U, W, tp, V, R ); }
 
     //! Public interface for computing the minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
@@ -190,8 +190,9 @@ class CGPDE {
            const std::vector< real >& tp,
            const std::vector< real >& dtp,
            const std::pair< const int, std::vector< std::size_t > >& sides,
-           const std::array< std::vector< real >, 3 >& coord ) const
-    { return self->dirbc( t, deltat, tp, dtp, sides, coord ); }
+           const std::array< std::vector< real >, 3 >& coord,
+           bool increment ) const
+    { return self->dirbc( t, deltat, tp, dtp, sides, coord, increment ); }
 
     //! Public interface to set symmetry boundary conditions at nodes
     void
@@ -327,7 +328,8 @@ class CGPDE {
              const std::vector< real >&,
              const std::vector< real >&,
              const std::pair< const int, std::vector< std::size_t > >&,
-             const std::array< std::vector< real >, 3 >& ) const = 0;
+             const std::array< std::vector< real >, 3 >&,
+             bool ) const = 0;
       virtual void symbc(
         tk::Fields& U,
         const std::array< std::vector< real >, 3 >&,
@@ -415,8 +417,8 @@ class CGPDE {
         const std::vector< real >& tp,
         real V,
         tk::Fields& R ) const override
-      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
-             symbctri, vol, edgenode, edgeid, boxnodes, G, U, W, tp, V, R ); }
+      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
+        esup, symbctri, vol, edgenode, edgeid, boxnodes, G, U, W, tp, V, R ); }
       real dt( const std::array< std::vector< real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
                tk::real t,
@@ -433,8 +435,10 @@ class CGPDE {
              const std::vector< real >& tp,
              const std::vector< real >& dtp,
              const std::pair< const int, std::vector< std::size_t > >& sides,
-             const std::array< std::vector< real >, 3 >& coord ) const
-        override { return data.dirbc( t, deltat, tp, dtp, sides, coord ); }
+             const std::array< std::vector< real >, 3 >& coord,
+             bool increment ) const
+        override { return data.dirbc( t, deltat, tp, dtp, sides, coord,
+                                      increment ); }
       void symbc(
         tk::Fields& U,
         const std::array< std::vector< real >, 3 >& coord,

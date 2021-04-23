@@ -493,8 +493,7 @@ Discretization::resizePostALE( const tk::UnsMesh::Coords& coord )
   // update mesh node coordinates
   m_coord = coord;
 
-  // Set flag that indicates that we are during a mesh refinement step during
-  // time stepping
+  // Set flag that indicates that we are during time stepping
   m_initial = 0.0;
 }
 
