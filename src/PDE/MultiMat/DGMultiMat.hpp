@@ -185,7 +185,7 @@ class MultiMat {
 
       for (std::size_t e=0; e<nielem; ++e)
       {
-        std::vector< tk::real > R((nmat+3)*ndof, 0.0);
+        std::vector< tk::real > R(nprim()*ndof, 0.0);
 
         auto ng = tk::NGvol(ndof);
 
@@ -209,7 +209,7 @@ class MultiMat {
 
           auto w = wgp[igp] * geoElem(e, 0, 0);
 
-          auto state = tk::eval_state( 3*nmat+3, 0, rdof, ndof, e, unk, B );
+          auto state = tk::eval_state( m_ncomp, 0, rdof, ndof, e, unk, B );
 
           // bulk density at quadrature point
           tk::real rhob(0.0);
@@ -222,23 +222,25 @@ class MultiMat {
                  state[momentumIdx(nmat, 1)]/rhob,
                  state[momentumIdx(nmat, 2)]/rhob };
 
-          std::vector< tk::real > pri(nmat+3, 0.0);
+          std::vector< tk::real > pri(nprim(), 0.0);
 
           // Evaluate material pressure at quadrature point
           for(std::size_t imat = 0; imat < nmat; imat++)
           {
             auto alphamat = state[volfracIdx(nmat, imat)];
-            auto arhomat  = state[densityIdx(nmat, imat)];
+            auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
-            pri[imat] = eos_pressure< tag::multimat >( m_system, arhomat, vel[0], vel[1],
-              vel[2], arhoemat, alphamat, imat );
+            pri[pressureIdx(nmat,imat)] = eos_pressure< tag::multimat >(
+              m_system, arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat,
+              imat);
           }
 
-          pri[nmat] = vel[0];
-          pri[nmat+1] = vel[1];
-          pri[nmat+2] = vel[2];
+          // Evaluate bulk velocity at quadrature point
+          for (std::size_t idir=0; idir<3; ++idir) {
+            pri[velocityIdx(nmat,idir)] = vel[idir];
+          }
 
-          for(std::size_t k = 0; k < nmat+3; k++)
+          for(std::size_t k = 0; k < nprim(); k++)
           {
             auto mark = k * ndof;
             R[mark] += w * pri[k];
@@ -251,7 +253,7 @@ class MultiMat {
         }
 
         // Update the DG solution of primitive variables
-        for(std::size_t k = 0; k < nmat+3; k++)
+        for(std::size_t k = 0; k < nprim(); k++)
         {
           auto mark = k * ndof;
           auto rmark = k * rdof;
@@ -363,7 +365,7 @@ class MultiMat {
           auto Pck =
             g_inputdeck.get< tag::param, eq, tag::pstiff >()[ m_system ][k];
           // for positive volume fractions
-          if (alk > 0.0)
+          if (matExists(alk))
           {
             // check if volume fraction is lesser than threshold (al_eps) and
             // if the material (effective) pressure is negative. If either of
@@ -416,6 +418,14 @@ class MultiMat {
             unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14
               * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14 *
+              p_target;
+          }
+          else {
+            auto rhok = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) / alk;
+            // update state of trace material
+            unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = alk
+              * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
+            prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk *
               p_target;
           }
         }
@@ -1132,16 +1142,14 @@ class MultiMat {
       for (std::size_t k=0; k<nmat; ++k)
         rho += ugp[densityIdx(nmat, k)];
 
-      auto u = ugp[momentumIdx(nmat, 0)] / rho;
-      auto v = ugp[momentumIdx(nmat, 1)] / rho;
-      auto w = ugp[momentumIdx(nmat, 2)] / rho;
+      auto u = ugp[ncomp+velocityIdx(nmat,0)];
+      auto v = ugp[ncomp+velocityIdx(nmat,1)];
+      auto w = ugp[ncomp+velocityIdx(nmat,2)];
 
       std::vector< tk::real > apk( nmat, 0.0 );
       for (std::size_t k=0; k<nmat; ++k)
       {
-        apk[k] = eos_pressure< tag::multimat >( system,
-          ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
-          ugp[volfracIdx(nmat, k)], k );
+        apk[k] = ugp[ncomp+pressureIdx(nmat,k)];
         p += apk[k];
       }
 
