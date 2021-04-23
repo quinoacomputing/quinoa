@@ -61,6 +61,12 @@ module dg {
                          const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
+      entry void comlayer( int fromch,
+                           const std::vector< std::size_t >& tetid,
+                           const std::vector< std::size_t >& ndof );
+      entry void comsmooth( int fromch,
+                            const std::vector< std::size_t >& tetid,
+                            const std::vector< std::size_t >& ndof );
       entry void refine( const std::vector< tk::real >& l2ref );
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
@@ -89,7 +95,13 @@ module dg {
         when ownsol_complete(), comsol_complete() serial "sol" { reco(); } }
 
       entry void wait4reco() {
-        when ownreco_complete(), comreco_complete() serial "reco" { lim(); } }
+        when ownreco_complete(), comreco_complete() serial "reco" { layer(); } }
+
+      entry void wait4layer() {
+        when ownlayer_complete(), comlayer_complete() serial "layer" { smooth(); } }
+
+      entry void wait4smooth() {
+        when ownsmooth_complete(), comsmooth_complete() serial "smooth" { lim(); } }
 
       entry void wait4lim() {
         when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
@@ -108,6 +120,10 @@ module dg {
       entry void comsol_complete();
       entry void ownreco_complete();
       entry void comreco_complete();
+      entry void ownlayer_complete();
+      entry void comlayer_complete();
+      entry void ownsmooth_complete();
+      entry void comsmooth_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
       entry void ownnod_complete( CkCallback c );

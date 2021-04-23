@@ -420,6 +420,61 @@ VertexBased_P1(
 
   for (std::size_t e=0; e<nelem; ++e)
   {
+    auto ng = tk::NGvol(ndofel[e]);
+
+    // arrays for quadrature points
+    std::array< std::vector< tk::real >, 3 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+    tk::real dU(0), U2(0);
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<ng; ++igp)
+    { 
+      auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+                                 coordgp[2][igp] );
+      
+      auto state = tk::eval_state( ncomp, 0, ndof, ndofel[e], e, U, B );
+      
+      U2 += wgp[igp] * state[0] * state[0];
+      
+      if(ndofel[e] > 4)
+      {  
+         auto dU_p2 = U(e, 4, 0) * B[4]
+                    + U(e, 5, 0) * B[5]
+                    + U(e, 6, 0) * B[6]
+                    + U(e, 7, 0) * B[7]
+                    + U(e, 8, 0) * B[8]
+                    + U(e, 9, 0) * B[9];
+         
+         dU += wgp[igp] * dU_p2 * dU_p2;
+      }
+      else if(ndofel[e] > 1)
+      {  
+         auto dU_p1 = U(e, 1, 0) * B[1]
+                    + U(e, 2, 0) * B[2]
+                    + U(e, 3, 0) * B[3];
+         
+         dU += wgp[igp] * dU_p1 * dU_p1;
+      }
+    }
+
+    auto Ind = dU / U2;
+
+    bool shock_detec(false);
+
+    // Evaluate the shock detection indicator
+    //auto Ind = eval_indicator(e, ncomp, ndofel[e], ndofel, U);
+    if(Ind > 1e-6)
+      shock_detec = true;
+
     // If an rDG method is set up (P0P1), then, currently we compute the P1
     // basis functions and solutions by default. This implies that P0P1 is
     // unsupported in the p-adaptive DG (PDG). This is a workaround until we
@@ -434,13 +489,6 @@ VertexBased_P1(
     {
       dof_el = ndofel[e];
     }
-
-    bool shock_detec(false);
-
-    // Evaluate the shock detection indicator
-    auto Ind = eval_indicator(e, ncomp, dof_el, ndofel, U);
-    if(Ind > 1e-6)
-      shock_detec = true;
 
     if (dof_el > 1 && shock_detec == true)
     {

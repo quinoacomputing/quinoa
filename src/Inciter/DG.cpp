@@ -63,6 +63,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_nlim( 0 ),
   m_nnod( 0 ),
   m_nreco( 0 ),
+  m_nlayer( 0 ),
+  m_nsmooth( 0 ),
   m_inpoel( Disc()->Inpoel() ),
   m_coord( Disc()->Coord() ),
   m_fd( m_inpoel, bface, tk::remap(triinpoel,Disc()->Lid()) ),
@@ -200,6 +202,8 @@ DG::resizeComm()
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
     thisProxy[ thisIndex ].wait4reco();
+    thisProxy[ thisIndex ].wait4layer();
+    thisProxy[ thisIndex ].wait4smooth();
     thisProxy[ thisIndex ].wait4lim();
     thisProxy[ thisIndex ].wait4nod();
   }
@@ -1684,7 +1688,7 @@ DG::reco()
     }
   }
 
-  if (pref && m_stage==0) propagate_ndof();
+  if (pref && m_stage==0) smoothingNDOF();
 
   if (rdof > 1) {
     auto d = Disc();
@@ -1777,6 +1781,135 @@ DG::comreco( int fromch,
 }
 
 void
+DG::layer()
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  for (const auto& b : m_bid) {
+    Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[0][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c) {
+      m_u(b.first,c,0) = m_uc[0][b.second][c];
+    }
+    for (std::size_t c=0; c<m_p.nprop(); ++c) {
+      m_p(b.first,c,0) = m_pc[0][b.second][c];
+    }
+    if (pref && m_stage == 0) {
+      m_ndof[ b.first ] = m_ndofc[0][ b.second ];
+    }
+  }
+
+  if (pref && m_stage==0) propagate_ndof();
+
+  if (m_sendGhost.empty())
+    comlayer_complete();
+  else
+    for(const auto& [cid, ghostdata] : m_sendGhost) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::size_t > ndof;
+      std::size_t j = 0;
+      for(const auto& i : ghostdata) {
+        Assert( i < m_fd.Esuel().size()/4, "Sending reconstructed ghost "
+          "data" );
+        tetid[j] = i;
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
+        ++j;
+      }
+      thisProxy[ cid ].comlayer( thisIndex, tetid, ndof );
+    }
+
+  ownlayer_complete();
+}
+
+void
+DG::comlayer( int fromch,
+            const std::vector< std::size_t >& tetid,
+            const std::vector< std::size_t >& ndof )
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  if (pref && m_stage == 0)
+    Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comreco()" );
+
+  const auto& n = tk::cref_find( m_ghost, fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( n, tetid[i] );
+    Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
+    auto b = tk::cref_find( m_bid, j );
+    if (pref && m_stage == 0) {
+      Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
+      m_ndofc[1][b] = ndof[i];
+    }
+  }
+
+  if (++m_nlayer == m_sendGhost.size()) {
+    m_nlayer = 0;
+    comlayer_complete();
+  }
+}
+
+void
+DG::smooth()
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  for (const auto& b : m_bid) {
+    if (pref && m_stage == 0) {
+      m_ndof[ b.first ] = m_ndofc[0][ b.second ];
+    }
+  }
+
+  if (pref && m_stage==0) smoothingNDOF();
+
+  if (m_sendGhost.empty())
+    comsmooth_complete();
+  else
+    for(const auto& [cid, ghostdata] : m_sendGhost) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::size_t > ndof;
+      std::size_t j = 0;
+      for(const auto& i : ghostdata) {
+        Assert( i < m_fd.Esuel().size()/4, "Sending ndof data" );
+        tetid[j] = i;
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
+        ++j;
+      }
+      thisProxy[ cid ].comsmooth( thisIndex, tetid, ndof );
+    }
+
+  ownsmooth_complete();
+}
+
+void
+DG::comsmooth( int fromch,
+               const std::vector< std::size_t >& tetid,
+               const std::vector< std::size_t >& ndof )
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  if (pref && m_stage == 0)
+    Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsmooth()" );
+
+  const auto& n = tk::cref_find( m_ghost, fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( n, tetid[i] );
+    Assert( j >= m_fd.Esuel().size()/4, "Receiving ndof data" );
+    auto b = tk::cref_find( m_bid, j );
+    if (pref && m_stage == 0) {
+      Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
+      m_ndofc[1][b] = ndof[i];
+    }
+  }
+
+  if (++m_nsmooth == m_sendGhost.size()) {
+    m_nsmooth = 0;
+    comsmooth_complete();
+  }
+}
+
+void
 DG::lim()
 // *****************************************************************************
 // Compute limiter function
@@ -1837,6 +1970,46 @@ DG::lim()
   ownlim_complete();
 }
 
+void DG::smoothingNDOF()
+{
+  auto d = Disc();
+  const auto& inpoel = d->Inpoel();
+  const auto& coord = d->Coord();
+  const auto npoin = coord[0].size();
+  const auto nelem = m_fd.Esuel().size()/4;
+  std::vector<std::size_t> node_ndof(npoin, 1);
+
+  for(std::size_t e = 0; e < nelem; e++)
+  {
+    for(std::size_t inode = 0; inode < 4; inode++)
+    {
+      auto ip = inpoel[4*e+inode];
+      const auto& pesup = tk::cref_find(m_esup, ip);
+      for(auto er : pesup)
+        node_ndof[ip] = std::max(m_ndof[er], node_ndof[ip]);
+    }
+  }
+
+  for(std::size_t e = 0; e < nelem; e++)
+  {
+    std::size_t counter_p2(0);
+    std::size_t counter_p1(0);
+    for(std::size_t inode = 0; inode < 4; inode++)
+    {
+      auto node = inpoel[4*e+inode];
+      if(node_ndof[node] == 10)
+        counter_p2++;
+      else if (node_ndof[node] == 4)
+        counter_p1++;
+    }
+
+    if(counter_p2 == 4 && m_ndof[e] == 4)
+      m_ndof[e] = 10;
+    else if(counter_p1 == 4 && m_ndof[e] == 1)
+      m_ndof[e] = 4;
+  }
+}
+
 void
 DG::propagate_ndof()
 // *****************************************************************************
@@ -1845,28 +2018,49 @@ DG::propagate_ndof()
 //!   been p-refined as a result of an error indicator.
 // *****************************************************************************
 {
-  const auto& esuf = m_fd.Esuf();
+  auto d = Disc();
+  const auto& coord = d->Coord();
+  const auto& inpoel = d->Inpoel();
+  const auto npoin = coord[0].size();
+  const auto nelem = m_fd.Esuel().size()/4;
+  std::vector<std::size_t> node_ndof(npoin, 1);
 
-  // Copy number of degrees of freedom for each cell
-  auto ndof = m_ndof;
-
-  // p-refine all neighboring elements of elements that have been p-refined as a
-  // result of error indicators
-  for( auto f=m_fd.Nbfac(); f<esuf.size()/2; ++f )
+  for(std::size_t e = 0; e < nelem; e++)
   {
-    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
-
-    if (m_ndof[el] > m_ndof[er])
-      ndof[er] = m_ndof[el];
-
-    if (m_ndof[el] < m_ndof[er])
-      ndof[el] = m_ndof[er];
+    for(std::size_t inode = 0; inode < 4; inode++)
+    {
+      auto ip = inpoel[4*e+inode];
+      const auto& pesup = tk::cref_find(m_esup, ip);
+      for(auto er : pesup)
+        node_ndof[ip] = std::max(m_ndof[er], node_ndof[ip]);
+    }
   }
 
-  // Update number of degrees of freedom for each cell
-  m_ndof = ndof;
+  for(std::size_t e = 0; e < nelem; e++)
+  {
+    std::size_t counter_p2(0);
+    std::size_t counter_p1(0);
+    for(std::size_t inode = 0; inode < 4; inode++)
+    {
+      auto node = inpoel[4*e+inode];
+      if(node_ndof[node] == 10)
+        counter_p2++;
+      else if (node_ndof[node] == 4)
+        counter_p1++;
+    }
+
+    if(counter_p2 > 0 && m_ndof[e] < 10)
+    {
+      if(m_ndof[e] == 4)
+        m_ndof[e] = 10;
+      if(m_ndof[e] == 1)
+        m_ndof[e] = 4;
+    }
+    else if(counter_p1 > 0 && m_ndof[e] < 4)
+      m_ndof[e] = 4;
+  }
 }
+
 
 void
 DG::comlim( int fromch,
@@ -1991,6 +2185,8 @@ DG::solve( tk::real newdt )
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4reco();
+  thisProxy[ thisIndex ].wait4layer();
+  thisProxy[ thisIndex ].wait4smooth();
   thisProxy[ thisIndex ].wait4lim();
   thisProxy[ thisIndex ].wait4nod();
 

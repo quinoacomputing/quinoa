@@ -78,8 +78,8 @@ void spectral_decay( std::size_t nunk,
   // observed. And then a linear projection is performed to map epsL and espH
   // to the range of [0, 1] so that it could be controlled by tolref.
 
-  auto epsH = std::pow(10, -4 - tolref * 4.0);
-  auto epsL = std::pow(10, -6 - tolref * 8.0);
+  auto epsH = std::pow(10, -3 - tolref * 4.0);
+  auto epsL = std::pow(10, -4 - tolref * 8.0);
 
   // Marke the ndof according to the adaptive indicator
   for (std::size_t e=0; e<esuel.size()/4; ++e)
@@ -88,7 +88,7 @@ void spectral_decay( std::size_t nunk,
     {
       if(ndofel[e] == 4)
         ndofel[e] = 1;
-      else if(ndofel[e] == 10)
+      else if(ndofel[e] == 10 && Ind[e] < std::pow(10, -5.5))
         ndofel[e] = 4;
     }
     else if(Ind[e] > epsH)                     // Refinement

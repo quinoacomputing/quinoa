@@ -142,6 +142,14 @@ class DG : public CBase_DG {
                   const std::vector< std::vector< tk::real > >& volfm,
                   const std::vector< std::size_t >& ndof );
 
+    void comlayer( int fromch,
+                   const std::vector< std::size_t >& tetid,
+                   const std::vector< std::size_t >& ndof );
+
+    void comsmooth( int fromch,
+                    const std::vector< std::size_t >& tetid,
+                    const std::vector< std::size_t >& ndof );
+
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
                  std::size_t fromstage,
@@ -214,6 +222,8 @@ class DG : public CBase_DG {
       p | m_nlim;
       p | m_nnod;
       p | m_nreco;
+      p | m_nlayer;
+      p | m_nsmooth;
       p | m_inpoel;
       p | m_coord;
       p | m_fd;
@@ -294,6 +304,8 @@ class DG : public CBase_DG {
     std::size_t m_nnod;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
+    std::size_t m_nlayer;
+    std::size_t m_nsmooth;
     //! Mesh connectivity extended
     std::vector< std::size_t > m_inpoel;
     //! Node coordinates extended
@@ -466,6 +478,10 @@ class DG : public CBase_DG {
     //! Compute solution reconstructions
     void reco();
 
+    void layer();
+
+    void smooth();
+
     //! Compute limiter function
     void lim();
 
@@ -477,6 +493,8 @@ class DG : public CBase_DG {
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
+
+    void smoothingNDOF();
 
     //! p-refine all elements that are adjacent to p-refined elements
     void propagate_ndof();
