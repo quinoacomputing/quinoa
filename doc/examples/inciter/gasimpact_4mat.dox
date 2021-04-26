@@ -2,11 +2,13 @@
   \page      inciter_example_gasimpact_4mat Inciter: Example set up for the four material gas impact problem
 
 This example runs the @ref inciter_mm algorithm for the four material gas
-impact problem from @ref papers_inciter "Inciter papers".
+impact problem from @ref papers_inciter "Pandare et al. (Comp. Fluids 2021)".
 It uses a second-order finite volume
 method for spatial discretization, with THINC material interface reconstruction.
-It uses the user-defined problem type with box-type initial conditions setup,
-and symmetric boundary conditions on all domain boundaries.
+The problem is configured using the user-defined problem class with box-type
+initial conditions, and symmetric boundary conditions on all domain boundaries.
+For further details about the numerical method see @ref papers_inciter
+"Pandare et al. (Comp. Fluids 2021)"
 
 @m_div{m-col-m-8 m-center-m}
 <img src="gasimpact4m.png"/>
@@ -39,11 +41,11 @@ inciter
     physics veleq
     depvar u
 
-    prelax 1
-    prelax_timescale 0.1
+    prelax 1  # finite-rate pressure relaxation
+    prelax_timescale 0.1  # time scale for pressure relaxation
 
-    intsharp 1
-    intsharp_param 2.5
+    intsharp 1  # THINC interface reconstruction
+    intsharp_param 2.5  # interface steepness parameter
 
     nmat 4
     material
@@ -106,13 +108,13 @@ inciter
   field_output
     interval 2500
     var elem
-      material_indicator "material_indicator"
-      density "density_numerical" # bulk density
-      pressure "pressure_numerical" # bulk pressure
-      specific_total_energy "total_energy_density_numerical" # bulk specific total energy
-      x-velocity "x-velocity_numerical"
-      y-velocity "y-velocity_numerical"
-      z-velocity "z-velocity_numerical"
+      material_indicator  # material indicator function
+      density  # bulk density
+      pressure  # bulk pressure
+      specific_total_energy  # bulk specific total energy
+      x-velocity  # bulk x-velocity
+      y-velocity  # bulk y-velocity
+      z-velocity  # bulk z-velocity
     end
   end
 
@@ -264,7 +266,6 @@ end
  * Output fields:
  ----------------
      Elem field(s)                            : { density material_indicator pressure specific_total_energy x-velocity y-velocity z-velocity }
-     Alias(es)                                : { density:density_numerical material_indicator:material_indicator pressure:pressure_numerical specific_total_energy:total_energy_density_numerical x-velocity:x-velocity_numerical y-velocity:y-velocity_numerical z-velocity:z-velocity_numerical }
 \endverbatim
 
 @section gi4m_sol Solution contours

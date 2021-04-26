@@ -2639,12 +2639,13 @@ struct materialid_info {
   static std::string name() { return "materialid"; }
   static std::string shortDescription() { return "Specify material id"; }
   static std::string longDescription() { return
-    R"(This keyword is used to configure the material within a box.)";
+    R"(This keyword is used to configure the material id within a box as a part
+    of the initialization.)";
   }
   struct expect {
     using type = std::size_t;
     static constexpr type lower = 1;
-    static std::string description() { return "uint"; }
+    static std::string description() { return "unsigned integer"; }
   };
 };
 using materialid = keyword< materialid_info,
