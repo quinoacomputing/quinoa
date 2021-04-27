@@ -2635,6 +2635,22 @@ struct velocity_info {
 };
 using velocity = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
 
+struct materialid_info {
+  static std::string name() { return "materialid"; }
+  static std::string shortDescription() { return "Specify material id"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to configure the material id within a box as a part
+    of the initialization.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static constexpr type lower = 1;
+    static std::string description() { return "unsigned integer"; }
+  };
+};
+using materialid = keyword< materialid_info,
+  TAOCPP_PEGTL_STRING("materialid") >;
+
 struct mass_info {
   static std::string name() { return "mass"; }
   static std::string shortDescription() { return "Specify mass"; }
@@ -2869,6 +2885,7 @@ struct box_info {
     will be set to 1.2 and the pressure to be 1.4. Besides the box dimensions,
     the following physics keywords are allowed in a box ... end block:)"
     + std::string("\'")
+    + materialid::string()+ "\', \'"
     + mass::string()+ "\', \'"
     + density::string()+ "\', \'"
     + velocity::string() + "\', \'"
@@ -2886,6 +2903,7 @@ struct ic_info {
   static std::string longDescription() { return
     R"(This keyword is used to introduce an ic...end block used to set initial
     conditions. Keywords allowed in a ic ... end block: )" + std::string("\'")
+    + materialid::string()+ "\', \'"
     + mass::string()+ "\', \'"
     + density::string()+ "\', \'"
     + velocity::string() + "\', \'"
@@ -4824,66 +4842,6 @@ struct waterair_shocktube_info {
 };
 using waterair_shocktube =
   keyword< waterair_shocktube_info, TAOCPP_PEGTL_STRING("waterair_shocktube") >;
-
-struct triple_point_info {
-  using code = Code< K >;
-  static std::string name() { return "Triple point problem"; }
-  static std::string shortDescription() { return
-    "Select the triple point test problem "; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the triple point test problem. The
-    purpose of this test problem is to test the correctness of the
-    multi-material algorithm and its interface capturing
-    capabilities. Example: "problem triple_point". For more details, see
-    Galera, S., Maire, P. H., & Breil, J. (2010). A two-dimensional unstructured
-    cell-centered multi-material ALE scheme using VOF interface reconstruction.
-    Journal of Computational Physics, 229(16), 5755-5787.)"; }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using triple_point =
-  keyword< triple_point_info, TAOCPP_PEGTL_STRING("triple_point") >;
-
-struct gas_impact_info {
-  using code = Code< P >;
-  static std::string name() { return "Gas impact problem"; }
-  static std::string shortDescription() { return
-    "Select the gas impact test problem "; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the gas impact test problem. The
-    purpose of this test problem is to test the correctness of the
-    multi-material algorithm and its interface capturing
-    capabilities. Example: "problem gas_impact". For more details, see
-    Barlow, A., Hill, R., & Shashkov, M. (2014). Constrained optimization
-    framework for interface-aware sub-scale dynamics closure model for
-    multimaterial cells in Lagrangian and arbitrary Lagrangian–Eulerian
-    hydrodynamics. Journal of Computational Physics, 276, 92-135.)"; }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using gas_impact =
-  keyword< gas_impact_info, TAOCPP_PEGTL_STRING("gas_impact") >;
-
-struct gas_impact_4mat_info {
-  using code = Code< L >;
-  static std::string name() { return "Gas impacting with two slabs problem"; }
-  static std::string shortDescription() { return
-    "Select the gas impacting with two slabs test problem "; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the test involving a gas impacting two
-    slabs. It involves four materials: the impactor, two slabs and the
-    background. The purpose of this test problem is to test the correctness of
-    multi-material algorithm for more than three materials and its interface
-    capturing capabilities under high deformation.
-    Example: "problem gas_impact_4mat".)"; }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using gas_impact_4mat =
-  keyword< gas_impact_4mat_info, TAOCPP_PEGTL_STRING("gas_impact_4mat") >;
 
 struct shock_hebubble_info {
   using code = Code< E >;
