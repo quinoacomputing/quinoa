@@ -15,6 +15,19 @@ add_regression_test(compflow_euler_alecg_ale_gcl ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF gcl_diag.ndiff.cfg
                     LABELS alecg ale)
 
+add_regression_test(compflow_euler_alecg_ale_sod_sine ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES sod_shocktube_alecg_ale_sine.q
+                               rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_alecg_ale_sine.q -v
+                    BIN_BASELINE sod_shocktube_alecg_ale_sine.0.std.exo
+                                 sod_shocktube_alecg_ale_sine.10.std.exo
+                    BIN_RESULT out.e-s.0.1.0 out.e-s.10.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF gcl_diag.ndiff.cfg
+                    LABELS alecg ale)
 # Parallel
 
 add_regression_test(compflow_euler_alecg_ale_gcl ${INCITER_EXECUTABLE}

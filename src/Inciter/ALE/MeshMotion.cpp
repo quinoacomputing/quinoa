@@ -23,7 +23,7 @@ sine( const tk::UnsMesh::Coords& coord, tk::Fields& w )
 // *****************************************************************************
 {
   for (std::size_t i=0; i<w.nunk(); ++i)
-    w(i,0,0) = std::pow( std::sin(coord[0][i]*M_PI/10.0), 2.0 );
+    w(i,0,0) = std::pow( std::sin(coord[0][i]*M_PI), 2.0 );
 }
 
 void
