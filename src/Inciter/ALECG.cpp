@@ -95,7 +95,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 ),
   m_newmesh( 0 ),
-  m_coordn( Disc()->Coord() )
+  m_coordn( Disc()->Coord() ),
+  m_vel()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -111,12 +112,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 
   // Zero ALE mesh velocity by default
   m_w.fill( 0.0 );
-
-  // Assign mesh velocity if configured
-  if (d->ALE())
-    meshvel( g_inputdeck.get< tag::ale, tag::meshvelocity >(),
-             d->Coord(),
-             m_w );
 
   // Perform optional operator-access-pattern mesh node reordering
   if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
@@ -440,8 +435,9 @@ ALECG::conserved( tk::Fields& u )
   Assert( Disc()->Vol().size() == u.nunk(), "Size mismatch" );
 
   for (std::size_t i=0; i<u.nunk(); ++i)
-    for (ncomp_t c=0; c<u.nprop(); ++c)
+    for (ncomp_t c=0; c<u.nprop(); ++c) {
       u(i,c,0) /= Disc()->Vol()[i];
+    }
 }
 
 void
@@ -459,9 +455,11 @@ ALECG::box( tk::real v )
   // Set initial conditions for all PDEs
   for (auto& eq : g_cgpde)
     eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes );
-
   // Multiply conserved variables with mesh volume
   volumetric( m_u );
+
+  // Assign initial mesh velocity
+  meshvel( /* init = */ true );
 
   // Initiate IC transfer (if coupled)
   Disc()->transfer( m_u );
@@ -769,6 +767,9 @@ ALECG::advance( tk::real newdt )
 
   // Compute gradients for next time step
   chBndGrad();
+
+  // Compute new mesh velocity
+  meshvel();
 }
 
 void
@@ -827,6 +828,70 @@ ALECG::comChBndGrad( const std::vector< std::size_t >& gid,
     m_ngrad = 0;
     comgrad_complete();
   }
+}
+
+void
+ALECG::meshvel( bool init )
+// *****************************************************************************
+// Assign new mesh velocity for ALE mesh motion
+//! \param[in] init True if called during setup
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  if (d->ALE()) {
+
+    // query fluid velocity across all systems integrated
+    if (d->dynALE()) {
+      conserved( m_u );
+      for (const auto& eq : g_cgpde) eq.velocity( m_u, m_vel );
+      volumetric( m_u );
+    }
+
+    // assign mesh velocity (never update static meshvel during timestepping)
+    if (d->dynALE() || init) {
+      inciter::meshvel( g_inputdeck.get< tag::ale, tag::meshvelocity >(),
+                        d->Coord(), m_vel, m_w );
+    }
+
+    // smooth mesh velocity
+    smooth();
+
+  } else {      // if ALE is not enabled, skip mesh smoothing
+
+    smoothed();
+
+  }
+}
+
+void
+ALECG::smooth()
+// *****************************************************************************
+// Smooth mesh velocity for ALE mesh motion
+// *****************************************************************************
+{
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+
+  // Smooth mesh velocity if enabled
+  if (meshvel == ctr::MeshVelocityType::FLUID) {
+    Disc()->ConjugateGradientsSolve( 10, 1.0e-3,
+      CkCallback(CkIndex_ALECG::smoothed(nullptr), thisProxy[thisIndex]) );
+  } else {
+    smoothed();
+  }
+}
+
+void
+ALECG::smoothed( CkDataMsg* msg )
+// *****************************************************************************
+//  Mesh smoother linear solver converged
+// *****************************************************************************
+{
+  if (msg != nullptr) {
+    auto *norm = static_cast< tk::real * >( msg->getData() );
+    std::cout << "smoothed, norm: " << *norm << '\n';
+  }
+  meshvel_complete();
 }
 
 void
@@ -1173,7 +1238,7 @@ ALECG::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise output field data to file(s)
-  if (m_stage < 3) chBndGrad(); else out();
+  if (m_stage < 3) advance( Disc()->Dt() ); else out();
 }
 
 void

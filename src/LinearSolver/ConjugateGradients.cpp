@@ -36,8 +36,6 @@ ConjugateGradients::ConjugateGradients(
   const CSR& A,
   const std::vector< tk::real >& x,
   const std::vector< tk::real >& b,
-  std::size_t maxit,
-  tk::real tol,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& lid,
   const NodeCommMap& nodecommmap ) :
@@ -58,8 +56,6 @@ ConjugateGradients::ConjugateGradients(
   m_solved(),
   m_normb( 0.0 ),
   m_it( 0 ),
-  m_maxit( maxit ),
-  m_tol( tol ),
   m_rho( 0.0 ),
   m_rho0( 0.0 ),
   m_alpha( 0.0 )
@@ -68,8 +64,6 @@ ConjugateGradients::ConjugateGradients(
 //! \param[in] A Left hand side matrix of the linear system to solve in Ax=b
 //! \param[in] x Solution (initial guess) of the linear system to solve in Ax=b
 //! \param[in] b Right hand side of the linear system to solve in Ax=b
-//! \param[in] maxit Max iteration count
-//! \param[in] tol Stop tolerance
 //! \param[in] gid Global node ids
 //! \param[in] lid Local node ids associated to global ones
 //! \param[in] nodecommmap Global mesh node IDs shared with other chares
@@ -212,12 +206,16 @@ ConjugateGradients::initres()
 }
 
 void
-ConjugateGradients::solve( CkCallback c )
+ConjugateGradients::solve( std::size_t maxit, tk::real tol, CkCallback c )
 // *****************************************************************************
 //  Solve linear system
+//! \param[in] maxit Max iteration count
+//! \param[in] tol Stop tolerance
 //! \param[in] c Call to continue with after solve is complete
 // *****************************************************************************
 {
+  m_maxit = maxit;
+  m_tol = tol;
   m_solved = c;
   m_it = 0;
   next();

@@ -120,6 +120,10 @@ class CGPDE {
       const std::vector< std::unordered_set< std::size_t > >& inbox )
     { self->initialize( coord, unk, t, V, inbox ); }
 
+    //! Public interface to querying a velocity
+    void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const
+    { self->velocity(u,v); }
+
     //! Public interface to computing the nodal gradients for ALECG
     void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
@@ -276,6 +280,8 @@ class CGPDE {
         real,
         real,
         const std::vector< std::unordered_set< std::size_t > >& ) = 0;
+      virtual void velocity( const tk::Fields&, tk::UnsMesh::Coords& )
+        const = 0;
       virtual void chBndGrad( const std::array< std::vector< real >, 3 >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
@@ -377,6 +383,8 @@ class CGPDE {
         real V,
         const std::vector< std::unordered_set< std::size_t > >& inbox )
       override { data.initialize( coord, unk, t, V, inbox ); }
+      void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const
+      override { data.velocity(u,v); }
       void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
         const std::vector< std::size_t >& inpoel,
         const std::vector< std::size_t >& bndel,

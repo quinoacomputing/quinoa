@@ -167,6 +167,12 @@ class ALECG : public CBase_ALECG {
     //! Resizing data sutrctures after mesh refinement has been completed
     void resized();
 
+    //! Smooth mesh velocity for ALE mesh motion
+    void smooth();
+
+    //! Mesh smoother linear solver converged
+    void smoothed( CkDataMsg* msg = nullptr );
+
     //! Evaluate whether to continue with next time step
     void step();
 
@@ -223,6 +229,7 @@ class ALECG : public CBase_ALECG {
       p | m_finished;
       p | m_newmesh;
       p | m_coordn;
+      p | m_vel;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -329,6 +336,8 @@ class ALECG : public CBase_ALECG {
     int m_newmesh;
     //! Mesh coordinates at the time n for ALE
     tk::UnsMesh::Coords m_coordn;
+    //! Fluid velocity for ALE
+    tk::UnsMesh::Coords m_vel;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -372,6 +381,12 @@ class ALECG : public CBase_ALECG {
 
     //! Compute gradients
     void chBndGrad();
+
+    //! Compute new mesh veloctity for ALE mesh motion
+    void meshvel( bool init = false );
+
+    //! Assign new mesh veloctity for ALE mesh motion
+    void assignMeshvel();
 
     //! Compute righ-hand side vector of transport equations
     void rhs();

@@ -144,10 +144,11 @@ Discretization::Discretization(
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   // Insert ConjugrateGradients solver chare array element if needed
-  if (ALE()) {
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  if (ALE() && meshvel == ctr::MeshVelocityType::FLUID) {
     const auto& [A,x,b] = LaplacianSmoother();
-    m_conjugategradients[ thisIndex ].insert( A, x, b, 10, 1.0e-3,
-                                              m_gid, m_lid, m_nodeCommMap );
+    m_conjugategradients[ thisIndex ].
+      insert( A, x, b, m_gid, m_lid, m_nodeCommMap );
   }
 
   // Register mesh with mesh-transfer lib
@@ -201,38 +202,64 @@ Discretization::ALE() const
     return false;
 }
 
+bool
+Discretization::dynALE() const
+// *****************************************************************************
+//! Query if ALE mesh velocity is updated during time stepping
+//! \return True if mesh velocity is updated during time stepping
+// *****************************************************************************
+{
+  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+
+  if (ale && meshvel != ctr::MeshVelocityType::NONE &&
+             meshvel != ctr::MeshVelocityType::SINE)
+    return true;
+  else
+    return false;
+}
+
 void
 Discretization::ConjugateGradientsInit()
 // *****************************************************************************
 //  Initialize Conjugrate Gradients linear solver
 // *****************************************************************************
 {
-  // Reinitialize ConjugrateGradients solver chare array element if needed
-  if (ALE()) {
+  // (Re-)Initialize ConjugrateGradients solver chare array element if needed
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  if (ALE() && meshvel == ctr::MeshVelocityType::FLUID) {
     m_conjugategradients[ thisIndex ].init(
-      CkCallback( CkIndex_Discretization::ConjugateGradientsSolve(nullptr),
-                  thisProxy[thisIndex]) );
-  } else vol();
+      CkCallback(
+        CkIndex_Discretization::ConjugateGradientsInitialized(nullptr),
+        thisProxy[thisIndex] ) );
+  } else {
+    vol();
+  }
 }
 
 void
-Discretization::ConjugateGradientsSolve( [[maybe_unused]] CkDataMsg* msg )
+Discretization::ConjugateGradientsInitialized( [[maybe_unused]] CkDataMsg* msg )
+// *****************************************************************************
+//  Conjugrate Gradients solver initialized
+// *****************************************************************************
+{
+  auto *normb = static_cast< tk::real * >( msg->getData() );
+  std::cout << "CG initialized, normb: " << *normb << '\n';
+  vol();
+}
+
+void
+Discretization::ConjugateGradientsSolve( std::size_t maxit,
+                                         tk::real tol,
+                                         CkCallback c )
 // *****************************************************************************
 //  Solve linear system using Conjugrate Gradients
+//! \param[in] maxit Max iteration count
+//! \param[in] tol Stop tolerance
+// \param[in] c Function to call when the solve is converged
 // *****************************************************************************
 {
-  m_conjugategradients[ thisIndex ].solve(
-    CkCallback( CkIndex_Discretization::ConjugateGradientsDone(nullptr),
-                thisProxy[thisIndex] ) );
-}
-
-void
-Discretization::ConjugateGradientsDone( [[maybe_unused]] CkDataMsg* msg )
-// *****************************************************************************
-//  Conjugrate Gradients linear solver converged
-// *****************************************************************************
-{
-  vol();
+  m_conjugategradients[ thisIndex ].solve( maxit, tol, c );
 }
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
@@ -279,12 +306,9 @@ Discretization::LaplacianSmoother() const
   }
 
   auto npoin = m_gid.size();
-  std::vector< tk::real > b(npoin,1.0), x(npoin,0.0);
+  std::vector< tk::real > b(npoin,0.0), x(npoin,0.0);
 
-  // Grab a node (gid=0) as Dirichlet BC
-  A.dirichlet( 0, m_lid, m_nodeCommMap );
-
-  return { A, x, b };
+  return { std::move(A), std::move(x), std::move(b) };
 }
 
 void

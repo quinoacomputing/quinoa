@@ -92,11 +92,12 @@ class Discretization : public CBase_Discretization {
     //! Initialize Conjugrate Gradients linear solver
     void ConjugateGradientsInit();
 
-    //! Solve using Conjugrate Gradients linear solver
-    void ConjugateGradientsSolve( CkDataMsg* msg );
+    //! Conjugrate Gradients solver initialized
+    void ConjugateGradientsInitialized( [[maybe_unused]] CkDataMsg* msg );
 
-    //! Conjugrate Gradients linear solver converged
-    void ConjugateGradientsDone( CkDataMsg* msg );
+    //! Solve using Conjugrate Gradients linear solver
+    void
+    ConjugateGradientsSolve( std::size_t maxit, tk::real tol, CkCallback c );
 
     //! \brief Our mesh has been registered with the mesh-to-mesh transfer
     //!   library (if coupled to other solver)
@@ -344,8 +345,11 @@ class Discretization : public CBase_Discretization {
     //! Find elements along our mesh chunk boundary
     std::vector< std::size_t > bndel() const;
 
-   //! Query if ALE mesh motion is enabled by the user
-   bool ALE() const;
+    //! Query if ALE mesh motion is enabled by the user
+    bool ALE() const;
+
+    //! Query if ALE mesh velocity is updated during time stepping
+    bool dynALE() const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

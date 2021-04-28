@@ -41,8 +41,10 @@ module discretization {
                          const std::vector< tk::real >& nodevol );
       entry void stat( tk::real mesh_volume );
       entry void ConjugateGradientsInit();
-      entry void ConjugateGradientsSolve( CkDataMsg* msg );
-      entry void ConjugateGradientsDone( CkDataMsg* msg );
+      entry void ConjugateGradientsInitialized( CkDataMsg* msg );
+      entry void ConjugateGradientsSolve( std::size_t maxit,
+                                          tk::real tol,
+                                          CkCallback c );
       entry void transferInit();
       entry void comcb( std::size_t srcmeshid, CkCallback c );
 

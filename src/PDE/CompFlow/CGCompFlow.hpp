@@ -184,6 +184,19 @@ class CompFlow {
       }
     }
 
+    //! Query the fluid velocity
+    //! \param[in] u Solution vector of conserved variables
+    //! \param[in,out] v Velocity components
+    void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const {
+      for (std::size_t j=0; j<3; ++j) {
+        // extract momentum
+        v[j] = u.extract( 1+j, m_offset );
+        Assert( v[j].size() == u.nunk(), "Size mismatch" );
+        // divide by density
+        for (std::size_t i=0; i<u.nunk(); ++i) v[j][i] /= u(i,0,m_offset);
+      }
+    }
+
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate
@@ -654,29 +667,6 @@ class CompFlow {
         // compute dt for node
         dtp[i] = L / v * g_inputdeck.get< tag::discr, tag::cfl >();
       }
-    }
-
-    //! Extract the velocity field at cell nodes. Currently unused.
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] N Element node indices    
-    //! \return Array of the four values of the velocity field
-    std::array< std::array< real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< real >, 3 >&,
-              const std::array< std::size_t, 4 >& N ) const
-    {
-      std::array< std::array< real, 4 >, 3 > v;
-      v[0] = U.extract( 1, m_offset, N );
-      v[1] = U.extract( 2, m_offset, N );
-      v[2] = U.extract( 3, m_offset, N );
-      auto r = U.extract( 0, m_offset, N );
-      std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
-                      []( real s, real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),
-                      []( real s, real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[2].begin(), v[2].begin(),
-                      []( real s, real& d ){ return d /= s; } );
-      return v;
     }
 
     //! \brief Query Dirichlet boundary condition value on a given side set for

@@ -97,6 +97,11 @@ class Transport {
       }
     }
 
+    //! Query a velocity
+    //! \note Since this function does not touch its output argument, that
+    //!   means this system does not define a "velocity".
+    void velocity( const tk::Fields&, tk::UnsMesh::Coords& ) const {}
+
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate

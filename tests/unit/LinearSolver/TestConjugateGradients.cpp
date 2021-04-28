@@ -58,7 +58,7 @@ class CGReceiver : public CBase_CGReceiver {
     void initialized( CkDataMsg* msg ) {
       auto normb = static_cast<tk::real*>( msg->getData() );
       received( "initialized", *normb, 3.7416573867739413 );
-      m_cg[thisIndex].solve(
+      m_cg[thisIndex].solve( 10, 1.0e-3,
         CkCallback(CkIndex_CGReceiver::solved(nullptr),thisProxy[thisIndex]) );
     }
     //! Called after CG solve() finished
@@ -184,7 +184,7 @@ void ConjugateGradients_object::test< 1 >() {
 
   // Create CG solver (chare array with a single element)
   tk::CProxy_ConjugateGradients cg =
-    tk::CProxy_ConjugateGradients::ckNew( A, x, b, 10, 1.0e-3, {}, {}, {}, 1 );
+    tk::CProxy_ConjugateGradients::ckNew( A, x, b, {}, {}, {}, 1 );
 
   // Create receiver chare whose callbacks are called when a CG task is done
   CProxy_CGReceiver host = CProxy_CGReceiver::ckNew( "Laplacian 1PE", cg, 1 );
@@ -298,7 +298,7 @@ void ConjugateGradients_object::test< 2 >() {
 
     // Dynamically insert array element with mesh partition
     auto M = static_cast< int >( m );
-    cg[M].insert( A, x, b, 10, 1.0e-3, gid[m], lid[m], nodecommap[m] );
+    cg[M].insert( A, x, b, gid[m], lid[m], nodecommap[m] );
 
     // Initialize CG solve for mesh partition
     cg[M].init( CkCallback(CkIndex_CGReceiver::initialized(nullptr), host[M]) );

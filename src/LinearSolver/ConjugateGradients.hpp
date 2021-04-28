@@ -54,8 +54,6 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       const CSR& A,
       const std::vector< tk::real >& x,
       const std::vector< tk::real >& b,
-      std::size_t maxit,
-      tk::real stop_tol,
       const std::vector< std::size_t >& gid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const NodeCommMap& nodecommmap );
@@ -74,7 +72,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     void init( CkCallback c );
 
     //! Solve linear system
-    void solve( CkCallback c );
+    void solve( std::size_t maxit, tk::real stop_tol, CkCallback c );
 
     //! Compute the norm of the right hand side
     void normb( tk::real n );

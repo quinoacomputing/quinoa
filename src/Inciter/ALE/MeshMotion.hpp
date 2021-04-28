@@ -24,10 +24,15 @@ namespace inciter {
 void
 sine( const tk::UnsMesh::Coords& coord, tk::Fields& w );
 
+//! Prescribe mesh velocity as the fluid velocity
+void
+fluid( const tk::UnsMesh::Coords& v, tk::Fields& w );
+
 //! Assign mesh velocity based on user config
 void
 meshvel( ctr::MeshVelocityType m,
          const tk::UnsMesh::Coords& coord,
+         const tk::UnsMesh::Coords& v,
          tk::Fields& w );
 
 } // inciter::
