@@ -230,7 +230,7 @@ class CGPDE {
     //! Public interface to returning surface field output
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
-                tk::Fields& U ) const
+                const tk::Fields& U ) const
     { return self->surfOutput( bnd, U ); }
 
     //! Public interface to returning time history output
@@ -350,7 +350,7 @@ class CGPDE {
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
-        tk::Fields& ) const = 0;
+        const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< real > > histOutput(
         const std::vector< HistData >&,
         const std::vector< std::size_t >&,
@@ -465,7 +465,7 @@ class CGPDE {
       { return data.names(); }
       std::vector< std::vector< real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
-        tk::Fields& U ) const override
+        const tk::Fields& U ) const override
       { return data.surfOutput( bnd, U ); }
       std::vector< std::vector< real > > histOutput(
         const std::vector< HistData >& h,

@@ -39,11 +39,6 @@ inciter
     end
   end
 
-  amr
-    #t0ref true
-    initial uniform
-  end
-
   field_output
     var
       density

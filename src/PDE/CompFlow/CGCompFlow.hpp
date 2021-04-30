@@ -850,7 +850,7 @@ class CompFlow {
     //! Return surface field output going to file
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
-                tk::Fields& U ) const
+                const tk::Fields& U ) const
     { return CompFlowSurfOutput( m_system, bnd, U ); }
 
     //! Return time history field output evaluated at time history points
