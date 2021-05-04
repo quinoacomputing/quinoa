@@ -808,6 +808,7 @@ DiagCG::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
+  const std::unordered_map< std::size_t, std::size_t >& removedNodes,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& /*bface*/,
   const std::map< int, std::vector< std::size_t > >& bnode,
@@ -819,6 +820,7 @@ DiagCG::resizePostAMR(
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
+//! \param[in] removedNodes Newly removed mesh nodes (local ids)
 //! \param[in] nodeCommMap New node communication map
 //! \param[in] bnode Boundary-node lists mapped to side set ids
 // *****************************************************************************
@@ -836,6 +838,17 @@ DiagCG::resizePostAMR(
 
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, nodeCommMap );
+
+  // Remove newly removed nodes from solution vectors
+  std::set< std::size_t > remset;
+  for (const auto& rn:removedNodes) {
+    remset.insert(rn.first);
+  }
+  m_u.rm(remset);
+  m_ul.rm(remset);
+  m_du.rm(remset);
+  m_lhs.rm(remset);
+  m_rhs.rm(remset);
 
   // Resize auxiliary solution vectors
   auto nelem = d->Inpoel().size()/4;

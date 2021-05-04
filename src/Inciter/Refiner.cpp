@@ -82,6 +82,7 @@ Refiner::Refiner( std::size_t meshid,
   m_oldTets(),
   m_addedNodes(),
   m_addedTets(),
+  m_removedNodes(),
   m_oldntets( 0 ),
   m_coarseBndFaces(),
   m_coarseBndNodes(),
@@ -969,8 +970,8 @@ Refiner::next()
 
     // Send new mesh, solution, and communication data back to PDE worker
     m_scheme[m_meshid].ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel,
-      m_el, m_coord, m_addedNodes, m_addedTets, m_nodeCommMap, m_bface, m_bnode,
-      m_triinpoel );
+      m_el, m_coord, m_addedNodes, m_addedTets, m_removedNodes, m_nodeCommMap,
+      m_bface, m_bnode, m_triinpoel );
 
   } else if (m_mode == RefMode::OUTREF) {
 
@@ -1488,6 +1489,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   // Generate coordinates and ids to newly added nodes after refinement
   std::unordered_map< std::size_t, std::size_t > gid_add;
   tk::destroy( m_addedNodes );
+  tk::destroy( m_removedNodes );
   for (auto r : ref) {               // for all unique nodes of the refined mesh
     if (old.find(r) == end(old)) {   // if node is newly added
       // get (local) parent ids of newly added node
@@ -1531,6 +1533,8 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
     if (ref.find(o) == end(ref)) {   // if node is no longer in new mesh
       auto l = tk::cref_find( m_lref, o );
       auto g = m_gid[l];
+      // store global-id to local-id map of removed nodes
+      m_removedNodes[l] = l;
       gid_rem[l] = g;
       m_lid.erase( g );
       m_coordmap.erase( g );
@@ -1570,6 +1574,16 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   Assert( m_lref.size() == ref.size(), "Size mismatch" );
   m_rid = std::move( rid );
   m_addedNodes = std::move( addedNodes );
+
+  //// store map of {key: removed node old-local-id, value: node new-local-id that took its place}
+  //std::unordered_map< std::size_t, std::size_t > removedNodes;
+  //for (auto rn:m_removedNodes) {
+  //  auto g = rn.first;
+  //  auto l = rn.second;
+  //  auto g_old = tk::cref_find(m_gid, l);
+  //  // find new node taking place of l
+  //  removedNodes[l] = //new-local-id
+  //}
 
   // Update node coordinates, ids, and id maps
   auto& rx = m_coord[0];
