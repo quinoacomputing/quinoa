@@ -149,6 +149,7 @@ namespace grm {
     SKIPBCWRONG,        //!< Skip BC incorrectly configured
     NONDISJOINTBC,      //!< Different BC types assigned to the same side set
     WRONGSIZE,          //!< Size of parameter vector incorrect
+    STEADYALE,          //!< ALE + steady state not supported
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
     POSITION_DEPVAR,    //!< Missing required position model dependent variable
@@ -413,6 +414,9 @@ namespace grm {
       "to the same side set." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
+    { MsgKey::STEADYALE, "Error in the preceding line or block. Arbitrary "
+      "Lagrangian-Eulerian mesh motion is not supported together with marching "
+      "to steady state." },
     { MsgKey::HYDROTIMESCALES, "Error in the preceding line or block. "
       "Specification of a 'hydrotimescales' vector missing." },
     { MsgKey::HYDROPRODUCTIONS, "Error in the preceding line or block. "

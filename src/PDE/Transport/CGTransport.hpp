@@ -535,7 +535,7 @@ class Transport {
     //! Return surface field output going to file
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >&,
-                tk::Fields& ) const { return {}; }
+                const tk::Fields& ) const { return {}; }
 
     //! Return time history field names to be output to file
     //! \return Vector of strings labelling time history fields output in file

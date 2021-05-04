@@ -391,7 +391,7 @@ class ALECG : public CBase_ALECG {
     //! Compute righ-hand side vector of transport equations
     void rhs();
 
-    //! Solve linear systems
+    //! Advance systems of equations
     void solve();
 
     //! Continue after ALE mesh movement

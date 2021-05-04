@@ -979,7 +979,7 @@ ALECG::comrhs( const std::vector< std::size_t >& gid,
 void
 ALECG::solve()
 // *****************************************************************************
-//  Solve linear systems
+//  Advance systems of equations
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1294,13 +1294,13 @@ ALECG::writeFields( CkCallback c )
     }
 
     // Collect node block and surface field solution
-    auto u = m_u;
     std::vector< std::vector< tk::real > > nodesurfs;
-    conserved( u );
+    conserved( m_u );
     for (const auto& eq : g_cgpde) {
-      auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
+      auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), m_u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
+    volumetric( m_u );
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 

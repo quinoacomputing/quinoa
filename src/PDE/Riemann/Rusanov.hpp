@@ -45,7 +45,7 @@ struct Rusanov {
   //! \param[in] rvL Left Y momentum
   //! \param[in] rwL Left Z momentum
   //! \param[in] reL Left total specific energy
-  //! \param[in] rL Right density
+  //! \param[in] rR Right density
   //! \param[in] ruR Right X momentum
   //! \param[in] rvR Right Y momentum
   //! \param[in] rwR Right Z momentum

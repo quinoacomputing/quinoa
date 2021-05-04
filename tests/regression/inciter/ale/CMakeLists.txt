@@ -10,7 +10,7 @@ add_regression_test(compflow_euler_alecg_ale_gcl ${INCITER_EXECUTABLE}
                     BIN_BASELINE gcl.0.std.exo gcl.10.std.exo
                     BIN_RESULT out.e-s.0.1.0 out.e-s.10.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
-                    TEXT_BASELINE diag.std
+                    TEXT_BASELINE diag_gcl.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gcl_diag.ndiff.cfg
                     LABELS alecg ale)
@@ -24,9 +24,9 @@ add_regression_test(compflow_euler_alecg_ale_sod_sine ${INCITER_EXECUTABLE}
                                  sod_shocktube_alecg_ale_sine.10.std.exo
                     BIN_RESULT out.e-s.0.1.0 out.e-s.10.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
-                    TEXT_BASELINE diag.std
+                    TEXT_BASELINE diag_sod_sine.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gcl_diag.ndiff.cfg
+                    TEXT_DIFF_PROG_CONF sod_diag.ndiff.cfg
                     LABELS alecg ale)
 # Parallel
 
@@ -65,7 +65,7 @@ add_regression_test(compflow_euler_alecg_ale_gcl ${INCITER_EXECUTABLE}
                                out.e-s.10.7.6
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     BIN_DIFF_PROG_ARGS -m
-                    TEXT_BASELINE diag.std
+                    TEXT_BASELINE diag_gcl.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gcl_diag.ndiff.cfg
                     LABELS alecg ale migration)
