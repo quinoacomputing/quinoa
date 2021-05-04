@@ -47,6 +47,7 @@ Discretization::Discretization(
   const tk::CProxy_MeshWriter& meshwriter,
   const std::vector< std::size_t >& ginpoel,
   const tk::UnsMesh::CoordMap& coordmap,
+  const tk::UnsMesh::Chunk& el,
   const tk::CommMaps& msum,
   int nc ) :
   m_meshid( meshid ),
@@ -67,7 +68,7 @@ Discretization::Discretization(
   m_conjugategradients( conjugategradientsproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
-  m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
+  m_el( el ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
   m_nodeCommMap(),
   m_edgeCommMap(),

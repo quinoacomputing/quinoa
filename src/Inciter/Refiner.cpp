@@ -86,9 +86,9 @@ Refiner::Refiner( std::size_t meshid,
   m_oldntets( 0 ),
   m_coarseBndFaces(),
   m_coarseBndNodes(),
-  m_rid( ginpoel.size() ),
+  m_rid( m_coord[0].size() ),
   m_oldrid(),
-  m_lref( ginpoel.size() ),
+  m_lref( m_rid.size() ),
   m_parent(),
   m_writeCallback(),
   m_outref_ginpoel(),
@@ -1027,7 +1027,7 @@ Refiner::endt0ref()
   // create sorter Charm++ chare array elements using dynamic insertion
   m_sorter[ thisIndex ].insert( m_meshid, m_host, m_meshwriter, m_cbs, m_scheme,
     CkCallback(CkIndex_Refiner::reorder(), thisProxy[thisIndex]), m_ginpoel,
-    m_coordmap, m_bface, m_triinpoel, m_bnode, m_nchare );
+    m_coordmap, m_el, m_bface, m_triinpoel, m_bnode, m_nchare );
 
   // Compute final number of cells across whole problem
   std::vector< std::size_t >

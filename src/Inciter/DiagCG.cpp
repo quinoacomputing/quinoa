@@ -854,12 +854,12 @@ DiagCG::resizePostAMR(
   auto nelem = d->Inpoel().size()/4;
   auto npoin = coord[0].size();
   auto nprop = m_u.nprop();
-  m_u.resize( npoin, nprop );
-  m_ul.resize( npoin, nprop );
-  m_du.resize( npoin, nprop );
-  m_ue.resize( nelem, nprop );
-  m_lhs.resize( npoin, nprop );
-  m_rhs.resize( npoin, nprop );
+  m_u.resize( npoin );
+  m_ul.resize( npoin );
+  m_du.resize( npoin );
+  m_ue.resize( nelem );
+  m_lhs.resize( npoin );
+  m_rhs.resize( npoin );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)
