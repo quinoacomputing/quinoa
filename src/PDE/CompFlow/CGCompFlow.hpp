@@ -150,9 +150,7 @@ class CompFlow {
         (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
         bgpreic[m_system][0] : 0.0;
 
-      const auto& cvol = g_inputdeck.get< tag::param, eq, tag::cv >();
-      tk::real cv = (cvol.size() > m_system && !cvol[m_system].empty()) ?
-                    cvol[m_system][0] : 0.0;
+      auto cv = g_inputdeck.get< tag::param, eq, tag::cv >()[ m_system ][ 0 ];
 
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
