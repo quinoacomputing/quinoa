@@ -119,7 +119,7 @@ std::vector< std::string > CompFlowSurfNames()
 std::vector< std::vector< tk::real > >
 CompFlowSurfOutput( ncomp_t system,
                     const std::map< int, std::vector< std::size_t > >& bnd,
-                    tk::Fields& U )
+                    const tk::Fields& U )
 // *****************************************************************************
 //  Return surface field output going to file
 //! \param[in] system Equation system index, i.e., which compressible

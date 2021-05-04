@@ -60,8 +60,15 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const NodeCommMap& nodecommmap );
 
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wundefined-func-template"
+    #endif
     //! Migrate constructor
-    //explicit ConjugateGradients( CkMigrateMessage* ) {}
+    explicit ConjugateGradients( CkMigrateMessage* ) {}
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #endif
 
     //! Initialize solver
     void init( CkCallback c );

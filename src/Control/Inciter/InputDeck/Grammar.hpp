@@ -717,6 +717,14 @@ namespace grm {
         (stack.template get< tag::history, tag::id >().size() == hist.size()),
         "Number of history points and ids must equal" );
 
+
+      // Trigger error if steady state + ALE are both enabled
+      auto steady = stack.template get< tag::discr, tag::steady_state >();
+      auto ale = stack.template get< tag::ale, tag::ale >();
+      if (steady && ale) {
+        Message< Stack, ERROR, MsgKey::STEADYALE >( stack, in );
+      }
+
       // If at least a mesh filename is assigned to a solver, all solvers must
       // have a mesh filename assigned
       std::size_t nmesh = 0;
