@@ -455,6 +455,7 @@ ALECG::box( tk::real v )
   // Set initial conditions for all PDEs
   for (auto& eq : g_cgpde)
     eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes );
+
   // Multiply conserved variables with mesh volume
   volumetric( m_u );
 

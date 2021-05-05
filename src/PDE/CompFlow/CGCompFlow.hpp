@@ -145,9 +145,12 @@ class CompFlow {
 
       const auto eps = 1000.0 * std::numeric_limits< tk::real >::epsilon();
 
-      // if an ic box was not specified, avoid division by zero by setting V
       const auto& bgpreic = ic.get< tag::pressure >();
-      const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
+      tk::real bgpre =
+        (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
+        bgpreic[m_system][0] : 0.0;
+
+      auto cv = g_inputdeck.get< tag::param, eq, tag::cv >()[ m_system ][ 0 ];
 
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
@@ -165,8 +168,7 @@ class CompFlow {
                 b.template get< tag::zmin >(), b.template get< tag::zmax >() };
               auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               if (V_ex < eps) V = 1.0;
-              initializeBox( m_system, V_ex/V, t, b, bgpreic[m_system][0],
-                             cv[m_system][0], s );
+              initializeBox( m_system, V_ex/V, t, b, bgpre, cv, s );
             }
             ++bcnt;
           }
