@@ -129,7 +129,7 @@ class Transporter : public CBase_Transporter {
     void resized( std::size_t meshid );
 
     //! Reduction target: all worker chares have generated their own esup
-    void startEsup( std::size_t meshid );
+    void startadj( std::size_t meshid );
 
     //! Reduction target: all Sorter chares have queried their boundary edges
     void queried( std::size_t meshid );

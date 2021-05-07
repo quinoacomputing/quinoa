@@ -99,16 +99,6 @@ class DG : public CBase_DG {
     //! Send all of our ghost data to fellow chares
     void sendGhost();
 
-    //! Setup node-neighborhood (esup)
-    void nodeNeighSetup();
-
-    //! Receive element-surr-points data on chare boundaries from fellow chare
-    void comEsup( int fromch,
-      const std::unordered_map< std::size_t, std::vector< std::size_t > >&
-        bndEsup,
-      const std::unordered_map< std::size_t, std::vector< tk::real > >&
-        nodeBndCells );
-
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
 
@@ -149,6 +139,12 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& u,
                  const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
+
+    //! Receive contributions to nodal gradients on chare-boundaries
+    void
+    comnodal( const std::vector< std::size_t >& gid,
+              const std::vector< std::vector< tk::real > >& G1,
+              const std::vector< std::vector< tk::real > >& G2 );
 
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
@@ -191,6 +187,9 @@ class DG : public CBase_DG {
     //! Compute left hand side
     void lhs();
 
+    //! Continue after node adjacency communication map completed on this chare
+    void adj();
+
     //! Unused in DG
     void resized() {}
 
@@ -208,12 +207,12 @@ class DG : public CBase_DG {
       p | m_disc;
       p | m_ncomfac;
       p | m_nadj;
-      p | m_ncomEsup;
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
       p | m_nnod;
       p | m_nreco;
+      p | m_nnodal;
       p | m_inpoel;
       p | m_coord;
       p | m_fd;
@@ -224,6 +223,10 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_volfracExtr;
       p | m_lhs;
+      p | m_nodalmax;
+      p | m_nodalmin;
+      p | m_nodalmaxc;
+      p | m_nodalminc;
       p | m_rhs;
       p | m_nfac;
       p | m_nunk;
@@ -279,8 +282,6 @@ class DG : public CBase_DG {
     std::size_t m_ncomfac;
     //! Counter signaling that all ghost data have been received
     std::size_t m_nadj;
-    //! Counter for element-surr-node adjacency communication map
-    std::size_t m_ncomEsup;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
     //! \brief Counter signaling that we have received all our solution ghost
@@ -294,6 +295,9 @@ class DG : public CBase_DG {
     std::size_t m_nnod;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
+    //! Counter signaling that we have received all our nodal extremes from
+    //! ghost chare partitions
+    std::size_t m_nnodal;
     //! Mesh connectivity extended
     std::vector< std::size_t > m_inpoel;
     //! Node coordinates extended
@@ -316,6 +320,12 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
+    //! Vector of nodal extremes
+    tk::Fields m_nodalmax;
+    tk::Fields m_nodalmin;
+    //! Buffer for vector of nodal extremes
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_nodalmaxc;
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_nodalminc;
     //! Counter for number of faces on this chare (including chare boundaries)
     std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
@@ -443,9 +453,6 @@ class DG : public CBase_DG {
     //! Continue after face adjacency communication map completed on this chare
     void faceAdj();
 
-    //! Continue after node adjacency communication map completed on this chare
-    void adj();
-
     //! Fill elements surrounding a face along chare boundary
     void addEsuf( const std::array< std::size_t, 2 >& id, std::size_t ghostid );
 
@@ -453,8 +460,6 @@ class DG : public CBase_DG {
     void addEsuel( const std::array< std::size_t, 2 >& id,
                    std::size_t ghostid,
                    const tk::UnsMesh::Face& t );
-
-    void addEsup();
 
     //! Fill face geometry data along chare boundary
     void addGeoFace( const tk::UnsMesh::Face& t,
@@ -465,6 +470,9 @@ class DG : public CBase_DG {
 
     //! Compute solution reconstructions
     void reco();
+
+    //! Compute nodal extremes at chare-boundary nodes
+    void nodal();
 
     //! Compute limiter function
     void lim();

@@ -32,12 +32,7 @@ module dg {
       entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
       entry void comGhost( int fromch, const GhostData& ghost );
       entry void reqGhost();
-      entry void nodeNeighSetup();
-      entry void comEsup( int fromch,
-        const std::unordered_map< std::size_t, std::vector< std::size_t > >&
-          bndEsup,
-        const std::unordered_map< std::size_t, std::vector< tk::real > >&
-          nodeBoundaryCells );
+      entry void adj();
       initnode void registerReducers();      
       entry void setup();
       entry void box( tk::real v );
@@ -65,6 +60,9 @@ module dg {
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void lhs();
+      entry void comnodal( const std::vector< std::size_t >& gid,
+                           const std::vector< std::vector< tk::real > >& G1,
+                           const std::vector< std::vector< tk::real > >& G2 );
       entry void step();
       entry void start();
       entry void next();
@@ -81,15 +79,14 @@ module dg {
         when ownghost_complete(), reqghost_complete() serial "ghost"
         { sendGhost(); } }
 
-      entry void wait4esup() {
-        when ownesup_complete(), comesup_complete() serial "esup"
-        { adj(); } }
-
       entry void wait4sol() {
         when ownsol_complete(), comsol_complete() serial "sol" { reco(); } }
 
       entry void wait4reco() {
-        when ownreco_complete(), comreco_complete() serial "reco" { lim(); } }
+        when ownreco_complete(), comreco_complete() serial "reco" { nodal(); } }
+
+      entry void wait4nodal() {
+        when ownnodal_complete(), comnodal_complete() serial "nodal" { lim(); } }
 
       entry void wait4lim() {
         when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
@@ -102,12 +99,12 @@ module dg {
       entry void comfac_complete();
       entry void ownghost_complete();
       entry void reqghost_complete();
-      entry void ownesup_complete();
-      entry void comesup_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
       entry void ownreco_complete();
       entry void comreco_complete();
+      entry void ownnodal_complete();
+      entry void comnodal_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
       entry void ownnod_complete( CkCallback c );

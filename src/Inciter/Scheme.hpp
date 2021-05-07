@@ -145,7 +145,7 @@ class Scheme {
     struct resizeComm {};
     struct refine {};
     struct lhs {};
-    struct nodeNeighSetup {};
+    struct adj {};
     struct diag {};
     struct evalLB {};
     struct doneInserting {};
@@ -173,8 +173,8 @@ class Scheme {
             p.refine( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, lhs > )
             p.lhs( std::forward< Args >( args )... );
-          else if constexpr( std::is_same_v< Fn, nodeNeighSetup > )
-            p.nodeNeighSetup( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, adj > )
+            p.adj( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, diag > )
             p.diag( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, evalLB > )

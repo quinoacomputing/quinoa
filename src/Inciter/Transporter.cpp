@@ -912,14 +912,14 @@ Transporter::resized( std::size_t meshid )
 }
 
 void
-Transporter::startEsup( std::size_t meshid )
+Transporter::startadj( std::size_t meshid )
 // *****************************************************************************
 // Reduction target: all worker chares have generated their own esup
 //! \param[in] meshid Mesh id
 //! \note Only used for cell-centered schemes
 // *****************************************************************************
 {
-  m_scheme[meshid].bcast< Scheme::nodeNeighSetup >();
+  m_scheme[meshid].bcast< Scheme::adj >();
 }
 
 void

@@ -57,12 +57,12 @@ DG::DG( const CProxy_Discretization& disc,
   m_disc( disc ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
-  m_ncomEsup( 0 ),
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
   m_nnod( 0 ),
   m_nreco( 0 ),
+  m_nnodal( 0 ),
   m_inpoel( Disc()->Inpoel() ),
   m_coord( Disc()->Coord() ),
   m_fd( m_inpoel, bface, tk::remap(triinpoel,Disc()->Lid()) ),
@@ -83,6 +83,14 @@ DG::DG( const CProxy_Discretization& disc,
   m_lhs( m_u.nunk(),
          g_inputdeck.get< tag::discr, tag::ndof >()*
          g_inputdeck.get< tag::component >().nprop() ),
+  m_nodalmax( Disc()->Bid().size(),
+              g_inputdeck.get< tag::component >().nprop() +
+              m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
+  m_nodalmin( Disc()->Bid().size(),
+              g_inputdeck.get< tag::component >().nprop() +
+              m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
+  m_nodalmaxc(),
+  m_nodalminc(),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
@@ -194,12 +202,12 @@ DG::resizeComm()
 
   // Activate SDAG waits for face adjacency map (ghost data) calculation
   thisProxy[ thisIndex ].wait4ghost();
-  thisProxy[ thisIndex ].wait4esup();
 
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
     thisProxy[ thisIndex ].wait4reco();
+    thisProxy[ thisIndex ].wait4nodal();
     thisProxy[ thisIndex ].wait4lim();
     thisProxy[ thisIndex ].wait4nod();
   }
@@ -995,105 +1003,7 @@ DG::faceAdj()
 
   auto meshid = Disc()->MeshId();
   contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
-    CkCallback(CkReductionTarget(Transporter,startEsup), Disc()->Tr()) );
-}
-
-void
-DG::nodeNeighSetup()
-// *****************************************************************************
-// Setup node-neighborhood (esup)
-//! \details At this point the face-ghost communication map has been established
-//!    on this chare. This function begins generating the node-ghost comm map.
-// *****************************************************************************
-{
-  if (Disc()->NodeCommMap().empty())
-  // in serial, skip setting up node-neighborhood
-  { comesup_complete(); }
-  else
-  {
-    const auto& nodeCommMap = Disc()->NodeCommMap();
-
-    // send out node-neighborhood map
-    for (const auto& [cid, nlist] : nodeCommMap)
-    {
-      std::unordered_map< std::size_t, std::vector< std::size_t > > bndEsup;
-      std::unordered_map< std::size_t, std::vector< tk::real > > nodeBndCells;
-      for (const auto& p : nlist)
-      {
-        auto pl = tk::cref_find(Disc()->Lid(), p);
-        // fill in the esup for the chare-boundary
-        const auto& pesup = tk::cref_find(m_esup, pl);
-        bndEsup[p] = pesup;
-
-        // fill a map with the element ids from esup as keys and geoElem as
-        // values, and another map containing these elements associated with
-        // the chare id with which they are node-neighbors.
-        for (const auto& e : pesup)
-        {
-          nodeBndCells[e] = m_geoElem[e];
-
-          // add these esup-elements into map of elements along chare boundary
-          Assert( e < m_fd.Esuel().size()/4, "Sender contains ghost tet id." );
-          m_sendGhost[cid].insert(e);
-        }
-      }
-
-      thisProxy[cid].comEsup(thisIndex, bndEsup, nodeBndCells);
-    }
-  }
-
-  ownesup_complete();
-}
-
-void
-DG::comEsup( int fromch,
-  const std::unordered_map< std::size_t, std::vector< std::size_t > >& bndEsup,
-  const std::unordered_map< std::size_t, std::vector< tk::real > >&
-    nodeBndCells )
-// *****************************************************************************
-//! \brief Receive elements-surrounding-points data-structure for points on
-//    common boundary between receiving and sending neighbor chare, and the
-//    element geometries for these new elements
-//! \param[in] fromch Sender chare id
-//! \param[in] bndEsup Elements-surrounding-points data-structure from fromch
-//! \param[in] nodeBndCells Map containing element geometries associated with
-//!   remote element IDs in the esup
-// *****************************************************************************
-{
-  auto& chghost = m_ghost[fromch];
-
-  // Extend remote-local element id map and element geometry array
-  for (const auto& e : nodeBndCells)
-  {
-    // need to check following, because 'e' could have been added previously in
-    // remote-local element id map as a part of face-communication, i.e. as a
-    // face-ghost element
-    if (chghost.find(e.first) == chghost.end())
-    {
-      chghost[e.first] = m_nunk;
-      m_geoElem.push_back(e.second);
-      ++m_nunk;
-    }
-  }
-
-  // Store incoming data in comm-map buffer for Esup
-  for (const auto& [node, elist] : bndEsup)
-  {
-    auto pl = tk::cref_find(Disc()->Lid(), node);
-    auto& pesup = m_esupc[pl];
-    for (auto e : elist)
-    {
-      auto el = tk::cref_find(chghost, e);
-      pesup.push_back(el);
-    }
-  }
-
-  // if we have heard from all fellow chares that we share at least a single
-  // node, edge, or face with
-  if (++m_ncomEsup == Disc()->NodeCommMap().size()) {
-    m_ncomEsup = 0;
-    comesup_complete();
-  }
+    CkCallback(CkReductionTarget(Transporter,startadj), Disc()->Tr()) );
 }
 
 void
@@ -1105,20 +1015,7 @@ DG::adj()
 //    for problem setup.
 // *****************************************************************************
 {
-  // combine own and communicated contributions to elements surrounding points
-  for (auto& [p, elist] : m_esupc)
-  {
-    auto& pesup = tk::ref_find(m_esup, p);
-    for ([[maybe_unused]] auto e : elist)
-    {
-      Assert( e >= m_fd.Esuel().size()/4, "Non-ghost element received from "
-        "esup buffer." );
-    }
-    tk::concat< std::size_t >(std::move(elist), pesup);
-  }
-
   tk::destroy(m_ghostData);
-  tk::destroy(m_esupc);
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) Disc()->Tr().chadj();
 
@@ -1667,6 +1564,8 @@ DG::reco()
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ncomp = m_u.nprop() / rdof;
+  const auto nprim = m_p.nprop() / rdof;
 
   // Combine own and communicated contributions of unreconstructed solution and
   // degrees of freedom in cells (if p-adaptive)
@@ -1718,6 +1617,17 @@ DG::reco()
       }
       thisProxy[ cid ].comreco( thisIndex, tetid, u, prim, volfm, ndof );
     }
+
+  // Initialization for the buffer vector of nodal extremes
+  for (const auto& [c,n] : Disc()->NodeCommMap())
+  {
+    auto gid = std::vector<std::size_t>(std::begin(n),std::end(n));
+    for (std::size_t i=0; i<gid.size(); ++i)
+    {
+      m_nodalmaxc[gid[i]].resize(ncomp+nprim,-std::numeric_limits< tk::real >::max());
+      m_nodalminc[gid[i]].resize(ncomp+nprim, std::numeric_limits< tk::real >::max());
+    }
+  }
 
   ownreco_complete();
 }
@@ -1777,13 +1687,19 @@ DG::comreco( int fromch,
 }
 
 void
-DG::lim()
+DG::nodal()
 // *****************************************************************************
-// Compute limiter function
+// Compute nodal extremes at chare-boundary nodes. Extremes at internal nodes
+// are calculated in limiter function.
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  auto d = Disc();
+  auto gid = d->Gid();
+  auto bid = d->Bid();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  const auto ncomp = m_u.nprop() / rdof;
+  const auto nprim = m_p.nprop() / rdof;
 
   // Combine own and communicated contributions of unlimited solution, and
   // if a p-adaptive algorithm is used, degrees of freedom in cells
@@ -1804,14 +1720,129 @@ DG::lim()
     }
   }
 
-  if (rdof > 1) {
-    auto d = Disc();
+  // Compute own portion of gradients for all equations
+  m_nodalmax.fill(-std::numeric_limits< tk::real >::max() );
+  m_nodalmin.fill( std::numeric_limits< tk::real >::max() );
 
-    for (const auto& eq : g_dgpde)
-      eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel,
-                m_coord, m_ndof, m_u, m_p );
+  for (auto e : d->bndel())  // elements contributing to chare boundary nodes
+  {
+    // access node IDs
+    std::size_t N[4] =
+        { m_inpoel[e*4+0], m_inpoel[e*4+1], m_inpoel[e*4+2], m_inpoel[e*4+3] };
+
+    for(std::size_t ip=0; ip<4; ++ip)
+    {
+      auto i = bid.find( gid[N[ip]] );
+      if (i != end(bid))
+      {
+        for (std::size_t c=0; c<ncomp; ++c)
+        {
+          m_nodalmax(i->second,c,0) =
+            std::max(m_nodalmax(i->second,c,0), m_u(e,c*rdof,0));
+          m_nodalmin(i->second,c,0) =
+            std::min(m_nodalmin(i->second,c,0), m_u(e,c*rdof,0));
+        }
+        for (std::size_t c=0; c<nprim; ++c)
+        {
+          m_nodalmax(i->second,c+ncomp,0) =
+            std::max(m_nodalmax(i->second,c+ncomp,0), m_p(e,c*rdof,0));
+          m_nodalmin(i->second,c+ncomp,0) =
+            std::min(m_nodalmin(i->second,c+ncomp,0), m_p(e,c*rdof,0));
+        }
+      }
+    }
   }
 
+  // Communicate extremes at nodes to other chares on chare-boundary
+  if (d->NodeCommMap().empty())        // in serial we are done
+    comnodal_complete();
+  else  // send nodal extremes to chare-boundary nodes to fellow chares
+  {
+    for (const auto& [c,n] : d->NodeCommMap()) {
+      std::vector< std::vector< tk::real > > g1( n.size() );
+      std::vector< std::vector< tk::real > > g2( n.size() );
+      std::size_t j = 0;
+      for (auto i : n)
+      {
+        g1[ j   ] = m_nodalmax[ tk::cref_find(d->Bid(),i) ];
+        g2[ j++ ] = m_nodalmin[ tk::cref_find(d->Bid(),i) ];
+      }
+      thisProxy[c].comnodal( std::vector<std::size_t>(begin(n),end(n)), g1, g2 );
+    }
+  }
+  ownnodal_complete();
+}
+
+void
+DG::comnodal( const std::vector< std::size_t >& gid,
+              const std::vector< std::vector< tk::real > >& G1,
+              const std::vector< std::vector< tk::real > >& G2 )
+// *****************************************************************************
+//  Receive contributions to nodal extremes on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive grad contributions
+//! \param[in] G1 Partial contributions of maximum to chare-boundary nodes
+//! \param[in] G2 Partial contributions of minimum to chare-boundary nodes
+//! \details This function receives contributions to m_nodalmax/m_nodalmin,
+//!   which stores nodal extrems at mesh chare-boundary nodes. While m_nodalmax/
+//!   m_nodalmin stores own contributions, m_nodalmaxc/m_nodalminc collects the
+//!   neighbor chare contributions during communication.
+// *****************************************************************************
+{
+  Assert( G1.size() == gid.size(), "Size mismatch" );
+  Assert( G2.size() == gid.size(), "Size mismatch" );
+
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ncomp = m_u.nprop() / rdof;
+  const auto nprim = m_p.nprop() / rdof;
+
+  for (std::size_t i=0; i<gid.size(); ++i)
+  {
+    for (std::size_t c=0; c<ncomp+nprim; ++c)
+    {
+      m_nodalmaxc[gid[i]][c] = std::max(G1[i][c], m_nodalmaxc[gid[i]][c]);
+      m_nodalminc[gid[i]][c] = std::min(G2[i][c], m_nodalminc[gid[i]][c]);
+    }
+  }
+
+  if (++m_nnodal == Disc()->NodeCommMap().size())
+  {
+    m_nnodal = 0;
+    comnodal_complete();
+  }
+}
+
+void
+DG::lim()
+// *****************************************************************************
+// Compute limiter function
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ncomp = m_u.nprop() / rdof;
+  const auto nprim = m_p.nprop() / rdof;
+
+  // Combine own and communicated contributions to nodal extremes
+  for (const auto& [gid,g] : m_nodalmaxc) {
+    auto bid = tk::cref_find( d->Bid(), gid );
+    for (ncomp_t c=0; c<ncomp+nprim; ++c)
+      m_nodalmax(bid,c,0) = std::max(g[c], m_nodalmax(bid,c,0));
+  }
+  for (const auto& [gid,g] : m_nodalminc) {
+    auto bid = tk::cref_find( d->Bid(), gid );
+    for (ncomp_t c=0; c<ncomp+nprim; ++c)
+      m_nodalmin(bid,c,0) = std::min(g[c], m_nodalmin(bid,c,0));
+  }
+
+  // clear gradients receive buffer
+  tk::destroy(m_nodalmaxc);
+  tk::destroy(m_nodalminc);
+
+  if (rdof > 1)
+    for (const auto& eq : g_dgpde)
+      eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel, m_coord,
+                m_ndof, d->Gid(), d->Bid(), m_nodalmax, m_nodalmin, m_u, m_p );
 
   // Send limited solution to neighboring chares
   if (m_sendGhost.empty())
@@ -1929,6 +1960,7 @@ DG::dt()
 
   auto d = Disc();
 
+
   // Combine own and communicated contributions of limited solution and degrees
   // of freedom in cells (if p-adaptive)
   for (const auto& b : m_bid) {
@@ -1991,6 +2023,7 @@ DG::solve( tk::real newdt )
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4reco();
+  thisProxy[ thisIndex ].wait4nodal();
   thisProxy[ thisIndex ].wait4lim();
   thisProxy[ thisIndex ].wait4nod();
 
