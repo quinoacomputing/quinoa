@@ -161,11 +161,12 @@ class CGPDE {
       const std::vector< std::unordered_set< std::size_t > >& boxnodes,
       const tk::Fields& G,
       const tk::Fields& U,
+      const tk::Fields& W,
       const std::vector< real >& tp,
       real V,
       tk::Fields& R ) const
-    { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
-                 symbctri, vol, edgenode, edgeid, boxnodes, G, U, tp, V, R ); }
+    { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
+        esup, symbctri, vol, edgenode, edgeid, boxnodes, G, U, W, tp, V, R ); }
 
     //! Public interface for computing the minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
@@ -189,8 +190,9 @@ class CGPDE {
            const std::vector< real >& tp,
            const std::vector< real >& dtp,
            const std::pair< const int, std::vector< std::size_t > >& sides,
-           const std::array< std::vector< real >, 3 >& coord ) const
-    { return self->dirbc( t, deltat, tp, dtp, sides, coord ); }
+           const std::array< std::vector< real >, 3 >& coord,
+           bool increment ) const
+    { return self->dirbc( t, deltat, tp, dtp, sides, coord, increment ); }
 
     //! Public interface to set symmetry boundary conditions at nodes
     void
@@ -228,7 +230,7 @@ class CGPDE {
     //! Public interface to returning surface field output
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
-                tk::Fields& U ) const
+                const tk::Fields& U ) const
     { return self->surfOutput( bnd, U ); }
 
     //! Public interface to returning time history output
@@ -308,6 +310,7 @@ class CGPDE {
         const std::vector< std::unordered_set< std::size_t > >&,
         const tk::Fields&,
         const tk::Fields&,
+        const tk::Fields&,
         const std::vector< real >&,
         real,
         tk::Fields& ) const = 0;
@@ -325,7 +328,8 @@ class CGPDE {
              const std::vector< real >&,
              const std::vector< real >&,
              const std::pair< const int, std::vector< std::size_t > >&,
-             const std::array< std::vector< real >, 3 >& ) const = 0;
+             const std::array< std::vector< real >, 3 >&,
+             bool ) const = 0;
       virtual void symbc(
         tk::Fields& U,
         const std::array< std::vector< real >, 3 >&,
@@ -346,7 +350,7 @@ class CGPDE {
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
-        tk::Fields& ) const = 0;
+        const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< real > > histOutput(
         const std::vector< HistData >&,
         const std::vector< std::size_t >&,
@@ -409,11 +413,12 @@ class CGPDE {
         const std::vector< std::unordered_set< std::size_t > >& boxnodes,
         const tk::Fields& G,
         const tk::Fields& U,
+        const tk::Fields& W,
         const std::vector< real >& tp,
         real V,
         tk::Fields& R ) const override
-      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup, esup,
-                  symbctri, vol, edgenode, edgeid, boxnodes, G, U, tp, V, R ); }
+      { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
+        esup, symbctri, vol, edgenode, edgeid, boxnodes, G, U, W, tp, V, R ); }
       real dt( const std::array< std::vector< real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
                tk::real t,
@@ -430,8 +435,10 @@ class CGPDE {
              const std::vector< real >& tp,
              const std::vector< real >& dtp,
              const std::pair< const int, std::vector< std::size_t > >& sides,
-             const std::array< std::vector< real >, 3 >& coord ) const
-        override { return data.dirbc( t, deltat, tp, dtp, sides, coord ); }
+             const std::array< std::vector< real >, 3 >& coord,
+             bool increment ) const
+        override { return data.dirbc( t, deltat, tp, dtp, sides, coord,
+                                      increment ); }
       void symbc(
         tk::Fields& U,
         const std::array< std::vector< real >, 3 >& coord,
@@ -458,7 +465,7 @@ class CGPDE {
       { return data.names(); }
       std::vector< std::vector< real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
-        tk::Fields& U ) const override
+        const tk::Fields& U ) const override
       { return data.surfOutput( bnd, U ); }
       std::vector< std::vector< real > > histOutput(
         const std::vector< HistData >& h,

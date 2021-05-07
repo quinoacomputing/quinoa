@@ -142,10 +142,14 @@ namespace grm {
     BC_EMPTY,           //!< Empty boundary condition block
     SYSFCTVAR,          //!< System-FCT variable index incorrect
     BGICMISSING,        //!< Background IC unspecified
+    BGMATIDMISSING,     //!< Background material id unspecified
+    BOXMATIDMISSING,    //!< Box material id unspecified
+    BOXMATIDWRONG,      //!< Box material id incorrect
     STAGBCWRONG,        //!< Stagnation BC incorrectly configured
     SKIPBCWRONG,        //!< Skip BC incorrectly configured
     NONDISJOINTBC,      //!< Different BC types assigned to the same side set
     WRONGSIZE,          //!< Size of parameter vector incorrect
+    STEADYALE,          //!< ALE + steady state not supported
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
     POSITION_DEPVAR,    //!< Missing required position model dependent variable
@@ -390,6 +394,12 @@ namespace grm {
       "condition specifications, e.g., 'sideset end', are not allowed." },
     { MsgKey::SYSFCTVAR, "Error in the system-FCT variable definition block. "
       "The block must list integers between 1 and 5 both inclusive." },
+    { MsgKey::BGMATIDMISSING, "Error in the preceding block. "
+      "The block must contain background material id." },
+    { MsgKey::BOXMATIDMISSING, "Error in the preceding block. "
+      "Each IC box must specify material id in the box." },
+    { MsgKey::BOXMATIDWRONG, "Error in the preceding block. "
+      "Material id in IC box larger than number of materials." },
     { MsgKey::STAGBCWRONG, "Stagnation boundary conditions incorrectly "
       "configured. Within a bc_stag ... end block there must be a point ... "
       "end block and a radius ... end block. Both point and radius blocks must "
@@ -404,6 +414,9 @@ namespace grm {
       "to the same side set." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
+    { MsgKey::STEADYALE, "Error in the preceding line or block. Arbitrary "
+      "Lagrangian-Eulerian mesh motion is not supported together with marching "
+      "to steady state." },
     { MsgKey::HYDROTIMESCALES, "Error in the preceding line or block. "
       "Specification of a 'hydrotimescales' vector missing." },
     { MsgKey::HYDROPRODUCTIONS, "Error in the preceding line or block. "

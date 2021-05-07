@@ -42,6 +42,7 @@
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "Problem/FieldOutput.hpp"
+#include "Problem/BoxInitialization.hpp"
 
 namespace inciter {
 
@@ -122,28 +123,67 @@ class MultiMat {
     }
 
     //! Determine elements that lie inside the user-defined IC box
-    void IcBoxElems( const tk::Fields&,
-      std::size_t,
-      std::vector< std::unordered_set< std::size_t > >& ) const
-    {}
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] nielem Number of internal elements
+    //! \param[in,out] inbox List of nodes at which box user ICs are set for
+    //!    each IC box
+    void IcBoxElems( const tk::Fields& geoElem,
+      std::size_t nielem,
+      std::vector< std::unordered_set< std::size_t > >& inbox ) const
+    {
+      tk::BoxElems< eq >(m_system, geoElem, nielem, inbox);
+    }
 
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+    //! \param[in] inbox List of elements at which box user ICs are set for
+    //!    each IC box
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
     void initialize( const tk::Fields& L,
-                     const std::vector< std::size_t >& inpoel,
-                     const tk::UnsMesh::Coords& coord,
-                     const std::vector< std::unordered_set< std::size_t > >&,
-                     tk::Fields& unk,
-                     tk::real t,
-                     const std::size_t nielem ) const
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      const std::vector< std::unordered_set< std::size_t > >& inbox,
+      tk::Fields& unk,
+      tk::real t,
+      const std::size_t nielem ) const
     {
       tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
+
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+
+      // Set initial conditions inside user-defined IC box
+      std::vector< tk::real > s(m_ncomp, 0.0);
+      for (std::size_t e=0; e<nielem; ++e) {
+        if (icbox.size() > m_system) {
+          std::size_t bcnt = 0;
+          for (const auto& b : icbox[m_system]) {   // for all boxes
+            if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
+            {
+              for (std::size_t c=0; c<m_ncomp; ++c) {
+                auto mark = c*rdof;
+                s[c] = unk(e,mark,m_offset);
+                // set high-order DOFs to zero
+                for (std::size_t i=1; i<rdof; ++i)
+                  unk(e,mark+i,m_offset) = 0.0;
+              }
+              initializeBox( m_system, 1.0, t, b, s );
+              // store box-initialization in solution vector
+              for (std::size_t c=0; c<m_ncomp; ++c) {
+                auto mark = c*rdof;
+                unk(e,mark,m_offset) = s[c];
+              }
+            }
+            ++bcnt;
+          }
+        }
+      }
     }
 
     //! Compute the left hand side block-diagonal mass matrix
@@ -365,7 +405,7 @@ class MultiMat {
           auto Pck =
             g_inputdeck.get< tag::param, eq, tag::pstiff >()[ m_system ][k];
           // for positive volume fractions
-          if (alk > 0.0)
+          if (matExists(alk))
           {
             // check if volume fraction is lesser than threshold (al_eps) and
             // if the material (effective) pressure is negative. If either of
@@ -418,6 +458,14 @@ class MultiMat {
             unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14
               * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14 *
+              p_target;
+          }
+          else {
+            auto rhok = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) / alk;
+            // update state of trace material
+            unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset) = alk
+              * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
+            prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk *
               p_target;
           }
         }

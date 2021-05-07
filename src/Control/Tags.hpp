@@ -214,6 +214,7 @@ struct position { static std::string name() { return "position"; } };
 struct dissipation { static std::string name() { return "dissipation"; } };
 struct variant { static std::string name() { return "variant"; } };
 struct normalization { static std::string name() { return "normalization"; } };
+struct materialid { static std::string name() { return "materialid"; } };
 struct mass { static std::string name() { return "mass"; } };
 struct hydro {};
 struct mix {};

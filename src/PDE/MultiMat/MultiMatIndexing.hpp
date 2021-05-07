@@ -150,6 +150,9 @@ inline std::size_t pressureDofIdx( std::size_t nmat, std::size_t kmat,
   std::size_t ndof, std::size_t idof )
 { return pressureIdx(nmat, kmat)*ndof+idof; }
 
+inline bool matExists( tk::real volfrac )
+{ return (volfrac > 1e-10) ? true : false; }
+
 //@}
 
 } //inciter::
