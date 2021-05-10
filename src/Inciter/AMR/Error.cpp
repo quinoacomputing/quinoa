@@ -63,16 +63,13 @@ Error::error_jump( const tk::Fields& u,
 //! \return Error indicator: a real number between [0...1] inclusive
 // *****************************************************************************
 {
-  const tk::real small = std::numeric_limits< tk::real >::epsilon();
-
   auto a = edge.first();
   auto b = edge.second();
 
   // If the normalization factor is zero, return zero error
-  auto norm = std::abs( u(a,c,0) + u(b,c,0) );
-  if (norm < small) return 0.0;
+  auto norm = std::abs(u(a,c,0)) + std::abs(u(b,c,0));
 
-  return std::abs( u(a,c,0) - u(b,c,0) ) / norm;
+  return std::abs( u(a,c,0) - u(b,c,0) ) / (norm+1e-6);
 }
 
 tk::real

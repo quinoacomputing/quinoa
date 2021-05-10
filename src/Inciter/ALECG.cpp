@@ -1285,7 +1285,7 @@ ALECG::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
-  const std::unordered_map< std::size_t, std::size_t >& /*removedNodes*/,
+  const std::unordered_map< std::size_t, std::size_t >& removedNodes,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
@@ -1312,13 +1312,22 @@ ALECG::resizePostAMR(
   // Resize mesh data structures after mesh refinement
   d->resizePostAMR( chunk, coord, nodeCommMap );
 
+  // Remove newly removed nodes from solution vectors
+  std::set< std::size_t > remset;
+  for (const auto& rn:removedNodes) {
+    remset.insert(rn.first);
+  }
+  m_u.rm(remset);
+  m_un.rm(remset);
+  m_rhs.rm(remset);
+
   // Resize auxiliary solution vectors
   auto npoin = coord[0].size();
   auto nprop = m_u.nprop();
-  m_u.resize( npoin, nprop );
-  m_un.resize( npoin, nprop );
-  m_rhs.resize( npoin, nprop );
-  m_chBndGrad.resize( d->Bid().size(), nprop*3 );
+  m_u.resize( npoin );
+  m_un.resize( npoin );
+  m_rhs.resize( npoin );
+  m_chBndGrad.resize( d->Bid().size() );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)
