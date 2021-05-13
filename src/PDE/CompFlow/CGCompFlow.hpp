@@ -912,6 +912,7 @@ class CompFlow {
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] vol Nodal volumes
+    //! \param[in] esup Elements surrounding points
     //! \param[in] U Solution vector at recent time step
     //! \param[in] G Nodal gradients of primitive variables in chare-boundary
     //!    nodes

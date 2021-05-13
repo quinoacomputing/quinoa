@@ -44,6 +44,7 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Control/TestToggle.cpp
                ../../tests/unit/${TestScheme}
                ../../tests/unit/${TestError}
+               ../../tests/unit/${TestVorticity}
                ../../tests/unit/IO/TestExodusIIMeshReader.cpp
                ../../tests/unit/IO/TestMesh.cpp
                ../../tests/unit/IO/TestMeshReader.cpp
@@ -82,6 +83,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       Init
                       RNG
                       ${MESHREFINEMENT}
+                      ${MESHMOTION}
                       UnitTest
                       UnitTestControl
                       LoadBalance

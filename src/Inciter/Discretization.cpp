@@ -728,7 +728,7 @@ Discretization::totalvol()
 // Sum mesh volumes and contribute own mesh volume to total volume
 // *****************************************************************************
 {
-  // Applied received contributions to nodal volumes
+  // Add received contributions to nodal volumes
   for (const auto& [gid, vol] : m_volc)
     m_vol[ tk::cref_find(m_lid,gid) ] += vol;
 

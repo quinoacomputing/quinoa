@@ -767,7 +767,7 @@ class Transport {
               ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
               da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
             const auto J = tk::triple( ba, ca, da );        // J = 6V
-            // shape function derivatives, nnode*ndim [5][3]
+            // shape function derivatives, nnode*ndim [4][3]
             std::array< std::array< tk::real, 3 >, 4 > grad;
             grad[1] = tk::crossdiv( ca, da, J );
             grad[2] = tk::crossdiv( da, ba, J );

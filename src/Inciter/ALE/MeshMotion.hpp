@@ -5,8 +5,8 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Mesh motion options for ALE
-  \details   Mesh motion options for ALE.
+  \brief     Mesh motion functionality for ALE
+  \details   Functionality for arbitrary Lagrangian-Eulerian (ALE) mesh motion.
 */
 // *****************************************************************************
 #ifndef MeshMotion_h
@@ -34,6 +34,18 @@ meshvel( ctr::MeshVelocityType m,
          const tk::UnsMesh::Coords& coord,
          const tk::UnsMesh::Coords& v,
          tk::Fields& w );
+
+//! Scale the mesh velocity with a function of the fluid vorticity for ALE
+void
+vortscale( const std::array< std::vector< tk::real >, 3 >& coord,
+           const std::vector< std::size_t >& inpoel,
+           const std::pair< std::vector< std::size_t >,
+                            std::vector< std::size_t > >& esup,
+           const std::vector< tk::real >& vol,
+           const tk::UnsMesh::Coords& vel,
+           tk::real c1,
+           tk::real c2,
+           tk::Fields& w );
 
 } // inciter::
 

@@ -229,7 +229,6 @@ class ALECG : public CBase_ALECG {
       p | m_finished;
       p | m_newmesh;
       p | m_coordn;
-      p | m_vel;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -336,8 +335,6 @@ class ALECG : public CBase_ALECG {
     int m_newmesh;
     //! Mesh coordinates at the time n for ALE
     tk::UnsMesh::Coords m_coordn;
-    //! Fluid velocity for ALE
-    tk::UnsMesh::Coords m_vel;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -350,7 +347,7 @@ class ALECG : public CBase_ALECG {
     edfnorm( const tk::UnsMesh::Edge& edge,
              const std::unordered_map< tk::UnsMesh::Edge,
                      std::vector< std::size_t >,
-                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
+                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued ) const;
 
     //! Compute chare-boundary edges
     void bndEdges();

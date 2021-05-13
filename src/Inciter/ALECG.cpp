@@ -95,8 +95,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 ),
   m_newmesh( 0 ),
-  m_coordn( Disc()->Coord() ),
-  m_vel()
+  m_coordn( Disc()->Coord() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -190,10 +189,10 @@ ALECG::edfnorm( const tk::UnsMesh::Edge& edge,
                 const std::unordered_map< tk::UnsMesh::Edge,
                         std::vector< std::size_t >,
                         tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued )
+const
 // *****************************************************************************
 //  Compute normal of dual-mesh associated to edge
 //! \param[in] edge Edge whose dual-face normal to compute given by local ids
-//! \param[in] inpoel Mesh element connectivity
 //! \param[in] esued Elements surrounding edges
 //! \return Dual-face normal for edge
 // *****************************************************************************
@@ -843,17 +842,17 @@ ALECG::meshvel( bool init )
   if (d->ALE()) {
 
     // query fluid velocity across all systems integrated
+    tk::UnsMesh::Coords vel;
     if (d->dynALE()) {
       conserved( m_u );
-      for (const auto& eq : g_cgpde) eq.velocity( m_u, m_vel );
+      for (const auto& eq : g_cgpde) eq.velocity( m_u, vel );
       volumetric( m_u );
     }
 
     // assign mesh velocity (never update static meshvel during timestepping)
-    if (d->dynALE() || init) {
+    if (d->dynALE() || init)
       inciter::meshvel( g_inputdeck.get< tag::ale, tag::meshvelocity >(),
-                        d->Coord(), m_vel, m_w );
-    }
+                        d->Coord(), vel, m_w );
 
     // smooth mesh velocity
     smooth();
