@@ -48,7 +48,7 @@ module transporter {
                                             std::size_t nelem,
                                             std::size_t npoin );
       entry [reductiontarget] void resized( std::size_t meshid );
-      entry [reductiontarget] void startadj( std::size_t meshid );
+      entry [reductiontarget] void startEsup( std::size_t meshid );
       entry [reductiontarget] void queried( std::size_t meshid );
       entry [reductiontarget] void responded( std::size_t meshid );
       entry [reductiontarget] void comfinal( std::size_t initial,

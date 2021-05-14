@@ -57,6 +57,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_disc( disc ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
+  m_ncomEsup( 0 ),
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
@@ -202,6 +203,7 @@ DG::resizeComm()
 
   // Activate SDAG waits for face adjacency map (ghost data) calculation
   thisProxy[ thisIndex ].wait4ghost();
+  thisProxy[ thisIndex ].wait4esup();
 
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
@@ -1003,7 +1005,105 @@ DG::faceAdj()
 
   auto meshid = Disc()->MeshId();
   contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
-    CkCallback(CkReductionTarget(Transporter,startadj), Disc()->Tr()) );
+    CkCallback(CkReductionTarget(Transporter,startEsup), Disc()->Tr()) );
+}
+
+void
+DG::nodeNeighSetup()
+// *****************************************************************************
+// Setup node-neighborhood (esup)
+//! \details At this point the face-ghost communication map has been established
+//!    on this chare. This function begins generating the node-ghost comm map.
+// *****************************************************************************
+{
+  if (Disc()->NodeCommMap().empty())
+  // in serial, skip setting up node-neighborhood
+  { comesup_complete(); }
+  else
+  {
+    const auto& nodeCommMap = Disc()->NodeCommMap();
+
+    // send out node-neighborhood map
+    for (const auto& [cid, nlist] : nodeCommMap)
+    {
+      std::unordered_map< std::size_t, std::vector< std::size_t > > bndEsup;
+      std::unordered_map< std::size_t, std::vector< tk::real > > nodeBndCells;
+      for (const auto& p : nlist)
+      {
+        auto pl = tk::cref_find(Disc()->Lid(), p);
+        // fill in the esup for the chare-boundary
+        const auto& pesup = tk::cref_find(m_esup, pl);
+        bndEsup[p] = pesup;
+
+        // fill a map with the element ids from esup as keys and geoElem as
+        // values, and another map containing these elements associated with
+        // the chare id with which they are node-neighbors.
+        for (const auto& e : pesup)
+        {
+          nodeBndCells[e] = m_geoElem[e];
+
+          // add these esup-elements into map of elements along chare boundary
+          Assert( e < m_fd.Esuel().size()/4, "Sender contains ghost tet id." );
+          m_sendGhost[cid].insert(e);
+        }
+      }
+
+      thisProxy[cid].comEsup(thisIndex, bndEsup, nodeBndCells);
+    }
+  }
+
+  ownesup_complete();
+}
+
+void
+DG::comEsup( int fromch,
+  const std::unordered_map< std::size_t, std::vector< std::size_t > >& bndEsup,
+  const std::unordered_map< std::size_t, std::vector< tk::real > >&
+    nodeBndCells )
+// *****************************************************************************
+//! \brief Receive elements-surrounding-points data-structure for points on
+//    common boundary between receiving and sending neighbor chare, and the
+//    element geometries for these new elements
+//! \param[in] fromch Sender chare id
+//! \param[in] bndEsup Elements-surrounding-points data-structure from fromch
+//! \param[in] nodeBndCells Map containing element geometries associated with
+//!   remote element IDs in the esup
+// *****************************************************************************
+{
+  auto& chghost = m_ghost[fromch];
+
+  // Extend remote-local element id map and element geometry array
+  for (const auto& e : nodeBndCells)
+  {
+    // need to check following, because 'e' could have been added previously in
+    // remote-local element id map as a part of face-communication, i.e. as a
+    // face-ghost element
+    if (chghost.find(e.first) == chghost.end())
+    {
+      chghost[e.first] = m_nunk;
+      m_geoElem.push_back(e.second);
+      ++m_nunk;
+    }
+  }
+
+  // Store incoming data in comm-map buffer for Esup
+  for (const auto& [node, elist] : bndEsup)
+  {
+    auto pl = tk::cref_find(Disc()->Lid(), node);
+    auto& pesup = m_esupc[pl];
+    for (auto e : elist)
+    {
+      auto el = tk::cref_find(chghost, e);
+      pesup.push_back(el);
+    }
+  }
+
+  // if we have heard from all fellow chares that we share at least a single
+  // node, edge, or face with
+  if (++m_ncomEsup == Disc()->NodeCommMap().size()) {
+    m_ncomEsup = 0;
+    comesup_complete();
+  }
 }
 
 void
@@ -1015,7 +1115,20 @@ DG::adj()
 //    for problem setup.
 // *****************************************************************************
 {
+  // combine own and communicated contributions to elements surrounding points
+  for (auto& [p, elist] : m_esupc)
+  {
+    auto& pesup = tk::ref_find(m_esup, p);
+    for ([[maybe_unused]] auto e : elist)
+    {
+      Assert( e >= m_fd.Esuel().size()/4, "Non-ghost element received from "
+        "esup buffer." );
+    }
+    tk::concat< std::size_t >(std::move(elist), pesup);
+  }
+
   tk::destroy(m_ghostData);
+  tk::destroy(m_esupc);
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) Disc()->Tr().chadj();
 
