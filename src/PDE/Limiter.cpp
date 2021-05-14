@@ -886,6 +886,8 @@ VertexBasedFunction( const tk::Fields& U,
   // 2. Calculate the limiter function (Superbee) for all the vertices of cell.
   //    From these, use the minimum value of the limiter function.
 
+  const auto nelem = inpoel.size() / 4;
+
   // Prepare for calculating Basis functions
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -942,11 +944,14 @@ VertexBasedFunction( const tk::Fields& U,
     // loop over all the elements surrounding this node p
     for (auto er : pesup)
     {
-      for (std::size_t c=0; c<ncomp; ++c)
+      if(er < nelem)
       {
-        auto mark = c*rdof;
-        uMin[c] = std::min(uMin[c], U(er, mark, offset));
-        uMax[c] = std::max(uMax[c], U(er, mark, offset));
+        for (std::size_t c=0; c<ncomp; ++c)
+        {
+          auto mark = c*rdof;
+          uMin[c] = std::min(uMin[c], U(er, mark, offset));
+          uMax[c] = std::max(uMax[c], U(er, mark, offset));
+        }
       }
     }
 

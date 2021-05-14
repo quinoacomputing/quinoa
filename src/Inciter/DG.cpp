@@ -84,6 +84,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_lhs( m_u.nunk(),
          g_inputdeck.get< tag::discr, tag::ndof >()*
          g_inputdeck.get< tag::component >().nprop() ),
+  m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_nodalmax( Disc()->Bid().size(),
               g_inputdeck.get< tag::component >().nprop() +
               m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
@@ -92,7 +93,6 @@ DG::DG( const CProxy_Discretization& disc,
               m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
   m_nodalmaxc(),
   m_nodalminc(),
-  m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_npoin( m_coord[0].size() ),
@@ -135,9 +135,24 @@ DG::DG( const CProxy_Discretization& disc,
     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
                                         "DG" );
 
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ncomp = m_u.nprop() / rdof;
+  const auto nprim = m_p.nprop() / rdof;
+
   // assign number of dofs for each equation in all pde systems
   for (const auto& eq : g_dgpde) {
     eq.numEquationDofs(m_numEqDof);
+  }
+
+  // Initialization for the buffer vector of nodal extremes
+  for (const auto& [c,n] : Disc()->NodeCommMap())
+  {
+    auto gid = std::vector<std::size_t>(std::begin(n),std::end(n));
+    for (std::size_t i=0; i<gid.size(); ++i)
+    {
+      m_nodalmaxc[gid[i]].resize(ncomp+nprim,-std::numeric_limits< tk::real >::max());
+      m_nodalminc[gid[i]].resize(ncomp+nprim, std::numeric_limits< tk::real >::max());
+    }
   }
 
   usesAtSync = true;    // enable migration at AtSync
@@ -1677,8 +1692,6 @@ DG::reco()
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ncomp = m_u.nprop() / rdof;
-  const auto nprim = m_p.nprop() / rdof;
 
   // Combine own and communicated contributions of unreconstructed solution and
   // degrees of freedom in cells (if p-adaptive)
@@ -1730,17 +1743,6 @@ DG::reco()
       }
       thisProxy[ cid ].comreco( thisIndex, tetid, u, prim, volfm, ndof );
     }
-
-  // Initialization for the buffer vector of nodal extremes
-  for (const auto& [c,n] : Disc()->NodeCommMap())
-  {
-    auto gid = std::vector<std::size_t>(std::begin(n),std::end(n));
-    for (std::size_t i=0; i<gid.size(); ++i)
-    {
-      m_nodalmaxc[gid[i]].resize(ncomp+nprim,-std::numeric_limits< tk::real >::max());
-      m_nodalminc[gid[i]].resize(ncomp+nprim, std::numeric_limits< tk::real >::max());
-    }
-  }
 
   ownreco_complete();
 }
@@ -2070,7 +2072,9 @@ DG::dt()
 // *****************************************************************************
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ncomp = m_u.nprop() / rdof;
+  const auto nprim = m_p.nprop() / rdof;
   auto d = Disc();
 
 
@@ -2119,6 +2123,17 @@ DG::dt()
   else
   {
     mindt = d->Dt();
+  }
+
+  // Initialization for the buffer vector of nodal extremes
+  for (const auto& [c,n] : Disc()->NodeCommMap())
+  {
+    auto gid = std::vector<std::size_t>(std::begin(n),std::end(n));
+    for (std::size_t i=0; i<gid.size(); ++i)
+    {
+      m_nodalmaxc[gid[i]].resize(ncomp+nprim,-std::numeric_limits< tk::real >::max());
+      m_nodalminc[gid[i]].resize(ncomp+nprim, std::numeric_limits< tk::real >::max());
+    }
   }
 
   // Contribute to minimum dt across all chares then advance to next step
