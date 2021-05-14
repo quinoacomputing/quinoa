@@ -1809,7 +1809,6 @@ curl( const std::array< std::vector< tk::real >, 3 >& coord,
    curl[1].resize( npoin, 0.0 );
    curl[2].resize( npoin, 0.0 );
 
-   #pragma omp simd
    for (std::size_t e=0; e<inpoel.size()/4; ++e) {
      // access node IDs
      std::size_t N[4] =
