@@ -31,16 +31,6 @@ flip( std::array< real, 3 >& v )
   v[2] = -v[2];
 }
 
-//! Compute the value of the Levi-Civita permutation tensor
-inline int
-perm( int i, int j, int k )
-{
-  if (j==i || k==i || k==j)
-    return 0;
-  else
-    return (j-i)*(k-i)*(k-j)/std::abs(j-i)/std::abs(k-i)/std::abs(k-j);
-}
-
 //! Compute the cross-product of two vectors
 //! \param[in] v1x x coordinate of the 1st vector
 //! \param[in] v1y y coordinate of the 1st vector
