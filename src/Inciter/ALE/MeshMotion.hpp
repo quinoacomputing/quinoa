@@ -39,8 +39,6 @@ meshvel( ctr::MeshVelocityType m,
 void
 vortscale( const std::array< std::vector< tk::real >, 3 >& coord,
            const std::vector< std::size_t >& inpoel,
-           const std::pair< std::vector< std::size_t >,
-                            std::vector< std::size_t > >& esup,
            const std::vector< tk::real >& vol,
            const tk::UnsMesh::Coords& vel,
            tk::real c1,
