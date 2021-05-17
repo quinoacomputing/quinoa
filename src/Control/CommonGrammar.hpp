@@ -147,6 +147,7 @@ namespace grm {
     BOXMATIDWRONG,      //!< Box material id incorrect
     STAGBCWRONG,        //!< Stagnation BC incorrectly configured
     SKIPBCWRONG,        //!< Skip BC incorrectly configured
+    SPONGEBCWRONG,      //!< Sponge BC incorrectly configured
     NONDISJOINTBC,      //!< Different BC types assigned to the same side set
     WRONGSIZE,          //!< Size of parameter vector incorrect
     STEADYALE,          //!< ALE + steady state not supported
@@ -410,6 +411,12 @@ namespace grm {
       "end block and a radius ... end block. Both point and radius blocks must "
       "contain floating-point numbers, and the number of items in the point "
       "block must be exactly 3x that of radii." },
+    { MsgKey::SPONGEBCWRONG, "Sponge symmetry boundary conditions incorrectly "
+      "configured. Within a bc_sym ... end block, if a sponge parameter vector "
+      "is given, its size must equal the number of side sets configured for "
+      "symmetry BCs, and each entry must be between 0.0 and 1.0, prescribing "
+      "the percentage of kinetic energy kept at the boundary, i.e., 0.0 fully "
+      "absorbs, 1.0 fully keeps." },
     { MsgKey::NONDISJOINTBC, "Different boundary condition types are assigned "
       "to the same side set." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "

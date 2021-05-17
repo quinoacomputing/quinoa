@@ -5356,6 +5356,24 @@ struct radius_info {
 };
 using radius = keyword< radius_info, TAOCPP_PEGTL_STRING("radius") >;
 
+struct sponge_info {
+  static std::string name() { return "sponge"; }
+  static std::string shortDescription() { return "Specify sponge absorption"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the sponge symmetry boundary conditions
+    absorption coefficient for each symmetry BC sideset configured. The
+    coefficient must be between 0.0 and 1.0, expressing the percentage of kinetic
+    energy kept at the boundary: 0.0 - fully absorbed, 1.0 - fully kept.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
+    static std::string description() { return "real"; }
+  };
+};
+using sponge = keyword< sponge_info, TAOCPP_PEGTL_STRING("sponge") >;
+
 struct bc_stag_info {
   static std::string name() { return "Stagnation boundary condition"; }
   static std::string shortDescription() { return
