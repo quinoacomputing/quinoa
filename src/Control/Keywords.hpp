@@ -1755,6 +1755,28 @@ struct cfl_info {
 };
 using cfl = keyword< cfl_info, TAOCPP_PEGTL_STRING("cfl") >;
 
+struct dvcfl_info {
+  static std::string name() { return "dvCFL"; }
+  static std::string shortDescription() { return
+    "Set the volume-change Courant-Friedrichs-Lewy (CFL) coefficient"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the volume-change (dV/dt) CFL coefficient
+    for variable-time-step-size simulations due to volume change in time in
+    arbitrary-Lagrangian-Eulerian (ALE) calculations. Setting 'dvcfl' only has
+    effect in ALE calculations and used together with 'cfl'. See also J. Waltz,
+    N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, A
+    three-dimensional finite element arbitrary Lagrangian–Eulerian method for
+    shock hydrodynamics on unstructured grids, Computers & Fluids, 92: 172-187,
+    2014.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.01;
+    static std::string description() { return "real"; }
+  };
+};
+using dvcfl = keyword< dvcfl_info, TAOCPP_PEGTL_STRING("dvcfl") >;
+
 struct ncomp_info {
   static std::string name() { return "ncomp"; }
   static std::string shortDescription() { return

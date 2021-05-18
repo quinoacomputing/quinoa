@@ -143,6 +143,7 @@ struct term { static std::string name() { return "term"; } };
 struct t0 { static std::string name() { return "t0"; } };
 struct dt { static std::string name() { return "dt"; } };
 struct cfl { static std::string name() { return "cfl"; } };
+struct dvcfl { static std::string name() { return "dvcfl"; } };
 struct fct { static std::string name() { return "fct"; } };
 struct fctclip { static std::string name() { return "fctclip"; } };
 struct sys { static std::string name() { return "sys"; } };

@@ -558,16 +558,23 @@ class CompFlow {
       src( coord, inpoel, t, tp, R );
     }
 
-    //! Compute the minimum time step size
-    //! \param[in] U Solution vector at recent time step
+    //! Compute the minimum time step size (for unsteady time stepping)
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] t Physical time
+    //! \param[in] dtn Time step size at the previous time step
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] vol Nodal volume (with contributions from other chares)
+    //! \param[in] voln Nodal volume (with contributions from other chares) at
+    //!   the previous time step
     //! \return Minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
              tk::real t,
-             const tk::Fields& U ) const
+             tk::real dtn,
+             const tk::Fields& U,
+             const std::vector< tk::real >& vol,
+             const std::vector< tk::real >& voln ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
@@ -579,8 +586,10 @@ class CompFlow {
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
+
       // ratio of specific heats
       auto g = g_inputdeck.get< tag::param, eq, tag::gamma >()[0][0];
+
       // compute the minimum dt across all elements we own
       real mindt = std::numeric_limits< real >::max();
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
@@ -630,7 +639,6 @@ class CompFlow {
 
           if (v > maxvel) maxvel = v;
         }
-
         // compute element dt for the Euler equations
         auto euler_dt = L / maxvel;
         // compute element dt based on the viscous force
@@ -640,12 +648,27 @@ class CompFlow {
         // compute minimum element dt
         auto elemdt = std::min( euler_dt, std::min( viscous_dt, conduct_dt ) );
         // find minimum dt across all elements
-        if (elemdt < mindt) mindt = elemdt;
+        mindt = std::min( elemdt, mindt );
       }
-      return mindt * g_inputdeck.get< tag::discr, tag::cfl >();
+      mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+
+      // compute the minimum dt across all nodes we contribute to due to volume
+      // change in time
+      auto dvcfl = g_inputdeck.get< tag::discr, tag::dvcfl >();
+      if (dtn > 0.0 && dvcfl > 0.0) {
+        Assert( vol.size() == voln.size(), "Size mismatch" );
+        for (std::size_t p=0; p<vol.size(); ++p) {
+          auto vol_dt = dtn * std::min( voln[p], vol[p] )
+                            / std::abs( voln[p] - vol[p] + 1.0e-16 );
+          mindt = std::min( vol_dt, mindt );
+        }
+        mindt *= dvcfl;
+      }
+
+      return mindt;
     }
 
-    //! Compute a time step size for each mesh node
+    //! Compute a time step size for each mesh node (for steady time stepping)
     //! \param[in] U Solution vector at recent time step
     //! \param[in] vol Nodal volume (with contributions from other chares)
     //! \param[in,out] dtp Time step size for each mesh node

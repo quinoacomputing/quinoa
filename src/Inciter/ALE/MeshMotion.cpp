@@ -102,7 +102,7 @@ vortscale( const std::array< std::vector< tk::real >, 3 >& coord,
    }
 std::cout << "maxv: " << maxv << '\n';
  
-   // scale mesh velocity with a function the fluid vorticity
+   // scale mesh velocity with a function of the fluid vorticity
    if (maxv > 1.0e-8) {
      for (std::size_t j=0; j<3; ++j) {
        #pragma omp simd

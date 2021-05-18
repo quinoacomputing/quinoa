@@ -122,7 +122,7 @@ class Discretization : public CBase_Discretization {
     resizePostALE( const tk::UnsMesh::Coords& coord );
 
     //! Get ready for (re-)computing/communicating nodal volumes
-    void startvol();
+    void startvol( bool last_stage = false );
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
@@ -172,6 +172,8 @@ class Discretization : public CBase_Discretization {
 
     //! Nodal mesh volumes accessors as const-ref
     const std::vector< tk::real >& Vol() const { return m_vol; }
+    //! Nodal mesh volumes accessors as const-ref at previous time step
+    const std::vector< tk::real >& Voln() const { return m_voln; }
 
     //! History points data accessor as const-ref
     const std::vector< HistData >& Hist() const { return m_histdata; }
@@ -184,6 +186,8 @@ class Discretization : public CBase_Discretization {
 
     //! Time step size accessor
     tk::real Dt() const { return m_dt; }
+    //! Time step size at previous time step accessor
+    tk::real Dtn() const { return m_dtn; }
     //! Physical time accessor
     tk::real T() const { return m_t; }
     //! Iteration count accessor
@@ -369,6 +373,7 @@ class Discretization : public CBase_Discretization {
       p | m_t;
       p | m_lastDumpTime;
       p | m_dt;
+      p | m_dtn;
       p | m_nvol;
       p | m_fct;
       p | m_conjugategradients;
@@ -388,6 +393,7 @@ class Discretization : public CBase_Discretization {
       p | m_v;
       p | m_vol;
       p | m_volc;
+      p | m_voln;
       p | m_boxvol;
       p | m_bid;
       p | m_timer;
@@ -443,6 +449,8 @@ class Discretization : public CBase_Discretization {
     tk::real m_lastDumpTime;
     //! Physical time step size
     tk::real m_dt;
+    //! Physical time step size at the previous time step
+    tk::real m_dtn;
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;
@@ -495,6 +503,11 @@ class Discretization : public CBase_Discretization {
     //!   cell volumes / 4) with contributions from other chares on
     //!   chare-boundaries.
     std::unordered_map< std::size_t, tk::real > m_volc;
+    //! Volume of nodes at previous time step
+    //! \details This is the volume of the mesh associated to nodes of owned
+    //!   elements (sum of surrounding cell volumes / 4) with contributions from
+    //!   other chares on chare-boundaries at the previous time step
+    std::vector< tk::real > m_voln;
     //! Volume of user-defined box IC
     tk::real m_boxvol;
     //! \brief Local chare-boundary mesh node IDs at which we receive

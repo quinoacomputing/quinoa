@@ -253,7 +253,14 @@ Transporter::info( const InciterPrint& print )
     print.item( "Constant time step size", constdt );
   else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
              std::numeric_limits< tk::real >::epsilon())
+  {
     print.item( "CFL coefficient", cfl );
+    const auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+    if (ale) {
+      const auto dvcfl = g_inputdeck.get< tag::discr, tag::dvcfl >();
+      print.item( "Volume-change CFL coefficient (ALE)", dvcfl );
+    }
+  }
 
   // Print out info on settings of selected partial differential equations
   print.pdes( "Partial differential equations integrated", stack.info() );

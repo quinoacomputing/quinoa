@@ -144,6 +144,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::pde_p0
                                  , kw::ctau
                                  , kw::cfl
+                                 , kw::dvcfl
                                  , kw::mj
                                  , kw::elem
                                  , kw::node
@@ -285,6 +286,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::t0 >() = 0.0;
       get< tag::discr, tag::dt >() = 0.0;
       get< tag::discr, tag::cfl >() = 0.0;
+      get< tag::discr, tag::dvcfl >() = 0.0;
       get< tag::discr, tag::fct >() = true;
       get< tag::discr, tag::fctclip >() = false;
       get< tag::discr, tag::ctau >() = 1.0;

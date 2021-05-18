@@ -98,6 +98,7 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::t0,     kw::t0::info::expect::type     //!< Starting time
   , tag::dt,     kw::dt::info::expect::type     //!< Size of time step
   , tag::cfl,    kw::cfl::info::expect::type    //!< CFL coefficient
+  , tag::dvcfl,  kw::dvcfl::info::expect::type  //!< dvCFL coefficient
   , tag::pelocal_reorder, bool                  //!< PE-locality reordering
   , tag::operator_reorder, bool                 //!< Operator-access reordering
   , tag::steady_state, bool                     //!< March to steady state

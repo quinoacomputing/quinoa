@@ -725,6 +725,12 @@ namespace grm {
         Message< Stack, ERROR, MsgKey::STEADYALE >( stack, in );
       }
 
+      // Set a sensible default for dvCFL if ALE is enabled and if dvcfl not set
+      auto& dvcfl = stack.template get< tag::discr, tag::dvcfl >();
+      auto dvcfl_default = g_inputdeck_defaults.get< tag::discr, tag::dvcfl >();
+      auto eps = std::numeric_limits< tk::real >::epsilon();
+      if (ale && std::abs(dvcfl - dvcfl_default) < eps) dvcfl = 0.01;
+
       // If at least a mesh filename is assigned to a solver, all solvers must
       // have a mesh filename assigned
       std::size_t nmesh = 0;
@@ -1147,6 +1153,7 @@ namespace deck {
            tk::grm::discrparam< use, kw::t0, tag::t0 >,
            tk::grm::discrparam< use, kw::dt, tag::dt >,
            tk::grm::discrparam< use, kw::cfl, tag::cfl >,
+           tk::grm::discrparam< use, kw::dvcfl, tag::dvcfl >,
            tk::grm::discrparam< use, kw::residual, tag::residual >,
            tk::grm::discrparam< use, kw::rescomp, tag::rescomp >,
            tk::grm::process< use< kw::fcteps >,

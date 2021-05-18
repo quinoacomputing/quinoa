@@ -732,7 +732,8 @@ ALECG::dt()
 
       // find the smallest dt of all equations on this chare
       for (const auto& eq : g_cgpde) {
-        auto eqdt = eq.dt( d->Coord(), d->Inpoel(), d->T(), m_u );
+        auto eqdt = eq.dt( d->Coord(), d->Inpoel(), d->T(), d->Dtn(), m_u,
+                           d->Vol(), d->Voln() );
         if (eqdt < mindt) mindt = eqdt;
       }
 
@@ -873,12 +874,12 @@ ALECG::smooth()
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
 
   // Smooth mesh velocity if enabled
-  if (meshvel == ctr::MeshVelocityType::FLUID) {
-    Disc()->ConjugateGradientsSolve( 10, 1.0e-3,
-      CkCallback(CkIndex_ALECG::smoothed(nullptr), thisProxy[thisIndex]) );
-  } else {
+  //if (meshvel == ctr::MeshVelocityType::FLUID) {
+  //  Disc()->ConjugateGradientsSolve( 10, 1.0e-3,
+  //    CkCallback(CkIndex_ALECG::smoothed(nullptr), thisProxy[thisIndex]) );
+  //} else {
     smoothed();
-  }
+  //}
 }
 
 void
@@ -1037,7 +1038,7 @@ ALECG::solve()
     transfer_complete();
     // Resize mesh data structures after mesh movement
     d->resizePostALE( d->Coord() );
-    d->startvol();
+    d->startvol( m_stage == 2 );
     auto meshid = d->MeshId();
     contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
                 CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );

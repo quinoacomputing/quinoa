@@ -375,7 +375,7 @@ class Transport {
       }
     }
 
-    //! Compute the minimum time step size
+    //! Compute the minimum time step size (for unsteady time stepping)
     //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
@@ -384,7 +384,10 @@ class Transport {
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
              tk::real t,
-             const tk::Fields& U ) const
+             tk::real,
+             const tk::Fields& U,
+             const std::vector< tk::real >&,
+             const std::vector< tk::real >& ) const
     {
       using tag::transport;
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
@@ -438,7 +441,7 @@ class Transport {
       return mindt * g_inputdeck.get< tag::discr, tag::cfl >();
     }
 
-    //! Compute a time step size for each mesh node
+    //! Compute a time step size for each mesh node (for steady time stepping)
     void dt( uint64_t,
              const std::vector< tk::real >&,
              const tk::Fields&,

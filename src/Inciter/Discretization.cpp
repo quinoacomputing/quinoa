@@ -60,6 +60,7 @@ Discretization::Discretization(
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),  
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
+  m_dtn( m_dt ),
   m_nvol( 0 ),
   m_fct( fctproxy ),
   m_conjugategradients( conjugategradientsproxy ),
@@ -73,6 +74,7 @@ Discretization::Discretization(
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
+  m_voln( m_vol ),
   m_bid(),
   m_timer(),
   m_refined( 0 ),
@@ -522,13 +524,17 @@ Discretization::resizePostALE( const tk::UnsMesh::Coords& coord )
 }
 
 void
-Discretization::startvol()
+Discretization::startvol( bool last_stage )
 // *****************************************************************************
 //  Get ready for (re-)computing/communicating nodal volumes
+//! \param[in] last_stage True if this is the last time step stage
 // *****************************************************************************
 {
   m_nvol = 0;
   thisProxy[ thisIndex ].wait4vol();
+
+  // Save nodal volumes at previous time step
+  if (last_stage) m_voln = m_vol;
 
   // Zero out mesh volume container
   std::fill( begin(m_vol), end(m_vol), 0.0 );
@@ -928,6 +934,7 @@ Discretization::setdt( tk::real newdt )
 //! \param[in] newdt Size of the new time step
 // *****************************************************************************
 {
+  m_dtn = m_dt;
   m_dt = newdt;
 
   // Truncate the size of last time step
