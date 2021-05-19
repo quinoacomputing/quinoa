@@ -2313,13 +2313,14 @@ DG::resizePostAMR(
   m_inpoel = d->Inpoel();
   m_coord = d->Coord();
   auto nelem = m_inpoel.size()/4;
-  auto nprop = m_p.nprop();
-  m_p.resize( nelem, nprop );
-  nprop = m_u.nprop();
-  m_u.resize( nelem, nprop );
-  m_un.resize( nelem, nprop );
-  m_lhs.resize( nelem, nprop );
-  m_rhs.resize( nelem, nprop );
+  m_p.resize( nelem );
+  m_u.resize( nelem );
+  m_un.resize( nelem );
+  m_lhs.resize( nelem );
+  m_rhs.resize( nelem );
+  m_volfracExtr.resize( nelem );
+  m_nodalmax.resize( d->Bid().size() );
+  m_nodalmin.resize( d->Bid().size() );
 
   m_fd = FaceData( m_inpoel, bface, tk::remap(triinpoel,d->Lid()) );
 
