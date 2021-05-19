@@ -68,6 +68,7 @@ Transporter::Transporter() :
   m_ndisc( 0 ),
   m_nchk( 0 ),
   m_ncom( 0 ),
+  m_ndiag( 0 ),
   m_nt0refit( m_nchare.size(), 0 ),
   m_ndtrefit( m_nchare.size(), 0 ),
   m_noutrefit( m_nchare.size(), 0 ),
@@ -111,6 +112,8 @@ Transporter::Transporter() :
 
     // Enable SDAG waits for collecting mesh statistics
     thisProxy.wait4stat();
+    // Enable SDAG waits for collecting diagnostics
+    thisProxy.wait4diag();
 
     // Configure and write diagnostics file header
     diagHeader();
@@ -1362,8 +1365,56 @@ Transporter::diagnostics( CkReductionMsg* msg )
                      std::ios_base::app );
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
-  // Continue time step
+  diagnostics_complete( meshid, l2res );
+
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
+    diagpdfs_complete( meshid );
+  }
+}
+
+void
+Transporter::diagpdfs( CkReductionMsg* msg )
+// *****************************************************************************
+//  Reduction target yielding diagnostics PDFs from all workers
+//! \param[in] msg Serialized PDFs
+// *****************************************************************************
+{
+  std::size_t meshid;
+  std::vector< tk::UniPDF > pdf;
+
+  // Deserialize final PDF
+  PUP::fromMem creator( msg->getData() );
+  creator | meshid;
+  creator | pdf;
+  delete msg;
+
+  auto id = std::to_string(meshid);
+
+  // Create new PDF file (overwrite if exists)
+  tk::PDFWriter pdfn( "ndof_pdf." + id + ".txt" );
+  // Output NDOF PDF
+  // cppcheck-suppress containerOutOfBounds
+  pdfn.writeTxt( pdf[0],
+                 tk::ctr::PDFInfo{ {"PDF"}, {}, {"NDOF"}, 0, 0.0 } );
+
+  diagpdfs_complete(meshid);
+}
+
+void
+Transporter::diagnext( std::size_t meshid,
+                       const std::vector< tk::real >& l2res )
+// *****************************************************************************
+// Wait for all meshes finishing their diagnostics output
+//! \param[in] meshid Mesh id finished processing diagnostics
+//! \param[in] l2res L2 residuals fro mdiagnostics, going back to the solver
+// *****************************************************************************
+{
   m_scheme[meshid].bcast< Scheme::refine >( l2res );
+
+  if (++m_ndiag == m_nelem.size()) {
+    m_ndiag = 0;
+    thisProxy.wait4diag();
+  }
 }
 
 void

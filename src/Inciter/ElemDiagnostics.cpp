@@ -19,6 +19,7 @@
 #include "DGPDE.hpp"
 #include "ElemDiagnostics.hpp"
 #include "DiagReducer.hpp"
+#include "PDFReducer.hpp"
 #include "Discretization.hpp"
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
@@ -30,6 +31,7 @@ extern ctr::InputDeck g_inputdeck;
 extern std::vector< DGPDE > g_dgpde;
 
 static CkReduction::reducerType DiagMerger;
+static CkReduction::reducerType PDFMerger;
 
 } // inciter::
 
@@ -48,6 +50,7 @@ ElemDiagnostics::registerReducers()
 // *****************************************************************************
 {
   DiagMerger = CkReduction::addReducer( mergeDiag );
+  PDFMerger = CkReduction::addReducer( tk::mergeUniPDFs );
 }
 
 bool
@@ -104,6 +107,16 @@ ElemDiagnostics::compute( Discretization& d,
     auto stream = serialize( d.MeshId(), diag );
     d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
+
+    // Compute the PDF of the number of degrees of freedom
+    tk::UniPDF ndofPDF( /* binsize = */ 1.0 );
+    tk::real r = 0.0;
+    for (auto n : ndofel) r += n;
+    ndofPDF.add( r/ndofel.size() );
+    // Contribute to PDFs
+    auto pdfstream = tk::serialize( d.MeshId(), { ndofPDF } );
+    d.contribute( pdfstream.first, pdfstream.second.get(), PDFMerger,
+      CkCallback(CkIndex_Transporter::diagpdfs(nullptr), d.Tr()) );
 
     return true;        // diagnostics have been computed
 

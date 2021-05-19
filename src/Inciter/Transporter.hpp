@@ -192,6 +192,9 @@ class Transporter : public CBase_Transporter {
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
 
+    //! Reduction target yielding diagnostics PDFs from all workers
+    void diagpdfs( CkReductionMsg* msg );
+
     //! Resume execution from checkpoint/restart files
     void resume();
 
@@ -217,6 +220,7 @@ class Transporter : public CBase_Transporter {
       p | m_ndisc;
       p | m_nchk;
       p | m_ncom;
+      p | m_ndiag;
       p | m_ncit;
       p | m_nt0refit;
       p | m_ndtrefit;
@@ -264,6 +268,8 @@ class Transporter : public CBase_Transporter {
     std::size_t m_nchk;
     //! Number of worker arrays have finished setting up their comm maps
     std::size_t m_ncom;
+    //! number of solvers (operating on different meshes) finished diagnostics
+    std::size_t m_ndiag;
     //! Number of t0ref mesh ref iters (one per mesh)
     std::vector< std::size_t > m_nt0refit;
     //! Number of dtref mesh ref iters (one per mesh)
@@ -319,6 +325,9 @@ class Transporter : public CBase_Transporter {
 
     //! Echo diagnostics on mesh statistics
     void stat();
+
+    //! Wait for all meshes finishing their diagnostics output
+    void diagnext( std::size_t meshid, const std::vector< tk::real >& l2res );
 
     //! Query variable names for all equation systems to be integrated
     //! \param[in] eq Equation system whose variable names to query

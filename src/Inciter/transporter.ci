@@ -67,6 +67,7 @@ module transporter {
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
       entry [reductiontarget] void boxvol( tk::real v, tk::real summeshid );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
+      entry [reductiontarget] void diagpdfs( CkReductionMsg* msg );
       entry void resume();
       entry [reductiontarget] void checkpoint( std::size_t finished,
                                                std::size_t meshid );
@@ -98,10 +99,22 @@ module transporter {
         }
       };
 
+      entry void wait4diag() {
+        forall [meshid] ( 0 : m_nelem.size(), 1 ) {
+          when diagnostics_complete[meshid]( std::size_t _meshid,
+                 const std::vector< tk::real >& l2res ),
+               diagpdfs_complete[meshid]( std::size_t _meshid )
+          serial "diag" { diagnext( meshid, l2res ); }
+        }
+      };
+
       entry void minstat_complete( std::size_t _meshid );
       entry void maxstat_complete( std::size_t _meshid );
       entry void sumstat_complete( std::size_t _meshid );
       entry void pdfstat_complete( std::size_t _meshid );
+      entry void diagnostics_complete( std::size_t _meshid,
+                                        const std::vector< tk::real >& l2res );
+      entry void diagpdfs_complete( std::size_t _meshid );
     }
 
   } // inciter::
