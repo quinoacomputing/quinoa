@@ -2322,6 +2322,19 @@ DG::resizePostAMR(
   m_nodalmax.resize( d->Bid().size() );
   m_nodalmin.resize( d->Bid().size() );
 
+  // Resize the buffer vector of nodal extremes
+  const auto ncomp = m_u.nprop() / g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto nprim = m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >();
+  for (const auto& [c,n] : d->NodeCommMap())
+  {
+    auto gid = std::vector<std::size_t>(std::begin(n),std::end(n));
+    for (std::size_t i=0; i<gid.size(); ++i)
+    {
+      m_nodalmaxc[gid[i]].resize(ncomp+nprim,-std::numeric_limits< tk::real >::max());
+      m_nodalminc[gid[i]].resize(ncomp+nprim, std::numeric_limits< tk::real >::max());
+    }
+  }
+
   m_fd = FaceData( m_inpoel, bface, tk::remap(triinpoel,d->Lid()) );
 
   m_geoFace =
