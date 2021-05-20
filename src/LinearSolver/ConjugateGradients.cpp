@@ -56,6 +56,8 @@ ConjugateGradients::ConjugateGradients(
   m_solved(),
   m_normb( 0.0 ),
   m_it( 0 ),
+  m_maxit( 0 ),
+  m_bcnodes(),
   m_rho( 0.0 ),
   m_rho0( 0.0 ),
   m_alpha( 0.0 )
@@ -72,7 +74,7 @@ ConjugateGradients::ConjugateGradients(
 {
   // Fill in gid and lid for serial solve
   if (gid.empty() || lid.empty() || nodecommmap.empty()) {
-    m_gid.resize( m_x.size() );
+    m_gid.resize( m_A.rsize()/m_A.Ncomp() );
     std::iota( begin(m_gid), end(m_gid), 0 );
     for (auto g : m_gid) m_lid[g] = g;
   }
@@ -114,8 +116,9 @@ ConjugateGradients::dot( const std::vector< tk::real >& a,
   Assert( a.size() == b.size(), "Size mismatch" );
 
   tk::real d = 0.0;
+  auto dof = m_A.Ncomp();
   for (std::size_t i=0; i<a.size(); ++i)
-    if (!slave(m_nodeCommMap,m_gid[i],thisIndex))
+    if (!slave(m_nodeCommMap,m_gid[i/dof],thisIndex))
       d += a[i]*b[i];
 
   contribute( sizeof(tk::real), &d, CkReduction::sum_double, c );
@@ -206,11 +209,20 @@ ConjugateGradients::initres()
 }
 
 void
-ConjugateGradients::solve( std::size_t maxit, tk::real tol, CkCallback c )
+ConjugateGradients::solve(
+  std::size_t maxit,
+  tk::real tol,
+  const std::unordered_set< std::size_t >& bcnodes,
+  const std::unordered_map< std::size_t, std::size_t >& lid,
+  const NodeCommMap& nodecommap,
+  CkCallback c )
 // *****************************************************************************
 //  Solve linear system
 //! \param[in] maxit Max iteration count
 //! \param[in] tol Stop tolerance
+//! \param[in] bcnodes Global node ids at which to impose Dirichlet BCs
+//! \param[in] lid Local->global node id map
+//! \param[in] nodecommap Node communication map
 //! \param[in] c Call to continue with after solve is complete
 // *****************************************************************************
 {
@@ -218,6 +230,11 @@ ConjugateGradients::solve( std::size_t maxit, tk::real tol, CkCallback c )
   m_tol = tol;
   m_solved = c;
   m_it = 0;
+  m_bcnodes = bcnodes;
+
+  // Apply BCs on matrix
+  for (auto g : bcnodes) m_A.dirichlet( g, lid, nodecommap );
+
   next();
 }
 
@@ -360,11 +377,10 @@ ConjugateGradients::normres( tk::real r )
     //std::cout << "ch:" << thisIndex << ", it:" << m_it << ": " << norm << " >? " << m_tol*m_normb << '\n';
     next();
   } else {
-     //std::cout << thisIndex << "x: ";
-     ////std::size_t j=0; for (auto i : m_x) std::cout << m_gid[j++] << ':' << i << ' ';
+     //std::cout << thisIndex << " NDOF: " << m_A.Ncomp()  << " x: ";
+     //std::size_t j=0; for (auto i : m_x) std::cout << m_gid[j++] << ':' << i << ' ';
      //for (auto i : m_x) std::cout << i << ' ';
-     //std::cout << '\n';
-     //std::cout << "ch:" << thisIndex << ", it:" << m_it << ": " << norm << '\n';
+     //std::cout << "on ch:" << thisIndex << ", it:" << m_it << ", res:" << norm << '\n';
      m_solved.send( CkDataMsg::buildNew( sizeof(tk::real), &norm ) );
   }
 }

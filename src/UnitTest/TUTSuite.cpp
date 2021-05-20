@@ -49,7 +49,7 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
   m_nskip( 0 ),
   m_nwarn( 0 ),
   m_nexcp( 0 ),
-  m_nmigr( 0 )
+  m_nspaw( 0 )
 // *****************************************************************************
 // Constructor
 //! \param[in] cmdline Data structure storing data from the command-line parser
@@ -120,10 +120,10 @@ TUTSuite::spawngrp( const std::string& g )
 
   else {
 
-    // Add up number of Charm++ migration tests (this is so we know how many to
-    // expect results from)
-    const auto it = m_migrations.find( g );
-    if (it != m_migrations.end()) m_nmigr += it->second;
+    // Add up number of additionally-spawned tests (this is so we know how many
+    // to expect results from)
+    const auto it = m_nspawned.find( g );
+    if (it != m_nspawned.end()) m_nspaw += it->second;
   
     // Asynchronously fire up all tests in test group
     for (int t=1; t<=g_maxTestsInGroup; ++t) {
@@ -156,7 +156,7 @@ TUTSuite::evaluate( std::vector< std::string > status )
   print.test( m_ncomplete, m_nfail, status );
 
   // Wait for all tests to finish, then quit
-  if (m_nrun == m_ngroup*static_cast<std::size_t>(g_maxTestsInGroup) + m_nmigr)
+  if (m_nrun == m_ngroup*static_cast<std::size_t>(g_maxTestsInGroup) + m_nspaw)
   {
     auto pass = assess(print, m_nfail, m_nwarn, m_nskip, m_nexcp, m_ncomplete);
     mainProxy.finalize( pass );

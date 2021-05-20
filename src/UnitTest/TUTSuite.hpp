@@ -43,32 +43,35 @@ class TUTSuite : public CBase_TUTSuite {
     ctr::CmdLine m_cmdline;        //!< Command line user input
     //! MPI unit test runner nodegroup proxy
     CProxy_MPIRunner< CProxy_TUTSuite > m_mpirunner;
-    std::size_t m_nrun;            //!< Number of tests ran (including dummies)
-    std::size_t m_ngroup;          //!< Number of test groups
-    std::size_t m_ncomplete;       //!< Number of completed tests
-    std::size_t m_nfail;           //!< Number of failed tests
-    std::size_t m_nskip;           //!< Number of skipped tests
-    std::size_t m_nwarn;           //!< Number of tests with a warning
-    std::size_t m_nexcp;           //!< Number of tests with an exception
-    std::size_t m_nmigr;           //!< Number of Charm++ migration tests ran
+    std::size_t m_nrun;      //!< Number of tests ran (including dummies)
+    std::size_t m_ngroup;    //!< Number of test groups
+    std::size_t m_ncomplete; //!< Number of completed tests
+    std::size_t m_nfail;     //!< Number of failed tests
+    std::size_t m_nskip;     //!< Number of skipped tests
+    std::size_t m_nwarn;     //!< Number of tests with a warning
+    std::size_t m_nexcp;     //!< Number of tests with an exception
+    std::size_t m_nspaw;     //!< Number of additionallly spawned tests ran
 
-    //! \brief Charm++ migration test group names and number of tests
+    //! \brief Charm++ test group names that spawn additional tests and number
+    //!   of tests they spawn
     //! \details This map stores the names of test groups that define Charm++
-    //!   migration tests and their associated number of Charm++ migration
-    //!   tests. Every Charm++ migration test consists of two unit tests: one
-    //!   for send and one for receive. Both triggers a TUT test, but the
-    //!   receive side is created manually, i.e., without the awareness of the
-    //!   TUT library. Unfortunately thus, there is no good way to count up
-    //!   these additional tests, so they need to be explicitly maintained here.
-    //!   To find out what tests spawn a new Charm++ chare, grep the src
-    //!   directory for 'This test spawns a new Charm++ chare', which appears in
-    //!   the comment before each Charm++ migration test name.
-    const std::map< std::string, std::size_t > m_migrations {
+    //!   tests, such as migration tests, that spawn multiple tests and their
+    //!   associated number tests they additionally spawn. Every such test
+    //!   consists of multiple unit tests: one for the host test and one or more
+    //!   for receive(s). All such tests trigger/spawn additional TUT test(s).
+    //!   The receive side of the spawed tests are created manually, i.e.,
+    //!   without the awareness of the TUT library. Unfortunately, there is no
+    //!   good way to count up these additionally spawned tests, so they need to
+    //!   be explicitly maintained here. To find out what tests spawn a new
+    //!   Charm++ chare, grep the src directory for 'This test spawns a new
+    //!   Charm++ chare', which appears in the comment before each such
+    //!   host test name.
+    const std::map< std::string, std::size_t > m_nspawned {
         { "Base/Factory", 2 }
       , { "Base/PUPUtil", 14 }
       , { "Base/Timer", 1 }
       , { "Inciter/Scheme", 3 }
-      , { "LinearSolver/ConjugateGradients", 6 }
+      , { "LinearSolver/ConjugateGradients", 2+4+2+4 }
     };
 
     // Tests that must be run on PE 0

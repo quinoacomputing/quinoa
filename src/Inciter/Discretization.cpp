@@ -251,17 +251,21 @@ Discretization::ConjugateGradientsInitialized( [[maybe_unused]] CkDataMsg* msg )
 }
 
 void
-Discretization::ConjugateGradientsSolve( std::size_t maxit,
-                                         tk::real tol,
-                                         CkCallback c )
+Discretization::ConjugateGradientsSolve(
+  std::size_t maxit,
+  tk::real tol,
+  const std::unordered_set< std::size_t >& bcnodes,
+  CkCallback c )
 // *****************************************************************************
 //  Solve linear system using Conjugrate Gradients
+//! \param[in] bcnodes Global node ids at which to impose Dirichlet BCs
 //! \param[in] maxit Max iteration count
 //! \param[in] tol Stop tolerance
 // \param[in] c Function to call when the solve is converged
 // *****************************************************************************
 {
-  m_conjugategradients[ thisIndex ].solve( maxit, tol, c );
+  m_conjugategradients[ thisIndex ].
+    solve( maxit, tol, bcnodes, m_lid, m_nodeCommMap, c );
 }
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
@@ -274,7 +278,7 @@ Discretization::LaplacianSmoother() const
 //!   grids", Computers& Fluids, 2013.
 // *****************************************************************************
 {
-  tk::CSR A( /* DOF= */ 1, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
+  tk::CSR A( /* DOF= */ 3, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
 
   const auto& X = m_coord[0];
   const auto& Y = m_coord[1];

@@ -72,7 +72,12 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     void init( CkCallback c );
 
     //! Solve linear system
-    void solve( std::size_t maxit, tk::real stop_tol, CkCallback c );
+    void solve( std::size_t maxit,
+                tk::real stop_tol,
+                const std::unordered_set< std::size_t >& bcnodes,
+                const std::unordered_map< std::size_t, std::size_t >& lid,
+                const NodeCommMap& nodecommap,
+                CkCallback c );
 
     //! Compute the norm of the right hand side
     void normb( tk::real n );
@@ -118,6 +123,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_it;
       p | m_maxit;
       p | m_tol;
+      p | m_bcnodes;
       p | m_rho;
       p | m_rho0;
       p | m_alpha;
@@ -167,6 +173,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     std::size_t m_maxit;
     //! Stop tolerance
     tk::real m_tol;
+    //! Global node ids at which to impose Dirichlet BCs
+    std::unordered_set< std::size_t > m_bcnodes;
     //! Helper scalar for CG algorithm
     tk::real m_rho;
     //! Helper scalar for CG algorithm

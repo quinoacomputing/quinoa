@@ -97,7 +97,10 @@ class Discretization : public CBase_Discretization {
 
     //! Solve using Conjugrate Gradients linear solver
     void
-    ConjugateGradientsSolve( std::size_t maxit, tk::real tol, CkCallback c );
+    ConjugateGradientsSolve( std::size_t maxit,
+                             tk::real tol,
+                             const std::unordered_set< std::size_t >& bcnodes,
+                             CkCallback c );
 
     //! \brief Our mesh has been registered with the mesh-to-mesh transfer
     //!   library (if coupled to other solver)

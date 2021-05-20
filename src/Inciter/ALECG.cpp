@@ -874,12 +874,12 @@ ALECG::smooth()
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
 
   // Smooth mesh velocity if enabled
-  //if (meshvel == ctr::MeshVelocityType::FLUID) {
-  //  Disc()->ConjugateGradientsSolve( 10, 1.0e-3,
-  //    CkCallback(CkIndex_ALECG::smoothed(nullptr), thisProxy[thisIndex]) );
-  //} else {
+  if (meshvel == ctr::MeshVelocityType::FLUID) {
+    Disc()->ConjugateGradientsSolve( 10, 1.0e-3, m_symbcnodes,
+      CkCallback(CkIndex_ALECG::smoothed(nullptr), thisProxy[thisIndex]) );
+  } else {
     smoothed();
-  //}
+  }
 }
 
 void

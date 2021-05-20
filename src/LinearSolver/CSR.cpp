@@ -105,12 +105,14 @@ CSR::operator()( std::size_t row, std::size_t col, std::size_t pos ) const
 void
 CSR::dirichlet( std::size_t g,
                 const std::unordered_map< std::size_t, std::size_t >& lid,
-                const NodeCommMap& nodecommap )
+                const NodeCommMap& nodecommap,
+                std::size_t pos )
 // *****************************************************************************
 //  Set Dirichlet boundary condition at a node
 //! \param[in] g Global id at which to set Dirichlet BC
 //! \param[in] lid Local->global node id map
 //! \param[in] nodecommap Node communication map
+//! \param[in] pos Position in block
 //! \details In parallel there can be multiple contributions to a single node
 //!   on the mesh, and correspondingly, a single matrix row can be partially
 //!   represented on multiple partitions. Setting a Dirichlet BC entails
@@ -129,19 +131,22 @@ CSR::dirichlet( std::size_t g,
                    [&](const auto& s) {
                      return s.second.find(node) != s.second.cend(); } ); };
 
+  auto gncomp = g * ncomp;
+
   if (lid.empty()) {	// serial
 
-    for (std::size_t j=ia[g]-1; j<ia[g+1]-1; ++j)
-      if (g+1==ja[j]) a[j] = 1.0; else a[j] = 0.0;
+    for (std::size_t j=ia[gncomp+pos]-1; j<ia[gncomp+pos+1]-1; ++j)
+      if (gncomp+pos+1==ja[j]) a[j] = 1.0; else a[j] = 0.0;
 
   } else {		// parallel
 
     auto it = lid.find( g );
     if (it != end(lid)) { // if row with global id g exists on this partition
       auto i = it->second;
+      auto incomp = i * ncomp;
       auto diag = 1.0 / count( g );
-      for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j)
-        if (i+1==ja[j]) a[j] = diag; else a[j] = 0.0;
+      for (std::size_t j=ia[incomp+pos]-1; j<ia[incomp+pos+1]-1; ++j)
+        if (incomp+pos+1==ja[j]) a[j] = diag; else a[j] = 0.0;
     }
 
   }
@@ -258,14 +263,14 @@ CSR::write_matlab( std::ostream& os ) const
 // *****************************************************************************
 {
   os << "A = [ ";
-  for (std::size_t i=0; i<rnz.size(); ++i) {
+  for (std::size_t i=0; i<rnz.size()*ncomp; ++i) {
     for (std::size_t j=1; j<ja[ia[i]-1]; ++j) os << "0 ";
     for ( std::size_t n=ia[i]-1; n<ia[i+1]-1; ++n) {
       if (n > ia[i]-1)
         for (std::size_t j=ja[n-1]; j<ja[n]-1; ++j) os << "0 ";
       os << a[n] << ' ';
     }
-    for (std::size_t j=ja[ia[i+1]-2]; j<ia.size()-1; ++j) os << "0 ";
+    for (std::size_t j=ja[ia[i+1]-2]; j<rnz.size()*ncomp; ++j) os << "0 ";
     os << ";\n";
   }
   os << "]\n";
