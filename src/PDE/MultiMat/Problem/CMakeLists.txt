@@ -1,11 +1,10 @@
 add_library(MultiMatProblem
+            UserDefined.cpp
+            BoxInitialization.cpp
             FieldOutput.cpp
             SodShocktube.cpp
             InterfaceAdvection.cpp
             WaterAirShocktube.cpp
-            TriplePoint.cpp
-            GasImpact.cpp
-            GasImpact4Mat.cpp
             ShockHeBubble.cpp
             UnderwaterEx.cpp)
 

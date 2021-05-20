@@ -23,6 +23,7 @@ namespace ctr {
 
 //! Mesh velocity configuration option types
 enum class MeshVelocityType : uint8_t { NONE
+                                      , SINE
                                       , FLUID
                                       , HELMHOLTZ
                                       };
@@ -36,6 +37,7 @@ class MeshVelocity : public tk::Toggle< MeshVelocityType > {
   public:
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::none
+                                  , kw::sine
                                   , kw::fluid
                                   , kw::helmholtz
                                   >;
@@ -49,11 +51,13 @@ class MeshVelocity : public tk::Toggle< MeshVelocityType > {
         kw::meshvelocity::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
         { { MeshVelocityType::NONE, kw::none::name() }
+        , { MeshVelocityType::SINE, kw::sine::name() }
         , { MeshVelocityType::FLUID, kw::fluid::name() }
         , { MeshVelocityType::HELMHOLTZ, kw::helmholtz::name() }
         },
         //! keywords -> Enums
         { { kw::none::string(), MeshVelocityType::NONE }
+        , { kw::sine::string(), MeshVelocityType::SINE }
         , { kw::fluid::string(), MeshVelocityType::FLUID }
         , { kw::helmholtz::string(), MeshVelocityType::HELMHOLTZ}
         } )

@@ -19,6 +19,13 @@
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+
+namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
+
+} // inciter::
 
 namespace tk {
 
@@ -56,6 +63,54 @@ eval_init( ncomp_t ncomp,
            const std::vector< tk::real >& R,
            const Fields& L,
            Fields& unk );
+
+template< class eq >
+void
+BoxElems( std::size_t system,
+  const tk::Fields& geoElem,
+  std::size_t nielem,
+  std::vector< std::unordered_set< std::size_t > >& inbox )
+// *****************************************************************************
+//! Determine if elements lie inside user defined IC boxes
+//! \tparam eq Equation type to operate on, e.g., tag::compflow, tag::multimat
+//! \param[in] system Equation system index
+//! \param[in] geoElem Element geometry array
+//! \param[in] nielem Number of internal elements
+//! \param[in,out] inbox List of nodes at which box user ICs are set for
+//!    each IC box
+// *****************************************************************************
+{
+  // Detect if user has configured a IC boxes
+  const auto& icbox = inciter::g_inputdeck.get<tag::param, eq, tag::ic,
+    tag::box>();
+  if (icbox.size() > system) {
+    std::size_t bcnt = 0;
+    for (const auto& b : icbox[system]) {   // for all boxes for this eq
+     inbox.emplace_back();
+      std::vector< tk::real > box
+        { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+          b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+          b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+
+      const auto eps = std::numeric_limits< tk::real >::epsilon();
+      // Determine which elements lie in the IC box
+      for (ncomp_t e=0; e<nielem; ++e) {
+        auto x = geoElem(e,1,0);
+        auto y = geoElem(e,2,0);
+        auto z = geoElem(e,3,0);
+        if ( std::any_of( begin(box), end(box),
+                          [=](auto p){ return abs(p) > eps; } ) &&
+             x>box[0] && x<box[1] &&
+             y>box[2] && y<box[3] &&
+             z>box[4] && z<box[5] )
+        {
+          inbox[bcnt].insert( e );
+        }
+      }
+      ++bcnt;
+    }
+  }
+}
 
 } // tk::
 

@@ -111,10 +111,14 @@ class Discretization : public CBase_Discretization {
     //! Start solution transfer (if coupled)
     void transfer( const tk::Fields& u );
 
-    //! Resize mesh data structures (e.g., after mesh refinement)
+    //! Resize mesh data structures after mesh refinement
     void resizePostAMR( const tk::UnsMesh::Chunk& chunk,
                         const tk::UnsMesh::Coords& coord,
                         const tk::NodeCommMap& nodeCommMap );
+
+    //! Resize mesh data structures after ALE mesh movement
+    void
+    resizePostALE( const tk::UnsMesh::Coords& coord );
 
     //! Get ready for (re-)computing/communicating nodal volumes
     void startvol();
@@ -141,8 +145,10 @@ class Discretization : public CBase_Discretization {
 
     /** @name Accessors */
     ///@{
-    //! Coordinates accessors as const-ref
+    //! Coordinates accessor as const-ref
     const tk::UnsMesh::Coords& Coord() const { return m_coord; }
+    //! Coordinates accessor as reference
+    tk::UnsMesh::Coords& Coord() { return m_coord; }
 
     //! Global ids accessors as const-ref
     const std::vector< std::size_t >& Gid() const { return m_gid; }
@@ -338,6 +344,9 @@ class Discretization : public CBase_Discretization {
     //! Find elements along our mesh chunk boundary
     std::vector< std::size_t > bndel() const;
 
+   //! Query if ALE mesh motion is enabled by the user
+   bool ALE() const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -509,9 +518,6 @@ class Discretization : public CBase_Discretization {
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );
-
-   //! Query if ALE mesh motion is enabled by the user
-   bool ALE() const;
 
     //! Determine if communication of mesh transfer callbacks is complete
     bool transferCallbacksComplete() const;

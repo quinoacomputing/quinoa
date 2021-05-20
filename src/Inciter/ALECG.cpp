@@ -34,6 +34,7 @@
 #include "CGPDE.hpp"
 #include "Integrate/Mass.hpp"
 #include "FieldOutput.hpp"
+#include "ALE/MeshMotion.hpp"
 
 #ifdef HAS_ROOT
   #include "RootMeshWriter.hpp"
@@ -59,7 +60,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_disc( disc ),
   m_initial( 1 ),
   m_nsol( 0 ),
-  m_nlhs( 0 ),
   m_ngrad( 0 ),
   m_nrhs( 0 ),
   m_nbnorm( 0 ),
@@ -73,14 +73,12 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_dfn(),
   m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
   m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
-  m_u( m_disc[thisIndex].ckLocal()->Gid().size(),
-       g_inputdeck.get< tag::component >().nprop() ),
+  m_u( Disc()->Gid().size(), g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
-  m_lhs( m_u.nunk(), m_u.nprop() ),
+  m_w( m_u.nunk(), 3 ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_bcdir(),
-  m_lhsc(),
   m_chBndGradc(),
   m_rhsc(),
   m_diag(),
@@ -95,7 +93,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_edgeid(),
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
-  m_finished( 0 )
+  m_finished( 0 ),
+  m_newmesh( 0 ),
+  m_coordn( Disc()->Coord() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -108,6 +108,15 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   usesAtSync = true;    // enable migration at AtSync
 
   auto d = Disc();
+
+  // Zero ALE mesh velocity by default
+  m_w.fill( 0.0 );
+
+  // Assign mesh velocity if configured
+  if (d->ALE())
+    meshvel( g_inputdeck.get< tag::ale, tag::meshvelocity >(),
+             d->Coord(),
+             m_w );
 
   // Perform optional operator-access-pattern mesh node reordering
   if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
@@ -135,8 +144,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
     tk::remap( m_triinpoel, map );
   }
 
-  // Activate SDAG wait for initially computing the left-hand side and normals
-  thisProxy[ thisIndex ].wait4lhs();
+  // Activate SDAG wait for initially computing normals
+  thisProxy[ thisIndex ].wait4norm();
 
   // Generate callbacks for solution transfers we are involved in
 
@@ -408,6 +417,34 @@ ALECG::setup()
 }
 
 void
+ALECG::volumetric( tk::Fields& u )
+// *****************************************************************************
+//  Multiply solution with mesh volume
+//! \param[in,out] u Solution vector
+// *****************************************************************************
+{
+  Assert( Disc()->Vol().size() == u.nunk(), "Size mismatch" );
+
+  for (std::size_t i=0; i<u.nunk(); ++i)
+    for (ncomp_t c=0; c<u.nprop(); ++c)
+      u(i,c,0) *= Disc()->Vol()[i];
+}
+
+void
+ALECG::conserved( tk::Fields& u )
+// *****************************************************************************
+//  Divide solution with mesh volume
+//! \param[in,out] u Solution vector
+// *****************************************************************************
+{
+  Assert( Disc()->Vol().size() == u.nunk(), "Size mismatch" );
+
+  for (std::size_t i=0; i<u.nunk(); ++i)
+    for (ncomp_t c=0; c<u.nprop(); ++c)
+      u(i,c,0) /= Disc()->Vol()[i];
+}
+
+void
 ALECG::box( tk::real v )
 // *****************************************************************************
 // Receive total box IC volume and set conditions in box
@@ -421,7 +458,10 @@ ALECG::box( tk::real v )
 
   // Set initial conditions for all PDEs
   for (auto& eq : g_cgpde)
-    eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes );
+    eq.initialize( d->Coord(), m_u, d->T(), v, m_boxnodes );
+
+  // Multiply conserved variables with mesh volume
+  volumetric( m_u );
 
   // Initiate IC transfer (if coupled)
   Disc()->transfer( m_u );
@@ -443,10 +483,14 @@ ALECG::start()
   Disc()->grindZero();
   // Continue to next time step
   next();
+  // Apply BCs on initial conditions
+  BC();
+  // Set flag that indicates that we are during time stepping
+  m_initial = 0;
 }
 //! [start]
 
-//! [Compute own and send lhs on chare-boundary]
+//! [Compute own and send contributions to normals on chare-boundary]
 void
 ALECG::lhs()
 // *****************************************************************************
@@ -454,94 +498,32 @@ ALECG::lhs()
 //! \details Also (re-)compute all data structures if the mesh changed.
 // *****************************************************************************
 {
-  auto d = Disc();
-
-  // Compute lumped mass lhs
-  m_lhs = tk::lump( m_u.nprop(), d->Coord(), d->Inpoel() );
-
-  if (d->NodeCommMap().empty())        // in serial we are done
-    comlhs_complete();
-  else // send contributions of lhs to chare-boundary nodes to fellow chares
-    for (const auto& [c,n] : d->NodeCommMap()) {
-      std::vector< std::vector< tk::real > > l( n.size() );
-      std::size_t j = 0;
-      for (auto i : n) l[ j++ ] = m_lhs[ tk::cref_find(d->Lid(),i) ];
-      thisProxy[c].comlhs( std::vector<std::size_t>(begin(n),end(n)), l );
-    }
-
-  ownlhs_complete();
+  // No need for LHS in ALECG
 
   // (Re-)compute boundary point-, and dual-face normals
   norm();
 }
-//! [Compute own and send lhs on chare-boundary]
+//! [Compute own and send contributions to normals on chare-boundary]
 
-//! [Receive lhs on chare-boundary]
+//! [Merge normals and continue]
 void
-ALECG::comlhs( const std::vector< std::size_t >& gid,
-               const std::vector< std::vector< tk::real > >& L )
-// *****************************************************************************
-//  Receive contributions to left-hand side diagonal matrix on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive LHS contributions
-//! \param[in] L Partial contributions of LHS to chare-boundary nodes
-//! \details This function receives contributions to m_lhs, which stores the
-//!   diagonal (lumped) mass matrix at mesh nodes. While m_lhs stores
-//!   own contributions, m_lhsc collects the neighbor chare contributions during
-//!   communication. This way work on m_lhs and m_lhsc is overlapped. The two
-//!   are combined in lhsmerge().
-// *****************************************************************************
-{
-  Assert( L.size() == gid.size(), "Size mismatch" );
-
-  using tk::operator+=;
-
-  auto d = Disc();
-
-  for (std::size_t i=0; i<gid.size(); ++i) {
-    m_lhsc[ gid[i] ] += L[i];
-  }
-
-  // When we have heard from all chares we communicate with, this chare is done
-  if (++m_nlhs == d->NodeCommMap().size()) {
-    m_nlhs = 0;
-    comlhs_complete();
-  }
-}
-//! [Receive lhs on chare-boundary]
-
-//! [Merge lhs and continue]
-void
-ALECG::lhsmerge()
+ALECG::merge()
 // *****************************************************************************
 // The own and communication portion of the left-hand side is complete
 // *****************************************************************************
 {
-  // Combine own and communicated contributions to left hand side
-  auto d = Disc();
-
-  // Combine own and communicated contributions to LHS and ICs
-  for (const auto& b : m_lhsc) {
-    auto lid = tk::cref_find( d->Lid(), b.first );
-    for (ncomp_t c=0; c<m_lhs.nprop(); ++c)
-      m_lhs(lid,c,0) += b.second[c];
-  }
-
-  // Clear receive buffer
-  tk::destroy(m_lhsc);
-
   // Combine own and communicated contributions of normals and apply boundary
   // conditions on the initial conditions
   normfinal();
 
-  // Continue after lhs is complete
   if (m_initial) {
     // Output initial conditions to file
     writeFields( CkCallback(CkIndex_ALECG::start(), thisProxy[thisIndex]) );
   } else {
-    lhs_complete();
+    norm_complete();
   }
 }
-//! [Merge lhs and continue]
+//! [Merge normals and continue]
 
 void
 ALECG::normfinal()
@@ -596,13 +578,6 @@ ALECG::normfinal()
 
   // If farfield BC is set on a node, will not also set symmetry BC
   for (auto fn : m_farfieldbcnodes) m_symbcnodes.erase(fn);
-
-  // Apply symmetry BCs on initial conditions
-  for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, d->Coord(), m_bnorm, m_symbcnodes );
-  // Apply farfield BCs on initial conditions
-  for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, d->Coord(), m_bnorm, m_farfieldbcnodes );
 
   // Prepare boundary nodes contiguously accessible from a triangle-face loop
   m_symbctri.resize( m_triinpoel.size()/3, 0 );
@@ -682,6 +657,39 @@ ALECG::normfinal()
 }
 
 void
+ALECG::BC()
+// *****************************************************************************
+// Apply boundary conditions
+// \details The following BC enforcement changes the initial condition or
+//!   updated solution (dependending on when it is called) to ensure strong
+//!   imposition of the BCs. This is a matter of choice. Another alternative is
+//!   to only apply BCs when computing fluxes at boundary faces, thereby only
+//!   weakly enforcing the BCs. The former is conventionally used in continunous
+//!   Galerkin finite element methods (such as ALECG implements), whereas the
+//!   latter, in finite volume methods.
+// *****************************************************************************
+{
+  const auto& coord = Disc()->Coord();
+
+  conserved( m_u );
+
+  // Apply Dirichlet BCs
+  for (const auto& [b,bc] : m_bcdir)
+    for (ncomp_t c=0; c<m_u.nprop(); ++c)
+      if (bc[c].first) m_u(b,c,0) = bc[c].second;
+
+  // Apply symmetry BCs
+  for (const auto& eq : g_cgpde)
+    eq.symbc( m_u, coord, m_bnorm, m_symbcnodes );
+
+  // Apply farfield BCs
+  for (const auto& eq : g_cgpde)
+    eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+
+  volumetric( m_u );
+}
+
+void
 ALECG::next()
 // *****************************************************************************
 // Continue to next time step
@@ -712,6 +720,7 @@ ALECG::dt()
   } else {      // compute dt based on CFL
 
     //! [Find the minimum dt across all PDEs integrated]
+    conserved( m_u );
     if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
 
       // compute new dt for each mesh point
@@ -730,6 +739,7 @@ ALECG::dt()
       }
 
     }
+    volumetric( m_u );
     //! [Find the minimum dt across all PDEs integrated]
 
   }
@@ -738,7 +748,6 @@ ALECG::dt()
   // Actiavate SDAG waits for next time step stage
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
-  thisProxy[ thisIndex ].wait4trans();
 
   // Contribute to minimum dt across all chares the advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -771,10 +780,14 @@ ALECG::chBndGrad()
 {
   auto d = Disc();
 
+  // Divide solution with mesh volume
+  conserved( m_u );
   // Compute own portion of gradients for all equations
   for (const auto& eq : g_cgpde)
-    eq.chBndGrad(d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u,
-      m_chBndGrad);
+    eq.chBndGrad( d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u,
+                  m_chBndGrad );
+  // Multiply solution with mesh volume
+  volumetric( m_u );
 
   // Communicate gradients to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
@@ -840,18 +853,21 @@ ALECG::rhs()
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] += prev_rkcoef * m_dtp[p];
+  conserved( m_u );
   for (const auto& eq : g_cgpde)
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
             m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
             m_symbctri, d->Vol(), m_edgenode, m_edgeid, m_boxnodes, m_chBndGrad,
-            m_u, m_tp, d->Boxvol(), m_rhs );
+            m_u, m_w, m_tp, d->Boxvol(), m_rhs );
+  volumetric( m_u );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
   // Query and match user-specified boundary conditions to side sets
   if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
   m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
-                   m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode );
+                   m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
+                   /* increment = */ false );
   if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
 
   // Communicate rhs to other chares on chare-boundary
@@ -898,63 +914,80 @@ ALECG::comrhs( const std::vector< std::size_t >& gid,
 void
 ALECG::solve()
 // *****************************************************************************
-//  Solve low and high order diagonal systems
+//  Advance systems of equations
 // *****************************************************************************
 {
-  const auto ncomp = m_rhs.nprop();
-
   auto d = Disc();
 
   // Combine own and communicated contributions to rhs
   for (const auto& b : m_rhsc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += b.second[c];
+    for (ncomp_t c=0; c<m_rhs.nprop(); ++c) m_rhs(lid,c,0) += b.second[c];
   }
 
   // clear receive buffer
   tk::destroy(m_rhsc);
 
-  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-
-  // Set Dirichlet BCs for lhs and rhs
-  for (const auto& [b,bc] : m_bcdir)
-    for (ncomp_t c=0; c<ncomp; ++c)
-      if (bc[c].first) {
-        m_lhs(b,c,0) = 1.0;
-        auto deltat = steady ? m_dtp[b] : d->Dt();
-        m_rhs(b,c,0) = bc[c].second / deltat / rkcoef[m_stage];
-      }
-
-  // Update Un
-  if (m_stage == 0) m_un = m_u;
+  // Update state at time n
+  if (m_stage == 0) {
+    m_un = m_u;
+    if (d->ALE()) m_coordn = d->Coord();
+  }
 
   // Solve the sytem
-  if (steady) {
+  if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
 
+    // Advance solution, converging to steady state
     for (std::size_t i=0; i<m_u.nunk(); ++i)
       for (ncomp_t c=0; c<m_u.nprop(); ++c)
-        m_u(i,c,0) = m_un(i,c,0)
-          + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c,0) / m_lhs(i,c,0);
+        m_u(i,c,0) = m_un(i,c,0) + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c,0);
 
   } else {
 
-    m_u = m_un + rkcoef[m_stage] * d->Dt() * m_rhs / m_lhs;
+    auto adt = rkcoef[m_stage] * d->Dt();
+
+    // Advance unsteady solution
+    m_u = m_un + adt * m_rhs;
+
+    // Advance mesh if ALE is enabled
+    if (d->ALE()) {
+      auto& coord = d->Coord();
+      for (std::size_t j=0; j<3; ++j)
+        for (std::size_t i=0; i<coord[j].size(); ++i)
+          coord[j][i] = m_coordn[j][i] + adt * m_w(i,j,0);
+    }
 
   }
 
-  // The following BC enforcement changes the updated solution to ensure strong
-  // imposition of the BCs. This is a matter of choice. Another alternative is
-  // to only apply BCs when computing fluxes at boundary faces, thereby only
-  // weakly enforcing the BCs. The former is conventionally used in finite
-  // element methods, whereas the latter, in finite volume methods.
+  // Apply BCs on new solution
+  BC();
 
-  // Apply symmetry BCs on new solution
-  for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, d->Coord(), m_bnorm, m_symbcnodes );
-  // Apply farfield BCs on new solution
-  for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, d->Coord(), m_bnorm, m_farfieldbcnodes );
+  // Activate SDAG waits for re-computing the normals
+  m_newmesh = 0;  // recompute normals after ALE (if enabled)
+  thisProxy[ thisIndex ].wait4norm();
+  thisProxy[ thisIndex ].wait4mesh();
 
+  // Recompute mesh volumes if ALE is enabled
+  if (d->ALE()) {
+    transfer_complete();
+    // Resize mesh data structures after mesh movement
+    d->resizePostALE( d->Coord() );
+    d->startvol();
+    auto meshid = d->MeshId();
+    contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
+                CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
+  } else {
+    norm_complete();
+    resized();
+  }
+}
+
+void
+ALECG::ale()
+// *****************************************************************************
+//  Continue after ALE mesh movement
+// *****************************************************************************
+{
   //! [Continue after solve]
   if (m_stage < 2) {
 
@@ -967,13 +1000,26 @@ ALECG::solve()
 
   } else {
 
+    auto d = Disc();
+
+    // Ensure new field output file if mesh moved if ALE is enabled
+    if (d->ALE()) {
+      d->Itf() = 0;  // Zero field output iteration count if mesh moved
+      ++d->Itr();    // Increase number of iterations with a change in the mesh
+    }
+
     // Compute diagnostics, e.g., residuals
-    auto diag_computed =
-      m_diag.compute( *d, m_u, m_un, m_bnorm, m_symbcnodes, m_farfieldbcnodes );
+    conserved( m_u );
+    conserved( m_un );
+    auto diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
+                                         m_symbcnodes, m_farfieldbcnodes );
+    volumetric( m_u );
+    volumetric( m_un );
     // Increase number of iterations and physical time
     d->next();
     // Advance physical time for local time stepping
-    if (steady) for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
+    if (g_inputdeck.get< tag::discr, tag::steady_state >())
+      for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
     // Continue to mesh refinement (if configured)
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
 
@@ -1016,11 +1062,13 @@ ALECG::refine( const std::vector< tk::real >& l2res )
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
 
+  // Activate SDAG waits for re-computing the normals
+  m_newmesh = 1;  // recompute normals after AMR (if enabled)
+  thisProxy[ thisIndex ].wait4norm();
+  thisProxy[ thisIndex ].wait4mesh();
+
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
-
-    // Activate SDAG waits for re-computing the left-hand side
-    thisProxy[ thisIndex ].wait4lhs();
 
     d->startvol();
     d->Ref()->dtref( {}, m_bnode, {} );
@@ -1029,7 +1077,7 @@ ALECG::refine( const std::vector< tk::real >& l2res )
   } else {      // do not refine
 
     d->refined() = 0;
-    lhs_complete();
+    norm_complete();
     resized();
 
   }
@@ -1063,16 +1111,10 @@ ALECG::resizePostAMR(
 {
   auto d = Disc();
 
-  // Set flag that indicates that we are during time stepping
-  m_initial = 0;
+  d->Itf() = 0;  // Zero field output iteration count if AMR
+  ++d->Itr();    // Increase number of iterations with a change in the mesh
 
-  // Zero field output iteration count between two mesh refinement steps
-  d->Itf() = 0;
-
-  // Increase number of iterations with mesh refinement
-  ++d->Itr();
-
-  // Resize mesh data structures
+  // Resize mesh data structures after mesh refinement
   d->resizePostAMR( chunk, coord, nodeCommMap );
 
   // Resize auxiliary solution vectors
@@ -1080,7 +1122,6 @@ ALECG::resizePostAMR(
   auto nprop = m_u.nprop();
   m_u.resize( npoin, nprop );
   m_un.resize( npoin, nprop );
-  m_lhs.resize( npoin, nprop );
   m_rhs.resize( npoin, nprop );
   m_chBndGrad.resize( d->Bid().size(), nprop*3 );
 
@@ -1136,7 +1177,7 @@ ALECG::stage()
 }
 
 void
-ALECG::writeFields( CkCallback c ) const
+ALECG::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
 //! \param[in] c Function to continue with after the write
@@ -1154,7 +1195,22 @@ ALECG::writeFields( CkCallback c ) const
     // Query fields names requested by user
     auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
     // Collect field output from numerical solution requested by user
+    conserved( m_u );
     auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
+    volumetric( m_u );
+
+    // Output mesh velocity if ALE is enabled
+    if (d->ALE()) {
+       nodefieldnames.push_back( "x mesh velocity" );
+       nodefieldnames.push_back( "y mesh velocity" );
+       nodefieldnames.push_back( "z mesh velocity" );
+       nodefieldnames.push_back( "volume" );
+       nodefields.push_back( m_w.extract(0,0) );
+       nodefields.push_back( m_w.extract(1,0) );
+       nodefields.push_back( m_w.extract(2,0) );
+       nodefields.push_back( d->Vol() );
+    }
+
     // Collect field output names for analytical solutions
     for (const auto& eq : g_cgpde)
       analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
@@ -1173,12 +1229,13 @@ ALECG::writeFields( CkCallback c ) const
     }
 
     // Collect node block and surface field solution
-    auto u = m_u;
     std::vector< std::vector< tk::real > > nodesurfs;
+    conserved( m_u );
     for (const auto& eq : g_cgpde) {
-      auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
+      auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), m_u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
+    volumetric( m_u );
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
@@ -1202,10 +1259,12 @@ ALECG::out()
   const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
   if ( !((d->It()) % histfreq) ) {
     std::vector< std::vector< tk::real > > hist;
+    conserved( m_u );
     for (const auto& eq : g_cgpde) {
       auto h = eq.histOutput( d->Hist(), d->Inpoel(), m_u );
       hist.insert( end(hist), begin(h), end(h) );
     }
+    volumetric( m_u );
     d->history( std::move(hist) );
   }
 

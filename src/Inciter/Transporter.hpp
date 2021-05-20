@@ -125,7 +125,7 @@ class Transporter : public CBase_Transporter {
     void refined( std::size_t meshid, std::size_t nelem, std::size_t npoin );
 
     //! \brief Reduction target: all worker chares have resized their own data
-    //!   after mesh refinement
+    //!   after AMR or ALE
     void resized( std::size_t meshid );
 
     //! Reduction target: all worker chares have generated their own esup

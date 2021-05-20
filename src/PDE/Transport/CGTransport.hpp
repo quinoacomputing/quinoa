@@ -197,6 +197,7 @@ class Transport {
     //! \param[in] edgeid Local node id pair -> edge id map
     //! \param[in] G Nodal gradients in chare-boundary nodes
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] W Mesh velocity
     //! \param[in,out] R Right-hand side vector computed
     void rhs(
       real,
@@ -218,6 +219,7 @@ class Transport {
       const std::vector< std::unordered_set< std::size_t > >&,
       const tk::Fields& G,
       const tk::Fields& U,
+      [[maybe_unused]] const tk::Fields& W,
       const std::vector< tk::real >&,
       real,
       tk::Fields& R ) const
@@ -445,18 +447,22 @@ class Transport {
     //! \param[in] dtp Time step size for each mesh node
     //! \param[in] ss Pair of side set ID and list of node IDs on the side set
     //! \param[in] coord Mesh node coordinates
+    //! \param[in] increment If true, evaluate the solution increment between
+    //!   t and t+dt for Dirichlet BCs. If false, evlauate the solution instead.
     //! \return Vector of pairs of bool and boundary condition value associated
     //!   to mesh node IDs at which Dirichlet boundary conditions are set. Note
-    //!   that instead of the actual boundary condition value, we return the
-    //!   increment between t+dt and t, since that is what the solution requires
-    //!   as we solve for the soution increments and not the solution itself.
+    //!   that if increment is true, instead of the actual boundary condition
+    //!   value, we return the increment between t+deltat and t, since,
+    //!   depending on client code and solver, that may be what the solution
+    //!   requires.
     std::map< std::size_t, std::vector< std::pair<bool,real> > >
     dirbc( real t,
            real deltat,
            const std::vector< tk::real >& tp,
            const std::vector< tk::real >& dtp,
            const std::pair< const int, std::vector< std::size_t > >& ss,
-           const std::array< std::vector< real >, 3 >& coord ) const
+           const std::array< std::vector< real >, 3 >& coord,
+           bool increment ) const
     {
       using tag::param; using tag::transport; using tag::bcdir;
       using NodeBC = std::vector< std::pair< bool, real > >;
@@ -473,8 +479,11 @@ class Transport {
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               if (steady) { t = tp[n]; deltat = dtp[n]; }
-              const auto s = solinc( m_system, m_ncomp, x[n], y[n], z[n],
-                                     t, deltat, Problem::initialize );
+              const auto s = increment ?
+                solinc( m_system, m_ncomp, x[n], y[n], z[n],
+                        t, deltat, Problem::initialize ) :
+                Problem::initialize( m_system, m_ncomp, x[n], y[n], z[n],
+                                     t+deltat );
               auto& nbc = bc[n] = NodeBC( m_ncomp );
               for (ncomp_t c=0; c<m_ncomp; ++c)
                 nbc[c] = { true, s[c] };
@@ -521,7 +530,7 @@ class Transport {
     //! Return surface field output going to file
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >&,
-                tk::Fields& ) const { return {}; }
+                const tk::Fields& ) const { return {}; }
 
     //! Return time history field names to be output to file
     //! \return Vector of strings labelling time history fields output in file

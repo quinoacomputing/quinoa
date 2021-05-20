@@ -144,5 +144,9 @@ are mitigated.
 For further details about the numerical method, see @ref papers_inciter
 "Inciter papers".
 
+@section mmrun_example Example of multi-material setup
+For an example test set up see the @ref inciter_example_gasimpact_4mat
+"example gas impact problem".
+
 */
 } // inciter::

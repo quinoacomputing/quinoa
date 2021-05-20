@@ -93,6 +93,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::ic
                                  , kw::box
                                  , kw::lua
+                                 , kw::materialid
                                  , kw::mass
                                  , kw::density
                                  , kw::velocity
@@ -189,6 +190,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::ale
                                  , kw::meshvelocity
                                  , kw::none
+                                 , kw::sine
                                  , kw::fluid
                                  , kw::helmholtz
                                  , kw::amr_t0ref
@@ -262,9 +264,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::interface_advection
                                  , kw::gauss_hump_compflow
                                  , kw::waterair_shocktube
-                                 , kw::triple_point
-                                 , kw::gas_impact
-                                 , kw::gas_impact_4mat
                                  , kw::shock_hebubble
                                  , kw::underwater_ex >;
 

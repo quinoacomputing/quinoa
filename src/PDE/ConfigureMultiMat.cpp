@@ -57,6 +57,7 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 // *****************************************************************************
 {
   using eq = tag::multimat;
+  using tk::parameter;
   using tk::parameters;
 
   auto c = ++cnt[ ctr::PDEType::MULTIMAT ];       // count eqs
@@ -129,6 +130,68 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   nfo.emplace_back( "material stiffness", parameters(
     g_inputdeck.get< tag::param, eq, tag::pstiff >()[c] ) );
+
+  // ICs and IC-boxes
+
+  const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+
+  const auto& bgmatidic = ic.get< tag::materialid >();
+  if (bgmatidic.size() > c && !bgmatidic[c].empty())
+    nfo.emplace_back( "IC background material id",
+                      parameter( bgmatidic[c][0] ) );
+  const auto& bgdensityic = ic.get< tag::density >();
+  if (bgdensityic.size() > c && !bgdensityic[c].empty())
+    nfo.emplace_back( "IC background density",
+                      parameter( bgdensityic[c][0] ) );
+  const auto& bgvelocityic = ic.get< tag::velocity >();
+  if (bgvelocityic.size() > c && !bgvelocityic[c].empty())
+    nfo.emplace_back( "IC background velocity",
+                      parameters( bgvelocityic[c] ) );
+  const auto& bgpressureic = ic.get< tag::pressure >();
+  if (bgpressureic.size() > c && !bgpressureic[c].empty())
+    nfo.emplace_back( "IC background pressure",
+                      parameter( bgpressureic[c][0] ) );
+  const auto& bgenergyic = ic.get< tag::energy >();
+  if (bgenergyic.size() > c && !bgenergyic[c].empty())
+    nfo.emplace_back( "IC background energy",
+                      parameter( bgenergyic[c][0] ) );
+  const auto& bgtemperatureic = ic.get< tag::temperature >();
+  if (bgtemperatureic.size() > c && !bgtemperatureic[c].empty())
+    nfo.emplace_back( "IC background temperature",
+                      parameter( bgtemperatureic[c][0] ) );
+
+  const auto& icbox = ic.get< tag::box >();
+  if (icbox.size() > c) {
+    std::size_t bcnt = 0;
+    for (const auto& b : icbox[c]) {   // for all boxes configured for this eq
+      std::vector< tk::real > box
+        { b.get< tag::xmin >(), b.get< tag::xmax >(),
+          b.get< tag::ymin >(), b.get< tag::ymax >(),
+          b.get< tag::zmin >(), b.get< tag::zmax >() };
+
+      std::string boxname = "IC box " + parameter(bcnt);
+      nfo.emplace_back( boxname, parameters( box ) );
+
+      nfo.emplace_back( boxname + " material id",
+                        parameter( b.get< tag::materialid >() ) );
+      nfo.emplace_back( boxname + " density",
+                        parameter( b.get< tag::density >() ) );
+      nfo.emplace_back( boxname + " velocity",
+                        parameters( b.get< tag::velocity >() ) );
+      nfo.emplace_back( boxname + " pressure",
+                        parameter( b.get< tag::pressure >() ) );
+      nfo.emplace_back( boxname + " internal energy per unit mass",
+                        parameter( b.get< tag::energy >() ) );
+      nfo.emplace_back( boxname + " mass",
+                        parameter( b.get< tag::mass >() ) );
+      nfo.emplace_back( boxname + " internal energy per unit volume",
+                        parameter( b.get< tag::energy_content >() ) );
+      nfo.emplace_back( boxname + " temperature",
+                        parameter( b.get< tag::temperature >() ) );
+
+      ++bcnt;
+    }
+  }
 
   return nfo;
 }

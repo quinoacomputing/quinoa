@@ -121,10 +121,6 @@ class ALECG : public CBase_ALECG {
     void comnorm( const std::unordered_map< int,
       std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
 
-    //! Receive contributions to left-hand side matrix on chare-boundaries
-    void comlhs( const std::vector< std::size_t >& gid,
-                 const std::vector< std::vector< tk::real > >& L );
-
     //! Receive contributions to gradients on chare-boundaries
     void comChBndGrad( const std::vector< std::size_t >& gid,
                        const std::vector< std::vector< tk::real > >& G );
@@ -191,7 +187,6 @@ class ALECG : public CBase_ALECG {
       p | m_disc;
       p | m_initial;
       p | m_nsol;
-      p | m_nlhs;
       p | m_ngrad;
       p | m_nrhs;
       p | m_nbnorm;
@@ -207,11 +202,10 @@ class ALECG : public CBase_ALECG {
       p | m_psup;
       p | m_u;
       p | m_un;
-      p | m_lhs;
+      p | m_w;
       p | m_rhs;
       p | m_chBndGrad;
       p | m_bcdir;
-      p | m_lhsc;
       p | m_chBndGradc;
       p | m_rhsc;
       p | m_diag;
@@ -227,6 +221,8 @@ class ALECG : public CBase_ALECG {
       p | m_dtp;
       p | m_tp;
       p | m_finished;
+      p | m_newmesh;
+      p | m_coordn;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -243,8 +239,6 @@ class ALECG : public CBase_ALECG {
     std::size_t m_initial;
     //! Counter for high order solution vector nodes updated
     std::size_t m_nsol;
-    //! Counter for left-hand side matrix (vector) nodes updated
-    std::size_t m_nlhs;
     //! Counter for nodal gradients updated
     std::size_t m_ngrad;
     //! Counter for right-hand side vector nodes updated
@@ -277,8 +271,8 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_u;
     //! Unknown/solution vector at mesh nodes at previous time
     tk::Fields m_un;
-    //! Lumped lhs mass matrix
-    tk::Fields m_lhs;
+    //! Mesh velocity for ALE mesh motion
+    tk::Fields m_w;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
     //! Nodal gradients at chare-boundary nodes
@@ -291,9 +285,6 @@ class ALECG : public CBase_ALECG {
     //!   the increment (from t to dt) in the BC specified for a component.
     std::unordered_map< std::size_t,
       std::vector< std::pair< bool, tk::real > > > m_bcdir;
-    //! Receive buffer for communication of the left hand side
-    //! \details Key: chare id, value: lhs for all scalar components per node
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_lhsc;
     //! Receive buffer for communication of the nodal gradients
     //! \details Key: chare id, value: gradients for all scalar components per
     //!   node
@@ -334,6 +325,10 @@ class ALECG : public CBase_ALECG {
     std::vector< tk::real > m_tp;
     //! True in the last time step
     int m_finished;
+    //! State indicating the reason we are recomputing the normals
+    int m_newmesh;
+    //! Mesh coordinates at the time n for ALE
+    tk::UnsMesh::Coords m_coordn;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -370,10 +365,10 @@ class ALECG : public CBase_ALECG {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( CkCallback c ) const;
+    void writeFields( CkCallback c );
 
-    //! Combine own and communicated contributions to left hand side
-    void lhsmerge();
+    //! Combine own and communicated contributions to normals
+    void merge();
 
     //! Compute gradients
     void chBndGrad();
@@ -381,8 +376,11 @@ class ALECG : public CBase_ALECG {
     //! Compute righ-hand side vector of transport equations
     void rhs();
 
-    //! Solve low and high order diagonal systems
+    //! Advance systems of equations
     void solve();
+
+    //! Continue after ALE mesh movement
+    void ale();
 
     //! Compute time step size
     void dt();
@@ -392,6 +390,15 @@ class ALECG : public CBase_ALECG {
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
+
+    //! Apply boundary conditions
+    void BC();
+
+    //! Multiply solution with mesh volume
+    void volumetric( tk::Fields& u );
+
+    //! Divide solution with mesh volume
+    void conserved( tk::Fields& u );
 };
 
 } // inciter::

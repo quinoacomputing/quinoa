@@ -33,7 +33,8 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
        const std::vector< tk::real >& dtp,
        const tk::UnsMesh::Coords& coord,
        const std::unordered_map< std::size_t, std::size_t >& lid,
-       const std::map< int, std::vector< std::size_t > >& bnode )
+       const std::map< int, std::vector< std::size_t > >& bnode,
+       bool increment )
 // *****************************************************************************
 //  Match user-specified boundary conditions at nodes for side sets
 //! \param[in] ncomp Number of scalar components in PDE system
@@ -44,6 +45,8 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
 //! \param[in] coord Mesh node coordinates
 //! \param[in] lid Local node IDs associated to local node IDs
 //! \param[in] bnode Map storing global mesh node IDs mapped to side set ids
+//! \param[in] increment If true, evaluate the solution increment between
+//!   t and t+dt for Dirichlet BCs. If false, evlauate the solution instead.
 //! \return Vector of pairs of bool and boundary condition value associated to
 //!   local mesh node IDs at which the user has set Dirichlet boundary
 //!   conditions for all systems of PDEs integrated. The bool indicates whether
@@ -123,7 +126,8 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
     auto l = local(s.second);   // generate local node ids on side set
     for (std::size_t eq=0; eq<g_cgpde.size(); ++eq) {
       // query Dirichlet BCs at nodes of this side set
-      auto eqbc = g_cgpde[eq].dirbc( t, dt, tp, dtp, {s.first,l}, coord );
+      auto eqbc =
+        g_cgpde[eq].dirbc( t, dt, tp, dtp, {s.first,l}, coord, increment );
       for (const auto& n : eqbc) {
         auto id = n.first;                      // BC node ID
         const auto& bcs = n.second;             // BCs
