@@ -152,9 +152,14 @@ class DG : public CBase_DG {
 
     //! Receive contributions to nodal gradients on chare-boundaries
     void
-    comnodal( const std::vector< std::size_t >& gid,
-              const std::vector< std::vector< tk::real > >& G1,
-              const std::vector< std::vector< tk::real > >& G2 );
+    comnodalExtreme( const std::vector< std::size_t >& gid,
+                     const std::vector< std::vector< tk::real > >& G1,
+                     const std::vector< std::vector< tk::real > >& G2 );
+
+    void ResizeNodalExtremec(
+      const tk::NodeCommMap& nodeCommMap,
+      std::unordered_map< std::size_t, std::vector< tk::real > >& uNodalExtrmc,
+      std::unordered_map< std::size_t, std::vector< tk::real > >& pNodalExtrmc );
 
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
@@ -220,7 +225,7 @@ class DG : public CBase_DG {
       p | m_nlim;
       p | m_nnod;
       p | m_nreco;
-      p | m_nnodal;
+      p | m_nnodalExtreme;
       p | m_inpoel;
       p | m_coord;
       p | m_fd;
@@ -231,10 +236,10 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_volfracExtr;
       p | m_lhs;
-      p | m_nodalmax;
-      p | m_nodalmin;
-      p | m_nodalmaxc;
-      p | m_nodalminc;
+      p | m_uNodalExtrm;
+      p | m_pNodalExtrm;
+      p | m_uNodalExtrmc;
+      p | m_pNodalExtrmc;
       p | m_rhs;
       p | m_nfac;
       p | m_nunk;
@@ -307,7 +312,7 @@ class DG : public CBase_DG {
     std::size_t m_nreco;
     //! Counter signaling that we have received all our nodal extremes from
     //! ghost chare partitions
-    std::size_t m_nnodal;
+    std::size_t m_nnodalExtreme;
     //! Mesh connectivity extended
     std::vector< std::size_t > m_inpoel;
     //! Node coordinates extended
@@ -331,11 +336,11 @@ class DG : public CBase_DG {
     //! Vector of right-hand side
     tk::Fields m_rhs;
     //! Vector of nodal extremes
-    tk::Fields m_nodalmax;
-    tk::Fields m_nodalmin;
+    tk::Fields m_uNodalExtrm;
+    tk::Fields m_pNodalExtrm;
     //! Buffer for vector of nodal extremes
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_nodalmaxc;
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_nodalminc;
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_pNodalExtrmc;
     //! Counter for number of faces on this chare (including chare boundaries)
     std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
@@ -487,7 +492,7 @@ class DG : public CBase_DG {
     void reco();
 
     //! Compute nodal extremes at chare-boundary nodes
-    void nodal();
+    void nodalExtreme();
 
     //! Compute limiter function
     void lim();

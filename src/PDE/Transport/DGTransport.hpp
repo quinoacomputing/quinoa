@@ -254,8 +254,10 @@ class Transport {
     //! \param[in] gid Local->global node id map
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!   global node ids (key)
-    //! \param[in] nodalmax Chare-boundary Nodal maximum
-    //! \param[in] nodalmin Chare-boundary Nodal minimum
+    //! \param[in] uNodalExtrm Chare-boundary nodal extreme for conservative
+    //!   variables
+    //! \param[in] pNodalExtrm Chare-boundary nodal extreme for primitive
+    //!   variables
     //! \param[in,out] U Solution vector at recent time step
     void limit( [[maybe_unused]] tk::real t,
                 [[maybe_unused]] const tk::Fields& geoFace,
@@ -267,8 +269,8 @@ class Transport {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                tk::Fields& nodalmax,
-                tk::Fields& nodalmin,
+                tk::Fields& uNodalExtrm,
+                tk::Fields& pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& ) const
     {
@@ -280,7 +282,7 @@ class Transport {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
         VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, coord, gid, bid, nodalmax, nodalmin, U );
+          m_system, m_offset, coord, gid, bid, uNodalExtrm, pNodalExtrm, U );
     }
 
     //! Compute right hand side

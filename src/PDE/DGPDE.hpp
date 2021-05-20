@@ -197,13 +197,13 @@ class DGPDE {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                tk::Fields& nodalmax,
-                tk::Fields& nodalmin,
+                tk::Fields& uNodalExtrm,
+                tk::Fields& pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
       self->limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                   bid, nodalmax, nodalmin, U, P );
+                   bid, uNodalExtrm, pNodalExtrm, U, P );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -441,13 +441,13 @@ class DGPDE {
                   const std::vector< std::size_t >& ndofel,
                   const std::vector< std::size_t >& gid,
                   const std::unordered_map< std::size_t, std::size_t >& bid,
-                  tk::Fields& nodalmax,
-                  tk::Fields& nodalmin,
+                  tk::Fields& uNodalExtrm,
+                  tk::Fields& pNodalExtrm,
                   tk::Fields& U,
                   tk::Fields& P ) const override
       {
         data.limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                    bid, nodalmax, nodalmin, U, P );
+                    bid, uNodalExtrm, pNodalExtrm, U, P );
       }
       void rhs(
         tk::real t,

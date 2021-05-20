@@ -63,7 +63,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nlim( 0 ),
   m_nnod( 0 ),
   m_nreco( 0 ),
-  m_nnodal( 0 ),
+  m_nnodalExtreme( 0 ),
   m_inpoel( Disc()->Inpoel() ),
   m_coord( Disc()->Coord() ),
   m_fd( m_inpoel, bface, tk::remap(triinpoel,Disc()->Lid()) ),
@@ -85,14 +85,12 @@ DG::DG( const CProxy_Discretization& disc,
          g_inputdeck.get< tag::discr, tag::ndof >()*
          g_inputdeck.get< tag::component >().nprop() ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
-  m_nodalmax( Disc()->Bid().size(),
-              g_inputdeck.get< tag::component >().nprop() +
-              m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
-  m_nodalmin( Disc()->Bid().size(),
-              g_inputdeck.get< tag::component >().nprop() +
-              m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
-  m_nodalmaxc(),
-  m_nodalminc(),
+  m_uNodalExtrm( Disc()->Bid().size(),
+                 2 * g_inputdeck.get< tag::component >().nprop() ),
+  m_pNodalExtrm( Disc()->Bid().size(),
+                 2 * m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
+  m_uNodalExtrmc(),
+  m_pNodalExtrmc(),
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_npoin( m_coord[0].size() ),
@@ -135,25 +133,13 @@ DG::DG( const CProxy_Discretization& disc,
     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
                                         "DG" );
 
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ncomp = m_u.nprop() / rdof;
-  const auto nprim = m_p.nprop() / rdof;
-
   // assign number of dofs for each equation in all pde systems
   for (const auto& eq : g_dgpde) {
     eq.numEquationDofs(m_numEqDof);
   }
 
   // Initialization for the buffer vector of nodal extremes
-  for (const auto& [c,n] : Disc()->NodeCommMap())
-  {
-    auto gid = std::vector<std::size_t>(std::begin(n),std::end(n));
-    for (std::size_t i=0; i<gid.size(); ++i)
-    {
-      m_nodalmaxc[gid[i]].resize(ncomp+nprim,-std::numeric_limits< tk::real >::max());
-      m_nodalminc[gid[i]].resize(ncomp+nprim, std::numeric_limits< tk::real >::max());
-    }
-  }
+  ResizeNodalExtremec(Disc()->NodeCommMap(), m_uNodalExtrmc, m_pNodalExtrmc);
 
   usesAtSync = true;    // enable migration at AtSync
 
@@ -224,7 +210,7 @@ DG::resizeComm()
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
     thisProxy[ thisIndex ].wait4reco();
-    thisProxy[ thisIndex ].wait4nodal();
+    thisProxy[ thisIndex ].wait4nodalExtreme();
     thisProxy[ thisIndex ].wait4lim();
     thisProxy[ thisIndex ].wait4nod();
   }
@@ -1802,7 +1788,7 @@ DG::comreco( int fromch,
 }
 
 void
-DG::nodal()
+DG::nodalExtreme()
 // *****************************************************************************
 // Compute nodal extremes at chare-boundary nodes. Extremes at internal nodes
 // are calculated in limiter function.
@@ -1835,10 +1821,23 @@ DG::nodal()
     }
   }
 
-  // Compute own portion of gradients for all equations
-  m_nodalmax.fill(-std::numeric_limits< tk::real >::max() );
-  m_nodalmin.fill( std::numeric_limits< tk::real >::max() );
+  // Initialize nodal extreme vector
+  auto large = std::numeric_limits< tk::real >::max();
+  for(std::size_t i = 0; i<bid.size(); i++)
+  {
+    for (std::size_t c=0; c<ncomp; ++c)
+    {
+      m_uNodalExtrm(i, c, 0) = -large;
+      m_uNodalExtrm(i, c+ncomp, 0) = large;
+    }
+    for (std::size_t c=0; c<nprim; ++c)
+    {
+      m_pNodalExtrm(i, c, 0) = -large;
+      m_pNodalExtrm(i, c+nprim, 0) = large;
+    }
+  }
 
+  // Compute own portion of gradients for all equations
   for (auto e : d->bndel())  // elements contributing to chare boundary nodes
   {
     // access node IDs
@@ -1852,17 +1851,17 @@ DG::nodal()
       {
         for (std::size_t c=0; c<ncomp; ++c)
         {
-          m_nodalmax(i->second,c,0) =
-            std::max(m_nodalmax(i->second,c,0), m_u(e,c*rdof,0));
-          m_nodalmin(i->second,c,0) =
-            std::min(m_nodalmin(i->second,c,0), m_u(e,c*rdof,0));
+          m_uNodalExtrm(i->second,c,0) =
+            std::max(m_uNodalExtrm(i->second,c,0), m_u(e,c*rdof,0));
+          m_uNodalExtrm(i->second,c+ncomp,0) =
+            std::min(m_uNodalExtrm(i->second,c+ncomp,0), m_u(e,c*rdof,0));
         }
         for (std::size_t c=0; c<nprim; ++c)
         {
-          m_nodalmax(i->second,c+ncomp,0) =
-            std::max(m_nodalmax(i->second,c+ncomp,0), m_p(e,c*rdof,0));
-          m_nodalmin(i->second,c+ncomp,0) =
-            std::min(m_nodalmin(i->second,c+ncomp,0), m_p(e,c*rdof,0));
+          m_pNodalExtrm(i->second,c,0) =
+            std::max(m_pNodalExtrm(i->second,c,0), m_p(e,c*rdof,0));
+          m_pNodalExtrm(i->second,c+nprim,0) =
+            std::min(m_pNodalExtrm(i->second,c+nprim,0), m_p(e,c*rdof,0));
         }
       }
     }
@@ -1870,7 +1869,7 @@ DG::nodal()
 
   // Communicate extremes at nodes to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
-    comnodal_complete();
+    comnodalExtreme_complete();
   else  // send nodal extremes to chare-boundary nodes to fellow chares
   {
     for (const auto& [c,n] : d->NodeCommMap()) {
@@ -1879,28 +1878,31 @@ DG::nodal()
       std::size_t j = 0;
       for (auto i : n)
       {
-        g1[ j   ] = m_nodalmax[ tk::cref_find(d->Bid(),i) ];
-        g2[ j++ ] = m_nodalmin[ tk::cref_find(d->Bid(),i) ];
+        g1[ j   ] = m_uNodalExtrm[ tk::cref_find(d->Bid(),i) ];
+        g2[ j++ ] = m_pNodalExtrm[ tk::cref_find(d->Bid(),i) ];
       }
-      thisProxy[c].comnodal( std::vector<std::size_t>(begin(n),end(n)), g1, g2 );
+      thisProxy[c].comnodalExtreme( std::vector<std::size_t>(begin(n),end(n)), g1, g2 );
     }
   }
-  ownnodal_complete();
+  ownnodalExtreme_complete();
 }
 
 void
-DG::comnodal( const std::vector< std::size_t >& gid,
-              const std::vector< std::vector< tk::real > >& G1,
-              const std::vector< std::vector< tk::real > >& G2 )
+DG::comnodalExtreme( const std::vector< std::size_t >& gid,
+                     const std::vector< std::vector< tk::real > >& G1,
+                     const std::vector< std::vector< tk::real > >& G2 )
 // *****************************************************************************
 //  Receive contributions to nodal extremes on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive grad contributions
-//! \param[in] G1 Partial contributions of maximum to chare-boundary nodes
-//! \param[in] G2 Partial contributions of minimum to chare-boundary nodes
-//! \details This function receives contributions to m_nodalmax/m_nodalmin,
-//!   which stores nodal extrems at mesh chare-boundary nodes. While m_nodalmax/
-//!   m_nodalmin stores own contributions, m_nodalmaxc/m_nodalminc collects the
-//!   neighbor chare contributions during communication.
+//! \param[in] G1 Partial contributions of extreme for conservative variables to
+//!   chare-boundary nodes
+//! \param[in] G2 Partial contributions of extreme for primitive variables to
+//!   chare-boundary nodes
+//! \details This function receives contributions to m_uNodalExtrm/m_pNodalExtrm
+//!   , which stores nodal extrems at mesh chare-boundary nodes. While
+//!   m_uNodalExtrm/m_pNodalExtrm stores own contributions, m_uNodalExtrmc
+//!   /m_pNodalExtrmc collects the neighbor chare contributions during
+//!   communication.
 // *****************************************************************************
 {
   Assert( G1.size() == gid.size(), "Size mismatch" );
@@ -1912,17 +1914,58 @@ DG::comnodal( const std::vector< std::size_t >& gid,
 
   for (std::size_t i=0; i<gid.size(); ++i)
   {
-    for (std::size_t c=0; c<ncomp+nprim; ++c)
+    for (std::size_t c=0; c<ncomp; ++c)
     {
-      m_nodalmaxc[gid[i]][c] = std::max(G1[i][c], m_nodalmaxc[gid[i]][c]);
-      m_nodalminc[gid[i]][c] = std::min(G2[i][c], m_nodalminc[gid[i]][c]);
+      m_uNodalExtrmc[gid[i]][c] =
+        std::max( G1[i][c], m_uNodalExtrmc[gid[i]][c] );
+      m_uNodalExtrmc[gid[i]][c+ncomp] =
+        std::min( G1[i][c+ncomp], m_uNodalExtrmc[gid[i]][c+ncomp] );
+    }
+    for (std::size_t c=0; c<nprim; ++c)
+    {
+      m_pNodalExtrmc[gid[i]][c] =
+        std::max( G2[i][c], m_pNodalExtrmc[gid[i]][c] );
+      m_pNodalExtrmc[gid[i]][c+nprim] =
+        std::min( G2[i][c+nprim], m_pNodalExtrmc[gid[i]][c+nprim] );
     }
   }
 
-  if (++m_nnodal == Disc()->NodeCommMap().size())
+  if (++m_nnodalExtreme == Disc()->NodeCommMap().size())
   {
-    m_nnodal = 0;
-    comnodal_complete();
+    m_nnodalExtreme = 0;
+    comnodalExtreme_complete();
+  }
+}
+
+void DG::ResizeNodalExtremec(
+  const tk::NodeCommMap& nodeCommMap,
+  std::unordered_map< std::size_t, std::vector< tk::real > >& uNodalExtrmc,
+  std::unordered_map< std::size_t, std::vector< tk::real > >& pNodalExtrmc )
+// *****************************************************************************
+//  Resize the buffer vector of nodal extreme
+//! \param[in] nodeCommMap Node communication map
+//! \param[in,out] uNodalExtrmc Buffer vector of nodal extreme of conservative
+//!   variable
+//! \param[in,out] pNodalExtrmc Buffer vector of nodal minimum of primitive
+//!   variable
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ncomp = m_u.nprop() / rdof;
+  const auto nprim = m_p.nprop() / rdof;
+
+  for (const auto& [c,n] : nodeCommMap)
+  {
+    auto large = std::numeric_limits< tk::real >::max();
+    for (auto i : n) {
+      uNodalExtrmc[i].resize( 2*ncomp, -large );
+      pNodalExtrmc[i].resize( 2*nprim, -large );
+
+      for(std::size_t k = 0; k < ncomp; k++)
+        uNodalExtrmc[i][k+ncomp] = large;
+      for(std::size_t k = 0; k < nprim; k++)
+        pNodalExtrmc[i][k+nprim] = large;
+    }
   }
 }
 
@@ -1939,25 +1982,34 @@ DG::lim()
   const auto nprim = m_p.nprop() / rdof;
 
   // Combine own and communicated contributions to nodal extremes
-  for (const auto& [gid,g] : m_nodalmaxc) {
+  for (const auto& [gid,g] : m_uNodalExtrmc) {
     auto bid = tk::cref_find( d->Bid(), gid );
-    for (ncomp_t c=0; c<ncomp+nprim; ++c)
-      m_nodalmax(bid,c,0) = std::max(g[c], m_nodalmax(bid,c,0));
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      m_uNodalExtrm(bid,c,0) = std::max(g[c], m_uNodalExtrm(bid,c,0));
+      m_uNodalExtrm(bid,c+ncomp,0) =
+        std::min(g[c+ncomp], m_uNodalExtrm(bid,c+ncomp,0));
+    }
   }
-  for (const auto& [gid,g] : m_nodalminc) {
+  for (const auto& [gid,g] : m_pNodalExtrmc) {
     auto bid = tk::cref_find( d->Bid(), gid );
-    for (ncomp_t c=0; c<ncomp+nprim; ++c)
-      m_nodalmin(bid,c,0) = std::min(g[c], m_nodalmin(bid,c,0));
+    for (ncomp_t c=0; c<nprim; ++c)
+    {
+      m_pNodalExtrm(bid,c,0) = std::max(g[c], m_pNodalExtrm(bid,c,0));
+      m_pNodalExtrm(bid,c+nprim,0) =
+        std::min(g[c+nprim], m_pNodalExtrm(bid,c+nprim,0));
+    }
   }
 
   // clear gradients receive buffer
-  tk::destroy(m_nodalmaxc);
-  tk::destroy(m_nodalminc);
+  tk::destroy(m_uNodalExtrmc);
+  tk::destroy(m_pNodalExtrmc);
 
   if (rdof > 1)
     for (const auto& eq : g_dgpde)
       eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel, m_coord,
-                m_ndof, d->Gid(), d->Bid(), m_nodalmax, m_nodalmin, m_u, m_p );
+                m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm, m_pNodalExtrm, m_u,
+                m_p );
 
   // Send limited solution to neighboring chares
   if (m_sendGhost.empty())
@@ -2072,9 +2124,6 @@ DG::dt()
 // *****************************************************************************
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ncomp = m_u.nprop() / rdof;
-  const auto nprim = m_p.nprop() / rdof;
   auto d = Disc();
 
 
@@ -2125,16 +2174,8 @@ DG::dt()
     mindt = d->Dt();
   }
 
-  // Initialization for the buffer vector of nodal extremes
-  for (const auto& [c,n] : Disc()->NodeCommMap())
-  {
-    auto gid = std::vector<std::size_t>(std::begin(n),std::end(n));
-    for (std::size_t i=0; i<gid.size(); ++i)
-    {
-      m_nodalmaxc[gid[i]].resize(ncomp+nprim,-std::numeric_limits< tk::real >::max());
-      m_nodalminc[gid[i]].resize(ncomp+nprim, std::numeric_limits< tk::real >::max());
-    }
-  }
+  // Resize the buffer vector of nodal extreme
+  ResizeNodalExtremec(Disc()->NodeCommMap(), m_uNodalExtrmc, m_pNodalExtrmc);
 
   // Contribute to minimum dt across all chares then advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -2151,7 +2192,7 @@ DG::solve( tk::real newdt )
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
   thisProxy[ thisIndex ].wait4reco();
-  thisProxy[ thisIndex ].wait4nodal();
+  thisProxy[ thisIndex ].wait4nodalExtreme();
   thisProxy[ thisIndex ].wait4lim();
   thisProxy[ thisIndex ].wait4nod();
 
@@ -2319,21 +2360,11 @@ DG::resizePostAMR(
   m_lhs.resize( nelem );
   m_rhs.resize( nelem );
   m_volfracExtr.resize( nelem );
-  m_nodalmax.resize( d->Bid().size() );
-  m_nodalmin.resize( d->Bid().size() );
+  m_uNodalExtrm.resize( d->Bid().size() );
+  m_pNodalExtrm.resize( d->Bid().size() );
 
-  // Resize the buffer vector of nodal extremes
-  const auto ncomp = m_u.nprop() / g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto nprim = m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >();
-  for (const auto& [c,n] : d->NodeCommMap())
-  {
-    auto gid = std::vector<std::size_t>(std::begin(n),std::end(n));
-    for (std::size_t i=0; i<gid.size(); ++i)
-    {
-      m_nodalmaxc[gid[i]].resize(ncomp+nprim,-std::numeric_limits< tk::real >::max());
-      m_nodalminc[gid[i]].resize(ncomp+nprim, std::numeric_limits< tk::real >::max());
-    }
-  }
+  // Resize the buffer vector of nodal extreme
+  ResizeNodalExtremec(nodeCommMap, m_uNodalExtrmc, m_pNodalExtrmc);
 
   m_fd = FaceData( m_inpoel, bface, tk::remap(triinpoel,d->Lid()) );
 
