@@ -38,7 +38,6 @@ module alecg {
       entry void box( tk::real v );
       entry void resizeComm();
       entry void nodeNeighSetup();
-      //entry void adj();
       entry void start();
       entry void refine( const std::vector< tk::real >& l2ref );
       entry [reductiontarget] void advance( tk::real newdt );
