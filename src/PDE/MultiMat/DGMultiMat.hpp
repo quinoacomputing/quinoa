@@ -459,6 +459,12 @@ class MultiMat {
               * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14 *
               p_target;
+            for (std::size_t i=1; i<rdof; ++i) {
+              unk(e, volfracDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+              unk(e, densityDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+              unk(e, energyDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+              prim(e, pressureDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+            }
           }
           else {
             auto rhok = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) / alk;
@@ -467,6 +473,10 @@ class MultiMat {
               * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk *
               p_target;
+            for (std::size_t i=1; i<rdof; ++i) {
+              unk(e, energyDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+              prim(e, pressureDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+            }
           }
         }
 
@@ -624,6 +634,30 @@ class MultiMat {
         // 1. solve 3x3 least-squares system
         for (std::size_t e=0; e<nelem; ++e)
         {
+          // Remove high-order terms at material interfaces
+          std::vector< std::size_t > matInt(nmat, 0);
+          std::vector< tk::real > alAvg(nmat, 0.0);
+          for (std::size_t k=0; k<nmat; ++k)
+            alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
+          auto intInd = interfaceIndicator(nmat, alAvg, matInt);
+          if ((intsharp > 0) && intInd)
+          {
+            for (std::size_t k=0; k<nmat; ++k) {
+              if (matInt[k]) {
+                for (std::size_t i=1; i<rdof; ++i) {
+                  U(e, densityDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
+                  U(e, energyDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
+                  P(e, pressureDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
+                }
+              }
+            }
+            for (std::size_t idir=0; idir<3; ++idir) {
+              for (std::size_t i=1; i<rdof; ++i) {
+                U(e, momentumDofIdx(nmat,idir,rdof,i), m_offset) = 0.0;
+                P(e, velocityDofIdx(nmat,idir,rdof,i), m_offset) = 0.0;
+              }
+            }
+          }
           // Reconstruct second-order dofs of volume-fractions in Taylor space
           // using nodal-stencils, for a good interface-normal estimate
           tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
