@@ -309,7 +309,6 @@ VertexBasedTransport_P1(
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   tk::Fields& uNodalExtrm,
-  tk::Fields&,
   tk::Fields& U )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for transport DGP1
@@ -323,7 +322,7 @@ VertexBasedTransport_P1(
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!   global node ids (key)
-//! \param[in] uNodalExtrm Chare-boundary nodal extreme for conservative
+//! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
 //!   variables
 //! \param[in,out] U High-order solution vector which gets limited
 //! \details This vertex-based limiter function should be called for transport.
@@ -398,7 +397,6 @@ VertexBased_P1(
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   tk::Fields& uNodalExtrm,
-  tk::Fields&,
   tk::Fields& U )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for single-material DGP1
@@ -411,7 +409,7 @@ VertexBased_P1(
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!   global node ids (key)
-//! \param[in] uNodalExtrm Chare-boundary nodal extreme for conservative
+//! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
 //!   variables
 //! \param[in,out] U High-order solution vector which gets limited
 //! \details This vertex-based limiter function should be called for compflow.
@@ -487,9 +485,9 @@ VertexBasedMultiMat_P1(
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!   global node ids (key)
-//! \param[in] uNodalExtrm Chare-boundary nodal extreme for conservative
+//! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
 //!   variables
-//! \param[in] pNodalExtrm Chare-boundary nodal extreme for primitive
+//! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
 //!   variables
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -871,7 +869,7 @@ VertexBasedFunction( const tk::Fields& U,
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!   global node ids (key)
-//! \param[in] NodalExtrm Chare-boundary nodal extreme
+//! \param[in] NodalExtrm Chare-boundary nodal extrema
 //! \return phi Limiter function for solution in element e
 // *****************************************************************************
 {
@@ -915,18 +913,8 @@ VertexBasedFunction( const tk::Fields& U,
     auto p = inpoel[4*e+lp];
     const auto& pesup = tk::cref_find(esup, p);
 
-    auto gip = bid.find( gid[p] );
-    if(gip != end(bid))
-    {
-      for (std::size_t c=0; c<ncomp; ++c)
-      {
-        uMax[c] = std::max(NodalExtrm(gip->second,c,0),       uMax[c]);
-        uMin[c] = std::min(NodalExtrm(gip->second,c+ncomp,0), uMin[c]);
-      }
-    }
-
     // ----- Step-1: find min/max in the neighborhood of node p
-    // loop over all the elements surrounding this node p
+    // loop over all the internal elements surrounding this node p
     for (auto er : pesup)
     {
       if(er < nelem)
@@ -937,6 +925,18 @@ VertexBasedFunction( const tk::Fields& U,
           uMin[c] = std::min(uMin[c], U(er, mark, offset));
           uMax[c] = std::max(uMax[c], U(er, mark, offset));
         }
+      }
+    }
+
+    // If node p is the chare-boundary node, find min/max by comparing with
+    // the chare-boundary nodal extrema from vector NodalExtrm
+    auto gip = bid.find( gid[p] );
+    if(gip != end(bid))
+    {
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        uMax[c] = std::max(NodalExtrm(gip->second,c,0),       uMax[c]);
+        uMin[c] = std::min(NodalExtrm(gip->second,c+ncomp,0), uMin[c]);
       }
     }
 

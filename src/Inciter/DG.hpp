@@ -152,11 +152,11 @@ class DG : public CBase_DG {
 
     //! Receive contributions to nodal gradients on chare-boundaries
     void
-    comnodalExtreme( const std::vector< std::size_t >& gid,
+    comnodalExtrema( const std::vector< std::size_t >& gid,
                      const std::vector< std::vector< tk::real > >& G1,
                      const std::vector< std::vector< tk::real > >& G2 );
 
-    void ResizeNodalExtremec(
+    void ResizeNodalExtremac(
       const tk::NodeCommMap& nodeCommMap,
       std::unordered_map< std::size_t, std::vector< tk::real > >& uNodalExtrmc,
       std::unordered_map< std::size_t, std::vector< tk::real > >& pNodalExtrmc );
@@ -225,7 +225,7 @@ class DG : public CBase_DG {
       p | m_nlim;
       p | m_nnod;
       p | m_nreco;
-      p | m_nnodalExtreme;
+      p | m_nnodalExtrema;
       p | m_inpoel;
       p | m_coord;
       p | m_fd;
@@ -310,9 +310,9 @@ class DG : public CBase_DG {
     std::size_t m_nnod;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
-    //! Counter signaling that we have received all our nodal extremes from
+    //! Counter signaling that we have received all our nodal extrema from
     //! ghost chare partitions
-    std::size_t m_nnodalExtreme;
+    std::size_t m_nnodalExtrema;
     //! Mesh connectivity extended
     std::vector< std::size_t > m_inpoel;
     //! Node coordinates extended
@@ -335,10 +335,10 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Vector of nodal extremes
+    //! Vector of nodal extrema
     tk::Fields m_uNodalExtrm;
     tk::Fields m_pNodalExtrm;
-    //! Buffer for vector of nodal extremes
+    //! Buffer for vector of nodal extrema
     std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
     std::unordered_map< std::size_t, std::vector< tk::real > > m_pNodalExtrmc;
     //! Counter for number of faces on this chare (including chare boundaries)
@@ -491,8 +491,8 @@ class DG : public CBase_DG {
     //! Compute solution reconstructions
     void reco();
 
-    //! Compute nodal extremes at chare-boundary nodes
-    void nodalExtreme();
+    //! Compute nodal extrema at chare-boundary nodes
+    void nodalExtrema();
 
     //! Compute limiter function
     void lim();
