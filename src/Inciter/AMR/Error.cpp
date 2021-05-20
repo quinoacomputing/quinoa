@@ -69,7 +69,7 @@ Error::error_jump( const tk::Fields& u,
   // If the normalization factor is zero, return zero error
   auto norm = std::abs(u(a,c,0)) + std::abs(u(b,c,0));
 
-  return std::abs( u(a,c,0) - u(b,c,0) ) / (norm+1e-6);
+  return std::abs( u(a,c,0) - u(b,c,0) ) / (norm+1e-4);
 }
 
 tk::real
