@@ -757,7 +757,7 @@ class CompFlow {
         const auto& sponge = g_inputdeck.get< tag::param, eq, tag::sponge >();
         for (auto p : nodes) {                 // for all symbc nodes
           if (!skipPoint(x[p],y[p],z[p])) {
-            std::vector< tk::real > sp( sbc[m_system].size(), 1.0 );
+            std::vector< tk::real > sp( sbc[m_system].size(), 0.0 );
             if (sponge.size() > m_system) {
               sp = sponge[m_system];
               for (auto& s : sp) s = std::sqrt(s);
@@ -778,9 +778,9 @@ class CompFlow {
                   U(p,2,m_offset) -= v_dot_n * n[1];
                   U(p,3,m_offset) -= v_dot_n * n[2];
                   // sponge: reduce kinetic energy by a user percentage
-                  U(p,1,m_offset) *= sp[s];
-                  U(p,2,m_offset) *= sp[s];
-                  U(p,3,m_offset) *= sp[s];
+                  U(p,1,m_offset) -= U(p,1,m_offset)*sp[s];
+                  U(p,2,m_offset) -= U(p,2,m_offset)*sp[s];
+                  U(p,3,m_offset) -= U(p,3,m_offset)*sp[s];
                 }
               }
             }

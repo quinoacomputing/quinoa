@@ -5362,8 +5362,9 @@ struct sponge_info {
   static std::string longDescription() { return
     R"(This keyword is used to specify the sponge symmetry boundary conditions
     absorption coefficient for each symmetry BC sideset configured. The
-    coefficient must be between 0.0 and 1.0, expressing the percentage of kinetic
-    energy kept at the boundary: 0.0 - fully absorbed, 1.0 - fully kept.)";
+    coefficient must be between 0.0 and 1.0, expressing the percentage of
+    kinetic energy absorbed at the boundary: 0.0 - nothing absorbed, 1.0 - all
+    absorbed.)";
   }
   struct expect {
     using type = tk::real;
