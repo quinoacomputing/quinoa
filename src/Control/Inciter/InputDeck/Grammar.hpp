@@ -395,17 +395,32 @@ namespace grm {
           Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
         }
 
-        // Error check sponge parameter vector for symmetry BC block
-        const auto& bcsym = stack.template get< param, eq, tag::bc, tag::bcsym >();
-        const auto& sponge = stack.template get< tag::param, eq, tag::sponge >();
-        if ( !sponge.empty() && !sponge.back().empty()) {
-          if (sponge.back().size() != bcsym.back().size())
+        // Error check sponge BC parameter vectors for symmetry BC block
+        const auto& bcsym =
+          stack.template get< param, eq, tag::bc, tag::bcsym >();
+        const auto& sponge =
+          stack.template get< tag::param, eq, tag::sponge >();
+
+        const auto& spvel = sponge.template get< tag::velocity >();
+        if ( !spvel.empty() && !spvel.back().empty()) {
+          if (spvel.back().size() != bcsym.back().size())
             Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
-          for (const auto& s : sponge.back())
-            if ( s < kw::sponge::info::expect::lower ||
-                 s > kw::sponge::info::expect::upper )
+          for (const auto& s : spvel.back())
+            if ( s < kw::sponge_velocity::info::expect::lower ||
+                 s > kw::sponge_velocity::info::expect::upper )
               Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
         }
+
+        const auto& sppre = sponge.template get< tag::velocity >();
+        if ( !sppre.empty() && !sppre.back().empty()) {
+          if (sppre.back().size() != bcsym.back().size())
+            Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+          for (const auto& s : sppre.back())
+            if ( s < kw::sponge_pressure::info::expect::lower ||
+                 s > kw::sponge_pressure::info::expect::upper )
+              Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+        }
+
       }
     }
   };
@@ -1309,11 +1324,17 @@ namespace deck {
            tk::grm::block<
              use< kw::end >,
              tk::grm::parameter_vector< use,
-                                        use< kw::sponge >,
+                                        use< kw::sponge_velocity >,
                                         tk::grm::Store_back_back,
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
-                                        eq, tag::sponge >,
+                                        eq, tag::sponge, tag::velocity >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::sponge_pressure >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq, tag::sponge, tag::pressure >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,

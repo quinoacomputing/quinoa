@@ -277,6 +277,15 @@ using SkipBCParameters = tk::TaggedTuple< brigand::list<
                           std::vector< kw::radius::info::expect::type > >
 > >;
 
+//! Sponge BC parameters storage
+using SpongeBCParameters = tk::TaggedTuple< brigand::list<
+    tag::velocity,      std::vector< std::vector<
+                          kw::sponge_velocity::info::expect::type > >
+  , tag::pressure,      std::vector< std::vector<
+                          kw::sponge_pressure::info::expect::type > >
+> >;
+
+
 //! Compressible flow equation parameters storage
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
@@ -288,8 +297,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::farfield_velocity, std::vector< std::vector<
                               kw::velocity::info::expect::type > >
   , tag::bc,            bc
-  , tag::sponge,        std::vector< std::vector<
-                          kw::sponge::info::expect::type > >
+  , tag::sponge,        SpongeBCParameters
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage
   , tag::bcstag,        StagnationBCParameters

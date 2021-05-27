@@ -754,12 +754,13 @@ class CompFlow {
       const auto& z = coord[2];
       const auto& sbc = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
       if (sbc.size() > m_system) {             // use symbcs for this system
-        const auto& sponge = g_inputdeck.get< tag::param, eq, tag::sponge >();
+        const auto& spvel =
+          g_inputdeck.get< tag::param, eq, tag::sponge, tag::velocity >();
         for (auto p : nodes) {                 // for all symbc nodes
           if (!skipPoint(x[p],y[p],z[p])) {
             std::vector< tk::real > sp( sbc[m_system].size(), 0.0 );
-            if (sponge.size() > m_system) {
-              sp = sponge[m_system];
+            if (spvel.size() > m_system) {
+              sp = spvel[m_system];
               for (auto& s : sp) s = std::sqrt(s);
             }
             // for all user-def symbc sets
@@ -777,7 +778,7 @@ class CompFlow {
                   U(p,1,m_offset) -= v_dot_n * n[0];
                   U(p,2,m_offset) -= v_dot_n * n[1];
                   U(p,3,m_offset) -= v_dot_n * n[2];
-                  // sponge: reduce kinetic energy by a user percentage
+                  // sponge velocity: reduce kinetic energy by a user percentage
                   U(p,1,m_offset) -= U(p,1,m_offset)*sp[s];
                   U(p,2,m_offset) -= U(p,2,m_offset)*sp[s];
                   U(p,3,m_offset) -= U(p,3,m_offset)*sp[s];
