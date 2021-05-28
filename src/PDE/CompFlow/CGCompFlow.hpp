@@ -1044,7 +1044,7 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] W Mesh velocity
     //! \param[in] G Nodal gradients
-    //! \param[in] spmult Sponge ressure multiplers at nodes (one per symBC set)
+    //! \param[in] spmult Sponge pressure multiplers at nodes, one per symBC set
     //! \param[in,out] R Right-hand side vector computed
     void domainint( const std::array< std::vector< real >, 3 >& coord,
                     const std::vector< std::size_t >& gid,
@@ -1276,7 +1276,7 @@ class CompFlow {
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] U Solution vector at recent time step
     //! \param[in] W Mesh velocity
-    //! \param[in] spmult Sponge ressure multiplers at nodes (one per symBC set)
+    //! \param[in] spmult Sponge pressure multiplers at nodes, one per symBC set
     //! \param[in,out] R Right-hand side vector computed
     void bndint( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& triinpoel,
@@ -1571,7 +1571,7 @@ class CompFlow {
     //! Compute sponge pressure multiplers at symmetry BCs
     //! \param[in] coord Mesh node coordinates
     //! \param[in] symbcnodes Unique set of nodes at which symmetry BCs are set
-    //! \return Sponge ressure multiplers at nodes (one per symBC side set)
+    //! \return Sponge ressure multiplers at nodes, one per symBC side set
     //! \note If no sponge pressure coefficients are configured for any symBC
     //!   side set, an empty vector is returned.
     std::vector< tk::real >
