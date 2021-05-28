@@ -465,6 +465,7 @@ class CompFlow {
     //! \param[in] psup Points surrounding points
     //! \param[in] esup Elements surrounding points
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
+    //! \param[in] symbcnodes Unique set of nodes at which symmetry BCs are set
     //! \param[in] vol Nodal volumes
     //! \param[in] edgenode Local node IDs of edges
     //! \param[in] edgeid Edge ids in the order of access
@@ -488,6 +489,7 @@ class CompFlow {
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup,
               const std::vector< int >& symbctri,
+              const std::unordered_set< std::size_t >& symbcnodes,
               const std::vector< real >& vol,
               const std::vector< std::size_t >& edgenode,
               const std::vector< std::size_t >& edgeid,
@@ -514,11 +516,15 @@ class CompFlow {
       // zero right hand side for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
 
+      // compute sponge pressure multiplers at symmetry BCs
+      auto spmult = spongePressures( coord, symbcnodes );
+
       // compute domain-edge integral
-      domainint( coord, gid, edgenode, edgeid, psup, dfn, U, W, Grad, R );
+      domainint( coord, gid, edgenode, edgeid, psup, dfn, U, W, Grad,
+                 spmult, R );
 
       // compute boundary integrals
-      bndint( coord, triinpoel, symbctri, U, W, R );
+      bndint( coord, triinpoel, symbctri, U, W, spmult, R );
 
       // compute external (energy) sources
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
@@ -1038,6 +1044,7 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] W Mesh velocity
     //! \param[in] G Nodal gradients
+    //! \param[in] spmult Sponge ressure multiplers at nodes (one per symBC set)
     //! \param[in,out] R Right-hand side vector computed
     void domainint( const std::array< std::vector< real >, 3 >& coord,
                     const std::vector< std::size_t >& gid,
@@ -1049,6 +1056,7 @@ class CompFlow {
                     const tk::Fields& U,
                     const tk::Fields& W,
                     const tk::Fields& G,
+                    const std::vector< tk::real >& spmult,
                     tk::Fields& R ) const
     {
       // domain-edge integral: compute fluxes in edges
@@ -1058,6 +1066,9 @@ class CompFlow {
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
+
+      // number of side sets configured with sponge pressure multipliers
+      std::size_t nset = spmult.size() / x.size();
 
       #pragma omp simd
       for (std::size_t e=0; e<edgenode.size()/2; ++e) {
@@ -1110,6 +1121,7 @@ class CompFlow {
                        rL, ruL, rvL, rwL, reL,
                        rR, ruR, rvR, rwR, reR,
                        w1L, w2L, w3L, w1R, w2R, w3R,
+                       spmult.data()+p*nset, spmult.data()+q*nset, nset,
                        f[0], f[1], f[2], f[3], f[4] );
         // store flux in edges
         for (std::size_t c=0; c<m_ncomp; ++c) dflux[e*m_ncomp+c] = f[c];
@@ -1264,12 +1276,14 @@ class CompFlow {
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] U Solution vector at recent time step
     //! \param[in] W Mesh velocity
+    //! \param[in] spmult Sponge ressure multiplers at nodes (one per symBC set)
     //! \param[in,out] R Right-hand side vector computed
     void bndint( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& triinpoel,
                  const std::vector< int >& symbctri,
                  const tk::Fields& U,
                  const tk::Fields& W,
+                 const std::vector< tk::real >& spmult,
                  tk::Fields& R ) const
     {
 
@@ -1280,6 +1294,9 @@ class CompFlow {
 
       // boundary integrals: compute fluxes in edges
       std::vector< real > bflux( triinpoel.size() * m_ncomp * 2 );
+
+      // number of side sets configured with sponge pressure multipliers
+      std::size_t nset = spmult.size() / x.size();
 
       #pragma omp simd
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
@@ -1338,6 +1355,7 @@ class CompFlow {
         real p, vn;
         int sym = symbctri[e];
         p = eos_pressure< eq >( m_system, rA, ruA/rA, rvA/rA, rwA/rA, reA );
+        for (std::size_t s=0; s<nset; ++s) p -= p*spmult[N[0]*nset+s];
         vn = sym ? 0.0 : (nx*(ruA/rA-w1A) + ny*(rvA/rA-w2A) + nz*(rwA/rA-w3A));
         f[0][0] = rA*vn;
         f[1][0] = ruA*vn + p*nx;
@@ -1345,6 +1363,7 @@ class CompFlow {
         f[3][0] = rwA*vn + p*nz;
         f[4][0] = reA*vn + p*(sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA)/rA);
         p = eos_pressure< eq >( m_system, rB, ruB/rB, rvB/rB, rwB/rB, reB );
+        for (std::size_t s=0; s<nset; ++s) p -= p*spmult[N[1]*nset+s];
         vn = sym ? 0.0 : (nx*(ruB/rB-w1B) + ny*(rvB/rB-w2B) + nz*(rwB/rB-w3B));
         f[0][1] = rB*vn;
         f[1][1] = ruB*vn + p*nx;
@@ -1352,6 +1371,7 @@ class CompFlow {
         f[3][1] = rwB*vn + p*nz;
         f[4][1] = reB*vn + p*(sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB)/rB);
         p = eos_pressure< eq >( m_system, rC, ruC/rC, rvC/rC, rwC/rC, reC );
+        for (std::size_t s=0; s<nset; ++s) p -= p*spmult[N[2]*nset+s];
         vn = sym ? 0.0 : (nx*(ruC/rC-w1C) + ny*(rvC/rC-w2C) + nz*(rwC/rC-w3C));
         f[0][2] = rC*vn;
         f[1][2] = ruC*vn + p*nx;
@@ -1547,6 +1567,45 @@ class CompFlow {
         }
       }
     }
+
+    //! Compute sponge pressure multiplers at symmetry BCs
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] symbcnodes Unique set of nodes at which symmetry BCs are set
+    //! \return Sponge ressure multiplers at nodes (one per symBC side set)
+    //! \note If no sponge pressure coefficients are configured for any symBC
+    //!   side set, an empty vector is returned.
+    std::vector< tk::real >
+    spongePressures( const std::array< std::vector< real >, 3 >& coord,
+                     const std::unordered_set< std::size_t >& symbcnodes ) const
+    {
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      std::vector< tk::real > spmult;
+      std::size_t nset = 0;     // number of symbc side sets configured
+      const auto& sbc = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
+      if (sbc.size() > m_system) {  // if symbcs configured for this system
+        const auto& sppre =  // sponge pressure coeffcieints for each symbc set
+          g_inputdeck.get< tag::param, eq, tag::sponge, tag::pressure >();
+        nset = sbc[m_system].size();  // number of symbc side sets configured
+        spmult.resize( x.size() * nset, 0.0 );
+        for (auto p : symbcnodes) {
+          if ( not skipPoint(x[p],y[p],z[p]) && sppre.size() > m_system ) {
+            Assert( nset == sppre[m_system].size(), "Size mismatch" );
+            for (std::size_t s=0; s<nset; ++s)
+              spmult[p*nset+s] = sppre[m_system][s];
+          } else {
+            for (std::size_t s=0; s<nset; ++s)
+              spmult[p*nset+s] = 0.0;
+          }
+        }
+      }
+      Assert( sbc.size() > m_system ?
+              spmult.size() == x.size() * sbc[m_system].size() :
+              spmult.size() == 0, "Sponge pressure multipler wrong size" );
+      return spmult;
+    }
+
 };
 
 } // cg::

@@ -56,6 +56,9 @@ struct Rusanov {
   //! \param[in] w1R Right X mesh velocity
   //! \param[in] w2R Right Y mesh velocity
   //! \param[in] w3R Right Z mesh velocity
+  //! \param[in] spmultL nset left sponge-pressure multipliers
+  //! \param[in] spmultR nset right sponge-pressure multipliers
+  //! \param[in] nset Number of side sets with sponge-pressure multipliers
   //! \param[in,out] fr Riemann solution for density according to Rusanov
   //! \param[in,out] fru Riemann solution for X momenutm according to Rusanov
   //! \param[in,out] frv Riemann solution for Y momenutm according to Rusanov
@@ -70,6 +73,7 @@ struct Rusanov {
         real rL, real ruL, real rvL, real rwL, real reL,
         real rR, real ruR, real rvR, real rwR, real reR,
         real w1L, real w2L, real w3L, real w1R, real w2R, real w3R,
+        const real spmultL[], const real spmultR[], std::size_t nset,
         real& fr, real& fru, real& frv, real& frw, real& fre )
   {
     auto ul = ruL/rL - w1L;
@@ -84,6 +88,12 @@ struct Rusanov {
       eos_pressure< tag::compflow >( system, rL, ruL/rL, rvL/rL, rwL/rL, reL );
     auto pr =
       eos_pressure< tag::compflow >( system, rR, ruR/rR, rvR/rR, rwR/rR, reR );
+
+    // apply sponge-pressure BCs
+    for (std::size_t s=0; s<nset; ++s) {
+      pl -= pl*spmultL[s];
+      pr -= pr*spmultR[s];
+    }
 
     auto al = eos_soundspeed< tag::compflow >( system, rL, pl );
     auto ar = eos_soundspeed< tag::compflow >( system, rR, pr );

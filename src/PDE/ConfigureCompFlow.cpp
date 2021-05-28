@@ -274,7 +274,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     const auto& sppre = sponge.get< tag::pressure >();
     if (sppre.size() > c)
       nfo.emplace_back( "Symmetry BC sponge pressure parameters",
-                        parameters( spvel[c] ) );
+                        parameters( sppre[c] ) );
   }
 
   const auto& dir =
