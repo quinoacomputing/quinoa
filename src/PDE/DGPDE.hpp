@@ -197,8 +197,8 @@ class DGPDE {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                tk::Fields& uNodalExtrm,
-                tk::Fields& pNodalExtrm,
+                const tk::Fields& uNodalExtrm,
+                const tk::Fields& pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
@@ -334,8 +334,8 @@ class DGPDE {
                           const std::vector< std::size_t >&,
                           const std::vector< std::size_t >&,
                           const std::unordered_map< std::size_t, std::size_t >&,
-                          tk::Fields&,
-                          tk::Fields&,
+                          const tk::Fields&,
+                          const tk::Fields&,
                           tk::Fields&,
                           tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
@@ -441,8 +441,8 @@ class DGPDE {
                   const std::vector< std::size_t >& ndofel,
                   const std::vector< std::size_t >& gid,
                   const std::unordered_map< std::size_t, std::size_t >& bid,
-                  tk::Fields& uNodalExtrm,
-                  tk::Fields& pNodalExtrm,
+                  const tk::Fields& uNodalExtrm,
+                  const tk::Fields& pNodalExtrm,
                   tk::Fields& U,
                   tk::Fields& P ) const override
       {

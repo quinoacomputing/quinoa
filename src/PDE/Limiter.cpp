@@ -308,7 +308,7 @@ VertexBasedTransport_P1(
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  tk::Fields& uNodalExtrm,
+  const tk::Fields& uNodalExtrm,
   tk::Fields& U )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for transport DGP1
@@ -396,7 +396,7 @@ VertexBased_P1(
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  tk::Fields& uNodalExtrm,
+  const tk::Fields& uNodalExtrm,
   tk::Fields& U )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for single-material DGP1
@@ -468,8 +468,8 @@ VertexBasedMultiMat_P1(
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  tk::Fields& uNodalExtrm,
-  tk::Fields& pNodalExtrm,
+  const tk::Fields& uNodalExtrm,
+  const tk::Fields& pNodalExtrm,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat )
@@ -854,7 +854,7 @@ VertexBasedFunction( const tk::Fields& U,
   std::size_t ncomp,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  tk::Fields& NodalExtrm )
+  const tk::Fields& NodalExtrm )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter function calculation for P1 dofs
 //! \param[in] U High-order solution vector which is to be limited

@@ -269,8 +269,8 @@ class Transport {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                tk::Fields& uNodalExtrm,
-                [[maybe_unused]] tk::Fields& pNodalExtrm,
+                const tk::Fields& uNodalExtrm,
+                [[maybe_unused]] const tk::Fields& pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& ) const
     {
