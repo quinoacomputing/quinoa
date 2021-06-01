@@ -264,8 +264,15 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   const auto& sym =
     g_inputdeck.get< tag::param, eq, tag::bc, tag::bcsym >();
-  if (sym.size() > c)
+  if (sym.size() > c) {
     nfo.emplace_back( "Symmetry BC sideset(s)", parameters( sym[c] ) );
+    const auto& sponge =
+      g_inputdeck.get< tag::param, eq, tag::sponge >();
+    if (sponge.size() > c) {
+      nfo.emplace_back( "Symmetry BC sponge parameters",
+                        parameters( sponge[c] ) );
+    }
+  }
 
   const auto& dir =
     g_inputdeck.get< tag::param, eq, tag::bc, tag::bcdir >();

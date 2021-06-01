@@ -394,6 +394,18 @@ namespace grm {
         {
           Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
         }
+
+        // Error check sponge parameter vector for symmetry BC block
+        const auto& bcsym = stack.template get< param, eq, tag::bc, tag::bcsym >();
+        const auto& sponge = stack.template get< tag::param, eq, tag::sponge >();
+        if ( !sponge.empty() && !sponge.back().empty()) {
+          if (sponge.back().size() != bcsym.back().size())
+            Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+          for (const auto& s : sponge.back())
+            if ( s < kw::sponge::info::expect::lower ||
+                 s > kw::sponge::info::expect::upper )
+              Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+        }
       }
     }
   };
@@ -1296,6 +1308,26 @@ namespace deck {
                                         tk::grm::check_vector,
                                         eq, bc, tag::point > > > {};
 
+  //! Boundary conditions block
+  template< class eq >
+  struct bc_sym :
+         pegtl::if_must<
+           tk::grm::readkw< typename use< kw::bc_sym >::pegtl_string >,
+           tk::grm::block<
+             use< kw::end >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::sponge >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq, tag::sponge >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::sideset >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq, tag::bc, tag::bcsym > > > {};
+
   //! Farfield boundary conditions block
   template< class keyword, class eq, class param >
   struct farfield_bc :
@@ -1529,7 +1561,7 @@ namespace deck {
                            parameter< tag::compflow, kw::pde_kappa,
                                       tag::kappa >,
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
-                           bc< kw::bc_sym, tag::compflow, tag::bcsym >,
+                           bc_sym< tag::compflow >,
                            bc_spec< tag::compflow, tag::bcstag, kw::bc_stag >,
                            bc_spec< tag::compflow, tag::bcskip, kw::bc_skip >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,

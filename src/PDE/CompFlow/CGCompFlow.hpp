@@ -766,11 +766,19 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
       const auto& sbc = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
-      if (sbc.size() > m_system)               // use symbcs for this system
-        for (auto p : nodes)                   // for all symbc nodes
-          if (!skipPoint(x[p],y[p],z[p]))
-            for (const auto& s : sbc[m_system]) {// for all user-def symbc sets
-              auto j = bnorm.find(std::stoi(s));// find nodes & normals for side
+      if (sbc.size() > m_system) {             // use symbcs for this system
+        const auto& sponge = g_inputdeck.get< tag::param, eq, tag::sponge >();
+        for (auto p : nodes) {                 // for all symbc nodes
+          if (!skipPoint(x[p],y[p],z[p])) {
+            std::vector< tk::real > sp( sbc[m_system].size(), 0.0 );
+            if (sponge.size() > m_system) {
+              sp = sponge[m_system];
+              for (auto& s : sp) s = std::sqrt(s);
+            }
+            // for all user-def symbc sets
+            for (std::size_t s=0; s<sbc[m_system].size(); ++s) {
+              // find nodes & normals for side
+              auto j = bnorm.find(std::stoi(sbc[m_system][s]));
               if (j != end(bnorm)) {
                 auto i = j->second.find(p);      // find normal for node
                 if (i != end(j->second)) {
@@ -778,12 +786,20 @@ class CompFlow {
                     n{ i->second[0], i->second[1], i->second[2] },
                     v{ U(p,1,m_offset), U(p,2,m_offset), U(p,3,m_offset) };
                   auto v_dot_n = tk::dot( v, n );
+                  // symbc: remove normal component of velocity
                   U(p,1,m_offset) -= v_dot_n * n[0];
                   U(p,2,m_offset) -= v_dot_n * n[1];
                   U(p,3,m_offset) -= v_dot_n * n[2];
+                  // sponge: reduce kinetic energy by a user percentage
+                  U(p,1,m_offset) -= U(p,1,m_offset)*sp[s];
+                  U(p,2,m_offset) -= U(p,2,m_offset)*sp[s];
+                  U(p,3,m_offset) -= U(p,3,m_offset)*sp[s];
                 }
               }
             }
+          }
+        }
+      }
     }
 
     //! Set farfield boundary conditions at nodes

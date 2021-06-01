@@ -265,6 +265,7 @@ struct bcstag { static std::string name() { return "bcstag"; } };
 struct bcskip { static std::string name() { return "bcskip"; } };
 struct point { static std::string name() { return "point"; } };
 struct radius { static std::string name() { return "radius"; } };
+struct sponge { static std::string name() { return "sponge"; } };
 struct bcinlet { static std::string name() { return "bcinlet"; } };
 struct bcoutlet { static std::string name() { return "bcoutlet"; } };
 struct bcextrapolate { static std::string name() { return "bcextrapolate"; } };
