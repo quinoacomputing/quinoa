@@ -211,7 +211,7 @@ class ALECG : public CBase_ALECG {
       p | m_w;
       p | m_rhs;
       p | m_chBndGrad;
-      p | m_bcdir;
+      p | m_dirbc;
       p | m_chBndGradc;
       p | m_rhsc;
       p | m_diag;
@@ -290,7 +290,7 @@ class ALECG : public CBase_ALECG {
     //!   is set at the node for that component the if true, the real value is
     //!   the increment (from t to dt) in the BC specified for a component.
     std::unordered_map< std::size_t,
-      std::vector< std::pair< bool, tk::real > > > m_bcdir;
+      std::vector< std::pair< bool, tk::real > > > m_dirbc;
     //! Receive buffer for communication of the nodal gradients
     //! \details Key: chare id, value: gradients for all scalar components per
     //!   node

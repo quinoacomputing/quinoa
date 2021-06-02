@@ -78,7 +78,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_w( m_u.nunk(), 3 ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
-  m_bcdir(),
+  m_dirbc(),
   m_chBndGradc(),
   m_rhsc(),
   m_diag(),
@@ -174,7 +174,7 @@ ALECG::queryBC()
   // Query and match user-specified Dirichlet boundary conditions to side sets
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
   if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
-  m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
+  m_dirbc = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
                    m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
                    /* increment = */ false );
   if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
@@ -690,7 +690,7 @@ ALECG::BC()
   conserved( m_u );
 
   // Apply Dirichlet BCs
-  for (const auto& [b,bc] : m_bcdir)
+  for (const auto& [b,bc] : m_dirbc)
     for (ncomp_t c=0; c<m_u.nprop(); ++c)
       if (bc[c].first) m_u(b,c,0) = bc[c].second;
 
@@ -949,7 +949,7 @@ ALECG::rhs()
 
   // Query and match user-specified boundary conditions to side sets
   if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
-  m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
+  m_dirbc = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
                    m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
                    /* increment = */ false );
   if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
