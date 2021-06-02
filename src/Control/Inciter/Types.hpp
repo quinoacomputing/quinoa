@@ -288,6 +288,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::farfield_velocity, std::vector< std::vector<
                               kw::velocity::info::expect::type > >
   , tag::bc,            bc
+  , tag::sponge,        std::vector< std::vector<
+                          kw::sponge::info::expect::type > >
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage
   , tag::bcstag,        StagnationBCParameters
