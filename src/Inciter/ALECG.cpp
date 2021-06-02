@@ -138,6 +138,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
     tk::remap( m_triinpoel, map );
   }
 
+  // Query boundary conditions from user input
+  queryBC();
+
   // Activate SDAG wait for initially computing normals
   thisProxy[ thisIndex ].wait4norm();
 
@@ -159,6 +162,40 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   d->transferCallback( cb );
 }
 //! [Constructor]
+
+void
+ALECG::queryBC()
+// *****************************************************************************
+// Query boundary conditions from user input
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Query and match user-specified Dirichlet boundary conditions to side sets
+  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+  if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
+  m_bcdir = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
+                   m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
+                   /* increment = */ false );
+  if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
+
+  // Prepare unique set of symmetry BC nodes
+  for (const auto& [s,nodes] : d->bcnodes<tag::bcsym>(m_bface,m_triinpoel))
+    m_symbcnodes.insert( begin(nodes), end(nodes) );
+
+  // Prepare unique set of farfield BC nodes
+  for (const auto& [s,nodes] : d->bcnodes<tag::bcfarfield>(m_bface,m_triinpoel))
+    m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
+
+  // If farfield BC is set on a node, will not also set symmetry BC
+  for (auto fn : m_farfieldbcnodes) m_symbcnodes.erase(fn);
+
+  // Prepare boundary nodes contiguously accessible from a triangle-face loop
+  m_symbctri.resize( m_triinpoel.size()/3, 0 );
+  for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
+    if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
+      m_symbctri[e] = 1;
+}
 
 void
 ALECG::norm()
@@ -510,8 +547,7 @@ ALECG::merge()
 // The own and communication portion of the left-hand side is complete
 // *****************************************************************************
 {
-  // Combine own and communicated contributions of normals and apply boundary
-  // conditions on the initial conditions
+  // Combine own and communicated contributions of normals
   normfinal();
 
   if (m_initial) {
@@ -526,8 +562,7 @@ ALECG::merge()
 void
 ALECG::normfinal()
 // *****************************************************************************
-//  Finish computing dual-face and boundary point normals and apply boundary
-//  conditions on the initial conditions
+//  Finish computing dual-face and boundary point normals
 // *****************************************************************************
 {
   auto d = Disc();
@@ -565,23 +600,6 @@ ALECG::normfinal()
       bnorms[ tk::cref_find(lid,g) ] = std::move(n);
   }
   m_bnorm = std::move(bnorm);
-
-  // Prepare unique set of symmetry BC nodes
-  for (const auto& [s,nodes] : d->bcnodes<tag::bcsym>(m_bface,m_triinpoel))
-    m_symbcnodes.insert( begin(nodes), end(nodes) );
-
-  // Prepare unique set of farfield BC nodes
-  for (const auto& [s,nodes] : d->bcnodes<tag::bcfarfield>(m_bface,m_triinpoel))
-    m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
-
-  // If farfield BC is set on a node, will not also set symmetry BC
-  for (auto fn : m_farfieldbcnodes) m_symbcnodes.erase(fn);
-
-  // Prepare boundary nodes contiguously accessible from a triangle-face loop
-  m_symbctri.resize( m_triinpoel.size()/3, 0 );
-  for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
-      m_symbctri[e] = 1;
 
   // Count contributions to chare-boundary edges
   std::unordered_map< tk::UnsMesh::Edge, std::size_t,

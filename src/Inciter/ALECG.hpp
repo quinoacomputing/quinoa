@@ -403,6 +403,9 @@ class ALECG : public CBase_ALECG {
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
 
+    //! Query boundary conditions from user input
+    void queryBC();
+
     //! Apply boundary conditions
     void BC();
 
