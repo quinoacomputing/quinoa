@@ -180,10 +180,12 @@ ALECG::queryBC()
   if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
 
   // Prepare unique set of symmetry BC nodes
+  tk::destroy( m_symbcnodes );
   for (const auto& [s,nodes] : d->bcnodes<tag::bcsym>(m_bface,m_triinpoel))
     m_symbcnodes.insert( begin(nodes), end(nodes) );
 
   // Prepare unique set of farfield BC nodes
+  tk::destroy( m_farfieldbcnodes );
   for (const auto& [s,nodes] : d->bcnodes<tag::bcfarfield>(m_bface,m_triinpoel))
     m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
 
@@ -947,12 +949,8 @@ ALECG::rhs()
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
-  // Query and match user-specified boundary conditions to side sets
-  if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
-  m_dirbc = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
-                   m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
-                   /* increment = */ false );
-  if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
+  // Query/update boundary conditions from user input
+  queryBC();
 
   // Communicate rhs to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
