@@ -512,6 +512,11 @@ class Transport {
                 std::array< real, 4 > > >&,
       const std::unordered_set< std::size_t >& ) const {}
 
+    //! Apply sponge conditions at boundary nodes (no-op for transport)
+    void sponge( tk::Fields&,
+                 const std::array< std::vector< real >, 3 >&,
+                 const std::unordered_set< std::size_t >& ) const {}
+
     //! Return analytic field names to be output to file
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {

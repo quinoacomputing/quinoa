@@ -28,7 +28,10 @@ inciter
 
     bc_sym
       sideset 2 4 5 6 end
-      sponge_pressure 0.01 0 0 0 end    # reduce pressure gradient at sset 2 by 1%
+    end
+    sponge
+      sideset 2 end
+      pressure 0.01 end    # reduce pressure gradient at sset 2 by 1%
     end
   end
 

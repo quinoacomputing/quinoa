@@ -28,7 +28,10 @@ inciter
 
     bc_sym
       sideset 2 4 5 6 end
-      sponge_velocity 0.01 0 0 0 end
+    end
+    sponge
+      sideset 2 end
+      velocity 0.01 end
     end
   end
 

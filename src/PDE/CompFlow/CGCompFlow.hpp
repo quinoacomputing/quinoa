@@ -66,8 +66,8 @@ class CompFlow {
       m_problem(),
       m_system( c ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_stagCnf( g_inputdeck.specialBC< eq, tag::bcstag >( c ) ),
-      m_skipCnf( g_inputdeck.specialBC< eq, tag::bcskip >( c ) ),
+      m_stagCnf( g_inputdeck.specialBC< eq, tag::stag >( c ) ),
+      m_skipCnf( g_inputdeck.specialBC< eq, tag::skip >( c ) ),
       m_fr( g_inputdeck.get< param, eq, tag::farfield_density >().size() > c ?
             g_inputdeck.get< param, eq, tag::farfield_density >()[c] : 1.0 ),
       m_fp( g_inputdeck.get< param, eq, tag::farfield_pressure >().size() > c ?
@@ -465,7 +465,6 @@ class CompFlow {
     //! \param[in] psup Points surrounding points
     //! \param[in] esup Elements surrounding points
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
-    //! \param[in] symbcnodes Unique set of nodes at which symmetry BCs are set
     //! \param[in] vol Nodal volumes
     //! \param[in] edgenode Local node IDs of edges
     //! \param[in] edgeid Edge ids in the order of access
@@ -489,7 +488,7 @@ class CompFlow {
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup,
               const std::vector< int >& symbctri,
-              const std::unordered_set< std::size_t >& symbcnodes,
+              const std::unordered_set< std::size_t >& spongenodes,
               const std::vector< real >& vol,
               const std::vector< std::size_t >& edgenode,
               const std::vector< std::size_t >& edgeid,
@@ -517,7 +516,7 @@ class CompFlow {
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
 
       // compute sponge pressure multiplers at symmetry BCs
-      auto spmult = spongePressures( coord, symbcnodes );
+      auto spmult = spongePressures( coord, spongenodes );
 
       // compute domain-edge integral
       domainint( coord, gid, edgenode, edgeid, psup, dfn, U, W, Grad,
@@ -760,15 +759,8 @@ class CompFlow {
       const auto& z = coord[2];
       const auto& sbc = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
       if (sbc.size() > m_system) {             // use symbcs for this system
-        const auto& spvel =
-          g_inputdeck.get< tag::param, eq, tag::sponge, tag::velocity >();
         for (auto p : nodes) {                 // for all symbc nodes
           if (!skipPoint(x[p],y[p],z[p])) {
-            std::vector< tk::real > sp( sbc[m_system].size(), 0.0 );
-            if (spvel.size() > m_system) {
-              sp = spvel[m_system];
-              for (auto& s : sp) s = std::sqrt(s);
-            }
             // for all user-def symbc sets
             for (std::size_t s=0; s<sbc[m_system].size(); ++s) {
               // find nodes & normals for side
@@ -784,10 +776,6 @@ class CompFlow {
                   U(p,1,m_offset) -= v_dot_n * n[0];
                   U(p,2,m_offset) -= v_dot_n * n[1];
                   U(p,3,m_offset) -= v_dot_n * n[2];
-                  // sponge velocity: reduce kinetic energy by a user percentage
-                  U(p,1,m_offset) -= U(p,1,m_offset)*sp[s];
-                  U(p,2,m_offset) -= U(p,2,m_offset)*sp[s];
-                  U(p,3,m_offset) -= U(p,3,m_offset)*sp[s];
                 }
               }
             }
@@ -855,6 +843,40 @@ class CompFlow {
                 }
               }
             }
+    }
+
+    //! Apply sponge conditions at boundary nodes
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] nodes Unique set of node ids at which to apply sponge
+    void
+    sponge( tk::Fields& U,
+            const std::array< std::vector< real >, 3 >& coord,
+            const std::unordered_set< std::size_t >& nodes ) const
+    {
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+      const auto& sponge = g_inputdeck.get< param, eq, tag::sponge >();
+      const auto& ss = sponge.get< tag::sideset >();
+      if (ss.size() > m_system) {             // use symbcs for this system
+        const auto& spvel = sponge.get< tag::velocity >();
+        for (auto p : nodes) {                 // for all symbc nodes
+          if (!skipPoint(x[p],y[p],z[p])) {
+            std::vector< tk::real > sp( ss[m_system].size(), 0.0 );
+            if (spvel.size() > m_system) {
+              sp = spvel[m_system];
+              for (auto& s : sp) s = std::sqrt(s);
+            }
+            // sponge velocity: reduce kinetic energy by a user percentage
+            for (std::size_t s=0; s<ss[m_system].size(); ++s) {
+              U(p,1,m_offset) -= U(p,1,m_offset)*sp[s];
+              U(p,2,m_offset) -= U(p,2,m_offset)*sp[s];
+              U(p,3,m_offset) -= U(p,3,m_offset)*sp[s];
+            }
+          }
+        }
+      }
     }
 
     //! Return analytic field names to be output to file
@@ -1568,29 +1590,29 @@ class CompFlow {
       }
     }
 
-    //! Compute sponge pressure multiplers at symmetry BCs
+    //! Compute sponge pressure multiplers at sponge side sets
     //! \param[in] coord Mesh node coordinates
-    //! \param[in] symbcnodes Unique set of nodes at which symmetry BCs are set
-    //! \return Sponge ressure multiplers at nodes, one per symBC side set
-    //! \note If no sponge pressure coefficients are configured for any symBC
-    //!   side set, an empty vector is returned.
+    //! \param[in] nodes Unique set of nodes for sponge conditions
+    //! \return Sponge ressure multiplers at nodes, one per sponge side set
+    //! \note If no sponge pressure coefficients are configured, an empty
+    //!   vector is returned.
     std::vector< tk::real >
     spongePressures( const std::array< std::vector< real >, 3 >& coord,
-                     const std::unordered_set< std::size_t >& symbcnodes ) const
+                     const std::unordered_set< std::size_t >& nodes ) const
     {
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
       std::vector< tk::real > spmult;
-      std::size_t nset = 0;     // number of symbc side sets configured
-      const auto& sbc = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
-      if (sbc.size() > m_system) {  // if symbcs configured for this system
-        const auto& sppre =  // sponge pressure coeffcieints for each symbc set
-          g_inputdeck.get< tag::param, eq, tag::sponge, tag::pressure >();
-        nset = sbc[m_system].size();  // number of symbc side sets configured
+      std::size_t nset = 0;     // number of sponge side sets configured
+      const auto& sponge = g_inputdeck.get< param, eq, tag::sponge >();
+      const auto& ss = sponge.get< tag::sideset >();
+      if (ss.size() > m_system) {  // if symbcs configured for this system
+        const auto& sppre = sponge.get< tag::pressure >();
+        nset = ss[m_system].size();  // number of sponge side sets configured
         spmult.resize( x.size() * nset, 0.0 );
-        for (auto p : symbcnodes) {
-          if ( not skipPoint(x[p],y[p],z[p]) && sppre.size() > m_system ) {
+        for (auto p : nodes) {
+          if (not skipPoint(x[p],y[p],z[p]) && sppre.size() > m_system) {
             Assert( nset == sppre[m_system].size(), "Size mismatch" );
             for (std::size_t s=0; s<nset; ++s)
               spmult[p*nset+s] = sppre[m_system][s];
@@ -1600,8 +1622,8 @@ class CompFlow {
           }
         }
       }
-      Assert( sbc.size() > m_system ?
-              spmult.size() == x.size() * sbc[m_system].size() :
+      Assert( ss.size() > m_system ?
+              spmult.size() == x.size() * ss[m_system].size() :
               spmult.size() == 0, "Sponge pressure multipler wrong size" );
       return spmult;
     }
