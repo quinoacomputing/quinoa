@@ -696,7 +696,8 @@ class CompFlow {
     histOutput( const std::vector< HistData >& h,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
-                const tk::Fields& U ) const
+                const tk::Fields& U,
+                const tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 

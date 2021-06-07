@@ -36,6 +36,9 @@ MultiMatFieldOutput(
   const tk::Fields& U,
   const tk::Fields& P );
 
+//! Return time history field names to be output to file
+std::vector< std::string > MultiMatHistNames();
+
 } //inciter::
 
 #endif // FieldOutput_h
