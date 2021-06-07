@@ -394,6 +394,18 @@ namespace grm {
         {
           Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
         }
+
+        // Error check sponge parameter vector for symmetry BC block
+        const auto& bcsym = stack.template get< param, eq, tag::bc, tag::bcsym >();
+        const auto& sponge = stack.template get< tag::param, eq, tag::sponge >();
+        if ( !sponge.empty() && !sponge.back().empty()) {
+          if (sponge.back().size() != bcsym.back().size())
+            Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+          for (const auto& s : sponge.back())
+            if ( s < kw::sponge::info::expect::lower ||
+                 s > kw::sponge::info::expect::upper )
+              Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+        }
       }
     }
   };
@@ -502,6 +514,45 @@ namespace grm {
              beta.size() != problem.size() ||
              p0.size() != problem.size() )
           Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
+      }
+
+      // Error check on user-defined problem type
+      auto& ic = stack.template get< param, eq, tag::ic >();
+      auto& bgmatid = ic.template get< tag::materialid >();
+      auto& bgdensityic = ic.template get< tag::density >();
+      auto& bgvelocityic = ic.template get< tag::velocity >();
+      auto& bgpressureic = ic.template get< tag::pressure >();
+      auto& bgenergyic = ic.template get< tag::energy >();
+      auto& bgtemperatureic = ic.template get< tag::temperature >();
+      if (problem.back() == inciter::ctr::ProblemType::USER_DEFINED) {
+        // must have defined background ICs for user-defined ICs
+        auto n = neq.get< eq >();
+        if (bgmatid.size() != n) {
+          Message< Stack, ERROR, MsgKey::BGMATIDMISSING >( stack, in );
+        }
+
+        if ( bgdensityic.size() != n || bgvelocityic.size() != n ||
+             ( bgpressureic.size() != n && bgenergyic.size() != n &&
+               bgtemperatureic.size() != n ) )
+        {
+          Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
+        }
+
+        // each IC box should have material id specified, and it should be
+        // within nmat
+        auto& icbox = ic.template get< tag::box >();
+
+        if (!icbox.empty()) {
+          for (const auto& b : icbox.back()) {   // for all boxes
+            auto boxmatid = b.template get< tag::materialid >();
+            if (boxmatid == 0) {
+              Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
+            }
+            else if (boxmatid > nmat.back()) {
+              Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
+            }
+          }
+        }
       }
 
       // Error check Dirichlet boundary condition block for all multimat
@@ -677,6 +728,14 @@ namespace grm {
       Assert(
         (stack.template get< tag::history, tag::id >().size() == hist.size()),
         "Number of history points and ids must equal" );
+
+
+      // Trigger error if steady state + ALE are both enabled
+      auto steady = stack.template get< tag::discr, tag::steady_state >();
+      auto ale = stack.template get< tag::ale, tag::ale >();
+      if (steady && ale) {
+        Message< Stack, ERROR, MsgKey::STEADYALE >( stack, in );
+      }
 
       // If at least a mesh filename is assigned to a solver, all solvers must
       // have a mesh filename assigned
@@ -1242,6 +1301,26 @@ namespace deck {
                                         tk::grm::check_vector,
                                         eq, bc, tag::point > > > {};
 
+  //! Boundary conditions block
+  template< class eq >
+  struct bc_sym :
+         pegtl::if_must<
+           tk::grm::readkw< typename use< kw::bc_sym >::pegtl_string >,
+           tk::grm::block<
+             use< kw::end >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::sponge >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq, tag::sponge >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::sideset >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq, tag::bc, tag::bcsym > > > {};
+
   //! Farfield boundary conditions block
   template< class keyword, class eq, class param >
   struct farfield_bc :
@@ -1298,6 +1377,7 @@ namespace deck {
              , box_parameter< eq, kw::ymax, tag::ymax >
              , box_parameter< eq, kw::zmin, tag::zmin >
              , box_parameter< eq, kw::zmax, tag::zmax >
+             , box_parameter< eq, kw::materialid, tag::materialid >
              , box_parameter< eq, kw::density, tag::density >
              , box_parameter< eq, kw::pressure, tag::pressure >
              , box_parameter< eq, kw::temperature, tag::temperature >
@@ -1326,6 +1406,8 @@ namespace deck {
              pegtl::sor<
                pde_parameter_vector< kw::density, eq,
                                      tag::ic, tag::density >,
+               pde_parameter_vector< kw::materialid, eq,
+                                     tag::ic, tag::materialid >,
                pde_parameter_vector< kw::velocity, eq,
                                      tag::ic, tag::velocity >,
                pde_parameter_vector< kw::pressure, eq,
@@ -1472,7 +1554,7 @@ namespace deck {
                            parameter< tag::compflow, kw::pde_kappa,
                                       tag::kappa >,
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
-                           bc< kw::bc_sym, tag::compflow, tag::bcsym >,
+                           bc_sym< tag::compflow >,
                            bc_spec< tag::compflow, tag::bcstag, kw::bc_stag >,
                            bc_spec< tag::compflow, tag::bcskip, kw::bc_skip >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
@@ -1487,6 +1569,7 @@ namespace deck {
   struct multimat :
          pegtl::if_must<
            scan_eq< use< kw::multimat >, tag::multimat >,
+           tk::grm::start_vector<tag::param, tag::multimat, tag::ic, tag::box>,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
                                             use< kw::physics >,
@@ -1513,6 +1596,7 @@ namespace deck {
                                                            tag::multimat,
                                                            tag::flux >,
                              pegtl::alpha >,
+                           ic< tag::multimat >,
                            material_properties< tag::multimat >,
                            parameter< tag::multimat,
                                       kw::pde_alpha,

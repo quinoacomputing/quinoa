@@ -119,42 +119,14 @@ class CompFlow {
       std::size_t nielem,
       std::vector< std::unordered_set< std::size_t > >& inbox ) const
     {
-     // Detect if user has configured a IC boxes
-      const auto& icbox = g_inputdeck.get<tag::param, eq, tag::ic, tag::box>();
-      if (icbox.size() > m_system) {
-        std::size_t bcnt = 0;
-        for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
-         inbox.emplace_back();
-          std::vector< tk::real > box
-            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
-              b.template get< tag::ymin >(), b.template get< tag::ymax >(),
-              b.template get< tag::zmin >(), b.template get< tag::zmax >() };
-
-          const auto eps = std::numeric_limits< tk::real >::epsilon();
-          // Determine which elements lie in the IC box
-          for (ncomp_t e=0; e<nielem; ++e) {
-            auto x = geoElem(e,1,0);
-            auto y = geoElem(e,2,0);
-            auto z = geoElem(e,3,0);
-            if ( std::any_of( begin(box), end(box),
-                              [=](auto p){ return abs(p) > eps; } ) &&
-                 x>box[0] && x<box[1] &&
-                 y>box[2] && y<box[3] &&
-                 z>box[4] && z<box[5] )
-            {
-              inbox[bcnt].insert( e );
-            }
-          }
-          ++bcnt;
-        }
-      }
+      tk::BoxElems< eq >(m_system, geoElem, nielem, inbox);
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
-    //! \param[in,out] inbox List of elements at which box user ICs are set for
+    //! \param[in] inbox List of elements at which box user ICs are set for
     //!    each IC box
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
@@ -307,6 +279,13 @@ class CompFlow {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
+    //! \param[in] gid Local->global node id map
+    //! \param[in] bid Local chare-boundary node ids (value) associated to
+    //!   global node ids (key)
+    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
+    //!   variables
+    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
+    //!   variables
     //! \param[in,out] U Solution vector at recent time step
     void limit( [[maybe_unused]] tk::real t,
                 [[maybe_unused]] const tk::Fields& geoFace,
@@ -316,6 +295,10 @@ class CompFlow {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
+                const std::vector< std::size_t >& gid,
+                const std::unordered_map< std::size_t, std::size_t >& bid,
+                const tk::Fields& uNodalExtrm,
+                [[maybe_unused]] const tk::Fields& pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& ) const
     {
@@ -327,7 +310,7 @@ class CompFlow {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
         VertexBased_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_offset, coord, geoElem, U );
+          m_offset, coord, gid, bid, uNodalExtrm, U);
     }
 
     //! Compute right hand side

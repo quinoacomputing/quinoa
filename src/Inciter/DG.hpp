@@ -150,6 +150,15 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
+    //! Receive contributions to nodal gradients on chare-boundaries
+    void
+    comnodalExtrema( const std::vector< std::size_t >& gid,
+                     const std::vector< std::vector< tk::real > >& G1,
+                     const std::vector< std::vector< tk::real > >& G2 );
+
+    //! Initialize the vector of nodal extrema
+    void resizeNodalExtremac();
+
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
     void comnodeout( const std::vector< std::size_t >& gid,
@@ -214,6 +223,7 @@ class DG : public CBase_DG {
       p | m_nlim;
       p | m_nnod;
       p | m_nreco;
+      p | m_nnodalExtrema;
       p | m_inpoel;
       p | m_coord;
       p | m_fd;
@@ -224,6 +234,10 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_volfracExtr;
       p | m_lhs;
+      p | m_uNodalExtrm;
+      p | m_pNodalExtrm;
+      p | m_uNodalExtrmc;
+      p | m_pNodalExtrmc;
       p | m_rhs;
       p | m_nfac;
       p | m_nunk;
@@ -294,6 +308,9 @@ class DG : public CBase_DG {
     std::size_t m_nnod;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
+    //! \brief Counter signaling that we have received all our nodal extrema from
+    //!   ghost chare partitions
+    std::size_t m_nnodalExtrema;
     //! Mesh connectivity extended
     std::vector< std::size_t > m_inpoel;
     //! Node coordinates extended
@@ -316,6 +333,14 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
+    //! Vector of nodal extrema for conservative variables
+    tk::Fields m_uNodalExtrm;
+    //! Vector of nodal extrema for primitive variables
+    tk::Fields m_pNodalExtrm;
+    //! Buffer for vector of nodal extrema for conservative variables
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
+    //! Buffer for vector of nodal extrema for primitive variables
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_pNodalExtrmc;
     //! Counter for number of faces on this chare (including chare boundaries)
     std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
@@ -465,6 +490,9 @@ class DG : public CBase_DG {
 
     //! Compute solution reconstructions
     void reco();
+
+    //! Compute nodal extrema at chare-boundary nodes
+    void nodalExtrema();
 
     //! Compute limiter function
     void lim();

@@ -521,7 +521,7 @@ DiagCG::rhs()
 
   // Query and match user-specified boundary conditions to side sets
   m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), m_tp, m_dtp, d->Coord(),
-                   lid, m_bnode );
+                   lid, m_bnode, /* increment = */ true );
 
   // Send rhs data on chare-boundary nodes to fellow chares
   if (d->NodeCommMap().empty())
@@ -760,8 +760,8 @@ DiagCG::update( const tk::Fields& a, [[maybe_unused]] tk::Fields&& dul )
     m_u = m_u + m_du;
 
   // Compute diagnostics, e.g., residuals
-  auto diag_computed =
-    m_diag.compute( *d, m_u, un, m_bnorm, m_symbcnodes, m_farfieldbcnodes );
+  auto diag_computed = m_diag.compute( *d, m_u, un, m_bnorm,
+                                        m_symbcnodes, m_farfieldbcnodes );
   // Increase number of iterations and physical time
   d->next();
   // Continue to mesh refinement (if configured)

@@ -32,7 +32,8 @@ match( tk::ctr::ncomp_t ncomp,
        const std::vector< tk::real >& dtp,
        const tk::UnsMesh::Coords& coord,
        const std::unordered_map< std::size_t, std::size_t >& lid,
-       const std::map< int, std::vector< std::size_t > >& sidenodes );
+       const std::map< int, std::vector< std::size_t > >& sidenodes,
+       bool increment );
 
 //! \brief Verify that the change in the solution at those nodes where
 //!   Dirichlet boundary conditions are set is exactly the amount the BCs

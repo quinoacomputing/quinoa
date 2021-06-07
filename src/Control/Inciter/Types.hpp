@@ -181,6 +181,7 @@ using box = tk::TaggedTuple< brigand::list<
   , tag::ymax,          kw::ymax::info::expect::type
   , tag::zmin,          kw::zmin::info::expect::type
   , tag::zmax,          kw::zmax::info::expect::type
+  , tag::materialid,    kw::materialid::info::expect::type
   , tag::mass,          kw::mass::info::expect::type
   , tag::density,       kw::density::info::expect::type
   , tag::velocity,      std::vector< kw::velocity::info::expect::type >
@@ -195,6 +196,8 @@ using box = tk::TaggedTuple< brigand::list<
 using ic = tk::TaggedTuple< brigand::list<
     tag::density,       std::vector<
                           std::vector< kw::density::info::expect::type > >
+  , tag::materialid,    std::vector<
+                          std::vector< kw::materialid::info::expect::type > >
   , tag::velocity,      std::vector<
                           std::vector< kw::velocity::info::expect::type > >
   , tag::pressure,      std::vector<
@@ -285,6 +288,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::farfield_velocity, std::vector< std::vector<
                               kw::velocity::info::expect::type > >
   , tag::bc,            bc
+  , tag::sponge,        std::vector< std::vector<
+                          kw::sponge::info::expect::type > >
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage
   , tag::bcstag,        StagnationBCParameters
@@ -343,6 +348,7 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
+  , tag::ic,            ic
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >

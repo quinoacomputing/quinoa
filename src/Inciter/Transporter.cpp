@@ -640,7 +640,7 @@ Transporter::partitioned( std::size_t meshid )
 void
 Transporter::distributed( std::size_t meshid )
 // *****************************************************************************
-// Reduction target: all compute nodes have distrbuted their mesh after
+// Reduction target: all compute nodes have distributed their mesh after
 // partitioning
 //! \param[in] meshid Mesh id
 // *****************************************************************************
@@ -901,8 +901,8 @@ Transporter::responded( std::size_t meshid )
 void
 Transporter::resized( std::size_t meshid )
 // *****************************************************************************
-// Reduction target: all worker chares have resized their own data after
-// mesh refinement
+// Reduction target: all worker chares have resized their own mesh data after
+// AMR or ALE
 //! \param[in] meshid Mesh id
 //! \note Only used for nodal schemes
 // *****************************************************************************
@@ -1098,9 +1098,9 @@ Transporter::totalvol( tk::real v, tk::real initial, tk::real summeshid )
 
   m_meshvol[meshid] = v;
 
-  if (initial > 0.0)
+  if (initial > 0.0)   // during initialization
     m_scheme[meshid].disc().stat( v );
-  else
+  else                  // during ALE or AMR
     m_scheme[meshid].bcast< Scheme::resized >();
 }
 
