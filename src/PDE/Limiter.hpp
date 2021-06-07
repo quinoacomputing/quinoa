@@ -69,6 +69,9 @@ VertexBasedTransport_P1(
   std::size_t system,
   std::size_t offset,
   const tk::UnsMesh::Coords& coord,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& bid,
+  const tk::Fields& uNodalExtrm,
   tk::Fields& U );
 
 //! Kuzmin's vertex-based limiter for single-material DGP1
@@ -80,6 +83,9 @@ VertexBased_P1(
   std::size_t nelem,
   std::size_t offset,
   const tk::UnsMesh::Coords& coord,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& bid,
+  const tk::Fields& uNodalExtrm,
   tk::Fields& U );
 
 //! Kuzmin's vertex-based limiter for multi-material DGP1
@@ -92,6 +98,10 @@ VertexBasedMultiMat_P1(
   std::size_t system,
   std::size_t offset,
   const tk::UnsMesh::Coords& coord,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& bid,
+  const tk::Fields& uNodalExtrm,
+  const tk::Fields& pNodalExtrm,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat );
@@ -131,7 +141,10 @@ VertexBasedFunction( const tk::Fields& U,
   std::size_t rdof,
   std::size_t dof_el,
   std::size_t offset,
-  std::size_t ncomp );
+  std::size_t ncomp,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& bid,
+  const tk::Fields& NodalExtrm );
 
 //! Consistent limiter modifications for P1 dofs
 void consistentMultiMatLimiting_P1( std::size_t nmat,
