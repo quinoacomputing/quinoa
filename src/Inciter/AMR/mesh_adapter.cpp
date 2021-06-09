@@ -227,6 +227,8 @@ namespace AMR {
              local.needs_refining = 0;
            } else {
              local.needs_refining = 1;
+             // an edge deemed to be 'needing refinement', cannot be derefined
+             local.needs_derefining = 0;
            }
          } else if (r.second == edge_tag::DEREFINE) {
            if (local.lock_case > Edge_Lock_Case::unlocked) {
@@ -370,7 +372,7 @@ namespace AMR {
 
 #ifndef AMR_MAX_ROUNDS
         // Paper says the average actual num rounds will be 5-15
-#define AMR_MAX_ROUNDS 30
+#define AMR_MAX_ROUNDS 50
 #endif
         const size_t max_num_rounds = AMR_MAX_ROUNDS;
 

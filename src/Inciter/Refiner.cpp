@@ -1424,8 +1424,6 @@ Refiner::updateMesh()
   // Get refined mesh connectivity
   const auto& refinpoel = m_refiner.tet_store.get_active_inpoel();
   Assert( refinpoel.size()%4 == 0, "Inconsistent refined mesh connectivity" );
-  Assert( tk::conforming( m_inpoel, m_coord, true, m_rid ),
-          "Mesh not conforming after refinement" );
 
   // Generate unique node lists of old and refined mesh using local ids
   auto rinpoel = m_inpoel;
@@ -1494,6 +1492,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
     if (old.find(r) == end(old)) {   // if node is newly added
       // get (local) parent ids of newly added node
       auto p = m_refiner.node_connectivity.get( r );
+      Assert(p[0] != p[1], "Node without parent edge in newVolMesh");
       Assert( old.find(p[0]) != end(old) && old.find(p[1]) != end(old),
               "Parent(s) not in old mesh" );
       Assert( r >= old.size(), "Attempting to overwrite node with added one" );
@@ -1509,8 +1508,6 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
         Assert( g >= old.size(), "Hashed id overwriting old id" );
         Assert( m_lid.find(g) == end(m_lid),
                 "Overwriting entry global->local node ID map" );
-        Assert( m_coordmap.find(g) == end(m_coordmap),
-                "Overwriting entry already in coordmap" );
         auto l = tk::cref_find( m_lref, r );
         // store newly added node id and their parent ids (local ids)
         m_addedNodes[r] = lp;   // key = r for later update to local
@@ -1547,8 +1544,8 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
 
   // Generate new node id maps for nodes kept
   tk::destroy( m_lref );
-  std::vector< std::size_t > rid( ref.size() );
-  std::vector< std::size_t > gid( ref.size() );
+  std::vector< std::size_t > rid( ref.size(), -1 );
+  std::vector< std::size_t > gid( ref.size(), -1 );
   std::size_t l = 0;    // will generate new local node id
   for (std::size_t i=0; i<m_gid.size(); ++i) {
     if (gid_rem.find(i) == end(gid_rem)) {
@@ -1563,8 +1560,11 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   for (const auto& n : gid_add) {
     auto r = n.first;
     auto g = n.second;
+    Assert(gid[l] == -1, "Overwriting gid");
+    Assert(rid[l] == -1, "Overwriting rid");
     gid[l] = g;
     rid[l] = r;
+    Assert(m_lref.find(r) == m_lref.end(), "Overwriting lref");
     m_lref[r] = l;
     auto it = m_addedNodes.find( r );
     Assert( it != end(m_addedNodes), "Cannot find added node" );
@@ -1573,6 +1573,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   }
   Assert( m_lref.size() == ref.size(), "Size mismatch" );
   m_rid = std::move( rid );
+  Assert( m_rid.size() == ref.size(), "Size mismatch" );
   m_addedNodes = std::move( addedNodes );
 
   //// store map of {key: removed node old-local-id, value: node new-local-id that took its place}
@@ -1600,7 +1601,8 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
     rz[i] = c[2];
   }
   m_gid = std::move( gid );
-  Assert( m_gid.size() == m_lid.size(), "Size mismatch" );
+  Assert( m_gid.size() == m_lid.size() && m_gid.size() == ref.size(),
+    "Size mismatch" );
 }
 
 std::unordered_set< std::size_t >
