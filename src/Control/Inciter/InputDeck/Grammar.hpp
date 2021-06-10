@@ -1426,15 +1426,18 @@ namespace deck {
   //! Material properties block for compressible flow
   template< class eq >
   struct material_properties :
-         pegtl::if_must<
-           tk::grm::readkw< use< kw::material >::pegtl_string >,
-           tk::grm::block<
-             use< kw::end >,
-             material_property< eq, kw::mat_gamma, tag::gamma >,
-             material_property< eq, kw::mat_pstiff, tag::pstiff >,
-             material_property< eq, kw::mat_mu, tag::mu >,
-             material_property< eq, kw::mat_cv, tag::cv >,
-             material_property< eq, kw::mat_k, tag::k > > > {};
+         pegtl::seq<
+          pegtl::if_must<
+            tk::grm::readkw< use< kw::material >::pegtl_string >,
+            tk::grm::block<
+              use< kw::end >,
+              pde_parameter_vector< kw::id, eq,
+                                    tag::ic, tag::materialid >,
+              material_property< eq, kw::mat_gamma, tag::gamma >,
+              material_property< eq, kw::mat_pstiff, tag::pstiff >,
+              material_property< eq, kw::mat_mu, tag::mu >,
+              material_property< eq, kw::mat_cv, tag::cv >,
+              material_property< eq, kw::mat_k, tag::k > > > > {};
 
   //! Mesh ... end block
   template< class eq >
