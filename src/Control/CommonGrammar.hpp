@@ -900,9 +900,45 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename target, typename subtarget, template < class > class use,
+  template< typename target, template < class > class use,
             class Option, typename tag, typename... tags >
   struct back_back_store_option : pegtl::success {};
+  //! \brief Push back option to vector of back of vector in state at position
+  //!   given by tags
+  //! \details This struct and its apply function are used as a functor-like
+  //!   wrapper for storing an option (an object deriving from tk::Toggle) in
+  //!   a place in the stack. tag and tags... address a vector of vectors, whose
+  //!   inner value_type is a nested tagged tuple whose field in where we store
+  //!   here after conversion, indexed by target.
+  //!   See walker::ctr::DiffEq for an example specialization of tk::Toggle to
+  //!   see how an option is created from tk::Toggle. We also do a simple sanity
+  //!   check here testing if the desired option value exist for the particular
+  //!   option type and error out if there is a problem. Errors and warnings are
+  //!   accumulated during parsing and diagnostics are given after the parsing
+  //!   is finished.
+  template< typename target, template < class > class use,
+            class Option, typename tag, typename... tags >
+  struct action< back_back_store_option< target, use, Option, tag, tags... > >
+  {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      Option opt;
+      if (opt.exist(in.string())) {
+        stack.template get< tag, tags... >().back().back().template
+          get< target >() = opt.value( in.string() );
+      } else {
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
+      }
+      // trigger error at compile-time if any of the expected option values
+      // is not in the keywords pool of the grammar
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename target, typename subtarget, template < class > class use,
+            class Option, typename tag, typename... tags >
+  struct back_back_deep_store_option : pegtl::success {};
   //! \brief Push back option to vector of back of vector in state at position
   //!   given by tags
   //! \details This struct and its apply function are used as a functor-like
@@ -918,7 +954,7 @@ namespace grm {
   //!   is finished.
   template< typename target, typename subtarget, template < class > class use,
             class Option, typename tag, typename... tags >
-  struct action< back_back_store_option< target, subtarget, use, Option,
+  struct action< back_back_deep_store_option< target, subtarget, use, Option,
                  tag, tags... > >
   {
     template< typename Input, typename Stack >

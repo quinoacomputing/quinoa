@@ -125,6 +125,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::couple
                                  , kw::material
                                  , kw::id
+                                 , kw::eos
+                                 , kw::stiffenedgas
+                                 , kw::jwl
                                  , kw::mat_gamma
                                  , kw::mat_pstiff
                                  , kw::mat_mu

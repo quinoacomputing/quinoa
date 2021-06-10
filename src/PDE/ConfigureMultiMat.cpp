@@ -112,6 +112,12 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
 
+
+  const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c];
+  for (const auto& m : matprop) {
+    nfo.emplace_back( "id", parameters( m.get< tag::id >() ) );
+  }
+
   nfo.emplace_back( "ratio of specific heats", parameters(
     g_inputdeck.get< tag::param, eq, tag::gamma >()[c] ) );
 

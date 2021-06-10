@@ -457,9 +457,9 @@ namespace grm {
       }
 
       // Verify correct number of multi-material properties configured
-      auto& gamma = stack.template get< param, eq, tag::gamma >();
-      if (gamma.empty() || gamma.back().size() != nmat.back())
-        Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+      //auto& gamma = stack.template get< param, eq, tag::gamma >();
+      //if (gamma.empty() || gamma.back().size() != nmat.back())
+      //  Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
 
       // If pressure relaxation is not specified, default to 'false'
       auto& prelax = stack.template get< param, eq, tag::prelax >();
@@ -1248,9 +1248,26 @@ namespace deck {
   struct box_option :
          tk::grm::process<
            use< keyword >,
-           tk::grm::back_back_store_option< target, subtarget, use, Option,
-             tag::param, eq, tag::ic, tag::box >,
+           tk::grm::back_back_deep_store_option< target, subtarget, use,
+             Option, tag::param, eq, tag::ic, tag::box >,
            pegtl::alpha > {};
+
+   //! Match material option
+  template< class eq, typename Option, typename keyword, typename target >
+  struct material_option :
+         tk::grm::process<
+           use< keyword >,
+           tk::grm::back_back_store_option< target, use, Option,
+             tag::param, eq, tag::material >,
+           pegtl::alpha > {};
+
+  //! Match material parameter vector
+  template< class eq, typename keyword, typename target >
+  struct material_vector :
+         tk::grm::vector< use< keyword >,
+                          tk::grm::Back_back_store_back< target,
+                            tag::param, eq, tag::material >,
+                          use< kw::end > > {};
 
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename param,
@@ -1429,15 +1446,16 @@ namespace deck {
          pegtl::seq<
           pegtl::if_must<
             tk::grm::readkw< use< kw::material >::pegtl_string >,
-            tk::grm::block<
-              use< kw::end >,
-              pde_parameter_vector< kw::id, eq,
-                                    tag::ic, tag::materialid >,
-              material_property< eq, kw::mat_gamma, tag::gamma >,
-              material_property< eq, kw::mat_pstiff, tag::pstiff >,
-              material_property< eq, kw::mat_mu, tag::mu >,
-              material_property< eq, kw::mat_cv, tag::cv >,
-              material_property< eq, kw::mat_k, tag::k > > > > {};
+              tk::grm::start_vector_back< tag::param, eq, tag::material >,
+            tk::grm::block< use< kw::end >,
+                material_vector< eq, kw::id, tag::id >
+              , material_vector< eq, kw::mat_gamma, tag::gamma >
+              , material_vector< eq, kw::mat_mu, tag::mu >
+              , material_vector< eq, kw::mat_pstiff, tag::pstiff >
+              , material_vector< eq, kw::mat_cv, tag::cv >
+              , material_vector< eq, kw::mat_k, tag::k >
+              , material_option< eq, ctr::Material, kw::eos, tag::eos >
+            > > > {};
 
   //! Mesh ... end block
   template< class eq >
@@ -1503,7 +1521,8 @@ namespace deck {
   struct compflow :
          pegtl::if_must<
            scan_eq< use< kw::compflow >, tag::compflow >,
-           tk::grm::start_vector<tag::param, tag::compflow, tag::ic, tag::box>,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::ic, tag::box >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::material >,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
                                             use< kw::physics >,
@@ -1572,7 +1591,8 @@ namespace deck {
   struct multimat :
          pegtl::if_must<
            scan_eq< use< kw::multimat >, tag::multimat >,
-           tk::grm::start_vector<tag::param, tag::multimat, tag::ic, tag::box>,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::ic, tag::box >,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::material >,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
                                             use< kw::physics >,
