@@ -65,6 +65,9 @@ module dg {
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void lhs();
+      entry void comnodalExtrema( const std::vector< std::size_t >& gid,
+                                  const std::vector< std::vector< tk::real > >& G1,
+                                  const std::vector< std::vector< tk::real > >& G2 );
       entry void step();
       entry void start();
       entry void next();
@@ -89,7 +92,12 @@ module dg {
         when ownsol_complete(), comsol_complete() serial "sol" { reco(); } }
 
       entry void wait4reco() {
-        when ownreco_complete(), comreco_complete() serial "reco" { lim(); } }
+        when ownreco_complete(), comreco_complete() serial "reco"
+        { nodalExtrema(); } }
+
+      entry void wait4nodalExtrema() {
+        when ownnodalExtrema_complete(), comnodalExtrema_complete()
+        serial "nodalExtrema" { lim(); } }
 
       entry void wait4lim() {
         when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
@@ -108,6 +116,8 @@ module dg {
       entry void comsol_complete();
       entry void ownreco_complete();
       entry void comreco_complete();
+      entry void ownnodalExtrema_complete();
+      entry void comnodalExtrema_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
       entry void ownnod_complete( CkCallback c );
