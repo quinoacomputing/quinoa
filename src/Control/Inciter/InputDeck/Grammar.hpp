@@ -738,8 +738,8 @@ namespace grm {
       }
 
       // Set a sensible default for dvCFL if ALE is enabled and if dvcfl not set
-      auto& dvcfl = stack.template get< tag::discr, tag::dvcfl >();
-      auto dvcfl_default = g_inputdeck_defaults.get< tag::discr, tag::dvcfl >();
+      auto& dvcfl = stack.template get< tag::ale, tag::dvcfl >();
+      auto dvcfl_default = g_inputdeck_defaults.get< tag::ale, tag::dvcfl >();
       auto eps = std::numeric_limits< tk::real >::epsilon();
       if (ale && std::abs(dvcfl - dvcfl_default) < eps) dvcfl = 0.01;
 
@@ -1165,7 +1165,6 @@ namespace deck {
            tk::grm::discrparam< use, kw::t0, tag::t0 >,
            tk::grm::discrparam< use, kw::dt, tag::dt >,
            tk::grm::discrparam< use, kw::cfl, tag::cfl >,
-           tk::grm::discrparam< use, kw::dvcfl, tag::dvcfl >,
            tk::grm::discrparam< use, kw::residual, tag::residual >,
            tk::grm::discrparam< use, kw::rescomp, tag::rescomp >,
            tk::grm::process< use< kw::fcteps >,
@@ -1715,8 +1714,7 @@ namespace deck {
                              pegtl::alpha >,
                            tk::grm::process< use< kw::amr_dtfreq >,
                              tk::grm::Store< tag::amr, tag::dtfreq >,
-                             pegtl::digit >
-                         >,
+                             pegtl::digit > >,
            tk::grm::check_amr_errors > {};
 
   //! Arbitrary-Lagrangian-Eulerian (ALE) ale...end block
@@ -1726,13 +1724,30 @@ namespace deck {
            // enable ALE if ale ...end block encountered
            tk::grm::enable< tag::ale >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::process<
-                             use< kw::meshvelocity >,
-                             tk::grm::store_inciter_option<
-                               ctr::MeshVelocity,
-                               tag::ale, tag::meshvelocity >,
-                             pegtl::alpha >
-                         > > {};
+              tk::grm::control< use< kw::dvcfl >,
+                                pegtl::digit,
+                                tk::grm::Store,
+                                tag::ale, tag::dvcfl >,
+              tk::grm::control< use< kw::meshvel_maxit >,
+                                pegtl::digit,
+                                tk::grm::Store,
+                                tag::ale, tag::maxit >,
+              tk::grm::control< use< kw::meshvel_tolerance >,
+                                pegtl::digit,
+                                tk::grm::Store,
+                                tag::ale, tag::tolerance >,
+              tk::grm::process<
+                use< kw::meshvelocity >,
+                tk::grm::store_inciter_option<
+                  ctr::MeshVelocity,
+                  tag::ale, tag::meshvelocity >,
+                pegtl::alpha >,
+              pegtl::if_must<
+                tk::grm::readkw< use< kw::bc_dirichlet >::pegtl_string >,
+                tk::grm::block< use< kw::end >,
+                  pegtl::if_must< tk::grm::vector< use< kw::sideset >,
+                                  tk::grm::Store_back< tag::ale, tag::bcdir >,
+                                  use< kw::end > > > > > > > {};
 
   //! \brief Match a depvar, defined upstream of control file, coupling a
   //!   solver and store

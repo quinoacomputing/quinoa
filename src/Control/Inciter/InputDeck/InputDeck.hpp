@@ -190,6 +190,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::amr
                                  , kw::ale
                                  , kw::meshvelocity
+                                 , kw::meshvel_maxit
+                                 , kw::meshvel_tolerance
                                  , kw::none
                                  , kw::sine
                                  , kw::fluid
@@ -287,7 +289,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::t0 >() = 0.0;
       get< tag::discr, tag::dt >() = 0.0;
       get< tag::discr, tag::cfl >() = 0.0;
-      get< tag::discr, tag::dvcfl >() = 0.0;
       get< tag::discr, tag::fct >() = true;
       get< tag::discr, tag::fctclip >() = false;
       get< tag::discr, tag::ctau >() = 1.0;
@@ -325,6 +326,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::zplus >() = -rmax;
       // Default ALE settings
       get< tag::ale, tag::ale >() = false;
+      get< tag::ale, tag::dvcfl >() = 0.0;
+      get< tag::ale, tag::maxit >() = 50;
+      get< tag::ale, tag::tolerance >() = 1.0e-2;
       get< tag::ale, tag::meshvelocity >() = MeshVelocityType::NONE;
       // Default p-refinement settings
       get< tag::pref, tag::pref >() = false;

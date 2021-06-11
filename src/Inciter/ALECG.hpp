@@ -167,10 +167,13 @@ class ALECG : public CBase_ALECG {
     //! Resizing data sutrctures after mesh refinement has been completed
     void resized();
 
-    //! Smooth mesh velocity for ALE mesh motion
-    void smooth();
+    //! Apply mesh velocity smoother boundary conditions for ALE mesh motion
+    void meshvelbc();
 
-    //! Mesh smoother linear solver converged
+    //! Mesh velocity smoother BCs have been applied
+    void applied( CkDataMsg* msg = nullptr );
+
+    //! Mesh velocity smoother linear solver converged
     void smoothed( CkDataMsg* msg = nullptr );
 
     //! Evaluate whether to continue with next time step
@@ -209,6 +212,7 @@ class ALECG : public CBase_ALECG {
       p | m_u;
       p | m_un;
       p | m_w;
+      p | m_vel;
       p | m_rhs;
       p | m_chBndGrad;
       p | m_dirbc;
@@ -219,6 +223,7 @@ class ALECG : public CBase_ALECG {
       p | m_bnormc;
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
+      p | m_meshvelbcnodes;
       p | m_symbctri;
       p | m_stage;
       p | m_boxnodes;
@@ -279,6 +284,8 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_un;
     //! Mesh velocity for ALE mesh motion
     tk::Fields m_w;
+    //! Fluid velocity for ALE mesh motion
+    tk::UnsMesh::Coords m_vel;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
     //! Nodal gradients at chare-boundary nodes
@@ -315,6 +322,8 @@ class ALECG : public CBase_ALECG {
     std::unordered_set< std::size_t > m_symbcnodes;
     //! Unique set of nodes at which farfield BCs are set
     std::unordered_set< std::size_t > m_farfieldbcnodes;
+    //! Unique set of nodes at which mesh velocity BCs are set for ALE
+    std::unordered_set< std::size_t > m_meshvelbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
     //! Runge-Kutta stage counter
@@ -380,7 +389,7 @@ class ALECG : public CBase_ALECG {
     void chBndGrad();
 
     //! Compute new mesh veloctity for ALE mesh motion
-    void meshvel( bool init = false );
+    void meshvel();
 
     //! Assign new mesh veloctity for ALE mesh motion
     void assignMeshvel();

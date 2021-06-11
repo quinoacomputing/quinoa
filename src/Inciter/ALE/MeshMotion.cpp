@@ -100,16 +100,16 @@ vortscale( const std::array< std::vector< tk::real >, 3 >& coord,
      v[p] = tk::length( vort[0][p], vort[1][p], vort[2][p] );
      maxv = std::max( maxv, v[p] );
    }
-std::cout << "maxv: " << maxv << '\n';
+//std::cout << "maxv: " << maxv << '\n';
  
    // scale mesh velocity with a function of the fluid vorticity
    if (maxv > 1.0e-8) {
      for (std::size_t j=0; j<3; ++j) {
        #pragma omp simd
        for (std::size_t p=0; p<npoin; ++p) {
- std::cout << v[p] << '/' << maxv << '>';
+// std::cout << v[p] << '/' << maxv << '>';
          w(p,j,0) *= c1 * std::max( 0.0, 1.0 - c2*v[p]/maxv );
- std::cout << w(p,j,0) << ' ';
+// std::cout << w(p,j,0) << ' ';
        }
      }
    }

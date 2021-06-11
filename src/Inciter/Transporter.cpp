@@ -255,11 +255,6 @@ Transporter::info( const InciterPrint& print )
              std::numeric_limits< tk::real >::epsilon())
   {
     print.item( "CFL coefficient", cfl );
-    const auto ale = g_inputdeck.get< tag::ale, tag::ale >();
-    if (ale) {
-      const auto dvcfl = g_inputdeck.get< tag::discr, tag::dvcfl >();
-      print.item( "Volume-change CFL coefficient (ALE)", dvcfl );
-    }
   }
 
   // Print out info on settings of selected partial differential equations
@@ -345,7 +340,19 @@ Transporter::info( const InciterPrint& print )
   const auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   if (ale) {
     print.section( "Arbitrary Lagrangian-Eulerian (ALE) mesh motion" );
+    const auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
+    print.item( "Volume-change CFL coefficient", dvcfl );
     print.Item< ctr::MeshVelocity, tag::ale, tag::meshvelocity >();
+    auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+    if (meshvel == ctr::MeshVelocityType::FLUID) {
+      print.item( "Mesh velocity linear solver tolerance",
+                  g_inputdeck.get< tag::ale, tag::tolerance >() );
+      print.item( "Mesh velocity linear solver maxit",
+                  g_inputdeck.get< tag::ale, tag::maxit >() );
+      const auto& dir = g_inputdeck.get< tag::ale, tag::bcdir >();
+      if (!dir.empty())
+        print.item( "Mesh velocity BC sideset(s)", tk::parameters( dir ) );
+    }
   }
 
   // Print I/O filenames
@@ -999,7 +1006,7 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
   if (ale && meshvel != ctr::MeshVelocityType::NONE)
     m_scheme[meshid].conjugategradients().doneInserting();
 
-  m_scheme[meshid].disc().ConjugateGradientsInit();
+  m_scheme[meshid].disc().vol();
 }
 
 void
@@ -1291,7 +1298,8 @@ Transporter::inthead( const InciterPrint& print )
   "             t - physics time history\n"
   "             h - h-refinement\n"
   "             l - load balancing\n"
-  "             r - checkpoint\n",
+  "             r - checkpoint\n"
+  "             a - ALE mesh velocity linear solver did not converge\n",
   "\n      it             t            dt        ETE        ETA        EGT  flg\n"
     " -------------------------------------------------------------------------\n" );
 }

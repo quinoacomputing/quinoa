@@ -76,6 +76,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_u( Disc()->Gid().size(), g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_w( m_u.nunk(), 3 ),
+  m_vel(),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_dirbc(),
@@ -86,6 +87,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_bnormc(),
   m_symbcnodes(),
   m_farfieldbcnodes(),
+  m_meshvelbcnodes(),
   m_symbctri(),
   m_stage( 0 ),
   m_boxnodes(),
@@ -197,6 +199,23 @@ ALECG::queryBC()
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
     if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
       m_symbctri[e] = 1;
+
+  // Prepare unique set of mesh velocity BC nodes
+  tk::destroy( m_meshvelbcnodes );
+  std::unordered_map< int, std::unordered_set< std::size_t > > meshvelbcnodes;
+  for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcdir >()) {
+    auto k = m_bface.find( std::stoi(s) );
+    if (k != end(m_bface)) {
+      auto& n = meshvelbcnodes[ k->first ];  // associate set id
+      for (auto f : k->second) {               // face ids on side set
+        n.insert( m_triinpoel[f*3+0] );
+        n.insert( m_triinpoel[f*3+1] );
+        n.insert( m_triinpoel[f*3+2] );
+      }
+    }
+  }
+  for (const auto& [s,nodes] : meshvelbcnodes)
+    m_meshvelbcnodes.insert( begin(nodes), end(nodes) );
 }
 
 void
@@ -494,11 +513,11 @@ ALECG::box( tk::real v )
   for (auto& eq : g_cgpde)
     eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes );
 
+  // query and initialize fluid velocity across all systems integrated
+  if (d->dynALE()) for (const auto& eq : g_cgpde) eq.velocity( m_u, m_vel );
+
   // Multiply conserved variables with mesh volume
   volumetric( m_u );
-
-  // Assign initial mesh velocity
-  meshvel( /* init = */ true );
 
   // Initiate IC transfer (if coupled)
   Disc()->transfer( m_u );
@@ -514,6 +533,8 @@ ALECG::start()
 // Start time stepping
 // *****************************************************************************
 {
+  // Set flag that indicates that we are now during time stepping
+  m_initial = 0;
   // Start timer measuring time stepping wall clock time
   Disc()->Timer().zero();
   // Zero grind-timer
@@ -522,8 +543,6 @@ ALECG::start()
   next();
   // Apply BCs on initial conditions
   BC();
-  // Set flag that indicates that we are during time stepping
-  m_initial = 0;
 }
 //! [start]
 
@@ -536,6 +555,9 @@ ALECG::lhs()
 // *****************************************************************************
 {
   // No need for LHS in ALECG
+
+  // Compute new mesh velocity
+  meshvel();
 
   // (Re-)compute boundary point-, and dual-face normals
   norm();
@@ -788,9 +810,6 @@ ALECG::advance( tk::real newdt )
 
   // Compute gradients for next time step
   chBndGrad();
-
-  // Compute new mesh velocity
-  meshvel();
 }
 
 void
@@ -852,31 +871,27 @@ ALECG::comChBndGrad( const std::vector< std::size_t >& gid,
 }
 
 void
-ALECG::meshvel( bool init )
+ALECG::meshvel()
 // *****************************************************************************
 // Assign new mesh velocity for ALE mesh motion
-//! \param[in] init True if called during setup
 // *****************************************************************************
 {
   auto d = Disc();
 
   if (d->ALE()) {
 
-    // query fluid velocity across all systems integrated
-    tk::UnsMesh::Coords vel;
-    if (d->dynALE()) {
-      conserved( m_u );
-      for (const auto& eq : g_cgpde) eq.velocity( m_u, vel );
-      volumetric( m_u );
+    // never update static meshvel during timestepping
+    if (d->dynALE() || m_initial) {
+      // assigne mesh velocity
+      inciter::meshvel( g_inputdeck.get< tag::ale, tag::meshvelocity >(),
+                        d->Coord(), m_vel, m_w );
+      // scale mesh velocity by a function of the fluid vorticity
+      //inciter::vortscale( d->Coord(), d->Inpoel(), d->Vol(), m_vel, 0.5, 0.5,
+      //                    m_w );
     }
 
-    // assign mesh velocity (never update static meshvel during timestepping)
-    if (d->dynALE() || init)
-      inciter::meshvel( g_inputdeck.get< tag::ale, tag::meshvelocity >(),
-                        d->Coord(), vel, m_w );
-
-    // smooth mesh velocity
-    smooth();
+    // applying mesh velocity smoother BCs
+    meshvelbc();
 
   } else {      // if ALE is not enabled, skip mesh smoothing
 
@@ -886,7 +901,38 @@ ALECG::meshvel( bool init )
 }
 
 void
-ALECG::smooth()
+ALECG::meshvelbc()
+// *****************************************************************************
+// Apply mesh velocity smoother boundary conditions for ALE mesh motion
+// *****************************************************************************
+{
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+
+  // Smooth mesh velocity if enabled
+  if (meshvel == ctr::MeshVelocityType::FLUID) {
+    auto d = Disc();
+    // set mesh velocity smoother linear solve boundary conditions
+    std::unordered_map< std::size_t,
+      std::array< std::pair< bool, tk::real >, 3 > > wbc;
+    for (auto i : m_meshvelbcnodes)
+      wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
+    for (auto i : m_symbcnodes)
+      wbc[i] = {{ {false,0}, {true,0}, {true,0} }};
+    // set smoother linear solve initial guess as current mesh velocity
+    std::vector< tk::real > w( m_w.nunk()*3 );
+    for (std::size_t j=0; j<3; ++j)
+      for (std::size_t i=0; i<m_w.nunk(); ++i)
+        w[i*3+j] = m_w(i,j,0);
+    // initiate setting mesh velocity BCs
+    d->meshvelInit( w, wbc,
+      CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
+  } else {
+    applied();
+  }
+}
+
+void
+ALECG::applied( [[maybe_unused]] CkDataMsg* msg )
 // *****************************************************************************
 // Smooth mesh velocity for ALE mesh motion
 // *****************************************************************************
@@ -895,7 +941,11 @@ ALECG::smooth()
 
   // Smooth mesh velocity if enabled
   if (meshvel == ctr::MeshVelocityType::FLUID) {
-    Disc()->ConjugateGradientsSolve( 10, 1.0e-3, m_symbcnodes,
+    //if (msg != nullptr) {
+    //  auto *norm = static_cast< tk::real * >( msg->getData() );
+    //  std::cout << "CG BC applied, normb: " << *norm << '\n';
+    //}
+    Disc()->meshvelSolve(
       CkCallback(CkIndex_ALECG::smoothed(nullptr), thisProxy[thisIndex]) );
   } else {
     smoothed();
@@ -903,15 +953,36 @@ ALECG::smooth()
 }
 
 void
-ALECG::smoothed( CkDataMsg* msg )
+ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
 // *****************************************************************************
 //  Mesh smoother linear solver converged
 // *****************************************************************************
 {
-  if (msg != nullptr) {
-    auto *norm = static_cast< tk::real * >( msg->getData() );
-    std::cout << "smoothed, norm: " << *norm << '\n';
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+
+  // Smooth mesh velocity if enabled
+  if (meshvel == ctr::MeshVelocityType::FLUID) {
+    //if (msg != nullptr) {
+    //  auto *normres = static_cast< tk::real * >( msg->getData() );
+    //  std::cout << "smoothed, converged: " << *normres << '\n';
+    //}
+    // Update mesh velocity from the smoother linear solve
+    auto w = Disc()->meshvel();
+    for (std::size_t j=0; j<3; ++j)
+      for (std::size_t i=0; i<m_w.nunk(); ++i)
+        m_w(i,j,0) = w[i*3+j];
+    // reinforce mesh velocity smoother linear solve boundary conditions
+    //for (auto i : m_meshvelbcnodes)
+    //  for (std::size_t j=0; j<3; ++j)
+    //    m_w(i,j,0) = 0.0;
+    //for (auto i : m_symbcnodes)
+    //  for (std::size_t j=1; j<3; ++j)
+    //    m_w(i,j,0) = 0.0;
   }
+
+  // Assess and record mesh velocity linear solver conergence
+  Disc()->meshvelConv();
+
   meshvel_complete();
 }
 
@@ -1051,6 +1122,14 @@ ALECG::solve()
 
   // Recompute mesh volumes if ALE is enabled
   if (d->ALE()) {
+
+    // query and update fluid velocity across all systems integrated
+    if (d->dynALE()) {
+      conserved( m_u );
+      for (const auto& eq : g_cgpde) eq.velocity( m_u, m_vel );
+      volumetric( m_u );
+    }
+
     transfer_complete();
     // Resize mesh data structures after mesh movement
     d->resizePostALE( d->Coord() );

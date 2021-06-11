@@ -22,6 +22,7 @@
 #include "Print.hpp"
 #include "Around.hpp"
 #include "QuinoaBuildConfig.hpp"
+#include "ConjugateGradients.hpp"
 
 #ifdef HAS_EXAM2M
   #include "Controller.hpp"
@@ -82,7 +83,8 @@ Discretization::Discretization(
   m_nrestart( 0 ),
   m_histdata(),
   m_nsrc( 0 ),
-  m_ndst( 0 )
+  m_ndst( 0 ),
+  m_meshvel_converged( true )  
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID
@@ -222,51 +224,53 @@ Discretization::dynALE() const
 }
 
 void
-Discretization::ConjugateGradientsInit()
-// *****************************************************************************
-//  Initialize Conjugrate Gradients linear solver
-// *****************************************************************************
-{
-  // (Re-)Initialize ConjugrateGradients solver chare array element if needed
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-  if (ALE() && meshvel == ctr::MeshVelocityType::FLUID) {
-    m_conjugategradients[ thisIndex ].init(
-      CkCallback(
-        CkIndex_Discretization::ConjugateGradientsInitialized(nullptr),
-        thisProxy[thisIndex] ) );
-  } else {
-    vol();
-  }
-}
-
-void
-Discretization::ConjugateGradientsInitialized( [[maybe_unused]] CkDataMsg* msg )
-// *****************************************************************************
-//  Conjugrate Gradients solver initialized
-// *****************************************************************************
-{
-  auto *normb = static_cast< tk::real * >( msg->getData() );
-  std::cout << "CG initialized, normb: " << *normb << '\n';
-  vol();
-}
-
-void
-Discretization::ConjugateGradientsSolve(
-  std::size_t maxit,
-  tk::real tol,
-  const std::unordered_set< std::size_t >& bcnodes,
+Discretization::meshvelInit(
+  const std::vector< tk::real >& w,
+  const std::unordered_map< std::size_t,
+          std::array< std::pair< bool, tk::real >, 3 > >& wbc,
   CkCallback c )
 // *****************************************************************************
+//  Initialize mesh velocity linear solve: set initial guess and BCs
+//! \param[in] w Initial guess for mesh velocity linear solve
+//! \param[in] wbc Local node ids associated to mesh velocity Dirichlet BCs
+// \param[in] c Function to call when the BCs have been applied
+// *****************************************************************************
+{
+  m_conjugategradients[ thisIndex ].init( w, wbc, m_gid, m_nodeCommMap, c );
+}
+
+void
+Discretization::meshvelSolve( CkCallback c )
+// *****************************************************************************
 //  Solve linear system using Conjugrate Gradients
-//! \param[in] bcnodes Global node ids at which to impose Dirichlet BCs
-//! \param[in] maxit Max iteration count
-//! \param[in] tol Stop tolerance
 // \param[in] c Function to call when the solve is converged
 // *****************************************************************************
 {
   m_conjugategradients[ thisIndex ].
-    solve( maxit, tol, bcnodes, m_lid, m_nodeCommMap, c );
+    solve( g_inputdeck.get< tag::ale, tag::maxit >(),
+           g_inputdeck.get< tag::ale, tag::tolerance >(),
+           c );
 }
+
+std::vector< tk::real >
+Discretization::meshvel() const
+// *****************************************************************************
+//! Query solution of the Conjugrate Gradients linear soilver
+//! \return Mesh velocity as a solution to the Conjugate Gradients linear solve
+// *****************************************************************************
+{
+  return ConjugateGradients()->solution();
+}
+
+void
+Discretization::meshvelConv()
+// *****************************************************************************
+//! Assess and record mesh velocity linear solver convergence
+// *****************************************************************************
+{
+  m_meshvel_converged &= ConjugateGradients()->converged();
+}
+
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
 Discretization::LaplacianSmoother() const
@@ -278,7 +282,7 @@ Discretization::LaplacianSmoother() const
 //!   grids", Computers& Fluids, 2013.
 // *****************************************************************************
 {
-  tk::CSR A( /* DOF= */ 3, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
+  tk::CSR A( /* DOF = */ 3, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
 
   const auto& X = m_coord[0];
   const auto& Y = m_coord[1];
@@ -308,11 +312,12 @@ Discretization::LaplacianSmoother() const
     for (std::size_t a=0; a<4; ++a)
       for (std::size_t k=0; k<3; ++k)
          for (std::size_t b=0; b<4; ++b)
-           A(N[a],N[b]) += J/6 * grad[a][k] * grad[b][k];
+           for (std::size_t i=0; i<3; ++i)
+           A(N[a],N[b],i) -= J/6 * grad[a][k] * grad[b][k];
   }
 
   auto npoin = m_gid.size();
-  std::vector< tk::real > b(npoin,0.0), x(npoin,0.0);
+  std::vector< tk::real > b(npoin*3,0.0), x(npoin*3,0.0);
 
   return { std::move(A), std::move(x), std::move(b) };
 }
@@ -689,9 +694,6 @@ Discretization::vol()
   // Store nodal volumes without contributions from other chares on
   // chare-boundaries
   m_v = m_vol;
-
-  // Compute volume in user-defined IC box
-  
 
   // Send our nodal volume contributions to neighbor chares
   if (m_nodeCommMap.empty())
@@ -1124,7 +1126,10 @@ Discretization::status()
     if (m_refined) print << 'h';
     if (!(m_it % lbfreq) && !finish) print << 'l';
     if (!benchmark && (!(m_it % rsfreq) || finish)) print << 'r';
-  
+
+    if (not m_meshvel_converged) print << 'a';
+    m_meshvel_converged = true; // get ready for next time step
+
     print << std::endl;
   }
 }

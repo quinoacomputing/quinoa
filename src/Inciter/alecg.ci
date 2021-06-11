@@ -52,6 +52,7 @@ module alecg {
       entry void comrhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& R );
       entry void resized();
+      entry void applied( CkDataMsg* msg );
       entry void smoothed( CkDataMsg* msg );
       entry void lhs();
       entry void step();
@@ -68,9 +69,7 @@ module alecg {
         when ownnorm_complete(), comnorm_complete(),
              owndfnorm_complete(), comdfnorm_complete(),
              transfer_complete(), meshvel_complete()  serial "norm" {
-          merge();
-        }
-      }
+          merge(); } }
 
       entry void wait4grad() {
         when owngrad_complete(), comgrad_complete() serial "grad" { rhs(); } }

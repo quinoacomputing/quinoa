@@ -27,13 +27,14 @@ module conjugategradients {
               const std::vector< std::size_t >& gid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
               const NodeCommMap& nodecommmap );
-      entry void init( CkCallback c );
-      entry void solve(
-                   std::size_t maxit, tk::real stop_tol,
-                   const std::unordered_set< std::size_t >& bcnodes,
-                   const std::unordered_map< std::size_t, std::size_t >& lid,
-                   const NodeCommMap& nodecommap,
-                   CkCallback c );
+      entry void init( const std::vector< tk::real >& x,
+                       const std::unordered_map< std::size_t,
+                         std::array< std::pair< bool, tk::real >, 3 > >& bc,
+                       const std::vector< std::size_t >& gid,
+                       const NodeCommMap& nodecommap,
+                       CkCallback c );
+      entry void setup( CkCallback c );
+      entry void solve( std::size_t maxit, tk::real stop_tol, CkCallback c );
       entry [reductiontarget] void normb( tk::real n );
       entry [reductiontarget] void rho( tk::real r );
       entry [reductiontarget] void pq( tk::real n );

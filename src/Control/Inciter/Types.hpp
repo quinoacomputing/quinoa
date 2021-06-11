@@ -80,7 +80,14 @@ using amr = tk::TaggedTuple< brigand::list<
 //! ALE mesh motion options
 using ale = tk::TaggedTuple< brigand::list<
     tag::ale,           bool                  //!< ALE on/off
+  , tag::dvcfl,         kw::dvcfl::info::expect::type  //!< dvCFL coefficient
+  //! Mesh velocity smoother linear solver max number of iterations
+  , tag::maxit,         kw::meshvel_maxit::info::expect::type
+  //! Mesh velocity smoother linear solver tolerance
+  , tag::tolerance,     kw::meshvel_tolerance::info::expect::type
   , tag::meshvelocity,  MeshVelocityType      //!< Mesh velocity option
+    //! Mesh velocity Dirichlet BC sidesets
+  , tag::bcdir,         std::vector< kw::sideset::info::expect::type >
 > >;
 
 //! p-adaptive refinement options
@@ -98,7 +105,6 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::t0,     kw::t0::info::expect::type     //!< Starting time
   , tag::dt,     kw::dt::info::expect::type     //!< Size of time step
   , tag::cfl,    kw::cfl::info::expect::type    //!< CFL coefficient
-  , tag::dvcfl,  kw::dvcfl::info::expect::type  //!< dvCFL coefficient
   , tag::pelocal_reorder, bool                  //!< PE-locality reordering
   , tag::operator_reorder, bool                 //!< Operator-access reordering
   , tag::steady_state, bool                     //!< March to steady state

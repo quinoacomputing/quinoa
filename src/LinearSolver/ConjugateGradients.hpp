@@ -68,16 +68,19 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       #pragma clang diagnostic pop
     #endif
 
-    //! Initialize solver
-    void init( CkCallback c );
-
     //! Solve linear system
-    void solve( std::size_t maxit,
-                tk::real stop_tol,
-                const std::unordered_set< std::size_t >& bcnodes,
-                const std::unordered_map< std::size_t, std::size_t >& lid,
-                const NodeCommMap& nodecommap,
-                CkCallback c );
+    void solve( std::size_t maxit, tk::real stop_tol, CkCallback c );
+
+    //! Initialize linear solve: set initial guess and boundary conditions
+    void init( const std::vector< tk::real >& x,
+                    const std::unordered_map< std::size_t,
+                            std::array< std::pair< bool, tk::real >, 3 > >& bc,
+                    const std::vector< std::size_t >& gid,
+                    const NodeCommMap& nodecommap,
+                    CkCallback c );
+
+    //! Setup solver
+    void setup( CkCallback c );
 
     //! Compute the norm of the right hand side
     void normb( tk::real n );
@@ -99,6 +102,12 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //! Compute the norm of the residual: (r,r)
     void normres( tk::real r );
 
+    //! Access solution
+    std::vector< tk::real > solution() const { return m_x; }
+
+    //! Return convergence flag
+    bool converged() const { return m_converged; }
+
     /** @name Pack/unpack (Charm++ serialization) routines */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -117,16 +126,16 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_q;
       p | m_qc;
       p | m_nq;
-      p | m_initialized;
+      p | m_initres;
       p | m_solved;
       p | m_normb;
       p | m_it;
       p | m_maxit;
       p | m_tol;
-      p | m_bcnodes;
       p | m_rho;
       p | m_rho0;
       p | m_alpha;
+      p | m_converged;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -161,8 +170,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     std::unordered_map< std::size_t, std::vector< tk::real > > m_qc;
     //! Counter for assembling m_q
     std::size_t m_nq;
-    //! Charm++ callback to continue with when the initialization is complete
-    CkCallback m_initialized;
+    //! Charm++ callback to continue with when the setup is complete
+    CkCallback m_initres;
     //! Charm++ callback to continue with when the solve is complete
     CkCallback m_solved;
     //! L2 norm of the right hand side
@@ -173,14 +182,14 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     std::size_t m_maxit;
     //! Stop tolerance
     tk::real m_tol;
-    //! Global node ids at which to impose Dirichlet BCs
-    std::unordered_set< std::size_t > m_bcnodes;
     //! Helper scalar for CG algorithm
     tk::real m_rho;
     //! Helper scalar for CG algorithm
     tk::real m_rho0;
     //! Helper scalar for CG algorithm
     tk::real m_alpha;
+    //! Convergence flag: true if linear smoother converged to tolerance
+    bool m_converged;
 
     //! Initiate computationa of dot product of two vectors
     void dot( const std::vector< tk::real >& a,

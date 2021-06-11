@@ -103,15 +103,15 @@ CSR::operator()( std::size_t row, std::size_t col, std::size_t pos ) const
 }
 
 void
-CSR::dirichlet( std::size_t g,
-                const std::unordered_map< std::size_t, std::size_t >& lid,
+CSR::dirichlet( std::size_t i,
+                const std::vector< std::size_t >& gid,
                 const NodeCommMap& nodecommap,
                 std::size_t pos )
 // *****************************************************************************
 //  Set Dirichlet boundary condition at a node
-//! \param[in] g Global id at which to set Dirichlet BC
-//! \param[in] lid Local->global node id map
-//! \param[in] nodecommap Node communication map
+//! \param[in] i Local id at which to set Dirichlet BC
+//! \param[in] gid Local->global node id map
+//! \param[in] nodecommap Node communication map with global node ids
 //! \param[in] pos Position in block
 //! \details In parallel there can be multiple contributions to a single node
 //!   on the mesh, and correspondingly, a single matrix row can be partially
@@ -121,33 +121,28 @@ CSR::dirichlet( std::size_t g,
 //!   (matrix row). As a result, when the matrix participates in a matrix-vector
 //!   product, where the partial contributions across all partitions are
 //!   aggregated, the diagonal will contain 1 after the sum across partitions.
-//! \note Both lid and nodecommap are optional - unused in serial. If lid is
+//! \note Both gid and nodecommap are optional - unused in serial. If gid is
 //!   empty, serial is assumed.
 // *****************************************************************************
 {
   // Lambda to count the number of contributions to a node at which to set BC
-  auto count = [&]( std::size_t node ){
+  auto count = [&]( std::size_t g ){
     return 1.0 + std::count_if( nodecommap.cbegin(), nodecommap.cend(),
                    [&](const auto& s) {
-                     return s.second.find(node) != s.second.cend(); } ); };
+                     return s.second.find(g) != s.second.cend(); } ); };
 
-  auto gncomp = g * ncomp;
+  auto incomp = i * ncomp;
 
-  if (lid.empty()) {	// serial
+  if (gid.empty()) {	// serial
 
-    for (std::size_t j=ia[gncomp+pos]-1; j<ia[gncomp+pos+1]-1; ++j)
-      if (gncomp+pos+1==ja[j]) a[j] = 1.0; else a[j] = 0.0;
+    for (std::size_t j=ia[incomp+pos]-1; j<ia[incomp+pos+1]-1; ++j)
+      if (incomp+pos+1==ja[j]) a[j] = 1.0; else a[j] = 0.0;
 
   } else {		// parallel
 
-    auto it = lid.find( g );
-    if (it != end(lid)) { // if row with global id g exists on this partition
-      auto i = it->second;
-      auto incomp = i * ncomp;
-      auto diag = 1.0 / count( g );
+      auto diag = 1.0 / count( gid[i] );
       for (std::size_t j=ia[incomp+pos]-1; j<ia[incomp+pos+1]-1; ++j)
         if (incomp+pos+1==ja[j]) a[j] = diag; else a[j] = 0.0;
-    }
 
   }
 }

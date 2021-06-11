@@ -654,16 +654,16 @@ class CompFlow {
 
       // compute the minimum dt across all nodes we contribute to due to volume
       // change in time
-      auto dvcfl = g_inputdeck.get< tag::discr, tag::dvcfl >();
-      if (dtn > 0.0 && dvcfl > 0.0) {
-        Assert( vol.size() == voln.size(), "Size mismatch" );
-        for (std::size_t p=0; p<vol.size(); ++p) {
-          auto vol_dt = dtn * std::min( voln[p], vol[p] )
-                            / std::abs( voln[p] - vol[p] + 1.0e-16 );
-          mindt = std::min( vol_dt, mindt );
-        }
-        mindt *= dvcfl;
-      }
+      //auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
+      //if (dtn > 0.0 && dvcfl > 0.0) {
+      //  Assert( vol.size() == voln.size(), "Size mismatch" );
+      //  for (std::size_t p=0; p<vol.size(); ++p) {
+      //    auto vol_dt = dtn * std::min( voln[p], vol[p] )
+      //                      / (std::abs(voln[p] - vol[p]) + 1.0e-16 );
+      //    mindt = std::min( vol_dt, mindt );
+      //  }
+      //  //mindt *= dvcfl;
+      //}
 
       return mindt;
     }

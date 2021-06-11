@@ -65,7 +65,7 @@ class CGReceiver : public CBase_CGReceiver {
       auto normb = static_cast<tk::real*>( msg->getData() );
       received( "init, ch" + std::to_string(thisIndex),
                 "normb", *normb, m_normb_ex );
-      m_cg[thisIndex].solve( m_maxit, m_tol, {}, {}, {},
+      m_cg[thisIndex].solve( m_maxit, m_tol,
         CkCallback(CkIndex_CGReceiver::solved(nullptr),thisProxy[thisIndex]) );
     }
     //! Called after CG solve() finished
@@ -218,7 +218,7 @@ void ConjugateGradients_object::test< 1 >() {
                               cg, 1 );
 
   // Initialize CG solve
-  cg[0].init( CkCallback(CkIndex_CGReceiver::initialized(nullptr), host[0]) );
+  cg[0].setup( CkCallback(CkIndex_CGReceiver::initialized(nullptr), host[0]) );
 }
 
 //! Test simple CG solve with DOF=1 of Laplacian on 2 PEs
@@ -334,14 +334,18 @@ void ConjugateGradients_object::test< 2 >() {
     std::vector< tk::real > b(npoin,1.0), x(npoin,0.0);
 
     // Grab a node (gid=0) as Dirichlet BC if on partition
-    A.dirichlet( 0, lid[m], nodecommap[m] );
+    auto it = lid[m].find( 0 );
+    if (it != end(lid[m])) { // if row with global id g exists on this partition
+      auto i = it->second;
+      A.dirichlet( i, gid[m], nodecommap[m] );
+    }
 
     // Dynamically insert array element with mesh partition
     auto M = static_cast< int >( m );
     cg[M].insert( A, x, b, gid[m], lid[m], nodecommap[m] );
 
     // Initialize CG solve for mesh partition
-    cg[M].init( CkCallback(CkIndex_CGReceiver::initialized(nullptr), host[M]) );
+    cg[M].setup(CkCallback(CkIndex_CGReceiver::initialized(nullptr), host[M]));
 
   }
 
@@ -454,7 +458,7 @@ void ConjugateGradients_object::test< 3 >() {
                               cg, 1 );
 
   // Initialize CG solve
-  cg[0].init( CkCallback(CkIndex_CGReceiver::initialized(nullptr), host[0]) );
+  cg[0].setup( CkCallback(CkIndex_CGReceiver::initialized(nullptr), host[0]) );
 }
 
 //! Test simple CG solve with DOF=3 of Laplacian on 2 PEs
@@ -571,14 +575,19 @@ void ConjugateGradients_object::test< 4 >() {
     std::vector< tk::real > b(npoin*3,1.0), x(npoin*3,0.0);
 
     // Grab a node (gid=0 for all components) as Dirichlet BC if on partition
-    for (std::size_t i=0; i<3; ++i) A.dirichlet( 0, lid[m], nodecommap[m], i );
+    auto it = lid[m].find( 0 );
+    if (it != end(lid[m])) { // if row with global id g exists on this partition
+      auto i = it->second;
+      for (std::size_t j=0; j<3; ++j)
+        A.dirichlet( i, gid[m], nodecommap[m], j );
+    }
 
     // Dynamically insert array element with mesh partition
     auto M = static_cast< int >( m );
     cg[M].insert( A, x, b, gid[m], lid[m], nodecommap[m] );
 
     // Initialize CG solve for mesh partition
-    cg[M].init( CkCallback(CkIndex_CGReceiver::initialized(nullptr), host[M]) );
+    cg[M].setup(CkCallback(CkIndex_CGReceiver::initialized(nullptr), host[M]));
 
   }
 

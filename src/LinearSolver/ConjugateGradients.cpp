@@ -52,15 +52,15 @@ ConjugateGradients::ConjugateGradients(
   m_q( m_A.rsize(), 0.0 ),
   m_qc(),
   m_nq( 0 ),
-  m_initialized(),
+  m_initres(),
   m_solved(),
   m_normb( 0.0 ),
   m_it( 0 ),
   m_maxit( 0 ),
-  m_bcnodes(),
   m_rho( 0.0 ),
   m_rho0( 0.0 ),
-  m_alpha( 0.0 )
+  m_alpha( 0.0 ),
+  m_converged( false )
 // *****************************************************************************
 //  Constructor
 //! \param[in] A Left hand side matrix of the linear system to solve in Ax=b
@@ -85,13 +85,54 @@ ConjugateGradients::ConjugateGradients(
 }
 
 void
-ConjugateGradients::init( CkCallback c )
+ConjugateGradients::init(
+  const std::vector< tk::real >& x,
+  const std::unordered_map< std::size_t,
+          std::array< std::pair< bool, tk::real >, 3 > >& bc,
+  const std::vector< std::size_t >& gid,
+  const NodeCommMap& nodecommap,
+  CkCallback c )
 // *****************************************************************************
-//  Initialize solver
-//! \param[in] c Call to continue with after initialization is complete
+//  Initialize linear solve: set initial guess and boundary conditions
+//! \param[in] x Initial guess
+//! \param[in] bc Local node ids and associated Dirichlet BCs
+//! \param[in] nodecommap Node communication map
+//! \param[in] c Call to continue with when initialized and ready for a solve
+//! \details This function allows setting the initial guess and boundary
+//!   conditions, followed by computing the initial residual and the norm of the
+//!   rhs.
 // *****************************************************************************
 {
-  m_initialized = c;
+  // Set initial guess
+  m_x = x;
+
+  // Apply Dirichlet BCs on matrix and rhs
+  for (const auto& [i,dirbc] : bc) {
+    auto dof = m_A.Ncomp();
+    for (std::size_t j=0; j<3; ++j) {
+      if (dirbc[j].first) {
+        m_A.dirichlet( i, gid, nodecommap, j );
+        m_b[i*dof+j] = dirbc[j].second;
+      }
+    }
+  }
+
+  // Initiate recomputing the initial residual and the norm of the rhs
+  setup( c );
+}
+
+void
+ConjugateGradients::setup( CkCallback c )
+// *****************************************************************************
+//  Setup solver
+//! \param[in] c Call to continue with after initialization is complete
+//! \details This function initiates computing the initial residual and the
+//!   norm of the rhs. As opposed to init() this function allows setting up the
+//!   linear solver with the initial guess and the rhs as created by the
+//!   constructor.
+// *****************************************************************************
+{
+  m_initres = c;
 
   // initiate computing A * x (for the initial residual)
   thisProxy[ thisIndex ].wait4res();
@@ -205,24 +246,15 @@ ConjugateGradients::initres()
   for (auto& r : m_r) r *= -1.0;
   m_r += m_b;
 
-  m_initialized.send( CkDataMsg::buildNew( sizeof(tk::real), &m_normb ) );
+  m_initres.send( CkDataMsg::buildNew( sizeof(tk::real), &m_normb ) );
 }
 
 void
-ConjugateGradients::solve(
-  std::size_t maxit,
-  tk::real tol,
-  const std::unordered_set< std::size_t >& bcnodes,
-  const std::unordered_map< std::size_t, std::size_t >& lid,
-  const NodeCommMap& nodecommap,
-  CkCallback c )
+ConjugateGradients::solve( std::size_t maxit, tk::real tol, CkCallback c )
 // *****************************************************************************
 //  Solve linear system
 //! \param[in] maxit Max iteration count
 //! \param[in] tol Stop tolerance
-//! \param[in] bcnodes Global node ids at which to impose Dirichlet BCs
-//! \param[in] lid Local->global node id map
-//! \param[in] nodecommap Node communication map
 //! \param[in] c Call to continue with after solve is complete
 // *****************************************************************************
 {
@@ -230,10 +262,11 @@ ConjugateGradients::solve(
   m_tol = tol;
   m_solved = c;
   m_it = 0;
-  m_bcnodes = bcnodes;
 
-  // Apply BCs on matrix
-  for (auto g : bcnodes) m_A.dirichlet( g, lid, nodecommap );
+  //m_A.write_matlab( std::cout );
+  //std::cout << "x:"; for (auto i : m_x) std::cout << i << ' ';
+  //std::cout << '\n';
+  //std::cout << "b:"; for (auto i : m_b) std::cout << i << ' ';
 
   next();
 }
@@ -327,13 +360,17 @@ ConjugateGradients::q()
 // Finish computing q = A * p
 // *****************************************************************************
 {
-  // Combine own and communicated contributions to r = A * x
+  // Combine own and communicated contributions to q = A * p
   auto dof = m_A.Ncomp();
   for (const auto& [gid,q] : m_qc) {
     auto lid = tk::cref_find( m_lid, gid );
     for (std::size_t c=0; c<dof; ++c) m_q[lid*dof+c] += q[c];
   }
   tk::destroy( m_qc );
+
+  //std::cout << "p:"; for (auto i : m_p) std::cout << i << ' ';
+  //std::cout << '\n';
+  //std::cout << "q:"; for (auto i : m_q) std::cout << i << ' ';
 
   // initiate computing (p,q)
   dot( m_p, m_q,
@@ -347,9 +384,19 @@ ConjugateGradients::pq( tk::real d )
 //! \param[in] d Dot product of (p,q) (aggregated across all chares)
 // *****************************************************************************
 {
-  Assert( d > 1.0e-14, "Conjugate Gradients: (p,q) orthogonal, wrong/no BC?" );
+  //Assert( d > 1.0e-14, "Conjugate Gradients: (p,q) orthogonal, wrong/no BC?" );
+  //m_alpha = m_rho / d;
 
-  m_alpha = m_rho / d;
+  // if (p,q)=0, p and q are orthogonal and the system either has a trivial
+  // solution, x=x0, or the BCs are incomplete or wrong, in either case the
+  // solve cannot continue
+  const auto eps = std::numeric_limits< tk::real >::epsilon();  
+  if (std::abs(d) < eps) {
+    m_it = m_maxit;
+    m_alpha = 0.0;
+  } else {
+    m_alpha = m_rho / d;
+  }
 
   // compute r = r - alpha * q
   for (std::size_t i=0; i<m_r.size(); ++i) m_r[i] -= m_alpha * m_q[i];
@@ -366,22 +413,24 @@ ConjugateGradients::normres( tk::real r )
 //! \param[in] r Dot product, (r,r) (aggregated across all chares)
 // *****************************************************************************
 {
-  auto norm = std::sqrt( r );
+  auto normres = std::sqrt( r );
 
   // advance solution: x = x + alpha * p
   for (std::size_t i=0; i<m_x.size(); ++i) m_x[i] += m_alpha * m_p[i];
 
   ++m_it;
 
-  if (m_it < m_maxit && norm > m_tol*m_normb) {
-    //std::cout << "ch:" << thisIndex << ", it:" << m_it << ": " << norm << " >? " << m_tol*m_normb << '\n';
+  auto normb = m_normb > 1.0e-14 ? m_normb : 1.0;
+  if ( m_it < m_maxit && normres > m_tol*normb ) {
+    //std::cout << "ch:" << thisIndex << ", it:" << m_it << ": " << normres << " >? " << m_tol*normb << '\n';
     next();
   } else {
      //std::cout << thisIndex << " NDOF: " << m_A.Ncomp()  << " x: ";
      //std::size_t j=0; for (auto i : m_x) std::cout << m_gid[j++] << ':' << i << ' ';
      //for (auto i : m_x) std::cout << i << ' ';
-     //std::cout << "on ch:" << thisIndex << ", it:" << m_it << ", res:" << norm << '\n';
-     m_solved.send( CkDataMsg::buildNew( sizeof(tk::real), &norm ) );
+     //if (m_it == m_maxit) std::cout << "maxit reached without convergence, ch:" << thisIndex << ", it:" << m_it << ", r:" << normres << '<' << m_tol*normb << '\n';
+     m_converged = m_it == m_maxit && normres > m_tol*normb ? false : true;
+     m_solved.send( CkDataMsg::buildNew( sizeof(tk::real)*2, &normres ) );
   }
 }
 

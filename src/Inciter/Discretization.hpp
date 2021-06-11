@@ -89,18 +89,21 @@ class Discretization : public CBase_Discretization {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
-    //! Initialize Conjugrate Gradients linear solver
-    void ConjugateGradientsInit();
-
-    //! Conjugrate Gradients solver initialized
-    void ConjugateGradientsInitialized( [[maybe_unused]] CkDataMsg* msg );
+    //! Initialize mesh velocity linear solve: set initial guess and BCs
+    void
+    meshvelInit( const std::vector< tk::real >& w,
+                 const std::unordered_map< std::size_t,
+                         std::array< std::pair< bool, tk::real >, 3 > >& wbc,
+                CkCallback c );
 
     //! Solve using Conjugrate Gradients linear solver
-    void
-    ConjugateGradientsSolve( std::size_t maxit,
-                             tk::real tol,
-                             const std::unordered_set< std::size_t >& bcnodes,
-                             CkCallback c );
+    void meshvelSolve( CkCallback c );
+
+    //! Query solution of the Conjugrate Gradients linear soilver
+    std::vector< tk::real > meshvel() const;
+
+    //! Assess and record mesh velocity linear solver convergence
+    void meshvelConv();
 
     //! \brief Our mesh has been registered with the mesh-to-mesh transfer
     //!   library (if coupled to other solver)
@@ -230,6 +233,13 @@ class Discretization : public CBase_Discretization {
     DistFCT* FCT() const {
       Assert(m_fct[ thisIndex ].ckLocal() != nullptr, "DistFCT ckLocal() null");
       return m_fct[ thisIndex ].ckLocal();
+    }
+
+    //! Access bound ConjugateGradients class pointer
+    tk::ConjugateGradients* ConjugateGradients() const {
+      Assert( m_conjugategradients[ thisIndex ].ckLocal() != nullptr,
+              "ConjugateGradients ckLocal() null" );
+      return m_conjugategradients[ thisIndex ].ckLocal();
     }
 
     //! Access Discretization proxy for a mesh
@@ -406,6 +416,7 @@ class Discretization : public CBase_Discretization {
       p | m_histdata;
       p | m_nsrc;
       p | m_ndst;
+      p | m_meshvel_converged;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -531,6 +542,9 @@ class Discretization : public CBase_Discretization {
     std::size_t m_nsrc;
     //! Number of transfers requested as a destination
     std::size_t m_ndst;
+    //! \brief True if all stages of the time step converged the mesh velocity
+    //!   linear solve in ALE
+    bool m_meshvel_converged;
 
     //! Generate {A,x,b} for Laplacian mesh velocity smoother
     std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
