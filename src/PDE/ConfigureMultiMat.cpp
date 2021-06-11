@@ -29,6 +29,7 @@
 #include "MultiMat/DGMultiMat.hpp"
 #include "MultiMat/Problem.hpp"
 #include "InfoMesh.hpp"
+#include "Inciter/Options/Material.hpp"
 
 namespace inciter {
 
@@ -112,30 +113,37 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
 
-
+  // Material property output
   const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c];
-  for (const auto& m : matprop) {
-    nfo.emplace_back( "id", parameters( m.get< tag::id >() ) );
+  for (const auto& mtype : matprop) {
+    const auto& m_id = mtype.get< tag::id >();
+    if (mtype.get< tag::eos >() == ctr::MaterialType::STIFFENEDGAS) {
+      nfo.emplace_back( "Stiffened Gas EoS materials: ",
+        std::to_string(m_id.size()) );
+    }
+    else if (mtype.get< tag::eos >() == ctr::MaterialType::JWL) {
+      nfo.emplace_back( "Jones-Wilkins-Lee (JWL) EoS:",
+        std::to_string(m_id.size()) );
+    }
+
+    nfo.emplace_back( "material id", parameters( m_id ) );
+    nfo.emplace_back( "ratio of specific heats",
+      parameters(mtype.get< tag::gamma >()) );
+    nfo.emplace_back( "specific heat at constant volume",
+      parameters(mtype.get< tag::cv >()) );
+    nfo.emplace_back( "material stiffness",
+      parameters(mtype.get< tag::pstiff >()) );
+
+    // Viscosity is optional: vector may be empty
+    const auto& mu = mtype.get< tag::mu >();
+    if (!mu.empty())
+      nfo.emplace_back( "dynamic viscosity", parameters( mu ) );
+
+    // Heat conductivity is optional: vector may be empty
+    const auto& k = mtype.get< tag::k >();
+    if (!k.empty())
+      nfo.emplace_back( "heat conductivity", parameters( k ) );
   }
-
-  nfo.emplace_back( "ratio of specific heats", parameters(
-    g_inputdeck.get< tag::param, eq, tag::gamma >()[c] ) );
-
-  // Viscosity is optional: the outer vector may be empty
-  const auto& mu = g_inputdeck.get< tag::param, eq, tag::mu >();
-  if (mu.size() > c)
-    nfo.emplace_back( "dynamic viscosity", parameters( mu[c] ) );
-
-  nfo.emplace_back( "specific heat at constant volume", parameters(
-    g_inputdeck.get< tag::param, eq, tag::cv >()[c] ) );
-
-  // Heat conductivity is optional: the outer vector may be empty
-  const auto& k = g_inputdeck.get< tag::param, eq, tag::k >();
-  if (k.size() > c)
-    nfo.emplace_back( "heat conductivity", parameters( k[c] ) );
-
-  nfo.emplace_back( "material stiffness", parameters(
-    g_inputdeck.get< tag::param, eq, tag::pstiff >()[c] ) );
 
   // ICs and IC-boxes
 

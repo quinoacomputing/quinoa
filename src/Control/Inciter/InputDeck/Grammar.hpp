@@ -265,28 +265,37 @@ namespace grm {
       }
 
       // Verify correct number of material properties configured
-      const auto& gamma = stack.template get< param, eq, tag::gamma >();
-      if (gamma.empty() || gamma.back().size() != 1)
-        Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+      auto& matprop = stack.template get< param, eq, tag::material >().back()[0];
+      auto& meos = matprop.template get< tag::eos >();
+      auto& mat_id = matprop.template get< tag::id >();
 
-      // If specific heat is not given, set defaults
-      using cv_t = kw::mat_cv::info::expect::type;
-      auto& cv = stack.template get< param, eq, tag::cv >();
-      // As a default, the specific heat of air (717.5 J/Kg-K) is used
-      if (cv.empty() || cv.size() != neq.get< eq >())
-        cv.push_back( std::vector< cv_t >( 1, 717.5 ) );
-      // If specific heat vector is wrong size, error out
-      if (cv.back().size() != 1)
-        Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+      if (mat_id.empty())
+        mat_id.push_back(0);
+      else if (mat_id.size() != 1)
+        Message< Stack, ERROR, MsgKey::NUMMAT >( stack, in );
 
-      // If stiffness coefficient is not given, set defaults
-      using pstiff_t = kw::mat_pstiff::info::expect::type;
-      auto& pstiff = stack.template get< param, eq, tag::pstiff >();
-      if (pstiff.empty() || pstiff.size() != neq.get< eq >())
-        pstiff.push_back( std::vector< pstiff_t >( 1, 0.0 ) );
-      // If stiffness coefficient vector is wrong size, error out
-      if (pstiff.back().size() != 1)
-        Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+      if (meos == inciter::ctr::MaterialType::STIFFENEDGAS) {
+        const auto& gamma = matprop.template get< tag::gamma >();
+        // If gamma vector is wrong size, error out
+        if (gamma.empty() || gamma.size() != 1)
+          Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+
+        auto& cv = matprop.template get< tag::cv >();
+        // As a default, the specific heat of air (717.5 J/Kg-K) is used
+        if (cv.empty())
+          cv.push_back(717.5);
+        // If specific heat vector is wrong size, error out
+        if (cv.size() != 1)
+          Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+        auto& pstiff = matprop.template get< tag::pstiff >();
+        // As a default, a stiffness coefficient of 0.0 is used
+        if (pstiff.empty())
+          pstiff.push_back(0.0);
+        // If stiffness coefficient vector is wrong size, error out
+        if (pstiff.size() != 1)
+          Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+      }
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
@@ -456,10 +465,51 @@ namespace grm {
         ncomp.push_back( m + m + 3 + m );
       }
 
-      // Verify correct number of multi-material properties configured
-      //auto& gamma = stack.template get< param, eq, tag::gamma >();
-      //if (gamma.empty() || gamma.back().size() != nmat.back())
-      //  Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+      // Verify correct number of multi-material properties (gamma, cv, pstiff)
+      // have been configured
+      auto& matprop = stack.template get< param, eq, tag::material >();
+      std::size_t tmat(0);
+
+      for (auto& mtype : matprop.back()) {
+        const auto& meos = mtype.template get< tag::eos >();
+        const auto& mat_id = mtype.template get< tag::id >();
+
+        if (meos == inciter::ctr::MaterialType::STIFFENEDGAS) {
+          const auto& gamma = mtype.template get< tag::gamma >();
+          // If gamma vector is wrong size, error out
+          if (gamma.empty() || gamma.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+
+          auto& cv = mtype.template get< tag::cv >();
+          // As a default, the specific heat of air (717.5 J/Kg-K) is used
+          if (cv.empty()) {
+            for (std::size_t k=0; k<mat_id.size(); ++k) {
+              cv.push_back(717.5);
+            }
+          }
+          // If specific heat vector is wrong size, error out
+          if (cv.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+          auto& pstiff = mtype.template get< tag::pstiff >();
+          // As a default, a stiffness coefficient of 0.0 is used
+          if (pstiff.empty()) {
+            for (std::size_t k=0; k<mat_id.size(); ++k) {
+              pstiff.push_back(0.0);
+            }
+          }
+          // If stiffness coefficient vector is wrong size, error out
+          if (pstiff.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+        }
+
+        // Track total number of materials in multiple material blocks
+        tmat += mat_id.size();
+      }
+
+      // If total number of materials is incorrect, error out
+      if (tmat != nmat.back())
+        Message< Stack, ERROR, MsgKey::NUMMAT >( stack, in );
 
       // If pressure relaxation is not specified, default to 'false'
       auto& prelax = stack.template get< param, eq, tag::prelax >();
@@ -482,25 +532,6 @@ namespace grm {
                                             tag::intsharp_param >();
       if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
         intsharp_p.push_back( 1.0 );
-
-      // If specific heats are not given, set defaults
-      using cv_t = kw::mat_cv::info::expect::type;
-      auto& cv = stack.template get< param, eq, tag::cv >();
-      // As a default, the specific heat of air (717.5 J/Kg-K) is used
-      if (cv.empty())
-        cv.push_back( std::vector< cv_t >( nmat.back(), 717.5 ) );
-      // If specific heat vector is wrong size, error out
-      if (cv.back().size() != nmat.back())
-        Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
-
-      // If stiffness coefficients are not given, set defaults
-      using pstiff_t = kw::mat_pstiff::info::expect::type;
-      auto& pstiff = stack.template get< param, eq, tag::pstiff >();
-      if (pstiff.empty())
-        pstiff.push_back( std::vector< pstiff_t >( nmat.back(), 0.0 ) );
-      // If stiffness coefficient vector is wrong size, error out
-      if (pstiff.back().size() != nmat.back())
-        Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
