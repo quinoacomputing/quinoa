@@ -236,7 +236,7 @@ Discretization::meshvelInit(
 // \param[in] c Function to call when the BCs have been applied
 // *****************************************************************************
 {
-  m_conjugategradients[ thisIndex ].init( w, wbc, m_gid, m_nodeCommMap, c );
+  m_conjugategradients[ thisIndex ].init( w, wbc, c );
 }
 
 void
@@ -268,7 +268,10 @@ Discretization::meshvelConv()
 //! Assess and record mesh velocity linear solver convergence
 // *****************************************************************************
 {
-  m_meshvel_converged &= ConjugateGradients()->converged();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  if (ALE() && meshvel == ctr::MeshVelocityType::FLUID) {
+    m_meshvel_converged &= ConjugateGradients()->converged();
+  }
 }
 
 
@@ -313,7 +316,7 @@ Discretization::LaplacianSmoother() const
       for (std::size_t k=0; k<3; ++k)
          for (std::size_t b=0; b<4; ++b)
            for (std::size_t i=0; i<3; ++i)
-           A(N[a],N[b],i) -= J/6 * grad[a][k] * grad[b][k];
+             A(N[a],N[b],i) -= J/6 * grad[a][k] * grad[b][k];
   }
 
   auto npoin = m_gid.size();

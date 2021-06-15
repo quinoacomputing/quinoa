@@ -95,7 +95,7 @@ CSR::operator()( std::size_t row, std::size_t col, std::size_t pos ) const
 {
   auto rncomp = row * ncomp;
 
-  for (std::size_t n=0, j=ia[rncomp+pos]-1; j<=ia[rncomp+pos+1]-2; ++j, ++n)
+  for (std::size_t n=0, j=ia[rncomp+pos]-1; j<ia[rncomp+pos+1]-1; ++j, ++n)
     if (col*ncomp+pos+1 == ja[j])
       return a[ia[rncomp+pos]-1+n];
 
@@ -121,8 +121,8 @@ CSR::dirichlet( std::size_t i,
 //!   (matrix row). As a result, when the matrix participates in a matrix-vector
 //!   product, where the partial contributions across all partitions are
 //!   aggregated, the diagonal will contain 1 after the sum across partitions.
-//! \note Both gid and nodecommap are optional - unused in serial. If gid is
-//!   empty, serial is assumed.
+//! \note Both gid and nodecommap are optional - unused in serial. If nodecommap
+//!   is empty, serial is assumed and gid is unused.
 // *****************************************************************************
 {
   // Lambda to count the number of contributions to a node at which to set BC
@@ -132,19 +132,10 @@ CSR::dirichlet( std::size_t i,
                      return s.second.find(g) != s.second.cend(); } ); };
 
   auto incomp = i * ncomp;
+  auto diag = nodecommap.empty() ? 1.0 : 1.0/count(gid[i]);
 
-  if (gid.empty()) {	// serial
-
-    for (std::size_t j=ia[incomp+pos]-1; j<ia[incomp+pos+1]-1; ++j)
-      if (incomp+pos+1==ja[j]) a[j] = 1.0; else a[j] = 0.0;
-
-  } else {		// parallel
-
-      auto diag = 1.0 / count( gid[i] );
-      for (std::size_t j=ia[incomp+pos]-1; j<ia[incomp+pos+1]-1; ++j)
-        if (incomp+pos+1==ja[j]) a[j] = diag; else a[j] = 0.0;
-
-  }
+  for (std::size_t j=ia[incomp+pos]-1; j<ia[incomp+pos+1]-1; ++j)
+    if (incomp+pos+1==ja[j]) a[j] = diag; else a[j] = 0.0;
 }
 
 void
@@ -153,7 +144,7 @@ CSR::mult( const std::vector< real >& x, std::vector< real >& r ) const
 //  Multiply CSR matrix with vector from the right: r = A * x
 //! \param[in] x Vector to multiply matrix with from the right
 //! \param[in] r Result vector of product r = A * x
-//! \note This is only complete in serial. In paralell, this computes the own
+//! \note This is only complete in serial. In parallel, this computes the own
 //!   contributions to the product, so it must be followed by communication
 //!   combining the rows stored on multiple partitions.
 // *****************************************************************************

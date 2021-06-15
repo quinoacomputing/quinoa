@@ -30,10 +30,8 @@ module conjugategradients {
       entry void init( const std::vector< tk::real >& x,
                        const std::unordered_map< std::size_t,
                          std::array< std::pair< bool, tk::real >, 3 > >& bc,
-                       const std::vector< std::size_t >& gid,
-                       const NodeCommMap& nodecommap,
-                       CkCallback c );
-      entry void setup( CkCallback c );
+                       CkCallback cb );
+      entry void setup( CkCallback cb );
       entry void solve( std::size_t maxit, tk::real stop_tol, CkCallback c );
       entry [reductiontarget] void normb( tk::real n );
       entry [reductiontarget] void rho( tk::real r );
@@ -41,6 +39,8 @@ module conjugategradients {
       entry [reductiontarget] void normres( tk::real r );
       entry void comres( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& rc );
+      entry void combc( const std::unordered_map< std::size_t,
+                          std::array< std::pair< bool, tk::real >, 3 > >& bc );
       entry void comq( const std::vector< std::size_t >& gid,
                        const std::vector< std::vector< tk::real > >& qc );
 
@@ -52,6 +52,11 @@ module conjugategradients {
         serial "res" { initres(); }
       }
 
+      entry void wait4bc() {
+        when ownbc_complete( CkCallback cb ), combc_complete()
+          serial "bc" { apply( cb ); }
+      }
+
       entry void wait4q() {
         when ownq_complete(), comq_complete() serial "q" { q(); }
       }
@@ -59,6 +64,8 @@ module conjugategradients {
       entry void ownres_complete();
       entry void comres_complete();
       entry void normb_complete();
+      entry void ownbc_complete( CkCallback cb );
+      entry void combc_complete();
       entry void ownq_complete();
       entry void comq_complete();
     };

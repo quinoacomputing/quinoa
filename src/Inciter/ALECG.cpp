@@ -910,7 +910,9 @@ ALECG::meshvelbc()
 
   // Smooth mesh velocity if enabled
   if (meshvel == ctr::MeshVelocityType::FLUID) {
+
     auto d = Disc();
+
     // set mesh velocity smoother linear solve boundary conditions
     std::unordered_map< std::size_t,
       std::array< std::pair< bool, tk::real >, 3 > > wbc;
@@ -918,16 +920,21 @@ ALECG::meshvelbc()
       wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
     for (auto i : m_symbcnodes)
       wbc[i] = {{ {false,0}, {true,0}, {true,0} }};
+
     // set smoother linear solve initial guess as current mesh velocity
     std::vector< tk::real > w( m_w.nunk()*3 );
     for (std::size_t j=0; j<3; ++j)
       for (std::size_t i=0; i<m_w.nunk(); ++i)
         w[i*3+j] = m_w(i,j,0);
+
     // initiate setting mesh velocity BCs
     d->meshvelInit( w, wbc,
       CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
+
   } else {
+
     applied();
+
   }
 }
 
@@ -941,14 +948,19 @@ ALECG::applied( [[maybe_unused]] CkDataMsg* msg )
 
   // Smooth mesh velocity if enabled
   if (meshvel == ctr::MeshVelocityType::FLUID) {
+
     //if (msg != nullptr) {
     //  auto *norm = static_cast< tk::real * >( msg->getData() );
     //  std::cout << "CG BC applied, normb: " << *norm << '\n';
     //}
+
     Disc()->meshvelSolve(
       CkCallback(CkIndex_ALECG::smoothed(nullptr), thisProxy[thisIndex]) );
+
   } else {
+
     smoothed();
+
   }
 }
 
@@ -962,15 +974,18 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
 
   // Smooth mesh velocity if enabled
   if (meshvel == ctr::MeshVelocityType::FLUID) {
+
     //if (msg != nullptr) {
     //  auto *normres = static_cast< tk::real * >( msg->getData() );
     //  std::cout << "smoothed, converged: " << *normres << '\n';
     //}
+
     // Update mesh velocity from the smoother linear solve
     auto w = Disc()->meshvel();
     for (std::size_t j=0; j<3; ++j)
       for (std::size_t i=0; i<m_w.nunk(); ++i)
         m_w(i,j,0) = w[i*3+j];
+
     // reinforce mesh velocity smoother linear solve boundary conditions
     //for (auto i : m_meshvelbcnodes)
     //  for (std::size_t j=0; j<3; ++j)
@@ -978,6 +993,7 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
     //for (auto i : m_symbcnodes)
     //  for (std::size_t j=1; j<3; ++j)
     //    m_w(i,j,0) = 0.0;
+
   }
 
   // Assess and record mesh velocity linear solver conergence

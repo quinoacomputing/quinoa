@@ -75,12 +75,10 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     void init( const std::vector< tk::real >& x,
                     const std::unordered_map< std::size_t,
                             std::array< std::pair< bool, tk::real >, 3 > >& bc,
-                    const std::vector< std::size_t >& gid,
-                    const NodeCommMap& nodecommap,
-                    CkCallback c );
+                    CkCallback cb );
 
     //! Setup solver
-    void setup( CkCallback c );
+    void setup( CkCallback cb );
 
     //! Compute the norm of the right hand side
     void normb( tk::real n );
@@ -91,6 +89,10 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //! Receive contributions to r = b - A * x on chare-boundaries
     void comres( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& rc );
+
+    //! Receive contributions to boundary conditions on chare-boundaries
+    void combc( const std::unordered_map< std::size_t,
+                       std::array< std::pair< bool, tk::real >, 3 > >& bc );
 
     //! Receive contributions to q = A * p on chare-boundaries
     void comq( const std::vector< std::size_t >& gid,
@@ -122,6 +124,9 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_r;
       p | m_rc;
       p | m_nr;
+      p | m_bc;
+      p | m_bcc;
+      p | m_nb;
       p | m_p;
       p | m_q;
       p | m_qc;
@@ -162,6 +167,14 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rc;
     //! Counter for assembling m_r
     std::size_t m_nr;
+    //! Dirichlet boundary conditions
+    std::unordered_map< std::size_t,
+        std::array< std::pair< bool, tk::real >, 3 > > m_bc;
+    //! Dirichlet boundary conditions communication buffer
+    std::unordered_map< std::size_t,
+        std::array< std::pair< bool, tk::real >, 3 > > m_bcc;
+    //! Counter for assembling boundary conditions
+    std::size_t m_nb;
     //! Auxiliary vector for CG solve
     std::vector< tk::real > m_p;
     //! Auxiliary vector for CG solve
@@ -200,6 +213,9 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     void residual();
     //! Compute the initial residual, r = b - A * x
     void initres();
+
+    //! Apply boundary conditions
+    void apply( CkCallback cb );
 
     //! Initiate computing q = A * p
     void qAp();

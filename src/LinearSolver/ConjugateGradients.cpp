@@ -12,19 +12,18 @@
     ISBN 9780898718003, 2003, Algorithm 6.18, conjugate gradients to solve the
     linear system A * x = b, reproduced here:
 
-    Compute r0:=b-A*x0, p0:=r0                  see residual(), normb()
+    Compute r0:=b-A*x0, p0:=r0
     For j=0,1,..., until convergence, do
-      alpha_j := (r_j,r_j) / (Ap_j,p_j)         see next(), qAp(), q(), pq()
-      x_{j+1} := x_j + alpha_j p_j              see normres()
-      r_{j+1} := r_j - alpha_j A p_j            see pq()
-      beta_j := (r_{j+1},r_{j+1}) / (r_j,r_j)   see normres()
-      p_{j+1} := r_{j+1} + beta_j p_j           see rho()
+      alpha_j := (r_j,r_j) / (Ap_j,p_j)
+      x_{j+1} := x_j + alpha_j p_j
+      r_{j+1} := r_j - alpha_j A p_j
+      beta_j := (r_{j+1},r_{j+1}) / (r_j,r_j)
+      p_{j+1} := r_{j+1} + beta_j p_j
     end
 */
 // *****************************************************************************
 
 #include <numeric>
-#include <iostream>     // NOT NEEDED AFTER DEBUGGED, LEAVE FOR NOW
 
 #include "Exception.hpp"
 #include "ConjugateGradients.hpp"
@@ -48,6 +47,9 @@ ConjugateGradients::ConjugateGradients(
   m_r( m_A.rsize(), 0.0 ),
   m_rc(),
   m_nr( 0 ),
+  m_bc(),
+  m_bcc(),
+  m_nb( 0 ),
   m_p( m_A.rsize(), 0.0 ),
   m_q( m_A.rsize(), 0.0 ),
   m_qc(),
@@ -82,43 +84,6 @@ ConjugateGradients::ConjugateGradients(
   Assert( m_A.rsize() == m_gid.size()*A.Ncomp(), "Size mismatch" );
   Assert( m_x.size() == m_gid.size()*A.Ncomp(), "Size mismatch" );
   Assert( m_b.size() == m_gid.size()*A.Ncomp(), "Size mismatch" );
-}
-
-void
-ConjugateGradients::init(
-  const std::vector< tk::real >& x,
-  const std::unordered_map< std::size_t,
-          std::array< std::pair< bool, tk::real >, 3 > >& bc,
-  const std::vector< std::size_t >& gid,
-  const NodeCommMap& nodecommap,
-  CkCallback c )
-// *****************************************************************************
-//  Initialize linear solve: set initial guess and boundary conditions
-//! \param[in] x Initial guess
-//! \param[in] bc Local node ids and associated Dirichlet BCs
-//! \param[in] nodecommap Node communication map
-//! \param[in] c Call to continue with when initialized and ready for a solve
-//! \details This function allows setting the initial guess and boundary
-//!   conditions, followed by computing the initial residual and the norm of the
-//!   rhs.
-// *****************************************************************************
-{
-  // Set initial guess
-  m_x = x;
-
-  // Apply Dirichlet BCs on matrix and rhs
-  for (const auto& [i,dirbc] : bc) {
-    auto dof = m_A.Ncomp();
-    for (std::size_t j=0; j<3; ++j) {
-      if (dirbc[j].first) {
-        m_A.dirichlet( i, gid, nodecommap, j );
-        m_b[i*dof+j] = dirbc[j].second;
-      }
-    }
-  }
-
-  // Initiate recomputing the initial residual and the norm of the rhs
-  setup( c );
 }
 
 void
@@ -157,9 +122,9 @@ ConjugateGradients::dot( const std::vector< tk::real >& a,
   Assert( a.size() == b.size(), "Size mismatch" );
 
   tk::real d = 0.0;
-  auto dof = m_A.Ncomp();
+  auto ncomp = m_A.Ncomp();
   for (std::size_t i=0; i<a.size(); ++i)
-    if (!slave(m_nodeCommMap,m_gid[i/dof],thisIndex))
+    if (!slave(m_nodeCommMap,m_gid[i/ncomp],thisIndex))
       d += a[i]*b[i];
 
   contribute( sizeof(tk::real), &d, CkReduction::sum_double, c );
@@ -189,14 +154,14 @@ ConjugateGradients::residual()
   if (m_nodeCommMap.empty()) {
     comres_complete();
   } else {
-    auto dof = m_A.Ncomp();
+    auto ncomp = m_A.Ncomp();
     for (const auto& [c,n] : m_nodeCommMap) {
       std::vector< std::vector< tk::real > > rc( n.size() );
       std::size_t j = 0;
       for (auto g : n) {
-        std::vector< tk::real > nr( dof );
+        std::vector< tk::real > nr( ncomp );
         auto lid = tk::cref_find( m_lid, g );
-        for (std::size_t d=0; d<dof; ++d) nr[d] = m_r[ lid*dof+d ];
+        for (std::size_t d=0; d<ncomp; ++d) nr[d] = m_r[ lid*ncomp+d ];
         rc[j++] = std::move(nr);
       }
       thisProxy[c].comres( std::vector<std::size_t>(begin(n),end(n)), rc );
@@ -235,10 +200,10 @@ ConjugateGradients::initres()
 // *****************************************************************************
 {
   // Combine own and communicated contributions to r = A * x
-  auto dof = m_A.Ncomp();
+  auto ncomp = m_A.Ncomp();
   for (const auto& [gid,r] : m_rc) {
     auto lid = tk::cref_find( m_lid, gid );
-    for (std::size_t c=0; c<dof; ++c) m_r[lid*dof+c] += r[c];
+    for (std::size_t c=0; c<ncomp; ++c) m_r[lid*ncomp+c] += r[c];
   }
   tk::destroy( m_rc );
 
@@ -246,7 +211,120 @@ ConjugateGradients::initres()
   for (auto& r : m_r) r *= -1.0;
   m_r += m_b;
 
+  // initiate computing the norm of the initial residual, rho = (r,r)
+  dot( m_r, m_r,
+       CkCallback( CkReductionTarget(ConjugateGradients,rho), thisProxy ) );
+}
+
+void
+ConjugateGradients::rho( tk::real r )
+// *****************************************************************************
+// Compute rho = (r,r)
+//! \param[in] r Dot product, rho = (r,r) (aggregated across all chares)
+// *****************************************************************************
+{
+  // store norm of residual
+  m_rho = r;
+
+  // send back rhs norm to caller
   m_initres.send( CkDataMsg::buildNew( sizeof(tk::real), &m_normb ) );
+}
+
+void
+ConjugateGradients::init(
+  const std::vector< tk::real >& x,
+  const std::unordered_map< std::size_t,
+          std::array< std::pair< bool, tk::real >, 3 > >& bc,
+  CkCallback cb )
+// *****************************************************************************
+//  Initialize linear solve: set initial guess and boundary conditions
+//! \param[in] x Initial guess
+//! \param[in] bc Local node ids and associated Dirichlet BCs
+//! \param[in] nodecommap Node communication map
+//! \param[in] cb Call to continue with when initialized and ready for a solve
+//! \details This function allows setting the initial guess and boundary
+//!   conditions, followed by computing the initial residual and the rhs norm.
+// *****************************************************************************
+{
+  // Set initial guess
+  m_x = x;
+
+  // Store incoming BCs
+  m_bc = bc;
+
+  // Get ready to communicate boundary conditions. This is necessary because
+  // there can be nodes a chare contributes to but does not apply BCs on. This
+  // happens if a node is in the node communication map but not on the list of
+  // incoming BCs on this chare. To have all chares share the same view on all
+  // BC nodes, we send the global node ids together with the Dirichlet BCs at
+  // which BCs are set to those fellow chares that also contribute to those BC
+  // nodes. Only after this communication step we apply the BCs on the matrix,
+  // which then will correctly setup the BC rows that exist on multiple chares
+  // (which now will be the same as the results of making the BCs consistent
+  // across all chares that contribute.
+  thisProxy[ thisIndex ].wait4bc();
+
+  // Send boundary conditions to those who contribute to those rows
+  if (m_nodeCommMap.empty()) {
+    combc_complete();
+  } else {
+    for (const auto& [c,n] : m_nodeCommMap) {
+      std::unordered_map< std::size_t,
+        std::array< std::pair< bool, tk::real >, 3 > > expbc;
+      for (auto g : n) {
+        auto lid = tk::cref_find( m_lid, g );
+        auto i = bc.find( lid );
+        if (i != end(bc)) expbc[g] = i->second;
+      }
+      thisProxy[c].combc( expbc );
+    }
+  }
+
+  ownbc_complete( cb );
+}
+
+void
+ConjugateGradients::combc(
+  const std::unordered_map< std::size_t,
+     std::array< std::pair< bool, tk::real >, 3 > >& bc )
+// *****************************************************************************
+//  Receive contributions to boundary conditions on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive contributions
+//! \param[in] cbc Contributions to boundary conditions
+// *****************************************************************************
+{
+  for (const auto& [g,dirbc] : bc) m_bcc[ tk::cref_find(m_lid,g) ] = dirbc;
+
+  if (++m_nb == m_nodeCommMap.size()) {
+    m_nb = 0;
+    combc_complete();
+  }
+}
+
+void
+ConjugateGradients::apply( CkCallback cb )
+// *****************************************************************************
+//  Apply boundary conditions
+//! \param[in] cb Call to continue with after applying the BCs is complete
+// *****************************************************************************
+{
+  // Merge own and received contributions to boundary conditions
+  for (const auto& [i,dirbc] : m_bcc) m_bc[i] = dirbc;
+  tk::destroy( m_bcc );
+
+  // Apply Dirichlet BCs on matrix and rhs
+  for (const auto& [i,dirbc] : m_bc) {
+    auto ncomp = m_A.Ncomp();
+    for (std::size_t j=0; j<3; ++j) {
+      if (dirbc[j].first) {
+        m_A.dirichlet( i, m_gid, m_nodeCommMap, j );
+        m_b[i*ncomp+j] = dirbc[j].second;
+      }
+    }
+  }
+
+  // Continue to setup linear solver after communicating and applying BCs
+  setup( cb );
 }
 
 void
@@ -263,11 +341,6 @@ ConjugateGradients::solve( std::size_t maxit, tk::real tol, CkCallback c )
   m_solved = c;
   m_it = 0;
 
-  //m_A.write_matlab( std::cout );
-  //std::cout << "x:"; for (auto i : m_x) std::cout << i << ' ';
-  //std::cout << '\n';
-  //std::cout << "b:"; for (auto i : m_b) std::cout << i << ' ';
-
   next();
 }
 
@@ -277,19 +350,6 @@ ConjugateGradients::next()
 //  Start next linear solver iteration
 // *****************************************************************************
 {
-  // initiate computing rho = (r,r)
-  dot( m_r, m_r,
-       CkCallback( CkReductionTarget(ConjugateGradients,rho), thisProxy ) );
-}
-
-void
-ConjugateGradients::rho( tk::real r )
-// *****************************************************************************
-// Compute rho = (r,r)
-//! \param[in] r Dot product, rho = (r,r) (aggregated across all chares)
-// *****************************************************************************
-{
-  m_rho = r;
   if (m_it == 0) m_alpha = 0.0; else m_alpha = m_rho/m_rho0;
   m_rho0 = m_rho;
 
@@ -315,14 +375,14 @@ ConjugateGradients::qAp()
   if (m_nodeCommMap.empty()) {
     comq_complete();
   } else {
-    auto dof = m_A.Ncomp();
+    auto ncomp = m_A.Ncomp();
     for (const auto& [c,n] : m_nodeCommMap) {
       std::vector< std::vector< tk::real > > qc( n.size() );
       std::size_t j = 0;
       for (auto g : n) {
-        std::vector< tk::real > nq( dof );
+        std::vector< tk::real > nq( ncomp );
         auto lid = tk::cref_find( m_lid, g );
-        for (std::size_t d=0; d<dof; ++d) nq[d] = m_q[ lid*dof+d ];
+        for (std::size_t d=0; d<ncomp; ++d) nq[d] = m_q[ lid*ncomp+d ];
         qc[j++] = std::move(nq);
       }
       thisProxy[c].comq( std::vector<std::size_t>(begin(n),end(n)), qc );
@@ -361,16 +421,12 @@ ConjugateGradients::q()
 // *****************************************************************************
 {
   // Combine own and communicated contributions to q = A * p
-  auto dof = m_A.Ncomp();
+  auto ncomp = m_A.Ncomp();
   for (const auto& [gid,q] : m_qc) {
     auto lid = tk::cref_find( m_lid, gid );
-    for (std::size_t c=0; c<dof; ++c) m_q[lid*dof+c] += q[c];
+    for (std::size_t c=0; c<ncomp; ++c) m_q[lid*ncomp+c] += q[c];
   }
   tk::destroy( m_qc );
-
-  //std::cout << "p:"; for (auto i : m_p) std::cout << i << ' ';
-  //std::cout << '\n';
-  //std::cout << "q:"; for (auto i : m_q) std::cout << i << ' ';
 
   // initiate computing (p,q)
   dot( m_p, m_q,
@@ -384,12 +440,9 @@ ConjugateGradients::pq( tk::real d )
 //! \param[in] d Dot product of (p,q) (aggregated across all chares)
 // *****************************************************************************
 {
-  //Assert( d > 1.0e-14, "Conjugate Gradients: (p,q) orthogonal, wrong/no BC?" );
-  //m_alpha = m_rho / d;
-
-  // if (p,q)=0, p and q are orthogonal and the system either has a trivial
+  // if (p,q)=0, then p and q are orthogonal and the system either has a trivial
   // solution, x=x0, or the BCs are incomplete or wrong, in either case the
-  // solve cannot continue
+  // solve cannot continue.
   const auto eps = std::numeric_limits< tk::real >::epsilon();  
   if (std::abs(d) < eps) {
     m_it = m_maxit;
@@ -413,7 +466,8 @@ ConjugateGradients::normres( tk::real r )
 //! \param[in] r Dot product, (r,r) (aggregated across all chares)
 // *****************************************************************************
 {
-  auto normres = std::sqrt( r );
+  m_rho = r;
+  auto norm = std::sqrt( r );
 
   // advance solution: x = x + alpha * p
   for (std::size_t i=0; i<m_x.size(); ++i) m_x[i] += m_alpha * m_p[i];
@@ -421,16 +475,22 @@ ConjugateGradients::normres( tk::real r )
   ++m_it;
 
   auto normb = m_normb > 1.0e-14 ? m_normb : 1.0;
-  if ( m_it < m_maxit && normres > m_tol*normb ) {
-    //std::cout << "ch:" << thisIndex << ", it:" << m_it << ": " << normres << " >? " << m_tol*normb << '\n';
+
+  if ( m_it < m_maxit && norm > m_tol*normb ) {
+
+    //if (thisIndex==0) std::cout << "iterating, it:" << m_it << ": " << norm << " >? " << m_tol*normb << '\n';
     next();
+
   } else {
-     //std::cout << thisIndex << " NDOF: " << m_A.Ncomp()  << " x: ";
-     //std::size_t j=0; for (auto i : m_x) std::cout << m_gid[j++] << ':' << i << ' ';
+
+    //if (thisIndex==0) std::cout << (m_it==m_maxit?"NOT ":"") << "converged, it:" << m_it << ": " << norm << " >? " << m_tol*normb << '\n';
+     //std::cout << thisIndex << " NDOF: " << m_A.Ncomp()  << " converged x: ";
      //for (auto i : m_x) std::cout << i << ' ';
-     //if (m_it == m_maxit) std::cout << "maxit reached without convergence, ch:" << thisIndex << ", it:" << m_it << ", r:" << normres << '<' << m_tol*normb << '\n';
-     m_converged = m_it == m_maxit && normres > m_tol*normb ? false : true;
-     m_solved.send( CkDataMsg::buildNew( sizeof(tk::real)*2, &normres ) );
+     //if (m_it == m_maxit) std::cout << "maxit reached without convergence, ch:" << thisIndex << ", it:" << m_it << ", r:" << norm << '<' << m_tol*normb << '\n';
+
+     m_converged = m_it == m_maxit && norm > m_tol*normb ? false : true;
+     m_solved.send( CkDataMsg::buildNew( sizeof(tk::real), &norm ) );
+
   }
 }
 

@@ -60,7 +60,7 @@ class CGReceiver : public CBase_CGReceiver {
                 tk::CProxy_ConjugateGradients cg )
       : m_label( label ), m_maxit(maxit), m_tol(tol), m_normb_ex(normb_ex),
         m_normres_ex(normres_ex), m_cg( cg ) {}
-    //! Called after CG init() finished
+    //! Called after CG::setup() finished
     void initialized( CkDataMsg* msg ) {
       auto normb = static_cast<tk::real*>( msg->getData() );
       received( "init, ch" + std::to_string(thisIndex),
