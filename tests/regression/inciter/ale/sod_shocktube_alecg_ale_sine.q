@@ -10,7 +10,6 @@ inciter
   ttyi 1      # TTY output interval
 
   cfl 0.5
-  dvcfl 1.0
 
   scheme alecg
 
@@ -19,6 +18,7 @@ inciter
   end
 
   ale
+    dvcfl 1.0
     mesh_velocity sine
   end
 
