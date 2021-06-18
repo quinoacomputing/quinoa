@@ -66,8 +66,12 @@ CompFlowProblemUserDefined::initialize( ncomp_t system,
   } else if (bgenic.size() > system && !bgenic[system].empty()) {
     u[4] = u[0] * bgenic[system][0];
   } else if (bgtempic.size() > system && !bgtempic[system].empty()) {
-    const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
-    u[4] = u[0] * bgtempic[system][0] * cv.at(system).at(0);
+    const auto& matprop =
+      g_inputdeck.get< tag::param, tag::compflow, tag::material >()[system];
+    const auto& meos = g_inputdeck.get< tag::param, tag::compflow,
+      tag::matidxmap >().get< tag::eosidx >()[0];
+    const auto& cv = matprop[meos].get< tag::cv >()[0];
+    u[4] = u[0] * bgtempic[system][0] * cv;
   } else Throw( "IC background energy cannot be computed. User must specify "
                 "one of background pressure, energy, or velocity." );
 

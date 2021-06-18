@@ -74,7 +74,11 @@ class CompFlowProblemVorticalFlow {
         g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
       const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
       // ratio of specific heats
-      tk::real g = g_inputdeck.get< param, compflow, tag::gamma >()[ system ][0];
+      const auto& matprop =
+        g_inputdeck.get< tag::param, tag::compflow, tag::material >()[ system ];
+      const auto& meos = g_inputdeck.get< tag::param, tag::compflow,
+        tag::matidxmap >().get< tag::eosidx >()[0];
+      tk::real g = matprop[meos].get< tag::gamma >()[0];
       // evaluate solution at x,y,z
       auto s = initialize( system, 5, x, y, z, 0.0 );
 

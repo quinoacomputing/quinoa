@@ -150,7 +150,11 @@ class CompFlow {
         (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
         bgpreic[m_system][0] : 0.0;
 
-      auto cv = g_inputdeck.get< tag::param, eq, tag::cv >()[ m_system ][ 0 ];
+      const auto& matprop =
+        g_inputdeck.get< tag::param, eq, tag::material >()[m_system];
+      const auto& meos = g_inputdeck.get< tag::param, eq,
+        tag::matidxmap >().get< tag::eosidx >()[0];
+      auto cv = matprop[meos].get< tag::cv >()[0];
 
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
@@ -567,7 +571,11 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
       // ratio of specific heats
-      auto g = g_inputdeck.get< tag::param, eq, tag::gamma >()[0][0];
+      const auto& matprop =
+        g_inputdeck.get< tag::param, eq, tag::material >()[m_system];
+      const auto& meos = g_inputdeck.get< tag::param, eq,
+        tag::matidxmap >().get< tag::eosidx >()[0];
+      auto g = matprop[meos].get< tag::gamma >()[0];
       // compute the minimum dt across all elements we own
       real mindt = std::numeric_limits< real >::max();
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {

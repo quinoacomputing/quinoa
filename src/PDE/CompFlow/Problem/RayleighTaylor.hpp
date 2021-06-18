@@ -76,7 +76,11 @@ class CompFlowProblemRayleighTaylor {
       auto k = g_inputdeck.get< param, eq, tag::kappa >()[system];
       auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[system];
       // ratio of specific heats
-      tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system][0];
+      const auto& matprop =
+        g_inputdeck.get< tag::param, tag::compflow, tag::material >()[system];
+      const auto& meos = g_inputdeck.get< tag::param, tag::compflow,
+        tag::matidxmap >().get< tag::eosidx >()[0];
+      auto g = matprop[meos].get< tag::gamma >()[0];
 
       // evaluate solution at x,y,z,t
       auto s = initialize( system, 5, x, y, z, t );

@@ -266,6 +266,9 @@ namespace grm {
 
       // Verify correct number of material properties configured
       auto& matprop = stack.template get< param, eq, tag::material >().back()[0];
+      auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
+      matidxmap.template get< tag::eosidx >().resize(1);
+      matidxmap.template get< tag::matidx >().resize(1);
       auto& meos = matprop.template get< tag::eos >();
       auto& mat_id = matprop.template get< tag::id >();
 
@@ -296,6 +299,13 @@ namespace grm {
         if (pstiff.size() != 1)
           Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
       }
+
+      // Generate mapping between material index and eos parameter index
+      auto& eosmap = matidxmap.template get< tag::eosidx >();
+      auto& idxmap = matidxmap.template get< tag::matidx >();
+      eosmap[mat_id[0]] = static_cast< std::size_t >(matprop.template get<
+        tag::eos >());
+      idxmap[mat_id[0]] = 0;
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
@@ -468,7 +478,10 @@ namespace grm {
       // Verify correct number of multi-material properties (gamma, cv, pstiff)
       // have been configured
       auto& matprop = stack.template get< param, eq, tag::material >();
-      std::size_t tmat(0);
+      auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
+      matidxmap.template get< tag::eosidx >().resize(nmat.back());
+      matidxmap.template get< tag::matidx >().resize(nmat.back());
+      std::size_t tmat(0), i(0);
 
       for (auto& mtype : matprop.back()) {
         const auto& meos = mtype.template get< tag::eos >();
@@ -505,6 +518,19 @@ namespace grm {
 
         // Track total number of materials in multiple material blocks
         tmat += mat_id.size();
+
+        // Generate mapping between material index and eos parameter index
+        auto& eosmap = matidxmap.template get< tag::eosidx >();
+        auto& idxmap = matidxmap.template get< tag::matidx >();
+        for (auto midx : mtype.template get< tag::id >()) {
+          midx -= 1;
+          eosmap[midx] = static_cast< std::size_t >(mtype.template get<
+            tag::eos >());
+          idxmap[midx] = i;
+          ++i;
+        }
+        // end of materials for this eos, thus reset index counter
+        i = 0;
       }
 
       // If total number of materials is incorrect, error out
