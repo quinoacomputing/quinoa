@@ -515,7 +515,7 @@ class CompFlow {
       // zero right hand side for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
 
-      // compute sponge pressure multiplers at symmetry BCs
+      // compute sponge pressure multiplers at sponge side sets
       auto spmult = spongePressures( coord, spongenodes );
 
       // compute domain-edge integral
@@ -845,7 +845,7 @@ class CompFlow {
             }
     }
 
-    //! Apply sponge conditions at boundary nodes
+    //! Apply sponge conditions at sponge nodes
     //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] nodes Unique set of node ids at which to apply sponge
@@ -859,9 +859,9 @@ class CompFlow {
       const auto& z = coord[2];
       const auto& sponge = g_inputdeck.get< param, eq, tag::sponge >();
       const auto& ss = sponge.get< tag::sideset >();
-      if (ss.size() > m_system) {             // use symbcs for this system
+      if (ss.size() > m_system) {          // sponge side set for this system
         const auto& spvel = sponge.get< tag::velocity >();
-        for (auto p : nodes) {                 // for all symbc nodes
+        for (auto p : nodes) {             // for all sponge nodes
           if (!skipPoint(x[p],y[p],z[p])) {
             std::vector< tk::real > sp( ss[m_system].size(), 0.0 );
             if (spvel.size() > m_system) {
