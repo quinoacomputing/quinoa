@@ -93,14 +93,13 @@ void initializeBox( std::size_t system,
 
       // based on the density and energy of the material, determine pressure
       // and temperature
+      auto boxmat_vf = s[volfracIdx(nmat,boxmatid-1)];
       auto pr_box = eos_pressure< tag::multimat >(system,
-        s[volfracIdx(nmat,boxmatid-1)]*rhok[boxmatid-1], u, v, w,
-        s[volfracIdx(nmat,boxmatid-1)]*rhok[boxmatid-1]*spi,
-        s[volfracIdx(nmat,boxmatid-1)], boxmatid-1);
+        boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
+        boxmat_vf, boxmatid-1);
       auto t_box = eos_temperature< tag::multimat >(system,
-        s[volfracIdx(nmat,boxmatid-1)]*rhok[boxmatid-1], u, v, w,
-        s[volfracIdx(nmat,boxmatid-1)]*rhok[boxmatid-1]*spi,
-        s[volfracIdx(nmat,boxmatid-1)], boxmatid-1);
+        boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
+        boxmat_vf, boxmatid-1);
 
       // find density of trace material quantities in the box based on pressure
       for (std::size_t k=0; k<nmat; ++k) {

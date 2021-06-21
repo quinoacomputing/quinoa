@@ -1129,6 +1129,8 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Array of unknowns
     //! \param[in] P Array of primitive quantities
+    //! \return Vector of time history output of bulk flow quantities (density,
+    //!   velocity, total energy, and pressure) evaluated at time history points
     std::vector< std::vector< tk::real > >
     histOutput( const std::vector< HistData >& h,
                 const std::vector< std::size_t >& inpoel,
