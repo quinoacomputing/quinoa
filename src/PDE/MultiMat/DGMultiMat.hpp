@@ -748,7 +748,7 @@ class MultiMat {
     //! \param[in,out] P Vector of primitives at recent time step
     void limit( [[maybe_unused]] tk::real t,
                 [[maybe_unused]] const tk::Fields& geoFace,
-                [[maybe_unused]] const tk::Fields& geoElem,
+                const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
@@ -777,8 +777,8 @@ class MultiMat {
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, coord, gid, bid, uNodalExtrm, pNodalExtrm, U, P,
-          nmat );
+          m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm,
+          pNodalExtrm, U, P, nmat );
       }
       else if (limiter == ctr::LimiterType::WENOP1)
       {
@@ -911,6 +911,76 @@ class MultiMat {
         tk::pressureRelaxationInt( m_system, nmat, m_offset, ndof, rdof, nelem,
                                    inpoel, coord, geoElem, U, P, ndofel, ct, R,
                                    intsharp );
+      }
+    }
+
+    //! Compute the nodal extrema for chare-boundary nodes
+    //! \param[in] ncomp Number of conservative variables
+    //! \param[in] nprim Number of primitive variables
+    //! \param[in] ndof_NodalExtrm Degree of freedom for nodal extrema
+    //! \param[in] bndel List of elements contributing to chare-boundary nodes
+    //! \param[in] inpoel Element-node connectivity for element e
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] gid Local->global node id map
+    //! \param[in] bid Local chare-boundary node ids (value) associated to
+    //!   global node ids (key)
+    //! \param[in] U Vector of conservative variables
+    //! \param[in] P Vector of primitive variables
+    //! \param[in,out] uNodalExtrm Chare-boundary nodal extrema for conservative
+    //!   variables
+    //! \param[in,out] pNodalExtrm Chare-boundary nodal extrema for primitive
+    //!   variables
+    void evalNodalExtrm( const std::size_t ncomp,
+                         const std::size_t nprim,
+                         const std::size_t ndof_NodalExtrm,
+                         const std::vector< std::size_t >& bndel,
+                         const std::vector< std::size_t >& inpoel,
+                         const tk::UnsMesh::Coords& coord,
+                         const std::vector< std::size_t >& gid,
+                         const std::unordered_map< std::size_t, std::size_t >&
+                           bid,
+                         const tk::Fields& U,
+                         const tk::Fields& P,
+                         tk::Fields& uNodalExtrm,
+                         tk::Fields& pNodalExtrm )
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+
+      for (auto e : bndel)
+      {
+        // access node IDs
+        const std::vector<std::size_t> N
+          { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+
+        // Loop over nodes of element e
+        for(std::size_t ip=0; ip<4; ++ip)
+        {
+          auto i = bid.find( gid[N[ip]] );
+          if (i != end(bid))      // If ip is the chare boundary point
+          {
+            // Find the nodal extrema of conservative variables
+            for (std::size_t c=0; c<ncomp; ++c)
+            {
+              auto max_mark = c * ndof_NodalExtrm;
+              auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
+              uNodalExtrm(i->second,max_mark,0) =
+                std::max(uNodalExtrm(i->second,max_mark,0), U(e,c*rdof,0));
+              uNodalExtrm(i->second,min_mark,0) =
+                std::min(uNodalExtrm(i->second,min_mark,0), U(e,c*rdof,0));
+            }
+
+            // Find the nodal extrema of conservative variables
+            for (std::size_t c=0; c<nprim; ++c)
+            {
+              auto max_mark = c * ndof_NodalExtrm;
+              auto min_mark = max_mark + nprim * ndof_NodalExtrm;
+              pNodalExtrm(i->second,max_mark,0) =
+                std::max(pNodalExtrm(i->second,max_mark,0), P(e,c*rdof,0));
+              pNodalExtrm(i->second,min_mark,0) =
+                std::min(pNodalExtrm(i->second,min_mark,0), P(e,c*rdof,0));
+            }
+          }
+        }
       }
     }
 

@@ -306,6 +306,7 @@ VertexBasedTransport_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
@@ -362,8 +363,8 @@ VertexBasedTransport_P1(
       TransformBasis(ncomp, offset, e, dof_el, U, inpoel, coord, unk);
 
       // limit conserved quantities
-      auto phi = VertexBasedFunction(U, esup, inpoel, coord, e, rdof, dof_el,
-        offset, ncomp, gid, bid, uNodalExtrm);
+      auto phi = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e,
+        rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(ncomp, 0);
@@ -398,6 +399,7 @@ VertexBased_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t offset,
+  const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
@@ -474,12 +476,12 @@ VertexBased_P1(
       // If DGP2 is applied, apply the limiter function to the first derivative
       // to obtain the limiting coefficient for P2 coefficients
       if(dof_el > 4)
-        phic_p2 = VertexBasedFunction_P2(unk, U, esup, inpoel, coord, geoElem, e, rdof, dof_el,
-          offset, ncomp);
+        phic_p2 = VertexBasedFunction_P2(unk, U, esup, inpoel, coord, geoElem,
+          e, rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       // limit conserved quantities
-      phic_p1 = VertexBasedFunction(unk, U, esup, inpoel, coord, e, rdof, dof_el,
-        offset, ncomp, gid, bid, uNodalExtrm);
+      phic_p1 = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e,
+        rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       if(dof_el > 4)
         for (std::size_t c=0; c<ncomp; ++c)
@@ -510,6 +512,7 @@ VertexBased_P1(
     }
   }
 
+  // Store the limited solution with Dubiner basis
   for (std::size_t e=0; e<nelem; ++e)
   {
     for (std::size_t c=0; c<ncomp; ++c)
@@ -540,6 +543,7 @@ VertexBasedMultiMat_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
@@ -604,11 +608,11 @@ VertexBasedMultiMat_P1(
       TransformBasis(ncomp, offset, e, dof_el, U, inpoel, coord, unk);
 
       // limit conserved quantities
-      auto phic = VertexBasedFunction(unk, U, esup, inpoel, coord, e,
+      auto phic = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
       // limit primitive quantities
-      auto phip = VertexBasedFunction(unk, P, esup, inpoel, coord, e,
-        rdof, dof_el, offset, nprim, gid, bid, uNodalExtrm);
+      auto phip = VertexBasedFunction(unk, P, esup, inpoel, coord, geoElem, e,
+        rdof, dof_el, offset, nprim, gid, bid, pNodalExtrm);
 
       if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
@@ -1077,7 +1081,10 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
   std::size_t rdof,
   [[maybe_unused]] std::size_t dof_el,
   std::size_t offset,
-  std::size_t ncomp )
+  std::size_t ncomp,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& bid,
+  const tk::Fields& NodalExtrm )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter function calculation for P2 dofs
 //! \param[in] U High-order solution vector which is to be limited
@@ -1092,7 +1099,9 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
 //! \return phi Limiter function for solution in element e
 // *****************************************************************************
 {
-    // Prepare for calculating Basis functions
+  const auto nelem = inpoel.size() / 4;
+
+  // Prepare for calculating Basis functions
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
@@ -1131,47 +1140,61 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
     // neighborhood of node p
     for (auto er : pesup)
     {
-      // Coordinates of the neighboring element
-      //std::array< std::array< tk::real, 3>, 4 > coorder {{
-      // {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
-      // {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
-      // {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
-      // {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
-
-      std::array< std::array< tk::real, 3 >, 3 > jacInv_er;
-
-      jacInv_er[0][0] = geoElem(er, 5, 0);
-      jacInv_er[1][0] = geoElem(er, 6, 0);
-      jacInv_er[2][0] = geoElem(er, 7, 0);
-
-      jacInv_er[0][1] = geoElem(er, 8, 0);
-      jacInv_er[1][1] = geoElem(er, 9, 0);
-      jacInv_er[2][1] = geoElem(er, 10, 0);
-
-      jacInv_er[0][2] = geoElem(er, 11, 0);
-      jacInv_er[1][2] = geoElem(er, 12, 0);
-      jacInv_er[2][2] = geoElem(er, 13, 0);
-
-
-      // Compute the derivatives of basis function in the physical domain
-      auto dBdx_er = tk::eval_dBdx_p1( rdof, jacInv_er );
-
-      if(rdof > 4)
-        tk::evaldBdx_p2(center, jacInv_er, dBdx_er);
-
-      for (std::size_t c=0; c<ncomp; ++c)
+      if(er < nelem)      // If this is internal element
       {
-        auto mark = c*rdof;
-        for (std::size_t idir=0; idir < 3; ++idir)
+        // Coordinates of the neighboring element
+        std::array< std::array< tk::real, 3>, 4 > coorder {{
+         {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
+         {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
+         {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
+         {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
+
+        auto jacInv_er = 
+          tk::inverseJacobian( coorder[0], coorder[1], coorder[2], coorder[3] );
+
+        // Compute the derivatives of basis function in the physical domain
+        auto dBdx_er = tk::eval_dBdx_p1( rdof, jacInv_er );
+
+        if(rdof > 4)
+          tk::evaldBdx_p2(center, jacInv_er, dBdx_er);
+
+        for (std::size_t c=0; c<ncomp; ++c)
         {
-          // The first order derivative at the centroid of element er
-          tk::real slope_er(0.0);
-          for(std::size_t idof = 1; idof < rdof; idof++)
-            slope_er += U(er, mark+idof, offset) * dBdx_er[idir][idof];
+          auto mark = c*rdof;
+          for (std::size_t idir=0; idir < 3; ++idir)
+          {
+            // The first order derivative at the centroid of element er
+            tk::real slope_er(0.0);
+            for(std::size_t idof = 1; idof < rdof; idof++)
+              slope_er += U(er, mark+idof, offset) * dBdx_er[idir][idof];
 
-          uMin[c][idir] = std::min(uMin[c][idir], slope_er);
-          uMax[c][idir] = std::max(uMax[c][idir], slope_er);
+            uMin[c][idir] = std::min(uMin[c][idir], slope_er);
+            uMax[c][idir] = std::max(uMax[c][idir], slope_er);
 
+          }
+        }
+      }
+      else          // If this is chare-boundary element
+      {
+        // If node p is the chare-boundary node, find min/max by comparing with
+        // the chare-boundary nodal extrema from vector NodalExtrm
+        auto gip = bid.find( gid[p] );
+        if(gip != end(bid))
+        {
+          for (std::size_t c=0; c<ncomp; ++c)
+          {
+            for (std::size_t idir = 0; idir < 3; idir++)
+            {
+              // Since this piece of code will only be called when DG(P2) is
+              // applied. Hence, 4 is used to represent ndof_NodalExtrm
+              auto max_mark = 4*c + idir + 1;
+              auto min_mark = max_mark + 4*ncomp;
+              uMax[c][idir] =
+                std::max(NodalExtrm(gip->second,max_mark,0), uMax[c][idir]);
+              uMin[c][idir] =
+                std::min(NodalExtrm(gip->second,min_mark,0), uMin[c][idir]);
+            }
+          }
         }
       }
     }
