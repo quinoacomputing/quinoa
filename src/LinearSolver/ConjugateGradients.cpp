@@ -288,6 +288,7 @@ ConjugateGradients::init(
     }
 
     ownbc_complete( cb );
+
   }
 }
 
