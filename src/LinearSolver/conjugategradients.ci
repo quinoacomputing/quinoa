@@ -30,7 +30,8 @@ module conjugategradients {
       entry void init( const std::vector< tk::real >& x,
                        const std::unordered_map< std::size_t,
                          std::array< std::pair< bool, tk::real >, 3 > >& bc,
-                       CkCallback cb );
+                       CkCallback cb,
+                       bool applybc );
       entry void setup( CkCallback cb );
       entry void solve( std::size_t maxit, tk::real stop_tol, CkCallback c );
       entry [reductiontarget] void normb( tk::real n );
