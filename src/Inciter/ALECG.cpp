@@ -918,8 +918,8 @@ ALECG::meshvelbc()
       std::array< std::pair< bool, tk::real >, 3 > > wbc;
     for (auto i : m_meshvelbcnodes)
       wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
-    for (auto i : m_symbcnodes)
-      wbc[i] = {{ {false,0}, {true,0}, {true,0} }};
+    //for (auto i : m_symbcnodes)
+    //  wbc[i] = {{ {false,0}, {true,0}, {true,0} }};
 
     // set smoother linear solve initial guess as current mesh velocity
     std::vector< tk::real > w( m_w.nunk()*3 );
