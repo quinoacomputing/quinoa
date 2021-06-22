@@ -210,9 +210,9 @@ class ConjugateGradients : public CBase_ConjugateGradients {
               const std::vector< tk::real >& b,
               CkCallback c );
 
-    //! Initiate A * x for computing the initial residual, r = b - A * x
+    //! Initiate A * x for computing the residual, r = b - A * x
     void residual();
-    //! Compute the initial residual, r = b - A * x
+    //! Finish computing the initial residual, r = b - A * x
     void initres();
 
     //! Apply boundary conditions

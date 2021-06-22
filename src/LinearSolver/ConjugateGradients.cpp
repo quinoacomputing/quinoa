@@ -91,10 +91,8 @@ ConjugateGradients::setup( CkCallback c )
 // *****************************************************************************
 //  Setup solver
 //! \param[in] c Call to continue with after initialization is complete
-//! \details This function initiates computing the initial residual and the
-//!   norm of the rhs. As opposed to init() this function allows setting up the
-//!   linear solver with the initial guess and the rhs as created by the
-//!   constructor.
+//! \details This function initiates computing the residual (r=b-A*x), its dot
+//!   product, and the rhs norm.
 // *****************************************************************************
 {
   m_initres = c;
@@ -196,7 +194,7 @@ ConjugateGradients::comres( const std::vector< std::size_t >& gid,
 void
 ConjugateGradients::initres()
 // *****************************************************************************
-// Compute the initial residual, r = b - A * x
+// Finish computing the initial residual, r = b - A * x
 // *****************************************************************************
 {
   // Combine own and communicated contributions to r = A * x
@@ -207,11 +205,14 @@ ConjugateGradients::initres()
   }
   tk::destroy( m_rc );
 
-  // Finish computing initial residual, r = b - A * x
+  // Finish computing the initial residual, r = b - A * x
   for (auto& r : m_r) r *= -1.0;
   m_r += m_b;
 
-  // initiate computing the norm of the initial residual, rho = (r,r)
+  // Initialize p
+  m_p = m_r;
+
+  // initiate computing the dot product of the initial residual, rho = (r,r)
   dot( m_r, m_r,
        CkCallback( CkReductionTarget(ConjugateGradients,rho), thisProxy ) );
 }
@@ -223,7 +224,7 @@ ConjugateGradients::rho( tk::real r )
 //! \param[in] r Dot product, rho = (r,r) (aggregated across all chares)
 // *****************************************************************************
 {
-  // store norm of residual
+  // store dot product of residual
   m_rho = r;
 
   // send back rhs norm to caller
@@ -252,7 +253,7 @@ ConjugateGradients::init(
 
   if (not applybc) {
 
-    // Recompute residual (r=A*x) and the norms of r and b
+    // Recompute initial residual (r=b-A*x), its dot product, and the rhs norm
     setup( cb );
 
   } else {
@@ -333,7 +334,7 @@ ConjugateGradients::apply( CkCallback cb )
     }
   }
 
-  // Recompute residual (r=A*x) and the norms of r and b
+  // Recompute initial residual (r=b-A*x), its dot product, and the rhs norm
   setup( cb );
 }
 
