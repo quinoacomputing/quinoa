@@ -158,8 +158,8 @@ ConjugateGradients::residual()
       std::size_t j = 0;
       for (auto g : n) {
         std::vector< tk::real > nr( ncomp );
-        auto lid = tk::cref_find( m_lid, g );
-        for (std::size_t d=0; d<ncomp; ++d) nr[d] = m_r[ lid*ncomp+d ];
+        auto i = tk::cref_find( m_lid, g );
+        for (std::size_t d=0; d<ncomp; ++d) nr[d] = m_r[ i*ncomp+d ];
         rc[j++] = std::move(nr);
       }
       thisProxy[c].comres( std::vector<std::size_t>(begin(n),end(n)), rc );
@@ -200,8 +200,8 @@ ConjugateGradients::initres()
   // Combine own and communicated contributions to r = A * x
   auto ncomp = m_A.Ncomp();
   for (const auto& [gid,r] : m_rc) {
-    auto lid = tk::cref_find( m_lid, gid );
-    for (std::size_t c=0; c<ncomp; ++c) m_r[lid*ncomp+c] += r[c];
+    auto i = tk::cref_find( m_lid, gid );
+    for (std::size_t c=0; c<ncomp; ++c) m_r[i*ncomp+c] += r[c];
   }
   tk::destroy( m_rc );
 
@@ -281,9 +281,9 @@ ConjugateGradients::init(
         std::unordered_map< std::size_t,
           std::array< std::pair< bool, tk::real >, 3 > > expbc;
         for (auto g : n) {
-          auto lid = tk::cref_find( m_lid, g );
-          auto i = bc.find( lid );
-          if (i != end(bc)) expbc[g] = i->second;
+          auto i = tk::cref_find( m_lid, g );
+          auto b = bc.find(i);
+          if (b != end(bc)) expbc[g] = b->second;
         }
         thisProxy[c].combc( expbc );
       }
@@ -392,8 +392,8 @@ ConjugateGradients::qAp()
       std::size_t j = 0;
       for (auto g : n) {
         std::vector< tk::real > nq( ncomp );
-        auto lid = tk::cref_find( m_lid, g );
-        for (std::size_t d=0; d<ncomp; ++d) nq[d] = m_q[ lid*ncomp+d ];
+        auto i = tk::cref_find( m_lid, g );
+        for (std::size_t d=0; d<ncomp; ++d) nq[d] = m_q[ i*ncomp+d ];
         qc[j++] = std::move(nq);
       }
       thisProxy[c].comq( std::vector<std::size_t>(begin(n),end(n)), qc );
@@ -434,8 +434,8 @@ ConjugateGradients::q()
   // Combine own and communicated contributions to q = A * p
   auto ncomp = m_A.Ncomp();
   for (const auto& [gid,q] : m_qc) {
-    auto lid = tk::cref_find( m_lid, gid );
-    for (std::size_t c=0; c<ncomp; ++c) m_q[lid*ncomp+c] += q[c];
+    auto i = tk::cref_find( m_lid, gid );
+    for (std::size_t c=0; c<ncomp; ++c) m_q[i*ncomp+c] += q[c];
   }
   tk::destroy( m_qc );
 
