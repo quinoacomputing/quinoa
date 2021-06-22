@@ -117,14 +117,9 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c];
   for (const auto& mtype : matprop) {
     const auto& m_id = mtype.get< tag::id >();
-    if (mtype.get< tag::eos >() == ctr::MaterialType::STIFFENEDGAS) {
-      nfo.emplace_back( "Stiffened Gas EoS materials: ",
-        std::to_string(m_id.size()) );
-    }
-    else if (mtype.get< tag::eos >() == ctr::MaterialType::JWL) {
-      nfo.emplace_back( "Jones-Wilkins-Lee (JWL) EoS:",
-        std::to_string(m_id.size()) );
-    }
+    ctr::Material opt;
+    nfo.emplace_back( opt.name( mtype.get< tag::eos >() ),
+      std::to_string(m_id.size()) );
 
     nfo.emplace_back( "material id", parameters( m_id ) );
     nfo.emplace_back( "ratio of specific heats",

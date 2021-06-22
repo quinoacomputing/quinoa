@@ -105,14 +105,9 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   // Material property output
   const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c][0];
   const auto& m_id = matprop.get< tag::id >();
-  if (matprop.get< tag::eos >() == ctr::MaterialType::STIFFENEDGAS) {
-    nfo.emplace_back( "Stiffened Gas EoS materials: ",
-      std::to_string(m_id.size()) );
-  }
-  else if (matprop.get< tag::eos >() == ctr::MaterialType::JWL) {
-    nfo.emplace_back( "Jones-Wilkins-Lee (JWL) EoS:",
-      std::to_string(m_id.size()) );
-  }
+  ctr::Material mopt;
+  nfo.emplace_back( mopt.name( matprop.get< tag::eos >() ),
+    std::to_string(m_id.size()) );
 
   nfo.emplace_back( "ratio of specific heats",
     parameters(matprop.get< tag::gamma >()) );

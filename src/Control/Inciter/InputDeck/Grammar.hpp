@@ -276,6 +276,8 @@ namespace grm {
         mat_id.push_back(0);
       else if (mat_id.size() != 1)
         Message< Stack, ERROR, MsgKey::NUMMAT >( stack, in );
+      else
+        mat_id[0] = 0;
 
       if (meos == inciter::ctr::MaterialType::STIFFENEDGAS) {
         const auto& gamma = matprop.template get< tag::gamma >();

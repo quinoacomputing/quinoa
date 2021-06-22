@@ -254,19 +254,19 @@ namespace grm {
     { MsgKey::NUMMAT, "The total number of materials in all the material "
       "blocks is not equal to the number of materials 'nmat' specified for "
       "this system." },
-    { MsgKey::EOSGAMMA, "Incorrect number of multi-material equation of state "
-      "(EOS) 'gamma' parameters configured in the preceding block's 'material "
-      "... end' sub-block. The number of components between 'gamma ... end' is "
+    { MsgKey::EOSGAMMA, "Incorrect number of equation of state (EOS) 'gamma' "
+      "parameters configured in the preceding block's 'material ... end' "
+      "sub-block. The number of components between 'gamma ... end' is "
       "incorrect, whose size must equal the number of material-ids set by "
       "keyword 'id' in that 'material ... end' sub-block." },
-    { MsgKey::EOSCV, "Incorrect number of multi-material equation of state "
-      "(EOS) 'cv' parameters configured in the preceding block's 'material "
-      "... end' sub-block. The number of components between 'cv... end' is "
+    { MsgKey::EOSCV, "Incorrect number of equation of state (EOS) 'cv' "
+      "parameters configured in the preceding block's 'material ... end' "
+      "sub-block. The number of components between 'cv... end' is "
       "incorrect, whose size must equal the number of material-ids set by "
       "keyword 'id' in that 'material ... end' sub-block." },
-    { MsgKey::EOSPSTIFF, "Incorrect number of multi-material equation of state "
-      "(EOS) 'pstiff' parameters configured in the preceding block's 'material "
-      "... end' sub-block. The number of components between 'pstiff ... end' "
+    { MsgKey::EOSPSTIFF, "Incorrect number of equation of state (EOS) 'pstiff' "
+      "parameters configured in the preceding block's 'material ... end' "
+      "sub-block. The number of components between 'pstiff ... end' "
       "is incorrect, whose size must equal the number of material-ids set by "
       "keyword 'id' in that 'material ... end' sub-block." },
     { MsgKey::NORNG, "The random number generator has not been specified in "
