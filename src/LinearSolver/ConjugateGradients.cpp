@@ -252,6 +252,7 @@ ConjugateGradients::init(
 
   if (not applybc) {
 
+    // Recompute residual (r=A*x) and the norms of r and b
     setup( cb );
 
   } else {
@@ -332,7 +333,7 @@ ConjugateGradients::apply( CkCallback cb )
     }
   }
 
-  // Continue to setup linear solver after communicating and applying BCs
+  // Recompute residual (r=A*x) and the norms of r and b
   setup( cb );
 }
 
