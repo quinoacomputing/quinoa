@@ -276,17 +276,13 @@ class Transport {
                 tk::Fields& ) const
     {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       if (limiter == ctr::LimiterType::WENOP1)
         WENO_P1( fd.Esuel(), m_offset, U );
       else if (limiter == ctr::LimiterType::SUPERBEEP1)
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
-      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
         VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, coord, gid, bid, uNodalExtrm, U );
-      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
-        VertexBasedTransport_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm, U );
     }
 
