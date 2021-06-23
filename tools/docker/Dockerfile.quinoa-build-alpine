@@ -53,7 +53,7 @@ RUN cd quinoa && git submodule init && git submodule update --recursive && cd ex
 # Build TPLs
 RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DBUILD_SHARED_LIBS=off .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build quinoa
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="--bind-to none -oversubscribe" ../src && make -sj$(grep -c processor /proc/cpuinfo) && npe=$(grep -c processor /proc/cpuinfo) && ./charmrun +p $npe Main/unittest -v -q && ctest -j $npe --output-on-failure -LE extreme
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="--bind-to none -oversubscribe" ../src && make -sj$(grep -c processor /proc/cpuinfo) && npe=$(expr $(grep -c processor /proc/cpuinfo) / 2) && ./charmrun +p $npe Main/unittest -v -q && ctest -j $npe --output-on-failure -LE extreme
 
 # Ensure all executables are statically linked
 RUN cd quinoa/build && \
