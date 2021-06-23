@@ -1373,9 +1373,9 @@ ALECG::writeFields( CkCallback c )
 
     // Output mesh velocity if ALE is enabled
     if (d->ALE()) {
-       nodefieldnames.push_back( "x mesh velocity" );
-       nodefieldnames.push_back( "y mesh velocity" );
-       nodefieldnames.push_back( "z mesh velocity" );
+       nodefieldnames.push_back( "x-mesh-velocity" );
+       nodefieldnames.push_back( "y-mesh-velocity" );
+       nodefieldnames.push_back( "z-mesh-velocity" );
        nodefieldnames.push_back( "volume" );
        nodefields.push_back( m_w.extract(0,0) );
        nodefields.push_back( m_w.extract(1,0) );
@@ -1388,10 +1388,9 @@ ALECG::writeFields( CkCallback c )
       analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
 
     // Collect field output from analytical solutions (if exist)
-    auto t = d->T();
     for (const auto& eq : g_cgpde)
       analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1],
-                           coord[2], t, nodefields );
+                           coord[2], d->T(), nodefields );
 
     // Query and collect block and surface field names from PDEs integrated
     std::vector< std::string > nodesurfnames;
