@@ -767,6 +767,7 @@ class MultiMat {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       // limit vectors of conserved and primitive quantities
       if (limiter == ctr::LimiterType::SUPERBEEP1)
@@ -774,9 +775,15 @@ class MultiMat {
         SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_system, m_offset,
           coord, U, P, nmat );
       }
-      else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
+          m_system, m_offset, coord, gid, bid, uNodalExtrm, pNodalExtrm, U, P,
+          nmat );
+      }
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
+      {
+        VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm,
           pNodalExtrm, U, P, nmat );
       }

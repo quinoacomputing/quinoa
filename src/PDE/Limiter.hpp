@@ -68,6 +68,21 @@ VertexBasedTransport_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const tk::UnsMesh::Coords& coord,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& bid,
+  const std::vector< std::vector<tk::real> >& uNodalExtrm,
+  tk::Fields& U );
+
+//! Kuzmin's vertex-based limiter for transport DGP2
+void
+VertexBasedTransport_P2(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
@@ -83,6 +98,20 @@ VertexBased_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t offset,
+  const tk::UnsMesh::Coords& coord,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& bid,
+  const std::vector< std::vector<tk::real> >& uNodalExtrm,
+  tk::Fields& U );
+
+//! Kuzmin's vertex-based limiter for single-material DGP2
+void
+VertexBased_P2(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  std::size_t offset,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
@@ -93,6 +122,24 @@ VertexBased_P1(
 //! Kuzmin's vertex-based limiter for multi-material DGP1
 void
 VertexBasedMultiMat_P1(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  const tk::UnsMesh::Coords& coord,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& bid,
+  const std::vector< std::vector<tk::real> >& uNodalExtrm,
+  const std::vector< std::vector<tk::real> >& pNodalExtrm,
+  tk::Fields& U,
+  tk::Fields& P,
+  std::size_t nmat );
+
+//! Kuzmin's vertex-based limiter for multi-material DGP2
+void
+VertexBasedMultiMat_P2(
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
@@ -134,9 +181,24 @@ SuperbeeFunction( const tk::Fields& U,
                   inciter:: ncomp_t ncomp,
                   tk::real beta_lim );
 
-//! Kuzmin's vertex-based limiter function calculation for P1 dofs
+//! Kuzmin's vertex-based p1 limiter function calculation for P1 dofs
 std::vector< tk::real >
-VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
+VertexBasedFunction( const tk::Fields& U,
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  std::size_t e,
+  std::size_t rdof,
+  std::size_t dof_el,
+  std::size_t offset,
+  std::size_t ncomp,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& bid,
+  const std::vector< std::vector<tk::real> >& NodalExtrm );
+
+//! Kuzmin's vertex-based p2 limiter function calculation for P1 dofs
+std::vector< tk::real >
+VertexBasedFunction_Taylor( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -151,7 +213,7 @@ VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& NodalExtrm );
 
-//! Kuzmin's vertex-based limiter function calculation for P2 dofs
+//! Kuzmin's vertex-based p2 limiter function calculation for P2 dofs
 std::vector< tk::real >
 VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
