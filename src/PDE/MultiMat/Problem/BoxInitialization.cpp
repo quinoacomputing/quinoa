@@ -23,13 +23,14 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 
 void initializeBox( std::size_t system,
-                    tk::real,
+                    tk::real VRatio,
                     tk::real,
                     const inciter::ctr::box& b,
                     std::vector< tk::real >& s )
 // *****************************************************************************
 // Set the solution in the user-defined IC box
 //! \param[in] system Equation system index
+//! \param[in] VRatio Ratio of exact box volume to discrete box volume
 //! \param[in] b IC box configuration to use
 //! \param[in,out] s Solution vector that is set to box ICs
 //! \details This function sets the fluid density and total specific energy
@@ -62,6 +63,7 @@ void initializeBox( std::size_t system,
   auto boxene = b.template get< tag::energy >();
   auto boxtemp = b.template get< tag::temperature >();
   auto boxmas = b.template get< tag::mass >();
+  auto boxenc = b.template get< tag::energy_content >();
 
   auto alphamin = 1.0e-12;
 
@@ -83,7 +85,50 @@ void initializeBox( std::size_t system,
   // nodes within a box.
   if (inittype == ctr::InitiateType::IMPULSE) {
     if (boxmas > 0.0) {
-      Throw("IC-box with specified mass not set up for multimat");
+      Assert( boxenc > 0.0, "Box energy content must be nonzero" );
+      // determine density and energy of material in the box
+      auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
+      rhok[boxmatid-1] = boxmas / V_ex;
+      auto spi = boxenc * VRatio / rhok[boxmatid-1];
+
+      // based on the density and energy of the material, determine pressure
+      // and temperature
+      auto boxmat_vf = s[volfracIdx(nmat,boxmatid-1)];
+      auto pr_box = eos_pressure< tag::multimat >(system,
+        boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
+        boxmat_vf, boxmatid-1);
+      auto t_box = eos_temperature< tag::multimat >(system,
+        boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
+        boxmat_vf, boxmatid-1);
+
+      // find density of trace material quantities in the box based on pressure
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (k != boxmatid-1) {
+          rhok[k] = eos_density< tag::multimat >(system, pr_box, t_box, k);
+        }
+      }
+
+      // initialize box based on above
+      auto rb(0.0);
+      for (std::size_t k=0; k<nmat; ++k) {
+        // partial density
+        s[densityIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k];
+        // total specific energy
+        if (k == boxmatid-1) {
+          s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k] * spi;
+        }
+        else {
+          s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
+            eos_totalenergy< tag::multimat >(system, rhok[k], u, v, w, pr_box,
+            k);
+        }
+        // bulk density
+        rb += s[densityIdx(nmat,k)];
+      }
+      // bulk momentum
+      s[momentumIdx(nmat,0)] = rb * u;
+      s[momentumIdx(nmat,1)] = rb * v;
+      s[momentumIdx(nmat,2)] = rb * w;
     } else {
       for (std::size_t k=0; k<nmat; ++k) {
         rhok[k] = eos_density< tag::multimat >(system, boxpre, boxtemp, k);
