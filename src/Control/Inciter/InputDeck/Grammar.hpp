@@ -484,6 +484,7 @@ namespace grm {
       matidxmap.template get< tag::eosidx >().resize(nmat.back());
       matidxmap.template get< tag::matidx >().resize(nmat.back());
       std::size_t tmat(0), i(0);
+      std::set< std::size_t > matidset;
 
       for (auto& mtype : matprop.back()) {
         const auto& meos = mtype.template get< tag::eos >();
@@ -521,10 +522,18 @@ namespace grm {
         // Track total number of materials in multiple material blocks
         tmat += mat_id.size();
 
+        // Check for repeating user specified material ids
+        for (auto midx : mat_id) {
+          if (!matidset.count(midx))
+            matidset.insert(midx);
+          else
+            Message< Stack, ERROR, MsgKey::REPMATID >( stack, in );
+        }
+
         // Generate mapping between material index and eos parameter index
         auto& eosmap = matidxmap.template get< tag::eosidx >();
         auto& idxmap = matidxmap.template get< tag::matidx >();
-        for (auto midx : mtype.template get< tag::id >()) {
+        for (auto midx : mat_id) {
           midx -= 1;
           eosmap[midx] = static_cast< std::size_t >(mtype.template get<
             tag::eos >());
@@ -538,6 +547,16 @@ namespace grm {
       // If total number of materials is incorrect, error out
       if (tmat != nmat.back())
         Message< Stack, ERROR, MsgKey::NUMMAT >( stack, in );
+
+      // Check if material ids are contiguous and 1-based
+      if (!matidset.count(1))
+        Message< Stack, ERROR, MsgKey::ONEMATID >( stack, in );
+      std::size_t icount(1);
+      for (auto midx : matidset) {
+        if (midx != icount)
+          Message< Stack, ERROR, MsgKey::GAPMATID >( stack, in );
+        ++icount;
+      }
 
       // If pressure relaxation is not specified, default to 'false'
       auto& prelax = stack.template get< param, eq, tag::prelax >();

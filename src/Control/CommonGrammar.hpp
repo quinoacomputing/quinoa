@@ -112,6 +112,9 @@ namespace grm {
     LARGECOMP,          //!< Component index indexing out of max eq sys ncomp
     NONMAT,             //!< No number of materials selected
     NUMMAT,             //!< Incorrect number of materials selected
+    REPMATID,           //!< Repeating material id
+    ONEMATID,           //!< Material id not one-based
+    GAPMATID,           //!< Material id not contiguous
     EOSGAMMA,           //!< Wrong number of EOS gamma parameters
     EOSCV,              //!< Wrong number of EOS cv parameters
     EOSPSTIFF,          //!< Wrong number of EOS pstiff parameters
@@ -254,6 +257,12 @@ namespace grm {
     { MsgKey::NUMMAT, "The total number of materials in all the material "
       "blocks is not equal to the number of materials 'nmat' specified for "
       "this system." },
+    { MsgKey::REPMATID, "Repeating material id specified in 'material ... end' "
+      "block. Material ids must be unique." },
+    { MsgKey::ONEMATID, "Material ids specified in 'material ... end' blocks "
+      "not one-based. Material ids must begin with one." },
+    { MsgKey::GAPMATID, "Material ids specified in 'material ... end' blocks "
+      "have a gap. Material ids must be contiguous." },
     { MsgKey::EOSGAMMA, "Incorrect number of equation of state (EOS) 'gamma' "
       "parameters configured in the preceding block's 'material ... end' "
       "sub-block. The number of components between 'gamma ... end' is "
