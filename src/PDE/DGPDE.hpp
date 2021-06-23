@@ -197,8 +197,8 @@ class DGPDE {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                const tk::Fields& uNodalExtrm,
-                const tk::Fields& pNodalExtrm,
+                const std::vector< std::vector<tk::real> >& uNodalExtrm,
+                const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
@@ -236,8 +236,8 @@ class DGPDE {
                            bid,
                          const tk::Fields& U,
                          const tk::Fields& P,
-                         tk::Fields& uNodalExtrm,
-                         tk::Fields& pNodalExtrm ) const
+                         std::vector< std::vector<tk::real> >& uNodalExtrm,
+                         std::vector< std::vector<tk::real> >& pNodalExtrm ) const
     {
       self->evalNodalExtrm( ncomp, nprim, ndof_NodalExtrm, bndel, inpoel, coord,
         gid, bid, U, P, uNodalExtrm, pNodalExtrm );
@@ -353,8 +353,8 @@ class DGPDE {
                           const std::vector< std::size_t >&,
                           const std::vector< std::size_t >&,
                           const std::unordered_map< std::size_t, std::size_t >&,
-                          const tk::Fields&,
-                          const tk::Fields&,
+                          const std::vector< std::vector<tk::real> >&,
+                          const std::vector< std::vector<tk::real> >&,
                           tk::Fields&,
                           tk::Fields& ) const = 0;
       virtual void rhs( tk::real,
@@ -380,8 +380,8 @@ class DGPDE {
         const std::unordered_map< std::size_t, std::size_t >& ,
         const tk::Fields& ,
         const tk::Fields& ,
-        tk::Fields& ,
-        tk::Fields&  ) const = 0;
+        std::vector< std::vector<tk::real> >& ,
+        std::vector< std::vector<tk::real> >&  ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const inciter::FaceData&,
@@ -473,8 +473,8 @@ class DGPDE {
                   const std::vector< std::size_t >& ndofel,
                   const std::vector< std::size_t >& gid,
                   const std::unordered_map< std::size_t, std::size_t >& bid,
-                  const tk::Fields& uNodalExtrm,
-                  const tk::Fields& pNodalExtrm,
+                  const std::vector< std::vector<tk::real> >& uNodalExtrm,
+                  const std::vector< std::vector<tk::real> >& pNodalExtrm,
                   tk::Fields& U,
                   tk::Fields& P ) const override
       {
@@ -509,8 +509,8 @@ class DGPDE {
         const std::unordered_map< std::size_t, std::size_t >& bid,
         const tk::Fields& U,
         const tk::Fields& P,
-        tk::Fields& uNodalExtrm,
-        tk::Fields& pNodalExtrm ) const override
+        std::vector< std::vector<tk::real> >& uNodalExtrm,
+        std::vector< std::vector<tk::real> >& pNodalExtrm ) const override
       {
         data.evalNodalExtrm( ncomp, nprim, ndof_NodalExtrm, bndel, inpoel,
           coord, gid, bid, U, P, uNodalExtrm, pNodalExtrm );

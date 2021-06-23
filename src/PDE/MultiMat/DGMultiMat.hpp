@@ -756,8 +756,8 @@ class MultiMat {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                const tk::Fields& uNodalExtrm,
-                const tk::Fields& pNodalExtrm,
+                const std::vector< std::vector<tk::real> >& uNodalExtrm,
+                const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
@@ -935,14 +935,14 @@ class MultiMat {
                          const std::size_t ndof_NodalExtrm,
                          const std::vector< std::size_t >& bndel,
                          const std::vector< std::size_t >& inpoel,
-                         const tk::UnsMesh::Coords& coord,
+                         [[maybe_unused]] const tk::UnsMesh::Coords& coord,
                          const std::vector< std::size_t >& gid,
                          const std::unordered_map< std::size_t, std::size_t >&
                            bid,
                          const tk::Fields& U,
                          const tk::Fields& P,
-                         tk::Fields& uNodalExtrm,
-                         tk::Fields& pNodalExtrm )
+                         std::vector< std::vector<tk::real> >& uNodalExtrm,
+                         std::vector< std::vector<tk::real> >& pNodalExtrm ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
@@ -963,10 +963,10 @@ class MultiMat {
             {
               auto max_mark = c * ndof_NodalExtrm;
               auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
-              uNodalExtrm(i->second,max_mark,0) =
-                std::max(uNodalExtrm(i->second,max_mark,0), U(e,c*rdof,0));
-              uNodalExtrm(i->second,min_mark,0) =
-                std::min(uNodalExtrm(i->second,min_mark,0), U(e,c*rdof,0));
+              uNodalExtrm[i->second][max_mark] =
+                std::max(uNodalExtrm[i->second][max_mark], U(e,c*rdof,0));
+              uNodalExtrm[i->second][min_mark] =
+                std::min(uNodalExtrm[i->second][min_mark], U(e,c*rdof,0));
             }
 
             // Find the nodal extrema of conservative variables
@@ -974,10 +974,10 @@ class MultiMat {
             {
               auto max_mark = c * ndof_NodalExtrm;
               auto min_mark = max_mark + nprim * ndof_NodalExtrm;
-              pNodalExtrm(i->second,max_mark,0) =
-                std::max(pNodalExtrm(i->second,max_mark,0), P(e,c*rdof,0));
-              pNodalExtrm(i->second,min_mark,0) =
-                std::min(pNodalExtrm(i->second,min_mark,0), P(e,c*rdof,0));
+              pNodalExtrm[i->second][max_mark] =
+                std::max(pNodalExtrm[i->second][max_mark], P(e,c*rdof,0));
+              pNodalExtrm[i->second][min_mark] =
+                std::min(pNodalExtrm[i->second][min_mark], P(e,c*rdof,0));
             }
           }
         }

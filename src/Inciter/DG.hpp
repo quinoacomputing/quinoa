@@ -340,9 +340,9 @@ class DG : public CBase_DG {
     //! Vector of right-hand side
     tk::Fields m_rhs;
     //! Vector of nodal extrema for conservative variables
-    tk::Fields m_uNodalExtrm;
+    std::vector< std::vector<tk::real> > m_uNodalExtrm;
     //! Vector of nodal extrema for primitive variables
-    tk::Fields m_pNodalExtrm;
+    std::vector< std::vector<tk::real> > m_pNodalExtrm;
     //! Buffer for vector of nodal extrema for conservative variables
     std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
     //! Buffer for vector of nodal extrema for primitive variables

@@ -297,8 +297,9 @@ class CompFlow {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                const tk::Fields& uNodalExtrm,
-                [[maybe_unused]] const tk::Fields& pNodalExtrm,
+                const std::vector< std::vector<tk::real> >& uNodalExtrm,
+                [[maybe_unused]] const std::vector< std::vector<tk::real> >&
+                  pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& ) const
     {
@@ -436,7 +437,7 @@ class CompFlow {
     //! \param[in,out] pNodalExtrm Chare-boundary nodal extrema for primitive
     //!   variables
     void evalNodalExtrm( const std::size_t ncomp,
-                         const std::size_t nprim,
+                         [[maybe_unused]] const std::size_t nprim,
                          const std::size_t ndof_NodalExtrm,
                          const std::vector< std::size_t >& bndel,
                          const std::vector< std::size_t >& inpoel,
@@ -446,8 +447,9 @@ class CompFlow {
                            bid,
                          const tk::Fields& U,
                          [[maybe_unused]] const tk::Fields& P,
-                         tk::Fields& uNodalExtrm,
-                         [[maybe_unused]] tk::Fields& pNodalExtrm )
+                         std::vector< std::vector<tk::real> >& uNodalExtrm,
+                         [[maybe_unused]] std::vector< std::vector<tk::real> >&
+                           pNodalExtrm ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
@@ -468,10 +470,10 @@ class CompFlow {
             {
               auto max_mark = c * ndof_NodalExtrm;
               auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
-              uNodalExtrm(i->second,max_mark,0) =
-                std::max(uNodalExtrm(i->second,max_mark,0), U(e,c*rdof,0));
-              uNodalExtrm(i->second,min_mark,0) =
-                std::min(uNodalExtrm(i->second,min_mark,0), U(e,c*rdof,0));
+              uNodalExtrm[i->second][max_mark] =
+                std::max(uNodalExtrm[i->second][max_mark], U(e,c*rdof,0));
+              uNodalExtrm[i->second][min_mark] =
+                std::min(uNodalExtrm[i->second][min_mark], U(e,c*rdof,0));
             }
 
             // If DG(P2) is applied, find the nodal extrema of the gradients of
@@ -519,10 +521,10 @@ class CompFlow {
                 {
                   auto max_mark = c * ndof_NodalExtrm + idof;
                   auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
-                  uNodalExtrm(i->second,max_mark,0) =
-                    std::max(uNodalExtrm(i->second,max_mark,0), grad[idof]);
-                  uNodalExtrm(i->second,min_mark,0) =
-                    std::min(uNodalExtrm(i->second,min_mark,0), grad[idof]);
+                  uNodalExtrm[i->second][max_mark] =
+                    std::max(uNodalExtrm[i->second][max_mark], grad[idof]);
+                  uNodalExtrm[i->second][min_mark] =
+                    std::min(uNodalExtrm[i->second][min_mark], grad[idof]);
                 }
               }
             }

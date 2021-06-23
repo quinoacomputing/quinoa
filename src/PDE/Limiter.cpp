@@ -310,7 +310,7 @@ VertexBasedTransport_P1(
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const tk::Fields& uNodalExtrm,
+  const std::vector< std::vector<tk::real> >& uNodalExtrm,
   tk::Fields& U )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for transport DGP1
@@ -403,7 +403,7 @@ VertexBased_P1(
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const tk::Fields& uNodalExtrm,
+  const std::vector< std::vector<tk::real> >& uNodalExtrm,
   tk::Fields& U )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for single-material DGP1
@@ -547,8 +547,8 @@ VertexBasedMultiMat_P1(
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const tk::Fields& uNodalExtrm,
-  const tk::Fields& pNodalExtrm,
+  const std::vector< std::vector<tk::real> >& uNodalExtrm,
+  const std::vector< std::vector<tk::real> >& pNodalExtrm,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat )
@@ -939,7 +939,7 @@ VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
   std::size_t ncomp,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const tk::Fields& NodalExtrm )
+  const std::vector< std::vector<tk::real> >& NodalExtrm )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter function calculation for P1 dofs
 //! \param[in] U High-order solution vector which is to be limited
@@ -1018,10 +1018,14 @@ VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
     auto gip = bid.find( gid[p] );
     if(gip != end(bid))
     {
+      auto size_NodalExtrm = NodalExtrm[0].size() / 2;
+      auto ndof_NodalExtrm = size_NodalExtrm / ncomp;
       for (std::size_t c=0; c<ncomp; ++c)
       {
-        uMax[c] = std::max(NodalExtrm(gip->second,c,0),       uMax[c]);
-        uMin[c] = std::min(NodalExtrm(gip->second,c+ncomp,0), uMin[c]);
+        auto mark_max = c * ndof_NodalExtrm;
+        auto mark_min = mark_max + size_NodalExtrm;
+        uMax[c] = std::max(NodalExtrm[gip->second][mark_max], uMax[c]);
+        uMin[c] = std::min(NodalExtrm[gip->second][mark_min], uMin[c]);
       }
     }
 
@@ -1084,7 +1088,7 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
   std::size_t ncomp,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const tk::Fields& NodalExtrm )
+  const std::vector< std::vector<tk::real> >& NodalExtrm )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter function calculation for P2 dofs
 //! \param[in] U High-order solution vector which is to be limited
@@ -1190,9 +1194,9 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
               auto max_mark = 4*c + idir + 1;
               auto min_mark = max_mark + 4*ncomp;
               uMax[c][idir] =
-                std::max(NodalExtrm(gip->second,max_mark,0), uMax[c][idir]);
+                std::max(NodalExtrm[gip->second][max_mark], uMax[c][idir]);
               uMin[c][idir] =
-                std::min(NodalExtrm(gip->second,min_mark,0), uMin[c][idir]);
+                std::min(NodalExtrm[gip->second][min_mark], uMin[c][idir]);
             }
           }
         }
