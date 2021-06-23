@@ -17,7 +17,7 @@
 #
 ################################################################################
 
-FROM alpine:latest
+FROM alpine:3.10
 
 # Install system-wide prerequisites
 RUN apk update && apk add patch libtool autoconf automake gfortran gcc g++ make boost-dev bash m4 file git cmake perl grep zlib-dev libexecinfo-dev libexecinfo-static ninja graphviz binutils-dev flex bison vim lua5.3-dev
