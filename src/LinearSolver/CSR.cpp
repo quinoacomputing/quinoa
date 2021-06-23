@@ -125,15 +125,15 @@ CSR::dirichlet( std::size_t i,
 //!   is empty, serial is assumed and gid is unused.
 // *****************************************************************************
 {
-  // Lambda to count the number of contributions to a node at which to set BC
-  auto count = [&]( std::size_t g ){
-    return 1.0 + std::count_if( nodecommap.cbegin(), nodecommap.cend(),
-                   [&](const auto& s) {
-                     return s.second.find(g) != s.second.cend(); } ); };
-
   auto incomp = i * ncomp;
-  auto diag = nodecommap.empty() ? 1.0 : 1.0/count(gid[i]);
+  auto diag = nodecommap.empty() ? 1.0 : 1.0/tk::count(nodecommap,gid[i]);
 
+  // zero column
+  for (std::size_t r=0; r<rnz.size()*ncomp; ++r)
+    for (std::size_t j=ia[r]-1; j<ia[r+1]-1; ++j)
+      if (incomp+pos+1==ja[j]) a[j] = 0.0;
+
+  // zero row and put in diagonal
   for (std::size_t j=ia[incomp+pos]-1; j<ia[incomp+pos+1]-1; ++j)
     if (incomp+pos+1==ja[j]) a[j] = diag; else a[j] = 0.0;
 }

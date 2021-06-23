@@ -74,7 +74,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //! Initialize linear solve: set initial guess and boundary conditions
     void init( const std::vector< tk::real >& x,
                     const std::unordered_map< std::size_t,
-                            std::array< std::pair< bool, tk::real >, 3 > >& bc,
+                            std::vector< std::pair< bool, tk::real > > >& bc,
                     CkCallback cb,
                     bool applybc );
 
@@ -93,10 +93,13 @@ class ConjugateGradients : public CBase_ConjugateGradients {
 
     //! Receive contributions to boundary conditions on chare-boundaries
     void combc( const std::unordered_map< std::size_t,
-                       std::array< std::pair< bool, tk::real >, 3 > >& bc );
+                       std::vector< std::pair< bool, tk::real > > >& bc );
 
     //! Receive contributions to q = A * p on chare-boundaries
     void comq( const std::vector< std::size_t >& gid,
+               const std::vector< std::vector< tk::real > >& qc );
+
+    void comx( const std::vector< std::size_t >& gid,
                const std::vector< std::vector< tk::real > >& qc );
 
     //! Compute the dot product (p,q)
@@ -142,6 +145,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_rho0;
       p | m_alpha;
       p | m_converged;
+      p | m_xc;
+      p | m_nx;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -170,10 +175,10 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     std::size_t m_nr;
     //! Dirichlet boundary conditions
     std::unordered_map< std::size_t,
-        std::array< std::pair< bool, tk::real >, 3 > > m_bc;
+        std::vector< std::pair< bool, tk::real > > > m_bc;
     //! Dirichlet boundary conditions communication buffer
     std::unordered_map< std::size_t,
-        std::array< std::pair< bool, tk::real >, 3 > > m_bcc;
+        std::vector< std::pair< bool, tk::real > > > m_bcc;
     //! Counter for assembling boundary conditions
     std::size_t m_nb;
     //! Auxiliary vector for CG solve
@@ -204,6 +209,10 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     tk::real m_alpha;
     //! Convergence flag: true if linear smoother converged to tolerance
     bool m_converged;
+    //! Receive buffer for solution
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_xc;
+    //! Counter for assembling the solution on chare boundaries
+    std::size_t m_nx;
 
     //! Initiate computationa of dot product of two vectors
     void dot( const std::vector< tk::real >& a,
@@ -225,6 +234,9 @@ class ConjugateGradients : public CBase_ConjugateGradients {
 
     //! Start next linear solver iteration
     void next();
+
+    //! Assemble solution on chare boundaries
+    void x();
 };
 
 } // tk::

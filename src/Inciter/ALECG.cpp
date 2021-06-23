@@ -915,11 +915,14 @@ ALECG::meshvelbc()
 
     // set mesh velocity smoother linear solve boundary conditions
     std::unordered_map< std::size_t,
-      std::array< std::pair< bool, tk::real >, 3 > > wbc;
+      std::vector< std::pair< bool, tk::real > > > wbc;
+    // Dirichlet BCs where user sepcified meshvel BCs
     for (auto i : m_meshvelbcnodes)
       wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
-    //for (auto i : m_symbcnodes)
-    //  wbc[i] = {{ {false,0}, {true,0}, {true,0} }};
+    // Dirichlet BCs on symmetry BCs (TODO: this needs to be generalized to
+    // arbitrarily oriented side sets)
+    for (auto i : m_symbcnodes)
+      wbc[i] = {{ {false,0}, {true,0}, {true,0} }};
 
     // set smoother linear solve initial guess as current mesh velocity
     std::vector< tk::real > w( m_w.nunk()*3 );
@@ -985,14 +988,6 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
     for (std::size_t j=0; j<3; ++j)
       for (std::size_t i=0; i<m_w.nunk(); ++i)
         m_w(i,j,0) = w[i*3+j];
-
-    // reinforce mesh velocity smoother linear solve boundary conditions
-    //for (auto i : m_meshvelbcnodes)
-    //  for (std::size_t j=0; j<3; ++j)
-    //    m_w(i,j,0) = 0.0;
-    //for (auto i : m_symbcnodes)
-    //  for (std::size_t j=1; j<3; ++j)
-    //    m_w(i,j,0) = 0.0;
 
   }
 

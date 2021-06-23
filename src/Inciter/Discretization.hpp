@@ -93,7 +93,7 @@ class Discretization : public CBase_Discretization {
     void
     meshvelInit( const std::vector< tk::real >& w,
                  const std::unordered_map< std::size_t,
-                         std::array< std::pair< bool, tk::real >, 3 > >& wbc,
+                         std::vector< std::pair< bool, tk::real > > >& wbc,
                 CkCallback c );
 
     //! Solve using Conjugrate Gradients linear solver

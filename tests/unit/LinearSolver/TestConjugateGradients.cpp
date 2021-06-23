@@ -214,7 +214,7 @@ void ConjugateGradients_object::test< 1 >() {
                               /* maxit = */ 10,
                               /* tol = * */ 1.0e-3,
                               /* normb_ex = */ 3.7416573867739413,
-                              /* normres_ex = */ 6.684025456497797,
+                              /* normres_ex = */ 3.8368230753371624e-15,
                               cg, 1 );
 
   // Initialize CG solve
@@ -287,7 +287,7 @@ void ConjugateGradients_object::test< 2 >() {
                               /* maxit = */ 10,
                               /* tol = * */ 1.0e-3,
                               /* normb_ex = */ 3.7416573867739413,
-                              /* normres_ex = */ 6.684025456497797,
+                              /* normres_ex = */ 3.8368230753371624e-15,
                               cg, 2 );
 
   for (std::size_t m=0; m<2; ++m) {  // for both mesh partitions
@@ -454,7 +454,7 @@ void ConjugateGradients_object::test< 3 >() {
                               /* maxit = */ 1000,
                               /* tol = * */ 1.0e-3,
                               /* normb_ex = */ 6.4807406984078604,
-                              /* normres_ex = */ 0.023755458181785562,
+                              /* normres_ex = */ 5.7532468516593534e-14,
                               cg, 1 );
 
   // Initialize CG solve
@@ -527,7 +527,7 @@ void ConjugateGradients_object::test< 4 >() {
                               /* maxit = */ 1000,
                               /* tol = * */ 1.0e-3,
                               /* normb_ex = */ 6.4807406984078604,
-                              /* normres_ex = */ 0.023755458181785562,
+                              /* normres_ex = */ 5.7532468516593534e-14,
                               cg, 2 );
 
   for (std::size_t m=0; m<2; ++m) {  // for both mesh partitions

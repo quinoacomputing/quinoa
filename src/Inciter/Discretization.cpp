@@ -227,7 +227,7 @@ void
 Discretization::meshvelInit(
   const std::vector< tk::real >& w,
   const std::unordered_map< std::size_t,
-          std::array< std::pair< bool, tk::real >, 3 > >& wbc,
+          std::vector< std::pair< bool, tk::real > > >& wbc,
   CkCallback c )
 // *****************************************************************************
 //  Initialize mesh velocity linear solve: set initial guess and BCs
