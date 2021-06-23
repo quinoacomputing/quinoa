@@ -1198,13 +1198,6 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  // Extract the element coordinates
-  //std::array< std::array< tk::real, 3>, 4 > coordel {{
-  //  {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-  //  {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-  //  {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-  //  {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
-
   std::vector< tk::real > phi(ncomp, 1.0);
   std::vector< std::vector< tk::real > > uMin, uMax;
   uMin.resize( ncomp, std::vector<tk::real>(3, 0.0) );
@@ -1319,15 +1312,14 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
       {
         phi_dir = 1.0;
         auto uNeg = state[c][idir-1] - unk[c][idir];
-        if (uNeg > 1.0e-5)
+        auto uref = std::max(std::fabs(unk[c][idir]), 1e-14);
+        if (uNeg > 1.0e-6*uref)
         {
-          //uNeg = std::max(uNeg, 1.0e-08);
           phi_dir =
             std::min( 1.0, ( uMax[c][idir-1] - unk[c][idir])/uNeg );
         }
-        else if (uNeg < -1.0e-5)
+        else if (uNeg < -1.0e-6*uref)
         {
-          //uNeg = std::min(uNeg, -1.0e-08);
           phi_dir =
             std::min( 1.0, ( uMin[c][idir-1] - unk[c][idir])/uNeg );
         }

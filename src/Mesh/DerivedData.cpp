@@ -1497,23 +1497,6 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
       }
     }
     geoElem(e,4,0) = edgelen;
-
-    auto jacInv = inverseJacobian( {x[A], y[A], z[A]},
-                                   {x[B], y[B], z[B]},
-                                   {x[C], y[C], z[C]},
-                                   {x[D], y[D], z[D]} );
-
-    geoElem(e,5,0) = jacInv[0][0];
-    geoElem(e,6,0) = jacInv[1][0];
-    geoElem(e,7,0) = jacInv[2][0];
-
-    geoElem(e,8,0) = jacInv[0][1];
-    geoElem(e,9,0) = jacInv[1][1];
-    geoElem(e,10,0) = jacInv[2][1];
-
-    geoElem(e,11,0) = jacInv[0][2];
-    geoElem(e,12,0) = jacInv[1][2];
-    geoElem(e,13,0) = jacInv[2][2];
   }
 
   return geoElem;

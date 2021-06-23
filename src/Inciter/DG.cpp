@@ -138,8 +138,6 @@ DG::DG( const CProxy_Discretization& disc,
   }
 
   // Allocate storage for the vector of nodal extrema
-  //std::cout << "start to initial uNodalExtrm " << m_ndof_NodalExtrm << "\t" <<
-  //  g_inputdeck.get< tag::component >().nprop() << std::endl;
   auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   if(rdof > 4)
     m_ndof_NodalExtrm = 4;
@@ -147,10 +145,6 @@ DG::DG( const CProxy_Discretization& disc,
     m_ndof_NodalExtrm*g_inputdeck.get< tag::component >().nprop() ) );
   m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
     m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()));
-  //std::cout << "start to finish uNodalExtrm " <<  m_p.nprop()  << "\t" <<
-  //   g_inputdeck.get< tag::discr, tag::rdof >() << std::endl;
-  //std::cout << "uNodal nprop = " << m_uNodalExtrm.nprop() << "\t" << m_uNodalExtrm.nunk() << "\t" << Disc()->Bid().size() << "\t" << 2 * m_ndof_NodalExtrm *
-  //  g_inputdeck.get< tag::component >().nprop() << std::endl;
 
   // Initialization for the buffer vector of nodal extrema
   resizeNodalExtremac();
@@ -1835,9 +1829,6 @@ DG::nodalExtrema()
     }
   }
 
-  //std::cout << "start initial" << std::endl;
-  //std::cout << "unknown = " << m_uNodalExtrm.nunk() << std::endl;
-  //std::cout << "unprop = " << m_uNodalExtrm.nprop() << std::endl;
   // Initialize nodal extrema vector
   auto large = std::numeric_limits< tk::real >::max();
   for(std::size_t i = 0; i<bid.size(); i++)
@@ -1852,7 +1843,6 @@ DG::nodalExtrema()
         m_uNodalExtrm[i][min_mark] =  large;
       }
     }
-    //std::cout << "finish u initial" << std::endl;
     for (std::size_t c=0; c<nprim; ++c)
     {
       for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
@@ -1865,48 +1855,11 @@ DG::nodalExtrema()
     }
   }
 
-  //std::cout << "start to evalNodalExtrm" << std::endl;
   // Evaluate the max/min value for the chare-boundary nodes
   if(rdof > 1)
     for (const auto& eq : g_dgpde)
       eq.evalNodalExtrm(ncomp, nprim, m_ndof_NodalExtrm, d->bndel(), m_inpoel,
         m_coord, gid, bid, m_u, m_p, m_uNodalExtrm, m_pNodalExtrm);
-  //std::cout << "end evalNodalExtrm" << std::endl;
-
-  //// Compute own portion of gradients for all equations
-  //for (auto e : d->bndel())  // elements contributing to chare boundary nodes
-  //{
-  //  // access node IDs
-  //  const std::vector<std::size_t> N
-  //      { m_inpoel[e*4+0], m_inpoel[e*4+1], m_inpoel[e*4+2], m_inpoel[e*4+3] };
-
-  //  // Evaluate the max/min value for the chare-boundary nodes
-  //  if(rdof > 1)
-  //    for (const auto& eq : g_dgpde)
-  //      eq.evalNodalExtrm(e, ncomp, nprim, m_ndof_NodalExtrm, N, m_coord, gid,
-  //        bid, m_u, m_p, m_uNodalExtrm, m_pNodalExtrm);
-  //  //for(std::size_t ip=0; ip<4; ++ip)
-  //  //{
-  //  //  auto i = bid.find( gid[N[ip]] );
-  //  //  if (i != end(bid))
-  //  //  {
-  //  //    for (std::size_t c=0; c<ncomp; ++c)
-  //  //    {
-  //  //      m_uNodalExtrm(i->second,c,0) =
-  //  //        std::max(m_uNodalExtrm(i->second,c,0), m_u(e,c*rdof,0));
-  //  //      m_uNodalExtrm(i->second,c+ncomp,0) =
-  //  //        std::min(m_uNodalExtrm(i->second,c+ncomp,0), m_u(e,c*rdof,0));
-  //  //    }
-  //  //    for (std::size_t c=0; c<nprim; ++c)
-  //  //    {
-  //  //      m_pNodalExtrm(i->second,c,0) =
-  //  //        std::max(m_pNodalExtrm(i->second,c,0), m_p(e,c*rdof,0));
-  //  //      m_pNodalExtrm(i->second,c+nprim,0) =
-  //  //        std::min(m_pNodalExtrm(i->second,c+nprim,0), m_p(e,c*rdof,0));
-  //  //    }
-  //  //  }
-  //  //}
-  //}
 
   // Communicate extrema at nodes to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
