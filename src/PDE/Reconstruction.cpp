@@ -23,6 +23,7 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Limiter.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
@@ -1051,14 +1052,8 @@ tk::evalPolynomialSol(std::size_t system,
     using inciter::pressureIdx;
     using inciter::volfracIdx;
 
-    const auto& matprop = inciter::g_inputdeck.get< tag::param, tag::multimat,
-      tag::material >()[system];
-    const auto& matidxmap = inciter::g_inputdeck.get< tag::param, tag::multimat,
-      tag::matidxmap >();
-
     for (std::size_t k=0; k<nmat; ++k) {
-      auto Pck = matprop[matidxmap.get< tag::eosidx >()[k]].get<
-        tag::pstiff >()[matidxmap.get< tag::matidx >()[k]];
+      auto Pck = inciter::pstiff< tag::multimat >(system, k);
       state[ncomp+pressureIdx(nmat,k)] = std::max(
         state[ncomp+pressureIdx(nmat,k)], state[volfracIdx(nmat,k)]*(-Pck+1e-12));
     }

@@ -22,6 +22,121 @@ extern ctr::InputDeck g_inputdeck;
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
+//! Get the ratio of specific heats (gamma) for a material
+//! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
+//! \param[in] system Equation system index
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \return Material ratio of specific heats (gamma)
+template< class Eq >
+tk::real gamma( ncomp_t system,
+  std::size_t imat=0 )
+{
+  const auto& matprop =
+    g_inputdeck.get< tag::param, Eq, tag::material >()[system];
+  const auto& meos =
+    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
+    tag::eosidx >()[imat];
+  const auto& midx =
+    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
+    tag::matidx >()[imat];
+
+  return matprop[meos].template get< tag::gamma >()[midx];
+}
+
+//! Get the specific heat at constant volume (cv) for a material
+//! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
+//! \param[in] system Equation system index
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \return Material specific heat at constant volume (cv)
+template< class Eq >
+tk::real cv( ncomp_t system,
+  std::size_t imat=0 )
+{
+  const auto& matprop =
+    g_inputdeck.get< tag::param, Eq, tag::material >()[system];
+  const auto& meos =
+    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
+    tag::eosidx >()[imat];
+  const auto& midx =
+    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
+    tag::matidx >()[imat];
+
+  return matprop[meos].template get< tag::cv >()[midx];
+}
+
+//! Get the stiffness parameter (pstiff) for a material
+//! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
+//! \param[in] system Equation system index
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \return Material stiffness parameter (pstiff)
+template< class Eq >
+tk::real pstiff( ncomp_t system,
+  std::size_t imat=0 )
+{
+  const auto& matprop =
+    g_inputdeck.get< tag::param, Eq, tag::material >()[system];
+  const auto& meos =
+    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
+    tag::eosidx >()[imat];
+  const auto& midx =
+    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
+    tag::matidx >()[imat];
+
+  return matprop[meos].template get< tag::pstiff >()[midx];
+}
+
+//! Get the thermal conductivity (k) for a material
+//! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
+//! \param[in] system Equation system index
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \return Material thermal conductivity (k)
+template< class Eq >
+tk::real k( ncomp_t system,
+  std::size_t imat=0 )
+{
+  const auto& matprop =
+    g_inputdeck.get< tag::param, Eq, tag::material >()[system];
+  const auto& meos =
+    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
+    tag::eosidx >()[imat];
+  const auto& midx =
+    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
+    tag::matidx >()[imat];
+
+  return matprop[meos].template get< tag::k >()[midx];
+}
+
+//! Get the dynamic viscosity (mu) for a material
+//! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
+//! \param[in] system Equation system index
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \return Material dynamic viscosity (mu)
+template< class Eq >
+tk::real mu( ncomp_t system,
+  std::size_t imat=0 )
+{
+  const auto& matprop =
+    g_inputdeck.get< tag::param, Eq, tag::material >()[system];
+  const auto& meos =
+    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
+    tag::eosidx >()[imat];
+  const auto& midx =
+    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
+    tag::matidx >()[imat];
+
+  return matprop[meos].template get< tag::mu >()[midx];
+}
+
 //! \brief Calculate density from the material pressure and temperature using
 //!   the stiffened-gas equation of state
 //! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
@@ -39,20 +154,11 @@ tk::real eos_density( ncomp_t system,
                       std::size_t imat=0 )
 {
   // query input deck to get gamma, p_c, cv
-  const auto& matprop =
-    g_inputdeck.get< tag::param, Eq, tag::material >()[system];
-  const auto& meos =
-    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
-    tag::eosidx >()[imat];
-  const auto& midx =
-    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
-    tag::matidx >()[imat];
+  auto g = gamma< Eq >(system, imat);
+  auto p_c = pstiff< Eq >(system, imat);
+  auto c_v = cv< Eq >(system, imat);
 
-  auto g = matprop[meos].template get< tag::gamma >()[midx];
-  auto p_c = matprop[meos].template get< tag::pstiff >()[midx];
-  auto cv = matprop[meos].template get< tag::cv >()[midx];
-
-  tk::real rho = (pr + p_c) / ((g-1.0) * cv * temp);
+  tk::real rho = (pr + p_c) / ((g-1.0) * c_v * temp);
   return rho;
 }
 
@@ -85,17 +191,8 @@ tk::real eos_pressure( ncomp_t system,
                        std::size_t imat=0 )
 {
   // query input deck to get gamma, p_c
-  const auto& matprop =
-    g_inputdeck.get< tag::param, Eq, tag::material >()[system];
-  const auto& meos =
-    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
-    tag::eosidx >()[imat];
-  const auto& midx =
-    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
-    tag::matidx >()[imat];
-
-  auto g = matprop[meos].template get< tag::gamma >()[midx];
-  auto p_c = matprop[meos].template get< tag::pstiff >()[midx];
+  auto g = gamma< Eq >(system, imat);
+  auto p_c = pstiff< Eq >(system, imat);
 
   tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c)
                           * (g-1.0) - alpha*p_c;
@@ -120,17 +217,8 @@ tk::real eos_soundspeed( ncomp_t system,
                          tk::real alpha=1.0, std::size_t imat=0 )
 {
   // query input deck to get gamma, p_c
-  const auto& matprop =
-    g_inputdeck.get< tag::param, Eq, tag::material >()[system];
-  const auto& meos =
-    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
-    tag::eosidx >()[imat];
-  const auto& midx =
-    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
-    tag::matidx >()[imat];
-
-  auto g = matprop[meos].template get< tag::gamma >()[midx];
-  auto p_c = matprop[meos].template get< tag::pstiff >()[midx];
+  auto g = gamma< Eq >(system, imat);
+  auto p_c = pstiff< Eq >(system, imat);
 
   auto p_eff = std::max( 1.0e-15, apr+(alpha*p_c) );
 
@@ -161,17 +249,8 @@ tk::real eos_totalenergy( ncomp_t system,
                           std::size_t imat=0 )
 {
   // query input deck to get gamma, p_c
-  const auto& matprop =
-    g_inputdeck.get< tag::param, Eq, tag::material >()[system];
-  const auto& meos =
-    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
-    tag::eosidx >()[imat];
-  const auto& midx =
-    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
-    tag::matidx >()[imat];
-
-  auto g = matprop[meos].template get< tag::gamma >()[midx];
-  auto p_c = matprop[meos].template get< tag::pstiff >()[midx];
+  auto g = gamma< Eq >(system, imat);
+  auto p_c = pstiff< Eq >(system, imat);
 
   tk::real rhoE = (pr + p_c) / (g-1.0) + 0.5 * rho * (u*u + v*v + w*w) + p_c;
   return rhoE;
@@ -204,19 +283,10 @@ tk::real eos_temperature( ncomp_t system,
                           std::size_t imat=0 )
 {
   // query input deck to get p_c, cv
-  const auto& matprop =
-    g_inputdeck.get< tag::param, Eq, tag::material >()[system];
-  const auto& meos =
-    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
-    tag::eosidx >()[imat];
-  const auto& midx =
-    g_inputdeck.get< tag::param, Eq, tag::matidxmap >().template get<
-    tag::matidx >()[imat];
+  auto c_v = cv< Eq >(system, imat);
+  auto p_c = pstiff< Eq >(system, imat);
 
-  auto cv = matprop[meos].template get< tag::cv >()[midx];
-  auto p_c = matprop[meos].template get< tag::pstiff >()[midx];
-
-  tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c) / (arho*cv);
+  tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c) / (arho*c_v);
   return t;
 }
 

@@ -147,11 +147,7 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
       const auto& bgpreic = ic.get< tag::pressure >();
-      const auto& matprop =
-        g_inputdeck.get< tag::param, tag::compflow, tag::material >()[m_system];
-      const auto& meos = g_inputdeck.get< tag::param, tag::compflow,
-        tag::matidxmap >().get< tag::eosidx >()[0];
-      auto cv = matprop[meos].get< tag::cv >()[0];
+      auto c_v = cv< eq >(m_system);
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
@@ -168,7 +164,8 @@ class CompFlow {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, 1.0, t, b, bgpreic[m_system][0], cv, s );
+              initializeBox( m_system, 1.0, t, b, bgpreic[m_system][0], c_v,
+                s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;

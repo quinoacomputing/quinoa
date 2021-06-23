@@ -49,11 +49,7 @@ CompFlowProblemVorticalFlow::initialize( ncomp_t system,
   auto b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
   auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ system ];
   // ratio of specific heats
-  const auto& matprop =
-    g_inputdeck.get< tag::param, tag::compflow, tag::material >()[system];
-  const auto& meos = g_inputdeck.get< tag::param, tag::compflow,
-    tag::matidxmap >().get< tag::eosidx >()[0];
-  auto g = matprop[meos].get< tag::gamma >()[0];
+  auto g = gamma< tag::compflow >(system);
   // velocity
   auto ru = a*x - b*y;
   auto rv = b*x + a*y;
@@ -89,11 +85,7 @@ CompFlowProblemVorticalFlow::analyticSolution( ncomp_t system,
   auto b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
   auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ system ];
   // ratio of specific heats
-  const auto& matprop =
-    g_inputdeck.get< tag::param, tag::compflow, tag::material >()[system];
-  const auto& meos = g_inputdeck.get< tag::param, tag::compflow,
-    tag::matidxmap >().get< tag::eosidx >()[0];
-  auto g = matprop[meos].get< tag::gamma >()[0];
+  auto g = gamma< tag::compflow >(system);
   // velocity
   auto ru = a*x - b*y;
   auto rv = b*x + a*y;

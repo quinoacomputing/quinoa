@@ -17,6 +17,7 @@
 // *****************************************************************************
 
 #include "CGNavierStokes.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -47,14 +48,10 @@ CompFlowPhysicsNavierStokes::viscousRhs(
 // *****************************************************************************
 {
   // dynamic viscosity
-  const auto& matprop =
-    g_inputdeck.get< tag::param, tag::compflow, tag::material >()[0];
-  const auto& meos = g_inputdeck.get< tag::param, tag::compflow,
-    tag::matidxmap >().get< tag::eosidx >()[0];
-  auto mu = matprop[meos].get< tag::mu >()[0];
+  auto mu_d = mu< tag::compflow >(0);
 
   // add deviatoric viscous stress contribution to momentum rhs
-  auto c = dt * J/6.0 * mu;
+  auto c = dt * J/6.0 * mu_d;
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
       for (std::size_t k=0; k<4; ++k) {
@@ -68,7 +65,7 @@ CompFlowPhysicsNavierStokes::viscousRhs(
                                               grad[k][i]*u[j+1][k])/u[0][k];
       }
   // add isotropic viscous stress contribution to momentum rhs
-  c = dt * J/6.0 * mu * 2.0/3.0;
+  c = dt * J/6.0 * mu_d * 2.0/3.0;
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
       for (std::size_t k=0; k<4; ++k) {
@@ -78,7 +75,7 @@ CompFlowPhysicsNavierStokes::viscousRhs(
         R.var(r[i+1],N[3]) += c * grad[3][i]*grad[k][j]*u[j+1][k]/u[0][k];
       }
   // add deviatoric viscous stress contribution to energy rhs
-  c = dt * J/24.0 * mu;
+  c = dt * J/24.0 * mu_d;
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
       for (std::size_t k=0; k<4; ++k) {
@@ -96,7 +93,7 @@ CompFlowPhysicsNavierStokes::viscousRhs(
                                         grad[k][i]*u[j+1][k])/u[0][k];
       }
   // add isotropic viscous stress contribution to energy rhs
-  c = dt * J/24.0 * mu * 2.0/3.0;
+  c = dt * J/24.0 * mu_d * 2.0/3.0;
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
       for (std::size_t k=0; k<4; ++k) {
@@ -123,17 +120,13 @@ CompFlowPhysicsNavierStokes::viscous_dt(
 // *****************************************************************************
 {
   // dynamic viscosity
-  const auto& matprop =
-    g_inputdeck.get< tag::param, tag::compflow, tag::material >()[0];
-  const auto& meos = g_inputdeck.get< tag::param, tag::compflow,
-    tag::matidxmap >().get< tag::eosidx >()[0];
-  auto mu = matprop[meos].get< tag::mu >()[0];
+  auto mu_d = mu< tag::compflow >(0);
 
   // compute the minimum viscous time step size across the four nodes
   tk::real mindt = std::numeric_limits< tk::real >::max();
   for (std::size_t j=0; j<4; ++j) {
     auto& r = u[0][j];              // rho
-    auto dt = L * L * r / (2.0*mu); // dt ~ dx^2/nu = dx^2*rho/(2mu)
+    auto dt = L * L * r / (2.0*mu_d); // dt ~ dx^2/nu = dx^2*rho/(2mu)
     if (dt < mindt) mindt = dt;
   }
   return mindt;
@@ -160,18 +153,14 @@ CompFlowPhysicsNavierStokes::conductRhs(
 // *****************************************************************************
 {
   // specific heat at constant volume
-  const auto& matprop =
-    g_inputdeck.get< tag::param, tag::compflow, tag::material >()[0];
-  const auto& meos = g_inputdeck.get< tag::param, tag::compflow,
-    tag::matidxmap >().get< tag::eosidx >()[0];
-  auto cv = matprop[meos].get< tag::cv >()[0];
+  auto c_v = cv< tag::compflow >(0);
   // thermal conductivity
-  auto kc = matprop[meos].get< tag::k >()[0];
+  auto kc = k< tag::compflow >(0);
 
   // compute temperature
   std::array< tk::real, 4 > T;
   for (std::size_t i=0; i<4; ++i)
-    T[i] = cv*(u[4][i] - (u[1][i]*u[1][i] +
+    T[i] = c_v*(u[4][i] - (u[1][i]*u[1][i] +
                           u[2][i]*u[2][i] +
                           u[3][i]*u[3][i])/2.0/u[0][i]) / u[0][i];
   // add heat conduction contribution to energy rhs
@@ -199,15 +188,11 @@ CompFlowPhysicsNavierStokes::conduct_dt(
 // *****************************************************************************
 {
   // specific heat at constant volume
-  const auto& matprop =
-    g_inputdeck.get< tag::param, tag::compflow, tag::material >()[0];
-  const auto& meos = g_inputdeck.get< tag::param, tag::compflow,
-    tag::matidxmap >().get< tag::eosidx >()[0];
-  auto cv = matprop[meos].get< tag::cv >()[0];
+  auto c_v = cv< tag::compflow >(0);
   // thermal conductivity
-  auto kc = matprop[meos].get< tag::k >()[0];
+  auto kc = k< tag::compflow >(0);
   // specific heat at constant pressure
-  auto cp = g * cv;
+  auto cp = g * c_v;
 
   // compute the minimum conduction time step size across the four nodes
   tk::real mindt = std::numeric_limits< tk::real >::max();

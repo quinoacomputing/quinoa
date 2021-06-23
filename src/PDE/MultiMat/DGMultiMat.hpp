@@ -332,10 +332,6 @@ class MultiMat {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-      const auto& matprop = g_inputdeck.get< tag::param, tag::multimat,
-        tag::material >()[m_system];
-      const auto& matidxmap = g_inputdeck.get< tag::param, tag::multimat,
-        tag::matidxmap >();
 
       Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -406,8 +402,7 @@ class MultiMat {
         {
           auto alk = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           auto pk = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) / alk;
-          auto Pck = matprop[matidxmap.get< tag::eosidx >()[k]].get<
-            tag::pstiff >()[matidxmap.get< tag::matidx >()[k]];
+          auto Pck = pstiff< eq >(m_system, k);
           // for positive volume fractions
           if (matExists(alk))
           {
@@ -416,8 +411,7 @@ class MultiMat {
             // these conditions is true, perform pressure relaxation.
             if ((alk < al_eps) || (pk+Pck < 0.0)/*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
             {
-              //auto gk = matprop[matidxmap.get< tag::eosidx >()[k]].get<
-              //  tag::gamma >()[matidxmap.get< tag::matidx >()[k]];
+              //auto gk = gamma< eq >(m_system, k);
 
               tk::real alk_new(0.0);
               //// volume change based on polytropic expansion/isentropic compression
@@ -475,8 +469,7 @@ class MultiMat {
         }
 
         // 2. Based on volume change in majority material, compute energy change
-        //auto gmax = matprop[matidxmap.get< tag::eosidx >()[kmax]].get<
-        //  tag::gamma >()[matidxmap.get< tag::matidx >()[kmax]];
+        //auto gmax = gamma< eq >(m_system, kmax);
         //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
         //auto rhomax_new = unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset)
         //  / (almax+d_al);
@@ -525,10 +518,8 @@ class MultiMat {
         //pmix = rhoEb - 0.5*rhob*(u*u+v*v+w*w);
         //for (std::size_t k=0; k<nmat; ++k)
         //{
-        //  auto gk = matprop[matidxmap.get< tag::eosidx >()[k]].get<
-        //    tag::gamma >()[matidxmap.get< tag::matidx >()[k]];
-        //  auto Pck = matprop[matidxmap.get< tag::eosidx >()[k]].get<
-        //    tag::pstiff >()[matidxmap.get< tag::matidx >()[k]];
+        //  auto gk = gamma< eq >(m_system, k);
+        //  auto Pck = pstiff< eq >(m_system, k);
 
         //  pmix -= unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset) * gk * Pck *
         //    relaxInd[k] / (gk-1.0);

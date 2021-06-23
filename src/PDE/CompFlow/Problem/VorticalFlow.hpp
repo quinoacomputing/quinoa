@@ -25,6 +25,7 @@
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -74,11 +75,7 @@ class CompFlowProblemVorticalFlow {
         g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
       const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
       // ratio of specific heats
-      const auto& matprop =
-        g_inputdeck.get< tag::param, tag::compflow, tag::material >()[ system ];
-      const auto& meos = g_inputdeck.get< tag::param, tag::compflow,
-        tag::matidxmap >().get< tag::eosidx >()[0];
-      tk::real g = matprop[meos].get< tag::gamma >()[0];
+      tk::real g = gamma< tag::compflow >(system);
       // evaluate solution at x,y,z
       auto s = initialize( system, 5, x, y, z, 0.0 );
 
