@@ -882,7 +882,7 @@ ALECG::meshvel()
 
     // never update static meshvel during timestepping
     if (d->dynALE() || m_initial) {
-      // assigne mesh velocity
+      // assign mesh velocity
       inciter::meshvel( g_inputdeck.get< tag::ale, tag::meshvelocity >(),
                         d->Coord(), m_vel, m_w );
       // scale mesh velocity by a function of the fluid vorticity
