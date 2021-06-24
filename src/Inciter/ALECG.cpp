@@ -924,14 +924,8 @@ ALECG::meshvelbc()
     for (auto i : m_symbcnodes)
       wbc[i] = {{ {false,0}, {true,0}, {true,0} }};
 
-    // set smoother linear solve initial guess as current mesh velocity
-    std::vector< tk::real > w( m_w.nunk()*3 );
-    for (std::size_t j=0; j<3; ++j)
-      for (std::size_t i=0; i<m_w.nunk(); ++i)
-        w[i*3+j] = m_w(i,j,0);
-
     // initiate setting mesh velocity BCs
-    d->meshvelInit( w, wbc,
+    d->meshvelInit( m_w.flat(), wbc,
       CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
 
   } else {
@@ -984,10 +978,7 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
     //}
 
     // Update mesh velocity from the smoother linear solve
-    auto w = Disc()->meshvel();
-    for (std::size_t j=0; j<3; ++j)
-      for (std::size_t i=0; i<m_w.nunk(); ++i)
-        m_w(i,j,0) = w[i*3+j];
+    m_w = Disc()->meshvel();
 
   }
 

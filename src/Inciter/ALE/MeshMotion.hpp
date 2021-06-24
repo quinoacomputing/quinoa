@@ -21,12 +21,10 @@
 namespace inciter {
 
 //! Prescribe mesh motion as a sine wave for testing purposes
-void
-sine( const tk::UnsMesh::Coords& coord, tk::Fields& w );
+void sine( const tk::UnsMesh::Coords& coord, tk::Fields& w );
 
 //! Prescribe mesh velocity as the fluid velocity
-void
-fluid( const tk::UnsMesh::Coords& v, tk::Fields& w );
+void fluid( const tk::UnsMesh::Coords& v, tk::Fields& w );
 
 //! Assign mesh velocity based on user config
 void
