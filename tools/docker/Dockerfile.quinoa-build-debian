@@ -45,4 +45,4 @@ RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -DENABLE_
 # Build code
 RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS="--bind-to none -oversubscribe" ../src && ninja
 # Run tests
-RUN cd quinoa/build && npe=$(grep -c processor /proc/cpuinfo) && mpirun -n $npe Main/unittest -v -q && ctest -j $npe --output-on-failure -LE extreme
+RUN cd quinoa/build && npe=$(expr $(grep -c processor /proc/cpuinfo) / 2) && mpirun -n $npe Main/unittest -v -q && ctest -j $npe --output-on-failure -LE extreme
