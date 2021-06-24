@@ -209,6 +209,18 @@ class Data {
           operator()( i, j, 0 ) = rhs[i*m_nprop+j];
     }
 
+    //! Assign from array(3) of vectors
+    //! \param[in] rhs Array(3) of vectors to assign from
+    void operator=( const std::array< std::vector< tk::real >, 3 >& rhs ) {
+      Assert( m_nprop == 3, "Size mismatch" );
+      Assert( rhs[0].size() == m_nunk, "Size mismatch" );
+      Assert( rhs[1].size() == m_nunk, "Size mismatch" );
+      Assert( rhs[2].size() == m_nunk, "Size mismatch" );
+      for (std::size_t j=0; j<3; ++j)
+        for (std::size_t i=0; i<m_nunk; ++i)
+          operator()( i, j, 0 ) = rhs[j][i];
+    }
+
     //! Extract vector of unknowns given component and offset
     //! \details Requirement: offset + component < nprop, enforced with an
     //!   assert in DEBUG mode, see also the constructor.

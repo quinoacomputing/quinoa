@@ -32,19 +32,6 @@ sine( const tk::UnsMesh::Coords& coord, tk::Fields& w )
 }
 
 void
-fluid( const tk::UnsMesh::Coords& v, tk::Fields& w )
-// *****************************************************************************
-//! Prescribe mesh velocity as the fluid velocity
-//! \param[in] v Fluid velocity
-//! \param[in,out] w Mesh velocity assigned
-// *****************************************************************************
-{
-  for (std::size_t j=0; j<3; ++j)
-    for (std::size_t i=0; i<w.nunk(); ++i)
-      w(i,j,0) = v[j][i];
-}
-
-void
 meshvel( ctr::MeshVelocityType m,
          const tk::UnsMesh::Coords& coord,
          const tk::UnsMesh::Coords& v,
@@ -62,7 +49,7 @@ meshvel( ctr::MeshVelocityType m,
   if (m == ctr::MeshVelocityType::SINE)
     sine( coord, w );
   else if (m == ctr::MeshVelocityType::FLUID)
-    fluid( v, w );
+    w = v;
   else
     Throw( "Mesh velocity not implemented" );
 }
