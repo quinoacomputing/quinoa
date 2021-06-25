@@ -84,6 +84,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_rhsc(),
   m_diag(),
   m_bnorm(),
+  m_bnormn(),
   m_bnormc(),
   m_symbcnodes(),
   m_farfieldbcnodes(),
@@ -913,16 +914,33 @@ ALECG::meshvelbc()
 
     auto d = Disc();
 
-    // set mesh velocity smoother linear solve boundary conditions
+    // Set mesh velocity smoother linear solve boundary conditions
     std::unordered_map< std::size_t,
       std::vector< std::pair< bool, tk::real > > > wbc;
-    // Dirichlet BCs where user sepcified meshvel BCs
+
+    // Dirichlet BCs where user specified mesh velocity BCs
     for (auto i : m_meshvelbcnodes)
       wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
-    // Dirichlet BCs on symmetry BCs (TODO: this needs to be generalized to
-    // arbitrarily oriented side sets)
-    for (auto i : m_symbcnodes)
-      wbc[i] = {{ {false,0}, {true,0}, {true,0} }};
+
+    // Lambda to find a boundary-point normal
+    auto norm = [&](std::size_t p) {
+      for (const auto& [s,sn] : m_bnormn)
+        for (const auto& [i,n] : sn)
+          if (i == p) return n;
+      return std::array< tk::real, 4 >{ 0.0, 0.0, 0.0, 0.0 };
+    };
+
+    // Dirichlet BCs on symmetry BCs aligned with coordinate directions
+    // Note: This will skip aribtrarily-oriented symmetry side sets.
+    for (auto i : m_symbcnodes) {
+      auto n = norm(i);
+      if (std::abs(n[0]) < 1.0e-12)
+        wbc[i] = {{{false,0},{true,0},{true,0}}};
+      else if (std::abs(n[1]) < 1.0e-12)
+        wbc[i] = {{{true,0},{false,0},{true,0}}};
+      else if (std::abs(n[2]) < 1.0e-12)
+        wbc[i] = {{{true,0},{true,0},{false,0}}};
+    }
 
     // initiate setting mesh velocity BCs
     d->meshvelInit( m_w.flat(), wbc,
@@ -1125,11 +1143,13 @@ ALECG::solve()
   // Recompute mesh volumes if ALE is enabled
   if (d->ALE()) {
 
-    // query and update fluid velocity across all systems integrated
     if (d->dynALE()) {
+      // query and update fluid velocity across all systems integrated
       conserved( m_u );
       for (const auto& eq : g_cgpde) eq.velocity( m_u, m_vel );
       volumetric( m_u );
+      // save current boundary-point normals
+      m_bnormn = m_bnorm;
     }
 
     transfer_complete();

@@ -220,6 +220,7 @@ class ALECG : public CBase_ALECG {
       p | m_rhsc;
       p | m_diag;
       p | m_bnorm;
+      p | m_bnormn;
       p | m_bnormc;
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
@@ -312,6 +313,8 @@ class ALECG : public CBase_ALECG {
     //!   square between face centroids and points, outer key: side set id
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnorm;
+    //! Face normals in boundary points at time n for ALE
+    decltype(m_bnorm) m_bnormn;
     //! \brief Receive buffer for communication of the boundary point normals
     //!   associated to side sets
     //! \details Key: global node id, value: normals (first 3 components),
