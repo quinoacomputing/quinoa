@@ -48,7 +48,8 @@ meshvel( ctr::MeshVelocityType m,
 
   if (m == ctr::MeshVelocityType::SINE)
     sine( coord, w );
-  else if (m == ctr::MeshVelocityType::FLUID)
+  else if (m == ctr::MeshVelocityType::FLUID ||
+           m == ctr::MeshVelocityType::LAGRANGE)
     w = v;
   else
     Throw( "Mesh velocity not implemented" );

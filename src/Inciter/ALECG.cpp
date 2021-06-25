@@ -891,7 +891,7 @@ ALECG::meshvel()
       //                    m_w );
     }
 
-    // applying mesh velocity smoother BCs
+    // applying mesh velocity smoother BCs (if needed)
     meshvelbc();
 
   } else {      // if ALE is not enabled, skip mesh smoothing

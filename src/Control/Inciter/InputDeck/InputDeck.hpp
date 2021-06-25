@@ -195,6 +195,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::none
                                  , kw::sine
                                  , kw::fluid
+                                 , kw::lagrange
                                  , kw::helmholtz
                                  , kw::amr_t0ref
                                  , kw::amr_dtref

@@ -25,6 +25,7 @@ namespace ctr {
 enum class MeshVelocityType : uint8_t { NONE
                                       , SINE
                                       , FLUID
+                                      , LAGRANGE
                                       , HELMHOLTZ
                                       };
 
@@ -39,6 +40,7 @@ class MeshVelocity : public tk::Toggle< MeshVelocityType > {
     using keywords = brigand::list< kw::none
                                   , kw::sine
                                   , kw::fluid
+                                  , kw::lagrange
                                   , kw::helmholtz
                                   >;
 
@@ -53,12 +55,14 @@ class MeshVelocity : public tk::Toggle< MeshVelocityType > {
         { { MeshVelocityType::NONE, kw::none::name() }
         , { MeshVelocityType::SINE, kw::sine::name() }
         , { MeshVelocityType::FLUID, kw::fluid::name() }
+        , { MeshVelocityType::LAGRANGE, kw::lagrange::name() }
         , { MeshVelocityType::HELMHOLTZ, kw::helmholtz::name() }
         },
         //! keywords -> Enums
         { { kw::none::string(), MeshVelocityType::NONE }
         , { kw::sine::string(), MeshVelocityType::SINE }
         , { kw::fluid::string(), MeshVelocityType::FLUID }
+        , { kw::lagrange::string(), MeshVelocityType::LAGRANGE }
         , { kw::helmholtz::string(), MeshVelocityType::HELMHOLTZ}
         } )
     {}
