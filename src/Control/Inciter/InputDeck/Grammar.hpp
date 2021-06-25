@@ -1824,6 +1824,10 @@ namespace deck {
            , outvar_human< kw::outvar_xmomentum >
            , outvar_human< kw::outvar_ymomentum >
            , outvar_human< kw::outvar_zmomentum >
+           , outvar_human< kw::outvar_vorticity_magnitude >
+           , outvar_human< kw::outvar_xvorticity >
+           , outvar_human< kw::outvar_yvorticity >
+           , outvar_human< kw::outvar_zvorticity >
            , outvar_human< kw::outvar_specific_total_energy >
            , outvar_human< kw::outvar_volumetric_total_energy >
            , outvar_human< kw::outvar_xvelocity >

@@ -17,6 +17,7 @@
 #include "Centering.hpp"
 #include "ContainerUtil.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "UnsMesh.hpp"
 
 namespace inciter {
 
@@ -29,7 +30,10 @@ numericFieldNames( tk::Centering c );
 //! Collect field output from numerical solution based on user input
 std::vector< std::vector< tk::real > >
 numericFieldOutput( const tk::Fields& U, tk::Centering c,
-                    const tk::Fields& P = tk::Fields() );
+                    const tk::Fields& P = tk::Fields(),
+                    const tk::UnsMesh::Coords& coord = {},
+                    const std::vector< std::size_t >& inpoel = {},
+                    const std::vector< tk::real >& vol = {} );
 
 //! Collect field output names from analytic solutions based on user input
 //! \tparam PDE Partial differential equation type

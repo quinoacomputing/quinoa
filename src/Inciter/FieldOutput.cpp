@@ -38,12 +38,18 @@ numericFieldNames( tk::Centering c )
 std::vector< std::vector< tk::real > >
 numericFieldOutput( const tk::Fields& U,
                     tk::Centering c,
-                    const tk::Fields& P )
+                    const tk::Fields& P,
+                    const tk::UnsMesh::Coords& coord,
+                    const std::vector< std::size_t >& inpoel,
+                    const std::vector< tk::real >& vol )
 // *****************************************************************************
 // Collect field output from numerical solution based on user input
 //! \param[in] U Solution data to extract from
 //! \param[in] c Extract variables only with this centering
 //! \param[in] P Optional primitive variable solution data to extract from
+//! \param[in] coord Optional mesh node coordinates
+//! \param[in] inpoel Optional mesh element connectivity
+//! \param[in] vol Optional nodal volumes
 //! \return Output fields requested by user
 // *****************************************************************************
 {
@@ -66,7 +72,7 @@ numericFieldOutput( const tk::Fields& U,
         f.push_back( F.extract( v.field*rdof, o ) );
       } else if (!v.analytic()) {  // human-readable non-analytic via custom fn
         Assert( v.getvar, "getvar() not configured for " + v.name );
-        f.push_back( v.getvar( F, o, rdof ) );
+        f.push_back( v.getvar( F, o, rdof, coord, inpoel, vol ) );
       }
     }
   }
