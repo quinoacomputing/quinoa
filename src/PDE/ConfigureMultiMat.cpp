@@ -29,6 +29,7 @@
 #include "MultiMat/DGMultiMat.hpp"
 #include "MultiMat/Problem.hpp"
 #include "InfoMesh.hpp"
+#include "Inciter/Options/Material.hpp"
 
 namespace inciter {
 
@@ -112,24 +113,32 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "start offset in unknowns array", std::to_string(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
 
-  nfo.emplace_back( "ratio of specific heats", parameters(
-    g_inputdeck.get< tag::param, eq, tag::gamma >()[c] ) );
+  // Material property output
+  const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c];
+  for (const auto& mtype : matprop) {
+    const auto& m_id = mtype.get< tag::id >();
+    ctr::Material opt;
+    nfo.emplace_back( opt.name( mtype.get< tag::eos >() ),
+      std::to_string(m_id.size()) );
 
-  // Viscosity is optional: the outer vector may be empty
-  const auto& mu = g_inputdeck.get< tag::param, eq, tag::mu >();
-  if (mu.size() > c)
-    nfo.emplace_back( "dynamic viscosity", parameters( mu[c] ) );
+    nfo.emplace_back( "material id", parameters( m_id ) );
+    nfo.emplace_back( "ratio of specific heats",
+      parameters(mtype.get< tag::gamma >()) );
+    nfo.emplace_back( "specific heat at constant volume",
+      parameters(mtype.get< tag::cv >()) );
+    nfo.emplace_back( "material stiffness",
+      parameters(mtype.get< tag::pstiff >()) );
 
-  nfo.emplace_back( "specific heat at constant volume", parameters(
-    g_inputdeck.get< tag::param, eq, tag::cv >()[c] ) );
+    // Viscosity is optional: vector may be empty
+    const auto& mu = mtype.get< tag::mu >();
+    if (!mu.empty())
+      nfo.emplace_back( "dynamic viscosity", parameters( mu ) );
 
-  // Heat conductivity is optional: the outer vector may be empty
-  const auto& k = g_inputdeck.get< tag::param, eq, tag::k >();
-  if (k.size() > c)
-    nfo.emplace_back( "heat conductivity", parameters( k[c] ) );
-
-  nfo.emplace_back( "material stiffness", parameters(
-    g_inputdeck.get< tag::param, eq, tag::pstiff >()[c] ) );
+    // Heat conductivity is optional: vector may be empty
+    const auto& k = mtype.get< tag::k >();
+    if (!k.empty())
+      nfo.emplace_back( "heat conductivity", parameters( k ) );
+  }
 
   // ICs and IC-boxes
 

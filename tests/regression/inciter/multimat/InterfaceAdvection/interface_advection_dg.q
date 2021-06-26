@@ -19,6 +19,7 @@ inciter
 
     nmat 3
     material
+      id 1 2 3 end
       gamma 1.4 1.4 1.4 end
       cv 83.33 717.5 717.5 end
     end

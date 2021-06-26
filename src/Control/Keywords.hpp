@@ -5643,6 +5643,42 @@ struct mat_k_info {
 };
 using mat_k = keyword< mat_k_info, TAOCPP_PEGTL_STRING("k") >;
 
+struct stiffenedgas_info {
+  static std::string name() { return "Stiffened gas"; }
+  static std::string shortDescription() { return
+    "Select the stiffened gas equation of state"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the stiffened gas equation of state.)"; }
+};
+using stiffenedgas =
+  keyword< stiffenedgas_info, TAOCPP_PEGTL_STRING("stiffenedgas") >;
+
+struct jwl_info {
+  static std::string name() { return "JWL"; }
+  static std::string shortDescription() { return
+    "Select the JWL equation of state"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Jones, Wilkins, Lee equation of
+    state.)"; }
+};
+using jwl = keyword< jwl_info, TAOCPP_PEGTL_STRING("jwl") >;
+
+struct eos_info {
+  static std::string name() { return "Equation of state"; }
+  static std::string shortDescription() { return
+    "Select equation of state (type)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select an equation of state for a material.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + stiffenedgas::string() + "\' | \'"
+                  + jwl::string() + '\'';
+    }
+  };
+};
+using eos = keyword< eos_info, TAOCPP_PEGTL_STRING("eos") >;
+
 struct material_info {
   static std::string name() { return "Material properties block"; }
   static std::string shortDescription() { return
@@ -5652,6 +5688,7 @@ struct material_info {
     specify material properties. Keywords allowed in a material ... end
     block: )" + std::string("\'")
     + id::string()+ "\', \'"
+    + eos::string()+ "\', \'"
     + mat_gamma::string()+ "\', \'"
     + mat_pstiff::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"

@@ -102,28 +102,33 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "start offset in unknowns array", parameter(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
 
-  const auto& gamma = g_inputdeck.get< tag::param, eq, tag::gamma >()[c];
-  if (!gamma.empty())
-    nfo.emplace_back( "ratio of specific heats", parameter( gamma[0] )) ;
+  // Material property output
+  const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c][0];
+  const auto& m_id = matprop.get< tag::id >();
+  ctr::Material mopt;
+  nfo.emplace_back( mopt.name( matprop.get< tag::eos >() ),
+    std::to_string(m_id.size()) );
 
-  const auto& pstiff = g_inputdeck.get< tag::param, eq, tag::pstiff >()[c];
-  if (!pstiff.empty())
-    nfo.emplace_back( "material stiffness", parameter( pstiff[0] ) );
-
-  // Viscosity is optional: the outer vector may be empty
-  const auto& mu = g_inputdeck.get< tag::param, eq, tag::mu >();
-  if (mu.size() > c)
-    nfo.emplace_back( "dynamic viscosity", parameter( mu[c][0] ) );
-
-  const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >()[c];
+  nfo.emplace_back( "ratio of specific heats",
+    parameters(matprop.get< tag::gamma >()) );
+  const auto& cv = matprop.get< tag::cv >();
   if (!cv.empty())
     nfo.emplace_back( "specific heat at constant volume",
-                      parameter(cv[0]) );
+      parameters(cv) );
+  const auto& pstiff = matprop.get< tag::pstiff >();
+  if (!pstiff.empty())
+    nfo.emplace_back( "material stiffness",
+      parameters(pstiff) );
 
-  // Heat conductivity is optional: the outer vector may be empty
-  const auto& k = g_inputdeck.get< tag::param, eq, tag::k >();
-  if (k.size() > c)
-    nfo.emplace_back( "heat conductivity", parameter( k[c][0] ) );
+  // Viscosity is optional: vector may be empty
+  const auto& mu = matprop.get< tag::mu >();
+  if (!mu.empty())
+    nfo.emplace_back( "dynamic viscosity", parameters( mu ) );
+
+  // Heat conductivity is optional: vector may be empty
+  const auto& k = matprop.get< tag::k >();
+  if (!k.empty())
+    nfo.emplace_back( "heat conductivity", parameters( k ) );
 
   const auto& npar = g_inputdeck.get< tag::param, eq, tag::npar >();
   if (!npar.empty())
