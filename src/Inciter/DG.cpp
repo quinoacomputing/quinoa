@@ -2373,8 +2373,12 @@ DG::resizePostAMR(
   m_lhs.resize( nelem );
   m_rhs.resize( nelem );
   m_volfracExtr.resize( nelem );
-  m_uNodalExtrm.resize( d->Bid().size() );
-  m_pNodalExtrm.resize( d->Bid().size() );
+  //m_uNodalExtrm.resize( d->Bid().size() );
+  //m_pNodalExtrm.resize( d->Bid().size() );
+  m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
+    m_ndof_NodalExtrm*g_inputdeck.get< tag::component >().nprop() ) );
+  m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
+    m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()));
 
   // Resize the buffer vector of nodal extrema
   resizeNodalExtremac();
