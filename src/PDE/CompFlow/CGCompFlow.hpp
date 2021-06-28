@@ -1135,6 +1135,16 @@ class CompFlow {
         rvR *= rR;
         rwR *= rR;
 
+        // evaluate pressure at edge-end points
+        real pL = eos_pressure<eq>( m_system, rL, ruL/rL, rvL/rL, rwL/rL, reL );
+        real pR = eos_pressure<eq>( m_system, rR, ruR/rR, rvR/rR, rwR/rR, reR );
+
+        // apply sponge-pressure multipliers
+        for (std::size_t s=0; s<nset; ++s) {
+          pL -= pL*spmult[p*nset+s];
+          pR -= pR*spmult[q*nset+s];
+        }
+
         // compute Riemann flux using edge-end point states
         real f[m_ncomp];
         Rusanov::flux( m_system,
@@ -1143,7 +1153,7 @@ class CompFlow {
                        rL, ruL, rvL, rwL, reL,
                        rR, ruR, rvR, rwR, reR,
                        w1L, w2L, w3L, w1R, w2R, w3R,
-                       spmult.data()+p*nset, spmult.data()+q*nset, nset,
+                       pL, pR,
                        f[0], f[1], f[2], f[3], f[4] );
         // store flux in edges
         for (std::size_t c=0; c<m_ncomp; ++c) dflux[e*m_ncomp+c] = f[c];

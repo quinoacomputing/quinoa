@@ -56,9 +56,8 @@ struct Rusanov {
   //! \param[in] w1R Right X mesh velocity
   //! \param[in] w2R Right Y mesh velocity
   //! \param[in] w3R Right Z mesh velocity
-  //! \param[in] spmultL nset left sponge-pressure multipliers
-  //! \param[in] spmultR nset right sponge-pressure multipliers
-  //! \param[in] nset Number of side sets with sponge-pressure multipliers
+  //! \param[in] pL Left pressure
+  //! \param[in] pR Right pressure
   //! \param[in,out] fr Riemann solution for density according to Rusanov
   //! \param[in,out] fru Riemann solution for X momenutm according to Rusanov
   //! \param[in,out] frv Riemann solution for Y momenutm according to Rusanov
@@ -73,7 +72,7 @@ struct Rusanov {
         real rL, real ruL, real rvL, real rwL, real reL,
         real rR, real ruR, real rvR, real rwR, real reR,
         real w1L, real w2L, real w3L, real w1R, real w2R, real w3R,
-        const real spmultL[], const real spmultR[], std::size_t nset,
+        real pL, real pR,
         real& fr, real& fru, real& frv, real& frw, real& fre )
   {
     auto ul = ruL/rL - w1L;
@@ -84,19 +83,8 @@ struct Rusanov {
     auto vr = rvR/rR - w2R;
     auto wr = rwR/rR - w3R;
 
-    auto pl =
-      eos_pressure< tag::compflow >( system, rL, ruL/rL, rvL/rL, rwL/rL, reL );
-    auto pr =
-      eos_pressure< tag::compflow >( system, rR, ruR/rR, rvR/rR, rwR/rR, reR );
-
-    // apply sponge-pressure BCs
-    for (std::size_t s=0; s<nset; ++s) {
-      pl -= pl*spmultL[s];
-      pr -= pr*spmultR[s];
-    }
-
-    auto al = eos_soundspeed< tag::compflow >( system, rL, pl );
-    auto ar = eos_soundspeed< tag::compflow >( system, rR, pr );
+    auto al = eos_soundspeed< tag::compflow >( system, rL, pL );
+    auto ar = eos_soundspeed< tag::compflow >( system, rR, pR );
 
     // dissipation
     real len = tk::length( {mx,my,mz} );
@@ -112,12 +100,12 @@ struct Rusanov {
 
     // numerical fluxes
     fr  = 0.5*(rL*vnl + rR*vnr - smax*(rR - rL));
-    fru = 0.5*(ruL*vnl + pl*nx + ruR*vnr + pr*nx - smax*(ruR - ruL));
-    frv = 0.5*(rvL*vnl + pl*ny + rvR*vnr + pr*ny - smax*(rvR - rvL));
-    frw = 0.5*(rwL*vnl + pl*nz + rwR*vnr + pr*nz - smax*(rwR - rwL));
+    fru = 0.5*(ruL*vnl + pL*nx + ruR*vnr + pR*nx - smax*(ruR - ruL));
+    frv = 0.5*(rvL*vnl + pL*ny + rvR*vnr + pR*ny - smax*(rvR - rvL));
+    frw = 0.5*(rwL*vnl + pL*nz + rwR*vnr + pR*nz - smax*(rwR - rwL));
     fre = 0.5*(reL*vnl + reR*vnr
-               + pl*(ruL*nx + rvL*ny + rwL*nz)/rL
-               + pr*(ruR*nx + rvR*ny + rwR*nz)/rR
+               + pL*(ruL*nx + rvL*ny + rwL*nz)/rL
+               + pR*(ruR*nx + rvR*ny + rwR*nz)/rR
                - smax*(reR - reL));
   }
 
