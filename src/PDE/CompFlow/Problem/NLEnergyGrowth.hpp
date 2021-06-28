@@ -23,6 +23,7 @@
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -85,7 +86,7 @@ class CompFlowProblemNLEnergyGrowth {
       const auto kappa = g_inputdeck.get< param, eq, tag::kappa >()[system];
       const auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[system];
       // ratio of specific heats
-      const auto g = g_inputdeck.get< param, eq, tag::gamma >()[system][0];
+      const auto g = gamma< tag::compflow >(system);
       // spatial component of density field
       const auto gx = 1.0 - x*x - y*y - z*z;
       // derivative of spatial component of density field

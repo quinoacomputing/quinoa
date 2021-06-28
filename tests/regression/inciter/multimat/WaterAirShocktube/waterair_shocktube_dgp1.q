@@ -27,6 +27,7 @@ inciter
 
     nmat 2
     material
+      id 1 2 end
       gamma 4.4 1.4 end # ratio of specific heats
       cv 951.36 717.5 end # specific heat at const volume
       pstiff 6.0e8 0.0 end # sg-eos stiffness parameter

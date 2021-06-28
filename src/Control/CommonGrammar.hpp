@@ -111,6 +111,10 @@ namespace grm {
     NONCOMP,            //!< No number of components selected
     LARGECOMP,          //!< Component index indexing out of max eq sys ncomp
     NONMAT,             //!< No number of materials selected
+    NUMMAT,             //!< Incorrect number of materials selected
+    REPMATID,           //!< Repeating material id
+    ONEMATID,           //!< Material id not one-based
+    GAPMATID,           //!< Material id not contiguous
     EOSGAMMA,           //!< Wrong number of EOS gamma parameters
     EOSCV,              //!< Wrong number of EOS cv parameters
     EOSPSTIFF,          //!< Wrong number of EOS pstiff parameters
@@ -250,21 +254,30 @@ namespace grm {
     { MsgKey::NONMAT, "The number of materials has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'nmat' to specify the number of materials." },
-    { MsgKey::EOSGAMMA, "Incorrect number of multi-material equation of state "
-      "(EOS) 'gamma' parameters configured in the preceding block's 'material "
-      "... end' sub-block. The number of components between 'gamma ... end' is "
-      "incorrect, whose size must equal the number of materials set by keyword "
-      "'nmat'." },
-    { MsgKey::EOSCV, "Incorrect number of multi-material equation of state "
-      "(EOS) 'cv' parameters configured in the preceding block's 'material "
-      "... end' sub-block. The number of components between 'cv... end' is "
-      "incorrect, whose size must equal the number of materials set by keyword "
-      "'nmat'." },
-    { MsgKey::EOSPSTIFF, "Incorrect number of multi-material equation of state "
-      "(EOS) 'pstiff' parameters configured in the preceding block's 'material "
-      "... end' sub-block. The number of components between 'pstiff ... end' "
-      "is incorrect, whose size must equal the number of materials set by "
-      "keyword 'nmat'." },
+    { MsgKey::NUMMAT, "The total number of materials in all the material "
+      "blocks is not equal to the number of materials 'nmat' specified for "
+      "this system." },
+    { MsgKey::REPMATID, "Repeating material id specified in 'material ... end' "
+      "block. Material ids must be unique." },
+    { MsgKey::ONEMATID, "Material ids specified in 'material ... end' blocks "
+      "not one-based. Material ids must begin with one." },
+    { MsgKey::GAPMATID, "Material ids specified in 'material ... end' blocks "
+      "have a gap. Material ids must be contiguous." },
+    { MsgKey::EOSGAMMA, "Incorrect number of equation of state (EOS) 'gamma' "
+      "parameters configured in the preceding block's 'material ... end' "
+      "sub-block. The number of components between 'gamma ... end' is "
+      "incorrect, whose size must equal the number of material-ids set by "
+      "keyword 'id' in that 'material ... end' sub-block." },
+    { MsgKey::EOSCV, "Incorrect number of equation of state (EOS) 'cv' "
+      "parameters configured in the preceding block's 'material ... end' "
+      "sub-block. The number of components between 'cv... end' is "
+      "incorrect, whose size must equal the number of material-ids set by "
+      "keyword 'id' in that 'material ... end' sub-block." },
+    { MsgKey::EOSPSTIFF, "Incorrect number of equation of state (EOS) 'pstiff' "
+      "parameters configured in the preceding block's 'material ... end' "
+      "sub-block. The number of components between 'pstiff ... end' "
+      "is incorrect, whose size must equal the number of material-ids set by "
+      "keyword 'id' in that 'material ... end' sub-block." },
     { MsgKey::NORNG, "The random number generator has not been specified in "
       "the block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'rng' to specify the random number generator." },
@@ -900,9 +913,45 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename target, typename subtarget, template < class > class use,
+  template< typename target, template < class > class use,
             class Option, typename tag, typename... tags >
   struct back_back_store_option : pegtl::success {};
+  //! \brief Push back option to vector of back of vector in state at position
+  //!   given by tags
+  //! \details This struct and its apply function are used as a functor-like
+  //!   wrapper for storing an option (an object deriving from tk::Toggle) in
+  //!   a place in the stack. tag and tags... address a vector of vectors, whose
+  //!   inner value_type is a nested tagged tuple whose field in where we store
+  //!   here after conversion, indexed by target.
+  //!   See walker::ctr::DiffEq for an example specialization of tk::Toggle to
+  //!   see how an option is created from tk::Toggle. We also do a simple sanity
+  //!   check here testing if the desired option value exist for the particular
+  //!   option type and error out if there is a problem. Errors and warnings are
+  //!   accumulated during parsing and diagnostics are given after the parsing
+  //!   is finished.
+  template< typename target, template < class > class use,
+            class Option, typename tag, typename... tags >
+  struct action< back_back_store_option< target, use, Option, tag, tags... > >
+  {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      Option opt;
+      if (opt.exist(in.string())) {
+        stack.template get< tag, tags... >().back().back().template
+          get< target >() = opt.value( in.string() );
+      } else {
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
+      }
+      // trigger error at compile-time if any of the expected option values
+      // is not in the keywords pool of the grammar
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename target, typename subtarget, template < class > class use,
+            class Option, typename tag, typename... tags >
+  struct back_back_deep_store_option : pegtl::success {};
   //! \brief Push back option to vector of back of vector in state at position
   //!   given by tags
   //! \details This struct and its apply function are used as a functor-like
@@ -918,7 +967,7 @@ namespace grm {
   //!   is finished.
   template< typename target, typename subtarget, template < class > class use,
             class Option, typename tag, typename... tags >
-  struct action< back_back_store_option< target, subtarget, use, Option,
+  struct action< back_back_deep_store_option< target, subtarget, use, Option,
                  tag, tags... > >
   {
     template< typename Input, typename Stack >
