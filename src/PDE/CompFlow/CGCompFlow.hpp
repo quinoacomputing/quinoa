@@ -150,7 +150,7 @@ class CompFlow {
         (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
         bgpreic[m_system][0] : 0.0;
 
-      auto cv = g_inputdeck.get< tag::param, eq, tag::cv >()[ m_system ][ 0 ];
+      auto c_v = cv< eq >(m_system);
 
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
@@ -168,7 +168,7 @@ class CompFlow {
                 b.template get< tag::zmin >(), b.template get< tag::zmax >() };
               auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               if (V_ex < eps) V = 1.0;
-              initializeBox( m_system, V_ex/V, t, b, bgpre, cv, s );
+              initializeBox( m_system, V_ex/V, t, b, bgpre, c_v, s );
             }
             ++bcnt;
           }
@@ -588,8 +588,7 @@ class CompFlow {
       const auto& z = coord[2];
 
       // ratio of specific heats
-      auto g = g_inputdeck.get< tag::param, eq, tag::gamma >()[0][0];
-
+      auto g = gamma< eq >(m_system);
       // compute the minimum dt across all elements we own
       real mindt = std::numeric_limits< real >::max();
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {

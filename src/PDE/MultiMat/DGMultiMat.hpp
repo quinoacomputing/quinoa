@@ -402,8 +402,7 @@ class MultiMat {
         {
           auto alk = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           auto pk = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) / alk;
-          auto Pck =
-            g_inputdeck.get< tag::param, eq, tag::pstiff >()[ m_system ][k];
+          auto Pck = pstiff< eq >(m_system, k);
           // for positive volume fractions
           if (matExists(alk))
           {
@@ -412,8 +411,7 @@ class MultiMat {
             // these conditions is true, perform pressure relaxation.
             if ((alk < al_eps) || (pk+Pck < 0.0)/*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
             {
-              //auto gk =
-              //  g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][k];
+              //auto gk = gamma< eq >(m_system, k);
 
               tk::real alk_new(0.0);
               //// volume change based on polytropic expansion/isentropic compression
@@ -471,8 +469,7 @@ class MultiMat {
         }
 
         // 2. Based on volume change in majority material, compute energy change
-        //auto gmax =
-        //  g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][kmax];
+        //auto gmax = gamma< eq >(m_system, kmax);
         //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
         //auto rhomax_new = unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset)
         //  / (almax+d_al);
@@ -521,10 +518,8 @@ class MultiMat {
         //pmix = rhoEb - 0.5*rhob*(u*u+v*v+w*w);
         //for (std::size_t k=0; k<nmat; ++k)
         //{
-        //  auto gk =
-        //    g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][k];
-        //  auto Pck =
-        //    g_inputdeck.get< tag::param, eq, tag::pstiff >()[ m_system ][k];
+        //  auto gk = gamma< eq >(m_system, k);
+        //  auto Pck = pstiff< eq >(m_system, k);
 
         //  pmix -= unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset) * gk * Pck *
         //    relaxInd[k] / (gk-1.0);

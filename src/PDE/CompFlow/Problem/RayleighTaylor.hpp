@@ -23,6 +23,7 @@
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -76,7 +77,7 @@ class CompFlowProblemRayleighTaylor {
       auto k = g_inputdeck.get< param, eq, tag::kappa >()[system];
       auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[system];
       // ratio of specific heats
-      tk::real g = g_inputdeck.get< param, eq, tag::gamma >()[system][0];
+      auto g = gamma< tag::compflow >(system);
 
       // evaluate solution at x,y,z,t
       auto s = initialize( system, 5, x, y, z, t );
