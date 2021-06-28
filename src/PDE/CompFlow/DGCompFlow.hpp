@@ -147,7 +147,7 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
       const auto& bgpreic = ic.get< tag::pressure >();
-      const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
+      auto c_v = cv< eq >(m_system);
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
@@ -164,8 +164,8 @@ class CompFlow {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, 1.0, t, b, bgpreic[m_system][0],
-                             cv[m_system][0], s );
+              initializeBox( m_system, 1.0, t, b, bgpreic[m_system][0], c_v,
+                s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -696,7 +696,8 @@ class CompFlow {
     histOutput( const std::vector< HistData >& h,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
-                const tk::Fields& U ) const
+                const tk::Fields& U,
+                const tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 

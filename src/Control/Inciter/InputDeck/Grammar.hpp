@@ -265,28 +265,49 @@ namespace grm {
       }
 
       // Verify correct number of material properties configured
-      const auto& gamma = stack.template get< param, eq, tag::gamma >();
-      if (gamma.empty() || gamma.back().size() != 1)
-        Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+      auto& matprop = stack.template get< param, eq, tag::material >().back()[0];
+      auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
+      matidxmap.template get< tag::eosidx >().resize(1);
+      matidxmap.template get< tag::matidx >().resize(1);
+      auto& meos = matprop.template get< tag::eos >();
+      auto& mat_id = matprop.template get< tag::id >();
 
-      // If specific heat is not given, set defaults
-      using cv_t = kw::mat_cv::info::expect::type;
-      auto& cv = stack.template get< param, eq, tag::cv >();
-      // As a default, the specific heat of air (717.5 J/Kg-K) is used
-      if (cv.empty() || cv.size() != neq.get< eq >())
-        cv.push_back( std::vector< cv_t >( 1, 717.5 ) );
-      // If specific heat vector is wrong size, error out
-      if (cv.back().size() != 1)
-        Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+      if (mat_id.empty())
+        mat_id.push_back(0);
+      else if (mat_id.size() != 1)
+        Message< Stack, ERROR, MsgKey::NUMMAT >( stack, in );
+      else
+        mat_id[0] = 0;
 
-      // If stiffness coefficient is not given, set defaults
-      using pstiff_t = kw::mat_pstiff::info::expect::type;
-      auto& pstiff = stack.template get< param, eq, tag::pstiff >();
-      if (pstiff.empty() || pstiff.size() != neq.get< eq >())
-        pstiff.push_back( std::vector< pstiff_t >( 1, 0.0 ) );
-      // If stiffness coefficient vector is wrong size, error out
-      if (pstiff.back().size() != 1)
-        Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+      if (meos == inciter::ctr::MaterialType::STIFFENEDGAS) {
+        const auto& gamma = matprop.template get< tag::gamma >();
+        // If gamma vector is wrong size, error out
+        if (gamma.empty() || gamma.size() != 1)
+          Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+
+        auto& cv = matprop.template get< tag::cv >();
+        // As a default, the specific heat of air (717.5 J/Kg-K) is used
+        if (cv.empty())
+          cv.push_back(717.5);
+        // If specific heat vector is wrong size, error out
+        if (cv.size() != 1)
+          Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+        auto& pstiff = matprop.template get< tag::pstiff >();
+        // As a default, a stiffness coefficient of 0.0 is used
+        if (pstiff.empty())
+          pstiff.push_back(0.0);
+        // If stiffness coefficient vector is wrong size, error out
+        if (pstiff.size() != 1)
+          Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+      }
+
+      // Generate mapping between material index and eos parameter index
+      auto& eosmap = matidxmap.template get< tag::eosidx >();
+      auto& idxmap = matidxmap.template get< tag::matidx >();
+      eosmap[mat_id[0]] = static_cast< std::size_t >(matprop.template get<
+        tag::eos >());
+      idxmap[mat_id[0]] = 0;
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
@@ -468,10 +489,86 @@ namespace grm {
         ncomp.push_back( m + m + 3 + m );
       }
 
-      // Verify correct number of multi-material properties configured
-      auto& gamma = stack.template get< param, eq, tag::gamma >();
-      if (gamma.empty() || gamma.back().size() != nmat.back())
-        Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+      // Verify correct number of multi-material properties (gamma, cv, pstiff)
+      // have been configured
+      auto& matprop = stack.template get< param, eq, tag::material >();
+      auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
+      matidxmap.template get< tag::eosidx >().resize(nmat.back());
+      matidxmap.template get< tag::matidx >().resize(nmat.back());
+      std::size_t tmat(0), i(0);
+      std::set< std::size_t > matidset;
+
+      for (auto& mtype : matprop.back()) {
+        const auto& meos = mtype.template get< tag::eos >();
+        const auto& mat_id = mtype.template get< tag::id >();
+
+        if (meos == inciter::ctr::MaterialType::STIFFENEDGAS) {
+          const auto& gamma = mtype.template get< tag::gamma >();
+          // If gamma vector is wrong size, error out
+          if (gamma.empty() || gamma.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+
+          auto& cv = mtype.template get< tag::cv >();
+          // As a default, the specific heat of air (717.5 J/Kg-K) is used
+          if (cv.empty()) {
+            for (std::size_t k=0; k<mat_id.size(); ++k) {
+              cv.push_back(717.5);
+            }
+          }
+          // If specific heat vector is wrong size, error out
+          if (cv.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+          auto& pstiff = mtype.template get< tag::pstiff >();
+          // As a default, a stiffness coefficient of 0.0 is used
+          if (pstiff.empty()) {
+            for (std::size_t k=0; k<mat_id.size(); ++k) {
+              pstiff.push_back(0.0);
+            }
+          }
+          // If stiffness coefficient vector is wrong size, error out
+          if (pstiff.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+        }
+
+        // Track total number of materials in multiple material blocks
+        tmat += mat_id.size();
+
+        // Check for repeating user specified material ids
+        for (auto midx : mat_id) {
+          if (!matidset.count(midx))
+            matidset.insert(midx);
+          else
+            Message< Stack, ERROR, MsgKey::REPMATID >( stack, in );
+        }
+
+        // Generate mapping between material index and eos parameter index
+        auto& eosmap = matidxmap.template get< tag::eosidx >();
+        auto& idxmap = matidxmap.template get< tag::matidx >();
+        for (auto midx : mat_id) {
+          midx -= 1;
+          eosmap[midx] = static_cast< std::size_t >(mtype.template get<
+            tag::eos >());
+          idxmap[midx] = i;
+          ++i;
+        }
+        // end of materials for this eos, thus reset index counter
+        i = 0;
+      }
+
+      // If total number of materials is incorrect, error out
+      if (tmat != nmat.back())
+        Message< Stack, ERROR, MsgKey::NUMMAT >( stack, in );
+
+      // Check if material ids are contiguous and 1-based
+      if (!matidset.count(1))
+        Message< Stack, ERROR, MsgKey::ONEMATID >( stack, in );
+      std::size_t icount(1);
+      for (auto midx : matidset) {
+        if (midx != icount)
+          Message< Stack, ERROR, MsgKey::GAPMATID >( stack, in );
+        ++icount;
+      }
 
       // If pressure relaxation is not specified, default to 'false'
       auto& prelax = stack.template get< param, eq, tag::prelax >();
@@ -494,25 +591,6 @@ namespace grm {
                                             tag::intsharp_param >();
       if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
         intsharp_p.push_back( 1.0 );
-
-      // If specific heats are not given, set defaults
-      using cv_t = kw::mat_cv::info::expect::type;
-      auto& cv = stack.template get< param, eq, tag::cv >();
-      // As a default, the specific heat of air (717.5 J/Kg-K) is used
-      if (cv.empty())
-        cv.push_back( std::vector< cv_t >( nmat.back(), 717.5 ) );
-      // If specific heat vector is wrong size, error out
-      if (cv.back().size() != nmat.back())
-        Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
-
-      // If stiffness coefficients are not given, set defaults
-      using pstiff_t = kw::mat_pstiff::info::expect::type;
-      auto& pstiff = stack.template get< param, eq, tag::pstiff >();
-      if (pstiff.empty())
-        pstiff.push_back( std::vector< pstiff_t >( nmat.back(), 0.0 ) );
-      // If stiffness coefficient vector is wrong size, error out
-      if (pstiff.back().size() != nmat.back())
-        Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
@@ -1260,9 +1338,26 @@ namespace deck {
   struct box_option :
          tk::grm::process<
            use< keyword >,
-           tk::grm::back_back_store_option< target, subtarget, use, Option,
-             tag::param, eq, tag::ic, tag::box >,
+           tk::grm::back_back_deep_store_option< target, subtarget, use,
+             Option, tag::param, eq, tag::ic, tag::box >,
            pegtl::alpha > {};
+
+   //! Match material option
+  template< class eq, typename Option, typename keyword, typename target >
+  struct material_option :
+         tk::grm::process<
+           use< keyword >,
+           tk::grm::back_back_store_option< target, use, Option,
+             tag::param, eq, tag::material >,
+           pegtl::alpha > {};
+
+  //! Match material parameter vector
+  template< class eq, typename keyword, typename target >
+  struct material_vector :
+         tk::grm::vector< use< keyword >,
+                          tk::grm::Back_back_store_back< target,
+                            tag::param, eq, tag::material >,
+                          use< kw::end > > {};
 
   //! put in PDE parameter for equation matching keyword
   template< typename eq, typename keyword, typename param,
@@ -1444,15 +1539,19 @@ namespace deck {
   //! Material properties block for compressible flow
   template< class eq >
   struct material_properties :
-         pegtl::if_must<
-           tk::grm::readkw< use< kw::material >::pegtl_string >,
-           tk::grm::block<
-             use< kw::end >,
-             material_property< eq, kw::mat_gamma, tag::gamma >,
-             material_property< eq, kw::mat_pstiff, tag::pstiff >,
-             material_property< eq, kw::mat_mu, tag::mu >,
-             material_property< eq, kw::mat_cv, tag::cv >,
-             material_property< eq, kw::mat_k, tag::k > > > {};
+         pegtl::seq<
+          pegtl::if_must<
+            tk::grm::readkw< use< kw::material >::pegtl_string >,
+              tk::grm::start_vector_back< tag::param, eq, tag::material >,
+            tk::grm::block< use< kw::end >,
+                material_vector< eq, kw::id, tag::id >
+              , material_vector< eq, kw::mat_gamma, tag::gamma >
+              , material_vector< eq, kw::mat_mu, tag::mu >
+              , material_vector< eq, kw::mat_pstiff, tag::pstiff >
+              , material_vector< eq, kw::mat_cv, tag::cv >
+              , material_vector< eq, kw::mat_k, tag::k >
+              , material_option< eq, ctr::Material, kw::eos, tag::eos >
+            > > > {};
 
   //! Mesh ... end block
   template< class eq >
@@ -1518,7 +1617,8 @@ namespace deck {
   struct compflow :
          pegtl::if_must<
            scan_eq< use< kw::compflow >, tag::compflow >,
-           tk::grm::start_vector<tag::param, tag::compflow, tag::ic, tag::box>,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::ic, tag::box >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::material >,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
                                             use< kw::physics >,
@@ -1588,7 +1688,8 @@ namespace deck {
   struct multimat :
          pegtl::if_must<
            scan_eq< use< kw::multimat >, tag::multimat >,
-           tk::grm::start_vector<tag::param, tag::multimat, tag::ic, tag::box>,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::ic, tag::box >,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::material >,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
                                             use< kw::physics >,

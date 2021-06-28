@@ -402,8 +402,7 @@ class MultiMat {
         {
           auto alk = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           auto pk = prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) / alk;
-          auto Pck =
-            g_inputdeck.get< tag::param, eq, tag::pstiff >()[ m_system ][k];
+          auto Pck = pstiff< eq >(m_system, k);
           // for positive volume fractions
           if (matExists(alk))
           {
@@ -412,8 +411,7 @@ class MultiMat {
             // these conditions is true, perform pressure relaxation.
             if ((alk < al_eps) || (pk+Pck < 0.0)/*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
             {
-              //auto gk =
-              //  g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][k];
+              //auto gk = gamma< eq >(m_system, k);
 
               tk::real alk_new(0.0);
               //// volume change based on polytropic expansion/isentropic compression
@@ -471,8 +469,7 @@ class MultiMat {
         }
 
         // 2. Based on volume change in majority material, compute energy change
-        //auto gmax =
-        //  g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][kmax];
+        //auto gmax = gamma< eq >(m_system, kmax);
         //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
         //auto rhomax_new = unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset)
         //  / (almax+d_al);
@@ -521,10 +518,8 @@ class MultiMat {
         //pmix = rhoEb - 0.5*rhob*(u*u+v*v+w*w);
         //for (std::size_t k=0; k<nmat; ++k)
         //{
-        //  auto gk =
-        //    g_inputdeck.get< tag::param, eq, tag::gamma >()[ m_system ][k];
-        //  auto Pck =
-        //    g_inputdeck.get< tag::param, eq, tag::pstiff >()[ m_system ][k];
+        //  auto gk = gamma< eq >(m_system, k);
+        //  auto Pck = pstiff< eq >(m_system, k);
 
         //  pmix -= unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset) * gk * Pck *
         //    relaxInd[k] / (gk-1.0);
@@ -1111,8 +1106,7 @@ class MultiMat {
     //! Return time history field names to be output to file
     //! \return Vector of strings labelling time history fields output in file
     std::vector< std::string > histNames() const {
-      std::vector< std::string > s; // punt for now
-      return s;
+      return MultiMatHistNames();
     }
 
     //! Return surface field output going to file
@@ -1126,13 +1120,63 @@ class MultiMat {
 
     //! Return time history field output evaluated at time history points
     //! \param[in] h History point data
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] U Array of unknowns
+    //! \param[in] P Array of primitive quantities
+    //! \return Vector of time history output of bulk flow quantities (density,
+    //!   velocity, total energy, and pressure) evaluated at time history points
     std::vector< std::vector< tk::real > >
     histOutput( const std::vector< HistData >& h,
-                const std::vector< std::size_t >&,
-                const tk::UnsMesh::Coords&,
-                const tk::Fields& ) const
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                const tk::Fields& U,
+                const tk::Fields& P ) const
     {
-      std::vector< std::vector< tk::real > > Up(h.size()); //punt for now
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      std::vector< std::vector< tk::real > > Up(h.size());
+
+      std::size_t j = 0;
+      for (const auto& p : h) {
+        auto e = p.get< tag::elem >();
+        auto chp = p.get< tag::coord >();
+
+        // Evaluate inverse Jacobian
+        std::array< std::array< tk::real, 3>, 4 > cp{{
+          {{ x[inpoel[4*e  ]], y[inpoel[4*e  ]], z[inpoel[4*e  ]] }},
+          {{ x[inpoel[4*e+1]], y[inpoel[4*e+1]], z[inpoel[4*e+1]] }},
+          {{ x[inpoel[4*e+2]], y[inpoel[4*e+2]], z[inpoel[4*e+2]] }},
+          {{ x[inpoel[4*e+3]], y[inpoel[4*e+3]], z[inpoel[4*e+3]] }} }};
+        auto J = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
+
+        // evaluate solution at history-point
+        std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
+          chp[2]-cp[0][2]}};
+        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc));
+        auto uhp = eval_state(m_ncomp, m_offset, rdof, rdof, e, U, B);
+        auto php = eval_state(nprim(), m_offset, rdof, rdof, e, P, B);
+
+        // store solution in history output vector
+        Up[j].resize(6, 0.0);
+        for (std::size_t k=0; k<nmat; ++k) {
+          Up[j][0] += uhp[densityIdx(nmat,k)];
+          Up[j][4] += uhp[energyIdx(nmat,k)];
+          Up[j][5] += php[pressureIdx(nmat,k)];
+        }
+        Up[j][1] = php[velocityIdx(nmat,0)];
+        Up[j][2] = php[velocityIdx(nmat,1)];
+        Up[j][3] = php[velocityIdx(nmat,2)];
+        ++j;
+      }
+
       return Up;
     }
 

@@ -185,4 +185,23 @@ MultiMatFieldOutput(
   return out;
 }
 
+std::vector< std::string > MultiMatHistNames()
+// *****************************************************************************
+// Return time history field names to be output to file
+//! \note Every time history point will output these fields.
+//! \return Vector of strings labelling time history fields output in file
+// *****************************************************************************
+{
+  std::vector< std::string > n;
+
+  n.push_back( "density" );
+  n.push_back( "x-velocity" );
+  n.push_back( "y-velocity" );
+  n.push_back( "z-velocity" );
+  n.push_back( "energy" );
+  n.push_back( "pressure" );
+
+  return n;
+}
+
 } //inciter::
