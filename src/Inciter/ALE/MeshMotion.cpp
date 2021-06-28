@@ -77,9 +77,14 @@ vortscale( const std::array< std::vector< tk::real >, 3 >& coord,
 // *****************************************************************************
 {
    // compute vorticity
-   auto vort = tk::curl( coord, inpoel, vol, vel );
+   auto vort = tk::curl( coord, inpoel, vel );
 
    auto npoin = coord[0].size();
+
+   // divide weak result by nodal volume
+   for (std::size_t j=0; j<3; ++j)
+     for (std::size_t p=0; p<npoin; ++p)
+       vort[j][p] /= vol[p];
 
    // compute max vorticity
    std::vector< tk::real > v( npoin, 0.0 );

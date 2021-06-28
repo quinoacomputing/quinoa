@@ -128,7 +128,7 @@ class Discretization : public CBase_Discretization {
     resizePostALE( const tk::UnsMesh::Coords& coord );
 
     //! Get ready for (re-)computing/communicating nodal volumes
-    void startvol( bool last_stage = false );
+    void startvol();
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
@@ -178,8 +178,10 @@ class Discretization : public CBase_Discretization {
 
     //! Nodal mesh volumes accessors as const-ref
     const std::vector< tk::real >& Vol() const { return m_vol; }
-    //! Nodal mesh volumes accessors as const-ref at previous time step
+    //! Nodal mesh volumes accessors as const-ref at previous time step stage
     const std::vector< tk::real >& Voln() const { return m_voln; }
+    //! Nodal mesh volumes accessors as ref at previous time step stage
+    std::vector< tk::real >& Voln() { return m_voln; }
 
     //! History points data accessor as const-ref
     const std::vector< HistData >& Hist() const { return m_histdata; }
@@ -520,7 +522,7 @@ class Discretization : public CBase_Discretization {
     //! Volume of nodes at previous time step
     //! \details This is the volume of the mesh associated to nodes of owned
     //!   elements (sum of surrounding cell volumes / 4) with contributions from
-    //!   other chares on chare-boundaries at the previous time step
+    //!   other chares on chare-boundaries at the previous time step stage
     std::vector< tk::real > m_voln;
     //! Volume of user-defined box IC
     tk::real m_boxvol;

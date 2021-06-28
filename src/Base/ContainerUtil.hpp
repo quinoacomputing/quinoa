@@ -109,6 +109,18 @@ auto extents( const Container& map )
   return {{ x.first->second, x.second->second }};
 }
 
+//! Add all elements of an array to those of another one
+//! \param[in,out] dst Destination array, i.e., left-hand side of a1 += a2
+//! \param[in] src Source array, i.e., righ-hand side of a1 += a2
+//! \return Destination containing a1[0] += a2[0], a1[1] += a2[1], ...
+template< class T, std::size_t N >
+std::array< T, N >&
+operator+=( std::array< T, N >& dst, const std::array< T, N >& src ) {
+  std::transform( src.cbegin(), src.cend(), dst.begin(), dst.begin(),
+                  []( const T& s, T& d ){ return d += s; } );
+  return dst;
+}
+
 //! Add all elements of a vector to those of another one
 //! \param[in,out] dst Destination vector, i.e., left-hand side of v1 += v2
 //! \param[in] src Source vector, i.e., righ-hand side of v1 += v2

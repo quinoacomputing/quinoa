@@ -129,6 +129,10 @@ class ALECG : public CBase_ALECG {
     void comrhs( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& R );
 
+    //! Receive contributions to vorticity on chare-boundaries
+    void comvort( const std::vector< std::size_t >& gid,
+                  const std::vector< std::array< tk::real, 3 > >& v );
+
     //! Update solution at the end of time step
     void update( const tk::Fields& a );
 
@@ -198,6 +202,7 @@ class ALECG : public CBase_ALECG {
       p | m_nsol;
       p | m_ngrad;
       p | m_nrhs;
+      p | m_nvort;
       p | m_nbnorm;
       p | m_ndfnorm;
       p | m_bnode;
@@ -235,6 +240,8 @@ class ALECG : public CBase_ALECG {
       p | m_finished;
       p | m_newmesh;
       p | m_coordn;
+      p | m_vorticity;
+      p | m_vorticityc;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -255,6 +262,8 @@ class ALECG : public CBase_ALECG {
     std::size_t m_ngrad;
     //! Counter for right-hand side vector nodes updated
     std::size_t m_nrhs;
+    //! Counter for communicating the vorticity for ALE
+    std::size_t m_nvort;
     //! Counter for receiving boundary point normals
     std::size_t m_nbnorm;
     //! Counter for receiving dual-face normals on chare-boundary edges
@@ -304,7 +313,8 @@ class ALECG : public CBase_ALECG {
     //!   node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_chBndGradc;
     //! Receive buffer for communication of the right hand side
-    //! \details Key: chare id, value: rhs for all scalar components per node
+    //! \details Key: global node id, value: rhs for all scalar components per
+    //!   node.
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
     //! Diagnostics object
     NodeDiagnostics m_diag;
@@ -347,6 +357,11 @@ class ALECG : public CBase_ALECG {
     int m_newmesh;
     //! Mesh coordinates at the time n for ALE
     tk::UnsMesh::Coords m_coordn;
+    //! Vorticity for ALE
+    tk::UnsMesh::Coords m_vorticity;
+    //! Receive buffer for communication of the vorticity for ALE
+    //! \details Key: global node id, value: vorticity in nodes
+    std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_vorticityc;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

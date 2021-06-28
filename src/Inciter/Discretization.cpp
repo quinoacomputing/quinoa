@@ -216,8 +216,9 @@ Discretization::dynALE() const
   auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
 
-  if (ale && meshvel != ctr::MeshVelocityType::NONE &&
-             meshvel != ctr::MeshVelocityType::SINE)
+  if (ale &&
+      meshvel != ctr::MeshVelocityType::NONE &&
+      meshvel != ctr::MeshVelocityType::SINE)
     return true;
   else
     return false;
@@ -538,17 +539,16 @@ Discretization::resizePostALE( const tk::UnsMesh::Coords& coord )
 }
 
 void
-Discretization::startvol( bool last_stage )
+Discretization::startvol()
 // *****************************************************************************
 //  Get ready for (re-)computing/communicating nodal volumes
-//! \param[in] last_stage True if this is the last time step stage
 // *****************************************************************************
 {
   m_nvol = 0;
   thisProxy[ thisIndex ].wait4vol();
 
-  // Save nodal volumes at previous time step
-  if (last_stage) m_voln = m_vol;
+  // Save current nodal volumes
+  m_voln = m_vol;
 
   // Zero out mesh volume container
   std::fill( begin(m_vol), end(m_vol), 0.0 );

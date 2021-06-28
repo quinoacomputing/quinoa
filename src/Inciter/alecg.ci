@@ -51,6 +51,8 @@ module alecg {
                                const std::vector< std::vector< tk::real > >& G );
       entry void comrhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& R );
+      entry void comvort( const std::vector< std::size_t >& gid,
+                          const std::vector< std::array< tk::real, 3 > >& v );
       entry void resized();
       entry void applied( CkDataMsg* msg );
       entry void smoothed( CkDataMsg* msg );
@@ -83,6 +85,12 @@ module alecg {
         }
       }
 
+      entry void wait4vort() {
+        when ownvort_complete(), comvort_complete() serial "vort" {
+          meshvelbc();
+        }
+      }
+
       entry void ownnorm_complete();
       entry void comnorm_complete();
       entry void owndfnorm_complete();
@@ -95,6 +103,8 @@ module alecg {
       entry void comgrad_complete();
       entry void norm_complete();
       entry void resize_complete();
+      entry void ownvort_complete();
+      entry void comvort_complete();
       //! [DAG]
     }
 
