@@ -57,12 +57,7 @@ namespace multimat {
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Bulk density ready to be output to file
 static tk::GetVarFn::result_type
-bulkDensityOutVar( const tk::Fields& U,
-                   tk::ctr::ncomp_t offset,
-                   std::size_t rdof,
-                   const tk::UnsMesh::Coords&,
-                   const std::vector< std::size_t >&,
-                   const std::vector< tk::real >& )
+bulkDensityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
 {
   using tk::operator+=;
   auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
@@ -81,12 +76,8 @@ bulkDensityOutVar( const tk::Fields& U,
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Bulk pressure ready to be output to file
 static tk::GetVarFn::result_type
-bulkPressureOutVar( const tk::Fields& U,
-                    tk::ctr::ncomp_t offset,
-                    std::size_t rdof,
-                    const tk::UnsMesh::Coords&,
-                    const std::vector< std::size_t >&,
-                    const std::vector< tk::real >& )
+bulkPressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
+                    std::size_t rdof )
 {
   using tk::operator+=;
   auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
@@ -105,12 +96,8 @@ bulkPressureOutVar( const tk::Fields& U,
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Bulk specific total energy ready to be output to file
 static tk::GetVarFn::result_type
-bulkSpecificTotalEnergyOutVar( const tk::Fields& U,
-                               tk::ctr::ncomp_t offset,
-                               std::size_t rdof,
-                               const tk::UnsMesh::Coords&,
-                               const std::vector< std::size_t >&,
-                               const std::vector< tk::real >& )
+bulkSpecificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
+                               std::size_t rdof )
 {
   using tk::operator+=;
   auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
@@ -131,12 +118,7 @@ bulkSpecificTotalEnergyOutVar( const tk::Fields& U,
 //! \return Velocity component ready to be output to file
 template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
-velocityOutVar( const tk::Fields& U,
-                tk::ctr::ncomp_t offset,
-                std::size_t rdof,
-                const tk::UnsMesh::Coords&,
-                const std::vector< std::size_t >&,
-                const std::vector< tk::real >& )
+velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
 {
   auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
   auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
@@ -151,12 +133,8 @@ velocityOutVar( const tk::Fields& U,
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Material indicator function ready to be output to file
 static tk::GetVarFn::result_type
-matIndicatorOutVar( const tk::Fields& U,
-                    tk::ctr::ncomp_t offset,
-                    std::size_t rdof,
-                    const tk::UnsMesh::Coords&,
-                    const std::vector< std::size_t >&,
-                    const std::vector< tk::real >& )
+matIndicatorOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
+                    std::size_t rdof )
 {
   auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
   auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];

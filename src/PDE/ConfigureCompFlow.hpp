@@ -22,8 +22,6 @@
 #include "FunctionPrototypes.hpp"
 #include "ContainerUtil.hpp"
 #include "EoS/EoS.hpp"
-#include "Mesh/DerivedData.hpp"
-#include "Vector.hpp"
 
 namespace inciter {
 
@@ -62,12 +60,7 @@ namespace compflow {
 //!   equation system among other systems
 //! \return Fluid density ready to be output to file
 static tk::GetVarFn::result_type
-densityOutVar( const tk::Fields& U,
-               tk::ctr::ncomp_t offset,
-               std::size_t,
-               const tk::UnsMesh::Coords&,
-               const std::vector< std::size_t >&,
-               const std::vector< tk::real >& )
+densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t )
 {
   return U.extract( 0, offset );
 }
@@ -82,12 +75,7 @@ densityOutVar( const tk::Fields& U,
 //! \return Velocity component ready to be output to file
 template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
-velocityOutVar( const tk::Fields& U,
-                tk::ctr::ncomp_t offset,
-                std::size_t rdof,
-                const tk::UnsMesh::Coords&,
-                const std::vector< std::size_t >&,
-                const std::vector< tk::real >& )
+velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
 {
   using tk::operator/=;
   auto r = U.extract( 0, offset ), u = U.extract( (dir+1)*rdof, offset );
@@ -103,12 +91,8 @@ velocityOutVar( const tk::Fields& U,
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Volumetric total energy ready to be output to file
 static tk::GetVarFn::result_type
-volumetricTotalEnergyOutVar( const tk::Fields& U,
-                             tk::ctr::ncomp_t offset,
-                             std::size_t rdof,
-                             const tk::UnsMesh::Coords&,
-                             const std::vector< std::size_t >&,
-                             const std::vector< tk::real >& )
+volumetricTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
+                             std::size_t rdof )
 {
   return U.extract( 4*rdof, offset );
 }
@@ -121,12 +105,8 @@ volumetricTotalEnergyOutVar( const tk::Fields& U,
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Specific total energy ready to be output to file
 static tk::GetVarFn::result_type
-specificTotalEnergyOutVar( const tk::Fields& U,
-                           tk::ctr::ncomp_t offset,
-                           std::size_t rdof,
-                           const tk::UnsMesh::Coords&,
-                           const std::vector< std::size_t >&,
-                           const std::vector< tk::real >& )
+specificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
+                           std::size_t rdof )
 {
   using tk::operator/=;
   auto r = U.extract( 0, offset ), e = U.extract( 4*rdof, offset );
@@ -144,78 +124,9 @@ specificTotalEnergyOutVar( const tk::Fields& U,
 //! \return Momentum component ready to be output to file
 template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
-momentumOutVar( const tk::Fields& U,
-                tk::ctr::ncomp_t offset,
-                std::size_t rdof,
-                const tk::UnsMesh::Coords&,
-                const std::vector< std::size_t >&,
-                const std::vector< tk::real >& )
+momentumOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
 {
   return U.extract( (dir+1)*rdof, offset );
-}
-
-//! Compute vorticity component for output to file
-//! \note Must follow the signature in tk::GetVarFn
-//! \tparam dir Physical direction, encoded as 0:x, 1:y, 2:z
-//! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the CompFlow
-//!   equation system among other systems
-//! \param[in] rdof Number of reconstructed solution DOFs
-//! \param[in] coord Mesh node coordinates
-//! \param[in] inpoel Mesh element connectivity
-//! \param[in] vol Nodal volumes
-//! \return Momentum component ready to be output to file
-template< tk::ctr::ncomp_t dir >
-tk::GetVarFn::result_type
-vorticityOutVar( const tk::Fields& U,
-                 tk::ctr::ncomp_t offset,
-                 std::size_t rdof,
-                 const tk::UnsMesh::Coords& coord,
-                 const std::vector< std::size_t >& inpoel,
-                 const std::vector< tk::real >& vol )
-{
-  using tk::operator/=;
-  tk::UnsMesh::Coords vel{ U.extract( 1*rdof, offset ),
-                           U.extract( 2*rdof, offset ),
-                           U.extract( 3*rdof, offset ) };
-  auto r = U.extract( 0, offset );
-  vel[0] /= r;
-  vel[1] /= r;
-  vel[2] /= r;
-  auto vort = tk::curl( coord, inpoel, vol, vel );
-  return vort[dir];
-}
-
-//! Compute length of the vorticity vector for output to file
-//! \note Must follow the signature in tk::GetVarFn
-//! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the CompFlow
-//!   equation system among other systems
-//! \param[in] rdof Number of reconstructed solution DOFs
-//! \param[in] coord Mesh node coordinates
-//! \param[in] inpoel Mesh element connectivity
-//! \param[in] vol Nodal volumes
-//! \return Momentum component ready to be output to file
-static tk::GetVarFn::result_type
-vorticityMagOutVar( const tk::Fields& U,
-                    tk::ctr::ncomp_t offset,
-                    std::size_t rdof,
-                    const tk::UnsMesh::Coords& coord,
-                    const std::vector< std::size_t >& inpoel,
-                    const std::vector< tk::real >& vol )
-{
-  using tk::operator/=;
-  tk::UnsMesh::Coords vel{ U.extract( 1*rdof, offset ),
-                           U.extract( 2*rdof, offset ),
-                           U.extract( 3*rdof, offset ) };
-  auto r = U.extract( 0, offset );
-  vel[0] /= r;
-  vel[1] /= r;
-  vel[2] /= r;
-  auto vort = tk::curl( coord, inpoel, vol, vel );
-  for (std::size_t i=0; i<U.nunk(); ++i)
-    vort[0][i] = tk::length( vort[0][i], vort[1][i], vort[2][i] );
-  return vort[0];
 }
 
 //! Compute pressure for output to file
@@ -226,12 +137,7 @@ vorticityMagOutVar( const tk::Fields& U,
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Pressure ready to be output to file
 static tk::GetVarFn::result_type
-pressureOutVar( const tk::Fields& U,
-                tk::ctr::ncomp_t offset,
-                std::size_t rdof,
-                const tk::UnsMesh::Coords&,
-                const std::vector< std::size_t >&,
-                const std::vector< tk::real >& )
+pressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
 {
   using tk::operator/=;
   auto r = U.extract( 0, offset ),

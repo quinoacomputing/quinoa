@@ -1379,9 +1379,7 @@ ALECG::writeFields( CkCallback c )
     auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
     // Collect field output from numerical solution requested by user
     conserved( m_u );
-    auto nodefields =
-      numericFieldOutput( m_u, tk::Centering::NODE, tk::Fields(),
-                          d->Coord(), d->Inpoel(), d->Vol() );
+    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
     volumetric( m_u );
 
     // Output mesh velocity if ALE is enabled

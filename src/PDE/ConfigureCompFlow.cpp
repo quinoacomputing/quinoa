@@ -332,10 +332,6 @@ assignCompFlowGetVars( const std::string& name, tk::GetVarFn& f )
   assign< outvar_xmomentum >( name, momentumOutVar<0>, f );
   assign< outvar_ymomentum >( name, momentumOutVar<1>, f );
   assign< outvar_zmomentum >( name, momentumOutVar<2>, f );
-  assign< outvar_xvorticity >( name, vorticityOutVar<0>, f );
-  assign< outvar_yvorticity >( name, vorticityOutVar<1>, f );
-  assign< outvar_zvorticity >( name, vorticityOutVar<2>, f );
-  assign< outvar_vorticity_magnitude >( name, vorticityMagOutVar, f );
   assign< outvar_pressure >( name, pressureOutVar, f );
 }
 

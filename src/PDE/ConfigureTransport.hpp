@@ -56,12 +56,8 @@ namespace transport {
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Material indicator function ready to be output to file
 static tk::GetVarFn::result_type
-matIndicatorOutVar( const tk::Fields& U,
-                    tk::ctr::ncomp_t offset,
-                    std::size_t rdof,
-                    const tk::UnsMesh::Coords&,
-                    const std::vector< std::size_t >&,
-                    const std::vector< tk::real >& )
+matIndicatorOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
+                    std::size_t rdof )
 {
   auto ncomp = U.nprop()/rdof;
   std::vector< tk::real > m(U.nunk(), 0.0);

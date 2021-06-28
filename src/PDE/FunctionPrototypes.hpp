@@ -21,7 +21,6 @@
 #include "Types.hpp"
 #include "Keywords.hpp"
 #include "Fields.hpp"
-#include "UnsMesh.hpp"
 
 namespace tk {
 
@@ -105,12 +104,7 @@ using ElemGradFn = std::function<
 
 //! Prototype for functions to compute a variable from the numerical solution
 using GetVarFn =
-  std::function< std::vector<real>( const tk::Fields&,
-                                    ncomp_t,
-                                    std::size_t,
-                                    const tk::UnsMesh::Coords&,
-                                    const std::vector< std::size_t >&,
-                                    const std::vector< tk::real >& ) >;
+  std::function< std::vector<real>( const tk::Fields&, ncomp_t, std::size_t ) >;
 
 //! Prototype for functions to a compute multi-material index
 using MultiMatIdxFn =

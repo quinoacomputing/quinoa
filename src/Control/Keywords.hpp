@@ -1986,51 +1986,6 @@ struct outvar_zmomentum_info {
 using outvar_zmomentum =
   keyword< outvar_zmomentum_info, TAOCPP_PEGTL_STRING("z-momentum") >;
 
-struct outvar_xvorticity_info {
-  static std::string name() { return "x-vorticity"; }
-  static std::string shortDescription() { return "Request x-vorticity"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to request the fluid x-vorticity as an output
-       variable.)";
-  }
-};
-using outvar_xvorticity =
-  keyword< outvar_xvorticity_info, TAOCPP_PEGTL_STRING("x-vorticity") >;
-
-struct outvar_yvorticity_info {
-  static std::string name() { return "y-vorticity"; }
-  static std::string shortDescription() { return "Request y-vorticity"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to request the fluid y-vorticity as an output
-       variable.)";
-  }
-};
-using outvar_yvorticity =
-  keyword< outvar_yvorticity_info, TAOCPP_PEGTL_STRING("y-vorticity") >;
-
-struct outvar_zvorticity_info {
-  static std::string name() { return "z-vorticity"; }
-  static std::string shortDescription() { return "Request z-vorticity"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to request the fluid z-vorticity as an output
-       variable.)";
-  }
-};
-using outvar_zvorticity =
-  keyword< outvar_zvorticity_info, TAOCPP_PEGTL_STRING("z-vorticity") >;
-
-struct outvar_vorticity_magnitude_info {
-  static std::string name() { return "vorticity"; }
-  static std::string shortDescription() { return "Request vorticity"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to request the length of the fluid vorticity vector
-       as an output variable.)";
-  }
-};
-using outvar_vorticity_magnitude =
-  keyword< outvar_vorticity_magnitude_info,
-           TAOCPP_PEGTL_STRING("vorticity_magnitude") >;
-
 struct outvar_specific_total_energy_info {
   static std::string name() { return "specific_total_energy"; }
   static std::string shortDescription() {
@@ -2137,10 +2092,6 @@ struct outvar_info {
     + outvar_xmomentum::string()+ "\', \'"
     + outvar_ymomentum::string()+ "\', \'"
     + outvar_zmomentum::string()+ "\', \'"
-    + outvar_xvorticity::string()+ "\', \'"
-    + outvar_yvorticity::string()+ "\', \'"
-    + outvar_zvorticity::string()+ "\', \'"
-    + outvar_vorticity_magnitude::string()+ "\', \'"
     + outvar_specific_total_energy::string() + "\', \'"
     + outvar_volumetric_total_energy::string() + "\', \'"
     + outvar_xvelocity::string() + "\', \'"
