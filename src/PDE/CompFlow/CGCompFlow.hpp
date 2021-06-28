@@ -849,6 +849,12 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] nodes Unique set of node ids at which to apply sponge
+    //! \details This function applies a sponge-like parameter to nodes of a
+    //!   side set specified in the input file. We remove a user-specified
+    //!   percentage of the kinetic energy by reducing the tangential
+    //!   component of the velocity at a boundary and thereby modeling the
+    //!   effect of a solid wall on the fluid via fluid-structure interaction
+    //!   via a viscosity-like effect.
     void
     sponge( tk::Fields& U,
             const std::array< std::vector< real >, 3 >& coord,
@@ -1604,6 +1610,11 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] nodes Unique set of nodes for sponge conditions
     //! \return Sponge ressure multiplers at nodes, one per sponge side set
+    //! \details This function computes a sponge-like multiplier that will be
+    //!   applied to nodes of side sets specified in the input file. This is
+    //!   used to reduce the pressure gradient normal to boundaries and thereby
+    //!   modeling the effect of a solid wall on the fluid via fluid-structure
+    //!   interaction.
     //! \note If no sponge pressure coefficients are configured, an empty
     //!   vector is returned.
     std::vector< tk::real >
