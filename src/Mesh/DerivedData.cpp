@@ -1457,7 +1457,7 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
 
   auto nelem = inpoel.size()/nnpe;
 
-  Fields geoElem( nelem, 14 );
+  Fields geoElem( nelem, 5 );
 
   const auto& x = coord[0];
   const auto& y = coord[1];
