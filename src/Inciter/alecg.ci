@@ -41,6 +41,7 @@ module alecg {
       entry void start();
       entry void refine( const std::vector< tk::real >& l2ref );
       entry [reductiontarget] void advance( tk::real newdt );
+      entry [reductiontarget] void meshvelbc( tk::real maxv );
       entry void comdfnorm(
               const std::unordered_map< tk::UnsMesh::Edge,
               std::array< tk::real, 3 >,
@@ -87,7 +88,7 @@ module alecg {
 
       entry void wait4vort() {
         when ownvort_complete(), comvort_complete() serial "vort" {
-          meshvelbc();
+          vorticity();
         }
       }
 

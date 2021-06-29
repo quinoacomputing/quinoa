@@ -80,8 +80,12 @@ using amr = tk::TaggedTuple< brigand::list<
 
 //! ALE mesh motion options
 using ale = tk::TaggedTuple< brigand::list<
-    tag::ale,           bool                  //!< ALE on/off
-  , tag::dvcfl,         kw::dvcfl::info::expect::type  //!< dvCFL coefficient
+  //! ALE on/off
+    tag::ale,           bool
+  //! dvCFL (CFL mesh volume change) coefficient for ALE
+  , tag::dvcfl,         kw::dvcfl::info::expect::type
+  //!< Multiplier for vorticity in mesh velocity smoother
+  , tag::vortmult,      kw::vortmult::info::expect::type
   //! Mesh velocity smoother linear solver max number of iterations
   , tag::maxit,         kw::meshvel_maxit::info::expect::type
   //! Mesh velocity smoother linear solver tolerance

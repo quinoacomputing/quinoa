@@ -21,6 +21,7 @@ inciter
   ale
     dvcfl 1.0
     mesh_velocity fluid
+    vortmult 0.0        # turn off vorticity scaling
 
     # yields close to Lagrangian mesh velocity
     maxit 20

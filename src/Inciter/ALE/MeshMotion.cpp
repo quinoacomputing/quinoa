@@ -10,9 +10,6 @@
 */
 // *****************************************************************************
 
-#include <limits>
-#include <iostream>     // NOT NEEDED
-
 #include "MeshMotion.hpp"
 #include "Mesh/DerivedData.hpp"
 #include "Vector.hpp"
@@ -56,19 +53,15 @@ meshvel( ctr::MeshVelocityType m,
 }
 
 void
-vortscale( const std::array< std::vector< tk::real >, 3 >& coord,
-           const std::vector< std::size_t >& inpoel,
-           const std::vector< tk::real >& vol,
-           const tk::UnsMesh::Coords& vel,
-           tk::real c1,
-           tk::real c2,
+vortscale( const std::vector< tk::real >& vort,
+           tk::real vmult,
+           tk::real maxv,
            tk::Fields& w )
 // *****************************************************************************
 //  Scale the mesh velocity with a function of the fluid vorticity for ALE
-//! \param[in] coord Mesh node coordinates
-//! \param[in] inpoel Mesh element connectivity
-//! \param[in] vol Nodal volumes
-//! \param[in] vel Fluid velocity in mesh points
+//! \param[in] vort Vorticity magnitude in mesh points
+//! \param[in] vmult Vorticity multiplier
+//! \param[in] maxv Largest vorticity magnitude
 //! \param[in] w Mesh velocity to scale
 //! \see J. Waltz, N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger,
 //!   J.G. Wohlbier, A three-dimensional finite element arbitrary
@@ -76,36 +69,13 @@ vortscale( const std::array< std::vector< tk::real >, 3 >& coord,
 //!   Computers & Fluids, 92: 172-187, 2014.
 // *****************************************************************************
 {
-   // compute vorticity
-   auto vort = tk::curl( coord, inpoel, vel );
+  Assert( w.nunk() == vort.size(), "Size mismatch" );
 
-   auto npoin = coord[0].size();
-
-   // divide weak result by nodal volume
-   for (std::size_t j=0; j<3; ++j)
-     for (std::size_t p=0; p<npoin; ++p)
-       vort[j][p] /= vol[p];
-
-   // compute max vorticity
-   std::vector< tk::real > v( npoin, 0.0 );
-   auto maxv = -std::numeric_limits< tk::real >::max();
-   for (std::size_t p=0; p<npoin; ++p) {
-     v[p] = tk::length( vort[0][p], vort[1][p], vort[2][p] );
-     maxv = std::max( maxv, v[p] );
-   }
-//std::cout << "maxv: " << maxv << '\n';
- 
-   // scale mesh velocity with a function of the fluid vorticity
-   if (maxv > 1.0e-8) {
-     for (std::size_t j=0; j<3; ++j) {
-       #pragma omp simd
-       for (std::size_t p=0; p<npoin; ++p) {
-// std::cout << v[p] << '/' << maxv << '>';
-         w(p,j,0) *= c1 * std::max( 0.0, 1.0 - c2*v[p]/maxv );
-// std::cout << w(p,j,0) << ' ';
-       }
-     }
-   }
+  // scale mesh velocity with a function of the fluid vorticity
+  if (maxv > 1.0e-8)
+    for (std::size_t j=0; j<3; ++j)
+      for (std::size_t p=0; p<vort.size(); ++p)
+        w(p,j,0) *= std::max( 0.0, 1.0 - vmult*vort[p]/maxv );
 }
 
 } // inciter::

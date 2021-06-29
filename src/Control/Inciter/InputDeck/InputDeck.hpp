@@ -148,6 +148,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::ctau
                                  , kw::cfl
                                  , kw::dvcfl
+                                 , kw::vortmult
                                  , kw::mj
                                  , kw::elem
                                  , kw::node
@@ -331,6 +332,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       // Default ALE settings
       get< tag::ale, tag::ale >() = false;
       get< tag::ale, tag::dvcfl >() = 0.0;
+      get< tag::ale, tag::vortmult >() = 1.0;
       get< tag::ale, tag::maxit >() = 50;
       get< tag::ale, tag::tolerance >() = 1.0e-2;
       get< tag::ale, tag::meshvelocity >() = MeshVelocityType::NONE;

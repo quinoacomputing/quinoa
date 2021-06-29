@@ -12,8 +12,6 @@
 #ifndef MeshMotion_h
 #define MeshMotion_h
 
-#include <cmath>
-
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "Control/Inciter/Options/MeshVelocity.hpp"
@@ -32,12 +30,9 @@ meshvel( ctr::MeshVelocityType m,
 
 //! Scale the mesh velocity with a function of the fluid vorticity for ALE
 void
-vortscale( const std::array< std::vector< tk::real >, 3 >& coord,
-           const std::vector< std::size_t >& inpoel,
-           const std::vector< tk::real >& vol,
-           const tk::UnsMesh::Coords& vel,
-           tk::real c1,
-           tk::real c2,
+vortscale( const std::vector< tk::real >& vort,
+           tk::real vmult,
+           tk::real maxv,
            tk::Fields& w );
 
 } // inciter::

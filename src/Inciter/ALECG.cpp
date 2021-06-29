@@ -800,7 +800,7 @@ ALECG::dt()
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
 
-  // Contribute to minimum dt across all chares the advance to next step
+  // Contribute to minimum dt across all chares and advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
               CkCallback(CkReductionTarget(ALECG,advance), thisProxy) );
   //! [Advance]
@@ -946,45 +946,63 @@ ALECG::comvort( const std::vector< std::size_t >& gid,
 }
 
 void
-ALECG::meshvelbc()
+ALECG::vorticity()
 // *****************************************************************************
-// Apply mesh velocity smoother boundary conditions for ALE mesh motion
+// Finalize computing fluid vorticity for ALE
 // *****************************************************************************
 {
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto d = Disc();
 
-  // smooth mesh velocity if enabled
+  // combine own and communicated contributions to vorticity
+  for (const auto& [g,v] : m_vorticityc) {
+    auto lid = tk::cref_find( d->Lid(), g );
+    m_vorticity[0][lid] += v[0];
+    m_vorticity[1][lid] += v[1];
+    m_vorticity[2][lid] += v[2];
+  }
+  // clear receive buffer
+  tk::destroy(m_vorticityc);
+
+  // finish computing vorticity dividing the weak sum by the nodal volumes
+  for (std::size_t j=0; j<3; ++j)
+    for (std::size_t p=0; p<m_vorticity[j].size(); ++p)
+      m_vorticity[j][p] /= d->Voln()[p];
+
+  // compute vorticity magnitude
+  for (std::size_t p=0; p<m_vorticity[0].size(); ++p)
+    m_vorticity[0][p] =
+      tk::length( m_vorticity[0][p], m_vorticity[1][p], m_vorticity[2][p] );
+
+  // get rid of the y and z vorticity components, since we just overwrote the
+  // x component with the magnitude
+  tk::destroy( m_vorticity[1] );
+  tk::destroy( m_vorticity[2] );
+
+  // compute max vorticity magnitude
+  auto maxv =
+    *std::max_element( m_vorticity[0].cbegin(), m_vorticity[0].cend() );
+
+  // Compute max vorticity magnitude across all chares
+  contribute( sizeof(tk::real), &maxv, CkReduction::max_double,
+              CkCallback(CkReductionTarget(ALECG,meshvelbc), thisProxy) );
+}
+
+void
+ALECG::meshvelbc( tk::real maxv )
+// *****************************************************************************
+// Apply mesh velocity smoother boundary conditions for ALE mesh motion
+//! \param[in] maxv The largest vorticity magnitude across the whole problem
+// *****************************************************************************
+{
+  // smooth mesh velocity if needed
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
   if (meshvel == ctr::MeshVelocityType::FLUID) {
 
-    auto d = Disc();
-
-    // combine own and communicated contributions to vorticity
-    for (const auto& [g,v] : m_vorticityc) {
-      auto lid = tk::cref_find( d->Lid(), g );
-      m_vorticity[0][lid] += v[0];
-      m_vorticity[1][lid] += v[1];
-      m_vorticity[2][lid] += v[2];
-    }
-    // clear receive buffer
-    tk::destroy(m_vorticityc);
-
-    // finish computing vorticity dividing the weak sum by the nodal volumes
-    for (std::size_t j=0; j<3; ++j)
-      for (std::size_t p=0; p<m_vorticity[j].size(); ++p)
-        m_vorticity[j][p] /= d->Voln()[p];
-
-    // compute vorticity magnitude
-    for (std::size_t p=0; p<m_vorticity[0].size(); ++p)
-      m_vorticity[0][p] =
-        tk::length( m_vorticity[0][p], m_vorticity[1][p], m_vorticity[2][p] );
-
-    // get rid of the y and z vorticity components, since we just overwrote the
-    // x component with the magnitude
-    tk::destroy( m_vorticity[1] );
-    tk::destroy( m_vorticity[2] );
-
     // scale mesh velocity by a function of the fluid vorticity
-    //inciter::vortscale( d->Coord(), d->Inpoel(), d->Vol(), m_vel, 0.5, 0.5, m_w );
+    inciter::vortscale( m_vorticity[0],
+                        g_inputdeck.get< tag::ale, tag::vortmult >(),
+                        maxv,
+                        m_w );
 
     // Set mesh velocity smoother linear solve boundary conditions
     std::unordered_map< std::size_t,
@@ -1015,7 +1033,7 @@ ALECG::meshvelbc()
     }
 
     // initiate setting mesh velocity BCs
-    d->meshvelInit( m_w.flat(), wbc,
+    Disc()->meshvelInit( m_w.flat(), wbc,
       CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
 
   } else {

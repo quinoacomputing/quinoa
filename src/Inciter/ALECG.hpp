@@ -108,6 +108,9 @@ class ALECG : public CBase_ALECG {
     //! Advance equations to next time step
     void advance( tk::real newdt );
 
+    //! Apply mesh velocity smoother boundary conditions for ALE mesh motion
+    void meshvelbc( tk::real maxv = 0.0 );
+
     //! Compute left-hand side of transport equations
     void lhs();
 
@@ -170,9 +173,6 @@ class ALECG : public CBase_ALECG {
 
     //! Resizing data sutrctures after mesh refinement has been completed
     void resized();
-
-    //! Apply mesh velocity smoother boundary conditions for ALE mesh motion
-    void meshvelbc();
 
     //! Mesh velocity smoother BCs have been applied
     void applied( CkDataMsg* msg = nullptr );
@@ -441,6 +441,9 @@ class ALECG : public CBase_ALECG {
 
     //! Divide solution with mesh volume
     void conserved( tk::Fields& u );
+
+    //! Finalize computing fluid vorticity for ALE
+    void vorticity();
 };
 
 } // inciter::
