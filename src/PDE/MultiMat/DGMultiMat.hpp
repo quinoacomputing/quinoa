@@ -300,11 +300,11 @@ class MultiMat {
           prim(e, rmark, 0) = R[mark] / L(e, mark, 0);
           if(ndof > 1)
           {
-            for(std::size_t idir = 0; idir < 3; idir++)
+            for(std::size_t idof = 1; idof < rdof; idof++)
             {
-              prim(e, rmark+idir+1, 0) = R[mark+idir+1] / L(e, mark+idir+1, 0);
-              if(fabs(prim(e, rmark+idir+1, 0)) < 1e-16)
-                prim(e, rmark+idir+1, 0) = 0;
+              prim(e, rmark+idof, 0) = R[mark+idof] / L(e, mark+idof, 0);
+              if(fabs(prim(e, rmark+idof, 0)) < 1e-16)
+                prim(e, rmark+idof, 0) = 0;
             }
           }
         }
@@ -767,6 +767,7 @@ class MultiMat {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       // limit vectors of conserved and primitive quantities
       if (limiter == ctr::LimiterType::SUPERBEEP1)
@@ -774,9 +775,15 @@ class MultiMat {
         SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_system, m_offset,
           coord, U, P, nmat );
       }
-      else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
+          m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm,
+          pNodalExtrm, U, P, nmat );
+      }
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
+      {
+        VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm,
           pNodalExtrm, U, P, nmat );
       }
@@ -978,6 +985,81 @@ class MultiMat {
                 std::max(pNodalExtrm[i->second][max_mark], P(e,c*rdof,0));
               pNodalExtrm[i->second][min_mark] =
                 std::min(pNodalExtrm[i->second][min_mark], P(e,c*rdof,0));
+            }
+
+            // If DG(P2) is applied, find the nodal extrema of the gradients of
+            // conservative/primitive variables in the physical domain
+            if(ndof_NodalExtrm > 1)
+            {
+              // Vector used to store the first order derivatives
+              std::vector< tk::real > gradc(3, 0.0);
+              std::vector< tk::real > gradp(3, 0.0);
+
+              const auto& cx = coord[0];
+              const auto& cy = coord[1];
+              const auto& cz = coord[2];
+
+              std::array< std::array< tk::real, 3>, 4 > coordel {{
+                {{ cx[ N[0] ], cy[ N[0] ], cz[ N[0] ] }},
+                {{ cx[ N[1] ], cy[ N[1] ], cz[ N[1] ] }},
+                {{ cx[ N[2] ], cy[ N[2] ], cz[ N[2] ] }},
+                {{ cx[ N[3] ], cy[ N[3] ], cz[ N[3] ] }}
+              }};
+
+              auto jacInv = tk::inverseJacobian( coordel[0], coordel[1],
+                coordel[2], coordel[3] );
+
+              // Compute the derivatives of basis functions
+              auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+
+              std::vector< tk::real > center{0.25, 0.25, 0.25};
+              tk::evaldBdx_p2(center, jacInv, dBdx);
+
+              // Evaluate the first order derivative in physical domain
+              for(std::size_t icomp = 0; icomp < ncomp; icomp++)
+              {
+                auto mark = icomp * rdof;
+                for(std::size_t idir = 0; idir < 3; idir++)
+                {
+                  for(std::size_t idof = 1; idof < rdof; idof++)
+                    gradc[idir] += U(e, mark+idof, 0) * dBdx[idir][idof];
+                }
+              }
+              for(std::size_t icomp = 0; icomp < nprim; icomp++)
+              {
+                auto mark = icomp * rdof;
+                for(std::size_t idir = 0; idir < 3; idir++)
+                {
+                  for(std::size_t idof = 1; idof < rdof; idof++)
+                    gradp[idir] += P(e, mark+idof, 0) * dBdx[idir][idof];
+                }
+              }
+
+              // Store the extrema for the gradients
+              for (std::size_t c=0; c<ncomp; ++c)
+              {
+                for (std::size_t idof = 1; idof < ndof_NodalExtrm; idof++)
+                {
+                  auto max_mark = c * ndof_NodalExtrm + idof;
+                  auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
+                  uNodalExtrm[i->second][max_mark] =
+                    std::max(uNodalExtrm[i->second][max_mark], gradc[idof]);
+                  uNodalExtrm[i->second][min_mark] =
+                    std::min(uNodalExtrm[i->second][min_mark], gradc[idof]);
+                }
+              }
+              for (std::size_t c=0; c<nprim; ++c)
+              {
+                for (std::size_t idof = 1; idof < ndof_NodalExtrm; idof++)
+                {
+                  auto max_mark = c * ndof_NodalExtrm + idof;
+                  auto min_mark = max_mark + nprim * ndof_NodalExtrm;
+                  pNodalExtrm[i->second][max_mark] =
+                    std::max(pNodalExtrm[i->second][max_mark], gradp[idof]);
+                  pNodalExtrm[i->second][min_mark] =
+                    std::min(pNodalExtrm[i->second][min_mark], gradp[idof]);
+                }
+              }
             }
           }
         }
