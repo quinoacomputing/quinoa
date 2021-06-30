@@ -78,16 +78,34 @@ add_regression_test(compflow_euler_sodshocktube_alecg ${INCITER_EXECUTABLE}
                                         sod_shocktube_hist.ndiff.cfg
                     LABELS alecg)
 
-add_regression_test(compflow_euler_sodshocktube_alecg_sponge ${INCITER_EXECUTABLE}
+add_regression_test(compflow_euler_sodshocktube_alecg_sponge_velocity ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES sod_shocktube_alecg_sponge.q rectangle_01_1.5k.exo
-                    ARGS -c sod_shocktube_alecg_sponge.q -i rectangle_01_1.5k.exo -v
-                    BIN_BASELINE sod_shocktube_alecg_sponge.std.exo
+                    INPUTFILES sod_shocktube_alecg_sponge_velocity.q rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_alecg_sponge_velocity.q -i rectangle_01_1.5k.exo -v
+                    BIN_BASELINE sod_shocktube_alecg_sponge_velocity.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
-                    TEXT_BASELINE diag_alecg_sponge.std
-                                  sod_shocktube_alecg_sponge_hist.p1.std
-                                  sod_shocktube_alecg_sponge_hist.p2.std
+                    TEXT_BASELINE diag_alecg_sponge_velocity.std
+                                  sod_shocktube_alecg_sponge_velocity_hist.p1.std
+                                  sod_shocktube_alecg_sponge_velocity_hist.p2.std
+                    TEXT_RESULT diag
+                                out.hist.p1
+                                out.hist.p2
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
+                    LABELS alecg)
+
+add_regression_test(compflow_euler_sodshocktube_alecg_sponge_pressure ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES sod_shocktube_alecg_sponge_pressure.q rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_alecg_sponge_pressure.q -i rectangle_01_1.5k.exo -v
+                    BIN_BASELINE sod_shocktube_alecg_sponge_pressure.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_alecg_sponge_pressure.std
+                                  sod_shocktube_alecg_sponge_pressure_hist.p1.std
+                                  sod_shocktube_alecg_sponge_pressure_hist.p2.std
                     TEXT_RESULT diag
                                 out.hist.p1
                                 out.hist.p2

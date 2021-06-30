@@ -120,16 +120,15 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4lhs();
 
   // Query nodes at which symmetry BCs are specified
-  auto bcnodes = d->bcnodes< tag::bcsym >( m_bface, m_triinpoel );
+  auto bn = d->bcnodes< tag::bc, tag::bcsym >( m_bface, m_triinpoel );
   // Query nodes at which farfield BCs are specified
-  auto farfieldbcnodes = d->bcnodes< tag::bcfarfield >( m_bface, m_triinpoel );
+  auto far = d->bcnodes< tag::bc, tag::bcfarfield >( m_bface, m_triinpoel );
 
   // Merge BC data where boundary-point normals are required
-  for (const auto& [s,n] : farfieldbcnodes)
-    bcnodes[s].insert( begin(n), end(n) );
+  for (const auto& [s,n] : far) bn[s].insert( begin(n), end(n) );
 
   // Compute boundary point normals
-  bnorm( bcnodes );
+  bnorm( bn );
 }
 
 void
@@ -238,12 +237,13 @@ DiagCG::normfinal()
   m_bnorm = std::move(bnorm);
 
   // Prepare unique set of symmetry BC nodes
-  m_symbcnodemap = d->bcnodes<tag::bcsym>( m_bface, m_triinpoel );
+  m_symbcnodemap = d->bcnodes< tag::bc, tag::bcsym >( m_bface, m_triinpoel );
   for (const auto& [s,nodes] : m_symbcnodemap)
     m_symbcnodes.insert( begin(nodes), end(nodes) );
 
   // Prepare unique set of farfield BC nodes
-  for (const auto& [s,nodes] : d->bcnodes<tag::bcfarfield>(m_bface,m_triinpoel))
+  auto far = d->bcnodes< tag::bc, tag::bcfarfield >( m_bface, m_triinpoel );
+  for (const auto& [s,nodes] : far)
     m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
 
   // If farfield BC is set on a node, will not also set symmetry BC

@@ -91,6 +91,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_farfieldbcnodes(),
   m_meshvelbcnodes(),
   m_symbctri(),
+  m_spongenodes(),
   m_stage( 0 ),
   m_boxnodes(),
   m_edgenode(),
@@ -189,13 +190,13 @@ ALECG::queryBC()
   if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
 
   // Prepare unique set of symmetry BC nodes
-  tk::destroy( m_symbcnodes );
-  for (const auto& [s,nodes] : d->bcnodes<tag::bcsym>(m_bface,m_triinpoel))
+  auto sym = d->bcnodes< tag::bc, tag::bcsym >( m_bface, m_triinpoel );
+  for (const auto& [s,nodes] : sym)
     m_symbcnodes.insert( begin(nodes), end(nodes) );
 
   // Prepare unique set of farfield BC nodes
-  tk::destroy( m_farfieldbcnodes );
-  for (const auto& [s,nodes] : d->bcnodes<tag::bcfarfield>(m_bface,m_triinpoel))
+  auto far = d->bcnodes< tag::bc, tag::bcfarfield >( m_bface, m_triinpoel );
+  for (const auto& [s,nodes] : far)
     m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
 
   // If farfield BC is set on a node, will not also set symmetry BC
@@ -206,6 +207,11 @@ ALECG::queryBC()
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
     if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
       m_symbctri[e] = 1;
+
+  // Prepare unique set of sponge nodes
+  auto sponge = d->bcnodes< tag::sponge, tag::sideset >( m_bface, m_triinpoel );
+  for (const auto& [s,nodes] : sponge)
+    m_spongenodes.insert( begin(nodes), end(nodes) );
 
   // Prepare unique set of mesh velocity BC nodes
   tk::destroy( m_meshvelbcnodes );
@@ -234,16 +240,15 @@ ALECG::norm()
   auto d = Disc();
 
   // Query nodes at which symmetry BCs are specified
-  auto bcnodes = d->bcnodes< tag::bcsym >( m_bface, m_triinpoel );
+  auto bn = d->bcnodes< tag::bc, tag::bcsym >( m_bface, m_triinpoel );
   // Query nodes at which farfield BCs are specified
-  auto farfieldbcnodes = d->bcnodes< tag::bcfarfield >( m_bface, m_triinpoel );
+  auto far = d->bcnodes< tag::bc, tag::bcfarfield >( m_bface, m_triinpoel );
 
   // Merge BC data where boundary-point normals are required
-  for (const auto& [s,n] : farfieldbcnodes)
-    bcnodes[s].insert( begin(n), end(n) );
+  for (const auto& [s,n] : far) bn[s].insert( begin(n), end(n) );
 
   // Compute boundary point normals
-  bnorm( bcnodes );
+  bnorm( bn );
 
   // Compute dual-face normals associated to edges
   dfnorm();
@@ -736,6 +741,10 @@ ALECG::BC()
   for (const auto& eq : g_cgpde)
     eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
 
+  // Apply sponge conditions
+  for (const auto& eq : g_cgpde)
+    eq.sponge( m_u, coord, m_spongenodes );
+
   volumetric( m_u );
 }
 
@@ -1121,11 +1130,12 @@ ALECG::rhs()
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] += prev_rkcoef * m_dtp[p];
   conserved( m_u );
-  for (const auto& eq : g_cgpde)
+  for (const auto& eq : g_cgpde) {
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
             m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-            m_symbctri, d->Vol(), m_edgenode, m_edgeid, m_boxnodes, m_chBndGrad,
-            m_u, m_w, m_tp, d->Boxvol(), m_rhs );
+            m_symbctri, m_spongenodes, d->Vol(), m_edgenode, m_edgeid,
+            m_boxnodes, m_chBndGrad, m_u, m_w, m_tp, d->Boxvol(), m_rhs );
+  }
   volumetric( m_u );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
@@ -1482,7 +1492,7 @@ ALECG::writeFields( CkCallback c )
        nodefieldnames.push_back( "y-mesh-velocity" );
        nodefieldnames.push_back( "z-mesh-velocity" );
        nodefieldnames.push_back( "volume" );
-       nodefieldnames.push_back( "vorticitiy magnitude" );
+       nodefieldnames.push_back( "vorticity-magnitude" );
        nodefields.push_back( m_w.extract(0,0) );
        nodefields.push_back( m_w.extract(1,0) );
        nodefields.push_back( m_w.extract(2,0) );
