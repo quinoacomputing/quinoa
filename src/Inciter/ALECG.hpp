@@ -214,6 +214,7 @@ class ALECG : public CBase_ALECG {
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
       p | m_symbctri;
+      p | m_spongenodes;
       p | m_stage;
       p | m_boxnodes;
       p | m_edgenode;
@@ -311,6 +312,8 @@ class ALECG : public CBase_ALECG {
     std::unordered_set< std::size_t > m_farfieldbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
+    //! Unique set of nodes at which sponge parameters are set
+    std::unordered_set< std::size_t > m_spongenodes;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Mesh node ids at which user-defined box ICs are defined (multiple boxes)

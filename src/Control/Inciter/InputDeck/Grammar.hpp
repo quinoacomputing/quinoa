@@ -381,9 +381,9 @@ namespace grm {
           if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
 
         // Error check stagnation BC block
-        const auto& bcstag = stack.template get<tag::param, eq, tag::bcstag>();
-        const auto& spoint = bcstag.template get< tag::point >();
-        const auto& sradius = bcstag.template get< tag::radius >();
+        const auto& stag = stack.template get<tag::param, eq, tag::stag>();
+        const auto& spoint = stag.template get< tag::point >();
+        const auto& sradius = stag.template get< tag::radius >();
         if ( (!spoint.empty() && !spoint.back().empty() &&
               !sradius.empty() && !sradius.back().empty() &&
               spoint.back().size() != 3*sradius.back().size())
@@ -399,9 +399,9 @@ namespace grm {
         }
 
         // Error check skip BC block
-        const auto& bcskip = stack.template get<tag::param, eq, tag::bcskip>();
-        const auto& kpoint = bcskip.template get< tag::point >();
-        const auto& kradius = bcskip.template get< tag::radius >();
+        const auto& skip = stack.template get<tag::param, eq, tag::skip>();
+        const auto& kpoint = skip.template get< tag::point >();
+        const auto& kradius = skip.template get< tag::radius >();
         if ( (!kpoint.empty() && !kpoint.back().empty() &&
               !kradius.empty() && !kradius.back().empty() &&
               kpoint.back().size() != 3*kradius.back().size())
@@ -416,17 +416,29 @@ namespace grm {
           Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
         }
 
-        // Error check sponge parameter vector for symmetry BC block
-        const auto& bcsym = stack.template get< param, eq, tag::bc, tag::bcsym >();
-        const auto& sponge = stack.template get< tag::param, eq, tag::sponge >();
-        if ( !sponge.empty() && !sponge.back().empty()) {
-          if (sponge.back().size() != bcsym.back().size())
+        // Error check sponge BC parameter vectors for symmetry BC block
+        const auto& sponge =
+          stack.template get< tag::param, eq, tag::sponge >();
+        const auto& ss = sponge.template get< tag::sideset >();
+
+        const auto& spvel = sponge.template get< tag::velocity >();
+        if ( !spvel.empty() && !spvel.back().empty()) {
+          if (spvel.back().size() != ss.back().size())
             Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
-          for (const auto& s : sponge.back())
-            if ( s < kw::sponge::info::expect::lower ||
-                 s > kw::sponge::info::expect::upper )
+          for (const auto& s : spvel.back())
+            if ( s < 0.0 || s > 1.0 )
               Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
         }
+
+        const auto& sppre = sponge.template get< tag::velocity >();
+        if ( !sppre.empty() && !sppre.back().empty()) {
+          if (sppre.back().size() != ss.back().size())
+            Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+          for (const auto& s : sppre.back())
+            if ( s < 0.0 || s > 1.0 )
+              Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+        }
+
       }
     }
   };
@@ -1398,23 +1410,29 @@ namespace deck {
 
   //! Boundary conditions block
   template< class eq >
-  struct bc_sym :
+  struct sponge :
          pegtl::if_must<
-           tk::grm::readkw< typename use< kw::bc_sym >::pegtl_string >,
+           tk::grm::readkw< typename use< kw::sponge >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
              tk::grm::parameter_vector< use,
-                                        use< kw::sponge >,
+                                        use< kw::velocity >,
                                         tk::grm::Store_back_back,
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
-                                        eq, tag::sponge >,
+                                        eq, tag::sponge, tag::velocity >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::pressure >,
+                                        tk::grm::Store_back_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq, tag::sponge, tag::pressure >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
-                                        eq, tag::bc, tag::bcsym > > > {};
+                                        eq, tag::sponge, tag::sideset > > > {};
 
   //! Farfield boundary conditions block
   template< class keyword, class eq, class param >
@@ -1654,10 +1672,11 @@ namespace deck {
                            parameter< tag::compflow, kw::pde_kappa,
                                       tag::kappa >,
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
-                           bc_sym< tag::compflow >,
-                           bc_spec< tag::compflow, tag::bcstag, kw::bc_stag >,
-                           bc_spec< tag::compflow, tag::bcskip, kw::bc_skip >,
+                           bc< kw::bc_sym, tag::compflow, tag::bcsym >,
+                           bc_spec< tag::compflow, tag::stag, kw::bc_stag >,
+                           bc_spec< tag::compflow, tag::skip, kw::bc_skip >,
                            bc< kw::bc_inlet, tag::compflow, tag::bcinlet >,
+                           sponge< tag::compflow >,
                            farfield_bc< kw::bc_farfield,
                                         tag::compflow,
                                         tag::bcfarfield >,
