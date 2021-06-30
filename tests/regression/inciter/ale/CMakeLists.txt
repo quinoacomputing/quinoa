@@ -43,6 +43,19 @@ add_regression_test(compflow_euler_alecg_ale_sod_fluid ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF sod_diag.ndiff.cfg
                     LABELS alecg ale)
 
+add_regression_test(compflow_euler_alecg_ale_lagrange ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES tg_pure_lagrangian.q unitcube_1k.exo
+                    ARGS -c tg_pure_lagrangian.q -v
+                    BIN_BASELINE tg_pure_lagrangian.0.std.exo
+                                 tg_pure_lagrangian.10.std.exo
+                    BIN_RESULT out.e-s.0.1.0 out.e-s.10.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_tg_pure_lagrangian.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF sod_diag.ndiff.cfg
+                    LABELS alecg ale)
+
 # Parallel
 
 add_regression_test(compflow_euler_alecg_ale_gcl ${INCITER_EXECUTABLE}
