@@ -1492,7 +1492,7 @@ ALECG::writeFields( CkCallback c )
        nodefieldnames.push_back( "y-mesh-velocity" );
        nodefieldnames.push_back( "z-mesh-velocity" );
        nodefieldnames.push_back( "volume" );
-       nodefieldnames.push_back( "vorticitiy magnitude" );
+       nodefieldnames.push_back( "vorticity-magnitude" );
        nodefields.push_back( m_w.extract(0,0) );
        nodefields.push_back( m_w.extract(1,0) );
        nodefields.push_back( m_w.extract(2,0) );
