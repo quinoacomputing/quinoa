@@ -238,8 +238,8 @@ Discretization::meshvelInit(
 // *****************************************************************************
 {
   auto eps = std::numeric_limits< tk::real >::epsilon();
-  bool applybc = std::abs(m_initial-1.0) < eps ? true : false;
-  m_conjugategradients[ thisIndex ].init( w, wbc, c, applybc );
+  m_conjugategradients[ thisIndex ].init( w,
+    std::abs(m_initial-1.0) < eps ? wbc : decltype(wbc){}, c );
 }
 
 void

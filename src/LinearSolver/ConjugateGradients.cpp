@@ -241,14 +241,13 @@ ConjugateGradients::init(
   const std::vector< tk::real >& x,
   const std::unordered_map< std::size_t,
           std::vector< std::pair< bool, tk::real > > >& bc,
-  CkCallback cb,
-  bool applybc )
+  CkCallback cb )
 // *****************************************************************************
 //  Initialize linear solve: set initial guess and boundary conditions
 //! \param[in] x Initial guess
 //! \param[in] bc Local node ids and associated Dirichlet BCs
-//! \param[in] nodecommap Node communication map
 //! \param[in] cb Call to continue with when initialized and ready for a solve
+//! \param[in] b Right hand side vector
 //! \details This function allows setting the initial guess and boundary
 //!   conditions, followed by computing the initial residual and the rhs norm.
 // *****************************************************************************
@@ -256,7 +255,7 @@ ConjugateGradients::init(
   // Set initial guess
   m_x = x;
 
-  if (not applybc) {
+  if (bc.empty()) {
 
     // Recompute initial residual (r=b-A*x), its dot product, and the rhs norm
     setup( cb );
