@@ -217,7 +217,7 @@ using ic = tk::TaggedTuple< brigand::list<
   , tag::box,           std::vector< std::vector< box > >
 > >;
 
-//! Boundary condition configuration
+//! Boundary conditions configuration (list of side sets for each eq system)
 using bc = tk::TaggedTuple< brigand::list<
     tag::bcdir,             std::vector< std::vector<
                               kw::sideset::info::expect::type > >
@@ -249,6 +249,32 @@ using mesh = tk::TaggedTuple< brigand::list<
   , tag::reference,   std::vector< char >
 > >;
 
+//! Stagnation points parameters storage
+using StagnationParameters = tk::TaggedTuple< brigand::list<
+    tag::point,         std::vector<
+                          std::vector< kw::point::info::expect::type > >
+  , tag::radius,        std::vector<
+                          std::vector< kw::radius::info::expect::type > >
+> >;
+
+//! Skip points parameters storage
+using SkipParameters = tk::TaggedTuple< brigand::list<
+    tag::point,         std::vector<
+                          std::vector< kw::point::info::expect::type > >
+  , tag::radius,        std::vector<
+                          std::vector< kw::radius::info::expect::type > >
+> >;
+
+//! Sponge parameters storage
+using SpongeParameters = tk::TaggedTuple< brigand::list<
+    tag::sideset,       std::vector< std::vector<
+                          kw::sideset::info::expect::type > >
+  , tag::velocity,      std::vector< std::vector<
+                          kw::velocity::info::expect::type > >
+  , tag::pressure,      std::vector< std::vector<
+                          kw::pressure::info::expect::type > >
+> >;
+
 //! Transport equation parameters storage
 using TransportPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
@@ -262,27 +288,12 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::u0,            std::vector< std::vector<
                         kw::pde_u0::info::expect::type > >
   , tag::bc,            bc
+  , tag::sponge,        SpongeParameters
   //! interface compression toggle
   , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
   //! interface compression parameter
   , tag::intsharp_param,
                       std::vector< kw::intsharp_param::info::expect::type >
-> >;
-
-//! Stagnation boundary conditions parameters storage
-using StagnationBCParameters = tk::TaggedTuple< brigand::list<
-    tag::point,         std::vector<
-                          std::vector< kw::point::info::expect::type > >
-  , tag::radius,        std::vector<
-                          std::vector< kw::radius::info::expect::type > >
-> >;
-
-//! Skip boundary conditions parameters storage
-using SkipBCParameters = tk::TaggedTuple< brigand::list<
-    tag::point,         std::vector<
-                          std::vector< kw::point::info::expect::type > >
-  , tag::radius,        std::vector<
-                          std::vector< kw::radius::info::expect::type > >
 > >;
 
 //! Material configuration
@@ -314,13 +325,12 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::farfield_velocity, std::vector< std::vector<
                               kw::velocity::info::expect::type > >
   , tag::bc,            bc
-  , tag::sponge,        std::vector< std::vector<
-                          kw::sponge::info::expect::type > >
+  , tag::sponge,        SpongeParameters
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage
-  , tag::bcstag,        StagnationBCParameters
+  , tag::stag,          StagnationParameters
   //! Skip boundary condition configuration storage
-  , tag::bcskip,        SkipBCParameters
+  , tag::skip,          SkipParameters
   //! System FCT character
   , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system
@@ -367,6 +377,7 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::bc,            bc
   , tag::ic,            ic
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
+  , tag::sponge,        SpongeParameters
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)

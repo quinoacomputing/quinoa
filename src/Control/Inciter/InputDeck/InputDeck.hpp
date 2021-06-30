@@ -258,9 +258,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::bc_extrapolate
                                  , kw::bc_stag
                                  , kw::bc_skip
+                                 , kw::sponge
                                  , kw::point
                                  , kw::radius
-                                 , kw::sponge
                                  , kw::gauss_hump
                                  , kw::rotated_sod_shocktube
                                  , kw::cyl_advect
