@@ -963,10 +963,10 @@ class MultiMat {
             {
               auto max_mark = c * ndof_NodalExtrm;
               auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
-              uNodalExtrm[i->second][max_mark] =
-                std::max(uNodalExtrm[i->second][max_mark], U(e,c*rdof,0));
-              uNodalExtrm[i->second][min_mark] =
-                std::min(uNodalExtrm[i->second][min_mark], U(e,c*rdof,0));
+              if(uNodalExtrm[i->second][max_mark] < U(e,c*rdof,0))
+                uNodalExtrm[i->second][max_mark] = U(e,c*rdof,0);
+              if(uNodalExtrm[i->second][min_mark] > U(e,c*rdof,0))
+                uNodalExtrm[i->second][min_mark] = U(e,c*rdof,0);
             }
 
             // Find the nodal extrema of conservative variables
@@ -974,10 +974,10 @@ class MultiMat {
             {
               auto max_mark = c * ndof_NodalExtrm;
               auto min_mark = max_mark + nprim * ndof_NodalExtrm;
-              pNodalExtrm[i->second][max_mark] =
-                std::max(pNodalExtrm[i->second][max_mark], P(e,c*rdof,0));
-              pNodalExtrm[i->second][min_mark] =
-                std::min(pNodalExtrm[i->second][min_mark], P(e,c*rdof,0));
+              if(pNodalExtrm[i->second][max_mark] < P(e,c*rdof,0))
+                pNodalExtrm[i->second][max_mark] = P(e,c*rdof,0);
+              if(pNodalExtrm[i->second][min_mark] > P(e,c*rdof,0))
+                pNodalExtrm[i->second][min_mark] = P(e,c*rdof,0);
             }
           }
         }
