@@ -428,8 +428,7 @@ namespace grm {
       "configured. Within a bc_sym ... end block, if a sponge parameter vector "
       "is given, its size must equal the number of side sets configured for "
       "symmetry BCs, and each entry must be between 0.0 and 1.0, prescribing "
-      "the percentage of kinetic energy kept at the boundary, i.e., 0.0 fully "
-      "absorbs, 1.0 fully keeps." },
+      "the percentage of absorption at the boundary." },
     { MsgKey::NONDISJOINTBC, "Different boundary condition types are assigned "
       "to the same side set." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "

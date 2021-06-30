@@ -2,7 +2,7 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Sod shock-tube with a sponge BC"
+title "Sod shock-tube with a sponge-velocity BC"
 
 inciter
 
@@ -28,7 +28,10 @@ inciter
 
     bc_sym
       sideset 2 4 5 6 end
-      sponge 0.01 0 0 0 end
+    end
+    sponge
+      sideset 2 end
+      velocity 0.01 end
     end
   end
 
