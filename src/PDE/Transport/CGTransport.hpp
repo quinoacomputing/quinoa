@@ -197,7 +197,7 @@ class Transport {
     //! \param[in] lid Global->local node ids
     //! \param[in] dfn Dual-face normals
     //! \param[in] psup Points surrounding points
-    //! \param[in] symbcnode Vector with 1 at symmetry BC nodes
+    //! \param[in] symbctri Vector with 1 at symmetry BC nodes
     //! \param[in] vol Nodal volumes
     //! \param[in] edgeid Local node id pair -> edge id map
     //! \param[in] G Nodal gradients in chare-boundary nodes
@@ -217,7 +217,8 @@ class Transport {
                        std::vector< std::size_t > >& psup,
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& esup,
-      const std::vector< int >& symbcnode,
+      const std::vector< int >& symbctri,
+      const std::unordered_set< std::size_t >&,
       const std::vector< real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >& edgeid,
@@ -247,7 +248,7 @@ class Transport {
       domainint( coord, inpoel, edgeid, psup, dfn, U, Grad, R );
 
       // compute boundary integrals
-      bndint( coord, triinpoel, symbcnode, U, R );
+      bndint( coord, triinpoel, symbctri, U, R );
     }
 
     //! Compute right hand side for DiagCG (CG+FCT)
@@ -518,6 +519,11 @@ class Transport {
               std::unordered_map< std::size_t,
                 std::array< real, 4 > > >&,
       const std::unordered_set< std::size_t >& ) const {}
+
+    //! Apply sponge conditions at boundary nodes (no-op for transport)
+    void sponge( tk::Fields&,
+                 const std::array< std::vector< real >, 3 >&,
+                 const std::unordered_set< std::size_t >& ) const {}
 
     //! Return analytic field names to be output to file
     //! \return Vector of strings labelling analytic fields output in file
