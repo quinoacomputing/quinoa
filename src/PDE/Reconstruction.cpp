@@ -877,9 +877,9 @@ evalPolynomialSol( std::size_t system,
     using inciter::volfracIdx;
 
     for (std::size_t k=0; k<nmat; ++k) {
-      auto Pck = inciter::pstiff< tag::multimat >(system, k);
-      state[ncomp+pressureIdx(nmat,k)] = std::max(
-        state[ncomp+pressureIdx(nmat,k)], state[volfracIdx(nmat,k)]*(-Pck+1e-12));
+      state[ncomp+pressureIdx(nmat,k)] = inciter::constrain_pressure
+        < tag::multimat >(system, state[ncomp+pressureIdx(nmat,k)],
+        state[volfracIdx(nmat,k)], k);
     }
   }
 

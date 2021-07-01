@@ -13,6 +13,7 @@
 #ifndef EoS_h
 #define EoS_h
 
+#include <cmath>
 #include "Data.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
@@ -164,6 +165,20 @@ tk::real eos_pressure( ncomp_t system,
 
   tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c)
                           * (g-1.0) - alpha*p_c;
+
+  // check partial pressure divergence
+  if (!std::isfinite(partpressure)) {
+    std::cout << "Material-id:      " << imat << std::endl;
+    std::cout << "Volume-fraction:  " << alpha << std::endl;
+    std::cout << "Partial density:  " << arho << std::endl;
+    std::cout << "Total energy:     " << arhoE << std::endl;
+    std::cout << "Velocity:         " << u << ", " << v << ", " << w
+      << std::endl;
+    Throw("Material-" + std::to_string(imat) + " has nan/inf partial pressure: "
+      + std::to_string(partpressure) + ", material volume fraction: " +
+      std::to_string(alpha));
+  }
+
   return partpressure;
 }
 
@@ -191,6 +206,18 @@ tk::real eos_soundspeed( ncomp_t system,
   auto p_eff = std::max( 1.0e-15, apr+(alpha*p_c) );
 
   tk::real a = std::sqrt( g * p_eff / arho );
+
+  // check sound speed divergence
+  if (!std::isfinite(a)) {
+    std::cout << "Material-id:      " << imat << std::endl;
+    std::cout << "Volume-fraction:  " << alpha << std::endl;
+    std::cout << "Partial density:  " << arho << std::endl;
+    std::cout << "Partial pressure: " << apr << std::endl;
+    Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed: "
+      + std::to_string(a) + ", material volume fraction: " +
+      std::to_string(alpha));
+  }
+
   return a;
 }
 
@@ -256,6 +283,29 @@ tk::real eos_temperature( ncomp_t system,
 
   tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c) / (arho*c_v);
   return t;
+}
+
+//! Constrain material partial pressure (alpha_k * p_k)
+//! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
+//! \param[in] system Equation system index
+//! \param[in] apr Material partial pressure (alpha_k * p_k)
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for the
+//!   single-material system, this argument can be left unspecified by the
+//!   calling code
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \return Constrained material partial pressure (alpha_k * p_k)
+template< class Eq >
+tk::real constrain_pressure( ncomp_t system,
+  tk::real apr,
+  tk::real alpha=1.0,
+  std::size_t imat=0 )
+{
+  // query input deck to get p_c
+  auto p_c = pstiff< Eq >(system, imat);
+
+  return std::max(apr, alpha*(-p_c+1e-12));
 }
 
 } //inciter::

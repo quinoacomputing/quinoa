@@ -275,6 +275,8 @@ class MultiMat {
             pri[pressureIdx(nmat,imat)] = eos_pressure< tag::multimat >(
               m_system, arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat,
               imat);
+            pri[pressureIdx(nmat,imat)] = constrain_pressure< tag::multimat >(
+              m_system, pri[pressureIdx(nmat,imat)], alphamat, imat);
           }
 
           // Evaluate bulk velocity at quadrature point
