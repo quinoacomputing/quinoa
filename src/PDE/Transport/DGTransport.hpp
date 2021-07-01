@@ -460,10 +460,10 @@ class Transport {
                 {
                   auto max_mark = c * ndof_NodalExtrm + idof;
                   auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
-                  if(uNodalExtrm[i->second][max_mark] < grad[idof])
-                    uNodalExtrm[i->second][max_mark] = grad[idof];
-                  if(uNodalExtrm[i->second][min_mark] > grad[idof])
-                    uNodalExtrm[i->second][min_mark] = grad[idof];
+                  if(uNodalExtrm[i->second][max_mark] < grad[idof-1])
+                    uNodalExtrm[i->second][max_mark] = grad[idof-1];
+                  if(uNodalExtrm[i->second][min_mark] > grad[idof-1])
+                    uNodalExtrm[i->second][min_mark] = grad[idof-1];
                 }
               }
             }
