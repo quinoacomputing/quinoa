@@ -37,7 +37,7 @@ meshvel( ctr::MeshVelocityType m,
 //  Assign mesh velocity based on user config
 //! \param[in] m Mesh velocity type
 //! \param[in] coord Mesh node coordinates
-//! \param[in] vel Fluid velocity
+//! \param[in] v Vector field to assign as mesh velocity
 //! \param[in,out] w Mesh velocity assigned
 // *****************************************************************************
 {
@@ -46,7 +46,8 @@ meshvel( ctr::MeshVelocityType m,
   if (m == ctr::MeshVelocityType::SINE)
     sine( coord, w );
   else if (m == ctr::MeshVelocityType::FLUID ||
-           m == ctr::MeshVelocityType::LAGRANGE)
+           m == ctr::MeshVelocityType::LAGRANGE ||
+           m == ctr::MeshVelocityType::HELMHOLTZ)
     w = v;
   else
     Throw( "Mesh velocity not implemented" );

@@ -62,6 +62,19 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
+    //! Constructor taking a tuple of {A,x,b} by rvalue reference
+    explicit ConjugateGradients(
+      std::tuple< tk::CSR,
+                  std::vector< tk::real >,
+                  std::vector< tk::real > >&& system,
+      const std::vector< std::size_t >& gid,
+      const std::unordered_map< std::size_t, std::size_t >& lid,
+      const NodeCommMap& nodecommmap ) :
+      ConjugateGradients( std::move(std::get<0>(system)),
+                          std::move(std::get<1>(system)),
+                          std::move(std::get<2>(system)),
+                          gid, lid, nodecommmap ) {}
+
     //! Migrate constructor
     explicit ConjugateGradients( CkMigrateMessage* ) {}
     #if defined(__clang__)
@@ -73,6 +86,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
 
     //! Initialize linear solve: set initial guess and boundary conditions
     void init( const std::vector< tk::real >& x,
+               const std::vector< tk::real >& b,
                const std::unordered_map< std::size_t,
                        std::vector< std::pair< bool, tk::real > > >& bc,
                CkCallback cb );

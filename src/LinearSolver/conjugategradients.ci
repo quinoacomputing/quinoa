@@ -27,7 +27,15 @@ module conjugategradients {
               const std::vector< std::size_t >& gid,
               const std::unordered_map< std::size_t, std::size_t >& lid,
               const NodeCommMap& nodecommmap );
+      entry ConjugateGradients(
+              std::tuple< tk::CSR,
+                          std::vector< tk::real >,
+                          std::vector< tk::real > >&& system,
+              const std::vector< std::size_t >& gid,
+              const std::unordered_map< std::size_t, std::size_t >& lid,
+              const NodeCommMap& nodecommmap );
       entry void init( const std::vector< tk::real >& x,
+                       const std::vector< tk::real >& b,
                        const std::unordered_map< std::size_t,
                          std::vector< std::pair< bool, tk::real > > >& bc,
                        CkCallback cb );

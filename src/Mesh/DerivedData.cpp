@@ -1785,69 +1785,184 @@ curl( const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& v )
 // *****************************************************************************
-//! Compute curl of a vector field at nodes of unstructured tetrahedra mesh
+//  Compute curl of a vector field at nodes of unstructured tetrahedra mesh
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] v Vector field whose curl to compute
-//! \return Weak (partial result) of curl of v (partial beacuse it still needs
+//! \return Weak (partial) result of curl of v (partial beacuse it still needs
 //!   a division by the nodal volumes.
 // *****************************************************************************
 {
-   // access node cooordinates
-   const auto& x = coord[0];
-   const auto& y = coord[1];
-   const auto& z = coord[2];
-   // access vector field components
-   const auto& vx = v[0];
-   const auto& vy = v[1];
-   const auto& vz = v[2];
+  // access node cooordinates
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+  // access vector field components
+  const auto& vx = v[0];
+  const auto& vy = v[1];
+  const auto& vz = v[2];
 
-   auto npoin = x.size();
-   tk::UnsMesh::Coords curl;
-   curl[0].resize( npoin, 0.0 );
-   curl[1].resize( npoin, 0.0 );
-   curl[2].resize( npoin, 0.0 );
+  auto npoin = x.size();
+  tk::UnsMesh::Coords curl;
+  curl[0].resize( npoin, 0.0 );
+  curl[1].resize( npoin, 0.0 );
+  curl[2].resize( npoin, 0.0 );
 
-   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-     // access node IDs
-     std::size_t N[4] =
-       { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
-     // compute element Jacobi determinant, J = 6V
-     tk::real bax = x[N[1]]-x[N[0]];
-     tk::real bay = y[N[1]]-y[N[0]];
-     tk::real baz = z[N[1]]-z[N[0]];
-     tk::real cax = x[N[2]]-x[N[0]];
-     tk::real cay = y[N[2]]-y[N[0]];
-     tk::real caz = z[N[2]]-z[N[0]];
-     tk::real dax = x[N[3]]-x[N[0]];
-     tk::real day = y[N[3]]-y[N[0]];
-     tk::real daz = z[N[3]]-z[N[0]];
-     auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
-     auto J24 = J/24.0;
-     // shape function derivatives, nnode*ndim [4][3]
-     tk::real g[4][3];
-     tk::crossdiv( cax, cay, caz, dax, day, daz, J,
-                   g[1][0], g[1][1], g[1][2] );
-     tk::crossdiv( dax, day, daz, bax, bay, baz, J,
-                   g[2][0], g[2][1], g[2][2] );
-     tk::crossdiv( bax, bay, baz, cax, cay, caz, J,
-                   g[3][0], g[3][1], g[3][2] );
-     for (std::size_t i=0; i<3; ++i)
-       g[0][i] = -g[1][i] - g[2][i] - g[3][i];
-     for (std::size_t b=0; b<4; ++b) {
-       tk::real c[3];
-       tk::cross( g[b][0], g[b][1], g[b][2],
-                  vx[N[b]], vy[N[b]], vz[N[b]],
-                  c[0], c[1], c[2] );
-       for (std::size_t a=0; a<4; ++a) {
-         curl[0][N[a]] += J24 * c[0];
-         curl[1][N[a]] += J24 * c[1];
-         curl[2][N[a]] += J24 * c[2];
-       }
-     }
-   }
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+    // access node IDs
+    std::size_t N[4] =
+      { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+    // compute element Jacobi determinant, J = 6V
+    tk::real bax = x[N[1]]-x[N[0]];
+    tk::real bay = y[N[1]]-y[N[0]];
+    tk::real baz = z[N[1]]-z[N[0]];
+    tk::real cax = x[N[2]]-x[N[0]];
+    tk::real cay = y[N[2]]-y[N[0]];
+    tk::real caz = z[N[2]]-z[N[0]];
+    tk::real dax = x[N[3]]-x[N[0]];
+    tk::real day = y[N[3]]-y[N[0]];
+    tk::real daz = z[N[3]]-z[N[0]];
+    auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+    auto J24 = J/24.0;
+    // shape function derivatives, nnode*ndim [4][3]
+    tk::real g[4][3];
+    tk::crossdiv( cax, cay, caz, dax, day, daz, J,
+                  g[1][0], g[1][1], g[1][2] );
+    tk::crossdiv( dax, day, daz, bax, bay, baz, J,
+                  g[2][0], g[2][1], g[2][2] );
+    tk::crossdiv( bax, bay, baz, cax, cay, caz, J,
+                  g[3][0], g[3][1], g[3][2] );
+    for (std::size_t i=0; i<3; ++i)
+      g[0][i] = -g[1][i] - g[2][i] - g[3][i];
+    for (std::size_t b=0; b<4; ++b) {
+      tk::real c[3];
+      tk::cross( g[b][0], g[b][1], g[b][2],
+                 vx[N[b]], vy[N[b]], vz[N[b]],
+                 c[0], c[1], c[2] );
+      for (std::size_t a=0; a<4; ++a) {
+        curl[0][N[a]] += J24 * c[0];
+        curl[1][N[a]] += J24 * c[1];
+        curl[2][N[a]] += J24 * c[2];
+      }
+    }
+  }
 
   return curl;
+}
+
+std::vector< tk::real >
+div( const std::array< std::vector< tk::real >, 3 >& coord,
+     const std::vector< std::size_t >& inpoel,
+     const tk::UnsMesh::Coords& v )
+// *****************************************************************************
+//  Compute divergence of vector field at nodes of unstructured tetrahedra mesh
+//! \param[in] coord Mesh node coordinates
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] v Vector field whose divergence to compute
+//! \return Weak (partial) result of div v (partial beacuse it still needs
+//!   a division by the nodal volumes.
+// *****************************************************************************
+{
+  // access node cooordinates
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  auto npoin = x.size();
+  std::vector< tk::real > div( npoin, 0.0 );
+
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+    // access node IDs
+    std::size_t N[4] =
+      { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+    // compute element Jacobi determinant, J = 6V
+    tk::real bax = x[N[1]]-x[N[0]];
+    tk::real bay = y[N[1]]-y[N[0]];
+    tk::real baz = z[N[1]]-z[N[0]];
+    tk::real cax = x[N[2]]-x[N[0]];
+    tk::real cay = y[N[2]]-y[N[0]];
+    tk::real caz = z[N[2]]-z[N[0]];
+    tk::real dax = x[N[3]]-x[N[0]];
+    tk::real day = y[N[3]]-y[N[0]];
+    tk::real daz = z[N[3]]-z[N[0]];
+    auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+    auto J24 = J/24.0;
+    // shape function derivatives, nnode*ndim [4][3]
+    tk::real g[4][3];
+    tk::crossdiv( cax, cay, caz, dax, day, daz, J,
+                  g[1][0], g[1][1], g[1][2] );
+    tk::crossdiv( dax, day, daz, bax, bay, baz, J,
+                  g[2][0], g[2][1], g[2][2] );
+    tk::crossdiv( bax, bay, baz, cax, cay, caz, J,
+                  g[3][0], g[3][1], g[3][2] );
+    for (std::size_t i=0; i<3; ++i)
+      g[0][i] = -g[1][i] - g[2][i] - g[3][i];
+    for (std::size_t a=0; a<4; ++a)
+      for (std::size_t b=0; b<4; ++b)
+        for (std::size_t i=0; i<3; ++i)
+          div[N[a]] += J24 * g[b][i] * v[i][N[b]];
+  }
+
+  return div;
+}
+
+tk::UnsMesh::Coords
+grad( const std::array< std::vector< tk::real >, 3 >& coord,
+      const std::vector< std::size_t >& inpoel,
+      const std::vector< tk::real >& phi )
+// *****************************************************************************
+//  Compute gradient of a scalar field at nodes of unstructured tetrahedra mesh
+//! \param[in] coord Mesh node coordinates
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] phi Scalar field whose gradient to compute
+//! \return Weak (partial) result of grad phi (partial beacuse it still needs
+//!   a division by the nodal volumes.
+// *****************************************************************************
+{
+  // access node cooordinates
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  auto npoin = x.size();
+  tk::UnsMesh::Coords grad;
+  grad[0].resize( npoin, 0.0 );
+  grad[1].resize( npoin, 0.0 );
+  grad[2].resize( npoin, 0.0 );
+
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+    // access node IDs
+    std::size_t N[4] =
+      { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+    // compute element Jacobi determinant, J = 6V
+    tk::real bax = x[N[1]]-x[N[0]];
+    tk::real bay = y[N[1]]-y[N[0]];
+    tk::real baz = z[N[1]]-z[N[0]];
+    tk::real cax = x[N[2]]-x[N[0]];
+    tk::real cay = y[N[2]]-y[N[0]];
+    tk::real caz = z[N[2]]-z[N[0]];
+    tk::real dax = x[N[3]]-x[N[0]];
+    tk::real day = y[N[3]]-y[N[0]];
+    tk::real daz = z[N[3]]-z[N[0]];
+    auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+    auto J24 = J/24.0;
+    // shape function derivatives, nnode*ndim [4][3]
+    tk::real g[4][3];
+    tk::crossdiv( cax, cay, caz, dax, day, daz, J,
+                  g[1][0], g[1][1], g[1][2] );
+    tk::crossdiv( dax, day, daz, bax, bay, baz, J,
+                  g[2][0], g[2][1], g[2][2] );
+    tk::crossdiv( bax, bay, baz, cax, cay, caz, J,
+                  g[3][0], g[3][1], g[3][2] );
+    for (std::size_t i=0; i<3; ++i)
+      g[0][i] = -g[1][i] - g[2][i] - g[3][i];
+    for (std::size_t a=0; a<4; ++a)
+      for (std::size_t b=0; b<4; ++b)
+        for (std::size_t i=0; i<3; ++i)
+          grad[i][N[a]] += J24 * g[b][i] * phi[N[b]];
+  }
+
+  return grad;
 }
 
 } // tk::

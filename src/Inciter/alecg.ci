@@ -54,9 +54,14 @@ module alecg {
                          const std::vector< std::vector< tk::real > >& R );
       entry void comvort( const std::vector< std::size_t >& gid,
                           const std::vector< std::array< tk::real, 3 > >& v );
+      entry void comdiv( const std::vector< std::size_t >& gid,
+                         const std::vector< tk::real >& v );
+      entry void compot( const std::vector< std::size_t >& gid,
+                         const std::vector< std::array< tk::real, 3 > >& v );
       entry void resized();
       entry void applied( CkDataMsg* msg );
       entry void smoothed( CkDataMsg* msg );
+      entry void helmholtz( CkDataMsg* msg );
       entry void lhs();
       entry void step();
       entry void next();
@@ -92,6 +97,12 @@ module alecg {
         }
       }
 
+      entry void wait4div() {
+        when owndiv_complete(), comdiv_complete() serial "div" { veldiv(); } }
+
+      entry void wait4pot() {
+        when ownpot_complete(), compot_complete() serial "pot" { gradpot(); } }
+
       entry void ownnorm_complete();
       entry void comnorm_complete();
       entry void owndfnorm_complete();
@@ -106,6 +117,10 @@ module alecg {
       entry void resize_complete();
       entry void ownvort_complete();
       entry void comvort_complete();
+      entry void owndiv_complete();
+      entry void comdiv_complete();
+      entry void ownpot_complete();
+      entry void compot_complete();
       //! [DAG]
     }
 

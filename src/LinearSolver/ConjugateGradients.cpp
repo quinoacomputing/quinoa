@@ -239,21 +239,25 @@ ConjugateGradients::rho( tk::real r )
 void
 ConjugateGradients::init(
   const std::vector< tk::real >& x,
+  const std::vector< tk::real >& b,
   const std::unordered_map< std::size_t,
           std::vector< std::pair< bool, tk::real > > >& bc,
   CkCallback cb )
 // *****************************************************************************
 //  Initialize linear solve: set initial guess and boundary conditions
 //! \param[in] x Initial guess
+//! \param[in] b Right hand side vector
 //! \param[in] bc Local node ids and associated Dirichlet BCs
 //! \param[in] cb Call to continue with when initialized and ready for a solve
-//! \param[in] b Right hand side vector
-//! \details This function allows setting the initial guess and boundary
+//! \details This function allows setting the initial guess, rhs, and boundary
 //!   conditions, followed by computing the initial residual and the rhs norm.
 // *****************************************************************************
 {
-  // Set initial guess
-  m_x = x;
+  // Optionally set initial guess
+  if (not x.empty()) m_x = x;
+
+  // Optionally update rhs
+  if (not b.empty()) m_b = b;
 
   if (bc.empty()) {
 
@@ -286,8 +290,8 @@ ConjugateGradients::init(
           std::vector< std::pair< bool, tk::real > > > expbc;
         for (auto g : n) {
           auto i = tk::cref_find( m_lid, g );
-          auto b = bc.find(i);
-          if (b != end(bc)) expbc[g] = b->second;
+          auto j = bc.find(i);
+          if (j != end(bc)) expbc[g] = j->second;
         }
         thisProxy[c].combc( expbc );
       }

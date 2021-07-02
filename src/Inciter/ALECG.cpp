@@ -63,6 +63,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_ngrad( 0 ),
   m_nrhs( 0 ),
   m_nvort( 0 ),
+  m_ndiv( 0 ),
+  m_npot( 0 ),
   m_nbnorm( 0 ),
   m_ndfnorm( 0 ),
   m_bnode( bnode ),
@@ -78,11 +80,15 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_w( m_u.nunk(), 3 ),
   m_vel(),
+  m_veldiv(),
+  m_veldivc(),
+  m_gradpot(),
+  m_gradpotc(),
   m_rhs( m_u.nunk(), m_u.nprop() ),
+  m_rhsc(),
   m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_dirbc(),
   m_chBndGradc(),
-  m_rhsc(),
   m_diag(),
   m_bnorm(),
   m_bnormn(),
@@ -151,8 +157,10 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   // Activate SDAG wait for initially computing normals
   thisProxy[ thisIndex ].wait4norm();
 
-  // Activate SDAG wait for initially computing vorticity for ALE
+  // Activate SDAG wait for initially computing prerequisites for ALE
   thisProxy[ thisIndex ].wait4vort();
+  thisProxy[ thisIndex ].wait4div();
+  thisProxy[ thisIndex ].wait4pot();
 
   // Generate callbacks for solution transfers we are involved in
 
@@ -892,21 +900,23 @@ ALECG::comChBndGrad( const std::vector< std::size_t >& gid,
 void
 ALECG::meshvel()
 // *****************************************************************************
-// Assign new mesh velocity for ALE mesh motion
+// Start computing new mesh velocity for ALE mesh motion
 // *****************************************************************************
 {
   auto d = Disc();
 
   if (d->ALE()) {
 
+    auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+
     // assign mesh velocity, but never update static meshvel during timestepping
     if (d->dynALE() || m_initial)
       inciter::meshvel( g_inputdeck.get< tag::ale, tag::meshvelocity >(),
                         d->Coord(), m_vel, m_w );
 
-    // compute vorticity if needed
-    auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
     if (meshvel == ctr::MeshVelocityType::FLUID) {
+
+      // compute vorticity
       m_vorticity = tk::curl( d->Coord(), d->Inpoel(), m_vel );
       // communicate vorticity sums to other chares on chare-boundary
       if (d->NodeCommMap().empty())
@@ -925,6 +935,24 @@ ALECG::meshvel()
           thisProxy[c].comvort( std::vector<std::size_t>(begin(n),end(n)), v );
         }
       ownvort_complete();
+
+    } else if (meshvel == ctr::MeshVelocityType::HELMHOLTZ) {
+
+      // compute velocity divergence
+      m_veldiv = tk::div( d->Coord(), d->Inpoel(), m_vel );
+      // communicate vorticity sums to other chares on chare-boundary
+      if (d->NodeCommMap().empty())
+        comdiv_complete();
+      else
+        for (const auto& [c,n] : d->NodeCommMap()) {
+          std::vector< tk::real > v( n.size() );
+          std::size_t j = 0;
+          for (auto i : n)
+            v[j++] = m_veldiv[ tk::cref_find( d->Lid(), i ) ];
+          thisProxy[c].comdiv( std::vector<std::size_t>(begin(n),end(n)), v );
+        }
+      owndiv_complete();
+
     } else meshvelbc();
 
   } else {      // if ALE is disabled, skip mesh smoothing
@@ -939,8 +967,8 @@ ALECG::comvort( const std::vector< std::size_t >& gid,
                 const std::vector< std::array< tk::real, 3 > >& v )
 // *****************************************************************************
 //  Receive contributions to vorticity on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive RHS contributions
-//! \param[in] v Partial contributions of vorticity to chare-boundary nodes
+//! \param[in] gid Global mesh node IDs at which we receive contributions
+//! \param[in] v Partial contributions to chare-boundary nodes
 // *****************************************************************************
 {
   Assert( v.size() == gid.size(), "Size mismatch" );
@@ -997,6 +1025,47 @@ ALECG::vorticity()
 }
 
 void
+ALECG::comdiv( const std::vector< std::size_t >& gid,
+               const std::vector< tk::real >& v )
+// *****************************************************************************
+//  Receive contributions to velocity divergence on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive RHS contributions
+//! \param[in] v Partial contributions to chare-boundary nodes
+// *****************************************************************************
+{
+  Assert( v.size() == gid.size(), "Size mismatch" );
+  using tk::operator+=;
+  for (std::size_t i=0; i<gid.size(); ++i) m_veldivc[ gid[i] ] += v[i];
+
+  // When we have heard from all chares we communicate with, this chare is done
+  if (++m_ndiv == Disc()->NodeCommMap().size()) {
+    m_ndiv = 0;
+    comdiv_complete();
+  }
+}
+
+void
+ALECG::veldiv()
+// *****************************************************************************
+// Finalize computing the velocity divergence for ALE
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // combine own and communicated contributions to vorticity
+  for (const auto& [g,v] : m_veldivc)
+    m_veldiv[ tk::cref_find( d->Lid(), g ) ] += v;
+  // clear receive buffer
+  tk::destroy(m_veldivc);
+
+  // finish computing divergence dividing the weak sum by the nodal volumes
+  for (std::size_t p=0; p<m_veldiv.size(); ++p)
+    m_veldiv[p] /= d->Voln()[p];
+
+  meshvelbc();
+}
+
+void
 ALECG::meshvelbc( tk::real maxv )
 // *****************************************************************************
 // Apply mesh velocity smoother boundary conditions for ALE mesh motion
@@ -1041,8 +1110,14 @@ ALECG::meshvelbc( tk::real maxv )
         wbc[i] = {{{true,0},{true,0},{false,0}}};
     }
 
-    // initiate setting mesh velocity BCs
-    Disc()->meshvelInit( m_w.flat(), wbc,
+    // initialize mesh velocity smoother linear solver
+    Disc()->meshvelInit( m_w.flat(), {}, wbc,
+      CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
+
+  } else if (meshvel == ctr::MeshVelocityType::HELMHOLTZ) {
+
+    // initialize Helmholtz decomposition linear solver
+    Disc()->meshvelInit( {}, m_veldiv, {},
       CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
 
   } else {
@@ -1055,21 +1130,26 @@ ALECG::meshvelbc( tk::real maxv )
 void
 ALECG::applied( [[maybe_unused]] CkDataMsg* msg )
 // *****************************************************************************
-// Smooth mesh velocity for ALE mesh motion
+// Solve mesh velocity linear solve for ALE mesh motion
 // *****************************************************************************
 {
+  //if (msg != nullptr) {
+  //  auto *norm = static_cast< tk::real * >( msg->getData() );
+  //  std::cout << "applied: " << *norm << '\n';
+  //}
+
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
 
   // Smooth mesh velocity if enabled
   if (meshvel == ctr::MeshVelocityType::FLUID) {
 
-    //if (msg != nullptr) {
-    //  auto *norm = static_cast< tk::real * >( msg->getData() );
-    //  std::cout << "CG BC applied, normb: " << *norm << '\n';
-    //}
-
     Disc()->meshvelSolve(
       CkCallback(CkIndex_ALECG::smoothed(nullptr), thisProxy[thisIndex]) );
+
+  } else if (meshvel == ctr::MeshVelocityType::HELMHOLTZ) {
+
+    Disc()->meshvelSolve(
+      CkCallback(CkIndex_ALECG::helmholtz(nullptr), thisProxy[thisIndex]) );
 
   } else {
 
@@ -1079,23 +1159,105 @@ ALECG::applied( [[maybe_unused]] CkDataMsg* msg )
 }
 
 void
+ALECG::helmholtz( [[maybe_unused]] CkDataMsg* msg )
+// *****************************************************************************
+//  Compute the gradient of the scalar potential for ALE
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // compute gradient of scalar potential for ALE (own portion)
+  m_gradpot = tk::grad( d->Coord(), d->Inpoel(), d->meshvelSolution() );
+
+  // communicate scalar potential sums to other chares on chare-boundary
+  if (d->NodeCommMap().empty())
+    compot_complete();
+  else
+    for (const auto& [c,n] : d->NodeCommMap()) {
+      std::vector< std::array< tk::real, 3 > > v( n.size() );
+      std::size_t j = 0;
+      for (auto i : n) {
+        auto lid = tk::cref_find( d->Lid(), i );
+        v[j][0] = m_gradpot[0][lid];
+        v[j][1] = m_gradpot[1][lid];
+        v[j][2] = m_gradpot[2][lid];
+        ++j;
+      }
+      thisProxy[c].compot( std::vector<std::size_t>(begin(n),end(n)), v );
+    }
+  ownpot_complete();
+}
+
+void
+ALECG::compot( const std::vector< std::size_t >& gid,
+               const std::vector< std::array< tk::real, 3 > >& v )
+// *****************************************************************************
+//  Receive contributions to scalar potential gradient on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive contributions
+//! \param[in] v Partial contributions to chare-boundary nodes
+// *****************************************************************************
+{
+  Assert( v.size() == gid.size(), "Size mismatch" );
+  using tk::operator+=;
+  for (std::size_t i=0; i<gid.size(); ++i) m_gradpotc[ gid[i] ] += v[i];
+
+  // When we have heard from all chares we communicate with, this chare is done
+  if (++m_npot == Disc()->NodeCommMap().size()) {
+    m_npot = 0;
+    compot_complete();
+  }
+}
+
+void
+ALECG::gradpot()
+// *****************************************************************************
+// Finalize computing gradient of the scalar potential for ALE
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // combine own and communicated contributions to scalar potential gradient
+  for (const auto& [g,v] : m_gradpotc) {
+    auto lid = tk::cref_find( d->Lid(), g );
+    m_gradpot[0][lid] += v[0];
+    m_gradpot[1][lid] += v[1];
+    m_gradpot[2][lid] += v[2];
+  }
+  // clear receive buffer
+  tk::destroy(m_gradpotc);
+
+  // finish computing the gradient dividing the weak sum by the nodal volumes
+  for (std::size_t j=0; j<3; ++j)
+    for (std::size_t p=0; p<m_gradpot[j].size(); ++p)
+      m_gradpot[j][p] /= d->Voln()[p];
+
+  smoothed();
+}
+
+void
 ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
 // *****************************************************************************
 //  Mesh smoother linear solver converged
 // *****************************************************************************
 {
+  //if (msg != nullptr) {
+  //  auto *normres = static_cast< tk::real * >( msg->getData() );
+  //  std::cout << "smoothed: " << *normres << '\n';
+  //}
+
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
 
-  // Smooth mesh velocity if enabled
+  // Update mesh velocity
   if (meshvel == ctr::MeshVelocityType::FLUID) {
 
-    //if (msg != nullptr) {
-    //  auto *normres = static_cast< tk::real * >( msg->getData() );
-    //  std::cout << "smoothed, converged: " << *normres << '\n';
-    //}
+    m_w = Disc()->meshvelSolution();
 
-    // Update mesh velocity from the smoother linear solve
-    m_w = Disc()->meshvel();
+  } else if (meshvel == ctr::MeshVelocityType::HELMHOLTZ) {
+
+    auto a1 = g_inputdeck.get< tag::ale, tag::vortmult >();
+    for (std::size_t j=0; j<3; ++j)
+      for (std::size_t p=0; p<m_gradpot[j].size(); ++p)
+        m_w(p,j,0) = m_vel[j][p] + a1 * (m_gradpot[j][p] - m_vel[j][p]);
 
   }
 
@@ -1235,11 +1397,13 @@ ALECG::solve()
   // Apply BCs on new solution
   BC();
 
-  // Activate SDAG waits for re-computing the normals
   m_newmesh = 0;  // recompute normals after ALE (if enabled)
+  // Activate SDAG waits
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4mesh();
   thisProxy[ thisIndex ].wait4vort();
+  thisProxy[ thisIndex ].wait4div();
+  thisProxy[ thisIndex ].wait4pot();
 
   // Recompute mesh volumes if ALE is enabled
   if (d->ALE()) {
@@ -1493,11 +1657,17 @@ ALECG::writeFields( CkCallback c )
        nodefieldnames.push_back( "z-mesh-velocity" );
        nodefieldnames.push_back( "volume" );
        nodefieldnames.push_back( "vorticity-magnitude" );
+       nodefieldnames.push_back( "x-gradpot" );
+       nodefieldnames.push_back( "y-gradpot" );
+       nodefieldnames.push_back( "z-gradpot" );
        nodefields.push_back( m_w.extract(0,0) );
        nodefields.push_back( m_w.extract(1,0) );
        nodefields.push_back( m_w.extract(2,0) );
        nodefields.push_back( d->Vol() );
        nodefields.push_back( m_vorticity[0] );
+       nodefields.push_back( m_gradpot[0] );
+       nodefields.push_back( m_gradpot[1] );
+       nodefields.push_back( m_gradpot[2] );
     }
 
     // Collect field output names for analytical solutions

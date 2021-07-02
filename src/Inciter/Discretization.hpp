@@ -92,6 +92,7 @@ class Discretization : public CBase_Discretization {
     //! Initialize mesh velocity linear solve: set initial guess and BCs
     void
     meshvelInit( const std::vector< tk::real >& w,
+                 const std::vector< tk::real >& div,
                  const std::unordered_map< std::size_t,
                          std::vector< std::pair< bool, tk::real > > >& wbc,
                 CkCallback c );
@@ -99,8 +100,8 @@ class Discretization : public CBase_Discretization {
     //! Solve using Conjugrate Gradients linear solver
     void meshvelSolve( CkCallback c );
 
-    //! Query solution of the Conjugrate Gradients linear soilver
-    std::vector< tk::real > meshvel() const;
+    //! Query the solution of the Conjugrate Gradients linear solver
+    std::vector< tk::real > meshvelSolution() const;
 
     //! Assess and record mesh velocity linear solver convergence
     void meshvelConv();
@@ -551,7 +552,7 @@ class Discretization : public CBase_Discretization {
 
     //! Generate {A,x,b} for Laplacian mesh velocity smoother
     std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
-    LaplacianSmoother() const;
+    Laplacian( std::size_t ncomp ) const;
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );

@@ -148,11 +148,14 @@ Discretization::Discretization(
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   // Insert ConjugrateGradients solver chare array element if needed
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-  if (ALE() && meshvel == ctr::MeshVelocityType::FLUID) {
-    const auto& [A,x,b] = LaplacianSmoother();
-    m_conjugategradients[ thisIndex ].
-      insert( A, x, b, m_gid, m_lid, m_nodeCommMap );
+  if (ALE()) {
+    auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+    if (meshvel == ctr::MeshVelocityType::FLUID)
+      m_conjugategradients[ thisIndex ].        // solve for mesh velocity
+        insert( Laplacian(3), m_gid, m_lid, m_nodeCommMap );
+    if (meshvel == ctr::MeshVelocityType::HELMHOLTZ)
+      m_conjugategradients[ thisIndex ].        // solve for scalar potential
+        insert( Laplacian(1), m_gid, m_lid, m_nodeCommMap );
   }
 
   // Register mesh with mesh-transfer lib
@@ -227,18 +230,20 @@ Discretization::dynALE() const
 void
 Discretization::meshvelInit(
   const std::vector< tk::real >& w,
+  const std::vector< tk::real >& div,
   const std::unordered_map< std::size_t,
           std::vector< std::pair< bool, tk::real > > >& wbc,
   CkCallback c )
 // *****************************************************************************
 //  Initialize mesh velocity linear solve: set initial guess and BCs
 //! \param[in] w Initial guess for mesh velocity linear solve
+//! \param[in] div Velocity divergence for Helmholtz rhs
 //! \param[in] wbc Local node ids associated to mesh velocity Dirichlet BCs
 // \param[in] c Function to call when the BCs have been applied
 // *****************************************************************************
 {
   auto eps = std::numeric_limits< tk::real >::epsilon();
-  m_conjugategradients[ thisIndex ].init( w,
+  m_conjugategradients[ thisIndex ].init( w, div,
     std::abs(m_initial-1.0) < eps ? wbc : decltype(wbc){}, c );
 }
 
@@ -256,10 +261,10 @@ Discretization::meshvelSolve( CkCallback c )
 }
 
 std::vector< tk::real >
-Discretization::meshvel() const
+Discretization::meshvelSolution() const
 // *****************************************************************************
-//! Query solution of the Conjugrate Gradients linear soilver
-//! \return Mesh velocity as a solution to the Conjugate Gradients linear solve
+//! Query the solution of the Conjugrate Gradients linear solver
+//! \return Solution to the Conjugate Gradients linear solve
 // *****************************************************************************
 {
   return ConjugateGradients()->solution();
@@ -279,16 +284,19 @@ Discretization::meshvelConv()
 
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
-Discretization::LaplacianSmoother() const
+Discretization::Laplacian( std::size_t ncomp ) const
 // *****************************************************************************
 // Generate {A,x,b} for Laplacian mesh velocity smoother
-//! \return {A,x,b} for Laplacian mesh velocity smoother
+//! \param[in] ncomp Number of scalar components
+//! \return {A,x,b} with a Laplacian, unknown, and rhs initialized with zeros
 //! \see Waltz, et al. "A three-dimensional finite element arbitrary
 //!   Lagrangian-Eulerian method for shock hydrodynamics on unstructured
-//!   grids", Computers& Fluids, 2013.
+//!   grids", Computers& Fluids, 2013, and Bakosi, et al. "Improved ALE mesh
+//!   velocities for complex flows, International Journal for Numerical Methods
+//!   in Fluids, 2017.
 // *****************************************************************************
 {
-  tk::CSR A( /* DOF = */ 3, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
+  tk::CSR A( ncomp, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
 
   const auto& X = m_coord[0];
   const auto& Y = m_coord[1];
@@ -318,12 +326,12 @@ Discretization::LaplacianSmoother() const
     for (std::size_t a=0; a<4; ++a)
       for (std::size_t k=0; k<3; ++k)
          for (std::size_t b=0; b<4; ++b)
-           for (std::size_t i=0; i<3; ++i)
+           for (std::size_t i=0; i<ncomp; ++i)
              A(N[a],N[b],i) -= J/6 * grad[a][k] * grad[b][k];
   }
 
   auto npoin = m_gid.size();
-  std::vector< tk::real > b(npoin*3,0.0), x(npoin*3,0.0);
+  std::vector< tk::real > b(npoin*ncomp,0.0), x(npoin*ncomp,0.0);
 
   return { std::move(A), std::move(x), std::move(b) };
 }

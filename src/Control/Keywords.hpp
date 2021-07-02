@@ -1780,10 +1780,18 @@ using dvcfl = keyword< dvcfl_info, TAOCPP_PEGTL_STRING("dvcfl") >;
 struct vortmult_info {
   static std::string name() { return "vortmult"; }
   static std::string shortDescription() { return
-    "Configure multiplier for ALE mesh velocity smoother vorticity scaling"; }
+    "Configure vorticity multiplier for ALE mesh velocity"; }
   static std::string longDescription() { return
-    R"(This keyword is used to configure the multiplier for the vorticity in
-    the mesh velocity smoother for ALE mesh motion.)";
+    R"(This keyword is used to configure the multiplier for the vorticity term
+    in the mesh velocity smoother (mesh_velocity=fluid) or for the potential
+    gradient for the Helmholtz mesh velocity (mesh_velocity=helmholtz) for ALE
+    mesh motion. For 'fluid' this is coefficient c2 in Eq.(36) of Waltz,
+    Morgan, Canfield, Charest, Risinger, Wohlbier, A three-dimensional finite
+    element arbitrary Lagrangian–Eulerian method for shock hydrodynamics on
+    unstructured grids, Computers & Fluids, 2014, and for 'helmholtz', this is
+    coefficient a1 in Eq.(23) of Bakosi, Waltz, Morgan, Improved ALE mesh
+    velocities for complex flows, International Journal for Numerical Methods
+    in Fluids, 2017. )";
   }
   struct expect {
     using type = tk::real;
@@ -1796,13 +1804,13 @@ using vortmult = keyword< vortmult_info, TAOCPP_PEGTL_STRING("vortmult") >;
 
 struct meshvel_maxit_info {
   static std::string name() {
-    return "mesh velocity smoother linear solve max number of iterations"; }
+    return "mesh velocity linear solve max number of iterations"; }
   static std::string shortDescription() { return
-    "Set the max number of iterations for the mesh velocity"
-    " smoother linear solve for ALE"; }
+    "Set the max number of iterations for the mesh velocity linear solve "
+    "for ALE"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the maximum number of linear solver
-    iterations taken to converge the mesh velocity smoother for in
+    iterations taken to converge the mesh velocity linear solve in
     arbitrary-Lagrangian-Eulerian (ALE) calculations. See also J. Waltz,
     N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, A
     three-dimensional finite element arbitrary Lagrangian–Eulerian method for
@@ -1819,12 +1827,12 @@ using meshvel_maxit =
 
 struct meshvel_tolerance_info {
   static std::string name() {
-    return "mesh velocity smoother linear solver tolerance "; }
+    return "mesh velocity linear solve tolerance "; }
   static std::string shortDescription() { return
-    "Set the tolerance for the mesh velocity smoother linear solve for ALE"; }
+    "Set the tolerance for the mesh velocity linear solve for ALE"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the tolerance for the linear solver
-    to converge the mesh velocity smoother for in
+    R"(This keyword is used to specify the tolerance to converge the mesh
+    velocity linear solve for in
     arbitrary-Lagrangian-Eulerian (ALE) calculations. See also J. Waltz,
     N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, A
     three-dimensional finite element arbitrary Lagrangian–Eulerian method for
