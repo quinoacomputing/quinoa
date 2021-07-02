@@ -1259,27 +1259,24 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
           }
         }
       }
-      else          // If this is chare-boundary element
+    }
+    // If node p is the chare-boundary node, find min/max by comparing with
+    // the chare-boundary nodal extrema from vector NodalExtrm
+    auto gip = bid.find( gid[p] );
+    if(gip != end(bid))
+    {
+      auto size_NodalExtrm = NodalExtrm[0].size() / 2;
+      auto ndof_NodalExtrm = size_NodalExtrm / ncomp;
+      for (std::size_t c=0; c<ncomp; ++c)
       {
-        // If node p is the chare-boundary node, find min/max by comparing with
-        // the chare-boundary nodal extrema from vector NodalExtrm
-        auto gip = bid.find( gid[p] );
-        if(gip != end(bid))
+        for (std::size_t idir = 0; idir < 3; idir++)
         {
-          for (std::size_t c=0; c<ncomp; ++c)
-          {
-            for (std::size_t idir = 0; idir < 3; idir++)
-            {
-              // Since this piece of code will only be called when DG(P2) is
-              // applied. Hence, 4 is used to represent ndof_NodalExtrm
-              auto max_mark = 4*c + idir + 1;
-              auto min_mark = max_mark + 4*ncomp;
-              uMax[c][idir] =
-                std::max(NodalExtrm[gip->second][max_mark], uMax[c][idir]);
-              uMin[c][idir] =
-                std::min(NodalExtrm[gip->second][min_mark], uMin[c][idir]);
-            }
-          }
+          auto max_mark = ndof_NodalExtrm*c + idir + 1;
+          auto min_mark = max_mark + size_NodalExtrm;
+          uMax[c][idir] =
+            std::max(NodalExtrm[gip->second][max_mark], uMax[c][idir]);
+          uMin[c][idir] =
+            std::min(NodalExtrm[gip->second][min_mark], uMin[c][idir]);
         }
       }
     }

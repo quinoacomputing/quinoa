@@ -420,7 +420,8 @@ class Transport {
             if(ndof_NodalExtrm > 1)
             {
               // Vector used to store the first order derivatives
-              std::vector< tk::real > grad(3, 0.0);
+              std::vector< std::vector< tk::real > > grad;
+              grad.resize(ncomp, std::vector<tk::real>(3, 0.0));
 
               const auto& cx = coord[0];
               const auto& cy = coord[1];
@@ -448,8 +449,9 @@ class Transport {
                 auto mark = icomp * rdof;
                 for(std::size_t idir = 0; idir < 3; idir++)
                 {
+                  grad[icomp][idir] = 0;
                   for(std::size_t idof = 1; idof < rdof; idof++)
-                    grad[idir] += U(e, mark+idof, 0) * dBdx[idir][idof];
+                    grad[icomp][idir] += U(e, mark+idof, 0) * dBdx[idir][idof];
                 }
               }
 
@@ -460,10 +462,10 @@ class Transport {
                 {
                   auto max_mark = c * ndof_NodalExtrm + idof;
                   auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
-                  if(uNodalExtrm[i->second][max_mark] < grad[idof-1])
-                    uNodalExtrm[i->second][max_mark] = grad[idof-1];
-                  if(uNodalExtrm[i->second][min_mark] > grad[idof-1])
-                    uNodalExtrm[i->second][min_mark] = grad[idof-1];
+                  if(uNodalExtrm[i->second][max_mark] < grad[c][idof-1])
+                    uNodalExtrm[i->second][max_mark] = grad[c][idof-1];
+                  if(uNodalExtrm[i->second][min_mark] > grad[c][idof-1])
+                    uNodalExtrm[i->second][min_mark] = grad[c][idof-1];
                 }
               }
             }
