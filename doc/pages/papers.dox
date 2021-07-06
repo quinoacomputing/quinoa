@@ -78,6 +78,14 @@ implemented in Quinoa. The papers are grouped by executables.
   `DG` hydro scheme.
 
 - @m_div{m-text m-strong}
+  J. Bakosi, J. Waltz, N. Morgan, **[Improved ALE mesh velocities for complex flows](https://doi.org/10.1002/fld.4403)**, Numerical Methods in Fluids, 85: 662– 671, 2017.
+  @m_enddiv
+
+  This paper describes the algorithm implemented as an option to move the mesh
+  for arbitrary Lagrangian-Eulerian mesh motion in @ref inciter_alecg "ALECG" in
+  @ref inciter_main.
+
+- @m_div{m-text m-strong}
   J. Waltz, N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, **[A three-dimensional finite element arbitrary Lagrangian–Eulerian method for shock hydrodynamics on unstructured grids](https://doi.org/10.1016/j.compfluid.2013.12.021)**, Computers & Fluids, 92: 172-187, 2014.
   @m_enddiv
 
