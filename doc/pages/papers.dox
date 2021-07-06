@@ -62,6 +62,13 @@ implemented in Quinoa. The papers are grouped by executables.
 @section papers_inciter Inciter
 
 - @m_div{m-text m-strong}
+  J. Bakosi, R. Bird, F.Gonzalez, C. Junghans, W. Li, H. Luo, A. Pandare, J. Waltz, **[Asynchronous distributed-memory task-parallel algorithm for compressible flows on unstructured 3D Eulerian grids](https://doi.org/10.1016/j.advengsoft.2020.102962)**, Advances in Engineering Software, 102962, 2021.
+  @m_enddiv
+
+  This paper describes the hydro scheme implemented in @ref inciter_main as
+  @ref inciter_diagcg "DiagCG".
+
+- @m_div{m-text m-strong}
   A. Pandare, J. Waltz, J. Bakosi, **[Multi-material hydrodynamics with algebraic sharp interface capturing](https://doi.org/10.1016/j.compfluid.2020.104804)**, Computers & Fluids, 215: 104804, 2021.
   @m_enddiv
 
