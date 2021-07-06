@@ -67,7 +67,7 @@ implemented in Quinoa. The papers are grouped by executables.
 
   This paper describes a finite volume method for multi-material flows in 3D
   with sharp interface capturing, implemented in Quinoa's @ref inciter_main
-  under the `DG` hydro scheme (@ref inciter_mm).
+  under the @ref inciter_dg "DG" hydro scheme using the @ref inciter_mm "multi-material solver".
 
 - @m_div{m-text m-strong}
   A. Pandare, J. Waltz, J. Bakosi, **[A reconstructed discontinuous Galerkin method for multi‐material hydrodynamics with sharp interfaces](https://doi.org/10.1002/fld.4810)**, International Journal for Numerical Methods in Fluids, 92(8): 874-898, 2020.
@@ -75,15 +75,15 @@ implemented in Quinoa. The papers are grouped by executables.
 
   This paper describes a discontinuous Galerkin method for multi-material flows
   in 1D, whose 3D version is implemented in Quinoa's @ref inciter_main under the
-  @ref inciter_dg "DG" hydro scheme.
+  @ref inciter_dg "DG" hydro scheme using the @ref inciter_mm "multi-material solver".
 
 - @m_div{m-text m-strong}
   J. Bakosi, J. Waltz, N. Morgan, **[Improved ALE mesh velocities for complex flows](https://doi.org/10.1002/fld.4403)**, Numerical Methods in Fluids, 85: 662– 671, 2017.
   @m_enddiv
 
-  This paper describes the algorithm implemented as an option to move the mesh
-  for arbitrary Lagrangian-Eulerian mesh motion in @ref inciter_alecg "ALECG" in
-  @ref inciter_main.
+  This paper describes the algorithm implemented as an option (Helmholtz) to
+  move the mesh for arbitrary Lagrangian-Eulerian mesh motion in @ref inciter_alecg "ALECG"
+  in @ref inciter_main.
 
 - @m_div{m-text m-strong}
   J. Waltz, N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, **[A three-dimensional finite element arbitrary Lagrangian–Eulerian method for shock hydrodynamics on unstructured grids](https://doi.org/10.1016/j.compfluid.2013.12.021)**, Computers & Fluids, 92: 172-187, 2014.
