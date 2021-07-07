@@ -28,6 +28,21 @@ add_regression_test(compflow_euler_alecg_ale_sod_sine ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_diag.ndiff.cfg
                     LABELS alecg ale)
+
+add_regression_test(compflow_euler_alecg_ale_sod_fluid ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES sod_shocktube_alecg_ale_fluid.q tube.exo
+                    ARGS -c sod_shocktube_alecg_ale_fluid.q -v
+                    BIN_BASELINE sod_shocktube_alecg_ale_fluid.0.std.exo
+                                 sod_shocktube_alecg_ale_fluid.10.std.exo
+                                 sod_shocktube_alecg_ale_fluid.20.std.exo
+                    BIN_RESULT out.e-s.0.1.0 out.e-s.10.1.0 out.e-s.20.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_sod_fluid.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF sod_diag.ndiff.cfg
+                    LABELS alecg ale)
+
 # Parallel
 
 add_regression_test(compflow_euler_alecg_ale_gcl ${INCITER_EXECUTABLE}
@@ -68,4 +83,40 @@ add_regression_test(compflow_euler_alecg_ale_gcl ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_gcl.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gcl_diag.ndiff.cfg
+                    LABELS alecg ale migration)
+
+add_regression_test(compflow_euler_alecg_ale_sod_fluid ${INCITER_EXECUTABLE}
+                    NUMPES 4 PPN 1
+                    INPUTFILES sod_shocktube_alecg_ale_fluid.q tube.exo
+                    ARGS -c sod_shocktube_alecg_ale_fluid.q -v
+                          +balancer RandCentLB +LBDebug 1
+                    BIN_BASELINE sod_shocktube_alecg_ale_fluid.0.std.exo.0
+                                 sod_shocktube_alecg_ale_fluid.0.std.exo.1
+                                 sod_shocktube_alecg_ale_fluid.0.std.exo.2
+                                 sod_shocktube_alecg_ale_fluid.0.std.exo.3
+                                 sod_shocktube_alecg_ale_fluid.10.std.exo.0
+                                 sod_shocktube_alecg_ale_fluid.10.std.exo.1
+                                 sod_shocktube_alecg_ale_fluid.10.std.exo.2
+                                 sod_shocktube_alecg_ale_fluid.10.std.exo.3
+                                 sod_shocktube_alecg_ale_fluid.20.std.exo.0
+                                 sod_shocktube_alecg_ale_fluid.20.std.exo.1
+                                 sod_shocktube_alecg_ale_fluid.20.std.exo.2
+                                 sod_shocktube_alecg_ale_fluid.20.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                               out.e-s.10.4.0
+                               out.e-s.10.4.1
+                               out.e-s.10.4.2
+                               out.e-s.10.4.3
+                               out.e-s.20.4.0
+                               out.e-s.20.4.1
+                               out.e-s.20.4.2
+                               out.e-s.20.4.3
+                    BIN_DIFF_PROG_CONF exodiff_meshvel.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_sod_fluid.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF sod_diag.ndiff.cfg
                     LABELS alecg ale migration)

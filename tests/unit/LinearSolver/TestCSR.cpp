@@ -76,7 +76,7 @@ static CSR_group CSR( "LinearSolver/CSR" );
 //! Test if constructor does not throw on positive ncomp and non-empty psup
 template<> template<>
 void CSR_object::test< 1 >() {
-  set_test_name( "ctor doesn't throw on positive ncomp and valid psup" );
+  set_test_name( "ctor doesn't throw on positive ncomp & valid psup" );
 
   // Shift node IDs to start from zero
   tk::shiftToZero( inpoel );

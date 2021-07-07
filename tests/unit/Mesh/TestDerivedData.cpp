@@ -118,6 +118,7 @@
 #include "TUTConfig.hpp"
 #include "DerivedData.hpp"
 #include "Reorder.hpp"
+#include "Vector.hpp"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 
@@ -3384,6 +3385,221 @@ void DerivedData_object::test< 75 >() {
     // exception thrown in DEBUG mode, test ok
   }
   #endif
+}
+
+//! Test zero curl of vector field
+template<> template<>
+void DerivedData_object::test< 76 >() {
+  set_test_name( "zero curl of vector field" );
+
+  // mesh node coordinates
+  std::array< std::vector< tk::real >, 3 > coord {{
+    {{ 0, 1, 1, 0, 0, 1, 1, 0, 0.5, 0.5, 0.5, 1,   0.5, 0 }},
+    {{ 0, 0, 1, 1, 0, 0, 1, 1, 0.5, 0.5, 0,   0.5, 1,   0.5 }},
+    {{ 0, 0, 0, 0, 1, 1, 1, 1, 0,   1,   0.5, 0.5, 0.5, 0.5 }} }};
+
+  // mesh connectivity for simple tetrahedron-only mesh
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+
+  // find out number of points in mesh connectivity
+  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+  Assert( *minmax.first == 0, "node ids should start from zero" );
+  auto npoin = *minmax.second + 1;
+
+  // Compute nodal volumes
+  std::vector< tk::real > vol( npoin, 0.0 );
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // compute nodal volumes
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+    std::array< std::size_t, 4 > N
+      {{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
+    // compute element Jacobi determinant * 5/120 = element volume / 4
+    const std::array< tk::real, 3 >
+      ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+      ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+      da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+    const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
+    ErrChk( J > 0, "Element Jacobian non-positive" );
+    // scatter add V/4 to nodes
+    for (std::size_t j=0; j<4; ++j) vol[N[j]] += J;
+  }
+
+  // Assign a curl-free fluid velocity
+  tk::UnsMesh::Coords v;
+  v[0].resize( npoin );
+  v[1].resize( npoin );
+  v[2].resize( npoin );
+  for (std::size_t i=0; i<npoin; ++i) {
+    v[0][i] = y[i]*z[i]*z[i];
+    v[1][i] = 2.0 + x[i]*z[i]*z[i];
+    v[2][i] = 2.0 * x[i]*y[i]*z[i] - 1.0;
+  }
+
+  // For a coarse mesh, such as the above 24-cell mesh, the analytical solution
+  // (0,0,0 at all points) will be fairly inaccurately approximated. However,
+  // the discrete approximation of the curl converges with successively finer
+  // meshes with smaller finite elements.
+  tk::UnsMesh::Coords curlex24 {{
+    {{ -0.09375, -0.15625, -0.28125, 0.03125, 0.09375, 0.15625, 0.28125,
+       -0.03125, -0.05, 0.05, 0, 0, 0, 0 }},
+    {{ 0.09375, -0.03125, 0.28125, 0.15625, -0.09375, 0.03125, -0.28125,
+       -0.15625, 0.05, -0.05, 0, 0, 0, 0 }},
+    {{ 0, 0.125, 0, -0.125, 0, 0.125, 0, -0.125, 0, 0, 0.05,
+       4.1666666666666767e-2, -0.05, -4.1666666666666767e-2 }}
+  }};
+
+  // Scale mesh velocity by a function of the vorticity
+  auto curl = tk::curl( coord, inpoel, vol, v );
+
+  tk::real pr = std::numeric_limits< tk::real >::epsilon() * 10;
+
+  // Ensure mesh velocity did not change
+  for (std::size_t p=0; p<npoin; ++p) {
+    Assert( curlex24[0].size() == npoin, "Size mismatch" );
+    Assert( curlex24[1].size() == npoin, "Size mismatch" );
+    Assert( curlex24[2].size() == npoin, "Size mismatch" );
+    ensure_equals( "curl x coord of point " + std::to_string(p) + " incorrect",
+                   curlex24[0][p], curl[0][p], pr );
+    ensure_equals( "curl y coord of point " + std::to_string(p) + " incorrect",
+                   curlex24[1][p], curlex24[1][p], pr );
+    ensure_equals( "curl z coord of point " + std::to_string(p) + " incorrect",
+                   curlex24[2][p], curl[2][p], pr );
+  }
+}
+
+//! Test non-zero curl of vector field
+template<> template<>
+void DerivedData_object::test< 77 >() {
+  set_test_name( "non-zero curl of vector field" );
+
+  // mesh node coordinates
+  std::array< std::vector< tk::real >, 3 > coord {{
+    {{ 0, 1, 1, 0, 0, 1, 1, 0, 0.5, 0.5, 0.5, 1,   0.5, 0 }},
+    {{ 0, 0, 1, 1, 0, 0, 1, 1, 0.5, 0.5, 0,   0.5, 1,   0.5 }},
+    {{ 0, 0, 0, 0, 1, 1, 1, 1, 0,   1,   0.5, 0.5, 0.5, 0.5 }} }};
+
+  // mesh connectivity for simple tetrahedron-only mesh
+  std::vector< std::size_t > inpoel { 12, 14,  9, 11,
+                                      10, 14, 13, 12,
+                                      14, 13, 12,  9,
+                                      10, 14, 12, 11,
+                                      1,  14,  5, 11,
+                                      7,   6, 10, 12,
+                                      14,  8,  5, 10,
+                                      8,   7, 10, 13,
+                                      7,  13,  3, 12,
+                                      1,   4, 14,  9,
+                                      13,  4,  3,  9,
+                                      3,   2, 12,  9,
+                                      4,   8, 14, 13,
+                                      6,   5, 10, 11,
+                                      1,   2,  9, 11,
+                                      2,   6, 12, 11,
+                                      6,  10, 12, 11,
+                                      2,  12,  9, 11,
+                                      5,  14, 10, 11,
+                                      14,  8, 10, 13,
+                                      13,  3, 12,  9,
+                                      7,  10, 13, 12,
+                                      14,  4, 13,  9,
+                                      14,  1,  9, 11 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+
+  // find out number of points in mesh connectivity
+  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+  Assert( *minmax.first == 0, "node ids should start from zero" );
+  auto npoin = *minmax.second + 1;
+
+  // Compute nodal volumes
+  std::vector< tk::real > vol( npoin, 0.0 );
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // compute nodal volumes
+  for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+    std::array< std::size_t, 4 > N
+      {{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
+    // compute element Jacobi determinant * 5/120 = element volume / 4
+    const std::array< tk::real, 3 >
+      ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
+      ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
+      da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+    const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
+    ErrChk( J > 0, "Element Jacobian non-positive" );
+    // scatter add V/4 to nodes
+    for (std::size_t j=0; j<4; ++j) vol[N[j]] += J;
+  }
+
+  // Assign a non-curl-free fluid velocity
+  tk::UnsMesh::Coords v;
+  v[0].resize( npoin );
+  v[1].resize( npoin );
+  v[2].resize( npoin );
+  for (std::size_t i=0; i<npoin; ++i) {
+    v[0][i] = 3.0*x[i]*x[i];
+    v[1][i] = 2.0*z[i];
+    v[2][i] = -x[i];
+  }
+
+  // For a coarse mesh, such as the above 24-cell mesh, the analytical solution
+  // (-2,1,0 at all points) will be fairly inaccurately approximated. However,
+  // the discrete approximation of the curl converges with successively finer
+  // meshes with smaller finite elements.
+  tk::UnsMesh::Coords curlex24 {{
+    {{ -2, -2, -2, -2, -2,  -2, -2, -2, -2, -2,  -2, -2, -2, -2 }},
+    {{ 0.625, 0.625, 0.625, 0.625, 1.375, 1.375, 1.375, 1.375, 1,1,1,1,1,1 }},
+    {{ 0.375, 0.375, -0.375, -0.375, 0.375, 0.375, -0.375, -0.375, 0,0,0,0,0,0}}
+  }};
+
+  // Scale mesh velocity by a function of the vorticity
+  auto curl = tk::curl( coord, inpoel, vol, v );
+
+  tk::real pr = std::numeric_limits< tk::real >::epsilon() * 10;
+
+  // Ensure mesh velocity did not change
+  for (std::size_t p=0; p<npoin; ++p) {
+    Assert( curlex24[0].size() == npoin, "Size mismatch" );
+    Assert( curlex24[1].size() == npoin, "Size mismatch" );
+    Assert( curlex24[2].size() == npoin, "Size mismatch" );
+    ensure_equals( "curl x coord of point " + std::to_string(p) + " incorrect",
+                   curlex24[0][p], curl[0][p], pr );
+    ensure_equals( "curl y coord of point " + std::to_string(p) + " incorrect",
+                   curlex24[1][p], curl[1][p], pr );
+    ensure_equals( "curl z coord of point " + std::to_string(p) + " incorrect",
+                   curlex24[2][p], curl[2][p], pr );
+  }
 }
 
 #if defined(STRICT_GNUC)

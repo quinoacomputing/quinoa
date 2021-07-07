@@ -1755,6 +1755,73 @@ struct cfl_info {
 };
 using cfl = keyword< cfl_info, TAOCPP_PEGTL_STRING("cfl") >;
 
+struct dvcfl_info {
+  static std::string name() { return "dvCFL"; }
+  static std::string shortDescription() { return
+    "Set the volume-change Courant-Friedrichs-Lewy (CFL) coefficient"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the volume-change (dV/dt) CFL coefficient
+    for variable-time-step-size simulations due to volume change in time in
+    arbitrary-Lagrangian-Eulerian (ALE) calculations. Setting 'dvcfl' only has
+    effect in ALE calculations and used together with 'cfl'. See also J. Waltz,
+    N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, A
+    three-dimensional finite element arbitrary Lagrangian–Eulerian method for
+    shock hydrodynamics on unstructured grids, Computers & Fluids, 92: 172-187,
+    2014.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.01;
+    static std::string description() { return "real"; }
+  };
+};
+using dvcfl = keyword< dvcfl_info, TAOCPP_PEGTL_STRING("dvcfl") >;
+
+struct meshvel_maxit_info {
+  static std::string name() {
+    return "mesh velocity smoother linear solve max number of iterations"; }
+  static std::string shortDescription() { return
+    "Set the max number of iterations for the mesh velocity"
+    " smoother linear solve for ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the maximum number of linear solver
+    iterations taken to converge the mesh velocity smoother for in
+    arbitrary-Lagrangian-Eulerian (ALE) calculations. See also J. Waltz,
+    N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, A
+    three-dimensional finite element arbitrary Lagrangian–Eulerian method for
+    shock hydrodynamics on unstructured grids, Computers & Fluids, 92: 172-187,
+    2014.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static std::string description() { return "int"; }
+  };
+};
+using meshvel_maxit =
+  keyword< meshvel_maxit_info, TAOCPP_PEGTL_STRING("maxit") >;
+
+struct meshvel_tolerance_info {
+  static std::string name() {
+    return "mesh velocity smoother linear solver tolerance "; }
+  static std::string shortDescription() { return
+    "Set the tolerance for the mesh velocity smoother linear solve for ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the tolerance for the linear solver
+    to converge the mesh velocity smoother for in
+    arbitrary-Lagrangian-Eulerian (ALE) calculations. See also J. Waltz,
+    N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, A
+    three-dimensional finite element arbitrary Lagrangian–Eulerian method for
+    shock hydrodynamics on unstructured grids, Computers & Fluids, 92: 172-187,
+    2014.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using meshvel_tolerance =
+  keyword< meshvel_tolerance_info, TAOCPP_PEGTL_STRING("tolerance") >;
+
 struct ncomp_info {
   static std::string name() { return "ncomp"; }
   static std::string shortDescription() { return

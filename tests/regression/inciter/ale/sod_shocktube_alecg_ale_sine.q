@@ -18,6 +18,7 @@ inciter
   end
 
   ale
+    dvcfl 1.0
     mesh_velocity sine
   end
 
