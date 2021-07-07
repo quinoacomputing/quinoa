@@ -2353,6 +2353,107 @@ void Data_object::test< 46 >() {
   }
 }
 
+//! Test that tk::Data's flat() returns correct vector of unknowns
+template<> template<>
+void Data_object::test< 47 >() {
+  set_test_name( "flat(), extract data as a flat vector" );
+
+  tk::Data< tk::UnkEqComp > pp( 2, 3 );
+  tk::Data< tk::EqCompUnk > pe( 2, 3 );
+
+  pp( 0, 0, 0 ) = 0.1;
+  pp( 0, 1, 0 ) = 0.2;
+  pp( 0, 2, 0 ) = 0.3;
+  pp( 1, 0, 0 ) = 0.4;
+  pp( 1, 1, 0 ) = 0.5;
+  pp( 1, 2, 0 ) = 0.6;
+
+  pe( 0, 0, 0 ) = 0.1;
+  pe( 0, 1, 0 ) = 0.2;
+  pe( 0, 2, 0 ) = 0.3;
+  pe( 1, 0, 0 ) = 0.4;
+  pe( 1, 1, 0 ) = 0.5;
+  pe( 1, 2, 0 ) = 0.6;
+
+  using unittest::veceq;
+
+  // Test all template specializations
+  std::vector< tk::real > ex{ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
+  veceq( "<UnkEqComp>::flat() extract vector incorrect", ex, pp.flat() );
+  veceq( "<EqUnkComp>::flat() extract vector incorrect", ex, pe.flat() );
+}
+
+//! Test that tk::Data's operator=() assigns correct vector
+template<> template<>
+void Data_object::test< 48 >() {
+  set_test_name( "operator=, assign from flat vector" );
+
+  std::vector< tk::real > v{ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
+
+  tk::Data< tk::UnkEqComp > pp( 2, 3 );
+  tk::Data< tk::EqCompUnk > pe( 2, 3 );
+
+  pp = v;
+  pe = v;
+
+  using unittest::veceq;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator= from flat vector at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.4 }, pp.extract( 0, 0 ) );
+  veceq( "<UnkEqComp>::operator= from flat vector at 1,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract( 1, 0 ) );
+  veceq( "<UnkEqComp>::operator= from flat vector at 2,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 2, 0 ) );
+  veceq( "<UnkEqComp>::operator= from flat vector at 0,1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract( 0, 1 ) );
+  veceq( "<UnkEqComp>::operator= from flat vector at 1,1 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 1, 1 ) );
+  veceq( "<UnkEqComp>::operator= from flat vector at 0,2 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 0, 2 ) );
+
+  veceq( "<EqCompUnk>::operator= from flat vector at 0,0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.4 }, pe.extract( 0, 0 ) );
+  veceq( "<EqCompUnk>::operator= from flat vector at 1,0 incorrect",
+         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract( 1, 0 ) );
+  veceq( "<EqCompUnk>::operator= from flat vector at 2,0 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 2, 0 ) );
+  veceq( "<EqCompUnk>::operator= from flat vector at 0,1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract( 0, 1 ) );
+  veceq( "<EqCompUnk>::operator= from flat vector at 1,1 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 1, 1 ) );
+  veceq( "<EqCompUnk>::operator= from flat vector at 0,2 incorrect",
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 0, 2 ) );
+}
+
+//! Test that tk::Data's operator=() assigns correct vector
+template<> template<>
+void Data_object::test< 49 >() {
+  set_test_name( "operator=, assign from array(3) of vectors" );
+
+  std::array< std::vector< tk::real >, 3 >
+    v{{ {0.1, 0.2}, {0.3, 0.4}, {0.5, 0.6} }};
+
+  tk::Data< tk::UnkEqComp > pp( 2, 3 );
+  tk::Data< tk::EqCompUnk > pe( 2, 3 );
+
+  pp = v;
+  pe = v;
+
+  using unittest::veceq;
+
+  // Test all template specializations
+  veceq( "<UnkEqComp>::operator= from array(3) of vectors at 0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.3, 0.5 }, pp.extract( 0 ) );
+  veceq( "<UnkEqComp>::operator= from array(3) of vectors at 1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.4, 0.6 }, pp.extract( 1 ) );
+
+  veceq( "<EqCompUnk>::operator= from array(3) of vectors at 0 incorrect",
+         std::vector< tk::real >{ 0.1, 0.3, 0.5 }, pe.extract( 0 ) );
+  veceq( "<EqCompUnk>::operator= from array(3) of vectors at 1 incorrect",
+         std::vector< tk::real >{ 0.2, 0.4, 0.6 }, pe.extract( 1 ) );
+}
+
 } // tut::
 
 #endif  // DOXYGEN_GENERATING_OUTPUT

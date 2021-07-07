@@ -167,6 +167,15 @@ class ALECG : public CBase_ALECG {
     //! Resizing data sutrctures after mesh refinement has been completed
     void resized();
 
+    //! Apply mesh velocity smoother boundary conditions for ALE mesh motion
+    void meshvelbc();
+
+    //! Mesh velocity smoother BCs have been applied
+    void applied( CkDataMsg* msg = nullptr );
+
+    //! Mesh velocity smoother linear solver converged
+    void smoothed( CkDataMsg* msg = nullptr );
+
     //! Evaluate whether to continue with next time step
     void step();
 
@@ -203,16 +212,19 @@ class ALECG : public CBase_ALECG {
       p | m_u;
       p | m_un;
       p | m_w;
+      p | m_vel;
       p | m_rhs;
       p | m_chBndGrad;
-      p | m_bcdir;
+      p | m_dirbc;
       p | m_chBndGradc;
       p | m_rhsc;
       p | m_diag;
       p | m_bnorm;
+      p | m_bnormn;
       p | m_bnormc;
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
+      p | m_meshvelbcnodes;
       p | m_symbctri;
       p | m_spongenodes;
       p | m_stage;
@@ -274,6 +286,8 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_un;
     //! Mesh velocity for ALE mesh motion
     tk::Fields m_w;
+    //! Fluid velocity for ALE mesh motion
+    tk::UnsMesh::Coords m_vel;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
     //! Nodal gradients at chare-boundary nodes
@@ -285,7 +299,7 @@ class ALECG : public CBase_ALECG {
     //!   is set at the node for that component the if true, the real value is
     //!   the increment (from t to dt) in the BC specified for a component.
     std::unordered_map< std::size_t,
-      std::vector< std::pair< bool, tk::real > > > m_bcdir;
+      std::vector< std::pair< bool, tk::real > > > m_dirbc;
     //! Receive buffer for communication of the nodal gradients
     //! \details Key: chare id, value: gradients for all scalar components per
     //!   node
@@ -300,6 +314,8 @@ class ALECG : public CBase_ALECG {
     //!   square between face centroids and points, outer key: side set id
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnorm;
+    //! Face normals in boundary points at time n for ALE
+    decltype(m_bnorm) m_bnormn;
     //! \brief Receive buffer for communication of the boundary point normals
     //!   associated to side sets
     //! \details Key: global node id, value: normals (first 3 components),
@@ -310,6 +326,8 @@ class ALECG : public CBase_ALECG {
     std::unordered_set< std::size_t > m_symbcnodes;
     //! Unique set of nodes at which farfield BCs are set
     std::unordered_set< std::size_t > m_farfieldbcnodes;
+    //! Unique set of nodes at which mesh velocity BCs are set for ALE
+    std::unordered_set< std::size_t > m_meshvelbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
     //! Unique set of nodes at which sponge parameters are set
@@ -344,7 +362,7 @@ class ALECG : public CBase_ALECG {
     edfnorm( const tk::UnsMesh::Edge& edge,
              const std::unordered_map< tk::UnsMesh::Edge,
                      std::vector< std::size_t >,
-                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued );
+                     tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued ) const;
 
     //! Compute chare-boundary edges
     void bndEdges();
@@ -376,6 +394,12 @@ class ALECG : public CBase_ALECG {
     //! Compute gradients
     void chBndGrad();
 
+    //! Compute new mesh veloctity for ALE mesh motion
+    void meshvel();
+
+    //! Assign new mesh veloctity for ALE mesh motion
+    void assignMeshvel();
+
     //! Compute righ-hand side vector of transport equations
     void rhs();
 
@@ -393,6 +417,9 @@ class ALECG : public CBase_ALECG {
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
+
+    //! Query boundary conditions from user input
+    void queryBC();
 
     //! Apply boundary conditions
     void BC();

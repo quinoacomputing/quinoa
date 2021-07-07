@@ -97,6 +97,11 @@ class Transport {
       }
     }
 
+    //! Query a velocity
+    //! \note Since this function does not touch its output argument, that
+    //!   means this system does not define a "velocity".
+    void velocity( const tk::Fields&, tk::UnsMesh::Coords& ) const {}
+
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate
@@ -371,7 +376,7 @@ class Transport {
       }
     }
 
-    //! Compute the minimum time step size
+    //! Compute the minimum time step size (for unsteady time stepping)
     //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
@@ -380,7 +385,10 @@ class Transport {
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
              tk::real t,
-             const tk::Fields& U ) const
+             tk::real,
+             const tk::Fields& U,
+             const std::vector< tk::real >&,
+             const std::vector< tk::real >& ) const
     {
       using tag::transport;
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
@@ -434,7 +442,7 @@ class Transport {
       return mindt * g_inputdeck.get< tag::discr, tag::cfl >();
     }
 
-    //! Compute a time step size for each mesh node
+    //! Compute a time step size for each mesh node (for steady time stepping)
     void dt( uint64_t,
              const std::vector< tk::real >&,
              const tk::Fields&,
@@ -768,7 +776,7 @@ class Transport {
               ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
               da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
             const auto J = tk::triple( ba, ca, da );        // J = 6V
-            // shape function derivatives, nnode*ndim [5][3]
+            // shape function derivatives, nnode*ndim [4][3]
             std::array< std::array< tk::real, 3 >, 4 > grad;
             grad[1] = tk::crossdiv( ca, da, J );
             grad[2] = tk::crossdiv( da, ba, J );

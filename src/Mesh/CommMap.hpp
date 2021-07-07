@@ -52,6 +52,9 @@ using CommMaps = std::map< int, AllCommMaps >;
 //! Decide if a node is not counted by a chare
 bool slave( const NodeCommMap& map, std::size_t node, int chare );
 
+//! Count the number of contributions to a node
+tk::real count( const NodeCommMap& map, std::size_t node );
+
 } // tk::
 
 #endif // CommMap_h

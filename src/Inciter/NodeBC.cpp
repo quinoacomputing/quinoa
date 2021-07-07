@@ -51,7 +51,8 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
 //!   local mesh node IDs at which the user has set Dirichlet boundary
 //!   conditions for all systems of PDEs integrated. The bool indicates whether
 //!   the BC is set at the node for that component: if true, the real value is
-//!   the increment (from t to dt) in the BC specified for a component.
+//!   the increment (from t to dt) in (or the value of) the BC specified for a
+//!   component.
 //! \details Boundary conditions (BC), mathematically speaking, are applied on
 //!   finite surfaces. These finite surfaces are given by element sets (i.e., a
 //!   list of elements). This function queries Dirichlet boundary condition
