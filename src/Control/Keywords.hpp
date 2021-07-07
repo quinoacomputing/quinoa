@@ -2713,7 +2713,7 @@ struct materialid_info {
   struct expect {
     using type = std::size_t;
     static constexpr type lower = 1;
-    static std::string description() { return "unsigned integer"; }
+    static std::string description() { return "uint"; }
   };
 };
 using materialid = keyword< materialid_info,
