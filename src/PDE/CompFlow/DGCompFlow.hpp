@@ -474,10 +474,10 @@ class CompFlow {
             {
               auto max_mark = c * ndof_NodalExtrm;
               auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
-              if(uNodalExtrm[i->second][max_mark] < U(e,c*rdof,0))
-                uNodalExtrm[i->second][max_mark] = U(e,c*rdof,0);
-              if(uNodalExtrm[i->second][min_mark] > U(e,c*rdof,0))
-                uNodalExtrm[i->second][min_mark] = U(e,c*rdof,0);
+              uNodalExtrm[i->second][max_mark] =
+                std::max(uNodalExtrm[i->second][max_mark], U(e,c*rdof,0));
+              uNodalExtrm[i->second][min_mark] =
+                std::min(uNodalExtrm[i->second][min_mark], U(e,c*rdof,0));
             }
 
             // If DG(P2) is applied, find the nodal extrema of the gradients of
@@ -527,10 +527,10 @@ class CompFlow {
                 {
                   auto max_mark = c * ndof_NodalExtrm + idof;
                   auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
-                  if(uNodalExtrm[i->second][max_mark] < grad[c][idof-1])
-                    uNodalExtrm[i->second][max_mark] = grad[c][idof-1];
-                  if(uNodalExtrm[i->second][min_mark] > grad[c][idof-1])
-                    uNodalExtrm[i->second][min_mark] = grad[c][idof-1];
+                  uNodalExtrm[i->second][max_mark] =
+                    std::max(uNodalExtrm[i->second][max_mark], grad[c][idof-1]);
+                  uNodalExtrm[i->second][min_mark] =
+                    std::min(uNodalExtrm[i->second][min_mark], grad[c][idof-1]);
                 }
               }
             }
