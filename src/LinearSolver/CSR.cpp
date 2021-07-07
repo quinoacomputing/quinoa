@@ -95,7 +95,7 @@ CSR::operator()( std::size_t row, std::size_t col, std::size_t pos ) const
 {
   auto rncomp = row * ncomp;
 
-  for (std::size_t n=0, j=ia[rncomp+pos]-1; j<=ia[rncomp+pos+1]-2; ++j, ++n)
+  for (std::size_t n=0, j=ia[rncomp+pos]-1; j<ia[rncomp+pos+1]-1; ++j, ++n)
     if (col*ncomp+pos+1 == ja[j])
       return a[ia[rncomp+pos]-1+n];
 
@@ -103,14 +103,16 @@ CSR::operator()( std::size_t row, std::size_t col, std::size_t pos ) const
 }
 
 void
-CSR::dirichlet( std::size_t g,
-                const std::unordered_map< std::size_t, std::size_t >& lid,
-                const NodeCommMap& nodecommap )
+CSR::dirichlet( std::size_t i,
+                const std::vector< std::size_t >& gid,
+                const NodeCommMap& nodecommap,
+                std::size_t pos )
 // *****************************************************************************
 //  Set Dirichlet boundary condition at a node
-//! \param[in] g Global id at which to set Dirichlet BC
-//! \param[in] lid Local->global node id map
-//! \param[in] nodecommap Node communication map
+//! \param[in] i Local id at which to set Dirichlet BC
+//! \param[in] gid Local->global node id map
+//! \param[in] nodecommap Node communication map with global node ids
+//! \param[in] pos Position in block
 //! \details In parallel there can be multiple contributions to a single node
 //!   on the mesh, and correspondingly, a single matrix row can be partially
 //!   represented on multiple partitions. Setting a Dirichlet BC entails
@@ -119,32 +121,21 @@ CSR::dirichlet( std::size_t g,
 //!   (matrix row). As a result, when the matrix participates in a matrix-vector
 //!   product, where the partial contributions across all partitions are
 //!   aggregated, the diagonal will contain 1 after the sum across partitions.
-//! \note Both lid and nodecommap are optional - unused in serial. If lid is
-//!   empty, serial is assumed.
+//! \note Both gid and nodecommap are optional - unused in serial. If nodecommap
+//!   is empty, serial is assumed and gid is unused.
 // *****************************************************************************
 {
-  // Lambda to count the number of contributions to a node at which to set BC
-  auto count = [&]( std::size_t node ){
-    return 1.0 + std::count_if( nodecommap.cbegin(), nodecommap.cend(),
-                   [&](const auto& s) {
-                     return s.second.find(node) != s.second.cend(); } ); };
+  auto incomp = i * ncomp;
+  auto diag = nodecommap.empty() ? 1.0 : 1.0/tk::count(nodecommap,gid[i]);
 
-  if (lid.empty()) {	// serial
+  // zero column
+  for (std::size_t r=0; r<rnz.size()*ncomp; ++r)
+    for (std::size_t j=ia[r]-1; j<ia[r+1]-1; ++j)
+      if (incomp+pos+1==ja[j]) a[j] = 0.0;
 
-    for (std::size_t j=ia[g]-1; j<ia[g+1]-1; ++j)
-      if (g+1==ja[j]) a[j] = 1.0; else a[j] = 0.0;
-
-  } else {		// parallel
-
-    auto it = lid.find( g );
-    if (it != end(lid)) { // if row with global id g exists on this partition
-      auto i = it->second;
-      auto diag = 1.0 / count( g );
-      for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j)
-        if (i+1==ja[j]) a[j] = diag; else a[j] = 0.0;
-    }
-
-  }
+  // zero row and put in diagonal
+  for (std::size_t j=ia[incomp+pos]-1; j<ia[incomp+pos+1]-1; ++j)
+    if (incomp+pos+1==ja[j]) a[j] = diag; else a[j] = 0.0;
 }
 
 void
@@ -153,7 +144,7 @@ CSR::mult( const std::vector< real >& x, std::vector< real >& r ) const
 //  Multiply CSR matrix with vector from the right: r = A * x
 //! \param[in] x Vector to multiply matrix with from the right
 //! \param[in] r Result vector of product r = A * x
-//! \note This is only complete in serial. In paralell, this computes the own
+//! \note This is only complete in serial. In parallel, this computes the own
 //!   contributions to the product, so it must be followed by communication
 //!   combining the rows stored on multiple partitions.
 // *****************************************************************************
@@ -258,14 +249,14 @@ CSR::write_matlab( std::ostream& os ) const
 // *****************************************************************************
 {
   os << "A = [ ";
-  for (std::size_t i=0; i<rnz.size(); ++i) {
+  for (std::size_t i=0; i<rnz.size()*ncomp; ++i) {
     for (std::size_t j=1; j<ja[ia[i]-1]; ++j) os << "0 ";
     for ( std::size_t n=ia[i]-1; n<ia[i+1]-1; ++n) {
       if (n > ia[i]-1)
         for (std::size_t j=ja[n-1]; j<ja[n]-1; ++j) os << "0 ";
       os << a[n] << ' ';
     }
-    for (std::size_t j=ja[ia[i+1]-2]; j<ia.size()-1; ++j) os << "0 ";
+    for (std::size_t j=ja[ia[i+1]-2]; j<rnz.size()*ncomp; ++j) os << "0 ";
     os << ";\n";
   }
   os << "]\n";

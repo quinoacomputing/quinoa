@@ -17,6 +17,10 @@ module cgreceiver {
 
     array [1D] CGReceiver {
       entry CGReceiver( const std::string& label,
+                        std::size_t maxit,
+                        tk::real tol,
+                        tk::real normb_ex,
+                        tk::real normres_ex,
                         tk::CProxy_ConjugateGradients cg );
       entry void initialized( CkDataMsg* msg );
       entry void solved( CkDataMsg* msg );

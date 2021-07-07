@@ -265,6 +265,13 @@ intet( const std::array< std::vector< real >, 3 >& coord,
        std::size_t e,
        std::array< real, 4 >& N );
 
+//! Compute curl of a vector field at nodes of unstructured tetrahedra mesh
+tk::UnsMesh::Coords
+curl( const std::array< std::vector< tk::real >, 3 >& coord,
+      const std::vector< std::size_t >& inpoel,
+      const std::vector< tk::real >& vol,
+      const tk::UnsMesh::Coords& v );
+
 } // tk::
 
 #endif // DerivedData_h

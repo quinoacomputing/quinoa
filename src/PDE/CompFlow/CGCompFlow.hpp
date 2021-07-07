@@ -186,6 +186,19 @@ class CompFlow {
       }
     }
 
+    //! Query the fluid velocity
+    //! \param[in] u Solution vector of conserved variables
+    //! \param[in,out] v Velocity components
+    void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const {
+      for (std::size_t j=0; j<3; ++j) {
+        // extract momentum
+        v[j] = u.extract( 1+j, m_offset );
+        Assert( v[j].size() == u.nunk(), "Size mismatch" );
+        // divide by density
+        for (std::size_t i=0; i<u.nunk(); ++i) v[j][i] /= u(i,0,m_offset);
+      }
+    }
+
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate
@@ -550,16 +563,23 @@ class CompFlow {
       src( coord, inpoel, t, tp, R );
     }
 
-    //! Compute the minimum time step size
-    //! \param[in] U Solution vector at recent time step
+    //! Compute the minimum time step size (for unsteady time stepping)
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
     //! \param[in] t Physical time
+    //! \param[in] dtn Time step size at the previous time step
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] vol Nodal volume (with contributions from other chares)
+    //! \param[in] voln Nodal volume (with contributions from other chares) at
+    //!   the previous time step
     //! \return Minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
              tk::real t,
-             const tk::Fields& U ) const
+             tk::real dtn,
+             const tk::Fields& U,
+             const std::vector< tk::real >& vol,
+             const std::vector< tk::real >& voln ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
@@ -571,6 +591,7 @@ class CompFlow {
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
+
       // ratio of specific heats
       auto g = gamma< eq >(m_system);
       // compute the minimum dt across all elements we own
@@ -622,7 +643,6 @@ class CompFlow {
 
           if (v > maxvel) maxvel = v;
         }
-
         // compute element dt for the Euler equations
         auto euler_dt = L / maxvel;
         // compute element dt based on the viscous force
@@ -632,12 +652,27 @@ class CompFlow {
         // compute minimum element dt
         auto elemdt = std::min( euler_dt, std::min( viscous_dt, conduct_dt ) );
         // find minimum dt across all elements
-        if (elemdt < mindt) mindt = elemdt;
+        mindt = std::min( elemdt, mindt );
       }
-      return mindt * g_inputdeck.get< tag::discr, tag::cfl >();
+      mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+
+      // compute the minimum dt across all nodes we contribute to due to volume
+      // change in time
+      auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
+      if (dtn > 0.0 && dvcfl > 0.0) {
+        Assert( vol.size() == voln.size(), "Size mismatch" );
+        for (std::size_t p=0; p<vol.size(); ++p) {
+          auto vol_dt = dtn * std::min( voln[p], vol[p] )
+                            / (std::abs(voln[p] - vol[p]) + 1.0e-16 );
+          mindt = std::min( vol_dt, mindt );
+        }
+        mindt *= dvcfl;
+      }
+
+      return mindt;
     }
 
-    //! Compute a time step size for each mesh node
+    //! Compute a time step size for each mesh node (for steady time stepping)
     //! \param[in] U Solution vector at recent time step
     //! \param[in] vol Nodal volume (with contributions from other chares)
     //! \param[in,out] dtp Time step size for each mesh node
@@ -661,29 +696,6 @@ class CompFlow {
         // compute dt for node
         dtp[i] = L / v * g_inputdeck.get< tag::discr, tag::cfl >();
       }
-    }
-
-    //! Extract the velocity field at cell nodes. Currently unused.
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] N Element node indices    
-    //! \return Array of the four values of the velocity field
-    std::array< std::array< real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< real >, 3 >&,
-              const std::array< std::size_t, 4 >& N ) const
-    {
-      std::array< std::array< real, 4 >, 3 > v;
-      v[0] = U.extract( 1, m_offset, N );
-      v[1] = U.extract( 2, m_offset, N );
-      v[2] = U.extract( 3, m_offset, N );
-      auto r = U.extract( 0, m_offset, N );
-      std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
-                      []( real s, real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),
-                      []( real s, real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[2].begin(), v[2].begin(),
-                      []( real s, real& d ){ return d /= s; } );
-      return v;
     }
 
     //! \brief Query Dirichlet boundary condition value on a given side set for
@@ -973,6 +985,7 @@ class CompFlow {
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] vol Nodal volumes
+    //! \param[in] esup Elements surrounding points
     //! \param[in] U Solution vector at recent time step
     //! \param[in] G Nodal gradients of primitive variables in chare-boundary
     //!    nodes

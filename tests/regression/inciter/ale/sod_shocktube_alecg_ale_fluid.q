@@ -2,46 +2,51 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Test GCL with ALECG"
+title "Sod shock-tube, ALECG, ALE"
 
 inciter
 
-  nstep 10    # Max number of time steps
+  nstep 20    # Max number of time steps
+  #term 0.2    # Max physical time
   ttyi 1      # TTY output interval
 
-  cfl 0.5
-
-  partitioning
-   algorithm mj
-  end
+  cfl 0.9
 
   scheme alecg
 
+  partitioning
+    algorithm rcb
+  end
+
   ale
     dvcfl 1.0
-    mesh_velocity sine
+    mesh_velocity fluid
+
+    # yields close to Lagrangian mesh velocity
+    maxit 20
+    tolerance 2.0e-2
+
+    bc_dirichlet
+      sideset 1 3 end
+    end
   end
 
   compflow
-    mesh filename "rectangle_01_1.5k.exo" end
     depvar u
     physics euler
-    problem user_defined
-    ic
-      density  1.0 end
-      velocity 0.0 0.0 0.0 end
-      pressure 1.0 end
-    end
+    mesh filename "tube.exo" end
+    problem sod_shocktube
     material
       gamma 1.4 end
     end
     bc_sym
-      sideset 2 4 5 6 end
+      sideset 2 end
     end
   end
 
   field_output
-    var
+    interval 10
+    var node
       density
       x-velocity
       y-velocity
@@ -49,7 +54,6 @@ inciter
       specific_total_energy
       pressure
     end
-    interval 10
   end
 
   diagnostics
