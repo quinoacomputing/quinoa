@@ -460,7 +460,7 @@ ConjugateGradients::pq( tk::real d )
   // If (p,q)=0, then p and q are orthogonal and the system either has a trivial
   // solution, x=x0, or the BCs are incomplete or wrong, in either case the
   // solve cannot continue.
-  const auto eps = std::numeric_limits< tk::real >::epsilon();  
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
   if (std::abs(d) < eps) {
     m_it = m_maxit;
     m_alpha = 0.0;

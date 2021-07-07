@@ -333,7 +333,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::ale, tag::ale >() = false;
       get< tag::ale, tag::dvcfl >() = 0.0;
       get< tag::ale, tag::vortmult >() = 1.0;
-      get< tag::ale, tag::maxit >() = 50;
+      get< tag::ale, tag::maxit >() = 5;
       get< tag::ale, tag::tolerance >() = 1.0e-2;
       get< tag::ale, tag::meshvelocity >() = MeshVelocityType::NONE;
       // Default p-refinement settings
