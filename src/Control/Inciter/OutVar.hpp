@@ -37,8 +37,10 @@ struct OutVar {
   //! Constructor: initialize all state data
   //! \param[in] v Variable name
   //! \param[in] f Field ID
+  //! \param[in] c Variable centering
   //! \param[in] n Human readable name
   //! \param[in] a Alias
+  //! \param[in] m Material-based physics label + material id
   explicit OutVar( char v = 0,
                    ncomp_t f = 0,
                    Centering c = Centering::NODE,

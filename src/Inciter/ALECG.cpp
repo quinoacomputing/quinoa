@@ -448,10 +448,11 @@ ALECG::ResumeFromSync()
   if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) next();
 }
 
+//! [setup]
 void
 ALECG::setup()
 // *****************************************************************************
-// Setup rows, query boundary conditions, output mesh, etc.
+// Start setup for solution
 // *****************************************************************************
 {
   auto d = Disc();
@@ -473,6 +474,7 @@ ALECG::setup()
     d->histheader( std::move(histnames) );
   }
 }
+//! [setup]
 
 void
 ALECG::volumetric( tk::Fields& u )
@@ -552,7 +554,7 @@ ALECG::start()
 }
 //! [start]
 
-//! [Compute own and send contributions to normals on chare-boundary]
+//! [Compute lhs]
 void
 ALECG::lhs()
 // *****************************************************************************
@@ -568,7 +570,7 @@ ALECG::lhs()
   // (Re-)compute boundary point-, and dual-face normals
   norm();
 }
-//! [Compute own and send contributions to normals on chare-boundary]
+//! [Compute lhs]
 
 //! [Merge normals and continue]
 void
@@ -1150,6 +1152,7 @@ ALECG::solve()
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4mesh();
 
+  //! [Continue after solve]
   // Recompute mesh volumes if ALE is enabled
   if (d->ALE()) {
 
@@ -1173,6 +1176,7 @@ ALECG::solve()
     norm_complete();
     resized();
   }
+  //! [Continue after solve]
 }
 
 void
@@ -1181,7 +1185,6 @@ ALECG::ale()
 //  Continue after ALE mesh movement
 // *****************************************************************************
 {
-  //! [Continue after solve]
   if (m_stage < 2) {
 
     // Activate SDAG wait for next time step stage
@@ -1217,9 +1220,9 @@ ALECG::ale()
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
 
   }
-  //! [Continue after solve]
 }
 
+//! [Refine]
 void
 ALECG::refine( const std::vector< tk::real >& l2res )
 // *****************************************************************************
@@ -1228,7 +1231,6 @@ ALECG::refine( const std::vector< tk::real >& l2res )
 //!   computed across the whole problem
 // *****************************************************************************
 {
-  //! [Refine]
   auto d = Disc();
 
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
@@ -1274,8 +1276,8 @@ ALECG::refine( const std::vector< tk::real >& l2res )
     resized();
 
   }
-  //! [Refine]
 }
+//! [Refine]
 
 //! [Resize]
 void
@@ -1355,6 +1357,7 @@ ALECG::transfer()
   thisProxy[thisIndex].stage();
 }
 
+//! [stage]
 void
 ALECG::stage()
 // *****************************************************************************
@@ -1368,6 +1371,7 @@ ALECG::stage()
   // otherwise output field data to file(s)
   if (m_stage < 3) chBndGrad(); else out();
 }
+//! [stage]
 
 void
 ALECG::writeFields( CkCallback c )

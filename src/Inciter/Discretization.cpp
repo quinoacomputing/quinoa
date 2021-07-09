@@ -88,6 +88,7 @@ Discretization::Discretization(
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID
+//! \param[in] disc All Discretization proxies (one per mesh)
 //! \param[in] fctproxy Distributed FCT proxy
 //! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
 //!   solver proxy
@@ -233,7 +234,7 @@ Discretization::meshvelInit(
 //  Initialize mesh velocity linear solve: set initial guess and BCs
 //! \param[in] w Initial guess for mesh velocity linear solve
 //! \param[in] wbc Local node ids associated to mesh velocity Dirichlet BCs
-// \param[in] c Function to call when the BCs have been applied
+//! \param[in] c Function to call when the BCs have been applied
 // *****************************************************************************
 {
   auto eps = std::numeric_limits< tk::real >::epsilon();

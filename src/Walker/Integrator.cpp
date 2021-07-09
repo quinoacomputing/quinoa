@@ -47,6 +47,7 @@ Integrator::Integrator( CProxy_Distributor hostproxy,
 // Constructor
 //! \param[in] hostproxy Host proxy to call back to
 //! \param[in] collproxy Collector proxy to send results to
+//! \param[in] particlewriterproxy Particle writer proxy to use
 //! \param[in] npar Number of particles this integrator advances
 // *****************************************************************************
 {

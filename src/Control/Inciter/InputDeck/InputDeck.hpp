@@ -423,7 +423,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
 
     //! Query special point BC configuration
     //! \tparam eq PDE type to query
-    //! \tparam bc  Special BC type to query, e.g., stagnation, skip
+    //! \tparam bc Special BC type to query, e.g., stagnation, skip
     //! \param[in] system Equation system id
     //! \return Vectors configuring the special points and their radii
     template< class eq, class bc >

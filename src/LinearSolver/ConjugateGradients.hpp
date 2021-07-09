@@ -69,7 +69,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     #endif
 
     //! Solve linear system
-    void solve( std::size_t maxit, tk::real stop_tol, CkCallback c );
+    void solve( std::size_t maxit, tk::real tol, CkCallback c );
 
     //! Initialize linear solve: set initial guess and boundary conditions
     void init( const std::vector< tk::real >& x,
@@ -79,7 +79,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
                     bool applybc );
 
     //! Setup solver
-    void setup( CkCallback cb );
+    void setup( CkCallback c );
 
     //! Compute the norm of the right hand side
     void normb( tk::real n );
@@ -100,10 +100,10 @@ class ConjugateGradients : public CBase_ConjugateGradients {
                const std::vector< std::vector< tk::real > >& qc );
 
     void comx( const std::vector< std::size_t >& gid,
-               const std::vector< std::vector< tk::real > >& qc );
+               const std::vector< std::vector< tk::real > >& xc );
 
     //! Compute the dot product (p,q)
-    void pq( tk::real n );
+    void pq( tk::real d );
 
     //! Compute the norm of the residual: (r,r)
     void normres( tk::real r );

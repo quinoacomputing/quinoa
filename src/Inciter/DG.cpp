@@ -77,10 +77,6 @@ DG::DG( const CProxy_Discretization& disc,
            [](std::size_t s, const DGPDE& eq){ return s + eq.nprim(); } ) ),
   m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), m_coord) ),
   m_geoElem( tk::genGeoElemTet( m_inpoel, m_coord ) ),
-  m_volfracExtr( m_u.nunk(),
-                 std::accumulate( begin(g_dgpde), end(g_dgpde), 0u,
-                 [](std::size_t s, const DGPDE& eq){ return s + 2*eq.nmat(); } )
-               ),
   m_lhs( m_u.nunk(),
          g_inputdeck.get< tag::discr, tag::ndof >()*
          g_inputdeck.get< tag::component >().nprop() ),
@@ -109,7 +105,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_bid(),
   m_uc(),
   m_pc(),
-  m_volfracExtrc(),
   m_ndofc(),
   m_initial( 1 ),
   m_expChBndFace(),
@@ -1142,7 +1137,6 @@ DG::adj()
   m_u.resize( m_nunk );
   m_un.resize( m_nunk );
   m_p.resize( m_nunk );
-  m_volfracExtr.resize( m_nunk );
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
 
@@ -1160,7 +1154,6 @@ DG::adj()
   for (auto& n : m_ndofc) n.resize( m_bid.size() );
   for (auto& u : m_uc) u.resize( m_bid.size() );
   for (auto& p : m_pc) p.resize( m_bid.size() );
-  for (auto& p : m_volfracExtrc) p.resize( m_bid.size() );
 
   // Initialize number of degrees of freedom in mesh elements
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
@@ -1703,7 +1696,7 @@ DG::reco()
     // Reconstruct second-order solution and primitive quantities
     for (const auto& eq : g_dgpde)
       eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel,
-                      m_coord, m_u, m_p, m_volfracExtr );
+                      m_coord, m_u, m_p );
   }
 
   // Send reconstructed solution to neighboring chares
@@ -1713,8 +1706,7 @@ DG::reco()
     for(const auto& [cid, ghostdata] : m_sendGhost) {
       std::vector< std::size_t > tetid( ghostdata.size() );
       std::vector< std::vector< tk::real > > u( ghostdata.size() ),
-                                             prim( ghostdata.size() ),
-                                             volfm( ghostdata.size() );
+                                             prim( ghostdata.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : ghostdata) {
@@ -1723,11 +1715,10 @@ DG::reco()
         tetid[j] = i;
         u[j] = m_u[i];
         prim[j] = m_p[i];
-        volfm[j] = m_volfracExtr[i];
         if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
         ++j;
       }
-      thisProxy[ cid ].comreco( thisIndex, tetid, u, prim, volfm, ndof );
+      thisProxy[ cid ].comreco( thisIndex, tetid, u, prim, ndof );
     }
 
   ownreco_complete();
@@ -1738,7 +1729,6 @@ DG::comreco( int fromch,
              const std::vector< std::size_t >& tetid,
              const std::vector< std::vector< tk::real > >& u,
              const std::vector< std::vector< tk::real > >& prim,
-             const std::vector< std::vector< tk::real > >& volfm,
              const std::vector< std::size_t >& ndof )
 // *****************************************************************************
 //  Receive chare-boundary reconstructed ghost data from neighboring chares
@@ -1768,10 +1758,8 @@ DG::comreco( int fromch,
     auto b = tk::cref_find( m_bid, j );
     Assert( b < m_uc[1].size(), "Indexing out of bounds" );
     Assert( b < m_pc[1].size(), "Indexing out of bounds" );
-    Assert( b < m_volfracExtrc[1].size(), "Indexing out of bounds" );
     m_uc[1][b] = u[i];
     m_pc[1][b] = prim[i];
-    m_volfracExtrc[1][b] = volfm[i];
     if (pref && m_stage == 0) {
       Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
       m_ndofc[1][b] = ndof[i];
@@ -1812,9 +1800,6 @@ DG::nodalExtrema()
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
       m_p(boundary,c,0) = m_pc[1][localtet][c];
-    }
-    for (std::size_t c=0; c<m_volfracExtr.nprop(); ++c) {
-      m_volfracExtr(boundary,c,0) = m_volfracExtrc[1][localtet][c];
     }
     if (pref && m_stage == 0) {
       m_ndof[ boundary ] = m_ndofc[1][ localtet ];
@@ -2234,7 +2219,7 @@ DG::solve( tk::real newdt )
 
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_inpoel, m_boxelems, m_coord,
-            m_u, m_p, m_volfracExtr, m_ndof, m_rhs );
+            m_u, m_p, m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<m_nunk; ++e)
@@ -2352,7 +2337,6 @@ DG::resizePostAMR(
   m_un.resize( nelem );
   m_lhs.resize( nelem );
   m_rhs.resize( nelem );
-  m_volfracExtr.resize( nelem );
   m_uNodalExtrm.resize( d->Bid().size() );
   m_pNodalExtrm.resize( d->Bid().size() );
 
