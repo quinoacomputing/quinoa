@@ -1624,7 +1624,7 @@ ALECG::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise output field data to file(s)
-  if (m_stage < 3) advance( Disc()->Dt() ); else out();
+  if (m_stage < 3) chBndGrad(); else out();
 }
 
 void
