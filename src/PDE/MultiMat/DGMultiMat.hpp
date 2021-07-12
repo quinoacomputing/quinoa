@@ -579,8 +579,6 @@ class MultiMat {
     }
 
     //! Reconstruct second-order solution from first-order
-    //! \param[in] t Physical time
-    //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] esup Elements-surrounding-nodes connectivity
@@ -588,8 +586,8 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
-    void reconstruct( tk::real t,
-                      const tk::Fields& geoFace,
+    void reconstruct( tk::real,
+                      const tk::Fields&,
                       const tk::Fields& geoElem,
                       const inciter::FaceData& fd,
                       const std::map< std::size_t, std::vector< std::size_t > >&
@@ -615,20 +613,6 @@ class MultiMat {
 
         Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
                 "vector must equal "+ std::to_string(rdof*m_ncomp) );
-        Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
-                "Mismatch in inpofa size" );
-
-        // allocate and initialize matrix and vector for reconstruction:
-        // lhs_ls is the left-hand side matrix for solving the least-squares
-        // system using the normal equation approach, for each mesh element.
-        // It is indexed as follows:
-        // The first index is the element id;
-        // the second index is the row id of the 3-by-3 matrix;
-        // the third index is the column id of the 3-by-3 matrix.
-        std::vector< std::array< std::array< tk::real, 3 >, 3 > >
-          lhs_ls( nelem, {{ {{0.0, 0.0, 0.0}},
-                            {{0.0, 0.0, 0.0}},
-                            {{0.0, 0.0, 0.0}} }} );
 
         //----- reconstruction of conserved quantities -----
         //--------------------------------------------------
@@ -637,54 +621,16 @@ class MultiMat {
         if (!is_p0p1)
           varRange = {{volfracIdx(nmat, 0), volfracIdx(nmat, nmat-1)}};
 
-        // rhs_ls is the right-hand side vector for solving the least-squares
-        // system using the normal equation approach, for each element.
-        // It is indexed as follows:
-        // The first index is the element id;
-        // the second index is the scalar equation which is being reconstructed;
-        // the third index is the row id of the rhs vector.
-        // two rhs_ls vectors are needed for reconstructing conserved and
-        // primitive quantites separately
-        std::vector< std::vector< std::array< tk::real, 3 > > >
-          rhsu_ls( nelem, std::vector< std::array< tk::real, 3 > >
-            ( varRange[1]-varRange[0]+1,
-              {{ 0.0, 0.0, 0.0 }} ) );
-
-        // reconstruct x,y,z-derivatives of unknowns.
-        // 0. get lhs matrix, which is only geometry dependent
-        tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
-
-        // 1. internal face contributions
-        tk::intLeastSq_P0P1(m_offset, rdof, fd, geoElem, U, rhsu_ls, varRange);
-
-        // 2. boundary face contributions
-        for (const auto& b : m_bc)
-        {
-          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
-            b.first, fd, geoFace, geoElem, t, b.second, P, U, rhsu_ls, varRange,
-            nprim() );
-        }
-
-        // 3. solve 3x3 least-squares system
-        tk::solveLeastSq_P0P1(m_offset, rdof, lhs_ls, rhsu_ls, U, varRange);
-
+        // 1. solve 3x3 least-squares system
         for (std::size_t e=0; e<nelem; ++e)
         {
-          std::vector< std::size_t > matInt(nmat, 0);
-          std::vector< tk::real > alAvg(nmat, 0.0);
-          for (std::size_t k=0; k<nmat; ++k)
-            alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
-          auto intInd = interfaceIndicator(nmat, alAvg, matInt);
-          if ((intsharp > 0) && intInd)
-          {
-            // Reconstruct second-order dofs of volume-fractions in Taylor space
-            // using nodal-stencils, for a good interface-normal estimate
-            tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
-              U, varRange );
-          }
+          // Reconstruct second-order dofs of volume-fractions in Taylor space
+          // using nodal-stencils, for a good interface-normal estimate
+          tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+            U, varRange );
         }
 
-        // 4. transform reconstructed derivatives to Dubiner dofs
+        // 2. transform reconstructed derivatives to Dubiner dofs
         tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, U, varRange);
 
         //----- reconstruction of primitive quantities -----
@@ -692,28 +638,16 @@ class MultiMat {
         // For multimat, conserved and primitive quantities are reconstructed
         // separately.
         if (is_p0p1) {
-          std::vector< std::vector< std::array< tk::real, 3 > > >
-            rhsp_ls( nelem, std::vector< std::array< tk::real, 3 > >
-              ( nprim(),
-                {{ 0.0, 0.0, 0.0 }} ) );
-
           // 1.
-          tk::intLeastSq_P0P1(m_offset, rdof, fd, geoElem, P, rhsp_ls,
-            {0, nprim()-1});
-
-          // 2.
-          for (const auto& b : m_bc)
+          for (std::size_t e=0; e<nelem; ++e)
           {
-            tk::bndLeastSqPrimitiveVar_P0P1(m_system, nprim(), m_offset, rdof,
-              b.first, fd, geoFace, geoElem, t, b.second, P, U, rhsp_ls,
-              m_ncomp);
+            // Reconstruct second-order dofs of volume-fractions in Taylor space
+            // using nodal-stencils, for a good interface-normal estimate
+            tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+              P, {0, nprim()-1} );
           }
 
-          // 3.
-          tk::solveLeastSq_P0P1(m_offset, rdof, lhs_ls, rhsp_ls, P,
-            {0, nprim()-1});
-
-          // 4.
+          // 2.
           tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, P,
             {0, nprim()-1});
         }
@@ -772,9 +706,9 @@ class MultiMat {
           m_system, m_offset, coord, gid, bid, uNodalExtrm, pNodalExtrm, U, P,
           nmat );
       }
-      else if (limiter == ctr::LimiterType::WENOP1)
+      else
       {
-        WENOMultiMat_P1( fd.Esuel(), m_offset, U, P, nmat );
+        Throw("Limiter type not configured for multimat.");
       }
     }
 
