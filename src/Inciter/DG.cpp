@@ -2464,7 +2464,7 @@ DG::writeFields( CkCallback c )
   if ( !((d->It()) % histfreq) ) {
     std::vector< std::vector< tk::real > > hist;
     for (const auto& eq : g_dgpde) {
-      auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u );
+      auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u, m_p );
       hist.insert( end(hist), begin(h), end(h) );
     }
     d->history( std::move(hist) );

@@ -276,8 +276,9 @@ class DGPDE {
     histOutput( const std::vector< HistData >& h,
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
-      const tk::Fields& U ) const
-    { return self->histOutput( h, inpoel, coord, U ); }
+      const tk::Fields& U,
+      const tk::Fields& P ) const
+    { return self->histOutput( h, inpoel, coord, U, P ); }
 
     //! Public interface to returning analytic solution
     tk::InitializeFn::result_type
@@ -401,6 +402,7 @@ class DGPDE {
         const std::vector< HistData >&,
         const std::vector< std::size_t >&,
         const tk::UnsMesh::Coords&,
+        const tk::Fields&,
         const tk::Fields& ) const = 0;
       virtual tk::InitializeFn::result_type analyticSolution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
@@ -540,8 +542,9 @@ class DGPDE {
         const std::vector< HistData >& h,
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
-        const tk::Fields& U ) const override
-      { return data.histOutput( h, inpoel, coord, U ); }
+        const tk::Fields& U,
+        const tk::Fields& P ) const override
+      { return data.histOutput( h, inpoel, coord, U, P ); }
       tk::InitializeFn::result_type
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }
