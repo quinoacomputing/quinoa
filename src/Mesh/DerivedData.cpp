@@ -1783,15 +1783,14 @@ intet( const std::array< std::vector< real >, 3 >& coord,
 tk::UnsMesh::Coords
 curl( const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
-      const std::vector< tk::real >& vol,
       const tk::UnsMesh::Coords& v )
 // *****************************************************************************
 //! Compute curl of a vector field at nodes of unstructured tetrahedra mesh
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
-//! \param[in] vol Nodal volumes
 //! \param[in] v Vector field whose curl to compute
-//! \return Curl of v
+//! \return Weak (partial result) of curl of v (partial beacuse it still needs
+//!   a division by the nodal volumes.
 // *****************************************************************************
 {
    // access node cooordinates
@@ -1845,14 +1844,6 @@ curl( const std::array< std::vector< tk::real >, 3 >& coord,
          curl[1][N[a]] += J24 * c[1];
          curl[2][N[a]] += J24 * c[2];
        }
-     }
-   }
-
-   // divide weak result by nodal volume
-   for (std::size_t j=0; j<3; ++j) {
-     #pragma omp simd
-     for (std::size_t p=0; p<npoin; ++p) {
-       curl[j][p] /= vol[p];
      }
    }
 

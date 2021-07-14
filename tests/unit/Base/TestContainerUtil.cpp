@@ -164,7 +164,7 @@ void ContainerUtil_object::test< 5 >() {
 //! Test operator += adding values of a std::vector to another one
 template<> template<>
 void ContainerUtil_object::test< 6 >() {
-  set_test_name( "operator+=" );
+  set_test_name( "operator+= std::vector" );
 
   using tk::operator+=;
 
@@ -363,6 +363,30 @@ void ContainerUtil_object::test< 11 >() {
   std::map< int, std::vector< std::size_t > > correct_result{ {3,{4,5,6}} };
   tk::erase_if( b, []( decltype(b)::value_type& p ){ return p.first<0; } );
   ensure( "erase_if on map incorrect", b == correct_result );
+}
+
+//! Test operator += adding values of a std::vector to another one
+template<> template<>
+void ContainerUtil_object::test< 12 >() {
+  set_test_name( "operator+= std::array" );
+
+  using tk::operator+=;
+
+  // add array to other one, dst += src for all components, leave src unchanged
+  std::array< tk::real, 3 > s1{{ 4.0, 9.0, 2.0 }}, s2{{ 3.0, -3.0, 1.0 }};
+  s1 += s2;
+  ensure_equals( "add array to other one, dst[0], incorrect",
+                 s1[0], 7.0, precision );
+  ensure_equals( "add array to other one, dst[1], incorrect",
+                 s1[1], 6.0, precision );
+  ensure_equals( "add array to other one, dst[2], incorrect",
+                 s1[2], 3.0, precision );
+  ensure_equals( "add array to other one, src[0], incorrect",
+                 s2[0], 3.0, precision );
+  ensure_equals( "add array to other one, src[1], incorrect",
+                 s2[1], -3.0, precision );
+  ensure_equals( "add array to other one, src[2], incorrect",
+                 s2[2], 1.0, precision );
 }
 
 #if defined(STRICT_GNUC)

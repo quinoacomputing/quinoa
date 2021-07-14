@@ -3478,7 +3478,12 @@ void DerivedData_object::test< 76 >() {
   }};
 
   // Scale mesh velocity by a function of the vorticity
-  auto curl = tk::curl( coord, inpoel, vol, v );
+  auto curl = tk::curl( coord, inpoel, v );
+
+  // divide weak result by nodal volume
+  for (std::size_t j=0; j<3; ++j)
+    for (std::size_t p=0; p<npoin; ++p)
+      curl[j][p] /= vol[p];
 
   tk::real pr = std::numeric_limits< tk::real >::epsilon() * 10;
 
@@ -3584,7 +3589,12 @@ void DerivedData_object::test< 77 >() {
   }};
 
   // Scale mesh velocity by a function of the vorticity
-  auto curl = tk::curl( coord, inpoel, vol, v );
+  auto curl = tk::curl( coord, inpoel, v );
+
+  // divide weak result by nodal volume
+  for (std::size_t j=0; j<3; ++j)
+    for (std::size_t p=0; p<npoin; ++p)
+      curl[j][p] /= vol[p];
 
   tk::real pr = std::numeric_limits< tk::real >::epsilon() * 10;
 

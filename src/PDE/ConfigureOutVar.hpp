@@ -34,7 +34,7 @@ assignGetVars( const std::string& name );
 template< class Keyword >
 void
 assign( const std::string& name, const tk::GetVarFn& src, tk::GetVarFn& dst ) {
-  if (name.find(Keyword::string()) != std::string::npos) dst = src;
+  if (name == Keyword::string()) dst = src;
 }
 
 } // inciter::

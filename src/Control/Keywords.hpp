@@ -1777,6 +1777,23 @@ struct dvcfl_info {
 };
 using dvcfl = keyword< dvcfl_info, TAOCPP_PEGTL_STRING("dvcfl") >;
 
+struct vortmult_info {
+  static std::string name() { return "vortmult"; }
+  static std::string shortDescription() { return
+    "Configure multiplier for ALE mesh velocity smoother vorticity scaling"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to configure the multiplier for the vorticity in
+    the mesh velocity smoother for ALE mesh motion.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
+    static std::string description() { return "real"; }
+  };
+};
+using vortmult = keyword< vortmult_info, TAOCPP_PEGTL_STRING("vortmult") >;
+
 struct meshvel_maxit_info {
   static std::string name() {
     return "mesh velocity smoother linear solve max number of iterations"; }
@@ -6704,6 +6721,18 @@ struct fluid_info {
 };
 using fluid = keyword< fluid_info, TAOCPP_PEGTL_STRING("fluid") >;
 
+struct lagrange_info {
+  static std::string name() { return "Lagrange"; }
+  static std::string shortDescription() { return
+    "Select the Lagrange velocity for ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the 'Lagrange' velocity as the mesh
+       velocity for Arbitrary-Lagrangian-Eulerian (ALE) mesh motion. This
+       practically equates the mesh velocity with the fluid velocity and turns
+       off mesh velocity smoothing.)"; }
+};
+using lagrange = keyword< lagrange_info, TAOCPP_PEGTL_STRING("lagrange") >;
+
 struct helmholtz_info {
   static std::string name() { return "Helmholtz"; }
   static std::string shortDescription() { return
@@ -6730,6 +6759,7 @@ struct meshvelocity_info {
       return '\'' + none::string() + "\' | \'"
                   + sine::string() + "\' | \'"
                   + fluid::string() + "\' | \'"
+                  + lagrange::string() + "\' | \'"
                   + helmholtz::string() + '\'';
     }
   };

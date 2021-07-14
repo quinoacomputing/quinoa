@@ -62,6 +62,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_ngrad( 0 ),
   m_nrhs( 0 ),
+  m_nvort( 0 ),
   m_nbnorm( 0 ),
   m_ndfnorm( 0 ),
   m_bnode( bnode ),
@@ -99,7 +100,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 ),
   m_newmesh( 0 ),
-  m_coordn( Disc()->Coord() )
+  m_coordn( Disc()->Coord() ),
+  m_vorticity(),
+  m_vorticityc()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -147,6 +150,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 
   // Activate SDAG wait for initially computing normals
   thisProxy[ thisIndex ].wait4norm();
+
+  // Activate SDAG wait for initially computing vorticity for ALE
+  thisProxy[ thisIndex ].wait4vort();
 
   // Generate callbacks for solution transfers we are involved in
 
@@ -528,6 +534,9 @@ ALECG::box( tk::real v )
   // Initiate IC transfer (if coupled)
   Disc()->transfer( m_u );
 
+  // Initialize nodal mesh volumes
+  d->Voln() = d->Vol();
+
   // Compute left-hand side of PDEs
   lhs();
 }
@@ -800,7 +809,7 @@ ALECG::dt()
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
 
-  // Contribute to minimum dt across all chares the advance to next step
+  // Contribute to minimum dt across all chares and advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
               CkCallback(CkReductionTarget(ALECG,advance), thisProxy) );
   //! [Advance]
@@ -890,20 +899,35 @@ ALECG::meshvel()
 
   if (d->ALE()) {
 
-    // never update static meshvel during timestepping
-    if (d->dynALE() || m_initial) {
-      // assign mesh velocity
+    // assign mesh velocity, but never update static meshvel during timestepping
+    if (d->dynALE() || m_initial)
       inciter::meshvel( g_inputdeck.get< tag::ale, tag::meshvelocity >(),
                         d->Coord(), m_vel, m_w );
-      // scale mesh velocity by a function of the fluid vorticity
-      //inciter::vortscale( d->Coord(), d->Inpoel(), d->Vol(), m_vel, 0.5, 0.5,
-      //                    m_w );
-    }
 
-    // applying mesh velocity smoother BCs
-    meshvelbc();
+    // compute vorticity if needed
+    auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+    if (meshvel == ctr::MeshVelocityType::FLUID) {
+      m_vorticity = tk::curl( d->Coord(), d->Inpoel(), m_vel );
+      // communicate vorticity sums to other chares on chare-boundary
+      if (d->NodeCommMap().empty())
+        comvort_complete();
+      else
+        for (const auto& [c,n] : d->NodeCommMap()) {
+          std::vector< std::array< tk::real, 3 > > v( n.size() );
+          std::size_t j = 0;
+          for (auto i : n) {
+            auto lid = tk::cref_find( d->Lid(), i );
+            v[j][0] = m_vorticity[0][lid];
+            v[j][1] = m_vorticity[1][lid];
+            v[j][2] = m_vorticity[2][lid];
+            ++j;
+          }
+          thisProxy[c].comvort( std::vector<std::size_t>(begin(n),end(n)), v );
+        }
+      ownvort_complete();
+    } else meshvelbc();
 
-  } else {      // if ALE is not enabled, skip mesh smoothing
+  } else {      // if ALE is disabled, skip mesh smoothing
 
     smoothed();
 
@@ -911,17 +935,83 @@ ALECG::meshvel()
 }
 
 void
-ALECG::meshvelbc()
+ALECG::comvort( const std::vector< std::size_t >& gid,
+                const std::vector< std::array< tk::real, 3 > >& v )
 // *****************************************************************************
-// Apply mesh velocity smoother boundary conditions for ALE mesh motion
+//  Receive contributions to vorticity on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive RHS contributions
+//! \param[in] v Partial contributions of vorticity to chare-boundary nodes
 // *****************************************************************************
 {
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  Assert( v.size() == gid.size(), "Size mismatch" );
+  using tk::operator+=;
+  for (std::size_t i=0; i<gid.size(); ++i) m_vorticityc[ gid[i] ] += v[i];
 
-  // Smooth mesh velocity if enabled
+  // When we have heard from all chares we communicate with, this chare is done
+  if (++m_nvort == Disc()->NodeCommMap().size()) {
+    m_nvort = 0;
+    comvort_complete();
+  }
+}
+
+void
+ALECG::vorticity()
+// *****************************************************************************
+// Finalize computing fluid vorticity for ALE
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // combine own and communicated contributions to vorticity
+  for (const auto& [g,v] : m_vorticityc) {
+    auto lid = tk::cref_find( d->Lid(), g );
+    m_vorticity[0][lid] += v[0];
+    m_vorticity[1][lid] += v[1];
+    m_vorticity[2][lid] += v[2];
+  }
+  // clear receive buffer
+  tk::destroy(m_vorticityc);
+
+  // finish computing vorticity dividing the weak sum by the nodal volumes
+  for (std::size_t j=0; j<3; ++j)
+    for (std::size_t p=0; p<m_vorticity[j].size(); ++p)
+      m_vorticity[j][p] /= d->Voln()[p];
+
+  // compute vorticity magnitude
+  for (std::size_t p=0; p<m_vorticity[0].size(); ++p)
+    m_vorticity[0][p] =
+      tk::length( m_vorticity[0][p], m_vorticity[1][p], m_vorticity[2][p] );
+
+  // get rid of the y and z vorticity components, since we just overwrote the
+  // x component with the magnitude
+  tk::destroy( m_vorticity[1] );
+  tk::destroy( m_vorticity[2] );
+
+  // compute max vorticity magnitude
+  auto maxv =
+    *std::max_element( m_vorticity[0].cbegin(), m_vorticity[0].cend() );
+
+  // Compute max vorticity magnitude across all chares
+  contribute( sizeof(tk::real), &maxv, CkReduction::max_double,
+              CkCallback(CkReductionTarget(ALECG,meshvelbc), thisProxy) );
+}
+
+void
+ALECG::meshvelbc( tk::real maxv )
+// *****************************************************************************
+// Apply mesh velocity smoother boundary conditions for ALE mesh motion
+//! \param[in] maxv The largest vorticity magnitude across the whole problem
+// *****************************************************************************
+{
+  // smooth mesh velocity if needed
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
   if (meshvel == ctr::MeshVelocityType::FLUID) {
 
-    auto d = Disc();
+    // scale mesh velocity by a function of the fluid vorticity
+    inciter::vortscale( m_vorticity[0],
+                        g_inputdeck.get< tag::ale, tag::vortmult >(),
+                        maxv,
+                        m_w );
 
     // Set mesh velocity smoother linear solve boundary conditions
     std::unordered_map< std::size_t,
@@ -952,7 +1042,7 @@ ALECG::meshvelbc()
     }
 
     // initiate setting mesh velocity BCs
-    d->meshvelInit( m_w.flat(), wbc,
+    Disc()->meshvelInit( m_w.flat(), wbc,
       CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
 
   } else {
@@ -1149,6 +1239,7 @@ ALECG::solve()
   m_newmesh = 0;  // recompute normals after ALE (if enabled)
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4mesh();
+  thisProxy[ thisIndex ].wait4vort();
 
   // Recompute mesh volumes if ALE is enabled
   if (d->ALE()) {
@@ -1165,13 +1256,16 @@ ALECG::solve()
     transfer_complete();
     // Resize mesh data structures after mesh movement
     d->resizePostALE( d->Coord() );
-    d->startvol( m_stage == 2 );
+    d->startvol();
     auto meshid = d->MeshId();
     contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
                 CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
+
   } else {
+
     norm_complete();
     resized();
+
   }
 }
 
@@ -1398,10 +1492,12 @@ ALECG::writeFields( CkCallback c )
        nodefieldnames.push_back( "y-mesh-velocity" );
        nodefieldnames.push_back( "z-mesh-velocity" );
        nodefieldnames.push_back( "volume" );
+       nodefieldnames.push_back( "vorticity-magnitude" );
        nodefields.push_back( m_w.extract(0,0) );
        nodefields.push_back( m_w.extract(1,0) );
        nodefields.push_back( m_w.extract(2,0) );
        nodefields.push_back( d->Vol() );
+       nodefields.push_back( m_vorticity[0] );
     }
 
     // Collect field output names for analytical solutions
