@@ -1579,7 +1579,7 @@ conforming( const std::vector< std::size_t >& inpoel,
 //!   tetrahedron mesh within a single refinement step. Thus this algorithm is
 //!   intended for this specific case, i.e., test for conformity after a
 //!   single refinement step and not after multiple ones or for detecting
-//!   hanging nodes in an arbitrary meshes.
+//!   hanging nodes in an arbitrary mesh.
 //*****************************************************************************
 {
   Assert( !inpoel.empty(),
