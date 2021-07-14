@@ -1,28 +1,83 @@
 /*!
   \page      inciter_performance Inciter performance
 
+@tableofcontents{xml}
+
 This page quantifies different aspects of the computational performance of @ref
 inciter_main.
 
-@section inciter_scaling Strong scaling
+@note More details on @ref inciter_main "Inciter"'s performance are given in
+@ref papers_inciter "Inciter papers".
+
+@section inciter_strong_scaling Strong scaling
+
+The following figures quantify <a
+href="https://hpc-wiki.info/hpc/Scaling_tutorial" target="_blank">strong
+scaling</a> of the different solvers in @ref inciter_main.
 
 @m_div{m-col-m-10 m-center-m}
-<img src="inciter_scaling.png"/>
-This figure quantifies the excellent scalability of inciter, integrating the
-advection-diffusion scalar transport equation for 10 time steps using a
-76-million-cell mesh, where the timing included measuring setup as well as
-reading the mesh and periodically outputting the solution, using approximately 4
-thousand CPUs. The insert depicts the CPU utilization from Charm++'s performance
-analysis tool, [Projections](http://charmplusplus.org/tools), showing excellent
-resource usage during setup (left side) as well as during the 10 two-stage
-time-steps.
+<img src="inciter_scaling_smp.svg"/>
+Strong scaling of the time stepping phase (i.e., excluding setup) running @ref
+inciter_diagcg "DiagCG", @ref inciter_alecg "ALECG", and the @ref inciter_dg
+"DG" single-material Euler solvers using a 794-million-cell mesh without
+large-file I/O up to about 50 thousand CPUs. The vertical axis here measures
+wall-clock time. SMP means that Charm++ is running in <a
+href="https://charm.readthedocs.io/en/latest/charm++/manual.html#machine-model"
+target="_blank">SMP mode</a>, which is Charm++'s equivalent of MPI+X where
+message-based communication is only used on the network, i.a., across compute
+nodes and not within nodes. One can see that SMP vs. non-SMP mode can make a
+large difference in absolute performance at large scales. Note that running in
+SMP mode simply amounts to @ref build_smp "building Charm++ in SMP mode" and
+recompiling Quinoa and Inciter, without any changes to the source code.
+@m_enddiv
+
+Note that the vertical axis above measures wall-clock time in seconds, thus the
+lower the value is faster the run was. Since the `DG` method stores the
+unknowns at cell centers, and there are a lot more cells than points of the
+unstructured computational mesh (specifically this mesh had `npoin=133,375,577`
+and `nelem=794,029,446`), the DG method operates on a singificantly larger data
+(also requiring more memory) and thus solves the same discrete problem with
+larger fidelity compared to the `DiagCG` and `ALECG` (node-centered) schemes.
+To offer a comparison between the solvers based on the same fidelity, the
+figure below depicts the same data but normalizing the wall-clock time by the
+number of degrees of freedom (NDOF). NDOF equals the total number of grid cells
+for `DG`, and the total number of nodes for the `DiagCG` and `ALECG` solvers.
+
+@m_div{m-col-m-10 m-center-m}
+<img src="inciter_scaling_ndof.svg"/>
+Strong scaling of time stepping running @ref inciter_diagcg "DiagCG", @ref
+inciter_alecg "ALECG", and the @ref inciter_dg "DG" single-material Euler
+solvers using a 794-million-cell mesh without large-file I/O. The vertical axis
+here measures wall-clock time normalized by the total number of cells for DG
+and the total number of nodes for the CG solvers. As before, SMP means that
+Charm++ is running in SMP mode.
+@m_enddiv
+
+@section inciter_weak_scaling Weak scaling
+
+The following figure quantifies the <a
+href="https://hpc-wiki.info/hpc/Scaling_tutorial" target="_blank">weak scaling
+scaling</a> of @ref inciter_diagcg "DiagCG".
+
+@m_div{m-col-m-10 m-center-m}
+<img src="inciter_weak.svg"/>
+Weak scaling of time stepping running @ref inciter_diagcg "DiagCG" without
+large-file I/O. As before, non-SMP means that Charm++ is running in non-SMP
+mode. See also @ref build_smp.
 @m_enddiv
 
 @section inciter_overdecomposition Effects of overdecomposition
 
-The figures below demonstrate typical effects of overdecomposition, partitioning
-the computational domain into _more_ work units than the number of available
-processors. The leftmost side of the figures corresponds to the case where the
+The figures below demonstrate typical effects of overdecomposition,
+partitioning the computational domain into _more_ work units than the number of
+available processors. Overdecomposition helps load balancing, since the runtime
+system can work with finer-grained work units (compared to a single mesh
+partition per processing element) that are quicker to migrate and redistribute
+to homogenize computational load. Another positive effect of overdecomposition
+is discussed below where smaller work units fit better into CPU caches yielding
+improved performance.
+
+The leftmost side of the figures corresponds to the case where the
 number of work units (_chares_) equal the number of CPUs -- this is labelled as
 "classic MPI", as this is how distributed-memory-parallel codes are
 traditionally used with the MPI (message passing) paradigm. As the problem is
@@ -60,5 +115,69 @@ fraction of large scientific computations. The performance gain during time
 stepping is even larger, reaching almost __50 times(!)__ compared to the
 original run without overdecomposition.
 @m_enddiv
+
+@section inciter_load_balancing Load balancing
+
+To demonstrate load balancing in parallel, we have run a Sedov problem modified
+to produce load imbalance. The Sedov problem is an idealized blast originating
+from a point, leading to a spherically spreading shock wave.
+
+To induce load imbalance we added some extra computational load to those
+computational cells whose fluid density exceeds the value of 1.5. This mimics,
+e.g., combustion, non-trivial material equations of state, etc., and induces
+realistic load imbalance, characteristic of multi-physics simulations.
+
+@m_div{m-col-m-6 m-left-m}
+<img src="sedov_load_ts14.svg"/>
+@m_enddiv
+@m_div{m-col-m-6 m-right-m}
+<img src="sedov_load_ts50.svg"/>
+@m_enddiv
+Spatial distributions of the extra load, corresponding to the fluid density
+exceeding the value 1.5, during time evolution of the Sedov solution: (left)
+shortly after the onset of load imbalance, (right) at end of the simulation.
+
+One can imagine that as the computational domain decomposed into many
+partitions, residing on multiple compute nodes, the parallel load gets out of
+balance and work units must all wait for the slowest one.
+
+Depicted below are simulation times for, running the problem using a 3
+million-cell mesh on 10 computes nodes of a distributed-memory cluster with 36
+CPUs/node. One can see that the density peak exceeds the value of 1.5 around
+the 130th time step, inducing load imbalance and this persists until the end of
+the simulation To balance the load we have used different strategies, available
+in Charm++, simply by turning on load balancing on the command line.
+
+@m_div{m-col-m-10 m-center-m}
+<img src="sedov_lb_large.svg"/>
+Grind-time during time stepping computing a Sedov problem with extra
+load in cells whose fluid density exceeds the threshold of 1.5, inducing load
+imbalance. These simulations were run on a distributed-memory cluster on 10
+compute nodes, in SMP mode, using 34 worker threads + 2 communication threads
+per node, on a 3M-cell mesh. Load balancing was invoked at every 10th time
+step for all load balancers.
+@m_enddiv
+
+It is clear from the figure that multiple load balancing strategies can
+successfully and effectively homogenize the uneven, dynamically generated, a
+priori unknown computational load. The common requirement for effective load
+balancing is fine-grained work units, ensured by increasing the degree of
+overdecomposition (virtualization) from 1 to 100x, which yields 100x the mesh
+partitions compared to the number of CPUs the problem is running on. As
+expected, increasing the number of partitions beyond the number of CPUs has a
+cost due to increased communication cost, c.f., black and red lines. Overall
+however, load balancing yields over an order of magnitude speedup over the
+non-balanced case.
+
+@note As show above, excellent performance can be obtained using the
+built-in automatic load balancers of Charm++. _It should be emphasized that we
+wrote no load balancing code: we simply ensure overdecomposition and turn on
+load balancing; the runtime system measures real-time CPU load and
+automatically performs object migration to homogenize the load._ This is
+particularly beneficial for applications with _a priori_ unknown or dynamically
+changing load distribution, characteristic of multiphysics or heterogeneous
+performance of large data centers. The data in @ref inciter_papers "Inciter
+papers" also demonstrates that the cost of load balancing is negligible
+compared to the savings over the unbalanced problem without load balancing.
 
 */
