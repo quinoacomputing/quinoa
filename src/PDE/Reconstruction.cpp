@@ -534,6 +534,22 @@ THINCReco( std::size_t system,
   THINCFunction(rdof, nmat, e, inpoel, coord, ref_xp, geoElem(e,0,0), bparam,
     alSol, intInd, matInt, alReco);
 
+  // check reconstructed volfracs for positivity
+  bool neg_vf = false;
+  for (std::size_t k=0; k<nmat; ++k) {
+    if (alReco[k] < 1e-14) neg_vf = true;
+  }
+  for (std::size_t k=0; k<nmat; ++k) {
+    if (neg_vf) {
+      std::cout << "Material-id:        " << k << std::endl;
+      std::cout << "Volume-fraction:    " << alReco[k] << std::endl;
+      std::cout << "Cell-avg vol-frac:  " << alAvg[k] << std::endl;
+      std::cout << "Material-interface? " << intInd << std::endl;
+      std::cout << "Mat-k-involved?     " << matInt[k] << std::endl;
+    }
+  }
+  if (neg_vf) Throw("Material has negative volume fraction.");
+
   // Step-2: Perform consistent reconstruction on other conserved quantities
   if (intInd)
   {
@@ -797,7 +813,24 @@ THINCFunction( std::size_t rdof,
 
     // following lines need to be commented to use THINC with Transport
     // ensure unit sum
-    alReco[kmax] += 1.0 - alsum;
+    // 1. check if modifying only max-mat will work
+    auto almax_mod = alReco[kmax] + 1.0 - alsum;
+    if (almax_mod > 0.0) {
+      alReco[kmax] += 1.0 - alsum;
+    }
+    // 2. otherwise, distribute error in all interface-constituting materials
+    else {
+      tk::real den(0.0);
+      std::vector< tk::real > almod(nmat, 0.0);
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (matInt[k]) {
+          almod[k] = (1.0-alsum)*alSol[k*rdof];
+          den += alSol[k*rdof];
+        }
+      }
+      for (auto& am:almod) am /= den;
+      for (std::size_t k=0; k<nmat; ++k) alReco[k] += almod[k];
+    }
     alsum = 1.0;
   }
 }
