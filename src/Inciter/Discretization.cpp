@@ -104,8 +104,16 @@ Discretization::Discretization(
   Assert( !ginpoel.empty(), "No elements assigned to Discretization chare" );
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
           "Jacobian in input mesh to Discretization non-positive" );
+  #if not defined(__INTEL_COMPILER) || defined(NDEBUG)
+  // The above ifdef skips running the conformity test with the intel compiler
+  // in debug mode only. This is necessary because in tk::conforming(), filling
+  // up the map can fail with some meshes (only in parallel), e.g., tube.exo,
+  // used by some regression tests, due to the intel compiler generating some
+  // garbage incorrect code - only in debug, only in parallel, only with that
+  // mesh.
   Assert( tk::conforming( m_inpoel, m_coord ),
           "Input mesh to Discretization not conforming" );
+  #endif
 
   // Store communication maps
   for (const auto& [ c, maps ] : msum) {
