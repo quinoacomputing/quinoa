@@ -154,7 +154,7 @@ tk::eval_dBdx_p2( const std::size_t igp,
                   const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
                   std::array< std::vector<tk::real>, 3 >& dBdx )
 // *****************************************************************************
-//  Compute the derivatives of basis function for DG(P2)
+//  Compute the derivatives of Dubiner basis function for DG(P2)
 //! \param[in] igp Index of quadrature points
 //! \param[in] coordgp Gauss point coordinates for tetrahedron element
 //! \param[in] jacInv Array of the inverse of Jacobian
@@ -362,128 +362,15 @@ tk::eval_state ( ncomp_t ncomp,
   return state;
 }
 
-void
-tk::evaldBdx_p2(  const std::vector< tk::real >& coord,
-                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
-                  std::array< std::vector<tk::real>, 3 >& dBdx )
-// *****************************************************************************
-//  Compute the derivatives of basis function in physical domain
-//! \param[in] coord point coordinates for tetrahedron element
-//! \param[in] jacInv Array of the inverse of Jacobian
-//! \param[in,out] dBdx Array of the derivatives of basis function
-// *****************************************************************************
-{
-  auto db5dxi1 = 12.0 * coord[0] + 6.0 * coord[1]
-               +  6.0 * coord[2] - 6.0;
-  auto db5dxi2 =  6.0 * coord[0] + 2.0 * coord[1]
-               +  2.0 * coord[2] - 2.0;
-  auto db5dxi3 =  6.0 * coord[0] + 2.0 * coord[1]
-               +  2.0 * coord[2] - 2.0;
-
-  auto db6dxi1 = 10.0 * coord[1] +  2.0 * coord[2] - 2.0;
-  auto db6dxi2 = 10.0 * coord[0] + 10.0 * coord[1]
-               +  6.0 * coord[2] - 6.0;
-  auto db6dxi3 =  2.0 * coord[0] +  6.0 * coord[1]
-               +  2.0 * coord[2] - 2.0;
-
-  auto db7dxi1 = 12.0 * coord[2] - 2.0;
-  auto db7dxi2 =  6.0 * coord[2] - 1.0;
-  auto db7dxi3 = 12.0 * coord[0] + 6.0 * coord[1]
-               + 12.0 * coord[2] - 7.0;
-
-  auto db8dxi1 =  0;
-  auto db8dxi2 = 20.0 * coord[1] + 8.0 * coord[2] - 8.0;
-  auto db8dxi3 =  8.0 * coord[1] + 2.0 * coord[2] - 2.0;
-
-  auto db9dxi1 =  0;
-  auto db9dxi2 = 18.0 * coord[2] -  3.0;
-  auto db9dxi3 = 18.0 * coord[1] + 12.0 * coord[2] - 7.0;
-
-  auto db10dxi1 =  0;
-  auto db10dxi2 =  0;
-  auto db10dxi3 = 30.0 * coord[2] - 10.0;
-
-  dBdx[0][4] = db5dxi1 * jacInv[0][0]
-             + db5dxi2 * jacInv[1][0]
-             + db5dxi3 * jacInv[2][0];
-
-  dBdx[1][4] = db5dxi1 * jacInv[0][1]
-             + db5dxi2 * jacInv[1][1]
-             + db5dxi3 * jacInv[2][1];
-
-  dBdx[2][4] = db5dxi1 * jacInv[0][2]
-             + db5dxi2 * jacInv[1][2]
-             + db5dxi3 * jacInv[2][2];
-
-  dBdx[0][5] = db6dxi1 * jacInv[0][0]
-             + db6dxi2 * jacInv[1][0]
-             + db6dxi3 * jacInv[2][0];
-
-  dBdx[1][5] = db6dxi1 * jacInv[0][1]
-             + db6dxi2 * jacInv[1][1]
-             + db6dxi3 * jacInv[2][1];
-
-  dBdx[2][5] = db6dxi1 * jacInv[0][2]
-             + db6dxi2 * jacInv[1][2]
-             + db6dxi3 * jacInv[2][2];
-
-  dBdx[0][6] = db7dxi1 * jacInv[0][0]
-             + db7dxi2 * jacInv[1][0]
-             + db7dxi3 * jacInv[2][0];
-
-  dBdx[1][6] = db7dxi1 * jacInv[0][1]
-             + db7dxi2 * jacInv[1][1]
-             + db7dxi3 * jacInv[2][1];
-
-  dBdx[2][6] = db7dxi1 * jacInv[0][2]
-             + db7dxi2 * jacInv[1][2]
-             + db7dxi3 * jacInv[2][2];
-
-  dBdx[0][7] = db8dxi1 * jacInv[0][0]
-             + db8dxi2 * jacInv[1][0]
-             + db8dxi3 * jacInv[2][0];
-
-  dBdx[1][7] = db8dxi1 * jacInv[0][1]
-             + db8dxi2 * jacInv[1][1]
-             + db8dxi3 * jacInv[2][1];
-
-  dBdx[2][7] = db8dxi1 * jacInv[0][2]
-             + db8dxi2 * jacInv[1][2]
-             + db8dxi3 * jacInv[2][2];
-
-  dBdx[0][8] = db9dxi1 * jacInv[0][0]
-             + db9dxi2 * jacInv[1][0]
-             + db9dxi3 * jacInv[2][0];
-
-  dBdx[1][8] = db9dxi1 * jacInv[0][1]
-             + db9dxi2 * jacInv[1][1]
-             + db9dxi3 * jacInv[2][1];
-
-  dBdx[2][8] = db9dxi1 * jacInv[0][2]
-             + db9dxi2 * jacInv[1][2]
-             + db9dxi3 * jacInv[2][2];
-
-  dBdx[0][9] = db10dxi1 * jacInv[0][0]
-             + db10dxi2 * jacInv[1][0]
-             + db10dxi3 * jacInv[2][0];
-
-  dBdx[1][9] = db10dxi1 * jacInv[0][1]
-             + db10dxi2 * jacInv[1][1]
-             + db10dxi3 * jacInv[2][1];
-
-  dBdx[2][9] = db10dxi1 * jacInv[0][2]
-             + db10dxi2 * jacInv[1][2]
-             + db10dxi3 * jacInv[2][2];
-}
-
-void tk::TransformBasis( ncomp_t ncomp,
-                         ncomp_t offset,
-                         const std::size_t e,
-                         const std::size_t ndof,
-                         const tk::Fields& U,
-                         const std::vector< std::size_t >& inpoel,
-                         const tk::UnsMesh::Coords& coord,
-                         std::vector< std::vector< tk::real > >& unk)
+std::vector< std::vector< tk::real > >
+tk::TransformDubinerToTaylor(
+  ncomp_t ncomp,
+  ncomp_t offset,
+  const std::size_t e,
+  const std::size_t ndof,
+  const tk::Fields& U,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord )
 // *****************************************************************************
 //  Transform the solution with Dubiner basis to the solution with Taylor basis
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -493,14 +380,20 @@ void tk::TransformBasis( ncomp_t ncomp,
 //! \param[in] U High-order solution vector with Dubiner basis
 //! \param[in] inpoel Element connectivity
 //! \param[in] coord Array of nodal coordinates
-//! \param[in] unk High-order solution vector with Taylor basis
+//! \return High-order solution vector with Taylor basis
 // *****************************************************************************
 {
+  std::vector< std::vector< tk::real > >
+    unk(ncomp, std::vector<tk::real>(ndof, 0.0));
+
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  std::vector< tk::real > center{0.25, 0.25, 0.25};
+  std::array< std::vector< tk::real >, 3 > center;
+  center[0].resize(1, 0.25);
+  center[1].resize(1, 0.25);
+  center[2].resize(1, 0.25);
 
   // Evaluate the cell center solution
   for(ncomp_t icomp = 0; icomp < ncomp; icomp++)
@@ -523,8 +416,9 @@ void tk::TransformBasis( ncomp_t ncomp,
   // Compute the derivatives of basis function for DG(P1)
   auto dBdx = tk::eval_dBdx_p1( ndof, jacInv );
 
-  if(ndof > 4)
-    tk::evaldBdx_p2(center, jacInv, dBdx);
+  if(ndof > 4) {
+    tk::eval_dBdx_p2(0, center, jacInv, dBdx);
+  }
 
   for(ncomp_t icomp = 0; icomp < ncomp; icomp++)
   {
@@ -543,7 +437,7 @@ void tk::TransformBasis( ncomp_t ncomp,
   // where d2B_i/dx2 = d( dB_i/dxi * dxi/dx ) / dxi * dxi/dx
   if(ndof > 4)
   {
-    std::vector< std::vector< tk::real > > dB2dxi2
+    tk::real dB2dxi2[6][6] =
     { { 12.0,  0.0,  0.0,  0.0,  0.0,  0.0 },
       {  2.0, 10.0,  0.0, 20.0,  0.0,  0.0 },
       {  2.0,  2.0, 12.0,  2.0, 12.0, 30.0 },
@@ -551,8 +445,7 @@ void tk::TransformBasis( ncomp_t ncomp,
       {  6.0,  2.0, 12.0,  0.0,  0.0,  0.0 },
       {  2.0,  6.0,  6.0,  8.0, 18.0,  0.0 } };
 
-    std::vector< std::vector< tk::real > > d2Bdx2;
-    d2Bdx2.resize(6, std::vector< tk::real>(6,0.0) );
+    std::array< std::array< tk::real, 6 >, 6 > d2Bdx2;
     for(std::size_t ibasis = 0; ibasis < 6; ibasis++)
     {
       for(std::size_t idir = 0; idir < 3; idir++)
@@ -609,17 +502,18 @@ void tk::TransformBasis( ncomp_t ncomp,
       }
     }
   }
+  return unk;
 }
 
-void tk::InverseBasis( ncomp_t ncomp,
-                       ncomp_t offset,
-                       std::size_t e,
-                       std::size_t ndof,
-                       const std::vector< std::size_t >& inpoel,
-                       const tk::UnsMesh::Coords& coord,
-                       const tk::Fields& geoElem,
-                       tk::Fields& U,
-                       std::vector< std::vector< tk::real > >& unk )
+std::vector< std::vector< tk::real > >
+tk::TransformTaylorToDubiner(
+  ncomp_t ncomp,
+  std::size_t e,
+  std::size_t ndof,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
+  const std::vector< std::vector< tk::real > >& unk )
 // *****************************************************************************
 //  Convert the solution with Taylor basis to the solution with Dubiner basis by
 //    projection method
@@ -628,10 +522,13 @@ void tk::InverseBasis( ncomp_t ncomp,
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] inpoel Element connectivity
 //! \param[in] coord Array of nodal coordinates
-//! \param[in] U High-order solution vector with Dubiner basis
 //! \param[in] unk High-order solution vector with Taylor basis
+//! \return High-order solution vector with Dubiner basis
 // *****************************************************************************
 {
+  Assert( ndof > 1, "Mismatch in number of degrees of freedom" );
+  Assert( ncomp > 0, "Number of scalar components is incorrect" );
+
   // The diagonal of mass matrix
   std::vector< tk::real > L(ndof, 0.0);
 
@@ -652,6 +549,10 @@ void tk::InverseBasis( ncomp_t ncomp,
     L[8] = vol * 3.0/14.0;
     L[9] = vol * 3.0/7.0;
   }
+
+  // Vector to store the solution with Dubiner basis
+  std::vector< std::vector< tk::real > >
+    U_Dubiner(ncomp, std::vector<tk::real>(ndof, 0.0));
 
   // Coordinates of the centroid in physical domain
   std::array< tk::real, 3 > x_c{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
@@ -738,25 +639,10 @@ void tk::InverseBasis( ncomp_t ncomp,
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    U(e, mark, offset) = R[mark] / L[0];
-
-    if(ndof > 1)
-    {
-      U(e, mark+1, offset) = R[mark+1] / L[1];
-      U(e, mark+2, offset) = R[mark+2] / L[2];
-      U(e, mark+3, offset) = R[mark+3] / L[3];
-
-      if(ndof > 4)
-      {
-        U(e, mark+4, offset) = R[mark+4] / L[4];
-        U(e, mark+5, offset) = R[mark+5] / L[5];
-        U(e, mark+6, offset) = R[mark+6] / L[6];
-        U(e, mark+7, offset) = R[mark+7] / L[7];
-        U(e, mark+8, offset) = R[mark+8] / L[8];
-        U(e, mark+9, offset) = R[mark+9] / L[9];
-      }
-    }
+    for(std::size_t idof = 0; idof < ndof; idof++)
+      U_Dubiner[c][idof] = R[mark+idof] / L[idof];
   }
+  return U_Dubiner;
 }
 
 std::vector< tk::real >
@@ -772,6 +658,8 @@ tk::eval_TaylorBasis( const std::size_t ndof,
 //! \param[in] coordel Array of nodal coordinates for the tetrahedron
 // *****************************************************************************
 {
+  Assert( ndof > 1, "Mismatch in the number of degrees of freedom" );
+
   std::vector< tk::real > avg( 6, 0.0 );
   if(ndof > 4)
   {

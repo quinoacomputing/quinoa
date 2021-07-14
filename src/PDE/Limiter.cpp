@@ -503,8 +503,8 @@ VertexBasedCompflow_P2(
   std::size_t ncomp = U.nprop()/rdof;
 
   // Copy field data U to U_lim. U_lim will store the limited solution
-  // temperally to avoid the limited solution will be used when finding
-  // the min/max bounds for the limiting function
+  // temporarily, so that the limited solution is NOT used to find the
+  // min/max bounds for the limiting function
   auto U_lim = U;
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -527,20 +527,17 @@ VertexBasedCompflow_P2(
     bool shock_detec(false);
 
     // Evaluate the shock detection indicator
-    auto Ind = eval_indicator(e, ncomp, dof_el, ndofel, U);
+    auto Ind = evalDiscontinuityIndicator(e, ncomp, dof_el, ndofel[e], U);
     if(Ind > 1e-6)
       shock_detec = true;
 
     if (dof_el > 1 && shock_detec == true)
     {
-      // The vector used to store the numerical solution with Taylor basis
-      std::vector< std::vector< tk::real > > unk;
-      unk.resize(ncomp, std::vector< tk::real >(dof_el, 0.0));
-
       // Transform the solution with Dubiner basis to Taylor basis so that the
       // limiting function could be applied to physical derivatives in a
       // hierarchical manner
-      tk::TransformBasis(ncomp, offset, e, dof_el, U, inpoel, coord, unk);
+      auto unk = tk::TransformDubinerToTaylor
+        (ncomp, offset, e, dof_el, U, inpoel, coord);
 
       // The vector of limiting coefficients for P1 and P2 coefficients
       std::vector< tk::real > phic_p1(ncomp, 1.0);
@@ -580,9 +577,18 @@ VertexBasedCompflow_P2(
         }
       }
 
-      // Convert the solution with Taylor basis to the solution with Dubiner basis
-      tk::InverseBasis
-        ( ncomp, offset, e, dof_el, inpoel, coord, geoElem, U_lim, unk );
+      // Convert the solution with Taylor basis to the solution with Dubiner 
+      // basis
+      unk = tk::TransformTaylorToDubiner
+        ( ncomp, e, dof_el, inpoel, coord, geoElem, unk );
+
+      // Store the limited solution in U_lim
+      for(std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*rdof;
+        for(std::size_t idof = 0; idof < rdof; idof++)
+          U_lim(e, mark+idof, offset) = unk[c][idof];
+      }
     }
   }
 
@@ -1189,6 +1195,10 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
 //!   global node ids (key)
 //! \param[in] NodalExtrm Chare-boundary nodal extrema
 //! \return phi Limiter function for solution in element e
+//! \details This function limits the P2 dofs of P2 solution in a hierachical
+//!   way to P1 dof limiting. Here we treat the first order derivatives the same
+//!   way as cell average while second order derivatives represent the gradients
+//!   to be limited in the P1 limiting procedure.
 // *****************************************************************************
 {
   const auto nelem = inpoel.size() / 4;
@@ -1204,11 +1214,15 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
   uMax.resize( ncomp, std::vector<tk::real>(3, 0.0) );
 
   // The coordinates of centroid in the reference domain
-  std::vector< tk::real > center{0.25, 0.25, 0.25};
+  std::array< std::vector< tk::real >, 3 > center;
+  center[0].resize(1, 0.25);
+  center[1].resize(1, 0.25);
+  center[2].resize(1, 0.25);
 
   // loop over all nodes of the element e
   for (std::size_t lp=0; lp<4; ++lp)
   {
+    // Find the max/min first-order derivatives for internal element
     for (std::size_t c=0; c<ncomp; ++c)
     {
       for (std::size_t idir=1; idir < 4; ++idir)
@@ -1241,7 +1255,7 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
         auto dBdx_er = tk::eval_dBdx_p1( rdof, jacInv_er );
 
         if(rdof > 4)
-          tk::evaldBdx_p2(center, jacInv_er, dBdx_er);
+          tk::eval_dBdx_p2(0, center, jacInv_er, dBdx_er);
 
         for (std::size_t c=0; c<ncomp; ++c)
         {
@@ -1269,14 +1283,14 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
       auto ndof_NodalExtrm = size_NodalExtrm / ncomp;
       for (std::size_t c=0; c<ncomp; ++c)
       {
-        for (std::size_t idir = 0; idir < 3; idir++)
+        for (std::size_t idir = 1; idir < 4; idir++)
         {
-          auto max_mark = ndof_NodalExtrm*c + idir + 1;
-          auto min_mark = max_mark + size_NodalExtrm;
-          uMax[c][idir] =
-            std::max(NodalExtrm[gip->second][max_mark], uMax[c][idir]);
-          uMin[c][idir] =
-            std::min(NodalExtrm[gip->second][min_mark], uMin[c][idir]);
+          auto max_mark = 2*c*ndof_NodalExtrm + 2*idir;
+          auto min_mark = max_mark + 1;
+          uMax[c][idir-1] =
+            std::max(NodalExtrm[gip->second][max_mark], uMax[c][idir-1]);
+          uMin[c][idir-1] =
+            std::min(NodalExtrm[gip->second][min_mark], uMin[c][idir-1]);
         }
       }
     }
@@ -1457,6 +1471,11 @@ void BoundPreservingLimiting( std::size_t nmat,
 //! \param[in,out] U Second-order solution vector which gets modified near
 //!   material interfaces for consistency
 //! \param[in,out] phic Vector of limiter functions for the conserved quantities
+//! \details This bound-preserving limiter is specifically meant to enforce
+//!   bounds [0,1], but it does not suppress oscillations like the other 'TVD'
+//!   limiters. TVD limiters on the other hand, do not preserve such bounds. A
+//!   combination of oscillation-suppressing and bound-preserving limiters can
+//!   obtain a non-oscillatory and bounded solution.
 // *****************************************************************************
 {
   const auto& cx = coord[0];
