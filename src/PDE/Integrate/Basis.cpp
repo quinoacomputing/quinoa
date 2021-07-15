@@ -446,6 +446,7 @@ tk::TransformDubinerToTaylor(
       {  2.0,  6.0,  6.0,  8.0, 18.0,  0.0 } };
 
     std::array< std::array< tk::real, 6 >, 6 > d2Bdx2;
+    d2Bdx2.fill({0});
     for(std::size_t ibasis = 0; ibasis < 6; ibasis++)
     {
       for(std::size_t idir = 0; idir < 3; idir++)

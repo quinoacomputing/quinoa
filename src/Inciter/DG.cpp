@@ -2044,7 +2044,7 @@ void DG::evalNodalExtrm( const std::size_t ncomp,
           // conservative and primitive variables
           std::vector< std::vector< tk::real > >
             gradc(ncomp, std::vector<tk::real>(3, 0.0));
-          std::vector< std::vector< tk::real > > 
+          std::vector< std::vector< tk::real > >
             gradp(ncomp, std::vector<tk::real>(3, 0.0));
 
           const auto& cx = coord[0];
@@ -2142,8 +2142,8 @@ DG::lim()
     {
       for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
       {
-        auto max_mark = c*m_ndof_NodalExtrm + idof;
-        auto min_mark = max_mark + ncomp * m_ndof_NodalExtrm;
+        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+        auto min_mark = max_mark + 1;
         m_uNodalExtrm[bid][max_mark] =
           std::max(g[max_mark], m_uNodalExtrm[bid][max_mark]);
         m_uNodalExtrm[bid][min_mark] =
@@ -2157,8 +2157,8 @@ DG::lim()
     {
       for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
       {
-        auto max_mark = c*m_ndof_NodalExtrm + idof;
-        auto min_mark = max_mark + nprim * m_ndof_NodalExtrm;
+        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+        auto min_mark = max_mark + 1;
         m_pNodalExtrm[bid][max_mark] =
           std::max(g[max_mark], m_pNodalExtrm[bid][max_mark]);
         m_pNodalExtrm[bid][min_mark] =

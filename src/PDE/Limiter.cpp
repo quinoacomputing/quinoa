@@ -577,7 +577,7 @@ VertexBasedCompflow_P2(
         }
       }
 
-      // Convert the solution with Taylor basis to the solution with Dubiner 
+      // Convert the solution with Taylor basis to the solution with Dubiner
       // basis
       unk = tk::TransformTaylorToDubiner
         ( ncomp, e, dof_el, inpoel, coord, geoElem, unk );
@@ -1097,14 +1097,13 @@ VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
     auto gip = bid.find( gid[p] );
     if(gip != end(bid))
     {
-      auto size_NodalExtrm = NodalExtrm[0].size() / 2;
-      auto ndof_NodalExtrm = size_NodalExtrm / ncomp;
+      auto ndof_NodalExtrm = NodalExtrm[0].size() / (ncomp * 2);
       for (std::size_t c=0; c<ncomp; ++c)
       {
-        auto mark_max = c * ndof_NodalExtrm;
-        auto mark_min = mark_max + size_NodalExtrm;
-        uMax[c] = std::max(NodalExtrm[gip->second][mark_max], uMax[c]);
-        uMin[c] = std::min(NodalExtrm[gip->second][mark_min], uMin[c]);
+        auto max_mark = 2*c*ndof_NodalExtrm;
+        auto min_mark = max_mark + 1;
+        uMax[c] = std::max(NodalExtrm[gip->second][max_mark], uMax[c]);
+        uMin[c] = std::min(NodalExtrm[gip->second][min_mark], uMin[c]);
       }
     }
 
@@ -1279,8 +1278,7 @@ VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
     auto gip = bid.find( gid[p] );
     if(gip != end(bid))
     {
-      auto size_NodalExtrm = NodalExtrm[0].size() / 2;
-      auto ndof_NodalExtrm = size_NodalExtrm / ncomp;
+      auto ndof_NodalExtrm = NodalExtrm[0].size() / (ncomp * 2);
       for (std::size_t c=0; c<ncomp; ++c)
       {
         for (std::size_t idir = 1; idir < 4; idir++)
