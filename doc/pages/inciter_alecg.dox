@@ -163,5 +163,11 @@ legnth of an edge \f$vw\f$. The global time step is thus
   \Delta t = \min_{\forall vw} \left( \Delta t^{vw}  \right).
 \end{split} \f]
 
+@section alecgrun_example Example setup, run, and solution
+
+For an example test set up see the page on @ref inciter_example_f16
+"steady-state solution of transconic flow around an F16". For other examples,
+see @ref papers_inciter "Inciter papers".
+
 */
 } // inciter::
