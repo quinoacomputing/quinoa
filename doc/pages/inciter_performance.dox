@@ -176,7 +176,7 @@ load balancing; the runtime system measures real-time CPU load and
 automatically performs object migration to homogenize the load._ This is
 particularly beneficial for applications with _a priori_ unknown or dynamically
 changing load distribution, characteristic of multiphysics or heterogeneous
-performance of large data centers. The data in @ref inciter_papers "Inciter
+performance of large data centers. The data in @ref papers_inciter "Inciter
 papers" also demonstrates that the cost of load balancing is negligible
 compared to the savings over the unbalanced problem without load balancing.
 

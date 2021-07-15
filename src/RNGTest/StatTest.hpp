@@ -62,7 +62,7 @@ class StatTest {
     //! \param[in] args Constructor arguments
     //! \see See also tk::recordCharmModel().
     template< typename T, typename... CtrArgs >
-    explicit StatTest( [[maybe_unused]] std::function<T()> c, CtrArgs... args )
+    explicit StatTest( std::function<T()> c [[maybe_unused]], CtrArgs... args )
       : self( std::make_unique< Model< typename T::Proxy > >
               (std::move(T::Proxy::ckNew(std::forward<CtrArgs>(args)...))) ) {
       Assert( c == nullptr, "std::function argument to StatTest Charm "

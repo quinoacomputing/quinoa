@@ -42,7 +42,7 @@ class CompFlowProblemSodShocktube {
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t, tk::real, tk::real,  tk::real,
+    analyticSolution( ncomp_t system, ncomp_t, tk::real x, tk::real,  tk::real,
                       tk::real );
 
     //! Compute and return source term for this problem
