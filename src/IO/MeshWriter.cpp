@@ -82,7 +82,7 @@ MeshWriter::write(
   CkCallback c )
 // *****************************************************************************
 //  Output unstructured mesh into file
-//! \param[in] Mesh Id
+//! \param[in] meshid Mesh Id
 //! \param[in] meshoutput True if mesh is to be written
 //! \param[in] fieldoutput True if field data is to be written
 //! \param[in] itr Iteration count since a new mesh. New mesh in this context
@@ -249,7 +249,7 @@ MeshWriter::filename( const std::string& basefilename,
 // *****************************************************************************
 //  Compute filename
 //! \param[in] basefilename String use as the base filename.
-//! \param[in] Mesh Id
+//! \param[in] meshid Mesh Id
 //! \param[in] itr Iteration count since a new mesh. New mesh in this context
 //!   means that either the mesh is moved and/or its topology has changed.
 //! \param[in] chareid The chare id the write-to-file request is coming from

@@ -25,7 +25,7 @@ try :
 // *****************************************************************************
 //  Constructor: Create a CSR symmetric matrix with ncomp scalar components per
 //  non-zero matrix entry, storing only the upper triangular part
-//! \param[in] ncomp Number of scalar components (degrees of freedom)
+//! \param[in] nc Number of scalar components (degrees of freedom)
 //! \param[in] psup Points surrounding points of mesh graph, see tk::genPsup
 // *****************************************************************************
 {
@@ -161,7 +161,6 @@ CSR::write_stored( std::ostream& os ) const
 // *****************************************************************************
 //  Write out CSR as stored
 //! \param[in,out] os Output stream to write to
-//! \param[in] csr CSR matrix to write
 //! \return Updated output stream
 // *****************************************************************************
 {
@@ -196,7 +195,6 @@ CSR::write_structure( std::ostream& os ) const
 // *****************************************************************************
 //  Write out CSR nonzero structure
 //! \param[in,out] os Output stream to write to
-//! \param[in] csr CSR matrix to write
 //! \return Updated output stream
 // *****************************************************************************
 {
@@ -222,7 +220,6 @@ CSR::write_matrix( std::ostream& os ) const
 // *****************************************************************************
 //  Write out CSR as a real matrix
 //! \param[in,out] os Output stream to write to
-//! \param[in] csr CSR matrix to write
 //! \return Updated output stream
 // *****************************************************************************
 {
@@ -244,7 +241,6 @@ CSR::write_matlab( std::ostream& os ) const
 // *****************************************************************************
 //  Write out CSR in Matlab/Octave format
 //! \param[in,out] os Output stream to write to
-//! \param[in] csr CSR matrix to write
 //! \return Updated output stream
 // *****************************************************************************
 {

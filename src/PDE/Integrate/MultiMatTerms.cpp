@@ -561,11 +561,12 @@ void evaluRiemann( ncomp_t ncomp,
 //! \param[in] e_right Index for the right element
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] fn Face/Surface normal
+//! \param[in] gp Gauss points coordinates
 //! \param[in] fl Surface flux
 //! \param[in] state Vector of state variables for left and right side
 //! \param[in,out] vriem Vector of the riemann velocity
-//! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data is
-//                 available
+//! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data
+//!   is available
 // *****************************************************************************
 {
   using inciter::densityIdx;

@@ -113,7 +113,7 @@ class FluxCorrector {
       const std::vector< std::size_t >& inpoel,
       const std::vector< tk::real >& vol,
       const std::unordered_map< std::size_t,
-              std::vector< std::pair< bool, tk::real > > >& bc,
+              std::vector< std::pair< bool, tk::real > > >& bcdir,
       const std::unordered_map< int,
         std::unordered_set< std::size_t > >& symbcnodemap,
       const std::unordered_map< int,

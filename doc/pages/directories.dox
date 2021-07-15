@@ -268,7 +268,7 @@ systems of PDEs, discretized with discontinuous Galerkin methods. The code is
 reused between various different PDE types, such as inciter::dg::Transport and
 inciter::dg::CompFlow.
 
-@dir src/PDE/Integrate/Riemann
+@dir src/PDE/Riemann
 @brief Approximate Riemann solvers
 
 @details This directory contains various approximate Riemann solver

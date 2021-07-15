@@ -246,6 +246,8 @@ namespace AMR {
              * @param nodes A list of the nodes which form th etet
              * @param refinement_case The refinement case which caused this tet
              * to be generated
+             * @param parent_id The ID of the parent tetrahedron
+             * @param has_parent True if element has a parent
             */
             void add_to_master(size_t id, const tet_t& nodes,
               Refinement_Case refinement_case, size_t parent_id=0,

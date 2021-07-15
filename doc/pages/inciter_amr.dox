@@ -73,7 +73,7 @@ This function calls into `refiner` to actually do the derefinement based on the 
 These functions are mostly logical, and straightforward, and focus on keeping the various data stores up to date. It is also responsible for making sure the operations (such as refining 1:4) are performed on the correct tet faces
 
 @section debugging Debugging
-Uncomment the `#define ENABLE_TRACE 1` line in `Inciter/AMR/Loggers.hpp` to get the `trace_out` screen-output from the AMR-library.
+Uncomment the @code #define ENABLE_TRACE 1 @endcode line in `Inciter/AMR/Loggers.hpp` to get the `trace_out` screen-output from the AMR-library.
 
 For further details about the AMR algorithm, see @ref papers_inciter "Inciter papers" (**[Parallel adaptive refinement for unsteady flow calculations on 3D unstructured grids](http://dx.doi.org/10.1002/fld.674)**).
 

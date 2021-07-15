@@ -90,6 +90,7 @@ walker::VelocityCoeffStationary::VelocityCoeffStationary(
 // Constructor: initialize coefficients
 //! \param[in] C0_ Value of C0 parameter in the Langevin model
 //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
+//! \param[in,out] dU Prescribed mean velocity gradient
 //! \details Prescribe no shear. The value of C0 is insignificant for a forced
 //!   stationary velocity PDF because drift and diffusion are in balance, so
 //!   that dk/dt = 0.
@@ -149,6 +150,7 @@ walker::VelocityCoeffHydroTimeScale::VelocityCoeffHydroTimeScale(
 // Constructor: initialize coefficients
 //! \param[in] C0_ Value of C0 parameter in the Langevin model
 //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
+//! \param[in,out] dU Prescribed mean velocity gradient
 // *****************************************************************************
 {
   C0 = C0_;

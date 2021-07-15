@@ -40,7 +40,7 @@ meshvel( ctr::MeshVelocityType m,
 //  Assign mesh velocity based on user config
 //! \param[in] m Mesh velocity type
 //! \param[in] coord Mesh node coordinates
-//! \param[in] vel Fluid velocity
+//! \param[in] v Fluid velocity
 //! \param[in,out] w Mesh velocity assigned
 // *****************************************************************************
 {
@@ -68,6 +68,8 @@ vortscale( const std::array< std::vector< tk::real >, 3 >& coord,
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] vol Nodal volumes
 //! \param[in] vel Fluid velocity in mesh points
+//! \param[in] c1 First coefficient in vorticity scaling function
+//! \param[in] c2 Second coefficient in vorticity scaling function
 //! \param[in] w Mesh velocity to scale
 //! \see J. Waltz, N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger,
 //!   J.G. Wohlbier, A three-dimensional finite element arbitrary

@@ -39,14 +39,4 @@ target="_blank">Cppcheck static analysis report (Debug)</a>
 - <a href="Release/cppcheck/index.html"
 target="_blank">Cppcheck static analysis report (Release)</a>
 
-@section coverage_codecov CodeCov
-
-- <a href="https://codecov.io/gh/quinoacomputing/quinoa"
-target="_blank">Coverage overview</a>
-
-@section coverage_sonarqube SonarQube
-
-- <a href="https://sonarqube.com/organizations/quinoacomputing"
-target="_blank">Branch quality overview</a>
-
 */

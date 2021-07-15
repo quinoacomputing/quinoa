@@ -20,29 +20,30 @@
 #include "Quadrature.hpp"
 #include "Reconstruction.hpp"
 
+namespace tk {
+
 void
-tk::surfInt( ncomp_t system,
-             std::size_t nmat,
-             ncomp_t offset,
-             real t,
-             const std::size_t ndof,
-             const std::size_t rdof,
-             const std::vector< std::size_t >& inpoel,
-             const UnsMesh::Coords& coord,
-             const inciter::FaceData& fd,
-             const Fields& geoFace,
-             const Fields& geoElem,
-             const RiemannFluxFn& flux,
-             const VelFn& vel,
-             const Fields& U,
-             const Fields& P,
-             [[maybe_unused]] const Fields& VolFracMax,
-             const std::vector< std::size_t >& ndofel,
-             Fields& R,
-             std::vector< std::vector< tk::real > >& vriem,
-             std::vector< std::vector< tk::real > >& riemannLoc,
-             std::vector< std::vector< tk::real > >& riemannDeriv,
-             int intsharp )
+surfInt( ncomp_t system,
+         std::size_t nmat,
+         ncomp_t offset,
+         real t,
+         const std::size_t ndof,
+         const std::size_t rdof,
+         const std::vector< std::size_t >& inpoel,
+         const UnsMesh::Coords& coord,
+         const inciter::FaceData& fd,
+         const Fields& geoFace,
+         const Fields& geoElem,
+         const RiemannFluxFn& flux,
+         const VelFn& vel,
+         const Fields& U,
+         const Fields& P,
+         const std::vector< std::size_t >& ndofel,
+         Fields& R,
+         std::vector< std::vector< tk::real > >& vriem,
+         std::vector< std::vector< tk::real > >& riemannLoc,
+         std::vector< std::vector< tk::real > >& riemannDeriv,
+         int intsharp )
 // *****************************************************************************
 //  Compute internal surface flux integrals
 //! \param[in] system Equation system index
@@ -55,6 +56,7 @@ tk::surfInt( ncomp_t system,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
 //! \param[in] flux Riemann flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
@@ -221,21 +223,21 @@ tk::surfInt( ncomp_t system,
 }
 
 void
-tk::update_rhs_fa ( ncomp_t ncomp,
-                    std::size_t nmat,
-                    ncomp_t offset,
-                    const std::size_t ndof,
-                    const std::size_t ndof_l,
-                    const std::size_t ndof_r,
-                    const tk::real wt,
-                    const std::array< tk::real, 3 >& fn,
-                    const std::size_t el,
-                    const std::size_t er,
-                    const std::vector< tk::real >& fl,
-                    const std::vector< tk::real >& B_l,
-                    const std::vector< tk::real >& B_r,
-                    Fields& R,
-                    std::vector< std::vector< tk::real > >& riemannDeriv )
+update_rhs_fa( ncomp_t ncomp,
+               std::size_t nmat,
+               ncomp_t offset,
+               const std::size_t ndof,
+               const std::size_t ndof_l,
+               const std::size_t ndof_r,
+               const tk::real wt,
+               const std::array< tk::real, 3 >& fn,
+               const std::size_t el,
+               const std::size_t er,
+               const std::vector< tk::real >& fl,
+               const std::vector< tk::real >& B_l,
+               const std::vector< tk::real >& B_r,
+               Fields& R,
+               std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //  Update the rhs by adding the surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -321,3 +323,5 @@ tk::update_rhs_fa ( ncomp_t ncomp,
     riemannDeriv[3*nmat][er] -= wt * fl[ncomp+nmat];
   }
 }
+
+} // tk::

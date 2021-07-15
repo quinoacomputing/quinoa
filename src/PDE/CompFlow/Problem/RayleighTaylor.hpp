@@ -42,12 +42,12 @@ class CompFlowProblemRayleighTaylor {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+    initialize( ncomp_t system, ncomp_t, tk::real x, tk::real y,
                 tk::real z, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+    analyticSolution( ncomp_t system, ncomp_t, tk::real x, tk::real y,
                       tk::real z, tk::real t );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution

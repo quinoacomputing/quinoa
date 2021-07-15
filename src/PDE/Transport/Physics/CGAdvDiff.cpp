@@ -44,9 +44,6 @@ TransportPhysicsAdvDiff::diffusionRhs(
 //! \param[in] ncomp Number of components in this PDE
 //! \param[in] deltat Size of time step
 //! \param[in] J Element Jacobi determinant
-//! \param[in] gid Local->global node id map
-//! \param[in] bid Local chare-boundary node ids (value) associated to global
-//!   node ids (key)
 //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
 //! \param[in] N Element node indices
 //! \param[in] u Solution at element nodes at recent time step
@@ -71,13 +68,13 @@ TransportPhysicsAdvDiff::diffusionRhs(
 
 tk::real
 TransportPhysicsAdvDiff::diffusion_dt(
-  ncomp_t e,
+  ncomp_t system,
   ncomp_t ncomp,
   tk::real L,
   const std::vector< std::array< tk::real, 4 > >& ) const
 // *****************************************************************************
 //! Compute the minimum time step size based on the diffusion
-//! \param[in] e Equation system index, i.e., which transport equation
+//! \param[in] system Equation system index, i.e., which transport equation
 //!   system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of components in this PDE
 //! \param[in] L Characteristic length scale
@@ -85,7 +82,8 @@ TransportPhysicsAdvDiff::diffusion_dt(
 // *****************************************************************************
 {
   // diffusivities for all components
-  const auto& df = g_inputdeck.get< tag::param, eq, tag::diffusivity >()[e];
+  const auto& df =
+    g_inputdeck.get< tag::param, eq, tag::diffusivity >()[ system ];
 
   // compute the minimum diffusion time step size across the four nodes
   tk::real mindt = std::numeric_limits< tk::real >::max();

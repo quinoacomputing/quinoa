@@ -197,6 +197,7 @@ class Transport {
     //! \param[in] lid Global->local node ids
     //! \param[in] dfn Dual-face normals
     //! \param[in] psup Points surrounding points
+    //! \param[in] esup Elements surrounding points
     //! \param[in] symbctri Vector with 1 at symmetry BC nodes
     //! \param[in] vol Nodal volumes
     //! \param[in] edgeid Local node id pair -> edge id map
@@ -584,6 +585,7 @@ class Transport {
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] vol Nodal volumes
+    //! \param[in] esup Elements surrounding points
     //! \param[in] U Solution vector at recent time step
     //! \param[in] G Nodal gradients of primitive variables in chare-boundary nodes
     //! \return Gradients of primitive variables in all mesh points
@@ -718,6 +720,7 @@ class Transport {
 
     //! Compute domain-edge integral for ALECG
     //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
     //! \param[in] edgeid Local node id pair -> edge id map
     //! \param[in] psup Points surrounding points
     //! \param[in] dfn Dual-face normals

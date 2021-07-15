@@ -126,7 +126,7 @@ end
 ./charmrun +p16 Main/inciter -c mmimpact4mat.q -i gasimpacthalf_ss6_struc24k.exo -v
 @endcode
 
-@section multimat_gi4m_run Setup screen output
+@section multimat_gi4m_screen Setup screen output
 \verbatim
                                    < FACTORY >                                  
                                    ---- o ----                            

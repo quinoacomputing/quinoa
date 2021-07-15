@@ -34,7 +34,7 @@ class TransportPhysicsAdvDiff {
   public:
     //! Add diffusion contribution to rhs
     void
-    diffusionRhs( ncomp_t e,
+    diffusionRhs( ncomp_t system,
                   ncomp_t ncomp,
                   tk::real deltat,
                   tk::real J,
@@ -46,7 +46,7 @@ class TransportPhysicsAdvDiff {
 
     //! Compute the minimum time step size based on the diffusion
     tk::real
-    diffusion_dt( ncomp_t e,
+    diffusion_dt( ncomp_t system,
                   ncomp_t ncomp,
                   tk::real L,
                   const std::vector< std::array< tk::real, 4 > >& ) const;

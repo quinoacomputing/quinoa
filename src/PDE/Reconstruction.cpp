@@ -29,12 +29,13 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 }
 
+namespace tk {
+
 void
-tk::lhsLeastSq_P0P1(
-  const inciter::FaceData& fd,
-  const Fields& geoElem,
-  const Fields& geoFace,
-  std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls )
+lhsLeastSq_P0P1( const inciter::FaceData& fd,
+                 const Fields& geoElem,
+                 const Fields& geoFace,
+                 std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls )
 // *****************************************************************************
 //  Compute lhs matrix for the least-squares reconstruction
 //! \param[in] fd Face connectivity and boundary conditions object
@@ -112,14 +113,13 @@ tk::lhsLeastSq_P0P1(
 }
 
 void
-tk::intLeastSq_P0P1(
-  ncomp_t offset,
-  const std::size_t rdof,
-  const inciter::FaceData& fd,
-  const Fields& geoElem,
-  const Fields& W,
-  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-  const std::array< std::size_t, 2 >& varRange )
+intLeastSq_P0P1( ncomp_t offset,
+                 const std::size_t rdof,
+                 const inciter::FaceData& fd,
+                 const Fields& geoElem,
+                 const Fields& W,
+                 std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
+                 const std::array< std::size_t, 2 >& varRange )
 // *****************************************************************************
 //  \brief Compute internal surface contributions to rhs vector of the
 //    least-squares reconstruction
@@ -175,7 +175,7 @@ tk::intLeastSq_P0P1(
 }
 
 void
-tk::bndLeastSqConservedVar_P0P1(
+bndLeastSqConservedVar_P0P1(
   ncomp_t system,
   ncomp_t ncomp,
   ncomp_t offset,
@@ -269,7 +269,7 @@ tk::bndLeastSqConservedVar_P0P1(
 }
 
 void
-tk::solveLeastSq_P0P1(
+solveLeastSq_P0P1(
   ncomp_t offset,
   const std::size_t rdof,
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
@@ -309,7 +309,7 @@ tk::solveLeastSq_P0P1(
 }
 
 void
-tk::recoLeastSqExtStencil(
+recoLeastSqExtStencil(
   std::size_t rdof,
   std::size_t offset,
   std::size_t e,
@@ -328,7 +328,6 @@ tk::recoLeastSqExtStencil(
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] geoElem Element geometry array
 //! \param[in,out] W Solution vector to be reconstructed at recent time step
-//! \param[in] geoElem Element geometry array
 //! \param[in] varRange Range of indices in W, that need to be reconstructed
 //! \details A second-order (piecewise linear) solution polynomial is obtained
 //!   from the first-order (piecewise constant) FV solutions by using a
@@ -394,13 +393,13 @@ tk::recoLeastSqExtStencil(
 }
 
 void
-tk::transform_P0P1( ncomp_t offset,
-                    std::size_t rdof,
-                    std::size_t nelem,
-                    const std::vector< std::size_t >& inpoel,
-                    const UnsMesh::Coords& coord,
-                    Fields& W,
-                    const std::array< std::size_t, 2 >& varRange )
+transform_P0P1( ncomp_t offset,
+                std::size_t rdof,
+                std::size_t nelem,
+                const std::vector< std::size_t >& inpoel,
+                const UnsMesh::Coords& coord,
+                Fields& W,
+                const std::array< std::size_t, 2 >& varRange )
 // *****************************************************************************
 //  Transform the reconstructed P1-derivatives to the Dubiner dofs
 //! \param[in] offset Index for equation systems
@@ -457,95 +456,20 @@ tk::transform_P0P1( ncomp_t offset,
 }
 
 void
-tk::findMaxVolfrac( std::size_t offset,
-  std::size_t rdof,
-  std::size_t nmat,
-  std::size_t nelem,
-  const std::vector< int >& esuel,
-  [[maybe_unused]] const std::map< std::size_t, std::vector< std::size_t > >& esup,
-  [[maybe_unused]] const std::vector< std::size_t >& inpoel,
-  const Fields& U,
-  Fields& VolFracMax )
-// *****************************************************************************
-//  Find maximum volume fractions in the neighborhood of each cell
-//! \param[in] offset Index for equation systems
-//! \param[in] rdof Total number of reconstructed dofs
-//! \param[in] nmat Total number of materials
-//! \param[in] nelem Total number of elements
-//! \param[in] esuel Elements surrounding elements
-//! \param[in] esup Elements surrounding points
-//! \param[in] inpoel Element-node connectivity
-//! \param[in] U Solution vector
-//! \param[in,out] VolFracMax Vector containing min/max volume fractions for
-//!   each material
-//! \details This function determines the minimum and maximum volume fractions
-//!   for each material in the neighborhood of a cell. The neighborhood can be
-//!   the face-neighbors or node-neighbors.
-// *****************************************************************************
-{
-  using inciter::volfracDofIdx;
-
-  VolFracMax.fill(0.0);
-  for (std::size_t e=0; e<nelem; ++e) {
-    for (std::size_t k=0; k<nmat; ++k) {
-      auto mark = 2*k;
-      VolFracMax(e, mark, 0) = 1.0;
-      VolFracMax(e, mark+1, 0) = 0.0;
-    }
-
-    //// find the maximum volume fraction among node-neighbors of cell e
-    //for (std::size_t lp=0; lp<4; ++lp) {
-    //  auto p = inpoel[4*e+lp];
-    //  const auto& pesup = cref_find(esup, p);
-
-    //  // loop over all the elements surrounding this node p
-    //  for (auto er : pesup) {
-    //    if (er != e) {
-    //      for (std::size_t k=0; k<nmat; ++k) {
-    //        auto mark = 2*k;
-    //        VolFracMax(e, mark, 0) = std::min(VolFracMax(e, k, 0),
-    //          U(er, volfracDofIdx(nmat,k,rdof,0), offset));
-    //        VolFracMax(e, mark+1, 0) = std::max(VolFracMax(e, k, 0),
-    //          U(er, volfracDofIdx(nmat,k,rdof,0), offset));
-    //      }
-    //    }
-    //  }
-    //}
-
-    // find the maximum volume fraction among face-neighbors of cell e
-    for (std::size_t lf=0; lf<4; ++lf) {
-      auto er = esuel[4*e+lf];
-
-      if (er > -1) {
-        auto eR = static_cast< std::size_t >(er);
-
-        for (std::size_t k=0; k<nmat; ++k) {
-          auto mark = 2*k;
-          VolFracMax(e, mark, 0) = std::min(VolFracMax(e, k, 0),
-            U(eR, volfracDofIdx(nmat,k,rdof,0), offset));
-          VolFracMax(e, mark+1, 0) = std::max(VolFracMax(e, k, 0),
-            U(eR, volfracDofIdx(nmat,k,rdof,0), offset));
-        }
-      }
-    }
-  }
-}
-
-void
-tk::THINCReco( std::size_t system,
-  std::size_t offset,
-  std::size_t rdof,
-  std::size_t nmat,
-  std::size_t e,
-  const std::vector< std::size_t >& inpoel,
-  const UnsMesh::Coords& coord,
-  const Fields& geoElem,
-  const std::array< real, 3 >& ref_xp,
-  const Fields& U,
-  const Fields& P,
-  [[maybe_unused]] const std::vector< real >& vfmin,
-  [[maybe_unused]] const std::vector< real >& vfmax,
-  std::vector< real >& state )
+THINCReco( std::size_t system,
+           std::size_t offset,
+           std::size_t rdof,
+           std::size_t nmat,
+           std::size_t e,
+           const std::vector< std::size_t >& inpoel,
+           const UnsMesh::Coords& coord,
+           const Fields& geoElem,
+           const std::array< real, 3 >& ref_xp,
+           const Fields& U,
+           const Fields& P,
+           [[maybe_unused]] const std::vector< real >& vfmin,
+           [[maybe_unused]] const std::vector< real >& vfmax,
+           std::vector< real >& state )
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for multi-material flows
 //! \param[in] system Equation system index
@@ -646,26 +570,25 @@ tk::THINCReco( std::size_t system,
 }
 
 void
-tk::THINCRecoTransport( std::size_t system,
-  std::size_t offset,
-  std::size_t rdof,
-  std::size_t,
-  std::size_t e,
-  const std::vector< std::size_t >& inpoel,
-  const UnsMesh::Coords& coord,
-  const Fields& geoElem,
-  const std::array< real, 3 >& ref_xp,
-  const Fields& U,
-  const Fields&,
-  [[maybe_unused]] const std::vector< real >& vfmin,
-  [[maybe_unused]] const std::vector< real >& vfmax,
-  std::vector< real >& state )
+THINCRecoTransport( std::size_t system,
+                    std::size_t offset,
+                    std::size_t rdof,
+                    std::size_t,
+                    std::size_t e,
+                    const std::vector< std::size_t >& inpoel,
+                    const UnsMesh::Coords& coord,
+                    const Fields& geoElem,
+                    const std::array< real, 3 >& ref_xp,
+                    const Fields& U,
+                    const Fields&,
+                    [[maybe_unused]] const std::vector< real >& vfmin,
+                    [[maybe_unused]] const std::vector< real >& vfmax,
+                    std::vector< real >& state )
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for transport
 //! \param[in] system Equation system index
 //! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
-//! \param[in] nmat Total number of materials
 //! \param[in] e Element for which interface reconstruction is being calculated
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
@@ -711,18 +634,18 @@ tk::THINCRecoTransport( std::size_t system,
 }
 
 void
-tk::THINCFunction( std::size_t rdof,
-  std::size_t nmat,
-  std::size_t e,
-  const std::vector< std::size_t >& inpoel,
-  const UnsMesh::Coords& coord,
-  const std::array< real, 3 >& ref_xp,
-  real vol,
-  real bparam,
-  const std::vector< real >& alSol,
-  bool intInd,
-  const std::vector< std::size_t >& matInt,
-  std::vector< real >& alReco )
+THINCFunction( std::size_t rdof,
+               std::size_t nmat,
+               std::size_t e,
+               const std::vector< std::size_t >& inpoel,
+               const UnsMesh::Coords& coord,
+               const std::array< real, 3 >& ref_xp,
+               real vol,
+               real bparam,
+               const std::vector< real >& alSol,
+               bool intInd,
+               const std::vector< std::size_t >& matInt,
+               std::vector< real >& alReco )
 // *****************************************************************************
 //  Multi-Medium THINC reconstruction function for volume fractions
 //! \param[in] rdof Total number of reconstructed dofs
@@ -731,7 +654,7 @@ tk::THINCFunction( std::size_t rdof,
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] ref_xp Quadrature point in reference space
-//! \param[in] vel Element volume
+//! \param[in] vol Element volume
 //! \param[in] bparam User specified Beta for THINC, from the input file
 //! \param[in] alSol Volume fraction solution vector for element e
 //! \param[in] intInd Interface indicator, true if e is interface element
@@ -880,22 +803,22 @@ tk::THINCFunction( std::size_t rdof,
 }
 
 std::vector< tk::real >
-tk::evalPolynomialSol(std::size_t system,
-  std::size_t offset,
-  int intsharp,
-  std::size_t ncomp,
-  std::size_t nprim,
-  std::size_t rdof,
-  std::size_t nmat,
-  std::size_t e,
-  std::size_t dof_e,
-  const std::vector< std::size_t >& inpoel,
-  const UnsMesh::Coords& coord,
-  const Fields& geoElem,
-  const std::array< real, 3 >& ref_gp,
-  const std::vector< real >& B,
-  const Fields& U,
-  const Fields& P)
+evalPolynomialSol( std::size_t system,
+                   std::size_t offset,
+                   int intsharp,
+                   std::size_t ncomp,
+                   std::size_t nprim,
+                   std::size_t rdof,
+                   std::size_t nmat,
+                   std::size_t e,
+                   std::size_t dof_e,
+                   const std::vector< std::size_t >& inpoel,
+                   const UnsMesh::Coords& coord,
+                   const Fields& geoElem,
+                   const std::array< real, 3 >& ref_gp,
+                   const std::vector< real >& B,
+                   const Fields& U,
+                   const Fields& P )
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] system Equation system index
@@ -964,13 +887,13 @@ tk::evalPolynomialSol(std::size_t system,
 }
 
 void
-tk::safeReco( std::size_t offset,
-              std::size_t rdof,
-              std::size_t nmat,
-              std::size_t el,
-              int er,
-              const Fields& U,
-              std::array< std::vector< real >, 2 >& state )
+safeReco( std::size_t offset,
+          std::size_t rdof,
+          std::size_t nmat,
+          std::size_t el,
+          int er,
+          const Fields& U,
+          std::array< std::vector< real >, 2 >& state )
 // *****************************************************************************
 //  Compute safe reconstructions near material interfaces
 //! \param[in] offset Index for equation systems
@@ -1036,3 +959,5 @@ tk::safeReco( std::size_t offset,
     safeLimit(densityIdx(nmat,k), ul, ur);
   }
 }
+
+} // tk::

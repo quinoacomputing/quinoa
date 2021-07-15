@@ -41,7 +41,7 @@ class CompFlowProblemGaussHump {
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
     analyticSolution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
-                      tk::real z, tk::real t );
+                      tk::real, tk::real t );
 
     //! Compute and return source term for manufactured solution
     //! \param[in,out] r Density source
