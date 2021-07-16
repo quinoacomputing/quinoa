@@ -446,15 +446,9 @@ tk::DubinerToTaylor( ncomp_t ncomp,
       {  6.0,  2.0, 12.0,  0.0,  0.0,  0.0 },
       {  2.0,  6.0,  6.0,  8.0, 18.0,  0.0 } };
 
-    // Matrix to store the second order derivatives of basis functions in
-    // physical domain
-    std::array< std::array< tk::real, 6 >, 6 > d2Bdx2;
-    d2Bdx2.fill({0});
-
     // Transform matrix to convert the second order derivatives of basis
     // function in reference domain to the one in physical domain
-    std::array< std::array< tk::real, 6 >, 6 > d2xdxi2;
-    d2xdxi2.fill({0});
+    tk::real d2xdxi2[6][6];
 
     d2xdxi2[0][0] = jacInv[0][0] * jacInv[0][0];
     d2xdxi2[0][1] = jacInv[1][0] * jacInv[1][0];
@@ -498,8 +492,12 @@ tk::DubinerToTaylor( ncomp_t ncomp,
     d2xdxi2[5][4] = jacInv[0][1] * jacInv[2][2] + jacInv[2][1] * jacInv[0][2];
     d2xdxi2[5][5] = jacInv[1][1] * jacInv[2][2] + jacInv[2][1] * jacInv[1][2];
 
+    // Matrix to store the second order derivatives of basis functions in
+    // physical domain
+    tk::real d2Bdx2[6][6];
     for(std::size_t ibasis = 0; ibasis < 6; ibasis++) {
       for(std::size_t idir = 0; idir < 6; idir++) {
+        d2Bdx2[idir][ibasis] = 0;
         for(std::size_t k = 0; k < 6; k++)
           d2Bdx2[idir][ibasis] += d2xdxi2[idir][k] * d2Bdxi2[k][ibasis];
       }
