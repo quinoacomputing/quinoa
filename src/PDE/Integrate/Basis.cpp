@@ -437,7 +437,9 @@ tk::TransformDubinerToTaylor(
   // where d2B_i/dx2 = d( dB_i/dxi * dxi/dx ) / dxi * dxi/dx
   if(ndof > 4)
   {
-    tk::real dB2dxi2[6][6] =
+    // Matrix to store the second order derivatives of basis functions in
+    // reference domain
+    tk::real d2Bdxi2[6][6] =
     { { 12.0,  0.0,  0.0,  0.0,  0.0,  0.0 },
       {  2.0, 10.0,  0.0, 20.0,  0.0,  0.0 },
       {  2.0,  2.0, 12.0,  2.0, 12.0, 30.0 },
@@ -445,51 +447,63 @@ tk::TransformDubinerToTaylor(
       {  6.0,  2.0, 12.0,  0.0,  0.0,  0.0 },
       {  2.0,  6.0,  6.0,  8.0, 18.0,  0.0 } };
 
+    // Matrix to store the second order derivatives of basis functions in
+    // physical domain
     std::array< std::array< tk::real, 6 >, 6 > d2Bdx2;
     d2Bdx2.fill({0});
-    for(std::size_t ibasis = 0; ibasis < 6; ibasis++)
-    {
-      for(std::size_t idir = 0; idir < 3; idir++)
-        d2Bdx2[idir][ibasis] +=
-            dB2dxi2[0][ibasis] * jacInv[0][idir] * jacInv[0][idir]
-          + dB2dxi2[1][ibasis] * jacInv[1][idir] * jacInv[1][idir]
-          + dB2dxi2[2][ibasis] * jacInv[2][idir] * jacInv[2][idir]
-          + 2.0 *( dB2dxi2[3][ibasis] * jacInv[0][idir] * jacInv[1][idir]
-                 + dB2dxi2[4][ibasis] * jacInv[0][idir] * jacInv[2][idir]
-                 + dB2dxi2[5][ibasis] * jacInv[1][idir] * jacInv[2][idir] );
 
-      d2Bdx2[3][ibasis] +=
-          dB2dxi2[0][ibasis] * jacInv[0][0] * jacInv[0][1]
-        + dB2dxi2[1][ibasis] * jacInv[1][0] * jacInv[1][1]
-        + dB2dxi2[2][ibasis] * jacInv[2][0] * jacInv[2][1]
-        + dB2dxi2[3][ibasis]
-        * (jacInv[0][0] * jacInv[1][1] + jacInv[1][0] * jacInv[0][1])
-        + dB2dxi2[4][ibasis]
-        * (jacInv[0][0] * jacInv[2][1] + jacInv[2][0] * jacInv[0][1])
-        + dB2dxi2[5][ibasis]
-        * (jacInv[1][0] * jacInv[2][1] + jacInv[2][0] * jacInv[1][1]);
+    // Transform matrix to convert the second order derivatives of basis
+    // function in reference domain to the one in physical domain
+    std::array< std::array< tk::real, 6 >, 6 > d2xdxi2;
+    d2xdxi2.fill({0});
 
-      d2Bdx2[4][ibasis] +=
-          dB2dxi2[0][ibasis] * jacInv[0][0] * jacInv[0][2]
-        + dB2dxi2[1][ibasis] * jacInv[1][0] * jacInv[1][2]
-        + dB2dxi2[2][ibasis] * jacInv[2][0] * jacInv[2][2]
-        + dB2dxi2[3][ibasis]
-        * (jacInv[0][0] * jacInv[1][2] + jacInv[1][0] * jacInv[0][2])
-        + dB2dxi2[4][ibasis]
-        * (jacInv[0][0] * jacInv[2][2] + jacInv[2][0] * jacInv[0][2])
-        + dB2dxi2[5][ibasis]
-        * (jacInv[1][0] * jacInv[2][2] + jacInv[2][0] * jacInv[1][2]);
+    d2xdxi2[0][0] = jacInv[0][0] * jacInv[0][0];
+    d2xdxi2[0][1] = jacInv[1][0] * jacInv[1][0];
+    d2xdxi2[0][2] = jacInv[2][0] * jacInv[2][0];
+    d2xdxi2[0][3] = jacInv[0][0] * jacInv[1][0] * 2.0;
+    d2xdxi2[0][4] = jacInv[0][0] * jacInv[2][0] * 2.0;
+    d2xdxi2[0][5] = jacInv[1][0] * jacInv[2][0] * 2.0;
 
-      d2Bdx2[5][ibasis] +=
-          dB2dxi2[0][ibasis] * jacInv[0][1] * jacInv[0][2]
-        + dB2dxi2[1][ibasis] * jacInv[1][1] * jacInv[1][2]
-        + dB2dxi2[2][ibasis] * jacInv[2][1] * jacInv[2][2]
-        + dB2dxi2[3][ibasis]
-        * (jacInv[0][1] * jacInv[1][2] + jacInv[1][1] * jacInv[0][2])
-        + dB2dxi2[4][ibasis]
-        * (jacInv[0][1] * jacInv[2][2] + jacInv[2][1] * jacInv[0][2])
-        + dB2dxi2[5][ibasis]
-        * (jacInv[1][1] * jacInv[2][2] + jacInv[2][1] * jacInv[1][2]);
+    d2xdxi2[1][0] = jacInv[0][1] * jacInv[0][1];
+    d2xdxi2[1][1] = jacInv[1][1] * jacInv[1][1];
+    d2xdxi2[1][2] = jacInv[2][1] * jacInv[2][1];
+    d2xdxi2[1][3] = jacInv[0][1] * jacInv[1][1] * 2.0;
+    d2xdxi2[1][4] = jacInv[0][1] * jacInv[2][1] * 2.0;
+    d2xdxi2[1][5] = jacInv[1][1] * jacInv[2][1] * 2.0;
+
+    d2xdxi2[2][0] = jacInv[0][2] * jacInv[0][2];
+    d2xdxi2[2][1] = jacInv[1][2] * jacInv[1][2];
+    d2xdxi2[2][2] = jacInv[2][2] * jacInv[2][2];
+    d2xdxi2[2][3] = jacInv[0][2] * jacInv[1][2] * 2.0;
+    d2xdxi2[2][4] = jacInv[0][2] * jacInv[2][2] * 2.0;
+    d2xdxi2[2][5] = jacInv[1][2] * jacInv[2][2] * 2.0;
+
+    d2xdxi2[3][0] = jacInv[0][0] * jacInv[0][1];
+    d2xdxi2[3][1] = jacInv[1][0] * jacInv[1][1];
+    d2xdxi2[3][2] = jacInv[2][0] * jacInv[2][1];
+    d2xdxi2[3][3] = jacInv[0][0] * jacInv[1][1] + jacInv[1][0] * jacInv[0][1];
+    d2xdxi2[3][4] = jacInv[0][0] * jacInv[2][1] + jacInv[2][0] * jacInv[0][1];
+    d2xdxi2[3][5] = jacInv[1][0] * jacInv[2][1] + jacInv[2][0] * jacInv[1][1];
+
+    d2xdxi2[4][0] = jacInv[0][0] * jacInv[0][2];
+    d2xdxi2[4][1] = jacInv[1][0] * jacInv[1][2];
+    d2xdxi2[4][2] = jacInv[2][0] * jacInv[2][2];
+    d2xdxi2[4][3] = jacInv[0][0] * jacInv[1][2] + jacInv[1][0] * jacInv[0][2];
+    d2xdxi2[4][4] = jacInv[0][0] * jacInv[2][2] + jacInv[2][0] * jacInv[0][2];
+    d2xdxi2[4][5] = jacInv[1][0] * jacInv[2][2] + jacInv[2][0] * jacInv[1][2];
+
+    d2xdxi2[5][0] = jacInv[0][1] * jacInv[0][2];
+    d2xdxi2[5][1] = jacInv[1][1] * jacInv[1][2];
+    d2xdxi2[5][2] = jacInv[2][1] * jacInv[2][2];
+    d2xdxi2[5][3] = jacInv[0][1] * jacInv[1][2] + jacInv[1][1] * jacInv[0][2];
+    d2xdxi2[5][4] = jacInv[0][1] * jacInv[2][2] + jacInv[2][1] * jacInv[0][2];
+    d2xdxi2[5][5] = jacInv[1][1] * jacInv[2][2] + jacInv[2][1] * jacInv[1][2];
+
+    for(std::size_t ibasis = 0; ibasis < 6; ibasis++) {
+      for(std::size_t idir = 0; idir < 6; idir++) {
+        for(std::size_t k = 0; k < 6; k++)
+          d2Bdx2[idir][ibasis] += d2xdxi2[idir][k] * d2Bdxi2[k][ibasis];
+      }
     }
 
     for(ncomp_t icomp = 0; icomp < ncomp; icomp++)
