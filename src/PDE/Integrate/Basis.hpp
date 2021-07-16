@@ -76,25 +76,23 @@ eval_state ( ncomp_t ncomp,
 
 //! Transform the solution with Dubiner basis to the solution with Taylor basis
 std::vector< std::vector< tk::real > >
-TransformDubinerToTaylor(
-  ncomp_t ncomp,
-  ncomp_t offset,
-  const std::size_t e,
-  const std::size_t ndof,
-  const tk::Fields& U,
-  const std::vector< std::size_t >& inpoel,
-  const tk::UnsMesh::Coords& coord );
+DubinerToTaylor( ncomp_t ncomp,
+                 ncomp_t offset,
+                 const std::size_t e,
+                 const std::size_t ndof,
+                 const tk::Fields& U,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::UnsMesh::Coords& coord );
 
 //! Convert the solution with Taylor basis to the solution with Dubiner basis
-std::vector< std::vector< tk::real > >
-TransformTaylorToDubiner(
-  ncomp_t ncomp,
-  std::size_t e,
-  std::size_t ndof,
-  const std::vector< std::size_t >& inpoel,
-  const tk::UnsMesh::Coords& coord,
-  const tk::Fields& geoElem,
-  const std::vector< std::vector< tk::real > >& unk );
+void
+TaylorToDubiner( ncomp_t ncomp,
+                 std::size_t e,
+                 std::size_t ndof,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::UnsMesh::Coords& coord,
+                 const tk::Fields& geoElem,
+                 std::vector< std::vector< tk::real > >& unk );
 
 //! Evaluate the Taylor basis at points
 std::vector< tk::real >

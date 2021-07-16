@@ -536,8 +536,8 @@ VertexBasedCompflow_P2(
       // Transform the solution with Dubiner basis to Taylor basis so that the
       // limiting function could be applied to physical derivatives in a
       // hierarchical manner
-      auto unk = tk::TransformDubinerToTaylor
-        (ncomp, offset, e, dof_el, U, inpoel, coord);
+      auto unk =
+        tk::DubinerToTaylor(ncomp, offset, e, dof_el, U, inpoel, coord);
 
       // The vector of limiting coefficients for P1 and P2 coefficients
       std::vector< tk::real > phic_p1(ncomp, 1.0);
@@ -579,14 +579,13 @@ VertexBasedCompflow_P2(
 
       // Convert the solution with Taylor basis to the solution with Dubiner
       // basis
-      unk = tk::TransformTaylorToDubiner
-        ( ncomp, e, dof_el, inpoel, coord, geoElem, unk );
+      tk::TaylorToDubiner( ncomp, e, dof_el, inpoel, coord, geoElem, unk );
 
       // Store the limited solution in U_lim
       for(std::size_t c=0; c<ncomp; ++c)
       {
         auto mark = c*rdof;
-        for(std::size_t idof = 0; idof < rdof; idof++)
+        for(std::size_t idof = 1; idof < rdof; idof++)
           U_lim(e, mark+idof, offset) = unk[c][idof];
       }
     }

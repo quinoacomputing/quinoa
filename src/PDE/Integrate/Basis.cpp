@@ -363,14 +363,13 @@ tk::eval_state ( ncomp_t ncomp,
 }
 
 std::vector< std::vector< tk::real > >
-tk::TransformDubinerToTaylor(
-  ncomp_t ncomp,
-  ncomp_t offset,
-  const std::size_t e,
-  const std::size_t ndof,
-  const tk::Fields& U,
-  const std::vector< std::size_t >& inpoel,
-  const tk::UnsMesh::Coords& coord )
+tk::DubinerToTaylor( ncomp_t ncomp,
+                     ncomp_t offset,
+                     const std::size_t e,
+                     const std::size_t ndof,
+                     const tk::Fields& U,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::UnsMesh::Coords& coord )
 // *****************************************************************************
 //  Transform the solution with Dubiner basis to the solution with Taylor basis
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -520,15 +519,14 @@ tk::TransformDubinerToTaylor(
   return unk;
 }
 
-std::vector< std::vector< tk::real > >
-tk::TransformTaylorToDubiner(
-  ncomp_t ncomp,
-  std::size_t e,
-  std::size_t ndof,
-  const std::vector< std::size_t >& inpoel,
-  const tk::UnsMesh::Coords& coord,
-  const tk::Fields& geoElem,
-  const std::vector< std::vector< tk::real > >& unk )
+void
+tk::TaylorToDubiner( ncomp_t ncomp,
+                     std::size_t e,
+                     std::size_t ndof,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::UnsMesh::Coords& coord,
+                     const tk::Fields& geoElem,
+                     std::vector< std::vector< tk::real > >& unk )
 // *****************************************************************************
 //  Convert the solution with Taylor basis to the solution with Dubiner basis by
 //    projection method
@@ -537,11 +535,9 @@ tk::TransformTaylorToDubiner(
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] inpoel Element connectivity
 //! \param[in] coord Array of nodal coordinates
-//! \param[in] unk High-order solution vector with Taylor basis
-//! \return High-order solution vector with Dubiner basis
+//! \param[in, out] unk High-order solution vector with Taylor basis
 // *****************************************************************************
 {
-  Assert( ndof > 1, "Mismatch in number of degrees of freedom" );
   Assert( ncomp > 0, "Number of scalar components is incorrect" );
 
   // The diagonal of mass matrix
@@ -551,12 +547,16 @@ tk::TransformTaylorToDubiner(
 
   L[0] = vol;
 
-  L[1] = vol / 10.0;
-  L[2] = vol * 3.0/10.0;
-  L[3] = vol * 3.0/5.0;
+  if(ndof > 1) {
+    Assert( (ndof == 4)||(ndof == 10),
+      "Mismatch in number of degrees of freedom" );
+    L[1] = vol / 10.0;
+    L[2] = vol * 3.0/10.0;
+    L[3] = vol * 3.0/5.0;
+  }
 
-  if(ndof > 4)
-  {
+  if(ndof > 4) {
+    Assert( ndof == 10, "Mismatch in number of degrees of freedom" );
     L[4] = vol / 35.0;
     L[5] = vol / 21.0;
     L[6] = vol / 14.0;
@@ -564,10 +564,6 @@ tk::TransformTaylorToDubiner(
     L[8] = vol * 3.0/14.0;
     L[9] = vol * 3.0/7.0;
   }
-
-  // Vector to store the solution with Dubiner basis
-  std::vector< std::vector< tk::real > >
-    U_Dubiner(ncomp, std::vector<tk::real>(ndof, 0.0));
 
   // Coordinates of the centroid in physical domain
   std::array< tk::real, 3 > x_c{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
@@ -655,9 +651,8 @@ tk::TransformTaylorToDubiner(
   {
     auto mark = c*ndof;
     for(std::size_t idof = 0; idof < ndof; idof++)
-      U_Dubiner[c][idof] = R[mark+idof] / L[idof];
+      unk[c][idof] = R[mark+idof] / L[idof];
   }
-  return U_Dubiner;
 }
 
 std::vector< tk::real >
@@ -673,11 +668,10 @@ tk::eval_TaylorBasis( const std::size_t ndof,
 //! \param[in] coordel Array of nodal coordinates for the tetrahedron
 // *****************************************************************************
 {
-  Assert( ndof > 1, "Mismatch in the number of degrees of freedom" );
-
   std::vector< tk::real > avg( 6, 0.0 );
   if(ndof > 4)
   {
+    Assert( ndof == 10, "Mismatch in number of degrees of freedom" );
     auto ng = tk::NGvol(ndof);
 
     std::array< std::vector< tk::real >, 3 > coordgp;
@@ -706,12 +700,15 @@ tk::eval_TaylorBasis( const std::size_t ndof,
 
   std::vector< tk::real > B( ndof, 1.0 );
 
-  B[1] = x[0] - x_c[0];
-  B[2] = x[1] - x_c[1];
-  B[3] = x[2] - x_c[2];
+  if(ndof > 1) {
+    Assert( (ndof == 4)||(ndof == 10) ,
+      "Mismatch in number of degrees of freedom" );
+    B[1] = x[0] - x_c[0];
+    B[2] = x[1] - x_c[1];
+    B[3] = x[2] - x_c[2];
+  }
 
-  if( ndof > 4 )
-  {
+  if(ndof > 4) {
     B[4] = B[1] * B[1] * 0.5 - avg[0];
     B[5] = B[2] * B[2] * 0.5 - avg[1];
     B[6] = B[3] * B[3] * 0.5 - avg[2];
