@@ -38,6 +38,11 @@ void eval_ndof( std::size_t nunk,
                 tk::real tolref,
                 std::vector< std::size_t >& ndofel );
 
+tk::real evalDiscontinuityIndicator( std::size_t e,
+                                     ncomp_t ncomp,
+                                     const std::size_t ndof,
+                                     const std::size_t ndofel,
+                                     const tk::Fields& unk );
 } // inciter::
 
 #endif // Indicator_h

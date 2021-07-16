@@ -25,6 +25,7 @@
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
+#include "Integrate/Quadrature.hpp"
 #include "../MultiMat/MultiMatIndexing.hpp"
 
 namespace tk {
@@ -72,6 +73,33 @@ eval_state ( ncomp_t ncomp,
              const std::size_t e,
              const Fields& U,
              const std::vector< tk::real >& B );
+
+//! Transform the solution with Dubiner basis to the solution with Taylor basis
+std::vector< std::vector< tk::real > >
+DubinerToTaylor( ncomp_t ncomp,
+                 ncomp_t offset,
+                 const std::size_t e,
+                 const std::size_t ndof,
+                 const tk::Fields& U,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::UnsMesh::Coords& coord );
+
+//! Convert the solution with Taylor basis to the solution with Dubiner basis
+void
+TaylorToDubiner( ncomp_t ncomp,
+                 std::size_t e,
+                 std::size_t ndof,
+                 const std::vector< std::size_t >& inpoel,
+                 const tk::UnsMesh::Coords& coord,
+                 const tk::Fields& geoElem,
+                 std::vector< std::vector< tk::real > >& unk );
+
+//! Evaluate the Taylor basis at points
+std::vector< tk::real >
+eval_TaylorBasis( const std::size_t ndof,
+                  const std::array< tk::real, 3 >& x,
+                  const std::array< tk::real, 3 >& x_c,
+                  const std::array< std::array< tk::real, 3>, 4 >& coordel );
 } // tk::
 
 #endif // Basis_h
