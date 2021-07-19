@@ -47,7 +47,7 @@ Sorter::Sorter( std::size_t meshid,
   m_reorderRefiner( reorderRefiner ),
   m_ginpoel( ginpoel ),
   m_coordmap( coordmap ),
-  m_el(el),
+  m_el( el ),
   m_nbnd( 0 ),
   m_bface( bface ),
   m_triinpoel( triinpoel ),
@@ -496,6 +496,9 @@ Sorter::finish()
 
   // Update node coordinate map with the reordered IDs
   m_coordmap = m_newcoordmap;
+
+  // Update mesh chunk data structure held in our state with new node order
+  m_el = tk::global2local( m_ginpoel );
 
   // Update symmetric chare-node communication map with the reordered IDs
   for (auto& [ neighborchare, maps ] : m_msum) {
