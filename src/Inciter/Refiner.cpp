@@ -1544,8 +1544,8 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
 
   // Generate new node id maps for nodes kept
   tk::destroy( m_lref );
-  std::vector< std::size_t > rid( ref.size(), -1 );
-  std::vector< std::size_t > gid( ref.size(), -1 );
+  std::vector< std::size_t > rid( ref.size() );
+  std::vector< std::size_t > gid( ref.size() );
   std::size_t l = 0;    // will generate new local node id
   for (std::size_t i=0; i<m_gid.size(); ++i) {
     if (gid_rem.find(i) == end(gid_rem)) {
@@ -1560,8 +1560,6 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   for (const auto& n : gid_add) {
     auto r = n.first;
     auto g = n.second;
-    Assert(gid[l] == -1, "Overwriting gid");
-    Assert(rid[l] == -1, "Overwriting rid");
     gid[l] = g;
     rid[l] = r;
     Assert(m_lref.find(r) == m_lref.end(), "Overwriting lref");
