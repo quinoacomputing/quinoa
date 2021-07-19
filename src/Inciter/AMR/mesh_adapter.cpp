@@ -1234,6 +1234,30 @@ namespace AMR {
 
                 child_id_list_t children = tet_store.data(tet_id).children;
 
+                // check if any child of tet_id (i.e. any active tet) is marked
+                // for refinement
+                bool is_child_ref(false);
+                for (size_t i=0; i<children.size(); i++) {
+                  edge_list_t chedge_list = tet_store.generate_edge_keys(children[i]);
+                  // Check each edge, see if it is marked for refinement
+                  for (size_t k=0; k<NUM_TET_EDGES; k++) {
+                    edge_t edge = chedge_list[k];
+
+                    if (tet_store.edge_store.get(edge).needs_refining == 1) {
+                      is_child_ref = true;
+                      continue;
+                    }
+                  }
+                }
+                // deactivate from deref if marked for ref
+                if (is_child_ref) {
+                  for (auto child_id : children) {
+                    deactivate_deref_tet_edges(child_id);
+                  }
+                  deactivate_deref_tet_edges(tet_id);
+                  continue;
+                }
+
                 // This is useful for later inspection
                 //edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
                 std::size_t num_to_derefine = 0; // Nodes
