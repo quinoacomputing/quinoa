@@ -18,6 +18,7 @@ inciter
   scheme alecg
 
   ale
+    dvcfl 1.0
     mesh_velocity sine
   end
 

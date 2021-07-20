@@ -89,14 +89,21 @@ class Discretization : public CBase_Discretization {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
-    //! Initialize Conjugrate Gradients linear solver
-    void ConjugateGradientsInit();
+    //! Initialize mesh velocity linear solve: set initial guess and BCs
+    void
+    meshvelInit( const std::vector< tk::real >& w,
+                 const std::unordered_map< std::size_t,
+                         std::vector< std::pair< bool, tk::real > > >& wbc,
+                CkCallback c );
 
     //! Solve using Conjugrate Gradients linear solver
-    void ConjugateGradientsSolve( CkDataMsg* msg );
+    void meshvelSolve( CkCallback c );
 
-    //! Conjugrate Gradients linear solver converged
-    void ConjugateGradientsDone( CkDataMsg* msg );
+    //! Query solution of the Conjugrate Gradients linear soilver
+    std::vector< tk::real > meshvel() const;
+
+    //! Assess and record mesh velocity linear solver convergence
+    void meshvelConv();
 
     //! \brief Our mesh has been registered with the mesh-to-mesh transfer
     //!   library (if coupled to other solver)
@@ -121,7 +128,7 @@ class Discretization : public CBase_Discretization {
     resizePostALE( const tk::UnsMesh::Coords& coord );
 
     //! Get ready for (re-)computing/communicating nodal volumes
-    void startvol();
+    void startvol( bool last_stage = false );
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
@@ -171,6 +178,8 @@ class Discretization : public CBase_Discretization {
 
     //! Nodal mesh volumes accessors as const-ref
     const std::vector< tk::real >& Vol() const { return m_vol; }
+    //! Nodal mesh volumes accessors as const-ref at previous time step
+    const std::vector< tk::real >& Voln() const { return m_voln; }
 
     //! History points data accessor as const-ref
     const std::vector< HistData >& Hist() const { return m_histdata; }
@@ -183,6 +192,8 @@ class Discretization : public CBase_Discretization {
 
     //! Time step size accessor
     tk::real Dt() const { return m_dt; }
+    //! Time step size at previous time step accessor
+    tk::real Dtn() const { return m_dtn; }
     //! Physical time accessor
     tk::real T() const { return m_t; }
     //! Iteration count accessor
@@ -222,6 +233,13 @@ class Discretization : public CBase_Discretization {
     DistFCT* FCT() const {
       Assert(m_fct[ thisIndex ].ckLocal() != nullptr, "DistFCT ckLocal() null");
       return m_fct[ thisIndex ].ckLocal();
+    }
+
+    //! Access bound ConjugateGradients class pointer
+    tk::ConjugateGradients* ConjugateGradients() const {
+      Assert( m_conjugategradients[ thisIndex ].ckLocal() != nullptr,
+              "ConjugateGradients ckLocal() null" );
+      return m_conjugategradients[ thisIndex ].ckLocal();
     }
 
     //! Access Discretization proxy for a mesh
@@ -304,7 +322,8 @@ class Discretization : public CBase_Discretization {
         : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes) {}
 
       template< typename Eq > void operator()( brigand::type_<Eq> ) {
-        const auto& ss = g_inputdeck.template get< tag::param, Eq, tags... >();
+        const auto& ss =
+          g_inputdeck.template get< tag::param, Eq, tags... >();
         for (const auto& eq : ss) {
           for (const auto& s : eq) {
             auto k = m_bface.find( std::stoi(s) );
@@ -344,8 +363,11 @@ class Discretization : public CBase_Discretization {
     //! Find elements along our mesh chunk boundary
     std::vector< std::size_t > bndel() const;
 
-   //! Query if ALE mesh motion is enabled by the user
-   bool ALE() const;
+    //! Query if ALE mesh motion is enabled by the user
+    bool ALE() const;
+
+    //! Query if ALE mesh velocity is updated during time stepping
+    bool dynALE() const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -365,6 +387,7 @@ class Discretization : public CBase_Discretization {
       p | m_t;
       p | m_lastDumpTime;
       p | m_dt;
+      p | m_dtn;
       p | m_nvol;
       p | m_fct;
       p | m_conjugategradients;
@@ -384,6 +407,7 @@ class Discretization : public CBase_Discretization {
       p | m_v;
       p | m_vol;
       p | m_volc;
+      p | m_voln;
       p | m_boxvol;
       p | m_bid;
       p | m_timer;
@@ -393,6 +417,7 @@ class Discretization : public CBase_Discretization {
       p | m_histdata;
       p | m_nsrc;
       p | m_ndst;
+      p | m_meshvel_converged;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -439,6 +464,8 @@ class Discretization : public CBase_Discretization {
     tk::real m_lastDumpTime;
     //! Physical time step size
     tk::real m_dt;
+    //! Physical time step size at the previous time step
+    tk::real m_dtn;
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;
@@ -491,6 +518,11 @@ class Discretization : public CBase_Discretization {
     //!   cell volumes / 4) with contributions from other chares on
     //!   chare-boundaries.
     std::unordered_map< std::size_t, tk::real > m_volc;
+    //! Volume of nodes at previous time step
+    //! \details This is the volume of the mesh associated to nodes of owned
+    //!   elements (sum of surrounding cell volumes / 4) with contributions from
+    //!   other chares on chare-boundaries at the previous time step
+    std::vector< tk::real > m_voln;
     //! Volume of user-defined box IC
     tk::real m_boxvol;
     //! \brief Local chare-boundary mesh node IDs at which we receive
@@ -511,6 +543,9 @@ class Discretization : public CBase_Discretization {
     std::size_t m_nsrc;
     //! Number of transfers requested as a destination
     std::size_t m_ndst;
+    //! \brief True if all stages of the time step converged the mesh velocity
+    //!   linear solve in ALE
+    bool m_meshvel_converged;
 
     //! Generate {A,x,b} for Laplacian mesh velocity smoother
     std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >

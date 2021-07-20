@@ -10,6 +10,8 @@
 */
 // *****************************************************************************
 
+#include <algorithm>
+
 #include "CommMap.hpp"
 
 namespace tk {
@@ -28,6 +30,18 @@ bool slave( const NodeCommMap& map, std::size_t node, int chare )
     std::any_of( map.cbegin(), map.cend(),
       [&](const auto& s) {
         return s.second.find(node) != s.second.cend() && s.first > chare; } );
+}
+
+tk::real count( const NodeCommMap& map, std::size_t node )
+// *****************************************************************************
+//  Count the number of contributions to a node
+//! \param[in] map Node commuinication map to search in
+//! \param[in] node Global node id to searhc for
+//! \return Count of contributions to node
+// *****************************************************************************
+{
+  return 1.0 + std::count_if( map.cbegin(), map.cend(),
+    [&](const auto& s) { return s.second.find(node) != s.second.cend(); } );
 }
 
 } // tk::

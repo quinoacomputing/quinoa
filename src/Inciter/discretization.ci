@@ -40,9 +40,7 @@ module discretization {
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
       entry void stat( tk::real mesh_volume );
-      entry void ConjugateGradientsInit();
-      entry void ConjugateGradientsSolve( CkDataMsg* msg );
-      entry void ConjugateGradientsDone( CkDataMsg* msg );
+      entry void meshvelSolve( CkCallback c );
       entry void transferInit();
       entry void comcb( std::size_t srcmeshid, CkCallback c );
 

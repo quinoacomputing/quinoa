@@ -1579,7 +1579,7 @@ conforming( const std::vector< std::size_t >& inpoel,
 //!   tetrahedron mesh within a single refinement step. Thus this algorithm is
 //!   intended for this specific case, i.e., test for conformity after a
 //!   single refinement step and not after multiple ones or for detecting
-//!   hanging nodes in an arbitrary meshes.
+//!   hanging nodes in an arbitrary mesh.
 //*****************************************************************************
 {
   Assert( !inpoel.empty(),
@@ -1780,5 +1780,83 @@ intet( const std::array< std::vector< real >, 3 >& coord,
   }
 }
 
+tk::UnsMesh::Coords
+curl( const std::array< std::vector< tk::real >, 3 >& coord,
+      const std::vector< std::size_t >& inpoel,
+      const std::vector< tk::real >& vol,
+      const tk::UnsMesh::Coords& v )
+// *****************************************************************************
+//! Compute curl of a vector field at nodes of unstructured tetrahedra mesh
+//! \param[in] coord Mesh node coordinates
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] vol Nodal volumes
+//! \param[in] v Vector field whose curl to compute
+//! \return Curl of v
+// *****************************************************************************
+{
+   // access node cooordinates
+   const auto& x = coord[0];
+   const auto& y = coord[1];
+   const auto& z = coord[2];
+   // access vector field components
+   const auto& vx = v[0];
+   const auto& vy = v[1];
+   const auto& vz = v[2];
+
+   auto npoin = x.size();
+   tk::UnsMesh::Coords curl;
+   curl[0].resize( npoin, 0.0 );
+   curl[1].resize( npoin, 0.0 );
+   curl[2].resize( npoin, 0.0 );
+
+   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
+     // access node IDs
+     std::size_t N[4] =
+       { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+     // compute element Jacobi determinant, J = 6V
+     tk::real bax = x[N[1]]-x[N[0]];
+     tk::real bay = y[N[1]]-y[N[0]];
+     tk::real baz = z[N[1]]-z[N[0]];
+     tk::real cax = x[N[2]]-x[N[0]];
+     tk::real cay = y[N[2]]-y[N[0]];
+     tk::real caz = z[N[2]]-z[N[0]];
+     tk::real dax = x[N[3]]-x[N[0]];
+     tk::real day = y[N[3]]-y[N[0]];
+     tk::real daz = z[N[3]]-z[N[0]];
+     auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+     auto J24 = J/24.0;
+     // shape function derivatives, nnode*ndim [4][3]
+     tk::real g[4][3];
+     tk::crossdiv( cax, cay, caz, dax, day, daz, J,
+                   g[1][0], g[1][1], g[1][2] );
+     tk::crossdiv( dax, day, daz, bax, bay, baz, J,
+                   g[2][0], g[2][1], g[2][2] );
+     tk::crossdiv( bax, bay, baz, cax, cay, caz, J,
+                   g[3][0], g[3][1], g[3][2] );
+     for (std::size_t i=0; i<3; ++i)
+       g[0][i] = -g[1][i] - g[2][i] - g[3][i];
+     for (std::size_t b=0; b<4; ++b) {
+       tk::real c[3];
+       tk::cross( g[b][0], g[b][1], g[b][2],
+                  vx[N[b]], vy[N[b]], vz[N[b]],
+                  c[0], c[1], c[2] );
+       for (std::size_t a=0; a<4; ++a) {
+         curl[0][N[a]] += J24 * c[0];
+         curl[1][N[a]] += J24 * c[1];
+         curl[2][N[a]] += J24 * c[2];
+       }
+     }
+   }
+
+   // divide weak result by nodal volume
+   for (std::size_t j=0; j<3; ++j) {
+     #pragma omp simd
+     for (std::size_t p=0; p<npoin; ++p) {
+       curl[j][p] /= vol[p];
+     }
+   }
+
+  return curl;
+}
 
 } // tk::

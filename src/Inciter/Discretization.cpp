@@ -22,6 +22,7 @@
 #include "Print.hpp"
 #include "Around.hpp"
 #include "QuinoaBuildConfig.hpp"
+#include "ConjugateGradients.hpp"
 
 #ifdef HAS_EXAM2M
   #include "Controller.hpp"
@@ -60,6 +61,7 @@ Discretization::Discretization(
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),  
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
+  m_dtn( m_dt ),
   m_nvol( 0 ),
   m_fct( fctproxy ),
   m_conjugategradients( conjugategradientsproxy ),
@@ -73,6 +75,7 @@ Discretization::Discretization(
   m_v( m_gid.size(), 0.0 ),
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
+  m_voln( m_vol ),
   m_bid(),
   m_timer(),
   m_refined( 0 ),
@@ -80,7 +83,8 @@ Discretization::Discretization(
   m_nrestart( 0 ),
   m_histdata(),
   m_nsrc( 0 ),
-  m_ndst( 0 )
+  m_ndst( 0 ),
+  m_meshvel_converged( true )  
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID
@@ -99,8 +103,16 @@ Discretization::Discretization(
   Assert( !ginpoel.empty(), "No elements assigned to Discretization chare" );
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
           "Jacobian in input mesh to Discretization non-positive" );
+  #if not defined(__INTEL_COMPILER) || defined(NDEBUG)
+  // The above ifdef skips running the conformity test with the intel compiler
+  // in debug mode only. This is necessary because in tk::conforming(), filling
+  // up the map can fail with some meshes (only in parallel), e.g., tube.exo,
+  // used by some regression tests, due to the intel compiler generating some
+  // garbage incorrect code - only in debug, only in parallel, only with that
+  // mesh.
   Assert( tk::conforming( m_inpoel, m_coord ),
           "Input mesh to Discretization not conforming" );
+  #endif
 
   // Store communication maps
   for (const auto& [ c, maps ] : msum) {
@@ -144,10 +156,11 @@ Discretization::Discretization(
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   // Insert ConjugrateGradients solver chare array element if needed
-  if (ALE()) {
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  if (ALE() && meshvel == ctr::MeshVelocityType::FLUID) {
     const auto& [A,x,b] = LaplacianSmoother();
-    m_conjugategradients[ thisIndex ].insert( A, x, b, 10, 1.0e-3,
-                                              m_gid, m_lid, m_nodeCommMap );
+    m_conjugategradients[ thisIndex ].
+      insert( A, x, b, m_gid, m_lid, m_nodeCommMap );
   }
 
   // Register mesh with mesh-transfer lib
@@ -201,39 +214,76 @@ Discretization::ALE() const
     return false;
 }
 
-void
-Discretization::ConjugateGradientsInit()
+bool
+Discretization::dynALE() const
 // *****************************************************************************
-//  Initialize Conjugrate Gradients linear solver
+//! Query if ALE mesh velocity is updated during time stepping
+//! \return True if mesh velocity is updated during time stepping
 // *****************************************************************************
 {
-  // Reinitialize ConjugrateGradients solver chare array element if needed
-  if (ALE()) {
-    m_conjugategradients[ thisIndex ].init(
-      CkCallback( CkIndex_Discretization::ConjugateGradientsSolve(nullptr),
-                  thisProxy[thisIndex]) );
-  } else vol();
+  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+
+  if (ale && meshvel != ctr::MeshVelocityType::NONE &&
+             meshvel != ctr::MeshVelocityType::SINE)
+    return true;
+  else
+    return false;
 }
 
 void
-Discretization::ConjugateGradientsSolve( [[maybe_unused]] CkDataMsg* msg )
+Discretization::meshvelInit(
+  const std::vector< tk::real >& w,
+  const std::unordered_map< std::size_t,
+          std::vector< std::pair< bool, tk::real > > >& wbc,
+  CkCallback c )
+// *****************************************************************************
+//  Initialize mesh velocity linear solve: set initial guess and BCs
+//! \param[in] w Initial guess for mesh velocity linear solve
+//! \param[in] wbc Local node ids associated to mesh velocity Dirichlet BCs
+// \param[in] c Function to call when the BCs have been applied
+// *****************************************************************************
+{
+  auto eps = std::numeric_limits< tk::real >::epsilon();
+  bool applybc = std::abs(m_initial-1.0) < eps ? true : false;
+  m_conjugategradients[ thisIndex ].init( w, wbc, c, applybc );
+}
+
+void
+Discretization::meshvelSolve( CkCallback c )
 // *****************************************************************************
 //  Solve linear system using Conjugrate Gradients
+// \param[in] c Function to call when the solve is converged
 // *****************************************************************************
 {
-  m_conjugategradients[ thisIndex ].solve(
-    CkCallback( CkIndex_Discretization::ConjugateGradientsDone(nullptr),
-                thisProxy[thisIndex] ) );
+  m_conjugategradients[ thisIndex ].
+    solve( g_inputdeck.get< tag::ale, tag::maxit >(),
+           g_inputdeck.get< tag::ale, tag::tolerance >(),
+           c );
+}
+
+std::vector< tk::real >
+Discretization::meshvel() const
+// *****************************************************************************
+//! Query solution of the Conjugrate Gradients linear soilver
+//! \return Mesh velocity as a solution to the Conjugate Gradients linear solve
+// *****************************************************************************
+{
+  return ConjugateGradients()->solution();
 }
 
 void
-Discretization::ConjugateGradientsDone( [[maybe_unused]] CkDataMsg* msg )
+Discretization::meshvelConv()
 // *****************************************************************************
-//  Conjugrate Gradients linear solver converged
+//! Assess and record mesh velocity linear solver convergence
 // *****************************************************************************
 {
-  vol();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  if (ALE() && meshvel == ctr::MeshVelocityType::FLUID) {
+    m_meshvel_converged &= ConjugateGradients()->converged();
+  }
 }
+
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
 Discretization::LaplacianSmoother() const
@@ -245,7 +295,7 @@ Discretization::LaplacianSmoother() const
 //!   grids", Computers& Fluids, 2013.
 // *****************************************************************************
 {
-  tk::CSR A( /* DOF= */ 1, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
+  tk::CSR A( /* DOF = */ 3, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
 
   const auto& X = m_coord[0];
   const auto& Y = m_coord[1];
@@ -275,16 +325,14 @@ Discretization::LaplacianSmoother() const
     for (std::size_t a=0; a<4; ++a)
       for (std::size_t k=0; k<3; ++k)
          for (std::size_t b=0; b<4; ++b)
-           A(N[a],N[b]) += J/6 * grad[a][k] * grad[b][k];
+           for (std::size_t i=0; i<3; ++i)
+             A(N[a],N[b],i) -= J/6 * grad[a][k] * grad[b][k];
   }
 
   auto npoin = m_gid.size();
-  std::vector< tk::real > b(npoin,1.0), x(npoin,0.0);
+  std::vector< tk::real > b(npoin*3,0.0), x(npoin*3,0.0);
 
-  // Grab a node (gid=0) as Dirichlet BC
-  A.dirichlet( 0, m_lid, m_nodeCommMap );
-
-  return { A, x, b };
+  return { std::move(A), std::move(x), std::move(b) };
 }
 
 void
@@ -498,13 +546,17 @@ Discretization::resizePostALE( const tk::UnsMesh::Coords& coord )
 }
 
 void
-Discretization::startvol()
+Discretization::startvol( bool last_stage )
 // *****************************************************************************
 //  Get ready for (re-)computing/communicating nodal volumes
+//! \param[in] last_stage True if this is the last time step stage
 // *****************************************************************************
 {
   m_nvol = 0;
   thisProxy[ thisIndex ].wait4vol();
+
+  // Save nodal volumes at previous time step
+  if (last_stage) m_voln = m_vol;
 
   // Zero out mesh volume container
   std::fill( begin(m_vol), end(m_vol), 0.0 );
@@ -656,9 +708,6 @@ Discretization::vol()
   // chare-boundaries
   m_v = m_vol;
 
-  // Compute volume in user-defined IC box
-  
-
   // Send our nodal volume contributions to neighbor chares
   if (m_nodeCommMap.empty())
    totalvol();
@@ -704,7 +753,7 @@ Discretization::totalvol()
 // Sum mesh volumes and contribute own mesh volume to total volume
 // *****************************************************************************
 {
-  // Applied received contributions to nodal volumes
+  // Add received contributions to nodal volumes
   for (const auto& [gid, vol] : m_volc)
     m_vol[ tk::cref_find(m_lid,gid) ] += vol;
 
@@ -904,6 +953,7 @@ Discretization::setdt( tk::real newdt )
 //! \param[in] newdt Size of the new time step
 // *****************************************************************************
 {
+  m_dtn = m_dt;
   m_dt = newdt;
 
   // Truncate the size of last time step
@@ -1089,7 +1139,10 @@ Discretization::status()
     if (m_refined) print << 'h';
     if (!(m_it % lbfreq) && !finish) print << 'l';
     if (!benchmark && (!(m_it % rsfreq) || finish)) print << 'r';
-  
+
+    if (not m_meshvel_converged) print << 'a';
+    m_meshvel_converged = true; // get ready for next time step
+
     print << std::endl;
   }
 }

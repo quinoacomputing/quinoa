@@ -215,8 +215,7 @@ tk::bndLeastSqConservedVar_P0P1(
 //!   A default is set to 0, so that calling code for systems that do not store
 //!   primitive quantities does not need to specify this argument.
 //! \details This function computing the boundary face contributions to the rhs
-//!   vector for reconstruction, is specialized for conserved quantities. Also
-//!   see the version for primitve quantities bndLeastSqPrimitiveVar_P0P1().
+//!   vector for reconstruction, is used for conserved quantities only.
 // *****************************************************************************
 {
   const auto& bface = fd.Bface();
@@ -263,104 +262,6 @@ tk::bndLeastSqConservedVar_P0P1(
           for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
             rhs_ls[el][c][idir] +=
               wdeltax[idir] * (ustate[1][c]-ustate[0][c]);
-        }
-      }
-    }
-  }
-}
-
-void
-tk::bndLeastSqPrimitiveVar_P0P1(
-  ncomp_t system,
-  ncomp_t nprim,
-  ncomp_t offset,
-  std::size_t rdof,
-  const std::vector< bcconf_t >& bcconfig,
-  const inciter::FaceData& fd,
-  const Fields& geoFace,
-  const Fields& geoElem,
-  real t,
-  const StateFn& state,
-  const Fields& P,
-  const Fields& U,
-  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-  std::size_t ncomp )
-// *****************************************************************************
-//  \brief Compute boundary surface contributions to rhs vector of the
-//    least-squares reconstruction of primitive quantities of the PDE system
-//! \param[in] system Equation system index
-//! \param[in] nprim Number of primitive quantities stored for this PDE system
-//! \param[in] offset Offset this PDE system operates from
-//! \param[in] rdof Maximum number of reconstructed degrees of freedom
-//! \param[in] bcconfig BC configuration vector for multiple side sets
-//! \param[in] fd Face connectivity and boundary conditions object
-//! \param[in] geoFace Face geometry array
-//! \param[in] geoElem Element geometry array
-//! \param[in] t Physical time
-//! \param[in] state Function to evaluate the left and right solution state at
-//!   boundaries
-//! \param[in] P Primitive vector to be reconstructed at recent time step
-//! \param[in] U Conserved vector at recent time step
-//! \param[in,out] rhs_ls RHS reconstruction vector
-//! \param[in] ncomp This is the number of conserved quantities stored for this
-//!   system. This is necessary to extend the state vector to the right size,
-//!   so that correct boundary conditions are obtained.
-//! \details Since this function computes rhs contributions of boundary faces
-//!   for the reconstruction of primitive quantities only, it should not be
-//!   called for systems of PDEs that do not store primitive quantities. Also
-//!   see the version for conserved quantities bndLeastSqConservedVar_P0P1().
-// *****************************************************************************
-{
-  const auto& bface = fd.Bface();
-  const auto& esuf = fd.Esuf();
-
-  Assert( nprim != 0, "Primitive variables reconstruction should not be called "
-          "for PDE systems not storing primitive quantities");
-
-  for (const auto& s : bcconfig) {       // for all bc sidesets
-    auto bc = bface.find( std::stoi(s) );// faces for side set
-    if (bc != end(bface))
-    {
-      // Compute boundary face contributions
-      for (const auto& f : bc->second)
-      {
-        Assert( esuf[2*f+1] == -1, "physical boundary element not -1" );
-
-        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-
-        // arrays for quadrature points
-        std::array< real, 3 >
-          fc{{ geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0) }};
-        std::array< real, 3 >
-          fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
-
-        // Compute the state variables at the left element
-        std::vector< real >B(1,1.0);
-        auto ul = eval_state( nprim, offset, rdof, 1, el, P, B );
-        auto ucons = eval_state(ncomp, offset, rdof, 1, el, U, B );
-
-        // consolidate conserved quantities into state vector
-        tk::concat< tk::real >(std::move(ul), ucons);
-
-        Assert( ucons.size() == ncomp+nprim, "Incorrect size for "
-                "appended state vector" );
-
-        // Compute the state at the face-center using BC
-        auto ustate = state( system, ncomp, ucons, fc[0], fc[1], fc[2], t, fn );
-
-        std::array< real, 3 > wdeltax{{ fc[0]-geoElem(el,1,0),
-                                        fc[1]-geoElem(el,2,0),
-                                        fc[2]-geoElem(el,3,0) }};
-
-        for (std::size_t idir=0; idir<3; ++idir)
-        {
-          // rhs vector
-          for (ncomp_t c=0; c<nprim; ++c)
-          {
-            auto cp = ustate[0].size()-nprim+c;
-            rhs_ls[el][c][idir] +=
-              wdeltax[idir] * (ustate[1][cp]-ustate[0][cp]);
-          }
         }
       }
     }
