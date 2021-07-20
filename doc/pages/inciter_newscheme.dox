@@ -365,7 +365,9 @@ are functions that the runtime system defines and we call them when the given
 task is complete. Note that the construct we used here, when \b A _and_ \b B
 are both complete _then_ do \b C, is probably the simplest task-logic Charm++
 allows prescribing. There are many more advanced ways of expressing such logic,
-e.g., using loops. For more details, see Section _Structured Control Flow: Structured Dagger_ in the [Charm++ manual](http://charm.cs.illinois.edu/manuals/html/charm++/manual.html).
+e.g., using loops. For more details, see Section _Structured Control Flow:
+Structured Dagger_ in the [Charm++
+manual](http://charm.cs.illinois.edu/manuals/html/charm++/manual.html).
 
 @subsection inciter_newscheme_nowarning NoWarning/alecg.decl.h and NoWarning/alecg.def.h
 
@@ -406,9 +408,10 @@ ALECG scheme, have been created. This is a reduction call, issued by all array
 elements, eventually calling the reduction target `Transporter::comfinal()` a
 single time.
 
-@note By default, there are no extra communication buffers needed to be setup in
-ALECG, because the symmetric mesh-node communication maps have already been
-setup and stored in Discretization::m_nodeCommMap, discussed in Section @ref inciter_reorder on the @ref inciter_design page. This node communication map is
+@note By default, there are no extra communication buffers needed to be setup
+in ALECG, because the symmetric mesh-node communication maps have already been
+setup and stored in Discretization::m_nodeCommMap, discussed in Section @ref
+inciter_reorder on the @ref inciter_design page. This node communication map is
 made available to all discretization schemes by default. A counter-example to
 ALECG is DG which, in this stage, sets up face communication and ghost element
 data structures, required only by the cell-centered DG-style discretization.
@@ -439,14 +442,16 @@ that it addresses _all_ array elements. Its argument is sent to all elements
 Transporter::comfinal() is a global synchronization point because _all_ worker
 chares must finish resizing and/or constructing their communication maps before
 their `setup()` member function can be invoked. This is because `setup()` is
-assumed  to be allowed to start using those communication maps that have been
-constructed _before_ calling setup().
+allowed to start using those communication maps that have been constructed
+_before_ calling setup().
 
 @subsection inciter_newscheme_class_setup ALECG::setup() -- Start setup
 
 @snippet Inciter/ALECG.cpp setup
 
-In the ALECG::setup() code snippet above the various setup setup are started. What they are may change as we develop this further, so we don't go into detail here, the current listing is above. 
+In the ALECG::setup() code snippet above the various setup steps are started.
+What they are may change as we develop this further, so we don't go into detail
+here, the current listing is above.
 
 The current DAG in @ref inciter_newscheme_chare_alecg_sdag should be consulted
 for the task logic. When the setup phase is done, ALECG::start() is called,
@@ -461,7 +466,7 @@ smallest-size `dt` allowed in the give time step across the whole problem:
 
 The above code snippet shows a `for` loop that calls the the `dt()` member
 function of all types of PDEs configured by the user and finds the minimum size
-of the time step to be taken next.
+of the next time step.
 
 @snippet Inciter/ALECG.cpp Advance
 
@@ -476,7 +481,8 @@ the primitive variable gradients first (requiring its own communication step).
 
 When both the own and communicated contributions are complete on a chare, the
 runtime system continues as described in the DAG in alecg.ci. ALECG::solve(),
-first combines the own and received contributions then advances all equations.
+first combines the own and received contributions then advances all equations
+using a Runge-Kutta method.
 
 @subsection inciter_newscheme_class_solve ALECG::solve() -- Solve
 
@@ -539,7 +545,7 @@ mesh velocity and (2) the recomputation of the boundary point-, and dual-face
 normals, due to moving and/or changing the topology of the mesh. (If there was a
 LHS, it would change if the mesh moved or the topology changed.) These two
 tasks are independent and so they happen on indepent execution threads. Both
-threads of execution progresses through a series of steps also involving
+threads of execution progress through a series of steps also involving
 communication. When all tasks are complete, the runtime system continues
 execution of the chare as specified in the DAG in
 @ref inciter_newscheme_chare_alecg_sdag, in ALECG::merge():
@@ -562,10 +568,11 @@ time step stage if it is not the last Runge-Kutta stage.
 
 @snippet Inciter/ALECG.cpp stage
 
-If it is the last one, we optionally output results to file then continue to
-the next time step calling ALECG::next(). Before continuing to a new time step,
-we optionally perform load balancing as well as saving a checkpoint, then test
-for the exit condition to see if time stepping is to be continued.
+If it is the last Runge-Kutta stage, we optionally output results to file then
+continue to the next time step calling ALECG::next(). Before continuing to a
+new time step, we optionally perform load balancing as well as saving a
+checkpoint, then test for the exit condition to see if time stepping is to be
+continued.
 
 @section inciter_newscheme_work 6. Making it all work
 

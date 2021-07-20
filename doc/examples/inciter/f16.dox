@@ -2,8 +2,9 @@
   \page      inciter_example_f16 Inciter: Example setup for marching a transonic problem to steady-state
 
 This example runs the @ref inciter_alecg algorithm marching the solution to
-steady state. The problem is initialized with a free-stream Mach number of
-`M=0.84` and an angle of attack of 3.06 degrees.
+steady state using a local time-stepping procedure. The problem is initialized
+with a free-stream Mach number of `M=0.84` and an angle of attack of 3.06
+degrees.
 
 @m_div{m-col-m-12 m-center-m}
 <img src="f16_mesh.png"/>
@@ -22,8 +23,6 @@ title "F16"
 
 inciter
 
-  #nstep 1     # Max number of time steps
-  #term 10.0   # Max physical time, s
   ttyi 10      # TTY output interval
 
   cfl 0.5
@@ -32,7 +31,6 @@ inciter
   rescomp 1
 
   scheme alecg
-  #operator_reorder true
 
   partitioning
     algorithm mj
@@ -69,11 +67,6 @@ inciter
     end
 
   end
-
-  #amr
-  #  t0ref true
-  #  initial uniform
-  #end
 
   field_output
     interval 1000
