@@ -1531,7 +1531,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
       auto l = tk::cref_find( m_lref, o );
       auto g = m_gid[l];
       // store global-id to local-id map of removed nodes
-      m_removedNodes[l] = l;
+      m_removedNodes.insert(l);
       gid_rem[l] = g;
       m_lid.erase( g );
       m_coordmap.erase( g );
@@ -1573,16 +1573,6 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   m_rid = std::move( rid );
   Assert( m_rid.size() == ref.size(), "Size mismatch" );
   m_addedNodes = std::move( addedNodes );
-
-  //// store map of {key: removed node old-local-id, value: node new-local-id that took its place}
-  //std::unordered_map< std::size_t, std::size_t > removedNodes;
-  //for (auto rn:m_removedNodes) {
-  //  auto g = rn.first;
-  //  auto l = rn.second;
-  //  auto g_old = tk::cref_find(m_gid, l);
-  //  // find new node taking place of l
-  //  removedNodes[l] = //new-local-id
-  //}
 
   // Update node coordinates, ids, and id maps
   auto& rx = m_coord[0];

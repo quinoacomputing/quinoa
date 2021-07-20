@@ -808,7 +808,7 @@ DiagCG::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
-  const std::unordered_map< std::size_t, std::size_t >& removedNodes,
+  const std::set< std::size_t >& removedNodes,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& /*bface*/,
   const std::map< int, std::vector< std::size_t > >& bnode,
@@ -840,15 +840,11 @@ DiagCG::resizePostAMR(
   d->resizePostAMR( chunk, coord, nodeCommMap );
 
   // Remove newly removed nodes from solution vectors
-  std::set< std::size_t > remset;
-  for (const auto& rn:removedNodes) {
-    remset.insert(rn.first);
-  }
-  m_u.rm(remset);
-  m_ul.rm(remset);
-  m_du.rm(remset);
-  m_lhs.rm(remset);
-  m_rhs.rm(remset);
+  m_u.rm(removedNodes);
+  m_ul.rm(removedNodes);
+  m_du.rm(removedNodes);
+  m_lhs.rm(removedNodes);
+  m_rhs.rm(removedNodes);
 
   // Resize auxiliary solution vectors
   auto nelem = d->Inpoel().size()/4;

@@ -1285,7 +1285,7 @@ ALECG::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
-  const std::unordered_map< std::size_t, std::size_t >& removedNodes,
+  const std::set< std::size_t >& removedNodes,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
@@ -1313,13 +1313,9 @@ ALECG::resizePostAMR(
   d->resizePostAMR( chunk, coord, nodeCommMap );
 
   // Remove newly removed nodes from solution vectors
-  std::set< std::size_t > remset;
-  for (const auto& rn:removedNodes) {
-    remset.insert(rn.first);
-  }
-  m_u.rm(remset);
-  m_un.rm(remset);
-  m_rhs.rm(remset);
+  m_u.rm(removedNodes);
+  m_un.rm(removedNodes);
+  m_rhs.rm(removedNodes);
 
   // Resize auxiliary solution vectors
   auto npoin = coord[0].size();
