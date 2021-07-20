@@ -29,14 +29,6 @@ WENO_P1( const std::vector< int >& esuel,
          inciter::ncomp_t offset,
          tk::Fields& U );
 
-//! Weighted Essentially Non-Oscillatory (WENO) limiter for multi-material DGP1
-void
-WENOMultiMat_P1( const std::vector< int >& esuel,
-                 inciter::ncomp_t offset,
-                 tk::Fields& U,
-                 tk::Fields& P,
-                 std::size_t nmat );
-
 //! Superbee limiter for DGP1
 void
 Superbee_P1( const std::vector< int >& esuel,

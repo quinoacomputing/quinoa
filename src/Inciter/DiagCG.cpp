@@ -460,7 +460,8 @@ DiagCG::dt()
 
     // find the minimum dt across all PDEs integrated
     for (const auto& eq : g_cgpde) {
-      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), d->T(), m_u );
+      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), d->T(), d->Dtn(), m_u,
+                         d->Vol(), d->Vol() );
       if (eqdt < mindt) mindt = eqdt;
     }
 

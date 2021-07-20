@@ -188,6 +188,39 @@ class Data {
     //! \return Number of propertes/unknown
     ncomp_t nprop() const noexcept { return m_nprop; }
 
+    //! Extract flat vector of all unknowns
+    //! \return Flat vector of reals
+    std::vector< tk::real >
+    flat() const {
+      std::vector< tk::real > w( m_nunk * m_nprop );
+      for (std::size_t j=0; j<m_nprop; ++j)
+        for (std::size_t i=0; i<m_nunk; ++i)
+          w[i*m_nprop+j] = operator()( i, j, 0 );
+      return w;
+    }
+
+    //! Assign from flat vector
+    //! \param[in] rhs Flat vector to assign from
+    //! \note This is the opposite of flat().
+    void operator=( const std::vector< tk::real >& rhs ) {
+      Assert( rhs.size() == m_nunk * m_nprop, "Size mismatch" );
+      for (std::size_t j=0; j<m_nprop; ++j)
+        for (std::size_t i=0; i<m_nunk; ++i)
+          operator()( i, j, 0 ) = rhs[i*m_nprop+j];
+    }
+
+    //! Assign from array(3) of vectors
+    //! \param[in] rhs Array(3) of vectors to assign from
+    void operator=( const std::array< std::vector< tk::real >, 3 >& rhs ) {
+      Assert( m_nprop == 3, "Size mismatch" );
+      Assert( rhs[0].size() == m_nunk, "Size mismatch" );
+      Assert( rhs[1].size() == m_nunk, "Size mismatch" );
+      Assert( rhs[2].size() == m_nunk, "Size mismatch" );
+      for (std::size_t j=0; j<3; ++j)
+        for (std::size_t i=0; i<m_nunk; ++i)
+          operator()( i, j, 0 ) = rhs[j][i];
+    }
+
     //! Extract vector of unknowns given component and offset
     //! \details Requirement: offset + component < nprop, enforced with an
     //!   assert in DEBUG mode, see also the constructor.
