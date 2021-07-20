@@ -2626,7 +2626,8 @@ struct velocity_info {
   static std::string shortDescription() { return "Specify velocity"; }
   static std::string longDescription() { return
     R"(This keyword is used to configure a velocity vector, used for, e.g.,
-    boundary or initial conditions.)";
+    boundary or initial conditions or as a keyword that selects velocity in some
+    other context-specific way.)";
   }
   struct expect {
     using type = tk::real;
@@ -2684,7 +2685,8 @@ struct pressure_info {
   static std::string shortDescription() { return "Specify pressure"; }
   static std::string longDescription() { return
     R"(This keyword is used to configure a pressure, used for, e.g., boundary or
-    initial conditions.)";
+    initial conditions or as a keyword that selects pressure in some other
+    context-specific way.)";
   }
   struct expect {
     using type = tk::real;
@@ -5357,21 +5359,17 @@ struct radius_info {
 using radius = keyword< radius_info, TAOCPP_PEGTL_STRING("radius") >;
 
 struct sponge_info {
-  static std::string name() { return "sponge"; }
-  static std::string shortDescription() { return "Specify sponge absorption"; }
+  static std::string name() { return "Sponge boundary"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing a sponge boundary"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the sponge symmetry boundary conditions
-    absorption coefficient for each symmetry BC sideset configured. The
-    coefficient must be between 0.0 and 1.0, expressing the percentage of
-    kinetic energy absorbed at the boundary: 0.0 - nothing absorbed, 1.0 - all
-    absorbed.)";
+    R"(This keyword is used to introduce an sponge ... end block, used to
+    specify the configuration for applying sponge parameters on boundaries.
+    Keywords allowed in a sponge ... end block: )" + std::string("\'")
+    + sideset::string() + "\', \'"
+    + velocity::string() + "\', \'"
+    + pressure::string() + "\'.";
   }
-  struct expect {
-    using type = tk::real;
-    static constexpr type lower = 0.0;
-    static constexpr type upper = 1.0;
-    static std::string description() { return "real"; }
-  };
 };
 using sponge = keyword< sponge_info, TAOCPP_PEGTL_STRING("sponge") >;
 
@@ -5385,7 +5383,7 @@ struct bc_stag_info {
     partial differential equation. Keywords allowed in a bc_stag ... end
     block: )" + std::string("\'")
     + point::string() + "\', \'"
-    + radius::string() + "\'. ";
+    + radius::string() + "\'.";
   }
 };
 using bc_stag = keyword< bc_stag_info, TAOCPP_PEGTL_STRING("bc_stag") >;
@@ -5643,6 +5641,42 @@ struct mat_k_info {
 };
 using mat_k = keyword< mat_k_info, TAOCPP_PEGTL_STRING("k") >;
 
+struct stiffenedgas_info {
+  static std::string name() { return "Stiffened gas"; }
+  static std::string shortDescription() { return
+    "Select the stiffened gas equation of state"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the stiffened gas equation of state.)"; }
+};
+using stiffenedgas =
+  keyword< stiffenedgas_info, TAOCPP_PEGTL_STRING("stiffenedgas") >;
+
+struct jwl_info {
+  static std::string name() { return "JWL"; }
+  static std::string shortDescription() { return
+    "Select the JWL equation of state"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Jones, Wilkins, Lee equation of
+    state.)"; }
+};
+using jwl = keyword< jwl_info, TAOCPP_PEGTL_STRING("jwl") >;
+
+struct eos_info {
+  static std::string name() { return "Equation of state"; }
+  static std::string shortDescription() { return
+    "Select equation of state (type)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select an equation of state for a material.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + stiffenedgas::string() + "\' | \'"
+                  + jwl::string() + '\'';
+    }
+  };
+};
+using eos = keyword< eos_info, TAOCPP_PEGTL_STRING("eos") >;
+
 struct material_info {
   static std::string name() { return "Material properties block"; }
   static std::string shortDescription() { return
@@ -5652,6 +5686,7 @@ struct material_info {
     specify material properties. Keywords allowed in a material ... end
     block: )" + std::string("\'")
     + id::string()+ "\', \'"
+    + eos::string()+ "\', \'"
     + mat_gamma::string()+ "\', \'"
     + mat_pstiff::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"

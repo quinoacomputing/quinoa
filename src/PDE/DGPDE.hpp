@@ -224,25 +224,6 @@ class DGPDE {
         VolFracMax, ndofel, R );
     }
 
-    //! Public interface for computing the nodal extrema
-    void evalNodalExtrm( const std::size_t ncomp,
-                         const std::size_t nprim,
-                         const std::size_t ndof_NodalExtrm,
-                         const std::vector< std::size_t >& bndel,
-                         const std::vector< std::size_t >& inpoel,
-                         const tk::UnsMesh::Coords& coord,
-                         const std::vector< std::size_t >& gid,
-                         const std::unordered_map< std::size_t, std::size_t >&
-                           bid,
-                         const tk::Fields& U,
-                         const tk::Fields& P,
-                         std::vector< std::vector<tk::real> >& uNodalExtrm,
-                         std::vector< std::vector<tk::real> >& pNodalExtrm ) const
-    {
-      self->evalNodalExtrm( ncomp, nprim, ndof_NodalExtrm, bndel, inpoel, coord,
-        gid, bid, U, P, uNodalExtrm, pNodalExtrm );
-    }
-
     //! Public interface for computing the minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
@@ -276,8 +257,9 @@ class DGPDE {
     histOutput( const std::vector< HistData >& h,
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
-      const tk::Fields& U ) const
-    { return self->histOutput( h, inpoel, coord, U ); }
+      const tk::Fields& U,
+      const tk::Fields& P ) const
+    { return self->histOutput( h, inpoel, coord, U, P ); }
 
     //! Public interface to returning analytic solution
     tk::InitializeFn::result_type
@@ -369,19 +351,6 @@ class DGPDE {
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
                         tk::Fields& ) const = 0;
-      virtual void evalNodalExtrm(
-        const std::size_t ,
-        const std::size_t ,
-        const std::size_t ,
-        const std::vector< std::size_t >& ,
-        const std::vector< std::size_t >& ,
-        const tk::UnsMesh::Coords& ,
-        const std::vector< std::size_t >& ,
-        const std::unordered_map< std::size_t, std::size_t >& ,
-        const tk::Fields& ,
-        const tk::Fields& ,
-        std::vector< std::vector<tk::real> >& ,
-        std::vector< std::vector<tk::real> >&  ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const inciter::FaceData&,
@@ -401,6 +370,7 @@ class DGPDE {
         const std::vector< HistData >&,
         const std::vector< std::size_t >&,
         const tk::UnsMesh::Coords&,
+        const tk::Fields&,
         const tk::Fields& ) const = 0;
       virtual tk::InitializeFn::result_type analyticSolution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
@@ -498,23 +468,6 @@ class DGPDE {
         data.rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
           VolFracMax, ndofel, R );
       }
-      void evalNodalExtrm( 
-        const std::size_t ncomp,
-        const std::size_t nprim,
-        const std::size_t ndof_NodalExtrm,
-        const std::vector< std::size_t >& bndel,
-        const std::vector< std::size_t >& inpoel,
-        const tk::UnsMesh::Coords& coord,
-        const std::vector< std::size_t >& gid,
-        const std::unordered_map< std::size_t, std::size_t >& bid,
-        const tk::Fields& U,
-        const tk::Fields& P,
-        std::vector< std::vector<tk::real> >& uNodalExtrm,
-        std::vector< std::vector<tk::real> >& pNodalExtrm ) const override
-      {
-        data.evalNodalExtrm( ncomp, nprim, ndof_NodalExtrm, bndel, inpoel,
-          coord, gid, bid, U, P, uNodalExtrm, pNodalExtrm );
-      }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const inciter::FaceData& fd,
@@ -540,8 +493,9 @@ class DGPDE {
         const std::vector< HistData >& h,
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
-        const tk::Fields& U ) const override
-      { return data.histOutput( h, inpoel, coord, U ); }
+        const tk::Fields& U,
+        const tk::Fields& P ) const override
+      { return data.histOutput( h, inpoel, coord, U, P ); }
       tk::InitializeFn::result_type
       analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.analyticSolution( xi, yi, zi, t ); }

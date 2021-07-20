@@ -222,20 +222,15 @@ void BoundPreservingLimiting( std::size_t nmat,
                               const std::vector< std::size_t >& inpoel,
                               const tk::UnsMesh::Coords& coord,
                               const tk::Fields& U,
-                              const std::vector< std::vector< tk::real > >& unk,
                               std::vector< tk::real >& phic_p1,
                               std::vector< tk::real >& phic_p2 );
 
 //! Bound preserving limiter function for the volume fractions
 tk::real
-BoundPreservingLimitingFunction(
-  const std::size_t imat,
-  const std::size_t nmat,
-  const tk::real min,
-  const tk::real max,
-  const std::vector< tk::real >& state,
-  const std::vector< std::vector< tk::real > >& unk );
-
+BoundPreservingLimitingFunction( const tk::real min,
+                                 const tk::real max,
+                                 const tk::real al_gp,
+                                 const tk::real al_avg );
 
 //! Interface indicator function, which checks element for material interface
 bool

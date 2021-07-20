@@ -102,28 +102,33 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "start offset in unknowns array", parameter(
     g_inputdeck.get< tag::component >().offset< eq >(c) ) );
 
-  const auto& gamma = g_inputdeck.get< tag::param, eq, tag::gamma >()[c];
-  if (!gamma.empty())
-    nfo.emplace_back( "ratio of specific heats", parameter( gamma[0] )) ;
+  // Material property output
+  const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c][0];
+  const auto& m_id = matprop.get< tag::id >();
+  ctr::Material mopt;
+  nfo.emplace_back( mopt.name( matprop.get< tag::eos >() ),
+    std::to_string(m_id.size()) );
 
-  const auto& pstiff = g_inputdeck.get< tag::param, eq, tag::pstiff >()[c];
-  if (!pstiff.empty())
-    nfo.emplace_back( "material stiffness", parameter( pstiff[0] ) );
-
-  // Viscosity is optional: the outer vector may be empty
-  const auto& mu = g_inputdeck.get< tag::param, eq, tag::mu >();
-  if (mu.size() > c)
-    nfo.emplace_back( "dynamic viscosity", parameter( mu[c][0] ) );
-
-  const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >()[c];
+  nfo.emplace_back( "ratio of specific heats",
+    parameters(matprop.get< tag::gamma >()) );
+  const auto& cv = matprop.get< tag::cv >();
   if (!cv.empty())
     nfo.emplace_back( "specific heat at constant volume",
-                      parameter(cv[0]) );
+      parameters(cv) );
+  const auto& pstiff = matprop.get< tag::pstiff >();
+  if (!pstiff.empty())
+    nfo.emplace_back( "material stiffness",
+      parameters(pstiff) );
 
-  // Heat conductivity is optional: the outer vector may be empty
-  const auto& k = g_inputdeck.get< tag::param, eq, tag::k >();
-  if (k.size() > c)
-    nfo.emplace_back( "heat conductivity", parameter( k[c][0] ) );
+  // Viscosity is optional: vector may be empty
+  const auto& mu = matprop.get< tag::mu >();
+  if (!mu.empty())
+    nfo.emplace_back( "dynamic viscosity", parameters( mu ) );
+
+  // Heat conductivity is optional: vector may be empty
+  const auto& k = matprop.get< tag::k >();
+  if (!k.empty())
+    nfo.emplace_back( "heat conductivity", parameters( k ) );
 
   const auto& npar = g_inputdeck.get< tag::param, eq, tag::npar >();
   if (!npar.empty())
@@ -228,21 +233,21 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   // BCs
 
-  const auto& bcstag = g_inputdeck.get< tag::param, eq, tag::bcstag >();
-  const auto& spoint = bcstag.get< tag::point >();
+  const auto& stag = g_inputdeck.get< tag::param, eq, tag::stag >();
+  const auto& spoint = stag.get< tag::point >();
   if (spoint.size() > c)
-    nfo.emplace_back( "Stagnation BC point(s)", parameters( spoint[c] ) );
-  const auto& sradius = bcstag.get< tag::radius >();
+    nfo.emplace_back( "Stagnation point(s)", parameters( spoint[c] ) );
+  const auto& sradius = stag.get< tag::radius >();
   if (sradius.size() > c)
-    nfo.emplace_back( "Stagnation BC radii", parameters( sradius[c] ) );
+    nfo.emplace_back( "Stagnation point(s) radii", parameters( sradius[c] ) );
 
-  const auto& bcskip = g_inputdeck.get< tag::param, eq, tag::bcskip >();
-  const auto& kpoint = bcskip.get< tag::point >();
+  const auto& skip = g_inputdeck.get< tag::param, eq, tag::skip >();
+  const auto& kpoint = skip.get< tag::point >();
   if (kpoint.size() > c)
-    nfo.emplace_back( "Skip BC point(s)", parameters( kpoint[c] ) );
-  const auto& kradius = bcskip.get< tag::radius >();
+    nfo.emplace_back( "Skip point(s)", parameters( kpoint[c] ) );
+  const auto& kradius = skip.get< tag::radius >();
   if (kradius.size() > c)
-    nfo.emplace_back( "Skip BC radii", parameters( kradius[c] ) );
+    nfo.emplace_back( "Skip point(s) radii", parameters( kradius[c] ) );
 
   const auto& fs =
     g_inputdeck.get< tag::param, eq, tag::bc, tag::bcfarfield >();
@@ -266,12 +271,17 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     g_inputdeck.get< tag::param, eq, tag::bc, tag::bcsym >();
   if (sym.size() > c) {
     nfo.emplace_back( "Symmetry BC sideset(s)", parameters( sym[c] ) );
-    const auto& sponge =
-      g_inputdeck.get< tag::param, eq, tag::sponge >();
-    if (sponge.size() > c) {
-      nfo.emplace_back( "Symmetry BC sponge parameters",
-                        parameters( sponge[c] ) );
-    }
+
+    const auto& sponge = g_inputdeck.get< tag::param, eq, tag::sponge >();
+    const auto& ss = sponge.get< tag::sideset >();
+    if (ss.size() > c)
+      nfo.emplace_back( "Sponge sideset(s)", parameters( ss[c] ) );
+    const auto& spvel = sponge.get< tag::velocity >();
+    if (spvel.size() > c)
+      nfo.emplace_back( "Sponge velocity parameters", parameters( spvel[c] ) );
+    const auto& sppre = sponge.get< tag::pressure >();
+    if (sppre.size() > c)
+      nfo.emplace_back( "Sponge pressure parameters", parameters( sppre[c] ) );
   }
 
   const auto& dir =

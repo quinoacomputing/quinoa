@@ -28,6 +28,7 @@
 #include "Inciter/Options/AMRError.hpp"
 #include "Inciter/Options/PrefIndicator.hpp"
 #include "Inciter/Options/MeshVelocity.hpp"
+#include "Inciter/Options/Material.hpp"
 #include "Options/PartitioningAlgorithm.hpp"
 #include "Options/TxtFloatFormat.hpp"
 #include "Options/FieldFile.hpp"
@@ -209,7 +210,7 @@ using ic = tk::TaggedTuple< brigand::list<
   , tag::box,           std::vector< std::vector< box > >
 > >;
 
-//! Boundary condition configuration
+//! Boundary conditions configuration (list of side sets for each eq system)
 using bc = tk::TaggedTuple< brigand::list<
     tag::bcdir,             std::vector< std::vector<
                               kw::sideset::info::expect::type > >
@@ -241,6 +242,32 @@ using mesh = tk::TaggedTuple< brigand::list<
   , tag::reference,   std::vector< char >
 > >;
 
+//! Stagnation points parameters storage
+using StagnationParameters = tk::TaggedTuple< brigand::list<
+    tag::point,         std::vector<
+                          std::vector< kw::point::info::expect::type > >
+  , tag::radius,        std::vector<
+                          std::vector< kw::radius::info::expect::type > >
+> >;
+
+//! Skip points parameters storage
+using SkipParameters = tk::TaggedTuple< brigand::list<
+    tag::point,         std::vector<
+                          std::vector< kw::point::info::expect::type > >
+  , tag::radius,        std::vector<
+                          std::vector< kw::radius::info::expect::type > >
+> >;
+
+//! Sponge parameters storage
+using SpongeParameters = tk::TaggedTuple< brigand::list<
+    tag::sideset,       std::vector< std::vector<
+                          kw::sideset::info::expect::type > >
+  , tag::velocity,      std::vector< std::vector<
+                          kw::velocity::info::expect::type > >
+  , tag::pressure,      std::vector< std::vector<
+                          kw::pressure::info::expect::type > >
+> >;
+
 //! Transport equation parameters storage
 using TransportPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
@@ -254,6 +281,7 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::u0,            std::vector< std::vector<
                         kw::pde_u0::info::expect::type > >
   , tag::bc,            bc
+  , tag::sponge,        SpongeParameters
   //! interface compression toggle
   , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
   //! interface compression parameter
@@ -261,20 +289,22 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
                       std::vector< kw::intsharp_param::info::expect::type >
 > >;
 
-//! Stagnation boundary conditions parameters storage
-using StagnationBCParameters = tk::TaggedTuple< brigand::list<
-    tag::point,         std::vector<
-                          std::vector< kw::point::info::expect::type > >
-  , tag::radius,        std::vector<
-                          std::vector< kw::radius::info::expect::type > >
-> >;
-
-//! Skip boundary conditions parameters storage
-using SkipBCParameters = tk::TaggedTuple< brigand::list<
-    tag::point,         std::vector<
-                          std::vector< kw::point::info::expect::type > >
-  , tag::radius,        std::vector<
-                          std::vector< kw::radius::info::expect::type > >
+//! Material configuration
+using material = tk::TaggedTuple< brigand::list<
+    //! material id
+    tag::id,       std::vector< kw::id::info::expect::type >
+    //! material EOS
+  , tag::eos,      MaterialType
+    //! Ratio of spec heats
+  , tag::gamma,    std::vector< kw::mat_gamma::info::expect::type >
+    //! EoS stiffness parameter
+  , tag::pstiff,   std::vector< kw::mat_pstiff::info::expect::type >
+    //! Dynamic viscosity
+  , tag::mu,       std::vector< kw::mat_mu::info::expect::type >
+    //! Spec. heat at const vol.
+  , tag::cv,       std::vector< kw::mat_cv::info::expect::type >
+    //! Heat conductivity
+  , tag::k,        std::vector< kw::mat_k::info::expect::type >
 > >;
 
 //! Compressible flow equation parameters storage
@@ -288,13 +318,12 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::farfield_velocity, std::vector< std::vector<
                               kw::velocity::info::expect::type > >
   , tag::bc,            bc
-  , tag::sponge,        std::vector< std::vector<
-                          kw::sponge::info::expect::type > >
+  , tag::sponge,        SpongeParameters
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage
-  , tag::bcstag,        StagnationBCParameters
+  , tag::stag,          StagnationParameters
   //! Skip boundary condition configuration storage
-  , tag::bcskip,        SkipBCParameters
+  , tag::skip,          SkipParameters
   //! System FCT character
   , tag::sysfct,        std::vector< int >
   //! Indices of system-FCT scalar components considered as a system
@@ -318,21 +347,12 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::kappa,         std::vector< kw::pde_kappa::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::p0,            std::vector< kw::pde_p0::info::expect::type >
-    //! Ratio of spec heats
-  , tag::gamma,         std::vector<
-                          std::vector< kw::mat_gamma::info::expect::type > >
-    //! EoS stiffness parameter
-  , tag::pstiff,        std::vector<
-                          std::vector< kw::mat_pstiff::info::expect::type > >
-    //! Dynamic viscosity
-  , tag::mu,            std::vector<
-                          std::vector< kw::mat_mu::info::expect::type > >
-    //! Spec. heat at const vol.
-  , tag::cv,            std::vector<
-                          std::vector< kw::mat_cv::info::expect::type > >
-    //! Heat conductivity
-  , tag::k,             std::vector<
-                          std::vector< kw::mat_k::info::expect::type > >
+    //! Materials block
+  , tag::material,      std::vector< std::vector< material > >
+    //! Materials index/EoS map
+  , tag::matidxmap,     tk::TaggedTuple< brigand::list<
+      tag::eosidx,      std::vector< std::size_t >,
+      tag::matidx,      std::vector< std::size_t > > >
     //! total number of optional passive tracker particles for visualization
   , tag::npar,          std::vector< kw::npar::info::expect::type >
     //! Flux function type
@@ -350,6 +370,7 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::bc,            bc
   , tag::ic,            ic
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
+  , tag::sponge,        SpongeParameters
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)
@@ -368,31 +389,22 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::kappa,         std::vector< kw::pde_kappa::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::p0,            std::vector< kw::pde_p0::info::expect::type >
-    //! Ratio of spec heats
-  , tag::gamma,         std::vector<
-                          std::vector< kw::mat_gamma::info::expect::type > >
-    //! EoS stiffness parameter
-  , tag::pstiff,        std::vector<
-                          std::vector< kw::mat_pstiff::info::expect::type > >
-    //! Dynamic viscosity
-  , tag::mu,            std::vector<
-                          std::vector< kw::mat_mu::info::expect::type > >
-    //! Spec. heat at const vol.
-  , tag::cv,            std::vector<
-                          std::vector< kw::mat_cv::info::expect::type > >
-    //! Heat conductivity
-  , tag::k,             std::vector<
-                          std::vector< kw::mat_k::info::expect::type > >
-  //! number of materials
+    //! Materials block
+  , tag::material,      std::vector< std::vector< material > >
+    //! Materials index/EoS map
+  , tag::matidxmap,     tk::TaggedTuple< brigand::list<
+      tag::eosidx,      std::vector< std::size_t >,
+      tag::matidx,      std::vector< std::size_t > > >
+    //! number of materials
   , tag::nmat,          std::vector< kw::nmat::info::expect::type >
-  //! pressure relaxation toggle
+    //! pressure relaxation toggle
   , tag::prelax,        std::vector< kw::prelax::info::expect::type >
-  //! pressure relaxation time scale
+    //! pressure relaxation time scale
   , tag::prelax_timescale,
                       std::vector< kw::prelax_timescale::info::expect::type >
-  //! interface compression toggle
+    //! interface compression toggle
   , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
-  //! interface compression parameter
+    //! interface compression parameter
   , tag::intsharp_param,
                       std::vector< kw::intsharp_param::info::expect::type >
     //! Flux function type

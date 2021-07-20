@@ -159,6 +159,21 @@ class DG : public CBase_DG {
     //! Initialize the vector of nodal extrema
     void resizeNodalExtremac();
 
+    //! Compute the nodal extrema for chare-boundary nodes
+    void evalNodalExtrm( const std::size_t ncomp,
+                         const std::size_t nprim,
+                         const std::size_t ndof_NodalExtrm,
+                         const std::vector< std::size_t >& bndel,
+                         const std::vector< std::size_t >& inpoel,
+                         const tk::UnsMesh::Coords& coord,
+                         const std::vector< std::size_t >& gid,
+                         const std::unordered_map< std::size_t, std::size_t >&
+                           bid,
+                         const tk::Fields& U,
+                         const tk::Fields& P,
+                         std::vector< std::vector<tk::real> >& uNodalExtrm,
+                         std::vector< std::vector<tk::real> >& pNodalExtrm );
+
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
     void comnodeout( const std::vector< std::size_t >& gid,

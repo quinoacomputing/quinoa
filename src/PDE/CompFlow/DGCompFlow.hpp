@@ -147,7 +147,7 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
       const auto& bgpreic = ic.get< tag::pressure >();
-      const auto& cv = g_inputdeck.get< tag::param, eq, tag::cv >();
+      auto c_v = cv< eq >(m_system);
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
@@ -164,8 +164,8 @@ class CompFlow {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, 1.0, t, b, bgpreic[m_system][0],
-                             cv[m_system][0], s );
+              initializeBox( m_system, 1.0, t, b, bgpreic[m_system][0], c_v,
+                s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -420,119 +420,6 @@ class CompFlow {
             boxSrc( t, inpoel, boxelems[bcnt], coord, geoElem, ndofel, R );
           }
           ++bcnt;
-        }
-      }
-    }
-
-    //! Compute the nodal extrema for chare-boundary nodes
-    //! \param[in] ncomp Number of conservative variables
-    //! \param[in] nprim Number of primitive variables
-    //! \param[in] ndof_NodalExtrm Degree of freedom for nodal extrema
-    //! \param[in] bndel List of elements contributing to chare-boundary nodes
-    //! \param[in] inpoel Element-node connectivity for element e
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in] gid Local->global node id map
-    //! \param[in] bid Local chare-boundary node ids (value) associated to
-    //!   global node ids (key)
-    //! \param[in] U Vector of conservative variables
-    //! \param[in] P Vector of primitive variables
-    //! \param[in,out] uNodalExtrm Chare-boundary nodal extrema for conservative
-    //!   variables
-    //! \param[in,out] pNodalExtrm Chare-boundary nodal extrema for primitive
-    //!   variables
-    void evalNodalExtrm( const std::size_t ncomp,
-                         [[maybe_unused]] const std::size_t nprim,
-                         const std::size_t ndof_NodalExtrm,
-                         const std::vector< std::size_t >& bndel,
-                         const std::vector< std::size_t >& inpoel,
-                         const tk::UnsMesh::Coords& coord,
-                         const std::vector< std::size_t >& gid,
-                         const std::unordered_map< std::size_t, std::size_t >&
-                           bid,
-                         const tk::Fields& U,
-                         [[maybe_unused]] const tk::Fields& P,
-                         std::vector< std::vector<tk::real> >& uNodalExtrm,
-                         [[maybe_unused]] std::vector< std::vector<tk::real> >&
-                           pNodalExtrm ) const
-    {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-
-      for (auto e : bndel)
-      {
-        // access node IDs
-        const std::vector<std::size_t> N
-          { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
-
-        // Loop over nodes of element e
-        for(std::size_t ip=0; ip<4; ++ip)
-        {
-          auto i = bid.find( gid[N[ip]] );
-          if (i != end(bid))      // If ip is the chare boundary point
-          {
-            // Find the nodal extrema of conservative variables
-            for (std::size_t c=0; c<ncomp; ++c)
-            {
-              auto max_mark = c * ndof_NodalExtrm;
-              auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
-              uNodalExtrm[i->second][max_mark] =
-                std::max(uNodalExtrm[i->second][max_mark], U(e,c*rdof,0));
-              uNodalExtrm[i->second][min_mark] =
-                std::min(uNodalExtrm[i->second][min_mark], U(e,c*rdof,0));
-            }
-
-            // If DG(P2) is applied, find the nodal extrema of the gradients of
-            // conservative/primitive variables in the physical domain
-            if(ndof_NodalExtrm > 1)
-            {
-              // Vector used to store the first order derivatives
-              std::vector< tk::real > grad(3, 0.0);
-
-              const auto& cx = coord[0];
-              const auto& cy = coord[1];
-              const auto& cz = coord[2];
-
-              std::array< std::array< tk::real, 3>, 4 > coordel {{
-                {{ cx[ N[0] ], cy[ N[0] ], cz[ N[0] ] }},
-                {{ cx[ N[1] ], cy[ N[1] ], cz[ N[1] ] }},
-                {{ cx[ N[2] ], cy[ N[2] ], cz[ N[2] ] }},
-                {{ cx[ N[3] ], cy[ N[3] ], cz[ N[3] ] }}
-              }};
-
-              auto jacInv = tk::inverseJacobian( coordel[0], coordel[1],
-                coordel[2], coordel[3] );
-
-              // Compute the derivatives of basis functions
-              auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
-
-              std::vector< tk::real > center{0.25, 0.25, 0.25};
-              tk::evaldBdx_p2(center, jacInv, dBdx);
-
-              // Evaluate the first order derivative in physical domain
-              for(std::size_t icomp = 0; icomp < ncomp; icomp++)
-              {
-                auto mark = icomp * rdof; 
-                for(std::size_t idir = 0; idir < 3; idir++)
-                {
-                  for(std::size_t idof = 1; idof < rdof; idof++)
-                    grad[idir] += U(e, mark+idof, 0) * dBdx[idir][idof];
-                }
-              }
-
-              // Store the extrema for the gradients
-              for (std::size_t c=0; c<ncomp; ++c)
-              {
-                for (std::size_t idof = 1; idof < ndof_NodalExtrm; idof++)
-                {
-                  auto max_mark = c * ndof_NodalExtrm + idof;
-                  auto min_mark = max_mark + ncomp * ndof_NodalExtrm;
-                  uNodalExtrm[i->second][max_mark] =
-                    std::max(uNodalExtrm[i->second][max_mark], grad[idof]);
-                  uNodalExtrm[i->second][min_mark] =
-                    std::min(uNodalExtrm[i->second][min_mark], grad[idof]);
-                }
-              }
-            }
-          }
         }
       }
     }
@@ -814,7 +701,8 @@ class CompFlow {
     histOutput( const std::vector< HistData >& h,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
-                const tk::Fields& U ) const
+                const tk::Fields& U,
+                const tk::Fields& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 

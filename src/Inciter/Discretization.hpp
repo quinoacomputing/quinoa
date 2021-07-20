@@ -287,31 +287,30 @@ class Discretization : public CBase_Discretization {
     //! Remap mesh data due to new local ids
     void remap( const std::unordered_map< std::size_t, std::size_t >& map );
 
-    //! \brief Function object for querying the node ids at which a particular
-    //!   BCType BC is configured by the user, called for each PDE type
-    template< typename BCType >
-    struct BCNodes {
+    //! \brief Function object for querying the node ids that belong to side
+    //!   sets of the same type, called for each PDE type
+    template< typename... tags >
+    struct SidesetNodes {
 
       const std::map< int, std::vector< std::size_t > >& m_bface;
       const std::vector< std::size_t >& m_triinpoel;
       std::unordered_map< int, std::unordered_set< std::size_t > >& m_nodes;
 
       explicit
-        BCNodes( const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::vector< std::size_t >& triinpoel,
-                 std::unordered_map< int,
-                   std::unordered_set< std::size_t > >& nodes )
+        SidesetNodes( const std::map< int, std::vector< std::size_t > >& bface,
+                      const std::vector< std::size_t >& triinpoel,
+                      std::unordered_map< int,
+                        std::unordered_set< std::size_t > >& nodes )
         : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes) {}
 
       template< typename Eq > void operator()( brigand::type_<Eq> ) {
-        const auto& bc =
-          g_inputdeck.template get< tag::param, Eq, tag::bc, BCType >();
-        for (const auto& eq : bc) {
+        const auto& ss = g_inputdeck.template get< tag::param, Eq, tags... >();
+        for (const auto& eq : ss) {
           for (const auto& s : eq) {
             auto k = m_bface.find( std::stoi(s) );
             if (k != end(m_bface)) {
               auto& n = m_nodes[ k->first ];  // associate set id
-              for (auto f : k->second) {      // face ids on BCType side set
+              for (auto f : k->second) {      // face ids on side set
                 n.insert( m_triinpoel[f*3+0] );
                 n.insert( m_triinpoel[f*3+1] );
                 n.insert( m_triinpoel[f*3+2] );
@@ -322,14 +321,15 @@ class Discretization : public CBase_Discretization {
       }
     };
 
-    //! \brief Query nodes at which BCType boundary conditions are set for all
+    //! \brief Query nodes that belong to side sets of the same type for all
     //!   PDE types
-    //! \tparam BCType Boundary condition type
+    //! \tparam tags Tags addressing the location of a vector of vectors of
+    //!   side set ids in the input deck
     //! \param[in] bface Boundary-faces mapped to side set ids
     //! \param[in] triinpoel Boundary-face connectivity
-    //! \return Node ids at which BCType BCs are set (value),
-    //!    associated to sides set id on which the BC is set (key)
-    template< typename BCType >
+    //! \return Node ids that belong side sets of the same type (value),
+    //!    associated to sides set id (key)
+    template< typename... tags >
     std::unordered_map< int, std::unordered_set< std::size_t > >
     bcnodes( const std::map< int, std::vector< std::size_t > >& bface,
              const std::vector< std::size_t >& triinpoel ) const
@@ -337,7 +337,7 @@ class Discretization : public CBase_Discretization {
       using PDETypes = ctr::parameters::Keys;
       std::unordered_map< int, std::unordered_set< std::size_t > > nodes;
       brigand::for_each< PDETypes >(
-        BCNodes< BCType >( bface, triinpoel, nodes ) );
+        SidesetNodes< tags... >( bface, triinpoel, nodes ) );
       return nodes;
     }
 

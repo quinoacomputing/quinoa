@@ -55,7 +55,7 @@ void spectral_decay( std::size_t nunk,
 
   for (std::size_t e=0; e<esuel.size()/4; ++e)
     if(ndofel[e] > 1)
-      Ind[e] = eval_indicator( e, ncomp, ndof, ndofel, unk );
+      Ind[e] = evalDiscontinuityIndicator( e, ncomp, ndof, ndofel[e], unk );
 
   // As for spectral-decay indicator, rho_p - rho_(p-1) actually is the leading
   // term of discretization error for the numerical solution of p-1. Therefore,
@@ -290,24 +290,24 @@ void eval_ndof( std::size_t nunk,
     Throw( "No such adaptive indicator type" );
 }
 
-tk::real eval_indicator( std::size_t e,
-                         ncomp_t ncomp,
-                         const std::size_t ndof,
-                         const std::vector< std::size_t >& ndofel,
-                         const tk::Fields& unk )
+tk::real evalDiscontinuityIndicator( std::size_t e,
+                                     ncomp_t ncomp,
+                                     const std::size_t ndof,
+                                     const std::size_t ndofel,
+                                     const tk::Fields& unk )
 // *****************************************************************************
 //! Evaluate the spectral decay indicator
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] ndof Number of degrees of freedom in the solution
-//! \param[in] ndofel Vector of local number of degrees of freedome
+//! \param[in] ndofel Local number of degrees of freedom
 //! \param[in] unk Array of unknowns
 //! \return The value of spectral indicator for the element
 // *****************************************************************************
 {
   tk::real Ind(0.0);
 
-  auto ng = tk::NGvol(ndofel[e]);
+  auto ng = tk::NGvol(ndofel);
 
   // arrays for quadrature points
   std::array< std::vector< tk::real >, 3 > coordgp;
@@ -326,14 +326,14 @@ tk::real eval_indicator( std::size_t e,
   for (std::size_t igp=0; igp<ng; ++igp)
   {
     // Compute the basis function
-    auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+    auto B = tk::eval_basis( ndofel, coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
-    auto state = tk::eval_state( ncomp, 0, ndof, ndofel[e], e, unk, B );
+    auto state = tk::eval_state( ncomp, 0, ndof, ndofel, e, unk, B );
 
     U += wgp[igp] * state[0] * state[0];
 
-    if(ndofel[e] > 4)
+    if(ndofel > 4)
     {
        auto dU_p2 = unk(e, 4, 0) * B[4]
                   + unk(e, 5, 0) * B[5]
