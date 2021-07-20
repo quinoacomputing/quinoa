@@ -54,7 +54,7 @@ WENO_P1( const std::vector< int >& esuel,
   {
     for (std::size_t e=0; e<nelem; ++e)
     {
-      WENOFunction(U, esuel, e, c, rdof, offset, cweight, limU);
+      WENOLimiting(U, esuel, e, c, rdof, offset, cweight, limU);
     }
 
     auto mark = c*rdof;
@@ -111,7 +111,7 @@ Superbee_P1( const std::vector< int >& esuel,
 
     if (dof_el > 1)
     {
-      auto phi = SuperbeeFunction(U, esuel, inpoel, coord, e, ndof, rdof,
+      auto phi = SuperbeeLimiting(U, esuel, inpoel, coord, e, ndof, rdof,
                    dof_el, offset, ncomp, beta_lim);
 
       // apply limiter function
@@ -180,10 +180,10 @@ SuperbeeMultiMat_P1(
     if (dof_el > 1)
     {
       // limit conserved quantities
-      auto phic = SuperbeeFunction(U, esuel, inpoel, coord, e, ndof, rdof,
+      auto phic = SuperbeeLimiting(U, esuel, inpoel, coord, e, ndof, rdof,
                     dof_el, offset, ncomp, beta_lim);
       // limit primitive quantities
-      auto phip = SuperbeeFunction(P, esuel, inpoel, coord, e, ndof, rdof,
+      auto phip = SuperbeeLimiting(P, esuel, inpoel, coord, e, ndof, rdof,
                     dof_el, offset, nprim, beta_lim);
 
       if(ndof > 1)
@@ -290,7 +290,7 @@ VertexBasedTransport_P1(
     {
       std::vector< std::vector< tk::real > > unk;
       // limit conserved quantities
-      auto phi = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e,
+      auto phi = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       // limits under which compression is to be performed
@@ -378,7 +378,7 @@ VertexBasedCompflow_P1(
     {
       std::vector< std::vector< tk::real > > unk;
       // limit conserved quantities
-      auto phi = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem,
+      auto phi = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem,
         e, rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       // apply limiter function
@@ -475,11 +475,11 @@ VertexBasedCompflow_P2(
       // If DGP2 is applied, apply the limiter function to the first derivative
       // to obtain the limiting coefficient for P2 coefficients
       if(dof_el > 4)
-        phic_p2 = VertexBasedFunction_P2(unk, U, esup, inpoel, coord, geoElem,
+        phic_p2 = VertexBasedLimiting_P2(unk, U, esup, inpoel, coord, geoElem,
           e, rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       // limit conserved quantities
-      phic_p1 = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e,
+      phic_p1 = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       if(dof_el > 4)
@@ -614,10 +614,10 @@ VertexBasedMultiMat_P1(
     {
       std::vector< std::vector< tk::real > > unk;
       // limit conserved quantities
-      auto phic = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e,
+      auto phic = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
       // limit primitive quantities
-      auto phip = VertexBasedFunction(unk, P, esup, inpoel, coord, geoElem, e,
+      auto phip = VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, nprim, gid, bid, pNodalExtrm);
 
       if(ndof > 1 && intsharp == 0)
@@ -662,7 +662,7 @@ VertexBasedMultiMat_P1(
 }
 
 void
-WENOFunction( const tk::Fields& U,
+WENOLimiting( const tk::Fields& U,
               const std::vector< int >& esuel,
               std::size_t e,
               inciter::ncomp_t c,
@@ -775,7 +775,7 @@ WENOFunction( const tk::Fields& U,
 }
 
 std::vector< tk::real >
-SuperbeeFunction( const tk::Fields& U,
+SuperbeeLimiting( const tk::Fields& U,
                   const std::vector< int >& esuel,
                   const std::vector< std::size_t >& inpoel,
                   const tk::UnsMesh::Coords& coord,
@@ -932,7 +932,7 @@ SuperbeeFunction( const tk::Fields& U,
 }
 
 std::vector< tk::real >
-VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
+VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -1091,7 +1091,7 @@ VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
 }
 
 std::vector< tk::real >
-VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
+VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
