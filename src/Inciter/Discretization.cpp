@@ -45,7 +45,6 @@ Discretization::Discretization(
   const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
-  [[maybe_unused]] const std::vector< std::size_t >& ginpoel,
   const tk::UnsMesh::CoordMap& coordmap,
   const tk::UnsMesh::Chunk& el,
   const tk::CommMaps& msum,
@@ -94,14 +93,13 @@ Discretization::Discretization(
 //!   solver proxy
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] meshwriter Mesh writer proxy
-//! \param[in] ginpoel Vector of mesh element connectivity owned (global IDs)
 //! \param[in] coordmap Coordinates of mesh nodes and their global IDs
 //! \param[in] msum Communication maps associated to chare IDs bordering the
 //!   mesh chunk we operate on
 //! \param[in] nc Total number of Discretization chares
 // *****************************************************************************
 {
-  Assert( !ginpoel.empty(), "No elements assigned to Discretization chare" );
+  Assert( !m_inpoel.empty(), "No elements assigned to Discretization chare" );
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
           "Jacobian in input mesh to Discretization non-positive" );
   #if not defined(__INTEL_COMPILER) || defined(NDEBUG)
