@@ -68,6 +68,7 @@ class Sorter : public CBase_Sorter {
                      CkCallback reorderRefiner,
                      const std::vector< std::size_t >& ginpoel,
                      const tk::UnsMesh::CoordMap& coordmap,
+                     const tk::UnsMesh::Chunk& el,
                      const std::map< int, std::vector< std::size_t > >& bface,
                      const std::vector< std::size_t >& triinpoel,
                      const std::map< int, std::vector< std::size_t > >& bnode,
@@ -140,6 +141,7 @@ class Sorter : public CBase_Sorter {
       p | m_reorderRefiner;
       p | m_ginpoel;
       p | m_coordmap;
+      p | m_el;
       p | m_nbnd;
       p | m_bface;
       p | m_triinpoel;
@@ -183,6 +185,8 @@ class Sorter : public CBase_Sorter {
     std::vector< std::size_t > m_ginpoel;
     //! Coordinates associated to global node IDs of our mesh chunk
     tk::UnsMesh::CoordMap m_coordmap;
+    //! Elements of the mesh chunk we operate on
+    tk::UnsMesh::Chunk m_el;
     //! Counter for number of chares contributing to chare boundary nodes
     std::size_t m_nbnd;
     //! List of boundary faces associated to side-set IDs
