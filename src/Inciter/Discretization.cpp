@@ -236,22 +236,22 @@ Discretization::dynALE() const
 
 void
 Discretization::meshvelInit(
-  const std::vector< tk::real >& w,
+  const std::vector< tk::real >& x,
   const std::vector< tk::real >& div,
   const std::unordered_map< std::size_t,
-          std::vector< std::pair< bool, tk::real > > >& wbc,
+          std::vector< std::pair< bool, tk::real > > >& bc,
   CkCallback c )
 // *****************************************************************************
 //  Initialize mesh velocity linear solve: set initial guess and BCs
-//! \param[in] w Initial guess for mesh velocity linear solve
+//! \param[in] x Initial guess for mesh velocity linear solve
 //! \param[in] div Velocity divergence for Helmholtz rhs
-//! \param[in] wbc Local node ids associated to mesh velocity Dirichlet BCs
+//! \param[in] bc Local node ids associated to linear solver Dirichlet BCs
 // \param[in] c Function to call when the BCs have been applied
 // *****************************************************************************
 {
   auto eps = std::numeric_limits< tk::real >::epsilon();
-  m_conjugategradients[ thisIndex ].init( w, div,
-    std::abs(m_initial-1.0) < eps ? wbc : decltype(wbc){}, c );
+  m_conjugategradients[ thisIndex ].init( x, div,
+    std::abs(m_initial-1.0) < eps ? bc : decltype(bc){}, c );
 }
 
 void
@@ -284,7 +284,11 @@ Discretization::meshvelConv()
 // *****************************************************************************
 {
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-  if (ALE() && meshvel == ctr::MeshVelocityType::FLUID) {
+
+  if ( ALE() &&
+       (meshvel == ctr::MeshVelocityType::FLUID ||
+        meshvel == ctr::MeshVelocityType::HELMHOLTZ) )
+  {
     m_meshvel_converged &= ConjugateGradients()->converged();
   }
 }

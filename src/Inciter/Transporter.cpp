@@ -344,7 +344,9 @@ Transporter::info( const InciterPrint& print )
     print.item( "Volume-change CFL coefficient", dvcfl );
     print.Item< ctr::MeshVelocity, tag::ale, tag::meshvelocity >();
     auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-    if (meshvel == ctr::MeshVelocityType::FLUID) {
+    if (meshvel == ctr::MeshVelocityType::FLUID ||
+        meshvel == ctr::MeshVelocityType::HELMHOLTZ)
+    {
       print.item( "Vorticity multiplier",
                   g_inputdeck.get< tag::ale, tag::vortmult >() );
       print.item( "Mesh velocity linear solver tolerance",

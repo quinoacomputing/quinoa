@@ -91,10 +91,10 @@ class Discretization : public CBase_Discretization {
 
     //! Initialize mesh velocity linear solve: set initial guess and BCs
     void
-    meshvelInit( const std::vector< tk::real >& w,
+    meshvelInit( const std::vector< tk::real >& x,
                  const std::vector< tk::real >& div,
                  const std::unordered_map< std::size_t,
-                         std::vector< std::pair< bool, tk::real > > >& wbc,
+                         std::vector< std::pair< bool, tk::real > > >& bc,
                 CkCallback c );
 
     //! Solve using Conjugrate Gradients linear solver

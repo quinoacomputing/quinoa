@@ -228,7 +228,7 @@ ALECG::queryBC()
     auto k = m_bface.find( std::stoi(s) );
     if (k != end(m_bface)) {
       auto& n = meshvelbcnodes[ k->first ];  // associate set id
-      for (auto f : k->second) {               // face ids on side set
+      for (auto f : k->second) {             // face ids on side set
         n.insert( m_triinpoel[f*3+0] );
         n.insert( m_triinpoel[f*3+1] );
         n.insert( m_triinpoel[f*3+2] );
@@ -1058,9 +1058,7 @@ ALECG::veldiv()
   // clear receive buffer
   tk::destroy(m_veldivc);
 
-  // finish computing divergence dividing the weak sum by the nodal volumes
-  for (std::size_t p=0; p<m_veldiv.size(); ++p)
-    m_veldiv[p] /= d->Voln()[p];
+  // Leave weak result in m_veldiv needed by the Helmholtz solve
 
   meshvelbc();
 }
@@ -1116,8 +1114,15 @@ ALECG::meshvelbc( tk::real maxv )
 
   } else if (meshvel == ctr::MeshVelocityType::HELMHOLTZ) {
 
+    // Set scalar potential linear solve boundary conditions
+    std::unordered_map< std::size_t,
+      std::vector< std::pair< bool, tk::real > > > pbc;
+
+    // Dirichlet BCs where user specified mesh velocity BCs
+    for (auto i : m_meshvelbcnodes) pbc[i] = {{ {true,0} }};
+
     // initialize Helmholtz decomposition linear solver
-    Disc()->meshvelInit( {}, m_veldiv, {},
+    Disc()->meshvelInit( {}, m_veldiv, pbc,
       CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
 
   } else {
@@ -1164,6 +1169,11 @@ ALECG::helmholtz( [[maybe_unused]] CkDataMsg* msg )
 //  Compute the gradient of the scalar potential for ALE
 // *****************************************************************************
 {
+  //if (msg != nullptr) {
+  //  auto *norm = static_cast< tk::real * >( msg->getData() );
+  //  std::cout << "solved: " << *norm << '\n';
+  //}
+
   auto d = Disc();
 
   // compute gradient of scalar potential for ALE (own portion)
@@ -1226,7 +1236,7 @@ ALECG::gradpot()
   // clear receive buffer
   tk::destroy(m_gradpotc);
 
-  // finish computing the gradient dividing the weak sum by the nodal volumes
+  // finish computing the gradient dividing weak sum by the nodal volumes
   for (std::size_t j=0; j<3; ++j)
     for (std::size_t p=0; p<m_gradpot[j].size(); ++p)
       m_gradpot[j][p] /= d->Voln()[p];
@@ -1667,6 +1677,8 @@ ALECG::writeFields( CkCallback c )
        nodefieldnames.push_back( "x-gradpot" );
        nodefieldnames.push_back( "y-gradpot" );
        nodefieldnames.push_back( "z-gradpot" );
+       nodefieldnames.push_back( "potential" );
+       nodefieldnames.push_back( "veldiv" );
        nodefields.push_back( m_w.extract(0,0) );
        nodefields.push_back( m_w.extract(1,0) );
        nodefields.push_back( m_w.extract(2,0) );
@@ -1675,6 +1687,8 @@ ALECG::writeFields( CkCallback c )
        nodefields.push_back( m_gradpot[0] );
        nodefields.push_back( m_gradpot[1] );
        nodefields.push_back( m_gradpot[2] );
+       nodefields.push_back( d->meshvelSolution() );
+       nodefields.push_back( m_veldiv );
     }
 
     // Collect field output names for analytical solutions
