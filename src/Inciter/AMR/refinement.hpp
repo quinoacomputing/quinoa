@@ -27,7 +27,7 @@ namespace AMR {
 
         public:
 
-            size_t MAX_REFINEMENT_LEVEL = 10;
+            size_t MAX_REFINEMENT_LEVEL = 3;
 
             // TODO: Document this
             child_id_list_t generate_child_ids( tet_store_t& tet_store, size_t parent_id, size_t count = MAX_CHILDREN)

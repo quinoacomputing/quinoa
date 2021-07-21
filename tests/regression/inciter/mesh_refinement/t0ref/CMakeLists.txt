@@ -11,6 +11,7 @@ add_regression_test(amr_t0ref_u_trans_diagcg ${INCITER_EXECUTABLE}
                     ARGS -c slot_cyl_amr_diagcg.q -i unitsquare_01_955.exo -v
                     BIN_BASELINE slot_cyl_diagcg_pe1_u0.0.std.exo
                     BIN_RESULT out.e-s.0.1.0
+                    BIN_DIFF_PROG_ARGS -m
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_diagcg.std
                     TEXT_RESULT diag
