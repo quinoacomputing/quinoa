@@ -54,7 +54,7 @@ WENO_P1( const std::vector< int >& esuel,
   {
     for (std::size_t e=0; e<nelem; ++e)
     {
-      WENOFunction(U, esuel, e, c, rdof, offset, cweight, limU);
+      WENOLimiting(U, esuel, e, c, rdof, offset, cweight, limU);
     }
 
     auto mark = c*rdof;
@@ -111,7 +111,7 @@ Superbee_P1( const std::vector< int >& esuel,
 
     if (dof_el > 1)
     {
-      auto phi = SuperbeeFunction(U, esuel, inpoel, coord, e, ndof, rdof,
+      auto phi = SuperbeeLimiting(U, esuel, inpoel, coord, e, ndof, rdof,
                    dof_el, offset, ncomp, beta_lim);
 
       // apply limiter function
@@ -180,10 +180,10 @@ SuperbeeMultiMat_P1(
     if (dof_el > 1)
     {
       // limit conserved quantities
-      auto phic = SuperbeeFunction(U, esuel, inpoel, coord, e, ndof, rdof,
+      auto phic = SuperbeeLimiting(U, esuel, inpoel, coord, e, ndof, rdof,
                     dof_el, offset, ncomp, beta_lim);
       // limit primitive quantities
-      auto phip = SuperbeeFunction(P, esuel, inpoel, coord, e, ndof, rdof,
+      auto phip = SuperbeeLimiting(P, esuel, inpoel, coord, e, ndof, rdof,
                     dof_el, offset, nprim, beta_lim);
 
       std::vector< tk::real > phic_p2;
@@ -294,7 +294,7 @@ VertexBasedTransport_P1(
     {
       std::vector< std::vector< tk::real > > unk;
       // limit conserved quantities
-      auto phi = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e,
+      auto phi = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       // limits under which compression is to be performed
@@ -382,7 +382,7 @@ VertexBasedCompflow_P1(
     {
       std::vector< std::vector< tk::real > > unk;
       // limit conserved quantities
-      auto phi = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem,
+      auto phi = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem,
         e, rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       // apply limiter function
@@ -479,11 +479,11 @@ VertexBasedCompflow_P2(
       // If DGP2 is applied, apply the limiter function to the first derivative
       // to obtain the limiting coefficient for P2 coefficients
       if(dof_el > 4)
-        phic_p2 = VertexBasedFunction_P2(unk, U, esup, inpoel, coord, geoElem,
+        phic_p2 = VertexBasedLimiting_P2(unk, U, esup, inpoel, coord, geoElem,
           e, rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       // limit conserved quantities
-      phic_p1 = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e,
+      phic_p1 = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       if(dof_el > 4)
@@ -619,10 +619,10 @@ VertexBasedMultiMat_P1(
       std::vector< std::vector< tk::real > > unk;
       std::vector< std::vector< tk::real > > prim;
       // limit conserved quantities
-      auto phic = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e,
+      auto phic = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
       // limit primitive quantities
-      auto phip = VertexBasedFunction(prim, P, esup, inpoel, coord, geoElem, e,
+      auto phip = VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, nprim, gid, bid, pNodalExtrm);
 
       std::vector< tk::real > phic_p2;
@@ -763,26 +763,29 @@ VertexBasedMultiMat_P2(
       // to obtain the limiting coefficient for P2 coefficients
       if(dof_el > 4)
       {
-        phic_p2 = VertexBasedFunction_P2(unk, U, esup, inpoel, coord, geoElem,
+        phic_p2 = VertexBasedLimiting_P2(unk, U, esup, inpoel, coord, geoElem,
           e, rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
-        phip_p2 = VertexBasedFunction_P2(prim, P, esup, inpoel, coord, geoElem,
+        phip_p2 = VertexBasedLimiting_P2(prim, P, esup, inpoel, coord, geoElem,
           e, rdof, dof_el, offset, nprim, gid, bid, pNodalExtrm);
       }
 
       // limit conserved quantities
-      phic_p1 = VertexBasedFunction(unk, U, esup, inpoel, coord, geoElem, e,
+      phic_p1 = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
       // limit primitive quantities
-      phip_p1 = VertexBasedFunction(prim, P, esup, inpoel, coord, geoElem, e,
+      phip_p1 = VertexBasedLimiting(prim, P, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, nprim, gid, bid, pNodalExtrm);
 
-      for (std::size_t c=0; c<ncomp; ++c)
-        phic_p1[c] = std::max(phic_p1[c], phic_p2[c]);
-      for (std::size_t c=0; c<nprim; ++c)
-        phip_p1[c] = std::max(phip_p1[c], phip_p2[c]);
+      //for (std::size_t c=0; c<ncomp; ++c)
+      //  phic_p1[c] = std::max(phic_p1[c], phic_p2[c]);
+      //for (std::size_t c=0; c<nprim; ++c)
+      //  phip_p1[c] = std::max(phip_p1[c], phip_p2[c]);
 
       if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic_p1,
+          phic_p2);
+
+      PositivityPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic_p1,
           phic_p2);
 
       // limits under which compression is to be performed
@@ -863,7 +866,7 @@ VertexBasedMultiMat_P2(
 }
 
 void
-WENOFunction( const tk::Fields& U,
+WENOLimiting( const tk::Fields& U,
               const std::vector< int >& esuel,
               std::size_t e,
               inciter::ncomp_t c,
@@ -976,7 +979,7 @@ WENOFunction( const tk::Fields& U,
 }
 
 std::vector< tk::real >
-SuperbeeFunction( const tk::Fields& U,
+SuperbeeLimiting( const tk::Fields& U,
                   const std::vector< int >& esuel,
                   const std::vector< std::size_t >& inpoel,
                   const tk::UnsMesh::Coords& coord,
@@ -1133,7 +1136,7 @@ SuperbeeFunction( const tk::Fields& U,
 }
 
 std::vector< tk::real >
-VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
+VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -1292,7 +1295,7 @@ VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
 }
 
 std::vector< tk::real >
-VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
+VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -1774,6 +1777,136 @@ BoundPreservingLimitingFunction( const tk::real min,
   else if(al_gp < min)
     phi = std::fabs( (min - al_avg) / (al_gp - al_avg) );
   return phi;
+}
+
+void PositivityPreservingLimiting( std::size_t nmat,
+                                   ncomp_t offset,
+                                   std::size_t ndof,
+                                   std::size_t e,
+                                   const std::vector< std::size_t >& inpoel,
+                                   const tk::UnsMesh::Coords& coord,
+                                   const tk::Fields& U,
+                                   std::vector< tk::real >& phic_p1,
+                                   std::vector< tk::real >& phic_p2 )
+// *****************************************************************************
+//  Positivity preserving limiter for density when MulMat DG(P2) scheme is
+//    selected
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] offset Index for equation system
+//! \param[in] ndof Total number of reconstructed dofs
+//! \param[in] e Element being checked for consistency
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in,out] U Second-order solution vector which gets modified near
+//!   material interfaces for consistency
+//! \param[in] unk Vector of conservative variables based on Taylor basis
+//! \param[in,out] phic_p1 Vector of limiter functions for P1 dofs of the
+//!   conserved quantities
+//! \param[in,out] phic_p2 Vector of limiter functions for P2 dofs of the
+//!   conserved quantities
+// *****************************************************************************
+{
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  // Extract the element coordinates
+  std::array< std::array< tk::real, 3>, 4 > coordel {{
+    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+  // Compute the determinant of Jacobian matrix
+  auto detT =
+    tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+  std::vector< tk::real > phi_bound(nmat, 1.0);
+
+  const tk::real min = 1e-15;
+
+  for (std::size_t lf=0; lf<4; ++lf)
+  {
+    std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
+                                             inpoel[4*e+tk::lpofa[lf][1]],
+                                             inpoel[4*e+tk::lpofa[lf][2]] }};
+
+    std::array< std::array< tk::real, 3>, 3 > coordfa {{
+      {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
+      {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
+      {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
+
+    auto ng = tk::NGfa(ndof);
+
+    std::array< std::vector< tk::real >, 2 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTri( ng, coordgp, wgp );
+
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      auto gp = tk::eval_gp( igp, coordfa, coordgp );
+      auto B = tk::eval_basis( ndof,
+            tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+
+      auto state = eval_state( U.nprop()/ndof, offset, ndof, ndof, e, U, B );
+
+      for(std::size_t imat = 0; imat < nmat; imat++)
+      {
+        tk::real phi(1.0);
+        auto al = state[densityIdx(nmat, imat)];
+        auto al_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
+        if(al < min)
+          phi = std::fabs( (min - al_avg) / (al  - al_avg) );
+        phi_bound[imat] = std::min( phi_bound[imat], phi );
+      }
+    }
+  }
+
+  if(ndof > 4)
+  {
+    auto ng = tk::NGvol(ndof);
+    std::array< std::vector< tk::real >, 3 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
+        coordgp[2][igp] );
+
+      auto state = tk::eval_state(U.nprop()/ndof, offset, ndof, ndof, e, U, B);
+
+      for(std::size_t imat = 0; imat < nmat; imat++)
+      {
+        tk::real phi(1.0);
+        auto al = state[densityIdx(nmat, imat)];
+        auto al_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
+        if(al < min)
+          phi = std::fabs( (min - al_avg) / (al  - al_avg) );
+        phi_bound[imat] = std::min( phi_bound[imat], phi );
+      }
+    }
+  }
+  for(std::size_t imat = 0; imat < nmat; imat++)
+    phic_p1[densityIdx(nmat,imat)] =
+      phi_bound[imat] * phic_p1[densityIdx(nmat,imat)];
+  if(ndof > 4)
+    for(std::size_t imat = 0; imat < nmat; imat++)
+      phic_p2[densityIdx(nmat,imat)] =
+        phi_bound[imat] * phic_p2[densityIdx(nmat,imat)];
 }
 
 bool

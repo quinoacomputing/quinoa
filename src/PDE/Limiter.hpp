@@ -137,7 +137,7 @@ VertexBasedMultiMat_P2(
 
 //! WENO limiter function calculation for P1 dofs
 void
-WENOFunction( const tk::Fields& U,
+WENOLimiting( const tk::Fields& U,
               const std::vector< int >& esuel,
               std::size_t e,
               inciter::ncomp_t c,
@@ -148,7 +148,7 @@ WENOFunction( const tk::Fields& U,
 
 //! Superbee limiter function calculation for P1 dofs
 std::vector< tk::real >
-SuperbeeFunction( const tk::Fields& U,
+SuperbeeLimiting( const tk::Fields& U,
                   const std::vector< int >& esuel,
                   const std::vector< std::size_t >& inpoel,
                   const tk::UnsMesh::Coords& coord,
@@ -162,7 +162,7 @@ SuperbeeFunction( const tk::Fields& U,
 
 //! Kuzmin's vertex-based limiter function calculation for P1 dofs
 std::vector< tk::real >
-VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
+VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -179,7 +179,7 @@ VertexBasedFunction( const std::vector< std::vector< tk::real > >& unk,
 
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
 std::vector< tk::real >
-VertexBasedFunction_P2( const std::vector< std::vector< tk::real > >& unk,
+VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -223,6 +223,17 @@ BoundPreservingLimitingFunction( const tk::real min,
                                  const tk::real max,
                                  const tk::real al_gp,
                                  const tk::real al_avg );
+
+//! Positivity preserving limiter for the density
+void PositivityPreservingLimiting( std::size_t nmat,
+                                   ncomp_t offset,
+                                   std::size_t ndof,
+                                   std::size_t e,
+                                   const std::vector< std::size_t >& inpoel,
+                                   const tk::UnsMesh::Coords& coord,
+                                   const tk::Fields& U,
+                                   std::vector< tk::real >& phic_p1,
+                                   std::vector< tk::real >& phic_p2 );
 
 //! Interface indicator function, which checks element for material interface
 bool
