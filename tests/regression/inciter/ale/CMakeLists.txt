@@ -160,3 +160,30 @@ add_regression_test(compflow_euler_alecg_ale_vort ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
                     LABELS alecg ale)
+
+add_regression_test(compflow_euler_alecg_ale_helmholtz ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES tg_helmholtz.q unitcube_1k.exo
+                    ARGS -c tg_helmholtz.q -v
+                    BIN_BASELINE tg_helmholtz.0.std.exo.0
+                                 tg_helmholtz.0.std.exo.1
+                                 tg_helmholtz.0.std.exo.2
+                                 tg_helmholtz.0.std.exo.3
+                                 tg_helmholtz.10.std.exo.0
+                                 tg_helmholtz.10.std.exo.1
+                                 tg_helmholtz.10.std.exo.2
+                                 tg_helmholtz.10.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                               out.e-s.10.4.0
+                               out.e-s.10.4.1
+                               out.e-s.10.4.2
+                               out.e-s.10.4.3
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_tg_helmholtz.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
+                    LABELS alecg ale)
