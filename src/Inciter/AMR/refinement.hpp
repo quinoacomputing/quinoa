@@ -307,9 +307,10 @@ namespace AMR {
                     trace_out << "Looping to " << NUM_FACE_NODES << std::endl;
                     for (size_t k = 0; k < NUM_FACE_NODES; k++)
                     {
-                        trace_out << "nodes " << k << std::endl;
-
                         edge_t edge = face_edge_list[k];
+                        trace_out << "edge-nodes " << edge.get_data()[0] << "-"
+                          << edge.get_data()[1] << std::endl;
+
                         if (tet_store.edge_store.get(edge).needs_refining == 2)
                         {
                             num_face_refine_edges++;
@@ -1175,9 +1176,12 @@ namespace AMR {
 
               // remove nodes that are unmarked for derefinement
               for (auto drnode : derefine_node_set) {
-                if (unmarked_deref_node_set.count(drnode) == 0)
+                if (unmarked_deref_node_set.count(drnode) == 0) {
                   final_deref_node_set.insert(drnode);
+                  trace_out << "Final deref node " << drnode << std::endl;
+                }
               }
+
               derefine_node_set = final_deref_node_set;
               return derefine_node_set;
             }
