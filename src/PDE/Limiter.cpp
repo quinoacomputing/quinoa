@@ -802,8 +802,16 @@ VertexBasedMultiMat_P2(
           {
             phic_p1[volfracIdx(nmat,k)] = 1.0;
             phic_p2[volfracIdx(nmat,k)] = 1.0;
+            for(std::size_t idof = 1; idof < rdof; idof++)
+            {
+              unk[densityIdx(nmat, k)][idof] = 0;
+              unk[energyIdx(nmat, k)][idof] = 0;
+            }
           }
         }
+        for(std::size_t idir = 0; idir < 3; idir++)
+          for(std::size_t idof = 1; idof < rdof; idof++)
+            unk[momentumIdx(nmat, idir)][idof] = 0;
       }
       else
       {
