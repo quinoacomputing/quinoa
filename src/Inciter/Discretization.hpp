@@ -70,8 +70,8 @@ class Discretization : public CBase_Discretization {
         const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
-        const std::vector< std::size_t >& ginpoel,
         const tk::UnsMesh::CoordMap& coordmap,
+        const tk::UnsMesh::Chunk& el,
         const tk::CommMaps& msum,
         int nc );
 

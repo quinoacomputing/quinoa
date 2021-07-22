@@ -34,6 +34,7 @@ Sorter::Sorter( std::size_t meshid,
                 CkCallback reorderRefiner,
                 const std::vector< std::size_t >& ginpoel,
                 const tk::UnsMesh::CoordMap& coordmap,
+                const tk::UnsMesh::Chunk& el,
                 const std::map< int, std::vector< std::size_t > >& bface,
                 const std::vector< std::size_t >& triinpoel,
                 const std::map< int, std::vector< std::size_t > >& bnode,
@@ -46,6 +47,7 @@ Sorter::Sorter( std::size_t meshid,
   m_reorderRefiner( reorderRefiner ),
   m_ginpoel( ginpoel ),
   m_coordmap( coordmap ),
+  m_el( el ),
   m_nbnd( 0 ),
   m_bface( bface ),
   m_triinpoel( triinpoel ),
@@ -495,6 +497,9 @@ Sorter::finish()
   // Update node coordinate map with the reordered IDs
   m_coordmap = m_newcoordmap;
 
+  // Update mesh chunk data structure held in our state with new node order
+  m_el = tk::global2local( m_ginpoel );
+
   // Update symmetric chare-node communication map with the reordered IDs
   for (auto& [ neighborchare, maps ] : m_msum) {
 
@@ -565,7 +570,7 @@ Sorter::createDiscWorkers()
 
   m_scheme[m_meshid].disc()[ thisIndex ].insert( m_meshid, disc,
     m_scheme[m_meshid].fct(), m_scheme[m_meshid].conjugategradients(), m_host,
-    m_meshwriter, m_ginpoel, m_coordmap, m_msum, m_nchare );
+    m_meshwriter, m_coordmap, m_el, m_msum, m_nchare );
 
   contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
               m_cbs.get< tag::discinserted >() );

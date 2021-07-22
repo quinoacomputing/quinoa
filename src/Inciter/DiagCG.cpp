@@ -808,6 +808,7 @@ DiagCG::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
+  const std::set< std::size_t >& removedNodes,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& /*bface*/,
   const std::map< int, std::vector< std::size_t > >& bnode,
@@ -819,6 +820,7 @@ DiagCG::resizePostAMR(
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
+//! \param[in] removedNodes Newly removed mesh nodes (local ids)
 //! \param[in] nodeCommMap New node communication map
 //! \param[in] bnode Boundary-node lists mapped to side set ids
 // *****************************************************************************
@@ -837,16 +839,23 @@ DiagCG::resizePostAMR(
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, nodeCommMap );
 
+  // Remove newly removed nodes from solution vectors
+  m_u.rm(removedNodes);
+  m_ul.rm(removedNodes);
+  m_du.rm(removedNodes);
+  m_lhs.rm(removedNodes);
+  m_rhs.rm(removedNodes);
+
   // Resize auxiliary solution vectors
   auto nelem = d->Inpoel().size()/4;
   auto npoin = coord[0].size();
   auto nprop = m_u.nprop();
-  m_u.resize( npoin, nprop );
-  m_ul.resize( npoin, nprop );
-  m_du.resize( npoin, nprop );
-  m_ue.resize( nelem, nprop );
-  m_lhs.resize( npoin, nprop );
-  m_rhs.resize( npoin, nprop );
+  m_u.resize( npoin );
+  m_ul.resize( npoin );
+  m_du.resize( npoin );
+  m_ue.resize( nelem );
+  m_lhs.resize( npoin );
+  m_rhs.resize( npoin );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)
