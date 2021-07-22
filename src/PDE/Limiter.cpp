@@ -208,8 +208,8 @@ SuperbeeMultiMat_P1(
       }
       else
       {
-        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, unk, prim,
-          phic, phic_p2);
+        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic,
+          phic_p2);
       }
 
       // apply limiter function
@@ -647,8 +647,8 @@ VertexBasedMultiMat_P1(
       }
       else
       {
-        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, unk, prim,
-          phic, phic_p2);
+        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic,
+          phic_p2);
       }
 
       // apply limiter function
@@ -781,42 +781,16 @@ VertexBasedMultiMat_P2(
       //for (std::size_t c=0; c<nprim; ++c)
       //  phip_p1[c] = std::max(phip_p1[c], phip_p2[c]);
 
-      if(ndof > 1 && intsharp == 0)
-        BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic_p1,
-          phic_p2);
-
-      PositivityPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic_p1,
-          phic_p2);
-
-      // limits under which compression is to be performed
-      std::vector< std::size_t > matInt(nmat, 0);
-      std::vector< tk::real > alAvg(nmat, 0.0);
-      for (std::size_t k=0; k<nmat; ++k)
-        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-      auto intInd = interfaceIndicator(nmat, alAvg, matInt);
-      if ((intsharp > 0) && intInd)
-      {
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          if (matInt[k])
-          {
-            phic_p1[volfracIdx(nmat,k)] = 1.0;
-            phic_p2[volfracIdx(nmat,k)] = 1.0;
-            for(std::size_t idof = 1; idof < rdof; idof++)
-            {
-              unk[densityIdx(nmat, k)][idof] = 0;
-              unk[energyIdx(nmat, k)][idof] = 0;
-            }
-          }
-        }
-        for(std::size_t idir = 0; idir < 3; idir++)
-          for(std::size_t idof = 1; idof < rdof; idof++)
-            unk[momentumIdx(nmat, idir)][idof] = 0;
+      // The coefficients for volume fractions of all materials should be
+      // identical to maintain the conservation law
+      tk::real phi_al_p1(1.0), phi_al_p2(1.0);
+      for(std::size_t k=0; k<nmat; ++k) {
+        phi_al_p1 = std::min(phic_p1[k], phi_al_p1);
+        phi_al_p2 = std::min(phic_p2[k], phi_al_p2);
       }
-      else
-      {
-        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, unk, prim,
-          phic_p1, phic_p2);
+      for(std::size_t k=0; k<nmat; ++k) {
+        phic_p1[k] =  phi_al_p1;
+        phic_p2[k] =  phi_al_p2;
       }
 
       // apply limiter function
@@ -851,6 +825,58 @@ VertexBasedMultiMat_P2(
         auto mark = c*rdof;
         for(std::size_t idof = 1; idof < rdof; idof++)
           P_lim(e, mark+idof, offset) = prim[c][idof];
+      }
+
+      // After Vertex-based limiter is applied, reset the limiting coefficients
+      phic_p1.resize(ncomp, 1.0);
+      phic_p2.resize(ncomp, 1.0);
+
+      if(ndof > 1 && intsharp == 0)
+        BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U_lim,
+          phic_p1, phic_p2);
+
+      PositivityPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U_lim,
+          phic_p1, phic_p2);
+
+      // limits under which compression is to be performed
+      std::vector< std::size_t > matInt(nmat, 0);
+      std::vector< tk::real > alAvg(nmat, 0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+      auto intInd = interfaceIndicator(nmat, alAvg, matInt);
+      if ((intsharp > 0) && intInd)
+      {
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (matInt[k])
+          {
+            // If THINC is applied to this material, the high order coefficients
+            // of density, energy and monmentum will be reset to 0
+            for(std::size_t idof = 1; idof < rdof; idof++)
+            {
+              U_lim(e, densityDofIdx(nmat, k, rdof, idof), offset) = 0;
+              U_lim(e, energyDofIdx(nmat, k, rdof, idof), offset) = 0;
+            }
+          }
+        }
+        for(std::size_t idir = 0; idir < 3; idir++)
+          for(std::size_t idof = 1; idof < rdof; idof++)
+            U_lim(e, momentumDofIdx(nmat, idir, rdof, idof), offset) = 0;
+      }
+      else
+      {
+        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U_lim, P_lim,
+          phic_p1, phic_p2);
+      }
+
+      // apply limiing coefficient
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c * rdof;
+        for(std::size_t idof=1; idof<4; idof++)
+          U_lim(e, mark+idof, offset) = phic_p1[c] * U_lim(e, mark+idof, offset);
+        for(std::size_t idof=4; idof<rdof; idof++)
+          U_lim(e, mark+idof, offset) = phic_p2[c] * U_lim(e, mark+idof, offset);
       }
     }
   }
@@ -1493,8 +1519,6 @@ void consistentMultiMatLimiting_P1(
   const std::size_t e,
   tk::Fields& U,
   [[maybe_unused]] tk::Fields& P,
-  std::vector< std::vector< tk::real > >& unk,
-  [[maybe_unused]] std::vector< std::vector< tk::real > >& prim,
   std::vector< tk::real >& phic_p1, 
   std::vector< tk::real >& phic_p2 )
 // *****************************************************************************
@@ -1505,11 +1529,6 @@ void consistentMultiMatLimiting_P1(
 //! \param[in] e Element being checked for consistency
 //! \param[in] U Vector of conservative variables
 //! \param[in] P Vector of primitive variables
-//! \parame[in,out] unk Second-order solution vector based on Taylor basis which
-//!   gets modified near material interfaces for consistency
-//! \parame[in,out] prim Second-order solution vector of primitive variables
-//!   based on Taylor basis which gets modified near material interfaces for
-//!   consistency
 //! \param[in,out] phic_p1 Vector of limiter functions for P1 dofs of the
 //!   conserved quantities
 //! \param[in,out] phip_p2 Vector of limiter functions for P2 dofs of the
@@ -1533,17 +1552,11 @@ void consistentMultiMatLimiting_P1(
       almax = U(e,volfracDofIdx(nmat, k, rdof, 0),offset);
     }
     tk::real dmax(0.0);
-    if(rdof > 4)
-      dmax = std::max(
-               std::max( std::abs(unk[volfracIdx(nmat, k)][1]),
-                         std::abs(unk[volfracIdx(nmat, k)][2]) ),
-                         std::abs(unk[volfracIdx(nmat, k)][3]) );
-    else
-      dmax = std::max(
-               std::max(
-                 std::abs(U(e,volfracDofIdx(nmat, k, rdof, 1),offset)),
-                 std::abs(U(e,volfracDofIdx(nmat, k, rdof, 2),offset)) ),
-                 std::abs(U(e,volfracDofIdx(nmat, k, rdof, 3),offset)) );
+    dmax = std::max(
+             std::max(
+               std::abs(U(e,volfracDofIdx(nmat, k, rdof, 1),offset)),
+               std::abs(U(e,volfracDofIdx(nmat, k, rdof, 2),offset)) ),
+               std::abs(U(e,volfracDofIdx(nmat, k, rdof, 3),offset)) );
     dalmax = std::max( dalmax, dmax );
   }
 
@@ -1584,12 +1597,6 @@ void consistentMultiMatLimiting_P1(
       auto rhok = U(e,densityDofIdx(nmat, k, rdof, 0),offset)/alk;
       for (std::size_t idof=1; idof<rdof; ++idof)
       {
-        // If DG(P2), modify the unk vector, otherwise the modification is
-        // applied to solution vector U
-        if(rdof > 4)
-          unk[densityIdx(nmat, k)][idof] =
-            rhok * unk[volfracIdx(nmat, k)][idof];
-        else
           U(e,densityDofIdx(nmat, k, rdof, idof),offset) = rhok *
             U(e,volfracDofIdx(nmat, k, rdof, idof),offset);
       }

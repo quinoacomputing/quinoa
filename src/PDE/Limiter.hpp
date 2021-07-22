@@ -201,8 +201,6 @@ void consistentMultiMatLimiting_P1( const std::size_t nmat,
   const std::size_t e,
   tk::Fields& U,
   tk::Fields& P,
-  std::vector< std::vector< tk::real > >& unk,
-  std::vector< std::vector< tk::real > >& prim,
   std::vector< tk::real >& phic_p1,
   std::vector< tk::real >& phic_p2 );
 
