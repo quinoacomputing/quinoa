@@ -247,8 +247,8 @@ ConjugateGradients::init(
 //  Initialize linear solve: set initial guess and boundary conditions
 //! \param[in] x Initial guess
 //! \param[in] bc Local node ids and associated Dirichlet BCs
-//! \param[in] nodecommap Node communication map
 //! \param[in] cb Call to continue with when initialized and ready for a solve
+//! \param[in] applybc True if to apply BCs
 //! \details This function allows setting the initial guess and boundary
 //!   conditions, followed by computing the initial residual and the rhs norm.
 // *****************************************************************************
@@ -305,8 +305,7 @@ ConjugateGradients::combc(
      std::vector< std::pair< bool, tk::real > > >& bc )
 // *****************************************************************************
 //  Receive contributions to boundary conditions on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive contributions
-//! \param[in] cbc Contributions to boundary conditions
+//! \param[in] bc Contributions to boundary conditions
 // *****************************************************************************
 {
   for (const auto& [g,dirbc] : bc) m_bcc[ tk::cref_find(m_lid,g) ] = dirbc;

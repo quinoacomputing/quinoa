@@ -426,13 +426,13 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
 
     //! Query special point BC configuration
     //! \tparam eq PDE type to query
-    //! \tparam bc  Special BC type to query, e.g., stagnation, skip
+    //! \tparam sbc Special BC type to query, e.g., stagnation, skip
     //! \param[in] system Equation system id
     //! \return Vectors configuring the special points and their radii
-    template< class eq, class bc >
+    template< class eq, class sbc >
     std::tuple< std::vector< tk::real >, std::vector< tk::real > >
     specialBC( std::size_t system ) {
-      const auto& bcspec = get< tag::param, eq, bc >();
+      const auto& bcspec = get< tag::param, eq, sbc >();
       const auto& point = bcspec.template get< tag::point >();
       const auto& radius = bcspec.template get< tag::radius >();
       std::vector< tk::real > pnt;

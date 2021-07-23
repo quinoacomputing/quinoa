@@ -148,7 +148,7 @@ class Discretization : public CBase_Discretization {
 
     //! Compute total box IC volume
     void
-    boxvol( const std::vector< std::unordered_set< std::size_t > >& boxnodes );
+    boxvol( const std::vector< std::unordered_set< std::size_t > >& nodes );
 
     /** @name Accessors */
     ///@{

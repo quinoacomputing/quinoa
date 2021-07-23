@@ -96,7 +96,7 @@ class ALECG : public CBase_ALECG {
     //! Setup node-neighborhood (no-op)
     void nodeNeighSetup() {}
 
-    //! Setup: query boundary conditions, output mesh, etc.
+    //! Start setup for solution
     void setup();
 
     //! Receive total box IC volume and set conditions in box
@@ -151,7 +151,7 @@ class ALECG : public CBase_ALECG {
       const std::unordered_map< std::size_t, std::size_t >& addedTets,
       const std::set< std::size_t >& removedNodes,
       const tk::NodeCommMap& nodeCommMap,
-      const std::map< int, std::vector< std::size_t > >& /* bface */,
+      const std::map< int, std::vector< std::size_t > >& bface,
       const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& triinpoel );
 

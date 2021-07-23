@@ -66,10 +66,10 @@
         Scheme::ProxyElem, and
     (3) Adding a new branch to the if test in Scheme's constructor.
 
-  \see A talk on [Concept-based runtime polymorphism with Charm++ chare arrays
-    using value semantics](http://charm.cs.illinois.edu/charmWorkshop/slides/CharmWorkshop2018_bakosi.pdf) at the 16th Annual Workshop on Charm++ and its
-    Applications, April 2018, discussing an earlier, more verbose
-    implementation of the idea, using C++11.
+  \see A talk on "Concept-based runtime polymorphism with Charm++ chare arrays
+    using value semantics given by J. Bakosi at the 16th Annual Workshop on
+    Charm++ and its Applications, April 2018, discussing an earlier, more
+    verbose implementation of the idea, using C++11.
 */
 // *****************************************************************************
 #ifndef Scheme_h
@@ -253,6 +253,7 @@ class Scheme {
     //! \return Charm++ array options object reference
     const CkArrayOptions& arrayoptions() { return bound; }
 
+    /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

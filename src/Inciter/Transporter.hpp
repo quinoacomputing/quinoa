@@ -115,14 +115,14 @@ class Transporter : public CBase_Transporter {
     //!   the tagging of chare-boundary edges, all chares are ready to perform
     //!   refinement.
     void matched( std::size_t summeshid, std::size_t nextra, std::size_t nref,
-                  std::size_t nderef, std::size_t initial );
+                  std::size_t nderef, std::size_t sumrefmode );
 
     //! Compute surface integral across the whole problem and perform leak-test
     void bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb,
                  tk::real summeshid );
 
     //! Reduction target: all chares have refined their mesh
-    void refined( std::size_t meshid, std::size_t nelem, std::size_t npoin );
+    void refined( std::size_t summeshid, std::size_t nelem, std::size_t npoin );
 
     //! \brief Reduction target: all worker chares have resized their own data
     //!   after AMR or ALE
@@ -186,7 +186,7 @@ class Transporter : public CBase_Transporter {
     void pdfstat( CkReductionMsg* msg );
 
     //! Reduction target computing total volume of IC box
-    void boxvol( tk::real v, tk::real rmeshid );
+    void boxvol( tk::real v, tk::real summeshid );
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
