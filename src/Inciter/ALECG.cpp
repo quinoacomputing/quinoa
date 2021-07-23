@@ -1671,28 +1671,29 @@ ALECG::writeFields( CkCallback c )
     auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
     volumetric( m_u );
 
+    //! Lambda to put in a field for output if not empty
+    auto add_node_field = [&]( const auto& name, const auto& field ){
+      if (not field.empty()) {
+        nodefieldnames.push_back( name );
+        nodefields.push_back( field );
+      }
+    };
+
     // Output mesh velocity if ALE is enabled
     if (d->ALE()) {
-       nodefieldnames.push_back( "x-mesh-velocity" );
-       nodefieldnames.push_back( "y-mesh-velocity" );
-       nodefieldnames.push_back( "z-mesh-velocity" );
-       nodefieldnames.push_back( "volume" );
-       nodefieldnames.push_back( "vorticity-magnitude" );
-       //nodefieldnames.push_back( "x-gradpot" );
-       //nodefieldnames.push_back( "y-gradpot" );
-       //nodefieldnames.push_back( "z-gradpot" );
-       //nodefieldnames.push_back( "potential" );
-       //nodefieldnames.push_back( "veldiv" );
-       nodefields.push_back( m_w.extract(0,0) );
-       nodefields.push_back( m_w.extract(1,0) );
-       nodefields.push_back( m_w.extract(2,0) );
-       nodefields.push_back( d->Vol() );
-       nodefields.push_back( m_vorticity[0] );
-       //nodefields.push_back( m_gradpot[0] );
-       //nodefields.push_back( m_gradpot[1] );
-       //nodefields.push_back( m_gradpot[2] );
-       //nodefields.push_back( d->meshvelSolution() );
-       //nodefields.push_back( m_veldiv );
+      add_node_field( "x-mesh-velocity", m_w.extract(0,0) );
+      add_node_field( "y-mesh-velocity", m_w.extract(1,0) );
+      add_node_field( "z-mesh-velocity", m_w.extract(2,0) );
+      add_node_field( "volume", d->Vol() );
+      add_node_field( "vorticity-magnitude", m_vorticity[0] );
+      auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+      if (meshvel == ctr::MeshVelocityType::HELMHOLTZ) {
+        add_node_field( "veldiv", m_veldiv );
+        add_node_field( "x-gradpot", m_gradpot[0] );
+        add_node_field( "y-gradpot", m_gradpot[1] );
+        add_node_field( "z-gradpot", m_gradpot[2] );
+        add_node_field( "potential", d->meshvelSolution() );
+      }
     }
 
     // Collect field output names for analytical solutions
