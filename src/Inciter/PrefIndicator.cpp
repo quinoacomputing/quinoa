@@ -118,6 +118,7 @@ void non_conformity( std::size_t nunk,
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] esuel Elements surrounding elements
+//! \param[in] esuf Elements surrounding faces
 //! \param[in] inpofa Face-node connectivity
 //! \param[in] unk Array of unknowns
 //! \param[in] ndof Number of degrees of freedom in the solution

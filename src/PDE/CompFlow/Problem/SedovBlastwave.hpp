@@ -35,13 +35,13 @@ class CompFlowProblemSedovBlastwave {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y, tk::real,
-                tk::real );
+    initialize( ncomp_t system, ncomp_t, tk::real x, tk::real y,
+                tk::real z, tk::real );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t, ncomp_t, tk::real, tk::real,  tk::real,
-                      tk::real );
+    analyticSolution( ncomp_t system, ncomp_t, tk::real x, tk::real y,
+                      tk::real z, tk::real );
 
     //! Compute and return source term for this problem
     //! \param[in,out] r Density source

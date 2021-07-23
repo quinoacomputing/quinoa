@@ -177,8 +177,7 @@ class Transport {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P,
-                      tk::Fields& ) const
+                      tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
@@ -306,7 +305,6 @@ class Transport {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
-              const tk::Fields& VolFracMax,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
@@ -342,8 +340,8 @@ class Transport {
       // compute internal surface flux integrals
       tk::surfInt( m_system, m_ncomp, m_offset, t, ndof, rdof, inpoel, coord,
                    fd, geoFace, geoElem, Upwind::flux,
-                   Problem::prescribedVelocity, U, P, VolFracMax, ndofel, R,
-                   vriem, riemannLoc, riemannDeriv, intsharp );
+                   Problem::prescribedVelocity, U, P, ndofel, R, vriem,
+                   riemannLoc, riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
@@ -355,8 +353,8 @@ class Transport {
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, rdof, b.first, fd,
           geoFace, geoElem, inpoel, coord, t, Upwind::flux,
-          Problem::prescribedVelocity, b.second, U, P, VolFracMax, ndofel, R,
-          vriem, riemannLoc, riemannDeriv, intsharp );
+          Problem::prescribedVelocity, b.second, U, P, ndofel, R, vriem,
+          riemannLoc, riemannDeriv, intsharp );
     }
 
     //! Compute the minimum time step size
@@ -402,74 +400,6 @@ class Transport {
     std::vector< std::string > histNames() const {
       std::vector< std::string > s; // punt for now
       return s;
-    }
-
-    //! Return field output going to file
-    //! \param[in] t Physical time
-    //! \param[in] nunk Number of unknowns to extract
-    //! \param[in] vol Volumes associated to elements (or nodes)
-    //! \param[in] coord Coordinates at which to evaluate the solution
-    //! \param[in,out] U Solution vector at recent time step
-    //! \return Vector of vectors to be output to file
-    //! \details This functions should be written in conjunction with names(),
-    //!   which provides the vector of field names
-    //! \note U is overwritten
-    std::vector< std::vector< tk::real > >
-    fieldOutput( tk::real t,
-                 tk::real,
-                 std::size_t nunk,
-                 std::size_t rdof,
-                 const std::vector< tk::real >& vol,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const tk::Fields& U,
-                 [[maybe_unused]] const tk::Fields& = tk::Fields() ) const
-    {
-      Assert( U.nunk() >= nunk, "Size mismatch" );
-      std::vector< std::vector< tk::real > > out;
-
-      // will output numerical solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( U.extract( c*rdof, m_offset ) );
-
-      // mesh node coordinates
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-
-      // evaluate analytic solution at time t
-      auto E = U;
-      for (std::size_t i=0; i<nunk; ++i)
-      {
-        auto s =
-          Problem::solution( m_system, m_ncomp, x[i], y[i], z[i], t );
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          E( i, c*rdof, m_offset ) = s[c];
-      }
-
-      // will output analytic solution for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c)
-        out.push_back( E.extract( c*rdof, m_offset ) );
-
-      // will output error for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) {
-        auto mark = c*rdof;
-        auto u = U.extract( mark, m_offset );
-        auto e = E.extract( mark, m_offset );
-        for (std::size_t i=0; i<nunk; ++i)
-          e[i] = std::pow( e[i] - u[i], 2.0 ) * vol[i];
-        out.push_back( e );
-      }
-
-      // will output material indicator function
-      std::vector< tk::real > matInd(nunk, 0.0);
-      for (std::size_t i=0; i<nunk; ++i) {
-        for (std::size_t c=0; c<m_ncomp; ++c) {
-          matInd[i] += U(i,c*rdof,m_offset) * static_cast< tk::real >(c+1);
-        }
-      }
-      out.push_back(matInd);
-
-      return out;
     }
 
     //! Return names of integral variables to be output to diagnostics file
