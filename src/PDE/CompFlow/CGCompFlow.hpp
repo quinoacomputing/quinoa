@@ -478,6 +478,8 @@ class CompFlow {
     //! \param[in] psup Points surrounding points
     //! \param[in] esup Elements surrounding points
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
+    //! \param[in] spongenodes Unique set of nodes at which to apply sponge
+    //               conditions
     //! \param[in] vol Nodal volumes
     //! \param[in] edgenode Local node IDs of edges
     //! \param[in] edgeid Edge ids in the order of access

@@ -117,7 +117,7 @@ class VelocityCoeffStationary {
     //! Constructor: initialize coefficients
     VelocityCoeffStationary( kw::sde_c0::info::expect::type C0_,
                              kw::sde_c0::info::expect::type& C0,
-                             std::array< tk::real, 9 >& );
+                             std::array< tk::real, 9 >& dU );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
@@ -144,7 +144,7 @@ class VelocityCoeffHydroTimeScale {
     //! Constructor: initialize coefficients
     VelocityCoeffHydroTimeScale( kw::sde_c0::info::expect::type C0_,
                                  kw::sde_c0::info::expect::type& C0,
-                                 std::array< tk::real, 9 >& );
+                                 std::array< tk::real, 9 >& dU );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept

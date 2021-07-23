@@ -37,7 +37,7 @@ tk::srcInt( ncomp_t system,
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
-//! \param[in] nelen Maximum number of elements
+//! \param[in] nelem Maximum number of elements
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
