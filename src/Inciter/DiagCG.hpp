@@ -134,7 +134,7 @@ class DiagCG : public CBase_DiagCG {
     void update( const tk::Fields& a, tk::Fields&& dul );
 
     //! Optionally refine/derefine mesh
-    void refine( const std::vector< tk::real >& l2ref );
+    void refine( const std::vector< tk::real >& l2res );
 
     //! Receive new mesh from Refiner
     void resizePostAMR(

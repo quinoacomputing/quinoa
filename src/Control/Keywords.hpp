@@ -114,8 +114,7 @@
           static const type lower = 1;
 
           // Optional expected value upper bound
-          static const type upper =
-            std::numeric_limits< tk::real >::digits10 + 1;
+          static const type upper = 10;
 
           // Optional expected valid choices description, here giving
           // information on the expected type and the valid bounds. Note that
@@ -1155,8 +1154,7 @@ struct precision_info {
     Example: "precision 10", which selects ten digits for floating-point
     output, e.g., 3.141592654. The number of digits must be larger than zero
     and lower than the maximum representable digits for the given floating-point
-    type, defined by std::numeric_limits< FLOAT_TYPE >::digits10+2.
-    For more info on setting the precision in C++, see
+    type. For more info on setting the precision in C++, see
     http://en.cppreference.com/w/cpp/io/manip/setprecision, and
     http://en.cppreference.com/w/cpp/types/numeric_limits/digits10)";
   }
@@ -2738,7 +2736,7 @@ struct materialid_info {
   struct expect {
     using type = std::size_t;
     static constexpr type lower = 1;
-    static std::string description() { return "unsigned integer"; }
+    static std::string description() { return "uint"; }
   };
 };
 using materialid = keyword< materialid_info,

@@ -19,11 +19,14 @@ namespace tk {
 bool slave( const NodeCommMap& map, std::size_t node, int chare )
 // *****************************************************************************
 //  Decide if a node is not counted by a chare
-//! \detail If a node is found in the node communication map and is associated
-//! to a lower chare id than the chare id given, it is counted by another chare
-//! (and not this one), hence a "slave" (for the purpose of this count).
+//! \param[in] map Node commuinication map to search in
+//! \param[in] node Global node id to search for
+//! \param[in] chare Caller chare id (but really can be any chare id)
 //! \return True if the node is a slave (counted by another chare with a lower
 //!   chare id)
+//! \details If a node is found in the node communication map and is associated
+//! to a lower chare id than the chare id given, it is counted by another chare
+//! (and not the caller one), hence a "slave" (for the purpose of this count).
 // *****************************************************************************
 {
   return
@@ -36,7 +39,7 @@ tk::real count( const NodeCommMap& map, std::size_t node )
 // *****************************************************************************
 //  Count the number of contributions to a node
 //! \param[in] map Node commuinication map to search in
-//! \param[in] node Global node id to searhc for
+//! \param[in] node Global node id to search for
 //! \return Count of contributions to node
 // *****************************************************************************
 {

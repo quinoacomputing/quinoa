@@ -37,7 +37,7 @@ meshvel( ctr::MeshVelocityType m,
 //  Assign mesh velocity based on user config
 //! \param[in] m Mesh velocity type
 //! \param[in] coord Mesh node coordinates
-//! \param[in] v Vector field to assign as mesh velocity
+//! \param[in] v Fluid velocity
 //! \param[in,out] w Mesh velocity assigned
 // *****************************************************************************
 {

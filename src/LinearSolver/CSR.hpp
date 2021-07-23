@@ -50,7 +50,7 @@ class CSR {
 
     //! Set Dirichlet boundary condition at a node
     void dirichlet(
-      std::size_t g,
+      std::size_t i,
       const std::vector< std::size_t >& gid = {},
       const NodeCommMap& nodecommap = {},
       std::size_t pos=0 );

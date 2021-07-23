@@ -88,6 +88,7 @@ Discretization::Discretization(
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID
+//! \param[in] disc All Discretization proxies (one per mesh)
 //! \param[in] fctproxy Distributed FCT proxy
 //! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
 //!   solver proxy

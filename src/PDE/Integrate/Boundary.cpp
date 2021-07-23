@@ -23,31 +23,32 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 
+namespace tk {
+
 void
-tk::bndSurfInt( ncomp_t system,
-                std::size_t nmat,
-                ncomp_t offset,
-                const std::size_t ndof,
-                const std::size_t rdof,
-                const std::vector< bcconf_t >& bcconfig,
-                const inciter::FaceData& fd,
-                const Fields& geoFace,
-                const Fields& geoElem,
-                const std::vector< std::size_t >& inpoel,
-                const UnsMesh::Coords& coord,
-                real t,
-                const RiemannFluxFn& flux,
-                const VelFn& vel,
-                const StateFn& state,
-                const Fields& U,
-                const Fields& P,
-                [[maybe_unused]] const Fields& VolFracMax,
-                const std::vector< std::size_t >& ndofel,
-                Fields& R,
-                std::vector< std::vector< tk::real > >& vriem,
-                std::vector< std::vector< tk::real > >& riemannLoc,
-                std::vector< std::vector< tk::real > >& riemannDeriv,
-                int intsharp )
+bndSurfInt( ncomp_t system,
+            std::size_t nmat,
+            ncomp_t offset,
+            const std::size_t ndof,
+            const std::size_t rdof,
+            const std::vector< bcconf_t >& bcconfig,
+            const inciter::FaceData& fd,
+            const Fields& geoFace,
+            const Fields& geoElem,
+            const std::vector< std::size_t >& inpoel,
+            const UnsMesh::Coords& coord,
+            real t,
+            const RiemannFluxFn& flux,
+            const VelFn& vel,
+            const StateFn& state,
+            const Fields& U,
+            const Fields& P,
+            const std::vector< std::size_t >& ndofel,
+            Fields& R,
+            std::vector< std::vector< tk::real > >& vriem,
+            std::vector< std::vector< tk::real > >& riemannLoc,
+            std::vector< std::vector< tk::real > >& riemannDeriv,
+            int intsharp )
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
 //! \details This function computes contributions from surface integrals along
@@ -61,6 +62,7 @@ tk::bndSurfInt( ncomp_t system,
 //! \param[in] bcconfig BC configuration vector for multiple side sets
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] t Physical time
@@ -199,18 +201,18 @@ tk::bndSurfInt( ncomp_t system,
 }
 
 void
-tk::update_rhs_bc ( ncomp_t ncomp,
-                    std::size_t nmat,
-                    ncomp_t offset,
-                    const std::size_t ndof,
-                    const std::size_t ndof_l,
-                    const tk::real wt,
-                    const std::array< tk::real, 3 >& fn,
-                    const std::size_t el,
-                    const std::vector< tk::real >& fl,
-                    const std::vector< tk::real >& B_l,
-                    Fields& R,
-                    std::vector< std::vector< tk::real > >& riemannDeriv )
+update_rhs_bc ( ncomp_t ncomp,
+                std::size_t nmat,
+                ncomp_t offset,
+                const std::size_t ndof,
+                const std::size_t ndof_l,
+                const tk::real wt,
+                const std::array< tk::real, 3 >& fn,
+                const std::size_t el,
+                const std::vector< tk::real >& fl,
+                const std::vector< tk::real >& B_l,
+                Fields& R,
+                std::vector< std::vector< tk::real > >& riemannDeriv )
 // *****************************************************************************
 //  Update the rhs by adding the boundary surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -270,3 +272,5 @@ tk::update_rhs_bc ( ncomp_t ncomp,
     riemannDeriv[3*nmat][el] += wt * fl[ncomp+nmat];
   }
 }
+
+} // tk::

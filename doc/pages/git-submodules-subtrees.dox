@@ -264,8 +264,8 @@ MARK_AS_ADVANCED(SOL2_INCLUDE_DIRS)
 @endcode
 
 @note We assume that [Lua](https://www.lua.org), required by Sol2, will be
-found on the system. On debian/ubuntu Lua can be installed by ```apt-get
-install liblua5.3-dev```.
+found on the system. On debian/ubuntu Lua can be installed by `apt-get
+install liblua5.3-dev`.
 
 We can now test if the TPL build works:
 
