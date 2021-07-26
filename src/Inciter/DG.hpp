@@ -158,6 +158,21 @@ class DG : public CBase_DG {
     //! Initialize the vector of nodal extrema
     void resizeNodalExtremac();
 
+    //! Compute the nodal extrema for chare-boundary nodes
+    void evalNodalExtrm( const std::size_t ncomp,
+                         const std::size_t nprim,
+                         const std::size_t ndof_NodalExtrm,
+                         const std::vector< std::size_t >& bndel,
+                         const std::vector< std::size_t >& inpoel,
+                         const tk::UnsMesh::Coords& coord,
+                         const std::vector< std::size_t >& gid,
+                         const std::unordered_map< std::size_t, std::size_t >&
+                           bid,
+                         const tk::Fields& U,
+                         const tk::Fields& P,
+                         std::vector< std::vector<tk::real> >& uNodalExtrm,
+                         std::vector< std::vector<tk::real> >& pNodalExtrm );
+
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
     void comnodeout( const std::vector< std::size_t >& gid,
@@ -215,6 +230,7 @@ class DG : public CBase_DG {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_disc;
+      p | m_ndof_NodalExtrm;
       p | m_ncomfac;
       p | m_nadj;
       p | m_ncomEsup;
@@ -318,6 +334,11 @@ class DG : public CBase_DG {
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
+    //! \brief Degree of freedom for nodal extrema vector. When DGP1 is applied,
+    //!   there is one degree of freedom for cell average variable. When DGP2 is
+    //!   applied, the degree of freedom is 4 which refers to cell average and
+    //!   gradients in three directions
+    std::size_t m_ndof_NodalExtrm;
     //! Counter for face adjacency communication map
     std::size_t m_ncomfac;
     //! Counter signaling that all ghost data have been received
@@ -361,9 +382,9 @@ class DG : public CBase_DG {
     //! Vector of right-hand side
     tk::Fields m_rhs;
     //! Vector of nodal extrema for conservative variables
-    tk::Fields m_uNodalExtrm;
+    std::vector< std::vector<tk::real> > m_uNodalExtrm;
     //! Vector of nodal extrema for primitive variables
-    tk::Fields m_pNodalExtrm;
+    std::vector< std::vector<tk::real> > m_pNodalExtrm;
     //! Buffer for vector of nodal extrema for conservative variables
     std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
     //! Buffer for vector of nodal extrema for primitive variables

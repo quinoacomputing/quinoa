@@ -55,6 +55,7 @@ DG::DG( const CProxy_Discretization& disc,
         const std::map< int, std::vector< std::size_t > >& /* bnode */,
         const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
+  m_ndof_NodalExtrm( 1 ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_ncomEsup( 0 ),
@@ -81,10 +82,8 @@ DG::DG( const CProxy_Discretization& disc,
          g_inputdeck.get< tag::discr, tag::ndof >()*
          g_inputdeck.get< tag::component >().nprop() ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
-  m_uNodalExtrm( Disc()->Bid().size(),
-                 2 * g_inputdeck.get< tag::component >().nprop() ),
-  m_pNodalExtrm( Disc()->Bid().size(),
-                 2 * m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
+  m_uNodalExtrm(),
+  m_pNodalExtrm(),
   m_uNodalExtrmc(),
   m_pNodalExtrmc(),
   m_nfac( m_fd.Inpofa().size()/3 ),
@@ -132,6 +131,14 @@ DG::DG( const CProxy_Discretization& disc,
   for (const auto& eq : g_dgpde) {
     eq.numEquationDofs(m_numEqDof);
   }
+
+  // Allocate storage for the vector of nodal extrema
+  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  if(rdof > 4)  m_ndof_NodalExtrm = 4;
+  m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
+    m_ndof_NodalExtrm*g_inputdeck.get< tag::component >().nprop() ) );
+  m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
+    m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()));
 
   // Initialization for the buffer vector of nodal extrema
   resizeNodalExtremac();
@@ -1812,44 +1819,30 @@ DG::nodalExtrema()
   {
     for (std::size_t c=0; c<ncomp; ++c)
     {
-      m_uNodalExtrm(i, c, 0) = -large;
-      m_uNodalExtrm(i, c+ncomp, 0) = large;
+      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+      {
+        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+        auto min_mark = max_mark + 1;
+        m_uNodalExtrm[i][max_mark] = -large;
+        m_uNodalExtrm[i][min_mark] =  large;
+      }
     }
     for (std::size_t c=0; c<nprim; ++c)
     {
-      m_pNodalExtrm(i, c, 0) = -large;
-      m_pNodalExtrm(i, c+nprim, 0) = large;
+      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+      {
+        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+        auto min_mark = max_mark + 1;
+        m_pNodalExtrm[i][max_mark] = -large;
+        m_pNodalExtrm[i][min_mark] =  large;
+      }
     }
   }
 
-  // Compute own portion of gradients for all equations
-  for (auto e : d->bndel())  // elements contributing to chare boundary nodes
-  {
-    // access node IDs
-    std::size_t N[4] =
-        { m_inpoel[e*4+0], m_inpoel[e*4+1], m_inpoel[e*4+2], m_inpoel[e*4+3] };
-
-    for(std::size_t ip=0; ip<4; ++ip)
-    {
-      auto i = bid.find( gid[N[ip]] );
-      if (i != end(bid))
-      {
-        for (std::size_t c=0; c<ncomp; ++c)
-        {
-          m_uNodalExtrm(i->second,c,0) =
-            std::max(m_uNodalExtrm(i->second,c,0), m_u(e,c*rdof,0));
-          m_uNodalExtrm(i->second,c+ncomp,0) =
-            std::min(m_uNodalExtrm(i->second,c+ncomp,0), m_u(e,c*rdof,0));
-        }
-        for (std::size_t c=0; c<nprim; ++c)
-        {
-          m_pNodalExtrm(i->second,c,0) =
-            std::max(m_pNodalExtrm(i->second,c,0), m_p(e,c*rdof,0));
-          m_pNodalExtrm(i->second,c+nprim,0) =
-            std::min(m_pNodalExtrm(i->second,c+nprim,0), m_p(e,c*rdof,0));
-        }
-      }
-    }
+  // Evaluate the max/min value for the chare-boundary nodes
+  if(rdof > 1) {
+      evalNodalExtrm(ncomp, nprim, m_ndof_NodalExtrm, d->bndel(), m_inpoel,
+        m_coord, gid, bid, m_u, m_p, m_uNodalExtrm, m_pNodalExtrm);
   }
 
   // Communicate extrema at nodes to other chares on chare-boundary
@@ -1904,13 +1897,23 @@ DG::comnodalExtrema( const std::vector< std::size_t >& gid,
     auto& p = m_pNodalExtrmc[gid[i]];
     for (std::size_t c=0; c<ncomp; ++c)
     {
-      u[c] = std::max( G1[i][c], u[c] );
-      u[c+ncomp] = std::min( G1[i][c+ncomp], u[c+ncomp] );
+      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+      {
+        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+        auto min_mark = max_mark + 1;
+        u[max_mark] = std::max( G1[i][max_mark], u[max_mark] );
+        u[min_mark] = std::min( G1[i][min_mark], u[min_mark] );
+      }
     }
     for (std::size_t c=0; c<nprim; ++c)
     {
-      p[c] = std::max( G2[i][c], p[c] );
-      p[c+nprim] = std::min( G2[i][c+nprim], p[c+nprim] );
+      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+      {
+        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+        auto min_mark = max_mark + 1;
+        p[max_mark] = std::max( G2[i][max_mark], p[max_mark] );
+        p[min_mark] = std::min( G2[i][min_mark], p[min_mark] );
+      }
     }
   }
 
@@ -1930,19 +1933,177 @@ void DG::resizeNodalExtremac()
   const auto ncomp = m_u.nprop() / rdof;
   const auto nprim = m_p.nprop() / rdof;
 
+  auto large = std::numeric_limits< tk::real >::max();
   for (const auto& [c,n] : Disc()->NodeCommMap())
   {
-    auto large = std::numeric_limits< tk::real >::max();
     for (auto i : n) {
       auto& u = m_uNodalExtrmc[i];
       auto& p = m_pNodalExtrmc[i];
-      u.resize( 2*ncomp, -large );
-      p.resize( 2*nprim, -large );
+      u.resize( 2*m_ndof_NodalExtrm*ncomp, large );
+      p.resize( 2*m_ndof_NodalExtrm*nprim, large );
 
-      for(std::size_t k = 0; k < ncomp; k++)
-        u[k+ncomp] = large;
-      for(std::size_t k = 0; k < nprim; k++)
-        p[k+nprim] = large;
+      // Initialize the minimum nodal extrema
+      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+      {
+        for(std::size_t k = 0; k < ncomp; k++)
+          u[2*k*m_ndof_NodalExtrm+2*idof] = -large;
+        for(std::size_t k = 0; k < nprim; k++)
+          p[2*k*m_ndof_NodalExtrm+2*idof] = -large;
+      }
+    }
+  }
+}
+
+void DG::evalNodalExtrm( const std::size_t ncomp,
+                         const std::size_t nprim,
+                         const std::size_t ndof_NodalExtrm,
+                         const std::vector< std::size_t >& bndel,
+                         const std::vector< std::size_t >& inpoel,
+                         const tk::UnsMesh::Coords& coord,
+                         const std::vector< std::size_t >& gid,
+                         const std::unordered_map< std::size_t, std::size_t >&
+                           bid,
+                         const tk::Fields& U,
+                         const tk::Fields& P,
+                         std::vector< std::vector<tk::real> >& uNodalExtrm,
+                         std::vector< std::vector<tk::real> >& pNodalExtrm )
+// *****************************************************************************
+//  Compute the nodal extrema for chare-boundary nodes
+//! \param[in] ncomp Number of conservative variables
+//! \param[in] nprim Number of primitive variables
+//! \param[in] ndof_NodalExtrm Degree of freedom for nodal extrema
+//! \param[in] bndel List of elements contributing to chare-boundary nodes
+//! \param[in] inpoel Element-node connectivity for element e
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] gid Local->global node id map
+//! \param[in] bid Local chare-boundary node ids (value) associated to
+//!   global node ids (key)
+//! \param[in] U Vector of conservative variables
+//! \param[in] P Vector of primitive variables
+//! \param[in,out] uNodalExtrm Chare-boundary nodal extrema for conservative
+//!   variables
+//! \param[in,out] pNodalExtrm Chare-boundary nodal extrema for primitive
+//!   variables
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+
+  for (auto e : bndel)
+  {
+    // access node IDs
+    const std::vector<std::size_t> N
+      { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+
+    // Loop over nodes of element e
+    for(std::size_t ip=0; ip<4; ++ip)
+    {
+      auto i = bid.find( gid[N[ip]] );
+      if (i != end(bid))      // If ip is the chare boundary point
+      {
+        // Find the nodal extrema of conservative variables
+        for (std::size_t c=0; c<ncomp; ++c)
+        {
+          auto max_mark = 2*c*m_ndof_NodalExtrm;
+          auto min_mark = max_mark + 1;
+          uNodalExtrm[i->second][max_mark] =
+            std::max(uNodalExtrm[i->second][max_mark], U(e,c*rdof,0));
+          uNodalExtrm[i->second][min_mark] =
+            std::min(uNodalExtrm[i->second][min_mark], U(e,c*rdof,0));
+        }
+        // Find the nodal extrema of primitive variables
+        for (std::size_t c=0; c<nprim; ++c)
+        {
+          auto max_mark = 2*c*m_ndof_NodalExtrm;
+          auto min_mark = max_mark + 1;
+          pNodalExtrm[i->second][max_mark] =
+            std::max(pNodalExtrm[i->second][max_mark], P(e,c*rdof,0));
+          pNodalExtrm[i->second][min_mark] =
+            std::min(pNodalExtrm[i->second][min_mark], P(e,c*rdof,0));
+        }
+
+        // If DG(P2) is applied, find the nodal extrema of the gradients of
+        // conservative/primitive variables in the physical domain
+        if(ndof_NodalExtrm > 1)
+        {
+          // Vector used to store the first order derivatives for both
+          // conservative and primitive variables
+          std::vector< std::vector< tk::real > >
+            gradc(ncomp, std::vector<tk::real>(3, 0.0));
+          std::vector< std::vector< tk::real > >
+            gradp(ncomp, std::vector<tk::real>(3, 0.0));
+
+          const auto& cx = coord[0];
+          const auto& cy = coord[1];
+          const auto& cz = coord[2];
+
+          std::array< std::array< tk::real, 3>, 4 > coordel {{
+            {{ cx[ N[0] ], cy[ N[0] ], cz[ N[0] ] }},
+            {{ cx[ N[1] ], cy[ N[1] ], cz[ N[1] ] }},
+            {{ cx[ N[2] ], cy[ N[2] ], cz[ N[2] ] }},
+            {{ cx[ N[3] ], cy[ N[3] ], cz[ N[3] ] }}
+          }};
+
+          auto jacInv = tk::inverseJacobian( coordel[0], coordel[1],
+            coordel[2], coordel[3] );
+
+          // Compute the derivatives of basis functions
+          auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+
+          std::array< std::vector< tk::real >, 3 > center;
+          center[0].resize(1, 0.25);
+          center[1].resize(1, 0.25);
+          center[2].resize(1, 0.25);
+          tk::eval_dBdx_p2(0, center, jacInv, dBdx);
+
+          // Evaluate the first order derivative in physical domain
+          for(std::size_t icomp = 0; icomp < ncomp; icomp++)
+          {
+            auto mark = icomp * rdof;
+            for(std::size_t idir = 0; idir < 3; idir++)
+            {
+              gradc[icomp][idir] = 0;
+              for(std::size_t idof = 1; idof < rdof; idof++)
+                gradc[icomp][idir] += U(e, mark+idof, 0) * dBdx[idir][idof];
+            }
+          }
+          for(std::size_t icomp = 0; icomp < nprim; icomp++)
+          {
+            auto mark = icomp * rdof;
+            for(std::size_t idir = 0; idir < 3; idir++)
+            {
+              gradp[icomp][idir] = 0;
+              for(std::size_t idof = 1; idof < rdof; idof++)
+                gradp[icomp][idir] += P(e, mark+idof, 0) * dBdx[idir][idof];
+            }
+          }
+
+          // Store the extrema for the gradients
+          for (std::size_t c=0; c<ncomp; ++c)
+          {
+            for (std::size_t idof = 1; idof < ndof_NodalExtrm; idof++)
+            {
+              auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+              auto min_mark = max_mark + 1;
+              uNodalExtrm[i->second][max_mark] =
+                std::max(uNodalExtrm[i->second][max_mark], gradc[c][idof-1]);
+              uNodalExtrm[i->second][min_mark] =
+                std::min(uNodalExtrm[i->second][min_mark], gradc[c][idof-1]);
+            }
+          }
+          for (std::size_t c=0; c<nprim; ++c)
+          {
+            for (std::size_t idof = 1; idof < ndof_NodalExtrm; idof++)
+            {
+              auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+              auto min_mark = max_mark + 1;
+              pNodalExtrm[i->second][max_mark] =
+                std::max(pNodalExtrm[i->second][max_mark], gradp[c][idof-1]);
+              pNodalExtrm[i->second][min_mark] =
+                std::min(pNodalExtrm[i->second][min_mark], gradp[c][idof-1]);
+            }
+          }
+        }
+      }
     }
   }
 }
@@ -1964,18 +2125,30 @@ DG::lim()
     auto bid = tk::cref_find( d->Bid(), gid );
     for (ncomp_t c=0; c<ncomp; ++c)
     {
-      m_uNodalExtrm(bid,c,0) = std::max(g[c], m_uNodalExtrm(bid,c,0));
-      m_uNodalExtrm(bid,c+ncomp,0) =
-        std::min(g[c+ncomp], m_uNodalExtrm(bid,c+ncomp,0));
+      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+      {
+        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+        auto min_mark = max_mark + 1;
+        m_uNodalExtrm[bid][max_mark] =
+          std::max(g[max_mark], m_uNodalExtrm[bid][max_mark]);
+        m_uNodalExtrm[bid][min_mark] =
+          std::min(g[min_mark], m_uNodalExtrm[bid][min_mark]);
+      }
     }
   }
   for (const auto& [gid,g] : m_pNodalExtrmc) {
     auto bid = tk::cref_find( d->Bid(), gid );
     for (ncomp_t c=0; c<nprim; ++c)
     {
-      m_pNodalExtrm(bid,c,0) = std::max(g[c], m_pNodalExtrm(bid,c,0));
-      m_pNodalExtrm(bid,c+nprim,0) =
-        std::min(g[c+nprim], m_pNodalExtrm(bid,c+nprim,0));
+      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+      {
+        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+        auto min_mark = max_mark + 1;
+        m_pNodalExtrm[bid][max_mark] =
+          std::max(g[max_mark], m_pNodalExtrm[bid][max_mark]);
+        m_pNodalExtrm[bid][min_mark] =
+          std::min(g[min_mark], m_pNodalExtrm[bid][min_mark]);
+      }
     }
   }
 
@@ -2338,8 +2511,10 @@ DG::resizePostAMR(
   m_un.resize( nelem );
   m_lhs.resize( nelem );
   m_rhs.resize( nelem );
-  m_uNodalExtrm.resize( d->Bid().size() );
-  m_pNodalExtrm.resize( d->Bid().size() );
+  m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
+    m_ndof_NodalExtrm*g_inputdeck.get< tag::component >().nprop() ) );
+  m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
+    m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()));
 
   // Resize the buffer vector of nodal extrema
   resizeNodalExtremac();

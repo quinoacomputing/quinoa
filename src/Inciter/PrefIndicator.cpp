@@ -54,59 +54,8 @@ void spectral_decay( std::size_t nunk,
   std::vector< tk::real > Ind(nunk, 0);
 
   for (std::size_t e=0; e<esuel.size()/4; ++e)
-  {
     if(ndofel[e] > 1)
-    {
-      auto ng = tk::NGvol(ndofel[e]);
-
-      // arrays for quadrature points
-      std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp;
-
-      coordgp[0].resize( ng );
-      coordgp[1].resize( ng );
-      coordgp[2].resize( ng );
-      wgp.resize( ng );
-
-      tk::GaussQuadratureTet( ng, coordgp, wgp );
-
-      tk::real dU(0), U(0);
-
-      // Gaussian quadrature
-      for (std::size_t igp=0; igp<ng; ++igp)
-      {
-        // Compute the basis function
-        auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
-                                 coordgp[2][igp] );
-
-        auto state = tk::eval_state( ncomp, 0, ndof, ndofel[e], e, unk, B );
-
-        U += wgp[igp] * state[0] * state[0];
-
-        if(ndofel[e] > 4)
-        {
-           auto dU_p2 = unk(e, 4, 0) * B[4]
-                      + unk(e, 5, 0) * B[5]
-                      + unk(e, 6, 0) * B[6]
-                      + unk(e, 7, 0) * B[7]
-                      + unk(e, 8, 0) * B[8]
-                      + unk(e, 9, 0) * B[9];
-
-           dU += wgp[igp] * dU_p2 * dU_p2;
-        }
-        else
-        {
-           auto dU_p1 = unk(e, 1, 0) * B[1]
-                      + unk(e, 2, 0) * B[2]
-                      + unk(e, 3, 0) * B[3];
-
-           dU += wgp[igp] * dU_p1 * dU_p1;
-        }
-      }
-
-      Ind[e] = dU / U;
-    }
-  }
+      Ind[e] = evalDiscontinuityIndicator( e, ncomp, ndof, ndofel[e], unk );
 
   // As for spectral-decay indicator, rho_p - rho_(p-1) actually is the leading
   // term of discretization error for the numerical solution of p-1. Therefore,
@@ -340,6 +289,75 @@ void eval_ndof( std::size_t nunk,
                     fd.Inpofa(), unk, ndof, ndofmax, ndofel );
   else
     Throw( "No such adaptive indicator type" );
+}
+
+tk::real evalDiscontinuityIndicator( std::size_t e,
+                                     ncomp_t ncomp,
+                                     const std::size_t ndof,
+                                     const std::size_t ndofel,
+                                     const tk::Fields& unk )
+// *****************************************************************************
+//! Evaluate the spectral decay indicator
+//! \param[in] e Index for the tetrahedron element
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] ndof Number of degrees of freedom in the solution
+//! \param[in] ndofel Local number of degrees of freedom
+//! \param[in] unk Array of unknowns
+//! \return The value of spectral indicator for the element
+// *****************************************************************************
+{
+  tk::real Ind(0.0);
+
+  auto ng = tk::NGvol(ndofel);
+
+  // arrays for quadrature points
+  std::array< std::vector< tk::real >, 3 > coordgp;
+  std::vector< tk::real > wgp;
+
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  coordgp[2].resize( ng );
+  wgp.resize( ng );
+
+  tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+  tk::real dU(0), U(0);
+
+  // Gaussian quadrature
+  for (std::size_t igp=0; igp<ng; ++igp)
+  {
+    // Compute the basis function
+    auto B = tk::eval_basis( ndofel, coordgp[0][igp], coordgp[1][igp],
+                             coordgp[2][igp] );
+
+    auto state = tk::eval_state( ncomp, 0, ndof, ndofel, e, unk, B );
+
+    U += wgp[igp] * state[0] * state[0];
+
+    if(ndofel > 4)
+    {
+       auto dU_p2 = unk(e, 4, 0) * B[4]
+                  + unk(e, 5, 0) * B[5]
+                  + unk(e, 6, 0) * B[6]
+                  + unk(e, 7, 0) * B[7]
+                  + unk(e, 8, 0) * B[8]
+                  + unk(e, 9, 0) * B[9];
+
+       dU += wgp[igp] * dU_p2 * dU_p2;
+    }
+    else
+    {
+       auto dU_p1 = unk(e, 1, 0) * B[1]
+                  + unk(e, 2, 0) * B[2]
+                  + unk(e, 3, 0) * B[3];
+
+       dU += wgp[igp] * dU_p1 * dU_p1;
+    }
+  }
+
+  Ind = dU / U;
+
+  return Ind;
 }
 
 }
