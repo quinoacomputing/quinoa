@@ -1459,7 +1459,7 @@ ALECG::out()
   auto d = Disc();
 
   // Output time history if we hit its output frequency
-  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
+  const auto histfreq = g_inputdeck.get< tag::interval_iter, tag::history >();
   if ( !((d->It()) % histfreq) ) {
     std::vector< std::vector< tk::real > > hist;
     conserved( m_u );
@@ -1471,7 +1471,7 @@ ALECG::out()
     d->history( std::move(hist) );
   }
 
-  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
+  const auto fieldfreq = g_inputdeck.get< tag::interval_iter, tag::field >();
 
   // output field data if field iteration count is reached or in the last time
   // step

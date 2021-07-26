@@ -1079,7 +1079,7 @@ Discretization::status()
 // *****************************************************************************
 {
   // Query after how many time steps user wants TTY dump
-  const auto tty = g_inputdeck.get< tag::interval, tag::tty >();
+  const auto tty = g_inputdeck.get< tag::interval_iter, tag::tty >();
 
   // estimate grind time (taken between this and the previous time step)
   using std::chrono::duration_cast;
@@ -1094,9 +1094,9 @@ Discretization::status()
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
     const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    const auto field = g_inputdeck.get< tag::interval,tag::field >();
-    const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
-    const auto hist = g_inputdeck.get< tag::interval, tag::history >();
+    const auto field = g_inputdeck.get< tag::interval_iter,tag::field >();
+    const auto diag = g_inputdeck.get< tag::interval_iter, tag::diag >();
+    const auto hist = g_inputdeck.get< tag::interval_iter, tag::history >();
     const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
     const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();

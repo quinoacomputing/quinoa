@@ -370,12 +370,12 @@ Transporter::info( const InciterPrint& print )
               g_inputdeck.get< tag::cmd, tag::io, tag::restart >() + '/' );
 
   // Print output intervals
-  print.section( "Output intervals" );
-  print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
+  print.section( "Output intervals (in units of iteration count)" );
+  print.item( "TTY", g_inputdeck.get< tag::interval_iter, tag::tty>() );
   print.item( "Field and surface",
-              g_inputdeck.get< tag::interval, tag::field >() );
+              g_inputdeck.get< tag::interval_iter, tag::field >() );
   print.item( "Diagnostics",
-              g_inputdeck.get< tag::interval, tag::diag >() );
+              g_inputdeck.get< tag::interval_iter, tag::diag >() );
   print.item( "Checkpoint/restart",
               g_inputdeck.get< tag::cmd, tag::rsfreq >() );
 

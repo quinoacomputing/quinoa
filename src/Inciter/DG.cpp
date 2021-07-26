@@ -2566,7 +2566,7 @@ DG::fieldOutput() const
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
+  const auto fieldfreq = g_inputdeck.get< tag::interval_iter, tag::field >();
 
   // output field data if field iteration count is reached or in the last time
   // step, otherwise continue to next time step
@@ -2596,7 +2596,7 @@ DG::writeFields( CkCallback c )
   auto d = Disc();
 
   // Output time history if we hit its output frequency
-  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
+  const auto histfreq = g_inputdeck.get< tag::interval_iter, tag::history >();
   if ( !((d->It()) % histfreq) ) {
     std::vector< std::vector< tk::real > > hist;
     for (const auto& eq : g_dgpde) {
