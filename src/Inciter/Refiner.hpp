@@ -201,6 +201,7 @@ class Refiner : public CBase_Refiner {
       p | m_addedNodes;
       p | m_addedTets;
       p | m_removedNodes;
+      p | m_amrNodeMap;
       p | m_oldntets;
       p | m_coarseBndFaces;
       p | m_coarseBndNodes;
@@ -307,6 +308,8 @@ class Refiner : public CBase_Refiner {
     std::unordered_map< std::size_t, std::size_t > m_addedTets;
     //! Newly removed mesh nodes (local id) and their ...? (local ids)
     std::set< std::size_t > m_removedNodes;
+    //! Node id maps from old mesh to new refined mesh
+    std::unordered_map< std::size_t, std::size_t > m_amrNodeMap;
     //! Number of tetrahedra in the mesh before refinement/derefinement step
     std::size_t m_oldntets;
     //! A unique set of faces associated to side sets of the coarsest mesh

@@ -810,6 +810,7 @@ DiagCG::resizePostAMR(
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
   const std::set< std::size_t >& removedNodes,
+  const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& /*bface*/,
   const std::map< int, std::vector< std::size_t > >& bnode,
@@ -822,6 +823,7 @@ DiagCG::resizePostAMR(
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 //! \param[in] removedNodes Newly removed mesh nodes (local ids)
+//! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
 //! \param[in] bnode Boundary-node lists mapped to side set ids
 // *****************************************************************************
@@ -838,7 +840,12 @@ DiagCG::resizePostAMR(
   ++d->Itr();
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, nodeCommMap );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap );
+
+  Assert(coord[0].size() == m_u.nunk()-removedNodes.size()+addedNodes.size(),
+    "Incorrect vector length post-AMR: expected length after resizing = " +
+    std::to_string(coord[0].size()) + ", actual unknown vector length = " +
+    std::to_string(m_u.nunk()-removedNodes.size()+addedNodes.size()));
 
   // Remove newly removed nodes from solution vectors
   m_u.rm(removedNodes);
@@ -860,8 +867,12 @@ DiagCG::resizePostAMR(
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)
-    for (std::size_t c=0; c<nprop; ++c)
+    for (std::size_t c=0; c<nprop; ++c) {
+      Assert(n.first < m_u.nunk(), "Added node index out of bounds post-AMR");
+      Assert(n.second[0] < m_u.nunk() && n.second[1] < m_u.nunk(),
+        "Indices of parent-edge nodes out of bounds post-AMR");
       m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
+    }
 
   // Update physical-boundary node lists
   m_bnode = bnode;

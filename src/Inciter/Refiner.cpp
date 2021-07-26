@@ -85,6 +85,7 @@ Refiner::Refiner( std::size_t meshid,
   m_addedNodes(),
   m_addedTets(),
   m_removedNodes(),
+  m_amrNodeMap(),
   m_oldntets( 0 ),
   m_coarseBndFaces(),
   m_coarseBndNodes(),
@@ -975,8 +976,8 @@ Refiner::next()
 
     // Send new mesh, solution, and communication data back to PDE worker
     m_scheme[m_meshid].ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel,
-      m_el, m_coord, m_addedNodes, m_addedTets, m_removedNodes, m_nodeCommMap,
-      m_bface, m_bnode, m_triinpoel );
+      m_el, m_coord, m_addedNodes, m_addedTets, m_removedNodes, m_amrNodeMap,
+      m_nodeCommMap, m_bface, m_bnode, m_triinpoel );
 
   } else if (m_mode == RefMode::OUTREF) {
 
@@ -1498,6 +1499,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   std::unordered_map< std::size_t, std::size_t > gid_add;
   tk::destroy( m_addedNodes );
   tk::destroy( m_removedNodes );
+  tk::destroy( m_amrNodeMap );
   for (auto r : ref) {               // for all unique nodes of the refined mesh
     if (old.find(r) == end(old)) {   // if node is newly added
       // get (local) parent ids of newly added node
@@ -1534,6 +1536,12 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   }
   tk::destroy( m_coord );
 
+  // generate a node map based on oldnodes+addednodes
+  std::vector< size_t > nodeVec(m_coordmap.size());
+  for (size_t j=0; j<nodeVec.size(); ++j) {
+    nodeVec[j] = j;
+  }
+
   // Remove coordinates and ids of removed nodes due to derefinement
   std::unordered_map< std::size_t, std::size_t > gid_rem;
   for (auto o : old) {               // for all unique nodes of the old mesh
@@ -1546,6 +1554,53 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
       m_lid.erase( g );
       m_coordmap.erase( g );
     }
+  }
+
+  // update the node map by removing the derefined nodes
+  if (m_removedNodes.size() > 0) {
+    // create removed nodes vector
+    std::vector< size_t > remNodes;
+    remNodes.assign(m_removedNodes.begin(), m_removedNodes.end());
+
+    Assert(remNodes.size() == m_removedNodes.size(), "Incorrect removed nodes "
+      "vector size.");
+
+    // remove derefined nodes
+    size_t remCount = 0;
+    size_t origSize = nodeVec.size();
+    for (size_t j=0; j<origSize; ++j) {
+      auto nd = nodeVec[j-remCount];
+
+      bool no_change = false;
+      size_t idx = 0;
+      for (size_t i=0; i<remNodes.size(); ++i) {
+        if (nd < remNodes[0] || nd > remNodes[remNodes.back()]) {
+          no_change = true;
+          break;
+        }
+        else if (nd <= remNodes[i]) {
+          idx = i;
+          break;
+        }
+      }
+
+      // if node is out-or-range of removed nodes list, continue with next entry
+      if (no_change)
+        continue;
+      // if not is within range of removed nodes list, erase node appropriately
+      else if (remNodes[idx] == nd) {
+        nodeVec.erase(nodeVec.begin()+j-remCount);
+        ++remCount;
+      }
+    }
+
+    Assert(remCount == m_removedNodes.size(), "Incorrect number of nodes removed "
+      "from node map.");
+  }
+
+  // invert node vector to get node map
+  for (size_t i=0; i<nodeVec.size(); ++i) {
+    m_amrNodeMap[nodeVec[i]] = i;
   }
 
   // Save previous states of refiner-local node id maps before update
@@ -1577,6 +1632,8 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
     auto it = m_addedNodes.find( r );
     Assert( it != end(m_addedNodes), "Cannot find added node" );
     addedNodes[l] = std::move(it->second);
+    addedNodes.at(l)[0] = m_amrNodeMap[addedNodes.at(l)[0]];
+    addedNodes.at(l)[1] = m_amrNodeMap[addedNodes.at(l)[1]];
     ++l;
   }
   Assert( m_lref.size() == ref.size(), "Size mismatch" );

@@ -452,13 +452,16 @@ Discretization::bndel() const
 }
 
 void
-Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
-                               const tk::UnsMesh::Coords& coord,
-                               const tk::NodeCommMap& nodeCommMap )
+Discretization::resizePostAMR(
+  const tk::UnsMesh::Chunk& chunk,
+  const tk::UnsMesh::Coords& coord,
+  const std::unordered_map< std::size_t, std::size_t >& /*amrNodeMap*/,
+  const tk::NodeCommMap& nodeCommMap )
 // *****************************************************************************
 //  Resize mesh data structures after mesh refinement
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
+//! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
 // *****************************************************************************
 {
