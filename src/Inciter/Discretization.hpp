@@ -369,6 +369,12 @@ class Discretization : public CBase_Discretization {
     //! Query if ALE mesh velocity is updated during time stepping
     bool dynALE() const;
 
+    //! Decide if field output iteration count interval is hit
+    bool fielditer() const;
+
+    //! Decide if physics time interval is hit
+    bool fieldtime();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -386,6 +392,7 @@ class Discretization : public CBase_Discretization {
       p | m_initial;
       p | m_t;
       p | m_lastDumpTime;
+      p | m_physFloor;
       p | m_dt;
       p | m_dtn;
       p | m_nvol;
@@ -460,8 +467,10 @@ class Discretization : public CBase_Discretization {
     tk::real m_initial;
     //! Physical time
     tk::real m_t;
-    //! Physical time at last field output
+    //! Physics time at last field output
     tk::real m_lastDumpTime;
+    //! Most recent floor of physics time divided by field output interval time
+    tk::real m_physFloor;
     //! Physical time step size
     tk::real m_dt;
     //! Physical time step size at the previous time step

@@ -1889,7 +1889,7 @@ using pari = keyword< pari_info, TAOCPP_PEGTL_STRING("pari") >;
 struct interval_iter_info {
   static std::string name() { return "interval"; }
   static std::string shortDescription() { return
-    "Set interval (in units of iteraction count)"; }
+    "Set interval (in units of iteration count)"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify an interval in units of iteration count
     (i.e., number of time steps). This must be used within a relevant block.)";
@@ -1902,6 +1902,23 @@ struct interval_iter_info {
 };
 using interval_iter =
   keyword< interval_iter_info, TAOCPP_PEGTL_STRING("interval") >;
+
+struct interval_time_info {
+  static std::string name() { return "time_interval"; }
+  static std::string shortDescription() { return
+    "Set interval (in units of physics time)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify an interval in units of physics time.
+    This must be used within a relevant block.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0;
+    static std::string description() { return "real"; }
+  };
+};
+using interval_time =
+  keyword< interval_time_info, TAOCPP_PEGTL_STRING("time_interval") >;
 
 struct statistics_info {
   static std::string name() { return "statistics"; }

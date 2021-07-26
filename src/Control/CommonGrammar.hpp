@@ -1936,10 +1936,15 @@ namespace grm {
                   Store_back< tag::component, Tag >,
                   pegtl::digit > {};
 
-  //! Match interval control parameter
+  //! Match interval control parameter in units of iteration count
   template< typename keyword, typename Tag >
   struct interval_iter :
          control< keyword, pegtl::digit, Store, tag::interval_iter, Tag > {};
+
+  //! Match interval control parameter in units of physics time
+  template< typename keyword, typename Tag >
+  struct interval_time :
+         control< keyword, number, Store, tag::interval_time, Tag > {};
 
   //! Parse statistics ... end block
   template< template< class > class use, template< class... Ts > class store >

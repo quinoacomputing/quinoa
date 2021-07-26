@@ -1968,6 +1968,7 @@ namespace deck {
                                  tag::filetype >,
                                pegtl::alpha >,
              tk::grm::interval_iter< use< kw::interval_iter >, tag::field >,
+             tk::grm::interval_time< use< kw::interval_time >, tag::field >,
              tk::grm::process<
                use< kw::refined >,
                tk::grm::Store< tag::cmd, tag::io, tag::refined >,
@@ -1986,6 +1987,7 @@ namespace deck {
              use< kw::end >,
              outvar_block,
              tk::grm::interval_iter< use< kw::interval_iter >, tag::history >,
+             tk::grm::interval_time< use< kw::interval_time >, tag::history >,
              tk::grm::precision< use, tag::history >,
              tk::grm::process<
                use< kw::txt_float_format >,

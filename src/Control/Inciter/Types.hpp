@@ -148,6 +148,14 @@ using interval_iter = tk::TaggedTuple< brigand::list<
   , tag::diag,    kw::interval_iter::info::expect::type
 > >;
 
+//! Output intervals in units of physics time
+using interval_time = tk::TaggedTuple< brigand::list<
+    //! Field output interval
+    tag::field,   kw::interval_time::info::expect::type
+    //! History output interval
+  , tag::history, kw::interval_time::info::expect::type
+> >;
+
 //! History output parameters storage
 using history = tk::TaggedTuple< brigand::list<
     tag::point,   std::vector< std::vector< kw::point::info::expect::type > >

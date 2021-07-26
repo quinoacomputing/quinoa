@@ -1471,11 +1471,9 @@ ALECG::out()
     d->history( std::move(hist) );
   }
 
-  const auto fieldfreq = g_inputdeck.get< tag::interval_iter, tag::field >();
-
-  // output field data if field iteration count is reached or in the last time
-  // step
-  if ( !((d->It()) % fieldfreq) || m_finished )
+  // output field data if field iteration count is reached or if the field
+  // physics time output frequency is hit or in the last time step
+  if (d->fielditer() or d->fieldtime() or m_finished)
     writeFields( CkCallback(CkIndex_ALECG::step(), thisProxy[thisIndex]) );
   else
     step();

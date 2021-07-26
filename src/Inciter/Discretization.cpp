@@ -59,7 +59,8 @@ Discretization::Discretization(
   m_itf( 0 ),
   m_initial( 1.0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
-  m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),  
+  m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),
+  m_physFloor( 0.0 ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_dtn( m_dt ),
   m_nvol( 0 ),
@@ -967,6 +968,10 @@ Discretization::next()
 // Prepare for next step
 // *****************************************************************************
 {
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto ft = g_inputdeck.get< tag::interval_time, tag::field >();
+  if (std::abs(ft) > eps) m_physFloor = std::floor( m_t / ft );
+
   ++m_it;
   m_t += m_dt;
 }
@@ -1072,6 +1077,35 @@ Discretization::history( std::vector< std::vector< tk::real > >&& data )
   }
 }
 
+bool
+Discretization::fielditer() const
+// *****************************************************************************
+//  Decide if field output iteration count interval is hit
+//! \return True if field output iteration count interval is hit
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
+
+  return m_it % g_inputdeck.get< tag::interval_iter, tag::field >() == 0;
+}
+
+bool
+Discretization::fieldtime()
+// *****************************************************************************
+//  Decide if physics time interval is hit
+//! \return True if physics time interval is hit
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
+
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto ft = g_inputdeck.get< tag::interval_time, tag::field >();
+
+  if (std::abs(ft) < eps) return false;
+
+  return std::abs( std::floor(m_t/ft) - m_physFloor ) > eps;
+}
+
 void
 Discretization::status()
 // *****************************************************************************
@@ -1094,7 +1128,6 @@ Discretization::status()
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
     const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    const auto field = g_inputdeck.get< tag::interval_iter,tag::field >();
     const auto diag = g_inputdeck.get< tag::interval_iter, tag::diag >();
     const auto hist = g_inputdeck.get< tag::interval_iter, tag::history >();
     const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
@@ -1113,7 +1146,7 @@ Discretization::status()
     tk::Print print( g_inputdeck.get< tag::cmd >().logname( def, m_nrestart ),
                      verbose ? std::cout : std::clog,
                      std::ios_base::app );
- 
+
     // Output one-liner
     print << std::setfill(' ') << std::setw(8) << m_it << "  "
           << std::scientific << std::setprecision(6)
@@ -1129,11 +1162,11 @@ Discretization::status()
           << std::scientific << std::setprecision(6) << std::setfill(' ')
           << std::setw(9) << grind_time << "  ";
 
-    // Determin if this is the last time step
+    // Determine if this is the last time step
     bool finish = not (std::fabs(m_t-term) > eps && m_it < nstep);
 
     // Augment one-liner status with output indicators
-    if (!benchmark && !(m_it % field)) print << 'f';
+    if (fielditer() or fieldtime()) print << 'f';
     if (!(m_it % diag)) print << 'd';
     if (!(m_it % hist) && !hist_points.empty()) print << 't';
     if (m_refined) print << 'h';

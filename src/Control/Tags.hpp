@@ -240,6 +240,7 @@ struct bcfarfield { static std::string name() { return "bcfarfield"; } };
 struct component { static std::string name() { return "component"; } };
 struct rescomp { static std::string name() { return "residual component"; } };
 struct interval_iter { static std::string name() { return "interval_iter"; } };
+struct interval_time { static std::string name() { return "interval_time"; } };
 struct cmd { static std::string name() { return "cmd"; } };
 struct param { static std::string name() { return "param"; } };
 struct init { static std::string name() { return "init"; } };

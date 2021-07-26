@@ -43,6 +43,7 @@ using InputDeckMembers = brigand::list<
   , tag::component,     ncomps
   , tag::sys,           std::map< tk::ctr::ncomp_t, tk::ctr::ncomp_t >
   , tag::interval_iter, interval_iter
+  , tag::interval_time, interval_time
   , tag::param,         parameters
   , tag::couple,        couple
   , tag::diag,          diagnostics
@@ -74,6 +75,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::field_output
                                  , kw::refined
                                  , kw::interval_iter
+                                 , kw::interval_time
                                  , kw::partitioning
                                  , kw::algorithm
                                  , kw::rcb
