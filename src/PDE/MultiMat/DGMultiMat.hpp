@@ -674,7 +674,7 @@ class MultiMat {
     //! \param[in,out] P Vector of primitives at recent time step
     void limit( [[maybe_unused]] tk::real t,
                 [[maybe_unused]] const tk::Fields& geoFace,
-                [[maybe_unused]] const tk::Fields& geoElem,
+                const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
@@ -682,8 +682,8 @@ class MultiMat {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                const tk::Fields& uNodalExtrm,
-                const tk::Fields& pNodalExtrm,
+                const std::vector< std::vector<tk::real> >& uNodalExtrm,
+                const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
@@ -703,8 +703,8 @@ class MultiMat {
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, coord, gid, bid, uNodalExtrm, pNodalExtrm, U, P,
-          nmat );
+          m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm,
+          pNodalExtrm, U, P, nmat );
       }
       else
       {

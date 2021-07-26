@@ -288,7 +288,7 @@ class CompFlow {
     //! \param[in,out] U Solution vector at recent time step
     void limit( [[maybe_unused]] tk::real t,
                 [[maybe_unused]] const tk::Fields& geoFace,
-                [[maybe_unused]] const tk::Fields& geoElem,
+                const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
@@ -296,20 +296,25 @@ class CompFlow {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                const tk::Fields& uNodalExtrm,
-                [[maybe_unused]] const tk::Fields& pNodalExtrm,
+                const std::vector< std::vector<tk::real> >& uNodalExtrm,
+                [[maybe_unused]] const std::vector< std::vector<tk::real> >&
+                  pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& ) const
     {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       if (limiter == ctr::LimiterType::WENOP1)
         WENO_P1( fd.Esuel(), m_offset, U );
       else if (limiter == ctr::LimiterType::SUPERBEEP1)
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
-      else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
-        VertexBased_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_offset, coord, gid, bid, uNodalExtrm, U);
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
+        VertexBasedCompflow_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
+          m_offset, geoElem, coord, gid, bid, uNodalExtrm, U);
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
+        VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
+          m_offset, geoElem, coord, gid, bid, uNodalExtrm, U);
     }
 
     //! Compute right hand side
