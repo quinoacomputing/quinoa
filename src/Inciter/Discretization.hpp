@@ -375,6 +375,9 @@ class Discretization : public CBase_Discretization {
     //! Decide if physics time interval is hit
     bool fieldtime();
 
+    //! Decide if this is the last time step
+    bool finished() const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

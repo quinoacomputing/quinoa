@@ -901,15 +901,9 @@ DiagCG::out()
     d->history( std::move(hist) );
   }
 
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto fieldfreq = g_inputdeck.get< tag::interval_iter, tag::field >();
-
   // output field data if field iteration count is reached or in the last time
   // step, otherwise continue to next time step
-  if ( !((d->It()) % fieldfreq) ||
-       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+  if (d->fielditer() or d->fieldtime() or d->finished())
     writeFields( CkCallback(CkIndex_DiagCG::step(), thisProxy[thisIndex]) );
   else
     step();

@@ -1092,7 +1092,7 @@ Discretization::fielditer() const
 bool
 Discretization::fieldtime()
 // *****************************************************************************
-//  Decide if physics time interval is hit
+//  Decide if physics time output interval is hit
 //! \return True if physics time interval is hit
 // *****************************************************************************
 {
@@ -1103,7 +1103,21 @@ Discretization::fieldtime()
 
   if (std::abs(ft) < eps) return false;
 
-  return std::abs( std::floor(m_t/ft) - m_physFloor ) > eps;
+  return std::abs(std::floor(m_t/ft) - m_physFloor) > eps;
+}
+
+bool
+Discretization::finished() const
+// *****************************************************************************
+//  Decide if this is the last time step
+//! \return True if this is the last time step
+// *****************************************************************************
+{
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+
+  return std::abs(m_t-term) < eps or m_it >= nstep;
 }
 
 void
@@ -1124,7 +1138,6 @@ Discretization::status()
 
   if (thisIndex==0 && m_meshid == 0 && !(m_it%tty)) {
 
-    const auto eps = std::numeric_limits< tk::real >::epsilon();
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
     const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
@@ -1162,16 +1175,13 @@ Discretization::status()
           << std::scientific << std::setprecision(6) << std::setfill(' ')
           << std::setw(9) << grind_time << "  ";
 
-    // Determine if this is the last time step
-    bool finish = not (std::fabs(m_t-term) > eps && m_it < nstep);
-
     // Augment one-liner status with output indicators
     if (fielditer() or fieldtime()) print << 'f';
     if (!(m_it % diag)) print << 'd';
     if (!(m_it % hist) && !hist_points.empty()) print << 't';
     if (m_refined) print << 'h';
-    if (!(m_it % lbfreq) && !finish) print << 'l';
-    if (!benchmark && (!(m_it % rsfreq) || finish)) print << 'r';
+    if (!(m_it % lbfreq) && not finished()) print << 'l';
+    if (!benchmark && (!(m_it % rsfreq) || not finished())) print << 'r';
 
     if (not m_meshvel_converged) print << 'a';
     m_meshvel_converged = true; // get ready for next time step

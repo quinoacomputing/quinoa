@@ -1233,24 +1233,20 @@ ALECG::refine( const std::vector< tk::real >& l2res )
 {
   auto d = Disc();
 
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
   const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
   const auto rc = g_inputdeck.get< tag::discr, tag::rescomp >() - 1;
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   if (steady) {
 
     // this is the last time step if max time of max number of time steps
     // reached or the residual has reached its convergence criterion
-    if (std::abs(d->T()-term) < eps || d->It() >= nstep || l2res[rc] < residual)
-      m_finished = 1;
+    if (d->finished() or l2res[rc] < residual) m_finished = 1;
 
   } else {
 
     // this is the last time step if max time or max iterations reached
-    if (std::abs(d->T()-term) < eps || d->It() >= nstep) m_finished = 1;
+    if (d->finished()) m_finished = 1;
 
   }
 
