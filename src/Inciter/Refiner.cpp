@@ -1589,7 +1589,9 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
         continue;
       // if not is within range of removed nodes list, erase node appropriately
       else if (remNodes[idx] == nd) {
-        nodeVec.erase(nodeVec.begin()+j-remCount);
+        //! Difference type for iterator/pointer arithmetics
+        using diff_type = std::vector< std::size_t >::difference_type;
+        nodeVec.erase(nodeVec.begin()+static_cast< diff_type >(j-remCount));
         ++remCount;
       }
     }
