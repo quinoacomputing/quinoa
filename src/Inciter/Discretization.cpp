@@ -60,7 +60,8 @@ Discretization::Discretization(
   m_initial( 1.0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),
-  m_physFloor( 0.0 ),
+  m_physFieldFloor( 0.0 ),
+  m_physHistFloor( 0.0 ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_dtn( m_dt ),
   m_nvol( 0 ),
@@ -970,7 +971,9 @@ Discretization::next()
 {
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto ft = g_inputdeck.get< tag::interval_time, tag::field >();
-  if (std::abs(ft) > eps) m_physFloor = std::floor( m_t / ft );
+  if (std::abs(ft) > eps) m_physFieldFloor = std::floor( m_t / ft );
+  const auto ht = g_inputdeck.get< tag::interval_time, tag::history >();
+  if (std::abs(ht) > eps) m_physHistFloor = std::floor( m_t / ht );
 
   ++m_it;
   m_t += m_dt;
@@ -1092,8 +1095,8 @@ Discretization::fielditer() const
 bool
 Discretization::fieldtime()
 // *****************************************************************************
-//  Decide if physics time output interval is hit
-//! \return True if physics time interval is hit
+//  Decide if field output physics time interval is hit
+//! \return True if field output physics time interval is hit
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
@@ -1103,7 +1106,37 @@ Discretization::fieldtime()
 
   if (std::abs(ft) < eps) return false;
 
-  return std::abs(std::floor(m_t/ft) - m_physFloor) > eps;
+  return std::abs(std::floor(m_t/ft) - m_physFieldFloor) > eps;
+}
+
+bool
+Discretization::histiter() const
+// *****************************************************************************
+//  Decide if history output iteration count interval is hit
+//! \return True if history output iteration count interval is hit
+// *****************************************************************************
+{
+  const auto hist = g_inputdeck.get< tag::interval_iter, tag::history >();
+  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+
+  return m_it % hist == 0 and not hist_points.empty();
+}
+
+bool
+Discretization::histtime()
+// *****************************************************************************
+//  Decide if history output physics time interval is hit
+//! \return True if history output physics time interval is hit
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
+
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto ht = g_inputdeck.get< tag::interval_time, tag::history >();
+
+  if (std::abs(ht) < eps) return false;
+
+  return std::abs(std::floor(m_t/ht) - m_physHistFloor) > eps;
 }
 
 bool
@@ -1142,13 +1175,11 @@ Discretization::status()
     const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
     const auto diag = g_inputdeck.get< tag::interval_iter, tag::diag >();
-    const auto hist = g_inputdeck.get< tag::interval_iter, tag::history >();
     const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
     const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
     const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
     const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-    const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
 
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
@@ -1178,7 +1209,7 @@ Discretization::status()
     // Augment one-liner status with output indicators
     if (fielditer() or fieldtime()) print << 'f';
     if (!(m_it % diag)) print << 'd';
-    if (!(m_it % hist) && !hist_points.empty()) print << 't';
+    if (histiter() or histtime()) print << 't';
     if (m_refined) print << 'h';
     if (!(m_it % lbfreq) && not finished()) print << 'l';
     if (!benchmark && (!(m_it % rsfreq) || not finished())) print << 'r';

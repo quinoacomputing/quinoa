@@ -891,8 +891,7 @@ DiagCG::out()
   auto d = Disc();
 
   // Output time history if we hit its output frequency
-  const auto histfreq = g_inputdeck.get< tag::interval_iter, tag::history >();
-  if ( !((d->It()) % histfreq) ) {
+  if (d->histiter() or d->histtime()) {
     std::vector< std::vector< tk::real > > hist;
     for (const auto& eq : g_cgpde) {
       auto h = eq.histOutput( d->Hist(), d->Inpoel(), m_u );
