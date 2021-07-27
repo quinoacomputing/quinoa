@@ -1557,7 +1557,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   }
 
   // update the node map by removing the derefined nodes
-  if (m_removedNodes.size() > 0) {
+  if (m_mode == RefMode::DTREF && m_removedNodes.size() > 0) {
     // create removed nodes vector
     std::vector< size_t > remNodes;
     remNodes.assign(m_removedNodes.begin(), m_removedNodes.end());
