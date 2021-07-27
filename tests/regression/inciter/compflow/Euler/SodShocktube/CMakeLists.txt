@@ -135,6 +135,27 @@ add_regression_test(compflow_euler_sodshocktube_alecg_surf ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
                     LABELS alecg)
 
+add_regression_test(compflow_euler_sodshocktube_alecg_surf_timeint ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES sod_shocktube_alecg_surf_timeinterval.q rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_alecg_surf_timeinterval.q -i rectangle_01_1.5k.exo
+                         -v
+                    BIN_BASELINE sod_shocktube_alecg_timeinterval.std.exo
+                                 sod_shocktube_alecg-surf_timeinterval.2.std.exo
+                                 sod_shocktube_alecg-surf_timeinterval.4.std.exo
+                                 sod_shocktube_alecg-surf_timeinterval.5.std.exo
+                                 sod_shocktube_alecg-surf_timeinterval.6.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                               out-surf.2.e-s.0.1.0
+                               out-surf.4.e-s.0.1.0
+                               out-surf.5.e-s.0.1.0
+                               out-surf.6.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_alecg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS alecg)
+
 add_regression_test(compflow_euler_sodshocktube_alecg_userdef
                     ${INCITER_EXECUTABLE}
                     NUMPES 1
