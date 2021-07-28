@@ -1314,27 +1314,27 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
       for (std::size_t p=0; p<m_gradpot[j].size(); ++p)
         m_w(p,j,0) = m_vel[j][p] + a1 * (m_gradpot[j][p] - m_vel[j][p]);
 
-    // On symmetry BCs remove normal component of mesh velocity
-    const auto& sbc = g_inputdeck.get< tag::ale, tag::bcsym >();
-    for (auto p : m_meshvelsymbcnodes) {
-      for (const auto& s : sbc) {
-        auto j = m_bnormn.find(std::stoi(s));
-        if (j != end(m_bnormn)) {
-          auto i = j->second.find(p);
-          if (i != end(j->second)) {
-            std::array< tk::real, 3 >
-              n{ i->second[0], i->second[1], i->second[2] },
-              v{ m_w(p,0,0), m_w(p,1,0), m_w(p,2,0) };
-            auto v_dot_n = tk::dot( v, n );
-            // symbc: remove normal component of mesh velocity
-            m_w(p,0,0) -= v_dot_n * n[0];
-            m_w(p,1,0) -= v_dot_n * n[1];
-            m_w(p,2,0) -= v_dot_n * n[2];
-          }
+  }
+
+  // On meshvel symmetry BCs remove normal component of mesh velocity
+  const auto& sbc = g_inputdeck.get< tag::ale, tag::bcsym >();
+  for (auto p : m_meshvelsymbcnodes) {
+    for (const auto& s : sbc) {
+      auto j = m_bnormn.find(std::stoi(s));
+      if (j != end(m_bnormn)) {
+        auto i = j->second.find(p);
+        if (i != end(j->second)) {
+          std::array< tk::real, 3 >
+            n{ i->second[0], i->second[1], i->second[2] },
+            v{ m_w(p,0,0), m_w(p,1,0), m_w(p,2,0) };
+          auto v_dot_n = tk::dot( v, n );
+          // symbc: remove normal component of mesh velocity
+          m_w(p,0,0) -= v_dot_n * n[0];
+          m_w(p,1,0) -= v_dot_n * n[1];
+          m_w(p,2,0) -= v_dot_n * n[2];
         }
       }
     }
-
   }
 
   // Assess and record mesh velocity linear solver conergence
