@@ -244,13 +244,13 @@ ALECG::queryBC()
   // faces here. This is because if we query the boundary faces, then we will
   // get the mathematically correctly defined finite discrete surfaces
   // (triangles) where mesh velocity symmetry BCs are configured by the user.
-  // However, in parallel, due to decomposing the domain and the boundary in
-  // various ways can produce situations on the boundary where boundary nodes
-  // are part of the given side set for mesh velocity symmetry BCs but not a
-  // full triangle face because not all 3 nodes would lie on the boundary. Thus
-  // interrogating the boundary nodes will include those nodes that are part of
-  // imposing symmetry BCs on nodes of faces that are only partial due to
-  // domain decomposition.
+  // However, in parallel, decomposing the domain and the boundary in various
+  // ways can produce situations on the boundary where boundary nodes are part
+  // of the given side set for mesh velocity symmetry BCs but not a full
+  // triangle face because, i.e., not all 3 nodes would lie on the boundary.
+  // Thus interrogating the boundary nodes will be a superset and will include
+  // those nodes that are part of imposing symmetry BCs on nodes of faces that
+  // are only partial due to domain decomposition.
   tk::destroy( m_meshvelsymbcnodes );
   std::unordered_map<int, std::unordered_set< std::size_t >> meshvelsymbcnodes;
   for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcsym >()) {
@@ -1141,7 +1141,7 @@ ALECG::meshvelbc( tk::real maxv )
       return std::array< tk::real, 4 >{ 0.0, 0.0, 0.0, 0.0 };
     };
 
-    // Dirichlet BCs on symmetry BCs aligned with coordinate directions
+    // Dirichlet BCs on fluid symmetry BCs aligned with coordinate directions
     // Note: This will skip aribtrarily-oriented symmetry side sets.
     for (auto i : m_symbcnodes) {
       auto n = norm(i);
