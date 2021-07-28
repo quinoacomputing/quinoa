@@ -21,6 +21,9 @@ inciter
     bc_dirichlet
       sideset 1 2 3 4 5 6 end
     end
+    bc_sym
+      sideset 1 2 3 4 5 6 end
+    end
   end
 
   partitioning
@@ -41,7 +44,7 @@ inciter
   end
 
   field_output
-    interval 1
+    interval 10
     var node
       density
       x-velocity
