@@ -1871,6 +1871,12 @@ namespace deck {
                 tk::grm::block< use< kw::end >,
                   pegtl::if_must< tk::grm::vector< use< kw::sideset >,
                                   tk::grm::Store_back< tag::ale, tag::bcdir >,
+                                  use< kw::end > > > > >,
+              pegtl::if_must<
+                tk::grm::readkw< use< kw::bc_sym >::pegtl_string >,
+                tk::grm::block< use< kw::end >,
+                  pegtl::if_must< tk::grm::vector< use< kw::sideset >,
+                                  tk::grm::Store_back< tag::ale, tag::bcsym >,
                                   use< kw::end > > > > > > > {};
 
   //! \brief Match a depvar, defined upstream of control file, coupling a

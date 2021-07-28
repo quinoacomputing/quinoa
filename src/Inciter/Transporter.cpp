@@ -355,7 +355,12 @@ Transporter::info( const InciterPrint& print )
                   g_inputdeck.get< tag::ale, tag::maxit >() );
       const auto& dir = g_inputdeck.get< tag::ale, tag::bcdir >();
       if (!dir.empty())
-        print.item( "Mesh velocity BC sideset(s)", tk::parameters( dir ) );
+        print.item( "Mesh velocity Dirichlet BC sideset(s)",
+                    tk::parameters( dir ) );
+      const auto& sym = g_inputdeck.get< tag::ale, tag::bcsym >();
+      if (!sym.empty())
+        print.item( "Mesh velocity symmetry BC sideset(s)",
+                    tk::parameters( sym ) );
     }
   }
 

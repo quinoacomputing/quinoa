@@ -95,7 +95,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_bnormc(),
   m_symbcnodes(),
   m_farfieldbcnodes(),
-  m_meshvelbcnodes(),
+  m_meshveldirbcnodes(),
+  m_meshvelsymbcnodes(),
   m_symbctri(),
   m_spongenodes(),
   m_stage( 0 ),
@@ -221,22 +222,48 @@ ALECG::queryBC()
   for (const auto& [s,nodes] : sponge)
     m_spongenodes.insert( begin(nodes), end(nodes) );
 
-  // Prepare unique set of mesh velocity BC nodes
-  tk::destroy( m_meshvelbcnodes );
-  std::unordered_map< int, std::unordered_set< std::size_t > > meshvelbcnodes;
+  // Prepare unique set of mesh velocity Dirichlet BC nodes
+  tk::destroy( m_meshveldirbcnodes );
+  std::unordered_map<int, std::unordered_set< std::size_t >> meshveldirbcnodes;
   for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcdir >()) {
     auto k = m_bface.find( std::stoi(s) );
     if (k != end(m_bface)) {
-      auto& n = meshvelbcnodes[ k->first ];  // associate set id
-      for (auto f : k->second) {             // face ids on side set
+      auto& n = meshveldirbcnodes[ k->first ];  // associate set id
+      for (auto f : k->second) {                // face ids on side set
         n.insert( m_triinpoel[f*3+0] );
         n.insert( m_triinpoel[f*3+1] );
         n.insert( m_triinpoel[f*3+2] );
       }
     }
   }
-  for (const auto& [s,nodes] : meshvelbcnodes)
-    m_meshvelbcnodes.insert( begin(nodes), end(nodes) );
+  for (const auto& [s,nodes] : meshveldirbcnodes)
+    m_meshveldirbcnodes.insert( begin(nodes), end(nodes) );
+
+  // Prepare unique set of mesh velocity symmetry BC nodes. Note that somewhat
+  // counter-intuitively, we interrogate the boundary nodes instead of boundary
+  // faces here. This is because if we query the boundary faces, then we will
+  // get the mathematically correctly defined finite discrete surfaces
+  // (triangles) where mesh velocity symmetry BCs are configured by the user.
+  // However, in parallel, due to decomposing the domain and the boundary in
+  // various ways can produce situations on the boundary where boundary nodes
+  // are part of the given side set for mesh velocity symmetry BCs but not a
+  // full triangle face because not all 3 nodes would lie on the boundary. Thus
+  // interrogating the boundary nodes will include those nodes that are part of
+  // imposing symmetry BCs on nodes of faces that are only partial due to
+  // domain decomposition.
+  tk::destroy( m_meshvelsymbcnodes );
+  std::unordered_map<int, std::unordered_set< std::size_t >> meshvelsymbcnodes;
+  for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcsym >()) {
+    auto k = m_bnode.find( std::stoi(s) );
+    if (k != end(m_bnode)) {
+      auto& n = meshvelsymbcnodes[ k->first ];  // associate set id
+      for (auto g : k->second) {                // node ids on side set
+        n.insert( tk::cref_find(d->Lid(),g) );
+      }
+    }
+  }
+  for (const auto& [s,nodes] : meshvelsymbcnodes)
+    m_meshvelsymbcnodes.insert( begin(nodes), end(nodes) );
 }
 
 void
@@ -249,11 +276,27 @@ ALECG::norm()
 
   // Query nodes at which symmetry BCs are specified
   auto bn = d->bcnodes< tag::bc, tag::bcsym >( m_bface, m_triinpoel );
+
   // Query nodes at which farfield BCs are specified
   auto far = d->bcnodes< tag::bc, tag::bcfarfield >( m_bface, m_triinpoel );
-
   // Merge BC data where boundary-point normals are required
   for (const auto& [s,n] : far) bn[s].insert( begin(n), end(n) );
+
+  // Query nodes at which mesh velocity symmetry BCs are specified
+  std::unordered_map<int, std::unordered_set< std::size_t >> ms;
+  for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcsym >()) {
+    auto k = m_bface.find( std::stoi(s) );
+    if (k != end(m_bface)) {
+      auto& n = ms[ k->first ];
+      for (auto f : k->second) {
+        n.insert( m_triinpoel[f*3+0] );
+        n.insert( m_triinpoel[f*3+1] );
+        n.insert( m_triinpoel[f*3+2] );
+      }
+    }
+  }
+  // Merge BC data where boundary-point normals are required
+  for (const auto& [s,n] : ms) bn[s].insert( begin(n), end(n) );
 
   // Compute boundary point normals
   bnorm( bn );
@@ -1087,7 +1130,7 @@ ALECG::meshvelbc( tk::real maxv )
       std::vector< std::pair< bool, tk::real > > > wbc;
 
     // Dirichlet BCs where user specified mesh velocity BCs
-    for (auto i : m_meshvelbcnodes)
+    for (auto i : m_meshveldirbcnodes)
       wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
 
     // Lambda to find a boundary-point normal
@@ -1121,7 +1164,7 @@ ALECG::meshvelbc( tk::real maxv )
       std::vector< std::pair< bool, tk::real > > > pbc;
 
     // Dirichlet BCs where user specified mesh velocity BCs
-    for (auto i : m_meshvelbcnodes) pbc[i] = {{ {true,0} }};
+    for (auto i : m_meshveldirbcnodes) pbc[i] = {{ {true,0} }};
 
     // initialize Helmholtz decomposition linear solver
     Disc()->meshvelInit( {}, m_veldiv, pbc,
@@ -1270,6 +1313,27 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
     for (std::size_t j=0; j<3; ++j)
       for (std::size_t p=0; p<m_gradpot[j].size(); ++p)
         m_w(p,j,0) = m_vel[j][p] + a1 * (m_gradpot[j][p] - m_vel[j][p]);
+
+    // On symmetry BCs remove normal component of mesh velocity
+    const auto& sbc = g_inputdeck.get< tag::ale, tag::bcsym >();
+    for (auto p : m_meshvelsymbcnodes) {
+      for (const auto& s : sbc) {
+        auto j = m_bnormn.find(std::stoi(s));
+        if (j != end(m_bnormn)) {
+          auto i = j->second.find(p);
+          if (i != end(j->second)) {
+            std::array< tk::real, 3 >
+              n{ i->second[0], i->second[1], i->second[2] },
+              v{ m_w(p,0,0), m_w(p,1,0), m_w(p,2,0) };
+            auto v_dot_n = tk::dot( v, n );
+            // symbc: remove normal component of mesh velocity
+            m_w(p,0,0) -= v_dot_n * n[0];
+            m_w(p,1,0) -= v_dot_n * n[1];
+            m_w(p,2,0) -= v_dot_n * n[2];
+          }
+        }
+      }
+    }
 
   }
 

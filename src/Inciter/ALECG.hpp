@@ -247,7 +247,8 @@ class ALECG : public CBase_ALECG {
       p | m_bnormc;
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
-      p | m_meshvelbcnodes;
+      p | m_meshveldirbcnodes;
+      p | m_meshvelsymbcnodes;
       p | m_symbctri;
       p | m_spongenodes;
       p | m_stage;
@@ -368,8 +369,10 @@ class ALECG : public CBase_ALECG {
     std::unordered_set< std::size_t > m_symbcnodes;
     //! Unique set of nodes at which farfield BCs are set
     std::unordered_set< std::size_t > m_farfieldbcnodes;
-    //! Unique set of nodes at which mesh velocity BCs are set for ALE
-    std::unordered_set< std::size_t > m_meshvelbcnodes;
+    //! Unique set of nodes at which ALE mesh velocity Dirichlet BCs are set
+    std::unordered_set< std::size_t > m_meshveldirbcnodes;
+    //! Unique set of nodes at which ALE mesh velocity symmetry BCs are set
+    std::unordered_set< std::size_t > m_meshvelsymbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
     //! Unique set of nodes at which sponge parameters are set

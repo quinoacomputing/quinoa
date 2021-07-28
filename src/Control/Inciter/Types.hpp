@@ -93,6 +93,8 @@ using ale = tk::TaggedTuple< brigand::list<
   , tag::meshvelocity,  MeshVelocityType      //!< Mesh velocity option
     //! Mesh velocity Dirichlet BC sidesets
   , tag::bcdir,         std::vector< kw::sideset::info::expect::type >
+    //! Mesh velocity symmetry BC sidesets
+  , tag::bcsym,         std::vector< kw::sideset::info::expect::type >
 > >;
 
 //! p-adaptive refinement options
