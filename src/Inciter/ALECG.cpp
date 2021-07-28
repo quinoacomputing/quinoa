@@ -11,7 +11,7 @@
     (using linear shapefunctions on tetrahedron elements) combined with a
     Runge-Kutta (RK) time stepping scheme in the arbitrary Eulerian-Lagrangian
     reference frame.
-  \see The documentation in ALECG.h.
+  \see The documentation in ALECG.hpp.
 */
 // *****************************************************************************
 
