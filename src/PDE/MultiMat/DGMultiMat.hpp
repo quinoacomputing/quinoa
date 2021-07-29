@@ -194,6 +194,50 @@ class MultiMat {
       tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
     }
 
+    //! Update the interface cells to first order dofs
+    //! \param[in] unk Array of unknowns
+    //! \param[in] nielem Number of internal elements
+//    //! \param[in,out] ndofel Array of dofs
+    //! \details This function resets the high-order terms in interface cells.
+    void updateInterfaceCells( tk::Fields& unk,
+      std::size_t nielem,
+      std::vector< std::size_t >& /*ndofel*/ ) const
+    {
+      auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto intsharp =
+        g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >()[m_system];
+      auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      if (intsharp > 0) {
+        for (std::size_t e=0; e<nielem; ++e) {
+          std::vector< std::size_t > matInt(nmat, 0);
+          std::vector< tk::real > alAvg(nmat, 0.0);
+          for (std::size_t k=0; k<nmat; ++k)
+            alAvg[k] = unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
+          auto intInd = interfaceIndicator(nmat, alAvg, matInt);
+
+          // interface cells cannot be high-order
+          if (intInd) {
+            //ndofel[e] = 1;
+            for (std::size_t k=0; k<nmat; ++k) {
+              if (matInt[k]) {
+                for (std::size_t i=1; i<rdof; ++i) {
+                  unk(e, densityDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
+                  unk(e, energyDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
+                }
+              }
+            }
+            for (std::size_t idir=0; idir<3; ++idir) {
+              for (std::size_t i=1; i<rdof; ++i) {
+                unk(e, momentumDofIdx(nmat,idir,rdof,i), m_offset) = 0.0;
+              }
+            }
+          }
+        }
+      }
+    }
+
     //! Update the primitives for this PDE system
     //! \param[in] unk Array of unknowns
     //! \param[in] L The left hand side block-diagonal mass matrix
@@ -636,30 +680,6 @@ class MultiMat {
         // 1. solve 3x3 least-squares system
         for (std::size_t e=0; e<nelem; ++e)
         {
-          // Remove high-order terms at material interfaces
-          std::vector< std::size_t > matInt(nmat, 0);
-          std::vector< tk::real > alAvg(nmat, 0.0);
-          for (std::size_t k=0; k<nmat; ++k)
-            alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
-          auto intInd = interfaceIndicator(nmat, alAvg, matInt);
-          if ((intsharp > 0) && intInd)
-          {
-            for (std::size_t k=0; k<nmat; ++k) {
-              if (matInt[k]) {
-                for (std::size_t i=1; i<rdof; ++i) {
-                  U(e, densityDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
-                  U(e, energyDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
-                  P(e, pressureDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
-                }
-              }
-            }
-            for (std::size_t idir=0; idir<3; ++idir) {
-              for (std::size_t i=1; i<rdof; ++i) {
-                U(e, momentumDofIdx(nmat,idir,rdof,i), m_offset) = 0.0;
-                P(e, velocityDofIdx(nmat,idir,rdof,i), m_offset) = 0.0;
-              }
-            }
-          }
           // Reconstruct second-order dofs of volume-fractions in Taylor space
           // using nodal-stencils, for a good interface-normal estimate
           tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,

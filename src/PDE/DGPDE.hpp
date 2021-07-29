@@ -154,6 +154,12 @@ class DGPDE {
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     { self->lhs( geoElem, l ); }
 
+    //! Public interface to updating the interface cells for the diff eq
+    void updateInterfaceCells( tk::Fields& unk,
+                               std::size_t nielem,
+                               std::vector< std::size_t >& ndofel ) const
+    { self->updateInterfaceCells( unk, nielem, ndofel ); }
+
     //! Public interface to updating the primitives for the diff eq
     void updatePrimitives( const tk::Fields& unk,
                            const tk::Fields& L,
@@ -301,6 +307,9 @@ class DGPDE {
         tk::real,
         const std::size_t nielem ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
+      virtual void updateInterfaceCells( tk::Fields&,
+                                         std::size_t,
+                                         std::vector< std::size_t >& ) const = 0;
       virtual void updatePrimitives( const tk::Fields&,
                                      const tk::Fields&,
                                      const tk::Fields&,
@@ -401,6 +410,10 @@ class DGPDE {
         nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
+      void updateInterfaceCells( tk::Fields& unk,
+                                 std::size_t nielem,
+                                 std::vector< std::size_t >& ndofel )
+      const override { data.updateInterfaceCells( unk, nielem, ndofel ); }
       void updatePrimitives( const tk::Fields& unk,
                              const tk::Fields& L,
                              const tk::Fields& geoElem,

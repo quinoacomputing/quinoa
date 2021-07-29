@@ -548,7 +548,8 @@ THINCReco( std::size_t system,
       std::cout << "Mat-k-involved?     " << matInt[k] << std::endl;
     }
   }
-  if (neg_vf) Throw("Material has negative volume fraction.");
+  if (neg_vf) Throw("Material has negative volume fraction after THINC "
+    "reconstruction.");
 
   // Step-2: Perform consistent reconstruction on other conserved quantities
   if (intInd)

@@ -2422,6 +2422,7 @@ DG::solve( tk::real newdt )
   // Update primitives based on the evolved solution
   for (const auto& eq : g_dgpde)
   {
+    eq.updateInterfaceCells( m_u, m_fd.Esuel().size()/4, m_ndof );
     eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
     eq.cleanTraceMaterial( m_geoElem, m_u, m_p, m_fd.Esuel().size()/4 );
   }
