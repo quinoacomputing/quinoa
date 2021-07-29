@@ -1916,12 +1916,10 @@ void PositivityPreservingLimiting( std::size_t nmat,
     }
   }
   for(std::size_t imat = 0; imat < nmat; imat++)
-    phic_p1[densityIdx(nmat,imat)] =
-      phi_bound[imat] * phic_p1[densityIdx(nmat,imat)];
+    phic_p1[densityIdx(nmat,imat)] = phi_bound[imat];
   if(ndof > 4)
     for(std::size_t imat = 0; imat < nmat; imat++)
-      phic_p2[densityIdx(nmat,imat)] =
-        phi_bound[imat] * phic_p2[densityIdx(nmat,imat)];
+      phic_p2[densityIdx(nmat,imat)] = phi_bound[imat];
 }
 
 bool
