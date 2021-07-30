@@ -1913,7 +1913,7 @@ struct interval_time_info {
   }
   struct expect {
     using type = tk::real;
-    static constexpr type lower = 0;
+    static constexpr type lower = std::numeric_limits< tk::real >::epsilon();
     static std::string description() { return "real"; }
   };
 };

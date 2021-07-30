@@ -1198,7 +1198,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       auto lower = keyword::info::expect::lower;
       auto val = stack.template get< tag, tags... >();
-      if (val < lower) Message< Stack, WARNING, MsgKey::BOUNDS >( stack, in );
+      if (val < lower) Message< Stack, ERROR, MsgKey::BOUNDS >( stack, in );
     }
   };
 
@@ -1212,7 +1212,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       auto upper = keyword::info::expect::upper;
       auto val = stack.template get< tag, tags... >();
-      if (val > upper) Message< Stack, WARNING, MsgKey::BOUNDS >( stack, in );
+      if (val > upper) Message< Stack, ERROR, MsgKey::BOUNDS >( stack, in );
     }
   };
 

@@ -971,9 +971,9 @@ Discretization::next()
 {
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto ft = g_inputdeck.get< tag::interval_time, tag::field >();
-  if (std::abs(ft) > eps) m_physFieldFloor = std::floor( m_t / ft );
+  if (ft > eps) m_physFieldFloor = std::floor( m_t / ft );
   const auto ht = g_inputdeck.get< tag::interval_time, tag::history >();
-  if (std::abs(ht) > eps) m_physHistFloor = std::floor( m_t / ht );
+  if (ht > eps) m_physHistFloor = std::floor( m_t / ht );
 
   ++m_it;
   m_t += m_dt;
@@ -1093,7 +1093,7 @@ Discretization::fielditer() const
 }
 
 bool
-Discretization::fieldtime()
+Discretization::fieldtime() const
 // *****************************************************************************
 //  Decide if field output physics time interval is hit
 //! \return True if field output physics time interval is hit
@@ -1104,9 +1104,9 @@ Discretization::fieldtime()
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto ft = g_inputdeck.get< tag::interval_time, tag::field >();
 
-  if (std::abs(ft) < eps) return false;
+  if (ft < eps) return false;
 
-  return std::abs(std::floor(m_t/ft) - m_physFieldFloor) > eps;
+  return std::floor(m_t/ft) - m_physFieldFloor > eps;
 }
 
 bool
@@ -1123,7 +1123,7 @@ Discretization::histiter() const
 }
 
 bool
-Discretization::histtime()
+Discretization::histtime() const
 // *****************************************************************************
 //  Decide if history output physics time interval is hit
 //! \return True if history output physics time interval is hit
@@ -1134,9 +1134,9 @@ Discretization::histtime()
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto ht = g_inputdeck.get< tag::interval_time, tag::history >();
 
-  if (std::abs(ht) < eps) return false;
+  if (ht < eps) return false;
 
-  return std::abs(std::floor(m_t/ht) - m_physHistFloor) > eps;
+  return std::floor(m_t/ht) - m_physHistFloor > eps;
 }
 
 bool

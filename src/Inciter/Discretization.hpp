@@ -373,13 +373,13 @@ class Discretization : public CBase_Discretization {
     bool fielditer() const;
 
     //! Decide if field output physics time interval is hit
-    bool fieldtime();
+    bool fieldtime() const;
 
     //! Decide if history output iteration count interval is hit
     bool histiter() const;
 
     //! Decide if history output physics time interval is hit
-    bool histtime();
+    bool histtime() const;
 
     //! Decide if this is the last time step
     bool finished() const;

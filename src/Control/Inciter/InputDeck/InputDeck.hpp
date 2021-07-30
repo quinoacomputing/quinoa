@@ -345,9 +345,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::prec, tag::history >() = std::cout.precision();
       // Default intervals
       get< tag::interval_iter, tag::tty >() = 1;
-      get< tag::interval_iter, tag::field >() = 1;
       get< tag::interval_iter, tag::diag >() = 1;
-      get< tag::interval_iter, tag::history >() = 1;
+      get< tag::interval_iter, tag::field >() =
+        std::numeric_limits< kw::interval_iter::info::expect::type >::max();
+      get< tag::interval_iter, tag::history >() =
+        std::numeric_limits< kw::interval_iter::info::expect::type >::max();
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       brigand::for_each< keywords >( ctrinfoFill );
