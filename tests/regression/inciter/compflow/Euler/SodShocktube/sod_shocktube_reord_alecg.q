@@ -51,6 +51,7 @@ inciter
   end
 
   history_output
+    interval  1
     point p1 0.1 0.05 0.025 end
     point p2 0.9 0.05 0.025 end
   end

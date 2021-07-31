@@ -31,23 +31,24 @@ namespace ctr {
 
 //! Member data for tagged tuple
 using InputDeckMembers = brigand::list<
-    tag::cmd,        CmdLine
-  , tag::title,      kw::title::info::expect::type
-  , tag::selected,   selects
-  , tag::amr,        amr
-  , tag::ale,        ale
-  , tag::pref,       pref
-  , tag::discr,      discretization
-  , tag::prec,       precision
-  , tag::flformat,   floatformat
-  , tag::component,  ncomps
-  , tag::sys,        std::map< tk::ctr::ncomp_t, tk::ctr::ncomp_t >
-  , tag::interval,   intervals
-  , tag::param,      parameters
-  , tag::couple,     couple
-  , tag::diag,       diagnostics
-  , tag::error,      std::vector< std::string >
-  , tag::history,    history
+    tag::cmd,           CmdLine
+  , tag::title,         kw::title::info::expect::type
+  , tag::selected,      selects
+  , tag::amr,           amr
+  , tag::ale,           ale
+  , tag::pref,          pref
+  , tag::discr,         discretization
+  , tag::prec,          precision
+  , tag::flformat,      floatformat
+  , tag::component,     ncomps
+  , tag::sys,           std::map< tk::ctr::ncomp_t, tk::ctr::ncomp_t >
+  , tag::interval_iter, interval_iter
+  , tag::interval_time, interval_time
+  , tag::param,         parameters
+  , tag::couple,        couple
+  , tag::diag,          diagnostics
+  , tag::error,         std::vector< std::string >
+  , tag::history,       history
 >;
 
 //! \brief InputDeck : Control< specialized to Inciter >, see Types.h,
@@ -73,7 +74,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::problem
                                  , kw::field_output
                                  , kw::refined
-                                 , kw::interval
+                                 , kw::interval_iter
+                                 , kw::interval_time
                                  , kw::partitioning
                                  , kw::algorithm
                                  , kw::rcb
@@ -345,10 +347,12 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::prec, tag::diag >() = std::cout.precision();
       get< tag::prec, tag::history >() = std::cout.precision();
       // Default intervals
-      get< tag::interval, tag::tty >() = 1;
-      get< tag::interval, tag::field >() = 1;
-      get< tag::interval, tag::diag >() = 1;
-      get< tag::interval, tag::history >() = 1;
+      get< tag::interval_iter, tag::tty >() = 1;
+      get< tag::interval_iter, tag::diag >() = 1;
+      get< tag::interval_iter, tag::field >() =
+        std::numeric_limits< kw::interval_iter::info::expect::type >::max();
+      get< tag::interval_iter, tag::history >() =
+        std::numeric_limits< kw::interval_iter::info::expect::type >::max();
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       brigand::for_each< keywords >( ctrinfoFill );

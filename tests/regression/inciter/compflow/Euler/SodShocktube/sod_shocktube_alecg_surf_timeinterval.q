@@ -33,6 +33,8 @@ inciter
 
   field_output
     interval 10000
+    time_interval 1.0e-02
+    sideset 2 4 5 6 end
     var
       density "density_numerical"
       x-velocity "x-velocity_numerical"
@@ -47,12 +49,6 @@ inciter
     interval  1
     format    scientific
     error l2
-  end
-
-  history_output
-    interval  1
-    point p1 0.1 0.05 0.025 end
-    point p2 0.9 0.05 0.025 end
   end
 
 end
