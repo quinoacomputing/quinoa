@@ -1276,7 +1276,7 @@ namespace deck {
            tk::grm::process< use< kw::steady_state >,
                              tk::grm::Store< tag::discr, tag::steady_state >,
                              pegtl::alpha >,
-           tk::grm::interval< use< kw::ttyi >, tag::tty >,
+           tk::grm::interval_iter< use< kw::ttyi >, tag::tty >,
            tk::grm::process_alpha< use< kw::scheme >,
                                    tk::grm::store_inciter_option<
                                      inciter::ctr::Scheme,
@@ -1977,7 +1977,8 @@ namespace deck {
                                  tag::selected,
                                  tag::filetype >,
                                pegtl::alpha >,
-             tk::grm::interval< use< kw::interval >, tag::field >,
+             tk::grm::interval_iter< use< kw::interval_iter >, tag::field >,
+             tk::grm::interval_time< use< kw::interval_time >, tag::field >,
              tk::grm::process<
                use< kw::refined >,
                tk::grm::Store< tag::cmd, tag::io, tag::refined >,
@@ -1995,7 +1996,8 @@ namespace deck {
            tk::grm::block<
              use< kw::end >,
              outvar_block,
-             tk::grm::interval< use< kw::interval >, tag::history >,
+             tk::grm::interval_iter< use< kw::interval_iter >, tag::history >,
+             tk::grm::interval_time< use< kw::interval_time >, tag::history >,
              tk::grm::precision< use, tag::history >,
              tk::grm::process<
                use< kw::txt_float_format >,

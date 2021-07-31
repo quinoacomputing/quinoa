@@ -202,7 +202,7 @@ Distributor::info( const WalkerPrint& print,
 
   // Print output intervals
   print.section( "Output intervals" );
-  const auto& interval = g_inputdeck.get< tag::interval >();
+  const auto& interval = g_inputdeck.get< tag::interval_iter >();
   print.item( "TTY", interval.get< tag::tty>() );
   if (!g_inputdeck.get< tag::stat >().empty())
     print.item( "Statistics", interval.get< tag::stat >() );
@@ -337,7 +337,7 @@ Distributor::outStat()
   };
 
   // Append statistics file at selected times
-  if (!((m_it+1) % g_inputdeck.get< tag::interval, tag::stat >())) {
+  if (!((m_it+1) % g_inputdeck.get< tag::interval_iter, tag::stat >())) {
     tk::TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
                           g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
                           std::string(),
@@ -358,7 +358,7 @@ Distributor::outPDF()
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto pdffreq = g_inputdeck.get< tag::interval, tag::pdf >();
+  const auto pdffreq = g_inputdeck.get< tag::interval_iter, tag::pdf >();
 
   // output PDFs at t=0 (regardless of whether it was requested), or at
   // selected times, or in the last time step (regardless of whether it was
@@ -727,9 +727,9 @@ Distributor::report()
 // Print out one-liner report on time step
 // *****************************************************************************
 {
-  if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
+  if (!(m_it % g_inputdeck.get< tag::interval_iter, tag::tty >())) {
 
-  const auto parfreq = g_inputdeck.get< tag::interval, tag::particles >();
+  const auto parfreq = g_inputdeck.get< tag::interval_iter, tag::particles >();
   const auto poseq =
     !g_inputdeck.get< tag::param, tag::position, tag::depvar >().empty();
 

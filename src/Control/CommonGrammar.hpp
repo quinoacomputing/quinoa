@@ -1198,7 +1198,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       auto lower = keyword::info::expect::lower;
       auto val = stack.template get< tag, tags... >();
-      if (val < lower) Message< Stack, WARNING, MsgKey::BOUNDS >( stack, in );
+      if (val < lower) Message< Stack, ERROR, MsgKey::BOUNDS >( stack, in );
     }
   };
 
@@ -1212,7 +1212,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       auto upper = keyword::info::expect::upper;
       auto val = stack.template get< tag, tags... >();
-      if (val > upper) Message< Stack, WARNING, MsgKey::BOUNDS >( stack, in );
+      if (val > upper) Message< Stack, ERROR, MsgKey::BOUNDS >( stack, in );
     }
   };
 
@@ -1936,18 +1936,23 @@ namespace grm {
                   Store_back< tag::component, Tag >,
                   pegtl::digit > {};
 
-  //! Match interval control parameter
+  //! Match interval control parameter in units of iteration count
   template< typename keyword, typename Tag >
-  struct interval :
-         control< keyword, pegtl::digit, Store, tag::interval, Tag > {};
+  struct interval_iter :
+         control< keyword, pegtl::digit, Store, tag::interval_iter, Tag > {};
+
+  //! Match interval control parameter in units of physics time
+  template< typename keyword, typename Tag >
+  struct interval_time :
+         control< keyword, number, Store, tag::interval_time, Tag > {};
 
   //! Parse statistics ... end block
   template< template< class > class use, template< class... Ts > class store >
   struct statistics :
          pegtl::if_must< readkw< typename use< kw::statistics >::pegtl_string >,
                          block< use< kw::end >,
-                                interval< use< kw::interval >,
-                                          tag::stat >,
+                                interval_iter< use< kw::interval_iter >,
+                                               tag::stat >,
                                 process< use< kw::txt_float_format >,
                                          store< tk::ctr::TxtFloatFormat,
                                                 tag::flformat,
@@ -1961,8 +1966,8 @@ namespace grm {
   struct diagnostics :
          pegtl::if_must< readkw< typename use< kw::diagnostics >::pegtl_string >,
                          block< use< kw::end >,
-                                interval< use< kw::interval >,
-                                          tag::diag >,
+                                interval_iter< use< kw::interval_iter >,
+                                                    tag::diag >,
                                 process< use< kw::txt_float_format >,
                                          store< tk::ctr::TxtFloatFormat,
                                                 tag::flformat,
@@ -2103,7 +2108,7 @@ namespace grm {
            tk::grm::readkw< typename use < kw::pdfs >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
-             tk::grm::interval< use< kw::interval >, tag::pdf >,
+             tk::grm::interval_iter< use< kw::interval_iter >, tag::pdf >,
              pdf_option< use< kw::filetype >,
                          store< tk::ctr::PDFFile,
                                 tag::selected,
