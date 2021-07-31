@@ -1327,24 +1327,20 @@ ALECG::refine( const std::vector< tk::real >& l2res )
 {
   auto d = Disc();
 
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
   const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
   const auto rc = g_inputdeck.get< tag::discr, tag::rescomp >() - 1;
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   if (steady) {
 
     // this is the last time step if max time of max number of time steps
     // reached or the residual has reached its convergence criterion
-    if (std::abs(d->T()-term) < eps || d->It() >= nstep || l2res[rc] < residual)
-      m_finished = 1;
+    if (d->finished() or l2res[rc] < residual) m_finished = 1;
 
   } else {
 
     // this is the last time step if max time or max iterations reached
-    if (std::abs(d->T()-term) < eps || d->It() >= nstep) m_finished = 1;
+    if (d->finished()) m_finished = 1;
 
   }
 
@@ -1555,8 +1551,7 @@ ALECG::out()
   auto d = Disc();
 
   // Output time history if we hit its output frequency
-  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
-  if ( !((d->It()) % histfreq) ) {
+  if (d->histiter() or d->histtime()) {
     std::vector< std::vector< tk::real > > hist;
     conserved( m_u );
     for (const auto& eq : g_cgpde) {
@@ -1567,11 +1562,9 @@ ALECG::out()
     d->history( std::move(hist) );
   }
 
-  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
-
-  // output field data if field iteration count is reached or in the last time
-  // step
-  if ( !((d->It()) % fieldfreq) || m_finished )
+  // output field data if field iteration count is reached or if the field
+  // physics time output frequency is hit or in the last time step
+  if (d->fielditer() or d->fieldtime() or m_finished)
     writeFields( CkCallback(CkIndex_ALECG::step(), thisProxy[thisIndex]) );
   else
     step();
