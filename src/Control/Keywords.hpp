@@ -1886,13 +1886,13 @@ struct pari_info {
 };
 using pari = keyword< pari_info, TAOCPP_PEGTL_STRING("pari") >;
 
-struct interval_info {
+struct interval_iter_info {
   static std::string name() { return "interval"; }
   static std::string shortDescription() { return
-    "Set interval (within a relevant block)"; }
+    "Set interval (in units of iteration count)"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify an interval in time steps. This must be
-    used within a relevant block.)";
+    R"(This keyword is used to specify an interval in units of iteration count
+    (i.e., number of time steps). This must be used within a relevant block.)";
   }
   struct expect {
     using type = uint32_t;
@@ -1900,7 +1900,25 @@ struct interval_info {
     static std::string description() { return "uint"; }
   };
 };
-using interval = keyword< interval_info, TAOCPP_PEGTL_STRING("interval") >;
+using interval_iter =
+  keyword< interval_iter_info, TAOCPP_PEGTL_STRING("interval") >;
+
+struct interval_time_info {
+  static std::string name() { return "time_interval"; }
+  static std::string shortDescription() { return
+    "Set interval (in units of physics time)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify an interval in units of physics time.
+    This must be used within a relevant block.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = std::numeric_limits< tk::real >::epsilon();
+    static std::string description() { return "real"; }
+  };
+};
+using interval_time =
+  keyword< interval_time_info, TAOCPP_PEGTL_STRING("time_interval") >;
 
 struct statistics_info {
   static std::string name() { return "statistics"; }
@@ -4446,7 +4464,7 @@ struct diagnostics_info {
     R"(This keyword is used to introduce the dagnostics ... end block, used to
     configure diagnostics output. Keywords allowed in this block: )"
     + std::string("\'")
-    + interval::string() + "\' | \'"
+    + interval_iter::string() + "\' | \'"
     + txt_float_format::string() + "\' | \'"
     + error::string() + "\' | \'"
     + precision::string() + "\'.";

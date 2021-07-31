@@ -67,16 +67,16 @@ using floatformat = tk::TaggedTuple< brigand::list<
   , tag::pdf,  tk::ctr::TxtFloatFormatType  //!< PDF output format
 > >;
 
-//! Output intervals storage
-using intervals = tk::TaggedTuple< brigand::list<
+//! Output intervals in units of iteration count
+using interval_iter = tk::TaggedTuple< brigand::list<
     //! TTY output interval
     tag::tty,  kw::ttyi::info::expect::type
     //! Statistics output interval
-  , tag::stat, kw::interval::info::expect::type
+  , tag::stat, kw::interval_iter::info::expect::type
     //! Particles output interval
-  , tag::particles, kw::interval::info::expect::type
+  , tag::particles, kw::interval_iter::info::expect::type
     //! PDF output interval
-  , tag::pdf,  kw::interval::info::expect::type
+  , tag::pdf,  kw::interval_iter::info::expect::type
 > >;
 
 //! IO parameters storage

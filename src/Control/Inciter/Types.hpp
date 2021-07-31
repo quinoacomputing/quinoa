@@ -136,12 +136,24 @@ using floatformat = tk::TaggedTuple< brigand::list<
   , tag::history, tk::ctr::TxtFloatFormatType  //!< History output format
 > >;
 
-//! Output intervals storage
-using intervals = tk::TaggedTuple< brigand::list<
-    tag::tty,     kw::ttyi::info::expect::type      //!< TTY output interval
-  , tag::field,   kw::interval::info::expect::type  //!< Field output interval
-  , tag::history, kw::interval::info::expect::type  //!< History output interval
-  , tag::diag,    kw::interval::info::expect::type  //!< Diags output interval
+//! Output intervals in units of iteration count
+using interval_iter = tk::TaggedTuple< brigand::list<
+    //! TTY output interval
+    tag::tty,     kw::ttyi::info::expect::type
+    //! Field output interval
+  , tag::field,   kw::interval_iter::info::expect::type
+    //! History output interval
+  , tag::history, kw::interval_iter::info::expect::type
+    //! Diags output interval
+  , tag::diag,    kw::interval_iter::info::expect::type
+> >;
+
+//! Output intervals in units of physics time
+using interval_time = tk::TaggedTuple< brigand::list<
+    //! Field output interval
+    tag::field,   kw::interval_time::info::expect::type
+    //! History output interval
+  , tag::history, kw::interval_time::info::expect::type
 > >;
 
 //! History output parameters storage
