@@ -1507,7 +1507,6 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
       Assert(p[0] != p[1], "Node without parent edge in newVolMesh");
       Assert( old.find(p[0]) != end(old) && old.find(p[1]) != end(old),
               "Parent(s) not in old mesh" );
-      Assert( r >= old.size(), "Attempting to overwrite node with added one" );
       // local parent ids
       decltype(p) lp{{tk::cref_find(m_lref,p[0]), tk::cref_find(m_lref,p[1])}};
       // global parent ids

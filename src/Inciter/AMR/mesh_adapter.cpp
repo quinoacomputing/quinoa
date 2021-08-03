@@ -1258,6 +1258,24 @@ namespace AMR {
                   continue;
                 }
 
+                // check if tet_id has been marked for deref-ref
+                edge_list_t pedge_list = tet_store.generate_edge_keys(tet_id);
+                // Check each edge, see if it is marked for refinement
+                for (size_t k=0; k<NUM_TET_EDGES; k++) {
+                  edge_t edge = pedge_list[k];
+
+                  // deactivate child-edges from deref if marked '2'
+                  if (tet_store.edge_store.get(edge).needs_refining == 2) {
+                    auto edge_nodes = edge.get_data();
+                    auto ch_node = node_connectivity.data().at(edge_nodes);
+                    std::array< edge_t, 2> ch_edge;
+                    ch_edge[0] = {edge_nodes[0], ch_node};
+                    ch_edge[1] = {edge_nodes[1], ch_node};
+                    tet_store.edge_store.get(ch_edge[0]).needs_derefining = 0;
+                    tet_store.edge_store.get(ch_edge[1]).needs_derefining = 0;
+                  }
+                }
+
                 // This is useful for later inspection
                 //edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
                 std::size_t num_to_derefine = 0; // Nodes
@@ -1367,9 +1385,12 @@ namespace AMR {
                             // create a vector of node-array-pairs to mark edges
                             // for refinement 1:4
                             std::vector< std::array< std::size_t, 2 > > ref_edges;
+                            trace_out << "inactive nodes on same face: ";
                             for (auto n:inactive_node_set) {
+                              trace_out << n << ", ";
                               ref_edges.push_back(node_connectivity.get(n));
                             }
+                            trace_out << std::endl;
 
                             tet_store.edge_store.mark_edges_for_deref_ref(ref_edges);
                             //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
