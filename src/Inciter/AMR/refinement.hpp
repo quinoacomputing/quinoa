@@ -446,13 +446,13 @@ namespace AMR {
                 child_id_list_t child = generate_child_ids(tet_store,tet_id, num_children);
 
                 // Outsides
-                tet_store.add(child[0], A,  AB, AC, D, Refinement_Case::one_to_four, tet_id);
-                tet_store.add(child[2], AC, BC, C,  D, Refinement_Case::one_to_four, tet_id);
-                tet_store.add(child[3], AB, B,  BC, D, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(child[0], {{A,  AB, AC, D}}, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(child[2], {{AC, BC, C,  D}}, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(child[3], {{AB, B,  BC, D}}, Refinement_Case::one_to_four, tet_id);
 
                 // Center
                 size_t center_id = child[1]; // 1 to preserve Jacobian order
-                tet_store.add(center_id, AC, AB, BC, D, Refinement_Case::one_to_four, tet_id);
+                tet_store.add(center_id, {{AC, AB, BC, D}}, Refinement_Case::one_to_four, tet_id);
 
 
                 // TODO: replace this with a more concise way to lock the correct edges
@@ -604,15 +604,15 @@ namespace AMR {
                 child_id_list_t child = generate_child_ids(tet_store,tet_id);
 
                 // This order should give a positive Jacobian
-                tet_store.add(child[0], A, AB, AC, AD, Refinement_Case::one_to_eight, tet_id);
-                tet_store.add(child[1], B, BC, AB, BD, Refinement_Case::one_to_eight, tet_id);
-                tet_store.add(child[2], C, AC, BC, CD, Refinement_Case::one_to_eight, tet_id);
-                tet_store.add(child[3], D, AD, CD, BD, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[0], {{A, AB, AC, AD}}, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[1], {{B, BC, AB, BD}}, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[2], {{C, AC, BC, CD}}, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[3], {{D, AD, CD, BD}}, Refinement_Case::one_to_eight, tet_id);
 
-                tet_store.add(child[4], BC, CD, AC, BD, Refinement_Case::one_to_eight, tet_id);
-                tet_store.add(child[5], AB, BD, AC, AD, Refinement_Case::one_to_eight, tet_id);
-                tet_store.add(child[6], AB, BC, AC, BD, Refinement_Case::one_to_eight, tet_id);
-                tet_store.add(child[7], AC, BD, CD, AD, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[4], {{BC, CD, AC, BD}}, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[5], {{AB, BD, AC, AD}}, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[6], {{AB, BC, AC, BD}}, Refinement_Case::one_to_eight, tet_id);
+                tet_store.add(child[7], {{AC, BD, CD, AD}}, Refinement_Case::one_to_eight, tet_id);
 
                 tet_store.deactivate(tet_id);
 

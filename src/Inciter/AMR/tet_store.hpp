@@ -273,25 +273,6 @@ namespace AMR {
                 add_to_master(id, nodes, refinement_case);
             }
 
-            void add(
-                    size_t id,
-                    size_t first,
-                    size_t second,
-                    size_t third,
-                    size_t forth,
-                    Refinement_Case refinement_case,
-                    size_t parent_id
-                    )
-            {
-                return add(
-                        id,
-                        { {first, second, third, forth} },
-                        refinement_case,
-                        parent_id
-                        );
-
-            }
-
             // NOTE: this does *not* deal with edges
             /**
              * @brief Function to delete a tet from the tet store (useful in

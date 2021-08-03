@@ -58,35 +58,6 @@ namespace AMR {
             }
 
             /**
-             * @brief Add a master element, with a specified parent_id which is
-             * used to udpate the refinement_level
-             *
-             * @param element_number The element number to add
-             * @param refinement_case The refinement_case which gave rise to
-             * this element
-             * @param parent_id The id of the parent element
-             *
-             * @return The id of the added element
-             */
-            size_t add(
-                 size_t element_number,
-                 Refinement_Case refinement_case,
-                 size_t parent_id
-            )
-            {
-                size_t refinement_level =
-                    get(parent_id).refinement_level + 1;
-
-                trace_out << "Refinement Level " << refinement_level <<
-                    std::endl;
-
-                add(element_number, refinement_case,
-                        refinement_level, parent_id);
-
-                return element_number;
-            }
-
-            /**
              * @brief Accessor method to retrieve master element by element id
              *
              * @param id The element_id of the master_element to fetch

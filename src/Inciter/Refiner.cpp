@@ -961,38 +961,12 @@ Refiner::next()
 
   } else if (m_mode == RefMode::DTREF) {
 
-    // Augment node communication map with newly added nodes on chare-boundary
-    for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
-      auto& nodes = tk::ref_find( m_nodeCommMap, neighborchare );
-      for (const auto& e : edges) {
-        // If parent nodes were part of the node communication map for chare
-        if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes)) {
-          // Add new node if local id was generated for it
-          auto n = Hash<2>()( e );
-          if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
-        }
-      }
-    }
-
     // Send new mesh, solution, and communication data back to PDE worker
     m_scheme[m_meshid].ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel,
       m_el, m_coord, m_addedNodes, m_addedTets, m_removedNodes, m_amrNodeMap,
       m_nodeCommMap, m_bface, m_bnode, m_triinpoel );
 
   } else if (m_mode == RefMode::OUTREF) {
-
-    // Augment node communication map with newly added nodes on chare-boundary
-    for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
-      auto& nodes = tk::ref_find( m_nodeCommMap, neighborchare );
-      for (const auto& e : edges) {
-        // If parent nodes were part of the node communication map for chare
-        if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes)) {
-          // Add new node if local id was generated for it
-          auto n = Hash<2>()( e );
-          if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
-        }
-      }
-    }
 
     // Store field output mesh
     m_outref_ginpoel = m_ginpoel;
@@ -1468,6 +1442,21 @@ Refiner::updateMesh()
           "Size mismatch" );
   tk::remap( m_ginpoel, m_gid );
 
+  // Augment node communication map with newly added nodes on chare-boundary
+  if (m_mode == RefMode::DTREF || m_mode == RefMode::OUTREF) {
+    for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
+      auto& nodes = tk::ref_find( m_nodeCommMap, neighborchare );
+      for (const auto& e : edges) {
+        // If parent nodes were part of the node communication map for chare
+        if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes)) {
+          // Add new node if local id was generated for it
+          auto n = Hash<2>()( e );
+          if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
+        }
+      }
+    }
+  }
+
   // Ensure valid mesh after refinement
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
           "Refined mesh cell Jacobian non-positive" );
@@ -1557,13 +1546,6 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
 
   // update the node map by removing the derefined nodes
   if (m_mode == RefMode::DTREF && m_removedNodes.size() > 0) {
-    // create removed nodes vector
-    std::vector< size_t > remNodes;
-    remNodes.assign(m_removedNodes.begin(), m_removedNodes.end());
-
-    Assert(remNodes.size() == m_removedNodes.size(), "Incorrect removed nodes "
-      "vector size.");
-
     // remove derefined nodes
     size_t remCount = 0;
     size_t origSize = nodeVec.size();
@@ -1571,14 +1553,14 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
       auto nd = nodeVec[j-remCount];
 
       bool no_change = false;
-      size_t idx = 0;
-      for (size_t i=0; i<remNodes.size(); ++i) {
-        if (nd < remNodes[0] || nd > remNodes[remNodes.back()]) {
+      size_t nodeidx = 0;
+      for (const auto& rn : m_removedNodes) {
+        if (nd < *m_removedNodes.cbegin()) {
           no_change = true;
           break;
         }
-        else if (nd <= remNodes[i]) {
-          idx = i;
+        else if (nd <= rn) {
+          nodeidx = rn;
           break;
         }
       }
@@ -1587,7 +1569,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
       if (no_change)
         continue;
       // if not is within range of removed nodes list, erase node appropriately
-      else if (remNodes[idx] == nd) {
+      else if (nodeidx == nd) {
         //! Difference type for iterator/pointer arithmetics
         using diff_type = std::vector< std::size_t >::difference_type;
         nodeVec.erase(nodeVec.begin()+static_cast< diff_type >(j-remCount));

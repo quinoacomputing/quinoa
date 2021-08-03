@@ -1574,6 +1574,7 @@ namespace AMR {
         for (auto& kv : tet_store.edge_store.edges) {
            auto& local = kv.second;
            local.needs_derefining = 0;
+           if (local.needs_refining == 2) local.needs_refining = 0;
         }
     }
 
