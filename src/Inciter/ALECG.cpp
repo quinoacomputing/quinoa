@@ -1107,7 +1107,8 @@ ALECG::veldiv()
   // clear receive buffer
   tk::destroy(m_veldivc);
 
-  // Leave weak result in m_veldiv needed by the Helmholtz solve
+  // finish computing velocity divergence dividing weak sum by the nodal volumes
+  for (std::size_t p=0; p<m_veldiv.size(); ++p) m_veldiv[p] /= d->Voln()[p];
 
   meshvelbc();
 }
@@ -1119,6 +1120,8 @@ ALECG::meshvelbc( tk::real maxv )
 //! \param[in] maxv The largest vorticity magnitude across the whole problem
 // *****************************************************************************
 {
+  auto d = Disc();
+
   // smooth mesh velocity if needed
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
   if (meshvel == ctr::MeshVelocityType::FLUID) {
@@ -1158,7 +1161,7 @@ ALECG::meshvelbc( tk::real maxv )
     }
 
     // initialize mesh velocity smoother linear solver
-    Disc()->meshvelInit( m_w.flat(), {}, wbc,
+    d->meshvelInit( m_w.flat(), {}, wbc,
       CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
 
   } else if (meshvel == ctr::MeshVelocityType::HELMHOLTZ) {
@@ -1170,8 +1173,12 @@ ALECG::meshvelbc( tk::real maxv )
     // Dirichlet BCs where user specified mesh velocity BCs
     for (auto i : m_meshveldirbcnodes) pbc[i] = {{ {true,0} }};
 
+    // prepare velocity divergence as weak sum required for Helmholtz solve
+    decltype(m_veldiv) wveldiv = m_veldiv;
+    for (std::size_t p=0; p<wveldiv.size(); ++p) wveldiv[p] *= d->Voln()[p];
+
     // initialize Helmholtz decomposition linear solver
-    Disc()->meshvelInit( {}, m_veldiv, pbc,
+    d->meshvelInit( {}, wveldiv, pbc,
       CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
 
   } else {
@@ -1333,7 +1340,7 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
     const auto& inpoel = d->Inpoel();
     const auto& coord = d->Coord();
     const auto& vol0 = d->Vol0();
-    const auto& vol = d->Vol();
+    const auto& voln = d->Voln();
     const auto& x = coord[0];
     const auto& y = coord[1];
     const auto& z = coord[2];
@@ -1377,7 +1384,7 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
       std::array< tk::real, 4 > q{0,0,0,0};
       for (std::size_t a=0; a<4; ++a) {
         auto du = L * m_veldiv[N[a]];
-        auto dv = vol0[N[a]] / vol[N[a]];
+        auto dv = vol0[N[a]] / voln[N[a]];
         q[a] = - du*(f[0]*c + f[1]*std::abs(du) + f[2]*du*du)
                + f[3]*c*c*std::abs(dv-1.0);
         mp[N[a]] = q[a];
