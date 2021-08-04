@@ -82,6 +82,8 @@ using amr = tk::TaggedTuple< brigand::list<
 using ale = tk::TaggedTuple< brigand::list<
   //! ALE on/off
     tag::ale,           bool
+  //! Restrict mesh velocity dimensions (useful for d<3 dimensional problems)
+  , tag::mesh_motion,   std::vector< kw::mesh_motion::info::expect::type >
   //! dvCFL (CFL mesh volume change) coefficient for ALE
   , tag::dvcfl,         kw::dvcfl::info::expect::type
   //!< Multiplier for vorticity in mesh velocity smoother
@@ -95,6 +97,8 @@ using ale = tk::TaggedTuple< brigand::list<
   , tag::bcdir,         std::vector< kw::sideset::info::expect::type >
     //! Mesh velocity symmetry BC sidesets
   , tag::bcsym,         std::vector< kw::sideset::info::expect::type >
+    //! Mesh force parameters
+  , tag::meshforce,     std::vector< kw::meshforce::info::expect::type >
 > >;
 
 //! p-adaptive refinement options

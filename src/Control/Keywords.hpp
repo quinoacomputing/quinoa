@@ -6791,6 +6791,42 @@ struct meshvelocity_info {
 using meshvelocity =
   keyword< meshvelocity_info, TAOCPP_PEGTL_STRING("mesh_velocity") >;
 
+struct mesh_motion_info {
+  static std::string name() {
+    return "Mesh velocity dimensions allowed to change in ALE"; }
+  static std::string shortDescription() { return "Specify a list of scalar "
+    "dimension indices that are allowed to move in ALE calculations"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a list of integers (0, 1, or 2) whose
+    coordinate directions corresponding to x, y, or z are allowed to move with
+    the mesh velocity in ALE calculations. Example: 'mesh_motion 0 1 end', which
+    means disallow mesh motion in the z coordinate direction, useful for 2D
+    problems in x-y.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static std::string description() { return "integers"; }
+  };
+};
+using mesh_motion =
+  keyword< mesh_motion_info, TAOCPP_PEGTL_STRING("mesh_motion") >;
+
+struct meshforce_info {
+  static std::string name() { return "meshforce"; }
+  static std::string shortDescription() { return
+    R"(Set ALE meshforce model parameter(s))"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a meshforce model for ALE. Example: "meshforce 1.0 2.0 3.0
+    4.0 end". The length of the vector must exactly 4. Everything else is an
+    error.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using meshforce = keyword< meshforce_info,  TAOCPP_PEGTL_STRING("meshforce") >;
+
 struct ale_info {
   static std::string name() { return "ALE"; }
   static std::string shortDescription() { return "Start configuration block "
@@ -6799,6 +6835,12 @@ struct ale_info {
     R"(This keyword is used to introduce the ale ... end block, used to
     configure arbitrary Lagrangian-Eulerian (ALE) mesh movement. Keywords
     allowed in this block: )" + std::string("\'")
+    + vortmult::string() + "\' | \'"
+    + meshvel_maxit::string() + "\' | \'"
+    + meshvel_tolerance::string() + "\' | \'"
+    + bc_dirichlet::string() + "\' | \'"
+    + bc_sym::string() + "\' | \'"
+    + meshforce::string() + "\' | \'"
     + meshvelocity::string() + "\'.";
   }
 };

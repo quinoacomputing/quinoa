@@ -353,6 +353,11 @@ Transporter::info( const InciterPrint& print )
                   g_inputdeck.get< tag::ale, tag::tolerance >() );
       print.item( "Mesh velocity linear solver maxit",
                   g_inputdeck.get< tag::ale, tag::maxit >() );
+      print.item( "Mesh motion dimensions", tk::parameters(
+        g_inputdeck.get< tag::ale, tag::mesh_motion >() ) );
+      auto meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
+      print.item( "Mesh velocity force parameters",
+                    tk::parameters( meshforce ) );
       const auto& dir = g_inputdeck.get< tag::ale, tag::bcdir >();
       if (!dir.empty())
         print.item( "Mesh velocity Dirichlet BC sideset(s)",

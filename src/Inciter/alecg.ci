@@ -58,6 +58,9 @@ module alecg {
                          const std::vector< tk::real >& v );
       entry void compot( const std::vector< std::size_t >& gid,
                          const std::vector< std::array< tk::real, 3 > >& v );
+      entry void commeshforce(
+        const std::vector< std::size_t >& gid,
+        const std::vector< std::array< tk::real, 3 > >& w );
       entry void resized();
       entry void applied( CkDataMsg* msg );
       entry void smoothed( CkDataMsg* msg );
@@ -105,6 +108,10 @@ module alecg {
       entry void wait4pot() {
         when ownpot_complete(), compot_complete() serial "pot" { gradpot(); } }
 
+      entry void wait4meshforce() {
+        when ownmeshforce_complete(), commeshforce_complete() serial "meshforce"
+        { meshforce(); } }
+
       entry void ownnorm_complete();
       entry void comnorm_complete();
       entry void owndfnorm_complete();
@@ -123,6 +130,8 @@ module alecg {
       entry void comdiv_complete();
       entry void ownpot_complete();
       entry void compot_complete();
+      entry void ownmeshforce_complete();
+      entry void commeshforce_complete();
       //! [DAG]
     }
 

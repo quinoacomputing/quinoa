@@ -198,6 +198,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::meshvelocity
                                  , kw::meshvel_maxit
                                  , kw::meshvel_tolerance
+                                 , kw::mesh_motion
+                                 , kw::meshforce
                                  , kw::none
                                  , kw::sine
                                  , kw::fluid

@@ -774,6 +774,8 @@ Discretization::totalvol()
   // Clear receive buffer
   tk::destroy(m_volc);
 
+  if (m_it == 0) m_vol0 = m_vol;
+
   // Sum mesh volume to host
   std::vector< tk::real > tvol{0.0, m_initial, static_cast<tk::real>(m_meshid)};
   for (auto v : m_v) tvol[0] += v;

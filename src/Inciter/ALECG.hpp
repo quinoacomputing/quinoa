@@ -150,6 +150,10 @@ class ALECG : public CBase_ALECG {
     void compot( const std::vector< std::size_t >& gid,
                  const std::vector< std::array< tk::real, 3 > >& v );
 
+    //! Receive contributions to ALE mesh force on chare-boundaries
+    void commeshforce( const std::vector< std::size_t >& gid,
+                       const std::vector< std::array< tk::real, 3 > >& w );
+
     //! Update solution at the end of time step
     void update( const tk::Fields& a );
 
@@ -223,6 +227,7 @@ class ALECG : public CBase_ALECG {
       p | m_nvort;
       p | m_ndiv;
       p | m_npot;
+      p | m_nwf;
       p | m_nbnorm;
       p | m_ndfnorm;
       p | m_bnode;
@@ -238,10 +243,13 @@ class ALECG : public CBase_ALECG {
       p | m_un;
       p | m_w;
       p | m_vel;
+      p | mp;
+      p | m_wf;
       p | m_veldiv;
       p | m_veldivc;
       p | m_gradpot;
       p | m_gradpotc;
+      p | m_wfc;
       p | m_rhs;
       p | m_rhsc;
       p | m_chBndGrad;
@@ -294,6 +302,8 @@ class ALECG : public CBase_ALECG {
     std::size_t m_ndiv;
     //! Counter for communicating the gradient of the scalar potential for ALE
     std::size_t m_npot;
+    //! Counter for communicating the mesh force for ALE
+    std::size_t m_nwf;
     //! Counter for receiving boundary point normals
     std::size_t m_nbnorm;
     //! Counter for receiving dual-face normals on chare-boundary edges
@@ -324,6 +334,9 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_un;
     //! Mesh velocity for ALE mesh motion
     tk::Fields m_w;
+    //! Mesh force for ALE mesh motion
+    tk::Fields m_wf;
+    std::vector< tk::real > mp;
     //! Fluid velocity for ALE mesh motion
     tk::UnsMesh::Coords m_vel;
     //! Fluid velocity divergence for ALE mesh motion
@@ -336,6 +349,9 @@ class ALECG : public CBase_ALECG {
     //! Receive buffer for the gradient of the scalar potential for ALE
     //! \details Key: global node id, value: scalar potential gradient in nodes
     std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_gradpotc;
+    //! Receive buffer for the mesh force for ALE
+    //! \details Key: global node id, value: mesh force in nodes
+    std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_wfc;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
     //! Receive buffer for communication of the right hand side
@@ -494,6 +510,9 @@ class ALECG : public CBase_ALECG {
 
     //! Finalize computing the scalar potential gradient for ALE
     void gradpot();
+
+    //! Apply mesh force
+    void meshforce();
 };
 
 } // inciter::

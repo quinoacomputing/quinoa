@@ -154,6 +154,7 @@ namespace grm {
     SPONGEBCWRONG,      //!< Sponge BC incorrectly configured
     NONDISJOINTBC,      //!< Different BC types assigned to the same side set
     WRONGSIZE,          //!< Size of parameter vector incorrect
+    WRONGMESHMOTION,    //!< Error in mesh motion dimensions
     STEADYALE,          //!< ALE + steady state not supported
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
@@ -433,6 +434,10 @@ namespace grm {
       "to the same side set." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
+    { MsgKey::WRONGMESHMOTION, "Error in the preceding line or block. Mesh "
+      "motion dimension list can only involve the integers 0, 1, and 2, and "
+      "the size of the list of dimensions must be lower than 4 and larger "
+      "than 0." },
     { MsgKey::STEADYALE, "Error in the preceding line or block. Arbitrary "
       "Lagrangian-Eulerian mesh motion is not supported together with marching "
       "to steady state." },
@@ -1706,6 +1711,16 @@ namespace grm {
                        ignore,
                        tokens...,
                        unknown< ERROR, MsgKey::KEYWORD > > > {};
+
+  //! \brief Read in list of dimensions between keywords 'key' and
+  //!   'endkeyword', calling 'insert' for each if matches and allow comments
+  //!   between values
+  template< class key, class insert, class endkeyword,
+            class starter = noop, class value = pegtl::digit >
+  struct dimensions :
+         pegtl::seq<
+           act< readkw< typename key::pegtl_string >, starter >,
+           block< endkeyword, scan< value, insert > > > {};
 
   //! Plow through vector of values between keywords 'key' and
   //!   'endkeyword', calling 'insert' for each if matches and allow comments

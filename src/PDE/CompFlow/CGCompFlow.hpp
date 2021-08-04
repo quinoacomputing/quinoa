@@ -199,6 +199,21 @@ class CompFlow {
       }
     }
 
+    //! Query the sound speed
+    //! \param[in] U Solution vector of conserved variables
+    //! \param[in,out] s Speed of sound in mesh nodes
+    void soundspeed( const tk::Fields& U, std::vector< tk::real >& s ) const {
+      for (std::size_t p=0; p<U.nunk(); ++p) {
+        const auto& r  = U(p,0,m_offset);
+        const auto& ru = U(p,1,m_offset);
+        const auto& rv = U(p,2,m_offset);
+        const auto& rw = U(p,3,m_offset);
+        const auto& re = U(p,4,m_offset);
+        s[p] = eos_soundspeed< eq >( m_system, r,
+                 eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re ) );
+      }
+    }
+
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate
