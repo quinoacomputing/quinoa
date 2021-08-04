@@ -200,11 +200,7 @@ namespace AMR {
           auto e = edge_store.edges.find(tetedge);
           if (e != end(edge_store.edges)) {
             auto& local = e->second;
-            //if (local.lock_case == Edge_Lock_Case::unlocked) {
-              local.needs_derefining = 1;
-            //  trace_out << "edge marked for deref: " << local.A << " - "
-            //    << local.B << std::endl;
-            //}
+            local.needs_derefining = 1;
           }
         }
       }
@@ -231,11 +227,7 @@ namespace AMR {
              local.needs_derefining = 0;
            }
          } else if (r.second == edge_tag::DEREFINE) {
-           if (local.lock_case > Edge_Lock_Case::unlocked) {
-             local.needs_derefining = 0;
-           } else {
-             local.needs_derefining = 1;
-           }
+           local.needs_derefining = 1;
          }
        }
 

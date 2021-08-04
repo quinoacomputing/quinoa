@@ -23,11 +23,11 @@ namespace AMR {
             size_t DEFAULT_REFINEMENT_LEVEL = 0; //TODO: Is this in the right place?
             size_t MIN_REFINEMENT_LEVEL = DEFAULT_REFINEMENT_LEVEL;
             // list of "intermediate" edges to be deleted
-            std::vector< edge_t > delete_list;
+            std::set< edge_t > delete_list;
 
         public:
 
-            size_t MAX_REFINEMENT_LEVEL = 3;
+            size_t MAX_REFINEMENT_LEVEL = 2;
 
             // TODO: Document this
             child_id_list_t generate_child_ids( tet_store_t& tet_store, size_t parent_id, size_t count = MAX_CHILDREN)
@@ -281,9 +281,11 @@ namespace AMR {
              * @param tet_store Tet store to use
              * @param node_connectivity Mesh node connectivity (graph)
              * @param tet_id The id to refine 1:4
+             * @param kept_edges Vector of edges to keep after deref-ref
             */
             void deref_refine_one_to_four( tet_store_t& tet_store,
-                    node_connectivity_t& node_connectivity, size_t tet_id)
+                    node_connectivity_t& node_connectivity, size_t tet_id,
+                    std::vector< edge_t >& kept_edges)
             {
                 trace_out << "do refine 1:4 " << std::endl;
                 //bool face_refine = false;
@@ -349,6 +351,13 @@ namespace AMR {
                 trace_out << "face list 0 " << face_list[face_refine_id][0] << std::endl;
                 trace_out << "face list 1 " << face_list[face_refine_id][1] << std::endl;
                 trace_out << "face list 2 " << face_list[face_refine_id][2] << std::endl;
+
+                // store edges that should not be removed due to the deref-ref
+                auto kept_edge_list = AMR::edge_store_t::
+                  generate_keys_from_face_ids(face_list[face_refine_id]);
+                for (size_t i=0; i<3; ++i) {
+                  kept_edges.push_back(kept_edge_list[i]);
+                }
 
                 refine_one_to_four(tet_store, node_connectivity, tet_id, face_list[face_refine_id], opposite_id);
             }
@@ -902,11 +911,60 @@ namespace AMR {
             void derefine_four_to_two(tet_store_t& tet_store, node_connectivity_t& node_connectivity, size_t parent_id)
             {
                 //if (!check_allowed_derefinement(tet_store,parent_id)) return;
+
+                // A 4:2 (implemented as a 4:1 + 1:2) keeps three child edges,
+                // two of which are from the 1:2 splitting. The third edge
+                // connects the opposite parent node with the intermediate node
+                // (of the 1:2 splitting). Figure out which is this edge, and
+                // remove it from the delete list.
+                // 1. first store the possible edges that connect parent nodes
+                //    with the intermediate node of the 1:2. There are 2
+                //    possibilities, because we can already eliminate the
+                //    parents of the intermediate node.
                 auto edge = find_edge_not_derefined(tet_store,
                   node_connectivity, parent_id);
+
+                std::array< edge_t, 2 > int_par_edges;
+                auto parent_tet = tet_store.get(parent_id);
+                auto npnode = node_connectivity.data().at(edge.get_data());
+                size_t icount(0);
+                for (size_t i=0; i<NUM_TET_NODES; ++i) {
+                  if (parent_tet[i] != edge.first() &&
+                    parent_tet[i] != edge.second()) {
+                    int_par_edges[icount] = edge_t(parent_tet[i], npnode);
+                    ++icount;
+                  }
+                }
+                assert(icount == 2);
+
+                // 2. find which one of these edges is present in the 4 children
+                child_id_list_t children = tet_store.data(parent_id).children;
+                bool ipedge_set = false;
+                edge_t int_par_edge;
+                for (size_t i=0; i<children.size(); i++) {
+                  edge_list_t chedge_list = tet_store.generate_edge_keys(children[i]);
+                  // Check each edge, and compare with possible edges
+                  for (size_t k=0; k<NUM_TET_EDGES; k++) {
+                    for (const auto& ipedge : int_par_edges) {
+                      if (chedge_list[k] == ipedge) {
+                        int_par_edge = ipedge;
+                        ipedge_set = true;
+                        break;
+                      }
+                    }
+                  }
+                }
+                assert(ipedge_set);
+
                 derefine_four_to_one(tet_store, node_connectivity, parent_id);
                 refine_one_to_two( tet_store, node_connectivity, parent_id,
                   edge.first(), edge.second() );
+
+                // remove edge not derefined from delete list
+                delete_list.erase(int_par_edge);
+                std::vector< edge_t > parent_edges;
+                parent_edges.push_back(edge);
+                remove_from_deletelist(node_connectivity, parent_edges);
             }
 
             // TODO: Document This.
@@ -919,6 +977,10 @@ namespace AMR {
                 derefine_eight_to_one(tet_store, node_connectivity, parent_id);
                 refine_one_to_two( tet_store, node_connectivity, parent_id,
                   edge.first(), edge.second() );
+                // remove edge not derefined from delete list
+                std::vector< edge_t > parent_edges;
+                parent_edges.push_back(edge);
+                remove_from_deletelist(node_connectivity, parent_edges);
             }
 
             // TODO: Document This.
@@ -927,7 +989,11 @@ namespace AMR {
                 //if (!check_allowed_derefinement(tet_store,parent_id)) return;
                 // TODO: think about if the logic for these derefs are right
                 derefine_eight_to_one(tet_store, node_connectivity, parent_id);
-                deref_refine_one_to_four( tet_store, node_connectivity, parent_id);
+                std::vector< edge_t > kept_edges;
+                deref_refine_one_to_four( tet_store, node_connectivity,
+                  parent_id, kept_edges);
+                // remove edge not derefined from delete list
+                remove_from_deletelist(node_connectivity, kept_edges);
             }
 
             /**
@@ -954,11 +1020,32 @@ namespace AMR {
                             {
                                 trace_out << "child " << c << " adding to delete list: "
                                   << edge.first() << " - " << edge.second() << std::endl;
-                                delete_list.push_back(edge);
+                                delete_list.insert(edge);
                             }
                         }
                     }
                 }
+            }
+
+            /**
+             * @brief Remove 'intermediate' edges (based on parent edges) from
+             *   delete list
+             *
+             * @param node_connectivity Node connectivity data structure
+             * @param parent_edges List of parent edges whose 'child' edges need
+             *   to be removed from the delete list
+             */
+            void remove_from_deletelist(
+              node_connectivity_t& node_connectivity,
+              const std::vector< edge_t >& parent_edges )
+            {
+              for (const auto& edge:parent_edges) {
+                auto npnode = node_connectivity.data().at(edge.get_data());
+                edge_t e1(edge.first(),npnode);
+                edge_t e2(edge.second(),npnode);
+                delete_list.erase(e1);
+                delete_list.erase(e2);
+              }
             }
 
             /**
@@ -970,6 +1057,8 @@ namespace AMR {
             {
               for (const auto& edge : delete_list) {
                 tet_store.edge_store.erase(edge);
+                tet_store.intermediate_list.erase(edge.get_data()[0]);
+                tet_store.intermediate_list.erase(edge.get_data()[1]);
               }
 
               delete_list.clear();
@@ -1012,7 +1101,10 @@ namespace AMR {
                     {
                         // Delete it
                         //tet_store.edge_store.erase(search_key);
-                        delete_list.push_back(search_key);
+                        trace_out << "adding to delete list: "
+                          << search_key.first() << " - " << search_key.second()
+                          << std::endl;
+                        delete_list.insert(search_key);
                     }
                 }
             }
