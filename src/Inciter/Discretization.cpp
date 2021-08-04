@@ -1224,7 +1224,7 @@ Discretization::status()
     if (histiter() or histtime()) print << 't';
     if (m_refined) print << 'h';
     if (!(m_it % lbfreq) && not finished()) print << 'l';
-    if (!benchmark && (!(m_it % rsfreq) || not finished())) print << 'r';
+    if (!benchmark && (!(m_it % rsfreq) || finished())) print << 'r';
 
     if (not m_meshvel_converged) print << 'a';
     m_meshvel_converged = true; // get ready for next time step
