@@ -1340,7 +1340,6 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
     const auto& inpoel = d->Inpoel();
     const auto& coord = d->Coord();
     const auto& vol0 = d->Vol0();
-    const auto& voln = d->Voln();
     const auto& x = coord[0];
     const auto& y = coord[1];
     const auto& z = coord[2];
@@ -1365,6 +1364,7 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
         ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
         da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
       const auto J = tk::triple( ba, ca, da );        // J = 6V
+      auto J24 = J/24.0;
       Assert( J > 0, "Element Jacobian non-positive" );
 
       // shape function derivatives, nnode*ndim [4][3]
@@ -1380,11 +1380,12 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
       for (std::size_t a=0; a<4; ++a) c = std::max( c, soundspeed[N[a]] );
 
       // mesh force in nodes
-      auto L = std::cbrt(J/6);  // element length scale, L=V^(1/3)
+      auto V = J/6.0;
+      auto L = std::cbrt(V);  // element length scale, L=V^(1/3)
+      auto dv = vol0[e] / V;
       std::array< tk::real, 4 > q{0,0,0,0};
       for (std::size_t a=0; a<4; ++a) {
         auto du = L * m_veldiv[N[a]];
-        auto dv = vol0[N[a]] / voln[N[a]];
         q[a] = - du*(f[0]*c + f[1]*std::abs(du) + f[2]*du*du)
                + f[3]*c*c*std::abs(dv-1.0);
         mp[N[a]] = q[a];
@@ -1394,7 +1395,7 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
       for (std::size_t a=0; a<4; ++a)
         for (std::size_t b=0; b<4; ++b)
           for (std::size_t i=0; i<3; ++i)
-            m_wf(N[a],i,0) += J/6 * grad[b][i] * q[b];
+            m_wf(N[a],i,0) += J24 * grad[b][i] * q[b];
     }
 
     // communicate mesh force sums to other chares on chare-boundary

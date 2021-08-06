@@ -177,13 +177,13 @@ class Discretization : public CBase_Discretization {
     //! Nodal mesh volume accessors const-ref
     const std::vector< tk::real >& V() const { return m_v; }
 
-    //! Nodal mesh volumes accessors as const-ref
+    //! Nodal mesh volumes at current time step accessors as const-ref
     const std::vector< tk::real >& Vol() const { return m_vol; }
-    //! Nodal mesh volumes accessors as const-ref at previous time step stage
+    //! Nodal mesh volumes at previous time step accessors as const-ref
     const std::vector< tk::real >& Voln() const { return m_voln; }
-    //! Nodal mesh volumes accessors as const-ref in the first time step stage
+    //! Element mesh volumes at t=t0 accessors as const-ref
     const std::vector< tk::real >& Vol0() const { return m_vol0; }
-    //! Nodal mesh volumes accessors as ref at previous time step stage
+    //! Nodal mesh volumes at previous time step accessors as ref
     std::vector< tk::real >& Voln() { return m_voln; }
 
     //! History points data accessor as const-ref
@@ -550,7 +550,7 @@ class Discretization : public CBase_Discretization {
     //!   elements (sum of surrounding cell volumes / 4) with contributions from
     //!   other chares on chare-boundaries at the previous time step stage
     std::vector< tk::real > m_voln;
-    //! ...
+    //! Mesh element volumes at t=t0
     std::vector< tk::real > m_vol0;
     //! Volume of user-defined box IC
     tk::real m_boxvol;

@@ -78,6 +78,7 @@ Discretization::Discretization(
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
   m_voln( m_vol ),
+  m_vol0( m_inpoel.size()/4, 0.0 ),
   m_bid(),
   m_timer(),
   m_refined( 0 ),
@@ -716,6 +717,9 @@ Discretization::vol()
                    std::to_string(z[N[3]]) + ')' );
     // scatter add V/4 to nodes
     for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
+
+    // save element volumes at t=t0
+    if (m_it == 0) m_vol0[e] = J * 4.0;
   }
 
   // Store nodal volumes without contributions from other chares on
@@ -773,8 +777,6 @@ Discretization::totalvol()
 
   // Clear receive buffer
   tk::destroy(m_volc);
-
-  if (m_it == 0) m_vol0 = m_vol;
 
   // Sum mesh volume to host
   std::vector< tk::real > tvol{0.0, m_initial, static_cast<tk::real>(m_meshid)};
