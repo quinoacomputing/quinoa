@@ -82,6 +82,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_w( m_u.nunk(), 3 ),
   m_wf( m_u.nunk(), 3 ),
   m_vel(),
+  m_soundspeed(),
   m_veldiv(),
   m_veldivc(),
   m_gradpot(),
@@ -94,7 +95,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_chBndGradc(),
   m_diag(),
   m_bnorm(),
-  m_bnormn(),
   m_bnormc(),
   m_symbcnodes(),
   m_farfieldbcnodes(),
@@ -538,31 +538,33 @@ ALECG::setup()
 //! [setup]
 
 void
-ALECG::volumetric( tk::Fields& u )
+ALECG::volumetric( tk::Fields& u, const std::vector< tk::real >& v )
 // *****************************************************************************
 //  Multiply solution with mesh volume
 //! \param[in,out] u Solution vector
+//! \param[in] v Nodal mesh volumes to use
 // *****************************************************************************
 {
   Assert( Disc()->Vol().size() == u.nunk(), "Size mismatch" );
 
   for (std::size_t i=0; i<u.nunk(); ++i)
     for (ncomp_t c=0; c<u.nprop(); ++c)
-      u(i,c,0) *= Disc()->Vol()[i];
+      u(i,c,0) *= v[i];
 }
 
 void
-ALECG::conserved( tk::Fields& u )
+ALECG::conserved( tk::Fields& u, const std::vector< tk::real >& v )
 // *****************************************************************************
 //  Divide solution with mesh volume
 //! \param[in,out] u Solution vector
+//! \param[in] v Nodal mesh volumes to use
 // *****************************************************************************
 {
   Assert( Disc()->Vol().size() == u.nunk(), "Size mismatch" );
 
   for (std::size_t i=0; i<u.nunk(); ++i)
     for (ncomp_t c=0; c<u.nprop(); ++c) {
-      u(i,c,0) /= Disc()->Vol()[i];
+      u(i,c,0) /= v[i];
     }
 }
 
@@ -582,11 +584,15 @@ ALECG::box( tk::real v )
   for (auto& eq : g_cgpde)
     eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes );
 
-  // query and initialize fluid velocity across all systems integrated
-  if (d->dynALE()) for (const auto& eq : g_cgpde) eq.velocity( m_u, m_vel );
+  if (d->dynALE()) {
+    // query and initialize fluid velocity across all systems integrated
+    for (const auto& eq : g_cgpde) eq.velocity( m_u, m_vel );
+    // query speed of sound in mesh nodes across all systems integrated
+    for (const auto& eq : g_cgpde) eq.soundspeed( m_u, m_soundspeed );
+  }
 
   // Multiply conserved variables with mesh volume
-  volumetric( m_u );
+  //volumetric( m_u );
 
   // Initiate IC transfer (if coupled)
   Disc()->transfer( m_u );
@@ -594,8 +600,8 @@ ALECG::box( tk::real v )
   // Initialize nodal mesh volumes
   d->Voln() = d->Vol();
 
-  // Compute left-hand side of PDEs
-  lhs();
+  // ...
+  meshvel();
 }
 
 //! [start]
@@ -611,10 +617,10 @@ ALECG::start()
   Disc()->Timer().zero();
   // Zero grind-timer
   Disc()->grindZero();
-  // Continue to next time step
-  next();
   // Apply BCs on initial conditions
   BC();
+  // Continue to next time step
+  next();
 }
 //! [start]
 
@@ -629,7 +635,7 @@ ALECG::lhs()
   // No need for LHS in ALECG
 
   // Compute new mesh velocity
-  meshvel();
+  //meshvel();
 
   // (Re-)compute boundary point-, and dual-face normals
   norm();
@@ -783,7 +789,7 @@ ALECG::BC()
 {
   const auto& coord = Disc()->Coord();
 
-  conserved( m_u );
+  //conserved( m_u );
 
   // Apply Dirichlet BCs
   for (const auto& [b,bc] : m_dirbc)
@@ -802,7 +808,7 @@ ALECG::BC()
   for (const auto& eq : g_cgpde)
     eq.sponge( m_u, coord, m_spongenodes );
 
-  volumetric( m_u );
+  //volumetric( m_u );
 }
 
 void
@@ -836,7 +842,7 @@ ALECG::dt()
   } else {      // compute dt based on CFL
 
     //! [Find the minimum dt across all PDEs integrated]
-    conserved( m_u );
+    //conserved( m_u );
     if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
 
       // compute new dt for each mesh point
@@ -856,7 +862,7 @@ ALECG::dt()
       }
 
     }
-    volumetric( m_u );
+    //volumetric( m_u );
     //! [Find the minimum dt across all PDEs integrated]
 
   }
@@ -898,13 +904,13 @@ ALECG::chBndGrad()
   auto d = Disc();
 
   // Divide solution with mesh volume
-  conserved( m_u );
+  //conserved( m_u );
   // Compute own portion of gradients for all equations
   for (const auto& eq : g_cgpde)
     eq.chBndGrad( d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u,
                   m_chBndGrad );
   // Multiply solution with mesh volume
-  volumetric( m_u );
+  //volumetric( m_u );
 
   // Communicate gradients to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
@@ -1142,7 +1148,7 @@ ALECG::meshvelbc( tk::real maxv )
 
     // Lambda to find a boundary-point normal
     auto norm = [&](std::size_t p) {
-      for (const auto& [s,sn] : m_bnormn)
+      for (const auto& [s,sn] : m_bnorm)
         for (const auto& [i,n] : sn)
           if (i == p) return n;
       return std::array< tk::real, 4 >{ 0.0, 0.0, 0.0, 0.0 };
@@ -1332,6 +1338,8 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
   // Assess and record mesh velocity linear solver conergence
   d->meshvelConv();
 
+  m_wf.fill( 0.0 );
+
   // Compute mesh forces. See Sec.4 in Bakosi, Waltz, Morgan, Improved ALE
   // mesh velocities for complex flows, International Journal for Numerical
   // Methods in Fluids, 2017.
@@ -1344,15 +1352,8 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
     const auto& y = coord[1];
     const auto& z = coord[2];
 
-    // query speed of sound in mesh nodes
-    std::vector< tk::real > soundspeed( x.size() );
-    conserved( m_u );
-    for (const auto& eq : g_cgpde) eq.soundspeed( m_u, soundspeed );
-    volumetric( m_u );
-
     // compute pseudo-pressure gradient for mesh force
     const auto& f = g_inputdeck.get< tag::ale, tag::meshforce >();
-    m_wf.fill( 0.0 );
     mp.resize( x.size(), 0.0 );
     for (std::size_t e=0; e<inpoel.size()/4; ++e) {
       // access node IDs
@@ -1377,7 +1378,7 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
 
       // max sound speed across nodes of element
       auto c = 1.0e-3;        // floor on sound speed
-      for (std::size_t a=0; a<4; ++a) c = std::max( c, soundspeed[N[a]] );
+      for (std::size_t a=0; a<4; ++a) c = std::max( c, m_soundspeed[N[a]] );
 
       // mesh force in nodes
       auto V = J/6.0;
@@ -1469,14 +1470,14 @@ ALECG::meshforce()
       m_wf(p,j,0) /= d->Voln()[p];
 
   // advance mesh velocity in time due to pseudo-pressure gradient mesh force
-  m_w += rkcoef[m_stage] * d->Dt() * m_wf;
+  //m_w += rkcoef[m_stage] * d->Dt() * m_wf;
 
   // On meshvel symmetry BCs remove normal component of mesh velocity
   const auto& sbc = g_inputdeck.get< tag::ale, tag::bcsym >();
   for (auto p : m_meshvelsymbcnodes) {
     for (const auto& s : sbc) {
-      auto j = m_bnormn.find(std::stoi(s));
-      if (j != end(m_bnormn)) {
+      auto j = m_bnorm.find(std::stoi(s));
+      if (j != end(m_bnorm)) {
         auto i = j->second.find(p);
         if (i != end(j->second)) {
           std::array< tk::real, 3 >
@@ -1492,7 +1493,7 @@ ALECG::meshforce()
     }
   }
 
-  meshvel_complete();
+  if (m_initial) lhs(); else postALE();
 }
 
 void
@@ -1519,14 +1520,14 @@ ALECG::rhs()
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] += prev_rkcoef * m_dtp[p];
-  conserved( m_u );
+  //conserved( m_u );
   for (const auto& eq : g_cgpde) {
     eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
             m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
             m_symbctri, m_spongenodes, d->Vol(), m_edgenode, m_edgeid,
             m_boxnodes, m_chBndGrad, m_u, m_w, m_tp, d->Boxvol(), m_rhs );
   }
-  volumetric( m_u );
+  //volumetric( m_u );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
@@ -1610,7 +1611,11 @@ ALECG::solve()
     auto adt = rkcoef[m_stage] * d->Dt();
 
     // Advance unsteady solution
+    //volumetric( m_u, d->Vol() );
+    volumetric( m_un, d->Voln() );
     m_u = m_un + adt * m_rhs;
+    //conserved( m_u, d->Vol() );
+    conserved( m_un, d->Voln() );
 
     // Advance mesh if ALE is enabled
     if (d->ALE()) {
@@ -1621,9 +1626,6 @@ ALECG::solve()
     }
 
   }
-
-  // Apply BCs on new solution
-  BC();
 
   m_newmesh = 0;  // recompute normals after ALE (if enabled)
   // Activate SDAG waits
@@ -1638,19 +1640,10 @@ ALECG::solve()
   // Recompute mesh volumes if ALE is enabled
   if (d->ALE()) {
 
-    if (d->dynALE()) {
-      // query and update fluid velocity across all systems integrated
-      conserved( m_u );
-      for (const auto& eq : g_cgpde) eq.velocity( m_u, m_vel );
-      volumetric( m_u );
-      // save current boundary-point normals
-      m_bnormn = m_bnorm;
-    }
-
     transfer_complete();
     // Resize mesh data structures after mesh movement
     d->resizePostALE( d->Coord() );
-    d->startvol();
+    d->startvol( m_stage == 2 );
     auto meshid = d->MeshId();
     contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
                 CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
@@ -1670,6 +1663,32 @@ ALECG::ale()
 //  Continue after ALE mesh movement
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  conserved( m_u, d->Vol() );
+
+  if (d->dynALE()) {
+    // query fluid velocity across all systems integrated
+    for (const auto& eq : g_cgpde) eq.velocity( m_u, m_vel );
+    // query speed of sound in mesh nodes across all systems integrated
+    for (const auto& eq : g_cgpde) eq.soundspeed( m_u, m_soundspeed );
+  }
+
+  // Apply BCs on new solution
+  BC();
+
+  // Compute new mesh velocity
+  meshvel();
+}
+
+void
+ALECG::postALE()
+// *****************************************************************************
+//  Continue after ALE mesh movement
+// *****************************************************************************
+{
+  auto d = Disc();
+
   if (m_stage < 2) {
 
     // Activate SDAG wait for next time step stage
@@ -1681,8 +1700,6 @@ ALECG::ale()
 
   } else {
 
-    auto d = Disc();
-
     // Ensure new field output file if mesh moved if ALE is enabled
     if (d->ALE()) {
       d->Itf() = 0;  // Zero field output iteration count if mesh moved
@@ -1690,12 +1707,12 @@ ALECG::ale()
     }
 
     // Compute diagnostics, e.g., residuals
-    conserved( m_u );
-    conserved( m_un );
+    //conserved( m_u );
+    //conserved( m_un );
     auto diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
                                          m_symbcnodes, m_farfieldbcnodes );
-    volumetric( m_u );
-    volumetric( m_un );
+    //volumetric( m_u );
+    //volumetric( m_un );
     // Increase number of iterations and physical time
     d->next();
     // Advance physical time for local time stepping
@@ -1880,9 +1897,9 @@ ALECG::writeFields( CkCallback c )
     // Query fields names requested by user
     auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
     // Collect field output from numerical solution requested by user
-    conserved( m_u );
+    //conserved( m_u );
     auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
-    volumetric( m_u );
+    //volumetric( m_u );
 
     //! Lambda to put in a field for output if not empty
     auto add_node_field = [&]( const auto& name, const auto& field ){
@@ -1931,12 +1948,12 @@ ALECG::writeFields( CkCallback c )
 
     // Collect node block and surface field solution
     std::vector< std::vector< tk::real > > nodesurfs;
-    conserved( m_u );
+    //conserved( m_u );
     for (const auto& eq : g_cgpde) {
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), m_u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
-    volumetric( m_u );
+    //volumetric( m_u );
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
@@ -1959,12 +1976,12 @@ ALECG::out()
   // Output time history if we hit its output frequency
   if (d->histiter() or d->histtime()) {
     std::vector< std::vector< tk::real > > hist;
-    conserved( m_u );
+    //conserved( m_u );
     for (const auto& eq : g_cgpde) {
       auto h = eq.histOutput( d->Hist(), d->Inpoel(), m_u );
       hist.insert( end(hist), begin(h), end(h) );
     }
-    volumetric( m_u );
+    //volumetric( m_u );
     d->history( std::move(hist) );
   }
 

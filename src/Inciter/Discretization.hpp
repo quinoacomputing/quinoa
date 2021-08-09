@@ -129,7 +129,7 @@ class Discretization : public CBase_Discretization {
     resizePostALE( const tk::UnsMesh::Coords& coord );
 
     //! Get ready for (re-)computing/communicating nodal volumes
-    void startvol();
+    void startvol( bool last_stage = false );
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();

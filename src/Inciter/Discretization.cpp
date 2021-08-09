@@ -562,7 +562,7 @@ Discretization::resizePostALE( const tk::UnsMesh::Coords& coord )
 }
 
 void
-Discretization::startvol()
+Discretization::startvol( bool last_stage)
 // *****************************************************************************
 //  Get ready for (re-)computing/communicating nodal volumes
 // *****************************************************************************
@@ -571,7 +571,7 @@ Discretization::startvol()
   thisProxy[ thisIndex ].wait4vol();
 
   // Save current nodal volumes
-  m_voln = m_vol;
+  if (last_stage) m_voln = m_vol;
 
   // Zero out mesh volume container
   std::fill( begin(m_vol), end(m_vol), 0.0 );

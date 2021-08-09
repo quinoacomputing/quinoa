@@ -203,14 +203,16 @@ class CompFlow {
     //! \param[in] U Solution vector of conserved variables
     //! \param[in,out] s Speed of sound in mesh nodes
     void soundspeed( const tk::Fields& U, std::vector< tk::real >& s ) const {
-      for (std::size_t p=0; p<U.nunk(); ++p) {
-        const auto& r  = U(p,0,m_offset);
-        const auto& ru = U(p,1,m_offset);
-        const auto& rv = U(p,2,m_offset);
-        const auto& rw = U(p,3,m_offset);
-        const auto& re = U(p,4,m_offset);
-        s[p] = eos_soundspeed< eq >( m_system, r,
-                 eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re ) );
+      s.resize( U.nunk() );
+      for (std::size_t i=0; i<U.nunk(); ++i) {
+        const auto& r  = U(i,0,m_offset);
+        const auto& ru = U(i,1,m_offset);
+        const auto& rv = U(i,2,m_offset);
+        const auto& rw = U(i,3,m_offset);
+        const auto& re = U(i,4,m_offset);
+        auto p = eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re );
+        if (p < 0) p = 0.0;
+        s[i] = eos_soundspeed< eq >( m_system, r, p );
       }
     }
 
@@ -428,6 +430,9 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
+      //fenv_t fe;
+      //feholdexcept( &fe );
+
       for (auto e : bndel) {  // elements contributing to chare boundary nodes
         // access node IDs
         std::size_t N[4] =
@@ -443,6 +448,7 @@ class CompFlow {
         real day = y[N[3]]-y[N[0]];
         real daz = z[N[3]]-z[N[0]];
         auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+        ErrChk( J > 0, "Element Jacobian non-positive" );
         auto J24 = J/24.0;
         // shape function derivatives, nnode*ndim [4][3]
         real g[4][3];
@@ -478,6 +484,9 @@ class CompFlow {
           }
         }
       }
+
+      //feclearexcept( FE_UNDERFLOW );
+      //feupdateenv( &fe );
     }
 
     //! Compute right hand side for ALECG

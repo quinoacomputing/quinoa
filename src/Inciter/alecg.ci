@@ -79,7 +79,7 @@ module alecg {
       entry void wait4norm() {
         when ownnorm_complete(), comnorm_complete(),
              owndfnorm_complete(), comdfnorm_complete(),
-             transfer_complete(), meshvel_complete() serial "norm" {
+             transfer_complete() serial "norm" {
           merge();
         }
       }
@@ -117,7 +117,6 @@ module alecg {
       entry void owndfnorm_complete();
       entry void comdfnorm_complete();
       entry void transfer_complete();
-      entry void meshvel_complete();
       entry void ownrhs_complete();
       entry void comrhs_complete();
       entry void owngrad_complete();

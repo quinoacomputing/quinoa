@@ -242,9 +242,10 @@ class ALECG : public CBase_ALECG {
       p | m_u;
       p | m_un;
       p | m_w;
-      p | m_vel;
-      p | mp;
       p | m_wf;
+      p | mp;
+      p | m_vel;
+      p | m_soundspeed;
       p | m_veldiv;
       p | m_veldivc;
       p | m_gradpot;
@@ -257,7 +258,6 @@ class ALECG : public CBase_ALECG {
       p | m_chBndGradc;
       p | m_diag;
       p | m_bnorm;
-      p | m_bnormn;
       p | m_bnormc;
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
@@ -339,6 +339,8 @@ class ALECG : public CBase_ALECG {
     std::vector< tk::real > mp;
     //! Fluid velocity for ALE mesh motion
     tk::UnsMesh::Coords m_vel;
+    //! Sound speed for ALE mesh motion
+    std::vector< tk::real > m_soundspeed;
     //! Fluid velocity divergence for ALE mesh motion
     std::vector< tk::real > m_veldiv;
     //! Receive buffer for communication of the velocity divergence for ALE
@@ -379,8 +381,6 @@ class ALECG : public CBase_ALECG {
     //!   square between face centroids and points, outer key: side set id
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnorm;
-    //! Face normals in boundary points at time n for ALE
-    decltype(m_bnorm) m_bnormn;
     //! \brief Receive buffer for communication of the boundary point normals
     //!   associated to side sets
     //! \details Key: global node id, value: normals (first 3 components),
@@ -497,10 +497,10 @@ class ALECG : public CBase_ALECG {
     void BC();
 
     //! Multiply solution with mesh volume
-    void volumetric( tk::Fields& u );
+    void volumetric( tk::Fields& u, const std::vector< tk::real >& v );
 
     //! Divide solution with mesh volume
-    void conserved( tk::Fields& u );
+    void conserved( tk::Fields& u, const std::vector< tk::real >& v );
 
     //! Finalize computing fluid vorticity for ALE
     void vorticity();
@@ -513,6 +513,9 @@ class ALECG : public CBase_ALECG {
 
     //! Apply mesh force
     void meshforce();
+
+    //! ...
+    void postALE();
 };
 
 } // inciter::
