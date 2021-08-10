@@ -12,6 +12,8 @@
 */
 // *****************************************************************************
 
+#include <cfenv>
+
 #include "CGPDE.hpp"
 #include "NodeDiagnostics.hpp"
 #include "DiagReducer.hpp"
@@ -112,6 +114,9 @@ NodeDiagnostics::compute(
     for (const auto& eq : g_cgpde)
       eq.farfieldbc( an, coord, bnorm, farfieldbcnodes );
 
+    fenv_t fe;
+    feholdexcept( &fe );
+
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk(); ++i) {
       // Compute sum for L2 norm of the numerical solution
@@ -132,6 +137,11 @@ NodeDiagnostics::compute(
       // entry is used)
       diag[TOTALSOL][0] += u(i,u.nprop()-1,0) * v[i];
     }
+
+    // Ignore possible floating-point underflow when computing the L2-norm for
+    // extremely small but non-zero scalars above.
+    feclearexcept( FE_UNDERFLOW );
+    feupdateenv( &fe );
 
     // Append diagnostics vector with metadata on the current time step
     // ITER:: Current iteration count (only the first entry is used)

@@ -430,9 +430,6 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      //fenv_t fe;
-      //feholdexcept( &fe );
-
       for (auto e : bndel) {  // elements contributing to chare boundary nodes
         // access node IDs
         std::size_t N[4] =
@@ -471,7 +468,7 @@ class CompFlow {
               u[2] = U(N[b],2,m_offset)/u[0];
               u[3] = U(N[b],3,m_offset)/u[0];
               u[4] = U(N[b],4,m_offset)/u[0]
-                     - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
+                     - eos_kineticenergy(u[1],u[2],u[3]);
               if ( !skipPoint(x[N[b]],y[N[b]],z[N[b]]) &&
                    stagPoint(x[N[b]],y[N[b]],z[N[b]]) )
               {
@@ -484,9 +481,6 @@ class CompFlow {
           }
         }
       }
-
-      //feclearexcept( FE_UNDERFLOW );
-      //feupdateenv( &fe );
     }
 
     //! Compute right hand side for ALECG
@@ -646,7 +640,8 @@ class CompFlow {
           auto p = eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re );
           if (p < 0) p = 0.0;
           auto c = eos_soundspeed< eq >( m_system, r, p );
-          auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
+          // characteristic velocity
+          auto v = std::sqrt(2.0*eos_kineticenergy(ru,rv,rw)/r/r) + c;
 
           // energy source propagation velocity (in all IC boxes configured)
           if (icbox.size() > m_system) {
@@ -1073,8 +1068,7 @@ class CompFlow {
             u[1] = U(N[b],1,m_offset)/u[0];
             u[2] = U(N[b],2,m_offset)/u[0];
             u[3] = U(N[b],3,m_offset)/u[0];
-            u[4] = U(N[b],4,m_offset)/u[0]
-                   - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
+            u[4] = U(N[b],4,m_offset)/u[0] - eos_kineticenergy(u[1],u[2],u[3]);
             if ( !skipPoint(x[N[b]],y[N[b]],z[N[b]]) &&
                  stagPoint(x[N[b]],y[N[b]],z[N[b]]) )
             {
@@ -1147,7 +1141,7 @@ class CompFlow {
         real ruL = U(p,1,m_offset) / rL;
         real rvL = U(p,2,m_offset) / rL;
         real rwL = U(p,3,m_offset) / rL;
-        real reL = U(p,4,m_offset) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
+        real reL = U(p,4,m_offset) / rL - eos_kineticenergy(ruL,rvL,rwL);
         real w1L = W(p,0,0);
         real w2L = W(p,1,0);
         real w3L = W(p,2,0);
@@ -1155,7 +1149,7 @@ class CompFlow {
         real ruR = U(q,1,m_offset) / rR;
         real rvR = U(q,2,m_offset) / rR;
         real rwR = U(q,3,m_offset) / rR;
-        real reR = U(q,4,m_offset) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
+        real reR = U(q,4,m_offset) / rR - eos_kineticenergy(ruR,rvR,rwR);
         real w1R = W(q,0,0);
         real w2R = W(q,1,0);
         real w3R = W(q,2,0);
@@ -1171,11 +1165,11 @@ class CompFlow {
                rL, ruL, rvL, rwL, reL, rR, ruR, rvR, rwR, reR );
 
         // convert back to conserved variables
-        reL = (reL + 0.5*(ruL*ruL + rvL*rvL + rwL*rwL)) * rL;
+        reL = (reL + eos_kineticenergy(ruL,rvL,rwL)) * rL;
         ruL *= rL;
         rvL *= rL;
         rwL *= rL;
-        reR = (reR + 0.5*(ruR*ruR + rvR*rvR + rwR*rwR)) * rR;
+        reR = (reR + eos_kineticenergy(ruR,rvR,rwR)) * rR;
         ruR *= rR;
         rvR *= rR;
         rwR *= rR;
@@ -1263,6 +1257,9 @@ class CompFlow {
       auto url = ls;
       auto urr = rs;
 
+      fenv_t fe;
+      feholdexcept( &fe );
+
       // MUSCL reconstruction of edge-end-point primitive variables
       for (std::size_t c=0; c<5; ++c) {
         // gradients
@@ -1328,6 +1325,11 @@ class CompFlow {
 
         // ---------------------------------------------------------------------
       }
+
+      // Ignore possible floating-point underflow when computing the product
+      // delta1*delta1 for extremely small but non-zero scalars above.
+      feclearexcept( FE_UNDERFLOW );
+      feupdateenv( &fe );
 
       // force first order if the reconstructions for density or internal energy
       // would have allowed negative values
