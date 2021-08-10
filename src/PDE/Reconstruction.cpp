@@ -821,16 +821,19 @@ THINCFunction( std::size_t rdof,
     }
     // 2. otherwise, distribute error in all interface-constituting materials
     else {
+      auto err = 1.0e-12 - almax_mod;
+      alReco[kmax] = 1.0e-12;
+
       tk::real den(0.0);
       std::vector< tk::real > almod(nmat, 0.0);
       for (std::size_t k=0; k<nmat; ++k) {
-        if (matInt[k]) {
-          almod[k] = (1.0-alsum)*alSol[k*rdof];
+        if (matInt[k] && k != kmax) {
+          almod[k] = err*alSol[k*rdof];
           den += alSol[k*rdof];
         }
       }
       for (auto& am:almod) am /= den;
-      for (std::size_t k=0; k<nmat; ++k) alReco[k] += almod[k];
+      for (std::size_t k=0; k<nmat; ++k) alReco[k] -= almod[k];
     }
     alsum = 1.0;
   }
