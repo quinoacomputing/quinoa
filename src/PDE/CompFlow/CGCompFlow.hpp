@@ -205,11 +205,11 @@ class CompFlow {
     void soundspeed( const tk::Fields& U, std::vector< tk::real >& s ) const {
       s.resize( U.nunk() );
       for (std::size_t i=0; i<U.nunk(); ++i) {
-        const auto& r  = U(i,0,m_offset);
-        const auto& ru = U(i,1,m_offset);
-        const auto& rv = U(i,2,m_offset);
-        const auto& rw = U(i,3,m_offset);
-        const auto& re = U(i,4,m_offset);
+        auto r  = U(i,0,m_offset);
+        auto ru = U(i,1,m_offset);
+        auto rv = U(i,2,m_offset);
+        auto rw = U(i,3,m_offset);
+        auto re = U(i,4,m_offset);
         auto p = eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re );
         if (p < 0) p = 0.0;
         s[i] = eos_soundspeed< eq >( m_system, r, p );
