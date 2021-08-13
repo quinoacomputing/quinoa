@@ -159,12 +159,12 @@ Discretization::Discretization(
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   // Insert ConjugrateGradients solver chare array element if needed
-  if (ALE()) {
-    auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-    if (meshvel == ctr::MeshVelocityType::FLUID)
+  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+    if (meshveltype == ctr::MeshVelocityType::FLUID)
       m_conjugategradients[ thisIndex ].        // solve for mesh velocity
         insert( Laplacian(3), m_gid, m_lid, m_nodeCommMap );
-    if (meshvel == ctr::MeshVelocityType::HELMHOLTZ)
+    if (meshveltype == ctr::MeshVelocityType::HELMHOLTZ)
       m_conjugategradients[ thisIndex ].        // solve for scalar potential
         insert( Laplacian(1), m_gid, m_lid, m_nodeCommMap );
   }
@@ -202,40 +202,6 @@ Discretization::transferInit()
   std::vector< std::size_t > meshdata{ m_meshid, npoin };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
-}
-
-bool
-Discretization::ALE() const
-// *****************************************************************************
-//! Query if ALE mesh motion is enabled by the user
-//! \return True if ALE is configured
-// *****************************************************************************
-{
-  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-
-  if (ale && meshvel != ctr::MeshVelocityType::NONE)
-    return true;
-  else
-    return false;
-}
-
-bool
-Discretization::dynALE() const
-// *****************************************************************************
-//! Query if ALE mesh velocity is updated during time stepping
-//! \return True if mesh velocity is updated during time stepping
-// *****************************************************************************
-{
-  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-
-  if (ale &&
-      meshvel != ctr::MeshVelocityType::NONE &&
-      meshvel != ctr::MeshVelocityType::SINE)
-    return true;
-  else
-    return false;
 }
 
 void
@@ -278,7 +244,16 @@ Discretization::meshvelSolution() const
 //! \return Solution to the Conjugate Gradients linear solve
 // *****************************************************************************
 {
-  return ConjugateGradients()->solution();
+  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+
+  if (g_inputdeck.get< tag::ale, tag::ale >() &&
+      (meshvel == ctr::MeshVelocityType::FLUID ||
+       meshvel == ctr::MeshVelocityType::HELMHOLTZ) )
+  {
+    return ConjugateGradients()->solution();
+  } else {
+    return {};
+  }
 }
 
 void
@@ -289,9 +264,9 @@ Discretization::meshvelConv()
 {
   auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
 
-  if ( ALE() &&
-       (meshvel == ctr::MeshVelocityType::FLUID ||
-        meshvel == ctr::MeshVelocityType::HELMHOLTZ) )
+  if (g_inputdeck.get< tag::ale, tag::ale >() &&
+      (meshvel == ctr::MeshVelocityType::FLUID ||
+       meshvel == ctr::MeshVelocityType::HELMHOLTZ) )
   {
     m_meshvel_converged &= ConjugateGradients()->converged();
   }
@@ -540,38 +515,34 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
   std::size_t bid = m_bid.size();
   for (const auto& [ neighborchare, sharednodes ] : m_nodeCommMap)
     for (auto g : sharednodes)
-      if (m_bid.find( g ) == end(m_bid))
-        m_bid[ g ] = bid++;
+      if (m_bid.find(g) == end(m_bid))
+        m_bid[g] = bid++;
 
-  // Resize mesh data structures after ALE mesh movement
-  resizePostALE( coord );
-}
-
-void
-Discretization::resizePostALE( const tk::UnsMesh::Coords& coord )
-// *****************************************************************************
-//  Resize mesh data structures after ALE mesh movement
-//! \param[in] coord New mesh node coordinates
-// *****************************************************************************
-{
   // update mesh node coordinates
   m_coord = coord;
 
+  // Resize mesh data structures after ALE mesh movement
+  resizePostALE();
+}
+
+void
+Discretization::resizePostALE()
+// *****************************************************************************
+//  Resize mesh data structures after ALE mesh movement
+// *****************************************************************************
+{
   // Set flag that indicates that we are during time stepping
   m_initial = 0.0;
 }
 
 void
-Discretization::startvol( bool last_stage)
+Discretization::startvol()
 // *****************************************************************************
 //  Get ready for (re-)computing/communicating nodal volumes
 // *****************************************************************************
 {
   m_nvol = 0;
   thisProxy[ thisIndex ].wait4vol();
-
-  // Save current nodal volumes
-  if (last_stage) m_voln = m_vol;
 
   // Zero out mesh volume container
   std::fill( begin(m_vol), end(m_vol), 0.0 );

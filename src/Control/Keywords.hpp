@@ -6812,12 +6812,12 @@ using mesh_motion =
   keyword< mesh_motion_info, TAOCPP_PEGTL_STRING("mesh_motion") >;
 
 struct meshforce_info {
-  static std::string name() { return "meshforce"; }
+  static std::string name() { return "Mesh force"; }
   static std::string shortDescription() { return
-    R"(Set ALE meshforce model parameter(s))"; }
+    R"(Set ALE mesh force model parameter(s))"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify a vector of real numbers used to
-    parameterize a meshforce model for ALE. Example: "meshforce 1.0 2.0 3.0
+    parameterize a mesh force model for ALE. Example: "mesh_force 1.0 2.0 3.0
     4.0 end". The length of the vector must exactly 4. Everything else is an
     error.)"; }
   struct expect {
@@ -6825,7 +6825,7 @@ struct meshforce_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using meshforce = keyword< meshforce_info,  TAOCPP_PEGTL_STRING("meshforce") >;
+using meshforce = keyword< meshforce_info,  TAOCPP_PEGTL_STRING("mesh_force") >;
 
 struct ale_info {
   static std::string name() { return "ALE"; }

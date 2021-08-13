@@ -19,7 +19,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       CGCompFlowPhysics
                       Integrate
                       MeshRefinement
-                      MeshMotion
                       LoadBalance
                       ZoltanInterOp
                       Base

@@ -22,8 +22,7 @@ namespace inciter {
 namespace ctr {
 
 //! Mesh velocity configuration option types
-enum class MeshVelocityType : uint8_t { NONE
-                                      , SINE
+enum class MeshVelocityType : uint8_t { SINE
                                       , FLUID
                                       , LAGRANGE
                                       , HELMHOLTZ
@@ -37,8 +36,7 @@ class MeshVelocity : public tk::Toggle< MeshVelocityType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::none
-                                  , kw::sine
+    using keywords = brigand::list< kw::sine
                                   , kw::fluid
                                   , kw::lagrange
                                   , kw::helmholtz
@@ -52,15 +50,13 @@ class MeshVelocity : public tk::Toggle< MeshVelocityType > {
         //! Group, i.e., options, name
         kw::meshvelocity::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { MeshVelocityType::NONE, kw::none::name() }
-        , { MeshVelocityType::SINE, kw::sine::name() }
+        { { MeshVelocityType::SINE, kw::sine::name() }
         , { MeshVelocityType::FLUID, kw::fluid::name() }
         , { MeshVelocityType::LAGRANGE, kw::lagrange::name() }
         , { MeshVelocityType::HELMHOLTZ, kw::helmholtz::name() }
         },
         //! keywords -> Enums
-        { { kw::none::string(), MeshVelocityType::NONE }
-        , { kw::sine::string(), MeshVelocityType::SINE }
+        { { kw::sine::string(), MeshVelocityType::SINE }
         , { kw::fluid::string(), MeshVelocityType::FLUID }
         , { kw::lagrange::string(), MeshVelocityType::LAGRANGE }
         , { kw::helmholtz::string(), MeshVelocityType::HELMHOLTZ}

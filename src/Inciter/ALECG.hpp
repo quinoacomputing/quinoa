@@ -151,8 +151,8 @@ class ALECG : public CBase_ALECG {
                  const std::vector< std::array< tk::real, 3 > >& v );
 
     //! Receive contributions to ALE mesh force on chare-boundaries
-    void commeshforce( const std::vector< std::size_t >& gid,
-                       const std::vector< std::array< tk::real, 3 > >& w );
+    void comfor( const std::vector< std::size_t >& gid,
+                 const std::vector< std::array< tk::real, 3 > >& w );
 
     //! Update solution at the end of time step
     void update( const tk::Fields& a );
@@ -220,7 +220,6 @@ class ALECG : public CBase_ALECG {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_disc;
-      p | m_initial;
       p | m_nsol;
       p | m_ngrad;
       p | m_nrhs;
@@ -244,8 +243,6 @@ class ALECG : public CBase_ALECG {
       p | m_w;
       p | m_wf;
       p | mp;
-      p | m_vel;
-      p | m_soundspeed;
       p | m_veldiv;
       p | m_veldivc;
       p | m_gradpot;
@@ -288,8 +285,6 @@ class ALECG : public CBase_ALECG {
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
-    //! 1 if starting time stepping, 0 if during time stepping
-    std::size_t m_initial;
     //! Counter for high order solution vector nodes updated
     std::size_t m_nsol;
     //! Counter for nodal gradients updated
@@ -337,10 +332,6 @@ class ALECG : public CBase_ALECG {
     //! Mesh force for ALE mesh motion
     tk::Fields m_wf;
     std::vector< tk::real > mp;
-    //! Fluid velocity for ALE mesh motion
-    tk::UnsMesh::Coords m_vel;
-    //! Sound speed for ALE mesh motion
-    std::vector< tk::real > m_soundspeed;
     //! Fluid velocity divergence for ALE mesh motion
     std::vector< tk::real > m_veldiv;
     //! Receive buffer for communication of the velocity divergence for ALE
@@ -461,13 +452,13 @@ class ALECG : public CBase_ALECG {
     void writeFields( CkCallback c );
 
     //! Combine own and communicated contributions to normals
-    void merge();
+    void mergelhs();
 
     //! Compute gradients
     void chBndGrad();
 
     //! Start computing new mesh veloctity for ALE mesh motion
-    void meshvel();
+    void meshvelStart();
 
     //! Assign new mesh veloctity for ALE mesh motion
     void assignMeshvel();
@@ -477,9 +468,6 @@ class ALECG : public CBase_ALECG {
 
     //! Advance systems of equations
     void solve();
-
-    //! Continue after ALE mesh movement
-    void ale();
 
     //! Compute time step size
     void dt();
@@ -502,20 +490,23 @@ class ALECG : public CBase_ALECG {
     //! Divide solution with mesh volume
     void conserved( tk::Fields& u, const std::vector< tk::real >& v );
 
-    //! Finalize computing fluid vorticity for ALE
-    void vorticity();
-
-    //! Finalize computing the velocity divergence for ALE
-    void veldiv();
+    //! Finalize computing fluid vorticity and velocity divergence for ALE
+    void mergevel();
 
     //! Finalize computing the scalar potential gradient for ALE
     void gradpot();
 
+    //! Compute mesh force for the ALE mesh velocity
+    void force();
+
     //! Apply mesh force
     void meshforce();
 
-    //! ...
-    void postALE();
+    //! Done with computing the mesh velocity for ALE mesh motion
+    void meshvelDone();
+
+    //! Continue after computing the new mesh velocity for ALE
+    void ale();
 };
 
 } // inciter::

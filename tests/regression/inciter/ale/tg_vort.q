@@ -2,7 +2,7 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Taylor-Green with ALE, smoothing, and vorticity scaling"
+title "Taylor-Green with ALE, Laplacian smoothing, and vorticity scaling"
 
 inciter
 
@@ -15,9 +15,9 @@ inciter
   ale
     dvcfl 1.0
     mesh_velocity fluid
+    vortmult 1.0
     maxit 10
     tolerance 1.0
-    #vortmult 1.0
     bc_dirichlet
       sideset 1 2 3 4 5 6 end
     end

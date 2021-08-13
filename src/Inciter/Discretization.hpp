@@ -125,11 +125,10 @@ class Discretization : public CBase_Discretization {
                         const tk::NodeCommMap& nodeCommMap );
 
     //! Resize mesh data structures after ALE mesh movement
-    void
-    resizePostALE( const tk::UnsMesh::Coords& coord );
+    void resizePostALE();
 
     //! Get ready for (re-)computing/communicating nodal volumes
-    void startvol( bool last_stage = false );
+    void startvol();
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
@@ -181,10 +180,19 @@ class Discretization : public CBase_Discretization {
     const std::vector< tk::real >& Vol() const { return m_vol; }
     //! Nodal mesh volumes at previous time step accessors as const-ref
     const std::vector< tk::real >& Voln() const { return m_voln; }
-    //! Element mesh volumes at t=t0 accessors as const-ref
-    const std::vector< tk::real >& Vol0() const { return m_vol0; }
     //! Nodal mesh volumes at previous time step accessors as ref
     std::vector< tk::real >& Voln() { return m_voln; }
+    //! Element mesh volumes at t=t0 accessors as const-ref
+    const std::vector< tk::real >& Vol0() const { return m_vol0; }
+
+    //! Set 'initial' flag
+    //! \param[in] i Value to put in 'initial'
+    void Initial( tk::real i ) { m_initial = i; }
+    //! Query 'initial' flag
+    //! \return True during setup, false durign time stepping
+    bool Initial() const {
+      return std::abs(m_initial-1.0) < std::numeric_limits<tk::real>::epsilon();
+    }
 
     //! History points data accessor as const-ref
     const std::vector< HistData >& Hist() const { return m_histdata; }
@@ -370,9 +378,6 @@ class Discretization : public CBase_Discretization {
 
     //! Query if ALE mesh motion is enabled by the user
     bool ALE() const;
-
-    //! Query if ALE mesh velocity is updated during time stepping
-    bool dynALE() const;
 
     //! Decide if field output iteration count interval is hit
     bool fielditer() const;
