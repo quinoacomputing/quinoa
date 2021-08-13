@@ -1301,7 +1301,7 @@ ALECG::meshvelsolved( [[maybe_unused]] CkDataMsg* msg )
 
     auto a1 = g_inputdeck.get< tag::ale, tag::vortmult >();
     for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
-      for (std::size_t p=0; p<m_gradpot[j].size(); ++p)
+      for (std::size_t p=0; p<m_w.nunk(); ++p)
         m_w(p,j,0) += a1 * (m_gradpot[j][p] - m_w(p,j,0));
 
   }
