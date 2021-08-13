@@ -1264,7 +1264,7 @@ ALECG::gradpot()
   tk::destroy(m_gradpotc);
 
   // finish computing the gradient dividing weak sum by the nodal volumes
-  for (std::size_t j=0; j<3; ++j)
+  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
     for (std::size_t p=0; p<m_gradpot[j].size(); ++p)
       m_gradpot[j][p] /= d->Vol()[p];
 
