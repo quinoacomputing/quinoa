@@ -1001,8 +1001,7 @@ ALECG::meshvelstart()
       for (const auto& [c,n] : d->NodeCommMap()) {
         std::vector< tk::real > v( n.size() );
         std::size_t j = 0;
-        for (auto i : n)
-          v[j++] = m_veldiv[ tk::cref_find( d->Lid(), i ) ];
+        for (auto i : n) v[j++] = m_veldiv[ tk::cref_find( d->Lid(), i ) ];
         thisProxy[c].comdiv( std::vector<std::size_t>(begin(n),end(n)), v );
       }
     }
