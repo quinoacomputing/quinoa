@@ -62,7 +62,7 @@ module alecg {
                          const std::vector< std::array< tk::real, 3 > >& w );
       entry void resized();
       entry void applied( CkDataMsg* msg );
-      entry void smoothed( CkDataMsg* msg );
+      entry void meshvelsolved( CkDataMsg* msg );
       entry void helmholtz( CkDataMsg* msg );
       entry void lhs();
       entry void step();
@@ -88,7 +88,7 @@ module alecg {
 
       entry void wait4mesh() {
         when norm_complete(), resize_complete() serial "trans" {
-          if (m_newmesh == 0) meshvelStart(); else transfer(); } }
+          if (m_newmesh == 0) meshvelstart(); else transfer(); } }
 
       entry void wait4vel() {
         when ownvort_complete(), comvort_complete(),

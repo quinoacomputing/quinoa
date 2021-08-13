@@ -197,7 +197,7 @@ class ALECG : public CBase_ALECG {
     void applied( CkDataMsg* msg = nullptr );
 
     //! Mesh velocity smoother linear solver converged
-    void smoothed( CkDataMsg* msg = nullptr );
+    void meshvelsolved( CkDataMsg* msg = nullptr );
 
     //! Compute the gradient of the scalar potential for ALE
     void helmholtz( CkDataMsg* msg = nullptr );
@@ -457,12 +457,6 @@ class ALECG : public CBase_ALECG {
     //! Compute gradients
     void chBndGrad();
 
-    //! Start computing new mesh veloctity for ALE mesh motion
-    void meshvelStart();
-
-    //! Assign new mesh veloctity for ALE mesh motion
-    void assignMeshvel();
-
     //! Compute righ-hand side vector of transport equations
     void rhs();
 
@@ -490,6 +484,9 @@ class ALECG : public CBase_ALECG {
     //! Divide solution with mesh volume
     void conserved( tk::Fields& u, const std::vector< tk::real >& v );
 
+    //! Start computing new mesh veloctity for ALE mesh motion
+    void meshvelstart();
+
     //! Finalize computing fluid vorticity and velocity divergence for ALE
     void mergevel();
 
@@ -503,7 +500,7 @@ class ALECG : public CBase_ALECG {
     void meshforce();
 
     //! Done with computing the mesh velocity for ALE mesh motion
-    void meshvelDone();
+    void meshveldone();
 
     //! Continue after computing the new mesh velocity for ALE
     void ale();

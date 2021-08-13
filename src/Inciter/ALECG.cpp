@@ -589,7 +589,7 @@ ALECG::box( tk::real v )
   m_w.fill( 0.0 );
 
   // Start computing the mesh mesh velocity for ALE
-  meshvelStart();
+  meshvelstart();
 }
 
 //! [start]
@@ -936,7 +936,7 @@ ALECG::comChBndGrad( const std::vector< std::size_t >& gid,
 }
 
 void
-ALECG::meshvelStart()
+ALECG::meshvelstart()
 // *****************************************************************************
 // Start computing new mesh velocity for ALE mesh motion
 // *****************************************************************************
@@ -948,7 +948,7 @@ ALECG::meshvelStart()
 
   if (not g_inputdeck.get< tag::ale, tag::ale >()) {
 
-     meshvelDone();
+     meshveldone();
 
   } else {
 
@@ -1177,7 +1177,7 @@ ALECG::applied( [[maybe_unused]] CkDataMsg* msg )
   if (meshveltype == ctr::MeshVelocityType::FLUID) {
 
     Disc()->meshvelSolve(
-      CkCallback(CkIndex_ALECG::smoothed(nullptr), thisProxy[thisIndex]) );
+      CkCallback(CkIndex_ALECG::meshvelsolved(nullptr), thisProxy[thisIndex]) );
 
   } else if (meshveltype == ctr::MeshVelocityType::HELMHOLTZ) {
 
@@ -1186,7 +1186,7 @@ ALECG::applied( [[maybe_unused]] CkDataMsg* msg )
 
   } else {
 
-    smoothed();
+    meshvelsolved();
 
   }
 }
@@ -1269,18 +1269,18 @@ ALECG::gradpot()
     for (std::size_t p=0; p<m_gradpot[j].size(); ++p)
       m_gradpot[j][p] /= d->Vol()[p];
 
-  smoothed();
+  meshvelsolved();
 }
 
 void
-ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
+ALECG::meshvelsolved( [[maybe_unused]] CkDataMsg* msg )
 // *****************************************************************************
 //  Mesh smoother linear solver converged
 // *****************************************************************************
 {
   //if (msg != nullptr) {
   //  auto *normres = static_cast< tk::real * >( msg->getData() );
-  //  std::cout << "smoothed: " << *normres << '\n';
+  //  std::cout << "meshvelsolved: " << *normres << '\n';
   //}
 
   auto d = Disc();
@@ -1485,11 +1485,11 @@ ALECG::meshforce()
     }
   }
 
-  meshvelDone();
+  meshveldone();
 }
 
 void
-ALECG::meshvelDone()
+ALECG::meshveldone()
 // *****************************************************************************
 // Done with computing the mesh velocity for ALE
 // *****************************************************************************
