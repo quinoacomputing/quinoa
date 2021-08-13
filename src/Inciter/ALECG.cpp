@@ -1300,16 +1300,10 @@ ALECG::smoothed( [[maybe_unused]] CkDataMsg* msg )
 
   } else if (meshveltype == ctr::MeshVelocityType::HELMHOLTZ) {
 
-    conserved( m_u, Disc()->Vol() );
-    // query fluid velocity across all systems integrated
-    tk::UnsMesh::Coords vel;
-    for (const auto& eq : g_cgpde) eq.velocity( m_u, vel );
-    volumetric( m_u, Disc()->Vol() );
-
     auto a1 = g_inputdeck.get< tag::ale, tag::vortmult >();
     for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
       for (std::size_t p=0; p<m_gradpot[j].size(); ++p)
-        m_w(p,j,0) = vel[j][p] + a1 * (m_gradpot[j][p] - vel[j][p]);
+        m_w(p,j,0) += a1 * (m_gradpot[j][p] - m_w(p,j,0));
 
   }
 
