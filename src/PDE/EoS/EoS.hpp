@@ -13,8 +13,6 @@
 #ifndef EoS_h
 #define EoS_h
 
-#include <cfenv>
-
 #include "Data.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
@@ -132,24 +130,6 @@ tk::real eos_density( ncomp_t system,
   return rho;
 }
 
-//! Calculate kinetic energy from the velocity components
-//! \param[in] u X-velocity
-//! \param[in] v Y-velocity
-//! \param[in] w Z-velocity
-//! \return Kinetic energy
-#pragma omp declare simd
-static inline
-tk::real eos_kineticenergy( tk::real u, tk::real v, tk::real w ) {
-  fenv_t fe;
-  feholdexcept( &fe );
-  auto ke = 0.5 * (u*u + v*v + w*w);
-  // Ignore possible floating-point underflow when computing the kinetic energy
-  // for extremely small but non-zero velocities above.
-  feclearexcept( FE_UNDERFLOW );
-  feupdateenv( &fe );
-  return ke;
-}
-
 //! \brief Calculate pressure from the material density, momentum and total
 //!   energy using the stiffened-gas equation of state
 //! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
@@ -182,9 +162,8 @@ tk::real eos_pressure( ncomp_t system,
   auto g = gamma< Eq >(system, imat);
   auto p_c = pstiff< Eq >(system, imat);
 
-  tk::real partpressure = (arhoE - arho * eos_kineticenergy(u,v,w) - alpha*p_c)
+  tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c)
                           * (g-1.0) - alpha*p_c;
-
   return partpressure;
 }
 
