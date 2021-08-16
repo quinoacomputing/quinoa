@@ -15,10 +15,8 @@
 
 #include <vector>
 #include <map>
-#include <cfenv>
 #include <utility>
 #include <cstddef>
-
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
@@ -84,15 +82,7 @@ normal( real x1, real x2, real x3,
   real n2 = -(ax*bz - az*bx);
   real n3 =   ax*by - ay*bx;
 
-  fenv_t fe;
-  feholdexcept( &fe );
-
   auto farea = std::sqrt( n1*n1 + n2*n2 + n3*n3 );
-
-  // Ignore possible floating-point underflow when computing the products
-  // above for extremely small but non-zero scalars above.
-  feclearexcept( FE_UNDERFLOW );
-  feupdateenv( &fe );
 
   nx = n1/farea;
   ny = n2/farea;
@@ -122,17 +112,9 @@ area( real x1, real x2, real x3,
       real y1, real y2, real y3,
       real z1, real z2, real z3 )
 {
-  fenv_t fe;
-  feholdexcept( &fe );
-
   auto sidea = sqrt( (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1) );
   auto sideb = sqrt( (x3-x2)*(x3-x2) + (y3-y2)*(y3-y2) + (z3-z2)*(z3-z2) );
   auto sidec = sqrt( (x1-x3)*(x1-x3) + (y1-y3)*(y1-y3) + (z1-z3)*(z1-z3) );
-
-  // Ignore possible floating-point underflow when computing the products
-  // above for extremely small but non-zero scalars above.
-  feclearexcept( FE_UNDERFLOW );
-  feupdateenv( &fe );
 
   auto semip = 0.5 * (sidea + sideb + sidec);
 
