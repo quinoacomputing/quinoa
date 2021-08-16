@@ -15,6 +15,8 @@
 */
 // *****************************************************************************
 
+#include <cfenv>
+
 #include "QuinoaBuildConfig.hpp"
 #include "ALECG.hpp"
 #include "Vector.hpp"
@@ -1463,6 +1465,9 @@ ALECG::meshforce()
   // Dirichlet BCs where user specified mesh velocity BCs
   for (auto i : m_meshveldirbcnodes) m_w(i,0,0) = m_w(i,1,0) = m_w(i,2,0) = 0.0;
 
+  fenv_t fe;
+  feholdexcept( &fe );
+
   // On meshvel symmetry BCs remove normal component of mesh velocity
   const auto& sbc = g_inputdeck.get< tag::ale, tag::bcsym >();
   for (auto p : m_meshvelsymbcnodes) {
@@ -1483,6 +1488,11 @@ ALECG::meshforce()
       }
     }
   }
+
+  // Ignore possible floating-point underflow when computing the products for
+  // extremely small but non-zero scalars above.
+  feclearexcept( FE_UNDERFLOW );
+  feupdateenv( &fe );
 
   meshveldone();
 }
