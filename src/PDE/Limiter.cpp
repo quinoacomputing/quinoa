@@ -776,10 +776,10 @@ VertexBasedMultiMat_P2(
       phip_p1 = VertexBasedLimiting(prim, P, esup, inpoel, coord, geoElem, e,
         rdof, dof_el, offset, nprim, gid, bid, pNodalExtrm);
 
-      //for (std::size_t c=0; c<ncomp; ++c)
-      //  phic_p1[c] = std::max(phic_p1[c], phic_p2[c]);
-      //for (std::size_t c=0; c<nprim; ++c)
-      //  phip_p1[c] = std::max(phip_p1[c], phip_p2[c]);
+      for (std::size_t c=0; c<ncomp; ++c)
+        phic_p1[c] = std::max(phic_p1[c], phic_p2[c]);
+      for (std::size_t c=0; c<nprim; ++c)
+        phip_p1[c] = std::max(phip_p1[c], phip_p2[c]);
 
       // The coefficients for volume fractions of all materials should be
       // identical to maintain the conservation law
@@ -830,13 +830,15 @@ VertexBasedMultiMat_P2(
       // After Vertex-based limiter is applied, reset the limiting coefficients
       phic_p1.resize(ncomp, 1.0);
       phic_p2.resize(ncomp, 1.0);
+      phip_p1.resize(nprim, 1.0);
+      phip_p2.resize(nprim, 1.0);
 
       if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U_lim,
           phic_p1, phic_p2);
 
       PositivityPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U_lim,
-          phic_p1, phic_p2);
+          P_lim, phic_p1, phic_p2, phip_p1, phip_p2);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -877,6 +879,14 @@ VertexBasedMultiMat_P2(
           U_lim(e, mark+idof, offset) = phic_p1[c] * U_lim(e, mark+idof, offset);
         for(std::size_t idof=4; idof<rdof; idof++)
           U_lim(e, mark+idof, offset) = phic_p2[c] * U_lim(e, mark+idof, offset);
+      }
+      for (std::size_t c=0; c<nprim; ++c)
+      {
+        auto mark = c * rdof;
+        for(std::size_t idof=1; idof<4; idof++)
+          P_lim(e, mark+idof, offset) = phip_p1[c] * P_lim(e, mark+idof, offset);
+        for(std::size_t idof=4; idof<rdof; idof++)
+          P_lim(e, mark+idof, offset) = phip_p2[c] * P_lim(e, mark+idof, offset);
       }
     }
   }
@@ -1801,8 +1811,11 @@ void PositivityPreservingLimiting( std::size_t nmat,
                                    const std::vector< std::size_t >& inpoel,
                                    const tk::UnsMesh::Coords& coord,
                                    const tk::Fields& U,
+                                   const tk::Fields& P,
                                    std::vector< tk::real >& phic_p1,
-                                   std::vector< tk::real >& phic_p2 )
+                                   std::vector< tk::real >& phic_p2,
+                                   std::vector< tk::real >& phip_p1,
+                                   std::vector< tk::real >& phip_p2 )
 // *****************************************************************************
 //  Positivity preserving limiter for density when MulMat DG(P2) scheme is
 //    selected
@@ -1812,15 +1825,21 @@ void PositivityPreservingLimiting( std::size_t nmat,
 //! \param[in] e Element being checked for consistency
 //! \param[in] inpoel Element connectivity
 //! \param[in] coord Array of nodal coordinates
-//! \param[in,out] U Second-order solution vector which gets modified near
-//!   material interfaces for consistency
-//! \param[in] unk Vector of conservative variables based on Taylor basis
+//! \param[in] U Vector of conservative variables
+//! \param[in] P Vector of primitive variables
 //! \param[in,out] phic_p1 Vector of limiter functions for P1 dofs of the
 //!   conserved quantities
 //! \param[in,out] phic_p2 Vector of limiter functions for P2 dofs of the
 //!   conserved quantities
+//! \param[in,out] phip_p1 Vector of limiter functions for P1 dofs of the
+//!   primitive quantities
+//! \param[in,out] phip_p2 Vector of limiter functions for P2 dofs of the
+//!   primitive quantities
 // *****************************************************************************
 {
+  const auto ncomp = U.nprop() / ndof;
+  const auto nprim = P.nprop() / ndof;
+
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
@@ -1836,7 +1855,7 @@ void PositivityPreservingLimiting( std::size_t nmat,
   auto detT =
     tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-  std::vector< tk::real > phi_bound(nmat, 1.0);
+  std::vector< tk::real > phi_bound(ncomp+nprim, 1.0);
 
   const tk::real min = 1e-15;
 
@@ -1870,16 +1889,30 @@ void PositivityPreservingLimiting( std::size_t nmat,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
-      auto state = eval_state( U.nprop()/ndof, offset, ndof, ndof, e, U, B );
+      auto state = eval_state( ncomp, offset, ndof, ndof, e, U, B );
+      auto sprim = eval_state( nprim, offset, ndof, ndof, e, P, B );
 
       for(std::size_t imat = 0; imat < nmat; imat++)
       {
-        tk::real phi(1.0);
-        auto al = state[densityIdx(nmat, imat)];
-        auto al_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
-        if(al < min)
-          phi = std::fabs( (min - al_avg) / (al  - al_avg) );
-        phi_bound[imat] = std::min( phi_bound[imat], phi );
+        tk::real phi_rho(1.0), phi_rhoe(1.0), phi_pre(1.0);
+        // Evaluate the limiting coefficient for material density
+        auto rho = state[densityIdx(nmat, imat)];
+        auto rho_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
+        phi_rho = PositivityPreservingLimitingFunction(min, rho, rho_avg);
+        phi_bound[densityIdx(nmat, imat)] =
+          std::min(phi_bound[densityIdx(nmat, imat)], phi_rho);
+        // Evaluate the limiting coefficient for material density
+        auto rhoe = state[energyIdx(nmat, imat)];
+        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, ndof, 0), offset);
+        phi_rhoe = PositivityPreservingLimitingFunction(min, rhoe, rhoe_avg);
+        phi_bound[energyIdx(nmat, imat)] =
+          std::min(phi_bound[energyIdx(nmat, imat)], phi_rhoe);
+        // Evaluate the limiting coefficient for material density
+        auto pre = sprim[pressureIdx(nmat, imat)];
+        auto pre_avg = P(e, pressureDofIdx(nmat, imat, ndof, 0), offset);
+        phi_pre = PositivityPreservingLimitingFunction(min, pre, pre_avg);
+        phi_bound[ncomp+pressureIdx(nmat, imat)] =
+          std::min(phi_bound[ncomp+pressureIdx(nmat, imat)], phi_pre);
       }
     }
   }
@@ -1902,25 +1935,64 @@ void PositivityPreservingLimiting( std::size_t nmat,
       auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
         coordgp[2][igp] );
 
-      auto state = tk::eval_state(U.nprop()/ndof, offset, ndof, ndof, e, U, B);
+      auto state = eval_state( ncomp, offset, ndof, ndof, e, U, B );
+      auto sprim = eval_state( nprim, offset, ndof, ndof, e, P, B );
 
       for(std::size_t imat = 0; imat < nmat; imat++)
       {
-        tk::real phi(1.0);
-        auto al = state[densityIdx(nmat, imat)];
-        auto al_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
-        if(al < min)
-          phi = std::fabs( (min - al_avg) / (al  - al_avg) );
-        phi_bound[imat] = std::min( phi_bound[imat], phi );
+        tk::real phi_rho(1.0), phi_rhoe(1.0), phi_pre(1.0);
+        // Evaluate the limiting coefficient for material density
+        auto rho = state[densityIdx(nmat, imat)];
+        auto rho_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
+        phi_rho = PositivityPreservingLimitingFunction(min, rho, rho_avg);
+        phi_bound[densityIdx(nmat, imat)] =
+          std::min(phi_bound[densityIdx(nmat, imat)], phi_rho);
+        // Evaluate the limiting coefficient for material density
+        auto rhoe = state[energyIdx(nmat, imat)];
+        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, ndof, 0), offset);
+        phi_rhoe = PositivityPreservingLimitingFunction(min, rhoe, rhoe_avg);
+        phi_bound[energyIdx(nmat, imat)] =
+          std::min(phi_bound[energyIdx(nmat, imat)], phi_rhoe);
+        // Evaluate the limiting coefficient for material density
+        auto pre = sprim[pressureIdx(nmat, imat)];
+        auto pre_avg = P(e, pressureDofIdx(nmat, imat, ndof, 0), offset);
+        phi_pre = PositivityPreservingLimitingFunction(min, pre, pre_avg);
+        phi_bound[ncomp+pressureIdx(nmat, imat)] =
+          std::min(phi_bound[ncomp+pressureIdx(nmat, imat)], phi_pre);
       }
     }
   }
-  for(std::size_t imat = 0; imat < nmat; imat++)
-    phic_p1[densityIdx(nmat,imat)] = phi_bound[imat];
-  if(ndof > 4)
-    for(std::size_t imat = 0; imat < nmat; imat++)
-      phic_p2[densityIdx(nmat,imat)] = phi_bound[imat];
+  for(std::size_t icomp = nmat; icomp < ncomp; icomp++)
+    phic_p1[icomp] = phi_bound[icomp];
+  for(std::size_t icomp = 0; icomp < nmat; icomp++)
+    phip_p1[icomp] = phi_bound[icomp+ncomp];
+  if(ndof > 4) {
+    for(std::size_t icomp = nmat; icomp < ncomp+nprim; icomp++)
+      phic_p2[icomp] = phi_bound[icomp];
+    for(std::size_t icomp = 0; icomp < nmat; icomp++)
+      phip_p2[icomp] = phi_bound[icomp+ncomp];
+  }
 }
+
+tk::real
+PositivityPreservingLimitingFunction( const tk::real min,
+                                      const tk::real u_gp,
+                                      const tk::real u_avg )
+// *****************************************************************************
+//  Positivity-preserving limiter function for the volume fractions
+//! \param[in] min Minimum bound for volume fraction
+//! \param[in] u_gp Variable quantity at the quadrature point
+//! \param[in] u_avg Cell-average variable quantitiy
+//! \return The limiting coefficient from the positivity-preserving limiter
+//!   function
+// *****************************************************************************
+{
+  tk::real phi(1.0);
+  if(u_gp < min)
+    phi = std::fabs( (min - u_avg) / (u_gp - u_avg) );
+  return phi;
+}
+
 
 bool
 interfaceIndicator( std::size_t nmat,

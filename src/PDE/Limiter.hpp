@@ -230,8 +230,16 @@ void PositivityPreservingLimiting( std::size_t nmat,
                                    const std::vector< std::size_t >& inpoel,
                                    const tk::UnsMesh::Coords& coord,
                                    const tk::Fields& U,
+                                   const tk::Fields& P,
                                    std::vector< tk::real >& phic_p1,
-                                   std::vector< tk::real >& phic_p2 );
+                                   std::vector< tk::real >& phic_p2,
+                                   std::vector< tk::real >& phip_p1,
+                                   std::vector< tk::real >& phip_p2 );
+//! Positivity preserving limiter function
+tk::real
+PositivityPreservingLimitingFunction( const tk::real min,
+                                      const tk::real u_gp,
+                                      const tk::real u_avg );
 
 //! Interface indicator function, which checks element for material interface
 bool
