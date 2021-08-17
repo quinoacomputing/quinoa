@@ -653,18 +653,18 @@ THINCRecoTransport( std::size_t system,
 }
 
 void
-THINCFunction_old( std::size_t rdof,
-                   std::size_t nmat,
-                   std::size_t e,
-                   const std::vector< std::size_t >& inpoel,
-                   const UnsMesh::Coords& coord,
-                   const std::array< real, 3 >& ref_xp,
-                   real vol,
-                   real bparam,
-                   const std::vector< real >& alSol,
-                   bool intInd,
-                   const std::vector< std::size_t >& matInt,
-                   std::vector< real >& alReco )
+THINCFunction( std::size_t rdof,
+               std::size_t nmat,
+               std::size_t e,
+               const std::vector< std::size_t >& inpoel,
+               const UnsMesh::Coords& coord,
+               const std::array< real, 3 >& ref_xp,
+               real vol,
+               real bparam,
+               const std::vector< real >& alSol,
+               bool intInd,
+               const std::vector< std::size_t >& matInt,
+               std::vector< real >& alReco )
 // *****************************************************************************
 //  Old version of the Multi-Medium THINC reconstruction function
 //! \param[in] rdof Total number of reconstructed dofs
@@ -686,8 +686,8 @@ THINCFunction_old( std::size_t rdof,
 //!   Pandare A. K., Waltz J., & Bakosi J. (2021) Multi-Material Hydrodynamics
 //!   with Algebraic Sharp Interface Capturing. Computers & Fluids,
 //!   doi: https://doi.org/10.1016/j.compfluid.2020.104804.
-//!   This function will be removed after the newer version is sufficiently
-//!   tested.
+//!   This function will be removed after the newer version (see
+//!   THINCFunction_new) is sufficiently tested.
 // *****************************************************************************
 {
   // determine number of materials with interfaces in this cell
@@ -844,18 +844,18 @@ THINCFunction_old( std::size_t rdof,
 }
 
 void
-THINCFunction( std::size_t rdof,
-               std::size_t nmat,
-               std::size_t e,
-               const std::vector< std::size_t >& inpoel,
-               const UnsMesh::Coords& coord,
-               const std::array< real, 3 >& ref_xp,
-               real vol,
-               real bparam,
-               const std::vector< real >& alSol,
-               bool intInd,
-               const std::vector< std::size_t >& matInt,
-               std::vector< real >& alReco )
+THINCFunction_new( std::size_t rdof,
+                   std::size_t nmat,
+                   std::size_t e,
+                   const std::vector< std::size_t >& inpoel,
+                   const UnsMesh::Coords& coord,
+                   const std::array< real, 3 >& ref_xp,
+                   real vol,
+                   real bparam,
+                   const std::vector< real >& alSol,
+                   bool intInd,
+                   const std::vector< std::size_t >& matInt,
+                   std::vector< real >& alReco )
 // *****************************************************************************
 //  New Multi-Medium THINC reconstruction function for volume fractions
 //! \param[in] rdof Total number of reconstructed dofs
@@ -874,7 +874,8 @@ THINCFunction( std::size_t rdof,
 //! \details This function computes the interface reconstruction using the
 //!   algebraic multi-material THINC reconstruction for each material at the
 //!   given (ref_xp) quadrature point. This function succeeds the older version
-//!   of the mm-THINC (see THINCFunction_old).
+//!   of the mm-THINC (see THINCFunction), but is still under testing and is
+//!   currently experimental.
 // *****************************************************************************
 {
   // compression parameter
