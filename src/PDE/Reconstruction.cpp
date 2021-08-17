@@ -772,6 +772,8 @@ THINCFunction( std::size_t rdof,
     }
 
     // 2. Reconstruct volume fractions using THINC
+    auto max_lim = 1.0 - (static_cast<real>(nmat-1)*1e-12);
+    auto min_lim = 1e-12;
     auto alsum(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
@@ -807,7 +809,7 @@ THINCFunction( std::size_t rdof,
         // THINC reconstruction
         auto al_c = 0.5 * (1.0 + std::tanh(beta*(tk::dot(ref_n[k], ref_xp) + d)));
 
-        alReco[k] = std::min(1.0-1e-14, std::max(1e-14, al_c));
+        alReco[k] = std::min(max_lim, std::max(min_lim, al_c));
       }
       // else, if this material does not have an interface close-by, the TVD
       // reconstructions must be used for state variables. This is ensured by
@@ -817,16 +819,16 @@ THINCFunction( std::size_t rdof,
     }
 
     // following lines need to be commented to use THINC with Transport
-    // ensure unit sum
-    // 1. check if modifying only max-mat will work
+    // 3. Do multimaterial cell corrections to ensure unit sum
+    // i. check if modifying only max-mat will work
     auto almax_mod = alReco[kmax] + 1.0 - alsum;
     if (almax_mod > 0.0) {
       alReco[kmax] += 1.0 - alsum;
     }
-    // 2. otherwise, distribute error in all interface-constituting materials
+    // ii. otherwise, distribute error in all interface-constituting materials
     else {
-      auto err = 1.0e-12 - almax_mod;
-      alReco[kmax] = 1.0e-12;
+      auto err = min_lim - almax_mod;
+      alReco[kmax] = min_lim;
 
       tk::real den(0.0);
       std::vector< tk::real > almod(nmat, 0.0);
