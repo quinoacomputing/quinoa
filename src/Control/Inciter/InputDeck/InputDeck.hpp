@@ -99,6 +99,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::mass
                                  , kw::density
                                  , kw::velocity
+                                 , kw::position
+                                 , kw::acceleration
+                                 , kw::fntype
+                                 , kw::fn
+                                 , kw::move
                                  , kw::initiate
                                  , kw::impulse
                                  , kw::linear

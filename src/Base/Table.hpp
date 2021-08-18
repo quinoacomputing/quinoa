@@ -21,8 +21,12 @@
 
 namespace tk {
 
-//! Type alias for declaring, defining, and storing a discrete y = f(x) function
-using Table = std::vector< std::pair< tk::real, tk::real > >;
+//! Type alias for storing a discrete y = f(x) function
+using Table = std::vector< std::tuple< tk::real, tk::real > >;
+
+//! Type alias for storing a discrete (y1,y2,y3) = f(x) function
+using Table3 =
+  std::vector< std::tuple< tk::real, tk::real, tk::real, tk::real > >;
 
 //! Sample a discrete y = f(x) function at x
 tk::real sample( tk::real x, const tk::Table& table );

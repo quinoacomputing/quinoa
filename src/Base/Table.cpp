@@ -38,17 +38,17 @@ tk::sample( tk::real x, const tk::Table& table )
 {
   Assert( !table.empty(), "Empty table to sample from" );
 
-  if (x < table.front().first) return table.front().second;
+  if (x < std::get<0>(table.front())) return std::get<1>(table.front());
 
   for (std::size_t i=0; i<table.size()-1; ++i) {
-    if (table[i].first < x && x < table[i+1].first) {
-      auto t1 = table[i].first;
-      auto y1 = table[i].second;
-      auto t2 = table[i+1].first;
-      auto y2 = table[i+1].second;
+    if (std::get<0>(table[i]) < x && x < std::get<0>(table[i+1])) {
+      auto t1 = std::get<0>( table[i] );
+      auto y1 = std::get<1>( table[i] );
+      auto t2 = std::get<0>( table[i+1] );
+      auto y2 = std::get<1>( table[i+1] );
       return y1 + (y2-y1)/(t2-t1)*(x-t1);
     }
   }
 
-  return table.back().second;
+  return std::get<1>(table.back());
 }
