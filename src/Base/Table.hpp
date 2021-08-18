@@ -14,6 +14,7 @@
 #ifndef Table_h
 #define Table_h
 
+#include <array>
 #include <vector>
 #include <utility>
 
@@ -30,6 +31,9 @@ using Table3 =
 
 //! Sample a discrete y = f(x) function at x
 tk::real sample( tk::real x, const tk::Table& table );
+
+//! Sample a discrete (y1,y2,y3) = f(x) function at x
+std::array< tk::real, 3 > sample( tk::real x, const tk::Table3& table );
 
 } // tk::
 

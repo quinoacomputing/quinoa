@@ -52,3 +52,56 @@ tk::sample( tk::real x, const tk::Table& table )
 
   return std::get<1>(table.back());
 }
+
+std::array< tk::real, 3 >
+tk::sample( tk::real x, const tk::Table3& table )
+// *****************************************************************************
+//  Sample a discrete (y1,y2,y3) = f(x) function at x
+//! \param[in] x Value of abscissa at which to sample (y1,y2,y3) = f(x)
+//! \param[in] table tk::Table to sample
+//! \details If x is lower than the first x value in the function table, the
+//!   first 3 function values, corresponding to the first x value, are returned.
+//!   If x is larger than the last x value in the function table, the last 3
+//!   function values, corresponding to the last x value, are returned. In other
+//!   words, no extrapolation is performed. If x falls between the first/lowest
+//!   and the last/largest value in the table, linear interpolation is used to
+//!   compute a sample between the two closest x values of the table around the
+//!   abscissa given.
+//! \return 3 sampled values from discrete table
+//! \note The x column in the table is assumed to be in increasing order.
+// *****************************************************************************
+{
+  Assert( !table.empty(), "Empty table to sample from" );
+
+  // Lambda to return the abscissa of a 4-tuple (return the first value)
+  auto abs = []( const tk::Table3::value_type& t ){ return std::get<0>(t); };
+
+  // Lambda to return ordinates of a 4-tuple as an array of 3 values
+  auto ord = []( const tk::Table3::value_type& t ){
+    return std::array< tk::real, 3 >{
+             std::get<1>(t), std::get<2>(t), std::get<3>(t) };
+  };
+
+  if (x < abs(table.front())) return ord( table.front() );
+
+  for (std::size_t i=0; i<table.size()-1; ++i) {
+    auto t1 = abs( table[i] );
+    auto t2 = abs( table[i+1] );
+    if (t1 < x && x < t2) {
+      auto d = (t2-t1)/(x-t1);
+      std::array< tk::real, 3 > o;
+      auto y1 = std::get<1>( table[i] );
+      auto y2 = std::get<1>( table[i+1] );
+      o[0] = y1 + (y2-y1) / d;
+      y1 = std::get<2>( table[i] );
+      y2 = std::get<2>( table[i+1] );
+      o[1] = y1 + (y2-y1) / d;
+      y1 = std::get<3>( table[i] );
+      y2 = std::get<3>( table[i+1] );
+      o[2] = y1 + (y2-y1) / d;
+      return o;
+    }
+  }
+
+  return ord( table.back() );
+}

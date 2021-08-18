@@ -108,7 +108,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_newmesh( 0 ),
   m_coordn( Disc()->Coord() ),
   m_vorticity(),
-  m_vorticityc()
+  m_vorticityc(),
+  m_usrfn( usrFn() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -177,6 +178,25 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   d->transferCallback( cb );
 }
 //! [Constructor]
+
+std::vector< tk::Table3 >
+ALECG::usrFn()
+// *****************************************************************************
+// Initialize user-defined functions for ALE moving sides
+// *****************************************************************************
+{
+  std::vector< tk::Table3 > vt;
+
+  for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
+    const auto& fn = m.get< tag::fn >();
+    Assert( fn.size() % 4 == 0, "Incomplete user-defined function" );
+    vt.emplace_back();
+    for (std::size_t i=0; i<fn.size()/4; ++i)
+      vt.back().push_back( { fn[i*4+0], fn[i*4+1], fn[i*4+2], fn[i*4+3] } );
+  }
+
+  return vt;
+}
 
 void
 ALECG::queryBC()

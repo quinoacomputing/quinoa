@@ -273,6 +273,7 @@ class ALECG : public CBase_ALECG {
       p | m_coordn;
       p | m_vorticity;
       p | m_vorticityc;
+      p | m_usrfn;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -413,6 +414,8 @@ class ALECG : public CBase_ALECG {
     //! Receive buffer for communication of the vorticity for ALE
     //! \details Key: global node id, value: vorticity in nodes
     std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_vorticityc;
+    //! User-defined functions for ALE moving sides
+    std::vector< tk::Table3 > m_usrfn;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -504,6 +507,9 @@ class ALECG : public CBase_ALECG {
 
     //! Continue after computing the new mesh velocity for ALE
     void ale();
+
+    //! Initialize user-defined functions for ALE moving sides
+    std::vector< tk::Table3 > usrFn();
 };
 
 } // inciter::
