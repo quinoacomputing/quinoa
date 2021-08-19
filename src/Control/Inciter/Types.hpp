@@ -18,7 +18,6 @@
 
 #include "Tags.hpp"
 #include "Base/Types.hpp"
-#include "Base/Table.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/Options/Scheme.hpp"

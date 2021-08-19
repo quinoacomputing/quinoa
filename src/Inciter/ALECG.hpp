@@ -35,6 +35,7 @@
 
 #include "Types.hpp"
 #include "Fields.hpp"
+#include "Table.hpp"
 #include "DerivedData.hpp"
 #include "FluxCorrector.hpp"
 #include "NodeDiagnostics.hpp"
