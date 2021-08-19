@@ -77,6 +77,7 @@ struct cenpdf {};
 struct nchare {};
 struct bounds {};
 struct meshvelocity { static std::string name() { return "meshvelocity"; } };
+struct smoother { static std::string name() { return "smoother"; } };
 struct meshforce { static std::string name() { return "meshforce"; } };
 struct mesh_motion{ static std::string name() { return "mesh_motion"; } };
 struct vortmult { static std::string name() { return "vortmult"; } };

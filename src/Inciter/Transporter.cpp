@@ -343,6 +343,7 @@ Transporter::info( const InciterPrint& print )
     auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
     print.item( "Volume-change CFL coefficient", dvcfl );
     print.Item< ctr::MeshVelocity, tag::ale, tag::meshvelocity >();
+    print.Item< ctr::MeshVelocitySmoother, tag::ale, tag::smoother >();
     print.item( "Mesh motion dimensions", tk::parameters(
                 g_inputdeck.get< tag::ale, tag::mesh_motion >() ) );
     const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
@@ -992,11 +993,11 @@ Transporter::need_linearsolver() const
 // *****************************************************************************
 {
   auto ale = g_inputdeck.get< tag::ale, tag::ale >();
-  auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
   bool need = false;
 
-  if (ale && (meshveltype == ctr::MeshVelocityType::FLUID ||
-              meshveltype == ctr::MeshVelocityType::HELMHOLTZ))
+  if (ale && (smoother == ctr::MeshVelocitySmootherType::LAPLACE ||
+              smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
   {
      need = true;
   }

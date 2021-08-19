@@ -984,7 +984,7 @@ ALECG::meshvelstart()
       if (d->Initial())
         for (std::size_t i=0; i<m_w.nunk(); ++i)
           m_w(i,0,0) = std::pow( std::sin(d->Coord()[0][i]*M_PI), 2.0 );
-    } else {
+    } else if (meshveltype == ctr::MeshVelocityType::FLUID) {
       // equate mesh velocity with fluid velocity
       for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
         for (std::size_t i=0; i<vel[j].size(); ++i)
@@ -1131,9 +1131,9 @@ ALECG::meshvelbc( tk::real maxv )
   auto d = Disc();
 
   // smooth mesh velocity if needed
-  auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
-  if (meshveltype == ctr::MeshVelocityType::FLUID) {
+  if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
     // scale mesh velocity with a function of the fluid vorticity
     if (maxv > 1.0e-8) {
@@ -1155,7 +1155,7 @@ ALECG::meshvelbc( tk::real maxv )
     d->meshvelInit( m_w.flat(), {}, wbc,
       CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
 
-  } else if (meshveltype == ctr::MeshVelocityType::HELMHOLTZ) {
+  } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
     // Set scalar potential linear solve boundary conditions
     std::unordered_map< std::size_t,
@@ -1191,14 +1191,14 @@ ALECG::applied( [[maybe_unused]] CkDataMsg* msg )
   //  std::cout << "applied: " << *norm << '\n';
   //}
 
-  auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
-  if (meshveltype == ctr::MeshVelocityType::FLUID) {
+  if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
     Disc()->meshvelSolve(
       CkCallback(CkIndex_ALECG::meshvelsolved(nullptr), thisProxy[thisIndex]) );
 
-  } else if (meshveltype == ctr::MeshVelocityType::HELMHOLTZ) {
+  } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
     Disc()->meshvelSolve(
       CkCallback(CkIndex_ALECG::helmholtz(nullptr), thisProxy[thisIndex]) );
@@ -1304,9 +1304,9 @@ ALECG::meshvelsolved( [[maybe_unused]] CkDataMsg* msg )
 
   auto d = Disc();
 
-  auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
-  if (meshveltype == ctr::MeshVelocityType::FLUID) {
+  if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
     // Read out linear solution
     auto w = d->meshvelSolution();
@@ -1317,7 +1317,7 @@ ALECG::meshvelsolved( [[maybe_unused]] CkDataMsg* msg )
       for (std::size_t i=0; i<m_w.nunk(); ++i)
         m_w(i,j,0) = w[i*m_w.nprop()+j];
 
-  } else if (meshveltype == ctr::MeshVelocityType::HELMHOLTZ) {
+  } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
     auto a1 = g_inputdeck.get< tag::ale, tag::vortmult >();
     for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())

@@ -24,7 +24,8 @@ inciter
   ale
     dvcfl 1.0
     mesh_velocity fluid
-    vortmult 0.0      # no vorticity scaling
+    smoother laplace
+    vortmult 0.0      # no vorticity scaling in Laplace smoother
     maxit 20
     tolerance 2.0e-2
     mesh_motion 0 end # mesh moves only in x

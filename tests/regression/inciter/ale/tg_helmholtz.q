@@ -14,7 +14,8 @@ inciter
 
   ale
     dvcfl 1.0
-    mesh_velocity helmholtz
+    mesh_velocity fluid
+    smoother helmholtz
     vortmult 1.0  # remove all vorticity
     maxit 100
     tolerance 1.0e-3

@@ -200,6 +200,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::rescomp
                                  , kw::amr
                                  , kw::ale
+                                 , kw::smoother
+                                 , kw::laplace
+                                 , kw::helmholtz
                                  , kw::meshvelocity
                                  , kw::meshvel_maxit
                                  , kw::meshvel_tolerance
@@ -208,8 +211,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::none
                                  , kw::sine
                                  , kw::fluid
-                                 , kw::lagrange
-                                 , kw::helmholtz
                                  , kw::amr_t0ref
                                  , kw::amr_dtref
                                  , kw::amr_dtref_uniform
@@ -340,6 +341,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::zplus >() = -rmax;
       // Default ALE settings
       get< tag::ale, tag::ale >() = false;
+      get< tag::ale, tag::smoother >() = MeshVelocitySmootherType::NONE;
       get< tag::ale, tag::dvcfl >() = 0.0;
       get< tag::ale, tag::vortmult >() = 0.0;
       get< tag::ale, tag::maxit >() = 5;

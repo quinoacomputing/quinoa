@@ -15,6 +15,7 @@ inciter
   ale
     dvcfl 1.0
     mesh_velocity fluid
+    smoother laplace
     vortmult 1.0
     maxit 10
     tolerance 1.0

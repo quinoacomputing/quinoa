@@ -1924,9 +1924,13 @@ namespace deck {
               moving_sides,
               tk::grm::process<
                 use< kw::meshvelocity >,
-                tk::grm::store_inciter_option<
-                  ctr::MeshVelocity,
-                  tag::ale, tag::meshvelocity >,
+                tk::grm::store_inciter_option< ctr::MeshVelocity,
+                                               tag::ale, tag::meshvelocity >,
+                pegtl::alpha >,
+              tk::grm::process<
+                use< kw::smoother >,
+                tk::grm::store_inciter_option< ctr::MeshVelocitySmoother,
+                                               tag::ale, tag::smoother >,
                 pegtl::alpha >,
               pegtl::if_must< tk::grm::dimensions< use< kw::mesh_motion >,
                               tk::grm::Store_back< tag::ale, tag::mesh_motion >,

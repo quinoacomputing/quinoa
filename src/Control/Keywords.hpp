@@ -4653,17 +4653,17 @@ struct user_defined_info {
   static std::string shortDescription() { return
     "Select user-defined specification for a problem"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the user-define specification for a
-    problem to be solved by a partial differential equation. The initial and
-    boundary conditions are expected to be specified elsewhere in the input file
-    to set up the problem. Example: "problem user_defined". This the default
-    problem type.)"; }
+    R"(This keyword is used to select the user-defined specification for an
+    option. This could be a 'problem' to be solved by a partial differential
+    equation, but can also be a 'user-defined' mesh velocity specification for
+    ALE mesh motion.)"; }
   struct expect {
     static std::string description() { return "string"; }
   };
 };
 
-using user_defined = keyword< user_defined_info, TAOCPP_PEGTL_STRING("user_defined") >;
+using user_defined =
+  keyword< user_defined_info, TAOCPP_PEGTL_STRING("user_defined") >;
 
 struct shear_diff_info {
   using code = Code< S >;
@@ -6772,17 +6772,15 @@ struct fluid_info {
 };
 using fluid = keyword< fluid_info, TAOCPP_PEGTL_STRING("fluid") >;
 
-struct lagrange_info {
-  static std::string name() { return "Lagrange"; }
+struct laplace_info {
+  static std::string name() { return "Laplace"; }
   static std::string shortDescription() { return
-    "Select the Lagrange velocity for ALE"; }
+    "Select the Laplace mesh velocity smoother for ALE"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the 'Lagrange' velocity as the mesh
-       velocity for Arbitrary-Lagrangian-Eulerian (ALE) mesh motion. This
-       practically equates the mesh velocity with the fluid velocity and turns
-       off mesh velocity smoothing.)"; }
+    R"(This keyword is used to select the 'Laplace' mesh velocity smoother for
+       Arbitrary-Lagrangian-Eulerian (ALE) mesh motion.)"; }
 };
-using lagrange = keyword< lagrange_info, TAOCPP_PEGTL_STRING("lagrange") >;
+using laplace = keyword< laplace_info, TAOCPP_PEGTL_STRING("laplace") >;
 
 struct helmholtz_info {
   static std::string name() { return "Helmholtz"; }
@@ -6807,16 +6805,33 @@ struct meshvelocity_info {
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + none::string() + "\' | \'"
-                  + sine::string() + "\' | \'"
+      return '\'' + sine::string() + "\' | \'"
                   + fluid::string() + "\' | \'"
-                  + lagrange::string() + "\' | \'"
-                  + helmholtz::string() + '\'';
+                  + user_defined::string() + '\'';
     }
   };
 };
 using meshvelocity =
   keyword< meshvelocity_info, TAOCPP_PEGTL_STRING("mesh_velocity") >;
+
+struct smoother_info {
+  static std::string name() { return "Smoother"; }
+  static std::string shortDescription() { return
+    "Select mesh velocity smoother"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a mesh velocity smoother option, used for
+       Arbitrary-Lagrangian-Eulerian (ALE) mesh motion.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + none::string() + "\' | \'"
+                  + laplace::string() + "\' | \'"
+                  + helmholtz::string() + '\'';
+    }
+  };
+};
+using smoother =
+  keyword< smoother_info, TAOCPP_PEGTL_STRING("smoother") >;
 
 struct fntype_info {
   static std::string name() { return "User-defined function type"; }

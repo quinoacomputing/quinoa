@@ -29,6 +29,7 @@
 #include "Inciter/Options/AMRError.hpp"
 #include "Inciter/Options/PrefIndicator.hpp"
 #include "Inciter/Options/MeshVelocity.hpp"
+#include "Inciter/Options/MeshVelocitySmoother.hpp"
 #include "Inciter/Options/Material.hpp"
 #include "Options/PartitioningAlgorithm.hpp"
 #include "Options/TxtFloatFormat.hpp"
@@ -106,6 +107,8 @@ using ale = tk::TaggedTuple< brigand::list<
   , tag::tolerance,     kw::meshvel_tolerance::info::expect::type
   //! Mesh velocity option
   , tag::meshvelocity,  MeshVelocityType
+  //! Mesh velocity smoother option
+  , tag::smoother    ,  MeshVelocitySmootherType
     //! Mesh velocity Dirichlet BC sidesets
   , tag::bcdir,         std::vector< kw::sideset::info::expect::type >
     //! Mesh velocity symmetry BC sidesets

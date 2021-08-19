@@ -14,7 +14,7 @@ inciter
 
   ale
     dvcfl 1.0
-    mesh_velocity lagrange
+    mesh_velocity fluid
   end
 
   partitioning
