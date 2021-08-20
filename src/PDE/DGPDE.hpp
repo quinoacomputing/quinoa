@@ -204,10 +204,11 @@ class DGPDE {
                 const std::vector< std::vector<tk::real> >& uNodalExtrm,
                 const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 tk::Fields& U,
-                tk::Fields& P ) const
+                tk::Fields& P,
+                std::vector< bool >& shockmarker ) const
     {
       self->limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                   bid, uNodalExtrm, pNodalExtrm, U, P );
+                   bid, uNodalExtrm, pNodalExtrm, U, P, shockmarker );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -343,7 +344,8 @@ class DGPDE {
                           const std::vector< std::vector<tk::real> >&,
                           const std::vector< std::vector<tk::real> >&,
                           tk::Fields&,
-                          tk::Fields& ) const = 0;
+                          tk::Fields&,
+                          std::vector< bool >& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -452,10 +454,11 @@ class DGPDE {
                   const std::vector< std::vector<tk::real> >& uNodalExtrm,
                   const std::vector< std::vector<tk::real> >& pNodalExtrm,
                   tk::Fields& U,
-                  tk::Fields& P ) const override
+                  tk::Fields& P,
+                  std::vector< bool >& shockmarker ) const override
       {
         data.limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                    bid, uNodalExtrm, pNodalExtrm, U, P );
+                    bid, uNodalExtrm, pNodalExtrm, U, P, shockmarker );
       }
       void rhs(
         tk::real t,

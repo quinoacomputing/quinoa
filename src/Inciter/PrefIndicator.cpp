@@ -360,5 +360,8 @@ tk::real evalDiscontinuityIndicator( std::size_t e,
   return Ind;
 }
 
+tk::real evalInterfaceCondition () {
+}
+
 }
 // inciter::

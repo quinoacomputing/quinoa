@@ -15,6 +15,7 @@
 #include <array>
 #include <vector>
 
+#include "FaceData.hpp"
 #include "Vector.hpp"
 #include "Limiter.hpp"
 #include "DerivedData.hpp"
@@ -22,6 +23,7 @@
 #include "Integrate/Basis.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/PrefIndicator.hpp"
+#include "Reconstruction.hpp"
 
 namespace inciter {
 
@@ -551,6 +553,8 @@ VertexBasedMultiMat_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
@@ -559,7 +563,8 @@ VertexBasedMultiMat_P1(
   const std::vector< std::vector<tk::real> >& pNodalExtrm,
   tk::Fields& U,
   tk::Fields& P,
-  std::size_t nmat )
+  std::size_t nmat,
+  std::vector< bool >& shockmarker )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for multi-material DGP1
 //! \param[in] esup Elements surrounding points
@@ -580,6 +585,7 @@ VertexBasedMultiMat_P1(
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for multimat.
 //!   For details see: Kuzmin, D. (2010). A vertex-based hierarchical slope
 //!   limiter for p-adaptive discontinuous Galerkin methods. Journal of
@@ -592,6 +598,10 @@ VertexBasedMultiMat_P1(
     tag::intsharp >()[system];
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
+
+  // Evaluate the interface condition and mark the shock cells
+  MarkShockCells(nelem, nmat, system, offset, ndof, rdof, ndofel, inpoel, coord,
+    fd, geoFace, geoElem, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -610,7 +620,7 @@ VertexBasedMultiMat_P1(
       dof_el = ndofel[e];
     }
 
-    if (dof_el > 1)
+    if (dof_el > 1)//&& shockmarker[e] == true)
     {
       std::vector< std::vector< tk::real > > unk;
       // limit conserved quantities
@@ -1521,6 +1531,145 @@ interfaceIndicator( std::size_t nmat,
   if ((almax > loLim) && (almax < hiLim)) intInd = true;
 
   return intInd;
+}
+
+void MarkShockCells ( const std::size_t nelem,
+                      const std::size_t nmat,
+                      const std::size_t system,
+                      const std::size_t offset,
+                      const std::size_t ndof,
+                      const std::size_t rdof,
+                      const std::vector< std::size_t >& ndofel,
+                      const std::vector< std::size_t >& inpoel,
+                      const tk::UnsMesh::Coords& coord,
+                      const inciter::FaceData& fd,
+                      const tk::Fields& geoFace,
+                      const tk::Fields& geoElem,
+                      const tk::Fields& U,
+                      const tk::Fields& P,
+                      std::vector< bool >& shockmarker )
+{
+  std::vector< tk::real > IC(nelem, 0.0);
+
+  const auto& esuf = fd.Esuf();
+  const auto& inpofa = fd.Inpofa();
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
+
+  for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f) {
+    Assert( esuf[2*f] > -1 && esuf[2*f+1] > -1, "Interior element detected "
+            "as -1" );
+
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    auto ng_l = tk::NGfa(ndofel[el]);
+    auto ng_r = tk::NGfa(ndofel[er]);
+
+    auto ng = std::max( ng_l, ng_r );
+
+    std::array< std::vector< tk::real >, 2 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTri( ng, coordgp, wgp );
+
+    std::array< std::array< tk::real, 3>, 4 > coordel_l {{
+      {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
+      {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
+      {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
+      {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
+
+    std::array< std::array< tk::real, 3>, 4 > coordel_r {{
+      {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
+      {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
+      {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
+      {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
+
+    auto detT_l =
+      tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+    auto detT_r =
+      tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
+
+    std::array< std::array< tk::real, 3>, 3 > coordfa {{
+      {{ cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] }},
+      {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
+      {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
+
+    std::array< tk::real, 3 >
+      fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+
+    for (std::size_t igp=0; igp<ng; ++igp) {
+      auto gp = tk::eval_gp( igp, coordfa, coordgp );
+      std::size_t dof_el, dof_er;
+      if (rdof > ndof)
+      {
+        dof_el = rdof;
+        dof_er = rdof;
+      }
+      else
+      {
+        dof_el = ndofel[el];
+        dof_er = ndofel[er];
+      }
+      std::array< tk::real, 3> ref_gp_l{
+        tk::Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+        tk::Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+        tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
+      std::array< tk::real, 3> ref_gp_r{
+        tk::Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
+        tk::Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
+        tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r };
+      auto B_l = tk::eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
+      auto B_r = tk::eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2] );
+
+      auto wt = wgp[igp] * geoFace(f,0,0);
+
+      std::array< std::vector< tk::real >, 2 > state;
+
+      state[0] = tk::evalPolynomialSol(system, offset, 1, ncomp, nprim, rdof,
+        nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+      state[1] = tk::evalPolynomialSol(system, offset, 1, ncomp, nprim, rdof,
+        nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
+
+      Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
+              "appended boundary state vector" );
+      Assert( state[1].size() == ncomp+nprim, "Incorrect size for "
+              "appended boundary state vector" );
+
+      tk::real rhol(0.0), rhor(0.0);
+      for(std::size_t k = 0; k < nmat; k++) {
+        rhol += state[0][densityIdx(nmat,k)];
+        rhor += state[1][densityIdx(nmat,k)];
+      }
+
+      tk::real fl(0.0), fr(0.0);
+      for(std::size_t i = 0; i < 3; i++) {
+        fl += rhol * state[0][ncomp+velocityIdx(nmat,i)] * fn[i];
+        fr += rhor * state[1][ncomp+velocityIdx(nmat,i)] * fn[i];
+      }
+
+      auto R =  wt * (fl - fr);
+      IC[el] += wt * R;
+      IC[er] -= wt * R;
+    }
+  }
+
+  // Loop over element to mark shock cell
+  for (std::size_t e=0; e<nelem; ++e) {
+    if(fabs(IC[e]) > 1e-6)
+      shockmarker[e] = true;
+    else
+      shockmarker[e] = false;
+  }
 }
 
 } // inciter::

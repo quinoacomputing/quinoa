@@ -114,7 +114,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_nodefields(),
   m_nodefieldsc(),
   m_outmesh(),
-  m_boxelems()
+  m_boxelems(),
+  m_shockmarker(m_u.nunk())
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -1490,6 +1491,15 @@ DG::extractFieldOutput(
     m_elemfields.push_back( ndof );
   }
 
+  // Add shock detection marker array to element-centered field output
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    std::vector< tk::real > shockmarker( begin(shockmarker), end(shockmarker) );
+    shockmarker.resize( nelem );
+    for (const auto& [child,parent] : addedTets)
+      shockmarker[child] = m_shockmarker[parent];
+    m_elemfields.push_back( shockmarker );
+  }
+
   // Send node fields contributions to neighbor chares
   if (nodeCommMap.empty())
     comnodeout_complete();
@@ -2160,7 +2170,7 @@ DG::lim()
     for (const auto& eq : g_dgpde)
       eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel, m_coord,
                 m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm, m_pNodalExtrm, m_u,
-                m_p );
+                m_p, m_shockmarker );
 
   // Send limited solution to neighboring chares
   if (m_sendGhost.empty())
@@ -2657,6 +2667,8 @@ DG::writeFields( CkCallback c )
 
   if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );
+
+  elemfieldnames.push_back( "shock_marker" );
 
   Assert( elemfieldnames.size() == m_elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == m_nodefields.size(), "Size mismatch" );

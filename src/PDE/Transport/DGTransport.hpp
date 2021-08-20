@@ -279,7 +279,8 @@ class Transport {
                 [[maybe_unused]] const std::vector< std::vector<tk::real> >&
                   pNodalExtrm,
                 tk::Fields& U,
-                tk::Fields& ) const
+                tk::Fields&,
+                std::vector< bool >& ) const
     {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
