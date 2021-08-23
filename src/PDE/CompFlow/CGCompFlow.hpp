@@ -430,9 +430,6 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      //fenv_t fe;
-      //feholdexcept( &fe );
-
       for (auto e : bndel) {  // elements contributing to chare boundary nodes
         // access node IDs
         std::size_t N[4] =
@@ -484,9 +481,6 @@ class CompFlow {
           }
         }
       }
-
-      //feclearexcept( FE_UNDERFLOW );
-      //feupdateenv( &fe );
     }
 
     //! Compute right hand side for ALECG
