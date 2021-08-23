@@ -187,3 +187,38 @@ add_regression_test(compflow_euler_alecg_ale_helmholtz ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
                     LABELS alecg ale)
+
+add_regression_test(compflow_euler_alecg_ale_move ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES cyl_move.q cyl_thin_9k.exo
+                    ARGS -c cyl_move.q -v
+                    BIN_BASELINE cyl_move.0.std.exo.0
+                                 cyl_move.0.std.exo.1
+                                 cyl_move.0.std.exo.2
+                                 cyl_move.0.std.exo.3
+                                 cyl_move.5.std.exo.0
+                                 cyl_move.5.std.exo.1
+                                 cyl_move.5.std.exo.2
+                                 cyl_move.5.std.exo.3
+                                 cyl_move.10.std.exo.0
+                                 cyl_move.10.std.exo.1
+                                 cyl_move.10.std.exo.2
+                                 cyl_move.10.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                               out.e-s.5.4.0
+                               out.e-s.5.4.1
+                               out.e-s.5.4.2
+                               out.e-s.5.4.3
+                               out.e-s.10.4.0
+                               out.e-s.10.4.1
+                               out.e-s.10.4.2
+                               out.e-s.10.4.3
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_cyl.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
+                    LABELS alecg ale)
