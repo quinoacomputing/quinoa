@@ -683,7 +683,7 @@ class CompFlow {
         Assert( vol.size() == voln.size(), "Size mismatch" );
         for (std::size_t p=0; p<vol.size(); ++p) {
           auto vol_dt = dtn *
-            std::min(voln[p],vol[p]) / std::abs(voln[p]-vol[p]+1.0e-16);
+            std::min(voln[p],vol[p]) / std::abs(voln[p]-vol[p]+1.0e-14);
           mindt = std::min( vol_dt, mindt );
         }
         mindt *= dvcfl;
