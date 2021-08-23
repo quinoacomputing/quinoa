@@ -355,13 +355,24 @@ Transporter::info( const InciterPrint& print )
     print.item( "Mesh velocity linear solver maxit",
                 g_inputdeck.get< tag::ale, tag::maxit >() );
     const auto& dir = g_inputdeck.get< tag::ale, tag::bcdir >();
-    if (!dir.empty())
+    if (not dir.empty())
       print.item( "Mesh velocity Dirichlet BC sideset(s)",
                   tk::parameters( dir ) );
     const auto& sym = g_inputdeck.get< tag::ale, tag::bcsym >();
-    if (!sym.empty())
+    if (not sym.empty())
       print.item( "Mesh velocity symmetry BC sideset(s)",
                   tk::parameters( sym ) );
+    std::size_t i = 1;
+    for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
+       tk::ctr::UserTable opt;
+       print.item( opt.group() + ' ' + std::to_string(i),
+                   opt.name( m.get< tag::fntype >() ) );
+       const auto& s = m.get< tag::sideset >();
+       if (not s.empty())
+         print.item( "  for moving sideset(s) " + std::to_string(i),
+                     tk::parameters(s));
+       ++i;
+    }
   }
 
   // Print I/O filenames

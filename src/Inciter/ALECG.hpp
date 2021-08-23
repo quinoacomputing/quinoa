@@ -274,7 +274,7 @@ class ALECG : public CBase_ALECG {
       p | m_coordn;
       p | m_vorticity;
       p | m_vorticityc;
-      p | m_usrfn;
+      p | m_move;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -415,8 +415,15 @@ class ALECG : public CBase_ALECG {
     //! Receive buffer for communication of the vorticity for ALE
     //! \details Key: global node id, value: vorticity in nodes
     std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_vorticityc;
-    //! User-defined functions for ALE moving sides
-    std::vector< tk::Table3 > m_usrfn;
+    //! Data structure storing configuration for moving boundaries with ALE
+    //! \details Tuple: 0: user-defined function type (i.e., how it should be
+    //!    interpreted), (2) user-defined function for, and (2) unique set of
+    //!    boundary nodes for each move ... end input file block (vector).
+    std::vector<
+      std::tuple< tk::ctr::UserTableType,
+                  tk::Table3,
+                  std::unordered_set< std::size_t > >
+    > m_move;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -476,8 +483,8 @@ class ALECG : public CBase_ALECG {
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
 
-    //! Query boundary conditions from user input
-    void queryBC();
+    //! Query/update boundary-conditions-related data structures from user input
+    void queryBnd();
 
     //! Apply boundary conditions
     void BC();
@@ -510,7 +517,7 @@ class ALECG : public CBase_ALECG {
     void ale();
 
     //! Initialize user-defined functions for ALE moving sides
-    std::vector< tk::Table3 > usrFn();
+    decltype(m_move) moveCfg();
 };
 
 } // inciter::
