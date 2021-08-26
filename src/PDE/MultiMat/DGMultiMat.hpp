@@ -197,7 +197,7 @@ class MultiMat {
     //! Update the interface cells to first order dofs
     //! \param[in] unk Array of unknowns
     //! \param[in] nielem Number of internal elements
-    //! \param[in,out] ndofel Array of dofs
+//    //! \param[in,out] ndofel Array of dofs
     //! \details This function resets the high-order terms in interface cells.
     void updateInterfaceCells( tk::Fields& unk,
       std::size_t nielem,
