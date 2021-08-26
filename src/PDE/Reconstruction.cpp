@@ -908,7 +908,7 @@ THINCFunction_new( std::size_t rdof,
   auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
 
   std::array< real, 3 > nInt;
-  std::array< real, 3 > ref_n{{0.0, 0.0, 0.0}};
+  std::array< real, 3 > ref_n{0.0, 0.0, 0.0};
   auto almax(0.0);
   std::size_t kmax(0);
 
