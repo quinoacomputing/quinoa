@@ -1492,13 +1492,13 @@ DG::extractFieldOutput(
   }
 
   // Add shock detection marker array to element-centered field output
-  if (g_inputdeck.get< tag::pref, tag::pref >()) {
-    std::vector< tk::real > shockmarker( begin(shockmarker), end(shockmarker) );
+  //if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    std::vector< tk::real > shockmarker( begin(m_shockmarker), end(m_shockmarker) );
     shockmarker.resize( nelem );
     for (const auto& [child,parent] : addedTets)
       shockmarker[child] = m_shockmarker[parent];
     m_elemfields.push_back( shockmarker );
-  }
+  //}
 
   // Send node fields contributions to neighbor chares
   if (nodeCommMap.empty())

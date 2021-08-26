@@ -598,7 +598,7 @@ VertexBasedMultiMat_P1(
     tag::intsharp >()[system];
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
-
+  //std::cout << "start mark cell" << std::endl;
   // Evaluate the interface condition and mark the shock cells
   MarkShockCells(nelem, nmat, system, offset, ndof, rdof, ndofel, inpoel, coord,
     fd, geoFace, geoElem, U, P, shockmarker);
@@ -620,15 +620,19 @@ VertexBasedMultiMat_P1(
       dof_el = ndofel[e];
     }
 
-    if (dof_el > 1)//&& shockmarker[e] == true)
+    if (dof_el > 1)// && shockmarker[e] == true)
     {
       std::vector< std::vector< tk::real > > unk;
-      // limit conserved quantities
-      auto phic = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
-        rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
-      // limit primitive quantities
-      auto phip = VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e,
-        rdof, dof_el, offset, nprim, gid, bid, pNodalExtrm);
+      std::vector< tk::real > phic(ncomp, 1.0);
+      std::vector< tk::real > phip(nprim, 1.0);
+      //if(shockmarker[e] == true) {
+        // limit conserved quantities
+        phic = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
+          rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
+        // limit primitive quantities
+        phip = VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e,
+          rdof, dof_el, offset, nprim, gid, bid, pNodalExtrm);
+      //}
 
       if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
@@ -1549,8 +1553,7 @@ void MarkShockCells ( const std::size_t nelem,
                       const tk::Fields& P,
                       std::vector< bool >& shockmarker )
 {
-  std::vector< tk::real > IC(nelem, 0.0);
-
+  std::vector< tk::real > IC(U.nunk(), 0.0);
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
 
@@ -1635,41 +1638,52 @@ void MarkShockCells ( const std::size_t nelem,
 
       std::array< std::vector< tk::real >, 2 > state;
 
-      state[0] = tk::evalPolynomialSol(system, offset, 1, ncomp, nprim, rdof,
+      state[0] = tk::evalPolynomialSol(system, offset, 0, ncomp, nprim, rdof,
         nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-      state[1] = tk::evalPolynomialSol(system, offset, 1, ncomp, nprim, rdof,
+      state[1] = tk::evalPolynomialSol(system, offset, 0, ncomp, nprim, rdof,
         nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
       Assert( state[1].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
+      //std::cout << "start surf " << f << "igp = " << igp << std::endl;
 
       tk::real rhol(0.0), rhor(0.0);
       for(std::size_t k = 0; k < nmat; k++) {
         rhol += state[0][densityIdx(nmat,k)];
         rhor += state[1][densityIdx(nmat,k)];
       }
-
+      //std::cout << "rho = " << rhol << "\t" << rhor << std::endl;
       tk::real fl(0.0), fr(0.0);
       for(std::size_t i = 0; i < 3; i++) {
         fl += rhol * state[0][ncomp+velocityIdx(nmat,i)] * fn[i];
         fr += rhor * state[1][ncomp+velocityIdx(nmat,i)] * fn[i];
       }
+      //std::cout << "flux = " << fl << "\t" << fr << std::endl;
 
-      auto R =  wt * (fl - fr);
-      IC[el] += wt * R;
-      IC[er] -= wt * R;
+      tk::real rhs =  wt * fabs(fl - fr);
+      //std::cout << "R = " << R << "\t" << IC[er] << std::endl;
+      //std::cout << "e = " << el << "\t" << er << std::endl;
+      //if(el >= nelem) std::cout << "el = " << el << "\t" << nelem << "\n";
+      //if(er >= nelem) std::cout << "er = " << er << "\t" << nelem << "\n";
+      //if(rhs > 1e-30) {
+      IC[el] += rhs;
+      IC[er] -= rhs;
+      //}
+      //std::cout << "finish surf " << f << "igp = " << igp << std::endl;
     }
   }
+  //std::cout << "finish surface loop" << std::endl;
 
   // Loop over element to mark shock cell
   for (std::size_t e=0; e<nelem; ++e) {
-    if(fabs(IC[e]) > 1e-6)
+    if(fabs(IC[e]) > 1e-10)
       shockmarker[e] = true;
     else
       shockmarker[e] = false;
   }
+  //std::cout << "finish ele loop" << std::endl;
 }
 
 } // inciter::
