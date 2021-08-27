@@ -25,6 +25,9 @@ inciter
     prelax 1
     prelax_timescale 0.25
 
+    intsharp 1
+    intsharp_param 2.5
+
     nmat 2
     material
       id 1 2 end
