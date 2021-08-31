@@ -2397,6 +2397,7 @@ DG::solve( tk::real newdt )
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<m_nunk; ++e)
     for(std::size_t c=0; c<neq; ++c)
+    {
       for (std::size_t k=0; k<m_numEqDof[c]; ++k)
       {
         auto rmark = c*rdof+k;
@@ -2407,10 +2408,21 @@ DG::solve( tk::real newdt )
         if(fabs(m_u(e, rmark, 0)) < 1e-16)
           m_u(e, rmark, 0) = 0;
       }
+      // zero out unused/reconstructed dofs of equations using reduced dofs
+      // (see DGMultiMat::numEquationDofs())
+      if (m_numEqDof[c] < rdof) {
+        for (std::size_t k=m_numEqDof[c]; k<rdof; ++k)
+        {
+          auto rmark = c*rdof+k;
+          m_u(e, rmark, 0) = 0.0;
+        }
+      }
+    }
 
   // Update primitives based on the evolved solution
   for (const auto& eq : g_dgpde)
   {
+    eq.updateInterfaceCells( m_u, m_fd.Esuel().size()/4, m_ndof );
     eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
     eq.cleanTraceMaterial( m_geoElem, m_u, m_p, m_fd.Esuel().size()/4 );
   }
