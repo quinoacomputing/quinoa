@@ -1526,31 +1526,15 @@ ALECG::meshforce()
   // advance mesh velocity in time due to pseudo-pressure gradient mesh force
   for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
     for (std::size_t i=0; i<m_w.nunk(); ++i)
+       // This is likely incorrect. It should be m_w = m_w0 + ...
        m_w(i,j,0) += rkcoef[m_stage] * d->Dt() * m_wf(i,j,0);
 
   // Dirichlet BCs where user specified mesh velocity BCs
   for (auto i : m_meshveldirbcnodes) m_w(i,0,0) = m_w(i,1,0) = m_w(i,2,0) = 0.0;
 
-  // Lambda to shift the mesh velocity at a point by the velocity prescribed
-  // for a moving side set. Returns zero if a point does not have a prescribed
-  // mesh velocity.
-  auto shift = [&]( std::size_t p ){
-    std::array< tk::real, 3 > s{0,0,0};
-    for (const auto& m : m_move)
-      if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
-        auto meshvel = tk::sample( d->T(), std::get<1>(m) );
-        for (const auto& i : std::get<2>(m))
-          if (i == p)
-            for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
-              s[j] = meshvel[j];
-      }
-    return s;
-  };
-
   // On meshvel symmetry BCs remove normal component of mesh velocity
   const auto& sbc = g_inputdeck.get< tag::ale, tag::bcsym >();
   for (auto p : m_meshvelsymbcnodes) {
-    auto of = shift( p );
     for (const auto& s : sbc) {
       auto j = m_bnorm.find(std::stoi(s));
       if (j != end(m_bnorm)) {
@@ -1558,7 +1542,7 @@ ALECG::meshforce()
         if (i != end(j->second)) {
           std::array< tk::real, 3 >
             n{ i->second[0], i->second[1], i->second[2] },
-            v{ m_w(p,0,0)-of[0], m_w(p,1,0)-of[1], m_w(p,2,0)-of[2] };
+            v{ m_w(p,0,0), m_w(p,1,0), m_w(p,2,0) };
           auto v_dot_n = tk::dot( v, n );
           // symbc: remove normal component of mesh velocity
           m_w(p,0,0) -= v_dot_n * n[0];
