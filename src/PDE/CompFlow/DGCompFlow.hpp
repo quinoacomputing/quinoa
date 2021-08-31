@@ -186,6 +186,13 @@ class CompFlow {
       tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
     }
 
+    //! Update the interface cells to first order dofs
+    //! \details This function resets the high-order terms in interface cells,
+    //!   and is currently not used in compflow.
+    void updateInterfaceCells( tk::Fields&,
+      std::size_t,
+      std::vector< std::size_t >& ) const {}
+
     //! Update the primitives for this PDE system
     //! \details This function computes and stores the dofs for primitive
     //!   quantities, which is currently unused for compflow. But if a limiter

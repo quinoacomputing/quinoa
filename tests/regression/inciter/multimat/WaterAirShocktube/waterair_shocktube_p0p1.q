@@ -7,7 +7,7 @@ title "Water-air shock-tube"
 inciter
 
   nstep 25
-  cfl 0.8
+  cfl 0.7
   ttyi 10     # TTY output interval
   scheme p0p1
   limiter vertexbasedp1
