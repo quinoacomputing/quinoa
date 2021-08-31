@@ -42,7 +42,7 @@ tk::sample( tk::real x, const tk::Table& table )
   if (x < std::get<0>(table.front())+eps) return std::get<1>(table.front());
 
   for (std::size_t i=0; i<table.size()-1; ++i) {
-    if (std::get<0>(table[i]) < x && x < std::get<0>(table[i+1])) {
+    if (std::get<0>(table[i]) < x and x < std::get<0>(table[i+1])) {
       auto t1 = std::get<0>( table[i] );
       auto y1 = std::get<1>( table[i] );
       auto t2 = std::get<0>( table[i+1] );
@@ -89,19 +89,11 @@ tk::sample( tk::real x, const tk::Table3& table )
   for (std::size_t i=0; i<table.size()-1; ++i) {
     auto t1 = abs( table[i] );
     auto t2 = abs( table[i+1] );
-    if (t1 < x && x < t2) {
+    if (t1 < x and x < t2) {
       auto d = (t2-t1)/(x-t1);
-      std::array< tk::real, 3 > o;
-      auto y1 = std::get<1>( table[i] );
-      auto y2 = std::get<1>( table[i+1] );
-      o[0] = y1 + (y2-y1) / d;
-      y1 = std::get<2>( table[i] );
-      y2 = std::get<2>( table[i+1] );
-      o[1] = y1 + (y2-y1) / d;
-      y1 = std::get<3>( table[i] );
-      y2 = std::get<3>( table[i+1] );
-      o[2] = y1 + (y2-y1) / d;
-      return o;
+      auto p = ord( table[i] );
+      auto q = ord( table[i+1] );
+      return { p[0]+(q[0]-p[0])/d, p[1]+(q[1]-p[1])/d, p[2]+(q[2]-p[2])/d };
     }
   }
 
