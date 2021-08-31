@@ -365,11 +365,11 @@ Transporter::info( const InciterPrint& print )
     std::size_t i = 1;
     for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
        tk::ctr::UserTable opt;
-       print.item( opt.group() + ' ' + std::to_string(i),
+       print.item( opt.group() + ' ' + std::to_string(i) + " interpreted as",
                    opt.name( m.get< tag::fntype >() ) );
        const auto& s = m.get< tag::sideset >();
        if (not s.empty())
-         print.item( "  for moving sideset(s) " + std::to_string(i),
+         print.item( "Moving sideset(s) with table " + std::to_string(i),
                      tk::parameters(s));
        ++i;
     }
