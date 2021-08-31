@@ -38,7 +38,8 @@ tk::sample( tk::real x, const tk::Table& table )
 {
   Assert( !table.empty(), "Empty table to sample from" );
 
-  if (x < std::get<0>(table.front())) return std::get<1>(table.front());
+  auto eps = std::numeric_limits< tk::real >::epsilon();
+  if (x < std::get<0>(table.front())+eps) return std::get<1>(table.front());
 
   for (std::size_t i=0; i<table.size()-1; ++i) {
     if (std::get<0>(table[i]) < x && x < std::get<0>(table[i+1])) {
@@ -82,7 +83,8 @@ tk::sample( tk::real x, const tk::Table3& table )
              std::get<1>(t), std::get<2>(t), std::get<3>(t) };
   };
 
-  if (x < abs(table.front())) return ord( table.front() );
+  auto eps = std::numeric_limits< tk::real >::epsilon();
+  if (x < abs(table.front())+eps) return ord( table.front() );
 
   for (std::size_t i=0; i<table.size()-1; ++i) {
     auto t1 = abs( table[i] );
