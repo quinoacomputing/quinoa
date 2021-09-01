@@ -218,7 +218,7 @@ add_regression_test(compflow_euler_alecg_ale_move_vel ${INCITER_EXECUTABLE}
                                out.e-s.10.4.3
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     BIN_DIFF_PROG_ARGS -m
-                    TEXT_BASELINE diag_cyl.std
+                    TEXT_BASELINE diag_cyl_vel.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
                     LABELS alecg ale)
@@ -253,7 +253,7 @@ add_regression_test(compflow_euler_alecg_ale_move_pos ${INCITER_EXECUTABLE}
                                out.e-s.10.4.3
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     BIN_DIFF_PROG_ARGS -m
-                    TEXT_BASELINE diag_cyl.std
+                    TEXT_BASELINE diag_cyl_pos.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
                     LABELS alecg ale)

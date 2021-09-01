@@ -7,14 +7,14 @@ title "ALE with a moving boundary with prescribed positions"
 inciter
 
   term 6.28319  # =2*pi
-  #nstep 5
+  nstep 10
   cfl 0.5
   ttyi 1
 
   scheme alecg
 
   partitioning
-    algorithm mj
+    algorithm rcb
   end
 
   ale
@@ -164,7 +164,7 @@ inciter
   end
 
   field_output
-    interval 1
+    interval 5
     var
       density
       x-velocity
