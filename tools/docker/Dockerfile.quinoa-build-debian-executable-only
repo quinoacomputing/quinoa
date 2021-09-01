@@ -21,7 +21,7 @@
 #
 ################################################################################
 
-FROM debian:stable
+FROM debian:buster
 
 # Install system-wide prerequisites
 #RUN sed -i 's/stable main/stable main contrib non-free/g' /etc/apt/sources.list
