@@ -155,10 +155,17 @@ CSR::mult( const std::vector< real >& x,
 {
   std::fill( begin(r), end(r), 0.0 );
 
-  for (std::size_t i=0; i<rnz.size()*ncomp; ++i)
-    if (bc.find(i/ncomp) == end(bc))    // skip Dirichlet BCs
-      for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j)
-        r[i] += a[j] * x[ja[j]-1];
+  // Lambda to multiply a row in the matrix vector product
+  auto multrow = [&]( std::size_t i ) {
+    for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j) r[i] += a[j] * x[ja[j]-1];
+  };
+
+  if (not bc.empty()) {
+    for (std::size_t i=0; i<rnz.size()*ncomp; ++i)
+      if (bc.find(i/ncomp) == end(bc)) multrow(i);
+  } else {
+    for (std::size_t i=0; i<rnz.size()*ncomp; ++i) multrow(i);
+  }
 }
 
 std::ostream&
