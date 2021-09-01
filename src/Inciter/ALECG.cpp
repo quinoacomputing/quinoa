@@ -107,6 +107,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_finished( 0 ),
   m_newmesh( 0 ),
   m_coordn( Disc()->Coord() ),
+  m_coord0( Disc()->Coord() ),
   m_vorticity(),
   m_vorticityc(),
   m_move( moveCfg() )
@@ -1027,15 +1028,22 @@ ALECG::meshvelstart()
     } else if (meshveltype == ctr::MeshVelocityType::USER_DEFINED) {
 
       // assign mesh velocity to sidesets from user-defined functions
-      for (const auto& m : m_move) {
+      for (const auto& m : m_move)
         if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
           auto meshvel = tk::sample( d->T(), std::get<1>(m) );
-          for (const auto& i : std::get<2>(m)) {
+          for (const auto& i : std::get<2>(m))
             for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
               m_w(i,j,0) = meshvel[j];
+        } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
+          auto eps = std::numeric_limits< tk::real >::epsilon();
+          auto adt = rkcoef[m_stage] * d->Dt();
+          if (adt > eps) {      // dt == 0 during setup
+            auto pos = tk::sample( d->T()+adt, std::get<1>(m) );
+            for (const auto& i : std::get<2>(m))
+              for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+                m_w(i,j,0) = (m_coord0[j][i] + pos[j] - m_coordn[j][i]) / adt;
           }
         }
-      }
 
     }
 
@@ -1198,6 +1206,22 @@ ALECG::meshvelbc( tk::real maxv )
     // Dirichlet BCs where user specified mesh velocity BCs
     for (auto i : m_meshveldirbcnodes)
       wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
+
+    // Dirichlet BCs on mesh velocity with prescribed movement
+    for (const auto& m : m_move)
+      if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
+        auto meshvel = tk::sample( d->T(), std::get<1>(m) );
+        for (const auto& i : std::get<2>(m))
+          for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+            m_w(i,j,0) = meshvel[j];
+      } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
+        auto eps = std::numeric_limits< tk::real >::epsilon();
+        auto adt = rkcoef[m_stage] * d->Dt();
+        if (adt > eps)
+          for (const auto& i : std::get<2>(m))
+            if (m_meshveldirbcnodes.find(i) != end(m_meshveldirbcnodes))
+              wbc[i] = {{ {false,0}, {false,0}, {false,0} }};
+      }
 
     // initialize mesh velocity smoother linear solver
     d->meshvelInit( m_w.flat(), {}, wbc,
@@ -1529,8 +1553,17 @@ ALECG::meshforce()
        // This is likely incorrect. It should be m_w = m_w0 + ...
        m_w(i,j,0) += rkcoef[m_stage] * d->Dt() * m_wf(i,j,0);
 
-  // Dirichlet BCs where user specified mesh velocity BCs
-  for (auto i : m_meshveldirbcnodes) m_w(i,0,0) = m_w(i,1,0) = m_w(i,2,0) = 0.0;
+  // Lambda to find Dirichlet BCs on mesh velocity with prescribed movement
+  auto move = [&]( std::size_t i ){
+    for (const auto& m : m_move)
+      if (std::get<2>(m).find(i) != end(std::get<2>(m))) return true;
+    return false;
+  };
+
+  // Enforce mesh velocity Dirichlet BCs where user specfied but did not
+  // prescribe a move
+  for (auto i : m_meshveldirbcnodes)
+    if (not move(i)) m_w(i,0,0) = m_w(i,1,0) = m_w(i,2,0) = 0.0;
 
   // On meshvel symmetry BCs remove normal component of mesh velocity
   const auto& sbc = g_inputdeck.get< tag::ale, tag::bcsym >();

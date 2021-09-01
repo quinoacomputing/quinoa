@@ -272,6 +272,7 @@ class ALECG : public CBase_ALECG {
       p | m_finished;
       p | m_newmesh;
       p | m_coordn;
+      p | m_coord0;
       p | m_vorticity;
       p | m_vorticityc;
       p | m_move;
@@ -410,6 +411,8 @@ class ALECG : public CBase_ALECG {
     int m_newmesh;
     //! Mesh coordinates at the time n for ALE
     tk::UnsMesh::Coords m_coordn;
+    //! Mesh coordinates at the time 0 for ALE
+    tk::UnsMesh::Coords m_coord0;
     //! Vorticity for ALE
     tk::UnsMesh::Coords m_vorticity;
     //! Receive buffer for communication of the vorticity for ALE

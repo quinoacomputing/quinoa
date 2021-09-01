@@ -219,9 +219,7 @@ Discretization::meshvelInit(
 // \param[in] c Function to call when the BCs have been applied
 // *****************************************************************************
 {
-  auto eps = std::numeric_limits< tk::real >::epsilon();
-  m_conjugategradients[ thisIndex ].init( x, div,
-    std::abs(m_initial-1.0) < eps ? bc : decltype(bc){}, c );
+  m_conjugategradients[ thisIndex ].init( x, div, bc, c );
 }
 
 void

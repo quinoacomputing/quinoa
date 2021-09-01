@@ -151,7 +151,7 @@ ConjugateGradients::residual()
 // *****************************************************************************
 {
   // Compute own contribution to r = A * x
-  m_A.mult( m_x, m_r );
+  m_A.mult( m_x, m_r, m_bc );
 
   // Send partial product on chare-boundary nodes to fellow chares
   if (m_nodeCommMap.empty()) {
@@ -378,7 +378,7 @@ ConjugateGradients::qAp()
 // *****************************************************************************
 {
   // Compute own contribution to q = A * p
-  m_A.mult( m_p, m_q );
+  m_A.mult( m_p, m_q, m_bc );
 
   // Send partial product on chare-boundary nodes to fellow chares
   if (m_nodeCommMap.empty()) {
