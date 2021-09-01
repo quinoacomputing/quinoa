@@ -6,7 +6,7 @@ title "ALE moving boundary with a prescribed velocity"
 
 inciter
 
-  term 12.566 #6.28319
+  term 12.566 # = 4*pi
   nstep 10
   cfl 0.5
   ttyi 1
