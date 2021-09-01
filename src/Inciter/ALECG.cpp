@@ -207,6 +207,21 @@ ALECG::moveCfg()
   return cfg;
 }
 
+bool
+ALECG::move( std::size_t i ) const
+// *****************************************************************************
+// Find Dirichlet BCs on mesh velocity with prescribed movement
+//! \param[in] i Local node id to check
+//! \return True of node falls on a boundary that is prescribed to move
+// *****************************************************************************
+{
+  for (const auto& m : m_move)
+    if (std::get<2>(m).find(i) != end(std::get<2>(m)))
+      return true;
+
+  return false;
+}
+
 void
 ALECG::queryBnd()
 // *****************************************************************************
@@ -1203,10 +1218,6 @@ ALECG::meshvelbc( tk::real maxv )
     std::unordered_map< std::size_t,
       std::vector< std::pair< bool, tk::real > > > wbc;
 
-    // Dirichlet BCs where user specified mesh velocity BCs
-    for (auto i : m_meshveldirbcnodes)
-      wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
-
     // Dirichlet BCs on mesh velocity with prescribed movement
     for (const auto& m : m_move)
       if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
@@ -1222,6 +1233,10 @@ ALECG::meshvelbc( tk::real maxv )
             if (m_meshveldirbcnodes.find(i) != end(m_meshveldirbcnodes))
               wbc[i] = {{ {false,0}, {false,0}, {false,0} }};
       }
+
+    // Dirichlet BCs where user specified mesh velocity BCs
+    for (auto i : m_meshveldirbcnodes)
+      if (not move(i)) wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
 
     // initialize mesh velocity smoother linear solver
     d->meshvelInit( m_w.flat(), {}, wbc,
@@ -1552,13 +1567,6 @@ ALECG::meshforce()
     for (std::size_t i=0; i<m_w.nunk(); ++i)
        // This is likely incorrect. It should be m_w = m_w0 + ...
        m_w(i,j,0) += rkcoef[m_stage] * d->Dt() * m_wf(i,j,0);
-
-  // Lambda to find Dirichlet BCs on mesh velocity with prescribed movement
-  auto move = [&]( std::size_t i ){
-    for (const auto& m : m_move)
-      if (std::get<2>(m).find(i) != end(std::get<2>(m))) return true;
-    return false;
-  };
 
   // Enforce mesh velocity Dirichlet BCs where user specfied but did not
   // prescribe a move

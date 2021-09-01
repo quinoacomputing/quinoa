@@ -441,6 +441,9 @@ class ALECG : public CBase_ALECG {
                      std::vector< std::size_t >,
                      tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& esued ) const;
 
+    //! Find Dirichlet BCs on mesh velocity with prescribed movement
+    bool move( std::size_t i ) const;
+
     //! Compute chare-boundary edges
     void bndEdges();
 
