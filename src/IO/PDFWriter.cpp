@@ -374,9 +374,11 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
   m_outFile << "$Nodes\n" << (nbix+1)*(nbiy+1) << std::endl;
   int k=0;
   for (std::size_t i=0; i<=nbiy; i++) {
-    tk::real y = ymin + i*binsize[1];
+    tk::real I = static_cast< tk::real >( i );
+    tk::real y = ymin + I*binsize[1];
     for (std::size_t j=0; j<=nbix; j++) {
-      tk::real x = xmin + j*binsize[0];
+      tk::real J = static_cast< tk::real >( j );
+      tk::real x = xmin + J*binsize[0];
       m_outFile << ++k << ' ' << x << ' ' << y << " 0\n";
     }
   }
@@ -491,11 +493,14 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
   m_outFile << "$Nodes\n" << (nbix+1)*(nbiy+1)*(nbiz+1) << std::endl;
   int l=0;
   for (std::size_t k=0; k<=nbiz; k++) {
-    tk::real z = zmin + k*binsize[2];
+    tk::real K = static_cast< tk::real >( k );
+    tk::real z = zmin + K*binsize[2];
     for (std::size_t j=0; j<=nbiy; j++) {
-      tk::real y = ymin + j*binsize[1];
+      tk::real J = static_cast< tk::real >( j );
+      tk::real y = ymin + J*binsize[1];
       for (std::size_t i=0; i<=nbix; i++) {
-        tk::real x = xmin + i*binsize[0];
+        tk::real I = static_cast< tk::real >( i );
+        tk::real x = xmin + I*binsize[0];
         m_outFile << ++l << ' ' << x << ' ' << y << ' ' << z << '\n';
       }
     }
@@ -619,9 +624,11 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
   int k = 0;
   tk::real z = 0.0;
   for (std::size_t i=0; i<=nbiy; i++) {
-    tk::real y = ymin + i*binsize[1];
+    tk::real I = static_cast< tk::real >( i );
+    tk::real y = ymin + I*binsize[1];
     for (std::size_t j=0; j<=nbix; j++) {
-      tk::real x = xmin + j*binsize[0];
+      tk::real J = static_cast< tk::real >( j );
+      tk::real x = xmin + J*binsize[0];
       ++k;
       m_outFile.write( reinterpret_cast< char* >( &k ), sizeof(int) );
       m_outFile.write( reinterpret_cast< char* >( &x ), sizeof(tk::real) );
@@ -766,11 +773,14 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
   m_outFile << "$Nodes\n" << (nbix+1)*(nbiy+1)*(nbiz+1) << std::endl;
   int l=0;
   for (std::size_t k=0; k<=nbiz; k++) {
-    tk::real z = zmin + k*binsize[2];
+    tk::real K = static_cast< tk::real >( k );
+    tk::real z = zmin + K*binsize[2];
     for (std::size_t j=0; j<=nbiy; j++) {
-      tk::real y = ymin + j*binsize[1];
+      tk::real J = static_cast< tk::real >( j );
+      tk::real y = ymin + J*binsize[1];
       for (std::size_t i=0; i<=nbix; i++) {
-        tk::real x = xmin + i*binsize[0];
+        tk::real I = static_cast< tk::real >( i );
+        tk::real x = xmin + I*binsize[0];
         ++l;
         m_outFile.write( reinterpret_cast< char* >( &l ), sizeof(int) );
         m_outFile.write( reinterpret_cast< char* >( &x ), sizeof(tk::real) );
@@ -915,8 +925,8 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
   std::size_t k = 0;
   for (std::size_t i=0; i<=nbiy; i++)
     for (std::size_t j=0; j<=nbix; j++) {
-      x[k] = xmin + j*binsize[0];
-      y[k] = ymin + i*binsize[1];
+      x[k] = xmin + static_cast< tk::real >( j )*binsize[0];
+      y[k] = ymin + static_cast< tk::real >( i )*binsize[1];
       ++k;
     }
   ErrChk( ex_put_coord( outFile, x.data(), y.data(), z.data() ) == 0,

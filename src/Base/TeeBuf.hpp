@@ -53,12 +53,10 @@ class basic_teebuf : public std::basic_streambuf< charT, traits > {
         m_buffer( std::make_unique< char_type[] >( BUFFER_SIZE ) )
     { this->setp( m_buffer.get(), m_buffer.get() + BUFFER_SIZE ); }
 
-    ~basic_teebuf() {
-      this->pubsync();
-    }
+    ~basic_teebuf() override { this->pubsync(); }
 
   protected:
-    virtual int_type overflow( int_type c = traits_type::eof() ) {
+    virtual int_type overflow( int_type c = traits_type::eof() ) override {
       // empty our buffer into m_sbuf1 and m_sbuf2
       std::streamsize n =
         static_cast< std::streamsize >( this->pptr() - this->pbase() );
@@ -78,7 +76,7 @@ class basic_teebuf : public std::basic_streambuf< charT, traits > {
       return traits_type::not_eof(c);
     }
 
-    virtual int sync() {
+    virtual int sync() override {
       // flush our buffer into m_sbuf1 and m_sbuf2
       int_type c = this->overflow(traits_type::eof());
 

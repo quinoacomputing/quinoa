@@ -82,14 +82,16 @@ class Exception : public std::exception {
                         unsigned int line = 0 ) noexcept;
 
     //! Destructor
-    virtual ~Exception() noexcept;
+    virtual ~Exception() noexcept override;
 
     //! Force move constructor for throws
     Exception(Exception&&) = default;
 
     //! Redefine std::exception's what()
     //! \return C-style string to exception message
-    virtual const char* what() const noexcept { return m_message.c_str(); }
+    virtual const char* what() const noexcept override {
+      return m_message.c_str();
+    }
 
     //! Handle Exception
     virtual ErrCode handleException() noexcept;

@@ -369,7 +369,8 @@ namespace AMR {
                 {
                     size_t element_id = kv.first;
                     if (active_elements.exists( element_id  )) {
-                        real_t val = master_elements.get(element_id).refinement_level;
+                        real_t val = static_cast< tk::real >(
+                          master_elements.get(element_id).refinement_level );
                         refinement_level_list.push_back(val);
                     }
                 }
