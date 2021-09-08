@@ -240,11 +240,13 @@ namespace AMR {
        for (const auto& r : edges)
        {
            auto& edgeref = tet_store.edge_store.get( edge_t(r.first) );
-           edgeref.needs_refining = r.second.first;
-           assert(edgeref.lock_case <= r.second.second);
-           edgeref.lock_case = r.second.second;
+           edgeref.needs_refining = std::get<0>(r.second);
+           edgeref.needs_derefining = std::get<1>(r.second);
+           assert(edgeref.lock_case <= std::get<2>(r.second));
+           edgeref.lock_case = std::get<2>(r.second);
        }
        mark_refinement();
+       mark_derefinement();
     }
 
     /**

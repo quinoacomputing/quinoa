@@ -292,7 +292,7 @@ class Refiner : public CBase_Refiner {
     AMR::EdgeData m_localEdgeData;
     //! Refinement data associated to edges shared with other chares
     std::unordered_map< int, std::vector< std::tuple<
-      Edge, int, AMR::Edge_Lock_Case > > > m_remoteEdgeData;
+      Edge, int, int, AMR::Edge_Lock_Case > > > m_remoteEdgeData;
     //! Edges received from other chares
     std::unordered_map< int, std::vector< Edge > > m_remoteEdges;
     //! Intermediate nodes

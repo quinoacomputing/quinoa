@@ -580,9 +580,10 @@ Refiner::addRefBndEdges(
   // Save/augment buffers of edge data for each sender chare
   auto& red = m_remoteEdgeData[ fromch ];
   auto& re = m_remoteEdges[ fromch ];
-  using edge_data_t = std::tuple< Edge, int, AMR::Edge_Lock_Case >;
+  using edge_data_t = std::tuple< Edge, int, int, AMR::Edge_Lock_Case >;
   for (const auto& [ edge, data ] : ed) {
-    red.push_back( edge_data_t{ edge, data.first, data.second } );
+    red.push_back( edge_data_t{ edge, std::get<0>(data), std::get<1>(data),
+      std::get<2>(data) } );
     re.push_back( edge );
   }
 
@@ -632,21 +633,26 @@ Refiner::correctref()
 
   // loop through all edges shared with other chares
   for (const auto& [ neighborchare, edgedata ] : m_remoteEdgeData) {
-    for (const auto& [edge,remote_needs_refining,remote_lock_case] : edgedata) {
+    for (const auto& [edge,remote_needs_refining,remote_needs_derefining,
+      remote_lock_case] : edgedata) {
       // find local data of remote edge
       auto it = m_localEdgeData.find( edge );
       if (it != end(m_localEdgeData)) {
         auto& local = it->second;
-        auto& local_needs_refining = local.first;
-        auto& local_lock_case = local.second;
+        auto& local_needs_refining = std::get<0>(local);
+        auto& local_needs_derefining = std::get<1>(local);
+        auto& local_lock_case = std::get<2>(local);
 
         auto local_needs_refining_orig = local_needs_refining;
+        auto local_needs_derefining_orig = local_needs_derefining;
         auto local_lock_case_orig = local_lock_case;
 
         Assert( !(local_lock_case > unlocked && local_needs_refining),
                 "Invalid local edge: locked & needs refining" );
         Assert( !(remote_lock_case > unlocked && remote_needs_refining),
                 "Invalid remote edge: locked & needs refining" );
+        Assert( !(local_needs_derefining == 1 && local_needs_refining > 0),
+                "Invalid local edge: needs refining and derefining" );
 
         // compute lock from local and remote locks as most restrictive
         local_lock_case = std::max( local_lock_case, remote_lock_case );
@@ -654,19 +660,52 @@ Refiner::correctref()
         if (local_lock_case > unlocked)
           local_needs_refining = 0;
 
-        if (local_lock_case == unlocked && remote_needs_refining)
-          local_needs_refining = 1;
+        if ((local_lock_case == unlocked && remote_needs_refining == 1) ||
+          (remote_needs_refining == 2)) {
+          local_needs_refining = remote_needs_refining;
+          local_needs_derefining = 0;
+        }
+
+        // Possible combinations of remote-local ref-deref decisions
+        // rows 1, 4, 5 are dealt with automatically.
+        //
+        //    LOCAL          |        REMOTE    |  Result
+        // 1  d              |        d         |  d
+        // 2  d              |        -         |  -
+        // 3  d              |        r         |  r
+        // 4  -              |        d         |  -
+        // 5  -              |        -         |  -
+        // 6  -              |        r         |  r
+        // 7  r              |        d         |  r
+        // 8  r              |        -         |  r
+        // 9  r              |        r         |  r
+
+        // this test handles rows 2, 3
+        if (local_needs_derefining == 1) {
+          Assert(local_needs_refining_orig == 0, "Inconsistent ref-deref marks");
+          if (remote_needs_derefining == 0 || remote_needs_refining > 0) {
+            local_needs_derefining = 0;
+          }
+        }
 
         // if the remote sent us data that makes us change our local state,
-        // e.g., local{0,0} + remote(1,0} -> local{1,0}, i.e., I changed my
+        // e.g., local{-,0} + remote{r,0} -> local{r,0}, i.e., I changed my
         // state I need to tell the world about it
         if ( (local_lock_case != local_lock_case_orig ||
-              local_needs_refining != local_needs_refining_orig) ||
+              local_needs_refining != local_needs_refining_orig ||
+              local_needs_derefining != local_needs_derefining_orig) ||
         // or if the remote data is inconsistent with what I think, e.g.,
-        // local{1,0} + remote(0,0} -> local{1,0}, i.e., the remote does not
+        // local{r,0} + remote{-,0} -> local{r,0}, i.e., the remote does not
         // yet agree, I need to tell the world about it
              (local_lock_case != remote_lock_case ||
-              local_needs_refining != remote_needs_refining) )
+              local_needs_refining != remote_needs_refining ||
+              local_needs_derefining != remote_needs_derefining) ||
+        // or if the remote data is remote{d,.}, while the local{r,.}, i.e.
+        // the remote does not yet agree, I need to tell the world about it.
+        // (row 7 in the table above)
+        // (note: the dot '.' in the above brackets indicate that it does not
+        // matter what the value there is.)
+             (local_needs_refining > 0 && remote_needs_derefining == 1) )
         {
           auto l1 = tk::cref_find( m_lid, edge[0] );
           auto l2 = tk::cref_find( m_lid, edge[1] );
@@ -675,7 +714,7 @@ Refiner::correctref()
           auto r2 = m_rid[ l2 ];
           Assert( r1 != r2, "Edge end-points refiner ids are the same" );
            extra[ {{ std::min(r1,r2), std::max(r1,r2) }} ] =
-             { local_needs_refining, local_lock_case };
+             { local_needs_refining, local_needs_derefining, local_lock_case };
         }
       }
     }
@@ -683,6 +722,7 @@ Refiner::correctref()
 
   m_remoteEdgeData.clear();
   m_extra = extra.size();
+  //std::cout << "amr correction reqd for nedge: " << m_extra << std::endl;
 
   if (!extra.empty()) {
     // Do refinement including edges that need to be corrected
@@ -730,7 +770,8 @@ Refiner::updateEdgeData()
       auto r = tk::cref_find( ref_edges, ae );
       const auto ged = Edge{{ m_gid[ tk::cref_find( m_lref, ed[0] ) ],
                               m_gid[ tk::cref_find( m_lref, ed[1] ) ] }};
-      m_localEdgeData[ ged ] = { r.needs_refining, r.lock_case };
+      m_localEdgeData[ ged ] = { r.needs_refining, r.needs_derefining,
+        r.lock_case };
     }
   }
 
@@ -738,7 +779,7 @@ Refiner::updateEdgeData()
   // the AMR lib, i.e., on the whole domain. We should eventually only collect
   // edges here that are shared with other chares.
   for (const auto& r : m_refiner.tet_store.intermediate_list) {
-     m_intermediates.insert( m_gid[ tk::cref_find( m_lref, r ) ] );
+    m_intermediates.insert( m_gid[ tk::cref_find( m_lref, r ) ] );
   }
 }
 
@@ -1538,6 +1579,12 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
       auto g = m_gid[l];
       // store global-id to local-id map of removed nodes
       m_removedNodes.insert(l);
+      // remove derefined nodes from node comm map
+      for (auto& [neighborchare, sharednodes] : m_nodeCommMap) {
+        if (sharednodes.find(g) != sharednodes.end()) {
+          sharednodes.erase(g);
+        }
+      }
       gid_rem[l] = g;
       m_lid.erase( g );
       m_coordmap.erase( g );

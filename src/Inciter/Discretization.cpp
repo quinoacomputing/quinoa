@@ -455,7 +455,7 @@ void
 Discretization::resizePostAMR(
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
-  const std::unordered_map< std::size_t, std::size_t >& /*amrNodeMap*/,
+  const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
   const tk::NodeCommMap& nodeCommMap )
 // *****************************************************************************
 //  Resize mesh data structures after mesh refinement
@@ -477,6 +477,22 @@ Discretization::resizePostAMR(
     for (auto g : sharednodes)
       if (m_bid.find(g) == end(m_bid))
         m_bid[g] = bid++;
+
+  // Remove local ids of derefined boundary nodes
+  for (auto& [g, l] : m_bid) {
+    for (const auto& [ neighborchare, sharednodes ] : m_nodeCommMap) {
+      if (sharednodes.find(g) == end(sharednodes)) {
+        m_bid.erase(g);
+      }
+    }
+  }
+
+  // Remap local ids in bid
+  for (auto& [g, l] : m_bid) {
+    Assert(amrNodeMap.find(l) != end(amrNodeMap), "Local id in bid not found "
+      "in amr node map.");
+    l = amrNodeMap.at(l);
+  }
 
   // update mesh node coordinates
   m_coord = coord;
