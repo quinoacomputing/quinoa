@@ -521,17 +521,7 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
   // update mesh node coordinates
   m_coord = coord;
 
-  // Resize mesh data structures after ALE mesh movement
-  resizePostALE();
-}
-
-void
-Discretization::resizePostALE()
-// *****************************************************************************
-//  Resize mesh data structures after ALE mesh movement
-// *****************************************************************************
-{
-  // Set flag that indicates that we are during time stepping
+  // we are no longer during setup
   m_initial = 0.0;
 }
 

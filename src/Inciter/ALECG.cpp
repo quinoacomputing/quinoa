@@ -1636,8 +1636,6 @@ ALECG::solve()
   if (g_inputdeck.get< tag::ale, tag::ale >()) {
 
     transfer_complete();
-    // Resize mesh data structures after mesh movement
-    d->resizePostALE();
     // Save nodal volumes at previous time step stage
     d->Voln() = d->Vol();
     // Prepare for recomputing the nodal volumes
