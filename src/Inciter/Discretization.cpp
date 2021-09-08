@@ -519,17 +519,7 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
   // update mesh node coordinates
   m_coord = coord;
 
-  // Resize mesh data structures after ALE mesh movement
-  resizePostALE();
-}
-
-void
-Discretization::resizePostALE()
-// *****************************************************************************
-//  Resize mesh data structures after ALE mesh movement
-// *****************************************************************************
-{
-  // Set flag that indicates that we are during time stepping
+  // we are no longer during setup
   m_initial = 0.0;
 }
 
@@ -823,7 +813,7 @@ Discretization::stat( tk::real mesh_volume )
 
   // Contribute stats of number of tetrahedra (ntets)
   sum[4] = 1.0;
-  min[2] = max[2] = sum[5] = m_inpoel.size() / 4;
+  min[2] = max[2] = sum[5] = static_cast< tk::real >( m_inpoel.size() / 4 );
   ntetPDF.add( min[2] );
 
   min.push_back( static_cast<tk::real>(m_meshid) );

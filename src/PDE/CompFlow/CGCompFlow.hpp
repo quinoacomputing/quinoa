@@ -211,7 +211,6 @@ class CompFlow {
         auto rw = U(i,3,m_offset);
         auto re = U(i,4,m_offset);
         auto p = eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re );
-        if (p < 0) p = 0.0;
         s[i] = eos_soundspeed< eq >( m_system, r, p );
       }
     }

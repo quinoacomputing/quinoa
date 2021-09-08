@@ -124,9 +124,6 @@ class Discretization : public CBase_Discretization {
                         const tk::UnsMesh::Coords& coord,
                         const tk::NodeCommMap& nodeCommMap );
 
-    //! Resize mesh data structures after ALE mesh movement
-    void resizePostALE();
-
     //! Get ready for (re-)computing/communicating nodal volumes
     void startvol();
 

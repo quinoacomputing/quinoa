@@ -1417,11 +1417,11 @@ ALECG::meshvelsolved( [[maybe_unused]] CkDataMsg* msg )
   d->meshvelConv();
 
   // continue to applying a mesh force to the mesh velocity
-  force();
+  startforce();
 }
 
 void
-ALECG::force()
+ALECG::startforce()
 // *****************************************************************************
 //  Compute mesh force for the ALE mesh velocity
 //! \details Compute mesh forces. See Sec.4 in Bakosi, Waltz, Morgan, Improved
@@ -1746,8 +1746,6 @@ ALECG::solve()
   if (g_inputdeck.get< tag::ale, tag::ale >()) {
 
     transfer_complete();
-    // Resize mesh data structures after mesh movement
-    d->resizePostALE();
     // Save nodal volumes at previous time step stage
     d->Voln() = d->Vol();
     // Prepare for recomputing the nodal volumes

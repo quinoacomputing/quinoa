@@ -28,6 +28,8 @@
   #pragma clang diagnostic ignored "-Wimplicit-int-conversion"
   #pragma clang diagnostic ignored "-Wundef"
   #pragma clang diagnostic ignored "-Wconversion"
+  #pragma clang diagnostic ignored "-Wsuggest-override"
+  #pragma clang diagnostic ignored "-Wsuggest-destructor-override"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wcast-qual"
