@@ -494,7 +494,7 @@ class ALECG : public CBase_ALECG {
     void gradpot();
 
     //! Compute mesh force for the ALE mesh velocity
-    void force();
+    void startforce();
 
     //! Apply mesh force
     void meshforce();

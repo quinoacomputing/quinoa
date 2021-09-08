@@ -1310,11 +1310,11 @@ ALECG::meshvelsolved( [[maybe_unused]] CkDataMsg* msg )
   d->meshvelConv();
 
   // continue to applying a mesh force to the mesh velocity
-  force();
+  startforce();
 }
 
 void
-ALECG::force()
+ALECG::startforce()
 // *****************************************************************************
 //  Compute mesh force for the ALE mesh velocity
 //! \details Compute mesh forces. See Sec.4 in Bakosi, Waltz, Morgan, Improved
