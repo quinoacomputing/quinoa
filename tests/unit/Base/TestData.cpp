@@ -1697,7 +1697,8 @@ void Data_object::test< 37 >() {
   p1.fill( 0.1 );
   p2.fill( 0.1 );
   auto m = tk::maxdiff(p1,p2);
-  ensure_equals( "<UnkEqComp>::maxdiff eq pos incorrect", m.first, 0, prec );
+  ensure_equals( "<UnkEqComp>::maxdiff eq pos incorrect",
+                 static_cast<tk::real>(m.first), 0.0, prec );
   ensure_equals( "<UnkEqComp>::maxdiff eq dif incorrect", m.second, 0.0, prec );
 
   // Test equal objects with EqCompUnk data layout
@@ -1705,7 +1706,8 @@ void Data_object::test< 37 >() {
   e1.fill( 0.3 );
   e2.fill( 0.3 );
   m = tk::maxdiff(e1,e2);
-  ensure_equals( "<EqCompUnk>::maxdiff eq pos incorrect", m.first, 0, prec );
+  ensure_equals( "<EqCompUnk>::maxdiff eq pos incorrect",
+                 static_cast<tk::real>(m.first), 0.0, prec );
   ensure_equals( "<EqCompUnk>::maxdiff eq dif incorrect", m.second, 0.0, prec );
 
   // Test unequal objects with UnkEqComp data layout
@@ -1713,7 +1715,8 @@ void Data_object::test< 37 >() {
   q1.fill( 0.1 );
   q2.fill( 0.0 );  q2(2,0,0) = 1.0;
   m = tk::maxdiff(q1,q2);
-  ensure_equals( "<UnkEqComp>::maxdiff neq pos incorrect", m.first, 4, prec );
+  ensure_equals( "<UnkEqComp>::maxdiff neq pos incorrect",
+                 static_cast<tk::real>(m.first), 4.0, prec );
   ensure_equals( "<UnkEqComp>::maxdiff neq dif incorrect", m.second, 0.9,prec );
 
   // Test unequal objects with EqCompUnk data layout
@@ -1721,7 +1724,8 @@ void Data_object::test< 37 >() {
   f1.fill( 0.1 );
   f2.fill( 0.0 );  f2(2,1,0) = -1.0;
   m = tk::maxdiff(f1,f2);
-  ensure_equals( "<EqCompUnk>::maxdiff neq pos incorrect", m.first, 5, prec );
+  ensure_equals( "<EqCompUnk>::maxdiff neq pos incorrect",
+                 static_cast<tk::real>(m.first), 5.0, prec );
   ensure_equals( "<EqCompUnk>::maxdiff neq dif incorrect", m.second, 1.1,prec );
 }
 

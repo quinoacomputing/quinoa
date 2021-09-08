@@ -815,7 +815,7 @@ Discretization::stat( tk::real mesh_volume )
 
   // Contribute stats of number of tetrahedra (ntets)
   sum[4] = 1.0;
-  min[2] = max[2] = sum[5] = m_inpoel.size() / 4;
+  min[2] = max[2] = sum[5] = static_cast< tk::real >( m_inpoel.size() / 4 );
   ntetPDF.add( min[2] );
 
   min.push_back( static_cast<tk::real>(m_meshid) );

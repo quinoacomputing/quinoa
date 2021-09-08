@@ -33,6 +33,7 @@
   #pragma clang diagnostic ignored "-Wfloat-equal"
   #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wc++2a-compat"
+  #pragma clang diagnostic ignored "-Wsuggest-override"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wfloat-equal"
