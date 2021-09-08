@@ -448,10 +448,11 @@ class Data {
     { return push_back( prop, int2type< Layout >() ); }
 
     //! Resize data store to contain 'count' elements
-    //! \param[in] count Resize store to contain 'count' elements
+    //! \param[in] count Resize store to contain count * nprop elements
     //! \param[in] value Value to initialize new data with (default: 0.0)
     //! \note This works for both shrinking and enlarging, as this simply
-    //!   translates to std::vector::resize().
+    //!   translates to std::vector::resize(). Note that count changes, nprop
+    //!   does not, see the private overload resize().
     void resize( std::size_t count, tk::real value = 0.0 )
     { resize( count, value, int2type< Layout >() ); }
 

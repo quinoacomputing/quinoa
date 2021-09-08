@@ -772,7 +772,7 @@ THINCFunction( std::size_t rdof,
     }
 
     // 2. Reconstruct volume fractions using THINC
-    auto max_lim = 1.0 - ((nmat-1)*1.0e-12);
+    auto max_lim = 1.0 - (static_cast<tk::real>(nmat-1)*1.0e-12);
     auto min_lim = 1e-12;
     auto alsum(0.0);
     for (std::size_t k=0; k<nmat; ++k)
@@ -948,7 +948,7 @@ THINCFunction_new( std::size_t rdof,
   // Step 2. Reconstruct volume fraction of majority material using THINC
   // -------------------------------------------------------------------------
 
-  auto al_max = 1.0 - ((nmat-1)*1.0e-12);
+  auto al_max = 1.0 - (static_cast<tk::real>(nmat-1)*1.0e-12);
   auto al_min = 1e-12;
   auto alsum(0.0);
   // get location of material interface (volume fraction 0.5) from the

@@ -28,7 +28,7 @@ class QuietCerr : public CBase_QuietCerr {
     static void quiet();
 
     //! Destructor: restore std::cerr's stream state
-    ~QuietCerr();
+    ~QuietCerr() override;
 };
 
 } // tk::

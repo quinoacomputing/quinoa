@@ -1486,7 +1486,7 @@ DG::extractFieldOutput(
     std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
     ndof.resize( nelem );
     for (const auto& [child,parent] : addedTets)
-      ndof[child] = m_ndof[parent];
+      ndof[child] = static_cast< tk::real >( m_ndof[parent] );
     m_elemfields.push_back( ndof );
   }
 
@@ -2621,7 +2621,8 @@ DG::writeFields( CkCallback c )
     auto p = tk::cref_find( lid, g );
     for (std::size_t i=0; i<f.first.size(); ++i) {
       m_nodefields[i][p] += f.first[i];
-      m_nodefields[i][p] /= esup.second[p+1] - esup.second[p] + f.second;
+      m_nodefields[i][p] /= static_cast< tk::real >(
+                             esup.second[p+1] - esup.second[p] + f.second );
     }
   }
   tk::destroy( m_nodefieldsc );
@@ -2640,7 +2641,7 @@ DG::writeFields( CkCallback c )
   auto& gid = std::get< 1 >( m_outmesh.chunk );
   for (std::size_t p=0; p<npoin; ++p) {
     if (!chbnd(gid[p])) {
-      auto n = esup.second[p+1] - esup.second[p];
+      auto n = static_cast< tk::real >( esup.second[p+1] - esup.second[p] );
       for (auto& f : m_nodefields) f[p] /= n;
     }
   }

@@ -316,7 +316,7 @@ struct RNG_common {
     for (std::size_t i=0; i<D; ++i) {
       mean[i] = 0.0;
       for (std::size_t j=0; j<N; ++j) mean[i] += numbers[j*D+i];
-      mean[i] /= N;
+      mean[i] /= static_cast<tk::real>(N);
       ensure_equals( "mean inaccurate", mean[i], correct_mean[i],
                      std::abs(correct_mean[i])*precision );
     }
@@ -334,7 +334,7 @@ struct RNG_common {
         }
       }
     for (std::size_t c=0; c<cov.size(); ++c) {
-      cov[c] /= N;
+      cov[c] /= static_cast<tk::real>(N);
       ensure_equals( "covariance matrix entry " + std::to_string(c) +
                      " inaccurate", cov[c], correct_cov[c],
                      std::abs(correct_cov[c])*precision );

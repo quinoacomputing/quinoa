@@ -43,8 +43,8 @@ tk::real count( const NodeCommMap& map, std::size_t node )
 //! \return Count of contributions to node
 // *****************************************************************************
 {
-  return 1.0 + std::count_if( map.cbegin(), map.cend(),
-    [&](const auto& s) { return s.second.find(node) != s.second.cend(); } );
+  return 1.0 + static_cast< tk::real >( std::count_if( map.cbegin(), map.cend(),
+    [&](const auto& s) { return s.second.find(node) != s.second.cend(); } ) );
 }
 
 } // tk::

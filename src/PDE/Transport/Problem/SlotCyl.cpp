@@ -43,7 +43,7 @@ TransportProblemSlotCyl::initialize( ncomp_t, ncomp_t ncomp, tk::real x,
 
   std::vector< tk::real > s( ncomp, 0.0 );
   for (ncomp_t c=0; c<ncomp; ++c) {
-    auto T = t + 2.0*M_PI/ncomp * c;
+    auto T = t + 2.0*M_PI/static_cast<tk::real>(ncomp)*static_cast<tk::real>(c);
     const tk::real R0 = 0.15;
 
     // center of the cone
