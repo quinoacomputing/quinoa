@@ -1775,15 +1775,40 @@ struct dvcfl_info {
 };
 using dvcfl = keyword< dvcfl_info, TAOCPP_PEGTL_STRING("dvcfl") >;
 
+struct vortmult_info {
+  static std::string name() { return "vortmult"; }
+  static std::string shortDescription() { return
+    "Configure vorticity multiplier for ALE mesh velocity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to configure the multiplier for the vorticity term
+    in the mesh velocity smoother (mesh_velocity=fluid) or for the potential
+    gradient for the Helmholtz mesh velocity (mesh_velocity=helmholtz) for ALE
+    mesh motion. For 'fluid' this is coefficient c2 in Eq.(36) of Waltz,
+    Morgan, Canfield, Charest, Risinger, Wohlbier, A three-dimensional finite
+    element arbitrary Lagrangian–Eulerian method for shock hydrodynamics on
+    unstructured grids, Computers & Fluids, 2014, and for 'helmholtz', this is
+    coefficient a1 in Eq.(23) of Bakosi, Waltz, Morgan, Improved ALE mesh
+    velocities for complex flows, International Journal for Numerical Methods
+    in Fluids, 2017. )";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
+    static std::string description() { return "real"; }
+  };
+};
+using vortmult = keyword< vortmult_info, TAOCPP_PEGTL_STRING("vortmult") >;
+
 struct meshvel_maxit_info {
   static std::string name() {
-    return "mesh velocity smoother linear solve max number of iterations"; }
+    return "mesh velocity linear solve max number of iterations"; }
   static std::string shortDescription() { return
-    "Set the max number of iterations for the mesh velocity"
-    " smoother linear solve for ALE"; }
+    "Set the max number of iterations for the mesh velocity linear solve "
+    "for ALE"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the maximum number of linear solver
-    iterations taken to converge the mesh velocity smoother for in
+    iterations taken to converge the mesh velocity linear solve in
     arbitrary-Lagrangian-Eulerian (ALE) calculations. See also J. Waltz,
     N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, A
     three-dimensional finite element arbitrary Lagrangian–Eulerian method for
@@ -1800,12 +1825,12 @@ using meshvel_maxit =
 
 struct meshvel_tolerance_info {
   static std::string name() {
-    return "mesh velocity smoother linear solver tolerance "; }
+    return "mesh velocity linear solve tolerance "; }
   static std::string shortDescription() { return
-    "Set the tolerance for the mesh velocity smoother linear solve for ALE"; }
+    "Set the tolerance for the mesh velocity linear solve for ALE"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the tolerance for the linear solver
-    to converge the mesh velocity smoother for in
+    R"(This keyword is used to specify the tolerance to converge the mesh
+    velocity linear solve for in
     arbitrary-Lagrangian-Eulerian (ALE) calculations. See also J. Waltz,
     N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, A
     three-dimensional finite element arbitrary Lagrangian–Eulerian method for
@@ -6720,6 +6745,18 @@ struct fluid_info {
 };
 using fluid = keyword< fluid_info, TAOCPP_PEGTL_STRING("fluid") >;
 
+struct lagrange_info {
+  static std::string name() { return "Lagrange"; }
+  static std::string shortDescription() { return
+    "Select the Lagrange velocity for ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the 'Lagrange' velocity as the mesh
+       velocity for Arbitrary-Lagrangian-Eulerian (ALE) mesh motion. This
+       practically equates the mesh velocity with the fluid velocity and turns
+       off mesh velocity smoothing.)"; }
+};
+using lagrange = keyword< lagrange_info, TAOCPP_PEGTL_STRING("lagrange") >;
+
 struct helmholtz_info {
   static std::string name() { return "Helmholtz"; }
   static std::string shortDescription() { return
@@ -6746,12 +6783,49 @@ struct meshvelocity_info {
       return '\'' + none::string() + "\' | \'"
                   + sine::string() + "\' | \'"
                   + fluid::string() + "\' | \'"
+                  + lagrange::string() + "\' | \'"
                   + helmholtz::string() + '\'';
     }
   };
 };
 using meshvelocity =
   keyword< meshvelocity_info, TAOCPP_PEGTL_STRING("mesh_velocity") >;
+
+struct mesh_motion_info {
+  static std::string name() {
+    return "Mesh velocity dimensions allowed to change in ALE"; }
+  static std::string shortDescription() { return "Specify a list of scalar "
+    "dimension indices that are allowed to move in ALE calculations"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a list of integers (0, 1, or 2) whose
+    coordinate directions corresponding to x, y, or z are allowed to move with
+    the mesh velocity in ALE calculations. Example: 'mesh_motion 0 1 end', which
+    means disallow mesh motion in the z coordinate direction, useful for 2D
+    problems in x-y.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static std::string description() { return "integers"; }
+  };
+};
+using mesh_motion =
+  keyword< mesh_motion_info, TAOCPP_PEGTL_STRING("mesh_motion") >;
+
+struct meshforce_info {
+  static std::string name() { return "Mesh force"; }
+  static std::string shortDescription() { return
+    R"(Set ALE mesh force model parameter(s))"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a mesh force model for ALE. Example: "mesh_force 1.0 2.0 3.0
+    4.0 end". The length of the vector must exactly 4. Everything else is an
+    error.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using meshforce = keyword< meshforce_info,  TAOCPP_PEGTL_STRING("mesh_force") >;
 
 struct ale_info {
   static std::string name() { return "ALE"; }
@@ -6761,6 +6835,12 @@ struct ale_info {
     R"(This keyword is used to introduce the ale ... end block, used to
     configure arbitrary Lagrangian-Eulerian (ALE) mesh movement. Keywords
     allowed in this block: )" + std::string("\'")
+    + vortmult::string() + "\' | \'"
+    + meshvel_maxit::string() + "\' | \'"
+    + meshvel_tolerance::string() + "\' | \'"
+    + bc_dirichlet::string() + "\' | \'"
+    + bc_sym::string() + "\' | \'"
+    + meshforce::string() + "\' | \'"
     + meshvelocity::string() + "\'.";
   }
 };

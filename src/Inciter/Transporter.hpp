@@ -369,6 +369,9 @@ class Transporter : public CBase_Transporter {
 
     //! Generate list of input mesh filenames configured by the user
     std::vector< std::string > input();
+
+    //! Decide if ALE will need a linear solver
+    bool need_linearsolver() const;
 };
 
 } // inciter::

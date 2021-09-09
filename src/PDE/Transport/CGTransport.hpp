@@ -102,6 +102,11 @@ class Transport {
     //!   means this system does not define a "velocity".
     void velocity( const tk::Fields&, tk::UnsMesh::Coords& ) const {}
 
+    //! Query the sound speed
+    //! \note Since this function does not touch its output argument, that
+    //!   means this system does not define a "sound speed".
+    void soundspeed( const tk::Fields&, std::vector< tk::real >& ) const {}
+
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate

@@ -150,6 +150,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::ctau
                                  , kw::cfl
                                  , kw::dvcfl
+                                 , kw::vortmult
                                  , kw::mj
                                  , kw::elem
                                  , kw::node
@@ -197,9 +198,12 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::meshvelocity
                                  , kw::meshvel_maxit
                                  , kw::meshvel_tolerance
+                                 , kw::mesh_motion
+                                 , kw::meshforce
                                  , kw::none
                                  , kw::sine
                                  , kw::fluid
+                                 , kw::lagrange
                                  , kw::helmholtz
                                  , kw::amr_t0ref
                                  , kw::amr_dtref
@@ -332,9 +336,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       // Default ALE settings
       get< tag::ale, tag::ale >() = false;
       get< tag::ale, tag::dvcfl >() = 0.0;
+      get< tag::ale, tag::vortmult >() = 0.0;
       get< tag::ale, tag::maxit >() = 5;
       get< tag::ale, tag::tolerance >() = 1.0e-2;
-      get< tag::ale, tag::meshvelocity >() = MeshVelocityType::NONE;
       // Default p-refinement settings
       get< tag::pref, tag::pref >() = false;
       get< tag::pref, tag::indicator >() = PrefIndicatorType::SPECTRAL_DECAY;

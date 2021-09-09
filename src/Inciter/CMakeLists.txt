@@ -73,19 +73,6 @@ target_include_directories(MeshRefinement PUBLIC
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 
-add_library(MeshMotion
-            ALE/MeshMotion.cpp)
-
-target_include_directories(MeshMotion PUBLIC
-                           ${QUINOA_SOURCE_DIR}
-                           ${QUINOA_SOURCE_DIR}/Base
-                           ${QUINOA_SOURCE_DIR}/Control
-                           ${QUINOA_SOURCE_DIR}/Mesh
-                           ${CHARM_INCLUDE_DIRS}
-                           ${PEGTL_INCLUDE_DIRS}
-                           ${BRIGAND_INCLUDE_DIRS}
-                           ${PROJECT_BINARY_DIR}/../Main)
-
 addCharmModule( "transporter" "Inciter" )
 addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "discretization" "Inciter" )
@@ -121,8 +108,6 @@ add_dependencies( "discretizationCharmModule" "meshwriterCharmModule" )
 set_target_properties(Inciter PROPERTIES LIBRARY_OUTPUT_NAME quinoa_inciter)
 set_target_properties(MeshRefinement PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_mesh_refinement)
-set_target_properties(MeshMotion PROPERTIES LIBRARY_OUTPUT_NAME
-                      quinoa_mesh_motion)
 
 INSTALL(TARGETS Inciter
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
@@ -131,12 +116,6 @@ INSTALL(TARGETS Inciter
 )
 
 INSTALL(TARGETS MeshRefinement
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-)
-
-INSTALL(TARGETS MeshMotion
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development

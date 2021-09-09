@@ -16,6 +16,12 @@
     Transporter. Each ALECG gets a chunk of the full load (part of the mesh)
     and does the same: initializes and advances a number of PDE systems in time.
 
+    ALE time-stepping is performed in an unsplit fashion, as opposed to
+    Lagrange + remap. See also J. Waltz, N.R. Morgan, T.R. Canfield, M.R.J.
+    Charest, L.D. Risinger, J.G. Wohlbier, A three-dimensional finite element
+    arbitrary Lagrangian–Eulerian method for shock hydrodynamics on unstructured
+    grids, Computers & Fluids, 92: 172-187, 2014.
+
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality.
@@ -108,6 +114,9 @@ class ALECG : public CBase_ALECG {
     //! Advance equations to next time step
     void advance( tk::real newdt );
 
+    //! Apply mesh velocity smoother boundary conditions for ALE mesh motion
+    void meshvelbc( tk::real maxv = 0.0 );
+
     //! Compute left-hand side of transport equations
     void lhs();
 
@@ -128,6 +137,22 @@ class ALECG : public CBase_ALECG {
     //! Receive contributions to right-hand side vector on chare-boundaries
     void comrhs( const std::vector< std::size_t >& gid,
                  const std::vector< std::vector< tk::real > >& R );
+
+    //! Receive contributions to vorticity on chare-boundaries
+    void comvort( const std::vector< std::size_t >& gid,
+                  const std::vector< std::array< tk::real, 3 > >& v );
+
+    //! Receive contributions to velocity divergence on chare-boundaries
+    void comdiv( const std::vector< std::size_t >& gid,
+                 const std::vector< tk::real >& v );
+
+    //! Receive contributions to scalar potential gradient on chare-boundaries
+    void compot( const std::vector< std::size_t >& gid,
+                 const std::vector< std::array< tk::real, 3 > >& v );
+
+    //! Receive contributions to ALE mesh force on chare-boundaries
+    void comfor( const std::vector< std::size_t >& gid,
+                 const std::vector< std::array< tk::real, 3 > >& w );
 
     //! Update solution at the end of time step
     void update( const tk::Fields& a );
@@ -168,14 +193,14 @@ class ALECG : public CBase_ALECG {
     //! Resizing data sutrctures after mesh refinement has been completed
     void resized();
 
-    //! Apply mesh velocity smoother boundary conditions for ALE mesh motion
-    void meshvelbc();
-
-    //! Mesh velocity smoother BCs have been applied
+    //! Solve mesh velocity linear solve for ALE mesh motion
     void applied( CkDataMsg* msg = nullptr );
 
     //! Mesh velocity smoother linear solver converged
-    void smoothed( CkDataMsg* msg = nullptr );
+    void meshvelsolved( CkDataMsg* msg = nullptr );
+
+    //! Compute the gradient of the scalar potential for ALE
+    void helmholtz( CkDataMsg* msg = nullptr );
 
     //! Evaluate whether to continue with next time step
     void step();
@@ -195,10 +220,13 @@ class ALECG : public CBase_ALECG {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_disc;
-      p | m_initial;
       p | m_nsol;
       p | m_ngrad;
       p | m_nrhs;
+      p | m_nvort;
+      p | m_ndiv;
+      p | m_npot;
+      p | m_nwf;
       p | m_nbnorm;
       p | m_ndfnorm;
       p | m_bnode;
@@ -213,19 +241,25 @@ class ALECG : public CBase_ALECG {
       p | m_u;
       p | m_un;
       p | m_w;
-      p | m_vel;
+      p | m_wf;
+      p | mp;
+      p | m_veldiv;
+      p | m_veldivc;
+      p | m_gradpot;
+      p | m_gradpotc;
+      p | m_wfc;
       p | m_rhs;
+      p | m_rhsc;
       p | m_chBndGrad;
       p | m_dirbc;
       p | m_chBndGradc;
-      p | m_rhsc;
       p | m_diag;
       p | m_bnorm;
-      p | m_bnormn;
       p | m_bnormc;
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
-      p | m_meshvelbcnodes;
+      p | m_meshveldirbcnodes;
+      p | m_meshvelsymbcnodes;
       p | m_symbctri;
       p | m_spongenodes;
       p | m_stage;
@@ -237,6 +271,8 @@ class ALECG : public CBase_ALECG {
       p | m_finished;
       p | m_newmesh;
       p | m_coordn;
+      p | m_vorticity;
+      p | m_vorticityc;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -249,14 +285,20 @@ class ALECG : public CBase_ALECG {
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
-    //! 1 if starting time stepping, 0 if during time stepping
-    std::size_t m_initial;
     //! Counter for high order solution vector nodes updated
     std::size_t m_nsol;
     //! Counter for nodal gradients updated
     std::size_t m_ngrad;
     //! Counter for right-hand side vector nodes updated
     std::size_t m_nrhs;
+    //! Counter for communicating the vorticity for ALE
+    std::size_t m_nvort;
+    //! Counter for communicating the velocity divergence for ALE
+    std::size_t m_ndiv;
+    //! Counter for communicating the gradient of the scalar potential for ALE
+    std::size_t m_npot;
+    //! Counter for communicating the mesh force for ALE
+    std::size_t m_nwf;
     //! Counter for receiving boundary point normals
     std::size_t m_nbnorm;
     //! Counter for receiving dual-face normals on chare-boundary edges
@@ -287,10 +329,28 @@ class ALECG : public CBase_ALECG {
     tk::Fields m_un;
     //! Mesh velocity for ALE mesh motion
     tk::Fields m_w;
-    //! Fluid velocity for ALE mesh motion
-    tk::UnsMesh::Coords m_vel;
+    //! Mesh force for ALE mesh motion
+    tk::Fields m_wf;
+    std::vector< tk::real > mp;
+    //! Fluid velocity divergence for ALE mesh motion
+    std::vector< tk::real > m_veldiv;
+    //! Receive buffer for communication of the velocity divergence for ALE
+    //! \details Key: global node id, value: divergence in nodes
+    std::unordered_map< std::size_t, tk::real > m_veldivc;
+    //! Gradient of the scalar potentinal for ALE mesh motion
+    tk::UnsMesh::Coords m_gradpot;
+    //! Receive buffer for the gradient of the scalar potential for ALE
+    //! \details Key: global node id, value: scalar potential gradient in nodes
+    std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_gradpotc;
+    //! Receive buffer for the mesh force for ALE
+    //! \details Key: global node id, value: mesh force in nodes
+    std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_wfc;
     //! Right-hand side vector (for the high order system)
     tk::Fields m_rhs;
+    //! Receive buffer for communication of the right hand side
+    //! \details Key: global node id, value: rhs for all scalar components per
+    //!   node.
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
     //! Nodal gradients at chare-boundary nodes
     tk::Fields m_chBndGrad;
     //! Boundary conditions evaluated and assigned to local mesh node IDs
@@ -305,9 +365,6 @@ class ALECG : public CBase_ALECG {
     //! \details Key: chare id, value: gradients for all scalar components per
     //!   node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_chBndGradc;
-    //! Receive buffer for communication of the right hand side
-    //! \details Key: chare id, value: rhs for all scalar components per node
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_rhsc;
     //! Diagnostics object
     NodeDiagnostics m_diag;
     //! Face normals in boundary points associated to side sets
@@ -315,8 +372,6 @@ class ALECG : public CBase_ALECG {
     //!   square between face centroids and points, outer key: side set id
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnorm;
-    //! Face normals in boundary points at time n for ALE
-    decltype(m_bnorm) m_bnormn;
     //! \brief Receive buffer for communication of the boundary point normals
     //!   associated to side sets
     //! \details Key: global node id, value: normals (first 3 components),
@@ -327,8 +382,10 @@ class ALECG : public CBase_ALECG {
     std::unordered_set< std::size_t > m_symbcnodes;
     //! Unique set of nodes at which farfield BCs are set
     std::unordered_set< std::size_t > m_farfieldbcnodes;
-    //! Unique set of nodes at which mesh velocity BCs are set for ALE
-    std::unordered_set< std::size_t > m_meshvelbcnodes;
+    //! Unique set of nodes at which ALE mesh velocity Dirichlet BCs are set
+    std::unordered_set< std::size_t > m_meshveldirbcnodes;
+    //! Unique set of nodes at which ALE mesh velocity symmetry BCs are set
+    std::unordered_set< std::size_t > m_meshvelsymbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
     //! Unique set of nodes at which sponge parameters are set
@@ -351,6 +408,11 @@ class ALECG : public CBase_ALECG {
     int m_newmesh;
     //! Mesh coordinates at the time n for ALE
     tk::UnsMesh::Coords m_coordn;
+    //! Vorticity for ALE
+    tk::UnsMesh::Coords m_vorticity;
+    //! Receive buffer for communication of the vorticity for ALE
+    //! \details Key: global node id, value: vorticity in nodes
+    std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_vorticityc;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -390,25 +452,16 @@ class ALECG : public CBase_ALECG {
     void writeFields( CkCallback c );
 
     //! Combine own and communicated contributions to normals
-    void merge();
+    void mergelhs();
 
     //! Compute gradients
     void chBndGrad();
-
-    //! Compute new mesh veloctity for ALE mesh motion
-    void meshvel();
-
-    //! Assign new mesh veloctity for ALE mesh motion
-    void assignMeshvel();
 
     //! Compute righ-hand side vector of transport equations
     void rhs();
 
     //! Advance systems of equations
     void solve();
-
-    //! Continue after ALE mesh movement
-    void ale();
 
     //! Compute time step size
     void dt();
@@ -426,10 +479,31 @@ class ALECG : public CBase_ALECG {
     void BC();
 
     //! Multiply solution with mesh volume
-    void volumetric( tk::Fields& u );
+    void volumetric( tk::Fields& u, const std::vector< tk::real >& v );
 
     //! Divide solution with mesh volume
-    void conserved( tk::Fields& u );
+    void conserved( tk::Fields& u, const std::vector< tk::real >& v );
+
+    //! Start computing new mesh veloctity for ALE mesh motion
+    void meshvelstart();
+
+    //! Finalize computing fluid vorticity and velocity divergence for ALE
+    void mergevel();
+
+    //! Finalize computing the scalar potential gradient for ALE
+    void gradpot();
+
+    //! Compute mesh force for the ALE mesh velocity
+    void startforce();
+
+    //! Apply mesh force
+    void meshforce();
+
+    //! Done with computing the mesh velocity for ALE mesh motion
+    void meshveldone();
+
+    //! Continue after computing the new mesh velocity for ALE
+    void ale();
 };
 
 } // inciter::

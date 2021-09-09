@@ -833,6 +833,22 @@ namespace grm {
       auto eps = std::numeric_limits< tk::real >::epsilon();
       if (ale && std::abs(dvcfl - dvcfl_default) < eps) dvcfl = 0.01;
 
+      // Set a default of zeros for the mesh force ALE parameters
+      auto& meshforce = stack.template get< tag::ale, tag::meshforce >();
+      if (ale && meshforce.size() != 4) meshforce = { 0, 0, 0, 0 };
+
+      // Set a default for the ALE mesh motion dimensions
+      auto& mesh_motion = stack.template get< tag::ale, tag::mesh_motion >();
+      if (ale && mesh_motion.empty()) mesh_motion = { 0, 1, 2 };
+
+      // Error out if mesh motion dimensions are wrong
+      if (ale && (mesh_motion.size() > 3 ||
+                  std::any_of( begin(mesh_motion), end(mesh_motion),
+                     [](auto d){return d > 2;} )) )
+      {
+        Message< Stack, ERROR, MsgKey::WRONGMESHMOTION >( stack, in );
+      }
+
       // If at least a mesh filename is assigned to a solver, all solvers must
       // have a mesh filename assigned
       std::size_t nmesh = 0;
@@ -1848,6 +1864,10 @@ namespace deck {
                                 pegtl::digit,
                                 tk::grm::Store,
                                 tag::ale, tag::dvcfl >,
+              tk::grm::control< use< kw::vortmult >,
+                                pegtl::digit,
+                                tk::grm::Store,
+                                tag::ale, tag::vortmult >,
               tk::grm::control< use< kw::meshvel_maxit >,
                                 pegtl::digit,
                                 tk::grm::Store,
@@ -1862,11 +1882,23 @@ namespace deck {
                   ctr::MeshVelocity,
                   tag::ale, tag::meshvelocity >,
                 pegtl::alpha >,
+              pegtl::if_must< tk::grm::dimensions< use< kw::mesh_motion >,
+                              tk::grm::Store_back< tag::ale, tag::mesh_motion >,
+                              use< kw::end > > >,
+              pegtl::if_must< tk::grm::vector< use< kw::meshforce >,
+                              tk::grm::Store_back< tag::ale, tag::meshforce >,
+                              use< kw::end > > >,
               pegtl::if_must<
                 tk::grm::readkw< use< kw::bc_dirichlet >::pegtl_string >,
                 tk::grm::block< use< kw::end >,
                   pegtl::if_must< tk::grm::vector< use< kw::sideset >,
                                   tk::grm::Store_back< tag::ale, tag::bcdir >,
+                                  use< kw::end > > > > >,
+              pegtl::if_must<
+                tk::grm::readkw< use< kw::bc_sym >::pegtl_string >,
+                tk::grm::block< use< kw::end >,
+                  pegtl::if_must< tk::grm::vector< use< kw::sideset >,
+                                  tk::grm::Store_back< tag::ale, tag::bcsym >,
                                   use< kw::end > > > > > > > {};
 
   //! \brief Match a depvar, defined upstream of control file, coupling a

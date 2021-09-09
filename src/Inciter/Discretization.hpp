@@ -91,16 +91,17 @@ class Discretization : public CBase_Discretization {
 
     //! Initialize mesh velocity linear solve: set initial guess and BCs
     void
-    meshvelInit( const std::vector< tk::real >& w,
+    meshvelInit( const std::vector< tk::real >& x,
+                 const std::vector< tk::real >& div,
                  const std::unordered_map< std::size_t,
-                         std::vector< std::pair< bool, tk::real > > >& wbc,
+                         std::vector< std::pair< bool, tk::real > > >& bc,
                 CkCallback c );
 
     //! Solve using Conjugrate Gradients linear solver
     void meshvelSolve( CkCallback c );
 
-    //! Query solution of the Conjugrate Gradients linear soilver
-    std::vector< tk::real > meshvel() const;
+    //! Query the solution of the Conjugrate Gradients linear solver
+    std::vector< tk::real > meshvelSolution() const;
 
     //! Assess and record mesh velocity linear solver convergence
     void meshvelConv();
@@ -123,12 +124,8 @@ class Discretization : public CBase_Discretization {
                         const tk::UnsMesh::Coords& coord,
                         const tk::NodeCommMap& nodeCommMap );
 
-    //! Resize mesh data structures after ALE mesh movement
-    void
-    resizePostALE( const tk::UnsMesh::Coords& coord );
-
     //! Get ready for (re-)computing/communicating nodal volumes
-    void startvol( bool last_stage = false );
+    void startvol();
 
     //! Sum mesh volumes to nodes, start communicating them on chare-boundaries
     void vol();
@@ -176,10 +173,23 @@ class Discretization : public CBase_Discretization {
     //! Nodal mesh volume accessors const-ref
     const std::vector< tk::real >& V() const { return m_v; }
 
-    //! Nodal mesh volumes accessors as const-ref
+    //! Nodal mesh volumes at current time step accessors as const-ref
     const std::vector< tk::real >& Vol() const { return m_vol; }
-    //! Nodal mesh volumes accessors as const-ref at previous time step
+    //! Nodal mesh volumes at previous time step accessors as const-ref
     const std::vector< tk::real >& Voln() const { return m_voln; }
+    //! Nodal mesh volumes at previous time step accessors as ref
+    std::vector< tk::real >& Voln() { return m_voln; }
+    //! Element mesh volumes at t=t0 accessors as const-ref
+    const std::vector< tk::real >& Vol0() const { return m_vol0; }
+
+    //! Set 'initial' flag
+    //! \param[in] i Value to put in 'initial'
+    void Initial( tk::real i ) { m_initial = i; }
+    //! Query 'initial' flag
+    //! \return True during setup, false durign time stepping
+    bool Initial() const {
+      return std::abs(m_initial-1.0) < std::numeric_limits<tk::real>::epsilon();
+    }
 
     //! History points data accessor as const-ref
     const std::vector< HistData >& Hist() const { return m_histdata; }
@@ -366,9 +376,6 @@ class Discretization : public CBase_Discretization {
     //! Query if ALE mesh motion is enabled by the user
     bool ALE() const;
 
-    //! Query if ALE mesh velocity is updated during time stepping
-    bool dynALE() const;
-
     //! Decide if field output iteration count interval is hit
     bool fielditer() const;
 
@@ -425,6 +432,7 @@ class Discretization : public CBase_Discretization {
       p | m_vol;
       p | m_volc;
       p | m_voln;
+      p | m_vol0;
       p | m_boxvol;
       p | m_bid;
       p | m_timer;
@@ -542,8 +550,10 @@ class Discretization : public CBase_Discretization {
     //! Volume of nodes at previous time step
     //! \details This is the volume of the mesh associated to nodes of owned
     //!   elements (sum of surrounding cell volumes / 4) with contributions from
-    //!   other chares on chare-boundaries at the previous time step
+    //!   other chares on chare-boundaries at the previous time step stage
     std::vector< tk::real > m_voln;
+    //! Mesh element volumes at t=t0
+    std::vector< tk::real > m_vol0;
     //! Volume of user-defined box IC
     tk::real m_boxvol;
     //! \brief Local chare-boundary mesh node IDs at which we receive
@@ -570,7 +580,7 @@ class Discretization : public CBase_Discretization {
 
     //! Generate {A,x,b} for Laplacian mesh velocity smoother
     std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
-    LaplacianSmoother() const;
+    Laplacian( std::size_t ncomp ) const;
 
     //! Set mesh coordinates based on coordinates map
     tk::UnsMesh::Coords setCoord( const tk::UnsMesh::CoordMap& coordmap );

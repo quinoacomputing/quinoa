@@ -12,7 +12,7 @@ add_regression_test(compflow_euler_alecg_ale_gcl ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_gcl.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gcl_diag.ndiff.cfg
+                    TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
                     LABELS alecg ale)
 
 add_regression_test(compflow_euler_alecg_ale_sod_sine ${INCITER_EXECUTABLE}
@@ -26,7 +26,7 @@ add_regression_test(compflow_euler_alecg_ale_sod_sine ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_sod_sine.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_diag.ndiff.cfg
+                    TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
                     LABELS alecg ale)
 
 add_regression_test(compflow_euler_alecg_ale_sod_fluid ${INCITER_EXECUTABLE}
@@ -40,7 +40,20 @@ add_regression_test(compflow_euler_alecg_ale_sod_fluid ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     TEXT_BASELINE diag_sod_fluid.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_diag.ndiff.cfg
+                    TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
+                    LABELS alecg ale)
+
+add_regression_test(compflow_euler_alecg_ale_lagrange ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES tg_lagrange.q unitcube_1k.exo
+                    ARGS -c tg_lagrange.q -v
+                    BIN_BASELINE tg_lagrange.0.std.exo
+                                 tg_lagrange.10.std.exo
+                    BIN_RESULT out.e-s.0.1.0 out.e-s.10.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_tg_lagrange.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
                     LABELS alecg ale)
 
 # Parallel
@@ -82,7 +95,7 @@ add_regression_test(compflow_euler_alecg_ale_gcl ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_gcl.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF gcl_diag.ndiff.cfg
+                    TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
                     LABELS alecg ale migration)
 
 add_regression_test(compflow_euler_alecg_ale_sod_fluid ${INCITER_EXECUTABLE}
@@ -118,5 +131,59 @@ add_regression_test(compflow_euler_alecg_ale_sod_fluid ${INCITER_EXECUTABLE}
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_sod_fluid.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_diag.ndiff.cfg
+                    TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
                     LABELS alecg ale migration)
+
+add_regression_test(compflow_euler_alecg_ale_vort ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES tg_vort.q unitcube_1k.exo
+                    ARGS -c tg_vort.q -v
+                    BIN_BASELINE tg_vort.0.std.exo.0
+                                 tg_vort.0.std.exo.1
+                                 tg_vort.0.std.exo.2
+                                 tg_vort.0.std.exo.3
+                                 tg_vort.10.std.exo.0
+                                 tg_vort.10.std.exo.1
+                                 tg_vort.10.std.exo.2
+                                 tg_vort.10.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                               out.e-s.10.4.0
+                               out.e-s.10.4.1
+                               out.e-s.10.4.2
+                               out.e-s.10.4.3
+                    BIN_DIFF_PROG_CONF exodiff_vort.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_tg_vort.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
+                    LABELS alecg ale)
+
+add_regression_test(compflow_euler_alecg_ale_helmholtz ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES tg_helmholtz.q unitcube_1k.exo
+                    ARGS -c tg_helmholtz.q -v
+                    BIN_BASELINE tg_helmholtz.0.std.exo.0
+                                 tg_helmholtz.0.std.exo.1
+                                 tg_helmholtz.0.std.exo.2
+                                 tg_helmholtz.0.std.exo.3
+                                 tg_helmholtz.10.std.exo.0
+                                 tg_helmholtz.10.std.exo.1
+                                 tg_helmholtz.10.std.exo.2
+                                 tg_helmholtz.10.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                               out.e-s.10.4.0
+                               out.e-s.10.4.1
+                               out.e-s.10.4.2
+                               out.e-s.10.4.3
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_tg_helmholtz.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
+                    LABELS alecg ale)

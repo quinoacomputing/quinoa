@@ -80,8 +80,14 @@ using amr = tk::TaggedTuple< brigand::list<
 
 //! ALE mesh motion options
 using ale = tk::TaggedTuple< brigand::list<
-    tag::ale,           bool                  //!< ALE on/off
-  , tag::dvcfl,         kw::dvcfl::info::expect::type  //!< dvCFL coefficient
+  //! ALE on/off
+    tag::ale,           bool
+  //! Restrict mesh velocity dimensions (useful for d<3 dimensional problems)
+  , tag::mesh_motion,   std::vector< kw::mesh_motion::info::expect::type >
+  //! dvCFL (CFL mesh volume change) coefficient for ALE
+  , tag::dvcfl,         kw::dvcfl::info::expect::type
+  //!< Multiplier for vorticity in mesh velocity smoother
+  , tag::vortmult,      kw::vortmult::info::expect::type
   //! Mesh velocity smoother linear solver max number of iterations
   , tag::maxit,         kw::meshvel_maxit::info::expect::type
   //! Mesh velocity smoother linear solver tolerance
@@ -89,6 +95,10 @@ using ale = tk::TaggedTuple< brigand::list<
   , tag::meshvelocity,  MeshVelocityType      //!< Mesh velocity option
     //! Mesh velocity Dirichlet BC sidesets
   , tag::bcdir,         std::vector< kw::sideset::info::expect::type >
+    //! Mesh velocity symmetry BC sidesets
+  , tag::bcsym,         std::vector< kw::sideset::info::expect::type >
+    //! Mesh force parameters
+  , tag::meshforce,     std::vector< kw::meshforce::info::expect::type >
 > >;
 
 //! p-adaptive refinement options
