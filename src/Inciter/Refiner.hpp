@@ -33,6 +33,7 @@
 #include "DiagCG.hpp"
 #include "ALECG.hpp"
 #include "DG.hpp"
+#include "FV.hpp"
 #include "CommMap.hpp"
 
 #include "NoWarning/transporter.decl.h"

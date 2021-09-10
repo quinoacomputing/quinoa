@@ -84,6 +84,7 @@
 #include "NoWarning/alecg.decl.h"
 #include "NoWarning/distfct.decl.h"
 #include "NoWarning/dg.decl.h"
+#include "NoWarning/fv.decl.h"
 #include "NoWarning/conjugategradients.decl.h"
 
 namespace inciter {
@@ -95,13 +96,15 @@ class Scheme {
     //! Variant type listing all chare proxy types modeling the same concept
     using Proxy = std::variant< CProxy_DiagCG
                               , CProxy_DG
-                              , CProxy_ALECG >;
+                              , CProxy_ALECG
+                              , CProxy_FV >;
 
   public:
     //! Variant type listing all chare element proxy types
     using ProxyElem = std::variant< CProxy_DiagCG::element_t
                                   , CProxy_DG::element_t
-                                  , CProxy_ALECG::element_t >;
+                                  , CProxy_ALECG::element_t
+                                  , CProxy_FV::element_t >;
 
     //! Empty constructor for Charm++
     explicit Scheme() {}
@@ -132,6 +135,8 @@ class Scheme {
         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
       } else if (scheme == ctr::SchemeType::ALECG) {
         proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(bound) );
+      } else if (scheme == ctr::SchemeType::FV) {
+        proxy = static_cast< CProxy_FV >( CProxy_FV::ckNew(bound) );
       } else Throw( "Unknown discretization scheme" );
       if (linearsolver)
         conjugategradientsproxy = tk::CProxy_ConjugateGradients::ckNew(bound);

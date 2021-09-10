@@ -241,6 +241,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::dgp1
                                  , kw::dgp2
                                  , kw::pdg
+                                 , kw::fv
                                  , kw::flux
                                  , kw::laxfriedrichs
                                  , kw::hllc

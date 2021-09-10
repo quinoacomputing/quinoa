@@ -228,7 +228,8 @@ Transporter::info( const InciterPrint& print )
     }
   } else if (scheme == ctr::SchemeType::DG ||
              scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
-             scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
+             scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG ||
+             scheme == ctr::SchemeType::FV)
   {
     print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
@@ -1067,7 +1068,8 @@ Transporter::diagHeader()
     for (const auto& eq : g_cgpde) varnames( eq, var );
   else if (scheme == ctr::SchemeType::DG ||
            scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
-           scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
+           scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG ||
+           scheme == ctr::SchemeType::FV)
     for (const auto& eq : g_dgpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
 

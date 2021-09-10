@@ -84,6 +84,8 @@ void Scheme_object::test< 1 >() {
   ensure_equals( "Underlying type", d.index(), 1 );
   inciter::Scheme a( inciter::ctr::SchemeType::ALECG );
   ensure_equals( "Underlying type", a.index(), 2 );
+  inciter::Scheme f( inciter::ctr::SchemeType::FV );
+  ensure_equals( "Underlying type", f.index(), 3 );
 }
 
 //! Test if operator[] returns the correct underlying type
@@ -97,6 +99,8 @@ void Scheme_object::test< 2 >() {
   ensure_equals( "Underlying element type", d.index_element(), 1 );
   inciter::Scheme a( inciter::ctr::SchemeType::ALECG );
   ensure_equals( "Underlying element type", a.index_element(), 2 );
+  inciter::Scheme f( inciter::ctr::SchemeType::FV );
+  ensure_equals( "Underlying element type", f.index_element(), 3 );
 }
 
 //! Test Pack/Unpack of Scheme holding CProxy_DiagCG
@@ -160,6 +164,27 @@ void Scheme_object::test< 5 >() {
 
   CProxy_Receiver::ckNew(
     inciter::Scheme( inciter::ctr::SchemeType::ALECG ), 2, "ALECG" );
+}
+
+//! Test Pack/Unpack of Scheme holding CProxy_FV
+//! \details Every Charm++ migration test, such as this one, consists of two
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
+//!   but the receive side is created manually, i.e., without the awareness of
+//!   the TUT library. Unfortunately thus, there is no good way to count up
+//!   these additional tests, and thus if a test such as this is added to the
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
+//!   unittest::TUTSuite::m_migrations.
+template<> template<>
+void Scheme_object::test< 6 >() {
+  // This test spawns a new Charm++ chare. The "1" at the end of the test name
+  // signals that this is only the first part of this test: the part up to
+  // firing up an asynchronous Charm++ chare. The second part creates a new test
+  // result, sending it back to the suite if successful. If that chare never
+  // executes, the suite will hang waiting for that chare to call back.
+  set_test_name( "Charm:migrate Scheme(FV) 1" );
+
+  CProxy_Receiver::ckNew(
+    inciter::Scheme( inciter::ctr::SchemeType::FV ), 3, "FV" );
 }
 
 } // tut::

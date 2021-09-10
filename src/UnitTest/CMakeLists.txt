@@ -70,6 +70,7 @@ if (ENABLE_INCITER)
                               "alecgCharmModule"
                               "distfctCharmModule"
                               "dgCharmModule"
+                              "fvCharmModule"
                               "discretizationCharmModule"
                               "transporterCharmModule")
 endif()

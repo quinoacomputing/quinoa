@@ -29,7 +29,8 @@ enum class SchemeType : uint8_t { DiagCG
                                 , P0P1 
                                 , DGP1 
                                 , DGP2
-                                , PDG };
+                                , PDG
+                                , FV };
 
 //! Pack/Unpack SchemeType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, SchemeType& e ) { PUP::pup( p, e ); }
@@ -46,6 +47,7 @@ class Scheme : public tk::Toggle< SchemeType > {
                                   , kw::dgp1
                                   , kw::dgp2
                                   , kw::pdg
+                                  , kw::fv
                                   >;
 
     //! \brief Options constructor
@@ -62,7 +64,8 @@ class Scheme : public tk::Toggle< SchemeType > {
           { SchemeType::P0P1, kw::p0p1::name() },
           { SchemeType::DGP1, kw::dgp1::name() },
           { SchemeType::DGP2, kw::dgp2::name() },
-          { SchemeType::PDG, kw::pdg::name() } },
+          { SchemeType::PDG, kw::pdg::name() },
+          { SchemeType::FV, kw::fv::name() } },
         //! keywords -> Enums
         { { kw::diagcg::string(), SchemeType::DiagCG },
           { kw::alecg::string(), SchemeType::ALECG },
@@ -70,7 +73,8 @@ class Scheme : public tk::Toggle< SchemeType > {
           { kw::p0p1::string(), SchemeType::P0P1 }, 
           { kw::dgp1::string(), SchemeType::DGP1 }, 
           { kw::dgp2::string(), SchemeType::DGP2 },
-          { kw::pdg::string(), SchemeType::PDG } } ) {}
+          { kw::pdg::string(), SchemeType::PDG },
+          { kw::fv::string(), SchemeType::FV } } ) {}
 
     //! Return scheme centering for SchemeType
     //! \param[in] type Scheme type
@@ -85,7 +89,8 @@ class Scheme : public tk::Toggle< SchemeType > {
                 type == SchemeType::P0P1 ||
                 type == SchemeType::DGP1 ||
                 type == SchemeType::DGP2 ||
-                type == SchemeType::PDG )
+                type == SchemeType::PDG ||
+                type == SchemeType::FV )
 
         return tk::Centering::ELEM;
 

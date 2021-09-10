@@ -142,7 +142,8 @@ PDEStack::selectedDG() const
   auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
   if (sch == ctr::SchemeType::DG ||
       sch == ctr::SchemeType::P0P1 || sch == ctr::SchemeType::DGP1 ||
-      sch == ctr::SchemeType::DGP2 || sch == ctr::SchemeType::PDG) {
+      sch == ctr::SchemeType::DGP2 || sch == ctr::SchemeType::PDG ||
+      sch == ctr::SchemeType::FV) {
 
     for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
       if (d == ctr::PDEType::TRANSPORT)

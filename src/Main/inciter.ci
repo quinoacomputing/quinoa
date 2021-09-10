@@ -20,6 +20,7 @@ mainmodule inciter {
   extern module diagcg;
   extern module alecg;
   extern module dg;
+  extern module fv;
   extern module charestatecollector;
   extern module lbswitch;
   #ifdef HAS_EXAM2M
