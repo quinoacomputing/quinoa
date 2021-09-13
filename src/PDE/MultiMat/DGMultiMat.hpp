@@ -296,7 +296,7 @@ class MultiMat {
 
           auto w = wgp[igp] * geoElem(e, 0, 0);
 
-          auto state = tk::eval_state( m_ncomp, 0, rdof, ndof, e, unk, B );
+          auto state = tk::eval_state( m_ncomp, 0, rdof, ndof, e, unk, B, {0, m_ncomp} );
 
           // bulk density at quadrature point
           tk::real rhob(0.0);
@@ -941,9 +941,9 @@ class MultiMat {
         B_l[0] = 1.0;
 
         // get conserved quantities
-        ugp = eval_state( m_ncomp, m_offset, rdof, ndof, el, U, B_l);
+        ugp = eval_state( m_ncomp, m_offset, rdof, ndof, el, U, B_l, {0, m_ncomp} );
         // get primitive quantities
-        pgp = eval_state( nprim(), m_offset, rdof, ndof, el, P, B_l);
+        pgp = eval_state( nprim(), m_offset, rdof, ndof, el, P, B_l, {0, nprim()} );
 
         // advection velocity
         u = pgp[velocityIdx(nmat, 0)];
@@ -974,9 +974,9 @@ class MultiMat {
           B_r[0] = 1.0;
 
           // get conserved quantities
-          ugp = eval_state( m_ncomp, m_offset, rdof, ndof, eR, U, B_r);
+          ugp = eval_state( m_ncomp, m_offset, rdof, ndof, eR, U, B_r, {0, m_ncomp});
           // get primitive quantities
-          pgp = eval_state( nprim(), m_offset, rdof, ndof, eR, P, B_r);
+          pgp = eval_state( nprim(), m_offset, rdof, ndof, eR, P, B_r, {0, nprim()});
 
           // advection velocity
           u = pgp[velocityIdx(nmat, 0)];
@@ -1145,8 +1145,8 @@ class MultiMat {
           chp[2]-cp[0][2]}};
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, m_offset, rdof, rdof, e, U, B);
-        auto php = eval_state(nprim(), m_offset, rdof, rdof, e, P, B);
+        auto uhp = eval_state(m_ncomp, m_offset, rdof, rdof, e, U, B, {0, m_ncomp});
+        auto php = eval_state(nprim(), m_offset, rdof, rdof, e, P, B, {0, nprim()});
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);

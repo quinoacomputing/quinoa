@@ -313,7 +313,8 @@ tk::eval_state ( ncomp_t ncomp,
                  const std::size_t ndof_el,
                  const std::size_t e,
                  const Fields& U,
-                 const std::vector< tk::real >& B )
+                 const std::vector< tk::real >& B,
+                 const std::vector< std::size_t >& VarRange )
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -323,6 +324,7 @@ tk::eval_state ( ncomp_t ncomp,
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] U Solution vector at recent time step
 //! \param[in] B Vector of basis functions
+//! \param[in] VarRange Range of the variables to be evaluated
 //! \return Vector of state variable for tetrahedron element
 // *****************************************************************************
 {
@@ -336,7 +338,7 @@ tk::eval_state ( ncomp_t ncomp,
   // Array of state variable for tetrahedron element
   std::vector< tk::real > state( ncomp, 0.0 );
 
-  for (ncomp_t c=0; c<ncomp; ++c)
+  for (ncomp_t c=VarRange[0]; c<VarRange[1]; ++c)
   {
     auto mark = c*ndof;
     state[c] = U( e, mark, offset );

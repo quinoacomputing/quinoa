@@ -159,7 +159,9 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   std::size_t ncomp,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& NodalExtrm );
+  const std::vector< std::vector<tk::real> >& NodalExtrm,
+  std::vector< tk::real >& phi,
+  const std::vector< std::size_t >& VarRange );
 
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
 std::vector< tk::real >
