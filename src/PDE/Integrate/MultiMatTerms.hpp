@@ -61,15 +61,19 @@ updateRhsNonCons( ncomp_t ncomp,
 //! Compute volume integrals of non-conservative terms for multi-material FV
 void
 nonConservativeIntFV(
+  ncomp_t system,
   std::size_t nmat,
   ncomp_t offset,
   const std::size_t rdof,
   const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
   const Fields& geoElem,
   const Fields& U,
   const Fields& P,
   const std::vector< std::vector< tk::real > >& riemannDeriv,
-  Fields& R );
+  Fields& R,
+  int intsharp );
 
 //! Compute volume integrals of pressure relaxation terms in multi-material DG
 void
@@ -104,16 +108,20 @@ updateRhsPre(
 
 //! Compute volume integrals of pressure relaxation terms in multi-material FV
 void
-pressureRelaxationIntFV( ncomp_t system,
+pressureRelaxationIntFV(
+  ncomp_t system,
   std::size_t nmat,
   ncomp_t offset,
   const std::size_t rdof,
   const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
   const Fields& geoElem,
   const Fields& U,
   const Fields& P,
   const tk::real ct,
-  Fields& R );
+  Fields& R,
+  int intsharp );
 
 //! Solve the reconstruct velocity used for volume fraction equation
 std::vector< std::vector< tk::real > >
