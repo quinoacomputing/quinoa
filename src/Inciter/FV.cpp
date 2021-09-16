@@ -18,7 +18,7 @@
 
 #include "FV.hpp"
 #include "Discretization.hpp"
-#include "DGPDE.hpp"
+#include "FVPDE.hpp"
 #include "DiagReducer.hpp"
 #include "DerivedData.hpp"
 #include "ElemDiagnostics.hpp"
@@ -37,7 +37,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
-extern std::vector< DGPDE > g_dgpde;
+extern std::vector< FVPDE > g_fvpde;
 
 //! Runge-Kutta coefficients
 static const std::array< std::array< tk::real, 3 >, 2 >
@@ -54,7 +54,6 @@ FV::FV( const CProxy_Discretization& disc,
         const std::map< int, std::vector< std::size_t > >& /* bnode */,
         const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
-  m_ndof_NodalExtrm( 1 ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_ncomEsup( 0 ),
@@ -62,8 +61,6 @@ FV::FV( const CProxy_Discretization& disc,
   m_ninitsol( 0 ),
   m_nlim( 0 ),
   m_nnod( 0 ),
-  m_nreco( 0 ),
-  m_nnodalExtrema( 0 ),
   m_inpoel( Disc()->Inpoel() ),
   m_coord( Disc()->Coord() ),
   m_fd( m_inpoel, bface, tk::remap(triinpoel,Disc()->Lid()) ),
@@ -73,18 +70,13 @@ FV::FV( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_p( m_u.nunk(),
        g_inputdeck.get< tag::discr, tag::rdof >()*
-         std::accumulate( begin(g_dgpde), end(g_dgpde), 0u,
-           [](std::size_t s, const DGPDE& eq){ return s + eq.nprim(); } ) ),
+         std::accumulate( begin(g_fvpde), end(g_fvpde), 0u,
+           [](std::size_t s, const FVPDE& eq){ return s + eq.nprim(); } ) ),
   m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), m_coord) ),
   m_geoElem( tk::genGeoElemTet( m_inpoel, m_coord ) ),
   m_lhs( m_u.nunk(),
-         g_inputdeck.get< tag::discr, tag::ndof >()*
          g_inputdeck.get< tag::component >().nprop() ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
-  m_uNodalExtrm(),
-  m_pNodalExtrm(),
-  m_uNodalExtrmc(),
-  m_pNodalExtrmc(),
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_nunk( m_u.nunk() ),
   m_npoin( m_coord[0].size() ),
@@ -98,12 +90,9 @@ FV::FV( const CProxy_Discretization& disc,
   m_recvGhost(),
   m_diag(),
   m_stage( 0 ),
-  m_ndof(),
-  m_numEqDof(),
   m_bid(),
   m_uc(),
   m_pc(),
-  m_ndofc(),
   m_initial( 1 ),
   m_expChBndFace(),
   m_infaces(),
@@ -125,22 +114,6 @@ FV::FV( const CProxy_Discretization& disc,
       g_inputdeck.get< tag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "FV", thisIndex, CkMyPe(), Disc()->It(),
                                         "FV" );
-
-  // assign number of dofs for each equation in all pde systems
-  for (const auto& eq : g_dgpde) {
-    eq.numEquationDofs(m_numEqDof);
-  }
-
-  // Allocate storage for the vector of nodal extrema
-  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  if(rdof > 4)  m_ndof_NodalExtrm = 4;
-  m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*g_inputdeck.get< tag::component >().nprop() ) );
-  m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()));
-
-  // Initialization for the buffer vector of nodal extrema
-  resizeNodalExtremac();
 
   usesAtSync = true;    // enable migration at AtSync
 
@@ -210,8 +183,6 @@ FV::resizeComm()
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
-    thisProxy[ thisIndex ].wait4reco();
-    thisProxy[ thisIndex ].wait4nodalExtrema();
     thisProxy[ thisIndex ].wait4lim();
     thisProxy[ thisIndex ].wait4nod();
   }
@@ -1157,22 +1128,8 @@ FV::adj()
   m_bid = tk::assignLid( c );
 
   // Size communication buffer that receives number of degrees of freedom
-  for (auto& n : m_ndofc) n.resize( m_bid.size() );
   for (auto& u : m_uc) u.resize( m_bid.size() );
   for (auto& p : m_pc) p.resize( m_bid.size() );
-
-  // Initialize number of degrees of freedom in mesh elements
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-  if( pref )
-  {
-    const auto ndofmax = g_inputdeck.get< tag::pref, tag::ndofmax >();
-    m_ndof.resize( m_nunk, ndofmax );
-  }
-  else
-  {
-    const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-    m_ndof.resize( m_nunk, ndof );
-  }
 
   // Ensure that we also have all the geometry and connectivity data
   // (including those of ghosts)
@@ -1241,7 +1198,7 @@ FV::setup()
   lhs();
 
   // Determine elements inside user-defined IC box
-  for (auto& eq : g_dgpde)
+  for (auto& eq : g_fvpde)
     eq.IcBoxElems( m_geoElem, m_fd.Esuel().size()/4, m_boxelems );
 
   // Compute volume of user-defined box IC
@@ -1251,7 +1208,7 @@ FV::setup()
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
   if (!hist_points.empty()) {
     std::vector< std::string > histnames;
-    for (const auto& eq : g_dgpde) {
+    for (const auto& eq : g_fvpde) {
       auto n = eq.histNames();
       histnames.insert( end(histnames), begin(n), end(n) );
     }
@@ -1272,11 +1229,11 @@ FV::box( tk::real v )
   d->Boxvol() = v;
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_dgpde)
+  for (const auto& eq : g_fvpde)
   {
     eq.initialize( m_lhs, m_inpoel, m_coord, m_boxelems, m_u, d->T(),
       m_fd.Esuel().size()/4 );
-    eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
+    eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
   }
 
   m_un = m_u;
@@ -1342,18 +1299,6 @@ FV::next()
 // Advance equations to next time step
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-
-  auto d = Disc();
-
-  if (pref && m_stage == 0 && d->T() > 0)
-    eval_ndof( m_nunk, m_coord, m_inpoel, m_fd, m_u,
-               g_inputdeck.get< tag::pref, tag::indicator >(),
-               g_inputdeck.get< tag::discr, tag::ndof >(),
-               g_inputdeck.get< tag::pref, tag::ndofmax >(),
-               g_inputdeck.get< tag::pref, tag::tolref >(),
-               m_ndof );
-
   // communicate solution ghost data (if any)
   if (m_sendGhost.empty())
     comsol_complete();
@@ -1362,17 +1307,15 @@ FV::next()
       std::vector< std::size_t > tetid( ghostdata.size() );
       std::vector< std::vector< tk::real > > u( ghostdata.size() ),
                                              prim( ghostdata.size() );
-      std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : ghostdata) {
         Assert( i < m_fd.Esuel().size()/4, "Sending solution ghost data" );
         tetid[j] = i;
         u[j] = m_u[i];
         prim[j] = m_p[i];
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
         ++j;
       }
-      thisProxy[ cid ].comsol( thisIndex, m_stage, tetid, u, prim, ndof );
+      thisProxy[ cid ].comsol( thisIndex, tetid, u, prim );
     }
 
   ownsol_complete();
@@ -1380,30 +1323,21 @@ FV::next()
 
 void
 FV::comsol( int fromch,
-            std::size_t fromstage,
             const std::vector< std::size_t >& tetid,
             const std::vector< std::vector< tk::real > >& u,
-            const std::vector< std::vector< tk::real > >& prim,
-            const std::vector< std::size_t >& ndof )
+            const std::vector< std::vector< tk::real > >& prim )
 // *****************************************************************************
 //  Receive chare-boundary solution ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
-//! \param[in] fromstage Sender chare time step stage
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Solution ghost data
 //! \param[in] prim Primitive variables in ghost cells
-//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
 //! \details This function receives contributions to the unlimited solution
 //!   from fellow chares.
 // *****************************************************************************
 {
   Assert( u.size() == tetid.size(), "Size mismatch in FV::comsol()" );
   Assert( prim.size() == tetid.size(), "Size mismatch in FV::comsol()" );
-
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-
-  if (pref && fromstage == 0)
-    Assert( ndof.size() == tetid.size(), "Size mismatch in FV::comsol()" );
 
   // Find local-to-ghost tet id map for sender chare
   const auto& n = tk::cref_find( m_ghost, fromch );
@@ -1415,10 +1349,6 @@ FV::comsol( int fromch,
     Assert( b < m_uc[0].size(), "Indexing out of bounds" );
     m_uc[0][b] = u[i];
     m_pc[0][b] = prim[i];
-    if (pref && fromstage == 0) {
-      Assert( b < m_ndofc[0].size(), "Indexing out of bounds" );
-      m_ndofc[0][b] = ndof[i];
-    }
   }
 
   // if we have received all solution ghost contributions from neighboring
@@ -1461,7 +1391,6 @@ FV::extractFieldOutput(
   m_outmesh.nodeCommMap = nodeCommMap;
 
   const auto& inpoel = std::get< 0 >( chunk );
-  auto nelem = inpoel.size() / 4;
 
   // Evaluate element solution on incoming mesh
   auto [ue,pe,un,pn] = evalSolution( inpoel, coord, addedTets );
@@ -1473,20 +1402,11 @@ FV::extractFieldOutput(
   // Collect field output from analytical solutions (if exist)
   auto geoElem = tk::genGeoElemTet( inpoel, coord );
   auto t = Disc()->T();
-  for (const auto& eq : g_dgpde) {
+  for (const auto& eq : g_fvpde) {
     analyticFieldOutput( eq, tk::Centering::ELEM, geoElem.extract(1,0),
       geoElem.extract(2,0), geoElem.extract(3,0), t, m_elemfields );
     analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1], coord[2],
       t, m_nodefields );
-  }
-
-  // Add adaptive indicator array to element-centered field output
-  if (g_inputdeck.get< tag::pref, tag::pref >()) {
-    std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
-    ndof.resize( nelem );
-    for (const auto& [child,parent] : addedTets)
-      ndof[child] = static_cast< tk::real >( m_ndof[parent] );
-    m_elemfields.push_back( ndof );
   }
 
   // Send node fields contributions to neighbor chares
@@ -1585,10 +1505,9 @@ FV::evalSolution(
       for (std::size_t j=0; j<4; ++j) {
         std::array< real, 3 >
            h{{ce[j][0]-ce[0][0], ce[j][1]-ce[0][1], ce[j][2]-ce[0][2] }};
-        auto Bn = tk::eval_basis( m_ndof[e],
-                                  dot(J[0],h), dot(J[1],h), dot(J[2],h) );
-        auto u = eval_state( uncomp, 0, rdof, m_ndof[e], e, m_u, Bn );
-        auto p = eval_state( pncomp, 0, rdof, m_ndof[e], e, m_p, Bn );
+        auto Bn = tk::eval_basis( 1, dot(J[0],h), dot(J[1],h), dot(J[2],h) );
+        auto u = eval_state( uncomp, 0, rdof, 1, e, m_u, Bn );
+        auto p = eval_state( pncomp, 0, rdof, 1, e, m_p, Bn );
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) un(inpoel[e4+j],i,0) += u[i];
         for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[e4+j],i,0) += p[i];
@@ -1627,10 +1546,9 @@ FV::evalSolution(
                  z[inpoel[c4+2]] + z[inpoel[c4+3]]) / 4.0;
       // Compute solution in child centroid
       std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
-      auto B = tk::eval_basis( m_ndof[parent],
-                               dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
-      auto u = eval_state( uncomp, 0, rdof, m_ndof[parent], parent, m_u, B );
-      auto p = eval_state( pncomp, 0, rdof, m_ndof[parent], parent, m_p, B );
+      auto B = tk::eval_basis( 1, dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
+      auto u = eval_state( uncomp, 0, rdof, 1, parent, m_u, B );
+      auto p = eval_state( pncomp, 0, rdof, 1, parent, m_p, B );
       // Assign cell center solution from parent to child
       for (std::size_t i=0; i<uncomp; ++i) ue(child,i*rdof,0) = u[i];
       for (std::size_t i=0; i<pncomp; ++i) pe(child,i*rdof,0) = p[i];
@@ -1644,10 +1562,9 @@ FV::evalSolution(
       for (std::size_t j=0; j<4; ++j) {
         std::array< real, 3 >
            hn{{cc[j][0]-cp[0][0], cc[j][1]-cp[0][1], cc[j][2]-cp[0][2] }};
-        auto Bn = tk::eval_basis( m_ndof[parent],
-                                  dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn) );
-        auto cnu = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_u, Bn);
-        auto cnp = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_p, Bn);
+        auto Bn = tk::eval_basis( 1, dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn) );
+        auto cnu = eval_state(uncomp, 0, rdof, 1, parent, m_u, Bn);
+        auto cnp = eval_state(uncomp, 0, rdof, 1, parent, m_p, Bn);
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) un(inpoel[c4+j],i,0) += cnu[i];
         for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[c4+j],i,0) += cnp[i];
@@ -1664,7 +1581,7 @@ FV::lhs()
 // Compute left-hand side of discrete transport equations
 // *****************************************************************************
 {
-  for (const auto& eq : g_dgpde) eq.lhs( m_geoElem, m_lhs );
+  for (const auto& eq : g_fvpde) eq.lhs( m_geoElem, m_lhs );
 
   if (!m_initial) stage();
 }
@@ -1675,7 +1592,6 @@ FV::reco()
 // Compute reconstructions
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
   // Combine own and communicated contributions of unreconstructed solution and
@@ -1689,422 +1605,16 @@ FV::reco()
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
       m_p(b.first,c,0) = m_pc[0][b.second][c];
     }
-    if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[0][ b.second ];
-    }
   }
-
-  if (pref && m_stage==0) propagate_ndof();
 
   if (rdof > 1) {
-    auto d = Disc();
-
     // Reconstruct second-order solution and primitive quantities
-    for (const auto& eq : g_dgpde)
-      eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel,
-                      m_coord, m_u, m_p );
+    for (const auto& eq : g_fvpde)
+      eq.reconstruct( m_geoElem, m_fd, m_esup, m_inpoel, m_coord, m_u, m_p );
   }
 
-  // Send reconstructed solution to neighboring chares
-  if (m_sendGhost.empty())
-    comreco_complete();
-  else
-    for(const auto& [cid, ghostdata] : m_sendGhost) {
-      std::vector< std::size_t > tetid( ghostdata.size() );
-      std::vector< std::vector< tk::real > > u( ghostdata.size() ),
-                                             prim( ghostdata.size() );
-      std::vector< std::size_t > ndof;
-      std::size_t j = 0;
-      for(const auto& i : ghostdata) {
-        Assert( i < m_fd.Esuel().size()/4, "Sending reconstructed ghost "
-          "data" );
-        tetid[j] = i;
-        u[j] = m_u[i];
-        prim[j] = m_p[i];
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
-        ++j;
-      }
-      thisProxy[ cid ].comreco( thisIndex, tetid, u, prim, ndof );
-    }
-
-  ownreco_complete();
-}
-
-void
-FV::comreco( int fromch,
-             const std::vector< std::size_t >& tetid,
-             const std::vector< std::vector< tk::real > >& u,
-             const std::vector< std::vector< tk::real > >& prim,
-             const std::vector< std::size_t >& ndof )
-// *****************************************************************************
-//  Receive chare-boundary reconstructed ghost data from neighboring chares
-//! \param[in] fromch Sender chare id
-//! \param[in] tetid Ghost tet ids we receive solution data for
-//! \param[in] u Reconstructed high-order solution
-//! \param[in] prim Limited high-order primitive quantities
-//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
-//! \details This function receives contributions to the reconstructed solution
-//!   from fellow chares.
-// *****************************************************************************
-{
-  Assert( u.size() == tetid.size(), "Size mismatch in FV::comreco()" );
-  Assert( prim.size() == tetid.size(), "Size mismatch in FV::comreco()" );
-
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-
-  if (pref && m_stage == 0)
-    Assert( ndof.size() == tetid.size(), "Size mismatch in FV::comreco()" );
-
-  // Find local-to-ghost tet id map for sender chare
-  const auto& n = tk::cref_find( m_ghost, fromch );
-
-  for (std::size_t i=0; i<tetid.size(); ++i) {
-    auto j = tk::cref_find( n, tetid[i] );
-    Assert( j >= m_fd.Esuel().size()/4, "Receiving solution non-ghost data" );
-    auto b = tk::cref_find( m_bid, j );
-    Assert( b < m_uc[1].size(), "Indexing out of bounds" );
-    Assert( b < m_pc[1].size(), "Indexing out of bounds" );
-    m_uc[1][b] = u[i];
-    m_pc[1][b] = prim[i];
-    if (pref && m_stage == 0) {
-      Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
-      m_ndofc[1][b] = ndof[i];
-    }
-  }
-
-  // if we have received all solution ghost contributions from neighboring
-  // chares (chares we communicate along chare-boundary faces with), and
-  // contributed our solution to these neighbors, proceed to limiting
-  if (++m_nreco == m_sendGhost.size()) {
-    m_nreco = 0;
-    comreco_complete();
-  }
-}
-
-void
-FV::nodalExtrema()
-// *****************************************************************************
-// Compute nodal extrema at chare-boundary nodes. Extrema at internal nodes
-// are calculated in limiter function.
-// *****************************************************************************
-{
-  auto d = Disc();
-  auto gid = d->Gid();
-  auto bid = d->Bid();
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-  const auto ncomp = m_u.nprop() / rdof;
-  const auto nprim = m_p.nprop() / rdof;
-
-  // Combine own and communicated contributions of unlimited solution, and
-  // if a p-adaptive algorithm is used, degrees of freedom in cells
-  for (const auto& [boundary, localtet] : m_bid) {
-    Assert( m_uc[1][localtet].size() == m_u.nprop(), "ncomp size mismatch" );
-    Assert( m_pc[1][localtet].size() == m_p.nprop(), "ncomp size mismatch" );
-    for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(boundary,c,0) = m_uc[1][localtet][c];
-    }
-    for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(boundary,c,0) = m_pc[1][localtet][c];
-    }
-    if (pref && m_stage == 0) {
-      m_ndof[ boundary ] = m_ndofc[1][ localtet ];
-    }
-  }
-
-  // Initialize nodal extrema vector
-  auto large = std::numeric_limits< tk::real >::max();
-  for(std::size_t i = 0; i<bid.size(); i++)
-  {
-    for (std::size_t c=0; c<ncomp; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        m_uNodalExtrm[i][max_mark] = -large;
-        m_uNodalExtrm[i][min_mark] =  large;
-      }
-    }
-    for (std::size_t c=0; c<nprim; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        m_pNodalExtrm[i][max_mark] = -large;
-        m_pNodalExtrm[i][min_mark] =  large;
-      }
-    }
-  }
-
-  // Evaluate the max/min value for the chare-boundary nodes
-  if(rdof > 1) {
-      evalNodalExtrm(ncomp, nprim, m_ndof_NodalExtrm, d->bndel(), m_inpoel,
-        m_coord, gid, bid, m_u, m_p, m_uNodalExtrm, m_pNodalExtrm);
-  }
-
-  // Communicate extrema at nodes to other chares on chare-boundary
-  if (d->NodeCommMap().empty())        // in serial we are done
-    comnodalExtrema_complete();
-  else  // send nodal extrema to chare-boundary nodes to fellow chares
-  {
-    for (const auto& [c,n] : d->NodeCommMap()) {
-      std::vector< std::vector< tk::real > > g1( n.size() ), g2( n.size() );
-      std::size_t j = 0;
-      for (auto i : n)
-      {
-        auto p = tk::cref_find(d->Bid(),i);
-        g1[ j   ] = m_uNodalExtrm[ p ];
-        g2[ j++ ] = m_pNodalExtrm[ p ];
-      }
-      thisProxy[c].comnodalExtrema( std::vector<std::size_t>(begin(n),end(n)),
-        g1, g2 );
-    }
-  }
-  ownnodalExtrema_complete();
-}
-
-void
-FV::comnodalExtrema( const std::vector< std::size_t >& gid,
-                     const std::vector< std::vector< tk::real > >& G1,
-                     const std::vector< std::vector< tk::real > >& G2 )
-// *****************************************************************************
-//  Receive contributions to nodal extrema on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive grad contributions
-//! \param[in] G1 Partial contributions of extrema for conservative variables to
-//!   chare-boundary nodes
-//! \param[in] G2 Partial contributions of extrema for primitive variables to
-//!   chare-boundary nodes
-//! \details This function receives contributions to m_uNodalExtrm/m_pNodalExtrm
-//!   , which stores nodal extrems at mesh chare-boundary nodes. While
-//!   m_uNodalExtrm/m_pNodalExtrm stores own contributions, m_uNodalExtrmc
-//!   /m_pNodalExtrmc collects the neighbor chare contributions during
-//!   communication.
-// *****************************************************************************
-{
-  Assert( G1.size() == gid.size(), "Size mismatch" );
-  Assert( G2.size() == gid.size(), "Size mismatch" );
-
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ncomp = m_u.nprop() / rdof;
-  const auto nprim = m_p.nprop() / rdof;
-
-  for (std::size_t i=0; i<gid.size(); ++i)
-  {
-    auto& u = m_uNodalExtrmc[gid[i]];
-    auto& p = m_pNodalExtrmc[gid[i]];
-    for (std::size_t c=0; c<ncomp; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        u[max_mark] = std::max( G1[i][max_mark], u[max_mark] );
-        u[min_mark] = std::min( G1[i][min_mark], u[min_mark] );
-      }
-    }
-    for (std::size_t c=0; c<nprim; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        p[max_mark] = std::max( G2[i][max_mark], p[max_mark] );
-        p[min_mark] = std::min( G2[i][min_mark], p[min_mark] );
-      }
-    }
-  }
-
-  if (++m_nnodalExtrema == Disc()->NodeCommMap().size())
-  {
-    m_nnodalExtrema = 0;
-    comnodalExtrema_complete();
-  }
-}
-
-void FV::resizeNodalExtremac()
-// *****************************************************************************
-//  Resize the buffer vector of nodal extrema
-// *****************************************************************************
-{
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ncomp = m_u.nprop() / rdof;
-  const auto nprim = m_p.nprop() / rdof;
-
-  auto large = std::numeric_limits< tk::real >::max();
-  for (const auto& [c,n] : Disc()->NodeCommMap())
-  {
-    for (auto i : n) {
-      auto& u = m_uNodalExtrmc[i];
-      auto& p = m_pNodalExtrmc[i];
-      u.resize( 2*m_ndof_NodalExtrm*ncomp, large );
-      p.resize( 2*m_ndof_NodalExtrm*nprim, large );
-
-      // Initialize the minimum nodal extrema
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        for(std::size_t k = 0; k < ncomp; k++)
-          u[2*k*m_ndof_NodalExtrm+2*idof] = -large;
-        for(std::size_t k = 0; k < nprim; k++)
-          p[2*k*m_ndof_NodalExtrm+2*idof] = -large;
-      }
-    }
-  }
-}
-
-void FV::evalNodalExtrm( const std::size_t ncomp,
-                         const std::size_t nprim,
-                         const std::size_t ndof_NodalExtrm,
-                         const std::vector< std::size_t >& bndel,
-                         const std::vector< std::size_t >& inpoel,
-                         const tk::UnsMesh::Coords& coord,
-                         const std::vector< std::size_t >& gid,
-                         const std::unordered_map< std::size_t, std::size_t >&
-                           bid,
-                         const tk::Fields& U,
-                         const tk::Fields& P,
-                         std::vector< std::vector<tk::real> >& uNodalExtrm,
-                         std::vector< std::vector<tk::real> >& pNodalExtrm )
-// *****************************************************************************
-//  Compute the nodal extrema for chare-boundary nodes
-//! \param[in] ncomp Number of conservative variables
-//! \param[in] nprim Number of primitive variables
-//! \param[in] ndof_NodalExtrm Degree of freedom for nodal extrema
-//! \param[in] bndel List of elements contributing to chare-boundary nodes
-//! \param[in] inpoel Element-node connectivity for element e
-//! \param[in] coord Array of nodal coordinates
-//! \param[in] gid Local->global node id map
-//! \param[in] bid Local chare-boundary node ids (value) associated to
-//!   global node ids (key)
-//! \param[in] U Vector of conservative variables
-//! \param[in] P Vector of primitive variables
-//! \param[in,out] uNodalExtrm Chare-boundary nodal extrema for conservative
-//!   variables
-//! \param[in,out] pNodalExtrm Chare-boundary nodal extrema for primitive
-//!   variables
-// *****************************************************************************
-{
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-
-  for (auto e : bndel)
-  {
-    // access node IDs
-    const std::vector<std::size_t> N
-      { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
-
-    // Loop over nodes of element e
-    for(std::size_t ip=0; ip<4; ++ip)
-    {
-      auto i = bid.find( gid[N[ip]] );
-      if (i != end(bid))      // If ip is the chare boundary point
-      {
-        // Find the nodal extrema of conservative variables
-        for (std::size_t c=0; c<ncomp; ++c)
-        {
-          auto max_mark = 2*c*m_ndof_NodalExtrm;
-          auto min_mark = max_mark + 1;
-          uNodalExtrm[i->second][max_mark] =
-            std::max(uNodalExtrm[i->second][max_mark], U(e,c*rdof,0));
-          uNodalExtrm[i->second][min_mark] =
-            std::min(uNodalExtrm[i->second][min_mark], U(e,c*rdof,0));
-        }
-        // Find the nodal extrema of primitive variables
-        for (std::size_t c=0; c<nprim; ++c)
-        {
-          auto max_mark = 2*c*m_ndof_NodalExtrm;
-          auto min_mark = max_mark + 1;
-          pNodalExtrm[i->second][max_mark] =
-            std::max(pNodalExtrm[i->second][max_mark], P(e,c*rdof,0));
-          pNodalExtrm[i->second][min_mark] =
-            std::min(pNodalExtrm[i->second][min_mark], P(e,c*rdof,0));
-        }
-
-        // If FV(P2) is applied, find the nodal extrema of the gradients of
-        // conservative/primitive variables in the physical domain
-        if(ndof_NodalExtrm > 1)
-        {
-          // Vector used to store the first order derivatives for both
-          // conservative and primitive variables
-          std::vector< std::vector< tk::real > >
-            gradc(ncomp, std::vector<tk::real>(3, 0.0));
-          std::vector< std::vector< tk::real > >
-            gradp(ncomp, std::vector<tk::real>(3, 0.0));
-
-          const auto& cx = coord[0];
-          const auto& cy = coord[1];
-          const auto& cz = coord[2];
-
-          std::array< std::array< tk::real, 3>, 4 > coordel {{
-            {{ cx[ N[0] ], cy[ N[0] ], cz[ N[0] ] }},
-            {{ cx[ N[1] ], cy[ N[1] ], cz[ N[1] ] }},
-            {{ cx[ N[2] ], cy[ N[2] ], cz[ N[2] ] }},
-            {{ cx[ N[3] ], cy[ N[3] ], cz[ N[3] ] }}
-          }};
-
-          auto jacInv = tk::inverseJacobian( coordel[0], coordel[1],
-            coordel[2], coordel[3] );
-
-          // Compute the derivatives of basis functions
-          auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
-
-          std::array< std::vector< tk::real >, 3 > center;
-          center[0].resize(1, 0.25);
-          center[1].resize(1, 0.25);
-          center[2].resize(1, 0.25);
-          tk::eval_dBdx_p2(0, center, jacInv, dBdx);
-
-          // Evaluate the first order derivative in physical domain
-          for(std::size_t icomp = 0; icomp < ncomp; icomp++)
-          {
-            auto mark = icomp * rdof;
-            for(std::size_t idir = 0; idir < 3; idir++)
-            {
-              gradc[icomp][idir] = 0;
-              for(std::size_t idof = 1; idof < rdof; idof++)
-                gradc[icomp][idir] += U(e, mark+idof, 0) * dBdx[idir][idof];
-            }
-          }
-          for(std::size_t icomp = 0; icomp < nprim; icomp++)
-          {
-            auto mark = icomp * rdof;
-            for(std::size_t idir = 0; idir < 3; idir++)
-            {
-              gradp[icomp][idir] = 0;
-              for(std::size_t idof = 1; idof < rdof; idof++)
-                gradp[icomp][idir] += P(e, mark+idof, 0) * dBdx[idir][idof];
-            }
-          }
-
-          // Store the extrema for the gradients
-          for (std::size_t c=0; c<ncomp; ++c)
-          {
-            for (std::size_t idof = 1; idof < ndof_NodalExtrm; idof++)
-            {
-              auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-              auto min_mark = max_mark + 1;
-              uNodalExtrm[i->second][max_mark] =
-                std::max(uNodalExtrm[i->second][max_mark], gradc[c][idof-1]);
-              uNodalExtrm[i->second][min_mark] =
-                std::min(uNodalExtrm[i->second][min_mark], gradc[c][idof-1]);
-            }
-          }
-          for (std::size_t c=0; c<nprim; ++c)
-          {
-            for (std::size_t idof = 1; idof < ndof_NodalExtrm; idof++)
-            {
-              auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-              auto min_mark = max_mark + 1;
-              pNodalExtrm[i->second][max_mark] =
-                std::max(pNodalExtrm[i->second][max_mark], gradp[c][idof-1]);
-              pNodalExtrm[i->second][min_mark] =
-                std::min(pNodalExtrm[i->second][min_mark], gradp[c][idof-1]);
-            }
-          }
-        }
-      }
-    }
-  }
+  // start limiting
+  lim();
 }
 
 void
@@ -2113,53 +1623,11 @@ FV::lim()
 // Compute limiter function
 // *****************************************************************************
 {
-  auto d = Disc();
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ncomp = m_u.nprop() / rdof;
-  const auto nprim = m_p.nprop() / rdof;
-
-  // Combine own and communicated contributions to nodal extrema
-  for (const auto& [gid,g] : m_uNodalExtrmc) {
-    auto bid = tk::cref_find( d->Bid(), gid );
-    for (ncomp_t c=0; c<ncomp; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        m_uNodalExtrm[bid][max_mark] =
-          std::max(g[max_mark], m_uNodalExtrm[bid][max_mark]);
-        m_uNodalExtrm[bid][min_mark] =
-          std::min(g[min_mark], m_uNodalExtrm[bid][min_mark]);
-      }
-    }
-  }
-  for (const auto& [gid,g] : m_pNodalExtrmc) {
-    auto bid = tk::cref_find( d->Bid(), gid );
-    for (ncomp_t c=0; c<nprim; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        m_pNodalExtrm[bid][max_mark] =
-          std::max(g[max_mark], m_pNodalExtrm[bid][max_mark]);
-        m_pNodalExtrm[bid][min_mark] =
-          std::min(g[min_mark], m_pNodalExtrm[bid][min_mark]);
-      }
-    }
-  }
-
-  // clear gradients receive buffer
-  tk::destroy(m_uNodalExtrmc);
-  tk::destroy(m_pNodalExtrmc);
 
   if (rdof > 1)
-    for (const auto& eq : g_dgpde)
-      eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel, m_coord,
-                m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm, m_pNodalExtrm, m_u,
-                m_p );
+    for (const auto& eq : g_fvpde)
+      eq.limit( m_geoElem, m_fd, m_esup, m_inpoel, m_coord, m_u, m_p );
 
   // Send limited solution to neighboring chares
   if (m_sendGhost.empty())
@@ -2169,77 +1637,37 @@ FV::lim()
       std::vector< std::size_t > tetid( ghostdata.size() );
       std::vector< std::vector< tk::real > > u( ghostdata.size() ),
                                              prim( ghostdata.size() );
-      std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : ghostdata) {
         Assert( i < m_fd.Esuel().size()/4, "Sending limiter ghost data" );
         tetid[j] = i;
         u[j] = m_u[i];
         prim[j] = m_p[i];
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
         ++j;
       }
-      thisProxy[ cid ].comlim( thisIndex, tetid, u, prim, ndof );
+      thisProxy[ cid ].comlim( thisIndex, tetid, u, prim );
     }
 
   ownlim_complete();
 }
 
 void
-FV::propagate_ndof()
-// *****************************************************************************
-//  p-refine all elements that are adjacent to p-refined elements
-//! \details This function p-refines all the neighbors of an element that has
-//!   been p-refined as a result of an error indicator.
-// *****************************************************************************
-{
-  const auto& esuf = m_fd.Esuf();
-
-  // Copy number of degrees of freedom for each cell
-  auto ndof = m_ndof;
-
-  // p-refine all neighboring elements of elements that have been p-refined as a
-  // result of error indicators
-  for( auto f=m_fd.Nbfac(); f<esuf.size()/2; ++f )
-  {
-    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
-
-    if (m_ndof[el] > m_ndof[er])
-      ndof[er] = m_ndof[el];
-
-    if (m_ndof[el] < m_ndof[er])
-      ndof[el] = m_ndof[er];
-  }
-
-  // Update number of degrees of freedom for each cell
-  m_ndof = ndof;
-}
-
-void
 FV::comlim( int fromch,
             const std::vector< std::size_t >& tetid,
             const std::vector< std::vector< tk::real > >& u,
-            const std::vector< std::vector< tk::real > >& prim,
-            const std::vector< std::size_t >& ndof )
+            const std::vector< std::vector< tk::real > >& prim )
 // *****************************************************************************
 //  Receive chare-boundary limiter ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Limited high-order solution
 //! \param[in] prim Limited high-order primitive quantities
-//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
 //! \details This function receives contributions to the limited solution from
 //!   fellow chares.
 // *****************************************************************************
 {
   Assert( u.size() == tetid.size(), "Size mismatch in FV::comlim()" );
   Assert( prim.size() == tetid.size(), "Size mismatch in FV::comlim()" );
-
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-
-  if (pref && m_stage == 0)
-    Assert( ndof.size() == tetid.size(), "Size mismatch in FV::comlim()" );
 
   // Find local-to-ghost tet id map for sender chare
   const auto& n = tk::cref_find( m_ghost, fromch );
@@ -2252,10 +1680,6 @@ FV::comlim( int fromch,
     Assert( b < m_pc[2].size(), "Indexing out of bounds" );
     m_uc[2][b] = u[i];
     m_pc[2][b] = prim[i];
-    if (pref && m_stage == 0) {
-      Assert( b < m_ndofc[2].size(), "Indexing out of bounds" );
-      m_ndofc[2][b] = ndof[i];
-    }
   }
 
   // if we have received all solution ghost contributions from neighboring
@@ -2273,9 +1697,7 @@ FV::dt()
 // Compute time step size
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   auto d = Disc();
-
 
   // Combine own and communicated contributions of limited solution and degrees
   // of freedom in cells (if p-adaptive)
@@ -2287,9 +1709,6 @@ FV::dt()
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
       m_p(b.first,c,0) = m_pc[2][b.second][c];
-    }
-    if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[2][ b.second ];
     }
   }
 
@@ -2309,10 +1728,9 @@ FV::dt()
     } else {      // compute dt based on CFL
 
       // find the minimum dt across all PDEs integrated
-      for (const auto& eq : g_dgpde) {
+      for (const auto& eq : g_fvpde) {
         auto eqdt =
-          eq.dt( m_coord, m_inpoel, m_fd, m_geoFace, m_geoElem, m_ndof,
-            m_u, m_p, m_fd.Esuel().size()/4 );
+          eq.dt( m_fd, m_geoFace, m_geoElem, m_u, m_p, m_fd.Esuel().size()/4 );
         if (eqdt < mindt) mindt = eqdt;
       }
 
@@ -2323,9 +1741,6 @@ FV::dt()
   {
     mindt = d->Dt();
   }
-
-  // Resize the buffer vector of nodal extrema
-  resizeNodalExtremac();
 
   // Contribute to minimum dt across all chares then advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
@@ -2341,88 +1756,45 @@ FV::solve( tk::real newdt )
 {
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
-  thisProxy[ thisIndex ].wait4reco();
-  thisProxy[ thisIndex ].wait4nodalExtrema();
   thisProxy[ thisIndex ].wait4lim();
   thisProxy[ thisIndex ].wait4nod();
 
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   const auto neq = m_u.nprop()/rdof;
 
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-  if (pref && m_stage == 0)
-  {
-    // When the element are coarsened, high order terms should be zero
-    for(std::size_t e = 0; e < m_nunk; e++)
-    {
-      const auto ncomp= m_u.nprop()/rdof;
-      if(m_ndof[e] == 1)
-      {
-        for (std::size_t c=0; c<ncomp; ++c)
-        {
-          auto mark = c*rdof;
-          m_u(e, mark+1, 0) = 0.0;
-          m_u(e, mark+2, 0) = 0.0;
-          m_u(e, mark+3, 0) = 0.0;
-        }
-      } else if(m_ndof[e] == 4)
-      {
-        for (std::size_t c=0; c<ncomp; ++c)
-        {
-          auto mark = c*ndof;
-          m_u(e, mark+4, 0) = 0.0;
-          m_u(e, mark+5, 0) = 0.0;
-          m_u(e, mark+6, 0) = 0.0;
-          m_u(e, mark+7, 0) = 0.0;
-          m_u(e, mark+8, 0) = 0.0;
-          m_u(e, mark+9, 0) = 0.0;
-        }
-      }
-    }
-  }
-
   // Update Un
   if (m_stage == 0) m_un = m_u;
 
-  for (const auto& eq : g_dgpde)
-    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_inpoel, m_boxelems, m_coord,
-            m_u, m_p, m_ndof, m_rhs );
+  for (const auto& eq : g_fvpde)
+    eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_inpoel, m_coord, m_u, m_p,
+      m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
-  for(std::size_t e=0; e<m_nunk; ++e)
-    for(std::size_t c=0; c<neq; ++c)
+  for (std::size_t e=0; e<m_nunk; ++e)
+    for (std::size_t c=0; c<neq; ++c)
     {
-      for (std::size_t k=0; k<m_numEqDof[c]; ++k)
-      {
-        auto rmark = c*rdof+k;
-        auto mark = c*ndof+k;
-        m_u(e, rmark, 0) =  rkcoef[0][m_stage] * m_un(e, rmark, 0)
-          + rkcoef[1][m_stage] * ( m_u(e, rmark, 0)
-            + d->Dt() * m_rhs(e, mark, 0)/m_lhs(e, mark, 0) );
-        if(fabs(m_u(e, rmark, 0)) < 1e-16)
-          m_u(e, rmark, 0) = 0;
-      }
-      // zero out unused/reconstructed dofs of equations using reduced dofs
-      // (see DGMultiMat::numEquationDofs())
-      if (m_numEqDof[c] < rdof) {
-        for (std::size_t k=m_numEqDof[c]; k<rdof; ++k)
+      auto rmark = c*rdof;
+      m_u(e, rmark, 0) =  rkcoef[0][m_stage] * m_un(e, rmark, 0)
+        + rkcoef[1][m_stage] * ( m_u(e, rmark, 0)
+          + d->Dt() * m_rhs(e, c, 0)/m_lhs(e, c, 0) );
+      // zero out reconstructed dofs of equations using reduced dofs
+      if (rdof > 1) {
+        for (std::size_t k=1; k<rdof; ++k)
         {
-          auto rmark = c*rdof+k;
+          rmark = c*rdof+k;
           m_u(e, rmark, 0) = 0.0;
         }
       }
     }
 
   // Update primitives based on the evolved solution
-  for (const auto& eq : g_dgpde)
+  for (const auto& eq : g_fvpde)
   {
-    eq.updateInterfaceCells( m_u, m_fd.Esuel().size()/4, m_ndof );
-    eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
+    eq.updatePrimitives( m_u, m_p, m_fd.Esuel().size()/4 );
     eq.cleanTraceMaterial( m_geoElem, m_u, m_p, m_fd.Esuel().size()/4 );
   }
 
@@ -2433,15 +1805,15 @@ FV::solve( tk::real newdt )
 
   } else {
 
-    // Compute diagnostics, e.g., residuals
-    auto diag_computed = m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4,
-                                         m_geoElem, m_ndof, m_u );
+    //// Compute diagnostics, e.g., residuals
+    //auto diag_computed = m_diag.compute( *d, m_u.nunk()-m_fd.Esuel().size()/4,
+    //                                     m_geoElem, m_ndof, m_u );
 
     // Increase number of iterations and physical time
     d->next();
 
     // Continue to mesh refinement (if configured)
-    if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
+    /*if (!diag_computed)*/ refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
 
   }
 }
@@ -2522,13 +1894,6 @@ FV::resizePostAMR(
   m_un.resize( nelem );
   m_lhs.resize( nelem );
   m_rhs.resize( nelem );
-  m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*g_inputdeck.get< tag::component >().nprop() ) );
-  m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()));
-
-  // Resize the buffer vector of nodal extrema
-  resizeNodalExtremac();
 
   m_fd = FaceData( m_inpoel, bface, tk::remap(triinpoel,d->Lid()) );
 
@@ -2602,7 +1967,7 @@ FV::writeFields( CkCallback c )
   // Output time history if we hit its output frequency
   if (d->histiter() or d->histtime()) {
     std::vector< std::vector< tk::real > > hist;
-    for (const auto& eq : g_dgpde) {
+    for (const auto& eq : g_fvpde) {
       auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u, m_p );
       hist.insert( end(hist), begin(h), end(h) );
     }
@@ -2650,13 +2015,10 @@ FV::writeFields( CkCallback c )
   auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
 
   // Collect field output names for analytical solutions
-  for (const auto& eq : g_dgpde) {
+  for (const auto& eq : g_fvpde) {
     analyticFieldNames( eq, tk::Centering::ELEM, elemfieldnames );
     analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
   }
-
-  if (g_inputdeck.get< tag::pref, tag::pref >())
-    elemfieldnames.push_back( "NDOF" );
 
   Assert( elemfieldnames.size() == m_elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == m_nodefields.size(), "Size mismatch" );

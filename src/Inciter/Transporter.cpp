@@ -52,6 +52,7 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
+extern std::vector< FVPDE > g_fvpde;
 
 }
 
@@ -195,6 +196,8 @@ Transporter::info( const InciterPrint& print )
                 stack.cgfactory(), stack.cgntypes() );
   print.eqlist( "Registered PDEs using discontinuous Galerkin (DG) methods",
                 stack.dgfactory(), stack.dgntypes() );
+  print.eqlist( "Registered PDEs using finite volume (DG) methods",
+                stack.fvfactory(), stack.fvntypes() );
   print.endpart();
 
   // Print out information on problem
@@ -1068,9 +1071,10 @@ Transporter::diagHeader()
     for (const auto& eq : g_cgpde) varnames( eq, var );
   else if (scheme == ctr::SchemeType::DG ||
            scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
-           scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG ||
-           scheme == ctr::SchemeType::FV)
+           scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
     for (const auto& eq : g_dgpde) varnames( eq, var );
+  else if (scheme == ctr::SchemeType::FV)
+    for (const auto& eq : g_fvpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
 
   const tk::ctr::Error opt;

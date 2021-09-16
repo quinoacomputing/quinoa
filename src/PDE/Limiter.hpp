@@ -62,9 +62,6 @@ VertexBasedTransport_P1(
   std::size_t offset,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
   tk::Fields& U );
 
 //! Kuzmin's vertex-based limiter for single-material DGP1
@@ -77,9 +74,6 @@ VertexBasedCompflow_P1(
   std::size_t offset,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
   tk::Fields& U );
 
 //! Kuzmin's vertex-based limiter for single-material DGP2
@@ -108,10 +102,20 @@ VertexBasedMultiMat_P1(
   std::size_t offset,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
-  const std::vector< std::vector<tk::real> >& pNodalExtrm,
+  tk::Fields& U,
+  tk::Fields& P,
+  std::size_t nmat );
+
+//! Kuzmin's vertex-based limiter for multi-material FV
+void
+VertexBasedMultiMat_FV(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  const tk::Fields& geoElem,
+  const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat );
@@ -153,10 +157,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   std::size_t rdof,
   std::size_t ,
   std::size_t offset,
-  std::size_t ncomp,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& NodalExtrm );
+  std::size_t ncomp );
 
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
 std::vector< tk::real >
@@ -200,6 +201,18 @@ bool
 interfaceIndicator( std::size_t nmat,
   const std::vector< tk::real >& al,
   std::vector< std::size_t >& matInt );
+
+//! Time step restriction for multi material cell-centered schemes
+tk::real
+timeStepSizeMultiMat(
+  const std::vector< int >& esuf,
+  const tk::Fields& geoFace,
+  const tk::Fields& geoElem,
+  const std::size_t nelem,
+  std::size_t offset,
+  std::size_t nmat,
+  const tk::Fields& U,
+  const tk::Fields& P );
 
 } // inciter::
 

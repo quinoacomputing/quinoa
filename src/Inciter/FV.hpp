@@ -130,47 +130,13 @@ class FV : public CBase_FV {
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
-                 const std::vector< std::vector< tk::real > >& prim,
-                 const std::vector< std::size_t >& ndof );
-
-    //! Receive chare-boundary reconstructed data from neighboring chares
-    void comreco( int fromch,
-                  const std::vector< std::size_t >& tetid,
-                  const std::vector< std::vector< tk::real > >& u,
-                  const std::vector< std::vector< tk::real > >& prim,
-                  const std::vector< std::size_t >& ndof );
+                 const std::vector< std::vector< tk::real > >& prim );
 
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
-                 std::size_t fromstage,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
-                 const std::vector< std::vector< tk::real > >& prim,
-                 const std::vector< std::size_t >& ndof );
-
-    //! Receive contributions to nodal gradients on chare-boundaries
-    void
-    comnodalExtrema( const std::vector< std::size_t >& gid,
-                     const std::vector< std::vector< tk::real > >& G1,
-                     const std::vector< std::vector< tk::real > >& G2 );
-
-    //! Initialize the vector of nodal extrema
-    void resizeNodalExtremac();
-
-    //! Compute the nodal extrema for chare-boundary nodes
-    void evalNodalExtrm( const std::size_t ncomp,
-                         const std::size_t nprim,
-                         const std::size_t ndof_NodalExtrm,
-                         const std::vector< std::size_t >& bndel,
-                         const std::vector< std::size_t >& inpoel,
-                         const tk::UnsMesh::Coords& coord,
-                         const std::vector< std::size_t >& gid,
-                         const std::unordered_map< std::size_t, std::size_t >&
-                           bid,
-                         const tk::Fields& U,
-                         const tk::Fields& P,
-                         std::vector< std::vector<tk::real> >& uNodalExtrm,
-                         std::vector< std::vector<tk::real> >& pNodalExtrm );
+                 const std::vector< std::vector< tk::real > >& prim );
 
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
@@ -229,7 +195,6 @@ class FV : public CBase_FV {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_disc;
-      p | m_ndof_NodalExtrm;
       p | m_ncomfac;
       p | m_nadj;
       p | m_ncomEsup;
@@ -237,8 +202,6 @@ class FV : public CBase_FV {
       p | m_ninitsol;
       p | m_nlim;
       p | m_nnod;
-      p | m_nreco;
-      p | m_nnodalExtrema;
       p | m_inpoel;
       p | m_coord;
       p | m_fd;
@@ -248,10 +211,6 @@ class FV : public CBase_FV {
       p | m_geoFace;
       p | m_geoElem;
       p | m_lhs;
-      p | m_uNodalExtrm;
-      p | m_pNodalExtrm;
-      p | m_uNodalExtrmc;
-      p | m_pNodalExtrmc;
       p | m_rhs;
       p | m_nfac;
       p | m_nunk;
@@ -266,12 +225,9 @@ class FV : public CBase_FV {
       p | m_recvGhost;
       p | m_diag;
       p | m_stage;
-      p | m_ndof;
-      p | m_numEqDof;
       p | m_bid;
       p | m_uc;
       p | m_pc;
-      p | m_ndofc;
       p | m_initial;
       p | m_expChBndFace;
       p | m_infaces;
@@ -333,8 +289,6 @@ class FV : public CBase_FV {
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
-    //! \brief Degree of freedom for nodal extrema vector.
-    std::size_t m_ndof_NodalExtrm;
     //! Counter for face adjacency communication map
     std::size_t m_ncomfac;
     //! Counter signaling that all ghost data have been received
@@ -352,11 +306,6 @@ class FV : public CBase_FV {
     //! \brief Counter signaling that we have received all our node solution
     //!   contributions
     std::size_t m_nnod;
-    //! Counter signaling that we have received all our reconstructed ghost data
-    std::size_t m_nreco;
-    //! \brief Counter signaling that we have received all our nodal extrema from
-    //!   ghost chare partitions
-    std::size_t m_nnodalExtrema;
     //! Mesh connectivity extended
     std::vector< std::size_t > m_inpoel;
     //! Node coordinates extended
@@ -377,14 +326,6 @@ class FV : public CBase_FV {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Vector of nodal extrema for conservative variables
-    std::vector< std::vector<tk::real> > m_uNodalExtrm;
-    //! Vector of nodal extrema for primitive variables
-    std::vector< std::vector<tk::real> > m_pNodalExtrm;
-    //! Buffer for vector of nodal extrema for conservative variables
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
-    //! Buffer for vector of nodal extrema for primitive variables
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_pNodalExtrmc;
     //! Counter for number of faces on this chare (including chare boundaries)
     std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
@@ -418,19 +359,12 @@ class FV : public CBase_FV {
     ElemDiagnostics m_diag;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
-    //! Vector of local number of degrees of freedom for each element
-    std::vector< std::size_t > m_ndof;
-    //! Vector of number of degrees of freedom for each PDE equation/component
-    std::vector< std::size_t > m_numEqDof;
     //! Map local ghost tet ids (value) and zero-based boundary ids (key)
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Solution receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
-    //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
-    //!   for ghosts only
-    std::array< std::vector< std::size_t >, 3 > m_ndofc;
     //! 1 if starting time stepping, 0 if during time stepping
     std::size_t m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
@@ -513,9 +447,6 @@ class FV : public CBase_FV {
     //! Compute solution reconstructions
     void reco();
 
-    //! Compute nodal extrema at chare-boundary nodes
-    void nodalExtrema();
-
     //! Compute limiter function
     void lim();
 
@@ -527,9 +458,6 @@ class FV : public CBase_FV {
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
-
-    //! p-refine all elements that are adjacent to p-refined elements
-    void propagate_ndof();
 
     //! Evaluate solution on incomping (a potentially refined) mesh
     std::tuple< tk::Fields, tk::Fields, tk::Fields, tk::Fields >

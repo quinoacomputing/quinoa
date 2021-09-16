@@ -292,6 +292,96 @@ updateRhsNonCons(
 }
 
 void
+nonConservativeIntFV(
+  std::size_t nmat,
+  ncomp_t offset,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const std::vector< std::vector< tk::real > >& riemannDeriv,
+  Fields& R )
+// *****************************************************************************
+//  Compute volume integrals of non-conservative terms for multi-material FV
+//! \details This is called for multi-material FV, computing volume integrals of
+//!   terms in the volume fraction and energy equations, which do not exist in
+//!   the single-material flow formulation (for `CompFlow`). For further
+//!   details see Pelanti, M., & Shyue, K. M. (2019). A numerical model for
+//!   multiphase liquid–vapor–gas flows with interfaces and cavitation.
+//!   International Journal of Multiphase Flow, 113, 208-230.
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] nelem Total number of elements
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitive quantities at recent time step
+//! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms
+//! \param[in,out] R Right-hand side vector added to
+// *****************************************************************************
+{
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::energyIdx;
+  using inciter::volfracDofIdx;
+  using inciter::densityDofIdx;
+  using inciter::velocityDofIdx;
+
+  auto ncomp = U.nprop()/rdof;
+
+  // compute volume integrals
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // get bulk properties
+    tk::real rhob(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+        rhob += U(e,densityDofIdx(nmat,k,rdof,0),offset);
+
+    // get the velocity vector
+    std::array< tk::real, 3 > vel{{ P(e,velocityDofIdx(nmat,0,rdof,0),offset),
+                                    P(e,velocityDofIdx(nmat,1,rdof,0),offset),
+                                    P(e,velocityDofIdx(nmat,2,rdof,0),offset) }};
+
+    std::vector< tk::real > ymat(nmat, 0.0);
+    std::array< tk::real, 3 > dap{{0.0, 0.0, 0.0}};
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      ymat[k] = U(e,densityDofIdx(nmat,k,rdof,0),offset)/rhob;
+
+      for (std::size_t idir=0; idir<3; ++idir)
+        dap[idir] += riemannDeriv[3*k+idir][e];
+    }
+
+    // compute non-conservative terms
+    std::vector< tk::real > ncf(ncomp, 0.0);
+
+    for (std::size_t idir=0; idir<3; ++idir)
+      ncf[momentumIdx(nmat, idir)] = 0.0;
+
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // evaluate non-conservative term for energy equation
+      ncf[densityIdx(nmat, k)] = 0.0;
+      for (std::size_t idir=0; idir<3; ++idir)
+        ncf[energyIdx(nmat, k)] -= vel[idir] * ( ymat[k]*dap[idir]
+                                              - riemannDeriv[3*k+idir][e] );
+
+      // evaluate non-conservative term for volume fraction equation
+      ncf[volfracIdx(nmat, k)] = U(e,volfracDofIdx(nmat,k,rdof,0),offset)
+        * riemannDeriv[3*nmat][e];
+    }
+
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      R(e, c, offset) += geoElem(e,0,0) * ncf[c];
+    }
+  }
+}
+
+void
 pressureRelaxationInt( ncomp_t system,
                        std::size_t nmat,
                        ncomp_t offset,
@@ -468,6 +558,95 @@ updateRhsPre(
     auto mark = c*ndof;
     for(std::size_t idof = 0; idof < ndof; idof++)
       R(e, mark+idof, offset) += wt * ncf[c] * B[idof];
+  }
+}
+
+void
+pressureRelaxationIntFV( ncomp_t system,
+  std::size_t nmat,
+  ncomp_t offset,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const tk::real ct,
+  Fields& R )
+// *****************************************************************************
+//  Compute volume integrals of pressure relaxation terms in multi-material FV
+//! \details This is called for multi-material FV to compute volume integrals of
+//!   finite pressure relaxation terms in the volume fraction and energy
+//!   equations, which do not exist in the single-material flow formulation (for
+//!   `CompFlow`). For further details see Dobrev, V. A., Kolev, T. V.,
+//!   Rieben, R. N., & Tomov, V. Z. (2016). Multi‐material closure model for
+//!   high‐order finite element Lagrangian hydrodynamics. International Journal
+//!   for Numerical Methods in Fluids, 82(10), 689-706.
+//! \param[in] system Equation system index
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] nelem Total number of elements
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitive quantities at recent time step
+//! \param[in] ct Pressure relaxation time-scale for this system
+//! \param[in,out] R Right-hand side vector added to
+// *****************************************************************************
+{
+  using inciter::volfracIdx;
+  using inciter::energyIdx;
+  using inciter::pressureIdx;
+  using inciter::velocityIdx;
+  using inciter::volfracDofIdx;
+  using inciter::densityDofIdx;
+  using inciter::pressureDofIdx;
+
+  auto ncomp = U.nprop()/rdof;
+
+  // compute volume integrals
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    auto dx = geoElem(e,4,0)/2.0;
+
+    // get bulk properties
+    real rhob(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+      rhob += U(e,densityDofIdx(nmat,k,rdof,0),offset);
+
+    // get pressures and bulk modulii
+    real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
+    std::vector< real > apmat(nmat, 0.0), kmat(nmat, 0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      real arhomat = U(e,densityDofIdx(nmat,k,rdof,0),offset);
+      real alphamat = U(e,volfracDofIdx(nmat,k,rdof,0),offset);
+      apmat[k] = P(e,pressureDofIdx(nmat,k,rdof,0),offset);
+      real amat = inciter::eos_soundspeed< tag::multimat >( system, arhomat,
+        apmat[k], alphamat, k );
+      kmat[k] = arhomat * amat * amat;
+      pb += apmat[k];
+
+      // relaxation parameters
+      trelax = std::max(trelax, ct*dx/amat);
+      nume += alphamat * apmat[k] / kmat[k];
+      deno += alphamat * alphamat / kmat[k];
+    }
+    auto p_relax = nume/deno;
+
+    // compute pressure relaxation terms
+    std::vector< real > s_prelax(ncomp, 0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      auto s_alpha = (apmat[k]-p_relax*U(e,volfracDofIdx(nmat,k,rdof,0),offset))
+        * (U(e,volfracDofIdx(nmat,k,rdof,0),offset)/kmat[k]) / trelax;
+      s_prelax[volfracIdx(nmat, k)] = s_alpha;
+      s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
+    }
+
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      R(e, c, offset) += geoElem(e,0,0) * s_prelax[c];
+    }
   }
 }
 

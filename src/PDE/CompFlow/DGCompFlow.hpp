@@ -318,7 +318,7 @@ class CompFlow {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
         VertexBasedCompflow_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_offset, geoElem, coord, gid, bid, uNodalExtrm, U);
+          m_offset, geoElem, coord, U);
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
         VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_offset, geoElem, coord, gid, bid, uNodalExtrm, U);

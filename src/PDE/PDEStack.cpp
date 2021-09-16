@@ -24,8 +24,8 @@
 
 using inciter::PDEStack;
 
-PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(),
-                       m_cgEqTypes(), m_dgEqTypes()
+PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_fvfactory(),
+                       m_cgEqTypes(), m_dgEqTypes(), m_fvEqTypes()
 // *****************************************************************************
 //  Constructor: register all partial differential equations into factory
 //! \details This constructor consists of several blocks, each registering a
@@ -100,7 +100,7 @@ PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(),
 {
   registerTransport( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
   registerCompFlow( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
-  registerMultiMat( m_dgfactory, m_dgEqTypes );
+  registerMultiMat( m_dgfactory, m_fvfactory, m_dgEqTypes, m_fvEqTypes );
 }
 
 std::vector< inciter::CGPDE >
@@ -153,6 +153,30 @@ PDEStack::selectedDG() const
       else if (d == ctr::PDEType::MULTIMAT)
         pdes.push_back( createDG< tag::multimat >( d, cnt ) );
       else Throw( "Can't find selected DGPDE" );
+    }
+
+  }
+
+  return pdes;
+}
+
+std::vector< inciter::FVPDE >
+PDEStack::selectedFV() const
+// *****************************************************************************
+//  Instantiate all selected PDEs using finite volume discretization
+//! \return std::vector of instantiated partial differential equation objects
+// *****************************************************************************
+{
+  std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
+  std::vector< FVPDE > pdes;                // will store instantiated PDEs
+
+  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
+  if (sch == ctr::SchemeType::FV) {
+
+    for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
+      if (d == ctr::PDEType::MULTIMAT)
+        pdes.push_back( createFV< tag::multimat >( d, cnt ) );
+      else Throw( "Can't find selected FVPDE" );
     }
 
   }

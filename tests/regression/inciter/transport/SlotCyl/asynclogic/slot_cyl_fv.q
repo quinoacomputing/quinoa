@@ -2,27 +2,40 @@
 # This is a comment
 # Keywords are case-sensitive
 
-title "Zalesak's slotted cylinder"
+title "Interface advection"
 
 inciter
 
   nstep 10    # Max number of time steps
-  dt   0.001  # Time step size
+  dt 2.5e-7   # Time step size
   ttyi 1      # TTY output interval
-  ctau 1.0    # FCT mass diffusivity
   scheme fv
+  limiter vertexbasedp1
 
-  transport
-    depvar c
-    physics advection
-    problem slot_cyl
-    bc_dirichlet
+  multimat
+
+    physics veleq
+    problem interface_advection
+    depvar u
+
+    nmat 3
+    material
+      id 1 2 3 end
+      gamma 1.4 1.4 1.4 end
+      cv 83.33 717.5 717.5 end
+    end
+
+    bc_extrapolate
       sideset 1 end
     end
+
   end
 
   field_output
     interval 5
+    var elem
+      material_indicator
+    end
   end
 
 end
