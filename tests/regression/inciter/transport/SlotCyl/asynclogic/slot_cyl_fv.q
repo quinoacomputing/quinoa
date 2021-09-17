@@ -6,7 +6,7 @@ title "Interface advection"
 
 inciter
 
-  nstep 10    # Max number of time steps
+  nstep 5    # Max number of time steps
   dt 2.5e-7   # Time step size
   ttyi 1      # TTY output interval
   scheme fv

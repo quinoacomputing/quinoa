@@ -831,4 +831,76 @@ void evaluRiemann( ncomp_t ncomp,
   }
 }
 
+std::vector< std::array< tk::real, 3 > >
+fluxTerms(
+  std::size_t ncomp,
+  std::size_t nmat,
+  const std::vector< tk::real >& ugp )
+// *****************************************************************************
+//  Compute the flux-function for the multimaterial PDEs
+//! \param[in] ncomp Number of components in this PDE system
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] U Solution vector at recent time step
+//! \return Flux vectors for all components in multi-material PDE system
+// *****************************************************************************
+{
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::energyIdx;
+  using inciter::velocityIdx;
+  using inciter::pressureIdx;
+
+  std::vector< std::array< tk::real, 3 > > fl( ncomp );
+
+  tk::real rho(0.0), p(0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    rho += ugp[densityIdx(nmat, k)];
+
+  auto u = ugp[ncomp+velocityIdx(nmat,0)];
+  auto v = ugp[ncomp+velocityIdx(nmat,1)];
+  auto w = ugp[ncomp+velocityIdx(nmat,2)];
+
+  std::vector< tk::real > apk( nmat, 0.0 );
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    apk[k] = ugp[ncomp+pressureIdx(nmat,k)];
+    p += apk[k];
+  }
+
+  // conservative part of momentum flux
+  fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
+  fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
+  fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
+
+  fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
+  fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
+  fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
+
+  fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
+  fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
+  fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
+
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    // conservative part of volume-fraction flux
+    fl[volfracIdx(nmat, k)][0] = 0.0;
+    fl[volfracIdx(nmat, k)][1] = 0.0;
+    fl[volfracIdx(nmat, k)][2] = 0.0;
+
+    // conservative part of material continuity flux
+    fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
+    fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
+    fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
+
+    // conservative part of material total-energy flux
+    auto hmat = ugp[energyIdx(nmat, k)] + apk[k];
+    fl[energyIdx(nmat, k)][0] = u * hmat;
+    fl[energyIdx(nmat, k)][1] = v * hmat;
+    fl[energyIdx(nmat, k)][2] = w * hmat;
+  }
+
+  return fl;
+}
+
 }// tk::

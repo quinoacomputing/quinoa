@@ -140,6 +140,13 @@ void evaluRiemann( ncomp_t ncomp,
                    const std::array< std::vector< tk::real >, 2 >& state,
                    std::vector< std::vector< tk::real > >& vriem,
                    std::vector< std::vector< tk::real > >& riemannLoc );
+
+//! Compute the flux-function for the multimaterial PDEs
+std::vector< std::array< tk::real, 3 > >
+fluxTerms(
+  std::size_t ncomp,
+  std::size_t nmat,
+  const std::vector< tk::real >& ugp );
 } // tk::
 
 #endif // MultiMatTerms_h

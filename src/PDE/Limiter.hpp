@@ -202,6 +202,17 @@ interfaceIndicator( std::size_t nmat,
   const std::vector< tk::real >& al,
   std::vector< std::size_t >& matInt );
 
+//! Clean up the state of trace materials for multi-material PDE system
+bool
+cleanTraceMultiMat(
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  const tk::Fields& geoElem,
+  std::size_t nmat,
+  tk::Fields& U,
+  tk::Fields& P );
+
 //! Time step restriction for multi material cell-centered schemes
 tk::real
 timeStepSizeMultiMat(
