@@ -115,57 +115,11 @@ This fancy enum is an option switch because it inherits from tk::Toggle,
 defined in Control/Toggle.hpp, which is a generic switch (or option), that helps
 associating enum values to keywords and querying one based on the other.
 Extending the existing Scheme option switch is done by extending the list of
-schemes in `src/Control/Inciter/Options/Scheme.hpp`:
-
-@subsection inciter_newscheme_option_Scheme Control/Inciter/Options/Scheme.hpp
-
-@code{.diff}
-$ git diff src/Control/Inciter/Options/Scheme.hpp
-diff --git a/src/Inciter/SchemeBase.hpp b/src/Inciter/SchemeBase.hpp
-index 61510d01..0cb3e9e8 100644
---- a/src/Inciter/SchemeBase.hpp
-+++ b/src/Inciter/SchemeBase.hpp
-@@ -22,6 +22,7 @@
-
- #include "NoWarning/matcg.decl.h"
- #include "NoWarning/diagcg.decl.h"
-+#include "NoWarning/alecg.decl.h"
- #include "NoWarning/distfct.decl.h"
- #include "NoWarning/dg.decl.h"
- #include "NoWarning/discretization.decl.h"
-@@ -52,8 +53,11 @@ class SchemeBase {
-         proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
-         fctproxy= CProxy_DistFCT::ckNew(m_bound);
-       } else if (scheme == ctr::SchemeType::DG ||
--                 scheme == ctr::SchemeType::DGP1) {
-+                 scheme == ctr::SchemeType::DGP1)
-+      {
-         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
-+      } else if (scheme == ctr::SchemeType::ALECG) {
-+        proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(m_bound) );
-       } else Throw( "Unknown discretization scheme" );
-     }
-
-@@ -75,11 +79,12 @@ class SchemeBase {
-     const CkArrayOptions& arrayoptions() { return m_bound; }
-
-     //! Variant type listing all chare proxy types modeling the same concept
--    using Proxy = boost::variant< CProxy_DiagCG, CProxy_DG >;
-+    using Proxy =
-+      boost::variant< CProxy_DiagCG, CProxy_DG, CProxy_ALECG >;
-     //! Variant type listing all chare element proxy types (behind operator[])
-     using ProxyElem =
-       boost::variant< CProxy_DiagCG::element_t,
--                      CProxy_DG::element_t >;
-+                      CProxy_DG::element_t, CProxy_ALECG::element_t >;
-
-   protected:
-     //! Variant storing one proxy to which this class is configured for
-@endcode
+schemes in `src/Control/Inciter/Options/Scheme.hpp`.
 
 @section inciter_newscheme_proxy 3. Add new Charm++ chare proxy in Scheme
 
-`Scheme` is a class that, together with its base, `SchemeBase`, implements
+`Scheme` is a class that implements
 concept-based runtime polymorphism for migratable Charm++ chare arrays using
 value semantics. Client code, e.g., `Transporter`, interacts with
 `Discretization` and its children via a uniform interface provided by `Scheme`,
@@ -175,14 +129,14 @@ particular chare array element. Read more details at src/Inciter/Scheme.hpp. To
 teach it to dispatch to our new `ALECG` scheme, besides the existing ones, we
 make the following changes:
 
-@subsection inciter_newscheme_proxy_SchemeBase Inciter/SchemeBase.hpp
+@subsection inciter_newscheme_proxy_Scheme Inciter/Scheme.hpp
 
 @code{.diff}
-$ git diff src/Inciter/SchemeBase.hpp
-diff --git a/src/Inciter/SchemeBase.hpp b/src/Inciter/SchemeBase.hpp
+$ git diff src/Inciter/Scheme.hpp
+diff --git a/src/Inciter/Scheme.hpp b/src/Inciter/Scheme.hpp
 index 61510d01..dea3d78a 100644
---- a/src/Inciter/SchemeBase.hpp
-+++ b/src/Inciter/SchemeBase.hpp
+--- a/src/Inciter/Scheme.hpp
++++ b/src/Inciter/Scheme.hpp
 @@ -22,6 +22,7 @@
 
  #include "NoWarning/matcg.decl.h"
@@ -191,7 +145,7 @@ index 61510d01..dea3d78a 100644
  #include "NoWarning/distfct.decl.h"
  #include "NoWarning/dg.decl.h"
  #include "NoWarning/discretization.decl.h"
-@@ -51,6 +52,8 @@ class SchemeBase {
+@@ -51,6 +52,8 @@ class Scheme {
        } else if (scheme == ctr::SchemeType::DiagCG) {
          proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(m_bound) );
          fctproxy= CProxy_DistFCT::ckNew(m_bound);
@@ -200,7 +154,7 @@ index 61510d01..dea3d78a 100644
        } else if (scheme == ctr::SchemeType::DG ||
                   scheme == ctr::SchemeType::DGP1) {
          proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(m_bound) );
-@@ -75,11 +78,12 @@ class SchemeBase {
+@@ -75,11 +78,12 @@ class Scheme {
      const CkArrayOptions& arrayoptions() { return m_bound; }
 
      //! Variant type listing all chare proxy types modeling the same concept
@@ -638,7 +592,7 @@ Though this is not strictly necessary, we also augment the unit tests of Scheme
 exercising our new discretization scheme:
 
 @code{.diff}
-$ git diff develop src/UnitTest/TUTSuite.hpp src/UnitTest/tests/Inciter/TestScheme.cpp
+$ git diff develop src/UnitTest/TUTSuite.hpp tests/unit/Inciter/TestScheme.cpp
 diff --git a/src/UnitTest/TUTSuite.hpp b/src/UnitTest/TUTSuite.hpp
 index 191b3972..dd904b02 100644
 --- a/src/UnitTest/TUTSuite.hpp
@@ -652,7 +606,7 @@ index 191b3972..dd904b02 100644
      };
 
      // Tests that must be run on PE 0
-diff --git a/src/UnitTest/tests/Inciter/TestScheme.cpp b/src/UnitTest/tests/Inciter/TestScheme.cpp
+diff --git a/tests/unit/Inciter/TestScheme.cpp b/tests/unit/Inciter/TestScheme.cpp
 index 6dc48c75..e4acfce4 100644
 --- a/src/UnitTest/tests/Inciter/TestScheme.cpp
 +++ b/src/UnitTest/tests/Inciter/TestScheme.cpp
