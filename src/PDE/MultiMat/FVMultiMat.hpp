@@ -453,8 +453,7 @@ class MultiMat {
 
       // compute volume integrals of non-conservative terms
       tk::nonConservativeIntFV( m_system, nmat, m_offset, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, riemannDeriv,
-                              R, intsharp );
+                              inpoel, coord, geoElem, U, P, riemannDeriv, R );
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
@@ -462,8 +461,7 @@ class MultiMat {
         const auto ct = g_inputdeck.get< tag::param, tag::multimat,
                                          tag::prelax_timescale >()[m_system];
         tk::pressureRelaxationIntFV( m_system, nmat, m_offset, rdof, nelem,
-                                     inpoel, coord, geoElem, U, P, ct, R,
-                                     intsharp );
+                                     inpoel, coord, geoElem, U, P, ct, R );
       }
     }
 

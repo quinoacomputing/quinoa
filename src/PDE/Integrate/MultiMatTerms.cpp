@@ -304,8 +304,7 @@ nonConservativeIntFV(
   const Fields& U,
   const Fields& P,
   const std::vector< std::vector< tk::real > >& riemannDeriv,
-  Fields& R,
-  int intsharp )
+  Fields& R )
 // *****************************************************************************
 //  Compute volume integrals of non-conservative terms for multi-material FV
 //! \details This is called for multi-material FV, computing volume integrals of
@@ -327,7 +326,6 @@ nonConservativeIntFV(
 //! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms
 //! \param[in,out] R Right-hand side vector added to
-//! \param[in] intsharp Interface reconstruction indicator
 // *****************************************************************************
 {
   using inciter::volfracIdx;
@@ -346,7 +344,7 @@ nonConservativeIntFV(
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
 
-    auto state = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+    auto state = evalPolynomialSol(system, offset, 0, ncomp, nprim,
       rdof, nmat, e, rdof, inpoel, coord, geoElem,
       {{0.25, 0.25, 0.25}}, B, U, P);
 
@@ -589,8 +587,7 @@ pressureRelaxationIntFV(
   const Fields& U,
   const Fields& P,
   const tk::real ct,
-  Fields& R,
-  int intsharp )
+  Fields& R )
 // *****************************************************************************
 //  Compute volume integrals of pressure relaxation terms in multi-material FV
 //! \details This is called for multi-material FV to compute volume integrals of
@@ -630,7 +627,7 @@ pressureRelaxationIntFV(
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
 
-    auto state = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+    auto state = evalPolynomialSol(system, offset, 0, ncomp, nprim,
       rdof, nmat, e, rdof, inpoel, coord, geoElem,
       {{0.25, 0.25, 0.25}}, B, U, P);
 

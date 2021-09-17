@@ -72,8 +72,7 @@ nonConservativeIntFV(
   const Fields& U,
   const Fields& P,
   const std::vector< std::vector< tk::real > >& riemannDeriv,
-  Fields& R,
-  int intsharp );
+  Fields& R );
 
 //! Compute volume integrals of pressure relaxation terms in multi-material DG
 void
@@ -120,8 +119,7 @@ pressureRelaxationIntFV(
   const Fields& U,
   const Fields& P,
   const tk::real ct,
-  Fields& R,
-  int intsharp );
+  Fields& R );
 
 //! Solve the reconstruct velocity used for volume fraction equation
 std::vector< std::vector< tk::real > >
