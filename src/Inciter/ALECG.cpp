@@ -194,14 +194,13 @@ ALECG::moveCfg()
   for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
     const auto& fn = m.get< tag::fn >();
     Assert( fn.size() % 4 == 0, "Incomplete user-defined function" );
-    tk::Table3 t;
     cfg.emplace_back();
     // store user-defined function type
     std::get<0>(cfg.back()) = m.get< tag::fntype >();
     // store user-defined function discrete data
     for (std::size_t i=0; i<fn.size()/4; ++i)
       std::get<1>(cfg.back()).
-        emplace_back( fn[i*4+0], fn[i*4+1], fn[i*4+2], fn[i*4+3] );
+        push_back( {{ fn[i*4+0], fn[i*4+1], fn[i*4+2], fn[i*4+3] }} );
   }
 
   return cfg;
@@ -1045,7 +1044,7 @@ ALECG::meshvelstart()
       // assign mesh velocity to sidesets from user-defined functions
       for (const auto& m : m_move)
         if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
-          auto meshvel = tk::sample( d->T(), std::get<1>(m) );
+          auto meshvel = tk::sample<3>( d->T(), std::get<1>(m) );
           for (const auto& i : std::get<2>(m))
             for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
               m_w(i,j,0) = meshvel[j];
@@ -1053,7 +1052,7 @@ ALECG::meshvelstart()
           auto eps = std::numeric_limits< tk::real >::epsilon();
           auto adt = rkcoef[m_stage] * d->Dt();
           if (adt > eps) {      // dt == 0 during setup
-            auto pos = tk::sample( d->T()+adt, std::get<1>(m) );
+            auto pos = tk::sample<3>( d->T()+adt, std::get<1>(m) );
             for (const auto& i : std::get<2>(m))
               for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
                 m_w(i,j,0) = (m_coord0[j][i] + pos[j] - m_coordn[j][i]) / adt;
@@ -1221,7 +1220,7 @@ ALECG::meshvelbc( tk::real maxv )
     // Dirichlet BCs on mesh velocity with prescribed movement
     for (const auto& m : m_move)
       if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
-        auto meshvel = tk::sample( d->T(), std::get<1>(m) );
+        auto meshvel = tk::sample<3>( d->T(), std::get<1>(m) );
         for (const auto& i : std::get<2>(m))
           for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
             m_w(i,j,0) = meshvel[j];

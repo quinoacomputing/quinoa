@@ -290,12 +290,12 @@ class MixMassFractionBeta {
     //! Selected inverse hydrodynamics time scales (if used) for each component
     //! \details This is only used if the coefficients policy is
     //!   MixMassFracBetaCoeffHydroTimeScale. See constructor.
-    std::vector< tk::Table > m_hts;
+    std::vector< tk::Table<1> > m_hts;
 
     //! Selected hydrodynamics production/dissipation (if used) for each comp.
     //! \details This is only used if the coefficients policy is
     //!   MixMassFracBetaCoeffHydroTimeScale. See constructor.
-    std::vector< tk::Table > m_hp;
+    std::vector< tk::Table<1> > m_hp;
 
     //! \brief Return density for mass fraction
     //! \details Functional wrapper around the dependent variable of the beta

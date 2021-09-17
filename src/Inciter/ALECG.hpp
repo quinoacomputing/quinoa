@@ -424,7 +424,7 @@ class ALECG : public CBase_ALECG {
     //!    boundary nodes for each move ... end input file block (vector).
     std::vector<
       std::tuple< tk::ctr::UserTableType,
-                  tk::Table3,
+                  tk::Table<3>,
                   std::unordered_set< std::size_t > >
     > m_move;
 
