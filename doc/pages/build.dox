@@ -116,7 +116,7 @@ if you work with a _non-recursive_ clone.
 
 To make this work, we need to clone the TPLs separately:
 
-       git clone https://github.com/quinoacomputing/quinoa-tpl.git
+       git clone --recurse-submodules https://github.com/quinoacomputing/quinoa-tpl.git
 
 Then build the TPLs using a similar process as in @ref build_default :
 
