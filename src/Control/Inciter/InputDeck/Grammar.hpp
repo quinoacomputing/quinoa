@@ -819,8 +819,33 @@ namespace grm {
         (stack.template get< tag::history, tag::id >().size() == hist.size()),
         "Number of history points and ids must equal" );
 
+      // If at least a mesh filename is assigned to a solver, all solvers must
+      // have a mesh filename assigned
+      std::size_t nmesh = 0;
+      brigand::for_each< PDETypes >( count_meshes< Stack >( stack, nmesh ) );
+      if (nmesh > 0 && nmesh != depvars.size())
+        Message< Stack, ERROR, MsgKey::MULTIMESH >( stack, in );
 
-      // Trigger error if steady state + ALE are both enabled
+      // Remove duplicate transfer steps
+      tk::unique( stack.template get< tag::couple, tag::transfer >() );
+
+      // Now that the inciter ... end block is finished, assign mesh ids to
+      // solvers configured
+      std::size_t meshid = 0;
+      brigand::for_each< PDETypes >( assign_meshid< Stack >( stack, meshid ) );
+      Assert( meshid == nmesh, "Not all meshes configured have mesh ids" );
+    }
+  };
+
+  //! Rule used to trigger action
+  struct check_ale : pegtl::success {};
+  //! \brief Do error checking on the inciter block
+  template<> struct action< check_ale > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::g_inputdeck_defaults;
+
+     // Trigger error if steady state + ALE are both enabled
       auto steady = stack.template get< tag::discr, tag::steady_state >();
       auto ale = stack.template get< tag::ale, tag::ale >();
       if (steady && ale) {
@@ -849,21 +874,13 @@ namespace grm {
         Message< Stack, ERROR, MsgKey::WRONGMESHMOTION >( stack, in );
       }
 
-      // If at least a mesh filename is assigned to a solver, all solvers must
-      // have a mesh filename assigned
-      std::size_t nmesh = 0;
-      brigand::for_each< PDETypes >( count_meshes< Stack >( stack, nmesh ) );
-      if (nmesh > 0 && nmesh != depvars.size())
-        Message< Stack, ERROR, MsgKey::MULTIMESH >( stack, in );
-
-      // Remove duplicate transfer steps
-      tk::unique( stack.template get< tag::couple, tag::transfer >() );
-
-      // Now that the inciter ... end block is finished, assign mesh ids to
-      // solvers configured
-      std::size_t meshid = 0;
-      brigand::for_each< PDETypes >( assign_meshid< Stack >( stack, meshid ) );
-      Assert( meshid == nmesh, "Not all meshes configured have mesh ids" );
+      // Error checking on user-defined function for ALE's moving sides
+      const auto& move = stack.template get< tag::ale, tag::move >();
+      for (const auto& s : move) {
+        const auto& f = s.template get< tag::fn >();
+        if (f.empty() or f.size() % 4 != 0)
+          Message< Stack, ERROR, MsgKey::INCOMPLETEUSERFN>( stack, in );
+      }
     }
   };
 
@@ -1853,6 +1870,34 @@ namespace deck {
                              pegtl::digit > >,
            tk::grm::check_amr_errors > {};
 
+
+  //! Match user-defined function as a discrete list of real numbers
+  template< class target, class tag, class... tags >
+  struct user_fn :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::fn >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+             tk::grm::scan< tk::grm::number,
+               tk::grm::Back_store_back< target, tag, tags... > > > > {};
+
+  //! Arbitrary-Lagrangian-Eulerian (ALE) move...end block
+  struct moving_sides :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::move >::pegtl_string >,
+           tk::grm::start_vector< tag::ale, tag::move >,
+           tk::grm::block< use< kw::end >,
+             tk::grm::process<
+                use< kw::fntype >,
+                tk::grm::back_store_option< tag::fntype,
+                                            use,
+                                            tk::ctr::UserTable,
+                                            tag::ale, tag::move >,
+                pegtl::alpha >,
+             user_fn< tag::fn, tag::ale, tag::move >,
+             pegtl::if_must< tk::grm::vector< use< kw::sideset >,
+               tk::grm::Back_store_back< tag::sideset, tag::ale, tag::move >,
+               use< kw::end > > > > > {};
+
   //! Arbitrary-Lagrangian-Eulerian (ALE) ale...end block
   struct ale :
          pegtl::if_must<
@@ -1876,11 +1921,16 @@ namespace deck {
                                 pegtl::digit,
                                 tk::grm::Store,
                                 tag::ale, tag::tolerance >,
+              moving_sides,
               tk::grm::process<
                 use< kw::meshvelocity >,
-                tk::grm::store_inciter_option<
-                  ctr::MeshVelocity,
-                  tag::ale, tag::meshvelocity >,
+                tk::grm::store_inciter_option< ctr::MeshVelocity,
+                                               tag::ale, tag::meshvelocity >,
+                pegtl::alpha >,
+              tk::grm::process<
+                use< kw::smoother >,
+                tk::grm::store_inciter_option< ctr::MeshVelocitySmoother,
+                                               tag::ale, tag::smoother >,
                 pegtl::alpha >,
               pegtl::if_must< tk::grm::dimensions< use< kw::mesh_motion >,
                               tk::grm::Store_back< tag::ale, tag::mesh_motion >,
@@ -1899,7 +1949,8 @@ namespace deck {
                 tk::grm::block< use< kw::end >,
                   pegtl::if_must< tk::grm::vector< use< kw::sideset >,
                                   tk::grm::Store_back< tag::ale, tag::bcsym >,
-                                  use< kw::end > > > > > > > {};
+                                  use< kw::end > > > > > >,
+              tk::grm::check_ale > {};
 
   //! \brief Match a depvar, defined upstream of control file, coupling a
   //!   solver and store

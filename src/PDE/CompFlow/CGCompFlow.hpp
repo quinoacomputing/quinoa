@@ -429,9 +429,6 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      //fenv_t fe;
-      //feholdexcept( &fe );
-
       for (auto e : bndel) {  // elements contributing to chare boundary nodes
         // access node IDs
         std::size_t N[4] =
@@ -483,9 +480,6 @@ class CompFlow {
           }
         }
       }
-
-      //feclearexcept( FE_UNDERFLOW );
-      //feupdateenv( &fe );
     }
 
     //! Compute right hand side for ALECG
@@ -688,7 +682,7 @@ class CompFlow {
         Assert( vol.size() == voln.size(), "Size mismatch" );
         for (std::size_t p=0; p<vol.size(); ++p) {
           auto vol_dt = dtn *
-            std::min(voln[p],vol[p]) / std::abs(voln[p]-vol[p]+1.0e-16);
+            std::min(voln[p],vol[p]) / std::abs(voln[p]-vol[p]+1.0e-14);
           mindt = std::min( vol_dt, mindt );
         }
         mindt *= dvcfl;

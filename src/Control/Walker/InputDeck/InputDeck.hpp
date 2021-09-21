@@ -117,6 +117,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::const_shear
                                  , kw::stationary
                                  , kw::position
+                                 , kw::velocity
                                  , kw::velocitysde
                                  , kw::inst_velocity
                                  , kw::seed
