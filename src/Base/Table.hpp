@@ -29,6 +29,9 @@ using Table = std::vector< std::array< real, N+1 > >;
 
 //! Sample a discrete (y1,y2,...,N) = f(x) function at x
 //! \tparam N Number of ordinates in the table
+//! \param[in] x Abscissa to sample at
+//! \param[in] table Table to sample
+//! \return Ordinates sampled
 template< std::size_t N >
 std::array< real, N > sample( real x, const Table< N >& table ) {
 
