@@ -16,6 +16,7 @@
 
 #include <array>
 #include <vector>
+#include <limits>
 
 #include "Types.hpp"
 #include "Exception.hpp"
