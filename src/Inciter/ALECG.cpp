@@ -1045,7 +1045,7 @@ ALECG::meshvelstart()
       for (const auto& m : m_move)
         if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
           auto meshvel = tk::sample<3>( d->T(), std::get<1>(m) );
-          for (const auto& i : std::get<2>(m))
+          for (auto i : std::get<2>(m))
             for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
               m_w(i,j,0) = meshvel[j];
         } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
@@ -1053,7 +1053,7 @@ ALECG::meshvelstart()
           auto adt = rkcoef[m_stage] * d->Dt();
           if (adt > eps) {      // dt == 0 during setup
             auto pos = tk::sample<3>( d->T()+adt, std::get<1>(m) );
-            for (const auto& i : std::get<2>(m))
+            for (auto i : std::get<2>(m))
               for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
                 m_w(i,j,0) = (m_coord0[j][i] + pos[j] - m_coordn[j][i]) / adt;
           }
@@ -1221,14 +1221,14 @@ ALECG::meshvelbc( tk::real maxv )
     for (const auto& m : m_move)
       if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
         auto meshvel = tk::sample<3>( d->T(), std::get<1>(m) );
-        for (const auto& i : std::get<2>(m))
+        for (auto i : std::get<2>(m))
           for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
             m_w(i,j,0) = meshvel[j];
       } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
         auto eps = std::numeric_limits< tk::real >::epsilon();
         auto adt = rkcoef[m_stage] * d->Dt();
         if (adt > eps)
-          for (const auto& i : std::get<2>(m))
+          for (auto i : std::get<2>(m))
             if (m_meshveldirbcnodes.find(i) != end(m_meshveldirbcnodes))
               wbc[i] = {{ {false,0}, {false,0}, {false,0} }};
       }
