@@ -40,32 +40,32 @@ std::array< real, N > sample( real x, const Table< N >& table ) {
   using Ord = std::array< tk::real, N >;
 
   // Lambda to return the abscissa of a Table (return the first value)
-  auto abs = []( const Line& t ){ return t[0]; };
+  auto abscissa = []( const Line& t ){ return t[0]; };
 
   // Lambda to return ordinates of a tk::Table
-  auto ord = []( const Line& t ){
+  auto ordinate = []( const Line& t ){
     Ord o;
     for (std::size_t i=0; i<N; ++i) o[i] = t[i+1];
     return o;
   };
 
   auto eps = std::numeric_limits< real >::epsilon();
-  if (x < abs(table.front())+eps) return ord( table.front() );
+  if (x < abscissa(table.front())+eps) return ordinate( table.front() );
 
   for (std::size_t i=0; i<table.size()-1; ++i) {
-    auto t1 = abs( table[i] );
-    auto t2 = abs( table[i+1] );
+    auto t1 = abscissa( table[i] );
+    auto t2 = abscissa( table[i+1] );
     if (t1 < x and x < t2) {
       auto d = (t2-t1)/(x-t1);
-      auto p = ord( table[i] );
-      auto q = ord( table[i+1] );
+      auto p = ordinate( table[i] );
+      auto q = ordinate( table[i+1] );
       Ord r;
       for (std::size_t j=0; j<N; ++j) r[j] = p[j]+(q[j]-p[j])/d;
       return r;
     }
   }
 
-  return ord( table.back() );
+  return ordinate( table.back() );
 }
 
 } // tk::
