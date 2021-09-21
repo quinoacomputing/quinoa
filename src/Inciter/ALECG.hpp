@@ -420,7 +420,7 @@ class ALECG : public CBase_ALECG {
     std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_vorticityc;
     //! Data structure storing configuration for moving boundaries with ALE
     //! \details Tuple: 0: user-defined function type (i.e., how it should be
-    //!    interpreted), (2) user-defined function for, and (2) unique set of
+    //!    interpreted), (1) user-defined function for, and (2) unique set of
     //!    boundary nodes for each move ... end input file block (vector).
     std::vector<
       std::tuple< tk::ctr::UserTableType,
