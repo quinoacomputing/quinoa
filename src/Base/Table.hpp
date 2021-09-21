@@ -6,9 +6,9 @@
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Basic functionality for storing and sampling a discrete
-             (y1,y2,...,N) = f(x) function
+             (y1,y2,...,yN) = f(x) function
   \details   Basic functionality for storing and sampling a discrete
-             (y1,y2,...,N) = f(x) function.
+             (y1,y2,...,yN) = f(x) function.
 */
 // *****************************************************************************
 #ifndef Table_h
@@ -22,12 +22,12 @@
 
 namespace tk {
 
-//! Type alias for storing a discrete (y1,y2,...,N) = f(x) function
+//! Type alias for storing a discrete (y1,y2,...,yN) = f(x) function
 //! \tparam N Number of ordinates in the table
 template< std::size_t N >
 using Table = std::vector< std::array< real, N+1 > >;
 
-//! Sample a discrete (y1,y2,...,N) = f(x) function at x
+//! Sample a discrete (y1,y2,...,yN) = f(x) function at x
 //! \tparam N Number of ordinates in the table
 //! \param[in] x Abscissa to sample at
 //! \param[in] table Table to sample
