@@ -5596,6 +5596,23 @@ struct bc_extrapolate_info {
 using bc_extrapolate =
   keyword< bc_extrapolate_info, TAOCPP_PEGTL_STRING("bc_extrapolate") >;
 
+struct bc_timedep_info {
+  static std::string name() { return "Time dependent boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing time dependent boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a bc_timedep ... end block, used to
+    specify the configuration for setting time dependent boundary conditions for
+    a partial differential equation. Keywords allowed in a bc_timedep ... end
+    block: )" + std::string("\'")
+    + sideset::string() + "\'. "
+    + R"(For an example bc_timedep ... end block, see
+      doc/html/inciter_example_gausshump.html.)";
+  }
+};
+using bc_timedep =
+  keyword< bc_timedep_info, TAOCPP_PEGTL_STRING("bc_timedep") >;
+
 struct id_info {
   static std::string name() { return "id"; }
   static std::string shortDescription() { return "ID"; }
@@ -5876,6 +5893,7 @@ struct compflow_info {
     + bc_outlet::string() + "\', \'"
     + bc_farfield::string() + "\', \'"
     + bc_extrapolate::string() + "\'."
+    + bc_timedep::string() + "\'."
     + R"(For an example compflow ... end block, see
       doc/html/inicter_example_compflow.html.)";
   }

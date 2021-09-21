@@ -281,6 +281,7 @@ struct sponge { static std::string name() { return "sponge"; } };
 struct bcinlet { static std::string name() { return "bcinlet"; } };
 struct bcoutlet { static std::string name() { return "bcoutlet"; } };
 struct bcextrapolate { static std::string name() { return "bcextrapolate"; } };
+struct bctimedep { static std::string name() { return "bctimedep"; } };
 struct material { static std::string name() { return "material"; } };
 struct eos { static std::string name() { return "eos"; } };
 struct id { static std::string name() { return "id"; } };

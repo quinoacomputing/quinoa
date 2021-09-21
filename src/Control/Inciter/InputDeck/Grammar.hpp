@@ -439,6 +439,8 @@ namespace grm {
               Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
         }
 
+        const auto& tdepbc =
+          stack.template get< tag::param, eq, tag::bc, tag::bctimedep >();
       }
     }
   };
@@ -1720,7 +1722,10 @@ namespace deck {
                                         tag::compflow,
                                         tag::bcfarfield >,
                            bc< kw::bc_extrapolate, tag::compflow,
-                               tag::bcextrapolate > >,
+                               tag::bcextrapolate >,
+                           bc< kw::bc_timedep, tag::compflow,
+                               tag::bctimedep >
+                           >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
   //! compressible multi-material flow

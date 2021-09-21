@@ -270,6 +270,8 @@ using bc = tk::TaggedTuple< brigand::list<
                               kw::sideset::info::expect::type > >
   , tag::bcextrapolate,     std::vector< std::vector<
                               kw::sideset::info::expect::type > >
+  , tag::bctimedep,         std::vector< std::vector<
+                              kw::sideset::info::expect::type > >
 > >;
 
 //! Solver coupling
