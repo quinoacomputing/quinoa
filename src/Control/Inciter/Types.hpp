@@ -28,11 +28,13 @@
 #include "Inciter/Options/AMRError.hpp"
 #include "Inciter/Options/PrefIndicator.hpp"
 #include "Inciter/Options/MeshVelocity.hpp"
+#include "Inciter/Options/MeshVelocitySmoother.hpp"
 #include "Inciter/Options/Material.hpp"
 #include "Options/PartitioningAlgorithm.hpp"
 #include "Options/TxtFloatFormat.hpp"
 #include "Options/FieldFile.hpp"
 #include "Options/Error.hpp"
+#include "Options/UserTable.hpp"
 #include "PUPUtil.hpp"
 #include "OutVar.hpp"
 #include "Transfer.hpp"
@@ -78,6 +80,16 @@ using amr = tk::TaggedTuple< brigand::list<
   , tag::zplus,  kw::amr_zplus::info::expect::type
 > >;
 
+//! A list of side sets moving with a user-defined function in time
+using moving_sides = tk::TaggedTuple< brigand::list<
+  //! List of side sets to move
+     tag::sideset, std::vector< kw::sideset::info::expect::type >
+  //! User-defined table (function) type
+  ,  tag::fntype,  tk::ctr::UserTableType
+  //! Functions x(t), y(t), and z(t) to move the side sets with
+  ,  tag::fn,      std::vector< tk::real >
+> >;
+
 //! ALE mesh motion options
 using ale = tk::TaggedTuple< brigand::list<
   //! ALE on/off
@@ -92,13 +104,18 @@ using ale = tk::TaggedTuple< brigand::list<
   , tag::maxit,         kw::meshvel_maxit::info::expect::type
   //! Mesh velocity smoother linear solver tolerance
   , tag::tolerance,     kw::meshvel_tolerance::info::expect::type
-  , tag::meshvelocity,  MeshVelocityType      //!< Mesh velocity option
+  //! Mesh velocity option
+  , tag::meshvelocity,  MeshVelocityType
+  //! Mesh velocity smoother option
+  , tag::smoother    ,  MeshVelocitySmootherType
     //! Mesh velocity Dirichlet BC sidesets
   , tag::bcdir,         std::vector< kw::sideset::info::expect::type >
     //! Mesh velocity symmetry BC sidesets
   , tag::bcsym,         std::vector< kw::sideset::info::expect::type >
     //! Mesh force parameters
   , tag::meshforce,     std::vector< kw::meshforce::info::expect::type >
+    //! List of side sets to move with a user-defined function
+  , tag::move,          std::vector< moving_sides >
 > >;
 
 //! p-adaptive refinement options

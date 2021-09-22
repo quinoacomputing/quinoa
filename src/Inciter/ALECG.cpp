@@ -107,8 +107,10 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_finished( 0 ),
   m_newmesh( 0 ),
   m_coordn( Disc()->Coord() ),
+  m_coord0( Disc()->Coord() ),
   m_vorticity(),
-  m_vorticityc()
+  m_vorticityc(),
+  m_move( moveCfg() )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -148,8 +150,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
     tk::remap( m_triinpoel, map );
   }
 
-  // Query/update boundary conditions from user input
-  queryBC();
+  // Query/update boundary-conditions-related data structures from user input
+  queryBnd();
 
   // Activate SDAG wait for initially computing normals
   thisProxy[ thisIndex ].wait4norm();
@@ -178,10 +180,52 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 }
 //! [Constructor]
 
-void
-ALECG::queryBC()
+decltype(ALECG::m_move)
+ALECG::moveCfg()
 // *****************************************************************************
-// Query boundary conditions from user input
+// Initialize user-defined functions for ALE moving sides
+//! \details This function fills in only part of the data structure
+//!   returned, containing the user-defined functions in discrete form that will
+//!   be sampled in time. The node lists will be initialized later.
+// *****************************************************************************
+{
+  decltype(m_move) cfg;
+
+  for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
+    const auto& fn = m.get< tag::fn >();
+    Assert( fn.size() % 4 == 0, "Incomplete user-defined function" );
+    tk::Table3 t;
+    cfg.emplace_back();
+    // store user-defined function type
+    std::get<0>(cfg.back()) = m.get< tag::fntype >();
+    // store user-defined function discrete data
+    for (std::size_t i=0; i<fn.size()/4; ++i)
+      std::get<1>(cfg.back()).
+        emplace_back( fn[i*4+0], fn[i*4+1], fn[i*4+2], fn[i*4+3] );
+  }
+
+  return cfg;
+}
+
+bool
+ALECG::move( std::size_t i ) const
+// *****************************************************************************
+// Find Dirichlet BCs on mesh velocity with prescribed movement
+//! \param[in] i Local node id to check
+//! \return True of node falls on a boundary that is prescribed to move
+// *****************************************************************************
+{
+  for (const auto& m : m_move)
+    if (std::get<2>(m).find(i) != end(std::get<2>(m)))
+      return true;
+
+  return false;
+}
+
+void
+ALECG::queryBnd()
+// *****************************************************************************
+// Query/update boundary-conditions-related data structures from user input
 // *****************************************************************************
 {
   auto d = Disc();
@@ -254,12 +298,34 @@ ALECG::queryBC()
     if (k != end(m_bnode)) {
       auto& n = meshvelsymbcnodes[ k->first ];  // associate set id
       for (auto g : k->second) {                // node ids on side set
-        n.insert( tk::cref_find(d->Lid(),g) );
+        n.insert( tk::cref_find(d->Lid(),g) );  // store local ids
       }
     }
   }
   for (const auto& [s,nodes] : meshvelsymbcnodes)
     m_meshvelsymbcnodes.insert( begin(nodes), end(nodes) );
+
+  // Prepare unique sets of boundary nodes at which ALE moves the boundary
+  // based on user-defined functions.
+  std::unordered_map< int, std::unordered_set< std::size_t > > movenodes;
+  std::size_t i = 0;
+  for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
+    for (const auto& s : m.get< tag::sideset >()) {
+      auto k = m_bnode.find( std::stoi(s) );
+      if (k != end(m_bnode)) {
+        auto& n = movenodes[ k->first ];        // associate set id
+        for (auto g : k->second) {              // node ids on side set
+          n.insert( tk::cref_find(d->Lid(),g) );// store local ids
+        }
+      }
+    }
+    // store all nodes from multiple side sets moved by this usrdef fn
+    auto& n = std::get<2>(m_move[i]);
+    n.clear();
+    for (const auto& [s,nodes] : movenodes) n.insert(begin(nodes), end(nodes));
+    // increment move ... end configuration block counter
+    ++i;
+  }
 }
 
 void
@@ -961,14 +1027,39 @@ ALECG::meshvelstart()
     // assign mesh velocity
     auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
     if (meshveltype == ctr::MeshVelocityType::SINE) {
+
+      // prescribe mesh velocity with a sine function during setup
       if (d->Initial())
         for (std::size_t i=0; i<m_w.nunk(); ++i)
           m_w(i,0,0) = std::pow( std::sin(d->Coord()[0][i]*M_PI), 2.0 );
-    } else {
+
+    } else if (meshveltype == ctr::MeshVelocityType::FLUID) {
+
       // equate mesh velocity with fluid velocity
       for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
         for (std::size_t i=0; i<vel[j].size(); ++i)
           m_w(i,j,0) = vel[j][i];
+
+    } else if (meshveltype == ctr::MeshVelocityType::USER_DEFINED) {
+
+      // assign mesh velocity to sidesets from user-defined functions
+      for (const auto& m : m_move)
+        if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
+          auto meshvel = tk::sample( d->T(), std::get<1>(m) );
+          for (auto i : std::get<2>(m))
+            for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+              m_w(i,j,0) = meshvel[j];
+        } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
+          auto eps = std::numeric_limits< tk::real >::epsilon();
+          auto adt = rkcoef[m_stage] * d->Dt();
+          if (adt > eps) {      // dt == 0 during setup
+            auto pos = tk::sample( d->T()+adt, std::get<1>(m) );
+            for (auto i : std::get<2>(m))
+              for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+                m_w(i,j,0) = (m_coord0[j][i] + pos[j] - m_coordn[j][i]) / adt;
+          }
+        }
+
     }
 
     // start computing the fluid vorticity
@@ -1111,9 +1202,9 @@ ALECG::meshvelbc( tk::real maxv )
   auto d = Disc();
 
   // smooth mesh velocity if needed
-  auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
-  if (meshveltype == ctr::MeshVelocityType::FLUID) {
+  if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
     // scale mesh velocity with a function of the fluid vorticity
     if (maxv > 1.0e-8) {
@@ -1127,15 +1218,31 @@ ALECG::meshvelbc( tk::real maxv )
     std::unordered_map< std::size_t,
       std::vector< std::pair< bool, tk::real > > > wbc;
 
+    // Dirichlet BCs on mesh velocity with prescribed movement
+    for (const auto& m : m_move)
+      if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
+        auto meshvel = tk::sample( d->T(), std::get<1>(m) );
+        for (auto i : std::get<2>(m))
+          for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+            m_w(i,j,0) = meshvel[j];
+      } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
+        auto eps = std::numeric_limits< tk::real >::epsilon();
+        auto adt = rkcoef[m_stage] * d->Dt();
+        if (adt > eps)
+          for (auto i : std::get<2>(m))
+            if (m_meshveldirbcnodes.find(i) != end(m_meshveldirbcnodes))
+              wbc[i] = {{ {false,0}, {false,0}, {false,0} }};
+      }
+
     // Dirichlet BCs where user specified mesh velocity BCs
     for (auto i : m_meshveldirbcnodes)
-      wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
+      if (not move(i)) wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
 
     // initialize mesh velocity smoother linear solver
     d->meshvelInit( m_w.flat(), {}, wbc,
       CkCallback(CkIndex_ALECG::applied(nullptr), thisProxy[thisIndex]) );
 
-  } else if (meshveltype == ctr::MeshVelocityType::HELMHOLTZ) {
+  } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
     // Set scalar potential linear solve boundary conditions
     std::unordered_map< std::size_t,
@@ -1171,14 +1278,14 @@ ALECG::applied( [[maybe_unused]] CkDataMsg* msg )
   //  std::cout << "applied: " << *norm << '\n';
   //}
 
-  auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
-  if (meshveltype == ctr::MeshVelocityType::FLUID) {
+  if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
     Disc()->meshvelSolve(
       CkCallback(CkIndex_ALECG::meshvelsolved(nullptr), thisProxy[thisIndex]) );
 
-  } else if (meshveltype == ctr::MeshVelocityType::HELMHOLTZ) {
+  } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
     Disc()->meshvelSolve(
       CkCallback(CkIndex_ALECG::helmholtz(nullptr), thisProxy[thisIndex]) );
@@ -1284,9 +1391,9 @@ ALECG::meshvelsolved( [[maybe_unused]] CkDataMsg* msg )
 
   auto d = Disc();
 
-  auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
-  if (meshveltype == ctr::MeshVelocityType::FLUID) {
+  if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
     // Read out linear solution
     auto w = d->meshvelSolution();
@@ -1297,7 +1404,7 @@ ALECG::meshvelsolved( [[maybe_unused]] CkDataMsg* msg )
       for (std::size_t i=0; i<m_w.nunk(); ++i)
         m_w(i,j,0) = w[i*m_w.nprop()+j];
 
-  } else if (meshveltype == ctr::MeshVelocityType::HELMHOLTZ) {
+  } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
     auto a1 = g_inputdeck.get< tag::ale, tag::vortmult >();
     for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
@@ -1458,10 +1565,13 @@ ALECG::meshforce()
   // advance mesh velocity in time due to pseudo-pressure gradient mesh force
   for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
     for (std::size_t i=0; i<m_w.nunk(); ++i)
+       // This is likely incorrect. It should be m_w = m_w0 + ...
        m_w(i,j,0) += rkcoef[m_stage] * d->Dt() * m_wf(i,j,0);
 
-  // Dirichlet BCs where user specified mesh velocity BCs
-  for (auto i : m_meshveldirbcnodes) m_w(i,0,0) = m_w(i,1,0) = m_w(i,2,0) = 0.0;
+  // Enforce mesh velocity Dirichlet BCs where user specfied but did not
+  // prescribe a move
+  for (auto i : m_meshveldirbcnodes)
+    if (not move(i)) m_w(i,0,0) = m_w(i,1,0) = m_w(i,2,0) = 0.0;
 
   // On meshvel symmetry BCs remove normal component of mesh velocity
   const auto& sbc = g_inputdeck.get< tag::ale, tag::bcsym >();
@@ -1531,8 +1641,8 @@ ALECG::rhs()
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
-  // Query/update boundary conditions from user input
-  queryBC();
+  // Query/update boundary-conditions-related data structures from user input
+  queryBnd();
 
   // Communicate rhs to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done

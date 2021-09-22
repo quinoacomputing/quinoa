@@ -347,6 +347,7 @@ Transporter::info( const InciterPrint& print )
     auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
     print.item( "Volume-change CFL coefficient", dvcfl );
     print.Item< ctr::MeshVelocity, tag::ale, tag::meshvelocity >();
+    print.Item< ctr::MeshVelocitySmoother, tag::ale, tag::smoother >();
     print.item( "Mesh motion dimensions", tk::parameters(
                 g_inputdeck.get< tag::ale, tag::mesh_motion >() ) );
     const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
@@ -358,13 +359,24 @@ Transporter::info( const InciterPrint& print )
     print.item( "Mesh velocity linear solver maxit",
                 g_inputdeck.get< tag::ale, tag::maxit >() );
     const auto& dir = g_inputdeck.get< tag::ale, tag::bcdir >();
-    if (!dir.empty())
+    if (not dir.empty())
       print.item( "Mesh velocity Dirichlet BC sideset(s)",
                   tk::parameters( dir ) );
     const auto& sym = g_inputdeck.get< tag::ale, tag::bcsym >();
-    if (!sym.empty())
+    if (not sym.empty())
       print.item( "Mesh velocity symmetry BC sideset(s)",
                   tk::parameters( sym ) );
+    std::size_t i = 1;
+    for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
+       tk::ctr::UserTable opt;
+       print.item( opt.group() + ' ' + std::to_string(i) + " interpreted as",
+                   opt.name( m.get< tag::fntype >() ) );
+       const auto& s = m.get< tag::sideset >();
+       if (not s.empty())
+         print.item( "Moving sideset(s) with table " + std::to_string(i),
+                     tk::parameters(s));
+       ++i;
+    }
   }
 
   // Print I/O filenames
@@ -996,11 +1008,11 @@ Transporter::need_linearsolver() const
 // *****************************************************************************
 {
   auto ale = g_inputdeck.get< tag::ale, tag::ale >();
-  auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
   bool need = false;
 
-  if (ale && (meshveltype == ctr::MeshVelocityType::FLUID ||
-              meshveltype == ctr::MeshVelocityType::HELMHOLTZ))
+  if (ale && (smoother == ctr::MeshVelocitySmootherType::LAPLACE ||
+              smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
   {
      need = true;
   }

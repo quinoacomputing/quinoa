@@ -160,11 +160,11 @@ Discretization::Discretization(
 
   // Insert ConjugrateGradients solver chare array element if needed
   if (g_inputdeck.get< tag::ale, tag::ale >()) {
-    auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-    if (meshveltype == ctr::MeshVelocityType::FLUID)
+    auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+    if (smoother == ctr::MeshVelocitySmootherType::LAPLACE)
       m_conjugategradients[ thisIndex ].        // solve for mesh velocity
         insert( Laplacian(3), m_gid, m_lid, m_nodeCommMap );
-    if (meshveltype == ctr::MeshVelocityType::HELMHOLTZ)
+    if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
       m_conjugategradients[ thisIndex ].        // solve for scalar potential
         insert( Laplacian(1), m_gid, m_lid, m_nodeCommMap );
   }
@@ -219,9 +219,7 @@ Discretization::meshvelInit(
 // \param[in] c Function to call when the BCs have been applied
 // *****************************************************************************
 {
-  auto eps = std::numeric_limits< tk::real >::epsilon();
-  m_conjugategradients[ thisIndex ].init( x, div,
-    std::abs(m_initial-1.0) < eps ? bc : decltype(bc){}, c );
+  m_conjugategradients[ thisIndex ].init( x, div, bc, c );
 }
 
 void
@@ -244,11 +242,11 @@ Discretization::meshvelSolution() const
 //! \return Solution to the Conjugate Gradients linear solve
 // *****************************************************************************
 {
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
-  if (g_inputdeck.get< tag::ale, tag::ale >() &&
-      (meshvel == ctr::MeshVelocityType::FLUID ||
-       meshvel == ctr::MeshVelocityType::HELMHOLTZ) )
+  if (g_inputdeck.get< tag::ale, tag::ale >() and
+      (smoother == ctr::MeshVelocitySmootherType::LAPLACE or
+       smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
   {
     return ConjugateGradients()->solution();
   } else {
@@ -262,11 +260,11 @@ Discretization::meshvelConv()
 //! Assess and record mesh velocity linear solver convergence
 // *****************************************************************************
 {
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
   if (g_inputdeck.get< tag::ale, tag::ale >() &&
-      (meshvel == ctr::MeshVelocityType::FLUID ||
-       meshvel == ctr::MeshVelocityType::HELMHOLTZ) )
+      (smoother == ctr::MeshVelocitySmootherType::LAPLACE or
+       smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
   {
     m_meshvel_converged &= ConjugateGradients()->converged();
   }
