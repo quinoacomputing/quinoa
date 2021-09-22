@@ -5412,6 +5412,20 @@ struct sideset_info {
 };
 using sideset = keyword< sideset_info, TAOCPP_PEGTL_STRING("sideset") >;
 
+struct fn_info {
+  static std::string name() { return "User-defined function"; }
+  static std::string shortDescription() { return
+    "Specify a discrete user-defined function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a user-defined function with discrete
+    points, listed between a fn ... end block.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+   };
+};
+using fn = keyword< fn_info, TAOCPP_PEGTL_STRING("fn") >;
+
 struct bc_dirichlet_info {
   static std::string name() { return "Dirichlet boundary condition"; }
   static std::string shortDescription() { return
@@ -5602,10 +5616,13 @@ struct bc_timedep_info {
     "Start configuration block describing time dependent boundary conditions"; }
   static std::string longDescription() { return
     R"(This keyword is used to introduce a bc_timedep ... end block, used to
-    specify the configuration for setting time dependent boundary conditions for
-    a partial differential equation. Keywords allowed in a bc_timedep ... end
-    block: )" + std::string("\'")
-    + sideset::string() + "\'. "
+    specify the configuration of time dependent boundary conditions for a
+    partial differential equation. A discrete function in time t in the form of
+    a table with 6 columns (t, pressure(t), density(t), vx(t), vy(t), vz(t)) is
+    expected inside a fn ... end block, specified within the bc_timedep ... end
+    block. Keywords allowed in a bc_timedep ... end block: )"
+    + std::string("\'") + sideset::string() + "\', "
+    + std::string("\'") + fn::string() + "\'. "
     + R"(For an example bc_timedep ... end block, see
       doc/html/inciter_example_gausshump.html.)";
   }
@@ -6864,20 +6881,6 @@ struct fntype_info {
 };
 using fntype =
   keyword< fntype_info, TAOCPP_PEGTL_STRING("fntype") >;
-
-struct fn_info {
-  static std::string name() { return "User-defined function"; }
-  static std::string shortDescription() { return
-    "Specify a discrete user-defined function"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify a user-defined function with discrete
-    points, listed between a fn ... end block.)"; }
-  struct expect {
-    using type = tk::real;
-    static std::string description() { return "real(s)"; }
-   };
-};
-using fn = keyword< fn_info, TAOCPP_PEGTL_STRING("fn") >;
 
 struct mesh_motion_info {
   static std::string name() {

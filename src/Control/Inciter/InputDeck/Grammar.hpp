@@ -439,14 +439,17 @@ namespace grm {
               Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
         }
 
-        // Error check user defined time dependent BC
+        // Error check user defined time dependent BC for this system
         const auto& tdepbc =
-          stack.template get< tag::param, eq, tag::bctimedep >();
-        //for (const auto& s : tdepbc) {
-        //  const auto& f = s.template get< tag::fn >();
-        //  if (f.empty() or f.size() % 6 != 0)
-        //    Message< Stack, ERROR, MsgKey::INCOMPLETEUSERFN>( stack, in );
-        //}
+          stack.template get< tag::param, eq, tag::bctimedep >().back();
+        // multiple time dependent BCs can be specified on different side sets
+        for (const auto& bndry : tdepbc) {
+          const auto& s = bndry.template get< tag::sideset >();
+          if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+          const auto& f = bndry.template get< tag::fn >();
+          if (f.empty() or f.size() % 6 != 0)
+            Message< Stack, ERROR, MsgKey::INCOMPLETEUSERFN>( stack, in );
+        }
       }
     }
   };
