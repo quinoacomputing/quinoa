@@ -51,8 +51,8 @@ class DiffEqStack {
 
     //! \brief Instantiate tables from which extra statistics data to be output
     //!    sampled for all selected differential equations
-    std::pair< std::vector< std::string >, std::vector< tk::Table > > tables()
-    const;
+    std::pair< std::vector< std::string >, std::vector< tk::Table<1> > >
+    tables() const;
 
     //! \brief Constant accessor to differential equation factory
     //! \return Constant reference to the internal differential equation factory
@@ -121,13 +121,13 @@ class DiffEqStack {
     //!   vector of tables associated to a differential equations systems by
     //!   type.
     template< class EqTag >
-    std::pair< std::vector< std::string >, std::vector< tk::Table > >
+    std::pair< std::vector< std::string >, std::vector< tk::Table<1> > >
     createTables( ctr::DiffEqType eq,
                   std::map< ctr::DiffEqType, ncomp_t >& cnt ) const
     {
       auto c = ++cnt[ eq ];   // count eqs
       --c;                    // used to index vectors starting with 0
-      std::vector< tk::Table > tab;
+      std::vector< tk::Table<1> > tab;
       std::vector< std::string > nam;
       const auto& ncompeq = g_inputdeck.get< tag::component, EqTag >();
       if (!ncompeq.empty()) {
