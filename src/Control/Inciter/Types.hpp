@@ -90,6 +90,14 @@ using moving_sides = tk::TaggedTuple< brigand::list<
   ,  tag::fn,      std::vector< tk::real >
 > >;
 
+//! A list of side sets moving with a user-defined function in time
+using time_dependent_bc = tk::TaggedTuple< brigand::list<
+  //! List of side sets to move
+     tag::sideset, std::vector< kw::sideset::info::expect::type >
+  //! Functions p(t), T(t), and v(t) to specify time dependent BC
+  ,  tag::fn,      std::vector< tk::real >
+> >;
+
 //! ALE mesh motion options
 using ale = tk::TaggedTuple< brigand::list<
   //! ALE on/off
@@ -270,8 +278,6 @@ using bc = tk::TaggedTuple< brigand::list<
                               kw::sideset::info::expect::type > >
   , tag::bcextrapolate,     std::vector< std::vector<
                               kw::sideset::info::expect::type > >
-  , tag::bctimedep,         std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
 > >;
 
 //! Solver coupling
@@ -366,6 +372,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::farfield_velocity, std::vector< std::vector<
                               kw::velocity::info::expect::type > >
   , tag::bc,            bc
+  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::sponge,        SpongeParameters
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage

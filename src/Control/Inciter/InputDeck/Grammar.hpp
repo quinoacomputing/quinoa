@@ -439,8 +439,14 @@ namespace grm {
               Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
         }
 
+        // Error check user defined time dependent BC
         const auto& tdepbc =
-          stack.template get< tag::param, eq, tag::bc, tag::bctimedep >();
+          stack.template get< tag::param, eq, tag::bctimedep >();
+        //for (const auto& s : tdepbc) {
+        //  const auto& f = s.template get< tag::fn >();
+        //  if (f.empty() or f.size() % 6 != 0)
+        //    Message< Stack, ERROR, MsgKey::INCOMPLETEUSERFN>( stack, in );
+        //}
       }
     }
   };
@@ -1429,6 +1435,30 @@ namespace deck {
                                         tk::grm::check_vector,
                                         eq, tag::bc, param > > > {};
 
+  //! Match user-defined function as a discrete list of real numbers
+  template< class target, template< class... > class insert, class tag,
+    class... tags >
+  struct user_fn :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::fn >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+             tk::grm::scan< tk::grm::number,
+               insert< target, tag, tags... > > > > {};
+
+  //! User defined time dependent BC bc_timedep...end block
+  template< class eq >
+  struct timedep_bc :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::bc_timedep >::pegtl_string >,
+           tk::grm::start_vector_back< tag::param, eq, tag::bctimedep >,
+           tk::grm::block< use< kw::end >,
+             user_fn< tag::fn, tk::grm::Back_back_store_back, tag::param, eq,
+               tag::bctimedep >,
+             pegtl::if_must< tk::grm::vector< use< kw::sideset >,
+               tk::grm::Back_back_store_back< tag::sideset, tag::param, eq,
+                 tag::bctimedep >,
+               use< kw::end > > > > > {};
+
   //! Stagnation boundary conditions block
   template< class eq, class bc, class kwbc >
   struct bc_spec :
@@ -1660,6 +1690,7 @@ namespace deck {
            scan_eq< use< kw::compflow >, tag::compflow >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::ic, tag::box >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::material >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::bctimedep >,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
                                             use< kw::physics >,
@@ -1723,8 +1754,7 @@ namespace deck {
                                         tag::bcfarfield >,
                            bc< kw::bc_extrapolate, tag::compflow,
                                tag::bcextrapolate >,
-                           bc< kw::bc_timedep, tag::compflow,
-                               tag::bctimedep >
+                           timedep_bc< tag::compflow >
                            >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
@@ -1876,15 +1906,6 @@ namespace deck {
            tk::grm::check_amr_errors > {};
 
 
-  //! Match user-defined function as a discrete list of real numbers
-  template< class target, class tag, class... tags >
-  struct user_fn :
-         pegtl::if_must<
-           tk::grm::readkw< use< kw::fn >::pegtl_string >,
-           tk::grm::block< use< kw::end >,
-             tk::grm::scan< tk::grm::number,
-               tk::grm::Back_store_back< target, tag, tags... > > > > {};
-
   //! Arbitrary-Lagrangian-Eulerian (ALE) move...end block
   struct moving_sides :
          pegtl::if_must<
@@ -1898,7 +1919,7 @@ namespace deck {
                                             tk::ctr::UserTable,
                                             tag::ale, tag::move >,
                 pegtl::alpha >,
-             user_fn< tag::fn, tag::ale, tag::move >,
+             user_fn< tag::fn, tk::grm::Back_store_back, tag::ale, tag::move >,
              pegtl::if_must< tk::grm::vector< use< kw::sideset >,
                tk::grm::Back_store_back< tag::sideset, tag::ale, tag::move >,
                use< kw::end > > > > > {};
