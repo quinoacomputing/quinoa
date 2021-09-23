@@ -308,34 +308,36 @@ ALECG::queryBnd()
 
   // Prepare unique set of time dependent BC nodes
   const auto& timedep =
-    g_inputdeck.template get< tag::param, tag::compflow, tag::bctimedep >()[0];
-  m_timedepbcnodes.resize(timedep.size());
-  m_timedepbcFn.resize(timedep.size());
-  std::size_t ib=0;
-  for (const auto& bndry : timedep) {
-    std::unordered_set< std::size_t > nodes;
-    for (const auto& s : bndry.template get< tag::sideset >()) {
-      auto k = m_bface.find( std::stoi(s) );
-      if (k != end(m_bface)) {
-        for (auto f : k->second) {      // face ids on side set
-          nodes.insert( m_triinpoel[f*3+0] );
-          nodes.insert( m_triinpoel[f*3+1] );
-          nodes.insert( m_triinpoel[f*3+2] );
+    g_inputdeck.template get< tag::param, tag::compflow, tag::bctimedep >();
+  if (!timedep.empty()) {
+    m_timedepbcnodes.resize(timedep[0].size());
+    m_timedepbcFn.resize(timedep[0].size());
+    std::size_t ib=0;
+    for (const auto& bndry : timedep[0]) {
+      std::unordered_set< std::size_t > nodes;
+      for (const auto& s : bndry.template get< tag::sideset >()) {
+        auto k = m_bface.find( std::stoi(s) );
+        if (k != end(m_bface)) {
+          for (auto f : k->second) {      // face ids on side set
+            nodes.insert( m_triinpoel[f*3+0] );
+            nodes.insert( m_triinpoel[f*3+1] );
+            nodes.insert( m_triinpoel[f*3+2] );
+          }
         }
       }
-    }
-    m_timedepbcnodes[ib].insert( begin(nodes), end(nodes) );
+      m_timedepbcnodes[ib].insert( begin(nodes), end(nodes) );
 
-    // Store user defined discrete function in time. This is done in the same
-    // loop as the BC nodes, so that the indices for the two vectors
-    // m_timedepbcnodes and m_timedepbcFn are consistent with each other
-    auto fn = bndry.template get< tag::fn >();
-    for (std::size_t ir=0; ir<fn.size()/6; ++ir) {
-      for (std::size_t ic=0; ic<6; ++ic) {
-        m_timedepbcFn[ib][ir][ic] = fn[ir*6+ic];
+      // Store user defined discrete function in time. This is done in the same
+      // loop as the BC nodes, so that the indices for the two vectors
+      // m_timedepbcnodes and m_timedepbcFn are consistent with each other
+      auto fn = bndry.template get< tag::fn >();
+      for (std::size_t ir=0; ir<fn.size()/6; ++ir) {
+        for (std::size_t ic=0; ic<6; ++ic) {
+          m_timedepbcFn[ib][ir][ic] = fn[ir*6+ic];
+        }
       }
+      ++ib;
     }
-    ++ib;
   }
 
   Assert(m_timedepbcFn.size() == m_timedepbcnodes.size(), "Incorrect number of "
