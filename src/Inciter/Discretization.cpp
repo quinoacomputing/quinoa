@@ -23,6 +23,7 @@
 #include "Around.hpp"
 #include "QuinoaBuildConfig.hpp"
 #include "ConjugateGradients.hpp"
+#include "ALE.hpp"
 
 #ifdef HAS_EXAM2M
   #include "Controller.hpp"
@@ -42,6 +43,7 @@ Discretization::Discretization(
   std::size_t meshid,
   const std::vector< CProxy_Discretization >& disc,
   const CProxy_DistFCT& fctproxy,
+  const CProxy_ALE& aleproxy,
   const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
@@ -66,7 +68,7 @@ Discretization::Discretization(
   m_dtn( m_dt ),
   m_nvol( 0 ),
   m_fct( fctproxy ),
-  m_conjugategradients( conjugategradientsproxy ),
+  m_ale( aleproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
   m_el( el ),     // fills m_inpoel, m_gid, m_lid
@@ -93,6 +95,7 @@ Discretization::Discretization(
 //! \param[in] meshid Mesh ID
 //! \param[in] disc All Discretization proxies (one per mesh)
 //! \param[in] fctproxy Distributed FCT proxy
+//! \param[in] aleproxy Distributed ALE proxy
 //! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
 //!   solver proxy
 //! \param[in] transporter Host (Transporter) proxy
@@ -159,15 +162,11 @@ Discretization::Discretization(
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   // Insert ConjugrateGradients solver chare array element if needed
-  if (g_inputdeck.get< tag::ale, tag::ale >()) {
-    auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
-    if (smoother == ctr::MeshVelocitySmootherType::LAPLACE)
-      m_conjugategradients[ thisIndex ].        // solve for mesh velocity
-        insert( Laplacian(3), m_gid, m_lid, m_nodeCommMap );
-    if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
-      m_conjugategradients[ thisIndex ].        // solve for scalar potential
-        insert( Laplacian(1), m_gid, m_lid, m_nodeCommMap );
-  }
+  if (g_inputdeck.get< tag::ale, tag::ale >())
+    m_ale[ thisIndex ].insert( g_inputdeck.get< tag::ale, tag::smoother >(),
+                               conjugategradientsproxy,
+                               m_coord, m_inpoel,
+                               m_gid, m_lid, m_nodeCommMap );
 
   // Register mesh with mesh-transfer lib
   if (m_disc.size() == 1 || m_transfer.empty()) {
@@ -219,7 +218,7 @@ Discretization::meshvelInit(
 // \param[in] c Function to call when the BCs have been applied
 // *****************************************************************************
 {
-  m_conjugategradients[ thisIndex ].init( x, div, bc, c );
+  m_ale[ thisIndex ].ckLocal()->init( x, div, bc, c );
 }
 
 void
@@ -229,7 +228,7 @@ Discretization::meshvelSolve( CkCallback c )
 // \param[in] c Function to call when the solve is converged
 // *****************************************************************************
 {
-  m_conjugategradients[ thisIndex ].
+  m_ale[ thisIndex ].ckLocal()->
     solve( g_inputdeck.get< tag::ale, tag::maxit >(),
            g_inputdeck.get< tag::ale, tag::tolerance >(),
            c );
@@ -248,7 +247,7 @@ Discretization::meshvelSolution() const
       (smoother == ctr::MeshVelocitySmootherType::LAPLACE or
        smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
   {
-    return ConjugateGradients()->solution();
+    return m_ale[ thisIndex ].ckLocal()->solution();
   } else {
     return {};
   }
@@ -266,62 +265,8 @@ Discretization::meshvelConv()
       (smoother == ctr::MeshVelocitySmootherType::LAPLACE or
        smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
   {
-    m_meshvel_converged &= ConjugateGradients()->converged();
+    m_meshvel_converged &= m_ale[ thisIndex ].ckLocal()->converged();
   }
-}
-
-
-std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
-Discretization::Laplacian( std::size_t ncomp ) const
-// *****************************************************************************
-// Generate {A,x,b} for Laplacian mesh velocity smoother
-//! \param[in] ncomp Number of scalar components
-//! \return {A,x,b} with a Laplacian, unknown, and rhs initialized with zeros
-//! \see Waltz, et al. "A three-dimensional finite element arbitrary
-//!   Lagrangian-Eulerian method for shock hydrodynamics on unstructured
-//!   grids", Computers& Fluids, 2013, and Bakosi, et al. "Improved ALE mesh
-//!   velocities for complex flows, International Journal for Numerical Methods
-//!   in Fluids, 2017.
-// *****************************************************************************
-{
-  tk::CSR A( ncomp, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
-
-  const auto& X = m_coord[0];
-  const auto& Y = m_coord[1];
-  const auto& Z = m_coord[2];
-
-  // fill matrix with Laplacian
-  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
-    // access node IDs
-    const std::array< std::size_t, 4 >
-      N{{ m_inpoel[e*4+0], m_inpoel[e*4+1], m_inpoel[e*4+2], m_inpoel[e*4+3] }};
-    // compute element Jacobi determinant
-    const std::array< tk::real, 3 >
-      ba{{ X[N[1]]-X[N[0]], Y[N[1]]-Y[N[0]], Z[N[1]]-Z[N[0]] }},
-      ca{{ X[N[2]]-X[N[0]], Y[N[2]]-Y[N[0]], Z[N[2]]-Z[N[0]] }},
-      da{{ X[N[3]]-X[N[0]], Y[N[3]]-Y[N[0]], Z[N[3]]-Z[N[0]] }};
-    const auto J = tk::triple( ba, ca, da );        // J = 6V
-    Assert( J > 0, "Element Jacobian non-positive" );
-
-    // shape function derivatives, nnode*ndim [4][3]
-    std::array< std::array< tk::real, 3 >, 4 > grad;
-    grad[1] = tk::crossdiv( ca, da, J );
-    grad[2] = tk::crossdiv( da, ba, J );
-    grad[3] = tk::crossdiv( ba, ca, J );
-    for (std::size_t i=0; i<3; ++i)
-      grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-
-    for (std::size_t a=0; a<4; ++a)
-      for (std::size_t k=0; k<3; ++k)
-         for (std::size_t b=0; b<4; ++b)
-           for (std::size_t i=0; i<ncomp; ++i)
-             A(N[a],N[b],i) -= J/6 * grad[a][k] * grad[b][k];
-  }
-
-  auto npoin = m_gid.size();
-  std::vector< tk::real > b(npoin*ncomp,0.0), x(npoin*ncomp,0.0);
-
-  return { std::move(A), std::move(x), std::move(b) };
 }
 
 void

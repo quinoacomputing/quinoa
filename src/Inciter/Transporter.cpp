@@ -540,6 +540,7 @@ Transporter::createPartitioner()
   // Create (discretization) Scheme chare worker arrays for all meshes
   for ([[maybe_unused]] const auto& filename : m_input)
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
+                           g_inputdeck.get< tag::ale, tag::ale >(),
                            need_linearsolver() );
 
   ErrChk( !m_input.empty(), "No input mesh" );
@@ -1043,6 +1044,9 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
 
   if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DiagCG)
     m_scheme[meshid].fct().doneInserting();
+
+  if (g_inputdeck.get< tag::ale, tag::ale >())
+    m_scheme[meshid].ale().doneInserting();
 
   if (need_linearsolver())
     m_scheme[meshid].conjugategradients().doneInserting();

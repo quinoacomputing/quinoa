@@ -10,8 +10,8 @@
     conjugate gradients linear solver.
 
     There are a potentially large number of ConjugateGradients Charm++ chares.
-    Each ConjugateGradient chare gets a chunk of the full load (due to partiting
-    the mesh on which the solve is performed.
+    Each ConjugateGradient chare gets a chunk of the full load, due to partiting
+    the mesh, on which the solve is performed.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm

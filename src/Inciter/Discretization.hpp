@@ -67,6 +67,7 @@ class Discretization : public CBase_Discretization {
         std::size_t meshid,
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
+        const CProxy_ALE& aleproxy,
         const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
@@ -245,13 +246,6 @@ class Discretization : public CBase_Discretization {
       return m_fct[ thisIndex ].ckLocal();
     }
 
-    //! Access bound ConjugateGradients class pointer
-    tk::ConjugateGradients* ConjugateGradients() const {
-      Assert( m_conjugategradients[ thisIndex ].ckLocal() != nullptr,
-              "ConjugateGradients ckLocal() null" );
-      return m_conjugategradients[ thisIndex ].ckLocal();
-    }
-
     //! Access Discretization proxy for a mesh
     CProxy_Discretization coupled( std::size_t meshid ) const {
       Assert( meshid < m_disc.size(),
@@ -373,9 +367,6 @@ class Discretization : public CBase_Discretization {
     //! Find elements along our mesh chunk boundary
     std::vector< std::size_t > bndel() const;
 
-    //! Query if ALE mesh motion is enabled by the user
-    bool ALE() const;
-
     //! Decide if field output iteration count interval is hit
     bool fielditer() const;
 
@@ -414,7 +405,7 @@ class Discretization : public CBase_Discretization {
       p | m_dtn;
       p | m_nvol;
       p | m_fct;
-      p | m_conjugategradients;
+      p | m_ale;
       p | m_transporter;
       p | m_meshwriter;
       p | m_refiner;
@@ -500,8 +491,8 @@ class Discretization : public CBase_Discretization {
     std::size_t m_nvol;
     //! Distributed FCT proxy
     CProxy_DistFCT m_fct;
-    //! Distributed conjugrate gradients solver proxy
-    tk::CProxy_ConjugateGradients m_conjugategradients;
+    //! Distributed ALE proxy
+    CProxy_ALE m_ale;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
     //! Mesh writer proxy
