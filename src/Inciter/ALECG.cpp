@@ -99,6 +99,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_symbctri(),
   m_spongenodes(),
   m_timedepbcnodes(),
+  m_timedepbcFn(),
   m_stage( 0 ),
   m_boxnodes(),
   m_edgenode(),
@@ -309,7 +310,7 @@ ALECG::queryBnd()
   const auto& timedep =
     g_inputdeck.template get< tag::param, tag::compflow, tag::bctimedep >()[0];
   m_timedepbcnodes.resize(timedep.size());
-  m_userdefTimedepFn.resize(timedep.size());
+  m_timedepbcFn.resize(timedep.size());
   std::size_t ib=0;
   for (const auto& bndry : timedep) {
     std::unordered_set< std::size_t > nodes;
@@ -327,15 +328,18 @@ ALECG::queryBnd()
 
     // Store user defined discrete function in time. This is done in the same
     // loop as the BC nodes, so that the indices for the two vectors
-    // m_timedepbcnodes and m_userdefTimedepFn are consistent with each other
+    // m_timedepbcnodes and m_timedepbcFn are consistent with each other
     auto fn = bndry.template get< tag::fn >();
     for (std::size_t ir=0; ir<fn.size()/6; ++ir) {
       for (std::size_t ic=0; ic<6; ++ic) {
-        m_userdefTimedepFn[ib][ir][ic] = fn[ir*6+ic];
+        m_timedepbcFn[ib][ir][ic] = fn[ir*6+ic];
       }
     }
     ++ib;
   }
+
+  Assert(m_timedepbcFn.size() == m_timedepbcnodes.size(), "Incorrect number of "
+    "time dependent functions.");
 
   // Prepare unique sets of boundary nodes at which ALE moves the boundary
   // based on user-defined functions.
@@ -888,6 +892,10 @@ ALECG::BC()
   // Apply sponge conditions
   for (const auto& eq : g_cgpde)
     eq.sponge( m_u, coord, m_spongenodes );
+
+  // Apply user defined time dependent BCs
+  for (const auto& eq : g_cgpde)
+    eq.timedepbc( Disc()->T(), m_u, m_timedepbcnodes, m_timedepbcFn );
 
   volumetric( m_u, Disc()->Vol() );
 }

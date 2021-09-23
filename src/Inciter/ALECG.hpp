@@ -264,7 +264,7 @@ class ALECG : public CBase_ALECG {
       p | m_symbctri;
       p | m_spongenodes;
       p | m_timedepbcnodes;
-      p | m_userdefTimedepFn;
+      p | m_timedepbcFn;
       p | m_stage;
       p | m_boxnodes;
       p | m_edgenode;
@@ -402,7 +402,7 @@ class ALECG : public CBase_ALECG {
     //    BCs associated with (index in vector) the number of distinct time
     //    dependent BCs specified. This index is the same as the index in
     //    m_timedepbcnodes.
-    std::vector< tk::Table<6> > m_userdefTimedepFn;
+    std::vector< tk::Table<5> > m_timedepbcFn;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Mesh node ids at which user-defined box ICs are defined (multiple boxes)
