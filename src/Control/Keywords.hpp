@@ -5620,7 +5620,9 @@ struct bc_timedep_info {
     partial differential equation. A discrete function in time t in the form of
     a table with 6 columns (t, pressure(t), density(t), vx(t), vy(t), vz(t)) is
     expected inside a fn ... end block, specified within the bc_timedep ... end
-    block. Keywords allowed in a bc_timedep ... end block: )"
+    block. Multiple such bc_timedep blocks can be specified for different
+    time dependent BCs on different groups of side sets. Keywords allowed in a
+    bc_timedep ... end block: )"
     + std::string("\'") + sideset::string() + "\', "
     + std::string("\'") + fn::string() + "\'. "
     + R"(For an example bc_timedep ... end block, see

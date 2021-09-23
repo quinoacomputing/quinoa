@@ -98,6 +98,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_meshvelsymbcnodes(),
   m_symbctri(),
   m_spongenodes(),
+  m_timedepbcnodes(),
   m_stage( 0 ),
   m_boxnodes(),
   m_edgenode(),
@@ -303,6 +304,38 @@ ALECG::queryBnd()
   }
   for (const auto& [s,nodes] : meshvelsymbcnodes)
     m_meshvelsymbcnodes.insert( begin(nodes), end(nodes) );
+
+  // Prepare unique set of time dependent BC nodes
+  const auto& timedep =
+    g_inputdeck.template get< tag::param, tag::compflow, tag::bctimedep >()[0];
+  m_timedepbcnodes.resize(timedep.size());
+  m_userdefTimedepFn.resize(timedep.size());
+  std::size_t ib=0;
+  for (const auto& bndry : timedep) {
+    std::unordered_set< std::size_t > nodes;
+    for (const auto& s : bndry.template get< tag::sideset >()) {
+      auto k = m_bface.find( std::stoi(s) );
+      if (k != end(m_bface)) {
+        for (auto f : k->second) {      // face ids on side set
+          nodes.insert( m_triinpoel[f*3+0] );
+          nodes.insert( m_triinpoel[f*3+1] );
+          nodes.insert( m_triinpoel[f*3+2] );
+        }
+      }
+    }
+    m_timedepbcnodes[ib].insert( begin(nodes), end(nodes) );
+
+    // Store user defined discrete function in time. This is done in the same
+    // loop as the BC nodes, so that the indices for the two vectors
+    // m_timedepbcnodes and m_userdefTimedepFn are consistent with each other
+    auto fn = bndry.template get< tag::fn >();
+    for (std::size_t ir=0; ir<fn.size()/6; ++ir) {
+      for (std::size_t ic=0; ic<6; ++ic) {
+        m_userdefTimedepFn[ib][ir][ic] = fn[ir*6+ic];
+      }
+    }
+    ++ib;
+  }
 
   // Prepare unique sets of boundary nodes at which ALE moves the boundary
   // based on user-defined functions.
