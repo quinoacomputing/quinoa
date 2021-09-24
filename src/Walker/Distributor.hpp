@@ -119,7 +119,7 @@ class Distributor : public CBase_Distributor {
     std::vector< tk::TriPDF > m_centpdf;        //!< Central trivariate PDFs
     //! Names of and tables to sample and output to statistics file
     std::pair< std::vector< std::string >,
-               std::vector< tk::Table > > m_tables;
+               std::vector< tk::Table<1> > > m_tables;
     //! Map used to lookup moments
     std::map< tk::ctr::Product, tk::real > m_moments;
 

@@ -275,7 +275,7 @@ class Velocity {
     //! Selected inverse hydrodynamics time scale (if used)
     //! \details This is only used if the coefficients policy is
     //!   VelocityCoeffHydroTimeScale. See constructor.
-    tk::Table m_hts;
+    tk::Table<1> m_hts;
 
     //! Coefficients
     kw::sde_c0::info::expect::type m_c0;

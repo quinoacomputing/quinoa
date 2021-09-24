@@ -332,7 +332,7 @@ Distributor::outStat()
   auto extra = [this]() -> std::vector< tk::real > {
     std::vector< tk::real > x( m_tables.second.size() );
     std::size_t j = 0;
-    for (const auto& t : m_tables.second) x[ j++ ] = tk::sample(m_t,t);
+    for (const auto& t : m_tables.second) x[ j++ ] = tk::sample<1>(m_t,t)[0];
     return x;
   };
 

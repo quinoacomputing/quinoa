@@ -1775,15 +1775,40 @@ struct dvcfl_info {
 };
 using dvcfl = keyword< dvcfl_info, TAOCPP_PEGTL_STRING("dvcfl") >;
 
+struct vortmult_info {
+  static std::string name() { return "vortmult"; }
+  static std::string shortDescription() { return
+    "Configure vorticity multiplier for ALE mesh velocity"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to configure the multiplier for the vorticity term
+    in the mesh velocity smoother (mesh_velocity=fluid) or for the potential
+    gradient for the Helmholtz mesh velocity (mesh_velocity=helmholtz) for ALE
+    mesh motion. For 'fluid' this is coefficient c2 in Eq.(36) of Waltz,
+    Morgan, Canfield, Charest, Risinger, Wohlbier, A three-dimensional finite
+    element arbitrary Lagrangian–Eulerian method for shock hydrodynamics on
+    unstructured grids, Computers & Fluids, 2014, and for 'helmholtz', this is
+    coefficient a1 in Eq.(23) of Bakosi, Waltz, Morgan, Improved ALE mesh
+    velocities for complex flows, International Journal for Numerical Methods
+    in Fluids, 2017. )";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static constexpr type upper = 1.0;
+    static std::string description() { return "real"; }
+  };
+};
+using vortmult = keyword< vortmult_info, TAOCPP_PEGTL_STRING("vortmult") >;
+
 struct meshvel_maxit_info {
   static std::string name() {
-    return "mesh velocity smoother linear solve max number of iterations"; }
+    return "mesh velocity linear solve max number of iterations"; }
   static std::string shortDescription() { return
-    "Set the max number of iterations for the mesh velocity"
-    " smoother linear solve for ALE"; }
+    "Set the max number of iterations for the mesh velocity linear solve "
+    "for ALE"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the maximum number of linear solver
-    iterations taken to converge the mesh velocity smoother for in
+    iterations taken to converge the mesh velocity linear solve in
     arbitrary-Lagrangian-Eulerian (ALE) calculations. See also J. Waltz,
     N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, A
     three-dimensional finite element arbitrary Lagrangian–Eulerian method for
@@ -1800,12 +1825,12 @@ using meshvel_maxit =
 
 struct meshvel_tolerance_info {
   static std::string name() {
-    return "mesh velocity smoother linear solver tolerance "; }
+    return "mesh velocity linear solve tolerance "; }
   static std::string shortDescription() { return
-    "Set the tolerance for the mesh velocity smoother linear solve for ALE"; }
+    "Set the tolerance for the mesh velocity linear solve for ALE"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the tolerance for the linear solver
-    to converge the mesh velocity smoother for in
+    R"(This keyword is used to specify the tolerance to converge the mesh
+    velocity linear solve for in
     arbitrary-Lagrangian-Eulerian (ALE) calculations. See also J. Waltz,
     N.R. Morgan, T.R. Canfield, M.R.J. Charest, L.D. Risinger, J.G. Wohlbier, A
     three-dimensional finite element arbitrary Lagrangian–Eulerian method for
@@ -2710,7 +2735,7 @@ struct velocity_info {
   static std::string longDescription() { return
     R"(This keyword is used to configure a velocity vector, used for, e.g.,
     boundary or initial conditions or as a keyword that selects velocity in some
-    other context-specific way.)";
+    other context-specific way, e.g., 'velocity' as opposed to 'position'.)";
   }
   struct expect {
     using type = tk::real;
@@ -2718,6 +2743,17 @@ struct velocity_info {
   };
 };
 using velocity = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
+
+struct acceleration_info {
+  static std::string name() { return "acceleration"; }
+  static std::string shortDescription() { return "Specify acceleration"; }
+  static std::string longDescription() { return
+    R"(This keyword is used as a keyword that selects acceleration in some
+    other context-specific way, e.g., as opposed to 'velocity' or 'position'.)";
+  }
+};
+using acceleration =
+  keyword< acceleration_info, TAOCPP_PEGTL_STRING("acceleration") >;
 
 struct materialid_info {
   static std::string name() { return "materialid"; }
@@ -3874,7 +3910,10 @@ struct position_info {
     + R"(For an example position ... end block, see
     doc/html/walker_example_position.html. (2) To specify a dependent
     variable (by a character) used to couple a differential equation system, in
-    which the 'position' keyword appears) to another labeled by a 'depvar'.)";
+    which the 'position' keyword appears) to another labeled by a 'depvar'.
+    Note that this keyword can also be used as a keyword that selects position
+    in some other context-specific way, e.g., 'position' as opposed to
+    'velocity'.)";
   }
 };
 using position = keyword< position_info, TAOCPP_PEGTL_STRING("position") >;
@@ -3937,7 +3976,7 @@ struct velocitysde_info {
     which the 'velocity' keyword appears) to another labeled by a 'depvar'.)";
   }
 };
-using velocitysde = keyword< velocity_info, TAOCPP_PEGTL_STRING("velocity") >;
+using velocitysde = keyword< velocitysde_info, TAOCPP_PEGTL_STRING("velocity") >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }
@@ -4614,17 +4653,17 @@ struct user_defined_info {
   static std::string shortDescription() { return
     "Select user-defined specification for a problem"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select the user-define specification for a
-    problem to be solved by a partial differential equation. The initial and
-    boundary conditions are expected to be specified elsewhere in the input file
-    to set up the problem. Example: "problem user_defined". This the default
-    problem type.)"; }
+    R"(This keyword is used to select the user-defined specification for an
+    option. This could be a 'problem' to be solved by a partial differential
+    equation, but can also be a 'user-defined' mesh velocity specification for
+    ALE mesh motion.)"; }
   struct expect {
     static std::string description() { return "string"; }
   };
 };
 
-using user_defined = keyword< user_defined_info, TAOCPP_PEGTL_STRING("user_defined") >;
+using user_defined =
+  keyword< user_defined_info, TAOCPP_PEGTL_STRING("user_defined") >;
 
 struct shear_diff_info {
   using code = Code< S >;
@@ -5974,6 +6013,19 @@ struct partitioning_info {
 };
 using partitioning = keyword< partitioning_info, TAOCPP_PEGTL_STRING("partitioning") >;
 
+struct move_info {
+  static std::string name() { return "move"; }
+  static std::string shortDescription() { return
+    "Start configuration block configuring surface movement"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a move ... end block, used to
+    configure surface movement for ALE simulations. Keywords allowed
+    in a move ... end block: )" + std::string("\'")
+    + sideset::string() + "\'.";
+  }
+};
+using move = keyword< move_info, TAOCPP_PEGTL_STRING("move") >;
+
 struct amr_uniform_info {
   using code = Code< u >;
   static std::string name() { return "uniform refine"; }
@@ -6720,6 +6772,16 @@ struct fluid_info {
 };
 using fluid = keyword< fluid_info, TAOCPP_PEGTL_STRING("fluid") >;
 
+struct laplace_info {
+  static std::string name() { return "Laplace"; }
+  static std::string shortDescription() { return
+    "Select the Laplace mesh velocity smoother for ALE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the 'Laplace' mesh velocity smoother for
+       Arbitrary-Lagrangian-Eulerian (ALE) mesh motion.)"; }
+};
+using laplace = keyword< laplace_info, TAOCPP_PEGTL_STRING("laplace") >;
+
 struct helmholtz_info {
   static std::string name() { return "Helmholtz"; }
   static std::string shortDescription() { return
@@ -6743,15 +6805,97 @@ struct meshvelocity_info {
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
-      return '\'' + none::string() + "\' | \'"
-                  + sine::string() + "\' | \'"
+      return '\'' + sine::string() + "\' | \'"
                   + fluid::string() + "\' | \'"
-                  + helmholtz::string() + '\'';
+                  + user_defined::string() + '\'';
     }
   };
 };
 using meshvelocity =
   keyword< meshvelocity_info, TAOCPP_PEGTL_STRING("mesh_velocity") >;
+
+struct smoother_info {
+  static std::string name() { return "Smoother"; }
+  static std::string shortDescription() { return
+    "Select mesh velocity smoother"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select a mesh velocity smoother option, used for
+       Arbitrary-Lagrangian-Eulerian (ALE) mesh motion.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + none::string() + "\' | \'"
+                  + laplace::string() + "\' | \'"
+                  + helmholtz::string() + '\'';
+    }
+  };
+};
+using smoother =
+  keyword< smoother_info, TAOCPP_PEGTL_STRING("smoother") >;
+
+struct fntype_info {
+  static std::string name() { return "User-defined function type"; }
+  static std::string shortDescription() { return
+    "Select how a user-defined function is interpreted"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select how a user-defined function should be
+    interpreted.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+   };
+};
+using fntype =
+  keyword< fntype_info, TAOCPP_PEGTL_STRING("fntype") >;
+
+struct fn_info {
+  static std::string name() { return "User-defined function"; }
+  static std::string shortDescription() { return
+    "Specify a discrete user-defined function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a user-defined function with discrete
+    points, listed between a fn ... end block.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+   };
+};
+using fn = keyword< fn_info, TAOCPP_PEGTL_STRING("fn") >;
+
+struct mesh_motion_info {
+  static std::string name() {
+    return "Mesh velocity dimensions allowed to change in ALE"; }
+  static std::string shortDescription() { return "Specify a list of scalar "
+    "dimension indices that are allowed to move in ALE calculations"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a list of integers (0, 1, or 2) whose
+    coordinate directions corresponding to x, y, or z are allowed to move with
+    the mesh velocity in ALE calculations. Example: 'mesh_motion 0 1 end', which
+    means disallow mesh motion in the z coordinate direction, useful for 2D
+    problems in x-y.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static std::string description() { return "integers"; }
+  };
+};
+using mesh_motion =
+  keyword< mesh_motion_info, TAOCPP_PEGTL_STRING("mesh_motion") >;
+
+struct meshforce_info {
+  static std::string name() { return "Mesh force"; }
+  static std::string shortDescription() { return
+    R"(Set ALE mesh force model parameter(s))"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a mesh force model for ALE. Example: "mesh_force 1.0 2.0 3.0
+    4.0 end". The length of the vector must exactly 4. Everything else is an
+    error.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using meshforce = keyword< meshforce_info,  TAOCPP_PEGTL_STRING("mesh_force") >;
 
 struct ale_info {
   static std::string name() { return "ALE"; }
@@ -6761,6 +6905,12 @@ struct ale_info {
     R"(This keyword is used to introduce the ale ... end block, used to
     configure arbitrary Lagrangian-Eulerian (ALE) mesh movement. Keywords
     allowed in this block: )" + std::string("\'")
+    + vortmult::string() + "\' | \'"
+    + meshvel_maxit::string() + "\' | \'"
+    + meshvel_tolerance::string() + "\' | \'"
+    + bc_dirichlet::string() + "\' | \'"
+    + bc_sym::string() + "\' | \'"
+    + meshforce::string() + "\' | \'"
     + meshvelocity::string() + "\'.";
   }
 };

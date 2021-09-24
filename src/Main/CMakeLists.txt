@@ -54,9 +54,7 @@ endif()
 if (ENABLE_INCITER)
   set(TestError "../../tests/unit/Inciter/AMR/TestError.cpp")
   set(TestScheme "../../tests/unit/Inciter/TestScheme.cpp")
-  set(TestVorticity "../../tests/unit/Inciter/ALE/TestVorticity.cpp")
   set(MESHREFINEMENT "MeshRefinement")
-  set(MESHMOTION "MeshMotion")
 endif()
 
 # Configure executable targets

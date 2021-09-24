@@ -72,7 +72,7 @@ namespace walker {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table prod_A005H {
+const tk::Table<1> prod_A005H {
   // time, P/e = (kdot + eps) / eps
   { 0.463557, 35.0019 },
   { 0.871389, 30.9944 },
@@ -347,7 +347,7 @@ const tk::Table prod_A005H {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table prod_A005S {
+const tk::Table<1> prod_A005S {
   // time, P/e = (kdot + eps) / eps
   { 0.463557, 38.1733 },
   { 0.89665, 32.7881 },
@@ -963,7 +963,7 @@ const tk::Table prod_A005S {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table prod_A005L {
+const tk::Table<1> prod_A005L {
   // time, P/e = (kdot + eps) / eps
   { 0.463557, 36.8638 },
   { 0.885535, 32.1119 },
@@ -1251,7 +1251,7 @@ const tk::Table prod_A005L {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table prod_A05H {
+const tk::Table<1> prod_A05H {
   // time, P/e = (kdot + eps) / eps
   { 0.2, 9.94466 },
   { 0.4, 9.70196 },
@@ -1488,7 +1488,7 @@ const tk::Table prod_A05H {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table prod_A05S {
+const tk::Table<1> prod_A05S {
   // time, P/e = (kdot + eps) / eps
   { 0.2, 11.9489 },
   { 0.4, 12.0282 },
@@ -1954,7 +1954,7 @@ const tk::Table prod_A05S {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table prod_A05L {
+const tk::Table<1> prod_A05L {
   // time, P/e = (kdot + eps) / eps
   { 0.2, 13.4295 },
   { 0.4, 13.4768 },
@@ -2135,7 +2135,7 @@ const tk::Table prod_A05L {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table prod_A075H {
+const tk::Table<1> prod_A075H {
   // time, P/e = (kdot + eps) / eps
   { 0.2, 4.7468 },
   { 0.4, 5.98441 },
@@ -2311,7 +2311,7 @@ const tk::Table prod_A075H {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table prod_A075S {
+const tk::Table<1> prod_A075S {
   // time, P/e = (kdot + eps) / eps
   { 0.2, 9.02514 },
   { 0.4, 6.14759 },
@@ -2979,7 +2979,7 @@ const tk::Table prod_A075S {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table prod_A075L {
+const tk::Table<1> prod_A075L {
   // time, P/e = (kdot + eps) / eps
   { 0.2, 8.69384 },
   { 0.4, 7.74094 },

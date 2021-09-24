@@ -62,7 +62,7 @@ namespace walker {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table invhts_eq_A005H {
+const tk::Table<1> invhts_eq_A005H {
   // time, eps/k
   //{ 0, 0.607053 },
   { 0.463557, 0.0634331 },
@@ -333,7 +333,7 @@ const tk::Table invhts_eq_A005H {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table invhts_eq_A005S {
+const tk::Table<1> invhts_eq_A005S {
   // time, eps/k
   //{ 0, 0.599926 },
   { 0.463557, 0.0580222 },
@@ -946,7 +946,7 @@ const tk::Table invhts_eq_A005S {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table invhts_eq_A005L {
+const tk::Table<1> invhts_eq_A005L {
   // time, eps/k
   //{ 0, 0.602732 },
   { 0.463557, 0.0601401 },
@@ -1231,7 +1231,7 @@ const tk::Table invhts_eq_A005L {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table invhts_eq_A05H {
+const tk::Table<1> invhts_eq_A05H {
   // time, eps/k
   //{ 0, 4.41559 },
   { 0.2, 0.532021 },
@@ -1415,7 +1415,7 @@ const tk::Table invhts_eq_A05H {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table invhts_eq_A05S {
+const tk::Table<1> invhts_eq_A05S {
   // time, eps/k
   //{ 0, 4.2183 },
   { 0.2, 0.433829 },
@@ -1648,7 +1648,7 @@ const tk::Table invhts_eq_A05S {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table invhts_eq_A05L {
+const tk::Table<1> invhts_eq_A05L {
   // time, eps/k
   //{ 0, 4.0834 },
   { 0.2, 0.379495 },
@@ -1831,7 +1831,7 @@ const tk::Table invhts_eq_A05L {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table invhts_eq_A075H {
+const tk::Table<1> invhts_eq_A075H {
   // time, eps/k
   //{ 0, 4.5358 },
   //{ 0.2, 1.30272 },
@@ -2003,7 +2003,7 @@ const tk::Table invhts_eq_A075H {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table invhts_eq_A075S {
+const tk::Table<1> invhts_eq_A075S {
   // time, eps/k
   //{ 0, 4.22419 },
   { 0.2, 0.608331 },
@@ -2186,7 +2186,7 @@ const tk::Table invhts_eq_A075S {
 //!    The resulting data is simply a y = f(x) function, where the x is the
 //!    first, and the y is the second column. The x column is assumed to be in
 //!    increasing order.
-const tk::Table invhts_eq_A075L {
+const tk::Table<1> invhts_eq_A075L {
   // time, eps/k
   //{ 0, 3.97027 },
   { 0.2, 0.621714 },

@@ -819,20 +819,6 @@ namespace grm {
         (stack.template get< tag::history, tag::id >().size() == hist.size()),
         "Number of history points and ids must equal" );
 
-
-      // Trigger error if steady state + ALE are both enabled
-      auto steady = stack.template get< tag::discr, tag::steady_state >();
-      auto ale = stack.template get< tag::ale, tag::ale >();
-      if (steady && ale) {
-        Message< Stack, ERROR, MsgKey::STEADYALE >( stack, in );
-      }
-
-      // Set a sensible default for dvCFL if ALE is enabled and if dvcfl not set
-      auto& dvcfl = stack.template get< tag::ale, tag::dvcfl >();
-      auto dvcfl_default = g_inputdeck_defaults.get< tag::ale, tag::dvcfl >();
-      auto eps = std::numeric_limits< tk::real >::epsilon();
-      if (ale && std::abs(dvcfl - dvcfl_default) < eps) dvcfl = 0.01;
-
       // If at least a mesh filename is assigned to a solver, all solvers must
       // have a mesh filename assigned
       std::size_t nmesh = 0;
@@ -848,6 +834,53 @@ namespace grm {
       std::size_t meshid = 0;
       brigand::for_each< PDETypes >( assign_meshid< Stack >( stack, meshid ) );
       Assert( meshid == nmesh, "Not all meshes configured have mesh ids" );
+    }
+  };
+
+  //! Rule used to trigger action
+  struct check_ale : pegtl::success {};
+  //! \brief Do error checking on the inciter block
+  template<> struct action< check_ale > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      using inciter::g_inputdeck_defaults;
+
+     // Trigger error if steady state + ALE are both enabled
+      auto steady = stack.template get< tag::discr, tag::steady_state >();
+      auto ale = stack.template get< tag::ale, tag::ale >();
+      if (steady && ale) {
+        Message< Stack, ERROR, MsgKey::STEADYALE >( stack, in );
+      }
+
+      // Set a sensible default for dvCFL if ALE is enabled and if dvcfl not set
+      auto& dvcfl = stack.template get< tag::ale, tag::dvcfl >();
+      auto dvcfl_default = g_inputdeck_defaults.get< tag::ale, tag::dvcfl >();
+      auto eps = std::numeric_limits< tk::real >::epsilon();
+      if (ale && std::abs(dvcfl - dvcfl_default) < eps) dvcfl = 0.01;
+
+      // Set a default of zeros for the mesh force ALE parameters
+      auto& meshforce = stack.template get< tag::ale, tag::meshforce >();
+      if (ale && meshforce.size() != 4) meshforce = { 0, 0, 0, 0 };
+
+      // Set a default for the ALE mesh motion dimensions
+      auto& mesh_motion = stack.template get< tag::ale, tag::mesh_motion >();
+      if (ale && mesh_motion.empty()) mesh_motion = { 0, 1, 2 };
+
+      // Error out if mesh motion dimensions are wrong
+      if (ale && (mesh_motion.size() > 3 ||
+                  std::any_of( begin(mesh_motion), end(mesh_motion),
+                     [](auto d){return d > 2;} )) )
+      {
+        Message< Stack, ERROR, MsgKey::WRONGMESHMOTION >( stack, in );
+      }
+
+      // Error checking on user-defined function for ALE's moving sides
+      const auto& move = stack.template get< tag::ale, tag::move >();
+      for (const auto& s : move) {
+        const auto& f = s.template get< tag::fn >();
+        if (f.empty() or f.size() % 4 != 0)
+          Message< Stack, ERROR, MsgKey::INCOMPLETEUSERFN>( stack, in );
+      }
     }
   };
 
@@ -1837,6 +1870,34 @@ namespace deck {
                              pegtl::digit > >,
            tk::grm::check_amr_errors > {};
 
+
+  //! Match user-defined function as a discrete list of real numbers
+  template< class target, class tag, class... tags >
+  struct user_fn :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::fn >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+             tk::grm::scan< tk::grm::number,
+               tk::grm::Back_store_back< target, tag, tags... > > > > {};
+
+  //! Arbitrary-Lagrangian-Eulerian (ALE) move...end block
+  struct moving_sides :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::move >::pegtl_string >,
+           tk::grm::start_vector< tag::ale, tag::move >,
+           tk::grm::block< use< kw::end >,
+             tk::grm::process<
+                use< kw::fntype >,
+                tk::grm::back_store_option< tag::fntype,
+                                            use,
+                                            tk::ctr::UserTable,
+                                            tag::ale, tag::move >,
+                pegtl::alpha >,
+             user_fn< tag::fn, tag::ale, tag::move >,
+             pegtl::if_must< tk::grm::vector< use< kw::sideset >,
+               tk::grm::Back_store_back< tag::sideset, tag::ale, tag::move >,
+               use< kw::end > > > > > {};
+
   //! Arbitrary-Lagrangian-Eulerian (ALE) ale...end block
   struct ale :
          pegtl::if_must<
@@ -1848,6 +1909,10 @@ namespace deck {
                                 pegtl::digit,
                                 tk::grm::Store,
                                 tag::ale, tag::dvcfl >,
+              tk::grm::control< use< kw::vortmult >,
+                                pegtl::digit,
+                                tk::grm::Store,
+                                tag::ale, tag::vortmult >,
               tk::grm::control< use< kw::meshvel_maxit >,
                                 pegtl::digit,
                                 tk::grm::Store,
@@ -1856,18 +1921,36 @@ namespace deck {
                                 pegtl::digit,
                                 tk::grm::Store,
                                 tag::ale, tag::tolerance >,
+              moving_sides,
               tk::grm::process<
                 use< kw::meshvelocity >,
-                tk::grm::store_inciter_option<
-                  ctr::MeshVelocity,
-                  tag::ale, tag::meshvelocity >,
+                tk::grm::store_inciter_option< ctr::MeshVelocity,
+                                               tag::ale, tag::meshvelocity >,
                 pegtl::alpha >,
+              tk::grm::process<
+                use< kw::smoother >,
+                tk::grm::store_inciter_option< ctr::MeshVelocitySmoother,
+                                               tag::ale, tag::smoother >,
+                pegtl::alpha >,
+              pegtl::if_must< tk::grm::dimensions< use< kw::mesh_motion >,
+                              tk::grm::Store_back< tag::ale, tag::mesh_motion >,
+                              use< kw::end > > >,
+              pegtl::if_must< tk::grm::vector< use< kw::meshforce >,
+                              tk::grm::Store_back< tag::ale, tag::meshforce >,
+                              use< kw::end > > >,
               pegtl::if_must<
                 tk::grm::readkw< use< kw::bc_dirichlet >::pegtl_string >,
                 tk::grm::block< use< kw::end >,
                   pegtl::if_must< tk::grm::vector< use< kw::sideset >,
                                   tk::grm::Store_back< tag::ale, tag::bcdir >,
-                                  use< kw::end > > > > > > > {};
+                                  use< kw::end > > > > >,
+              pegtl::if_must<
+                tk::grm::readkw< use< kw::bc_sym >::pegtl_string >,
+                tk::grm::block< use< kw::end >,
+                  pegtl::if_must< tk::grm::vector< use< kw::sideset >,
+                                  tk::grm::Store_back< tag::ale, tag::bcsym >,
+                                  use< kw::end > > > > > >,
+              tk::grm::check_ale > {};
 
   //! \brief Match a depvar, defined upstream of control file, coupling a
   //!   solver and store

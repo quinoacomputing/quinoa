@@ -56,7 +56,9 @@ class CSR {
       std::size_t pos=0 );
 
     //! Multiply CSR matrix with vector from the right: r = A * x
-    void mult( const std::vector< real >& x, std::vector< real >& r ) const;
+    void mult( const std::vector< real >& x, std::vector< real >& r,
+               const std::unordered_map< std::size_t,
+                 std::vector< std::pair< bool, tk::real > > >& bc = {} ) const;
 
     //! Access real size of matrix
     std::size_t rsize() const { return rnz.size()*ncomp; }

@@ -86,7 +86,7 @@ class HydroProductions : public tk::Toggle< HydroProductionsType > {
     //! \brief Return table based on Enum
     //! \param[in] t Enum value of the option requested
     //! \return tk::Table associated to the option
-    tk::Table table( HydroProductionsType t ) const {
+    tk::Table<1> table( HydroProductionsType t ) const {
       if (t == HydroProductionsType::PROD_A005H)
         return prod_A005H;
       else if (t == HydroProductionsType::PROD_A005S)

@@ -139,11 +139,15 @@ CSR::dirichlet( std::size_t i,
 }
 
 void
-CSR::mult( const std::vector< real >& x, std::vector< real >& r ) const
+CSR::mult( const std::vector< real >& x,
+           std::vector< real >& r,
+           const std::unordered_map< std::size_t,
+             std::vector< std::pair< bool, tk::real > > >& bc ) const
 // *****************************************************************************
 //  Multiply CSR matrix with vector from the right: r = A * x
 //! \param[in] x Vector to multiply matrix with from the right
 //! \param[in] r Result vector of product r = A * x
+//! \param[in] bc Local node ids and associated Dirichlet BCs
 //! \note This is only complete in serial. In parallel, this computes the own
 //!   contributions to the product, so it must be followed by communication
 //!   combining the rows stored on multiple partitions.
@@ -151,9 +155,17 @@ CSR::mult( const std::vector< real >& x, std::vector< real >& r ) const
 {
   std::fill( begin(r), end(r), 0.0 );
 
-  for (std::size_t i=0; i<rnz.size()*ncomp; ++i)
-    for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j)
-      r[i] += a[j] * x[ja[j]-1];
+  // Lambda to multiply a row in the matrix vector product
+  auto multrow = [&]( std::size_t i ) {
+    for (std::size_t j=ia[i]-1; j<ia[i+1]-1; ++j) r[i] += a[j] * x[ja[j]-1];
+  };
+
+  if (not bc.empty()) {
+    for (std::size_t i=0; i<rnz.size()*ncomp; ++i)
+      if (bc.find(i/ncomp) == end(bc)) multrow(i);
+  } else {
+    for (std::size_t i=0; i<rnz.size()*ncomp; ++i) multrow(i);
+  }
 }
 
 std::ostream&

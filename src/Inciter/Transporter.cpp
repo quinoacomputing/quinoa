@@ -340,18 +340,38 @@ Transporter::info( const InciterPrint& print )
   const auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   if (ale) {
     print.section( "Arbitrary Lagrangian-Eulerian (ALE) mesh motion" );
-    const auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
+    auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
     print.item( "Volume-change CFL coefficient", dvcfl );
     print.Item< ctr::MeshVelocity, tag::ale, tag::meshvelocity >();
-    auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-    if (meshvel == ctr::MeshVelocityType::FLUID) {
-      print.item( "Mesh velocity linear solver tolerance",
-                  g_inputdeck.get< tag::ale, tag::tolerance >() );
-      print.item( "Mesh velocity linear solver maxit",
-                  g_inputdeck.get< tag::ale, tag::maxit >() );
-      const auto& dir = g_inputdeck.get< tag::ale, tag::bcdir >();
-      if (!dir.empty())
-        print.item( "Mesh velocity BC sideset(s)", tk::parameters( dir ) );
+    print.Item< ctr::MeshVelocitySmoother, tag::ale, tag::smoother >();
+    print.item( "Mesh motion dimensions", tk::parameters(
+                g_inputdeck.get< tag::ale, tag::mesh_motion >() ) );
+    const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
+    print.item( "Mesh velocity force coefficients", tk::parameters(meshforce) );
+    print.item( "Vorticity multiplier",
+                g_inputdeck.get< tag::ale, tag::vortmult >() );
+    print.item( "Mesh velocity linear solver tolerance",
+                g_inputdeck.get< tag::ale, tag::tolerance >() );
+    print.item( "Mesh velocity linear solver maxit",
+                g_inputdeck.get< tag::ale, tag::maxit >() );
+    const auto& dir = g_inputdeck.get< tag::ale, tag::bcdir >();
+    if (not dir.empty())
+      print.item( "Mesh velocity Dirichlet BC sideset(s)",
+                  tk::parameters( dir ) );
+    const auto& sym = g_inputdeck.get< tag::ale, tag::bcsym >();
+    if (not sym.empty())
+      print.item( "Mesh velocity symmetry BC sideset(s)",
+                  tk::parameters( sym ) );
+    std::size_t i = 1;
+    for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
+       tk::ctr::UserTable opt;
+       print.item( opt.group() + ' ' + std::to_string(i) + " interpreted as",
+                   opt.name( m.get< tag::fntype >() ) );
+       const auto& s = m.get< tag::sideset >();
+       if (not s.empty())
+         print.item( "Moving sideset(s) with table " + std::to_string(i),
+                     tk::parameters(s));
+       ++i;
     }
   }
 
@@ -517,16 +537,10 @@ Transporter::createPartitioner()
   // Start preparing mesh(es)
   print.diag( "Reading mesh(es)" );
 
-  // Query input mesh file names
-  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-  bool linearsolver = false;
-  if (ale && meshvel != ctr::MeshVelocityType::NONE) linearsolver = true;
-
   // Create (discretization) Scheme chare worker arrays for all meshes
   for ([[maybe_unused]] const auto& filename : m_input)
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
-                           linearsolver );
+                           need_linearsolver() );
 
   ErrChk( !m_input.empty(), "No input mesh" );
 
@@ -982,6 +996,26 @@ Transporter::meshstat( const std::string& header ) const
   print.endsubsection();
 }
 
+bool
+Transporter::need_linearsolver() const
+// *****************************************************************************
+//  Decide if we need a linear solver for ALE
+//! \return True if ALE will neeed a linear solver
+// *****************************************************************************
+{
+  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+  bool need = false;
+
+  if (ale && (smoother == ctr::MeshVelocitySmootherType::LAPLACE ||
+              smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
+  {
+     need = true;
+  }
+
+  return need;
+}
+
 void
 Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
 // *****************************************************************************
@@ -1010,9 +1044,7 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
   if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DiagCG)
     m_scheme[meshid].fct().doneInserting();
 
-  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-  if (ale && meshvel != ctr::MeshVelocityType::NONE)
+  if (need_linearsolver())
     m_scheme[meshid].conjugategradients().doneInserting();
 
   m_scheme[meshid].disc().vol();

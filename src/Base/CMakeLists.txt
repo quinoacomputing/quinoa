@@ -11,7 +11,6 @@ add_library(Base
             Timer.cpp
             Reader.cpp
             Writer.cpp
-            Table.cpp
             PrintUtil.cpp
             ChareStateCollector.cpp
 )

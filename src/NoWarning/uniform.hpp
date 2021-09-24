@@ -17,6 +17,7 @@
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wundef"
+  #pragma clang diagnostic ignored "-Wimplicit-int-float-conversion"
 #endif
 
 #include <Random123/uniform.hpp>

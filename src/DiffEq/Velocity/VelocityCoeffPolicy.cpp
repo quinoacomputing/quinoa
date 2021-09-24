@@ -38,7 +38,7 @@ walker::VelocityCoeffConstShear::update(
   char depvar,
   char dissipation_depvar,
   const std::map< tk::ctr::Product, tk::real >& moments,
-  const tk::Table&,
+  const tk::Table<1>&,
   ctr::DepvarType solve,
   ctr::VelocityVariantType variant,
   kw::sde_c0::info::expect::type C0,
@@ -105,7 +105,7 @@ walker::VelocityCoeffStationary::update(
   char,
   char,
   const std::map< tk::ctr::Product, tk::real >&,
-  const tk::Table&,
+  const tk::Table<1>&,
   ctr::DepvarType,
   ctr::VelocityVariantType,
   kw::sde_c0::info::expect::type C0,
@@ -162,7 +162,7 @@ walker::VelocityCoeffHydroTimeScale::update(
   char depvar,
   char,
   const std::map< tk::ctr::Product, tk::real >& moments,
-  const tk::Table& hts,
+  const tk::Table<1>& hts,
   ctr::DepvarType solve,
   ctr::VelocityVariantType,
   kw::sde_c0::info::expect::type C0,
@@ -188,7 +188,7 @@ walker::VelocityCoeffHydroTimeScale::update(
   auto k = tke( depvar, solve, moments );
 
   // Sample the inverse hydrodynamics timescale at time t
-  auto ts = tk::sample( t, hts );  // eps/k
+  auto ts = tk::sample<1>( t, hts )[ 0 ];  // eps/k
 
   // compute turbulent kinetic energy dissipation rate
   eps = ts * k;

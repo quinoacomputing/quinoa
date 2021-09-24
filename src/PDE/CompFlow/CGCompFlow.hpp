@@ -199,6 +199,22 @@ class CompFlow {
       }
     }
 
+    //! Query the sound speed
+    //! \param[in] U Solution vector of conserved variables
+    //! \param[in,out] s Speed of sound in mesh nodes
+    void soundspeed( const tk::Fields& U, std::vector< tk::real >& s ) const {
+      s.resize( U.nunk() );
+      for (std::size_t i=0; i<U.nunk(); ++i) {
+        auto r  = U(i,0,m_offset);
+        auto ru = U(i,1,m_offset);
+        auto rv = U(i,2,m_offset);
+        auto rw = U(i,3,m_offset);
+        auto re = U(i,4,m_offset);
+        auto p = eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re );
+        s[i] = eos_soundspeed< eq >( m_system, r, p );
+      }
+    }
+
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate
@@ -428,6 +444,7 @@ class CompFlow {
         real day = y[N[3]]-y[N[0]];
         real daz = z[N[3]]-z[N[0]];
         auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+        ErrChk( J > 0, "Element Jacobian non-positive" );
         auto J24 = J/24.0;
         // shape function derivatives, nnode*ndim [4][3]
         real g[4][3];
@@ -664,8 +681,8 @@ class CompFlow {
       if (dtn > 0.0 && dvcfl > 0.0) {
         Assert( vol.size() == voln.size(), "Size mismatch" );
         for (std::size_t p=0; p<vol.size(); ++p) {
-          auto vol_dt = dtn * std::min( voln[p], vol[p] )
-                            / (std::abs(voln[p] - vol[p]) + 1.0e-16 );
+          auto vol_dt = dtn *
+            std::min(voln[p],vol[p]) / std::abs(voln[p]-vol[p]+1.0e-14);
           mindt = std::min( vol_dt, mindt );
         }
         mindt *= dvcfl;

@@ -126,10 +126,9 @@ DistFCT::resize( std::size_t nu,
   m_lid = lid;
   m_inpoel = inpoel;
 
-  auto np = m_a.nprop();
-  m_p.resize( nu, np*2 );
-  m_q.resize( nu, np*2 );
-  m_a.resize( nu, np );
+  m_p.resize( nu );
+  m_q.resize( nu );
+  m_a.resize( nu );
   resizeComm();
 
   m_fluxcorrector.resize( m_inpoel.size() );

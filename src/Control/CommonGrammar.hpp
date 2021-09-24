@@ -154,7 +154,9 @@ namespace grm {
     SPONGEBCWRONG,      //!< Sponge BC incorrectly configured
     NONDISJOINTBC,      //!< Different BC types assigned to the same side set
     WRONGSIZE,          //!< Size of parameter vector incorrect
+    WRONGMESHMOTION,    //!< Error in mesh motion dimensions
     STEADYALE,          //!< ALE + steady state not supported
+    INCOMPLETEUSERFN,   //!< Incomplete user-defined function
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
     POSITION_DEPVAR,    //!< Missing required position model dependent variable
@@ -433,9 +435,20 @@ namespace grm {
       "to the same side set." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
+    { MsgKey::WRONGMESHMOTION, "Error in the preceding line or block. Mesh "
+      "motion dimension list can only involve the integers 0, 1, and 2, and "
+      "the size of the list of dimensions must be lower than 4 and larger "
+      "than 0." },
     { MsgKey::STEADYALE, "Error in the preceding line or block. Arbitrary "
       "Lagrangian-Eulerian mesh motion is not supported together with marching "
       "to steady state." },
+    { MsgKey::INCOMPLETEUSERFN, "Error in the preceding line or block. "
+      "Incomplete user-defined function. This usually means the number of "
+      "entries in list is either empty (i.e., the function is not defined) or "
+      "the number of entries is larger than zero but it is not divisible by "
+      "the correct number. For example, if a R->R^3 function is expected the "
+      "number of descrete entries must be divisible by 4: one 'column' for "
+      "the abscissa, and 3 for the ordinate." },
     { MsgKey::HYDROTIMESCALES, "Error in the preceding line or block. "
       "Specification of a 'hydrotimescales' vector missing." },
     { MsgKey::HYDROPRODUCTIONS, "Error in the preceding line or block. "
@@ -812,6 +825,23 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< typename target, typename tag, typename... tags >
+  struct Back_store_back : pegtl::success {};
+  //! \brief Convert and store value to vector in state at position
+  //!   given by tags and target
+  //! \details This struct and its apply function are used as a functor-like
+  //!    wrapper for calling the store_back member function of the underlying
+  //!    grammar stack.
+  template< typename target, typename tag, typename...tags >
+  struct action< Back_store_back< target, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template get< tag, tags... >().back().template
+        store_back< target >( in.string() );
+    }
+  };
+
+  //! Rule used to trigger action
   template< typename target, typename subtarget, typename tag,
             typename... tags >
   struct Back_back_deep_store_back : pegtl::success {};
@@ -937,6 +967,42 @@ namespace grm {
       Option opt;
       if (opt.exist(in.string())) {
         stack.template get< tag, tags... >().back().back().template
+          get< target >() = opt.value( in.string() );
+      } else {
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
+      }
+      // trigger error at compile-time if any of the expected option values
+      // is not in the keywords pool of the grammar
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename target, template < class > class use,
+            class Option, typename tag, typename... tags >
+  struct back_store_option : pegtl::success {};
+  //! \brief Push back option to back of vector in state at position
+  //!   given by tags
+  //! \details This struct and its apply function are used as a functor-like
+  //!   wrapper for storing an option (an object deriving from tk::Toggle) in
+  //!   a place in the stack. tag and tags... address a vector, whose
+  //!   inner value_type is a nested tagged tuple whose field in where we store
+  //!   here after conversion, indexed by target.
+  //!   See walker::ctr::DiffEq for an example specialization of tk::Toggle to
+  //!   see how an option is created from tk::Toggle. We also do a simple sanity
+  //!   check here testing if the desired option value exist for the particular
+  //!   option type and error out if there is a problem. Errors and warnings are
+  //!   accumulated during parsing and diagnostics are given after the parsing
+  //!   is finished.
+  template< typename target, template < class > class use,
+            class Option, typename tag, typename... tags >
+  struct action< back_store_option< target, use, Option, tag, tags... > >
+  {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      Option opt;
+      if (opt.exist(in.string())) {
+        stack.template get< tag, tags... >().back().template
           get< target >() = opt.value( in.string() );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
@@ -1706,6 +1772,16 @@ namespace grm {
                        ignore,
                        tokens...,
                        unknown< ERROR, MsgKey::KEYWORD > > > {};
+
+  //! \brief Read in list of dimensions between keywords 'key' and
+  //!   'endkeyword', calling 'insert' for each if matches and allow comments
+  //!   between values
+  template< class key, class insert, class endkeyword,
+            class starter = noop, class value = pegtl::digit >
+  struct dimensions :
+         pegtl::seq<
+           act< readkw< typename key::pegtl_string >, starter >,
+           block< endkeyword, scan< value, insert > > > {};
 
   //! Plow through vector of values between keywords 'key' and
   //!   'endkeyword', calling 'insert' for each if matches and allow comments

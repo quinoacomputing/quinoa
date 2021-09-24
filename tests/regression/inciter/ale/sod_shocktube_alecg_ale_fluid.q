@@ -4,10 +4,13 @@
 
 title "Sod shock-tube, ALECG, ALE"
 
+# This ALE config for this mesh yields close to Lagrangian mesh velocity and
+# should run until t=0.2 without a problem.
+
 inciter
 
   nstep 20    # Max number of time steps
-  #term 0.2    # Max physical time
+  #term 0.2   # Max physical time
   ttyi 1      # TTY output interval
 
   cfl 0.9
@@ -21,11 +24,11 @@ inciter
   ale
     dvcfl 1.0
     mesh_velocity fluid
-
-    # yields close to Lagrangian mesh velocity
+    smoother laplace
+    vortmult 0.0      # no vorticity scaling in Laplace smoother
     maxit 20
     tolerance 2.0e-2
-
+    mesh_motion 0 end # mesh moves only in x
     bc_dirichlet
       sideset 1 3 end
     end
