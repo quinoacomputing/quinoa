@@ -332,9 +332,8 @@ ALECG::queryBnd()
       // m_timedepbcnodes and m_timedepbcFn are consistent with each other
       auto fn = bndry.template get< tag::fn >();
       for (std::size_t ir=0; ir<fn.size()/6; ++ir) {
-        for (std::size_t ic=0; ic<6; ++ic) {
-          m_timedepbcFn[ib][ir][ic] = fn[ir*6+ic];
-        }
+        m_timedepbcFn[ib].push_back({{ fn[ir*6+0], fn[ir*6+1], fn[ir*6+2],
+          fn[ir*6+3], fn[ir*6+4], fn[ir*6+5] }});
       }
       ++ib;
     }
