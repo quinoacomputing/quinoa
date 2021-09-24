@@ -919,7 +919,7 @@ class CompFlow {
 
     //! Apply user defined time dependent BCs
     //! \param[in] t Physical time
-    //! \param[in/out] U Solution vector at recent time step
+    //! \param[in,out] U Solution vector at recent time step
     //! \param[in] nodes Vector of unique sets of node ids at which to apply BCs
     //! \details This function applies user defined time dependent boundary
     //!   conditions on groups of side sets specified in the input file.
