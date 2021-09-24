@@ -20,25 +20,38 @@
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
-#include "Inciter/Options/PrefIndicator.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! Evaluate the adaptive indicator and mark the ndof for each element
-void eval_ndof( std::size_t nunk,
-                const tk::UnsMesh::Coords& coord,
-                const std::vector< std::size_t >& inpoel,
-                const inciter::FaceData& fd,
-                const tk::Fields& unk,
-                inciter::ctr::PrefIndicatorType indicator,
-                std::size_t ndof,
-                std::size_t ndofmax,
-                tk::real tolref,
-                std::vector< std::size_t >& ndofel );
+//! Evaluate the spectral-decay indicator and mark the ndof for each element
+void spectral_decay( std::size_t nmat,
+                     std::size_t nunk,
+                     const std::vector< int >& esuel,
+                     const tk::Fields& unk,
+                     std::size_t ndof,
+                     std::size_t ndofmax,
+                     tk::real tolref,
+                     std::vector< std::size_t >& ndofel );
 
+//! Evaluate the non-conformity indicator and mark the ndof for each element
+void non_conformity( std::size_t nunk,
+                     std::size_t Nbfac,
+                     const std::vector< std::size_t >& inpoel,
+                     const tk::UnsMesh::Coords& coord,
+                     const std::vector< int >& esuel,
+                     const std::vector< int >& esuf,
+                     const std::vector< std::size_t >& inpofa,
+                     const tk::Fields& unk,
+                     std::size_t ndof,
+                     std::size_t ndofmax,
+                     std::vector< std::size_t >& ndofel );
+
+//! Evaluate the spectral decay indicator
 tk::real evalDiscontinuityIndicator( std::size_t e,
+                                     std::size_t nmat,
                                      ncomp_t ncomp,
                                      const std::size_t ndof,
                                      const std::size_t ndofel,

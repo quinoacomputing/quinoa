@@ -26,7 +26,6 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Refiner.hpp"
 #include "Limiter.hpp"
-#include "PrefIndicator.hpp"
 #include "Reorder.hpp"
 #include "Vector.hpp"
 #include "Around.hpp"
@@ -1349,12 +1348,13 @@ DG::next()
   auto d = Disc();
 
   if (pref && m_stage == 0 && d->T() > 0)
-    eval_ndof( m_nunk, m_coord, m_inpoel, m_fd, m_u,
-               g_inputdeck.get< tag::pref, tag::indicator >(),
-               g_inputdeck.get< tag::discr, tag::ndof >(),
-               g_inputdeck.get< tag::pref, tag::ndofmax >(),
-               g_inputdeck.get< tag::pref, tag::tolref >(),
-               m_ndof );
+    for (const auto& eq : g_dgpde)
+      eq.eval_ndof( m_nunk, m_coord, m_inpoel, m_fd, m_u,
+                    g_inputdeck.get< tag::pref, tag::indicator >(),
+                    g_inputdeck.get< tag::discr, tag::ndof >(),
+                    g_inputdeck.get< tag::pref, tag::ndofmax >(),
+                    g_inputdeck.get< tag::pref, tag::tolref >(),
+                    m_ndof );
 
   // communicate solution ghost data (if any)
   if (m_sendGhost.empty())

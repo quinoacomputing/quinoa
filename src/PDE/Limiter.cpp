@@ -22,7 +22,7 @@
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Basis.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "Inciter/PrefIndicator.hpp"
+#include "PrefIndicator.hpp"
 #include "Reconstruction.hpp"
 
 namespace inciter {
@@ -460,7 +460,7 @@ VertexBasedCompflow_P2(
     bool shock_detec(false);
 
     // Evaluate the shock detection indicator
-    auto Ind = evalDiscontinuityIndicator(e, ncomp, dof_el, ndofel[e], U);
+    auto Ind = evalDiscontinuityIndicator(1, e, ncomp, dof_el, ndofel[e], U);
     if(Ind > 1e-6)
       shock_detec = true;
 
