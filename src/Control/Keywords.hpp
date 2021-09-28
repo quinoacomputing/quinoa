@@ -5626,7 +5626,7 @@ struct bc_timedep_info {
     + std::string("\'") + sideset::string() + "\', "
     + std::string("\'") + fn::string() + "\'. "
     + R"(For an example bc_timedep ... end block, see
-      doc/html/inciter_example_gausshump.html.)";
+      tests/regression/inciter/compflow/Euler/TimedepBC/timedep_bc.q.)";
   }
 };
 using bc_timedep =
