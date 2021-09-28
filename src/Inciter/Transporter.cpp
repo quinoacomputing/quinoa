@@ -1004,17 +1004,16 @@ Transporter::need_linearsolver() const
 //! \return True if ALE will neeed a linear solver
 // *****************************************************************************
 {
-  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
-  bool need = false;
 
-  if (ale && (smoother == ctr::MeshVelocitySmootherType::LAPLACE ||
-              smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
+  if ( g_inputdeck.get< tag::ale, tag::ale >() and
+       (smoother == ctr::MeshVelocitySmootherType::LAPLACE ||
+        smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) )
   {
-     need = true;
+     return true;
+  } else {
+     return false;
   }
-
-  return need;
 }
 
 void

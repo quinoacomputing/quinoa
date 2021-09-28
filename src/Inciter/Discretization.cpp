@@ -938,7 +938,7 @@ Discretization::restarted( int nrestart )
   //   nrestart == -1 if there was no checkpoint this step
   //   d->Nrestart() == nrestart if there was a checkpoint this step
   //   if both false, just restarted from a checkpoint
-  bool restarted = nrestart != -1 && m_nrestart != nrestart;
+  bool restarted = nrestart != -1 and m_nrestart != nrestart;
 
    // If just restarted from checkpoint
   if (restarted) {
@@ -1097,7 +1097,7 @@ Discretization::status()
   auto grind_time = duration_cast< ms >(clock::now() - m_prevstatus).count();
   m_prevstatus = clock::now();
 
-  if (thisIndex==0 && m_meshid == 0 && !(m_it%tty)) {
+  if (thisIndex==0 and m_meshid == 0 and not (m_it%tty)) {
 
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
     const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
@@ -1111,7 +1111,7 @@ Discretization::status()
 
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
-    if (!steady) m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
+    if (not steady) m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
 
     const auto& def =
       g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
@@ -1136,11 +1136,11 @@ Discretization::status()
 
     // Augment one-liner status with output indicators
     if (fielditer() or fieldtime()) print << 'f';
-    if (!(m_it % diag)) print << 'd';
+    if (not (m_it % diag)) print << 'd';
     if (histiter() or histtime()) print << 't';
     if (m_refined) print << 'h';
-    if (!(m_it % lbfreq) && not finished()) print << 'l';
-    if (!benchmark && (!(m_it % rsfreq) || finished())) print << 'r';
+    if (not (m_it % lbfreq) && not finished()) print << 'l';
+    if (not benchmark && (not (m_it % rsfreq) || finished())) print << 'r';
 
     if (not m_meshvel_converged) print << 'a';
     m_meshvel_converged = true; // get ready for next time step
