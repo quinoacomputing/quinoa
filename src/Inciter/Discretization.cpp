@@ -59,7 +59,7 @@ Discretization::Discretization(
   m_it( 0 ),
   m_itr( 0 ),
   m_itf( 0 ),
-  m_initial( 1.0 ),
+  m_initial( 1 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),
   m_physFieldFloor( 0.0 ),
@@ -73,6 +73,7 @@ Discretization::Discretization(
   m_meshwriter( meshwriter ),
   m_el( el ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
+  m_coordn( m_coord ),
   m_nodeCommMap(),
   m_edgeCommMap(),
   m_meshvol( 0.0 ),
@@ -89,7 +90,8 @@ Discretization::Discretization(
   m_histdata(),
   m_nsrc( 0 ),
   m_ndst( 0 ),
-  m_meshvel_converged( true )  
+  m_meshvel( 0, 3 ),
+  m_meshvel_converged( true )
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID
@@ -162,11 +164,13 @@ Discretization::Discretization(
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   // Insert ConjugrateGradients solver chare array element if needed
-  if (g_inputdeck.get< tag::ale, tag::ale >())
-    m_ale[ thisIndex ].insert( g_inputdeck.get< tag::ale, tag::smoother >(),
-                               conjugategradientsproxy,
+  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    m_ale[ thisIndex ].insert( conjugategradientsproxy,
                                m_coord, m_inpoel,
                                m_gid, m_lid, m_nodeCommMap );
+  } else {
+    m_meshvel.resize( m_gid.size() );
+  }
 
   // Register mesh with mesh-transfer lib
   if (m_disc.size() == 1 || m_transfer.empty()) {
@@ -204,53 +208,55 @@ Discretization::transferInit()
 }
 
 void
-Discretization::meshvelInit(
-  const std::vector< tk::real >& x,
-  const std::vector< tk::real >& div,
-  const std::unordered_map< std::size_t,
-          std::vector< std::pair< bool, tk::real > > >& bc,
-  CkCallback c )
+Discretization::meshvelStart(
+  const tk::UnsMesh::Coords vel,
+  const std::vector< tk::real >& soundspeed,
+  const std::unordered_map< int,
+    std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm,
+  tk::real adt,
+  CkCallback done ) const
 // *****************************************************************************
-//  Initialize mesh velocity linear solve: set initial guess and BCs
-//! \param[in] x Initial guess for mesh velocity linear solve
-//! \param[in] div Velocity divergence for Helmholtz rhs
-//! \param[in] bc Local node ids associated to linear solver Dirichlet BCs
-// \param[in] c Function to call when the BCs have been applied
+// Start computing new mesh velocity for ALE mesh motion
+//! \param[in] vel Fluid velocity at mesh nodes
+//! \param[in] soundspeed Speed of sound at mesh nodes
+//! \param[in] bnorm Face normals in boundary points associated to side sets
+//! \param[in] adt alpha*dt of the RK time step
+//! \param[in] done Function to continue with when mesh velocity has been
+//!   computed
 // *****************************************************************************
 {
-  m_ale[ thisIndex ].ckLocal()->init( x, div, bc, c );
+  if (g_inputdeck.get< tag::ale, tag::ale >())
+    m_ale[ thisIndex ].ckLocal()->start( vel, soundspeed, done, m_initial,
+      m_coord, m_coordn, m_vol0, m_vol, bnorm, m_t, adt );
+  else
+    done.send();
+}
+
+const tk::Fields&
+Discretization::meshvel() const
+// *****************************************************************************
+//! Query the mesh velocity
+//! \return Mesh velocity
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::ale, tag::ale >())
+    return m_ale[ thisIndex ].ckLocal()->meshvel();
+  else
+    return m_meshvel;
 }
 
 void
-Discretization::meshvelSolve( CkCallback c )
+Discretization::meshvelBnd(
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::map< int, std::vector< std::size_t > >& bnode,
+  const std::vector< std::size_t >& triinpoel) const
 // *****************************************************************************
-//  Solve linear system using Conjugrate Gradients
-// \param[in] c Function to call when the solve is converged
-// *****************************************************************************
-{
-  m_ale[ thisIndex ].ckLocal()->
-    solve( g_inputdeck.get< tag::ale, tag::maxit >(),
-           g_inputdeck.get< tag::ale, tag::tolerance >(),
-           c );
-}
-
-std::vector< tk::real >
-Discretization::meshvelSolution() const
-// *****************************************************************************
-//! Query the solution of the Conjugrate Gradients linear solver
-//! \return Solution to the Conjugate Gradients linear solve
+// Query ALE mesh velocity boundary condition node lists and node lists at
+// which ALE moves boundaries
 // *****************************************************************************
 {
-  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
-
-  if (g_inputdeck.get< tag::ale, tag::ale >() and
-      (smoother == ctr::MeshVelocitySmootherType::LAPLACE or
-       smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
-  {
-    return m_ale[ thisIndex ].ckLocal()->solution();
-  } else {
-    return {};
-  }
+  if (g_inputdeck.get< tag::ale, tag::ale >())
+    m_ale[ thisIndex ].ckLocal()->meshvelBnd( bface, bnode, triinpoel );
 }
 
 void
@@ -683,7 +689,9 @@ Discretization::totalvol()
   tk::destroy(m_volc);
 
   // Sum mesh volume to host
-  std::vector< tk::real > tvol{0.0, m_initial, static_cast<tk::real>(m_meshid)};
+  std::vector< tk::real > tvol{ 0.0,
+                                static_cast<tk::real>(m_initial),
+                                static_cast<tk::real>(m_meshid) };
   for (auto v : m_v) tvol[0] += v;
   contribute( tvol, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,totalvol), m_transporter) );
