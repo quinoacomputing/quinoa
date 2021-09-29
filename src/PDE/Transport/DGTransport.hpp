@@ -378,8 +378,8 @@ class Transport {
     //! \param[in] tolref Tolerance for p-refinement
     //! \param[in,out] ndofel Vector of local number of degrees of freedome
     void eval_ndof( std::size_t nunk,
-                    const tk::UnsMesh::Coords& coord,
-                    const std::vector< std::size_t >& inpoel,
+                    [[maybe_unused]] const tk::UnsMesh::Coords& coord,
+                    [[maybe_unused]] const std::vector< std::size_t >& inpoel,
                     const inciter::FaceData& fd,
                     const tk::Fields& unk,
                     inciter::ctr::PrefIndicatorType indicator,

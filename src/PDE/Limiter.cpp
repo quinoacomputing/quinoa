@@ -555,8 +555,8 @@ VertexBasedMultiMat_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
-  const inciter::FaceData& fd,
-  const tk::Fields& geoFace,
+  [[maybe_unused]] const inciter::FaceData& fd,
+  [[maybe_unused]] const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
@@ -602,8 +602,11 @@ VertexBasedMultiMat_P1(
   std::size_t nprim = P.nprop()/rdof;
 
   // Evaluate the interface condition and mark the shock cells
-  MarkShockCells(nelem, nmat, system, offset, ndof, rdof, ndofel, inpoel, coord,
-    fd, geoFace, geoElem, U, P, shockmarker);
+  //MarkShockCells(nelem, nmat, system, offset, ndof, rdof, ndofel, inpoel, coord,
+  //  fd, geoFace, geoElem, U, P, shockmarker);
+
+  // Threshold for shock detection indicator
+  auto threshold = pow(10, -5.7);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -621,6 +624,13 @@ VertexBasedMultiMat_P1(
     {
       dof_el = ndofel[e];
     }
+
+    // Evaluate the shock detection indicator
+    auto Ind = evalDiscontinuityIndicator(nmat, e, ncomp, dof_el, ndofel[e], U);
+    if(Ind > threshold)
+      shockmarker[e] = true;
+    else
+      shockmarker[e] = false;
 
     if (dof_el > 1)
     {
