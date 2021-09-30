@@ -919,7 +919,7 @@ class MultiMat {
       const auto& esuel = fd.Esuel();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-    
+
       if(indicator == inciter::ctr::PrefIndicatorType::SPECTRAL_DECAY)
         spectral_decay(nmat, nunk, esuel, unk, ndof, ndofmax, tolref, ndofel);
       else

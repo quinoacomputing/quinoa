@@ -306,7 +306,7 @@ tk::real evalDiscontinuityIndicator( std::size_t e,
     auto state = tk::eval_state( ncomp, 0, ndof, ndofel, e, unk, B, {0, ncomp} );
 
     for(std::size_t k = 0; k < nmat; k++) {
-      if(nmat == 1) {
+      if(nmat == 1) {     // If this is single-material flow
         marker[k] = true;
         U[k] += wgp[igp] * state[0] * state[0];
 
@@ -329,7 +329,7 @@ tk::real evalDiscontinuityIndicator( std::size_t e,
 
            dU[k] += wgp[igp] * dU_p1 * dU_p1;
         }
-      } else {
+      } else {    // If this is multi-material flow
         if(unk(e, volfracDofIdx(nmat, k, ndof, 0), 0) > 1e-2) {
           marker[k] = true;
           U[k] += wgp[igp] *
@@ -359,6 +359,7 @@ tk::real evalDiscontinuityIndicator( std::size_t e,
     }
   }
 
+  // Return the max indicator value among all the materials
   tk::real Indmax(0);
   for(std::size_t k = 0; k < nmat; k++) {
     if(marker[k] == true) {

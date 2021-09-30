@@ -654,7 +654,7 @@ VertexBasedMultiMat_P1(
           dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic, {0, nmat});
 
         for(std::size_t k=0; k<nmat; ++k) {
-          if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-2) {
+          if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-4) {
             // Vector to store the range of limited variables
             std::vector< std::size_t > VarRange(2, 0);
 
@@ -1594,6 +1594,25 @@ void MarkShockCells ( const std::size_t nelem,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       std::vector< bool >& shockmarker )
+// *****************************************************************************
+//  Mark the cells that contain discontinuity according to the interface
+//    condition
+//! \param[in] nelem Number of elements
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] system Equation system index
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] ndofel Vector of local number of degrees of freedome
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in, out] shockmarker Vector of the shock indicator
+// *****************************************************************************
 {
   std::vector< tk::real > IC(U.nunk(), 0.0);
   const auto& esuf = fd.Esuf();
@@ -1606,6 +1625,7 @@ void MarkShockCells ( const std::size_t nelem,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
+  // Loop over faces
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f) {
     Assert( esuf[2*f] > -1 && esuf[2*f+1] > -1, "Interior element detected "
             "as -1" );
@@ -1613,6 +1633,8 @@ void MarkShockCells ( const std::size_t nelem,
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
+    // When the number of gauss points for the left and right element are
+    // different, choose the larger ng
     auto ng_l = tk::NGfa(ndofel[el]);
     auto ng_r = tk::NGfa(ndofel[er]);
 
@@ -1627,6 +1649,7 @@ void MarkShockCells ( const std::size_t nelem,
 
     tk::GaussQuadratureTri( ng, coordgp, wgp );
 
+    // Extract the element coordinates
     std::array< std::array< tk::real, 3>, 4 > coordel_l {{
       {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
       {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
@@ -1639,6 +1662,7 @@ void MarkShockCells ( const std::size_t nelem,
       {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
       {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
 
+    // Compute the determinant of Jacobian matrix
     auto detT_l =
       tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
     auto detT_r =
@@ -1680,6 +1704,7 @@ void MarkShockCells ( const std::size_t nelem,
 
       std::array< std::vector< tk::real >, 2 > state;
 
+      // Evaluate the high order solution at the qudrature point
       state[0] = tk::evalPolynomialSol(system, offset, 0, ncomp, nprim, rdof,
         nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
       state[1] = tk::evalPolynomialSol(system, offset, 0, ncomp, nprim, rdof,
@@ -1690,11 +1715,14 @@ void MarkShockCells ( const std::size_t nelem,
       Assert( state[1].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
 
+      // Evaluate the bulk density
       tk::real rhol(0.0), rhor(0.0);
       for(std::size_t k = 0; k < nmat; k++) {
         rhol += state[0][densityIdx(nmat,k)];
         rhor += state[1][densityIdx(nmat,k)];
       }
+
+      // Evaluate the flux for the density
       tk::real fl(0.0), fr(0.0);
       for(std::size_t i = 0; i < 3; i++) {
         fl += rhol * state[0][ncomp+velocityIdx(nmat,i)] * fn[i];
