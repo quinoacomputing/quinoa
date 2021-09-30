@@ -278,7 +278,7 @@ tk::real evalDiscontinuityIndicator( std::size_t e,
 //! \return The value of spectral indicator for the element
 // *****************************************************************************
 {
-  auto ng = tk::NGvol(ndofel);
+  auto ng = tk::NGvol(ndof);
 
   // arrays for quadrature points
   std::array< std::vector< tk::real >, 3 > coordgp;
@@ -300,7 +300,7 @@ tk::real evalDiscontinuityIndicator( std::size_t e,
   for (std::size_t igp=0; igp<ng; ++igp)
   {
     // Compute the basis function
-    auto B = tk::eval_basis( ndofel, coordgp[0][igp], coordgp[1][igp],
+    auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
     auto state = tk::eval_state( ncomp, 0, ndof, ndofel, e, unk, B, {0, ncomp} );
@@ -332,7 +332,8 @@ tk::real evalDiscontinuityIndicator( std::size_t e,
       } else {
         if(unk(e, volfracDofIdx(nmat, k, ndof, 0), 0) > 1e-2) {
           marker[k] = true;
-          U[k] += wgp[igp] * std::pow(state[densityIdx(nmat, k)], 2);
+          U[k] += wgp[igp] *
+            state[densityIdx(nmat, k)] * state[densityIdx(nmat, k)];
 
           if(ndofel > 4)
           {

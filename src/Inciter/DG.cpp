@@ -1658,7 +1658,7 @@ DG::evalSolution(
         auto Bn = tk::eval_basis( m_ndof[parent],
                                   dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn) );
         auto cnu = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_u, Bn, {0, uncomp});
-        auto cnp = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_p, Bn, {0, uncomp});
+        auto cnp = eval_state(pncomp, 0, rdof, m_ndof[parent], parent, m_p, Bn, {0, pncomp});
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) un(inpoel[c4+j],i,0) += cnu[i];
         for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[c4+j],i,0) += cnp[i];

@@ -460,7 +460,7 @@ VertexBasedCompflow_P2(
     bool shock_detec(false);
 
     // Evaluate the shock detection indicator
-    auto Ind = evalDiscontinuityIndicator(1, e, ncomp, dof_el, ndofel[e], U);
+    auto Ind = evalDiscontinuityIndicator(e, 1, ncomp, dof_el, ndofel[e], U);
     if(Ind > 1e-6)
       shock_detec = true;
 
@@ -484,7 +484,7 @@ VertexBasedCompflow_P2(
 
       // limit conserved quantities
       VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
-        dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic_p2, {0, ncomp});
+        dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic_p1, {0, ncomp});
 
       if(dof_el > 4)
         for (std::size_t c=0; c<ncomp; ++c)
@@ -626,7 +626,7 @@ VertexBasedMultiMat_P1(
     }
 
     // Evaluate the shock detection indicator
-    auto Ind = evalDiscontinuityIndicator(nmat, e, ncomp, dof_el, ndofel[e], U);
+    auto Ind = evalDiscontinuityIndicator(e, nmat, ncomp, dof_el, ndofel[e], U);
     if(Ind > threshold)
       shockmarker[e] = true;
     else
@@ -654,7 +654,7 @@ VertexBasedMultiMat_P1(
           dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic, {0, nmat});
 
         for(std::size_t k=0; k<nmat; ++k) {
-          if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-6) {
+          if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-2) {
             // Vector to store the range of limited variables
             std::vector< std::size_t > VarRange(2, 0);
 
