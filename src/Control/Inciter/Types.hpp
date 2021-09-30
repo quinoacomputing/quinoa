@@ -90,11 +90,11 @@ using moving_sides = tk::TaggedTuple< brigand::list<
   ,  tag::fn,      std::vector< tk::real >
 > >;
 
-//! A list of side sets moving with a user-defined function in time
+//! A list of side sets along with a user-defined function for time dependent BC
 using time_dependent_bc = tk::TaggedTuple< brigand::list<
-  //! List of side sets to move
+  //! List of side sets on which to apply time dependent BC
      tag::sideset, std::vector< kw::sideset::info::expect::type >
-  //! Functions p(t), T(t), and v(t) to specify time dependent BC
+  //! Functions p(t), rho(t), u(t), v(t) and w(t) to specify time dependent BC
   ,  tag::fn,      std::vector< tk::real >
 > >;
 

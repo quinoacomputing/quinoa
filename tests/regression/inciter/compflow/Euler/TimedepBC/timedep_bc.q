@@ -32,7 +32,10 @@ inciter
 
     bc_timedep
       sideset 1 end
-      fn
+      # The pressure, density, and velocity components are specified here as
+      # a discrete function in time (tabular form). This table is sampled
+      # to apply time dependent boundary conditions on the above side sets.
+      fn # t    p    rho          u            v    w
         0.100   1.0  1.0          0.0          0.0  0.0
         0.101   5.0  2.818181818  1.606438658  0.0  0.0
         0.300   1.0  1.0          0.0          0.0  0.0

@@ -396,7 +396,7 @@ class ALECG : public CBase_ALECG {
     //! Unique set of nodes at which sponge parameters are set
     std::unordered_set< std::size_t > m_spongenodes;
     //! \brief Unique set of nodes at which time dependent BCs are set
-    //    associated with the number of distinct time dependent BCs specified
+    //    for each time dependent BC
     std::vector< std::unordered_set< std::size_t > > m_timedepbcnodes;
     //! \brief User defined discrete function of time used in the time dependent
     //    BCs associated with (index in vector) the number of distinct time
