@@ -460,11 +460,16 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
  //! \return True if sidesets have been used and found in mesh
 // *****************************************************************************
  {
+   using PDETypes = ctr::parameters::Keys;
    // Query side set ids at which BCs assigned for all BC types for all PDEs
    using PDEsBCs =
-     tk::cartesian_product< ctr::parameters::Keys, ctr::bc::Keys >;
+     tk::cartesian_product< PDETypes, ctr::bc::Keys >;
    std::unordered_set< int > usedsets;
    brigand::for_each< PDEsBCs >( UserBC( g_inputdeck, usedsets ) );
+
+   // Add side sets of the time dependent BCs (since tag::bctimedep is not a
+   // part of tag::bc)
+   brigand::for_each< PDETypes >( UserTimedepBC(g_inputdeck, usedsets) );
 
    // Add sidesets requested for field output
    const auto& ss = g_inputdeck.get< tag::cmd, tag::io, tag::surface >();

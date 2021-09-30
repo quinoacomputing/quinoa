@@ -335,6 +335,7 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::u0,            std::vector< std::vector<
                         kw::pde_u0::info::expect::type > >
   , tag::bc,            bc
+  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::sponge,        SpongeParameters
   //! interface compression toggle
   , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
@@ -423,6 +424,7 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
+  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::ic,            ic
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
   , tag::sponge,        SpongeParameters

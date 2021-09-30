@@ -316,12 +316,10 @@ ALECG::queryBnd()
     for (const auto& bndry : timedep[0]) {
       std::unordered_set< std::size_t > nodes;
       for (const auto& s : bndry.template get< tag::sideset >()) {
-        auto k = m_bface.find( std::stoi(s) );
-        if (k != end(m_bface)) {
-          for (auto f : k->second) {      // face ids on side set
-            nodes.insert( m_triinpoel[f*3+0] );
-            nodes.insert( m_triinpoel[f*3+1] );
-            nodes.insert( m_triinpoel[f*3+2] );
+        auto k = m_bnode.find( std::stoi(s) );
+        if (k != end(m_bnode)) {
+          for (auto g : k->second) {      // global node ids on side set
+            nodes.insert( tk::cref_find(d->Lid(),g) );
           }
         }
       }
