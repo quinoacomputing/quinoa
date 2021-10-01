@@ -768,6 +768,19 @@ namespace grm {
     }
   };
 
+  //! Function object to do error checking on output time ranges
+  template< typename Stack, typename Input >
+  struct range_errchk {
+    Stack& stack;
+    const Input& input;
+    explicit range_errchk( Stack& s, const Input& in ) : stack(s), input(in) {}
+    template< typename U > void operator()( brigand::type_<U> ) {
+      for (const auto& r : stack.template get< tag::output, tag::range, U >())
+        if ( r.size() != 3 or r[0] > r[1] or r[2] < 0.0 or r[2] > r[1]-r[0] )
+          Message< Stack, ERROR, MsgKey::BADRANGE >( stack, input );
+    }
+  };
+
   //! Rule used to trigger action
   struct check_inciter : pegtl::success {};
   //! \brief Do error checking on the inciter block
@@ -812,6 +825,12 @@ namespace grm {
       using BCTypes = inciter::ctr::bc::Keys;
       brigand::for_each< tk::cartesian_product< PDETypes, BCTypes > >(
         ensure_disjoint< Input, Stack >( in, stack ) );
+
+      // Do error checking on output time range configuration parameters: they
+      // all must be a 3 reals: mintime, maxtime, and dt with maxtime >
+      // mintime, and dt<maxtime-mintime.
+      brigand::for_each< inciter::ctr::time_range::Keys >
+                       ( range_errchk< Stack, Input >( stack, in ) );
 
       // Do error checking on time history point names (this is a programmer
       // error if triggers, hence assert)
@@ -1309,7 +1328,8 @@ namespace deck {
            tk::grm::process< use< kw::steady_state >,
                              tk::grm::Store< tag::discr, tag::steady_state >,
                              pegtl::alpha >,
-           tk::grm::interval_iter< use< kw::ttyi >, tag::tty >,
+           tk::grm::interval_iter< use< kw::ttyi >,
+                                   tag::output, tag::iter, tag::tty >,
            tk::grm::process_alpha< use< kw::scheme >,
                                    tk::grm::store_inciter_option<
                                      inciter::ctr::Scheme,
@@ -2050,8 +2070,12 @@ namespace deck {
                                  tag::selected,
                                  tag::filetype >,
                                pegtl::alpha >,
-             tk::grm::interval_iter< use< kw::interval_iter >, tag::field >,
-             tk::grm::interval_time< use< kw::interval_time >, tag::field >,
+             tk::grm::interval_iter< use< kw::interval_iter >,
+                                     tag::output, tag::iter, tag::field >,
+             tk::grm::interval_time< use< kw::interval_time >,
+                                     tag::output, tag::time, tag::field >,
+             tk::grm::time_range< use, kw::time_range,
+                                  tag::output, tag::range, tag::field >,
              tk::grm::process<
                use< kw::refined >,
                tk::grm::Store< tag::cmd, tag::io, tag::refined >,
@@ -2069,8 +2093,12 @@ namespace deck {
            tk::grm::block<
              use< kw::end >,
              outvar_block,
-             tk::grm::interval_iter< use< kw::interval_iter >, tag::history >,
-             tk::grm::interval_time< use< kw::interval_time >, tag::history >,
+             tk::grm::interval_iter< use< kw::interval_iter >,
+               tag::output, tag::iter, tag::history >,
+             tk::grm::interval_time< use< kw::interval_time >,
+               tag::output, tag::time, tag::history >,
+             tk::grm::time_range< use, kw::time_range,
+                                  tag::output, tag::range, tag::history >,
              tk::grm::precision< use, tag::history >,
              tk::grm::process<
                use< kw::txt_float_format >,

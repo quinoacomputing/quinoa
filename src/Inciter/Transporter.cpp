@@ -391,21 +391,30 @@ Transporter::info( const InciterPrint& print )
 
   // Print output intervals
   print.section( "Output intervals (in units of iteration count)" );
-  print.item( "TTY", g_inputdeck.get< tag::interval_iter, tag::tty>() );
+  print.item( "TTY", g_inputdeck.get< tag::output, tag::iter, tag::tty>() );
   print.item( "Field and surface",
-              g_inputdeck.get< tag::interval_iter, tag::field >() );
+              g_inputdeck.get< tag::output, tag::iter, tag::field >() );
   print.item( "History",
-              g_inputdeck.get< tag::interval_iter, tag::history >() );
+              g_inputdeck.get< tag::output, tag::iter, tag::history >() );
   print.item( "Diagnostics",
-              g_inputdeck.get< tag::interval_iter, tag::diag >() );
+              g_inputdeck.get< tag::output, tag::iter, tag::diag >() );
   print.item( "Checkpoint/restart",
               g_inputdeck.get< tag::cmd, tag::rsfreq >() );
-  auto tf = g_inputdeck.get< tag::interval_time, tag::field >();
-  auto th = g_inputdeck.get< tag::interval_time, tag::history >();
+  auto tf = g_inputdeck.get< tag::output, tag::time, tag::field >();
+  auto th = g_inputdeck.get< tag::output, tag::time, tag::history >();
   if (tf>0.0 || th>0.0) {
     print.section( "Output intervals (in units of physics time)" );
     if (tf > 0.0) print.item( "Field and surface", tf );
     if (th > 0.0) print.item( "History", th );
+  }
+  const auto& rf = g_inputdeck.get< tag::output, tag::range, tag::field >();
+  const auto& rh = g_inputdeck.get< tag::output, tag::range, tag::history >();
+  if (not rf.empty() or not rh.empty()) {
+    print.section( "Output time ranges (in units of physics time)" );
+    for (const auto& r : rf)
+      print.item( "Field output time range", tk::parameters(r) );
+    for (const auto& r : rh)
+      print.item( "History output time range", tk::parameters(r) );
   }
 
   // Print output variables: fields and surfaces
@@ -445,54 +454,54 @@ Transporter::info( const InciterPrint& print )
 bool
 Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
 // *****************************************************************************
- // Verify that side sets specified in the control file exist in mesh file
- //! \details This function does two things: (1) it verifies that the side
- //!   sets used in the input file (either to which boundary conditions (BC)
- //!   are assigned or listed as field output by the user in the
- //!   input file) all exist among the side sets read from the input mesh
- //!   file and errors out if at least one does not, and (2) it matches the
- //!   side set ids at which the user has configured BCs (or listed as an output
- //!   surface) to side set ids read from the mesh file and removes those face
- //!   and node lists associated to side sets that the user did not set BCs or
- //!   listed as field output on (as they will not need processing further since
- //!   they will not be used).
- //! \param[in,out] bnd Node or face lists mapped to side set ids
- //! \return True if sidesets have been used and found in mesh
+// Verify that side sets specified in the control file exist in mesh file
+//! \details This function does two things: (1) it verifies that the side
+//!   sets used in the input file (either to which boundary conditions (BC)
+//!   are assigned or listed as field output by the user in the
+//!   input file) all exist among the side sets read from the input mesh
+//!   file and errors out if at least one does not, and (2) it matches the
+//!   side set ids at which the user has configured BCs (or listed as an output
+//!   surface) to side set ids read from the mesh file and removes those face
+//!   and node lists associated to side sets that the user did not set BCs or
+//!   listed as field output on (as they will not need processing further since
+//!   they will not be used).
+//! \param[in,out] bnd Node or face lists mapped to side set ids
+//! \return True if sidesets have been used and found in mesh
 // *****************************************************************************
- {
-   // Query side set ids at which BCs assigned for all BC types for all PDEs
-   using PDEsBCs =
-     tk::cartesian_product< ctr::parameters::Keys, ctr::bc::Keys >;
-   std::unordered_set< int > usedsets;
-   brigand::for_each< PDEsBCs >( UserBC( g_inputdeck, usedsets ) );
+{
+  // Query side set ids at which BCs assigned for all BC types for all PDEs
+  using PDEsBCs =
+    tk::cartesian_product< ctr::parameters::Keys, ctr::bc::Keys >;
+  std::unordered_set< int > usedsets;
+  brigand::for_each< PDEsBCs >( UserBC( g_inputdeck, usedsets ) );
 
-   // Add sidesets requested for field output
-   const auto& ss = g_inputdeck.get< tag::cmd, tag::io, tag::surface >();
-   for (const auto& s : ss) {
-     std::stringstream conv( s );
-     int num;
-     conv >> num;
-     usedsets.insert( num );
-   }
+  // Add sidesets requested for field output
+  const auto& ss = g_inputdeck.get< tag::cmd, tag::io, tag::surface >();
+  for (const auto& s : ss) {
+    std::stringstream conv( s );
+    int num;
+    conv >> num;
+    usedsets.insert( num );
+  }
 
-   // Find user-configured side set ids among side sets read from mesh file
-   std::unordered_set< int > sidesets_used;
-   for (auto i : usedsets) {       // for all side sets used in control file
-     if (bnd.find(i) != end(bnd))  // used set found among side sets in file
-       sidesets_used.insert( i );  // store side set id configured as BC
-     else {
-       Throw( "Boundary conditions specified on side set " +
-         std::to_string(i) + " which does not exist in mesh file" );
-     }
-   }
+  // Find user-configured side set ids among side sets read from mesh file
+  std::unordered_set< int > sidesets_used;
+  for (auto i : usedsets) {       // for all side sets used in control file
+    if (bnd.find(i) != end(bnd))  // used set found among side sets in file
+      sidesets_used.insert( i );  // store side set id configured as BC
+    else {
+      Throw( "Boundary conditions specified on side set " +
+        std::to_string(i) + " which does not exist in mesh file" );
+    }
+  }
 
-   // Remove sidesets not used (will not process those further)
-   tk::erase_if( bnd, [&]( auto& item ) {
-     return sidesets_used.find( item.first ) == end(sidesets_used);
-   });
+  // Remove sidesets not used (will not process those further)
+  tk::erase_if( bnd, [&]( auto& item ) {
+    return sidesets_used.find( item.first ) == end(sidesets_used);
+  });
 
-   return !bnd.empty();
- }
+  return !bnd.empty();
+}
 
 void
 Transporter::createPartitioner()

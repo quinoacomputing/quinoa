@@ -42,8 +42,7 @@ using InputDeckMembers = brigand::list<
   , tag::flformat,      floatformat
   , tag::component,     ncomps
   , tag::sys,           std::map< tk::ctr::ncomp_t, tk::ctr::ncomp_t >
-  , tag::interval_iter, interval_iter
-  , tag::interval_time, interval_time
+  , tag::output,        output_parameters
   , tag::param,         parameters
   , tag::couple,        couple
   , tag::diag,          diagnostics
@@ -76,6 +75,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::refined
                                  , kw::interval_iter
                                  , kw::interval_time
+                                 , kw::time_range
                                  , kw::partitioning
                                  , kw::algorithm
                                  , kw::rcb
@@ -355,11 +355,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::prec, tag::diag >() = std::cout.precision();
       get< tag::prec, tag::history >() = std::cout.precision();
       // Default intervals
-      get< tag::interval_iter, tag::tty >() = 1;
-      get< tag::interval_iter, tag::diag >() = 1;
-      get< tag::interval_iter, tag::field >() =
+      get< tag::output, tag::iter, tag::tty >() = 1;
+      get< tag::output, tag::iter, tag::diag >() = 1;
+      get< tag::output, tag::iter, tag::field >() =
         std::numeric_limits< kw::interval_iter::info::expect::type >::max();
-      get< tag::interval_iter, tag::history >() =
+      get< tag::output, tag::iter, tag::history >() =
         std::numeric_limits< kw::interval_iter::info::expect::type >::max();
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );

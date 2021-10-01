@@ -183,6 +183,28 @@ using interval_time = tk::TaggedTuple< brigand::list<
   , tag::history, kw::interval_time::info::expect::type
 > >;
 
+//! Output time ranges in units of physics time
+using time_range = tk::TaggedTuple< brigand::list<
+    //! \brief Field output configuration: outer vector: multiple ranges, inner
+    //!        vector: mintime, maxtime, dt
+    tag::field,   std::vector<
+                    std::vector< kw::time_range::info::expect::type > >
+    //! \brief History output configuration: outer vector: multiple ranges,
+    //!        inner vector: mintime, maxtime, dt
+  , tag::history, std::vector<
+                    std::vector< kw::time_range::info::expect::type > >
+> >;
+
+//! Output configuration parameters
+using output_parameters = tk::TaggedTuple< brigand::list<
+    //! Output intervals in units of iteration count
+    tag::iter,  interval_iter
+    //! Output intervals in units of physics time
+  , tag::time,  interval_time
+    //! Output time ranges in units of physics time
+  , tag::range, time_range
+> >;
+
 //! History output parameters storage
 using history = tk::TaggedTuple< brigand::list<
     tag::point,   std::vector< std::vector< kw::point::info::expect::type > >

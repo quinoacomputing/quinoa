@@ -945,9 +945,9 @@ Discretization::next()
 // *****************************************************************************
 {
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto ft = g_inputdeck.get< tag::interval_time, tag::field >();
+  const auto ft = g_inputdeck.get< tag::output, tag::time, tag::field >();
   if (ft > eps) m_physFieldFloor = std::floor( m_t / ft );
-  const auto ht = g_inputdeck.get< tag::interval_time, tag::history >();
+  const auto ht = g_inputdeck.get< tag::output, tag::time, tag::history >();
   if (ht > eps) m_physHistFloor = std::floor( m_t / ht );
 
   ++m_it;
@@ -1064,7 +1064,7 @@ Discretization::fielditer() const
 {
   if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
 
-  return m_it % g_inputdeck.get< tag::interval_iter, tag::field >() == 0;
+  return m_it % g_inputdeck.get< tag::output, tag::iter, tag::field >() == 0;
 }
 
 bool
@@ -1077,7 +1077,7 @@ Discretization::fieldtime() const
   if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
 
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto ft = g_inputdeck.get< tag::interval_time, tag::field >();
+  const auto ft = g_inputdeck.get< tag::output, tag::time, tag::field >();
 
   if (ft < eps) return false;
 
@@ -1091,7 +1091,7 @@ Discretization::histiter() const
 //! \return True if history output iteration count interval is hit
 // *****************************************************************************
 {
-  const auto hist = g_inputdeck.get< tag::interval_iter, tag::history >();
+  const auto hist = g_inputdeck.get< tag::output, tag::iter, tag::history >();
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
 
   return m_it % hist == 0 and not hist_points.empty();
@@ -1107,7 +1107,7 @@ Discretization::histtime() const
   if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
 
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto ht = g_inputdeck.get< tag::interval_time, tag::history >();
+  const auto ht = g_inputdeck.get< tag::output, tag::time, tag::history >();
 
   if (ht < eps) return false;
 
@@ -1135,7 +1135,7 @@ Discretization::status()
 // *****************************************************************************
 {
   // Query after how many time steps user wants TTY dump
-  const auto tty = g_inputdeck.get< tag::interval_iter, tag::tty >();
+  const auto tty = g_inputdeck.get< tag::output, tag::iter, tag::tty >();
 
   // estimate grind time (taken between this and the previous time step)
   using std::chrono::duration_cast;
@@ -1149,7 +1149,7 @@ Discretization::status()
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
     const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    const auto diag = g_inputdeck.get< tag::interval_iter, tag::diag >();
+    const auto diag = g_inputdeck.get< tag::output, tag::iter, tag::diag >();
     const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
     const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
