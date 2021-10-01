@@ -62,6 +62,10 @@ Discretization::Discretization(
   m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),
   m_physFieldFloor( 0.0 ),
   m_physHistFloor( 0.0 ),
+  m_rangeFieldFloor(
+    g_inputdeck.get< tag::output, tag::range, tag::field >().size(), 0.0 ),
+  m_rangeHistFloor(
+    g_inputdeck.get< tag::output, tag::range, tag::history >().size(), 0.0 ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_dtn( m_dt ),
   m_nvol( 0 ),
@@ -944,11 +948,22 @@ Discretization::next()
 // Prepare for next step
 // *****************************************************************************
 {
+  // Update floor of physics time divided by output interval times
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto ft = g_inputdeck.get< tag::output, tag::time, tag::field >();
   if (ft > eps) m_physFieldFloor = std::floor( m_t / ft );
   const auto ht = g_inputdeck.get< tag::output, tag::time, tag::history >();
   if (ht > eps) m_physHistFloor = std::floor( m_t / ht );
+
+  // Update floors of physics time divided by output interval times for ranges
+  const auto& rf = g_inputdeck.get< tag::output, tag::range, tag::field >();
+  for (std::size_t i=0; i<rf.size(); ++i)
+    if (m_t > rf[i][0] and m_t < rf[i][1])
+      m_rangeFieldFloor[i] = std::floor( m_t / rf[i][2] );
+  const auto& rh = g_inputdeck.get< tag::output, tag::range, tag::history >();
+  for (std::size_t i=0; i<rh.size(); ++i)
+    if (m_t > rh[i][0] and m_t < rh[i][1])
+      m_rangeHistFloor[i] = std::floor( m_t / rh[i][2] );
 
   ++m_it;
   m_t += m_dt;
@@ -1085,6 +1100,27 @@ Discretization::fieldtime() const
 }
 
 bool
+Discretization::fieldrange() const
+// *****************************************************************************
+//  Decide if physics time falls into a field output time range
+//! \return True if physics time falls into a field output time range
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
+
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  bool output = false;
+
+  const auto& rf = g_inputdeck.get< tag::output, tag::range, tag::field >();
+  for (std::size_t i=0; i<rf.size(); ++i)
+    if (m_t > rf[i][0] and m_t < rf[i][1])
+      output |= std::floor(m_t/rf[i][2]) - m_rangeFieldFloor[i] > eps;
+
+  return output;
+}
+
+bool
 Discretization::histiter() const
 // *****************************************************************************
 //  Decide if history output iteration count interval is hit
@@ -1112,6 +1148,27 @@ Discretization::histtime() const
   if (ht < eps) return false;
 
   return std::floor(m_t/ht) - m_physHistFloor > eps;
+}
+
+bool
+Discretization::histrange() const
+// *****************************************************************************
+//  Decide if physics time falls into a history output time range
+//! \return True if physics time falls into a history output time range
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
+
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  bool output = false;
+
+  const auto& rh = g_inputdeck.get< tag::output, tag::range, tag::history >();
+  for (std::size_t i=0; i<rh.size(); ++i)
+    if (m_t > rh[i][0] and m_t < rh[i][1])
+      output |= std::floor(m_t/rh[i][2]) - m_rangeHistFloor[i] > eps;
+
+  return output;
 }
 
 bool
@@ -1182,9 +1239,9 @@ Discretization::status()
           << std::setw(9) << grind_time << "  ";
 
     // Augment one-liner status with output indicators
-    if (fielditer() or fieldtime()) print << 'f';
+    if (fielditer() or fieldtime() or fieldrange()) print << 'f';
     if (!(m_it % diag)) print << 'd';
-    if (histiter() or histtime()) print << 't';
+    if (histiter() or histtime() or histrange()) print << 't';
     if (m_refined) print << 'h';
     if (!(m_it % lbfreq) && not finished()) print << 'l';
     if (!benchmark && (!(m_it % rsfreq) || finished())) print << 'r';

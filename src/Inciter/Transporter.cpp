@@ -412,9 +412,9 @@ Transporter::info( const InciterPrint& print )
   if (not rf.empty() or not rh.empty()) {
     print.section( "Output time ranges (in units of physics time)" );
     for (const auto& r : rf)
-      print.item( "Field output time range", tk::parameters(r) );
+      print.item("Field output { mintime, maxtime, dt }", tk::parameters(r));
     for (const auto& r : rh)
-      print.item( "History output time range", tk::parameters(r) );
+      print.item("History output { mintime, maxtime, dt }", tk::parameters(r));
   }
 
   // Print output variables: fields and surfaces
