@@ -85,6 +85,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_farfieldbcnodes(),
   m_symbctri(),
   m_spongenodes(),
+  m_timedepbcnodes(),
+  m_timedepbcFn(),
   m_stage( 0 ),
   m_boxnodes(),
   m_edgenode(),
@@ -196,6 +198,40 @@ ALECG::queryBnd()
   auto sponge = d->bcnodes< tag::sponge, tag::sideset >( m_bface, m_triinpoel );
   for (const auto& [s,nodes] : sponge)
     m_spongenodes.insert( begin(nodes), end(nodes) );
+
+  // Prepare unique set of time dependent BC nodes
+  const auto& timedep =
+    g_inputdeck.template get< tag::param, tag::compflow, tag::bctimedep >();
+  if (!timedep.empty()) {
+    m_timedepbcnodes.resize(timedep[0].size());
+    m_timedepbcFn.resize(timedep[0].size());
+    std::size_t ib=0;
+    for (const auto& bndry : timedep[0]) {
+      std::unordered_set< std::size_t > nodes;
+      for (const auto& s : bndry.template get< tag::sideset >()) {
+        auto k = m_bnode.find( std::stoi(s) );
+        if (k != end(m_bnode)) {
+          for (auto g : k->second) {      // global node ids on side set
+            nodes.insert( tk::cref_find(d->Lid(),g) );
+          }
+        }
+      }
+      m_timedepbcnodes[ib].insert( begin(nodes), end(nodes) );
+
+      // Store user defined discrete function in time. This is done in the same
+      // loop as the BC nodes, so that the indices for the two vectors
+      // m_timedepbcnodes and m_timedepbcFn are consistent with each other
+      auto fn = bndry.template get< tag::fn >();
+      for (std::size_t ir=0; ir<fn.size()/6; ++ir) {
+        m_timedepbcFn[ib].push_back({{ fn[ir*6+0], fn[ir*6+1], fn[ir*6+2],
+          fn[ir*6+3], fn[ir*6+4], fn[ir*6+5] }});
+      }
+      ++ib;
+    }
+  }
+
+  Assert(m_timedepbcFn.size() == m_timedepbcnodes.size(), "Incorrect number of "
+    "time dependent functions.");
 
   // Query ALE mesh velocity boundary condition node lists and node lists at
   // which ALE moves boundaries
@@ -767,6 +803,10 @@ ALECG::BC()
   // Apply sponge conditions
   for (const auto& eq : g_cgpde)
     eq.sponge( m_u, coord, m_spongenodes );
+
+  // Apply user defined time dependent BCs
+  for (const auto& eq : g_cgpde)
+    eq.timedepbc( Disc()->T(), m_u, m_timedepbcnodes, m_timedepbcFn );
 
   volumetric( m_u, Disc()->Vol() );
 }

@@ -268,6 +268,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::bc_outlet
                                  , kw::bc_farfield
                                  , kw::bc_extrapolate
+                                 , kw::bc_timedep
                                  , kw::bc_stag
                                  , kw::bc_skip
                                  , kw::sponge
