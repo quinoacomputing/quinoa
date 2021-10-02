@@ -454,26 +454,31 @@ Transporter::info( const InciterPrint& print )
 bool
 Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
 // *****************************************************************************
-// Verify that side sets specified in the control file exist in mesh file
-//! \details This function does two things: (1) it verifies that the side
-//!   sets used in the input file (either to which boundary conditions (BC)
-//!   are assigned or listed as field output by the user in the
-//!   input file) all exist among the side sets read from the input mesh
-//!   file and errors out if at least one does not, and (2) it matches the
-//!   side set ids at which the user has configured BCs (or listed as an output
-//!   surface) to side set ids read from the mesh file and removes those face
-//!   and node lists associated to side sets that the user did not set BCs or
-//!   listed as field output on (as they will not need processing further since
-//!   they will not be used).
-//! \param[in,out] bnd Node or face lists mapped to side set ids
-//! \return True if sidesets have been used and found in mesh
+ // Verify that side sets specified in the control file exist in mesh file
+ //! \details This function does two things: (1) it verifies that the side
+ //!   sets used in the input file (either to which boundary conditions (BC)
+ //!   are assigned or listed as field output by the user in the
+ //!   input file) all exist among the side sets read from the input mesh
+ //!   file and errors out if at least one does not, and (2) it matches the
+ //!   side set ids at which the user has configured BCs (or listed as an output
+ //!   surface) to side set ids read from the mesh file and removes those face
+ //!   and node lists associated to side sets that the user did not set BCs or
+ //!   listed as field output on (as they will not need processing further since
+ //!   they will not be used).
+ //! \param[in,out] bnd Node or face lists mapped to side set ids
+ //! \return True if sidesets have been used and found in mesh
 // *****************************************************************************
 {
+  using PDETypes = ctr::parameters::Keys;
   // Query side set ids at which BCs assigned for all BC types for all PDEs
   using PDEsBCs =
-    tk::cartesian_product< ctr::parameters::Keys, ctr::bc::Keys >;
+    tk::cartesian_product< PDETypes, ctr::bc::Keys >;
   std::unordered_set< int > usedsets;
   brigand::for_each< PDEsBCs >( UserBC( g_inputdeck, usedsets ) );
+
+  // Add side sets of the time dependent BCs (since tag::bctimedep is not a
+  // part of tag::bc)
+  brigand::for_each< PDETypes >( UserTimedepBC(g_inputdeck, usedsets) );
 
   // Add sidesets requested for field output
   const auto& ss = g_inputdeck.get< tag::cmd, tag::io, tag::surface >();

@@ -531,6 +531,13 @@ class Transport {
                  const std::array< std::vector< real >, 3 >&,
                  const std::unordered_set< std::size_t >& ) const {}
 
+    //! Apply user defined time dependent BCs (no-op for transport)
+    void
+    timedepbc( tk::real,
+      tk::Fields&,
+      const std::vector< std::unordered_set< std::size_t > >&,
+      const std::vector< tk::Table<5> >& ) const {}
+
     //! Return analytic field names to be output to file
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
