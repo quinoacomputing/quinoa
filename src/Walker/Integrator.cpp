@@ -117,7 +117,8 @@ Integrator::advance( tk::real dt,
   // Contribute number of particles we hit the particles output frequency
   auto poseq =
     !g_inputdeck.get< tag::param, tag::position, tag::depvar >().empty();
-  const auto parfreq = g_inputdeck.get< tag::interval_iter, tag::particles >();
+  const auto parfreq =
+    g_inputdeck.get< tag::output, tag::iter, tag::particles >();
 
   CkCallback c( CkIndex_Integrator::out(), thisProxy[thisIndex] );
 
@@ -135,7 +136,8 @@ Integrator::out()
 {
   auto poseq =
     !g_inputdeck.get< tag::param, tag::position, tag::depvar >().empty();
-  const auto parfreq = g_inputdeck.get< tag::interval_iter, tag::particles >();
+  const auto parfreq =
+    g_inputdeck.get< tag::output, tag::iter, tag::particles >();
 
   CkCallback c( CkIndex_Integrator::accumulate(), thisProxy[thisIndex] );
 
@@ -178,7 +180,7 @@ Integrator::accumulateOrd( uint64_t it, tk::real t, tk::real dt )
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto pdffreq = g_inputdeck.get< tag::interval_iter, tag::pdf >();
+  const auto pdffreq = g_inputdeck.get< tag::output, tag::iter, tag::pdf >();
 
   // Accumulate partial sums for ordinary moments
   m_stat.accumulateOrd();
@@ -214,7 +216,7 @@ Integrator::accumulateCen( uint64_t it,
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto pdffreq = g_inputdeck.get< tag::interval_iter, tag::pdf >();
+  const auto pdffreq = g_inputdeck.get< tag::output, tag::iter, tag::pdf >();
 
   // Accumulate partial sums for central moments
   m_stat.accumulateCen( ord );

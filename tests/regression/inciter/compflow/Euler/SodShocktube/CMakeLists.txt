@@ -289,6 +289,31 @@ add_regression_test(compflow_euler_sodshocktube_pdg ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
                     LABELS dg)
 
+add_regression_test(compflow_euler_sodshocktube_alecg_hist_range ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES sod_shocktube_alecg_hist_range.q rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_alecg_hist_range.q -i rectangle_01_1.5k.exo -v
+                    BIN_BASELINE sod_shocktube_alecg_hist_range.std.exo.0
+                                 sod_shocktube_alecg_hist_range.std.exo.1
+                                 sod_shocktube_alecg_hist_range.std.exo.2
+                                 sod_shocktube_alecg_hist_range.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_alecg_hist_range.std
+                                  sod_shocktube_alecg_hist_range.p1.std
+                                  sod_shocktube_alecg_hist_range.p2.std
+                    TEXT_RESULT diag
+                                out.hist.p1
+                                out.hist.p2
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
+                    LABELS alecg)
+
 # Parallel + virtualization
 
 add_regression_test(compflow_euler_sodshocktube_pdg_u0.8 ${INCITER_EXECUTABLE}
