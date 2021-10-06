@@ -37,7 +37,7 @@ using InputDeckMembers = brigand::list<
   , tag::prec,          precision
   , tag::flformat,      floatformat
   , tag::component,     ncomps
-  , tag::interval_iter, interval_iter
+  , tag::output,        output_parameters
   , tag::param,         parameters
   , tag::stat,          std::vector< tk::ctr::Product >
   , tag::pdf,           std::vector< tk::ctr::Probability >
@@ -255,10 +255,10 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::prec, tag::stat >() = std::cout.precision();
       get< tag::prec, tag::pdf >() = std::cout.precision();
       // Default intervals
-      get< tag::interval_iter, tag::tty >() = 1;
-      get< tag::interval_iter, tag::stat >() = 1;
-      get< tag::interval_iter, tag::particles >() = 10000;
-      get< tag::interval_iter, tag::pdf >() = 1;
+      get< tag::output, tag::iter, tag::tty >() = 1;
+      get< tag::output, tag::iter, tag::stat >() = 1;
+      get< tag::output, tag::iter, tag::particles >() = 10000;
+      get< tag::output, tag::iter, tag::pdf >() = 1;
       // Default requested statistics
       get< tag::stat >() = std::vector< tk::ctr::Product >();
       // Initialize help

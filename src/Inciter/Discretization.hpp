@@ -381,11 +381,17 @@ class Discretization : public CBase_Discretization {
     //! Decide if field output physics time interval is hit
     bool fieldtime() const;
 
+    //! Decide if physics time falls into a field output time range
+    bool fieldrange() const;
+
     //! Decide if history output iteration count interval is hit
     bool histiter() const;
 
     //! Decide if history output physics time interval is hit
     bool histtime() const;
+
+    //! Decide if physics time falls into a history output time range
+    bool histrange() const;
 
     //! Decide if this is the last time step
     bool finished() const;
@@ -409,6 +415,8 @@ class Discretization : public CBase_Discretization {
       p | m_lastDumpTime;
       p | m_physFieldFloor;
       p | m_physHistFloor;
+      p | m_rangeFieldFloor;
+      p | m_rangeHistFloor;
       p | m_dt;
       p | m_dtn;
       p | m_nvol;
@@ -492,6 +500,10 @@ class Discretization : public CBase_Discretization {
     tk::real m_physFieldFloor;
     //! Recent floor of physics time divided by history output interval time
     tk::real m_physHistFloor;
+    //! Recent floors of physics time divided by field output time for ranges
+    std::vector< tk::real > m_rangeFieldFloor;
+    //! Recent floors of physics time divided by history output time for ranges
+    std::vector< tk::real > m_rangeHistFloor;
     //! Physical time step size
     tk::real m_dt;
     //! Physical time step size at the previous time step
