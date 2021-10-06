@@ -2585,9 +2585,8 @@ DG::fieldOutput() const
 {
   auto d = Disc();
 
-  // output field data if field iteration count is reached or if the field
-  // physics time output frequency is hit or in the last time step
-  return d->fielditer() or d->fieldtime() or d->finished();
+  // Output field data
+  return d->fielditer() or d->fieldtime() or d->fieldrange() or d->finished();
 }
 
 bool
@@ -2610,8 +2609,8 @@ DG::writeFields( CkCallback c )
 {
   auto d = Disc();
 
-  // Output time history if we hit its output frequency
-  if (d->histiter() or d->histtime()) {
+  // Output time history
+  if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
     for (const auto& eq : g_dgpde) {
       auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u, m_p );

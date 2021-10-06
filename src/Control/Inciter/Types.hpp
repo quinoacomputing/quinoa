@@ -90,6 +90,14 @@ using moving_sides = tk::TaggedTuple< brigand::list<
   ,  tag::fn,      std::vector< tk::real >
 > >;
 
+//! A list of side sets along with a user-defined function for time dependent BC
+using time_dependent_bc = tk::TaggedTuple< brigand::list<
+  //! List of side sets on which to apply time dependent BC
+     tag::sideset, std::vector< kw::sideset::info::expect::type >
+  //! Functions p(t), rho(t), u(t), v(t) and w(t) to specify time dependent BC
+  ,  tag::fn,      std::vector< tk::real >
+> >;
+
 //! ALE mesh motion options
 using ale = tk::TaggedTuple< brigand::list<
   //! ALE on/off
@@ -181,6 +189,28 @@ using interval_time = tk::TaggedTuple< brigand::list<
     tag::field,   kw::interval_time::info::expect::type
     //! History output interval
   , tag::history, kw::interval_time::info::expect::type
+> >;
+
+//! Output time ranges in units of physics time
+using time_range = tk::TaggedTuple< brigand::list<
+    //! \brief Field output configuration: outer vector: multiple ranges, inner
+    //!        vector: mintime, maxtime, dt
+    tag::field,   std::vector<
+                    std::vector< kw::time_range::info::expect::type > >
+    //! \brief History output configuration: outer vector: multiple ranges,
+    //!        inner vector: mintime, maxtime, dt
+  , tag::history, std::vector<
+                    std::vector< kw::time_range::info::expect::type > >
+> >;
+
+//! Output configuration parameters
+using output_parameters = tk::TaggedTuple< brigand::list<
+    //! Output intervals in units of iteration count
+    tag::iter,  interval_iter
+    //! Output intervals in units of physics time
+  , tag::time,  interval_time
+    //! Output time ranges in units of physics time
+  , tag::range, time_range
 > >;
 
 //! History output parameters storage
@@ -327,6 +357,7 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::u0,            std::vector< std::vector<
                         kw::pde_u0::info::expect::type > >
   , tag::bc,            bc
+  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::sponge,        SpongeParameters
   //! interface compression toggle
   , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
@@ -364,6 +395,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::farfield_velocity, std::vector< std::vector<
                               kw::velocity::info::expect::type > >
   , tag::bc,            bc
+  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::sponge,        SpongeParameters
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage
@@ -414,6 +446,7 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
+  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::ic,            ic
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
   , tag::sponge,        SpongeParameters

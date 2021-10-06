@@ -79,6 +79,12 @@ using interval_iter = tk::TaggedTuple< brigand::list<
   , tag::pdf,  kw::interval_iter::info::expect::type
 > >;
 
+//! Output configuration parameters
+using output_parameters = tk::TaggedTuple< brigand::list<
+    //! Output intervals in units of iteration count
+    tag::iter,  interval_iter
+> >;
+
 //! IO parameters storage
 using ios = tk::TaggedTuple< brigand::list<
     tag::nrestart,  int                             //!< Number of restarts

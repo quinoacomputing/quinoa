@@ -890,8 +890,8 @@ DiagCG::out()
 {
   auto d = Disc();
 
-  // Output time history if we hit its output frequency
-  if (d->histiter() or d->histtime()) {
+  // Output time history
+  if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
     for (const auto& eq : g_cgpde) {
       auto h = eq.histOutput( d->Hist(), d->Inpoel(), m_u );
@@ -900,9 +900,8 @@ DiagCG::out()
     d->history( std::move(hist) );
   }
 
-  // output field data if field iteration count is reached or in the last time
-  // step, otherwise continue to next time step
-  if (d->fielditer() or d->fieldtime() or d->finished())
+  // Output field data
+  if (d->fielditer() or d->fieldtime() or d->fieldrange() or d->finished())
     writeFields( CkCallback(CkIndex_DiagCG::step(), thisProxy[thisIndex]) );
   else
     step();

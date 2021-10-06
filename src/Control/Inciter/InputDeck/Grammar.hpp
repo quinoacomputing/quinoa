@@ -439,6 +439,17 @@ namespace grm {
               Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
         }
 
+        // Error check user defined time dependent BC for this system
+        const auto& tdepbc =
+          stack.template get< tag::param, eq, tag::bctimedep >().back();
+        // multiple time dependent BCs can be specified on different side sets
+        for (const auto& bndry : tdepbc) {
+          const auto& s = bndry.template get< tag::sideset >();
+          if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
+          const auto& f = bndry.template get< tag::fn >();
+          if (f.empty() or f.size() % 6 != 0)
+            Message< Stack, ERROR, MsgKey::INCOMPLETEUSERFN>( stack, in );
+        }
       }
     }
   };
@@ -768,6 +779,19 @@ namespace grm {
     }
   };
 
+  //! Function object to do error checking on output time ranges
+  template< typename Stack, typename Input >
+  struct range_errchk {
+    Stack& stack;
+    const Input& input;
+    explicit range_errchk( Stack& s, const Input& in ) : stack(s), input(in) {}
+    template< typename U > void operator()( brigand::type_<U> ) {
+      for (const auto& r : stack.template get< tag::output, tag::range, U >())
+        if ( r.size() != 3 or r[0] > r[1] or r[2] < 0.0 or r[2] > r[1]-r[0] )
+          Message< Stack, ERROR, MsgKey::BADRANGE >( stack, input );
+    }
+  };
+
   //! Rule used to trigger action
   struct check_inciter : pegtl::success {};
   //! \brief Do error checking on the inciter block
@@ -812,6 +836,12 @@ namespace grm {
       using BCTypes = inciter::ctr::bc::Keys;
       brigand::for_each< tk::cartesian_product< PDETypes, BCTypes > >(
         ensure_disjoint< Input, Stack >( in, stack ) );
+
+      // Do error checking on output time range configuration parameters: they
+      // all must be a 3 reals: mintime, maxtime, and dt with maxtime >
+      // mintime, and dt<maxtime-mintime.
+      brigand::for_each< inciter::ctr::time_range::Keys >
+                       ( range_errchk< Stack, Input >( stack, in ) );
 
       // Do error checking on time history point names (this is a programmer
       // error if triggers, hence assert)
@@ -1309,7 +1339,8 @@ namespace deck {
            tk::grm::process< use< kw::steady_state >,
                              tk::grm::Store< tag::discr, tag::steady_state >,
                              pegtl::alpha >,
-           tk::grm::interval_iter< use< kw::ttyi >, tag::tty >,
+           tk::grm::interval_iter< use< kw::ttyi >,
+                                   tag::output, tag::iter, tag::tty >,
            tk::grm::process_alpha< use< kw::scheme >,
                                    tk::grm::store_inciter_option<
                                      inciter::ctr::Scheme,
@@ -1426,6 +1457,30 @@ namespace deck {
                                         tk::grm::start_vector,
                                         tk::grm::check_vector,
                                         eq, tag::bc, param > > > {};
+
+  //! Match user-defined function as a discrete list of real numbers
+  template< class target, template< class... > class insert, class tag,
+    class... tags >
+  struct user_fn :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::fn >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+             tk::grm::scan< tk::grm::number,
+               insert< target, tag, tags... > > > > {};
+
+  //! User defined time dependent BC bc_timedep...end block
+  template< class eq >
+  struct timedep_bc :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::bc_timedep >::pegtl_string >,
+           tk::grm::start_vector_back< tag::param, eq, tag::bctimedep >,
+           tk::grm::block< use< kw::end >,
+             user_fn< tag::fn, tk::grm::Back_back_store_back, tag::param, eq,
+               tag::bctimedep >,
+             pegtl::if_must< tk::grm::vector< use< kw::sideset >,
+               tk::grm::Back_back_store_back< tag::sideset, tag::param, eq,
+                 tag::bctimedep >,
+               use< kw::end > > > > > {};
 
   //! Stagnation boundary conditions block
   template< class eq, class bc, class kwbc >
@@ -1658,6 +1713,7 @@ namespace deck {
            scan_eq< use< kw::compflow >, tag::compflow >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::ic, tag::box >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::material >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::bctimedep >,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,
                                             use< kw::physics >,
@@ -1720,7 +1776,9 @@ namespace deck {
                                         tag::compflow,
                                         tag::bcfarfield >,
                            bc< kw::bc_extrapolate, tag::compflow,
-                               tag::bcextrapolate > >,
+                               tag::bcextrapolate >,
+                           timedep_bc< tag::compflow >
+                           >,
            check_errors< tag::compflow, tk::grm::check_compflow > > {};
 
   //! compressible multi-material flow
@@ -1871,15 +1929,6 @@ namespace deck {
            tk::grm::check_amr_errors > {};
 
 
-  //! Match user-defined function as a discrete list of real numbers
-  template< class target, class tag, class... tags >
-  struct user_fn :
-         pegtl::if_must<
-           tk::grm::readkw< use< kw::fn >::pegtl_string >,
-           tk::grm::block< use< kw::end >,
-             tk::grm::scan< tk::grm::number,
-               tk::grm::Back_store_back< target, tag, tags... > > > > {};
-
   //! Arbitrary-Lagrangian-Eulerian (ALE) move...end block
   struct moving_sides :
          pegtl::if_must<
@@ -1893,7 +1942,7 @@ namespace deck {
                                             tk::ctr::UserTable,
                                             tag::ale, tag::move >,
                 pegtl::alpha >,
-             user_fn< tag::fn, tag::ale, tag::move >,
+             user_fn< tag::fn, tk::grm::Back_store_back, tag::ale, tag::move >,
              pegtl::if_must< tk::grm::vector< use< kw::sideset >,
                tk::grm::Back_store_back< tag::sideset, tag::ale, tag::move >,
                use< kw::end > > > > > {};
@@ -2050,8 +2099,12 @@ namespace deck {
                                  tag::selected,
                                  tag::filetype >,
                                pegtl::alpha >,
-             tk::grm::interval_iter< use< kw::interval_iter >, tag::field >,
-             tk::grm::interval_time< use< kw::interval_time >, tag::field >,
+             tk::grm::interval_iter< use< kw::interval_iter >,
+                                     tag::output, tag::iter, tag::field >,
+             tk::grm::interval_time< use< kw::interval_time >,
+                                     tag::output, tag::time, tag::field >,
+             tk::grm::time_range< use, kw::time_range,
+                                  tag::output, tag::range, tag::field >,
              tk::grm::process<
                use< kw::refined >,
                tk::grm::Store< tag::cmd, tag::io, tag::refined >,
@@ -2069,8 +2122,12 @@ namespace deck {
            tk::grm::block<
              use< kw::end >,
              outvar_block,
-             tk::grm::interval_iter< use< kw::interval_iter >, tag::history >,
-             tk::grm::interval_time< use< kw::interval_time >, tag::history >,
+             tk::grm::interval_iter< use< kw::interval_iter >,
+               tag::output, tag::iter, tag::history >,
+             tk::grm::interval_time< use< kw::interval_time >,
+               tag::output, tag::time, tag::history >,
+             tk::grm::time_range< use, kw::time_range,
+                                  tag::output, tag::range, tag::history >,
              tk::grm::precision< use, tag::history >,
              tk::grm::process<
                use< kw::txt_float_format >,

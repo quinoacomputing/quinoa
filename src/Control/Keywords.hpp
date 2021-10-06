@@ -1945,6 +1945,25 @@ struct interval_time_info {
 using interval_time =
   keyword< interval_time_info, TAOCPP_PEGTL_STRING("time_interval") >;
 
+struct time_range_info {
+  static std::string name() { return "time_range"; }
+  static std::string shortDescription() { return
+    "Configure physics time range for output (in units of physics time)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to configure field-, or history-output, specifying
+    a start time, a stop time, and an output frequency in physics time units.
+    Example: 'time_range 0.2 0.3 0.001 end', which specifies that from t=0.2 to
+    t=0.3 output should happen at physics time units of dt=0.001. This must be
+    used within a relevant block.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "3 reals"; }
+  };
+};
+using time_range =
+  keyword< time_range_info, TAOCPP_PEGTL_STRING("time_range") >;
+
 struct statistics_info {
   static std::string name() { return "statistics"; }
   static std::string shortDescription() { return
@@ -5412,6 +5431,20 @@ struct sideset_info {
 };
 using sideset = keyword< sideset_info, TAOCPP_PEGTL_STRING("sideset") >;
 
+struct fn_info {
+  static std::string name() { return "User-defined function"; }
+  static std::string shortDescription() { return
+    "Specify a discrete user-defined function"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a user-defined function with discrete
+    points, listed between a fn ... end block.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+   };
+};
+using fn = keyword< fn_info, TAOCPP_PEGTL_STRING("fn") >;
+
 struct bc_dirichlet_info {
   static std::string name() { return "Dirichlet boundary condition"; }
   static std::string shortDescription() { return
@@ -5595,6 +5628,28 @@ struct bc_extrapolate_info {
 };
 using bc_extrapolate =
   keyword< bc_extrapolate_info, TAOCPP_PEGTL_STRING("bc_extrapolate") >;
+
+struct bc_timedep_info {
+  static std::string name() { return "Time dependent boundary condition"; }
+  static std::string shortDescription() { return
+    "Start configuration block describing time dependent boundary conditions"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a bc_timedep ... end block, used to
+    specify the configuration of time dependent boundary conditions for a
+    partial differential equation. A discrete function in time t in the form of
+    a table with 6 columns (t, pressure(t), density(t), vx(t), vy(t), vz(t)) is
+    expected inside a fn ... end block, specified within the bc_timedep ... end
+    block. Multiple such bc_timedep blocks can be specified for different
+    time dependent BCs on different groups of side sets. Keywords allowed in a
+    bc_timedep ... end block: )"
+    + std::string("\'") + sideset::string() + "\', "
+    + std::string("\'") + fn::string() + "\'. "
+    + R"(For an example bc_timedep ... end block, see
+      tests/regression/inciter/compflow/Euler/TimedepBC/timedep_bc.q.)";
+  }
+};
+using bc_timedep =
+  keyword< bc_timedep_info, TAOCPP_PEGTL_STRING("bc_timedep") >;
 
 struct id_info {
   static std::string name() { return "id"; }
@@ -5876,6 +5931,7 @@ struct compflow_info {
     + bc_outlet::string() + "\', \'"
     + bc_farfield::string() + "\', \'"
     + bc_extrapolate::string() + "\'."
+    + bc_timedep::string() + "\'."
     + R"(For an example compflow ... end block, see
       doc/html/inicter_example_compflow.html.)";
   }
@@ -6846,20 +6902,6 @@ struct fntype_info {
 };
 using fntype =
   keyword< fntype_info, TAOCPP_PEGTL_STRING("fntype") >;
-
-struct fn_info {
-  static std::string name() { return "User-defined function"; }
-  static std::string shortDescription() { return
-    "Specify a discrete user-defined function"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify a user-defined function with discrete
-    points, listed between a fn ... end block.)"; }
-  struct expect {
-    using type = tk::real;
-    static std::string description() { return "real(s)"; }
-   };
-};
-using fn = keyword< fn_info, TAOCPP_PEGTL_STRING("fn") >;
 
 struct mesh_motion_info {
   static std::string name() {
