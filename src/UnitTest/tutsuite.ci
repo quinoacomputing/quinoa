@@ -49,7 +49,6 @@ module tutsuite {
   extern module testarray;
   extern module conjugategradients;
   extern module cgreceiver;
-  extern module ale;
 
   namespace unittest {
 
