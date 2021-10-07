@@ -811,7 +811,7 @@ THINCFunction( std::size_t rdof,
       // initializing the alReco vector as the TVD state.
     }
 
-    // Distribute the rest of volume fraction according to THINC solution
+    // Rescale volume fractions of interface-materials to ensure unit sum
     auto sum_rest = 1.0 - sum_non_inter;
     for (std::size_t k=0; k<nmat; ++k)
       if(matInt[k])
