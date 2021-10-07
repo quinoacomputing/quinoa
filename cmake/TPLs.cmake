@@ -5,7 +5,7 @@
 #            2016-2018 Los Alamos National Security, LLC.,
 #            2019-2021 Triad National Security, LLC.
 #            All rights reserved. See the LICENSE file for details.
-# \brief     Find the third-party libraries required to build Quinoa
+# \brief     Find third-party libraries required
 #
 ################################################################################
 
@@ -32,7 +32,7 @@ if (MATHLIB STREQUAL mkl OR MATHLIB STREQUAL MKL)
   find_package(MKL)
 endif()
 if(MKL_FOUND)
-  set(HAS_MKL true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_MKL true)  # will become compiler define
   message(STATUS "MKL enabled")
 endif()
 
@@ -71,7 +71,7 @@ if(ARCH MATCHES "x86")
   find_package(RNGSSE2)
 endif()
 if(RNGSSE2_FOUND)
-  set(HAS_RNGSSE2 true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_RNGSSE2 true)  # will become compiler define
   message(STATUS "RNGSSE2 enabled")
 endif()
 
@@ -115,14 +115,14 @@ find_package(Exodiff)
 set(TESTU01_ROOT ${TPL_DIR}) # prefer ours
 find_package(TestU01)
 if(TestU01_FOUND)
-  set(HAS_TESTU01 true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_TESTU01 true)  # will become compiler define
   message(STATUS "TestU01 enabled")
 endif()
 
 ### Root library
 find_package(Root COMPONENTS RIO Core Tree Hist)
 if (Root_FOUND)
-  set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_ROOT true)  # will become compiler define
   message(STATUS "ROOT enabled")
   # Root does not support libc++ on linux, so remove if configured
   if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -138,7 +138,7 @@ endif()
 set(BACKWARD_ROOT ${TPL_DIR}) # prefer ours
 find_package(BackwardCpp)
 if(BACKWARDCPP_FOUND)
-  set(HAS_BACKWARD true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_BACKWARD true)  # will become compiler define
   message(STATUS "BackwardCpp enabled")
 else()
   set(BACKWARD_INCLUDE_DIRS "")
@@ -148,7 +148,7 @@ endif()
 #### Configure Omega_h
 find_package(Omega_h)
 if(OMEGA_H_FOUND)
-  set(HAS_OMEGA_H true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_OMEGA_H true)  # will become compiler define
   message(STATUS "Omega_H enabled")
 else()
   set(OMEGA_H_INCLUDE_DIRS "")
@@ -169,7 +169,7 @@ set(SOL2_ROOT ${TPL_DIR}) # prefer ours
 find_package(Lua)
 find_package(Sol2)
 if (LUA_FOUND AND SOL2_FOUND)
-  set(HAS_LUA true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_LUA true)  # will become compiler define
   message(STATUS "Lua enabled")
 else()
   set(LUA_INCLUDE_DIR "")
@@ -179,7 +179,7 @@ endif()
 if (ENABLE_EXAM2M)
   find_package(ExaM2M)
   if(ExaM2M_FOUND)
-    set(HAS_EXAM2M true)  # will become compiler define in Main/QuinoaConfig.h
+    set(HAS_EXAM2M true)  # will become compiler define
     message(STATUS "ExaM2M enabled")
   else()
     set(EXAM2M_LIBRARIES "")
@@ -239,7 +239,7 @@ if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
     RANDOM123_FOUND AND Boost_FOUND AND (MKL_FOUND OR LAPACKE_FOUND))
   set(ENABLE_RNGTEST "true")
   set(RNGTEST_EXECUTABLE rngtest)
-  set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
+  set(RNGTEST_SRC_DIR ${PROJECT_SOURCE_DIR}/RNGTest)
   set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
 else()
   PrintMissing(rngtest "CHARM_FOUND;TESTU01_FOUND;BRIGAND_FOUND;PEGTL_FOUND;RANDOM123_FOUND;Boost_FOUND;MKL_FOUND;LAPACKE_FOUND")
