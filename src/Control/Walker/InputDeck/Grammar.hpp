@@ -706,8 +706,10 @@ namespace deck {
                      tk::grm::discrparam< use, kw::nstep, tag::nstep >,
                      tk::grm::discrparam< use, kw::term, tag::term >,
                      tk::grm::discrparam< use, kw::dt, tag::dt >,
-                     tk::grm::interval_iter< use< kw::ttyi >, tag::tty >,
-                     tk::grm::interval_iter< use< kw::pari >, tag::particles >
+                     tk::grm::interval_iter< use< kw::ttyi >,
+                       tag::output, tag::iter, tag::tty >,
+                     tk::grm::interval_iter< use< kw::pari >,
+                       tag::output, tag::iter, tag::particles >
                    > {};
 
   //! rngs

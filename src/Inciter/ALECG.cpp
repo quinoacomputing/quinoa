@@ -2087,8 +2087,8 @@ ALECG::out()
 {
   auto d = Disc();
 
-  // Output time history if we hit its output frequency
-  if (d->histiter() or d->histtime()) {
+  // Output time history
+  if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
     conserved( m_u, Disc()->Vol() );
     for (const auto& eq : g_cgpde) {
@@ -2099,9 +2099,8 @@ ALECG::out()
     d->history( std::move(hist) );
   }
 
-  // output field data if field iteration count is reached or if the field
-  // physics time output frequency is hit or in the last time step
-  if (d->fielditer() or d->fieldtime() or m_finished)
+  // Output field data
+  if (d->fielditer() or d->fieldtime() or d->fieldrange() or m_finished)
     writeFields( CkCallback(CkIndex_ALECG::step(), thisProxy[thisIndex]) );
   else
     step();

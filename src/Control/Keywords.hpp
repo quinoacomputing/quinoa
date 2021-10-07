@@ -1945,6 +1945,25 @@ struct interval_time_info {
 using interval_time =
   keyword< interval_time_info, TAOCPP_PEGTL_STRING("time_interval") >;
 
+struct time_range_info {
+  static std::string name() { return "time_range"; }
+  static std::string shortDescription() { return
+    "Configure physics time range for output (in units of physics time)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to configure field-, or history-output, specifying
+    a start time, a stop time, and an output frequency in physics time units.
+    Example: 'time_range 0.2 0.3 0.001 end', which specifies that from t=0.2 to
+    t=0.3 output should happen at physics time units of dt=0.001. This must be
+    used within a relevant block.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "3 reals"; }
+  };
+};
+using time_range =
+  keyword< time_range_info, TAOCPP_PEGTL_STRING("time_range") >;
+
 struct statistics_info {
   static std::string name() { return "statistics"; }
   static std::string shortDescription() { return

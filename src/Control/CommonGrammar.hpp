@@ -110,6 +110,7 @@ namespace grm {
     NEGATIVEPARAM,      //!< Negative parameter given configuring a PDF
     NONCOMP,            //!< No number of components selected
     LARGECOMP,          //!< Component index indexing out of max eq sys ncomp
+    BADRANGE,           //!< Incorrect time range configuration
     NONMAT,             //!< No number of materials selected
     NUMMAT,             //!< Incorrect number of materials selected
     REPMATID,           //!< Repeating material id
@@ -253,6 +254,10 @@ namespace grm {
     { MsgKey::LARGECOMP, "The component index is too large and indexes out of "
       "the total number of scalar components of the equation system "
       "configured." },
+    { MsgKey::BADRANGE, "Incorrect output time range configuration. "
+      "Configuration for a time range must contain exactly 3 reals, "
+      "specifying mintime, maxtime, and dt, as exactly 3 reals in that order, "
+      "with maxtime > mintime and 0 < dt < maxtime-mintime." },
     { MsgKey::NONMAT, "The number of materials has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'nmat' to specify the number of materials." },
@@ -2012,15 +2017,26 @@ namespace grm {
                   Store_back< tag::component, Tag >,
                   pegtl::digit > {};
 
-  //! Match interval control parameter in units of iteration count
-  template< typename keyword, typename Tag >
+  //! Match output interval control parameter in units of iteration count
+  template< typename keyword, typename Tag, typename... Tags >
   struct interval_iter :
-         control< keyword, pegtl::digit, Store, tag::interval_iter, Tag > {};
+         control< keyword, pegtl::digit, Store, Tag, Tags... > {};
 
-  //! Match interval control parameter in units of physics time
-  template< typename keyword, typename Tag >
+  //! Match output interval control parameter in units of physics time
+  template< typename keyword, typename Tag, typename... Tags >
   struct interval_time :
-         control< keyword, number, Store, tag::interval_time, Tag > {};
+         control< keyword, number, Store, Tag, Tags... > {};
+
+  //! Match output range control configuration as a list of min, max, and dt
+  template< template< class > class use, class keyword, class tag,
+            class... tags >
+  struct time_range :
+         pegtl::if_must<
+           tk::grm::readkw< typename use< keyword >::pegtl_string >,
+           start_vector< tag, tags... >,
+           tk::grm::block< use< kw::end >,
+             tk::grm::scan< tk::grm::number,
+               tk::grm::Store_back_back< tag, tags... > > > > {};
 
   //! Parse statistics ... end block
   template< template< class > class use, template< class... Ts > class store >
@@ -2028,7 +2044,7 @@ namespace grm {
          pegtl::if_must< readkw< typename use< kw::statistics >::pegtl_string >,
                          block< use< kw::end >,
                                 interval_iter< use< kw::interval_iter >,
-                                               tag::stat >,
+                                  tag::output, tag::iter, tag::stat >,
                                 process< use< kw::txt_float_format >,
                                          store< tk::ctr::TxtFloatFormat,
                                                 tag::flformat,
@@ -2043,7 +2059,7 @@ namespace grm {
          pegtl::if_must< readkw< typename use< kw::diagnostics >::pegtl_string >,
                          block< use< kw::end >,
                                 interval_iter< use< kw::interval_iter >,
-                                                    tag::diag >,
+                                  tag::output, tag::iter, tag::diag >,
                                 process< use< kw::txt_float_format >,
                                          store< tk::ctr::TxtFloatFormat,
                                                 tag::flformat,
@@ -2184,7 +2200,8 @@ namespace grm {
            tk::grm::readkw< typename use < kw::pdfs >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
-             tk::grm::interval_iter< use< kw::interval_iter >, tag::pdf >,
+             tk::grm::interval_iter< use< kw::interval_iter >,
+                                     tag::output, tag::iter, tag::pdf >,
              pdf_option< use< kw::filetype >,
                          store< tk::ctr::PDFFile,
                                 tag::selected,
