@@ -648,6 +648,9 @@ endif()
 if (ENABLE_INCITER AND HIGHWAYHASH_FOUND)
   add_subdirectory(PDE)
   add_subdirectory(Inciter)
+endif()
+
+if (ENABLE_INCITER OR ENABLE_UNITTEST)
   add_subdirectory(LinearSolver)
 endif()
 
