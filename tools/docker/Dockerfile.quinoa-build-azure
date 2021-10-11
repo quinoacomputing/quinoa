@@ -44,7 +44,7 @@ RUN sh pre.sh && cmake \
     -DRUNNER=mpirun \
     -DRUNNER_NCPUS_ARG=-n \
     -DRUNNER_ARGS="${RUNNER_ARGS}" \
-    -DENABLE_RNGTEST="${RNGTEST}" \
+    ${RNGTEST:+-DENABLE_RNGTEST=$RNGTEST} \
     ${M2M:+-DENABLE_EXAM2M=true} \
     ${SMP:+-DPOSTFIX_RUNNER_ARGS="+setcpuaffinity"} \
     ../src
