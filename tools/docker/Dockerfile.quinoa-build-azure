@@ -19,6 +19,7 @@ ARG SHARED_LIBS
 ARG DOC
 ARG SMP
 ARG M2M
+ARG RNGTEST
 
 ENV PATH=/opt/openmpi/${COMPILER}/bin:$PATH
 ENV RUNNER_ARGS="--bind-to none -oversubscribe"
@@ -40,6 +41,7 @@ RUN cmake \
     -DRUNNER=mpirun \
     -DRUNNER_NCPUS_ARG=-n \
     -DRUNNER_ARGS="${RUNNER_ARGS}" \
+    -DENABLE_RNGTEST="${RNGTEST}" \
     ${M2M:+-DENABLE_EXAM2M=true} \
     ${SMP:+-DPOSTFIX_RUNNER_ARGS="+setcpuaffinity"} \
     ../src

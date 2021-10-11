@@ -78,6 +78,16 @@ jobs:
         BUILD: 'Release'
         DISTRO: 'debian-clang-smp'
         SMP: 'on'
+      intel-debug:
+        COMPILER: 'intel'
+        BUILD: 'Debug'
+        DISTRO: 'debian-intel'
+        RNGTEST: false
+      intel-release:
+        COMPILER: 'intel'
+        BUILD: 'Release'
+        DISTRO: 'debian-intel'
+        RNGTEST: false
       doc:
         COMPILER: 'gnu'
         DOC: true
@@ -92,5 +102,6 @@ jobs:
                --build-arg SHARED_LIBS="${SHARED_LIBS}" \
                --build-arg SMP=${SMP} \
                --build-arg M2M=${M2M} \
+               --build-arg RNGTEST=${RNGTEST} \
                --rm=false -f tools/docker/Dockerfile.quinoa-build-azure -t ${DISTRO} .
       displayName: 'Build & Test'
