@@ -29,7 +29,10 @@ USER quinoa
 COPY . /home/quinoa/
 RUN mkdir build
 WORKDIR build
-RUN cmake \
+
+RUN if [ ${COMPILER} = intel ]; then echo '. /opt/intel/oneapi/setvars.sh intel64 && export PATH=/opt/openmpi/bin:$PATH' > pre.sh; else touch pre.sh; fi && cat pre.sh
+
+RUN sh pre.sh && cmake \
     -GNinja \
     -DCMAKE_C_COMPILER=mpicc \
     -DCMAKE_CXX_COMPILER=mpicxx \
@@ -49,7 +52,7 @@ RUN cmake \
 RUN if [ "${DOC}" ]; then \
       ninja doc; \
     else \
-      ninja && if [ "${SMP}" ]; then mpirun -n 1 ${RUNNER_ARGS} Main/unittest -v -q +ppn 2; else mpirun -n 2 ${RUNNER_ARGS} Main/unittest -v -q; fi && ctest -j2 --output-on-failure -LE stringent; \
+      sh pre.sh && ninja && if [ "${SMP}" ]; then mpirun -n 1 ${RUNNER_ARGS} Main/unittest -v -q +ppn 2; else mpirun -n 2 ${RUNNER_ARGS} Main/unittest -v -q; fi && ctest -j2 --output-on-failure -LE stringent; \
     fi
 
 USER root
