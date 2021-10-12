@@ -145,7 +145,7 @@ SuperbeeLimiting( const tk::Fields& U,
                   tk::real beta_lim );
 
 //! Kuzmin's vertex-based limiter function calculation for P1 dofs
-std::vector< tk::real >
+void
 VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,

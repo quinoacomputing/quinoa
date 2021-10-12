@@ -49,13 +49,20 @@ void non_conformity( std::size_t nunk,
                      std::size_t ndofmax,
                      std::vector< std::size_t >& ndofel );
 
-//! Evaluate the spectral decay indicator
-tk::real evalDiscontinuityIndicator( std::size_t e,
-                                     std::size_t nmat,
-                                     ncomp_t ncomp,
-                                     const std::size_t ndof,
-                                     const std::size_t ndofel,
-                                     const tk::Fields& unk );
+//! Evaluate the spectral decay indicator for single-material flow
+tk::real evalDisIndicator_CompFlow( std::size_t e,
+                                    ncomp_t ncomp,
+                                    const std::size_t ndof,
+                                    const std::size_t ndofel,
+                                    const tk::Fields& unk );
+
+//! Evaluate the spectral decay indicator for multi-material flow
+tk::real evalDisIndicator_MultiMat( std::size_t e,
+                                    std::size_t nmat,
+                                    ncomp_t ncomp,
+                                    const std::size_t ndof,
+                                    const std::size_t ndofel,
+                                    const tk::Fields& unk );
 } // inciter::
 
 #endif // Indicator_h

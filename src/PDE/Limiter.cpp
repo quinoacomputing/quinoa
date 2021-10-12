@@ -460,7 +460,7 @@ VertexBasedCompflow_P2(
     bool shock_detec(false);
 
     // Evaluate the shock detection indicator
-    auto Ind = evalDiscontinuityIndicator(e, 1, ncomp, dof_el, ndofel[e], U);
+    auto Ind = evalDisIndicator_CompFlow(e, ncomp, dof_el, ndofel[e], U);
     if(Ind > 1e-6)
       shock_detec = true;
 
@@ -626,7 +626,7 @@ VertexBasedMultiMat_P1(
     }
 
     // Evaluate the shock detection indicator
-    auto Ind = evalDiscontinuityIndicator(e, nmat, ncomp, dof_el, ndofel[e], U);
+    auto Ind = evalDisIndicator_MultiMat(e, nmat, ncomp, dof_el, ndofel[e], U);
     if(Ind > threshold)
       shockmarker[e] = true;
     else
@@ -984,7 +984,7 @@ SuperbeeLimiting( const tk::Fields& U,
   return phi;
 }
 
-std::vector< tk::real >
+void
 VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
@@ -1141,8 +1141,6 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
       phi[c] = std::min( phi[c], phi_gp );
     }
   }
-
-  return phi;
 }
 
 std::vector< tk::real >
@@ -1640,12 +1638,9 @@ void MarkShockCells ( const std::size_t nelem,
 
     auto ng = std::max( ng_l, ng_r );
 
-    std::array< std::vector< tk::real >, 2 > coordgp;
-    std::vector< tk::real > wgp;
-
-    coordgp[0].resize( ng );
-    coordgp[1].resize( ng );
-    wgp.resize( ng );
+    std::array< std::vector< tk::real >, 2 > coordgp
+      { std::vector<tk::real>(ng), std::vector<tk::real>(ng) };
+    std::vector< tk::real > wgp( ng );
 
     tk::GaussQuadratureTri( ng, coordgp, wgp );
 
