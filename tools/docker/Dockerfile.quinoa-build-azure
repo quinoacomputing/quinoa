@@ -53,7 +53,7 @@ RUN . `pwd`/pre.sh && cmake \
 RUN if [ "${DOC}" ]; then \
       ninja doc; \
     else \
-      . `pwd`/pre.sh && ninja && if [ "${SMP}" ]; then mpirun -n 1 ${RUNNER_ARGS} Main/unittest -v -q +ppn 2; else mpirun -n 2 ${RUNNER_ARGS} Main/unittest -v -q; fi && ctest -j2 --output-on-failure -LE stringent; \
+      . `pwd`/pre.sh && ninja -j 1 && if [ "${SMP}" ]; then mpirun -n 1 ${RUNNER_ARGS} Main/unittest -v -q +ppn 2; else mpirun -n 2 ${RUNNER_ARGS} Main/unittest -v -q; fi && ctest -j2 --output-on-failure -LE stringent; \
     fi
 
 USER root
