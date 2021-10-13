@@ -337,9 +337,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   #add_compiler_flag("-fopt-info-vec-missed")
 
   # Linker flags for gcc
-  if (NOT HOST_OS_ALPINE)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wno-unused-parameter")
-  endif()
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wno-unused-parameter")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
