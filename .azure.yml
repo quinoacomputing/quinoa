@@ -7,7 +7,7 @@ jobs:
 - job: "Quinoa"
   timeoutInMinutes: 270
   pool:
-    vmImage: 'Debian 10 Basic'
+    vmImage: 'Ubuntu 16.04'
   variables:
     imageName: 'quinoa-azure:$(build.buildId)'
   strategy:
