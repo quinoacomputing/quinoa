@@ -205,7 +205,7 @@ class DGPDE {
                 const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& P,
-                std::vector< bool >& shockmarker ) const
+                std::vector< std::size_t >& shockmarker ) const
     {
       self->limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
                    bid, uNodalExtrm, pNodalExtrm, U, P, shockmarker );
@@ -361,7 +361,7 @@ class DGPDE {
                           const std::vector< std::vector<tk::real> >&,
                           tk::Fields&,
                           tk::Fields&,
-                          std::vector< bool >& ) const = 0;
+                          std::vector< std::size_t >& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -481,7 +481,7 @@ class DGPDE {
                   const std::vector< std::vector<tk::real> >& pNodalExtrm,
                   tk::Fields& U,
                   tk::Fields& P,
-                  std::vector< bool >& shockmarker ) const override
+                  std::vector< std::size_t >& shockmarker ) const override
       {
         data.limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
                     bid, uNodalExtrm, pNodalExtrm, U, P, shockmarker );

@@ -117,7 +117,7 @@ VertexBasedMultiMat_P1(
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
-  std::vector< bool >& shockmarker );
+  std::vector< std::size_t >& shockmarker );
 
 //! WENO limiter function calculation for P1 dofs
 void
@@ -161,7 +161,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& NodalExtrm,
   std::vector< tk::real >& phi,
-  const std::vector< std::size_t >& VarRange );
+  const std::array< std::size_t, 2 >& VarRange );
 
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
 std::vector< tk::real >
@@ -220,7 +220,7 @@ void MarkShockCells ( const std::size_t nelem,
                       const tk::Fields& geoElem,
                       const tk::Fields& U,
                       const tk::Fields& P,
-                      std::vector< bool >& shockmarker );
+                      std::vector< std::size_t >& shockmarker );
 
 } // inciter::
 

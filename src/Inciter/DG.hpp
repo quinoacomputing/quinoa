@@ -460,7 +460,7 @@ class DG : public CBase_DG {
     //! Element ids at which box ICs are defined by user (multiple boxes)
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
     //! Shock detection marker for field output
-    std::vector< bool > m_shockmarker;
+    std::vector< std::size_t > m_shockmarker;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

@@ -61,10 +61,10 @@ void spectral_decay( std::size_t nmat,
     if(ndofel[e] > 1) {
       if(nmat == 1)
         Ind[e] =
-          evalDisIndicator_CompFlow(e, ncomp, ndof, ndofel[e], unk);
+          evalDiscIndicator_CompFlow(e, ncomp, ndof, ndofel[e], unk);
       else
         Ind[e] =
-          evalDisIndicator_MultiMat(e, nmat, ncomp, ndof, ndofel[e], unk);
+          evalDiscIndicator_MultiMat(e, nmat, ncomp, ndof, ndofel[e], unk);
     }
 
   // As for spectral-decay indicator, rho_p - rho_(p-1) actually is the leading
@@ -267,11 +267,11 @@ void non_conformity( std::size_t nunk,
   }
 }
 
-tk::real evalDisIndicator_CompFlow( std::size_t e,
-                                    ncomp_t ncomp,
-                                    const std::size_t ndof,
-                                    const std::size_t ndofel,
-                                    const tk::Fields& unk )
+tk::real evalDiscIndicator_CompFlow( std::size_t e,
+                                     ncomp_t ncomp,
+                                     const std::size_t ndof,
+                                     const std::size_t ndofel,
+                                     const tk::Fields& unk )
 // *****************************************************************************
 //! Evaluate the spectral decay indicator
 //! \param[in] e Index for the tetrahedron element
@@ -333,12 +333,12 @@ tk::real evalDisIndicator_CompFlow( std::size_t e,
   return Ind;
 }
 
-tk::real evalDisIndicator_MultiMat( std::size_t e,
-                                    std::size_t nmat,
-                                    ncomp_t ncomp,
-                                    const std::size_t ndof,
-                                    const std::size_t ndofel,
-                                    const tk::Fields& unk )
+tk::real evalDiscIndicator_MultiMat( std::size_t e,
+                                     std::size_t nmat,
+                                     ncomp_t ncomp,
+                                     const std::size_t ndof,
+                                     const std::size_t ndofel,
+                                     const tk::Fields& unk )
 // *****************************************************************************
 //! Evaluate the spectral decay indicator
 //! \param[in] e Index for the tetrahedron element
@@ -364,7 +364,7 @@ tk::real evalDisIndicator_MultiMat( std::size_t e,
 
   std::vector<tk::real> dU(nmat,0.0);
   std::vector<tk::real> U(nmat,0.0);
-  std::vector<bool> marker(nmat,false);
+  std::vector<std::size_t> marker(nmat,0);
 
   // Gaussian quadrature
   for (std::size_t igp=0; igp<ng; ++igp)
@@ -377,7 +377,7 @@ tk::real evalDisIndicator_MultiMat( std::size_t e,
 
     for(std::size_t k = 0; k < nmat; k++) {
       if(unk(e, volfracDofIdx(nmat, k, ndof, 0), 0) > 1e-2) {
-        marker[k] = true;
+        marker[k] = 1;
         U[k] += wgp[igp] *
           state[densityIdx(nmat, k)] * state[densityIdx(nmat, k)];
 

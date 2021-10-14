@@ -744,7 +744,7 @@ class MultiMat {
                 const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& P,
-                std::vector< bool >& shockmarker ) const
+                std::vector< std::size_t >& shockmarker ) const
     {
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );

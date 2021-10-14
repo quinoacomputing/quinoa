@@ -460,11 +460,11 @@ VertexBasedCompflow_P2(
     bool shock_detec(false);
 
     // Evaluate the shock detection indicator
-    auto Ind = evalDisIndicator_CompFlow(e, ncomp, dof_el, ndofel[e], U);
+    auto Ind = evalDiscIndicator_CompFlow(e, ncomp, dof_el, ndofel[e], U);
     if(Ind > 1e-6)
       shock_detec = true;
 
-    if (dof_el > 1 && shock_detec == true)
+    if (dof_el > 1 && shock_detec)
     {
       // Transform the solution with Dubiner basis to Taylor basis so that the
       // limiting function could be applied to physical derivatives in a
@@ -566,7 +566,7 @@ VertexBasedMultiMat_P1(
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
-  std::vector< bool >& shockmarker )
+  std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for multi-material DGP1
 //! \param[in] esup Elements surrounding points
@@ -626,19 +626,19 @@ VertexBasedMultiMat_P1(
     }
 
     // Evaluate the shock detection indicator
-    auto Ind = evalDisIndicator_MultiMat(e, nmat, ncomp, dof_el, ndofel[e], U);
+    auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, dof_el, ndofel[e], U);
     if(Ind > threshold)
-      shockmarker[e] = true;
+      shockmarker[e] = 1;
     else
-      shockmarker[e] = false;
+      shockmarker[e] = 0;
 
     if (dof_el > 1)
     {
       std::vector< std::vector< tk::real > > unk;
       std::vector< tk::real > phic(ncomp, 1.0);
       std::vector< tk::real > phip(nprim, 1.0);
-      if(shockmarker[e] == true) {
-        // When shockmarker is true, there is discontinuity within the element.
+      if(shockmarker[e]) {
+        // When shockmarker is 1, there is discontinuity within the element.
         // Hence, the vertex-based limiter will be applied.
 
         // limit conserved quantities
@@ -648,15 +648,16 @@ VertexBasedMultiMat_P1(
         VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e, rdof,
           dof_el, offset, nprim, gid, bid, pNodalExtrm, phip, {0, nprim});
       } else {
-        // When shockmarker is false, the volume fraction, density and energy
+        // When shockmarker is 0, the volume fraction, density and energy
         // of minor material will still be limited to ensure a stable solution.
         VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
-          dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic, {0, nmat});
+          dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic,
+          {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)+1});
 
         for(std::size_t k=0; k<nmat; ++k) {
           if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-4) {
             // Vector to store the range of limited variables
-            std::vector< std::size_t > VarRange(2, 0);
+            std::array< std::size_t, 2 > VarRange;
 
             // limit the density of minor materials
             VarRange[0] = densityIdx(nmat, k);
@@ -1000,7 +1001,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& NodalExtrm,
   std::vector< tk::real >& phi,
-  const std::vector< std::size_t >& VarRange )
+  const std::array< std::size_t, 2 >& VarRange )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter function calculation for P1 dofs
 //! \param[in] U High-order solution vector which is to be limited
@@ -1591,7 +1592,7 @@ void MarkShockCells ( const std::size_t nelem,
                       const tk::Fields& geoElem,
                       const tk::Fields& U,
                       const tk::Fields& P,
-                      std::vector< bool >& shockmarker )
+                      std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
 //  Mark the cells that contain discontinuity according to the interface
 //    condition
@@ -1610,6 +1611,12 @@ void MarkShockCells ( const std::size_t nelem,
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in, out] shockmarker Vector of the shock indicator
+//! \details This function computes the discontinuity indicator based on
+//!   interface conditon. It is based on the following paper:
+//!   Hong L., Gianni A., Robert N. (2021) A moving discontinuous Galerkin
+//!   finite element method with interface condition enforcement for
+//!   compressible flows. Journal of Computational Physics,
+//!   doi: https://doi.org/10.1016/j.jcp.2021.110618
 // *****************************************************************************
 {
   std::vector< tk::real > IC(U.nunk(), 0.0);
@@ -1733,9 +1740,9 @@ void MarkShockCells ( const std::size_t nelem,
   // Loop over element to mark shock cell
   for (std::size_t e=0; e<nelem; ++e) {
     if(fabs(IC[e]) > 1e-6)
-      shockmarker[e] = true;
+      shockmarker[e] = 1;
     else
-      shockmarker[e] = false;
+      shockmarker[e] = 0;
   }
 }
 

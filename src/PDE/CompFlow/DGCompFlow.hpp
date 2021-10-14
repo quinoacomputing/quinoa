@@ -309,7 +309,7 @@ class CompFlow {
                   pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields&,
-                std::vector< bool >& ) const
+                std::vector< std::size_t >& ) const
     {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
