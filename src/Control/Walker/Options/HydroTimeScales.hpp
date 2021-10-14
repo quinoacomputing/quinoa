@@ -86,7 +86,7 @@ class HydroTimeScales : public tk::Toggle< HydroTimeScalesType > {
     //! \brief Return table based on Enum
     //! \param[in] t Enum value of the option requested
     //! \return tk::Table associated to the option
-    tk::Table table( HydroTimeScalesType t ) const {
+    tk::Table<1> table( HydroTimeScalesType t ) const {
       if (t == HydroTimeScalesType::EQ_A005H)
         return invhts_eq_A005H;
       else if (t == HydroTimeScalesType::EQ_A005S)

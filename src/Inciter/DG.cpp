@@ -78,10 +78,6 @@ DG::DG( const CProxy_Discretization& disc,
            [](std::size_t s, const DGPDE& eq){ return s + eq.nprim(); } ) ),
   m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), m_coord) ),
   m_geoElem( tk::genGeoElemTet( m_inpoel, m_coord ) ),
-  m_volfracExtr( m_u.nunk(),
-                 std::accumulate( begin(g_dgpde), end(g_dgpde), 0u,
-                 [](std::size_t s, const DGPDE& eq){ return s + 2*eq.nmat(); } )
-               ),
   m_lhs( m_u.nunk(),
          g_inputdeck.get< tag::discr, tag::ndof >()*
          g_inputdeck.get< tag::component >().nprop() ),
@@ -108,7 +104,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_bid(),
   m_uc(),
   m_pc(),
-  m_volfracExtrc(),
   m_ndofc(),
   m_initial( 1 ),
   m_expChBndFace(),
@@ -1149,7 +1144,6 @@ DG::adj()
   m_u.resize( m_nunk );
   m_un.resize( m_nunk );
   m_p.resize( m_nunk );
-  m_volfracExtr.resize( m_nunk );
   m_lhs.resize( m_nunk );
   m_rhs.resize( m_nunk );
 
@@ -1167,7 +1161,6 @@ DG::adj()
   for (auto& n : m_ndofc) n.resize( m_bid.size() );
   for (auto& u : m_uc) u.resize( m_bid.size() );
   for (auto& p : m_pc) p.resize( m_bid.size() );
-  for (auto& p : m_volfracExtrc) p.resize( m_bid.size() );
 
   // Initialize number of degrees of freedom in mesh elements
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
@@ -1493,7 +1486,7 @@ DG::extractFieldOutput(
     std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
     ndof.resize( nelem );
     for (const auto& [child,parent] : addedTets)
-      ndof[child] = m_ndof[parent];
+      ndof[child] = static_cast< tk::real >( m_ndof[parent] );
     m_elemfields.push_back( ndof );
   }
 
@@ -1710,7 +1703,7 @@ DG::reco()
     // Reconstruct second-order solution and primitive quantities
     for (const auto& eq : g_dgpde)
       eq.reconstruct( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel,
-                      m_coord, m_u, m_p, m_volfracExtr );
+                      m_coord, m_u, m_p );
   }
 
   // Send reconstructed solution to neighboring chares
@@ -1720,8 +1713,7 @@ DG::reco()
     for(const auto& [cid, ghostdata] : m_sendGhost) {
       std::vector< std::size_t > tetid( ghostdata.size() );
       std::vector< std::vector< tk::real > > u( ghostdata.size() ),
-                                             prim( ghostdata.size() ),
-                                             volfm( ghostdata.size() );
+                                             prim( ghostdata.size() );
       std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : ghostdata) {
@@ -1730,11 +1722,10 @@ DG::reco()
         tetid[j] = i;
         u[j] = m_u[i];
         prim[j] = m_p[i];
-        volfm[j] = m_volfracExtr[i];
         if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
         ++j;
       }
-      thisProxy[ cid ].comreco( thisIndex, tetid, u, prim, volfm, ndof );
+      thisProxy[ cid ].comreco( thisIndex, tetid, u, prim, ndof );
     }
 
   ownreco_complete();
@@ -1745,7 +1736,6 @@ DG::comreco( int fromch,
              const std::vector< std::size_t >& tetid,
              const std::vector< std::vector< tk::real > >& u,
              const std::vector< std::vector< tk::real > >& prim,
-             const std::vector< std::vector< tk::real > >& volfm,
              const std::vector< std::size_t >& ndof )
 // *****************************************************************************
 //  Receive chare-boundary reconstructed ghost data from neighboring chares
@@ -1775,10 +1765,8 @@ DG::comreco( int fromch,
     auto b = tk::cref_find( m_bid, j );
     Assert( b < m_uc[1].size(), "Indexing out of bounds" );
     Assert( b < m_pc[1].size(), "Indexing out of bounds" );
-    Assert( b < m_volfracExtrc[1].size(), "Indexing out of bounds" );
     m_uc[1][b] = u[i];
     m_pc[1][b] = prim[i];
-    m_volfracExtrc[1][b] = volfm[i];
     if (pref && m_stage == 0) {
       Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
       m_ndofc[1][b] = ndof[i];
@@ -1819,9 +1807,6 @@ DG::nodalExtrema()
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
       m_p(boundary,c,0) = m_pc[1][localtet][c];
-    }
-    for (std::size_t c=0; c<m_volfracExtr.nprop(); ++c) {
-      m_volfracExtr(boundary,c,0) = m_volfracExtrc[1][localtet][c];
     }
     if (pref && m_stage == 0) {
       m_ndof[ boundary ] = m_ndofc[1][ localtet ];
@@ -2407,11 +2392,12 @@ DG::solve( tk::real newdt )
 
   for (const auto& eq : g_dgpde)
     eq.rhs( d->T(), m_geoFace, m_geoElem, m_fd, m_inpoel, m_boxelems, m_coord,
-            m_u, m_p, m_volfracExtr, m_ndof, m_rhs );
+            m_u, m_p, m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<m_nunk; ++e)
     for(std::size_t c=0; c<neq; ++c)
+    {
       for (std::size_t k=0; k<m_numEqDof[c]; ++k)
       {
         auto rmark = c*rdof+k;
@@ -2422,10 +2408,21 @@ DG::solve( tk::real newdt )
         if(fabs(m_u(e, rmark, 0)) < 1e-16)
           m_u(e, rmark, 0) = 0;
       }
+      // zero out unused/reconstructed dofs of equations using reduced dofs
+      // (see DGMultiMat::numEquationDofs())
+      if (m_numEqDof[c] < rdof) {
+        for (std::size_t k=m_numEqDof[c]; k<rdof; ++k)
+        {
+          auto rmark = c*rdof+k;
+          m_u(e, rmark, 0) = 0.0;
+        }
+      }
+    }
 
   // Update primitives based on the evolved solution
   for (const auto& eq : g_dgpde)
   {
+    eq.updateInterfaceCells( m_u, m_fd.Esuel().size()/4, m_ndof );
     eq.updatePrimitives( m_u, m_lhs, m_geoElem, m_p, m_fd.Esuel().size()/4 );
     eq.cleanTraceMaterial( m_geoElem, m_u, m_p, m_fd.Esuel().size()/4 );
   }
@@ -2485,6 +2482,7 @@ DG::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
   const std::unordered_map< std::size_t, std::size_t >& addedTets,
+  const std::set< std::size_t >& /*removedNodes*/,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
@@ -2525,7 +2523,6 @@ DG::resizePostAMR(
   m_un.resize( nelem );
   m_lhs.resize( nelem );
   m_rhs.resize( nelem );
-  m_volfracExtr.resize( nelem );
   m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
     m_ndof_NodalExtrm*g_inputdeck.get< tag::component >().nprop() ) );
   m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
@@ -2578,16 +2575,8 @@ DG::fieldOutput() const
 {
   auto d = Disc();
 
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
-
-  // output field data if field iteration count is reached or in the last time
-  // step, otherwise continue to next time step
-  return !((d->It()) % fieldfreq) ||
-         std::fabs(d->T()-term) < eps ||
-         d->It() >= nstep;
+  // Output field data
+  return d->fielditer() or d->fieldtime() or d->fieldrange() or d->finished();
 }
 
 bool
@@ -2610,9 +2599,8 @@ DG::writeFields( CkCallback c )
 {
   auto d = Disc();
 
-  // Output time history if we hit its output frequency
-  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
-  if ( !((d->It()) % histfreq) ) {
+  // Output time history
+  if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
     for (const auto& eq : g_dgpde) {
       auto h = eq.histOutput( d->Hist(), m_inpoel, m_coord, m_u, m_p );
@@ -2632,7 +2620,8 @@ DG::writeFields( CkCallback c )
     auto p = tk::cref_find( lid, g );
     for (std::size_t i=0; i<f.first.size(); ++i) {
       m_nodefields[i][p] += f.first[i];
-      m_nodefields[i][p] /= esup.second[p+1] - esup.second[p] + f.second;
+      m_nodefields[i][p] /= static_cast< tk::real >(
+                             esup.second[p+1] - esup.second[p] + f.second );
     }
   }
   tk::destroy( m_nodefieldsc );
@@ -2651,7 +2640,7 @@ DG::writeFields( CkCallback c )
   auto& gid = std::get< 1 >( m_outmesh.chunk );
   for (std::size_t p=0; p<npoin; ++p) {
     if (!chbnd(gid[p])) {
-      auto n = esup.second[p+1] - esup.second[p];
+      auto n = static_cast< tk::real >( esup.second[p+1] - esup.second[p] );
       for (auto& f : m_nodefields) f[p] /= n;
     }
   }

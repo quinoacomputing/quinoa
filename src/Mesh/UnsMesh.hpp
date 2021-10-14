@@ -312,7 +312,7 @@ class UnsMesh {
     std::vector< std::size_t >& lininpoel() noexcept { return m_lininpoel; }
     ///@}
 
-    /** @name Triangles elements connectivity accessors */
+    /** @name Triangle elements connectivity accessors */
     ///@{
     const std::vector< std::size_t >& triinpoel() const noexcept
     { return m_triinpoel; }

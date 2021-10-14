@@ -139,7 +139,6 @@ class DG : public CBase_DG {
                   const std::vector< std::size_t >& tetid,
                   const std::vector< std::vector< tk::real > >& u,
                   const std::vector< std::vector< tk::real > >& prim,
-                  const std::vector< std::vector< tk::real > >& volfm,
                   const std::vector< std::size_t >& ndof );
 
     //! Receive chare-boundary ghost data from neighboring chares
@@ -190,6 +189,7 @@ class DG : public CBase_DG {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /* addedNodes */,
       const std::unordered_map< std::size_t, std::size_t >& addedTets,
+      const std::set< std::size_t >& /*removedNodes*/,
       const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::map< int, std::vector< std::size_t > >& /* bnode */,
@@ -248,7 +248,6 @@ class DG : public CBase_DG {
       p | m_p;
       p | m_geoFace;
       p | m_geoElem;
-      p | m_volfracExtr;
       p | m_lhs;
       p | m_uNodalExtrm;
       p | m_pNodalExtrm;
@@ -273,7 +272,6 @@ class DG : public CBase_DG {
       p | m_bid;
       p | m_uc;
       p | m_pc;
-      p | m_volfracExtrc;
       p | m_ndofc;
       p | m_initial;
       p | m_expChBndFace;
@@ -302,6 +300,37 @@ class DG : public CBase_DG {
                           std::array< std::size_t, 2 >, // local face & tet ID
                           tk::UnsMesh::Hash<3>,
                           tk::UnsMesh::Eq<3> >;
+
+    //! Storage type for refined mesh used for field output
+    struct OutMesh {
+      //! Element connectivity, local->global node ids, global->local nodes ids
+      tk::UnsMesh::Chunk chunk;
+      //! Node coordinates
+      tk::UnsMesh::Coords coord;
+      //! Triangle element connectivity
+      std::vector< std::size_t > triinpoel;
+      //! Boundary-face connectivity
+      std::map< int, std::vector< std::size_t > > bface;
+      //! Node communinaction map
+      tk::NodeCommMap nodeCommMap;
+      //! \brief Pack/Unpack serialize member function
+      //! \param[in,out] p Charm++'s PUP::er serializer object reference
+      void pup( PUP::er& p ) {
+        p|chunk; p|coord; p|triinpoel; p|bface; p|nodeCommMap;
+      }
+      //! Destroyer
+      void destroy() {
+        tk::destroy( std::get<0>(chunk) );
+        tk::destroy( std::get<1>(chunk) );
+        tk::destroy( std::get<2>(chunk) );
+        tk::destroy( coord[0] );
+        tk::destroy( coord[1] );
+        tk::destroy( coord[2] );
+        tk::destroy( triinpoel );
+        tk::destroy( bface );
+        tk::destroy( nodeCommMap );
+      }
+    };
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
@@ -348,8 +377,6 @@ class DG : public CBase_DG {
     tk::Fields m_geoFace;
     //! Element geometry
     tk::Fields m_geoElem;
-    //! Vector of maximum volume fraction for each mesh element
-    tk::Fields m_volfracExtr;
     //! Left-hand side mass-matrix which is a diagonal matrix
     tk::Fields m_lhs;
     //! Vector of right-hand side
@@ -405,8 +432,6 @@ class DG : public CBase_DG {
     std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
-    //! Volume fraction max receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 3 > m_volfracExtrc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
     std::array< std::vector< std::size_t >, 3 > m_ndofc;
@@ -430,27 +455,7 @@ class DG : public CBase_DG {
     std::unordered_map< std::size_t, std::pair< std::vector< tk::real >,
                                                 std::size_t > > m_nodefieldsc;
     //! Storage for refined mesh used for field output
-    struct {
-      tk::UnsMesh::Chunk chunk;
-      tk::UnsMesh::Coords coord;
-      std::vector< std::size_t > triinpoel;
-      std::map< int, std::vector< std::size_t > > bface;
-      tk::NodeCommMap nodeCommMap;
-      void pup( PUP::er& p ) {
-        p|chunk; p|coord; p|triinpoel; p|bface; p|nodeCommMap;
-      }
-      void destroy() {
-        tk::destroy( std::get<0>(chunk) );
-        tk::destroy( std::get<1>(chunk) );
-        tk::destroy( std::get<2>(chunk) );
-        tk::destroy( coord[0] );
-        tk::destroy( coord[1] );
-        tk::destroy( coord[2] );
-        tk::destroy( triinpoel );
-        tk::destroy( bface );
-        tk::destroy( nodeCommMap );
-      }
-    } m_outmesh;
+    OutMesh m_outmesh;
     //! Element ids at which box ICs are defined by user (multiple boxes)
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
 

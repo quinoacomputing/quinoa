@@ -115,14 +115,14 @@ class Transporter : public CBase_Transporter {
     //!   the tagging of chare-boundary edges, all chares are ready to perform
     //!   refinement.
     void matched( std::size_t summeshid, std::size_t nextra, std::size_t nref,
-                  std::size_t nderef, std::size_t initial );
+                  std::size_t nderef, std::size_t sumrefmode );
 
     //! Compute surface integral across the whole problem and perform leak-test
     void bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb,
                  tk::real summeshid );
 
     //! Reduction target: all chares have refined their mesh
-    void refined( std::size_t meshid, std::size_t nelem, std::size_t npoin );
+    void refined( std::size_t summeshid, std::size_t nelem, std::size_t npoin );
 
     //! \brief Reduction target: all worker chares have resized their own data
     //!   after AMR or ALE
@@ -186,7 +186,7 @@ class Transporter : public CBase_Transporter {
     void pdfstat( CkReductionMsg* msg );
 
     //! Reduction target computing total volume of IC box
-    void boxvol( tk::real v, tk::real rmeshid );
+    void boxvol( tk::real v, tk::real summeshid );
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
@@ -361,6 +361,27 @@ class Transporter : public CBase_Transporter {
       }
     };
 
+    //! Function object for querying the side set ids for time dependent BCs
+    //! \details Used to query and collect the side set ids the user has
+    //!   configured for all PDE types querying time dependent BCs. Used on
+    //!   PDE type list.
+    struct UserTimedepBC {
+      const ctr::InputDeck& inputdeck;
+      std::unordered_set< int >& userbc;
+      explicit UserTimedepBC( const ctr::InputDeck& i,
+        std::unordered_set< int >& u )
+        : inputdeck(i), userbc(u) {}
+      template< typename eq > void operator()( brigand::type_<eq> ) {
+        using tag::param;
+        for (const auto& sys : inputdeck.get< param, eq, tag::bctimedep >()) {
+          for (const auto& b : sys) {
+            for (auto i : b.template get< tag::sideset >())
+              userbc.insert( std::stoi(i) );
+          }
+        }
+      }
+    };
+
     //! Verify boundary condition (BC) side sets used exist in mesh file
     bool matchBCs( std::map< int, std::vector< std::size_t > >& bnd );
 
@@ -369,6 +390,9 @@ class Transporter : public CBase_Transporter {
 
     //! Generate list of input mesh filenames configured by the user
     std::vector< std::string > input();
+
+    //! Decide if ALE will need a linear solver
+    bool need_linearsolver() const;
 };
 
 } // inciter::

@@ -177,7 +177,7 @@ DiffEqStack::selected() const
   return diffeqs;
 }
 
-std::pair< std::vector< std::string >, std::vector< tk::Table > >
+std::pair< std::vector< std::string >, std::vector< tk::Table<1> > >
 DiffEqStack::tables() const
 // *****************************************************************************
 //  Instantiate tables from which extra statistics data to be output sampled for
@@ -187,10 +187,10 @@ DiffEqStack::tables() const
 {
   std::map< ctr::DiffEqType, ncomp_t > cnt;     // count DiffEqs per type
   std::vector< std::string > nam;               // names of instantiated tables
-  std::vector< tk::Table > tab;                 // instantiated tables
+  std::vector< tk::Table<1> > tab;              // instantiated tables
 
   for (const auto& d : g_inputdeck.get< tag::selected, tag::diffeq >()) {
-    std::pair< std::vector< std::string >, std::vector< tk::Table > > t;
+    std::pair< std::vector< std::string >, std::vector< tk::Table<1> > > t;
 
     if (d == ctr::DiffEqType::MIXMASSFRACBETA)
       t = createTables< tag::mixmassfracbeta >( d, cnt );

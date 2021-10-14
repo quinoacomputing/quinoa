@@ -99,18 +99,6 @@ transform_P0P1( ncomp_t offset,
                 Fields& W,
                 const std::array< std::size_t, 2 >& varRange );
 
-//! Find maximum volume fractions in the neighborhood of each cell
-void
-findMaxVolfrac( std::size_t offset,
-  std::size_t rdof,
-  std::size_t nmat,
-  std::size_t nelem,
-  const std::vector< int >& esuel,
-  const std::map< std::size_t, std::vector< std::size_t > >& esup,
-  const std::vector< std::size_t >& inpoel,
-  const Fields& U,
-  Fields& VolFracMax );
-
 //! Compute THINC reconstructions near material interfaces
 void
 THINCReco( std::size_t system,
@@ -145,9 +133,24 @@ THINCRecoTransport( std::size_t system,
   [[maybe_unused]] const std::vector< real >& vfmax,
   std::vector< real >& state );
 
-//! THINC reconstruction function for volume fractions near interfaces
+//! Old THINC reconstruction function for volume fractions near interfaces
 void
 THINCFunction( std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const std::array< real, 3 >& ref_xp,
+  real vol,
+  real bparam,
+  const std::vector< real >& alSol,
+  bool intInd,
+  const std::vector< std::size_t >& matInt,
+  std::vector< real >& alReco );
+
+//! New THINC reconstruction function for volume fractions near interfaces
+void
+THINCFunction_new( std::size_t rdof,
   std::size_t nmat,
   std::size_t e,
   const std::vector< std::size_t >& inpoel,

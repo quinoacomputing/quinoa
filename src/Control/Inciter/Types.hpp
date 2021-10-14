@@ -28,11 +28,13 @@
 #include "Inciter/Options/AMRError.hpp"
 #include "Inciter/Options/PrefIndicator.hpp"
 #include "Inciter/Options/MeshVelocity.hpp"
+#include "Inciter/Options/MeshVelocitySmoother.hpp"
 #include "Inciter/Options/Material.hpp"
 #include "Options/PartitioningAlgorithm.hpp"
 #include "Options/TxtFloatFormat.hpp"
 #include "Options/FieldFile.hpp"
 #include "Options/Error.hpp"
+#include "Options/UserTable.hpp"
 #include "PUPUtil.hpp"
 #include "OutVar.hpp"
 #include "Transfer.hpp"
@@ -78,17 +80,50 @@ using amr = tk::TaggedTuple< brigand::list<
   , tag::zplus,  kw::amr_zplus::info::expect::type
 > >;
 
+//! A list of side sets moving with a user-defined function in time
+using moving_sides = tk::TaggedTuple< brigand::list<
+  //! List of side sets to move
+     tag::sideset, std::vector< kw::sideset::info::expect::type >
+  //! User-defined table (function) type
+  ,  tag::fntype,  tk::ctr::UserTableType
+  //! Functions x(t), y(t), and z(t) to move the side sets with
+  ,  tag::fn,      std::vector< tk::real >
+> >;
+
+//! A list of side sets along with a user-defined function for time dependent BC
+using time_dependent_bc = tk::TaggedTuple< brigand::list<
+  //! List of side sets on which to apply time dependent BC
+     tag::sideset, std::vector< kw::sideset::info::expect::type >
+  //! Functions p(t), rho(t), u(t), v(t) and w(t) to specify time dependent BC
+  ,  tag::fn,      std::vector< tk::real >
+> >;
+
 //! ALE mesh motion options
 using ale = tk::TaggedTuple< brigand::list<
-    tag::ale,           bool                  //!< ALE on/off
-  , tag::dvcfl,         kw::dvcfl::info::expect::type  //!< dvCFL coefficient
+  //! ALE on/off
+    tag::ale,           bool
+  //! Restrict mesh velocity dimensions (useful for d<3 dimensional problems)
+  , tag::mesh_motion,   std::vector< kw::mesh_motion::info::expect::type >
+  //! dvCFL (CFL mesh volume change) coefficient for ALE
+  , tag::dvcfl,         kw::dvcfl::info::expect::type
+  //!< Multiplier for vorticity in mesh velocity smoother
+  , tag::vortmult,      kw::vortmult::info::expect::type
   //! Mesh velocity smoother linear solver max number of iterations
   , tag::maxit,         kw::meshvel_maxit::info::expect::type
   //! Mesh velocity smoother linear solver tolerance
   , tag::tolerance,     kw::meshvel_tolerance::info::expect::type
-  , tag::meshvelocity,  MeshVelocityType      //!< Mesh velocity option
+  //! Mesh velocity option
+  , tag::meshvelocity,  MeshVelocityType
+  //! Mesh velocity smoother option
+  , tag::smoother    ,  MeshVelocitySmootherType
     //! Mesh velocity Dirichlet BC sidesets
   , tag::bcdir,         std::vector< kw::sideset::info::expect::type >
+    //! Mesh velocity symmetry BC sidesets
+  , tag::bcsym,         std::vector< kw::sideset::info::expect::type >
+    //! Mesh force parameters
+  , tag::meshforce,     std::vector< kw::meshforce::info::expect::type >
+    //! List of side sets to move with a user-defined function
+  , tag::move,          std::vector< moving_sides >
 > >;
 
 //! p-adaptive refinement options
@@ -136,12 +171,46 @@ using floatformat = tk::TaggedTuple< brigand::list<
   , tag::history, tk::ctr::TxtFloatFormatType  //!< History output format
 > >;
 
-//! Output intervals storage
-using intervals = tk::TaggedTuple< brigand::list<
-    tag::tty,     kw::ttyi::info::expect::type      //!< TTY output interval
-  , tag::field,   kw::interval::info::expect::type  //!< Field output interval
-  , tag::history, kw::interval::info::expect::type  //!< History output interval
-  , tag::diag,    kw::interval::info::expect::type  //!< Diags output interval
+//! Output intervals in units of iteration count
+using interval_iter = tk::TaggedTuple< brigand::list<
+    //! TTY output interval
+    tag::tty,     kw::ttyi::info::expect::type
+    //! Field output interval
+  , tag::field,   kw::interval_iter::info::expect::type
+    //! History output interval
+  , tag::history, kw::interval_iter::info::expect::type
+    //! Diags output interval
+  , tag::diag,    kw::interval_iter::info::expect::type
+> >;
+
+//! Output intervals in units of physics time
+using interval_time = tk::TaggedTuple< brigand::list<
+    //! Field output interval
+    tag::field,   kw::interval_time::info::expect::type
+    //! History output interval
+  , tag::history, kw::interval_time::info::expect::type
+> >;
+
+//! Output time ranges in units of physics time
+using time_range = tk::TaggedTuple< brigand::list<
+    //! \brief Field output configuration: outer vector: multiple ranges, inner
+    //!        vector: mintime, maxtime, dt
+    tag::field,   std::vector<
+                    std::vector< kw::time_range::info::expect::type > >
+    //! \brief History output configuration: outer vector: multiple ranges,
+    //!        inner vector: mintime, maxtime, dt
+  , tag::history, std::vector<
+                    std::vector< kw::time_range::info::expect::type > >
+> >;
+
+//! Output configuration parameters
+using output_parameters = tk::TaggedTuple< brigand::list<
+    //! Output intervals in units of iteration count
+    tag::iter,  interval_iter
+    //! Output intervals in units of physics time
+  , tag::time,  interval_time
+    //! Output time ranges in units of physics time
+  , tag::range, time_range
 > >;
 
 //! History output parameters storage
@@ -288,6 +357,7 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::u0,            std::vector< std::vector<
                         kw::pde_u0::info::expect::type > >
   , tag::bc,            bc
+  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::sponge,        SpongeParameters
   //! interface compression toggle
   , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
@@ -325,6 +395,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::farfield_velocity, std::vector< std::vector<
                               kw::velocity::info::expect::type > >
   , tag::bc,            bc
+  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::sponge,        SpongeParameters
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage
@@ -375,6 +446,7 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
+  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::ic,            ic
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
   , tag::sponge,        SpongeParameters

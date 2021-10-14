@@ -62,6 +62,19 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
+    //! Constructor taking a tuple of {A,x,b} by rvalue reference
+    explicit ConjugateGradients(
+      std::tuple< tk::CSR,
+                  std::vector< tk::real >,
+                  std::vector< tk::real > >&& system,
+      const std::vector< std::size_t >& gid,
+      const std::unordered_map< std::size_t, std::size_t >& lid,
+      const NodeCommMap& nodecommmap ) :
+      ConjugateGradients( std::move(std::get<0>(system)),
+                          std::move(std::get<1>(system)),
+                          std::move(std::get<2>(system)),
+                          gid, lid, nodecommmap ) {}
+
     //! Migrate constructor
     explicit ConjugateGradients( CkMigrateMessage* ) {}
     #if defined(__clang__)
@@ -69,17 +82,17 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     #endif
 
     //! Solve linear system
-    void solve( std::size_t maxit, tk::real stop_tol, CkCallback c );
+    void solve( std::size_t maxit, tk::real tol, CkCallback c );
 
     //! Initialize linear solve: set initial guess and boundary conditions
     void init( const std::vector< tk::real >& x,
-                    const std::unordered_map< std::size_t,
-                            std::vector< std::pair< bool, tk::real > > >& bc,
-                    CkCallback cb,
-                    bool applybc );
+               const std::vector< tk::real >& b,
+               const std::unordered_map< std::size_t,
+                       std::vector< std::pair< bool, tk::real > > >& bc,
+               CkCallback cb );
 
     //! Setup solver
-    void setup( CkCallback cb );
+    void setup( CkCallback c );
 
     //! Compute the norm of the right hand side
     void normb( tk::real n );
@@ -100,10 +113,10 @@ class ConjugateGradients : public CBase_ConjugateGradients {
                const std::vector< std::vector< tk::real > >& qc );
 
     void comx( const std::vector< std::size_t >& gid,
-               const std::vector< std::vector< tk::real > >& qc );
+               const std::vector< std::vector< tk::real > >& xc );
 
     //! Compute the dot product (p,q)
-    void pq( tk::real n );
+    void pq( tk::real d );
 
     //! Compute the norm of the residual: (r,r)
     void normres( tk::real r );

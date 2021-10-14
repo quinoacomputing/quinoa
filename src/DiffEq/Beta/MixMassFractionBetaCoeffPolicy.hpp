@@ -65,8 +65,8 @@
           const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
           const std::vector< kw::sde_rho2::info::expect::type >& rho2,
           const std::vector< kw::sde_r::info::expect::type >& r,
-          const std::vector< tk::Table >& hts,
-          const std::vector< tk::Table >& hp,
+          const std::vector< tk::Table<1> >& hts,
+          const std::vector< tk::Table<1> >& hp,
           std::vector< kw::sde_b::info::expect::type  >& b,
           std::vector< kw::sde_kappa::info::expect::type >& k,
           std::vector< kw::sde_S::info::expect::type >& S ) const {}
@@ -160,8 +160,8 @@ class MixMassFracBetaCoeffDecay {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >&,
       const std::vector< kw::sde_r::info::expect::type >&,
-      const std::vector< tk::Table >&,
-      const std::vector< tk::Table >&,
+      const std::vector< tk::Table<1> >&,
+      const std::vector< tk::Table<1> >&,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >&,
@@ -210,8 +210,8 @@ class MixMassFracBetaCoeffHomDecay {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
-      const std::vector< tk::Table >&,
-      const std::vector< tk::Table >&,
+      const std::vector< tk::Table<1> >&,
+      const std::vector< tk::Table<1> >&,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
@@ -264,8 +264,8 @@ class MixMassFracBetaCoeffMonteCarloHomDecay {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
-      const std::vector< tk::Table >&,
-      const std::vector< tk::Table >&,
+      const std::vector< tk::Table<1> >&,
+      const std::vector< tk::Table<1> >&,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
@@ -318,8 +318,8 @@ class MixMassFracBetaCoeffHydroTimeScale {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
-      const std::vector< tk::Table >& hts,
-      const std::vector< tk::Table >& hp,
+      const std::vector< tk::Table<1> >& hts,
+      const std::vector< tk::Table<1> >& hp,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,
@@ -329,15 +329,15 @@ class MixMassFracBetaCoeffHydroTimeScale {
     //! \param[in] t Time at which to sample inverse hydrodynamics time scale
     //! \param[in] ts Hydro time scale table to sample
     //! \return Sampled value from discrete table of inverse hydro time scale
-    tk::real hydrotimescale( tk::real t, const tk::Table& ts ) const
-    { return tk::sample( t, ts ); }
+    tk::real hydrotimescale( tk::real t, const tk::Table<1>& ts ) const
+    { return tk::sample<1>( t, ts )[ 0 ]; }
 
     //! Sample the hydrodynamics production/dissipation rate (P/e) at time t
     //! \param[in] t Time at which to sample hydrodynamics P/e
     //! \param[in] p P/e table to sample
     //! \return Sampled value from discrete table of P/e
-    tk::real hydroproduction( tk::real t, const tk::Table& p ) const
-    { return tk::sample( t, p ); }
+    tk::real hydroproduction( tk::real t, const tk::Table<1>& p ) const
+    { return tk::sample<1>( t, p )[ 0 ]; }
 
     mutable std::size_t m_it = 0;
     mutable std::vector< tk::real > m_s;
@@ -386,8 +386,8 @@ class MixMassFracBetaCoeffInstVel {
       const std::vector< kw::sde_kappaprime::info::expect::type >& kprime,
       const std::vector< kw::sde_rho2::info::expect::type >& rho2,
       const std::vector< kw::sde_r::info::expect::type >& r,
-      const std::vector< tk::Table >&,
-      const std::vector< tk::Table >&,
+      const std::vector< tk::Table<1> >&,
+      const std::vector< tk::Table<1> >&,
       std::vector< kw::sde_b::info::expect::type  >& b,
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_S::info::expect::type >& S,

@@ -126,10 +126,9 @@ DistFCT::resize( std::size_t nu,
   m_lid = lid;
   m_inpoel = inpoel;
 
-  auto np = m_a.nprop();
-  m_p.resize( nu, np*2 );
-  m_q.resize( nu, np*2 );
-  m_a.resize( nu, np );
+  m_p.resize( nu );
+  m_q.resize( nu );
+  m_a.resize( nu );
   resizeComm();
 
   m_fluxcorrector.resize( m_inpoel.size() );
@@ -194,7 +193,7 @@ DistFCT::aec(
 //!   associated to mesh node IDs at which to set Dirichlet boundary conditions.
 //!   Note that this BC data structure must include boundary conditions set
 //!   across all PEs, not just the ones need to be set on this PE.
-//! \param[in] nodes Unique set of node ids at which to set symmetry BCs
+//! \param[in] symbcnodemap Unique set of node ids at which to set symmetry BCs
 //! \param[in] bnorm Face normals in boundary points: key global node id,
 //!   value: unit normal, outer key: side set id
 //! \details This function computes and starts communicating m_p, which stores

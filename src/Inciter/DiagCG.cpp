@@ -808,6 +808,7 @@ DiagCG::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
+  const std::set< std::size_t >& removedNodes,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& /*bface*/,
   const std::map< int, std::vector< std::size_t > >& bnode,
@@ -819,6 +820,7 @@ DiagCG::resizePostAMR(
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
+//! \param[in] removedNodes Newly removed mesh nodes (local ids)
 //! \param[in] nodeCommMap New node communication map
 //! \param[in] bnode Boundary-node lists mapped to side set ids
 // *****************************************************************************
@@ -837,16 +839,23 @@ DiagCG::resizePostAMR(
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, nodeCommMap );
 
+  // Remove newly removed nodes from solution vectors
+  m_u.rm(removedNodes);
+  m_ul.rm(removedNodes);
+  m_du.rm(removedNodes);
+  m_lhs.rm(removedNodes);
+  m_rhs.rm(removedNodes);
+
   // Resize auxiliary solution vectors
   auto nelem = d->Inpoel().size()/4;
   auto npoin = coord[0].size();
   auto nprop = m_u.nprop();
-  m_u.resize( npoin, nprop );
-  m_ul.resize( npoin, nprop );
-  m_du.resize( npoin, nprop );
-  m_ue.resize( nelem, nprop );
-  m_lhs.resize( npoin, nprop );
-  m_rhs.resize( npoin, nprop );
+  m_u.resize( npoin );
+  m_ul.resize( npoin );
+  m_du.resize( npoin );
+  m_ue.resize( nelem );
+  m_lhs.resize( npoin );
+  m_rhs.resize( npoin );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)
@@ -881,9 +890,8 @@ DiagCG::out()
 {
   auto d = Disc();
 
-  // Output time history if we hit its output frequency
-  const auto histfreq = g_inputdeck.get< tag::interval, tag::history >();
-  if ( !((d->It()) % histfreq) ) {
+  // Output time history
+  if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
     for (const auto& eq : g_cgpde) {
       auto h = eq.histOutput( d->Hist(), d->Inpoel(), m_u );
@@ -892,15 +900,8 @@ DiagCG::out()
     d->history( std::move(hist) );
   }
 
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto fieldfreq = g_inputdeck.get< tag::interval, tag::field >();
-
-  // output field data if field iteration count is reached or in the last time
-  // step, otherwise continue to next time step
-  if ( !((d->It()) % fieldfreq) ||
-       (std::fabs(d->T()-term) < eps || d->It() >= nstep) )
+  // Output field data
+  if (d->fielditer() or d->fieldtime() or d->fieldrange() or d->finished())
     writeFields( CkCallback(CkIndex_DiagCG::step(), thisProxy[thisIndex]) );
   else
     step();

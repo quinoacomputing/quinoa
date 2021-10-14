@@ -32,7 +32,7 @@
         void update( char depvar,
                      char dissipation_depvar,
                      const std::map< tk::ctr::Product, tk::real >& moments,
-                     const tk::Table& hts,
+                     const tk::Table<1>& hts,
                      ctr::DepvarType solve,
                      ctr::VelocityVariantType variant,
                      kw::sde_c0::info::expect::type C0,
@@ -95,7 +95,7 @@ class VelocityCoeffConstShear {
     void update( char depvar,
                  char dissipation_depvar,
                  const std::map< tk::ctr::Product, tk::real >& moments,
-                 const tk::Table&,
+                 const tk::Table<1>&,
                  ctr::DepvarType solve,
                  ctr::VelocityVariantType variant,
                  kw::sde_c0::info::expect::type C0,
@@ -117,7 +117,7 @@ class VelocityCoeffStationary {
     //! Constructor: initialize coefficients
     VelocityCoeffStationary( kw::sde_c0::info::expect::type C0_,
                              kw::sde_c0::info::expect::type& C0,
-                             std::array< tk::real, 9 >& );
+                             std::array< tk::real, 9 >& dU );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
@@ -127,7 +127,7 @@ class VelocityCoeffStationary {
     void update( char /*depvar*/,
                  char,
                  const std::map< tk::ctr::Product, tk::real >&,
-                 const tk::Table&,
+                 const tk::Table<1>&,
                  ctr::DepvarType,
                  ctr::VelocityVariantType,
                  kw::sde_c0::info::expect::type C0,
@@ -144,7 +144,7 @@ class VelocityCoeffHydroTimeScale {
     //! Constructor: initialize coefficients
     VelocityCoeffHydroTimeScale( kw::sde_c0::info::expect::type C0_,
                                  kw::sde_c0::info::expect::type& C0,
-                                 std::array< tk::real, 9 >& );
+                                 std::array< tk::real, 9 >& dU );
 
     //! Coefficients policy type accessor
     static ctr::CoeffPolicyType type() noexcept
@@ -155,7 +155,7 @@ class VelocityCoeffHydroTimeScale {
     void update( char depvar,
                  char,
                  const std::map< tk::ctr::Product, tk::real >& moments,
-                 const tk::Table& hts,
+                 const tk::Table<1>& hts,
                  ctr::DepvarType solve,
                  ctr::VelocityVariantType,
                  kw::sde_c0::info::expect::type C0,

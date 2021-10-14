@@ -33,6 +33,7 @@
 #include "FunctionPrototypes.hpp"
 #include "Mesh/CommMap.hpp"
 #include "History.hpp"
+#include "Table.hpp"
 
 namespace inciter {
 
@@ -123,6 +124,10 @@ class CGPDE {
     //! Public interface to querying a velocity
     void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const
     { self->velocity(u,v); }
+
+    //! Public interface to querying a sound speed
+    void soundspeed( const tk::Fields& u, std::vector< tk::real >& s ) const
+    { self->soundspeed(u,s); }
 
     //! Public interface to computing the nodal gradients for ALECG
     void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
@@ -230,6 +235,14 @@ class CGPDE {
             const std::unordered_set< std::size_t >& nodes ) const
     { self->sponge( U, coord, nodes ); }
 
+    //! Public interface to applying time dependent boundary conditions at nodes
+    void
+    timedepbc( tk::real t,
+      tk::Fields& U,
+      const std::vector< std::unordered_set< std::size_t > >& nodes,
+      const std::vector< tk::Table<5> >& timedepfn ) const
+    { self->timedepbc( t, U, nodes, timedepfn ); }
+
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
     { return self->analyticFieldNames(); }
@@ -293,6 +306,8 @@ class CGPDE {
         real,
         const std::vector< std::unordered_set< std::size_t > >& ) = 0;
       virtual void velocity( const tk::Fields&, tk::UnsMesh::Coords& )
+        const = 0;
+      virtual void soundspeed( const tk::Fields&, std::vector< tk::real >& )
         const = 0;
       virtual void chBndGrad( const std::array< std::vector< real >, 3 >&,
         const std::vector< std::size_t >&,
@@ -370,6 +385,11 @@ class CGPDE {
         tk::Fields&,
         const std::array< std::vector< real >, 3 >&,
         const std::unordered_set< std::size_t >& ) const = 0;
+      virtual void timedepbc(
+        tk::real,
+        tk::Fields&,
+        const std::vector< std::unordered_set< std::size_t > >&,
+        const std::vector< tk::Table<5> >& ) const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -405,6 +425,8 @@ class CGPDE {
       override { data.initialize( coord, unk, t, V, inbox ); }
       void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const
       override { data.velocity(u,v); }
+      void soundspeed( const tk::Fields& u, std::vector< tk::real >& s ) const
+      override { data.soundspeed(u,s); }
       void chBndGrad( const std::array< std::vector< real >, 3 >& coord,
         const std::vector< std::size_t >& inpoel,
         const std::vector< std::size_t >& bndel,
@@ -493,6 +515,13 @@ class CGPDE {
         const std::array< std::vector< real >, 3 >& coord,
         const std::unordered_set< std::size_t >& nodes ) const override
       { data.sponge( U, coord, nodes ); }
+      void
+      timedepbc(
+        tk::real t,
+        tk::Fields& U,
+        const std::vector< std::unordered_set< std::size_t > >& nodes,
+        const std::vector< tk::Table<5> >& timedepfn ) const override
+      { data.timedepbc( t, U, nodes, timedepfn ); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > surfNames() const override

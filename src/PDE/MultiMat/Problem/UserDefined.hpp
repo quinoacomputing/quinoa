@@ -38,7 +38,8 @@ class MultiMatProblemUserDefined {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real );
+    initialize( ncomp_t system, ncomp_t ncomp,
+                tk::real, tk::real, tk::real, tk::real );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static std::vector< tk::real >
@@ -53,7 +54,6 @@ class MultiMatProblemUserDefined {
     { std::vector< tk::real > s( ncomp, 0.0 ); }
 
     //! Return names of integral variables to be output to diagnostics file
-    //! \return Vector of strings labelling integral variables output
     static std::vector< std::string > names( ncomp_t );
 
    static ctr::ProblemType type() noexcept

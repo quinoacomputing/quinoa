@@ -30,6 +30,7 @@
 #include "NodeBC.hpp"
 #include "EoS/EoS.hpp"
 #include "History.hpp"
+#include "Table.hpp"
 
 namespace inciter {
 
@@ -196,6 +197,22 @@ class CompFlow {
         Assert( v[j].size() == u.nunk(), "Size mismatch" );
         // divide by density
         for (std::size_t i=0; i<u.nunk(); ++i) v[j][i] /= u(i,0,m_offset);
+      }
+    }
+
+    //! Query the sound speed
+    //! \param[in] U Solution vector of conserved variables
+    //! \param[in,out] s Speed of sound in mesh nodes
+    void soundspeed( const tk::Fields& U, std::vector< tk::real >& s ) const {
+      s.resize( U.nunk() );
+      for (std::size_t i=0; i<U.nunk(); ++i) {
+        auto r  = U(i,0,m_offset);
+        auto ru = U(i,1,m_offset);
+        auto rv = U(i,2,m_offset);
+        auto rw = U(i,3,m_offset);
+        auto re = U(i,4,m_offset);
+        auto p = eos_pressure< eq >( m_system, r, ru/r, rv/r, rw/r, re );
+        s[i] = eos_soundspeed< eq >( m_system, r, p );
       }
     }
 
@@ -428,6 +445,7 @@ class CompFlow {
         real day = y[N[3]]-y[N[0]];
         real daz = z[N[3]]-z[N[0]];
         auto J = tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
+        ErrChk( J > 0, "Element Jacobian non-positive" );
         auto J24 = J/24.0;
         // shape function derivatives, nnode*ndim [4][3]
         real g[4][3];
@@ -478,6 +496,8 @@ class CompFlow {
     //! \param[in] psup Points surrounding points
     //! \param[in] esup Elements surrounding points
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
+    //! \param[in] spongenodes Unique set of nodes at which to apply sponge
+    //               conditions
     //! \param[in] vol Nodal volumes
     //! \param[in] edgenode Local node IDs of edges
     //! \param[in] edgeid Edge ids in the order of access
@@ -662,8 +682,8 @@ class CompFlow {
       if (dtn > 0.0 && dvcfl > 0.0) {
         Assert( vol.size() == voln.size(), "Size mismatch" );
         for (std::size_t p=0; p<vol.size(); ++p) {
-          auto vol_dt = dtn * std::min( voln[p], vol[p] )
-                            / (std::abs(voln[p] - vol[p]) + 1.0e-16 );
+          auto vol_dt = dtn *
+            std::min(voln[p],vol[p]) / std::abs(voln[p]-vol[p]+1.0e-14);
           mindt = std::min( vol_dt, mindt );
         }
         mindt *= dvcfl;
@@ -893,6 +913,38 @@ class CompFlow {
               U(p,3,m_offset) -= U(p,3,m_offset)*sp[s];
             }
           }
+        }
+      }
+    }
+
+    //! Apply user defined time dependent BCs
+    //! \param[in] t Physical time
+    //! \param[in,out] U Solution vector at recent time step
+    //! \param[in] nodes Vector of unique sets of node ids at which to apply BCs
+    //! \details This function applies user defined time dependent boundary
+    //!   conditions on groups of side sets specified in the input file.
+    //!   The user specifies pressure, density, and velocity as discrete
+    //!   functions of time, in the control file, associated with a group of
+    //!   side sets. Several such groups can be specified, each with their
+    //!   own discrete function: p(t), rho(t), vx(t), vy(t), vz(t).
+    void
+    timedepbc( tk::real t,
+      tk::Fields& U,
+      const std::vector< std::unordered_set< std::size_t > >& nodes,
+      const std::vector< tk::Table<5> >& timedepfn ) const
+    {
+      for (std::size_t ib=0; ib<nodes.size(); ++ib) {
+        for (auto p:nodes[ib]) {
+          // sample primitive vars from discrete data at time t
+          auto unk = tk::sample<5>(t, timedepfn[ib]);
+
+          // apply BCs after converting to conserved vars
+          U(p,0,m_offset) = unk[1];
+          U(p,1,m_offset) = unk[1]*unk[2];
+          U(p,2,m_offset) = unk[1]*unk[3];
+          U(p,3,m_offset) = unk[1]*unk[4];
+          U(p,4,m_offset) = eos_totalenergy< eq >(m_system, unk[1], unk[2],
+            unk[3], unk[4], unk[0]);
         }
       }
     }

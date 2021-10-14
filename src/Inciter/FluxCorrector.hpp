@@ -103,9 +103,7 @@ class FluxCorrector {
     }
 
     //! Resize state (e.g., after mesh refinement)
-    void resize( std::size_t is ) {
-      m_aec.resize( is, g_inputdeck.get< tag::component >().nprop() );
-    }
+    void resize( std::size_t is ) { m_aec.resize( is ); }
 
     //! Compute antidiffusive element contributions (AEC)
     void aec(
@@ -113,7 +111,7 @@ class FluxCorrector {
       const std::vector< std::size_t >& inpoel,
       const std::vector< tk::real >& vol,
       const std::unordered_map< std::size_t,
-              std::vector< std::pair< bool, tk::real > > >& bc,
+              std::vector< std::pair< bool, tk::real > > >& bcdir,
       const std::unordered_map< int,
         std::unordered_set< std::size_t > >& symbcnodemap,
       const std::unordered_map< int,

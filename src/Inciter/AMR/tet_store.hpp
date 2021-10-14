@@ -246,6 +246,8 @@ namespace AMR {
              * @param nodes A list of the nodes which form th etet
              * @param refinement_case The refinement case which caused this tet
              * to be generated
+             * @param parent_id The ID of the parent tetrahedron
+             * @param has_parent True if element has a parent
             */
             void add_to_master(size_t id, const tet_t& nodes,
               Refinement_Case refinement_case, size_t parent_id=0,
@@ -367,7 +369,8 @@ namespace AMR {
                 {
                     size_t element_id = kv.first;
                     if (active_elements.exists( element_id  )) {
-                        real_t val = master_elements.get(element_id).refinement_level;
+                        real_t val = static_cast< tk::real >(
+                          master_elements.get(element_id).refinement_level );
                         refinement_level_list.push_back(val);
                     }
                 }

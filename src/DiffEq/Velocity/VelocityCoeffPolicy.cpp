@@ -38,7 +38,7 @@ walker::VelocityCoeffConstShear::update(
   char depvar,
   char dissipation_depvar,
   const std::map< tk::ctr::Product, tk::real >& moments,
-  const tk::Table&,
+  const tk::Table<1>&,
   ctr::DepvarType solve,
   ctr::VelocityVariantType variant,
   kw::sde_c0::info::expect::type C0,
@@ -90,6 +90,7 @@ walker::VelocityCoeffStationary::VelocityCoeffStationary(
 // Constructor: initialize coefficients
 //! \param[in] C0_ Value of C0 parameter in the Langevin model
 //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
+//! \param[in,out] dU Prescribed mean velocity gradient
 //! \details Prescribe no shear. The value of C0 is insignificant for a forced
 //!   stationary velocity PDF because drift and diffusion are in balance, so
 //!   that dk/dt = 0.
@@ -104,7 +105,7 @@ walker::VelocityCoeffStationary::update(
   char,
   char,
   const std::map< tk::ctr::Product, tk::real >&,
-  const tk::Table&,
+  const tk::Table<1>&,
   ctr::DepvarType,
   ctr::VelocityVariantType,
   kw::sde_c0::info::expect::type C0,
@@ -149,6 +150,7 @@ walker::VelocityCoeffHydroTimeScale::VelocityCoeffHydroTimeScale(
 // Constructor: initialize coefficients
 //! \param[in] C0_ Value of C0 parameter in the Langevin model
 //! \param[in,out] C0 Value of to set the C0 parameter in the Langevin model
+//! \param[in,out] dU Prescribed mean velocity gradient
 // *****************************************************************************
 {
   C0 = C0_;
@@ -160,7 +162,7 @@ walker::VelocityCoeffHydroTimeScale::update(
   char depvar,
   char,
   const std::map< tk::ctr::Product, tk::real >& moments,
-  const tk::Table& hts,
+  const tk::Table<1>& hts,
   ctr::DepvarType solve,
   ctr::VelocityVariantType,
   kw::sde_c0::info::expect::type C0,
@@ -186,7 +188,7 @@ walker::VelocityCoeffHydroTimeScale::update(
   auto k = tke( depvar, solve, moments );
 
   // Sample the inverse hydrodynamics timescale at time t
-  auto ts = tk::sample( t, hts );  // eps/k
+  auto ts = tk::sample<1>( t, hts )[ 0 ];  // eps/k
 
   // compute turbulent kinetic energy dissipation rate
   eps = ts * k;

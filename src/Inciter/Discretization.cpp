@@ -45,8 +45,8 @@ Discretization::Discretization(
   const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
-  const std::vector< std::size_t >& ginpoel,
   const tk::UnsMesh::CoordMap& coordmap,
+  const tk::UnsMesh::Chunk& el,
   const tk::CommMaps& msum,
   int nc ) :
   m_meshid( meshid ),
@@ -59,7 +59,13 @@ Discretization::Discretization(
   m_itf( 0 ),
   m_initial( 1.0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
-  m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),  
+  m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),
+  m_physFieldFloor( 0.0 ),
+  m_physHistFloor( 0.0 ),
+  m_rangeFieldFloor(
+    g_inputdeck.get< tag::output, tag::range, tag::field >().size(), 0.0 ),
+  m_rangeHistFloor(
+    g_inputdeck.get< tag::output, tag::range, tag::history >().size(), 0.0 ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_dtn( m_dt ),
   m_nvol( 0 ),
@@ -67,7 +73,7 @@ Discretization::Discretization(
   m_conjugategradients( conjugategradientsproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
-  m_el( tk::global2local( ginpoel ) ),     // fills m_inpoel, m_gid, m_lid
+  m_el( el ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
   m_nodeCommMap(),
   m_edgeCommMap(),
@@ -76,6 +82,7 @@ Discretization::Discretization(
   m_vol( m_gid.size(), 0.0 ),
   m_volc(),
   m_voln( m_vol ),
+  m_vol0( m_inpoel.size()/4, 0.0 ),
   m_bid(),
   m_timer(),
   m_refined( 0 ),
@@ -88,19 +95,19 @@ Discretization::Discretization(
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID
+//! \param[in] disc All Discretization proxies (one per mesh)
 //! \param[in] fctproxy Distributed FCT proxy
 //! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
 //!   solver proxy
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] meshwriter Mesh writer proxy
-//! \param[in] ginpoel Vector of mesh element connectivity owned (global IDs)
 //! \param[in] coordmap Coordinates of mesh nodes and their global IDs
 //! \param[in] msum Communication maps associated to chare IDs bordering the
 //!   mesh chunk we operate on
 //! \param[in] nc Total number of Discretization chares
 // *****************************************************************************
 {
-  Assert( !ginpoel.empty(), "No elements assigned to Discretization chare" );
+  Assert( !m_inpoel.empty(), "No elements assigned to Discretization chare" );
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
           "Jacobian in input mesh to Discretization non-positive" );
   #if not defined(__INTEL_COMPILER) || defined(NDEBUG)
@@ -156,11 +163,14 @@ Discretization::Discretization(
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   // Insert ConjugrateGradients solver chare array element if needed
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-  if (ALE() && meshvel == ctr::MeshVelocityType::FLUID) {
-    const auto& [A,x,b] = LaplacianSmoother();
-    m_conjugategradients[ thisIndex ].
-      insert( A, x, b, m_gid, m_lid, m_nodeCommMap );
+  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+    if (smoother == ctr::MeshVelocitySmootherType::LAPLACE)
+      m_conjugategradients[ thisIndex ].        // solve for mesh velocity
+        insert( Laplacian(3), m_gid, m_lid, m_nodeCommMap );
+    if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
+      m_conjugategradients[ thisIndex ].        // solve for scalar potential
+        insert( Laplacian(1), m_gid, m_lid, m_nodeCommMap );
   }
 
   // Register mesh with mesh-transfer lib
@@ -198,55 +208,22 @@ Discretization::transferInit()
     CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
 }
 
-bool
-Discretization::ALE() const
-// *****************************************************************************
-//! Query if ALE mesh motion is enabled by the user
-//! \return True if ALE is configured
-// *****************************************************************************
-{
-  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-
-  if (ale && meshvel != ctr::MeshVelocityType::NONE)
-    return true;
-  else
-    return false;
-}
-
-bool
-Discretization::dynALE() const
-// *****************************************************************************
-//! Query if ALE mesh velocity is updated during time stepping
-//! \return True if mesh velocity is updated during time stepping
-// *****************************************************************************
-{
-  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-
-  if (ale && meshvel != ctr::MeshVelocityType::NONE &&
-             meshvel != ctr::MeshVelocityType::SINE)
-    return true;
-  else
-    return false;
-}
-
 void
 Discretization::meshvelInit(
-  const std::vector< tk::real >& w,
+  const std::vector< tk::real >& x,
+  const std::vector< tk::real >& div,
   const std::unordered_map< std::size_t,
-          std::vector< std::pair< bool, tk::real > > >& wbc,
+          std::vector< std::pair< bool, tk::real > > >& bc,
   CkCallback c )
 // *****************************************************************************
 //  Initialize mesh velocity linear solve: set initial guess and BCs
-//! \param[in] w Initial guess for mesh velocity linear solve
-//! \param[in] wbc Local node ids associated to mesh velocity Dirichlet BCs
+//! \param[in] x Initial guess for mesh velocity linear solve
+//! \param[in] div Velocity divergence for Helmholtz rhs
+//! \param[in] bc Local node ids associated to linear solver Dirichlet BCs
 // \param[in] c Function to call when the BCs have been applied
 // *****************************************************************************
 {
-  auto eps = std::numeric_limits< tk::real >::epsilon();
-  bool applybc = std::abs(m_initial-1.0) < eps ? true : false;
-  m_conjugategradients[ thisIndex ].init( w, wbc, c, applybc );
+  m_conjugategradients[ thisIndex ].init( x, div, bc, c );
 }
 
 void
@@ -263,13 +240,22 @@ Discretization::meshvelSolve( CkCallback c )
 }
 
 std::vector< tk::real >
-Discretization::meshvel() const
+Discretization::meshvelSolution() const
 // *****************************************************************************
-//! Query solution of the Conjugrate Gradients linear soilver
-//! \return Mesh velocity as a solution to the Conjugate Gradients linear solve
+//! Query the solution of the Conjugrate Gradients linear solver
+//! \return Solution to the Conjugate Gradients linear solve
 // *****************************************************************************
 {
-  return ConjugateGradients()->solution();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+
+  if (g_inputdeck.get< tag::ale, tag::ale >() and
+      (smoother == ctr::MeshVelocitySmootherType::LAPLACE or
+       smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
+  {
+    return ConjugateGradients()->solution();
+  } else {
+    return {};
+  }
 }
 
 void
@@ -278,24 +264,31 @@ Discretization::meshvelConv()
 //! Assess and record mesh velocity linear solver convergence
 // *****************************************************************************
 {
-  auto meshvel = g_inputdeck.get< tag::ale, tag::meshvelocity >();
-  if (ALE() && meshvel == ctr::MeshVelocityType::FLUID) {
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+
+  if (g_inputdeck.get< tag::ale, tag::ale >() &&
+      (smoother == ctr::MeshVelocitySmootherType::LAPLACE or
+       smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
+  {
     m_meshvel_converged &= ConjugateGradients()->converged();
   }
 }
 
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
-Discretization::LaplacianSmoother() const
+Discretization::Laplacian( std::size_t ncomp ) const
 // *****************************************************************************
 // Generate {A,x,b} for Laplacian mesh velocity smoother
-//! \return {A,x,b} for Laplacian mesh velocity smoother
+//! \param[in] ncomp Number of scalar components
+//! \return {A,x,b} with a Laplacian, unknown, and rhs initialized with zeros
 //! \see Waltz, et al. "A three-dimensional finite element arbitrary
 //!   Lagrangian-Eulerian method for shock hydrodynamics on unstructured
-//!   grids", Computers& Fluids, 2013.
+//!   grids", Computers& Fluids, 2013, and Bakosi, et al. "Improved ALE mesh
+//!   velocities for complex flows, International Journal for Numerical Methods
+//!   in Fluids, 2017.
 // *****************************************************************************
 {
-  tk::CSR A( /* DOF = */ 3, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
+  tk::CSR A( ncomp, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
 
   const auto& X = m_coord[0];
   const auto& Y = m_coord[1];
@@ -325,12 +318,12 @@ Discretization::LaplacianSmoother() const
     for (std::size_t a=0; a<4; ++a)
       for (std::size_t k=0; k<3; ++k)
          for (std::size_t b=0; b<4; ++b)
-           for (std::size_t i=0; i<3; ++i)
+           for (std::size_t i=0; i<ncomp; ++i)
              A(N[a],N[b],i) -= J/6 * grad[a][k] * grad[b][k];
   }
 
   auto npoin = m_gid.size();
-  std::vector< tk::real > b(npoin*3,0.0), x(npoin*3,0.0);
+  std::vector< tk::real > b(npoin*ncomp,0.0), x(npoin*ncomp,0.0);
 
   return { std::move(A), std::move(x), std::move(b) };
 }
@@ -524,39 +517,24 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
   std::size_t bid = m_bid.size();
   for (const auto& [ neighborchare, sharednodes ] : m_nodeCommMap)
     for (auto g : sharednodes)
-      if (m_bid.find( g ) == end(m_bid))
-        m_bid[ g ] = bid++;
+      if (m_bid.find(g) == end(m_bid))
+        m_bid[g] = bid++;
 
-  // Resize mesh data structures after ALE mesh movement
-  resizePostALE( coord );
-}
-
-void
-Discretization::resizePostALE( const tk::UnsMesh::Coords& coord )
-// *****************************************************************************
-//  Resize mesh data structures after ALE mesh movement
-//! \param[in] coord New mesh node coordinates
-// *****************************************************************************
-{
   // update mesh node coordinates
   m_coord = coord;
 
-  // Set flag that indicates that we are during time stepping
+  // we are no longer during setup
   m_initial = 0.0;
 }
 
 void
-Discretization::startvol( bool last_stage )
+Discretization::startvol()
 // *****************************************************************************
 //  Get ready for (re-)computing/communicating nodal volumes
-//! \param[in] last_stage True if this is the last time step stage
 // *****************************************************************************
 {
   m_nvol = 0;
   thisProxy[ thisIndex ].wait4vol();
-
-  // Save nodal volumes at previous time step
-  if (last_stage) m_voln = m_vol;
 
   // Zero out mesh volume container
   std::fill( begin(m_vol), end(m_vol), 0.0 );
@@ -702,6 +680,9 @@ Discretization::vol()
                    std::to_string(z[N[3]]) + ')' );
     // scatter add V/4 to nodes
     for (std::size_t j=0; j<4; ++j) m_vol[N[j]] += J;
+
+    // save element volumes at t=t0
+    if (m_it == 0) m_vol0[e] = J * 4.0;
   }
 
   // Store nodal volumes without contributions from other chares on
@@ -836,7 +817,7 @@ Discretization::stat( tk::real mesh_volume )
 
   // Contribute stats of number of tetrahedra (ntets)
   sum[4] = 1.0;
-  min[2] = max[2] = sum[5] = m_inpoel.size() / 4;
+  min[2] = max[2] = sum[5] = static_cast< tk::real >( m_inpoel.size() / 4 );
   ntetPDF.add( min[2] );
 
   min.push_back( static_cast<tk::real>(m_meshid) );
@@ -967,6 +948,23 @@ Discretization::next()
 // Prepare for next step
 // *****************************************************************************
 {
+  // Update floor of physics time divided by output interval times
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto ft = g_inputdeck.get< tag::output, tag::time, tag::field >();
+  if (ft > eps) m_physFieldFloor = std::floor( m_t / ft );
+  const auto ht = g_inputdeck.get< tag::output, tag::time, tag::history >();
+  if (ht > eps) m_physHistFloor = std::floor( m_t / ht );
+
+  // Update floors of physics time divided by output interval times for ranges
+  const auto& rf = g_inputdeck.get< tag::output, tag::range, tag::field >();
+  for (std::size_t i=0; i<rf.size(); ++i)
+    if (m_t > rf[i][0] and m_t < rf[i][1])
+      m_rangeFieldFloor[i] = std::floor( m_t / rf[i][2] );
+  const auto& rh = g_inputdeck.get< tag::output, tag::range, tag::history >();
+  for (std::size_t i=0; i<rh.size(); ++i)
+    if (m_t > rh[i][0] and m_t < rh[i][1])
+      m_rangeHistFloor[i] = std::floor( m_t / rh[i][2] );
+
   ++m_it;
   m_t += m_dt;
 }
@@ -1072,6 +1070,121 @@ Discretization::history( std::vector< std::vector< tk::real > >&& data )
   }
 }
 
+bool
+Discretization::fielditer() const
+// *****************************************************************************
+//  Decide if field output iteration count interval is hit
+//! \return True if field output iteration count interval is hit
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
+
+  return m_it % g_inputdeck.get< tag::output, tag::iter, tag::field >() == 0;
+}
+
+bool
+Discretization::fieldtime() const
+// *****************************************************************************
+//  Decide if field output physics time interval is hit
+//! \return True if field output physics time interval is hit
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
+
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto ft = g_inputdeck.get< tag::output, tag::time, tag::field >();
+
+  if (ft < eps) return false;
+
+  return std::floor(m_t/ft) - m_physFieldFloor > eps;
+}
+
+bool
+Discretization::fieldrange() const
+// *****************************************************************************
+//  Decide if physics time falls into a field output time range
+//! \return True if physics time falls into a field output time range
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
+
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  bool output = false;
+
+  const auto& rf = g_inputdeck.get< tag::output, tag::range, tag::field >();
+  for (std::size_t i=0; i<rf.size(); ++i)
+    if (m_t > rf[i][0] and m_t < rf[i][1])
+      output |= std::floor(m_t/rf[i][2]) - m_rangeFieldFloor[i] > eps;
+
+  return output;
+}
+
+bool
+Discretization::histiter() const
+// *****************************************************************************
+//  Decide if history output iteration count interval is hit
+//! \return True if history output iteration count interval is hit
+// *****************************************************************************
+{
+  const auto hist = g_inputdeck.get< tag::output, tag::iter, tag::history >();
+  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+
+  return m_it % hist == 0 and not hist_points.empty();
+}
+
+bool
+Discretization::histtime() const
+// *****************************************************************************
+//  Decide if history output physics time interval is hit
+//! \return True if history output physics time interval is hit
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
+
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto ht = g_inputdeck.get< tag::output, tag::time, tag::history >();
+
+  if (ht < eps) return false;
+
+  return std::floor(m_t/ht) - m_physHistFloor > eps;
+}
+
+bool
+Discretization::histrange() const
+// *****************************************************************************
+//  Decide if physics time falls into a history output time range
+//! \return True if physics time falls into a history output time range
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
+
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+
+  bool output = false;
+
+  const auto& rh = g_inputdeck.get< tag::output, tag::range, tag::history >();
+  for (std::size_t i=0; i<rh.size(); ++i)
+    if (m_t > rh[i][0] and m_t < rh[i][1])
+      output |= std::floor(m_t/rh[i][2]) - m_rangeHistFloor[i] > eps;
+
+  return output;
+}
+
+bool
+Discretization::finished() const
+// *****************************************************************************
+//  Decide if this is the last time step
+//! \return True if this is the last time step
+// *****************************************************************************
+{
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+
+  return std::abs(m_t-term) < eps or m_it >= nstep;
+}
+
 void
 Discretization::status()
 // *****************************************************************************
@@ -1079,7 +1192,7 @@ Discretization::status()
 // *****************************************************************************
 {
   // Query after how many time steps user wants TTY dump
-  const auto tty = g_inputdeck.get< tag::interval, tag::tty >();
+  const auto tty = g_inputdeck.get< tag::output, tag::iter, tag::tty >();
 
   // estimate grind time (taken between this and the previous time step)
   using std::chrono::duration_cast;
@@ -1090,19 +1203,15 @@ Discretization::status()
 
   if (thisIndex==0 && m_meshid == 0 && !(m_it%tty)) {
 
-    const auto eps = std::numeric_limits< tk::real >::epsilon();
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
     const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    const auto field = g_inputdeck.get< tag::interval,tag::field >();
-    const auto diag = g_inputdeck.get< tag::interval, tag::diag >();
-    const auto hist = g_inputdeck.get< tag::interval, tag::history >();
+    const auto diag = g_inputdeck.get< tag::output, tag::iter, tag::diag >();
     const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
     const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
     const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
     const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-    const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
 
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
@@ -1113,7 +1222,7 @@ Discretization::status()
     tk::Print print( g_inputdeck.get< tag::cmd >().logname( def, m_nrestart ),
                      verbose ? std::cout : std::clog,
                      std::ios_base::app );
- 
+
     // Output one-liner
     print << std::setfill(' ') << std::setw(8) << m_it << "  "
           << std::scientific << std::setprecision(6)
@@ -1129,16 +1238,13 @@ Discretization::status()
           << std::scientific << std::setprecision(6) << std::setfill(' ')
           << std::setw(9) << grind_time << "  ";
 
-    // Determin if this is the last time step
-    bool finish = not (std::fabs(m_t-term) > eps && m_it < nstep);
-
     // Augment one-liner status with output indicators
-    if (!benchmark && !(m_it % field)) print << 'f';
+    if (fielditer() or fieldtime() or fieldrange()) print << 'f';
     if (!(m_it % diag)) print << 'd';
-    if (!(m_it % hist) && !hist_points.empty()) print << 't';
+    if (histiter() or histtime() or histrange()) print << 't';
     if (m_refined) print << 'h';
-    if (!(m_it % lbfreq) && !finish) print << 'l';
-    if (!benchmark && (!(m_it % rsfreq) || finish)) print << 'r';
+    if (!(m_it % lbfreq) && not finished()) print << 'l';
+    if (!benchmark && (!(m_it % rsfreq) || finished())) print << 'r';
 
     if (not m_meshvel_converged) print << 'a';
     m_meshvel_converged = true; // get ready for next time step

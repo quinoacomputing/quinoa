@@ -78,6 +78,24 @@ add_regression_test(compflow_euler_sodshocktube_alecg ${INCITER_EXECUTABLE}
                                         sod_shocktube_hist.ndiff.cfg
                     LABELS alecg)
 
+add_regression_test(compflow_euler_sodshocktube_alecg_hist_timeint ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES sod_shocktube_alecg_hist_timeint.q rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_alecg_hist_timeint.q -i rectangle_01_1.5k.exo -v
+                    BIN_BASELINE sod_shocktube_alecg_hist_timeint.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_alecg.std
+                                  sod_shocktube_alecg_hist_timeint.p1.std
+                                  sod_shocktube_alecg_hist_timeint.p2.std
+                    TEXT_RESULT diag
+                                out.hist.p1
+                                out.hist.p2
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
+                    LABELS alecg)
+
 add_regression_test(compflow_euler_sodshocktube_alecg_sponge_velocity ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES sod_shocktube_alecg_sponge_velocity.q rectangle_01_1.5k.exo
@@ -124,6 +142,27 @@ add_regression_test(compflow_euler_sodshocktube_alecg_surf ${INCITER_EXECUTABLE}
                                  sod_shocktube_alecg-surf.4.std.exo
                                  sod_shocktube_alecg-surf.5.std.exo
                                  sod_shocktube_alecg-surf.6.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                               out-surf.2.e-s.0.1.0
+                               out-surf.4.e-s.0.1.0
+                               out-surf.5.e-s.0.1.0
+                               out-surf.6.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    TEXT_BASELINE diag_alecg.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS alecg)
+
+add_regression_test(compflow_euler_sodshocktube_alecg_surf_timeint ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES sod_shocktube_alecg_surf_timeinterval.q rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_alecg_surf_timeinterval.q -i rectangle_01_1.5k.exo
+                         -v
+                    BIN_BASELINE sod_shocktube_alecg_timeinterval.std.exo
+                                 sod_shocktube_alecg-surf_timeinterval.2.std.exo
+                                 sod_shocktube_alecg-surf_timeinterval.4.std.exo
+                                 sod_shocktube_alecg-surf_timeinterval.5.std.exo
+                                 sod_shocktube_alecg-surf_timeinterval.6.std.exo
                     BIN_RESULT out.e-s.0.1.0
                                out-surf.2.e-s.0.1.0
                                out-surf.4.e-s.0.1.0
@@ -249,6 +288,31 @@ add_regression_test(compflow_euler_sodshocktube_pdg ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
                     LABELS dg)
+
+add_regression_test(compflow_euler_sodshocktube_alecg_hist_range ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES sod_shocktube_alecg_hist_range.q rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_alecg_hist_range.q -i rectangle_01_1.5k.exo -v
+                    BIN_BASELINE sod_shocktube_alecg_hist_range.std.exo.0
+                                 sod_shocktube_alecg_hist_range.std.exo.1
+                                 sod_shocktube_alecg_hist_range.std.exo.2
+                                 sod_shocktube_alecg_hist_range.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_alecg_hist_range.std
+                                  sod_shocktube_alecg_hist_range.p1.std
+                                  sod_shocktube_alecg_hist_range.p2.std
+                    TEXT_RESULT diag
+                                out.hist.p1
+                                out.hist.p2
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
+                                        sod_shocktube_hist.ndiff.cfg
+                    LABELS alecg)
 
 # Parallel + virtualization
 

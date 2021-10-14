@@ -31,23 +31,23 @@ namespace ctr {
 
 //! Member data for tagged tuple
 using InputDeckMembers = brigand::list<
-    tag::cmd,        CmdLine
-  , tag::title,      kw::title::info::expect::type
-  , tag::selected,   selects
-  , tag::amr,        amr
-  , tag::ale,        ale
-  , tag::pref,       pref
-  , tag::discr,      discretization
-  , tag::prec,       precision
-  , tag::flformat,   floatformat
-  , tag::component,  ncomps
-  , tag::sys,        std::map< tk::ctr::ncomp_t, tk::ctr::ncomp_t >
-  , tag::interval,   intervals
-  , tag::param,      parameters
-  , tag::couple,     couple
-  , tag::diag,       diagnostics
-  , tag::error,      std::vector< std::string >
-  , tag::history,    history
+    tag::cmd,           CmdLine
+  , tag::title,         kw::title::info::expect::type
+  , tag::selected,      selects
+  , tag::amr,           amr
+  , tag::ale,           ale
+  , tag::pref,          pref
+  , tag::discr,         discretization
+  , tag::prec,          precision
+  , tag::flformat,      floatformat
+  , tag::component,     ncomps
+  , tag::sys,           std::map< tk::ctr::ncomp_t, tk::ctr::ncomp_t >
+  , tag::output,        output_parameters
+  , tag::param,         parameters
+  , tag::couple,        couple
+  , tag::diag,          diagnostics
+  , tag::error,         std::vector< std::string >
+  , tag::history,       history
 >;
 
 //! \brief InputDeck : Control< specialized to Inciter >, see Types.h,
@@ -73,7 +73,9 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::problem
                                  , kw::field_output
                                  , kw::refined
-                                 , kw::interval
+                                 , kw::interval_iter
+                                 , kw::interval_time
+                                 , kw::time_range
                                  , kw::partitioning
                                  , kw::algorithm
                                  , kw::rcb
@@ -97,6 +99,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::mass
                                  , kw::density
                                  , kw::velocity
+                                 , kw::position
+                                 , kw::acceleration
+                                 , kw::fntype
+                                 , kw::fn
+                                 , kw::move
                                  , kw::initiate
                                  , kw::impulse
                                  , kw::linear
@@ -148,6 +155,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::ctau
                                  , kw::cfl
                                  , kw::dvcfl
+                                 , kw::vortmult
                                  , kw::mj
                                  , kw::elem
                                  , kw::node
@@ -192,13 +200,17 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::rescomp
                                  , kw::amr
                                  , kw::ale
+                                 , kw::smoother
+                                 , kw::laplace
+                                 , kw::helmholtz
                                  , kw::meshvelocity
                                  , kw::meshvel_maxit
                                  , kw::meshvel_tolerance
+                                 , kw::mesh_motion
+                                 , kw::meshforce
                                  , kw::none
                                  , kw::sine
                                  , kw::fluid
-                                 , kw::helmholtz
                                  , kw::amr_t0ref
                                  , kw::amr_dtref
                                  , kw::amr_dtref_uniform
@@ -256,6 +268,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::bc_outlet
                                  , kw::bc_farfield
                                  , kw::bc_extrapolate
+                                 , kw::bc_timedep
                                  , kw::bc_stag
                                  , kw::bc_skip
                                  , kw::sponge
@@ -329,10 +342,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::zplus >() = -rmax;
       // Default ALE settings
       get< tag::ale, tag::ale >() = false;
+      get< tag::ale, tag::smoother >() = MeshVelocitySmootherType::NONE;
       get< tag::ale, tag::dvcfl >() = 0.0;
+      get< tag::ale, tag::vortmult >() = 0.0;
       get< tag::ale, tag::maxit >() = 5;
       get< tag::ale, tag::tolerance >() = 1.0e-2;
-      get< tag::ale, tag::meshvelocity >() = MeshVelocityType::NONE;
       // Default p-refinement settings
       get< tag::pref, tag::pref >() = false;
       get< tag::pref, tag::indicator >() = PrefIndicatorType::SPECTRAL_DECAY;
@@ -342,10 +356,12 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::prec, tag::diag >() = std::cout.precision();
       get< tag::prec, tag::history >() = std::cout.precision();
       // Default intervals
-      get< tag::interval, tag::tty >() = 1;
-      get< tag::interval, tag::field >() = 1;
-      get< tag::interval, tag::diag >() = 1;
-      get< tag::interval, tag::history >() = 1;
+      get< tag::output, tag::iter, tag::tty >() = 1;
+      get< tag::output, tag::iter, tag::diag >() = 1;
+      get< tag::output, tag::iter, tag::field >() =
+        std::numeric_limits< kw::interval_iter::info::expect::type >::max();
+      get< tag::output, tag::iter, tag::history >() =
+        std::numeric_limits< kw::interval_iter::info::expect::type >::max();
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       brigand::for_each< keywords >( ctrinfoFill );
@@ -423,13 +439,13 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
 
     //! Query special point BC configuration
     //! \tparam eq PDE type to query
-    //! \tparam bc  Special BC type to query, e.g., stagnation, skip
+    //! \tparam sbc Special BC type to query, e.g., stagnation, skip
     //! \param[in] system Equation system id
     //! \return Vectors configuring the special points and their radii
-    template< class eq, class bc >
+    template< class eq, class sbc >
     std::tuple< std::vector< tk::real >, std::vector< tk::real > >
     specialBC( std::size_t system ) {
-      const auto& bcspec = get< tag::param, eq, bc >();
+      const auto& bcspec = get< tag::param, eq, sbc >();
       const auto& point = bcspec.template get< tag::point >();
       const auto& radius = bcspec.template get< tag::radius >();
       std::vector< tk::real > pnt;

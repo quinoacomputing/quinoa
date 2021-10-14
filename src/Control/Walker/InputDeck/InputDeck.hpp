@@ -30,18 +30,18 @@ namespace ctr {
 
 //! Member data for tagged tuple
 using InputDeckMembers = brigand::list<
-    tag::cmd,        CmdLine
-  , tag::title,      kw::title::info::expect::type
-  , tag::selected,   selects
-  , tag::discr,      discretization
-  , tag::prec,       precision
-  , tag::flformat,   floatformat
-  , tag::component,  ncomps
-  , tag::interval,   intervals
-  , tag::param,      parameters
-  , tag::stat,       std::vector< tk::ctr::Product >
-  , tag::pdf,        std::vector< tk::ctr::Probability >
-  , tag::error,      std::vector< std::string >
+    tag::cmd,           CmdLine
+  , tag::title,         kw::title::info::expect::type
+  , tag::selected,      selects
+  , tag::discr,         discretization
+  , tag::prec,          precision
+  , tag::flformat,      floatformat
+  , tag::component,     ncomps
+  , tag::output,        output_parameters
+  , tag::param,         parameters
+  , tag::stat,          std::vector< tk::ctr::Product >
+  , tag::pdf,           std::vector< tk::ctr::Probability >
+  , tag::error,         std::vector< std::string >
 >;
 
 //! InputDeck : Control< specialized to Walker >, see Types.h
@@ -55,7 +55,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::depvar
                                  , kw::title
                                  , kw::statistics
-                                 , kw::interval
+                                 , kw::interval_iter
                                  , kw::pdfs
                                  , kw::filetype
                                  , kw::pdf_policy
@@ -117,6 +117,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::const_shear
                                  , kw::stationary
                                  , kw::position
+                                 , kw::velocity
                                  , kw::velocitysde
                                  , kw::inst_velocity
                                  , kw::seed
@@ -254,10 +255,10 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::prec, tag::stat >() = std::cout.precision();
       get< tag::prec, tag::pdf >() = std::cout.precision();
       // Default intervals
-      get< tag::interval, tag::tty >() = 1;
-      get< tag::interval, tag::stat >() = 1;
-      get< tag::interval, tag::particles >() = 10000;
-      get< tag::interval, tag::pdf >() = 1;
+      get< tag::output, tag::iter, tag::tty >() = 1;
+      get< tag::output, tag::iter, tag::stat >() = 1;
+      get< tag::output, tag::iter, tag::particles >() = 10000;
+      get< tag::output, tag::iter, tag::pdf >() = 1;
       // Default requested statistics
       get< tag::stat >() = std::vector< tk::ctr::Product >();
       // Initialize help

@@ -194,13 +194,60 @@ class MultiMat {
       tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
     }
 
+    //! Update the interface cells to first order dofs
+    //! \param[in] unk Array of unknowns
+    //! \param[in] nielem Number of internal elements
+//    //! \param[in,out] ndofel Array of dofs
+    //! \details This function resets the high-order terms in interface cells.
+    void updateInterfaceCells( tk::Fields& unk,
+      std::size_t nielem,
+      std::vector< std::size_t >& /*ndofel*/ ) const
+    {
+      auto intsharp =
+        g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >()[m_system];
+      // If this cell is not material interface, return this function
+      if(not intsharp)  return;
+
+      auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      for (std::size_t e=0; e<nielem; ++e) {
+        std::vector< std::size_t > matInt(nmat, 0);
+        std::vector< tk::real > alAvg(nmat, 0.0);
+        for (std::size_t k=0; k<nmat; ++k)
+          alAvg[k] = unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
+        auto intInd = interfaceIndicator(nmat, alAvg, matInt);
+
+        // interface cells cannot be high-order
+        if (intInd) {
+          //ndofel[e] = 1;
+          for (std::size_t k=0; k<nmat; ++k) {
+            if (matInt[k]) {
+              for (std::size_t i=1; i<rdof; ++i) {
+                unk(e, densityDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
+                unk(e, energyDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
+              }
+            }
+          }
+          for (std::size_t idir=0; idir<3; ++idir) {
+            for (std::size_t i=1; i<rdof; ++i) {
+              unk(e, momentumDofIdx(nmat,idir,rdof,i), m_offset) = 0.0;
+            }
+          }
+        }
+      }
+    }
+
     //! Update the primitives for this PDE system
     //! \param[in] unk Array of unknowns
+    //! \param[in] L The left hand side block-diagonal mass matrix
+    //! \param[in] geoElem Element geometry array
     //! \param[in,out] prim Array of primitives
     //! \param[in] nielem Number of internal elements
     //! \details This function computes and stores the dofs for primitive
     //!   quantities, which are required for obtaining reconstructed states used
-    //!   in the Riemann solver. See /PDE/Integrate/Riemann/AUSM.hpp, where the
+    //!   in the Riemann solver. See /PDE/Riemann/AUSM.hpp, where the
     //!   normal velocity for advection is calculated from independently
     //!   reconstructed velocities.
     void updatePrimitives( const tk::Fields& unk,
@@ -273,6 +320,8 @@ class MultiMat {
             pri[pressureIdx(nmat,imat)] = eos_pressure< tag::multimat >(
               m_system, arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat,
               imat);
+            pri[pressureIdx(nmat,imat)] = constrain_pressure< tag::multimat >(
+              m_system, pri[pressureIdx(nmat,imat)], alphamat, imat);
           }
 
           // Evaluate bulk velocity at quadrature point
@@ -323,7 +372,7 @@ class MultiMat {
     //!   becomes necessary when shocks pass through cells which contain a very
     //!   small amount of material. The state of that tiny material might
     //!   become unphysical and cause solution to diverge; thus requiring such
-    //!   a ``reset''.
+    //!   a "reset".
     void cleanTraceMaterial( const tk::Fields& geoElem,
                              tk::Fields& unk,
                              tk::Fields& prim,
@@ -457,6 +506,12 @@ class MultiMat {
               * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = 1e-14 *
               p_target;
+            for (std::size_t i=1; i<rdof; ++i) {
+              unk(e, volfracDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+              unk(e, densityDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+              unk(e, energyDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+              prim(e, pressureDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+            }
           }
           else {
             auto rhok = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset) / alk;
@@ -465,6 +520,10 @@ class MultiMat {
               * eos_totalenergy< eq >(m_system, rhok, u, v, w, p_target, k);
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) = alk *
               p_target;
+            for (std::size_t i=1; i<rdof; ++i) {
+              unk(e, energyDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+              prim(e, pressureDofIdx(nmat, k, rdof, i), m_offset) = 0.0;
+            }
           }
         }
 
@@ -593,8 +652,7 @@ class MultiMat {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P,
-                      tk::Fields& /*VolFracMax*/ ) const
+                      tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto intsharp =
@@ -631,10 +689,6 @@ class MultiMat {
 
         // 2. transform reconstructed derivatives to Dubiner dofs
         tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, U, varRange);
-
-        //// 3. Find the maximum volume fraction in the neighborhood of each cell
-        //tk::findMaxVolfrac( m_offset, rdof, nmat, nelem, fd.Esuel(), esup,
-        //  inpoel, U, VolFracMax );
 
         //----- reconstruction of primitive quantities -----
         //--------------------------------------------------
@@ -742,7 +796,6 @@ class MultiMat {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
-              const tk::Fields& VolFracMax,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
@@ -759,16 +812,12 @@ class MultiMat {
               "vector and primitive vector at recent time step incorrect" );
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
               "vector and right-hand side at recent time step incorrect" );
-      Assert( VolFracMax.nunk() == P.nunk(), "Number of unknowns in volfracmax "
-              "vector and primitive vector at recent time step incorrect" );
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( P.nprop() == rdof*nprim(), "Number of components in primitive "
               "vector must equal "+ std::to_string(rdof*nprim()) );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
-      Assert( VolFracMax.nprop() == 2*nmat, "Number of components in "
-              "volfracmax vector incorrect" );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
       Assert( ndof <= 4, "DGP2 not set up for multi-material" );
@@ -799,8 +848,8 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, nmat, m_offset, t, ndof, rdof, inpoel, coord,
-                   fd, geoFace, geoElem, rieflxfn, velfn, U, P, VolFracMax,
-                   ndofel, R, vriem, riemannLoc, riemannDeriv, intsharp );
+                   fd, geoFace, geoElem, rieflxfn, velfn, U, P, ndofel, R,
+                   vriem, riemannLoc, riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
@@ -811,8 +860,8 @@ class MultiMat {
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, nmat, m_offset, ndof, rdof, b.first,
                         fd, geoFace, geoElem, inpoel, coord, t, rieflxfn, velfn,
-                        b.second, U, P, VolFracMax, ndofel, R, vriem,
-                        riemannLoc, riemannDeriv, intsharp );
+                        b.second, U, P, ndofel, R, vriem, riemannLoc,
+                        riemannDeriv, intsharp );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );
@@ -1390,6 +1439,8 @@ class MultiMat {
 
     //! \brief Boundary state function providing the left and right state of a
     //!   face at subsonic outlet boundaries
+    //! \param[in] system Equation system index
+    //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] ul Left (domain-internal) state
     //! \return Left and right states for all scalar components in this PDE
     //!   system
@@ -1400,7 +1451,8 @@ class MultiMat {
     //!   pressure from the outside and other quantities from the internal cell.
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    subsonicOutlet( ncomp_t system, ncomp_t ncomp,
+    subsonicOutlet( ncomp_t system,
+                    ncomp_t ncomp,
                     const std::vector< tk::real >& ul,
                     tk::real, tk::real, tk::real, tk::real,
                     const std::array< tk::real, 3 >& )

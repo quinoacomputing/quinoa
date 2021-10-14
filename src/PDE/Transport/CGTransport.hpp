@@ -102,6 +102,11 @@ class Transport {
     //!   means this system does not define a "velocity".
     void velocity( const tk::Fields&, tk::UnsMesh::Coords& ) const {}
 
+    //! Query the sound speed
+    //! \note Since this function does not touch its output argument, that
+    //!   means this system does not define a "sound speed".
+    void soundspeed( const tk::Fields&, std::vector< tk::real >& ) const {}
+
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate
     //! \param[in] yi Y-coordinate
@@ -197,6 +202,7 @@ class Transport {
     //! \param[in] lid Global->local node ids
     //! \param[in] dfn Dual-face normals
     //! \param[in] psup Points surrounding points
+    //! \param[in] esup Elements surrounding points
     //! \param[in] symbctri Vector with 1 at symmetry BC nodes
     //! \param[in] vol Nodal volumes
     //! \param[in] edgeid Local node id pair -> edge id map
@@ -525,6 +531,13 @@ class Transport {
                  const std::array< std::vector< real >, 3 >&,
                  const std::unordered_set< std::size_t >& ) const {}
 
+    //! Apply user defined time dependent BCs (no-op for transport)
+    void
+    timedepbc( tk::real,
+      tk::Fields&,
+      const std::vector< std::unordered_set< std::size_t > >&,
+      const std::vector< tk::Table<5> >& ) const {}
+
     //! Return analytic field names to be output to file
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
@@ -584,6 +597,7 @@ class Transport {
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!    global node ids (key)
     //! \param[in] vol Nodal volumes
+    //! \param[in] esup Elements surrounding points
     //! \param[in] U Solution vector at recent time step
     //! \param[in] G Nodal gradients of primitive variables in chare-boundary nodes
     //! \return Gradients of primitive variables in all mesh points
@@ -718,6 +732,7 @@ class Transport {
 
     //! Compute domain-edge integral for ALECG
     //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
     //! \param[in] edgeid Local node id pair -> edge id map
     //! \param[in] psup Points surrounding points
     //! \param[in] dfn Dual-face normals

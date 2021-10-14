@@ -269,8 +269,19 @@ intet( const std::array< std::vector< real >, 3 >& coord,
 tk::UnsMesh::Coords
 curl( const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel,
-      const std::vector< tk::real >& vol,
       const tk::UnsMesh::Coords& v );
+
+//! Compute divergence of vector field at nodes of unstructured tetrahedra mesh
+std::vector< tk::real >
+div( const std::array< std::vector< tk::real >, 3 >& coord,
+     const std::vector< std::size_t >& inpoel,
+     const tk::UnsMesh::Coords& v );
+
+//! Compute gradient of a scalar field at nodes of unstructured tetrahedra mesh
+tk::UnsMesh::Coords
+grad( const std::array< std::vector< tk::real >, 3 >& coord,
+      const std::vector< std::size_t >& inpoel,
+      const std::vector< tk::real >& phi );
 
 } // tk::
 

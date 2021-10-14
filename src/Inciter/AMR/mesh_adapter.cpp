@@ -227,6 +227,8 @@ namespace AMR {
              local.needs_refining = 0;
            } else {
              local.needs_refining = 1;
+             // an edge deemed to be 'needing refinement', cannot be derefined
+             local.needs_derefining = 0;
            }
          } else if (r.second == edge_tag::DEREFINE) {
            if (local.lock_case > Edge_Lock_Case::unlocked) {
@@ -370,7 +372,7 @@ namespace AMR {
 
 #ifndef AMR_MAX_ROUNDS
         // Paper says the average actual num rounds will be 5-15
-#define AMR_MAX_ROUNDS 30
+#define AMR_MAX_ROUNDS 50
 #endif
         const size_t max_num_rounds = AMR_MAX_ROUNDS;
 
@@ -1231,6 +1233,30 @@ namespace AMR {
                 done_deref_marking.insert(tet_id);
 
                 child_id_list_t children = tet_store.data(tet_id).children;
+
+                // check if any child of tet_id (i.e. any active tet) is marked
+                // for refinement
+                bool is_child_ref(false);
+                for (size_t i=0; i<children.size(); i++) {
+                  edge_list_t chedge_list = tet_store.generate_edge_keys(children[i]);
+                  // Check each edge, see if it is marked for refinement
+                  for (size_t k=0; k<NUM_TET_EDGES; k++) {
+                    edge_t edge = chedge_list[k];
+
+                    if (tet_store.edge_store.get(edge).needs_refining == 1) {
+                      is_child_ref = true;
+                      continue;
+                    }
+                  }
+                }
+                // deactivate from deref if marked for ref
+                if (is_child_ref) {
+                  for (auto child_id : children) {
+                    deactivate_deref_tet_edges(child_id);
+                  }
+                  deactivate_deref_tet_edges(tet_id);
+                  continue;
+                }
 
                 // This is useful for later inspection
                 //edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);

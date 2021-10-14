@@ -154,6 +154,12 @@ class DGPDE {
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     { self->lhs( geoElem, l ); }
 
+    //! Public interface to updating the interface cells for the diff eq
+    void updateInterfaceCells( tk::Fields& unk,
+                               std::size_t nielem,
+                               std::vector< std::size_t >& ndofel ) const
+    { self->updateInterfaceCells( unk, nielem, ndofel ); }
+
     //! Public interface to updating the primitives for the diff eq
     void updatePrimitives( const tk::Fields& unk,
                            const tk::Fields& L,
@@ -179,11 +185,9 @@ class DGPDE {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P,
-                      tk::Fields& VolFracMax ) const
+                      tk::Fields& P ) const
     {
-      self->reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P,
-        VolFracMax );
+      self->reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P );
     }
 
     //! Public interface to limiting the second-order solution
@@ -216,12 +220,11 @@ class DGPDE {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
-              const tk::Fields& VolFracMax,
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
       self->rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-        VolFracMax, ndofel, R );
+                 ndofel, R );
     }
 
     //! Public interface for computing the minimum time step size
@@ -304,6 +307,9 @@ class DGPDE {
         tk::real,
         const std::size_t nielem ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
+      virtual void updateInterfaceCells( tk::Fields&,
+                                         std::size_t,
+                                         std::vector< std::size_t >& ) const = 0;
       virtual void updatePrimitives( const tk::Fields&,
                                      const tk::Fields&,
                                      const tk::Fields&,
@@ -321,7 +327,6 @@ class DGPDE {
                                   std::vector< std::size_t > >&,
                                 const std::vector< std::size_t >&,
                                 const tk::UnsMesh::Coords&,
-                                tk::Fields&,
                                 tk::Fields&,
                                 tk::Fields& ) const = 0;
       virtual void limit( tk::real,
@@ -346,7 +351,6 @@ class DGPDE {
                         const std::vector< std::size_t >&,
                         const std::vector< std::unordered_set< std::size_t > >&,
                         const tk::UnsMesh::Coords&,
-                        const tk::Fields&,
                         const tk::Fields&,
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
@@ -406,6 +410,10 @@ class DGPDE {
         nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
+      void updateInterfaceCells( tk::Fields& unk,
+                                 std::size_t nielem,
+                                 std::vector< std::size_t >& ndofel )
+      const override { data.updateInterfaceCells( unk, nielem, ndofel ); }
       void updatePrimitives( const tk::Fields& unk,
                              const tk::Fields& L,
                              const tk::Fields& geoElem,
@@ -426,11 +434,9 @@ class DGPDE {
                         const std::vector< std::size_t >& inpoel,
                         const tk::UnsMesh::Coords& coord,
                         tk::Fields& U,
-                        tk::Fields& P,
-                        tk::Fields& VolFracMax ) const override
+                        tk::Fields& P ) const override
       {
-        data.reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P,
-          VolFracMax );
+        data.reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P );
       }
       void limit( tk::real t,
                   const tk::Fields& geoFace,
@@ -461,12 +467,11 @@ class DGPDE {
         const tk::UnsMesh::Coords& coord,
         const tk::Fields& U,
         const tk::Fields& P,
-        const tk::Fields& VolFracMax,
         const std::vector< std::size_t >& ndofel,
         tk::Fields& R ) const override
       {
         data.rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-          VolFracMax, ndofel, R );
+                  ndofel, R );
       }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,

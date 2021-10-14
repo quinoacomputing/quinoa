@@ -110,6 +110,7 @@ namespace grm {
     NEGATIVEPARAM,      //!< Negative parameter given configuring a PDF
     NONCOMP,            //!< No number of components selected
     LARGECOMP,          //!< Component index indexing out of max eq sys ncomp
+    BADRANGE,           //!< Incorrect time range configuration
     NONMAT,             //!< No number of materials selected
     NUMMAT,             //!< Incorrect number of materials selected
     REPMATID,           //!< Repeating material id
@@ -154,7 +155,9 @@ namespace grm {
     SPONGEBCWRONG,      //!< Sponge BC incorrectly configured
     NONDISJOINTBC,      //!< Different BC types assigned to the same side set
     WRONGSIZE,          //!< Size of parameter vector incorrect
+    WRONGMESHMOTION,    //!< Error in mesh motion dimensions
     STEADYALE,          //!< ALE + steady state not supported
+    INCOMPLETEUSERFN,   //!< Incomplete user-defined function
     HYDROTIMESCALES,    //!< Missing required hydrotimescales vector
     HYDROPRODUCTIONS,   //!< Missing required hydroproductions vector
     POSITION_DEPVAR,    //!< Missing required position model dependent variable
@@ -251,6 +254,10 @@ namespace grm {
     { MsgKey::LARGECOMP, "The component index is too large and indexes out of "
       "the total number of scalar components of the equation system "
       "configured." },
+    { MsgKey::BADRANGE, "Incorrect output time range configuration. "
+      "Configuration for a time range must contain exactly 3 reals, "
+      "specifying mintime, maxtime, and dt, as exactly 3 reals in that order, "
+      "with maxtime > mintime and 0 < dt < maxtime-mintime." },
     { MsgKey::NONMAT, "The number of materials has not been specified in the "
       "block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'nmat' to specify the number of materials." },
@@ -433,9 +440,20 @@ namespace grm {
       "to the same side set." },
     { MsgKey::WRONGSIZE, "Error in the preceding line or block. The size of "
       "the parameter vector is incorrect." },
+    { MsgKey::WRONGMESHMOTION, "Error in the preceding line or block. Mesh "
+      "motion dimension list can only involve the integers 0, 1, and 2, and "
+      "the size of the list of dimensions must be lower than 4 and larger "
+      "than 0." },
     { MsgKey::STEADYALE, "Error in the preceding line or block. Arbitrary "
       "Lagrangian-Eulerian mesh motion is not supported together with marching "
       "to steady state." },
+    { MsgKey::INCOMPLETEUSERFN, "Error in the preceding line or block. "
+      "Incomplete user-defined function. This usually means the number of "
+      "entries in list is either empty (i.e., the function is not defined) or "
+      "the number of entries is larger than zero but it is not divisible by "
+      "the correct number. For example, if a R->R^3 function is expected the "
+      "number of descrete entries must be divisible by 4: one 'column' for "
+      "the abscissa, and 3 for the ordinate." },
     { MsgKey::HYDROTIMESCALES, "Error in the preceding line or block. "
       "Specification of a 'hydrotimescales' vector missing." },
     { MsgKey::HYDROPRODUCTIONS, "Error in the preceding line or block. "
@@ -812,6 +830,23 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< typename target, typename tag, typename... tags >
+  struct Back_store_back : pegtl::success {};
+  //! \brief Convert and store value to vector in state at position
+  //!   given by tags and target
+  //! \details This struct and its apply function are used as a functor-like
+  //!    wrapper for calling the store_back member function of the underlying
+  //!    grammar stack.
+  template< typename target, typename tag, typename...tags >
+  struct action< Back_store_back< target, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template get< tag, tags... >().back().template
+        store_back< target >( in.string() );
+    }
+  };
+
+  //! Rule used to trigger action
   template< typename target, typename subtarget, typename tag,
             typename... tags >
   struct Back_back_deep_store_back : pegtl::success {};
@@ -937,6 +972,42 @@ namespace grm {
       Option opt;
       if (opt.exist(in.string())) {
         stack.template get< tag, tags... >().back().back().template
+          get< target >() = opt.value( in.string() );
+      } else {
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
+      }
+      // trigger error at compile-time if any of the expected option values
+      // is not in the keywords pool of the grammar
+      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
+    }
+  };
+
+  //! Rule used to trigger action
+  template< typename target, template < class > class use,
+            class Option, typename tag, typename... tags >
+  struct back_store_option : pegtl::success {};
+  //! \brief Push back option to back of vector in state at position
+  //!   given by tags
+  //! \details This struct and its apply function are used as a functor-like
+  //!   wrapper for storing an option (an object deriving from tk::Toggle) in
+  //!   a place in the stack. tag and tags... address a vector, whose
+  //!   inner value_type is a nested tagged tuple whose field in where we store
+  //!   here after conversion, indexed by target.
+  //!   See walker::ctr::DiffEq for an example specialization of tk::Toggle to
+  //!   see how an option is created from tk::Toggle. We also do a simple sanity
+  //!   check here testing if the desired option value exist for the particular
+  //!   option type and error out if there is a problem. Errors and warnings are
+  //!   accumulated during parsing and diagnostics are given after the parsing
+  //!   is finished.
+  template< typename target, template < class > class use,
+            class Option, typename tag, typename... tags >
+  struct action< back_store_option< target, use, Option, tag, tags... > >
+  {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      Option opt;
+      if (opt.exist(in.string())) {
+        stack.template get< tag, tags... >().back().template
           get< target >() = opt.value( in.string() );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
@@ -1198,7 +1269,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       auto lower = keyword::info::expect::lower;
       auto val = stack.template get< tag, tags... >();
-      if (val < lower) Message< Stack, WARNING, MsgKey::BOUNDS >( stack, in );
+      if (val < lower) Message< Stack, ERROR, MsgKey::BOUNDS >( stack, in );
     }
   };
 
@@ -1212,7 +1283,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       auto upper = keyword::info::expect::upper;
       auto val = stack.template get< tag, tags... >();
-      if (val > upper) Message< Stack, WARNING, MsgKey::BOUNDS >( stack, in );
+      if (val > upper) Message< Stack, ERROR, MsgKey::BOUNDS >( stack, in );
     }
   };
 
@@ -1707,6 +1778,16 @@ namespace grm {
                        tokens...,
                        unknown< ERROR, MsgKey::KEYWORD > > > {};
 
+  //! \brief Read in list of dimensions between keywords 'key' and
+  //!   'endkeyword', calling 'insert' for each if matches and allow comments
+  //!   between values
+  template< class key, class insert, class endkeyword,
+            class starter = noop, class value = pegtl::digit >
+  struct dimensions :
+         pegtl::seq<
+           act< readkw< typename key::pegtl_string >, starter >,
+           block< endkeyword, scan< value, insert > > > {};
+
   //! Plow through vector of values between keywords 'key' and
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
   //!   between values
@@ -1936,18 +2017,34 @@ namespace grm {
                   Store_back< tag::component, Tag >,
                   pegtl::digit > {};
 
-  //! Match interval control parameter
-  template< typename keyword, typename Tag >
-  struct interval :
-         control< keyword, pegtl::digit, Store, tag::interval, Tag > {};
+  //! Match output interval control parameter in units of iteration count
+  template< typename keyword, typename Tag, typename... Tags >
+  struct interval_iter :
+         control< keyword, pegtl::digit, Store, Tag, Tags... > {};
+
+  //! Match output interval control parameter in units of physics time
+  template< typename keyword, typename Tag, typename... Tags >
+  struct interval_time :
+         control< keyword, number, Store, Tag, Tags... > {};
+
+  //! Match output range control configuration as a list of min, max, and dt
+  template< template< class > class use, class keyword, class tag,
+            class... tags >
+  struct time_range :
+         pegtl::if_must<
+           tk::grm::readkw< typename use< keyword >::pegtl_string >,
+           start_vector< tag, tags... >,
+           tk::grm::block< use< kw::end >,
+             tk::grm::scan< tk::grm::number,
+               tk::grm::Store_back_back< tag, tags... > > > > {};
 
   //! Parse statistics ... end block
   template< template< class > class use, template< class... Ts > class store >
   struct statistics :
          pegtl::if_must< readkw< typename use< kw::statistics >::pegtl_string >,
                          block< use< kw::end >,
-                                interval< use< kw::interval >,
-                                          tag::stat >,
+                                interval_iter< use< kw::interval_iter >,
+                                  tag::output, tag::iter, tag::stat >,
                                 process< use< kw::txt_float_format >,
                                          store< tk::ctr::TxtFloatFormat,
                                                 tag::flformat,
@@ -1961,8 +2058,8 @@ namespace grm {
   struct diagnostics :
          pegtl::if_must< readkw< typename use< kw::diagnostics >::pegtl_string >,
                          block< use< kw::end >,
-                                interval< use< kw::interval >,
-                                          tag::diag >,
+                                interval_iter< use< kw::interval_iter >,
+                                  tag::output, tag::iter, tag::diag >,
                                 process< use< kw::txt_float_format >,
                                          store< tk::ctr::TxtFloatFormat,
                                                 tag::flformat,
@@ -2103,7 +2200,8 @@ namespace grm {
            tk::grm::readkw< typename use < kw::pdfs >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
-             tk::grm::interval< use< kw::interval >, tag::pdf >,
+             tk::grm::interval_iter< use< kw::interval_iter >,
+                                     tag::output, tag::iter, tag::pdf >,
              pdf_option< use< kw::filetype >,
                          store< tk::ctr::PDFFile,
                                 tag::selected,
