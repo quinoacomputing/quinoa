@@ -59,5 +59,5 @@ RUN if [ "${DOC}" ]; then \
 USER root
 RUN [ ${DOC} ] || ninja install
 USER quinoa
-RUN [ ${DOC} ] || (export PATH=/usr/local/bin:$PATH && unittest -h && inciter && rngtest && meshconv && walker)
+RUN [ ${DOC} ] || (export PATH=/usr/local/bin:$PATH && unittest -h && inciter && if [ ${COMPILER} != intel ]; then rngtest; fi && meshconv && walker)
 WORKDIR /home/quinoa
