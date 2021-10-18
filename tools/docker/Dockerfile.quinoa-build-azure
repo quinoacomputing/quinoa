@@ -59,5 +59,6 @@ RUN if [ "${DOC}" ]; then \
 USER root
 RUN [ ${DOC} ] || ninja install
 USER quinoa
+ENV LD_LIBRARY_PATH=/opt/intel/oneapi/compiler/2021.4.0/linux/compiler/lib/intel64_lin:$LD_LIBRARY_PATH
 RUN [ ${DOC} ] || (export PATH=/usr/local/bin:$PATH && unittest -h && inciter && if [ ${COMPILER} != intel ]; then rngtest; fi && meshconv && walker)
 WORKDIR /home/quinoa
