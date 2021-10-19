@@ -77,13 +77,6 @@ class ALE : public CBase_ALE {
       #pragma clang diagnostic pop
     #endif
 
-    //! Initialize mesh velocity linear solve: set initial guess and BCs
-    void init( const std::vector< tk::real >& x,
-               const std::vector< tk::real >& div,
-               const std::unordered_map< std::size_t,
-               std::vector< std::pair< bool, tk::real > > >& bc,
-               CkCallback c );
-
     //! Solve linear system to smooth ALE mesh velocity
     void solve( CkCallback c );
 
@@ -95,13 +88,14 @@ class ALE : public CBase_ALE {
       const tk::UnsMesh::Coords vel,
       const std::vector< tk::real >& soundspeed,
       CkCallback done,
-      std::size_t initial,
       const std::array< std::vector< tk::real >, 3 >& coord,
       const tk::UnsMesh::Coords coordn,
       const std::vector< tk::real >& vol0,
       const std::vector< tk::real >& vol,
       const std::unordered_map< int,
         std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm,
+      std::size_t initial,
+      std::size_t it,
       tk::real t,
       tk::real adt );
 
@@ -161,6 +155,7 @@ class ALE : public CBase_ALE {
       p | m_inpoel;
       p | m_vol0;
       p | m_vol;
+      p | m_it;
       p | m_t;
       p | m_adt;
       p | m_w;
@@ -216,6 +211,8 @@ class ALE : public CBase_ALE {
     //!   elements (sum of surrounding cell volumes / 4) with contributions from
     //!   other chares on chare-boundaries
     std::vector< tk::real > m_vol;
+    //! Iteration count
+    std::size_t m_it;
     //! Physics time
     tk::real m_t;
     //! alpha*dt of the Runge-Kutta time step

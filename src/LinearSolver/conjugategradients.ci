@@ -38,6 +38,7 @@ module conjugategradients {
                        const std::vector< tk::real >& b,
                        const std::unordered_map< std::size_t,
                          std::vector< std::pair< bool, tk::real > > >& bc,
+                       std::size_t ignorebc,
                        CkCallback cb );
       entry void setup( CkCallback cb );
       entry void solve( std::size_t maxit, tk::real stop_tol, CkCallback c );

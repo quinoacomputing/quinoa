@@ -230,8 +230,8 @@ Discretization::meshvelStart(
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::ale, tag::ale >())
-    m_ale[ thisIndex ].ckLocal()->start( vel, soundspeed, done, m_initial,
-      m_coord, m_coordn, m_vol0, m_vol, bnorm, m_t, adt );
+    m_ale[ thisIndex ].ckLocal()->start( vel, soundspeed, done,
+      m_coord, m_coordn, m_vol0, m_vol, bnorm, m_initial, m_it, m_t, adt );
   else
     done.send();
 }
@@ -475,7 +475,7 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
   m_coord = coord;
 
   // we are no longer during setup
-  m_initial = 0.0;
+  m_initial = 0;
 }
 
 void

@@ -42,6 +42,8 @@ ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   m_inpoel( inpoel ),
   m_vol0(),
   m_vol(),
+  m_it( 0 ),
+  m_t( 0.0 ),
   m_w( gid.size(), 3 ),
   m_wf( gid.size(), 3 ),
   m_wfc(),
@@ -259,23 +261,6 @@ ALE::move( std::size_t i ) const
 }
 
 void
-ALE::init( const std::vector< tk::real >& x,
-           const std::vector< tk::real >& div,
-           const std::unordered_map< std::size_t,
-                   std::vector< std::pair< bool, tk::real > > >& bc,
-           CkCallback c )
-// *****************************************************************************
-//  Initialize mesh velocity linear solve: set initial guess and BCs
-//! \param[in] x Initial guess for mesh velocity linear solve
-//! \param[in] div Velocity divergence for Helmholtz rhs
-//! \param[in] bc Local node ids associated to linear solver Dirichlet BCs
-// \param[in] c Function to call when the BCs have been applied
-// *****************************************************************************
-{
-  m_conjugategradients[ thisIndex ].ckLocal()->init( x, div, bc, c );
-}
-
-void
 ALE::solve( CkCallback c )
 // *****************************************************************************
 //  Solve linear system to smooth ALE mesh velocity
@@ -303,13 +288,14 @@ ALE::start(
   const tk::UnsMesh::Coords vel,
   const std::vector< tk::real >& soundspeed,
   CkCallback done,
-  std::size_t initial,
   const std::array< std::vector< tk::real >, 3 >& coord,
   const tk::UnsMesh::Coords coordn,
   const std::vector< tk::real >& vol0,
   const std::vector< tk::real >& vol,
   const std::unordered_map< int,
     std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm,
+  std::size_t initial,
+  std::size_t it,
   tk::real t,
   tk::real adt )
 // *****************************************************************************
@@ -318,13 +304,13 @@ ALE::start(
 //! \param[in] soundspeed Speed of sound at mesh nodes
 //! \param[in] done Function to continue with when mesh velocity has been
 //!   computed
-//! \param[in] initial True if during initialization/setup, false if during
-//!   time stepping
 //! \param[in] coord Mesh node coordinates
 //! \param[in] coordn Mesh node coordinates at the previous time step
 //! \param[in] vol0 Nodal mesh volumes at t=t0
 //! \param[in] vol Nodal mesh volumes
 //! \param[in] bnorm Face normals in boundary points associated to side sets
+//! \param[in] initial Nonzero during the first time step stage, zero otherwise
+//! \param[in] it Iteration count
 //! \param[in] t Physics time
 //! \param[in] adt alpha*dt of the RK time step
 // *****************************************************************************
@@ -336,6 +322,7 @@ ALE::start(
   m_vol0 = vol0;
   m_vol = vol;
   m_bnorm = bnorm;
+  m_it = it;
   m_t = t;
   m_adt = adt;
 
@@ -509,6 +496,8 @@ ALE::meshvelbc( tk::real maxv )
 //! \param[in] maxv The largest vorticity magnitude across the whole problem
 // *****************************************************************************
 {
+  std::size_t ignorebc = false;
+
   // smooth mesh velocity if needed
   auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
@@ -535,10 +524,12 @@ ALE::meshvelbc( tk::real maxv )
             m_w(i,j,0) = meshvel[j];
       } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
         auto eps = std::numeric_limits< tk::real >::epsilon();
-        if (m_adt > eps)
+        if (m_adt > eps) {
+          ignorebc = m_it > 0;
           for (auto i : std::get<2>(m))
             if (m_meshveldirbcnodes.find(i) != end(m_meshveldirbcnodes))
               wbc[i] = {{ {false,0}, {false,0}, {false,0} }};
+        }
       }
 
     // Dirichlet BCs where user specified mesh velocity BCs
@@ -546,8 +537,9 @@ ALE::meshvelbc( tk::real maxv )
       if (not move(i)) wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
 
     // initialize mesh velocity smoother linear solver
-    init( m_w.flat(), {}, wbc,
-      CkCallback(CkIndex_ALE::applied(nullptr), thisProxy[thisIndex]) );
+    m_conjugategradients[ thisIndex ].ckLocal()->
+      init( m_w.flat(), {}, wbc, ignorebc,
+            CkCallback(CkIndex_ALE::applied(nullptr), thisProxy[thisIndex]) );
 
   } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
@@ -563,8 +555,9 @@ ALE::meshvelbc( tk::real maxv )
     for (std::size_t p=0; p<wveldiv.size(); ++p) wveldiv[p] *= m_vol[p];
 
     // initialize Helmholtz decomposition linear solver
-    init( {}, wveldiv, pbc,
-      CkCallback(CkIndex_ALE::applied(nullptr), thisProxy[thisIndex]) );
+    m_conjugategradients[ thisIndex ].ckLocal()->
+      init( {}, wveldiv, pbc, ignorebc,
+            CkCallback(CkIndex_ALE::applied(nullptr), thisProxy[thisIndex]) );
 
   } else {
 

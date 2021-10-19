@@ -89,6 +89,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
                const std::vector< tk::real >& b,
                const std::unordered_map< std::size_t,
                        std::vector< std::pair< bool, tk::real > > >& bc,
+               std::size_t ignorebc,
                CkCallback cb );
 
     //! Setup solver
