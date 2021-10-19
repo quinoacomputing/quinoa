@@ -340,7 +340,7 @@ void CSR_object::test< 9 >() {
   std::iota( begin(x), end(x), 0.0 );
   auto r = x;
 
-  A.mult( x, r );
+  A.mult( x, r, std::vector<tk::real>(npoin,1.0) );
 
   std::vector< tk::real > correct{
     -6.124999999999999, -5.25, -5.041666666666666, -5, -4.166666666666666,

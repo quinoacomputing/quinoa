@@ -49,7 +49,7 @@ ConjugateGradients::ConjugateGradients(
   m_nr( 0 ),
   m_bc(),
   m_bcc(),
-  m_bcmask(),
+  m_bcmask( m_A.rsize(), 1.0 ),
   m_nb( 0 ),
   m_p( m_A.rsize(), 0.0 ),
   m_q( m_A.rsize(), 0.0 ),
@@ -325,7 +325,6 @@ ConjugateGradients::apply( CkCallback cb )
   auto ncomp = m_A.Ncomp();
 
   // Setup Dirichlet BC map as contiguous mask
-  m_bcmask.resize( m_A.rsize(), 1.0 );
   for (const auto& [i,bc] : m_bc)
     for (std::size_t j=0; j<ncomp; ++j)
       m_bcmask[i*ncomp+j] = 0.0;
