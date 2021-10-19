@@ -45,19 +45,19 @@ jobs:
       #  BUILD: 'Release'
       #  DISTRO: 'debian-gnu'
       #  M2M: true
-      #clang-debug:
-      #  COMPILER: 'clang'
-      #  BUILD: 'Debug'
-      #  DISTRO: 'debian-clang'
+      clang-debug:
+        COMPILER: 'clang'
+        BUILD: 'Debug'
+        DISTRO: 'debian-clang'
       #clang-debug-static:
       #  COMPILER: 'clang'
       #  BUILD: 'Debug'
       #  SHARED_LIBS: 'off'
       #  DISTRO: 'debian-clang-static'
-      clang-release:
-        COMPILER: 'clang'
-        BUILD: 'Release'
-        DISTRO: 'debian-clang'
+      #clang-release:
+      #  COMPILER: 'clang'
+      #  BUILD: 'Release'
+      #  DISTRO: 'debian-clang'
       #clang-release-m2m:
       #  COMPILER: 'clang'
       #  BUILD: 'Release'
