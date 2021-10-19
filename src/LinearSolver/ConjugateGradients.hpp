@@ -143,6 +143,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_nr;
       p | m_bc;
       p | m_bcc;
+      p | m_bcmask;
       p | m_nb;
       p | m_p;
       p | m_q;
@@ -192,6 +193,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //! Dirichlet boundary conditions communication buffer
     std::unordered_map< std::size_t,
         std::vector< std::pair< bool, tk::real > > > m_bcc;
+    //! Dirichlet boundary condition mask
+    std::vector< tk::real > m_bcmask;
     //! Counter for assembling boundary conditions
     std::size_t m_nb;
     //! Auxiliary vector for CG solve

@@ -49,6 +49,7 @@ ConjugateGradients::ConjugateGradients(
   m_nr( 0 ),
   m_bc(),
   m_bcc(),
+  m_bcmask(),
   m_nb( 0 ),
   m_p( m_A.rsize(), 0.0 ),
   m_q( m_A.rsize(), 0.0 ),
@@ -151,7 +152,7 @@ ConjugateGradients::residual()
 // *****************************************************************************
 {
   // Compute own contribution to r = A * x
-  m_A.mult( m_x, m_r, m_bc );
+  m_A.mult( m_x, m_r, m_bcmask );
 
   // Send partial product on chare-boundary nodes to fellow chares
   if (m_nodeCommMap.empty()) {
@@ -321,9 +322,16 @@ ConjugateGradients::apply( CkCallback cb )
   for (const auto& [i,dirbc] : m_bcc) m_bc[i] = dirbc;
   tk::destroy( m_bcc );
 
+  auto ncomp = m_A.Ncomp();
+
+  // Setup Dirichlet BC map as contiguous mask
+  m_bcmask.resize( m_A.rsize(), 1.0 );
+  for (const auto& [i,bc] : m_bc)
+    for (std::size_t j=0; j<ncomp; ++j)
+      m_bcmask[i*ncomp+j] = 0.0;
+
   // Apply Dirichlet BCs on matrix and rhs
   for (const auto& [i,dirbc] : m_bc) {
-    auto ncomp = m_A.Ncomp();
     for (std::size_t j=0; j<ncomp; ++j) {
       if (dirbc[j].first) {
         m_A.dirichlet( i, m_gid, m_nodeCommMap, j );
@@ -378,7 +386,7 @@ ConjugateGradients::qAp()
 // *****************************************************************************
 {
   // Compute own contribution to q = A * p
-  m_A.mult( m_p, m_q, m_bc );
+  m_A.mult( m_p, m_q, m_bcmask );
 
   // Send partial product on chare-boundary nodes to fellow chares
   if (m_nodeCommMap.empty()) {
