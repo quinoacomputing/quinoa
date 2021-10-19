@@ -12,77 +12,77 @@ jobs:
     imageName: 'quinoa-azure:$(build.buildId)'
   strategy:
     matrix:
-      gnu-debug:
-        COMPILER: 'gnu'
-        BUILD: 'Debug'
-        DISTRO: 'debian-gnu'
-      gnu-debug-static:
-        COMPILER: 'gnu'
-        BUILD: 'Debug'
-        SHARED_LIBS: 'off'
-        DISTRO: 'debian-gnu-static'
+      #gnu-debug:
+      #  COMPILER: 'gnu'
+      #  BUILD: 'Debug'
+      #  DISTRO: 'debian-gnu'
+      #gnu-debug-static:
+      #  COMPILER: 'gnu'
+      #  BUILD: 'Debug'
+      #  SHARED_LIBS: 'off'
+      #  DISTRO: 'debian-gnu-static'
       gnu-release:
         COMPILER: 'gnu'
         BUILD: 'Release'
         DISTRO: 'debian-gnu'
-      gnu-release-static:
-        COMPILER: 'gnu'
-        BUILD: 'Release'
-        SHARED_LIBS: 'off'
-        DISTRO: 'debian-gnu-static'
-      gnu-debug-smp:
-        COMPILER: 'gnu'
-        BUILD: 'Debug'
-        DISTRO: 'debian-gnu-smp'
-        SMP: 'on'
-      gnu-release-smp:
-        COMPILER: 'gnu'
-        BUILD: 'Release'
-        DISTRO: 'debian-gnu-smp'
-        SMP: 'on'
-      gnu-release-m2m:
-        COMPILER: 'gnu'
-        BUILD: 'Release'
-        DISTRO: 'debian-gnu'
-        M2M: true
-      clang-debug:
-        COMPILER: 'clang'
-        BUILD: 'Debug'
-        DISTRO: 'debian-clang'
-      clang-debug-static:
-        COMPILER: 'clang'
-        BUILD: 'Debug'
-        SHARED_LIBS: 'off'
-        DISTRO: 'debian-clang-static'
+      #gnu-release-static:
+      #  COMPILER: 'gnu'
+      #  BUILD: 'Release'
+      #  SHARED_LIBS: 'off'
+      #  DISTRO: 'debian-gnu-static'
+      #gnu-debug-smp:
+      #  COMPILER: 'gnu'
+      #  BUILD: 'Debug'
+      #  DISTRO: 'debian-gnu-smp'
+      #  SMP: 'on'
+      #gnu-release-smp:
+      #  COMPILER: 'gnu'
+      #  BUILD: 'Release'
+      #  DISTRO: 'debian-gnu-smp'
+      #  SMP: 'on'
+      #gnu-release-m2m:
+      #  COMPILER: 'gnu'
+      #  BUILD: 'Release'
+      #  DISTRO: 'debian-gnu'
+      #  M2M: true
+      #clang-debug:
+      #  COMPILER: 'clang'
+      #  BUILD: 'Debug'
+      #  DISTRO: 'debian-clang'
+      #clang-debug-static:
+      #  COMPILER: 'clang'
+      #  BUILD: 'Debug'
+      #  SHARED_LIBS: 'off'
+      #  DISTRO: 'debian-clang-static'
       clang-release:
         COMPILER: 'clang'
         BUILD: 'Release'
         DISTRO: 'debian-clang'
-      clang-release-m2m:
-        COMPILER: 'clang'
-        BUILD: 'Release'
-        DISTRO: 'debian-clang'
-        M2M: true
-      clang-release-static:
-        COMPILER: 'clang'
-        BUILD: 'Release'
-        SHARED_LIBS: 'off'
-        DISTRO: 'debian-clang-static'
-      clang-debug-smp:
-        COMPILER: 'clang'
-        BUILD: 'Debug'
-        DISTRO: 'debian-clang-smp'
-        SMP: 'on'
-      clang-release-smp:
-        COMPILER: 'clang'
-        BUILD: 'Release'
-        DISTRO: 'debian-clang-smp'
-        SMP: 'on'
-      intel-debug:
-        COMPILER: 'intel'
-        BUILD: 'Debug'
-        DISTRO: 'debian-intel'
-        RNGTEST: false
+      #clang-release-m2m:
+      #  COMPILER: 'clang'
+      #  BUILD: 'Release'
+      #  DISTRO: 'debian-clang'
+      #  M2M: true
+      #clang-release-static:
+      #  COMPILER: 'clang'
+      #  BUILD: 'Release'
+      #  SHARED_LIBS: 'off'
+      #  DISTRO: 'debian-clang-static'
+      #clang-debug-smp:
+      #  COMPILER: 'clang'
+      #  BUILD: 'Debug'
+      #  DISTRO: 'debian-clang-smp'
+      #  SMP: 'on'
+      #clang-release-smp:
+      #  COMPILER: 'clang'
+      #  BUILD: 'Release'
+      #  DISTRO: 'debian-clang-smp'
+      #  SMP: 'on'
+      #intel-debug:
+      #  COMPILER: 'intel'
+      #  BUILD: 'Debug'
+      #  DISTRO: 'debian-intel'
+      #  RNGTEST: false
       intel-release:
         COMPILER: 'intel'
         BUILD: 'Release'
