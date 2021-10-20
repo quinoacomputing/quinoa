@@ -25,7 +25,7 @@ extern ctr::InputDeck g_inputdeck;
 void initializeBox( std::size_t system,
                     tk::real VRatio,
                     tk::real,
-                    const inciter::ctr::box& b,
+                    const inciter::ctr::icbox& b,
                     std::vector< tk::real >& s )
 // *****************************************************************************
 // Set the solution in the user-defined IC box

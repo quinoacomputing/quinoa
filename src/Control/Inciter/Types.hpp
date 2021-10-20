@@ -98,6 +98,16 @@ using time_dependent_bc = tk::TaggedTuple< brigand::list<
   ,  tag::fn,      std::vector< tk::real >
 > >;
 
+//! Box, given by coordinates, specifying ALE subset nodes
+using alebox = tk::TaggedTuple< brigand::list<
+    tag::xmin,          kw::xmin::info::expect::type
+  , tag::xmax,          kw::xmax::info::expect::type
+  , tag::ymin,          kw::ymin::info::expect::type
+  , tag::ymax,          kw::ymax::info::expect::type
+  , tag::zmin,          kw::zmin::info::expect::type
+  , tag::zmax,          kw::zmax::info::expect::type
+> >;
+
 //! ALE mesh motion options
 using ale = tk::TaggedTuple< brigand::list<
   //! ALE on/off
@@ -122,8 +132,10 @@ using ale = tk::TaggedTuple< brigand::list<
   , tag::bcsym,         std::vector< kw::sideset::info::expect::type >
     //! Mesh force parameters
   , tag::meshforce,     std::vector< kw::meshforce::info::expect::type >
-    //! List of side sets to move with a user-defined function
+    //! Configuration with a side sets to move with a user-defined function
   , tag::move,          std::vector< moving_sides >
+    //! Configuration with a list of nodes in boxes to move with ALE
+  , tag::box,           std::vector< alebox >
 > >;
 
 //! p-adaptive refinement options
@@ -250,8 +262,8 @@ using InitiateParameters = tk::TaggedTuple< brigand::list<
   , tag::velocity,      kw::velocity::info::expect::type
 > >;
 
-//! Box, given by coordinates, specifying physics variables
-using box = tk::TaggedTuple< brigand::list<
+//! Box, given by coordinates, specifying physics variables for ICs
+using icbox = tk::TaggedTuple< brigand::list<
     tag::xmin,          kw::xmin::info::expect::type
   , tag::xmax,          kw::xmax::info::expect::type
   , tag::ymin,          kw::ymin::info::expect::type
@@ -283,7 +295,7 @@ using ic = tk::TaggedTuple< brigand::list<
                           std::vector< kw::energy::info::expect::type > >
   , tag::temperature,   std::vector<
                           std::vector< kw::temperature::info::expect::type > >
-  , tag::box,           std::vector< std::vector< box > >
+  , tag::box,           std::vector< std::vector< icbox > >
 > >;
 
 //! Boundary conditions configuration (list of side sets for each eq system)

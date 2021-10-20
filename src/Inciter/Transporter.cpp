@@ -373,6 +373,19 @@ Transporter::info( const InciterPrint& print )
                      tk::parameters(s));
        ++i;
     }
+    const auto& alebox = g_inputdeck.get< tag::ale, tag::box >();
+    if (not alebox.empty()) {
+      std::size_t bcnt = 0;
+      for (const auto& b : alebox) {    // for all boxes configured
+        std::vector< tk::real > box
+          { b.get< tag::xmin >(), b.get< tag::xmax >(),
+            b.get< tag::ymin >(), b.get< tag::ymax >(),
+            b.get< tag::zmin >(), b.get< tag::zmax >() };
+        print.item( "Move mesh nodes within box " + tk::parameter(bcnt),
+                    tk::parameters( box ) );
+        ++bcnt;
+      }
+    }
   }
 
   // Print I/O filenames
