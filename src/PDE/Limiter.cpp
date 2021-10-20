@@ -625,12 +625,17 @@ VertexBasedMultiMat_P1(
       dof_el = ndofel[e];
     }
 
-    // Evaluate the shock detection indicator
-    auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, dof_el, ndofel[e], U);
-    if(Ind > threshold)
+    if(ndofel[e] > 1) {
+      // Evaluate the shock detection indicator to determine whether the limiter
+      // is applied or not
+      auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, dof_el, ndofel[e], U);
+      if(Ind > threshold)
+        shockmarker[e] = 1;
+      else
+        shockmarker[e] = 0;
+    } else {    // If P0P1, the limiter is always applied
       shockmarker[e] = 1;
-    else
-      shockmarker[e] = 0;
+    }
 
     if (dof_el > 1)
     {
