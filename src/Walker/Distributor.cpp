@@ -202,8 +202,8 @@ Distributor::info( const WalkerPrint& print,
 
   // Print output intervals
   print.section( "Output intervals" );
-  const auto& interval = g_inputdeck.get< tag::interval_iter >();
-  print.item( "TTY", interval.get< tag::tty>() );
+  const auto& interval = g_inputdeck.get< tag::output, tag::iter >();
+  print.item( "TTY", interval.get< tag::tty >() );
   if (!g_inputdeck.get< tag::stat >().empty())
     print.item( "Statistics", interval.get< tag::stat >() );
   if (!g_inputdeck.get< tag::pdf >().empty())
@@ -332,12 +332,12 @@ Distributor::outStat()
   auto extra = [this]() -> std::vector< tk::real > {
     std::vector< tk::real > x( m_tables.second.size() );
     std::size_t j = 0;
-    for (const auto& t : m_tables.second) x[ j++ ] = tk::sample(m_t,t);
+    for (const auto& t : m_tables.second) x[ j++ ] = tk::sample<1>(m_t,t)[0];
     return x;
   };
 
   // Append statistics file at selected times
-  if (!((m_it+1) % g_inputdeck.get< tag::interval_iter, tag::stat >())) {
+  if (!((m_it+1) % g_inputdeck.get< tag::output, tag::iter, tag::stat >())) {
     tk::TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
                           g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
                           std::string(),
@@ -358,7 +358,7 @@ Distributor::outPDF()
   const auto term = g_inputdeck.get< tag::discr, tag::term >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto pdffreq = g_inputdeck.get< tag::interval_iter, tag::pdf >();
+  const auto pdffreq = g_inputdeck.get< tag::output, tag::iter, tag::pdf >();
 
   // output PDFs at t=0 (regardless of whether it was requested), or at
   // selected times, or in the last time step (regardless of whether it was
@@ -727,9 +727,10 @@ Distributor::report()
 // Print out one-liner report on time step
 // *****************************************************************************
 {
-  if (!(m_it % g_inputdeck.get< tag::interval_iter, tag::tty >())) {
+  if (!(m_it % g_inputdeck.get< tag::output, tag::iter, tag::tty >())) {
 
-  const auto parfreq = g_inputdeck.get< tag::interval_iter, tag::particles >();
+  const auto parfreq =
+    g_inputdeck.get< tag::output, tag::iter, tag::particles >();
   const auto poseq =
     !g_inputdeck.get< tag::param, tag::position, tag::depvar >().empty();
 

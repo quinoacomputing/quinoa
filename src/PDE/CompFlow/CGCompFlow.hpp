@@ -30,6 +30,7 @@
 #include "NodeBC.hpp"
 #include "EoS/EoS.hpp"
 #include "History.hpp"
+#include "Table.hpp"
 
 namespace inciter {
 
@@ -912,6 +913,38 @@ class CompFlow {
               U(p,3,m_offset) -= U(p,3,m_offset)*sp[s];
             }
           }
+        }
+      }
+    }
+
+    //! Apply user defined time dependent BCs
+    //! \param[in] t Physical time
+    //! \param[in,out] U Solution vector at recent time step
+    //! \param[in] nodes Vector of unique sets of node ids at which to apply BCs
+    //! \details This function applies user defined time dependent boundary
+    //!   conditions on groups of side sets specified in the input file.
+    //!   The user specifies pressure, density, and velocity as discrete
+    //!   functions of time, in the control file, associated with a group of
+    //!   side sets. Several such groups can be specified, each with their
+    //!   own discrete function: p(t), rho(t), vx(t), vy(t), vz(t).
+    void
+    timedepbc( tk::real t,
+      tk::Fields& U,
+      const std::vector< std::unordered_set< std::size_t > >& nodes,
+      const std::vector< tk::Table<5> >& timedepfn ) const
+    {
+      for (std::size_t ib=0; ib<nodes.size(); ++ib) {
+        for (auto p:nodes[ib]) {
+          // sample primitive vars from discrete data at time t
+          auto unk = tk::sample<5>(t, timedepfn[ib]);
+
+          // apply BCs after converting to conserved vars
+          U(p,0,m_offset) = unk[1];
+          U(p,1,m_offset) = unk[1]*unk[2];
+          U(p,2,m_offset) = unk[1]*unk[3];
+          U(p,3,m_offset) = unk[1]*unk[4];
+          U(p,4,m_offset) = eos_totalenergy< eq >(m_system, unk[1], unk[2],
+            unk[3], unk[4], unk[0]);
         }
       }
     }

@@ -98,6 +98,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_meshvelsymbcnodes(),
   m_symbctri(),
   m_spongenodes(),
+  m_timedepbcnodes(),
+  m_timedepbcFn(),
   m_stage( 0 ),
   m_boxnodes(),
   m_edgenode(),
@@ -194,14 +196,13 @@ ALECG::moveCfg()
   for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
     const auto& fn = m.get< tag::fn >();
     Assert( fn.size() % 4 == 0, "Incomplete user-defined function" );
-    tk::Table3 t;
     cfg.emplace_back();
     // store user-defined function type
     std::get<0>(cfg.back()) = m.get< tag::fntype >();
     // store user-defined function discrete data
     for (std::size_t i=0; i<fn.size()/4; ++i)
       std::get<1>(cfg.back()).
-        emplace_back( fn[i*4+0], fn[i*4+1], fn[i*4+2], fn[i*4+3] );
+        push_back( {{ fn[i*4+0], fn[i*4+1], fn[i*4+2], fn[i*4+3] }} );
   }
 
   return cfg;
@@ -304,6 +305,40 @@ ALECG::queryBnd()
   }
   for (const auto& [s,nodes] : meshvelsymbcnodes)
     m_meshvelsymbcnodes.insert( begin(nodes), end(nodes) );
+
+  // Prepare unique set of time dependent BC nodes
+  const auto& timedep =
+    g_inputdeck.template get< tag::param, tag::compflow, tag::bctimedep >();
+  if (!timedep.empty()) {
+    m_timedepbcnodes.resize(timedep[0].size());
+    m_timedepbcFn.resize(timedep[0].size());
+    std::size_t ib=0;
+    for (const auto& bndry : timedep[0]) {
+      std::unordered_set< std::size_t > nodes;
+      for (const auto& s : bndry.template get< tag::sideset >()) {
+        auto k = m_bnode.find( std::stoi(s) );
+        if (k != end(m_bnode)) {
+          for (auto g : k->second) {      // global node ids on side set
+            nodes.insert( tk::cref_find(d->Lid(),g) );
+          }
+        }
+      }
+      m_timedepbcnodes[ib].insert( begin(nodes), end(nodes) );
+
+      // Store user defined discrete function in time. This is done in the same
+      // loop as the BC nodes, so that the indices for the two vectors
+      // m_timedepbcnodes and m_timedepbcFn are consistent with each other
+      auto fn = bndry.template get< tag::fn >();
+      for (std::size_t ir=0; ir<fn.size()/6; ++ir) {
+        m_timedepbcFn[ib].push_back({{ fn[ir*6+0], fn[ir*6+1], fn[ir*6+2],
+          fn[ir*6+3], fn[ir*6+4], fn[ir*6+5] }});
+      }
+      ++ib;
+    }
+  }
+
+  Assert(m_timedepbcFn.size() == m_timedepbcnodes.size(), "Incorrect number of "
+    "time dependent functions.");
 
   // Prepare unique sets of boundary nodes at which ALE moves the boundary
   // based on user-defined functions.
@@ -857,6 +892,10 @@ ALECG::BC()
   for (const auto& eq : g_cgpde)
     eq.sponge( m_u, coord, m_spongenodes );
 
+  // Apply user defined time dependent BCs
+  for (const auto& eq : g_cgpde)
+    eq.timedepbc( Disc()->T(), m_u, m_timedepbcnodes, m_timedepbcFn );
+
   volumetric( m_u, Disc()->Vol() );
 }
 
@@ -1045,7 +1084,7 @@ ALECG::meshvelstart()
       // assign mesh velocity to sidesets from user-defined functions
       for (const auto& m : m_move)
         if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
-          auto meshvel = tk::sample( d->T(), std::get<1>(m) );
+          auto meshvel = tk::sample<3>( d->T(), std::get<1>(m) );
           for (auto i : std::get<2>(m))
             for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
               m_w(i,j,0) = meshvel[j];
@@ -1053,7 +1092,7 @@ ALECG::meshvelstart()
           auto eps = std::numeric_limits< tk::real >::epsilon();
           auto adt = rkcoef[m_stage] * d->Dt();
           if (adt > eps) {      // dt == 0 during setup
-            auto pos = tk::sample( d->T()+adt, std::get<1>(m) );
+            auto pos = tk::sample<3>( d->T()+adt, std::get<1>(m) );
             for (auto i : std::get<2>(m))
               for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
                 m_w(i,j,0) = (m_coord0[j][i] + pos[j] - m_coordn[j][i]) / adt;
@@ -1221,7 +1260,7 @@ ALECG::meshvelbc( tk::real maxv )
     // Dirichlet BCs on mesh velocity with prescribed movement
     for (const auto& m : m_move)
       if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
-        auto meshvel = tk::sample( d->T(), std::get<1>(m) );
+        auto meshvel = tk::sample<3>( d->T(), std::get<1>(m) );
         for (auto i : std::get<2>(m))
           for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
             m_w(i,j,0) = meshvel[j];
@@ -2048,8 +2087,8 @@ ALECG::out()
 {
   auto d = Disc();
 
-  // Output time history if we hit its output frequency
-  if (d->histiter() or d->histtime()) {
+  // Output time history
+  if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
     conserved( m_u, Disc()->Vol() );
     for (const auto& eq : g_cgpde) {
@@ -2060,9 +2099,8 @@ ALECG::out()
     d->history( std::move(hist) );
   }
 
-  // output field data if field iteration count is reached or if the field
-  // physics time output frequency is hit or in the last time step
-  if (d->fielditer() or d->fieldtime() or m_finished)
+  // Output field data
+  if (d->fielditer() or d->fieldtime() or d->fieldrange() or m_finished)
     writeFields( CkCallback(CkIndex_ALECG::step(), thisProxy[thisIndex]) );
   else
     step();

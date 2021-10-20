@@ -26,7 +26,8 @@ enum class BCType : uint8_t { SYM,
                               INLET,
                               OUTLET,
                               EXTRAPOLATE,
-                              FARFIELD };
+                              FARFIELD,
+                              TIMEDEP };
 
 //! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, BCType& e ) { PUP::pup( p, e ); }
@@ -41,6 +42,7 @@ class BC : public tk::Toggle< BCType > {
                                   , kw::bc_outlet
                                   , kw::bc_extrapolate
                                   , kw::bc_farfield
+                                  , kw::bc_timedep
                                   >;
 
     //! Constructor: pass associations references to base, which will handle
@@ -52,13 +54,15 @@ class BC : public tk::Toggle< BCType > {
           { BCType::INLET, kw::bc_inlet::name() },
           { BCType::OUTLET, kw::bc_outlet::name() },
           { BCType::EXTRAPOLATE, kw::bc_extrapolate::name() },
-          { BCType::FARFIELD, kw::bc_farfield::name() } },
+          { BCType::FARFIELD, kw::bc_farfield::name() },
+          { BCType::TIMEDEP, kw::bc_timedep::name() } },
         //! keywords -> Enums
         { { kw::bc_sym::string(), BCType::SYM },
           { kw::bc_inlet::string(), BCType::INLET },
           { kw::bc_outlet::string(), BCType::OUTLET },
           { kw::bc_extrapolate::string(), BCType::EXTRAPOLATE },
-          { kw::bc_farfield::string(), BCType::FARFIELD } } ) {}
+          { kw::bc_farfield::string(), BCType::FARFIELD },
+          { kw::bc_timedep::string(), BCType::TIMEDEP } } ) {}
 };
 
 } // ctr::

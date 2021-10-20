@@ -361,6 +361,27 @@ class Transporter : public CBase_Transporter {
       }
     };
 
+    //! Function object for querying the side set ids for time dependent BCs
+    //! \details Used to query and collect the side set ids the user has
+    //!   configured for all PDE types querying time dependent BCs. Used on
+    //!   PDE type list.
+    struct UserTimedepBC {
+      const ctr::InputDeck& inputdeck;
+      std::unordered_set< int >& userbc;
+      explicit UserTimedepBC( const ctr::InputDeck& i,
+        std::unordered_set< int >& u )
+        : inputdeck(i), userbc(u) {}
+      template< typename eq > void operator()( brigand::type_<eq> ) {
+        using tag::param;
+        for (const auto& sys : inputdeck.get< param, eq, tag::bctimedep >()) {
+          for (const auto& b : sys) {
+            for (auto i : b.template get< tag::sideset >())
+              userbc.insert( std::stoi(i) );
+          }
+        }
+      }
+    };
+
     //! Verify boundary condition (BC) side sets used exist in mesh file
     bool matchBCs( std::map< int, std::vector< std::size_t > >& bnd );
 

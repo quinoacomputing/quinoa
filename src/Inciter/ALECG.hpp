@@ -263,6 +263,8 @@ class ALECG : public CBase_ALECG {
       p | m_meshvelsymbcnodes;
       p | m_symbctri;
       p | m_spongenodes;
+      p | m_timedepbcnodes;
+      p | m_timedepbcFn;
       p | m_stage;
       p | m_boxnodes;
       p | m_edgenode;
@@ -393,6 +395,14 @@ class ALECG : public CBase_ALECG {
     std::vector< int > m_symbctri;
     //! Unique set of nodes at which sponge parameters are set
     std::unordered_set< std::size_t > m_spongenodes;
+    //! \brief Unique set of nodes at which time dependent BCs are set
+    //    for each time dependent BC
+    std::vector< std::unordered_set< std::size_t > > m_timedepbcnodes;
+    //! \brief User defined discrete function of time used in the time dependent
+    //    BCs associated with (index in vector) the number of distinct time
+    //    dependent BCs specified. This index is the same as the index in
+    //    m_timedepbcnodes.
+    std::vector< tk::Table<5> > m_timedepbcFn;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Mesh node ids at which user-defined box ICs are defined (multiple boxes)
@@ -420,11 +430,11 @@ class ALECG : public CBase_ALECG {
     std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_vorticityc;
     //! Data structure storing configuration for moving boundaries with ALE
     //! \details Tuple: 0: user-defined function type (i.e., how it should be
-    //!    interpreted), (2) user-defined function for, and (2) unique set of
+    //!    interpreted), (1) user-defined function for, and (2) unique set of
     //!    boundary nodes for each move ... end input file block (vector).
     std::vector<
       std::tuple< tk::ctr::UserTableType,
-                  tk::Table3,
+                  tk::Table<3>,
                   std::unordered_set< std::size_t > >
     > m_move;
 
