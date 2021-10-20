@@ -12,6 +12,7 @@ add_library(Inciter
             Sorter.cpp
             DiagCG.cpp
             ALECG.cpp
+            ElemCommMap.cpp
             DG.cpp
             FV.cpp
             FluxCorrector.cpp

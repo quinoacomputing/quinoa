@@ -31,6 +31,7 @@
 #include "DerivedData.hpp"
 #include "FaceData.hpp"
 #include "ElemDiagnostics.hpp"
+#include "ElemCommMap.hpp"
 
 #include "NoWarning/fv.decl.h"
 
@@ -246,16 +247,6 @@ class FV : public CBase_FV {
     //@}
 
   private:
-    //! Local face & tet IDs associated to 3 global node IDs
-    //! \details This map stores tetrahedron cell faces (map key) and their
-    //!   associated local face ID and inner local tet id adjacent to the face
-    //!   (map value). A face is given by 3 global node IDs.
-    using FaceMap =
-      std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
-                          std::array< std::size_t, 2 >, // local face & tet ID
-                          tk::UnsMesh::Hash<3>,
-                          tk::UnsMesh::Eq<3> >;
-
     //! Storage type for refined mesh used for field output
     struct OutMesh {
       //! Element connectivity, local->global node ids, global->local nodes ids
@@ -401,23 +392,6 @@ class FV : public CBase_FV {
     //! Compute chare-boundary faces
     void bndFaces();
 
-    //! Perform leak test on chare-boundary faces
-    bool leakyAdjacency();
-
-    //! Check if esuf of chare-boundary faces matches
-    bool faceMatch();
-
-    //! Verify that all chare-boundary faces have been received
-    bool receivedChBndFaces();
-
-    //! Check if entries in inpoel, inpofa and node-triplet are consistent
-    std::size_t
-    nodetripletMatch( const std::array< std::size_t, 2 >& id,
-                      const tk::UnsMesh::Face& t );
-
-    //! Find any chare for face (given by 3 global node IDs)
-    int findchare( const tk::UnsMesh::Face& t );
-
     //! Setup own ghost data on this chare
     void setupGhost();
 
@@ -427,19 +401,7 @@ class FV : public CBase_FV {
     //! Continue after node adjacency communication map completed on this chare
     void adj();
 
-    //! Fill elements surrounding a face along chare boundary
-    void addEsuf( const std::array< std::size_t, 2 >& id, std::size_t ghostid );
-
-    //! Fill elements surrounding a element along chare boundary
-    void addEsuel( const std::array< std::size_t, 2 >& id,
-                   std::size_t ghostid,
-                   const tk::UnsMesh::Face& t );
-
     void addEsup();
-
-    //! Fill face geometry data along chare boundary
-    void addGeoFace( const tk::UnsMesh::Face& t,
-                     const std::array< std::size_t, 2 >& id );
 
     //! Output mesh field data
     void writeFields( CkCallback c );
