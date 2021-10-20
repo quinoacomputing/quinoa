@@ -25,7 +25,7 @@ namespace lua {
 template< class eq >
 void box( const sol::table& iclua,
           std::size_t cnt,
-          std::vector< std::vector< ctr::box > >& icbox )
+          std::vector< std::vector< ctr::icbox > >& icbox )
 {
   const auto& boxlua = iclua[ kw::box::string() ];
   if (boxlua.valid()) {

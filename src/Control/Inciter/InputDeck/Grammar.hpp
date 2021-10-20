@@ -1571,9 +1571,9 @@ namespace deck {
                              half_world< kw::amr_zminus, tag::zminus >,
                              half_world< kw::amr_zplus, tag::zplus > > > {};
 
-  //! initial conditins box block
+  //! initial conditions box block
   template< class eq >
-  struct box :
+  struct icbox :
          pegtl::if_must<
            tk::grm::readkw< use< kw::box >::pegtl_string >,
            tk::grm::start_vector_back< tag::param, eq, tag::ic, tag::box >,
@@ -1623,7 +1623,7 @@ namespace deck {
                                      tag::ic, tag::temperature >,
                pde_parameter_vector< kw::energy, eq,
                                      tag::ic, tag::energy > >,
-               pegtl::seq< box< eq > > > > {};
+               pegtl::seq< icbox< eq > > > > {};
 
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
@@ -1947,6 +1947,31 @@ namespace deck {
                tk::grm::Back_store_back< tag::sideset, tag::ale, tag::move >,
                use< kw::end > > > > > {};
 
+  //! ALE box block
+  struct alebox :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::box >::pegtl_string >,
+             tk::grm::start_vector< tag::ale, tag::box >,
+             tk::grm::block< use< kw::end >,
+               tk::grm::process< use< kw::xmin >,
+                 tk::grm::Back_store< tag::xmin, tag::ale, tag::box >,
+                 tk::grm::number >,
+               tk::grm::process< use< kw::xmax >,
+                 tk::grm::Back_store< tag::xmax, tag::ale, tag::box >,
+                 tk::grm::number >,
+               tk::grm::process< use< kw::ymin >,
+                 tk::grm::Back_store< tag::ymin, tag::ale, tag::box >,
+                 tk::grm::number >,
+               tk::grm::process< use< kw::ymax >,
+                 tk::grm::Back_store< tag::ymax, tag::ale, tag::box >,
+                 tk::grm::number >,
+               tk::grm::process< use< kw::zmin >,
+                 tk::grm::Back_store< tag::zmin, tag::ale, tag::box >,
+                 tk::grm::number >,
+               tk::grm::process< use< kw::zmax >,
+                 tk::grm::Back_store< tag::zmax, tag::ale, tag::box >,
+                 tk::grm::number > > > {};
+
   //! Arbitrary-Lagrangian-Eulerian (ALE) ale...end block
   struct ale :
          pegtl::if_must<
@@ -1954,52 +1979,54 @@ namespace deck {
            // enable ALE if ale ...end block encountered
            tk::grm::enable< tag::ale >,
            tk::grm::block< use< kw::end >,
-              tk::grm::control< use< kw::dvcfl >,
-                                pegtl::digit,
-                                tk::grm::Store,
-                                tag::ale, tag::dvcfl >,
-              tk::grm::control< use< kw::vortmult >,
-                                pegtl::digit,
-                                tk::grm::Store,
-                                tag::ale, tag::vortmult >,
-              tk::grm::control< use< kw::meshvel_maxit >,
-                                pegtl::digit,
-                                tk::grm::Store,
-                                tag::ale, tag::maxit >,
-              tk::grm::control< use< kw::meshvel_tolerance >,
-                                pegtl::digit,
-                                tk::grm::Store,
-                                tag::ale, tag::tolerance >,
-              moving_sides,
-              tk::grm::process<
-                use< kw::meshvelocity >,
-                tk::grm::store_inciter_option< ctr::MeshVelocity,
-                                               tag::ale, tag::meshvelocity >,
-                pegtl::alpha >,
-              tk::grm::process<
-                use< kw::smoother >,
-                tk::grm::store_inciter_option< ctr::MeshVelocitySmoother,
-                                               tag::ale, tag::smoother >,
-                pegtl::alpha >,
-              pegtl::if_must< tk::grm::dimensions< use< kw::mesh_motion >,
-                              tk::grm::Store_back< tag::ale, tag::mesh_motion >,
-                              use< kw::end > > >,
-              pegtl::if_must< tk::grm::vector< use< kw::meshforce >,
-                              tk::grm::Store_back< tag::ale, tag::meshforce >,
-                              use< kw::end > > >,
-              pegtl::if_must<
-                tk::grm::readkw< use< kw::bc_dirichlet >::pegtl_string >,
-                tk::grm::block< use< kw::end >,
-                  pegtl::if_must< tk::grm::vector< use< kw::sideset >,
-                                  tk::grm::Store_back< tag::ale, tag::bcdir >,
-                                  use< kw::end > > > > >,
-              pegtl::if_must<
-                tk::grm::readkw< use< kw::bc_sym >::pegtl_string >,
-                tk::grm::block< use< kw::end >,
-                  pegtl::if_must< tk::grm::vector< use< kw::sideset >,
-                                  tk::grm::Store_back< tag::ale, tag::bcsym >,
-                                  use< kw::end > > > > > >,
-              tk::grm::check_ale > {};
+             tk::grm::control< use< kw::dvcfl >,
+                               pegtl::digit,
+                               tk::grm::Store,
+                               tag::ale, tag::dvcfl >,
+             tk::grm::control< use< kw::vortmult >,
+                               pegtl::digit,
+                               tk::grm::Store,
+                               tag::ale, tag::vortmult >,
+             tk::grm::control< use< kw::meshvel_maxit >,
+                               pegtl::digit,
+                               tk::grm::Store,
+                               tag::ale, tag::maxit >,
+             tk::grm::control< use< kw::meshvel_tolerance >,
+                               pegtl::digit,
+                               tk::grm::Store,
+                               tag::ale, tag::tolerance >,
+             moving_sides,
+             tk::grm::process<
+               use< kw::meshvelocity >,
+               tk::grm::store_inciter_option< ctr::MeshVelocity,
+                                              tag::ale, tag::meshvelocity >,
+               pegtl::alpha >,
+             tk::grm::process<
+               use< kw::smoother >,
+               tk::grm::store_inciter_option< ctr::MeshVelocitySmoother,
+                                              tag::ale, tag::smoother >,
+               pegtl::alpha >,
+             pegtl::if_must< tk::grm::dimensions< use< kw::mesh_motion >,
+                             tk::grm::Store_back< tag::ale, tag::mesh_motion >,
+                             use< kw::end > > >,
+             pegtl::if_must< tk::grm::vector< use< kw::meshforce >,
+                             tk::grm::Store_back< tag::ale, tag::meshforce >,
+                             use< kw::end > > >,
+             pegtl::if_must<
+               tk::grm::readkw< use< kw::bc_dirichlet >::pegtl_string >,
+               tk::grm::block< use< kw::end >,
+                 pegtl::if_must< tk::grm::vector< use< kw::sideset >,
+                                 tk::grm::Store_back< tag::ale, tag::bcdir >,
+                                 use< kw::end > > > > >,
+             pegtl::if_must<
+               tk::grm::readkw< use< kw::bc_sym >::pegtl_string >,
+               tk::grm::block< use< kw::end >,
+                 pegtl::if_must< tk::grm::vector< use< kw::sideset >,
+                                 tk::grm::Store_back< tag::ale, tag::bcsym >,
+                                 use< kw::end > > > > >,
+             pegtl::seq< alebox >
+           >,
+           tk::grm::check_ale > {};
 
   //! \brief Match a depvar, defined upstream of control file, coupling a
   //!   solver and store

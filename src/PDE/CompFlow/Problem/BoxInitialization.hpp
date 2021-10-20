@@ -25,7 +25,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 void initializeBox( std::size_t system,
                     tk::real VRatio,
                     tk::real t,
-                    const inciter::ctr::box& icbox,
+                    const inciter::ctr::icbox& icbox,
                     tk::real bgpreic,
                     tk::real cv,
                     std::vector< tk::real >& s );
