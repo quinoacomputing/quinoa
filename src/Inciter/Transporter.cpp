@@ -375,7 +375,7 @@ Transporter::info( const InciterPrint& print )
     }
     const auto& alebox = g_inputdeck.get< tag::ale, tag::box >();
     if (not alebox.empty()) {
-      std::size_t bcnt = 0;
+      std::size_t bcnt = 1;
       for (const auto& b : alebox) {    // for all boxes configured
         std::vector< tk::real > box
           { b.get< tag::xmin >(), b.get< tag::xmax >(),
