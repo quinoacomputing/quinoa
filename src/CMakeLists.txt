@@ -406,6 +406,15 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
     #add_compiler_flag("-no-inline-max-size")
     #add_compiler_flag("-no-inline-max-total-size")
     #add_compiler_flag("-no-inline-max-per-routine")
+<<<<<<< build
+=======
+    add_compiler_flag("-diag-disable 11074,11076")
+    # As upgrading to newer version of the intel compiler, this -O level could
+    # be revisited to see if higher optimization levels are okay or not.
+    set(CMAKE_CXX_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING
+    "CMAKE_CXX_FLAGS_RELEASE: Flags used by the compiler during release builds."
+    FORCE)
+>>>>>>> local
   endif()
 
   # Linker flags for intel
