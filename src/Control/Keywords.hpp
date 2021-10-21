@@ -3016,22 +3016,15 @@ using initiate = keyword< initiate_info, TAOCPP_PEGTL_STRING("initiate") >;
 struct box_info {
   static std::string name() { return "box"; }
   static std::string shortDescription() { return
-    R"(Introduce a box ... end block)"; }
+    R"(Introduce a box ... end block used to assign initial conditions)"; }
   static std::string longDescription() { return
-    R"(This keyword, if used within an ic ... end block, is used to assign
+    R"(This keyword is used to introduce a box ... end block used to assign
     initial conditions within a box given by spatial coordinates. Example:
     box x- 0.5 x+ 1.5 y- -0.5 y+ 0.5 z- -0.5 z+ 0.5 density 1.2 end pressure
     1.4 end end", which specifies a box with extends within which the density
     will be set to 1.2 and the pressure to be 1.4. Besides the box dimensions,
-    the following physics keywords are allowed in a box ... end within an
-    ic ... end block:)"
+    the following physics keywords are allowed in a box ... end block:)"
     + std::string("\'")
-    + xmin::string()+ "\', \'"
-    + xmax::string()+ "\', \'"
-    + ymin::string()+ "\', \'"
-    + ymax::string()+ "\', \'"
-    + zmin::string()+ "\', \'"
-    + zmax::string()+ "\', \'"
     + materialid::string()+ "\', \'"
     + mass::string()+ "\', \'"
     + density::string()+ "\', \'"
@@ -3039,11 +3032,7 @@ struct box_info {
     + energy::string() + "\', \'"
     + energy_content::string() + "\', \'"
     + temperature::string() + "\', \'"
-    + pressure::string() + "\'."
-    + R"(. The box ... end block can also be used within
-    an ale ... end block, and then it is used to specify the corners of a box
-    within which mesh nodes are considered for ALE mesh movement: outside the
-    box nodes are ignored for the prupose of mesh movement.)"; }
+    + pressure::string() + "\'."; }
 };
 using box = keyword< box_info, TAOCPP_PEGTL_STRING("box") >;
 

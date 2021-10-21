@@ -831,20 +831,6 @@ namespace grm {
 
   //! Rule used to trigger action
   template< typename target, typename tag, typename... tags >
-  struct Back_store : pegtl::success {};
-  //! \brief Convert and store value to a vector in state at position
-  //!   given by tags and target
-  template< typename target, typename tag, typename...tags >
-  struct action< Back_store< target, tag, tags... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      stack.template get< tag, tags... >().back().template
-        store< target >( in.string() );
-    }
-  };
-
-  //! Rule used to trigger action
-  template< typename target, typename tag, typename... tags >
   struct Back_store_back : pegtl::success {};
   //! \brief Convert and store value to vector in state at position
   //!   given by tags and target
