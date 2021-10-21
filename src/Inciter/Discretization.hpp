@@ -67,6 +67,7 @@ class Discretization : public CBase_Discretization {
         std::size_t meshid,
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
+        const CProxy_ALE& aleproxy,
         const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
@@ -89,19 +90,24 @@ class Discretization : public CBase_Discretization {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
-    //! Initialize mesh velocity linear solve: set initial guess and BCs
-    void
-    meshvelInit( const std::vector< tk::real >& x,
-                 const std::vector< tk::real >& div,
-                 const std::unordered_map< std::size_t,
-                         std::vector< std::pair< bool, tk::real > > >& bc,
-                CkCallback c );
+    //! Start computing new mesh veloctity for ALE mesh motion
+    void meshvelStart(
+      const tk::UnsMesh::Coords vel,
+      const std::vector< tk::real >& soundspeed,
+      const std::unordered_map< int,
+        std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm,
+      tk::real adt,
+      CkCallback done ) const;
 
-    //! Solve using Conjugrate Gradients linear solver
-    void meshvelSolve( CkCallback c );
+    //! Query the mesh velocity
+    const tk::Fields& meshvel() const;
 
-    //! Query the solution of the Conjugrate Gradients linear solver
-    std::vector< tk::real > meshvelSolution() const;
+   //! \brief Query ALE mesh velocity boundary condition node lists and node
+   //!   lists at which ALE moves boundaries
+   void meshvelBnd(
+     const std::map< int, std::vector< std::size_t > >& bface,
+     const std::map< int, std::vector< std::size_t > >& bnode,
+     const std::vector< std::size_t >& triinpoel ) const;
 
     //! Assess and record mesh velocity linear solver convergence
     void meshvelConv();
@@ -153,6 +159,8 @@ class Discretization : public CBase_Discretization {
     const tk::UnsMesh::Coords& Coord() const { return m_coord; }
     //! Coordinates accessor as reference
     tk::UnsMesh::Coords& Coord() { return m_coord; }
+    //! Coordinates at time n accessor as const-ref
+    const tk::UnsMesh::Coords& Coordn() const { return m_coordn; }
 
     //! Global ids accessors as const-ref
     const std::vector< std::size_t >& Gid() const { return m_gid; }
@@ -184,12 +192,13 @@ class Discretization : public CBase_Discretization {
 
     //! Set 'initial' flag
     //! \param[in] i Value to put in 'initial'
-    void Initial( tk::real i ) { m_initial = i; }
+    void Initial( std::size_t i ) { m_initial = i; }
     //! Query 'initial' flag
     //! \return True during setup, false durign time stepping
-    bool Initial() const {
-      return std::abs(m_initial-1.0) < std::numeric_limits<tk::real>::epsilon();
-    }
+    bool Initial() const { return m_initial; }
+
+    //! Update coordinates at time n
+    void UpdateCoordn() { m_coordn = m_coord; }
 
     //! History points data accessor as const-ref
     const std::vector< HistData >& Hist() const { return m_histdata; }
@@ -243,13 +252,6 @@ class Discretization : public CBase_Discretization {
     DistFCT* FCT() const {
       Assert(m_fct[ thisIndex ].ckLocal() != nullptr, "DistFCT ckLocal() null");
       return m_fct[ thisIndex ].ckLocal();
-    }
-
-    //! Access bound ConjugateGradients class pointer
-    tk::ConjugateGradients* ConjugateGradients() const {
-      Assert( m_conjugategradients[ thisIndex ].ckLocal() != nullptr,
-              "ConjugateGradients ckLocal() null" );
-      return m_conjugategradients[ thisIndex ].ckLocal();
     }
 
     //! Access Discretization proxy for a mesh
@@ -419,7 +421,7 @@ class Discretization : public CBase_Discretization {
       p | m_dtn;
       p | m_nvol;
       p | m_fct;
-      p | m_conjugategradients;
+      p | m_ale;
       p | m_transporter;
       p | m_meshwriter;
       p | m_refiner;
@@ -430,6 +432,7 @@ class Discretization : public CBase_Discretization {
         m_lid = std::get< 2 >( m_el );
       }
       p | m_coord;
+      p | m_coordn;
       p | m_nodeCommMap;
       p | m_edgeCommMap;
       p | m_meshvol;
@@ -447,6 +450,7 @@ class Discretization : public CBase_Discretization {
       p | m_histdata;
       p | m_nsrc;
       p | m_ndst;
+      p | m_meshvel;
       p | m_meshvel_converged;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -487,7 +491,7 @@ class Discretization : public CBase_Discretization {
     //!   time steps with mesh efinement
     uint64_t m_itf;
     //! Flag that is nonzero during setup and zero during time stepping
-    tk::real m_initial;
+    std::size_t m_initial;
     //! Physical time
     tk::real m_t;
     //! Physics time at last field output
@@ -509,8 +513,8 @@ class Discretization : public CBase_Discretization {
     std::size_t m_nvol;
     //! Distributed FCT proxy
     CProxy_DistFCT m_fct;
-    //! Distributed conjugrate gradients solver proxy
-    tk::CProxy_ConjugateGradients m_conjugategradients;
+    //! Distributed ALE proxy
+    CProxy_ALE m_ale;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
     //! Mesh writer proxy
@@ -532,6 +536,8 @@ class Discretization : public CBase_Discretization {
     std::unordered_map< std::size_t, std::size_t >& m_lid = std::get<2>( m_el );
     //! Mesh point coordinates
     tk::UnsMesh::Coords m_coord;
+    //! Mesh coordinates at the time n for ALE
+    tk::UnsMesh::Coords m_coordn;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!   Discretization chares associated to their chare IDs
     tk::NodeCommMap m_nodeCommMap;
@@ -583,6 +589,8 @@ class Discretization : public CBase_Discretization {
     std::size_t m_nsrc;
     //! Number of transfers requested as a destination
     std::size_t m_ndst;
+    //! Mesh velocity if ALE is not enabled
+    tk::Fields m_meshvel;
     //! \brief True if all stages of the time step converged the mesh velocity
     //!   linear solve in ALE
     bool m_meshvel_converged;

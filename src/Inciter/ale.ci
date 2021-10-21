@@ -1,0 +1,68 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/ale.ci
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019-2021 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
+  \brief     Charm++ module interface for distributed ALE mesh motion
+  \details   Charm++ module interface file for asynchronous distributed
+             arbitrary Lagrangian-Eulerian (ALE) mesh motion.
+  \see       ALE.[ch]pp for more info.
+*/
+// *****************************************************************************
+
+module ale {
+
+  extern module conjugategradients;
+
+  include "Inciter/Options/MeshVelocitySmoother.hpp";
+
+  namespace inciter {
+
+    array [1D] ALE {
+      entry ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+                 const std::array< std::vector< tk::real >, 3 >& coord,
+                 const std::vector< std::size_t >& inpoel,
+                 const std::vector< std::size_t >& gid,
+                 const std::unordered_map< std::size_t, std::size_t >& lid,
+                 const tk::NodeCommMap& nodecommmap );
+      entry void comvort( const std::vector< std::size_t >& gid,
+                          const std::vector< std::array< tk::real, 3 > >& v );
+      entry void comdiv( const std::vector< std::size_t >& gid,
+                         const std::vector< tk::real >& v );
+      entry void compot( const std::vector< std::size_t >& gid,
+                         const std::vector< std::array< tk::real, 3 > >& v );
+      entry void comfor( const std::vector< std::size_t >& gid,
+                         const std::vector< std::array< tk::real, 3 > >& w );
+      entry [reductiontarget] void meshvelbc( tk::real maxv );
+      entry void applied( CkDataMsg* msg );
+      entry void solved( CkDataMsg* msg );
+      entry void helmholtz( CkDataMsg* msg );
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      entry void wait4vel() {
+        when ownvort_complete(), comvort_complete(),
+             owndiv_complete(), comdiv_complete() serial "vel" { mergevel(); }}
+
+      entry void wait4pot() {
+        when ownpot_complete(), compot_complete() serial "pot" { gradpot(); } }
+
+      entry void wait4for() {
+        when ownfor_complete(), comfor_complete() serial "for" { meshforce(); }}
+
+      entry void ownvort_complete();
+      entry void comvort_complete();
+      entry void owndiv_complete();
+      entry void comdiv_complete();
+      entry void ownpot_complete();
+      entry void compot_complete();
+      entry void ownfor_complete();
+      entry void comfor_complete();
+    };
+
+  } // inciter::
+
+}
