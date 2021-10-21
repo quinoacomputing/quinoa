@@ -735,8 +735,6 @@ THINCFunction( std::size_t rdof,
 
     std::array< real, 3 > nInt;
     std::vector< std::array< real, 3 > > ref_n(nmat, {{0.0, 0.0, 0.0}});
-    auto almax(0.0);
-    std::size_t kmax(0);
 
     // Get normals
     for (std::size_t k=0; k<nmat; ++k)
@@ -748,14 +746,6 @@ THINCFunction( std::size_t rdof,
           + dBdx[i][3] * alSol[k*rdof+3];
 
       auto nMag = std::sqrt(tk::dot(nInt, nInt)) + 1e-14;
-
-      // determine index of material present in majority
-      auto alk = alSol[k*rdof];
-      if (alk > almax)
-      {
-        almax = alk;
-        kmax = k;
-      }
 
       for (std::size_t i=0; i<3; ++i)
         nInt[i] /= nMag;
@@ -774,7 +764,7 @@ THINCFunction( std::size_t rdof,
     // 2. Reconstruct volume fractions using THINC
     auto max_lim = 1.0 - (static_cast<tk::real>(nmat-1)*1.0e-12);
     auto min_lim = 1e-12;
-    auto alsum(0.0);
+    auto sum_inter(0.0), sum_non_inter(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
       if (matInt[k])
@@ -810,38 +800,22 @@ THINCFunction( std::size_t rdof,
         auto al_c = 0.5 * (1.0 + std::tanh(beta*(tk::dot(ref_n[k], ref_xp) + d)));
 
         alReco[k] = std::min(max_lim, std::max(min_lim, al_c));
+
+        sum_inter += alReco[k];
+      } else
+      {
+        sum_non_inter += alReco[k];
       }
       // else, if this material does not have an interface close-by, the TVD
       // reconstructions must be used for state variables. This is ensured by
       // initializing the alReco vector as the TVD state.
-
-      alsum += alReco[k];
     }
 
-    // following lines need to be commented to use THINC with Transport
-    // 3. Do multimaterial cell corrections to ensure unit sum
-    // i. check if modifying only max-mat will work
-    auto almax_mod = alReco[kmax] + 1.0 - alsum;
-    if (almax_mod > 0.0) {
-      alReco[kmax] += 1.0 - alsum;
-    }
-    // ii. otherwise, distribute error in all interface-constituting materials
-    else {
-      auto err = min_lim - almax_mod;
-      alReco[kmax] = min_lim;
-
-      tk::real den(0.0);
-      std::vector< tk::real > almod(nmat, 0.0);
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (matInt[k] && k != kmax) {
-          almod[k] = err*alSol[k*rdof];
-          den += alSol[k*rdof];
-        }
-      }
-      for (auto& am:almod) am /= den;
-      for (std::size_t k=0; k<nmat; ++k) alReco[k] -= almod[k];
-    }
-    alsum = 1.0;
+    // Rescale volume fractions of interface-materials to ensure unit sum
+    auto sum_rest = 1.0 - sum_non_inter;
+    for (std::size_t k=0; k<nmat; ++k)
+      if(matInt[k])
+        alReco[k] = alReco[k] * sum_rest / sum_inter;
   }
 }
 
