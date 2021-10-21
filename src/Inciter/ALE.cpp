@@ -260,19 +260,6 @@ ALE::move( std::size_t i ) const
   return false;
 }
 
-void
-ALE::solve( CkCallback c )
-// *****************************************************************************
-//  Solve linear system to smooth ALE mesh velocity
-//! \param[in] c Call to continue with after solve is complete
-// *****************************************************************************
-{
-  m_conjugategradients[ thisIndex ].ckLocal()->solve(
-     g_inputdeck.get< tag::ale, tag::maxit >(),
-     g_inputdeck.get< tag::ale, tag::tolerance >(),
-     c );
-}
-
 bool
 ALE::converged() const
 // *****************************************************************************
@@ -582,11 +569,17 @@ ALE::applied( [[maybe_unused]] CkDataMsg* msg )
 
   if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
-    solve( CkCallback(CkIndex_ALE::solved(nullptr), thisProxy[thisIndex]) );
+    m_conjugategradients[ thisIndex ].ckLocal()->solve(
+       g_inputdeck.get< tag::ale, tag::maxit >(),
+       g_inputdeck.get< tag::ale, tag::tolerance >(),
+       CkCallback(CkIndex_ALE::solved(nullptr), thisProxy[thisIndex]) );
 
   } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
-    solve( CkCallback(CkIndex_ALE::helmholtz(nullptr), thisProxy[thisIndex]) );
+    m_conjugategradients[ thisIndex ].ckLocal()->solve(
+       g_inputdeck.get< tag::ale, tag::maxit >(),
+       g_inputdeck.get< tag::ale, tag::tolerance >(),
+       CkCallback(CkIndex_ALE::helmholtz(nullptr), thisProxy[thisIndex]) );
 
   } else {
 
