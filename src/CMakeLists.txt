@@ -389,7 +389,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # 10120: overriding '-O3' with '-O2'
   # 10397: optimization reports are generated in *.optrpt files in the output location
   # 15518: Structure assignment was serialized
-  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,688,869,981,1011,1292,1418,1419,1572,1599,2259,2407,2415,2547,2557,3180,3280,3346,3656,10120,10397,15518,2282")
+  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,688,869,981,1011,1292,1418,1419,1572,1599,2259,2407,2415,2547,2557,3180,3280,3346,3656,10120,10397,11074,11076,15518,2282")
 
   # default: no openmp simd
   add_compiler_flag("-qno-openmp-simd")
@@ -406,7 +406,11 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
     #add_compiler_flag("-no-inline-max-size")
     #add_compiler_flag("-no-inline-max-total-size")
     #add_compiler_flag("-no-inline-max-per-routine")
-    add_compiler_flag("-diag-disable 11074,11076")
+    # As upgrading to newer version of the intel compiler, this -O level could
+    # be revisited to see if higher optimization levels are okay or not.
+    set(CMAKE_CXX_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING
+    "CMAKE_CXX_FLAGS_RELEASE: Flags used by the compiler during release builds."
+    FORCE)
   endif()
 
   # Linker flags for intel
@@ -648,6 +652,9 @@ endif()
 if (ENABLE_INCITER AND HIGHWAYHASH_FOUND)
   add_subdirectory(PDE)
   add_subdirectory(Inciter)
+endif()
+
+if (ENABLE_INCITER OR ENABLE_UNITTEST)
   add_subdirectory(LinearSolver)
 endif()
 

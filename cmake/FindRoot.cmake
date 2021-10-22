@@ -34,7 +34,7 @@ find_path(ROOT_INCLUDE_DIR NAMES TFile.h HINTS ${ROOT_ROOT}/include
                                          PATH_SUFFIXES root root6)
 
 ### Find ROOT libraries required
-set(ROOT_REQLIBS RIO Core Tree Hist Thread Net Imt Matrix MathCore)
+set(ROOT_REQLIBS RIO Core Tree Hist Thread Net Imt Matrix MathCore MultiProc)
 foreach(lib ${ROOT_REQLIBS})
   find_library(ROOT_${lib}_LIBRARY NAMES ${lib}
                HINTS ${ROOT_ROOT}/lib $ENV{ROOT_ROOT}/lib

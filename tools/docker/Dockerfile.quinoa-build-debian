@@ -23,18 +23,17 @@
 FROM debian:buster
 
 # Install system-wide prerequisites
-#RUN sed -i 's/stable main/stable main contrib non-free/g' /etc/apt/sources.list
-RUN apt-get update -y && apt-get install -y m4 autoconf git cmake gfortran gcc g++ openmpi-bin libopenmpi-dev gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev zlib1g-dev libhdf5-dev libhdf5-openmpi-dev libnetcdf-mpi-dev libbackward-cpp-dev tao-pegtl-dev binutils-dev libx11-dev libxpm-dev libxft-dev libxext-dev ninja-build flex bison libdw-dev libdwarf-dev vim liblua5.3-dev libssl-dev
+RUN apt-get update -y && apt-get install -y git autoconf cmake gfortran g++ libopenmpi-dev m4 zlib1g-dev libx11-dev libxpm-dev libxft-dev libxext-dev python python-dev flex bison libssl-dev
 
 # Setup user
 RUN adduser --gecos "" --disabled-password quinoa
 WORKDIR /home/quinoa
 USER quinoa
 WORKDIR /home/quinoa
-CMD ["/bin/bash"]
+#CMD ["/bin/bash"]
 
 # Clone quinoa
-RUN git clone --recurse-submodules http://github.com/quinoacomputing/quinoa.git
+RUN git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git
 # Checkout commit to be tested
 ARG COMMIT
 RUN cd quinoa && git checkout $COMMIT && git log -1 HEAD
@@ -43,6 +42,6 @@ RUN cd quinoa && git submodule init && git submodule update --recursive && cd ex
 # Build TPLs
 RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -DENABLE_ROOT=true -DENABLE_OMEGA_H=true -DCXXFLAGS=-w .. && make -sj$(grep -c processor /proc/cpuinfo)
 # Build code
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_FLAGS=-Werror -GNinja -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS="--bind-to none -oversubscribe" ../src && ninja
+RUN cd quinoa && mkdir -p build && cd build && cmake -DRUNNER=mpirun -DRUNNER_NCPUS_ARG=-n -DRUNNER_ARGS="--bind-to none -oversubscribe" ../src && make -sj$(grep -c processor /proc/cpuinfo)
 # Run tests
 RUN cd quinoa/build && npe=$(expr $(grep -c processor /proc/cpuinfo) / 2) && mpirun -n $npe Main/unittest -v -q && ctest -j $npe --output-on-failure -LE extreme

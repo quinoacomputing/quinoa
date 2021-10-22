@@ -18,9 +18,9 @@ if(CPPCHECK AND CPPCHECK_HTMLREPORT)
     # Run cppcheck static analysis
     COMMAND ${CPPCHECK} --inline-suppr --enable=all --force
                         --error-exitcode=1 -j${PROCESSOR_COUNT}
-                        -I${QUINOA_SOURCE_DIR}/Base
-                        -I${QUINOA_SOURCE_DIR}/Control
-                        -I${QUINOA_SOURCE_DIR}/NoWarning
+                        -I${PROJECT_SOURCE_DIR}/Base
+                        -I${PROJECT_SOURCE_DIR}/Control
+                        -I${PROJECT_SOURCE_DIR}/NoWarning
                         -I${PROJECT_BINARY_DIR}/Main
                         ${CMAKE_CURRENT_SOURCE_DIR}
     # Set work directory for target
@@ -42,9 +42,9 @@ if(CPPCHECK AND CPPCHECK_HTMLREPORT)
       # Run cppcheck static analysis
       COMMAND ${CPPCHECK} --inline-suppr --enable=all --force
                           --xml --xml-version=2 -j${PROCESSOR_COUNT}
-                          -I${QUINOA_SOURCE_DIR}/Base
-                          -I${QUINOA_SOURCE_DIR}/Control
-                          -I${QUINOA_SOURCE_DIR}/NoWarning
+                          -I${PROJECT_SOURCE_DIR}/Base
+                          -I${PROJECT_SOURCE_DIR}/Control
+                          -I${PROJECT_SOURCE_DIR}/NoWarning
                           -I${PROJECT_BINARY_DIR}/Main
                           ${CMAKE_CURRENT_SOURCE_DIR}
                           2> doc/cppcheck/cppcheck-report.xml
