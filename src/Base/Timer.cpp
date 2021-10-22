@@ -93,10 +93,8 @@ Timer::eta( tk::real term, tk::real time, uint64_t nstep, uint64_t it,
   estimatedWatch.sec = duration_cast< seconds >( estimated ) % minutes(1);
 }
 
-namespace tk {
-
 Timer::Watch
-hms( tk::real stamp )
+tk::hms( tk::real stamp )
 // *****************************************************************************
 //! Convert existing time stamp as a real to Watch (global-scope)
 //! \param[in] stamp Time stamp as a real number
@@ -110,5 +108,3 @@ hms( tk::real stamp )
                   duration_cast< Timer::minutes >( d ) % Timer::hours(1),
                   duration_cast< Timer::seconds >( d ) % Timer::minutes(1) );
 }
-
-} // tk::

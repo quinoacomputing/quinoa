@@ -480,9 +480,14 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
   std::unordered_set< int > usedsets;
   brigand::for_each< PDEsBCs >( UserBC( g_inputdeck, usedsets ) );
 
-  // Add side sets of the time dependent BCs (since tag::bctimedep is not a
-  // part of tag::bc)
+  // Query side sets of time dependent BCs (since tag::bctimedep is not a part
+  // of tag::bc)
   brigand::for_each< PDETypes >( UserTimedepBC(g_inputdeck, usedsets) );
+
+  // Query side sets of boundaries prescribed as moving with ALE
+  for (const auto& move : g_inputdeck.get< tag::ale, tag::move >())
+    for (auto i : move.get< tag::sideset >())
+      usedsets.insert( std::stoi(i) );
 
   // Add sidesets requested for field output
   const auto& ss = g_inputdeck.get< tag::cmd, tag::io, tag::surface >();
@@ -558,6 +563,7 @@ Transporter::createPartitioner()
   // Create (discretization) Scheme chare worker arrays for all meshes
   for ([[maybe_unused]] const auto& filename : m_input)
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
+                           g_inputdeck.get< tag::ale, tag::ale >(),
                            need_linearsolver() );
 
   ErrChk( !m_input.empty(), "No input mesh" );
@@ -1021,17 +1027,16 @@ Transporter::need_linearsolver() const
 //! \return True if ALE will neeed a linear solver
 // *****************************************************************************
 {
-  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
-  bool need = false;
 
-  if (ale && (smoother == ctr::MeshVelocitySmootherType::LAPLACE ||
-              smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
+  if ( g_inputdeck.get< tag::ale, tag::ale >() and
+       (smoother == ctr::MeshVelocitySmootherType::LAPLACE ||
+        smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) )
   {
-     need = true;
+     return true;
+  } else {
+     return false;
   }
-
-  return need;
 }
 
 void
@@ -1061,6 +1066,9 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
 
   if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DiagCG)
     m_scheme[meshid].fct().doneInserting();
+
+  if (g_inputdeck.get< tag::ale, tag::ale >())
+    m_scheme[meshid].ale().doneInserting();
 
   if (need_linearsolver())
     m_scheme[meshid].conjugategradients().doneInserting();

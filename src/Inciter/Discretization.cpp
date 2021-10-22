@@ -23,6 +23,7 @@
 #include "Around.hpp"
 #include "QuinoaBuildConfig.hpp"
 #include "ConjugateGradients.hpp"
+#include "ALE.hpp"
 
 #ifdef HAS_EXAM2M
   #include "Controller.hpp"
@@ -42,6 +43,7 @@ Discretization::Discretization(
   std::size_t meshid,
   const std::vector< CProxy_Discretization >& disc,
   const CProxy_DistFCT& fctproxy,
+  const CProxy_ALE& aleproxy,
   const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
@@ -57,7 +59,7 @@ Discretization::Discretization(
   m_it( 0 ),
   m_itr( 0 ),
   m_itf( 0 ),
-  m_initial( 1.0 ),
+  m_initial( 1 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),
   m_physFieldFloor( 0.0 ),
@@ -70,11 +72,12 @@ Discretization::Discretization(
   m_dtn( m_dt ),
   m_nvol( 0 ),
   m_fct( fctproxy ),
-  m_conjugategradients( conjugategradientsproxy ),
+  m_ale( aleproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
   m_el( el ),     // fills m_inpoel, m_gid, m_lid
   m_coord( setCoord( coordmap ) ),
+  m_coordn( m_coord ),
   m_nodeCommMap(),
   m_edgeCommMap(),
   m_meshvol( 0.0 ),
@@ -91,12 +94,14 @@ Discretization::Discretization(
   m_histdata(),
   m_nsrc( 0 ),
   m_ndst( 0 ),
-  m_meshvel_converged( true )  
+  m_meshvel( 0, 3 ),
+  m_meshvel_converged( true )
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID
 //! \param[in] disc All Discretization proxies (one per mesh)
 //! \param[in] fctproxy Distributed FCT proxy
+//! \param[in] aleproxy Distributed ALE proxy
 //! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
 //!   solver proxy
 //! \param[in] transporter Host (Transporter) proxy
@@ -164,13 +169,11 @@ Discretization::Discretization(
 
   // Insert ConjugrateGradients solver chare array element if needed
   if (g_inputdeck.get< tag::ale, tag::ale >()) {
-    auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
-    if (smoother == ctr::MeshVelocitySmootherType::LAPLACE)
-      m_conjugategradients[ thisIndex ].        // solve for mesh velocity
-        insert( Laplacian(3), m_gid, m_lid, m_nodeCommMap );
-    if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
-      m_conjugategradients[ thisIndex ].        // solve for scalar potential
-        insert( Laplacian(1), m_gid, m_lid, m_nodeCommMap );
+    m_ale[ thisIndex ].insert( conjugategradientsproxy,
+                               m_coord, m_inpoel,
+                               m_gid, m_lid, m_nodeCommMap );
+  } else {
+    m_meshvel.resize( m_gid.size() );
   }
 
   // Register mesh with mesh-transfer lib
@@ -209,53 +212,55 @@ Discretization::transferInit()
 }
 
 void
-Discretization::meshvelInit(
-  const std::vector< tk::real >& x,
-  const std::vector< tk::real >& div,
-  const std::unordered_map< std::size_t,
-          std::vector< std::pair< bool, tk::real > > >& bc,
-  CkCallback c )
+Discretization::meshvelStart(
+  const tk::UnsMesh::Coords vel,
+  const std::vector< tk::real >& soundspeed,
+  const std::unordered_map< int,
+    std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm,
+  tk::real adt,
+  CkCallback done ) const
 // *****************************************************************************
-//  Initialize mesh velocity linear solve: set initial guess and BCs
-//! \param[in] x Initial guess for mesh velocity linear solve
-//! \param[in] div Velocity divergence for Helmholtz rhs
-//! \param[in] bc Local node ids associated to linear solver Dirichlet BCs
-// \param[in] c Function to call when the BCs have been applied
+// Start computing new mesh velocity for ALE mesh motion
+//! \param[in] vel Fluid velocity at mesh nodes
+//! \param[in] soundspeed Speed of sound at mesh nodes
+//! \param[in] bnorm Face normals in boundary points associated to side sets
+//! \param[in] adt alpha*dt of the RK time step
+//! \param[in] done Function to continue with when mesh velocity has been
+//!   computed
 // *****************************************************************************
 {
-  m_conjugategradients[ thisIndex ].init( x, div, bc, c );
+  if (g_inputdeck.get< tag::ale, tag::ale >())
+    m_ale[ thisIndex ].ckLocal()->start( vel, soundspeed, done,
+      m_coord, m_coordn, m_vol0, m_vol, bnorm, m_initial, m_it, m_t, adt );
+  else
+    done.send();
+}
+
+const tk::Fields&
+Discretization::meshvel() const
+// *****************************************************************************
+//! Query the mesh velocity
+//! \return Mesh velocity
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::ale, tag::ale >())
+    return m_ale[ thisIndex ].ckLocal()->meshvel();
+  else
+    return m_meshvel;
 }
 
 void
-Discretization::meshvelSolve( CkCallback c )
+Discretization::meshvelBnd(
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::map< int, std::vector< std::size_t > >& bnode,
+  const std::vector< std::size_t >& triinpoel) const
 // *****************************************************************************
-//  Solve linear system using Conjugrate Gradients
-// \param[in] c Function to call when the solve is converged
-// *****************************************************************************
-{
-  m_conjugategradients[ thisIndex ].
-    solve( g_inputdeck.get< tag::ale, tag::maxit >(),
-           g_inputdeck.get< tag::ale, tag::tolerance >(),
-           c );
-}
-
-std::vector< tk::real >
-Discretization::meshvelSolution() const
-// *****************************************************************************
-//! Query the solution of the Conjugrate Gradients linear solver
-//! \return Solution to the Conjugate Gradients linear solve
+// Query ALE mesh velocity boundary condition node lists and node lists at
+// which ALE moves boundaries
 // *****************************************************************************
 {
-  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
-
-  if (g_inputdeck.get< tag::ale, tag::ale >() and
-      (smoother == ctr::MeshVelocitySmootherType::LAPLACE or
-       smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
-  {
-    return ConjugateGradients()->solution();
-  } else {
-    return {};
-  }
+  if (g_inputdeck.get< tag::ale, tag::ale >())
+    m_ale[ thisIndex ].ckLocal()->meshvelBnd( bface, bnode, triinpoel );
 }
 
 void
@@ -270,62 +275,8 @@ Discretization::meshvelConv()
       (smoother == ctr::MeshVelocitySmootherType::LAPLACE or
        smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
   {
-    m_meshvel_converged &= ConjugateGradients()->converged();
+    m_meshvel_converged &= m_ale[ thisIndex ].ckLocal()->converged();
   }
-}
-
-
-std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
-Discretization::Laplacian( std::size_t ncomp ) const
-// *****************************************************************************
-// Generate {A,x,b} for Laplacian mesh velocity smoother
-//! \param[in] ncomp Number of scalar components
-//! \return {A,x,b} with a Laplacian, unknown, and rhs initialized with zeros
-//! \see Waltz, et al. "A three-dimensional finite element arbitrary
-//!   Lagrangian-Eulerian method for shock hydrodynamics on unstructured
-//!   grids", Computers& Fluids, 2013, and Bakosi, et al. "Improved ALE mesh
-//!   velocities for complex flows, International Journal for Numerical Methods
-//!   in Fluids, 2017.
-// *****************************************************************************
-{
-  tk::CSR A( ncomp, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
-
-  const auto& X = m_coord[0];
-  const auto& Y = m_coord[1];
-  const auto& Z = m_coord[2];
-
-  // fill matrix with Laplacian
-  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
-    // access node IDs
-    const std::array< std::size_t, 4 >
-      N{{ m_inpoel[e*4+0], m_inpoel[e*4+1], m_inpoel[e*4+2], m_inpoel[e*4+3] }};
-    // compute element Jacobi determinant
-    const std::array< tk::real, 3 >
-      ba{{ X[N[1]]-X[N[0]], Y[N[1]]-Y[N[0]], Z[N[1]]-Z[N[0]] }},
-      ca{{ X[N[2]]-X[N[0]], Y[N[2]]-Y[N[0]], Z[N[2]]-Z[N[0]] }},
-      da{{ X[N[3]]-X[N[0]], Y[N[3]]-Y[N[0]], Z[N[3]]-Z[N[0]] }};
-    const auto J = tk::triple( ba, ca, da );        // J = 6V
-    Assert( J > 0, "Element Jacobian non-positive" );
-
-    // shape function derivatives, nnode*ndim [4][3]
-    std::array< std::array< tk::real, 3 >, 4 > grad;
-    grad[1] = tk::crossdiv( ca, da, J );
-    grad[2] = tk::crossdiv( da, ba, J );
-    grad[3] = tk::crossdiv( ba, ca, J );
-    for (std::size_t i=0; i<3; ++i)
-      grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
-
-    for (std::size_t a=0; a<4; ++a)
-      for (std::size_t k=0; k<3; ++k)
-         for (std::size_t b=0; b<4; ++b)
-           for (std::size_t i=0; i<ncomp; ++i)
-             A(N[a],N[b],i) -= J/6 * grad[a][k] * grad[b][k];
-  }
-
-  auto npoin = m_gid.size();
-  std::vector< tk::real > b(npoin*ncomp,0.0), x(npoin*ncomp,0.0);
-
-  return { std::move(A), std::move(x), std::move(b) };
 }
 
 void
@@ -524,7 +475,7 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
   m_coord = coord;
 
   // we are no longer during setup
-  m_initial = 0.0;
+  m_initial = 0;
 }
 
 void
@@ -742,7 +693,9 @@ Discretization::totalvol()
   tk::destroy(m_volc);
 
   // Sum mesh volume to host
-  std::vector< tk::real > tvol{0.0, m_initial, static_cast<tk::real>(m_meshid)};
+  std::vector< tk::real > tvol{ 0.0,
+                                static_cast<tk::real>(m_initial),
+                                static_cast<tk::real>(m_meshid) };
   for (auto v : m_v) tvol[0] += v;
   contribute( tvol, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,totalvol), m_transporter) );
@@ -1000,7 +953,7 @@ Discretization::restarted( int nrestart )
   //   nrestart == -1 if there was no checkpoint this step
   //   d->Nrestart() == nrestart if there was a checkpoint this step
   //   if both false, just restarted from a checkpoint
-  bool restarted = nrestart != -1 && m_nrestart != nrestart;
+  bool restarted = nrestart != -1 and m_nrestart != nrestart;
 
    // If just restarted from checkpoint
   if (restarted) {
@@ -1201,7 +1154,7 @@ Discretization::status()
   auto grind_time = duration_cast< ms >(clock::now() - m_prevstatus).count();
   m_prevstatus = clock::now();
 
-  if (thisIndex==0 && m_meshid == 0 && !(m_it%tty)) {
+  if (thisIndex==0 and m_meshid == 0 and not (m_it%tty)) {
 
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
     const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
@@ -1215,7 +1168,7 @@ Discretization::status()
 
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
-    if (!steady) m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
+    if (not steady) m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
 
     const auto& def =
       g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
@@ -1240,11 +1193,11 @@ Discretization::status()
 
     // Augment one-liner status with output indicators
     if (fielditer() or fieldtime() or fieldrange()) print << 'f';
-    if (!(m_it % diag)) print << 'd';
+    if (not (m_it % diag)) print << 'd';
     if (histiter() or histtime() or histrange()) print << 't';
     if (m_refined) print << 'h';
-    if (!(m_it % lbfreq) && not finished()) print << 'l';
-    if (!benchmark && (!(m_it % rsfreq) || finished())) print << 'r';
+    if (not (m_it % lbfreq) && not finished()) print << 'l';
+    if (not benchmark && (not (m_it % rsfreq) || finished())) print << 'r';
 
     if (not m_meshvel_converged) print << 'a';
     m_meshvel_converged = true; // get ready for next time step

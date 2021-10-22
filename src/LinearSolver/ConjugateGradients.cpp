@@ -24,6 +24,7 @@
 // *****************************************************************************
 
 #include <numeric>
+#include <iostream>
 
 #include "Exception.hpp"
 #include "ConjugateGradients.hpp"
@@ -49,6 +50,7 @@ ConjugateGradients::ConjugateGradients(
   m_nr( 0 ),
   m_bc(),
   m_bcc(),
+  m_bcmask( m_A.rsize(), 1.0 ),
   m_nb( 0 ),
   m_p( m_A.rsize(), 0.0 ),
   m_q( m_A.rsize(), 0.0 ),
@@ -151,7 +153,7 @@ ConjugateGradients::residual()
 // *****************************************************************************
 {
   // Compute own contribution to r = A * x
-  m_A.mult( m_x, m_r, m_bc );
+  m_A.mult( m_x, m_r, m_bcmask );
 
   // Send partial product on chare-boundary nodes to fellow chares
   if (m_nodeCommMap.empty()) {
@@ -242,12 +244,14 @@ ConjugateGradients::init(
   const std::vector< tk::real >& b,
   const std::unordered_map< std::size_t,
           std::vector< std::pair< bool, tk::real > > >& bc,
+  std::size_t ignorebc,
   CkCallback cb )
 // *****************************************************************************
 //  Initialize linear solve: set initial guess and boundary conditions
 //! \param[in] x Initial guess
 //! \param[in] b Right hand side vector
 //! \param[in] bc Local node ids and associated Dirichlet BCs
+//! \param[in] ignorebc True if applyin BCs should be skipped
 //! \param[in] cb Call to continue with when initialized and ready for a solve
 //! \details This function allows setting the initial guess and boundary
 //!   conditions, followed by computing the initial residual and the rhs norm.
@@ -259,38 +263,46 @@ ConjugateGradients::init(
   // Optionally update rhs
   if (not b.empty()) m_b = b;
 
-  // Store incoming BCs
-  m_bc = bc;
+  if (ignorebc) {
 
-  // Get ready to communicate boundary conditions. This is necessary because
-  // there can be nodes a chare contributes to but does not apply BCs on. This
-  // happens if a node is in the node communication map but not on the list of
-  // incoming BCs on this chare. To have all chares share the same view on all
-  // BC nodes, we send the global node ids together with the Dirichlet BCs at
-  // which BCs are set to those fellow chares that also contribute to those BC
-  // nodes. Only after this communication step we apply the BCs on the matrix,
-  // which then will correctly setup the BC rows that exist on multiple chares
-  // (which now will be the same as the results of making the BCs consistent
-  // across all chares that contribute.
-  thisProxy[ thisIndex ].wait4bc();
+    setup( cb );
 
-  // Send boundary conditions to those who contribute to those rows
-  if (m_nodeCommMap.empty()) {
-    combc_complete();
   } else {
-    for (const auto& [c,n] : m_nodeCommMap) {
-      std::unordered_map< std::size_t,
-        std::vector< std::pair< bool, tk::real > > > expbc;
-      for (auto g : n) {
-        auto i = tk::cref_find( m_lid, g );
-        auto j = bc.find(i);
-        if (j != end(bc)) expbc[g] = j->second;
-      }
-      thisProxy[c].combc( expbc );
-    }
-  }
 
-  ownbc_complete( cb );
+    // Store incoming BCs
+    m_bc = bc;
+
+    // Get ready to communicate boundary conditions. This is necessary because
+    // there can be nodes a chare contributes to but does not apply BCs on. This
+    // happens if a node is in the node communication map but not on the list of
+    // incoming BCs on this chare. To have all chares share the same view on all
+    // BC nodes, we send the global node ids together with the Dirichlet BCs at
+    // which BCs are set to those fellow chares that also contribute to those BC
+    // nodes. Only after this communication step we apply the BCs on the matrix,
+    // which then will correctly setup the BC rows that exist on multiple chares
+    // (which now will be the same as the results of making the BCs consistent
+    // across all chares that contribute.
+    thisProxy[ thisIndex ].wait4bc();
+
+    // Send boundary conditions to those who contribute to those rows
+    if (m_nodeCommMap.empty()) {
+      combc_complete();
+    } else {
+      for (const auto& [c,n] : m_nodeCommMap) {
+        std::unordered_map< std::size_t,
+          std::vector< std::pair< bool, tk::real > > > expbc;
+        for (auto g : n) {
+          auto i = tk::cref_find( m_lid, g );
+          auto j = bc.find(i);
+          if (j != end(bc)) expbc[g] = j->second;
+        }
+        thisProxy[c].combc( expbc );
+      }
+    }
+
+    ownbc_complete( cb );
+
+  }
 }
 
 void
@@ -321,9 +333,15 @@ ConjugateGradients::apply( CkCallback cb )
   for (const auto& [i,dirbc] : m_bcc) m_bc[i] = dirbc;
   tk::destroy( m_bcc );
 
+  auto ncomp = m_A.Ncomp();
+
+  // Setup Dirichlet BC map as contiguous mask
+  for (const auto& [i,bc] : m_bc)
+    for (std::size_t j=0; j<ncomp; ++j)
+      m_bcmask[i*ncomp+j] = 0.0;
+
   // Apply Dirichlet BCs on matrix and rhs
   for (const auto& [i,dirbc] : m_bc) {
-    auto ncomp = m_A.Ncomp();
     for (std::size_t j=0; j<ncomp; ++j) {
       if (dirbc[j].first) {
         m_A.dirichlet( i, m_gid, m_nodeCommMap, j );
@@ -378,7 +396,7 @@ ConjugateGradients::qAp()
 // *****************************************************************************
 {
   // Compute own contribution to q = A * p
-  m_A.mult( m_p, m_q, m_bc );
+  m_A.mult( m_p, m_q, m_bcmask );
 
   // Send partial product on chare-boundary nodes to fellow chares
   if (m_nodeCommMap.empty()) {
