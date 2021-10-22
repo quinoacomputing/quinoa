@@ -5,7 +5,7 @@
 #            2016-2018 Los Alamos National Security, LLC.,
 #            2019-2021 Triad National Security, LLC.
 #            All rights reserved. See the LICENSE file for details.
-# \brief     Find the third-party libraries required to build Quinoa
+# \brief     Find third-party libraries required
 #
 ################################################################################
 
@@ -32,7 +32,7 @@ if (MATHLIB STREQUAL mkl OR MATHLIB STREQUAL MKL)
   find_package(MKL)
 endif()
 if(MKL_FOUND)
-  set(HAS_MKL true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_MKL true)  # will become compiler define
   message(STATUS "MKL enabled")
 endif()
 
@@ -71,7 +71,7 @@ if(ARCH MATCHES "x86")
   find_package(RNGSSE2)
 endif()
 if(RNGSSE2_FOUND)
-  set(HAS_RNGSSE2 true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_RNGSSE2 true)  # will become compiler define
   message(STATUS "RNGSSE2 enabled")
 endif()
 
@@ -115,14 +115,14 @@ find_package(Exodiff)
 set(TESTU01_ROOT ${TPL_DIR}) # prefer ours
 find_package(TestU01)
 if(TestU01_FOUND)
-  set(HAS_TESTU01 true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_TESTU01 true)  # will become compiler define
   message(STATUS "TestU01 enabled")
 endif()
 
 ### Root library
 find_package(Root COMPONENTS RIO Core Tree Hist)
 if (Root_FOUND)
-  set(HAS_ROOT true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_ROOT true)  # will become compiler define
   message(STATUS "ROOT enabled")
   # Root does not support libc++ on linux, so remove if configured
   if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -138,7 +138,7 @@ endif()
 set(BACKWARD_ROOT ${TPL_DIR}) # prefer ours
 find_package(BackwardCpp)
 if(BACKWARDCPP_FOUND)
-  set(HAS_BACKWARD true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_BACKWARD true)  # will become compiler define
   message(STATUS "BackwardCpp enabled")
 else()
   set(BACKWARD_INCLUDE_DIRS "")
@@ -148,7 +148,7 @@ endif()
 #### Configure Omega_h
 find_package(Omega_h)
 if(OMEGA_H_FOUND)
-  set(HAS_OMEGA_H true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_OMEGA_H true)  # will become compiler define
   message(STATUS "Omega_H enabled")
 else()
   set(OMEGA_H_INCLUDE_DIRS "")
@@ -169,7 +169,7 @@ set(SOL2_ROOT ${TPL_DIR}) # prefer ours
 find_package(Lua)
 find_package(Sol2)
 if (LUA_FOUND AND SOL2_FOUND)
-  set(HAS_LUA true)  # will become compiler define in Main/QuinoaConfig.h
+  set(HAS_LUA true)  # will become compiler define
   message(STATUS "Lua enabled")
 else()
   set(LUA_INCLUDE_DIR "")
@@ -179,7 +179,7 @@ endif()
 if (ENABLE_EXAM2M)
   find_package(ExaM2M)
   if(ExaM2M_FOUND)
-    set(HAS_EXAM2M true)  # will become compiler define in Main/QuinoaConfig.h
+    set(HAS_EXAM2M true)  # will become compiler define
     message(STATUS "ExaM2M enabled")
   else()
     set(EXAM2M_LIBRARIES "")
@@ -216,8 +216,12 @@ if (CHARM_FOUND AND PUGIXML_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
     HDF5_FOUND AND BRIGAND_FOUND AND TUT_FOUND AND PEGTL_FOUND AND Boost_FOUND AND
     HIGHWAYHASH_FOUND AND RANDOM123_FOUND AND (MKL_FOUND OR LAPACKE_FOUND)
     AND ENABLE_TESTS)
-  set(ENABLE_UNITTEST "true")
   set(UNITTEST_EXECUTABLE unittest)
+  set(ENABLE_UNITTEST true CACHE BOOL "Enable ${UNITTEST_EXECUTABLE}")
+  if (NOT ENABLE_UNITTEST)
+    message(STATUS "Target '${UNITTEST_EXECUTABLE}' disabled")
+  endif()
+  set(UNITTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
 else()
   if (NOT ENABLE_TESTS)
     message(STATUS "Target 'unittest' will NOT be configured, tests disabled.")
@@ -229,16 +233,22 @@ endif()
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
     Zoltan2_FOUND AND HDF5_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
     (MKL_FOUND OR LAPACKE_FOUND) AND Boost_FOUND AND HIGHWAYHASH_FOUND)
-  set(ENABLE_INCITER "true")
   set(INCITER_EXECUTABLE inciter)
+  set(ENABLE_INCITER true CACHE BOOL "Enable ${INCITER_EXECUTABLE}")
+  if (NOT ENABLE_INCITER)
+    message(STATUS "Target '${INCITER_EXECUTABLE}' disabled")
+  endif()
 else()
   PrintMissing(inciter "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;Zoltan2_FOUND;HDF5_FOUND;BRIGAND_FOUND;PEGTL_FOUND;MKL_FOUND;LAPACKE_FOUND;Boost_FOUND")
 endif()
 
 if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
     RANDOM123_FOUND AND Boost_FOUND AND (MKL_FOUND OR LAPACKE_FOUND))
-  set(ENABLE_RNGTEST "true")
   set(RNGTEST_EXECUTABLE rngtest)
+  set(ENABLE_RNGTEST true CACHE BOOL "Enable ${RNGTEST_EXECUTABLE}")
+  if (NOT ENABLE_RNGTEST)
+    message(STATUS "Target '${RNGTEST_EXECUTABLE}' disabled")
+  endif()
   set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
   set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
 else()
@@ -248,8 +258,11 @@ endif()
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
     PUGIXML_FOUND AND HDF5_FOUND AND Boost_FOUND AND BRIGAND_FOUND AND
     HIGHWAYHASH_FOUND)
-  set(ENABLE_MESHCONV "true")
   set(MESHCONV_EXECUTABLE meshconv)
+  set(ENABLE_MESHCONV true CACHE BOOL "Enable ${MESHCONV_EXECUTABLE}")
+  if (NOT ENABLE_MESHCONV)
+    message(STATUS "Target '${MESHCONV_EXECUTABLE}' disabled")
+  endif()
 else()
   PrintMissing(meshconv "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;PEGTL_FOUND;PUGIXML_FOUND;HDF5_FOUND;Boost_FOUND;BRIGAND_FOUND;HIGHWAYHASH_FOUND")
 endif()
@@ -257,8 +270,11 @@ endif()
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
     BRIGAND_FOUND AND HDF5_FOUND AND RANDOM123_FOUND AND Boost_FOUND AND
     (MKL_FOUND OR LAPACKE_FOUND) AND HIGHWAYHASH_FOUND AND H5Part_FOUND)
-  set(ENABLE_WALKER "true")
   set(WALKER_EXECUTABLE walker)
+  set(ENABLE_WALKER true CACHE BOOL "Enable ${WALKER_EXECUTABLE}")
+  if (NOT ENABLE_WALKER)
+    message(STATUS "Target '${WALKER_EXECUTABLE}' disabled")
+  endif()
 else()
   PrintMissing(walker "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;PEGTL_FOUND;BRIGAND_FOUND;HDF5_FOUND;RANDOM123_FOUND;Boost_FOUND;MKL_FOUND;LAPACKE_FOUND;HIGHWAYHASH_FOUND;H5Part_FOUND")
 endif()
@@ -266,8 +282,11 @@ endif()
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND ROOT_FOUND
     AND PEGTL_FOUND AND PUGIXML_FOUND AND HDF5_FOUND AND Boost_FOUND AND
     BRIGAND_FOUND AND HIGHWAYHASH_FOUND)
-  set(ENABLE_FILECONV "true")
   set(FILECONV_EXECUTABLE fileconv)
+  set(ENABLE_FILECONV true CACHE BOOL "Enable ${FILECONV_EXECUTABLE}")
+  if (NOT ENABLE_FILECONV)
+    message(STATUS "Target '${FILECONV_EXECUTABLE}' disabled")
+  endif()
 else()
   PrintMissing(fileconv "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;ROOT_FOUND;PEGTL_FOUND;PUGIXML_FOUND;HDF5_FOUND;Boost_FOUND;BRIGAND_FOUND;HIGHWAYHASH_FOUND")
 endif()
