@@ -754,10 +754,7 @@ VertexBasedMultiMat_P2(
         tk::DubinerToTaylor(nprim, offset, e, dof_el, P, inpoel, coord);
 
       // The vector of limiting coefficients for P1 and P2 coefficients
-      std::vector< tk::real > phic_p1(ncomp, 1.0);
-      std::vector< tk::real > phic_p2(ncomp, 1.0);
-      std::vector< tk::real > phip_p1(nprim, 1.0);
-      std::vector< tk::real > phip_p2(nprim, 1.0);
+      std::vector< tk::real > phic_p1, phic_p2, phip_p1, phip_p2;
 
       // If DGP2 is applied, apply the limiter function to the first derivative
       // to obtain the limiting coefficient for P2 coefficients
@@ -1285,7 +1282,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
 
     // ----- Step-2: compute the limiter function at this node
     // find high-order solution
-    std::vector< tk::real > state( ncomp, 0.0 );
+    std::vector< tk::real > state;
     if(rdof == 4)
     {
       // If DG(P1), evaluate high order solution based on dubiner basis
@@ -1303,6 +1300,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
         { geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0) };
       auto B_p = tk::eval_TaylorBasis( rdof, node, x_center, coordel );
 
+      state.resize( ncomp, 0.0 );
       for (ncomp_t c=0; c<ncomp; ++c)
         for(std::size_t idof = 0; idof < 4; idof++)
           state[c] += unk[c][idof] * B_p[idof];
