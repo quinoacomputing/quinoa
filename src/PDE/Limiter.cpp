@@ -1187,7 +1187,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   std::size_t rdof,
   std::size_t dof_el,
   std::size_t offset,
-  std::size_t ncomp,
+  std::size_t n,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& NodalExtrm )
@@ -1202,7 +1202,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] dof_el Local number of degrees of freedom
 //! \param[in] offset Index for equation systems
-//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] n Number of scalar components to limit
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!   global node ids (key)
@@ -1235,13 +1235,13 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   auto detT =
     tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-  std::vector< tk::real > uMin(ncomp, 0.0), uMax(ncomp, 0.0), phi(ncomp, 1.0);
+  std::vector< tk::real > uMin(n, 0.0), uMax(n, 0.0), phi(n, 1.0);
 
   // loop over all nodes of the element e
   for (std::size_t lp=0; lp<4; ++lp)
   {
     // reset min/max
-    for (std::size_t c=0; c<ncomp; ++c)
+    for (std::size_t c=0; c<n; ++c)
     {
       auto mark = c*rdof;
       uMin[c] = U(e, mark, offset);
@@ -1256,7 +1256,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
     {
       if(er < nelem)
       {
-        for (std::size_t c=0; c<ncomp; ++c)
+        for (std::size_t c=0; c<n; ++c)
         {
           auto mark = c*rdof;
           uMin[c] = std::min(uMin[c], U(er, mark, offset));
@@ -1270,8 +1270,8 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
     auto gip = bid.find( gid[p] );
     if(gip != end(bid))
     {
-      auto ndof_NodalExtrm = NodalExtrm[0].size() / (ncomp * 2);
-      for (std::size_t c=0; c<ncomp; ++c)
+      auto ndof_NodalExtrm = NodalExtrm[0].size() / (n * 2);
+      for (std::size_t c=0; c<n; ++c)
       {
         auto max_mark = 2*c*ndof_NodalExtrm;
         auto min_mark = max_mark + 1;
@@ -1291,7 +1291,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
             tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
-      state = tk::eval_state( ncomp, offset, rdof, dof_el, e, U, B_p );
+      state = tk::eval_state( n, offset, rdof, dof_el, e, U, B_p );
     }
     else {  // If DG(P2), evaluate high order solution based on Taylor basis
       // The nodal and central coordinates
@@ -1300,16 +1300,16 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
         { geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0) };
       auto B_p = tk::eval_TaylorBasis( rdof, node, x_center, coordel );
 
-      state.resize( ncomp, 0.0 );
-      for (ncomp_t c=0; c<ncomp; ++c)
+      state.resize( n, 0.0 );
+      for (ncomp_t c=0; c<n; ++c)
         for(std::size_t idof = 0; idof < 4; idof++)
           state[c] += unk[c][idof] * B_p[idof];
     }
 
-    Assert( state.size() == ncomp, "Size mismatch" );
+    Assert( state.size() == n, "Size mismatch" );
 
     // compute the limiter function
-    for (std::size_t c=0; c<ncomp; ++c)
+    for (std::size_t c=0; c<n; ++c)
     {
       auto phi_gp = 1.0;
       auto mark = c*rdof;
