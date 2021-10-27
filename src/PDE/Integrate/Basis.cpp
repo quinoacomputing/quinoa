@@ -338,7 +338,7 @@ tk::eval_state ( ncomp_t ncomp,
   // Array of state variable for tetrahedron element
   std::vector< tk::real > state( ncomp, 0.0 );
 
-  for (ncomp_t c=VarRange[0]; c<VarRange[1]; ++c)
+  for (ncomp_t c=VarRange[0]; c<=VarRange[1]; ++c)
   {
     auto mark = c*ndof;
     state[c] = U( e, mark, offset );

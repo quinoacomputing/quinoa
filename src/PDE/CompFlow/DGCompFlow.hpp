@@ -770,7 +770,7 @@ class CompFlow {
           chp[2]-cp[0][2]}};
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, 0, rdof, rdof, e, U, B, {0, m_ncomp});
+        auto uhp = eval_state(m_ncomp, 0, rdof, rdof, e, U, B, {0, m_ncomp-1});
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);
