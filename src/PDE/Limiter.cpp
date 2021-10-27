@@ -1545,9 +1545,6 @@ void consistentMultiMatLimiting_P1(
 //!   conserved quantities
 // *****************************************************************************
 {
-  Assert(phic_p1.size()+phic_p2.size() == U.nprop()/rdof, "Number of unknowns "
-    "in vector of conserved quantities incorrect");
-
   // find the limiter-function for volume-fractions
   auto phi_al_p1(1.0), phi_al_p2(1.0), almax(0.0), dalmax(0.0);
   //std::size_t nmax(0);
