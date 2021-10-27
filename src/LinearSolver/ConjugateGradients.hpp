@@ -10,8 +10,8 @@
     conjugate gradients linear solver.
 
     There are a potentially large number of ConjugateGradients Charm++ chares.
-    Each ConjugateGradient chare gets a chunk of the full load (due to partiting
-    the mesh on which the solve is performed.
+    Each ConjugateGradient chare gets a chunk of the full load, due to partiting
+    the mesh, on which the solve is performed.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
@@ -89,6 +89,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
                const std::vector< tk::real >& b,
                const std::unordered_map< std::size_t,
                        std::vector< std::pair< bool, tk::real > > >& bc,
+               std::size_t ignorebc,
                CkCallback cb );
 
     //! Setup solver
@@ -143,6 +144,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_nr;
       p | m_bc;
       p | m_bcc;
+      p | m_bcmask;
       p | m_nb;
       p | m_p;
       p | m_q;
@@ -192,6 +194,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     //! Dirichlet boundary conditions communication buffer
     std::unordered_map< std::size_t,
         std::vector< std::pair< bool, tk::real > > > m_bcc;
+    //! Dirichlet boundary condition mask
+    std::vector< tk::real > m_bcmask;
     //! Counter for assembling boundary conditions
     std::size_t m_nb;
     //! Auxiliary vector for CG solve

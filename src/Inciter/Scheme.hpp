@@ -84,6 +84,7 @@
 #include "NoWarning/alecg.decl.h"
 #include "NoWarning/distfct.decl.h"
 #include "NoWarning/dg.decl.h"
+#include "NoWarning/ale.decl.h"
 #include "NoWarning/conjugategradients.decl.h"
 
 namespace inciter {
@@ -108,6 +109,7 @@ class Scheme {
 
     //! Constructor
     //! \param[in] scheme Discretization scheme
+    //! \param[in] ale True if enable ALE
     //! \param[in] linearsolver True if enable a linear solver
     //! \details Based on the input enum we create at least two empty chare
     //!   arrays: (1) discproxy which contains common functionality and data for
@@ -116,7 +118,9 @@ class Scheme {
     //!   migration behavior and properties) to discproxy.
     //! \note There may be other bound proxy arrays created depending on the
     //!   specific discretization configured by the enum.
-    explicit Scheme( ctr::SchemeType scheme, bool linearsolver = false ) :
+    explicit Scheme( ctr::SchemeType scheme,
+                     bool ale = false,
+                     bool linearsolver = false ) :
       discproxy( CProxy_Discretization::ckNew() )
     {
       bound.bindTo( discproxy );
@@ -133,6 +137,7 @@ class Scheme {
       } else if (scheme == ctr::SchemeType::ALECG) {
         proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(bound) );
       } else Throw( "Unknown discretization scheme" );
+      if (ale) aleproxy = CProxy_ALE::ckNew(bound);
       if (linearsolver)
         conjugategradientsproxy = tk::CProxy_ConjugateGradients::ckNew(bound);
     }
@@ -230,6 +235,10 @@ class Scheme {
     //! \return DistFCT Charm++ chare array proxy
     CProxy_DistFCT& fct() noexcept { return fctproxy; }
 
+    //! Get reference to ALE proxy
+    //! \return ALE Charm++ chare array proxy
+    CProxy_ALE& ale() noexcept { return aleproxy; }
+
     //! Get reference to ConjugateGradients proxy
     //! \return ConjugateGradients Charm++ chare array proxy
     tk::CProxy_ConjugateGradients& conjugategradients() noexcept
@@ -261,6 +270,7 @@ class Scheme {
       p | proxy;
       p | discproxy;
       p | fctproxy;
+      p | aleproxy;
       p | conjugategradientsproxy;
       p | bound;
     }
@@ -277,6 +287,8 @@ class Scheme {
     CProxy_Discretization discproxy;
     //! Charm++ proxy to flux-corrected transport (FCT) driver class
     CProxy_DistFCT fctproxy;
+    //! Charm++ proxy to ALE class
+    CProxy_ALE aleproxy;
     //! Charm++ proxy to conjugate gradients linear solver class
     tk::CProxy_ConjugateGradients conjugategradientsproxy;
     //! Charm++ array options for binding chares
