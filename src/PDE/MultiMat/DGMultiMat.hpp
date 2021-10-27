@@ -818,7 +818,6 @@ class MultiMat {
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
-      Assert( ndof <= 4, "DGP2 not set up for multi-material" );
 
       // set rhs to zero
       R.fill(0.0);
