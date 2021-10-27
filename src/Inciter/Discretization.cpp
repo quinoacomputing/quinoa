@@ -249,6 +249,22 @@ Discretization::meshvel() const
     return m_meshvel;
 }
 
+std::unordered_map< int, std::unordered_set< std::size_t > >
+Discretization::meshvelNorm(
+  const std::map< int, std::vector< std::size_t > >& bnode ) const
+// *****************************************************************************
+//  Query nodes at which mesh velocity symmetry BCs are specified
+//! \param[in] bnode Boundary-node lists mapped to side sets used in input file
+//! \return Local node ids associated to side set ids at which normals are
+//!         required
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::ale, tag::ale >())
+    return m_ale[ thisIndex ].ckLocal()->norm( bnode );
+  else
+    return {};
+}
+
 void
 Discretization::meshvelBnd(
   const std::map< int, std::vector< std::size_t > >& bface,
@@ -257,6 +273,9 @@ Discretization::meshvelBnd(
 // *****************************************************************************
 // Query ALE mesh velocity boundary condition node lists and node lists at
 // which ALE moves boundaries
+//! \param[in] bface Boundary-faces mapped to side sets used in the input file
+//! \param[in] bnode Boundary-node lists mapped to side sets used in input file
+//! \param[in] triinpoel Boundary-face connectivity where BCs set
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::ale, tag::ale >())

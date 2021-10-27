@@ -255,18 +255,7 @@ ALECG::norm()
   for (const auto& [s,n] : far) bn[s].insert( begin(n), end(n) );
 
   // Query nodes at which mesh velocity symmetry BCs are specified
-  std::unordered_map<int, std::unordered_set< std::size_t >> ms;
-  for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcsym >()) {
-    auto k = m_bface.find( std::stoi(s) );
-    if (k != end(m_bface)) {
-      auto& n = ms[ k->first ];
-      for (auto f : k->second) {
-        n.insert( m_triinpoel[f*3+0] );
-        n.insert( m_triinpoel[f*3+1] );
-        n.insert( m_triinpoel[f*3+2] );
-      }
-    }
-  }
+  auto ms = d->meshvelNorm( m_bnode );
   // Merge BC data where boundary-point normals are required
   for (const auto& [s,n] : ms) bn[s].insert( begin(n), end(n) );
 

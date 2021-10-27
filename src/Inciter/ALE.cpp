@@ -166,6 +166,42 @@ ALE::moveCfg()
   return cfg;
 }
 
+std::unordered_map< int, std::unordered_set< std::size_t > >
+ALE::norm( const std::map< int, std::vector< std::size_t > >& bnode ) const
+// *****************************************************************************
+//  Query nodes at which mesh velocity symmetry BCs are specified
+//! \param[in] bnode Boundary-node lists mapped to side sets used in input file
+//! \return Local node ids associated to side set ids at which normals are
+//!         required
+// *****************************************************************************
+{
+  std::unordered_map<int, std::unordered_set< std::size_t >> ms;
+
+  // Query unique set of mesh velocity symmetry BC nodes. Note that somewhat
+  // counter-intuitively, we interrogate the boundary nodes instead of boundary
+  // faces here. This is because if we query the boundary faces, then we will
+  // get the mathematically correctly defined finite discrete surfaces
+  // (triangles) where mesh velocity symmetry BCs are configured by the user.
+  // However, in parallel, decomposing the domain and the boundary in various
+  // ways can produce situations on the boundary where boundary nodes are part
+  // of the given side set for mesh velocity symmetry BCs but not a full
+  // triangle face because, not all 3 nodes lie on the boundary. Thus
+  // interrogating the boundary nodes will be a superset and will include those
+  // nodes that are part of imposing symmetry BCs on nodes of faces that are
+  // only partial due to domain decomposition.
+  for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcsym >()) {
+    auto k = bnode.find( std::stoi(s) );
+    if (k != end(bnode)) {
+      auto& n = ms[ k->first ];                 // associate set id
+      for (auto g : k->second) {                // node ids on side set
+        n.insert( tk::cref_find(m_lid,g) );     // store local ids
+      }
+    }
+  }
+
+  return ms;
+}
+
 void
 ALE::meshvelBnd(
   const std::map< int, std::vector< std::size_t > >& bface,
@@ -196,31 +232,10 @@ ALE::meshvelBnd(
   for (const auto& [s,nodes] : meshveldirbcnodes)
     m_meshveldirbcnodes.insert( begin(nodes), end(nodes) );
 
-  // Prepare unique set of mesh velocity symmetry BC nodes. Note that somewhat
-  // counter-intuitively, we interrogate the boundary nodes instead of boundary
-  // faces here. This is because if we query the boundary faces, then we will
-  // get the mathematically correctly defined finite discrete surfaces
-  // (triangles) where mesh velocity symmetry BCs are configured by the user.
-  // However, in parallel, decomposing the domain and the boundary in various
-  // ways can produce situations on the boundary where boundary nodes are part
-  // of the given side set for mesh velocity symmetry BCs but not a full
-  // triangle face because, not all 3 nodes lie on the boundary. Thus
-  // interrogating the boundary nodes will be a superset and will include those
-  // nodes that are part of imposing symmetry BCs on nodes of faces that are
-  // only partial due to domain decomposition.
+  // Prepare unique set of mesh velocity symmetry BC nodes
   tk::destroy( m_meshvelsymbcnodes );
-  std::unordered_map<int, std::unordered_set< std::size_t >> meshvelsymbcnodes;
-  for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcsym >()) {
-    auto k = bnode.find( std::stoi(s) );
-    if (k != end(bnode)) {
-      auto& n = meshvelsymbcnodes[ k->first ];  // associate set id
-      for (auto g : k->second) {                // node ids on side set
-        n.insert( tk::cref_find(m_lid,g) );     // store local ids
-      }
-    }
-  }
-  for (const auto& [s,nodes] : meshvelsymbcnodes)
-    m_meshvelsymbcnodes.insert( begin(nodes), end(nodes) );
+  auto ms = norm( bnode );
+  for (const auto& [s,n] : ms) m_meshvelsymbcnodes.insert( begin(n), end(n) );
 
   // Prepare unique sets of boundary nodes at which ALE moves the boundary
   // based on user-defined functions.

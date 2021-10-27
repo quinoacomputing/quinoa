@@ -102,6 +102,10 @@ class ALE : public CBase_ALE {
     //! Query the mesh velocity
     const tk::Fields& meshvel() const { return m_w; }
 
+    //! Query nodes at which mesh velocity symmetry BCs are specified
+    std::unordered_map< int, std::unordered_set< std::size_t > >
+    norm( const std::map< int, std::vector< std::size_t > >& bnode ) const;
+
     //! \brief Query mesh velocity boundary conditions node lists and node list
     //!    at which ALE moves boundaries
     void meshvelBnd( const std::map< int, std::vector< std::size_t > >& bface,

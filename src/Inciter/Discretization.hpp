@@ -102,12 +102,17 @@ class Discretization : public CBase_Discretization {
     //! Query the mesh velocity
     const tk::Fields& meshvel() const;
 
-   //! \brief Query ALE mesh velocity boundary condition node lists and node
-   //!   lists at which ALE moves boundaries
-   void meshvelBnd(
-     const std::map< int, std::vector< std::size_t > >& bface,
-     const std::map< int, std::vector< std::size_t > >& bnode,
-     const std::vector< std::size_t >& triinpoel ) const;
+    //! Query nodes at which mesh velocity symmetry BCs are specified
+    std::unordered_map< int, std::unordered_set< std::size_t > >
+    meshvelNorm( const std::map< int, std::vector< std::size_t > >& bnode )
+    const;
+
+    //! \brief Query ALE mesh velocity boundary condition node lists and node
+    //!   lists at which ALE moves boundaries
+    void meshvelBnd(
+      const std::map< int, std::vector< std::size_t > >& bface,
+      const std::map< int, std::vector< std::size_t > >& bnode,
+      const std::vector< std::size_t >& triinpoel ) const;
 
     //! Assess and record mesh velocity linear solver convergence
     void meshvelConv();
