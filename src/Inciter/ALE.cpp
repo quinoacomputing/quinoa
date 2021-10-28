@@ -286,6 +286,39 @@ ALE::converged() const
 }
 
 void
+ALE::box( const tk::UnsMesh::Coords& coord )
+// *****************************************************************************
+//  Query and store nodes that fall into user-defined box(es) to move with ALE
+//! \param[in] coord Mesh node coordinates
+// *****************************************************************************
+{
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  const auto& alebox = g_inputdeck.get< tag::ale, tag::box >();
+  for (const auto& b : alebox) {    // for all boxes configured
+    std::vector< tk::real > box
+      { b.get< tag::xmin >(), b.get< tag::xmax >(),
+        b.get< tag::ymin >(), b.get< tag::ymax >(),
+        b.get< tag::zmin >(), b.get< tag::zmax >() };
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
+    // Determine which nodes lie in the IC box
+    if (std::any_of( begin(box), end(box), [=](auto p){return abs(p)>eps;} )) {
+      auto& bn = m_box.emplace_back();
+      for (std::size_t i=0; i<x.size(); ++i) {
+        if ( x[i] > box[0] and x[i] < box[1] and
+             y[i] > box[2] and y[i] < box[3] and
+             z[i] > box[4] and z[i] < box[5] )
+        {
+          bn.insert( i );
+        }
+      }
+    }
+  }
+}
+
+void
 ALE::start(
   const tk::UnsMesh::Coords vel,
   const std::vector< tk::real >& soundspeed,
@@ -327,6 +360,9 @@ ALE::start(
   m_it = it;
   m_t = t;
   m_adt = adt;
+
+  // Query and store nodes that fall into user-defined box(es) to move with ALE
+  box( coord );
 
   // assign mesh velocity
   auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();

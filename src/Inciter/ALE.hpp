@@ -175,6 +175,7 @@ class ALE : public CBase_ALE {
       p | m_meshveldirbcnodes;
       p | m_meshvelsymbcnodes;
       p | m_move;
+      p | m_box;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -261,6 +262,9 @@ class ALE : public CBase_ALE {
                   tk::Table<3>,
                   std::unordered_set< std::size_t > >
     > m_move;
+    //! \brief Local node ids falling into ALE boxes configured by the user
+    //! \details Within these boxes we move nodes with ALE, others stay put.
+    std::vector< std::unordered_set< std::size_t > > m_box;
 
     //! Generate {A,x,b} for Laplacian mesh velocity smoother
     std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
@@ -269,6 +273,9 @@ class ALE : public CBase_ALE {
 
     //! Initialize user-defined functions for ALE moving sides
     decltype(m_move) moveCfg();
+
+    //! Query nodes that fall into user-defined box(es) to move with ALE
+    void box( const tk::UnsMesh::Coords& coord );
 
     //! Find Dirichlet BCs on mesh velocity with prescribed movement
     bool move( std::size_t i ) const;
