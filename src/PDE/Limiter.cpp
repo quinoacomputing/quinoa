@@ -239,9 +239,6 @@ VertexBasedTransport_P1(
   std::size_t offset,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
   tk::Fields& U )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for transport DGP1
@@ -253,11 +250,6 @@ VertexBasedTransport_P1(
 //! \param[in] offset Index for equation systems
 //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
-//! \param[in] gid Local->global node id map
-//! \param[in] bid Local chare-boundary node ids (value) associated to
-//!   global node ids (key)
-//! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-//!   variables
 //! \param[in,out] U High-order solution vector which gets limited
 //! \details This vertex-based limiter function should be called for transport.
 //!   For details see: Kuzmin, D. (2010). A vertex-based hierarchical slope
@@ -294,7 +286,7 @@ VertexBasedTransport_P1(
       std::vector< tk::real > phi(ncomp, 1.0);
       // limit conserved quantities
       VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
-        dof_el, offset, ncomp, gid, bid, uNodalExtrm, phi, {0, ncomp-1});
+        dof_el, offset, ncomp, phi, {0, ncomp-1});
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(ncomp, 0);
@@ -331,9 +323,6 @@ VertexBasedCompflow_P1(
   std::size_t offset,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
   tk::Fields& U )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for single-material DGP1
@@ -344,11 +333,6 @@ VertexBasedCompflow_P1(
 //! \param[in] offset Index for equation systems
 //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
-//! \param[in] gid Local->global node id map
-//! \param[in] bid Local chare-boundary node ids (value) associated to
-//!   global node ids (key)
-//! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-//!   variables
 //! \param[in,out] U High-order solution vector which gets limited
 //! \details This vertex-based limiter function should be called for compflow.
 //!   For details see: Kuzmin, D. (2010). A vertex-based hierarchical slope
@@ -383,7 +367,7 @@ VertexBasedCompflow_P1(
       std::vector< tk::real > phi(ncomp, 1.0);
       // limit conserved quantities
       VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
-        dof_el, offset, ncomp, gid, bid, uNodalExtrm, phi, {0, ncomp-1});
+        dof_el, offset, ncomp, phi, {0, ncomp-1});
 
       // apply limiter function
       for (std::size_t c=0; c<ncomp; ++c)
@@ -484,7 +468,7 @@ VertexBasedCompflow_P2(
 
       // limit conserved quantities
       VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
-        dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic_p1, {0, ncomp-1});
+        dof_el, offset, ncomp, phic_p1, {0, ncomp-1});
 
       if(dof_el > 4)
         for (std::size_t c=0; c<ncomp; ++c)
@@ -559,10 +543,6 @@ VertexBasedMultiMat_P1(
   [[maybe_unused]] const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
-  const std::vector< std::vector<tk::real> >& pNodalExtrm,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -577,13 +557,6 @@ VertexBasedMultiMat_P1(
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
-//! \param[in] gid Local->global node id map
-//! \param[in] bid Local chare-boundary node ids (value) associated to
-//!   global node ids (key)
-//! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-//!   variables
-//! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-//!   variables
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
@@ -648,15 +621,15 @@ VertexBasedMultiMat_P1(
 
         // limit conserved quantities
         VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
-          dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic, {0, ncomp-1});
+          dof_el, offset, ncomp, phic, {0, ncomp-1});
         // limit primitive quantities
         VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e, rdof,
-          dof_el, offset, nprim, gid, bid, pNodalExtrm, phip, {0, nprim-1});
+          dof_el, offset, nprim, phip, {0, nprim-1});
       } else {
         // When shockmarker is 0, the volume fraction, density and energy
         // of minor material will still be limited to ensure a stable solution.
         VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
-          dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic,
+          dof_el, offset, ncomp, phic,
           {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)});
 
         for(std::size_t k=0; k<nmat; ++k) {
@@ -668,19 +641,19 @@ VertexBasedMultiMat_P1(
             VarRange[0] = densityIdx(nmat, k);
             VarRange[1] = VarRange[0];
             VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
-              dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic, VarRange);
+              dof_el, offset, ncomp, phic, VarRange);
 
             // limit the energy of minor materials
             VarRange[0] = energyIdx(nmat, k);
             VarRange[1] = VarRange[0];
             VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
-              dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic, VarRange);
+              dof_el, offset, ncomp, phic, VarRange);
 
             // limit the pressure of minor materials
             VarRange[0] = pressureIdx(nmat, k);
             VarRange[1] = VarRange[0];
             VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e, rdof,
-              dof_el, offset, nprim, gid, bid, uNodalExtrm, phip, VarRange);
+              dof_el, offset, nprim, phip, VarRange);
           }
         }
       }
@@ -1008,9 +981,6 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   std::size_t dof_el,
   std::size_t offset,
   std::size_t ncomp,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& NodalExtrm,
   std::vector< tk::real >& phi,
   const std::array< std::size_t, 2 >& VarRange )
 // *****************************************************************************
@@ -1025,10 +995,6 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
 //! \param[in] dof_el Local number of degrees of freedom
 //! \param[in] offset Index for equation systems
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] gid Local->global node id map
-//! \param[in] bid Local chare-boundary node ids (value) associated to
-//!   global node ids (key)
-//! \param[in] NodalExtrm Chare-boundary nodal extrema
 //! \return phi Limiter function for solution in element e
 // *****************************************************************************
 {
@@ -1038,8 +1004,6 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   // 1. Find min-max bounds in the nodal-neighborhood of cell.
   // 2. Calculate the limiter function (Superbee) for all the vertices of cell.
   //    From these, use the minimum value of the limiter function.
-
-  const auto nelem = inpoel.size() / 4;
 
   // Prepare for calculating Basis functions
   const auto& cx = coord[0];
@@ -1078,31 +1042,12 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
     // loop over all the internal elements surrounding this node p
     for (auto er : pesup)
     {
-      if(er < nelem)
-      {
-        for (std::size_t c=VarRange[0]; c<=VarRange[1]; ++c)
-        {
-          auto mark = c*rdof;
-          auto cmark = c-VarRange[0];
-          uMin[cmark] = std::min(uMin[cmark], U(er, mark, offset));
-          uMax[cmark] = std::max(uMax[cmark], U(er, mark, offset));
-        }
-      }
-    }
-
-    // If node p is the chare-boundary node, find min/max by comparing with
-    // the chare-boundary nodal extrema from vector NodalExtrm
-    auto gip = bid.find( gid[p] );
-    if(gip != end(bid))
-    {
-      auto ndof_NodalExtrm = NodalExtrm[0].size() / (ncomp * 2);
       for (std::size_t c=VarRange[0]; c<=VarRange[1]; ++c)
       {
-        auto max_mark = 2*c*ndof_NodalExtrm;
-        auto min_mark = max_mark + 1;
-        auto cmark = c - VarRange[0];
-        uMax[cmark] = std::max(NodalExtrm[gip->second][max_mark], uMax[cmark]);
-        uMin[cmark] = std::min(NodalExtrm[gip->second][min_mark], uMin[cmark]);
+        auto mark = c*rdof;
+        auto cmark = c-VarRange[0];
+        uMin[cmark] = std::min(uMin[cmark], U(er, mark, offset));
+        uMax[cmark] = std::max(uMax[cmark], U(er, mark, offset));
       }
     }
 
@@ -1279,7 +1224,7 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
       auto ndof_NodalExtrm = NodalExtrm[0].size() / (ncomp * 2);
       for (std::size_t c=0; c<ncomp; ++c)
       {
-        for (std::size_t idir = 1; idir < 4; idir++)
+        for (std::size_t idir = 0; idir < 3; idir++)
         {
           auto max_mark = 2*c*ndof_NodalExtrm + 2*idir;
           auto min_mark = max_mark + 1;

@@ -274,9 +274,11 @@ class Transport {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
-                const std::vector< std::size_t >& gid,
-                const std::unordered_map< std::size_t, std::size_t >& bid,
-                const std::vector< std::vector<tk::real> >& uNodalExtrm,
+                [[maybe_unused]] const std::vector< std::size_t >& gid,
+                [[maybe_unused]] const
+                  std::unordered_map< std::size_t, std::size_t >& bid,
+                [[maybe_unused]] const std::vector< std::vector<tk::real> >&
+                  uNodalExtrm,
                 [[maybe_unused]] const std::vector< std::vector<tk::real> >&
                   pNodalExtrm,
                 tk::Fields& U,
@@ -291,7 +293,7 @@ class Transport {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
         VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm, U );
+          m_system, m_offset, geoElem, coord, U );
     }
 
     //! Compute right hand side

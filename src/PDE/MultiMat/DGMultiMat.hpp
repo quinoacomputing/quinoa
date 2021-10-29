@@ -738,10 +738,13 @@ class MultiMat {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
-                const std::vector< std::size_t >& gid,
-                const std::unordered_map< std::size_t, std::size_t >& bid,
-                const std::vector< std::vector<tk::real> >& uNodalExtrm,
-                const std::vector< std::vector<tk::real> >& pNodalExtrm,
+                [[maybe_unused]] const std::vector< std::size_t >& gid,
+                [[maybe_unused]] const
+                  std::unordered_map< std::size_t, std::size_t >& bid,
+                [[maybe_unused]] const std::vector< std::vector<tk::real> >&
+                  uNodalExtrm,
+                [[maybe_unused]] const std::vector< std::vector<tk::real> >&
+                  pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
@@ -762,8 +765,8 @@ class MultiMat {
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, fd, geoFace, geoElem, coord, gid, bid,
-          uNodalExtrm, pNodalExtrm, U, P, nmat, shockmarker );
+          m_system, m_offset, fd, geoFace, geoElem, coord, U, P, nmat,
+          shockmarker );
       }
       else
       {
