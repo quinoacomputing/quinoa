@@ -386,8 +386,6 @@ class MultiMat {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
-      Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) <= 4, "High-order "
-              "discretizations not set up for multimat cleanTraceMaterial()" );
 
       auto al_eps = 1.0e-02;
       auto neg_density = false;

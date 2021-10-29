@@ -1962,7 +1962,7 @@ void PositivityPreservingLimiting( std::size_t nmat,
   for(std::size_t icomp = 0; icomp < nmat; icomp++)
     phip_p1[icomp] = phi_bound[icomp+ncomp];
   if(ndof > 4) {
-    for(std::size_t icomp = nmat; icomp < ncomp+nprim; icomp++)
+    for(std::size_t icomp = nmat; icomp < ncomp; icomp++)
       phic_p2[icomp] = phi_bound[icomp];
     for(std::size_t icomp = 0; icomp < nmat; icomp++)
       phip_p2[icomp] = phi_bound[icomp+ncomp];
