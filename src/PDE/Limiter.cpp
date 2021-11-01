@@ -15,13 +15,15 @@
 #include <array>
 #include <vector>
 
+#include "FaceData.hpp"
 #include "Vector.hpp"
 #include "Limiter.hpp"
 #include "DerivedData.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Basis.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "Inciter/PrefIndicator.hpp"
+#include "PrefIndicator.hpp"
+#include "Reconstruction.hpp"
 
 namespace inciter {
 
@@ -289,9 +291,10 @@ VertexBasedTransport_P1(
     if (dof_el > 1)
     {
       std::vector< std::vector< tk::real > > unk;
+      std::vector< tk::real > phi(ncomp, 1.0);
       // limit conserved quantities
-      auto phi = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
-        rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
+      VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+        dof_el, offset, ncomp, gid, bid, uNodalExtrm, phi, {0, ncomp-1});
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(ncomp, 0);
@@ -377,9 +380,10 @@ VertexBasedCompflow_P1(
     if (dof_el > 1)
     {
       std::vector< std::vector< tk::real > > unk;
+      std::vector< tk::real > phi(ncomp, 1.0);
       // limit conserved quantities
-      auto phi = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem,
-        e, rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
+      VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+        dof_el, offset, ncomp, gid, bid, uNodalExtrm, phi, {0, ncomp-1});
 
       // apply limiter function
       for (std::size_t c=0; c<ncomp; ++c)
@@ -456,11 +460,11 @@ VertexBasedCompflow_P2(
     bool shock_detec(false);
 
     // Evaluate the shock detection indicator
-    auto Ind = evalDiscontinuityIndicator(e, ncomp, dof_el, ndofel[e], U);
+    auto Ind = evalDiscIndicator_CompFlow(e, ncomp, dof_el, ndofel[e], U);
     if(Ind > 1e-6)
       shock_detec = true;
 
-    if (dof_el > 1 && shock_detec == true)
+    if (dof_el > 1 && shock_detec)
     {
       // Transform the solution with Dubiner basis to Taylor basis so that the
       // limiting function could be applied to physical derivatives in a
@@ -479,8 +483,8 @@ VertexBasedCompflow_P2(
           e, rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
 
       // limit conserved quantities
-      phic_p1 = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
-        rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
+      VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+        dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic_p1, {0, ncomp-1});
 
       if(dof_el > 4)
         for (std::size_t c=0; c<ncomp; ++c)
@@ -551,6 +555,8 @@ VertexBasedMultiMat_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  [[maybe_unused]] const inciter::FaceData& fd,
+  [[maybe_unused]] const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
@@ -559,7 +565,8 @@ VertexBasedMultiMat_P1(
   const std::vector< std::vector<tk::real> >& pNodalExtrm,
   tk::Fields& U,
   tk::Fields& P,
-  std::size_t nmat )
+  std::size_t nmat,
+  std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for multi-material DGP1
 //! \param[in] esup Elements surrounding points
@@ -580,6 +587,7 @@ VertexBasedMultiMat_P1(
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for multimat.
 //!   For details see: Kuzmin, D. (2010). A vertex-based hierarchical slope
 //!   limiter for p-adaptive discontinuous Galerkin methods. Journal of
@@ -592,6 +600,13 @@ VertexBasedMultiMat_P1(
     tag::intsharp >()[system];
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
+
+  // Evaluate the interface condition and mark the shock cells
+  //MarkShockCells(nelem, nmat, system, offset, ndof, rdof, ndofel, inpoel, coord,
+  //  fd, geoFace, geoElem, U, P, shockmarker);
+
+  // Threshold for shock detection indicator
+  auto threshold = pow(10, -5.7);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -610,15 +625,65 @@ VertexBasedMultiMat_P1(
       dof_el = ndofel[e];
     }
 
+    if(ndofel[e] > 1) {
+      // Evaluate the shock detection indicator to determine whether the limiter
+      // is applied or not
+      auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, dof_el, ndofel[e], U);
+      if(Ind > threshold)
+        shockmarker[e] = 1;
+      else
+        shockmarker[e] = 0;
+    } else {    // If P0P1, the limiter is always applied
+      shockmarker[e] = 1;
+    }
+
     if (dof_el > 1)
     {
       std::vector< std::vector< tk::real > > unk;
-      // limit conserved quantities
-      auto phic = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
-        rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm);
-      // limit primitive quantities
-      auto phip = VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e,
-        rdof, dof_el, offset, nprim, gid, bid, pNodalExtrm);
+      std::vector< tk::real > phic(ncomp, 1.0);
+      std::vector< tk::real > phip(nprim, 1.0);
+      if(shockmarker[e]) {
+        // When shockmarker is 1, there is discontinuity within the element.
+        // Hence, the vertex-based limiter will be applied.
+
+        // limit conserved quantities
+        VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+          dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic, {0, ncomp-1});
+        // limit primitive quantities
+        VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e, rdof,
+          dof_el, offset, nprim, gid, bid, pNodalExtrm, phip, {0, nprim-1});
+      } else {
+        // When shockmarker is 0, the volume fraction, density and energy
+        // of minor material will still be limited to ensure a stable solution.
+        VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+          dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic,
+          {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)});
+
+        for(std::size_t k=0; k<nmat; ++k) {
+          if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-4) {
+            // Vector to store the range of limited variables
+            std::array< std::size_t, 2 > VarRange;
+
+            // limit the density of minor materials
+            VarRange[0] = densityIdx(nmat, k);
+            VarRange[1] = VarRange[0];
+            VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+              dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic, VarRange);
+
+            // limit the energy of minor materials
+            VarRange[0] = energyIdx(nmat, k);
+            VarRange[1] = VarRange[0];
+            VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+              dof_el, offset, ncomp, gid, bid, uNodalExtrm, phic, VarRange);
+
+            // limit the pressure of minor materials
+            VarRange[0] = pressureIdx(nmat, k);
+            VarRange[1] = VarRange[0];
+            VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e, rdof,
+              dof_el, offset, nprim, gid, bid, uNodalExtrm, phip, VarRange);
+          }
+        }
+      }
 
       if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
@@ -896,7 +961,7 @@ SuperbeeLimiting( const tk::Fields& U,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
-      auto state = tk::eval_state( ncomp, offset, rdof, dof_el, e, U, B_l );
+      auto state = tk::eval_state( ncomp, offset, rdof, dof_el, e, U, B_l, {0, ncomp-1} );
 
       Assert( state.size() == ncomp, "Size mismatch" );
 
@@ -931,7 +996,7 @@ SuperbeeLimiting( const tk::Fields& U,
   return phi;
 }
 
-std::vector< tk::real >
+void
 VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
@@ -945,7 +1010,9 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   std::size_t ncomp,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& NodalExtrm )
+  const std::vector< std::vector<tk::real> >& NodalExtrm,
+  std::vector< tk::real >& phi,
+  const std::array< std::size_t, 2 >& VarRange )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter function calculation for P1 dofs
 //! \param[in] U High-order solution vector which is to be limited
@@ -990,17 +1057,19 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   auto detT =
     tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-  std::vector< tk::real > uMin(ncomp, 0.0), uMax(ncomp, 0.0), phi(ncomp, 1.0);
+  std::vector< tk::real > uMin(VarRange[1]-VarRange[0]+1, 0.0),
+                          uMax(VarRange[1]-VarRange[0]+1, 0.0);
 
   // loop over all nodes of the element e
   for (std::size_t lp=0; lp<4; ++lp)
   {
     // reset min/max
-    for (std::size_t c=0; c<ncomp; ++c)
+    for (std::size_t c=VarRange[0]; c<=VarRange[1]; ++c)
     {
       auto mark = c*rdof;
-      uMin[c] = U(e, mark, offset);
-      uMax[c] = U(e, mark, offset);
+      auto cmark = c-VarRange[0];
+      uMin[cmark] = U(e, mark, offset);
+      uMax[cmark] = U(e, mark, offset);
     }
     auto p = inpoel[4*e+lp];
     const auto& pesup = tk::cref_find(esup, p);
@@ -1011,11 +1080,12 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
     {
       if(er < nelem)
       {
-        for (std::size_t c=0; c<ncomp; ++c)
+        for (std::size_t c=VarRange[0]; c<=VarRange[1]; ++c)
         {
           auto mark = c*rdof;
-          uMin[c] = std::min(uMin[c], U(er, mark, offset));
-          uMax[c] = std::max(uMax[c], U(er, mark, offset));
+          auto cmark = c-VarRange[0];
+          uMin[cmark] = std::min(uMin[cmark], U(er, mark, offset));
+          uMax[cmark] = std::max(uMax[cmark], U(er, mark, offset));
         }
       }
     }
@@ -1026,12 +1096,13 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
     if(gip != end(bid))
     {
       auto ndof_NodalExtrm = NodalExtrm[0].size() / (ncomp * 2);
-      for (std::size_t c=0; c<ncomp; ++c)
+      for (std::size_t c=VarRange[0]; c<=VarRange[1]; ++c)
       {
         auto max_mark = 2*c*ndof_NodalExtrm;
         auto min_mark = max_mark + 1;
-        uMax[c] = std::max(NodalExtrm[gip->second][max_mark], uMax[c]);
-        uMin[c] = std::min(NodalExtrm[gip->second][min_mark], uMin[c]);
+        auto cmark = c - VarRange[0];
+        uMax[cmark] = std::max(NodalExtrm[gip->second][max_mark], uMax[cmark]);
+        uMin[cmark] = std::min(NodalExtrm[gip->second][min_mark], uMin[cmark]);
       }
     }
 
@@ -1046,7 +1117,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
             tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
-      state = tk::eval_state( ncomp, offset, rdof, dof_el, e, U, B_p );
+      state = tk::eval_state( ncomp, offset, rdof, dof_el, e, U, B_p, VarRange );
     }
     else {  // If DG(P2), evaluate high order solution based on Taylor basis
       // The nodal and central coordinates
@@ -1063,19 +1134,20 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
     Assert( state.size() == ncomp, "Size mismatch" );
 
     // compute the limiter function
-    for (std::size_t c=0; c<ncomp; ++c)
+    for (std::size_t c=VarRange[0]; c<=VarRange[1]; ++c)
     {
       auto phi_gp = 1.0;
       auto mark = c*rdof;
       auto uNeg = state[c] - U(e, mark, offset);
       auto uref = std::max(std::fabs(U(e,mark,offset)), 1e-14);
+      auto cmark = c - VarRange[0];
       if (uNeg > 1.0e-06*uref)
       {
-        phi_gp = std::min( 1.0, (uMax[c]-U(e, mark, offset))/uNeg );
+        phi_gp = std::min( 1.0, (uMax[cmark]-U(e, mark, offset))/uNeg );
       }
       else if (uNeg < -1.0e-06*uref)
       {
-        phi_gp = std::min( 1.0, (uMin[c]-U(e, mark, offset))/uNeg );
+        phi_gp = std::min( 1.0, (uMin[cmark]-U(e, mark, offset))/uNeg );
       }
       else
       {
@@ -1086,8 +1158,6 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
       phi[c] = std::min( phi[c], phi_gp );
     }
   }
-
-  return phi;
 }
 
 std::vector< tk::real >
@@ -1463,7 +1533,8 @@ void BoundPreservingLimiting( std::size_t nmat,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
-      auto state = eval_state( U.nprop()/ndof, offset, ndof, ndof, e, U, B );
+      auto state = eval_state( U.nprop()/ndof, offset, ndof, ndof, e, U, B,
+        {0, U.nprop()/ndof-1} );
 
       for(std::size_t imat = 0; imat < nmat; imat++)
       {
@@ -1521,6 +1592,174 @@ interfaceIndicator( std::size_t nmat,
   if ((almax > loLim) && (almax < hiLim)) intInd = true;
 
   return intInd;
+}
+
+void MarkShockCells ( const std::size_t nelem,
+                      const std::size_t nmat,
+                      const std::size_t system,
+                      const std::size_t offset,
+                      const std::size_t ndof,
+                      const std::size_t rdof,
+                      const std::vector< std::size_t >& ndofel,
+                      const std::vector< std::size_t >& inpoel,
+                      const tk::UnsMesh::Coords& coord,
+                      const inciter::FaceData& fd,
+                      const tk::Fields& geoFace,
+                      const tk::Fields& geoElem,
+                      const tk::Fields& U,
+                      const tk::Fields& P,
+                      std::vector< std::size_t >& shockmarker )
+// *****************************************************************************
+//  Mark the cells that contain discontinuity according to the interface
+//    condition
+//! \param[in] nelem Number of elements
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] system Equation system index
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] ndofel Vector of local number of degrees of freedome
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in, out] shockmarker Vector of the shock indicator
+//! \details This function computes the discontinuity indicator based on
+//!   interface conditon. It is based on the following paper:
+//!   Hong L., Gianni A., Robert N. (2021) A moving discontinuous Galerkin
+//!   finite element method with interface condition enforcement for
+//!   compressible flows. Journal of Computational Physics,
+//!   doi: https://doi.org/10.1016/j.jcp.2021.110618
+// *****************************************************************************
+{
+  std::vector< tk::real > IC(U.nunk(), 0.0);
+  const auto& esuf = fd.Esuf();
+  const auto& inpofa = fd.Inpofa();
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
+
+  // Loop over faces
+  for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f) {
+    Assert( esuf[2*f] > -1 && esuf[2*f+1] > -1, "Interior element detected "
+            "as -1" );
+
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    // When the number of gauss points for the left and right element are
+    // different, choose the larger ng
+    auto ng_l = tk::NGfa(ndofel[el]);
+    auto ng_r = tk::NGfa(ndofel[er]);
+
+    auto ng = std::max( ng_l, ng_r );
+
+    std::array< std::vector< tk::real >, 2 > coordgp
+      { std::vector<tk::real>(ng), std::vector<tk::real>(ng) };
+    std::vector< tk::real > wgp( ng );
+
+    tk::GaussQuadratureTri( ng, coordgp, wgp );
+
+    // Extract the element coordinates
+    std::array< std::array< tk::real, 3>, 4 > coordel_l {{
+      {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
+      {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
+      {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
+      {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
+
+    std::array< std::array< tk::real, 3>, 4 > coordel_r {{
+      {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
+      {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
+      {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
+      {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
+
+    // Compute the determinant of Jacobian matrix
+    auto detT_l =
+      tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+    auto detT_r =
+      tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
+
+    std::array< std::array< tk::real, 3>, 3 > coordfa {{
+      {{ cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] }},
+      {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
+      {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
+
+    std::array< tk::real, 3 >
+      fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+
+    for (std::size_t igp=0; igp<ng; ++igp) {
+      auto gp = tk::eval_gp( igp, coordfa, coordgp );
+      std::size_t dof_el, dof_er;
+      if (rdof > ndof)
+      {
+        dof_el = rdof;
+        dof_er = rdof;
+      }
+      else
+      {
+        dof_el = ndofel[el];
+        dof_er = ndofel[er];
+      }
+      std::array< tk::real, 3> ref_gp_l{
+        tk::Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+        tk::Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+        tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
+      std::array< tk::real, 3> ref_gp_r{
+        tk::Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
+        tk::Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
+        tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r };
+      auto B_l = tk::eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
+      auto B_r = tk::eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2] );
+
+      auto wt = wgp[igp] * geoFace(f,0,0);
+
+      std::array< std::vector< tk::real >, 2 > state;
+
+      // Evaluate the high order solution at the qudrature point
+      state[0] = tk::evalPolynomialSol(system, offset, 0, ncomp, nprim, rdof,
+        nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+      state[1] = tk::evalPolynomialSol(system, offset, 0, ncomp, nprim, rdof,
+        nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
+
+      Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
+              "appended boundary state vector" );
+      Assert( state[1].size() == ncomp+nprim, "Incorrect size for "
+              "appended boundary state vector" );
+
+      // Evaluate the bulk density
+      tk::real rhol(0.0), rhor(0.0);
+      for(std::size_t k = 0; k < nmat; k++) {
+        rhol += state[0][densityIdx(nmat,k)];
+        rhor += state[1][densityIdx(nmat,k)];
+      }
+
+      // Evaluate the flux for the density
+      tk::real fl(0.0), fr(0.0);
+      for(std::size_t i = 0; i < 3; i++) {
+        fl += rhol * state[0][ncomp+velocityIdx(nmat,i)] * fn[i];
+        fr += rhor * state[1][ncomp+velocityIdx(nmat,i)] * fn[i];
+      }
+
+      tk::real rhs =  wt * fabs(fl - fr);
+      IC[el] += rhs;
+      IC[er] += rhs;
+    }
+  }
+
+  // Loop over element to mark shock cell
+  for (std::size_t e=0; e<nelem; ++e) {
+    if(fabs(IC[e]) > 1e-6)
+      shockmarker[e] = 1;
+    else
+      shockmarker[e] = 0;
+  }
 }
 
 } // inciter::

@@ -40,6 +40,7 @@
 #include "EoS/EoS.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
+#include "PrefIndicator.hpp"
 
 namespace inciter {
 
@@ -307,7 +308,8 @@ class CompFlow {
                 [[maybe_unused]] const std::vector< std::vector<tk::real> >&
                   pNodalExtrm,
                 tk::Fields& U,
-                tk::Fields& ) const
+                tk::Fields&,
+                std::vector< std::size_t >& ) const
     {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -427,6 +429,39 @@ class CompFlow {
           ++bcnt;
         }
       }
+    }
+
+    //! Evaluate the adaptive indicator and mark the ndof for each element
+    //! \param[in] nunk Number of unknowns
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] unk Array of unknowns
+    //! \param[in] indicator p-refinement indicator type
+    //! \param[in] ndof Number of degrees of freedom in the solution
+    //! \param[in] ndofmax Max number of degrees of freedom for p-refinement
+    //! \param[in] tolref Tolerance for p-refinement
+    //! \param[in,out] ndofel Vector of local number of degrees of freedome
+    void eval_ndof( std::size_t nunk,
+                    const tk::UnsMesh::Coords& coord,
+                    const std::vector< std::size_t >& inpoel,
+                    const inciter::FaceData& fd,
+                    const tk::Fields& unk,
+                    inciter::ctr::PrefIndicatorType indicator,
+                    std::size_t ndof,
+                    std::size_t ndofmax,
+                    tk::real tolref,
+                    std::vector< std::size_t >& ndofel ) const
+    {
+      const auto& esuel = fd.Esuel();
+
+      if(indicator == inciter::ctr::PrefIndicatorType::SPECTRAL_DECAY)
+        spectral_decay( 1, nunk, esuel, unk, ndof, ndofmax, tolref, ndofel );
+      else if(indicator == inciter::ctr::PrefIndicatorType::NON_CONFORMITY)
+        non_conformity( nunk, fd.Nbfac(), inpoel, coord, esuel, fd.Esuf(),
+          fd.Inpofa(), unk, ndof, ndofmax, ndofel );
+      else
+        Throw( "No such adaptive indicator type" );
     }
 
     //! Compute the minimum time step size
@@ -735,7 +770,7 @@ class CompFlow {
           chp[2]-cp[0][2]}};
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, 0, rdof, rdof, e, U, B);
+        auto uhp = eval_state(m_ncomp, 0, rdof, rdof, e, U, B, {0, m_ncomp-1});
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);

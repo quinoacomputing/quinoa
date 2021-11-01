@@ -283,6 +283,7 @@ class DG : public CBase_DG {
       p | m_nodefieldsc;
       p | m_outmesh;
       p | m_boxelems;
+      p | m_shockmarker;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -458,6 +459,8 @@ class DG : public CBase_DG {
     OutMesh m_outmesh;
     //! Element ids at which box ICs are defined by user (multiple boxes)
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
+    //! Shock detection marker for field output
+    std::vector< std::size_t > m_shockmarker;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

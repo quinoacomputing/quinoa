@@ -106,6 +106,8 @@ VertexBasedMultiMat_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
@@ -114,7 +116,8 @@ VertexBasedMultiMat_P1(
   const std::vector< std::vector<tk::real> >& pNodalExtrm,
   tk::Fields& U,
   tk::Fields& P,
-  std::size_t nmat );
+  std::size_t nmat,
+  std::vector< std::size_t >& shockmarker );
 
 //! WENO limiter function calculation for P1 dofs
 void
@@ -142,7 +145,7 @@ SuperbeeLimiting( const tk::Fields& U,
                   tk::real beta_lim );
 
 //! Kuzmin's vertex-based limiter function calculation for P1 dofs
-std::vector< tk::real >
+void
 VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
@@ -156,7 +159,9 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   std::size_t ncomp,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& NodalExtrm );
+  const std::vector< std::vector<tk::real> >& NodalExtrm,
+  std::vector< tk::real >& phi,
+  const std::array< std::size_t, 2 >& VarRange );
 
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
 std::vector< tk::real >
@@ -200,6 +205,22 @@ bool
 interfaceIndicator( std::size_t nmat,
   const std::vector< tk::real >& al,
   std::vector< std::size_t >& matInt );
+
+void MarkShockCells ( const std::size_t nelem,
+                      const std::size_t nmat,
+                      const std::size_t system,
+                      const std::size_t offset,
+                      const std::size_t ndof,
+                      const std::size_t rdof,
+                      const std::vector< std::size_t >& ndofel,
+                      const std::vector< std::size_t >& inpoel,
+                      const tk::UnsMesh::Coords& coord,
+                      const inciter::FaceData& fd,
+                      const tk::Fields& geoFace,
+                      const tk::Fields& geoElem,
+                      const tk::Fields& U,
+                      const tk::Fields& P,
+                      std::vector< std::size_t >& shockmarker );
 
 } // inciter::
 

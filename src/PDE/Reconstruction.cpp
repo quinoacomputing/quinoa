@@ -240,8 +240,8 @@ bndLeastSqConservedVar_P0P1(
 
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
-        auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B );
-        auto uprim = eval_state( nprim, offset, rdof, 1, el, P, B );
+        auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B, {0, ncomp-1} );
+        auto uprim = eval_state( nprim, offset, rdof, 1, el, P, B, {0, nprim-1} );
 
         // consolidate primitives into state vector
         ul.insert(ul.end(), uprim.begin(), uprim.end());
@@ -1038,8 +1038,8 @@ evalPolynomialSol( std::size_t system,
   std::vector< real > state;
   std::vector< real > sprim;
 
-  state = eval_state( ncomp, offset, rdof, dof_e, e, U, B );
-  sprim = eval_state( nprim, offset, rdof, dof_e, e, P, B );
+  state = eval_state( ncomp, offset, rdof, dof_e, e, U, B, {0, ncomp-1} );
+  sprim = eval_state( nprim, offset, rdof, dof_e, e, P, B, {0, nprim-1} );
 
   // consolidate primitives into state vector
   state.insert(state.end(), sprim.begin(), sprim.end());

@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/PrefIndicator.cpp
+  \file      src/PDE/PrefIndicator.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
@@ -18,11 +18,14 @@
 #include "Vector.hpp"
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
-static
-void spectral_decay( std::size_t nunk,
+extern ctr::InputDeck g_inputdeck;
+
+void spectral_decay( std::size_t nmat,
+                     std::size_t nunk,
                      const std::vector< int >& esuel,
                      const tk::Fields& unk,
                      std::size_t ndof,
@@ -31,6 +34,7 @@ void spectral_decay( std::size_t nunk,
                      std::vector< std::size_t >& ndofel )
 // *****************************************************************************
 //! Evaluate the spectral-decay indicator and mark the ndof for each element
+//! \param[in] nmat Number of materials in this PDE system
 //! \param[in] nunk Number of unknowns
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] unk Array of unknowns
@@ -54,8 +58,14 @@ void spectral_decay( std::size_t nunk,
   std::vector< tk::real > Ind(nunk, 0);
 
   for (std::size_t e=0; e<esuel.size()/4; ++e)
-    if(ndofel[e] > 1)
-      Ind[e] = evalDiscontinuityIndicator( e, ncomp, ndof, ndofel[e], unk );
+    if(ndofel[e] > 1) {
+      if(nmat == 1)
+        Ind[e] =
+          evalDiscIndicator_CompFlow(e, ncomp, ndof, ndofel[e], unk);
+      else
+        Ind[e] =
+          evalDiscIndicator_MultiMat(e, nmat, ncomp, ndof, ndofel[e], unk);
+    }
 
   // As for spectral-decay indicator, rho_p - rho_(p-1) actually is the leading
   // term of discretization error for the numerical solution of p-1. Therefore,
@@ -99,7 +109,6 @@ void spectral_decay( std::size_t nunk,
   }
 }
 
-static
 void non_conformity( std::size_t nunk,
                      std::size_t Nbfac,
                      const std::vector< std::size_t >& inpoel,
@@ -214,8 +223,10 @@ void non_conformity( std::size_t nunk,
 
       std::array< std::vector< tk::real >, 2 > state;
 
-      state[0] = tk::eval_state( ncomp, 0, ndof, ndofel[el], el, unk, B_l );
-      state[1] = tk::eval_state( ncomp, 0, ndof, ndofel[er], er, unk, B_r );
+      state[0] = tk::eval_state( ncomp, 0, ndof, ndofel[el], el, unk, B_l,
+        {0, ncomp-1} );
+      state[1] = tk::eval_state( ncomp, 0, ndof, ndofel[er], er, unk, B_r,
+        {0, ncomp-1} );
 
       Assert( unk[0].size() == ncomp, "Size mismatch" );
       Assert( unk[1].size() == ncomp, "Size mismatch" );
@@ -256,42 +267,7 @@ void non_conformity( std::size_t nunk,
   }
 }
 
-void eval_ndof( std::size_t nunk,
-                const tk::UnsMesh::Coords& coord,
-                const std::vector< std::size_t >& inpoel,
-                const inciter::FaceData& fd,
-                const tk::Fields& unk,
-                inciter::ctr::PrefIndicatorType indicator,
-                std::size_t ndof,
-                std::size_t ndofmax,
-                tk::real tolref,
-                std::vector< std::size_t >& ndofel )
-// *****************************************************************************
-//! Evaluate the adaptive indicator and mark the ndof for each element
-//! \param[in] nunk Number of unknowns
-//! \param[in] coord Array of nodal coordinates
-//! \param[in] inpoel Element-node connectivity
-//! \param[in] fd Face connectivity and boundary conditions object
-//! \param[in] unk Array of unknowns
-//! \param[in] indicator p-refinement indicator type
-//! \param[in] ndof Number of degrees of freedom in the solution
-//! \param[in] ndofmax Max number of degrees of freedom for p-refinement
-//! \param[in] tolref Tolerance for p-refinement
-//! \param[in,out] ndofel Vector of local number of degrees of freedome
-// *****************************************************************************
-{
-  const auto& esuel = fd.Esuel();
-
-  if(indicator == inciter::ctr::PrefIndicatorType::SPECTRAL_DECAY)
-    spectral_decay( nunk, esuel, unk, ndof, ndofmax, tolref, ndofel );
-  else if(indicator == inciter::ctr::PrefIndicatorType::NON_CONFORMITY)
-    non_conformity( nunk, fd.Nbfac(), inpoel, coord, esuel, fd.Esuf(),
-                    fd.Inpofa(), unk, ndof, ndofmax, ndofel );
-  else
-    Throw( "No such adaptive indicator type" );
-}
-
-tk::real evalDiscontinuityIndicator( std::size_t e,
+tk::real evalDiscIndicator_CompFlow( std::size_t e,
                                      ncomp_t ncomp,
                                      const std::size_t ndof,
                                      const std::size_t ndofel,
@@ -306,22 +282,19 @@ tk::real evalDiscontinuityIndicator( std::size_t e,
 //! \return The value of spectral indicator for the element
 // *****************************************************************************
 {
-  tk::real Ind(0.0);
-
   auto ng = tk::NGvol(ndofel);
 
   // arrays for quadrature points
   std::array< std::vector< tk::real >, 3 > coordgp;
-  std::vector< tk::real > wgp;
+  std::vector< tk::real > wgp( ng );
 
   coordgp[0].resize( ng );
   coordgp[1].resize( ng );
   coordgp[2].resize( ng );
-  wgp.resize( ng );
 
   tk::GaussQuadratureTet( ng, coordgp, wgp );
 
-  tk::real dU(0), U(0);
+  tk::real dU(0.0), U(0.0), Ind(0.0);
 
   // Gaussian quadrature
   for (std::size_t igp=0; igp<ng; ++igp)
@@ -330,7 +303,7 @@ tk::real evalDiscontinuityIndicator( std::size_t e,
     auto B = tk::eval_basis( ndofel, coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
-    auto state = tk::eval_state( ncomp, 0, ndof, ndofel, e, unk, B );
+    auto state = tk::eval_state( ncomp, 0, ndof, ndofel, e, unk, B, {0, ncomp-1} );
 
     U += wgp[igp] * state[0] * state[0];
 
@@ -358,6 +331,84 @@ tk::real evalDiscontinuityIndicator( std::size_t e,
   Ind = dU / U;
 
   return Ind;
+}
+
+tk::real evalDiscIndicator_MultiMat( std::size_t e,
+                                     std::size_t nmat,
+                                     ncomp_t ncomp,
+                                     const std::size_t ndof,
+                                     const std::size_t ndofel,
+                                     const tk::Fields& unk )
+// *****************************************************************************
+//! Evaluate the spectral decay indicator
+//! \param[in] e Index for the tetrahedron element
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] ndof Number of degrees of freedom in the solution
+//! \param[in] ndofel Local number of degrees of freedom
+//! \param[in] unk Array of unknowns
+//! \return The value of spectral indicator for the element
+// *****************************************************************************
+{
+  auto ng = tk::NGvol(ndof);
+
+  // arrays for quadrature points
+  std::array< std::vector< tk::real >, 3 > coordgp;
+  std::vector< tk::real > wgp( ng );
+
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  coordgp[2].resize( ng );
+
+  tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+  std::vector<tk::real> dU(nmat,0.0);
+  std::vector<tk::real> U(nmat,0.0);
+  std::vector<std::size_t> marker(nmat,0);
+
+  // Gaussian quadrature
+  for (std::size_t igp=0; igp<ng; ++igp)
+  {
+    // Compute the basis function
+    auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
+                             coordgp[2][igp] );
+
+    auto state = tk::eval_state( ncomp, 0, ndof, ndofel, e, unk, B, {0, ncomp-1} );
+
+    for(std::size_t k = 0; k < nmat; k++) {
+      if(unk(e, volfracDofIdx(nmat, k, ndof, 0), 0) > 1e-2) {
+        marker[k] = 1;
+        U[k] += wgp[igp] *
+          state[densityIdx(nmat, k)] * state[densityIdx(nmat, k)];
+
+        if(ndofel > 4)
+        {
+           auto dU_p2 = unk(e, densityDofIdx(nmat, k, ndof, 4), 0) * B[4]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 5), 0) * B[5]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 6), 0) * B[6]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 7), 0) * B[7]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 8), 0) * B[8]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 9), 0) * B[9];
+
+           dU[k] += wgp[igp] * dU_p2 * dU_p2;
+        }
+        else
+        {
+           auto dU_p1 = unk(e, densityDofIdx(nmat, k, ndof, 1), 0) * B[1]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 2), 0) * B[2]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 3), 0) * B[3];
+
+           dU[k] += wgp[igp] * dU_p1 * dU_p1;
+        }
+      }
+    }
+  }
+
+  // Return the max indicator value among all the materials
+  tk::real Indmax = 0.0;
+  for(std::size_t k = 0; k < nmat; k++)
+    if(marker[k]) Indmax = std::max(dU[k]/U[k], Indmax);
+  return Indmax;
 }
 
 }
