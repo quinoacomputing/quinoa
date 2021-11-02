@@ -200,6 +200,8 @@ ALECG::queryBnd()
     m_spongenodes.insert( begin(nodes), end(nodes) );
 
   // Prepare unique set of time dependent BC nodes
+  m_timedepbcnodes.clear();
+  m_timedepbcFn.clear();
   const auto& timedep =
     g_inputdeck.template get< tag::param, tag::compflow, tag::bctimedep >();
   if (!timedep.empty()) {

@@ -26,7 +26,6 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Refiner.hpp"
 #include "Limiter.hpp"
-#include "PrefIndicator.hpp"
 #include "Reorder.hpp"
 #include "Vector.hpp"
 #include "Around.hpp"
@@ -114,7 +113,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_nodefields(),
   m_nodefieldsc(),
   m_outmesh(),
-  m_boxelems()
+  m_boxelems(),
+  m_shockmarker(m_u.nunk())
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -1348,12 +1348,13 @@ DG::next()
   auto d = Disc();
 
   if (pref && m_stage == 0 && d->T() > 0)
-    eval_ndof( m_nunk, m_coord, m_inpoel, m_fd, m_u,
-               g_inputdeck.get< tag::pref, tag::indicator >(),
-               g_inputdeck.get< tag::discr, tag::ndof >(),
-               g_inputdeck.get< tag::pref, tag::ndofmax >(),
-               g_inputdeck.get< tag::pref, tag::tolref >(),
-               m_ndof );
+    for (const auto& eq : g_dgpde)
+      eq.eval_ndof( m_nunk, m_coord, m_inpoel, m_fd, m_u,
+                    g_inputdeck.get< tag::pref, tag::indicator >(),
+                    g_inputdeck.get< tag::discr, tag::ndof >(),
+                    g_inputdeck.get< tag::pref, tag::ndofmax >(),
+                    g_inputdeck.get< tag::pref, tag::tolref >(),
+                    m_ndof );
 
   // communicate solution ghost data (if any)
   if (m_sendGhost.empty())
@@ -1490,6 +1491,13 @@ DG::extractFieldOutput(
     m_elemfields.push_back( ndof );
   }
 
+  // Add shock detection marker array to element-centered field output
+  std::vector< tk::real > shockmarker( begin(m_shockmarker), end(m_shockmarker) );
+  shockmarker.resize( nelem );
+  for (const auto& [child,parent] : addedTets)
+    shockmarker[child] = m_shockmarker[parent];
+  m_elemfields.push_back( shockmarker );
+
   // Send node fields contributions to neighbor chares
   if (nodeCommMap.empty())
     comnodeout_complete();
@@ -1588,8 +1596,8 @@ DG::evalSolution(
            h{{ce[j][0]-ce[0][0], ce[j][1]-ce[0][1], ce[j][2]-ce[0][2] }};
         auto Bn = tk::eval_basis( m_ndof[e],
                                   dot(J[0],h), dot(J[1],h), dot(J[2],h) );
-        auto u = eval_state( uncomp, 0, rdof, m_ndof[e], e, m_u, Bn );
-        auto p = eval_state( pncomp, 0, rdof, m_ndof[e], e, m_p, Bn );
+        auto u = eval_state( uncomp, 0, rdof, m_ndof[e], e, m_u, Bn, {0, uncomp-1} );
+        auto p = eval_state( pncomp, 0, rdof, m_ndof[e], e, m_p, Bn, {0, pncomp-1} );
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) un(inpoel[e4+j],i,0) += u[i];
         for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[e4+j],i,0) += p[i];
@@ -1630,8 +1638,8 @@ DG::evalSolution(
       std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
       auto B = tk::eval_basis( m_ndof[parent],
                                dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
-      auto u = eval_state( uncomp, 0, rdof, m_ndof[parent], parent, m_u, B );
-      auto p = eval_state( pncomp, 0, rdof, m_ndof[parent], parent, m_p, B );
+      auto u = eval_state( uncomp, 0, rdof, m_ndof[parent], parent, m_u, B, {0, uncomp-1} );
+      auto p = eval_state( pncomp, 0, rdof, m_ndof[parent], parent, m_p, B, {0, pncomp-1} );
       // Assign cell center solution from parent to child
       for (std::size_t i=0; i<uncomp; ++i) ue(child,i*rdof,0) = u[i];
       for (std::size_t i=0; i<pncomp; ++i) pe(child,i*rdof,0) = p[i];
@@ -1647,8 +1655,8 @@ DG::evalSolution(
            hn{{cc[j][0]-cp[0][0], cc[j][1]-cp[0][1], cc[j][2]-cp[0][2] }};
         auto Bn = tk::eval_basis( m_ndof[parent],
                                   dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn) );
-        auto cnu = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_u, Bn);
-        auto cnp = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_p, Bn);
+        auto cnu = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_u, Bn, {0, uncomp-1});
+        auto cnp = eval_state(pncomp, 0, rdof, m_ndof[parent], parent, m_p, Bn, {0, pncomp-1});
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) un(inpoel[c4+j],i,0) += cnu[i];
         for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[c4+j],i,0) += cnp[i];
@@ -2160,7 +2168,7 @@ DG::lim()
     for (const auto& eq : g_dgpde)
       eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel, m_coord,
                 m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm, m_pNodalExtrm, m_u,
-                m_p );
+                m_p, m_shockmarker );
 
   // Send limited solution to neighboring chares
   if (m_sendGhost.empty())
@@ -2657,6 +2665,8 @@ DG::writeFields( CkCallback c )
 
   if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );
+
+  elemfieldnames.push_back( "shock_marker" );
 
   Assert( elemfieldnames.size() == m_elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == m_nodefields.size(), "Size mismatch" );

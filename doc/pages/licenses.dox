@@ -212,9 +212,6 @@ executable.
 \subsection intel_web Intel C++ compiler
   - Web: https://software.intel.com/en-us/c-compilers
 
-\subsection cray_web Cray C++ compiler
-  - Web: https://pubs.cray.com/content/S-2179/8.7/cray-c-and-c++-reference-manual
-
 -------------------------------------
 
 \section tools_web Tools
@@ -248,15 +245,6 @@ executable.
 
 \subsection teamcity_web TeamCity for continuous integration
   - Web: https://www.jetbrains.com/?from=quinoa
-
-\subsection azure_web Azure DevOps for continuous integration
-  - Web: https://azure.microsoft.com/en-us/services/devops
-
-\subsection codecov_web Codecov for test coverage analysis
-  - Web: https://codecov.io
-
-\subsection sonarqube_web SonarQube for code quality analysis
-  - Web: https://www.sonarqube.org
 
 \subsection docker_web Docker for containers and testing
   - Web: https://www.docker.com

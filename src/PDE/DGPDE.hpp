@@ -204,10 +204,11 @@ class DGPDE {
                 const std::vector< std::vector<tk::real> >& uNodalExtrm,
                 const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 tk::Fields& U,
-                tk::Fields& P ) const
+                tk::Fields& P,
+                std::vector< std::size_t >& shockmarker ) const
     {
       self->limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                   bid, uNodalExtrm, pNodalExtrm, U, P );
+                   bid, uNodalExtrm, pNodalExtrm, U, P, shockmarker );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -225,6 +226,22 @@ class DGPDE {
     {
       self->rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
                  ndofel, R );
+    }
+
+    //! Evaluate the adaptive indicator and mark the ndof for each element
+    void eval_ndof( std::size_t nunk,
+                    const tk::UnsMesh::Coords& coord,
+                    const std::vector< std::size_t >& inpoel,
+                    const inciter::FaceData& fd,
+                    const tk::Fields& unk,
+                    inciter::ctr::PrefIndicatorType indicator,
+                    std::size_t ndof,
+                    std::size_t ndofmax,
+                    tk::real tolref,
+                    std::vector< std::size_t >& ndofel ) const
+    {
+      self->eval_ndof( nunk, coord, inpoel, fd, unk, indicator, ndof, ndofmax,
+        tolref, ndofel );
     }
 
     //! Public interface for computing the minimum time step size
@@ -343,7 +360,8 @@ class DGPDE {
                           const std::vector< std::vector<tk::real> >&,
                           const std::vector< std::vector<tk::real> >&,
                           tk::Fields&,
-                          tk::Fields& ) const = 0;
+                          tk::Fields&,
+                          std::vector< std::size_t >& ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -355,6 +373,16 @@ class DGPDE {
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
                         tk::Fields& ) const = 0;
+      virtual void eval_ndof( std::size_t,
+                              const tk::UnsMesh::Coords&,
+                              const std::vector< std::size_t >&,
+                              const inciter::FaceData&,
+                              const tk::Fields&,
+                              inciter::ctr::PrefIndicatorType,
+                              std::size_t,
+                              std::size_t,
+                              tk::real,
+                              std::vector< std::size_t >& ) const = 0;
       virtual tk::real dt( const std::array< std::vector< tk::real >, 3 >&,
                            const std::vector< std::size_t >&,
                            const inciter::FaceData&,
@@ -452,10 +480,11 @@ class DGPDE {
                   const std::vector< std::vector<tk::real> >& uNodalExtrm,
                   const std::vector< std::vector<tk::real> >& pNodalExtrm,
                   tk::Fields& U,
-                  tk::Fields& P ) const override
+                  tk::Fields& P,
+                  std::vector< std::size_t >& shockmarker ) const override
       {
         data.limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                    bid, uNodalExtrm, pNodalExtrm, U, P );
+                    bid, uNodalExtrm, pNodalExtrm, U, P, shockmarker );
       }
       void rhs(
         tk::real t,
@@ -473,6 +502,18 @@ class DGPDE {
         data.rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
                   ndofel, R );
       }
+      void eval_ndof( std::size_t nunk,
+                      const tk::UnsMesh::Coords& coord,
+                      const std::vector< std::size_t >& inpoel,
+                      const inciter::FaceData& fd,
+                      const tk::Fields& unk,
+                      inciter::ctr::PrefIndicatorType indicator,
+                      std::size_t ndof,
+                      std::size_t ndofmax,
+                      tk::real tolref,
+                      std::vector< std::size_t >& ndofel ) const override
+      { data.eval_ndof( nunk, coord, inpoel, fd, unk, indicator, ndof, ndofmax,
+                        tolref, ndofel ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const inciter::FaceData& fd,
