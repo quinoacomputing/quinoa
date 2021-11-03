@@ -296,6 +296,7 @@ ALE::box( const tk::UnsMesh::Coords& coord )
   const auto& y = coord[1];
   const auto& z = coord[2];
 
+  m_box.clear();
   const auto& alebox = g_inputdeck.get< tag::ale, tag::box >();
   for (const auto& b : alebox) {    // for all boxes configured
     std::vector< tk::real > box
