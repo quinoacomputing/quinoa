@@ -1228,10 +1228,10 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
         {
           auto max_mark = 2*c*ndof_NodalExtrm + 2*idir;
           auto min_mark = max_mark + 1;
-          uMax[c][idir-1] =
-            std::max(NodalExtrm[gip->second][max_mark], uMax[c][idir-1]);
-          uMin[c][idir-1] =
-            std::min(NodalExtrm[gip->second][min_mark], uMin[c][idir-1]);
+          uMax[c][idir] =
+            std::max(NodalExtrm[gip->second][max_mark], uMax[c][idir]);
+          uMin[c][idir] =
+            std::min(NodalExtrm[gip->second][min_mark], uMin[c][idir]);
         }
       }
     }
