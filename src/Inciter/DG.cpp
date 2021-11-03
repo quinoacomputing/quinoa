@@ -54,7 +54,7 @@ DG::DG( const CProxy_Discretization& disc,
         const std::map< int, std::vector< std::size_t > >& /* bnode */,
         const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
-  m_ndof_NodalExtrm( 3 ),
+  m_ndof_NodalExtrm( 3 ), // for the first order derivatives in 3 directions
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_ncomEsup( 0 ),
@@ -2011,10 +2011,8 @@ void DG::evalNodalExtrm( const std::size_t ncomp,
 
         // Vector used to store the first order derivatives for both
         // conservative and primitive variables
-        std::vector< std::vector< tk::real > >
-          gradc(ncomp, std::vector<tk::real>(3, 0.0));
-        std::vector< std::vector< tk::real > >
-          gradp(ncomp, std::vector<tk::real>(3, 0.0));
+        std::vector< std::array< tk::real, 3 > > gradc(ncomp, {0.0, 0.0, 0.0});
+        std::vector< std::array< tk::real, 3 > > gradp(ncomp, {0.0, 0.0, 0.0});
 
         const auto& cx = coord[0];
         const auto& cy = coord[1];
@@ -2068,10 +2066,9 @@ void DG::evalNodalExtrm( const std::size_t ncomp,
           {
             auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
             auto min_mark = max_mark + 1;
-            uNodalExtrm[i->second][max_mark] =
-              std::max(uNodalExtrm[i->second][max_mark], gradc[c][idof-1]);
-            uNodalExtrm[i->second][min_mark] =
-              std::min(uNodalExtrm[i->second][min_mark], gradc[c][idof-1]);
+            auto& ex = uNodalExtrm[i->second];
+            ex[max_mark] = std::max(ex[max_mark], gradc[c][idof-1]);
+            ex[min_mark] = std::min(ex[min_mark], gradc[c][idof-1]);
           }
         }
         for (std::size_t c=0; c<nprim; ++c)
@@ -2080,10 +2077,9 @@ void DG::evalNodalExtrm( const std::size_t ncomp,
           {
             auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
             auto min_mark = max_mark + 1;
-            pNodalExtrm[i->second][max_mark] =
-              std::max(pNodalExtrm[i->second][max_mark], gradp[c][idof-1]);
-            pNodalExtrm[i->second][min_mark] =
-              std::min(pNodalExtrm[i->second][min_mark], gradp[c][idof-1]);
+            auto& ex = pNodalExtrm[i->second];
+            ex[max_mark] = std::max(ex[max_mark], gradp[c][idof-1]);
+            ex[min_mark] = std::min(ex[min_mark], gradp[c][idof-1]);
           }
         }
       }

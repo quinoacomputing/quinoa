@@ -343,6 +343,7 @@ recoLeastSqExtStencil(
                {{0.0, 0.0, 0.0}},
                {{0.0, 0.0, 0.0}} }} );
   // rhs matrix
+  Assert( varRange[0] <= varRange[1], "Incorrect variable range detected" );
   std::vector< std::array< tk::real, 3 > >
   rhs_ls( varRange[1]-varRange[0]+1, {{ 0.0, 0.0, 0.0 }} );
 

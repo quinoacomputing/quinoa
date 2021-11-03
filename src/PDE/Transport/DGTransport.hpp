@@ -263,8 +263,6 @@ class Transport {
 //    //!   global node ids (key)
 //    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
 //    //!   variables
-//    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-//    //!   variables
     //! \param[in,out] U Solution vector at recent time step
     void limit( [[maybe_unused]] tk::real t,
                 [[maybe_unused]] const tk::Fields& geoFace,
