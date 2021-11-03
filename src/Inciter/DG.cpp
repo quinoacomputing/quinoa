@@ -1493,6 +1493,13 @@ DG::extractFieldOutput(
 
   // Add shock detection marker array to element-centered field output
   std::vector< tk::real > shockmarker( begin(m_shockmarker), end(m_shockmarker) );
+  // Here m_shockmarker has a size of m_u.nunk() which is the number of the
+  // elements within this partition (nelem) plus the ghost partition cells. In
+  // terms of output purpose, we only need the solution data within this
+  // partition. Therefore, resizing it to nelem removes the extra partition
+  // boundary allocations in the shockmarker vector. Since the code assumes that
+  // the boundary elements are on the top, the resize operation keeps the lower
+  // portion.
   shockmarker.resize( nelem );
   for (const auto& [child,parent] : addedTets)
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
