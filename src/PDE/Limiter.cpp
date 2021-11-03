@@ -830,7 +830,7 @@ VertexBasedMultiMat_P2(
       phip_p1.resize(nprim, 1.0);
       phip_p2.resize(nprim, 1.0);
 
-      if(ndof > 1 && intsharp == 0)
+      //if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U_lim,
           phic_p1, phic_p2);
 
@@ -847,20 +847,11 @@ VertexBasedMultiMat_P2(
       {
         for (std::size_t k=0; k<nmat; ++k)
         {
-          if (matInt[k])
-          {
-            // If THINC is applied to this material, the high order coefficients
-            // of density, energy and monmentum will be reset to 0
-            for(std::size_t idof = 1; idof < rdof; idof++)
-            {
-              U_lim(e, densityDofIdx(nmat, k, rdof, idof), offset) = 0;
-              U_lim(e, energyDofIdx(nmat, k, rdof, idof), offset) = 0;
-            }
+          if (matInt[k]) {
+            phic_p1[volfracIdx(nmat,k)] = 1.0;
+            phic_p2[volfracIdx(nmat,k)] = 1.0;
           }
         }
-        for(std::size_t idir = 0; idir < 3; idir++)
-          for(std::size_t idof = 1; idof < rdof; idof++)
-            U_lim(e, momentumDofIdx(nmat, idir, rdof, idof), offset) = 0;
       }
       else
       {
