@@ -258,13 +258,13 @@ class Transport {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
-    //! \param[in] gid Local->global node id map
-    //! \param[in] bid Local chare-boundary node ids (value) associated to
-    //!   global node ids (key)
-    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-    //!   variables
-    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-    //!   variables
+//    //! \param[in] gid Local->global node id map
+//    //! \param[in] bid Local chare-boundary node ids (value) associated to
+//    //!   global node ids (key)
+//    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
+//    //!   variables
+//    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
+//    //!   variables
     //! \param[in,out] U Solution vector at recent time step
     void limit( [[maybe_unused]] tk::real t,
                 [[maybe_unused]] const tk::Fields& geoFace,
