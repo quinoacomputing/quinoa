@@ -907,6 +907,12 @@ ALE::meshforce()
     }
   }
 
+//   // Test correctness of the ALE box feature
+//   for (std::size_t i=0; i<m_w.nunk(); ++i)
+//     for (const auto& b : m_box)
+//       if (b.find(i) == end(b))
+//         m_w(i,0,0) = m_w(i,1,0) = m_w(i,2,0) = 0.0;
+
   // Activate SDAG wait for re-computing prerequisites for ALE
   thisProxy[ thisIndex ].wait4vel();
   thisProxy[ thisIndex ].wait4pot();
