@@ -1495,7 +1495,7 @@ DG::extractFieldOutput(
   std::vector< tk::real > shockmarker( begin(m_shockmarker), end(m_shockmarker) );
   shockmarker.resize( nelem );
   for (const auto& [child,parent] : addedTets)
-    shockmarker[child] = m_shockmarker[parent];
+    shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   m_elemfields.push_back( shockmarker );
 
   // Send node fields contributions to neighbor chares
