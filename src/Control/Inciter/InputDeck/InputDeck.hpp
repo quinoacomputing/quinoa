@@ -288,7 +288,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::waterair_shocktube
                                  , kw::shock_hebubble
                                  , kw::underwater_ex
-                                 , kw::shockdensity_wave >;
+                                 , kw::shockdensity_wave
+                                 , kw::equilinterface_advect >;
 
     //! Set of tags to ignore when printing this InputDeck
     using ignore = CmdLine::ignore;
