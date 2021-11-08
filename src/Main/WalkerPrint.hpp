@@ -134,49 +134,6 @@ class WalkerPrint : public tk::RNGPrint {
         std::string coef;
     };
 
-    //! Print equation list with policies
-    //! \param[in] t Section title
-    //! \param[in] factory Factory to get equation data from
-    //! \param[in] ntypes Unique equation types
-    template< class Factory >
-    void eqlist( const std::string& t,
-                 const Factory& factory,
-                 std::size_t ntypes ) const
-    {
-      if (!factory.empty()) {
-        section( t );
-        item( "Unique equation types", ntypes );
-        item( "With all policy combinations", factory.size() );
-        raw( '\n' );
-        raw( m_item_indent + "Legend: equation name : supported policies\n" );
-        raw( '\n' );
-        raw( m_item_indent + "Policy codes:\n" );
-        static_assert( tk::HasTypedef_code_v< kw::init::info >,
-                       "Policy code undefined for keyword" );
-        static_assert( tk::HasTypedef_code_v< kw::coeff::info >,
-                       "Policy code undefined for keyword" );
-        raw( m_item_indent + " * " + *kw::init::code() + ": "
-                           + kw::init::name() + ":\n" );
-        brigand::for_each< ctr::InitPolicy::keywords >( echoPolicies(this) );
-        raw( m_item_indent + " * " + *kw::coeff::code() + ": "
-                           + kw::coeff::name() + ":\n" );
-        brigand::for_each< ctr::CoeffPolicy::keywords >( echoPolicies(this) );
-        raw( '\n' );
-        // extract eqname and supported policies
-        const auto ip = ctr::InitPolicy();
-        const auto cp = ctr::CoeffPolicy();
-        std::map< std::string, Policies > eqs;      // eqname : policies
-        for (const auto& f : factory)
-          eqs[ DiffEqName( f.first ) ] +=
-            Policies( ip.code( f.first.template get< tag::initpolicy >() ),
-                      cp.code( f.first.template get< tag::coeffpolicy >() ) );
-        // output eqname and supported policies
-        for (const auto& e : eqs)
-          m_stream << m_item_name_value_fmt % m_item_indent
-                                            % e.first % e.second;
-      }
-    }
-
     //! Print time integration header
     void inthead( const std::string& t, const std::string& name,
                   const std::string& legend, const std::string& head ) const;

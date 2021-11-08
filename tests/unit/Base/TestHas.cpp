@@ -64,28 +64,10 @@ void Has_object::test< 2 >() {
   ensure_equals( "struct has alias", yes().value, true );
 }
 
-//! Test if tk::HasTypedef_code correctly detects the absence of typedef code
-template<> template<>
-void Has_object::test< 3 >() {
-  set_test_name( "HasTypedef_code detects absence" );
-
-  struct no { bool value = tk::HasTypedef_code_v< noCode >; };
-  ensure_equals( "struct has no code", no().value, false );
-}
-
-//! Test if tk::HasTypedef_code correctly detects the presence of typedef code
-template<> template<>
-void Has_object::test< 4 >() {
-  set_test_name( "HasTypedef_code detects presence" );
-
-  struct yes { bool value = tk::HasTypedef_code_v< yesCode >; };
-  ensure_equals( "struct has code", yes().value, true );
-}
-
 //! \brief Test if tk::HasFunction_expect_description correctly detects the
 //!   absence of function expect::description()
 template<> template<>
-void Has_object::test< 5 >() {
+void Has_object::test< 3 >() {
   set_test_name( "HasFunction_expect_description: absence" );
 
   struct no {
@@ -97,7 +79,7 @@ void Has_object::test< 5 >() {
 //! \brief Test if tk::HasFunction_expect_description correctly detects the
 //!   presence of function expect::description()
 template<> template<>
-void Has_object::test< 6 >() {
+void Has_object::test< 4 >() {
   set_test_name( "HasFunction_expect_description: presence" );
 
   struct yes {
@@ -109,7 +91,7 @@ void Has_object::test< 6 >() {
 //! \brief Test if tk::HasVar_expect_lower correctly detects the
 //!   absence of function expect::lower()
 template<> template<>
-void Has_object::test< 7 >() {
+void Has_object::test< 5 >() {
   set_test_name( "HasVar_expect_lower: absence" );
 
   struct no {
@@ -121,7 +103,7 @@ void Has_object::test< 7 >() {
 //! \brief Test if tk::HasVar_expect_lower correctly detects the
 //!   presence of variable expect::lower()
 template<> template<>
-void Has_object::test< 8 >() {
+void Has_object::test< 6 >() {
   set_test_name( "HasVar_expect_lower: presence" );
 
   struct yes {
@@ -133,7 +115,7 @@ void Has_object::test< 8 >() {
 //! \brief Test if tk::HasVar_expect_upper correctly detects the
 //!   absence of function expect::upper()
 template<> template<>
-void Has_object::test< 9 >() {
+void Has_object::test< 7 >() {
   set_test_name( "HasVar_expect_upper: absence" );
 
   struct no {
@@ -145,7 +127,7 @@ void Has_object::test< 9 >() {
 //! \brief Test if tk::HasVar_expect_upper correctly detects the
 //!   presence of variable expect::upper()
 template<> template<>
-void Has_object::test< 10 >() {
+void Has_object::test< 8 >() {
   set_test_name( "HasVar_expect_upper: presence" );
 
   struct yes {
@@ -157,7 +139,7 @@ void Has_object::test< 10 >() {
 //! \brief Test if tk::HasFunction_expect_choices correctly detects the absence
 //!   of function expect::choices()
 template<> template<>
-void Has_object::test< 11 >() {
+void Has_object::test< 9 >() {
   set_test_name( "HasFunction_expect_choices: absence" );
 
   struct no {
@@ -169,7 +151,7 @@ void Has_object::test< 11 >() {
 //! \brief Test if tk::HasFunction_expect_choices correctly detects the presence
 //!   of function expect::choices()
 template<> template<>
-void Has_object::test< 12 >() {
+void Has_object::test< 10 >() {
   set_test_name( "HasFunction_expect_choices: presence" );
 
   struct yes {
