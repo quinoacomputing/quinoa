@@ -90,6 +90,11 @@ class Discretization : public CBase_Discretization {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
+  private:
+    //! Query nodes that fall into user-defined box(es) to move with ALE
+    std::vector< std::unordered_set< std::size_t > > meshvelBox();
+
+  public:
     //! Start computing new mesh veloctity for ALE mesh motion
     void meshvelStart(
       const tk::UnsMesh::Coords vel,

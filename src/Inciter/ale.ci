@@ -21,12 +21,14 @@ module ale {
   namespace inciter {
 
     array [1D] ALE {
-      entry ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
-                 const std::array< std::vector< tk::real >, 3 >& coord,
-                 const std::vector< std::size_t >& inpoel,
-                 const std::vector< std::size_t >& gid,
-                 const std::unordered_map< std::size_t, std::size_t >& lid,
-                 const tk::NodeCommMap& nodecommmap );
+      entry
+      ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+           const std::array< std::vector< tk::real >, 3 >& coord,
+           const std::vector< std::size_t >& inpoel,
+           const std::vector< std::size_t >& gid,
+           const std::unordered_map< std::size_t, std::size_t >& lid,
+           const tk::NodeCommMap& nodecommmap,
+           const std::vector< std::unordered_set< std::size_t > >& alebox );
       entry void comvort( const std::vector< std::size_t >& gid,
                           const std::vector< std::array< tk::real, 3 > >& v );
       entry void comdiv( const std::vector< std::size_t >& gid,

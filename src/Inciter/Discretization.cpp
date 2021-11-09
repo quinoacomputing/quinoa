@@ -169,9 +169,8 @@ Discretization::Discretization(
 
   // Insert ConjugrateGradients solver chare array element if needed
   if (g_inputdeck.get< tag::ale, tag::ale >()) {
-    m_ale[ thisIndex ].insert( conjugategradientsproxy,
-                               m_coord, m_inpoel,
-                               m_gid, m_lid, m_nodeCommMap );
+    m_ale[ thisIndex ].insert( conjugategradientsproxy, m_coord, m_inpoel,
+                               m_gid, m_lid, m_nodeCommMap, meshvelBox() );
   } else {
     m_meshvel.resize( m_gid.size() );
   }
@@ -209,6 +208,43 @@ Discretization::transferInit()
   std::vector< std::size_t > meshdata{ m_meshid, npoin };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
+}
+
+std::vector< std::unordered_set< std::size_t > >
+Discretization::meshvelBox()
+// *****************************************************************************
+//  Query and store nodes that fall into user-defined box(es) to move with ALE
+//! \return Local node ids falling into ALE box(es) configured by the user
+// *****************************************************************************
+{
+  const auto& x = m_coord[0];
+  const auto& y = m_coord[1];
+  const auto& z = m_coord[2];
+
+  std::vector< std::unordered_set< std::size_t > > boxes;
+
+  const auto& alebox = g_inputdeck.get< tag::ale, tag::box >();
+  for (const auto& b : alebox) {    // for all boxes configured
+    std::vector< tk::real > box
+      { b.get< tag::xmin >(), b.get< tag::xmax >(),
+        b.get< tag::ymin >(), b.get< tag::ymax >(),
+        b.get< tag::zmin >(), b.get< tag::zmax >() };
+    const auto eps = std::numeric_limits< tk::real >::epsilon();
+    // Determine which nodes lie in the box
+    if (std::any_of( begin(box), end(box), [=](auto p){return abs(p)>eps;} )) {
+      auto& bn = boxes.emplace_back();
+      for (std::size_t i=0; i<x.size(); ++i) {
+        if ( x[i] > box[0] and x[i] < box[1] and
+             y[i] > box[2] and y[i] < box[3] and
+             z[i] > box[4] and z[i] < box[5] )
+        {
+          bn.insert( i );
+        }
+      }
+    }
+  }
+
+  return boxes;
 }
 
 void

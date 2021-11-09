@@ -64,7 +64,8 @@ class ALE : public CBase_ALE {
          const std::vector< std::size_t >& inpoel,
          const std::vector< std::size_t >& gid,
          const std::unordered_map< std::size_t, std::size_t >& lid,
-         const tk::NodeCommMap& nodecommmap );
+         const tk::NodeCommMap& nodecommmap,
+         const std::vector< std::unordered_set< std::size_t > >& alebox );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -152,11 +153,15 @@ class ALE : public CBase_ALE {
       p | m_ndiv;
       p | m_npot;
       p | m_nwf;
-      p | m_nodeCommMap;
-      p | m_lid;
-      p | m_coord0;
-      p | m_coord;
+      p | m_mesh;
+      if (p.isUnpacking()) {
+        m_coord = std::get< 0 >( m_mesh );
+        m_inpoel = std::get< 1 >( m_mesh );
+        m_lid = std::get< 2 >( m_mesh );
+        m_nodeCommMap = std::get< 3 >( m_mesh );
+      }
       p | m_inpoel;
+      p | m_coord0;
       p | m_vol0;
       p | m_vol;
       p | m_it;
@@ -175,7 +180,6 @@ class ALE : public CBase_ALE {
       p | m_meshveldirbcnodes;
       p | m_meshvelsymbcnodes;
       p | m_move;
-      p | m_box;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -198,17 +202,22 @@ class ALE : public CBase_ALE {
     std::size_t m_npot;
     //! Counter for communicating the mesh force for ALE
     std::size_t m_nwf;
+    //! Mesh (or subset of the mesh) ALE moves mesh nodes on
+    std::tuple< tk::UnsMesh::Coords,                            // coord
+                std::vector< std::size_t >,                     // inpoel
+                std::unordered_map< std::size_t, std::size_t >, // lid
+                tk::NodeCommMap > m_mesh;                       // node comm map
+    //! Mesh point coordinates
+    tk::UnsMesh::Coords& m_coord = std::get<0>(m_mesh);
+    //! Element connectivity
+    std::vector< std::size_t >& m_inpoel = std::get<1>(m_mesh);
+    //! Local node ids associated to the global ones of owned elements
+    std::unordered_map< std::size_t, std::size_t >& m_lid = std::get<2>(m_mesh);
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!   Discretization chares associated to their chare IDs
-    tk::NodeCommMap m_nodeCommMap;
-    //! Local node ids associated to the global ones of owned elements
-    std::unordered_map< std::size_t, std::size_t > m_lid;
+    tk::NodeCommMap& m_nodeCommMap = std::get<3>(m_mesh);
     //! Mesh coordinates at the time 0 for ALE
     tk::UnsMesh::Coords m_coord0;
-    //! Mesh point coordinates
-    tk::UnsMesh::Coords m_coord;
-    //! Element connectivity
-    std::vector< std::size_t > m_inpoel;
     //! Mesh element volumes at t=t0
     std::vector< tk::real > m_vol0;
     //! Volume of nodes
@@ -262,9 +271,15 @@ class ALE : public CBase_ALE {
                   tk::Table<3>,
                   std::unordered_set< std::size_t > >
     > m_move;
-    //! \brief Local node ids falling into ALE boxes configured by the user
-    //! \details Within these boxes we move nodes with ALE, others stay put.
-    std::vector< std::unordered_set< std::size_t > > m_box;
+
+    // Remove nodes from mesh data that do not fall into any of the ALE boxes
+    decltype(m_mesh)
+    box( const std::vector< std::unordered_set< std::size_t > >& alebox,
+         const tk::UnsMesh::Coords& coord,
+         const std::vector< std::size_t >& inpoel,
+         const std::vector< std::size_t >& gid,
+         const std::unordered_map< std::size_t, std::size_t >& lid,
+         const tk::NodeCommMap& nodeCommMap );
 
     //! Generate {A,x,b} for Laplacian mesh velocity smoother
     std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
@@ -273,9 +288,6 @@ class ALE : public CBase_ALE {
 
     //! Initialize user-defined functions for ALE moving sides
     decltype(m_move) moveCfg();
-
-    //! Query nodes that fall into user-defined box(es) to move with ALE
-    void box( const tk::UnsMesh::Coords& coord );
 
     //! Find Dirichlet BCs on mesh velocity with prescribed movement
     bool move( std::size_t i ) const;

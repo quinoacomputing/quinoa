@@ -29,23 +29,22 @@ ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
           const std::vector< std::size_t >& inpoel,
           const std::vector< std::size_t >& gid,
           const std::unordered_map< std::size_t, std::size_t >& lid,
-          const tk::NodeCommMap& nodeCommMap ) :
+          const tk::NodeCommMap& nodeCommMap,
+          const std::vector< std::unordered_set< std::size_t > >& alebox ) :
   m_conjugategradients( conjugategradientsproxy ),
   m_done(),
   m_nvort( 0 ),
   m_ndiv( 0 ),
   m_npot( 0 ),
   m_nwf( 0 ),
-  m_nodeCommMap( nodeCommMap ),
-  m_lid( lid ),
+  m_mesh( box(alebox,coord,inpoel,gid,lid,nodeCommMap) ),
   m_coord0( coord ),
-  m_inpoel( inpoel ),
   m_vol0(),
   m_vol(),
   m_it( 0 ),
   m_t( 0.0 ),
-  m_w( gid.size(), 3 ),
-  m_wf( gid.size(), 3 ),
+  m_w( lid.size(), 3 ),
+  m_wf( lid.size(), 3 ),
   m_wfc(),
   m_veldiv(),
   m_veldivc(),
@@ -63,8 +62,9 @@ ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] gid Local->global node id map
-//! \param[in] lid Global->locbal node id map
+//! \param[in] lid Global->local node id map
 //! \param[in] nodeCommMap Node communication map
+//! \param[in] box Local node ids falling into ALE boxes configured by the user
 // *****************************************************************************
 {
   auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
@@ -83,6 +83,69 @@ ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   thisProxy[ thisIndex ].wait4vel();
   thisProxy[ thisIndex ].wait4pot();
   thisProxy[ thisIndex ].wait4for();
+}
+
+decltype(ALE::m_mesh)
+ALE::box( const std::vector< std::unordered_set< std::size_t > >& alebox,
+          const tk::UnsMesh::Coords& coord,
+          const std::vector< std::size_t >& inpoel,
+          const std::vector< std::size_t >& gid,
+          const std::unordered_map< std::size_t, std::size_t >& lid,
+          const tk::NodeCommMap& nodeCommMap )
+// *****************************************************************************
+// Remove nodes from mesh data that do not fall into any of the ALE boxes
+//! \param[in] box Local node ids falling into ALE boxes configured by the user
+//! \param[in] coord Coordinates of the full mesh
+//! \param[in] gid Local->global node id map of the full mesh
+//! \param[in] lid Global->locbal node id map of the full mesh
+//! \param[in] nodeCommMap Node communication map of the full mesh
+//! \return Mesh data containing only those nodes that fall into any of the ALE
+//!    boxes: coordinates, element connectivity, global->local node id map,
+//!    node communication map
+// *****************************************************************************
+{
+  // Return original mesh if no ALE boxes configured
+  if (alebox.empty()) return std::make_tuple( coord, inpoel, lid, nodeCommMap );
+
+  // Generate unique set of local node ids within the union of all ALE boxes
+  std::unordered_set< std::size_t > boxes;
+  for (const auto& b : alebox) boxes.insert( begin(b), end(b) );
+
+  // Generate coordinates and global->local id map for mesh within all ALE boxes
+  std::array< std::vector< tk::real >, 3 > boxcoord;
+  std::unordered_map< std::size_t, std::size_t > boxlid;
+  for (std::size_t i=0; i<coord[0].size(); ++i) {
+    if (boxes.find(i) != end(boxes)) {
+      boxcoord[0][i] = coord[0][i];
+      boxcoord[1][i] = coord[1][i];
+      boxcoord[2][i] = coord[2][i];
+      boxlid[ gid[i] ] = i;
+    }
+  }
+
+  // Generate element connectivity for mesh within all ALE boxes
+  std::vector< std::size_t > boxinpoel;
+  for (std::size_t i=0; i<inpoel.size()/4; ++i) {
+    if ( boxes.find(inpoel[i*4+0]) != end(boxes) and
+         boxes.find(inpoel[i*4+1]) != end(boxes) and
+         boxes.find(inpoel[i*4+2]) != end(boxes) and
+         boxes.find(inpoel[i*4+3]) != end(boxes) )
+    {
+      boxinpoel.push_back( inpoel[i*4+0] );
+      boxinpoel.push_back( inpoel[i*4+1] );
+      boxinpoel.push_back( inpoel[i*4+2] );
+      boxinpoel.push_back( inpoel[i*4+3] );
+    }
+  }
+
+  // Generate node communication map for mesh within all ALE boxes
+  tk::NodeCommMap boxmap;
+  for (const auto& [c,n] : nodeCommMap)
+    for (auto g : n)
+      if (boxes.find(tk::cref_find(lid,g)) != end(boxes))
+        boxmap[ c ].insert( g );
+
+  return std::make_tuple( boxcoord, boxinpoel, boxlid, boxmap );
 }
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
@@ -286,40 +349,6 @@ ALE::converged() const
 }
 
 void
-ALE::box( const tk::UnsMesh::Coords& coord )
-// *****************************************************************************
-//  Query and store nodes that fall into user-defined box(es) to move with ALE
-//! \param[in] coord Mesh node coordinates
-// *****************************************************************************
-{
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
-
-  m_box.clear();
-  const auto& alebox = g_inputdeck.get< tag::ale, tag::box >();
-  for (const auto& b : alebox) {    // for all boxes configured
-    std::vector< tk::real > box
-      { b.get< tag::xmin >(), b.get< tag::xmax >(),
-        b.get< tag::ymin >(), b.get< tag::ymax >(),
-        b.get< tag::zmin >(), b.get< tag::zmax >() };
-    const auto eps = std::numeric_limits< tk::real >::epsilon();
-    // Determine which nodes lie in the IC box
-    if (std::any_of( begin(box), end(box), [=](auto p){return abs(p)>eps;} )) {
-      auto& bn = m_box.emplace_back();
-      for (std::size_t i=0; i<x.size(); ++i) {
-        if ( x[i] > box[0] and x[i] < box[1] and
-             y[i] > box[2] and y[i] < box[3] and
-             z[i] > box[4] and z[i] < box[5] )
-        {
-          bn.insert( i );
-        }
-      }
-    }
-  }
-}
-
-void
 ALE::start(
   const tk::UnsMesh::Coords vel,
   const std::vector< tk::real >& soundspeed,
@@ -361,9 +390,6 @@ ALE::start(
   m_it = it;
   m_t = t;
   m_adt = adt;
-
-  // Query and store nodes that fall into user-defined box(es) to move with ALE
-  box( coord );
 
   // assign mesh velocity
   auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
@@ -906,12 +932,6 @@ ALE::meshforce()
       }
     }
   }
-
-//   // Test correctness of the ALE box feature
-//   for (std::size_t i=0; i<m_w.nunk(); ++i)
-//     for (const auto& b : m_box)
-//       if (b.find(i) == end(b))
-//         m_w(i,0,0) = m_w(i,1,0) = m_w(i,2,0) = 0.0;
 
   // Activate SDAG wait for re-computing prerequisites for ALE
   thisProxy[ thisIndex ].wait4vel();
