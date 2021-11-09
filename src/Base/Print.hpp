@@ -579,23 +579,6 @@ class Print {
     template< Style s = VERBOSE >
     std::ostream& stream() const noexcept { return s ? m_stream : m_qstream; }
 
-    //! Function object for echoing policies to screen
-    struct echoPolicies {
-      //! Need to store reference to host class whose data we operate on
-      const Print* const m_host;
-      //! Constructor: store host object pointer
-      explicit echoPolicies( const Print* const host ) : m_host( host ) {}
-      //! Function call operator templated on the type that echos a policy
-      template< typename U > void operator()( brigand::type_<U> ) {
-        static_assert( tk::HasTypedef_code_v< typename U::info >,
-                       "Policy code undefined for keyword" );
-        // Print policy code - policy name
-        m_host->raw( m_host->m_item_indent + "   " +
-                     *U::code() + " - " + U::info::name() + '\n' );
-
-      }
-    };
-
     //! Print Inciter header. Text ASCII Art Generator used for executable
     //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
     //! used for converting the logo text "Quinoa": http://picascii.com.

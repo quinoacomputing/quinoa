@@ -161,9 +161,6 @@ Distributor::info( const WalkerPrint& print,
   // Re-create differential equations stack for output
   DiffEqStack stack;
 
-  // Print out information on factory
-  print.eqlist( "Registered differential equations",
-                stack.factory(), stack.ntypes() );
   print.endpart();
 
   // Instantiate tables to sample and output to statistics file

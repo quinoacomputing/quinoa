@@ -343,6 +343,7 @@ recoLeastSqExtStencil(
                {{0.0, 0.0, 0.0}},
                {{0.0, 0.0, 0.0}} }} );
   // rhs matrix
+  Assert( varRange[0] <= varRange[1], "Incorrect variable range detected" );
   std::vector< std::array< tk::real, 3 > >
   rhs_ls( varRange[1]-varRange[0]+1, {{ 0.0, 0.0, 0.0 }} );
 
@@ -369,8 +370,9 @@ recoLeastSqExtStencil(
       for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
       {
         auto mark = c*rdof;
+        auto cmark = c - varRange[0];
         for (std::size_t idir=0; idir<3; ++idir)
-          rhs_ls[c][idir] +=
+          rhs_ls[cmark][idir] +=
             wdeltax[idir] * (W(er,mark,offset)-W(e,mark,offset));
       }
     }
@@ -380,8 +382,9 @@ recoLeastSqExtStencil(
   for (ncomp_t c=varRange[0]; c<=varRange[1]; ++c)
   {
     auto mark = c*rdof;
+    auto cmark = c - varRange[0];
 
-    auto ux = tk::cramer( lhs_ls, rhs_ls[c] );
+    auto ux = tk::cramer( lhs_ls, rhs_ls[cmark] );
 
     // Update the P1 dofs with the reconstructioned gradients.
     // Since this reconstruction does not affect the cell-averaged solution,

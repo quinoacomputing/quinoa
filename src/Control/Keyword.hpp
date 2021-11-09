@@ -35,18 +35,6 @@ class cmd_keywords {
     using aliases = brigand::set< alias<T>... >;
 };
 
-//! Helper to ensure uniqueness of policy codes for keywords
-//! \details This ensures that a compile-error is generated if the policy codes
-//!    of the keywords passed in as T... are not unique.
-template< typename... T >
-class unique_codes {
-  public:
-    using list = brigand::list< T... >;
-  private:
-    template< typename K > using code = typename K::info::code::type;
-    using set = brigand::set< code<T>... >;
-};
-
 } // tk::
 
 namespace kw {
@@ -60,16 +48,6 @@ using namespace tao;
 //! \see Control/Keywords.h
 template< int Char >
 struct Alias {
-  using type = pegtl::one< Char >;
-  static const int value = Char;
-};
-
-//! \brief Keyword code helper
-//! \details This struct is used to define both a type and a value for a keyword
-//!   code, which is a single character. Used for printing out policy code.
-//! \see Control/Keywords.h
-template< int Char >
-struct Code {
   using type = pegtl::one< Char >;
   static const int value = Char;
 };
@@ -137,16 +115,6 @@ struct keyword< Info, pegtl::string< Chars... > > {
   static std::optional< std::string > alias() {
     if constexpr( tk::HasTypedef_alias_v< T > )
       return std::string( 1, static_cast<char>( Info::alias::value ) );
-    else
-      return std::nullopt;
-  }
-
-  //! Policy code accessor for keyword
-  //! \return An initialized (or uninitialized) std::optional< std::string >
-  template< typename T = Info >
-  static std::optional< std::string > code() {
-    if constexpr( tk::HasTypedef_code_v< T > )
-      return std::string( 1, Info::code::value );
     else
       return std::nullopt;
   }

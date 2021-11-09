@@ -721,13 +721,13 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
-    //! \param[in] gid Local->global node id map
-    //! \param[in] bid Local chare-boundary node ids (value) associated to
-    //!   global node ids (key)
-    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-    //!   variables
-    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-    //!   variables
+//    //! \param[in] gid Local->global node id map
+//    //! \param[in] bid Local chare-boundary node ids (value) associated to
+//    //!   global node ids (key)
+//    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
+//    //!   variables
+//    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
+//    //!   variables
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
     void limit( [[maybe_unused]] tk::real t,
@@ -738,10 +738,10 @@ class MultiMat {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
-                const std::vector< std::size_t >& gid,
-                const std::unordered_map< std::size_t, std::size_t >& bid,
-                const std::vector< std::vector<tk::real> >& uNodalExtrm,
-                const std::vector< std::vector<tk::real> >& pNodalExtrm,
+                const std::vector< std::size_t >&,
+                const std::unordered_map< std::size_t, std::size_t >&,
+                const std::vector< std::vector<tk::real> >&,
+                const std::vector< std::vector<tk::real> >&,
                 tk::Fields& U,
                 tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
@@ -762,8 +762,8 @@ class MultiMat {
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, fd, geoFace, geoElem, coord, gid, bid,
-          uNodalExtrm, pNodalExtrm, U, P, nmat, shockmarker );
+          m_system, m_offset, fd, geoFace, geoElem, coord, U, P, nmat,
+          shockmarker );
       }
       else
       {

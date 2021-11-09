@@ -51,26 +51,26 @@ class Problem : public tk::Toggle< ProblemType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = tk::unique_codes< kw::user_defined
-                                     , kw::shear_diff
-                                     , kw::vortical_flow
-                                     , kw::nl_energy_growth
-                                     , kw::rayleigh_taylor
-                                     , kw::taylor_green
-                                     , kw::slot_cyl
-                                     , kw::gauss_hump
-                                     , kw::cyl_advect
-                                     , kw::cyl_vortex
-                                     , kw::shedding_flow
-                                     , kw::sod_shocktube
-                                     , kw::rotated_sod_shocktube
-                                     , kw::sedov_blastwave
-                                     , kw::interface_advection
-                                     , kw::gauss_hump_compflow
-                                     , kw::waterair_shocktube
-                                     , kw::shock_hebubble
-                                     , kw::underwater_ex
-                                     >::list;
+    using keywords = brigand::list< kw::user_defined
+                                  , kw::shear_diff
+                                  , kw::vortical_flow
+                                  , kw::nl_energy_growth
+                                  , kw::rayleigh_taylor
+                                  , kw::taylor_green
+                                  , kw::slot_cyl
+                                  , kw::gauss_hump
+                                  , kw::cyl_advect
+                                  , kw::cyl_vortex
+                                  , kw::shedding_flow
+                                  , kw::sod_shocktube
+                                  , kw::rotated_sod_shocktube
+                                  , kw::sedov_blastwave
+                                  , kw::interface_advection
+                                  , kw::gauss_hump_compflow
+                                  , kw::waterair_shocktube
+                                  , kw::shock_hebubble
+                                  , kw::underwater_ex
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -131,56 +131,7 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::underwater_ex::string(),
             ProblemType::UNDERWATER_EX }
         } )
-    {
-      brigand::for_each< keywords >( assertPolicyCodes() );
-    }
-
-    //! \brief Return policy code based on Enum
-    //! \param[in] p Enum value of the problem option requested
-    //! \return Policy code of the option
-    const std::string& code( ProblemType p ) const {
-      using tk::operator<<;
-      auto it = policy.find( p );
-      Assert( it != end(policy),
-              std::string("Cannot find policy code for problem \"") << p <<
-                "\"" );
-      return it->second;
-    }
-
-  private:
-    //! Function object for ensuring the existence of policy codes
-    struct assertPolicyCodes {
-      //! \brief Function call operator templated on the type to assert the
-      //!   existence of a policy code
-      template< typename U > void operator()( brigand::type_<U> ) {
-        static_assert( tk::HasTypedef_code_v< typename U::info >,
-                       "Policy code undefined for keyword" );
-      }
-    };
-
-    //! Enums -> policy code
-    std::map< ProblemType, std::string > policy {
-        { ProblemType::USER_DEFINED, *kw::user_defined::code() }
-      , { ProblemType::SHEAR_DIFF, *kw::shear_diff::code() }
-      , { ProblemType::VORTICAL_FLOW, *kw::vortical_flow::code() }
-      , { ProblemType::NL_ENERGY_GROWTH, *kw::nl_energy_growth::code() }
-      , { ProblemType::RAYLEIGH_TAYLOR, *kw::rayleigh_taylor::code() }      
-      , { ProblemType::TAYLOR_GREEN, *kw::taylor_green::code() }      
-      , { ProblemType::SLOT_CYL, *kw::slot_cyl::code() }
-      , { ProblemType::GAUSS_HUMP, *kw::gauss_hump::code() }
-      , { ProblemType::CYL_ADVECT, *kw::cyl_advect::code() }
-      , { ProblemType::CYL_VORTEX, *kw::cyl_vortex::code() }
-      , { ProblemType::SHEDDING_FLOW, *kw::shedding_flow::code() }
-      , { ProblemType::SOD_SHOCKTUBE, *kw::sod_shocktube::code() }
-      , { ProblemType::ROTATED_SOD_SHOCKTUBE,
-          *kw::rotated_sod_shocktube::code() }
-      , { ProblemType::SEDOV_BLASTWAVE, *kw::sedov_blastwave::code() }
-      , { ProblemType::INTERFACE_ADVECTION, *kw::interface_advection::code() }
-      , { ProblemType::GAUSS_HUMP_COMPFLOW, *kw::gauss_hump_compflow::code() }
-      , { ProblemType::WATERAIR_SHOCKTUBE, *kw::waterair_shocktube::code() }
-      , { ProblemType::SHOCK_HEBUBBLE, *kw::shock_hebubble::code() }
-      , { ProblemType::UNDERWATER_EX, *kw::underwater_ex::code() }
-    };
+    {}
 };
 
 } // ctr::

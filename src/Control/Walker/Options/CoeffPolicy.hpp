@@ -84,48 +84,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
            { kw::stationary::string(), CoeffPolicyType::STATIONARY },
            { kw::inst_velocity::string(),
              CoeffPolicyType::INSTANTANEOUS_VELOCITY } } )
-    {
-      brigand::for_each< keywords >( assertPolicyCodes() );
-    }
-
-    //! \brief Return policy code based on Enum
-    //! \param[in] p Enum value of the option requested
-    //! \return Policy code of the option
-    const std::string& code( CoeffPolicyType p ) const {
-      using tk::operator<<;
-      auto it = policy.find( p );
-      Assert( it != end(policy),
-              std::string("Cannot find policy code for physics \"") << p <<
-                "\"" );
-      return it->second;
-    }
-
-  private:
-    //! Function object for ensuring the existence of policy codes
-    struct assertPolicyCodes {
-      //! \brief Function call operator templated on the type to assert the
-      //!   existence of a policy code
-      template< typename U > void operator()( brigand::type_<U> ) {
-        static_assert( tk::HasTypedef_code_v< typename U::info >,
-                       "Policy code undefined for keyword" );
-      }
-    };
-
-    //! Enums -> policy code
-    std::map< CoeffPolicyType, std::string > policy {
-        { CoeffPolicyType::CONST_COEFF, *kw::constcoeff::code() }
-      , { CoeffPolicyType::DECAY, *kw::decay::code() }
-      , { CoeffPolicyType::HOMOGENEOUS, *kw::homogeneous::code() }
-      , { CoeffPolicyType::HOMOGENEOUS_DECAY, *kw::homdecay::code() }
-      , { CoeffPolicyType::MONTE_CARLO_HOMOGENEOUS_DECAY,
-          *kw::montecarlo_homdecay::code() }
-      , { CoeffPolicyType::HYDROTIMESCALE, *kw::hydrotimescale::code() }
-      , { CoeffPolicyType::CONST_SHEAR, *kw::const_shear::code() }
-      , { CoeffPolicyType::STATIONARY, *kw::stationary::code() }
-      , { CoeffPolicyType::INSTANTANEOUS_VELOCITY,
-          *kw::inst_velocity::code() }
-    };
-
+    {}
 };
 
 } // ctr::
