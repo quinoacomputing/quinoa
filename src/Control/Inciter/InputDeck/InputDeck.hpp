@@ -459,6 +459,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       return { std::move(pnt), std::move(rad) };
     }
 
+    //! Query scheme centering
+    //! \return Scheme centering
+    tk::Centering centering() const
+    { return ctr::Scheme().centering( get< tag::discr, tag::scheme >() ); }
+
   private:
     //! Function object to extract the mesh filenames assigned to solvers
     //! \details This is instantiated for all PDE types at compile time. It goes
