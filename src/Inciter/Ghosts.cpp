@@ -12,20 +12,10 @@
 // *****************************************************************************
 
 #include "Ghosts.hpp"
-#include "DerivedData.hpp"
-#include "Vector.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // inciter::
 
 using inciter::Ghosts;
 
 Ghosts::Ghosts()
-//:
 // *****************************************************************************
 //  Constructor
 // *****************************************************************************
