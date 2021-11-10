@@ -1,0 +1,29 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/ghosts.ci
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019-2021 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
+  \brief     Charm++ module interface for generating Ghost data structures
+  \details   Charm++ module interface file for asynchronous generation of
+             Ghost data structures.
+  \see       Ghosts.[ch]pp for more info.
+*/
+// *****************************************************************************
+
+module ghosts {
+
+  namespace inciter {
+
+    array [1D] Ghosts {
+      entry Ghosts();
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+    };
+
+  } // inciter::
+
+}

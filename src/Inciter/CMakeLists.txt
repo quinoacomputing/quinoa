@@ -14,6 +14,7 @@ add_library(Inciter
             ALECG.cpp
             ElemCommMap.cpp
             ALE.cpp
+            Ghosts.cpp
             DG.cpp
             FV.cpp
             FluxCorrector.cpp
@@ -87,6 +88,7 @@ addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
 addCharmModule( "fv" "Inciter" )
 addCharmModule( "ale" "Inciter" )
+addCharmModule( "ghosts" "Inciter" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module

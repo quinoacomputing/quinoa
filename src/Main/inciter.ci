@@ -19,6 +19,7 @@ mainmodule inciter {
   extern module partitioner;
   extern module conjugategradients;
   extern module ale;
+  extern module ghosts;
   extern module diagcg;
   extern module alecg;
   extern module dg;

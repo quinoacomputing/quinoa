@@ -72,6 +72,7 @@ if (ENABLE_INCITER)
                               "dgCharmModule"
                               "fvCharmModule"
                               "aleCharmModule"
+                              "ghostsCharmModule"
                               "conjugategradientsCharmModule"
                               "discretizationCharmModule"
                               "transporterCharmModule")

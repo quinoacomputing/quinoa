@@ -17,6 +17,7 @@ module discretization {
   extern module meshwriter;
   extern module distfct;
   extern module ale;
+  extern module ghosts;
   extern module conjugategradients;
 
   include "UnsMesh.hpp";

@@ -87,6 +87,7 @@
 #include "NoWarning/fv.decl.h"
 #include "NoWarning/ale.decl.h"
 #include "NoWarning/conjugategradients.decl.h"
+#include "NoWarning/ghosts.decl.h"
 
 namespace inciter {
 
@@ -145,6 +146,13 @@ class Scheme {
       if (ale) aleproxy = CProxy_ALE::ckNew(bound);
       if (linearsolver)
         conjugategradientsproxy = tk::CProxy_ConjugateGradients::ckNew(bound);
+      if (scheme == ctr::SchemeType::DG ||
+        scheme == ctr::SchemeType::P0P1 ||
+        scheme == ctr::SchemeType::DGP1 ||
+        scheme == ctr::SchemeType::DGP2 ||
+        scheme == ctr::SchemeType::PDG ||
+        scheme == ctr::SchemeType::FV)
+        ghostsproxy = CProxy_Ghosts::ckNew(bound);
     }
 
     //! Entry method tags for specific Scheme classes to use with bcast()
@@ -249,6 +257,10 @@ class Scheme {
     tk::CProxy_ConjugateGradients& conjugategradients() noexcept
     { return conjugategradientsproxy; }
 
+    //! Get reference to Ghosts proxy
+    //! \return Ghosts Charm++ chare array proxy
+    CProxy_Ghosts& ghosts() noexcept { return ghostsproxy; }
+
     //! Get reference to scheme proxy
     //! Get reference to scheme proxy
     //! \return Variant storing Charm++ chare array proxy configured
@@ -277,6 +289,7 @@ class Scheme {
       p | fctproxy;
       p | aleproxy;
       p | conjugategradientsproxy;
+      p | ghostsproxy;
       p | bound;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -296,6 +309,8 @@ class Scheme {
     CProxy_ALE aleproxy;
     //! Charm++ proxy to conjugate gradients linear solver class
     tk::CProxy_ConjugateGradients conjugategradientsproxy;
+    //! Charm++ proxy to Ghosts class
+    CProxy_Ghosts ghostsproxy;
     //! Charm++ array options for binding chares
     CkArrayOptions bound;
 

@@ -24,6 +24,7 @@
 #include "QuinoaBuildConfig.hpp"
 #include "ConjugateGradients.hpp"
 #include "ALE.hpp"
+#include "Ghosts.hpp"
 
 #ifdef HAS_EXAM2M
   #include "Controller.hpp"
