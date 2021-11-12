@@ -113,31 +113,6 @@ if (HAS_OMEGA_H)
   set(OMEGAHMESHIO "OmegaHMeshIO" PARENT_SCOPE)
 endif()
 
-if (HAS_ROOT AND ENABLE_FILECONV)
-  add_library(RootMeshIO
-              FileConvWriter.cpp
-              RootMeshWriter.cpp)
-  
-  target_include_directories(RootMeshIO PUBLIC
-                             ${QUINOA_SOURCE_DIR}
-                             ${QUINOA_SOURCE_DIR}/Base
-                             ${QUINOA_SOURCE_DIR}/Mesh
-                             ${SEACASExodus_INCLUDE_DIRS}
-                             ${NETCDF_INCLUDES}
-                             ${ROOT_INCLUDE_DIRS}
-                             ${MPI_CXX_INCLUDE_DIRS}
-                             ${MPI_CXX_INCLUDE_PATH})
-
-  set_target_properties(RootMeshIO PROPERTIES LIBRARY_OUTPUT_NAME
-                        quinoa_rootmeshio)
-  
-  INSTALL(TARGETS RootMeshIO
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
-  set(ROOTMESHIO "RootMeshIO" PARENT_SCOPE)
-endif()
-
 if (ENABLE_UNITTEST OR ENABLE_MESHCONV)
   add_library(HyperMeshIO
               HyperMeshReader.cpp)

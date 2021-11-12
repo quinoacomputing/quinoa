@@ -548,14 +548,12 @@ include(ConfigureDataLayout)
 # Create set of all executables tested. These are the executables that do
 # "interesting things", i.e., excluding unittest
 set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE}
-                        ${MESHCONV_EXECUTABLE}
-                        ${FILECONV_EXECUTABLE})
+                        ${MESHCONV_EXECUTABLE})
 
 # Create set of all executables.
 set(EXECUTABLES ${INCITER_EXECUTABLE}
                 ${MESHCONV_EXECUTABLE}
-                ${UNITTEST_EXECUTABLE}
-                ${FILECONV_EXECUTABLE})
+                ${UNITTEST_EXECUTABLE})
 
 
 # Decide if the Exception class will write to std::cerr. This may not always be
@@ -632,7 +630,7 @@ else()
   PrintMissing(Statistics "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
 endif()
 
-if ((ENABLE_MESHCONV OR ENABLE_INCITER OR ENABLE_FILECONV) AND
+if ((ENABLE_MESHCONV OR ENABLE_INCITER) AND
     BRIGAND_FOUND AND HIGHWAYHASH_FOUND)
   add_subdirectory(Mesh)
   add_subdirectory(IO)

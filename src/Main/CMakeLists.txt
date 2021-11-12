@@ -70,7 +70,3 @@ endif()
 if (ENABLE_MESHCONV)
   include("MeshConv.cmake")
 endif()
-
-if (ENABLE_FILECONV)
-  include("FileConv.cmake")
-endif()

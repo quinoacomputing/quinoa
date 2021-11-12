@@ -79,8 +79,6 @@ void echoHeader( const Print& print, HeaderType header )
     print.headerUnitTest();
   else if ( header == HeaderType::MESHCONV )
     print.headerMeshConv();
-  else if ( header == HeaderType::FILECONV )
-    print.headerFileConv();
   else
     Throw( "Header not available" );
 }

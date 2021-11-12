@@ -31,8 +31,7 @@ namespace tk {
 //! Executable types for which an ascii logo is available in tk::Print
 enum class HeaderType : uint8_t { INCITER=0,
                                   UNITTEST,
-                                  MESHCONV,
-                                  FILECONV };
+                                  MESHCONV };
 
 //! Wrapper for the standard C library's gettimeofday() from
 std::string curtime();
