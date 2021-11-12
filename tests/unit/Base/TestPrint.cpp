@@ -14,7 +14,6 @@
 
 #include "TUTConfig.hpp"
 #include "Print.hpp"
-#include "RNGTest/Options/Battery.hpp"
 #include "UnitTest/CmdLine/CmdLine.hpp"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -184,21 +183,6 @@ void Print_object::test< 14 >() {
   prv.list( "name", set );
 }
 
-//! Test that tk::Print::list(name,factory) does not throw an exception
-template<> template<>
-void Print_object::test< 15 >() {
-  set_test_name( "list(name,factory) does not throw" );
-
-  // Create a fake factory. Only the key is used in list(name,factory), so the
-  // value is just an int here.
-  using rngtest::ctr::BatteryType;
-  std::map< BatteryType, int > factory;
-  factory.emplace( BatteryType::SMALLCRUSH, 1 );
-  factory.emplace( BatteryType::CRUSH, 2 );
-  factory.emplace( BatteryType::BIGCRUSH, 3 );
-  prv.list< rngtest::ctr::Battery >( "factory list", factory );
-}
-
 //! Test that tk::Print::time(title,clocks) does not throw an exception
 template<> template<>
 void Print_object::test< 16 >() {
@@ -302,13 +286,6 @@ void Print_object::test< 25 >() {
   prv.headerInciter();
 }
 
-//! Test that tk::Print::headerRNGTest() does not throw an exception
-template<> template<>
-void Print_object::test< 26 >() {
-  set_test_name( "headerRNGTest() does not throw" );
-  prv.headerRNGTest();
-}
-
 //! Test that tk::Print::headerUnitTest() does not throw an exception
 template<> template<>
 void Print_object::test< 27 >() {
@@ -321,13 +298,6 @@ template<> template<>
 void Print_object::test< 28 >() {
   set_test_name( "headerMeshConv() does not throw" );
   prv.headerMeshConv();
-}
-
-//! Test that tk::Print::headerWalker() does not throw an exception
-template<> template<>
-void Print_object::test< 29 >() {
-  set_test_name( "headerWalker() does not throw" );
-  prv.headerWalker();
 }
 
 } // tut::

@@ -203,30 +203,3 @@ INSTALL(TARGETS MeshWriter
 )
 
 addCharmModule( "meshwriter" "MeshWriter" )
-
-if (ENABLE_WALKER)
-  add_library(ParticleWriter
-              H5PartWriter.cpp
-              ParticleWriter.cpp)
-
-  target_include_directories(ParticleWriter PUBLIC
-                             ${QUINOA_SOURCE_DIR}
-                             ${QUINOA_SOURCE_DIR}/Base
-                             ${PROJECT_BINARY_DIR}/../IO
-                             ${H5PART_INCLUDE_DIRS}
-                             ${HDF5_INCLUDE_DIRS}
-                             ${CHARM_INCLUDE_DIRS}
-                             ${MPI_CXX_INCLUDE_DIRS}
-                             ${MPI_CXX_INCLUDE_PATH})
-
-  set_target_properties(ParticleWriter PROPERTIES LIBRARY_OUTPUT_NAME
-                        quinoa_particlewriter)
-
-  INSTALL(TARGETS ParticleWriter
-          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
-  )
-
-  addCharmModule( "particlewriter" "ParticleWriter" )
-endif()

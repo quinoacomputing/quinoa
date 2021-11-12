@@ -19,9 +19,7 @@ namespace tk {
 
 #define UNITTEST_EXECUTABLE          "@UNITTEST_EXECUTABLE@"
 #define INCITER_EXECUTABLE           "@INCITER_EXECUTABLE@"
-#define RNGTEST_EXECUTABLE           "@RNGTEST_EXECUTABLE@"
 #define MESHCONV_EXECUTABLE          "@MESHCONV_EXECUTABLE@"
-#define WALKER_EXECUTABLE            "@WALKER_EXECUTABLE@"
 #define FILECONV_EXECUTABLE          "@FILECONV_EXECUTABLE@"
 
 #define QUINOA_VERSION               "@MAJOR_VER@.@MINOR_VER@ (C@LACC@)"
@@ -39,9 +37,7 @@ namespace tk {
 
 std::string unittest_executable() { return UNITTEST_EXECUTABLE; }
 std::string inciter_executable() { return INCITER_EXECUTABLE; }
-std::string rngtest_executable() { return RNGTEST_EXECUTABLE; }
 std::string meshconv_executable() { return MESHCONV_EXECUTABLE; }
-std::string walker_executable() { return WALKER_EXECUTABLE; }
 std::string fileconv_executable() { return FILECONV_EXECUTABLE; }
 
 std::string quinoa_version() { return QUINOA_VERSION; }

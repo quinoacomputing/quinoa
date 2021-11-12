@@ -436,10 +436,6 @@ function(ADD_REGRESSION_TEST test_name executable)
   if (ARG_TEXT_BASELINE)
     list(APPEND pass_regexp ".*${test_name}.*PASS")
   endif()
-  # add pass regular expression for rngtest output if needed
-  if (test_name MATCHES "${RNGTEST_EXECUTABLE}")
-    list(APPEND pass_regexp "Failed statistics" "All tests passed")
-  endif()
   # add pass regular expression for exodiff output if needed
   if (ARG_BIN_BASELINE)
     list(APPEND pass_regexp "Binary diff found match")

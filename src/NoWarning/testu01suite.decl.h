@@ -25,8 +25,6 @@
   #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
-#include "../RNGTest/testu01suite.decl.h"
-
 #if defined(__clang__)
   #pragma clang diagnostic pop
 #elif defined(STRICT_GNUC)

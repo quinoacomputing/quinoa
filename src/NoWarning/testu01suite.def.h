@@ -31,8 +31,6 @@
   #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
-#include "../RNGTest/testu01suite.def.h"
-
 #if defined(__clang__)
   #pragma clang diagnostic pop
 #elif defined(STRICT_GNUC)

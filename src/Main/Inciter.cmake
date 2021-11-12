@@ -37,7 +37,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${SEACASExodus_LIBRARIES}
                       ${ROOT_LIBRARIES}
                       ${Zoltan2_LIBRARIES}
-                      ${RNGSSE2_LIBRARIES}
                       ${LAPACKE_LIBRARIES}    # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}

@@ -66,15 +66,6 @@ find_package(PEGTL 2.0.0)
 #### Random123
 find_package(Random123)
 
-#### RNGSSE2 library
-if(ARCH MATCHES "x86")
-  find_package(RNGSSE2)
-endif()
-if(RNGSSE2_FOUND)
-  set(HAS_RNGSSE2 true)  # will become compiler define
-  message(STATUS "RNGSSE2 enabled")
-endif()
-
 ### HDF5/NetCDF (NetCDF only for static link)
 set(HDF5_PREFER_PARALLEL true)
 if(NOT BUILD_SHARED_LIBS)
@@ -221,7 +212,6 @@ if (CHARM_FOUND AND PUGIXML_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
   if (NOT ENABLE_UNITTEST)
     message(STATUS "Target '${UNITTEST_EXECUTABLE}' disabled")
   endif()
-  set(UNITTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
 else()
   if (NOT ENABLE_TESTS)
     message(STATUS "Target 'unittest' will NOT be configured, tests disabled.")
@@ -240,19 +230,6 @@ if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
   endif()
 else()
   PrintMissing(inciter "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;Zoltan2_FOUND;HDF5_FOUND;BRIGAND_FOUND;PEGTL_FOUND;MKL_FOUND;LAPACKE_FOUND;Boost_FOUND")
-endif()
-
-if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
-    RANDOM123_FOUND AND Boost_FOUND AND (MKL_FOUND OR LAPACKE_FOUND))
-  set(RNGTEST_EXECUTABLE rngtest)
-  set(ENABLE_RNGTEST true CACHE BOOL "Enable ${RNGTEST_EXECUTABLE}")
-  if (NOT ENABLE_RNGTEST)
-    message(STATUS "Target '${RNGTEST_EXECUTABLE}' disabled")
-  endif()
-  set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
-  set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
-else()
-  PrintMissing(rngtest "CHARM_FOUND;TESTU01_FOUND;BRIGAND_FOUND;PEGTL_FOUND;RANDOM123_FOUND;Boost_FOUND;MKL_FOUND;LAPACKE_FOUND")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND

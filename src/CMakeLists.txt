@@ -546,19 +546,14 @@ message(STATUS "Executable linker flags: '${CMAKE_EXE_LINKER_FLAGS}'")
 include(ConfigureDataLayout)
 
 # Create set of all executables tested. These are the executables that do
-# "interesting things", i.e., excluding unittest but keeping rngtest as that is
-# (to be) regression tested
+# "interesting things", i.e., excluding unittest
 set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE}
-                        ${RNGTEST_EXECUTABLE}
                         ${MESHCONV_EXECUTABLE}
-                        ${WALKER_EXECUTABLE}
                         ${FILECONV_EXECUTABLE})
 
 # Create set of all executables.
 set(EXECUTABLES ${INCITER_EXECUTABLE}
-                ${RNGTEST_EXECUTABLE}
                 ${MESHCONV_EXECUTABLE}
-                ${WALKER_EXECUTABLE}
                 ${UNITTEST_EXECUTABLE}
                 ${FILECONV_EXECUTABLE})
 
@@ -631,12 +626,6 @@ else()
   PrintMissing(LoadBalance "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND;Zoltan2_FOUND")
 endif()
 
-if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND RANDOM123_FOUND)
-  add_subdirectory(RNG)
-else()
-  PrintMissing(RNG "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
-endif()
-
 if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
   add_subdirectory(Statistics)
 else()
@@ -660,15 +649,6 @@ endif()
 
 if (ENABLE_UNITTEST AND ENABLE_TESTS)
   add_subdirectory(UnitTest)
-endif()
-
-if (ENABLE_WALKER)
-  add_subdirectory(DiffEq)
-  add_subdirectory(Walker)
-endif()
-
-if (ENABLE_RNGTEST)
-  add_subdirectory(RNGTest)
 endif()
 
 add_subdirectory(Main)
