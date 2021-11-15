@@ -1,12 +1,5 @@
 ## UnitTest executable ########################################################
 
-if (HAS_MKL)
-  set(TestMKLBetaMethod "Control/Options/TestMKLBetaMethod.cpp")
-  set(TestMKLGammaMethod "Control/Options/TestMKLGammaMethod.cpp")
-  set(TestMKLGaussianMethod "Control/Options/TestMKLGaussianMethod.cpp")
-  set(TestMKLUniformMethod "Control/Options/TestMKLUniformMethod.cpp")
-endif()
-
 add_executable(${UNITTEST_EXECUTABLE}
                UnitTestDriver.cpp
                UnitTest.cpp
@@ -28,10 +21,6 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Base/TestTimer.cpp
                ../../tests/unit/Base/TestVector.cpp
                ../../tests/unit/Base/TestWriter.cpp
-               ../../tests/unit/${TestMKLUniformMethod}
-               ../../tests/unit/${TestMKLGaussianMethod}
-               ../../tests/unit/${TestMKLBetaMethod}
-               ../../tests/unit/${TestMKLGammaMethod}
                ../../tests/unit/Control/TestFileParser.cpp
                ../../tests/unit/Control/TestStringParser.cpp
                ../../tests/unit/Control/TestSystemComponents.cpp
