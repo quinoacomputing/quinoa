@@ -589,7 +589,7 @@ Transporter::createPartitioner()
       bnode = mr.readSidesetNodes();
       // Verify boundarty condition (BC) side sets used exist in mesh file
       bcs_set = matchBCs( bnode );
-      bcs_set = bcs_set || matchBCs( bface );
+      bcs_set = matchBCs( bface ) or bcs_set;
     }
 
     // Warn on no BCs
