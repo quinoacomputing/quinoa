@@ -35,7 +35,6 @@ See section @ref mainpage_build on the main page.
  - Debian Linux
  - Alpine Linux
  - RedHat Enterprise Linux
- - MacOS
 
 @section build_stages Two-stage build
 
