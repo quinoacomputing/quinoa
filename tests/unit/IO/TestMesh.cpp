@@ -11,12 +11,12 @@
 // *****************************************************************************
 
 #include "NoWarning/tut.hpp"
+#include <filesystem>
 
 #include "TUTConfig.hpp"
 #include "MeshDetect.hpp"
 #include "Reorder.hpp"
 #include "DerivedData.hpp"
-#include "ProcessControl.hpp"
 #include "GmshMeshWriter.hpp"
 #include "GmshMeshReader.hpp"
 #include "ExodusIIMeshWriter.hpp"
@@ -170,7 +170,7 @@ struct Mesh_common {
             outmesh.tetinpoel() == inmesh.tetinpoel() );
 
     // remove mesh file from disk
-    tk::rm( filename );
+    ensure("file not found to remove", std::filesystem::remove(filename));
   }
 
 };

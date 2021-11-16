@@ -11,7 +11,6 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Base/TestFlip_map.cpp
                ../../tests/unit/Base/TestHas.cpp
                ../../tests/unit/Base/TestPrint.cpp
-               ../../tests/unit/Base/TestProcessControl.cpp
                ../../tests/unit/Base/TestPUPUtil.cpp
                ../../tests/unit/Base/TestReader.cpp
                ../../tests/unit/Base/TestPrintUtil.cpp

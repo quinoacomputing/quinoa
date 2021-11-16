@@ -606,10 +606,10 @@ if (BUILD_SHARED_LIBS)
 endif(BUILD_SHARED_LIBS)
 
 # Components
-if (CHARM_FOUND AND PSTREAMS_FOUND)
+if (CHARM_FOUND)
   add_subdirectory(Base)
 else()
-  PrintMissing(Base "CHARM_FOUND;PSTREAMS_FOUND")
+  PrintMissing(Base "CHARM_FOUND")
 endif()
 
 if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
