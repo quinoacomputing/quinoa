@@ -578,12 +578,6 @@ add_regression_test(compflow_euler_sodshocktube_alecg_u0.8_migr
                     BIN_DIFF_PROG_CONF exodiff.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_alecg.std
-                                  sod_shocktube_alecg_hist.p1.std
-                                  sod_shocktube_alecg_hist.p2.std
                     TEXT_RESULT diag
-                                out.hist.p1
-                                out.hist.p2
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
-                                        sod_shocktube_hist.ndiff.cfg
-                                        sod_shocktube_hist.ndiff.cfg
                     LABELS alecg migration)
