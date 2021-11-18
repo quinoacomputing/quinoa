@@ -1479,6 +1479,7 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
       resume();
     }
     #else
+      printer() << ">>> WARNING: Checkpointing with ExaM2M not yet implemented\n";
       resume();
     #endif
   }
