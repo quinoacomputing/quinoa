@@ -54,25 +54,6 @@ class InciterPrint : public tk::Print {
                   % opt.name( g_inputdeck.get< tags... >() );
     }
 
-    //! Print list of codes of vector-valued option
-    //! \tparam Option Option type
-    //! \tparam T Enum type for option type
-    //! \param[in] v Vector of option types (enums) whose code vector to print
-    template< typename Option, typename T >
-    void ItemVec( const std::vector< T >& v ) const {
-      Option opt;
-      std::string codes;
-      for (auto e : v) codes += opt.code(e);
-      item( opt.group(), codes );
-    }
-
-    //! Print legend for list of codes of vector-valued option
-    //! \tparam Option Option type
-    template< typename Option >
-    void ItemVecLegend() const {
-      brigand::for_each< typename Option::keywords >( echoPolicies(this) );
-    }
-
     // Helper class for compact output of PDE policies
     class Policies {
       public:
@@ -87,17 +68,6 @@ class InciterPrint : public tk::Print {
           prob += p.prob;
           return *this;
         }
-        // Output unique policies to output stream
-        friend std::ostream& operator<< ( std::ostream& os, const Policies& p )
-        {
-          Policies copy( p );     // copy policies
-          copy.unique();          // get rid of duplicate policies
-          os << static_cast< char >( kw::physics::info::code::value ) << ':'
-             << copy.phys << ", "
-             << static_cast< char >( kw::problem::info::code::value ) << ':'
-             << copy.prob;
-          return os;
-        }
 
       private:
         // Make all policies unique
@@ -106,9 +76,6 @@ class InciterPrint : public tk::Print {
         std::string phys;
         std::string prob;
     };
-
-    //! Print PDE factory legend
-    void eqlegend() const;
 
     //! Print equation list with policies
     //! \param[in] t Section title
@@ -123,18 +90,6 @@ class InciterPrint : public tk::Print {
         section( t );
         item( "Unique equation types", ntypes );
         item( "With all policy combinations", factory.size() );
-         // extract eqname and supported policies for output
-        const auto p = ctr::Physics();
-        const auto r = ctr::Problem();
-        std::map< std::string, Policies > eqs;      // eqname : policies
-        for (const auto& f : factory)
-          eqs[ PDEName( f.first ) ] +=
-            Policies( p.code( f.first.template get< tag::physics >() ),
-                      r.code( f.first.template get< tag::problem >() ) );
-        // output eqname and supported policies
-        for (const auto& e : eqs)
-          m_stream << m_item_name_value_fmt % m_item_indent
-                                            % e.first % e.second;
       }
     }
 

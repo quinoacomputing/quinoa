@@ -37,12 +37,12 @@ class Physics : public tk::Toggle< PhysicsType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = tk::unique_codes< kw::advection
-                                     , kw::advdiff
-                                     , kw::euler
-                                     , kw::navierstokes
-                                     , kw::veleq
-                                     >::list;
+    using keywords = brigand::list< kw::advection
+                                  , kw::advdiff
+                                  , kw::euler
+                                  , kw::navierstokes
+                                  , kw::veleq
+                                  >;
 
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
@@ -64,41 +64,7 @@ class Physics : public tk::Toggle< PhysicsType > {
           { kw::euler::string(), PhysicsType::EULER },
           { kw::navierstokes::string(), PhysicsType::NAVIERSTOKES },
           { kw::veleq::string(), PhysicsType::VELEQ } } )
-    {
-      brigand::for_each< keywords >( assertPolicyCodes() );
-    }
-
-    //! \brief Return policy code based on Enum
-    //! \param[in] p Enum value of the physics option requested
-    //! \return Policy code of the option
-    const std::string& code( PhysicsType p ) const {
-      using tk::operator<<;
-      auto it = policy.find( p );
-      Assert( it != end(policy),
-              std::string("Cannot find policy code for physics \"") << p <<
-                "\"" );
-      return it->second;
-    }
-
-  private:
-    //! Function object for ensuring the existence of policy codes
-    struct assertPolicyCodes {
-      //! \brief Function call operator templated on the type to assert the
-      //!   existence of a policy code
-      template< typename U > void operator()( brigand::type_<U> ) {
-        static_assert( tk::HasTypedef_code_v< typename U::info >,
-                       "Policy code undefined for keyword" );
-      }
-    };
-
-    //! Enums -> policy code
-    std::map< PhysicsType, std::string > policy {
-        { PhysicsType::ADVECTION, *kw::advection::code() }
-      , { PhysicsType::ADVDIFF, *kw::advdiff::code() }
-      , { PhysicsType::EULER, *kw::euler::code() }
-      , { PhysicsType::NAVIERSTOKES, *kw::navierstokes::code() }
-      , { PhysicsType::VELEQ, *kw::veleq::code() }
-    };
+    {}
 };
 
 } // ctr::

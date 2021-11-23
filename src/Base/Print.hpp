@@ -579,23 +579,6 @@ class Print {
     template< Style s = VERBOSE >
     std::ostream& stream() const noexcept { return s ? m_stream : m_qstream; }
 
-    //! Function object for echoing policies to screen
-    struct echoPolicies {
-      //! Need to store reference to host class whose data we operate on
-      const Print* const m_host;
-      //! Constructor: store host object pointer
-      explicit echoPolicies( const Print* const host ) : m_host( host ) {}
-      //! Function call operator templated on the type that echos a policy
-      template< typename U > void operator()( brigand::type_<U> ) {
-        static_assert( tk::HasTypedef_code_v< typename U::info >,
-                       "Policy code undefined for keyword" );
-        // Print policy code - policy name
-        m_host->raw( m_host->m_item_indent + "   " +
-                     *U::code() + " - " + U::info::name() + '\n' );
-
-      }
-    };
-
     //! Print Inciter header. Text ASCII Art Generator used for executable
     //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
     //! used for converting the logo text "Quinoa": http://picascii.com.
@@ -624,37 +607,6 @@ class Print {
                  |   |   |  \  \___|  ||  | \  ___/|  | \/
                  |___|___|  /\___  >__||__|  \___  >__|
                           \/     \/              \/)"
-      << std::endl;
-    }
-
-    //! Print RNGTest header. Text ASCII Art Generator used for executable
-    //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
-    //! used for converting the logo text "Quinoa": http://picascii.com.
-    template< Style s = VERBOSE >
-    void headerRNGTest() const {
-       stream<s>() << R"(
-      ,::,`                                                            `.
-   .;;;'';;;:                                                          ;;#
-  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
- :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
- ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
-.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
-;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
-;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
-;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
-;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
-`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
- ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
- .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
-  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
-   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
-     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
-    :;;;;;;.     __________ _______    __________________             __
-   .;@+@';;;;;;' \______   \\      \  /  _____\__    _______   ______/  |_
-    `     '#''@`  |       _//   |   \/   \  ___ |    |_/ __ \ /  ___\   __\
-                  |    |   /    |    \    \_\  \|    |\  ___/ \___ \ |  |
-                  |____|_  \____|__  /\______  /|____| \___  /____  >|__|
-                         \/        \/        \/            \/     \/)"
       << std::endl;
     }
 
@@ -689,37 +641,6 @@ class Print {
       << std::endl;
     }
 
-    //! Print FileConv header. Text ASCII Art Generator used for executable
-    //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
-    //! used for converting the logo text "Quinoa": http://picascii.com.
-    template< Style s = VERBOSE >
-    void headerFileConv() const {
-      stream<s>() << R"(
-      ,::,`                                                            `.
-   .;;;'';;;:                                                          ;;#
-  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
- :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
- ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
-.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
-;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
-;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
-;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
-;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
-`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
- ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
- .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
-  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
-   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
-     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
-    :;;;;;;.     ___________.__.__         _________
-   .;@+@';;;;;;' \_   _____/|__|  |   ____ \_   ___ \  ____   _______  __
-    `     '#''@`  |    __)  |  |  | _/ __ \/    \  \/ /  _ \ /    \  \/ /
-                  |     \   |  |  |_\  ___/\     \___(  <_> )   |  \   /
-                  \___  /   |__|____/\___  >\______  /\____/|___|  /\_/
-                      \/                 \/        \/            \/)"
-      << std::endl;
-    }
-
     //! Print MeshConv header. Text ASCII Art Generator used for executable
     //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
     //! used for converting the logo text "Quinoa": http://picascii.com.
@@ -748,37 +669,6 @@ class Print {
                  /    Y    \  ___/ \___ \|   Y  \     \___(  <_> |   |  \   /
                  \____|__  /\___  /____  |___|  /\______  /\____/|___|  /\_/
                          \/     \/     \/     \/        \/            \/)"
-      << std::endl;
-    }
-
-    //! Print Walker header. Text ASCII Art Generator used for executable names:
-    //! http://patorjk.com/software/taag, Picture ASCII Art Generator used for
-    //! converting the logo text "Quinoa": http://picascii.com.
-    template< Style s = VERBOSE >
-    void headerWalker() const {
-      stream<s>() << R"(
-      ,::,`                                                            `.
-   .;;;'';;;:                                                          ;;#
-  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
- :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
- ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
-.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
-;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
-;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
-;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
-;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
-`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
- ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
- .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
-  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
-   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
-     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
-    :;;;;;;.      __      __        .__   __
-  .;@+@';;;;;;'  /  \    /  \_____  |  | |  | __ ___________
-    `     '#''@` \   \/\/   /\__  \ |  | |  |/ // __ \_  __ \
-                  \        /  / __ \|  |_|    <\  ___/|  | \/
-                   \__/\  /  (____  /____/__|_ \\___  >__|
-                        \/        \/          \/    \/)"
       << std::endl;
     }
 

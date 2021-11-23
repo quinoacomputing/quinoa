@@ -240,8 +240,8 @@ bndLeastSqConservedVar_P0P1(
 
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
-        auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B );
-        auto uprim = eval_state( nprim, offset, rdof, 1, el, P, B );
+        auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B, {0, ncomp-1} );
+        auto uprim = eval_state( nprim, offset, rdof, 1, el, P, B, {0, nprim-1} );
 
         // consolidate primitives into state vector
         ul.insert(ul.end(), uprim.begin(), uprim.end());
@@ -343,6 +343,7 @@ recoLeastSqExtStencil(
                {{0.0, 0.0, 0.0}},
                {{0.0, 0.0, 0.0}} }} );
   // rhs matrix
+  Assert( varRange[0] <= varRange[1], "Incorrect variable range detected" );
   std::vector< std::array< tk::real, 3 > >
   rhs_ls( varRange[1]-varRange[0]+1, {{ 0.0, 0.0, 0.0 }} );
 
@@ -369,8 +370,9 @@ recoLeastSqExtStencil(
       for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
       {
         auto mark = c*rdof;
+        auto cmark = c - varRange[0];
         for (std::size_t idir=0; idir<3; ++idir)
-          rhs_ls[c][idir] +=
+          rhs_ls[cmark][idir] +=
             wdeltax[idir] * (W(er,mark,offset)-W(e,mark,offset));
       }
     }
@@ -380,8 +382,9 @@ recoLeastSqExtStencil(
   for (ncomp_t c=varRange[0]; c<=varRange[1]; ++c)
   {
     auto mark = c*rdof;
+    auto cmark = c - varRange[0];
 
-    auto ux = tk::cramer( lhs_ls, rhs_ls[c] );
+    auto ux = tk::cramer( lhs_ls, rhs_ls[cmark] );
 
     // Update the P1 dofs with the reconstructioned gradients.
     // Since this reconstruction does not affect the cell-averaged solution,
@@ -1038,8 +1041,8 @@ evalPolynomialSol( std::size_t system,
   std::vector< real > state;
   std::vector< real > sprim;
 
-  state = eval_state( ncomp, offset, rdof, dof_e, e, U, B );
-  sprim = eval_state( nprim, offset, rdof, dof_e, e, P, B );
+  state = eval_state( ncomp, offset, rdof, dof_e, e, U, B, {0, ncomp-1} );
+  sprim = eval_state( nprim, offset, rdof, dof_e, e, P, B, {0, nprim-1} );
 
   // consolidate primitives into state vector
   state.insert(state.end(), sprim.begin(), sprim.end());

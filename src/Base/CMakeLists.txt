@@ -6,7 +6,6 @@ include(charm)
 add_library(Base
             Exception.cpp
             ProcessException.cpp
-            ProcessControl.cpp
             LoadDistributor.cpp
             Timer.cpp
             Reader.cpp
@@ -24,8 +23,7 @@ target_include_directories(Base PUBLIC
                            ${BACKWARD_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
-                           ${MPI_CXX_INCLUDE_PATH}
-                           ${PSTREAMS_INCLUDE_DIRS})
+                           ${MPI_CXX_INCLUDE_PATH})
 
 addCharmModule( "charestatecollector" "Base" )
 

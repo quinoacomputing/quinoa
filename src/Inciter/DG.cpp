@@ -26,7 +26,6 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Refiner.hpp"
 #include "Limiter.hpp"
-#include "PrefIndicator.hpp"
 #include "Reorder.hpp"
 #include "Vector.hpp"
 #include "Around.hpp"
@@ -55,7 +54,7 @@ DG::DG( const CProxy_Discretization& disc,
         const std::map< int, std::vector< std::size_t > >& /* bnode */,
         const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
-  m_ndof_NodalExtrm( 1 ),
+  m_ndof_NodalExtrm( 3 ), // for the first order derivatives in 3 directions
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_ncomEsup( 0 ),
@@ -114,7 +113,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_nodefields(),
   m_nodefieldsc(),
   m_outmesh(),
-  m_boxelems()
+  m_boxelems(),
+  m_shockmarker(m_u.nunk())
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -133,8 +133,6 @@ DG::DG( const CProxy_Discretization& disc,
   }
 
   // Allocate storage for the vector of nodal extrema
-  auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  if(rdof > 4)  m_ndof_NodalExtrm = 4;
   m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
     m_ndof_NodalExtrm*g_inputdeck.get< tag::component >().nprop() ) );
   m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
@@ -1070,12 +1068,13 @@ DG::next()
   auto d = Disc();
 
   if (pref && m_stage == 0 && d->T() > 0)
-    eval_ndof( m_nunk, m_coord, m_inpoel, m_fd, m_u,
-               g_inputdeck.get< tag::pref, tag::indicator >(),
-               g_inputdeck.get< tag::discr, tag::ndof >(),
-               g_inputdeck.get< tag::pref, tag::ndofmax >(),
-               g_inputdeck.get< tag::pref, tag::tolref >(),
-               m_ndof );
+    for (const auto& eq : g_dgpde)
+      eq.eval_ndof( m_nunk, m_coord, m_inpoel, m_fd, m_u,
+                    g_inputdeck.get< tag::pref, tag::indicator >(),
+                    g_inputdeck.get< tag::discr, tag::ndof >(),
+                    g_inputdeck.get< tag::pref, tag::ndofmax >(),
+                    g_inputdeck.get< tag::pref, tag::tolref >(),
+                    m_ndof );
 
   // communicate solution ghost data (if any)
   if (m_sendGhost.empty())
@@ -1212,6 +1211,20 @@ DG::extractFieldOutput(
     m_elemfields.push_back( ndof );
   }
 
+  // Add shock detection marker array to element-centered field output
+  std::vector< tk::real > shockmarker( begin(m_shockmarker), end(m_shockmarker) );
+  // Here m_shockmarker has a size of m_u.nunk() which is the number of the
+  // elements within this partition (nelem) plus the ghost partition cells. In
+  // terms of output purpose, we only need the solution data within this
+  // partition. Therefore, resizing it to nelem removes the extra partition
+  // boundary allocations in the shockmarker vector. Since the code assumes that
+  // the boundary elements are on the top, the resize operation keeps the lower
+  // portion.
+  shockmarker.resize( nelem );
+  for (const auto& [child,parent] : addedTets)
+    shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
+  m_elemfields.push_back( shockmarker );
+
   // Send node fields contributions to neighbor chares
   if (nodeCommMap.empty())
     comnodeout_complete();
@@ -1310,8 +1323,8 @@ DG::evalSolution(
            h{{ce[j][0]-ce[0][0], ce[j][1]-ce[0][1], ce[j][2]-ce[0][2] }};
         auto Bn = tk::eval_basis( m_ndof[e],
                                   dot(J[0],h), dot(J[1],h), dot(J[2],h) );
-        auto u = eval_state( uncomp, 0, rdof, m_ndof[e], e, m_u, Bn );
-        auto p = eval_state( pncomp, 0, rdof, m_ndof[e], e, m_p, Bn );
+        auto u = eval_state( uncomp, 0, rdof, m_ndof[e], e, m_u, Bn, {0, uncomp-1} );
+        auto p = eval_state( pncomp, 0, rdof, m_ndof[e], e, m_p, Bn, {0, pncomp-1} );
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) un(inpoel[e4+j],i,0) += u[i];
         for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[e4+j],i,0) += p[i];
@@ -1352,8 +1365,8 @@ DG::evalSolution(
       std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
       auto B = tk::eval_basis( m_ndof[parent],
                                dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
-      auto u = eval_state( uncomp, 0, rdof, m_ndof[parent], parent, m_u, B );
-      auto p = eval_state( pncomp, 0, rdof, m_ndof[parent], parent, m_p, B );
+      auto u = eval_state( uncomp, 0, rdof, m_ndof[parent], parent, m_u, B, {0, uncomp-1} );
+      auto p = eval_state( pncomp, 0, rdof, m_ndof[parent], parent, m_p, B, {0, pncomp-1} );
       // Assign cell center solution from parent to child
       for (std::size_t i=0; i<uncomp; ++i) ue(child,i*rdof,0) = u[i];
       for (std::size_t i=0; i<pncomp; ++i) pe(child,i*rdof,0) = p[i];
@@ -1369,8 +1382,8 @@ DG::evalSolution(
            hn{{cc[j][0]-cp[0][0], cc[j][1]-cp[0][1], cc[j][2]-cp[0][2] }};
         auto Bn = tk::eval_basis( m_ndof[parent],
                                   dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn) );
-        auto cnu = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_u, Bn);
-        auto cnp = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_p, Bn);
+        auto cnu = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_u, Bn, {0, uncomp-1});
+        auto cnp = eval_state(pncomp, 0, rdof, m_ndof[parent], parent, m_p, Bn, {0, pncomp-1});
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) un(inpoel[c4+j],i,0) += cnu[i];
         for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[c4+j],i,0) += cnp[i];
@@ -1562,7 +1575,7 @@ DG::nodalExtrema()
   }
 
   // Evaluate the max/min value for the chare-boundary nodes
-  if(rdof > 1) {
+  if(rdof > 4) {
       evalNodalExtrm(ncomp, nprim, m_ndof_NodalExtrm, d->bndel(), m_inpoel,
         m_coord, gid, bid, m_u, m_p, m_uNodalExtrm, m_pNodalExtrm);
   }
@@ -1722,107 +1735,80 @@ void DG::evalNodalExtrm( const std::size_t ncomp,
       auto i = bid.find( gid[N[ip]] );
       if (i != end(bid))      // If ip is the chare boundary point
       {
-        // Find the nodal extrema of conservative variables
-        for (std::size_t c=0; c<ncomp; ++c)
-        {
-          auto max_mark = 2*c*m_ndof_NodalExtrm;
-          auto min_mark = max_mark + 1;
-          uNodalExtrm[i->second][max_mark] =
-            std::max(uNodalExtrm[i->second][max_mark], U(e,c*rdof,0));
-          uNodalExtrm[i->second][min_mark] =
-            std::min(uNodalExtrm[i->second][min_mark], U(e,c*rdof,0));
-        }
-        // Find the nodal extrema of primitive variables
-        for (std::size_t c=0; c<nprim; ++c)
-        {
-          auto max_mark = 2*c*m_ndof_NodalExtrm;
-          auto min_mark = max_mark + 1;
-          pNodalExtrm[i->second][max_mark] =
-            std::max(pNodalExtrm[i->second][max_mark], P(e,c*rdof,0));
-          pNodalExtrm[i->second][min_mark] =
-            std::min(pNodalExtrm[i->second][min_mark], P(e,c*rdof,0));
-        }
-
         // If DG(P2) is applied, find the nodal extrema of the gradients of
         // conservative/primitive variables in the physical domain
-        if(ndof_NodalExtrm > 1)
+
+        // Vector used to store the first order derivatives for both
+        // conservative and primitive variables
+        std::vector< std::array< tk::real, 3 > > gradc(ncomp, {0.0, 0.0, 0.0});
+        std::vector< std::array< tk::real, 3 > > gradp(ncomp, {0.0, 0.0, 0.0});
+
+        const auto& cx = coord[0];
+        const auto& cy = coord[1];
+        const auto& cz = coord[2];
+
+        std::array< std::array< tk::real, 3>, 4 > coordel {{
+          {{ cx[ N[0] ], cy[ N[0] ], cz[ N[0] ] }},
+          {{ cx[ N[1] ], cy[ N[1] ], cz[ N[1] ] }},
+          {{ cx[ N[2] ], cy[ N[2] ], cz[ N[2] ] }},
+          {{ cx[ N[3] ], cy[ N[3] ], cz[ N[3] ] }}
+        }};
+
+        auto jacInv = tk::inverseJacobian( coordel[0], coordel[1],
+          coordel[2], coordel[3] );
+
+        // Compute the derivatives of basis functions
+        auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+
+        std::array< std::vector< tk::real >, 3 > center;
+        center[0].resize(1, 0.25);
+        center[1].resize(1, 0.25);
+        center[2].resize(1, 0.25);
+        tk::eval_dBdx_p2(0, center, jacInv, dBdx);
+
+        // Evaluate the first order derivative in physical domain
+        for(std::size_t icomp = 0; icomp < ncomp; icomp++)
         {
-          // Vector used to store the first order derivatives for both
-          // conservative and primitive variables
-          std::vector< std::vector< tk::real > >
-            gradc(ncomp, std::vector<tk::real>(3, 0.0));
-          std::vector< std::vector< tk::real > >
-            gradp(ncomp, std::vector<tk::real>(3, 0.0));
-
-          const auto& cx = coord[0];
-          const auto& cy = coord[1];
-          const auto& cz = coord[2];
-
-          std::array< std::array< tk::real, 3>, 4 > coordel {{
-            {{ cx[ N[0] ], cy[ N[0] ], cz[ N[0] ] }},
-            {{ cx[ N[1] ], cy[ N[1] ], cz[ N[1] ] }},
-            {{ cx[ N[2] ], cy[ N[2] ], cz[ N[2] ] }},
-            {{ cx[ N[3] ], cy[ N[3] ], cz[ N[3] ] }}
-          }};
-
-          auto jacInv = tk::inverseJacobian( coordel[0], coordel[1],
-            coordel[2], coordel[3] );
-
-          // Compute the derivatives of basis functions
-          auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
-
-          std::array< std::vector< tk::real >, 3 > center;
-          center[0].resize(1, 0.25);
-          center[1].resize(1, 0.25);
-          center[2].resize(1, 0.25);
-          tk::eval_dBdx_p2(0, center, jacInv, dBdx);
-
-          // Evaluate the first order derivative in physical domain
-          for(std::size_t icomp = 0; icomp < ncomp; icomp++)
+          auto mark = icomp * rdof;
+          for(std::size_t idir = 0; idir < 3; idir++)
           {
-            auto mark = icomp * rdof;
-            for(std::size_t idir = 0; idir < 3; idir++)
-            {
-              gradc[icomp][idir] = 0;
-              for(std::size_t idof = 1; idof < rdof; idof++)
-                gradc[icomp][idir] += U(e, mark+idof, 0) * dBdx[idir][idof];
-            }
+            gradc[icomp][idir] = 0;
+            for(std::size_t idof = 1; idof < rdof; idof++)
+              gradc[icomp][idir] += U(e, mark+idof, 0) * dBdx[idir][idof];
           }
-          for(std::size_t icomp = 0; icomp < nprim; icomp++)
+        }
+        for(std::size_t icomp = 0; icomp < nprim; icomp++)
+        {
+          auto mark = icomp * rdof;
+          for(std::size_t idir = 0; idir < 3; idir++)
           {
-            auto mark = icomp * rdof;
-            for(std::size_t idir = 0; idir < 3; idir++)
-            {
-              gradp[icomp][idir] = 0;
-              for(std::size_t idof = 1; idof < rdof; idof++)
-                gradp[icomp][idir] += P(e, mark+idof, 0) * dBdx[idir][idof];
-            }
+            gradp[icomp][idir] = 0;
+            for(std::size_t idof = 1; idof < rdof; idof++)
+              gradp[icomp][idir] += P(e, mark+idof, 0) * dBdx[idir][idof];
           }
+        }
 
-          // Store the extrema for the gradients
-          for (std::size_t c=0; c<ncomp; ++c)
+        // Store the extrema for the gradients
+        for (std::size_t c=0; c<ncomp; ++c)
+        {
+          for (std::size_t idof = 0; idof < ndof_NodalExtrm; idof++)
           {
-            for (std::size_t idof = 1; idof < ndof_NodalExtrm; idof++)
-            {
-              auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-              auto min_mark = max_mark + 1;
-              uNodalExtrm[i->second][max_mark] =
-                std::max(uNodalExtrm[i->second][max_mark], gradc[c][idof-1]);
-              uNodalExtrm[i->second][min_mark] =
-                std::min(uNodalExtrm[i->second][min_mark], gradc[c][idof-1]);
-            }
+            auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+            auto min_mark = max_mark + 1;
+            auto& ex = uNodalExtrm[i->second];
+            ex[max_mark] = std::max(ex[max_mark], gradc[c][idof-1]);
+            ex[min_mark] = std::min(ex[min_mark], gradc[c][idof-1]);
           }
-          for (std::size_t c=0; c<nprim; ++c)
+        }
+        for (std::size_t c=0; c<nprim; ++c)
+        {
+          for (std::size_t idof = 0; idof < ndof_NodalExtrm; idof++)
           {
-            for (std::size_t idof = 1; idof < ndof_NodalExtrm; idof++)
-            {
-              auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-              auto min_mark = max_mark + 1;
-              pNodalExtrm[i->second][max_mark] =
-                std::max(pNodalExtrm[i->second][max_mark], gradp[c][idof-1]);
-              pNodalExtrm[i->second][min_mark] =
-                std::min(pNodalExtrm[i->second][min_mark], gradp[c][idof-1]);
-            }
+            auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+            auto min_mark = max_mark + 1;
+            auto& ex = pNodalExtrm[i->second];
+            ex[max_mark] = std::max(ex[max_mark], gradp[c][idof-1]);
+            ex[min_mark] = std::min(ex[min_mark], gradp[c][idof-1]);
           }
         }
       }
@@ -1882,7 +1868,7 @@ DG::lim()
     for (const auto& eq : g_dgpde)
       eq.limit( d->T(), m_geoFace, m_geoElem, m_fd, m_esup, m_inpoel, m_coord,
                 m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm, m_pNodalExtrm, m_u,
-                m_p );
+                m_p, m_shockmarker );
 
   // Send limited solution to neighboring chares
   if (m_sendGhost.empty())
@@ -2379,6 +2365,8 @@ DG::writeFields( CkCallback c )
 
   if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );
+
+  elemfieldnames.push_back( "shock_marker" );
 
   Assert( elemfieldnames.size() == m_elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == m_nodefields.size(), "Size mismatch" );

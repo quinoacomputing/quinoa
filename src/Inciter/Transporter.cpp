@@ -191,7 +191,6 @@ Transporter::info( const InciterPrint& print )
   PDEStack stack;
 
   // Print out information on PDE factories
-  print.eqlegend();
   print.eqlist( "Registered PDEs using continuous Galerkin (CG) methods",
                 stack.cgfactory(), stack.cgntypes() );
   print.eqlist( "Registered PDEs using discontinuous Galerkin (DG) methods",
@@ -292,8 +291,6 @@ Transporter::info( const InciterPrint& print )
     if (t0ref) {
       const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
       print.item( "Initial refinement steps", initref.size() );
-      print.ItemVec< ctr::AMRInitial >( initref );
-      print.ItemVecLegend< ctr::AMRInitial >();
       print.edgeref( g_inputdeck.get< tag::amr, tag::edge >() );
 
       auto eps =
@@ -822,12 +819,11 @@ Transporter::matched( std::size_t summeshid,
     if (refmode == Refiner::RefMode::T0REF) {
 
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
-        const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
         ctr::AMRInitial opt;
         print.diag( { "meshid", "t0ref", "type", "nref", "nderef", "ncorr" },
                     { std::to_string(meshid),
                       std::to_string(m_nt0refit[meshid]),
-                      opt.code(initref[m_nt0refit[meshid]]),
+                      "initial",
                       std::to_string(nref),
                       std::to_string(nderef),
                       std::to_string(m_ncit[meshid]) } );

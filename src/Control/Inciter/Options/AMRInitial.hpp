@@ -67,42 +67,7 @@ class AMRInitial : public tk::Toggle< AMRInitialType > {
             AMRInitialType::INITIAL_CONDITIONS },
           { kw::amr_edgelist::string(), AMRInitialType::EDGELIST },
           { kw::amr_coords::string(), AMRInitialType::COORDINATES } } )
-    {
-       brigand::for_each< keywords >( assertPolicyCodes() );
-    }
-
-    //! \brief Return policy code based on Enum
-    //! \param[in] p Enum value of the option requested
-    //! \return Policy code of the option
-    const std::string& code( AMRInitialType p ) const {
-      using tk::operator<<;
-      auto it = policy.find( p );
-      Assert( it != end(policy),
-              std::string("Cannot find policy code for initial AMR type \"")
-              << p << "\"" );
-      return it->second;
-    }
-
-  private:
-    //! Function object for ensuring the existence of policy codes
-    struct assertPolicyCodes {
-      //! \brief Function call operator templated on the type to assert the
-      //!   existence of a policy code
-      template< typename U > void operator()( brigand::type_<U> ) {
-        static_assert( tk::HasTypedef_code_v< typename U::info >,
-                       "Policy code undefined for keyword" );
-      }
-    };
-
-    //! Enums -> policy code
-    std::map< AMRInitialType, std::string > policy {
-        { AMRInitialType::UNIFORM, *kw::amr_uniform::code() }
-      , { AMRInitialType::UNIFORM_DEREFINE, *kw::amr_uniform_derefine::code() }
-      , { AMRInitialType::INITIAL_CONDITIONS,
-          *kw::amr_initial_conditions::code() }
-      , { AMRInitialType::EDGELIST, *kw::amr_edgelist::code() }
-      , { AMRInitialType::COORDINATES, *kw::amr_coords::code() }
-    };
+    {}
 };
 
 } // ctr::

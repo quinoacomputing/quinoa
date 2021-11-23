@@ -28,18 +28,6 @@ template < typename T >
 inline constexpr bool HasTypedef_alias_v = HasTypedef_alias< T >::value;
 
 
-//! Detect if a type defines type 'code'
-template< typename, typename = std::void_t<> >
-struct HasTypedef_code : std::false_type {};
-
-template< typename T >
-struct HasTypedef_code< T, std::void_t< typename T::code > >
-  : std::true_type {};
-
-template < typename T >
-inline constexpr bool HasTypedef_code_v = HasTypedef_code< T >::value;
-
-
 //! Detect if a type defines type 'i_am_tagged_tuple'
 template< typename, typename = std::void_t<> >
 struct HasTypedef_i_am_tagged_tuple : std::false_type {};

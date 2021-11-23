@@ -43,6 +43,7 @@
 #include "Limiter.hpp"
 #include "Problem/FieldOutput.hpp"
 #include "Problem/BoxInitialization.hpp"
+#include "PrefIndicator.hpp"
 
 namespace inciter {
 
@@ -296,7 +297,7 @@ class MultiMat {
 
           auto w = wgp[igp] * geoElem(e, 0, 0);
 
-          auto state = tk::eval_state( m_ncomp, 0, rdof, ndof, e, unk, B );
+          auto state = tk::eval_state( m_ncomp, 0, rdof, ndof, e, unk, B, {0, m_ncomp-1} );
 
           // bulk density at quadrature point
           tk::real rhob(0.0);
@@ -493,7 +494,7 @@ class MultiMat {
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
     void limit( [[maybe_unused]] tk::real t,
-                [[maybe_unused]] const tk::Fields& geoFace,
+                const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
@@ -505,7 +506,8 @@ class MultiMat {
                 const std::vector< std::vector<tk::real> >&,
                 const std::vector< std::vector<tk::real> >&,
                 tk::Fields& U,
-                tk::Fields& P ) const
+                tk::Fields& P,
+                std::vector< std::size_t >& shockmarker ) const
     {
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -523,7 +525,8 @@ class MultiMat {
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, geoElem, coord, U, P, nmat );
+          m_system, m_offset, fd, geoFace, geoElem, coord, U, P, nmat,
+          shockmarker );
       }
       else
       {
@@ -652,6 +655,38 @@ class MultiMat {
                                    inpoel, coord, geoElem, U, P, ndofel, ct, R,
                                    intsharp );
       }
+    }
+
+    //! Evaluate the adaptive indicator and mark the ndof for each element
+    //! \param[in] nunk Number of unknowns
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] unk Array of unknowns
+    //! \param[in] indicator p-refinement indicator type
+    //! \param[in] ndof Number of degrees of freedom in the solution
+    //! \param[in] ndofmax Max number of degrees of freedom for p-refinement
+    //! \param[in] tolref Tolerance for p-refinement
+    //! \param[in,out] ndofel Vector of local number of degrees of freedome
+    void eval_ndof( std::size_t nunk,
+                    [[maybe_unused]] const tk::UnsMesh::Coords& coord,
+                    [[maybe_unused]] const std::vector< std::size_t >& inpoel,
+                    const inciter::FaceData& fd,
+                    const tk::Fields& unk,
+                    inciter::ctr::PrefIndicatorType indicator,
+                    std::size_t ndof,
+                    std::size_t ndofmax,
+                    tk::real tolref,
+                    std::vector< std::size_t >& ndofel ) const
+    {
+      const auto& esuel = fd.Esuel();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      if(indicator == inciter::ctr::PrefIndicatorType::SPECTRAL_DECAY)
+        spectral_decay(nmat, nunk, esuel, unk, ndof, ndofmax, tolref, ndofel);
+      else
+        Throw( "No such adaptive indicator type" );
     }
 
     //! Compute the minimum time step size
@@ -816,8 +851,8 @@ class MultiMat {
           chp[2]-cp[0][2]}};
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, m_offset, rdof, rdof, e, U, B);
-        auto php = eval_state(nprim(), m_offset, rdof, rdof, e, P, B);
+        auto uhp = eval_state(m_ncomp, m_offset, rdof, rdof, e, U, B, {0, m_ncomp-1});
+        auto php = eval_state(nprim(), m_offset, rdof, rdof, e, P, B, {0, nprim()-1});
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);

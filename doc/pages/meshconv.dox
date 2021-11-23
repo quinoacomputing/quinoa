@@ -15,6 +15,10 @@ meshes from and to either of the following formats:
   - ExodusII, https://github.com/gsjaardema/seacas
   - HyperMesh, http://www.altairhyperworks.com/product/HyperMesh
   - ASC, used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code
+  - Omega_h, https://github.com/sandialabs/omega_h
+  - UGRID, https://www.simcenter.msstate.edu/software/documentation/aflr3
+  - RDGFLO, https://www.mae.ncsu.edu/people/hluo2
+
 
 Similar to the rest of Quinoa, meshconv also uses the Charm++ runtime system,
 however, meshconv is currently not parallelized.
