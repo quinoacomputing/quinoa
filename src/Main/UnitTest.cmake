@@ -67,7 +67,6 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       NativeMeshIO
                       ExodusIIMeshIO
                       HyperMeshIO
-                      ${OMEGAHMESHIO}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${MKL_INTERFACE_LIBRARY}
@@ -78,9 +77,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
-                      ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES}
                       ${LIBCXX_LIBRARIES}       # only for static link with libc++
                       ${LIBCXXABI_LIBRARIES})   # only for static link with libc++
 

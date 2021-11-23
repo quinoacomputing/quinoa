@@ -28,10 +28,7 @@
 
 // Optional TPLs
 #cmakedefine HAS_MKL
-#cmakedefine HAS_TESTU01
-#cmakedefine HAS_ROOT
 #cmakedefine HAS_BACKWARD
-#cmakedefine HAS_OMEGA_H
 #cmakedefine HAS_LUA
 #cmakedefine HAS_EXAM2M
 
