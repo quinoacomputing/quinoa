@@ -40,16 +40,7 @@ why "Philosophy" page.
 
 Quinoa consists of the following tools:
 
-  - @ref walker_main --- __Time-integrator for stochastic differential
-    equations__
-
-    _Walker_ is a mathematical tool to analyze and design the behavior of
-    stochastic differential equations. Solving a multivariate
-    [Fokker-Planck equation](https://en.wikipedia.org/wiki/Fokker%E2%80%93Planck_equation),
-    it allows the estimation of arbitrary coupled @ref statistics_output
-    "statistics" and probability distributions as they evolve in time and
-    is used for the design of @ref papers_walker "statistical moment approximations"
-    for turbulent flows.
+@note If you are looking for information on tools, _walker_, _rngtest_, or _fileconv_, previously part of Quinoa, browse the archived version of this site at https://github.com/quinoacomputing/quinoa.github.io.
 
   - @ref inciter_main --- __Navier-Stokes solver for complex domains__
 
@@ -59,15 +50,6 @@ Quinoa consists of the following tools:
     continuous and discontinuous Galerkin finite element and finite volume methods, and
     solution-adaptive mesh-, and polynomial-degree refinement, enabling dynamically
     concentrating compute resources to regions with interesting physics.
-
-  - @ref rngtest_main --- __Random number generators test suite__
-
-    _RNGTest_ is a test harness to subject random number generators to stringent
-    statistical tests, enabling quantitative ranking with respect to their
-    quality and computational cost. Multiple generators can be tested from
-    Intel's [Math Kernel Library](https://software.intel.com/en-us/intel-mkl),
-    [RNGSSE](https://doi.org/10.1016/j.cpc.2013.04.007), and
-    [Random123](http://www.thesalmons.org/john/random123/releases/latest/docs/index.html).
 
   - @ref unittest_main --- __Test suite for synchronous and asynchronous
     functions__
@@ -83,8 +65,10 @@ Quinoa consists of the following tools:
     [Gmsh](http://www.geuz.org/gmsh),
     [Netgen](https://sourceforge.net/projects/netgen-mesher),
     [ExodusII](https://github.com/gsjaardema/seacas),
-    [HyperMesh](http://www.altairhyperworks.com/product/HyperMesh), and
-    ASC used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code.
+    [HyperMesh](http://www.altairhyperworks.com/product/HyperMesh),
+    ASC used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code,
+    [UGRID](https://www.simcenter.msstate.edu/software/documentation/aflr3),
+    [RDGFLO, https://www.mae.ncsu.edu/people/hluo2).
 
 @section mainpage_try Try
 
