@@ -159,12 +159,12 @@ Transporter::input()
   // Extract mesh filenames specified in the control file (assigned to solvers)
   auto ctrinput = g_inputdeck.mesh();
 
-  ErrChk( !cmdinput.empty() || !ctrinput.empty(),
+  ErrChk( not cmdinput.empty() or not ctrinput.empty(),
     "Either a single input mesh must be given on the command line or multiple "
     "meshes must be configured in the control file." );
 
    // Prepend control file path to mesh filenames in given in control file
-  if (!ctrinput.empty()) {
+  if (not ctrinput.empty()) {
      const auto& ctr = g_inputdeck.get< tag::cmd, tag::io, tag::control >();
      auto path = ctr.substr( 0, ctr.find_last_of("/")+1 );
      for (auto& f : ctrinput) f = path + f;
@@ -588,8 +588,9 @@ Transporter::createPartitioner()
       // Read node lists on side sets
       bnode = mr.readSidesetNodes();
       // Verify boundarty condition (BC) side sets used exist in mesh file
-      bcs_set = matchBCs( bnode );
-      bcs_set = bcs_set || matchBCs( bface );
+      bool bcnode_set = matchBCs( bnode );
+      bool bcface_set = matchBCs( bface );
+      bcs_set = bcface_set or bcnode_set;
     }
 
     // Warn on no BCs
@@ -1471,8 +1472,7 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
   if (++m_nchk == m_nelem.size()) { // all worker arrays have checkpointed
     m_nchk = 0;
     #ifndef HAS_EXAM2M
-    const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
-    if (!benchmark) {
+    if (not g_inputdeck.get< tag::cmd, tag::benchmark >()) {
       const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
       CkCallback res( CkIndex_Transporter::resume(), thisProxy );
       CkStartCheckpoint( restart.c_str(), res );
@@ -1480,6 +1480,7 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
       resume();
     }
     #else
+      printer() << ">>> WARNING: Checkpointing with ExaM2M not yet implemented\n";
       resume();
     #endif
   }
