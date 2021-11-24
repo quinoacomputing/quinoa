@@ -1228,8 +1228,8 @@ FV::evalSolution(
         std::array< real, 3 >
            h{{ce[j][0]-ce[0][0], ce[j][1]-ce[0][1], ce[j][2]-ce[0][2] }};
         auto Bn = tk::eval_basis( 1, dot(J[0],h), dot(J[1],h), dot(J[2],h) );
-        auto u = eval_state( uncomp, 0, rdof, 1, e, m_u, Bn );
-        auto p = eval_state( pncomp, 0, rdof, 1, e, m_p, Bn );
+        auto u = eval_state( uncomp, 0, rdof, 1, e, m_u, Bn, {0, uncomp-1} );
+        auto p = eval_state( pncomp, 0, rdof, 1, e, m_p, Bn, {0, pncomp-1} );
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) un(inpoel[e4+j],i,0) += u[i];
         for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[e4+j],i,0) += p[i];
@@ -1269,8 +1269,8 @@ FV::evalSolution(
       // Compute solution in child centroid
       std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
       auto B = tk::eval_basis( 1, dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
-      auto u = eval_state( uncomp, 0, rdof, 1, parent, m_u, B );
-      auto p = eval_state( pncomp, 0, rdof, 1, parent, m_p, B );
+      auto u = eval_state( uncomp, 0, rdof, 1, parent, m_u, B, {0, uncomp-1} );
+      auto p = eval_state( pncomp, 0, rdof, 1, parent, m_p, B, {0, pncomp-1} );
       // Assign cell center solution from parent to child
       for (std::size_t i=0; i<uncomp; ++i) ue(child,i*rdof,0) = u[i];
       for (std::size_t i=0; i<pncomp; ++i) pe(child,i*rdof,0) = p[i];
@@ -1285,8 +1285,10 @@ FV::evalSolution(
         std::array< real, 3 >
            hn{{cc[j][0]-cp[0][0], cc[j][1]-cp[0][1], cc[j][2]-cp[0][2] }};
         auto Bn = tk::eval_basis( 1, dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn) );
-        auto cnu = eval_state(uncomp, 0, rdof, 1, parent, m_u, Bn);
-        auto cnp = eval_state(uncomp, 0, rdof, 1, parent, m_p, Bn);
+        auto cnu = eval_state(uncomp, 0, rdof, 1, parent, m_u, Bn,
+          {0, uncomp-1});
+        auto cnp = eval_state(pncomp, 0, rdof, 1, parent, m_p, Bn,
+          {0, pncomp-1});
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) un(inpoel[c4+j],i,0) += cnu[i];
         for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[c4+j],i,0) += cnp[i];

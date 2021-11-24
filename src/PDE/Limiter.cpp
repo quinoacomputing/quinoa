@@ -739,12 +739,14 @@ VertexBasedMultiMat_FV(
   for (std::size_t e=0; e<nelem; ++e)
   {
     std::vector< std::vector< tk::real > > unk;
+    std::vector< tk::real > phic(ncomp, 1.0);
+    std::vector< tk::real > phip(nprim, 1.0);
     // limit conserved quantities
-    auto phic = VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e,
-      rdof, rdof, offset, ncomp);
+    VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+      rdof, offset, ncomp, phic, {0, ncomp-1});
     // limit primitive quantities
-    auto phip = VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e,
-      rdof, rdof, offset, nprim);
+    VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e, rdof,
+      rdof, offset, nprim, phip, {0, nprim-1});
 
     // limits under which compression is to be performed
     std::vector< std::size_t > matInt(nmat, 0);
@@ -2102,9 +2104,9 @@ timeStepSizeMultiMat(
     B_l[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state( ncomp, offset, rdof, ndof, el, U, B_l);
+    ugp = eval_state(ncomp, offset, rdof, ndof, el, U, B_l, {0, ncomp-1});
     // get primitive quantities
-    pgp = eval_state( nprim, offset, rdof, ndof, el, P, B_l);
+    pgp = eval_state(nprim, offset, rdof, ndof, el, P, B_l, {0, nprim-1});
 
     // advection velocity
     u = pgp[velocityIdx(nmat, 0)];
@@ -2135,9 +2137,9 @@ timeStepSizeMultiMat(
       B_r[0] = 1.0;
 
       // get conserved quantities
-      ugp = eval_state( ncomp, offset, rdof, ndof, eR, U, B_r);
+      ugp = eval_state( ncomp, offset, rdof, ndof, eR, U, B_r, {0, ncomp-1});
       // get primitive quantities
-      pgp = eval_state( nprim, offset, rdof, ndof, eR, P, B_r);
+      pgp = eval_state( nprim, offset, rdof, ndof, eR, P, B_r, {0, nprim-1});
 
       // advection velocity
       u = pgp[velocityIdx(nmat, 0)];
