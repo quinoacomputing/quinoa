@@ -88,11 +88,8 @@
 #include "NoWarning/ale.decl.h"
 #include "NoWarning/conjugategradients.decl.h"
 #include "NoWarning/ghosts.decl.h"
-#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
 
 //! Base class for generic forwarding interface to discretization proxies
 class Scheme {
@@ -127,7 +124,8 @@ class Scheme {
     //!   specific discretization configured by the enum.
     explicit Scheme( ctr::SchemeType scheme,
                      bool ale = false,
-                     bool linearsolver = false ) :
+                     bool linearsolver = false,
+                     tk::Centering centering = tk::Centering::NODE ) :
       discproxy( CProxy_Discretization::ckNew() )
     {
       bound.bindTo( discproxy );
@@ -149,7 +147,7 @@ class Scheme {
       if (ale) aleproxy = CProxy_ALE::ckNew(bound);
       if (linearsolver)
         conjugategradientsproxy = tk::CProxy_ConjugateGradients::ckNew(bound);
-      if (g_inputdeck.centering() == tk::Centering::ELEM)
+      if (centering == tk::Centering::ELEM)
         ghostsproxy = CProxy_Ghosts::ckNew(bound);
     }
 

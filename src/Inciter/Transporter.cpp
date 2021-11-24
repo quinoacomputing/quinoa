@@ -228,10 +228,7 @@ Transporter::info( const InciterPrint& print )
       print.item( "Clipping FCT",
                   g_inputdeck.get< tag::discr, tag::fctclip >() );
     }
-  } else if (scheme == ctr::SchemeType::DG ||
-             scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
-             scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG ||
-             scheme == ctr::SchemeType::FV)
+  } else if (g_inputdeck.centering() == tk::Centering::ELEM)
   {
     print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
@@ -561,7 +558,8 @@ Transporter::createPartitioner()
   for ([[maybe_unused]] const auto& filename : m_input)
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
                            g_inputdeck.get< tag::ale, tag::ale >(),
-                           need_linearsolver() );
+                           need_linearsolver(),
+                           centering );
 
   ErrChk( !m_input.empty(), "No input mesh" );
 
