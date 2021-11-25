@@ -32,6 +32,7 @@ module discretization {
         const CProxy_DistFCT& fctproxy,
         const CProxy_ALE& aleproxy,
         const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+        const CProxy_Ghosts& ghostsproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
         const tk::UnsMesh::CoordMap& coordmap,

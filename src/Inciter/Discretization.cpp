@@ -46,6 +46,7 @@ Discretization::Discretization(
   const CProxy_DistFCT& fctproxy,
   const CProxy_ALE& aleproxy,
   const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+  const CProxy_Ghosts& ghostsproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
   const tk::UnsMesh::CoordMap& coordmap,
@@ -74,6 +75,7 @@ Discretization::Discretization(
   m_nvol( 0 ),
   m_fct( fctproxy ),
   m_ale( aleproxy ),
+  m_ghosts( ghostsproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
   m_el( el ),     // fills m_inpoel, m_gid, m_lid
@@ -105,6 +107,7 @@ Discretization::Discretization(
 //! \param[in] aleproxy Distributed ALE proxy
 //! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
 //!   solver proxy
+//! \param[in] ghostsproxy Distributed Ghosts proxy
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] meshwriter Mesh writer proxy
 //! \param[in] coordmap Coordinates of mesh nodes and their global IDs
@@ -167,6 +170,11 @@ Discretization::Discretization(
   if (sch == ctr::SchemeType::DiagCG)
     m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
                                m_nodeCommMap, m_bid, m_lid, m_inpoel );
+
+  // Insert Ghosts chare array element if needed
+  if (g_inputdeck.centering() == tk::Centering::ELEM) {
+    m_ghosts[thisIndex].insert();
+  }
 
   // Insert ConjugrateGradients solver chare array element if needed
   if (g_inputdeck.get< tag::ale, tag::ale >()) {

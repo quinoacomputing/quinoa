@@ -69,6 +69,7 @@ class Discretization : public CBase_Discretization {
         const CProxy_DistFCT& fctproxy,
         const CProxy_ALE& aleproxy,
         const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+        const CProxy_Ghosts& ghostsproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
         const tk::UnsMesh::CoordMap& coordmap,
@@ -422,6 +423,7 @@ class Discretization : public CBase_Discretization {
       p | m_nvol;
       p | m_fct;
       p | m_ale;
+      p | m_ghosts;
       p | m_transporter;
       p | m_meshwriter;
       p | m_refiner;
@@ -515,6 +517,8 @@ class Discretization : public CBase_Discretization {
     CProxy_DistFCT m_fct;
     //! Distributed ALE proxy
     CProxy_ALE m_ale;
+    //! Distributed Ghosts proxy
+    CProxy_Ghosts m_ghosts;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
     //! Mesh writer proxy

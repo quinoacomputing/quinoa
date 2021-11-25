@@ -1058,8 +1058,8 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
 
   m_refiner[meshid].sendProxy();
 
-//  if (g_inputdeck.centering() == tk::Centering::ELEM)
-//    m_scheme[meshid].ghosts().doneInserting();
+  if (g_inputdeck.centering() == tk::Centering::ELEM)
+    m_scheme[meshid].ghosts().doneInserting();
 
   if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DiagCG)
     m_scheme[meshid].fct().doneInserting();
