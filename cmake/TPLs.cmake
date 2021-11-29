@@ -52,28 +52,12 @@ endif()
 #### TUT
 find_package(TUT)
 
-#### Pstreams
-set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
-find_package(Pstreams)
-
 #### PugiXML
 set(PUGIXML_ROOT ${TPL_DIR}) # prefer ours
 find_package(Pugixml)
 
 #### PEGTL
 find_package(PEGTL 2.0.0)
-
-#### Random123
-find_package(Random123)
-
-#### RNGSSE2 library
-if(ARCH MATCHES "x86")
-  find_package(RNGSSE2)
-endif()
-if(RNGSSE2_FOUND)
-  set(HAS_RNGSSE2 true)  # will become compiler define
-  message(STATUS "RNGSSE2 enabled")
-endif()
 
 ### HDF5/NetCDF (NetCDF only for static link)
 set(HDF5_PREFER_PARALLEL true)
@@ -85,14 +69,6 @@ find_package(NetCDF)
 
 if (NOT HDF5_FOUND)
   set(HDF5_INCLUDE_DIRS "")
-endif()
-
-#### H5Part
-find_package(H5Part)
-
-#### AEC (only for static link)
-if(NOT BUILD_SHARED_LIBS)
-  find_package(AEC)
 endif()
 
 #### Zlib (only for static link)
@@ -111,29 +87,6 @@ find_package(SEACASExodus)
 set(EXODUS_ROOT ${TPL_DIR}) # prefer ours
 find_package(Exodiff)
 
-#### TestU01 library
-set(TESTU01_ROOT ${TPL_DIR}) # prefer ours
-find_package(TestU01)
-if(TestU01_FOUND)
-  set(HAS_TESTU01 true)  # will become compiler define
-  message(STATUS "TestU01 enabled")
-endif()
-
-### Root library
-find_package(Root COMPONENTS RIO Core Tree Hist)
-if (Root_FOUND)
-  set(HAS_ROOT true)  # will become compiler define
-  message(STATUS "ROOT enabled")
-  # Root does not support libc++ on linux, so remove if configured
-  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    string(FIND "${CMAKE_CXX_FLAGS}" "-stdlib=libc++" pos)
-    if (NOT "${pos}" STREQUAL "-1")
-      message(STATUS "Removing C++ compiler flag '-stdlib=libc++' as Root does not support it")
-      string(REPLACE "-stdlib=libc++" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-    endif()
-  endif()
-endif()
-
 #### Configure Backward-cpp
 set(BACKWARD_ROOT ${TPL_DIR}) # prefer ours
 find_package(BackwardCpp)
@@ -143,16 +96,6 @@ if(BACKWARDCPP_FOUND)
 else()
   set(BACKWARD_INCLUDE_DIRS "")
   set(BACKWARD_LIBRARIES "")
-endif()
-
-#### Configure Omega_h
-find_package(Omega_h)
-if(OMEGA_H_FOUND)
-  set(HAS_OMEGA_H true)  # will become compiler define
-  message(STATUS "Omega_H enabled")
-else()
-  set(OMEGA_H_INCLUDE_DIRS "")
-  set(OMEGA_H_LIBRARIES "")
 endif()
 
 #### Configure HighwayHash
@@ -214,19 +157,18 @@ endfunction(PrintMissing)
 
 if (CHARM_FOUND AND PUGIXML_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
     HDF5_FOUND AND BRIGAND_FOUND AND TUT_FOUND AND PEGTL_FOUND AND Boost_FOUND AND
-    HIGHWAYHASH_FOUND AND RANDOM123_FOUND AND (MKL_FOUND OR LAPACKE_FOUND)
+    HIGHWAYHASH_FOUND AND (MKL_FOUND OR LAPACKE_FOUND)
     AND ENABLE_TESTS)
   set(UNITTEST_EXECUTABLE unittest)
   set(ENABLE_UNITTEST true CACHE BOOL "Enable ${UNITTEST_EXECUTABLE}")
   if (NOT ENABLE_UNITTEST)
     message(STATUS "Target '${UNITTEST_EXECUTABLE}' disabled")
   endif()
-  set(UNITTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
 else()
   if (NOT ENABLE_TESTS)
     message(STATUS "Target 'unittest' will NOT be configured, tests disabled.")
   else()
-    PrintMissing(unittest "CHARM_FOUND;PUGIXML_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;HDF5_FOUND;BRIGAND_FOUND;TUT_FOUND;PEGTL_FOUND;Boost_FOUND;HIGHWAYHASH_FOUND;RANDOM123_FOUND;MKL_FOUND;LAPACKE_FOUND")
+    PrintMissing(unittest "CHARM_FOUND;PUGIXML_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;HDF5_FOUND;BRIGAND_FOUND;TUT_FOUND;PEGTL_FOUND;Boost_FOUND;HIGHWAYHASH_FOUND;MKL_FOUND;LAPACKE_FOUND")
   endif()
 endif()
 
@@ -242,19 +184,6 @@ else()
   PrintMissing(inciter "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;Zoltan2_FOUND;HDF5_FOUND;BRIGAND_FOUND;PEGTL_FOUND;MKL_FOUND;LAPACKE_FOUND;Boost_FOUND")
 endif()
 
-if (CHARM_FOUND AND TESTU01_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND
-    RANDOM123_FOUND AND Boost_FOUND AND (MKL_FOUND OR LAPACKE_FOUND))
-  set(RNGTEST_EXECUTABLE rngtest)
-  set(ENABLE_RNGTEST true CACHE BOOL "Enable ${RNGTEST_EXECUTABLE}")
-  if (NOT ENABLE_RNGTEST)
-    message(STATUS "Target '${RNGTEST_EXECUTABLE}' disabled")
-  endif()
-  set(RNGTEST_SRC_DIR ${QUINOA_SOURCE_DIR}/RNGTest)
-  set(RNGTEST_BIN_DIR ${PROJECT_BINARY_DIR}/RNGTest)
-else()
-  PrintMissing(rngtest "CHARM_FOUND;TESTU01_FOUND;BRIGAND_FOUND;PEGTL_FOUND;RANDOM123_FOUND;Boost_FOUND;MKL_FOUND;LAPACKE_FOUND")
-endif()
-
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
     PUGIXML_FOUND AND HDF5_FOUND AND Boost_FOUND AND BRIGAND_FOUND AND
     HIGHWAYHASH_FOUND)
@@ -265,28 +194,4 @@ if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
   endif()
 else()
   PrintMissing(meshconv "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;PEGTL_FOUND;PUGIXML_FOUND;HDF5_FOUND;Boost_FOUND;BRIGAND_FOUND;HIGHWAYHASH_FOUND")
-endif()
-
-if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
-    BRIGAND_FOUND AND HDF5_FOUND AND RANDOM123_FOUND AND Boost_FOUND AND
-    (MKL_FOUND OR LAPACKE_FOUND) AND HIGHWAYHASH_FOUND AND H5Part_FOUND)
-  set(WALKER_EXECUTABLE walker)
-  set(ENABLE_WALKER true CACHE BOOL "Enable ${WALKER_EXECUTABLE}")
-  if (NOT ENABLE_WALKER)
-    message(STATUS "Target '${WALKER_EXECUTABLE}' disabled")
-  endif()
-else()
-  PrintMissing(walker "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;PEGTL_FOUND;BRIGAND_FOUND;HDF5_FOUND;RANDOM123_FOUND;Boost_FOUND;MKL_FOUND;LAPACKE_FOUND;HIGHWAYHASH_FOUND;H5Part_FOUND")
-endif()
-
-if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND ROOT_FOUND
-    AND PEGTL_FOUND AND PUGIXML_FOUND AND HDF5_FOUND AND Boost_FOUND AND
-    BRIGAND_FOUND AND HIGHWAYHASH_FOUND)
-  set(FILECONV_EXECUTABLE fileconv)
-  set(ENABLE_FILECONV true CACHE BOOL "Enable ${FILECONV_EXECUTABLE}")
-  if (NOT ENABLE_FILECONV)
-    message(STATUS "Target '${FILECONV_EXECUTABLE}' disabled")
-  endif()
-else()
-  PrintMissing(fileconv "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;ROOT_FOUND;PEGTL_FOUND;PUGIXML_FOUND;HDF5_FOUND;Boost_FOUND;BRIGAND_FOUND;HIGHWAYHASH_FOUND")
 endif()

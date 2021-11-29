@@ -36,9 +36,6 @@ endfunction()
 #                      [BIN_BASELINE stat1.std stat2.std ...]
 #                      [BIN_RESULT stat1.bin stat2.bin ...]
 #                      [BIN_DIFF_PROG_CONF exodiff1.cfg exodiff2.cfg ...]
-#                      [FILECONV_PROG fileconv]
-#                      [FILECONV_INPUT arg1 arg2 ...]
-#                      [FILECONV_RESULT out.0.exo out.1.exo ...]
 #                      [POSTPROCESS_PROG exec]
 #                      [POSTPROCESS_PROG_ARGS arg1 arg2 ...]
 #                      [POSTPROCESS_PROG_OUTPUT file]
@@ -107,15 +104,6 @@ endfunction()
 # BIN_DIFF_PROG_CONF exodiff1.cfg exodiff2.cfg ... - Binary diff program
 # configuration file(s). Default: "".
 #
-# FILECONV_PROG fileconv - File conversion program to convert between field
-# output files. Default: fileconv.
-#
-# FILECONV_INPUT arg1 arg2 ... - File converter program input files.
-# Default: "".
-#
-# FILECONV_RESULT out.0.exo out.1.exo ... - Output files produced by the
-# optional file converter step. Default: "".
-#
 # POSTPROCESS_PROG exec - Optional postprocess executable to run after test
 # run. Default: "".
 #
@@ -129,12 +117,10 @@ endfunction()
 function(ADD_REGRESSION_TEST test_name executable)
 
   set(oneValueArgs NUMPES PPN TEXT_DIFF_PROG BIN_DIFF_PROG
-                   FILECONV_PROG POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT
-                   CHECKPOINT)
+                   POSTPROCESS_PROG POSTPROCESS_PROG_OUTPUT CHECKPOINT)
   set(multiValueArgs INPUTFILES ARGS TEXT_BASELINE TEXT_RESULT BIN_BASELINE
                      BIN_RESULT LABELS POSTPROCESS_PROG_ARGS BIN_DIFF_PROG_ARGS
-                     TEXT_DIFF_PROG_ARGS TEXT_DIFF_PROG_CONF BIN_DIFF_PROG_CONF
-                     FILECONV_RESULT FILECONV_INPUT)
+                     TEXT_DIFF_PROG_ARGS TEXT_DIFF_PROG_CONF BIN_DIFF_PROG_CONF)
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}"
                         ${ARGN})
 
@@ -256,9 +242,6 @@ function(ADD_REGRESSION_TEST test_name executable)
   if (ARG_BIN_DIFF_PROG)
     set(BIN_DIFF_PROG ${ARG_BIN_DIFF_PROG})
   endif()
-  # Set file converter tool
-  # FILECONV_EXECUTABLE points to fileconv, refer src/Main/FileConv.C
-  set(FILECONV_PROG ${FILECONV_EXECUTABLE})
 
   # Construct and echo configuration for test being added
   set(msg "Add regression test ${test_name} for ${executable}")
@@ -305,10 +288,6 @@ function(ADD_REGRESSION_TEST test_name executable)
                 "${workdir}" )
     endforeach()
     foreach(result IN LISTS ARG_TEXT_RESULT)
-      softlink( "${CMAKE_CURRENT_BINARY_DIR}/${checkpoint}/${result}"
-                "${workdir}" )
-    endforeach()
-    foreach(result IN LISTS ARG_FILECONV_RESULT)
       softlink( "${CMAKE_CURRENT_BINARY_DIR}/${checkpoint}/${result}"
                 "${workdir}" )
     endforeach()
@@ -364,16 +343,6 @@ function(ADD_REGRESSION_TEST test_name executable)
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_ARGS "${ARG_BIN_DIFF_PROG_ARGS}")
   endif()
 
-  if(ARG_FILECONV_INPUT)
-    string(REPLACE ";" " " ARG_FILECONV_INPUT "${ARG_FILECONV_INPUT}")
-  endif()
-
-  # Do sainity check on and prepare to pass as cmake script arguments the
-  # filenames of the file converter result(s)
-  if(ARG_FILECONV_RESULT)
-    string(REPLACE ";" " " ARG_FILECONV_RESULT "${ARG_FILECONV_RESULT}")
-  endif()
-
   if(ARG_BIN_DIFF_PROG_CONF)
     string(REPLACE ";" " " ARG_BIN_DIFF_PROG_CONF "${ARG_BIN_DIFF_PROG_CONF}")
   endif()
@@ -420,9 +389,6 @@ function(ADD_REGRESSION_TEST test_name executable)
            -DBIN_DIFF_PROG_CONF=${ARG_BIN_DIFF_PROG_CONF}
            -DBIN_BASELINE=${ARG_BIN_BASELINE}
            -DBIN_RESULT=${ARG_BIN_RESULT}
-           -DFILECONV_PROG=${CMAKE_BINARY_DIR}/Main/${FILECONV_PROG}
-           -DFILECONV_INPUT=${ARG_FILECONV_INPUT}
-           -DFILECONV_RESULT=${ARG_FILECONV_RESULT}
            -DPOSTPROCESS_PROG=${ARG_POSTPROCESS_PROG}
            -DPOSTPROCESS_PROG_ARGS=${ARG_POSTPROCESS_PROG_ARGS}
            -DPOSTPROCESS_PROG_OUTPUT=${ARG_POSTPROCESS_PROG_OUTPUT}
@@ -435,10 +401,6 @@ function(ADD_REGRESSION_TEST test_name executable)
   # add pass regular expression for numdiff output if needed
   if (ARG_TEXT_BASELINE)
     list(APPEND pass_regexp ".*${test_name}.*PASS")
-  endif()
-  # add pass regular expression for rngtest output if needed
-  if (test_name MATCHES "${RNGTEST_EXECUTABLE}")
-    list(APPEND pass_regexp "Failed statistics" "All tests passed")
   endif()
   # add pass regular expression for exodiff output if needed
   if (ARG_BIN_BASELINE)

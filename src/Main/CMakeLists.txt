@@ -67,18 +67,6 @@ if (ENABLE_INCITER)
   include("Inciter.cmake")
 endif()
 
-if (ENABLE_RNGTEST)
-  include("RNGTest.cmake")
-endif()
-
 if (ENABLE_MESHCONV)
   include("MeshConv.cmake")
-endif()
-
-if (ENABLE_WALKER)
-  include("Walker.cmake")
-endif()
-
-if (ENABLE_FILECONV)
-  include("FileConv.cmake")
 endif()

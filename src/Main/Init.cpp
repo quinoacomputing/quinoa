@@ -75,16 +75,10 @@ void echoHeader( const Print& print, HeaderType header )
 {
   if ( header == HeaderType::INCITER )
     print.headerInciter();
-  else if ( header == HeaderType::RNGTEST )
-    print.headerRNGTest();
   else if ( header == HeaderType::UNITTEST )
     print.headerUnitTest();
   else if ( header == HeaderType::MESHCONV )
     print.headerMeshConv();
-  else if ( header == HeaderType::WALKER )
-    print.headerWalker();
-  else if ( header == HeaderType::FILECONV )
-    print.headerFileConv();
   else
     Throw( "Header not available" );
 }

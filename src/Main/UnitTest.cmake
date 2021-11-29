@@ -1,17 +1,5 @@
 ## UnitTest executable ########################################################
 
-if (HAS_MKL)
-  set(TestMKLBetaMethod "Control/Options/TestMKLBetaMethod.cpp")
-  set(TestMKLGammaMethod "Control/Options/TestMKLGammaMethod.cpp")
-  set(TestMKLGaussianMethod "Control/Options/TestMKLGaussianMethod.cpp")
-  set(TestMKLUniformMethod "Control/Options/TestMKLUniformMethod.cpp")
-  set(TestMKLRNG "RNG/TestMKLRNG.cpp")
-endif()
-
-if(HAS_RNGSSE2)
-  set(TestRNGSSE "RNG/TestRNGSSE.cpp")
-endif()
-
 add_executable(${UNITTEST_EXECUTABLE}
                UnitTestDriver.cpp
                UnitTest.cpp
@@ -23,7 +11,6 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Base/TestFlip_map.cpp
                ../../tests/unit/Base/TestHas.cpp
                ../../tests/unit/Base/TestPrint.cpp
-               ../../tests/unit/Base/TestProcessControl.cpp
                ../../tests/unit/Base/TestPUPUtil.cpp
                ../../tests/unit/Base/TestReader.cpp
                ../../tests/unit/Base/TestPrintUtil.cpp
@@ -33,11 +20,6 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Base/TestTimer.cpp
                ../../tests/unit/Base/TestVector.cpp
                ../../tests/unit/Base/TestWriter.cpp
-               ../../tests/unit/${TestMKLUniformMethod}
-               ../../tests/unit/${TestMKLGaussianMethod}
-               ../../tests/unit/${TestMKLBetaMethod}
-               ../../tests/unit/${TestMKLGammaMethod}
-               ../../tests/unit/Control/Options/TestRNG.cpp
                ../../tests/unit/Control/TestFileParser.cpp
                ../../tests/unit/Control/TestStringParser.cpp
                ../../tests/unit/Control/TestSystemComponents.cpp
@@ -56,18 +38,13 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Mesh/TestDerivedData.cpp
                ../../tests/unit/Mesh/TestDerivedData_MPISingle.cpp
                ../../tests/unit/Mesh/TestGradients.cpp
-               ../../tests/unit/Mesh/TestReorder.cpp
-               ../../tests/unit/${TestMKLRNG}
-               ../../tests/unit/${TestRNGSSE}
-               ../../tests/unit/RNG/TestRNG.cpp
-               ../../tests/unit/RNG/TestRandom123.cpp)
+               ../../tests/unit/Mesh/TestReorder.cpp)
 
 target_include_directories(${UNITTEST_EXECUTABLE} PUBLIC
                            ${QUINOA_SOURCE_DIR}
                            ${QUINOA_SOURCE_DIR}/UnitTest
                            ${QUINOA_SOURCE_DIR}/LoadBalance
                            ${QUINOA_SOURCE_DIR}/IO
-                           ${QUINOA_SOURCE_DIR}/RNG
                            ${TUT_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
                            ${RANDOM123_INCLUDE_DIRS}
@@ -80,7 +57,6 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
                       Config
                       Init
-                      RNG
                       ${MESHREFINEMENT}
                       UnitTest
                       UnitTestControl
@@ -91,10 +67,8 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       NativeMeshIO
                       ExodusIIMeshIO
                       HyperMeshIO
-                      ${OMEGAHMESHIO}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${RNGSSE2_LIBRARIES}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${MKL_CORE_LIBRARY}
@@ -103,9 +77,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${NETCDF_LIBRARIES}       # only for static link
                       ${HDF5_HL_LIBRARIES}      # only for static link
                       ${HDF5_C_LIBRARIES}
-                      ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES}
                       ${LIBCXX_LIBRARIES}       # only for static link with libc++
                       ${LIBCXXABI_LIBRARIES})   # only for static link with libc++
 

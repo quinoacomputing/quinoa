@@ -35,9 +35,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       LinearSolver
                       ${EXAM2M_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${ROOT_LIBRARIES}
                       ${Zoltan2_LIBRARIES}
-                      ${RNGSSE2_LIBRARIES}
                       ${LAPACKE_LIBRARIES}    # only if MKL not found
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
@@ -47,9 +45,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${NETCDF_LIBRARIES}     # only for static link
                       ${HDF5_HL_LIBRARIES}    # only for static link
                       ${HDF5_C_LIBRARIES}
-                      ${AEC_LIBRARIES}        # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${OMEGA_H_LIBRARIES}
                       ${LUA_LIBRARIES}
                       ${LIBCXX_LIBRARIES}     # only for static link with libc++
                       ${LIBCXXABI_LIBRARIES}) # only for static link with libc++

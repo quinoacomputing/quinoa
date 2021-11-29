@@ -23,10 +23,7 @@ namespace tk {
 
 std::string unittest_executable();
 std::string inciter_executable();
-std::string rngtest_executable();
 std::string meshconv_executable();
-std::string walker_executable();
-std::string fileconv_executable();
 
 std::string quinoa_version();
 std::string git_commit();

@@ -35,29 +35,6 @@ include(add_regression_test)
 
 # Include regression test directories
 
-# Walker regression tests
-if (ENABLE_WALKER)
-  message(STATUS "Adding regression tests for ${WALKER_EXECUTABLE}")
-  add_subdirectory(walker/Dirichlet)
-  add_subdirectory(walker/MixDirichlet)
-  add_subdirectory(walker/GeneralizedDirichlet)
-  add_subdirectory(walker/SkewNormal)
-  add_subdirectory(walker/DiagOrnsteinUhlenbeck)
-  add_subdirectory(walker/OrnsteinUhlenbeck)
-  add_subdirectory(walker/Beta)
-  add_subdirectory(walker/Gamma)
-  add_subdirectory(walker/NumFracBeta)
-  add_subdirectory(walker/MassFracBeta)
-  add_subdirectory(walker/MixMassFracBeta)
-  add_subdirectory(walker/Velocity)
-endif()
-
-# RNGTest regression tests
-if(ENABLE_RNGTEST)
-  message(STATUS "Adding regression tests for ${RNGTEST_EXECUTABLE}")
-  add_subdirectory(rngtest)
-endif()
-
 # MeshConv regression tests
 if(ENABLE_MESHCONV)
   message(STATUS "Adding regression tests for ${MESHCONV_EXECUTABLE}")
