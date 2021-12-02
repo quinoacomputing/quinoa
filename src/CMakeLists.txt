@@ -764,7 +764,8 @@ if(CODE_COVERAGE AND ENABLE_TESTS)
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
                             TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
-                                            ${REGRESSION_COVERAGE_ARGS} #-LE insane
+                                            ${REGRESSION_COVERAGE_ARGS}
+                                            --output-on-failure
                             DEPENDS ${NONTEST_EXECUTABLES})
   if (REGRESSION_COVERAGE_ARGS)
     message(STATUS "Regression coverage test-runner arguments: '${REGRESSION_COVERAGE_ARGS}'")

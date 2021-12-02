@@ -25,9 +25,9 @@ requests to writing code which can be incorporated into Quinoa itself.
 
 One way to contribute to Quinoa is to create your own @ref mainpage_tools
 "tool". A tool is the largest unit of interacting components, such as @ref
-walker_main or @ref inciter_main. Creating a new tool provides the largest
-degree of freedom in what and how the tool should do, what its goals are, what
-equations it solves, the numerical methods of choice, etc.
+inciter_main. Creating a new tool provides the largest degree of freedom in
+what and how the tool should do, what its goals are, what equations it solves,
+the numerical methods of choice, etc.
 
 The main benefit of creating a new tool in Quinoa is to be able to build
 something almost entirely new, yet still not having to start it from scratch.

@@ -6,6 +6,10 @@ implemented in Quinoa. The papers are grouped by executables.
 
 @section papers_walker Walker
 
+@note Walker is no longer in active development and not part of Quinoa. But you
+can still browsse the documentation at https:///quinoacomputing.org/archive and
+go back in the Quinoa git repository to checkout the code.
+
 - @m_div{m-text m-strong}
   J.R. Ristorcelli, J. Bakosi, **[A Fokker–Planck approach to a moment closure for mixing in variable-density turbulence](https://doi.org/10.1080/14685248.2019.1662030)**, Journal of Turbulence, vol. 20, issue 7, Pages 393-423, 2019.
   @m_enddiv

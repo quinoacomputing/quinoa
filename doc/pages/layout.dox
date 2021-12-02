@@ -15,13 +15,13 @@ entity such as cell, face, node, etc.
 
 @section layout_req Data layout requirements and design
 
-How should field values, storing particle properties (in @ref walker_main)
-should be stored in memory? How should mesh field data (associated to nodes,
-elements, faces, etc., in @ref inciter_main) should be stored in memory? These
-are the single largest chunks of data a particle-, and/or mesh-based code
-operates on. The data layout, i.e., how the data is stored and organized in
-memory, determines how the data is accessed and potentially has a first-degree
-effect on overall performance.
+How should field values, storing particle properties (or solution unknowns in
+mesh cells or nodes) should be stored in memory? How should mesh field data
+(associated to nodes, elements, faces, etc., in @ref inciter_main) should be
+stored in memory? These are the single largest chunks of data a particle-,
+and/or mesh-based code operates on. The data layout, i.e., how the data is
+stored and organized in memory, determines how the data is accessed and
+potentially has a first-degree effect on overall performance.
 
 @section layout_possibilities Possibilities
 
@@ -160,9 +160,7 @@ For clarity, the discussion below will use the expression "particle" for a
 particle-code and will not specifically mention mesh-based unknowns, stored at
 the nodes, elements, faces, etc., of a computational mesh. The former is for a
 particle-code, the latter is for a mesh-code. The data layout discussion is
-independent of whether particles or mesh entities (nodes, cells, etc.) are used,
-and accordingly both @ref walker_main and @ref inciter_main uses the same
-implementation.
+independent of whether particles or mesh entities (nodes, cells, etc.) are used.
 
 In principle there are a total of 6 permutations:
 
@@ -423,6 +421,9 @@ thin data-access interface with zero run-time cost, no code-duplication, and in
 a way that is invisible to client code.
 
 @subsection layout_input Quinoa::Walker input file used for the benchmark
+
+Note that walker is no longer part of Quinoa. But you can still browse its
+documentation at https://quinoacomputing.org/archive.
 
 We will integrate for the duration of a 100,000 time steps a system of 100
 coupled non-linear stochastic differential equations (SDEs) whose statistically
