@@ -2,62 +2,7 @@
   \page      papers Publications
 
 This page collects peer-reviewed journal papers related to the algorithms
-implemented in Quinoa. The papers are grouped by executables.
-
-@section papers_walker Walker
-
-- @m_div{m-text m-strong}
-  J.R. Ristorcelli, J. Bakosi, **[A Fokker–Planck approach to a moment closure for mixing in variable-density turbulence](https://doi.org/10.1080/14685248.2019.1662030)**, Journal of Turbulence, vol. 20, issue 7, Pages 393-423, 2019.
-  @m_enddiv
-
-  This paper develops a statistical moment closure for mixing of two fluids
-  with very different densities in a flow that becomes turbulent starting from a
-  quiescent state. Developed using the Monte Carlo solutions from walker::Beta,
-  and walker::MixMassFractionBeta.
-
-- @m_div{m-text m-strong}
-  J. Bakosi, J.R. Ristorcelli, **[Diffusion Processes Satisfying a Conservation Law Constraint](http://dx.doi.org/10.1155/2014/603692)**, International Journal of Stochastic Analysis, vol. 2014, Article ID 603692, 9 pages, 2014.
-  @m_enddiv
-
-  This paper develops a set of constraints that enables the development of
-  statistical representations of _N_ non-negative continuous fluctuating variables
-  satisfying a conservation principle. A practical example is _N_ material mass
-  fractions (that must always sum to unity) in a turbulent multi-material flow.
-  Example model equations that satisfy such constraints are implemented in
-  walker::Beta, walker::Dirichlet, and walker::GeneralizedDirichlet.
-
-- @m_div{m-text m-strong}
-  J. Bakosi, J.R. Ristorcelli, **[A stochastic diffusion process for Lochner's generalized Dirichlet distribution](http://dx.doi.org/10.1063/1.4822416)**, Journal of Mathematical Physics, *54*(10), 2013.
-  @m_enddiv
-
-  This paper develops a system of stochastic differential equations whose
-  statistically stationary solution is the [generalized
-  Dirichlet](https://en.wikipedia.org/wiki/Generalized_Dirichlet_distribution)
-  distribution. The system is implemented in walker::GeneralizedDirichlet.
-
-- @m_div{m-text m-strong}
-  J. Bakosi, J.R. Ristorcelli, **[A stochastic diffusion process for the Dirichlet distribution](http://dx.doi.org/10.1155/2013/842981)**, International Journal of Stochastic Analysis, 2013, Article ID 842981, 2013.
-  @m_enddiv
-
-  This paper develops a system of stochastic differential equations whose
-  statistically stationary solution is the [Dirichlet
-  distribution](https://en.wikipedia.org/wiki/Dirichlet_distribution). The system
-  is implemented in walker::Dirichlet.
-
-- @m_div{m-text m-strong}
-  J. Bakosi, J.R. Ristorcelli, **[Exploring the beta distribution in variable-density turbulent mixing](http://dx.doi.org/10.1080/14685248.2010.510843)**, Journal of Turbulence, *11*(37) 2010.
-  @m_enddiv
-
-  This paper explores the [beta
-  distribution](https://en.wikipedia.org/wiki/Beta_distribution) as a potential
-  statistical representation of the fluctuating fluid density in variable-density
-  turbulence and sets the stage for developing a probability density function
-  model that can be useful for simulations of turbulent flows in which exactly
-  computing all relevant spatial and temporal scales is not computationally
-  economical. Implementations of various versions of the stochastic differential
-  equation whose invariant is beta can be found in walker::Beta,
-  walker::NumberFractionBeta, walker::MassFractionBeta,
-  walker::MixNumberFractionBeta, and walker::MixMassFractionBeta.
+implemented in Quinoa.
 
 @section papers_inciter Inciter
 
