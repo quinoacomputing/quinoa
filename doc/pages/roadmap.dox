@@ -16,27 +16,6 @@ discussed by the @ref contributing "contributing guide".
 
 @tableofcontents{xml}
 
-@section roadmap_walker Walker
-
-@ref walker_main is relatively mature and has been used in production for a
-number of years. However, contributions are welcome in the following areas:
-
-- **Implement new types of stochastic differential equations** besides the ones
-  listed among @ref walker_equations "Walker's diffrential equations".
-
-- **Document** those equation types that have been implemented but not yet
-  documented. The implementations are under `src/DiffEq/` but not all of them
-  are listed on @ref walker_main "Walker's main page".  "Documentation" here can
-  consist of as little as listing them among @ref walker_equations "Walker's differential equations",
-  and adding examples with their documentation to @ref walker_examples "Walker's example page".
-
-- **Add regression tests** for those equations that are @ref coverage_gcov
-  "not yet adequately tested".
-
-- **Perform strong-, and weak scaling studies**, similar to what produced the
-  figure on @ref walker_performance "Walker's performance", and if not ideal,
-  profile and improve performance and scalability.
-
 @section roadmap_inciter Inciter
 
 Compared to all other tools @ref inciter_main is currently receiving most of
@@ -151,14 +130,6 @@ Currently, equations of state for ideal gases are implemented. It would be
 great to implement some more advanced EOSs, including coupling libraries with
 EOS tables. A good starting point for this is under `PDE/EoS/`.
 
-@section roadmap_rngtest RNGTest
-
-@ref rngtest_main is mature and can be pretty much considered complete. It can
-be used to test most random number generators (RNG) from all RNG libraries that
-are hooked up. Naturally, if there is a need to hook up more RNG libraries, it
-would be great to also ensure that RNGTest can test them. At this point,
-however, the @ref rngtest_main "existing RNGs" are sufficient for our purposes.
-
 @section roadmap_unittest UnitTest
 
 @ref unittest_main is also pretty mature and we heavily use it. There is no
@@ -198,9 +169,8 @@ not really require writing code.
 @subsubsection roadmap_doc_content_howtos HOWTOs
 
 We have a few HOWTOs that detail some specific aspects of Inciter. These are
-the pages titled as _"How to add ..."_. @ref inciter_main as well as @ref
-walker_main could use some additional such pages to lower the barrier of entry
-for contributing to these tools.
+the pages titled as _"How to add ..."_. @ref inciter_main could use some
+additional such pages to lower the barrier of entry for contributing.
 
 @subsection roadmap_doc_functionality Functionality
 
@@ -225,20 +195,19 @@ fruits. This can be done by profiling first, followed by identifying, then
 optimizing the hot-spots, while continuously benchmarking the changes by
 comparing to (1) current/previous implementation or (2) to a highly optimized
 _other_ code (or codes) implementing a similar functionality. All @ref
-mainpage_tools "tools", but most importantly, @ref inciter_main and @ref
-walker_main need such performance optimization help.
+mainpage_tools "tools", but most importantly, @ref inciter_main needs such
+performance optimization help.
 
 @section roadmap_friendly Improve user-friendliness
 
-Both @ref inciter_main and @ref walker_main need some work on improving their
-user-friendliness. Both parse their input file, expecting a different grammar,
-configuring the numerical solution they are to compute. There is only basic
-error handling during and after parsing their user input.  To make them more
-effective, robust, and fun to use, there is more testing necessary.  For
-example, one could use one of their regression test inputs, under
-`tests/regression/` and randomly altering them, feed them garbage input with
-wrong syntax for various parameters and see if the correct error message is
-generated.
+Both @ref inciter_main needs some work on improving user-friendliness. Both
+parse their input file, expecting a different grammar, configuring the
+numerical solution they are to compute. There is only basic error handling
+during and after parsing their user input.  To make them more effective,
+robust, and fun to use, there is more testing necessary.  For example, one
+could use one of their regression test inputs, under `tests/regression/` and
+randomly altering them, feed them garbage input with wrong syntax for various
+parameters and see if the correct error message is generated.
 
 A potentially more fun (and more rewarding) way to do this is to automate this
 with [fuzz testing](https://en.wikipedia.org/wiki/Fuzzing) by setting up, e.g.,

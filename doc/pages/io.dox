@@ -1,40 +1,20 @@
 /*!
-  \page      io Input/Output for a PIC-based inhomogeneity strategy in walker
+  \page      io Input/Output (large-file I/O) strategy
 
 This page collects some ideas and requirements for software design of file-based
-input and output of large field data in @ref walker_main, using a
-particle-in-cell (PIC) strategy. For more details, advantages and disadvantages,
-on PIC-, and SPH-based inhomogeneity strategies, see the page on @ref
-inhomogeneity.
+input and output of large field data.
 
 @section io_format Input format requirements
 
-An algorithm based on a PIC-based inhomogeneity strategy in walker would require
-an Eulerian mesh. At this time, the plan is to keep it simple, and only support
-a Cartesian mesh for structured grid-applications and pure-tetrahedron
-unstructured meshes. Examples of supported mesh generators:
-
-  - Gmsh, http://www.geuz.org/gmsh
-  - Netgen, https://sourceforge.net/projects/netgen-mesher
-  - Cubit, https://cubit.sandia.gov
-  - HyperMesh, http://www.altairhyperworks.com/product/HyperMesh
-  - HEXPRESS/Hybrid, https://www.numeca.com/product/hexpresshybrid
-  - Any other generator that outputs the input formats supported by a @ref
-    meshconv_main reader
-
-@section io_mesh Input mesh file formats supported
-
-See the page on @ref meshconv_main.
+At this time, the plan is to keep it simple, and only support a Cartesian mesh
+for structured grid-applications and pure-tetrahedron unstructured meshes.
+Examples of supported mesh generators are at a @ref meshconv_main.
 
 @section io_output File output types
 
   1. Eulerian-mesh
-  2. Checkpoint-Restart (particle and/or field, should be combined with existing
-     support in Charm++)
+  2. Checkpoint-Restart (field output, combined with existing support in Charm++)
   3. Diagnostics (small text of integral data)
-  4. Statistics
-  5. Probability density functions (PDF), joint PDFs, marginal PDFs, conditional
-     PDFs, etc.
 
 @section io_policy Output policies
 
@@ -42,32 +22,10 @@ See the page on @ref meshconv_main.
   2. Multiple files for multiple time step data
   3. Store time evolution in single file
 
-@section io_req Input/Output requirements
+@section io_req Input/Output requirements for large Euler mesh-based field output
 
-  1. __Fields I/O:__
-     - For large binary fields I/O we use ExodusII HDF5 (single file and
-       multiple files), and Quinoa's native mesh format could be based on an
-       [ADIOS](https://www.olcf.ornl.gov/center-projects/adios) schema and .bp
-       format.
-     - For Exodus I/O we use the Seacas/ExodusII library in Trilinos.
-
-  2. __Particles I/O:__
-     - For large binary particle I/O we have interfaced with
-       [H5Part](http://vis.lbl.gov/Research/H5Part), a particle-centric I/O
-       format based on HDF5.
-     - We may also develop a native particles format based on an ADIOS schema
-       and .bp format.
-
-  3. __Fields + Particles I/O:__
-     - For large binary field + particle I/O (same or separate file) a potential
-       solution is to use the ADIOS library,
-       which facilitates both file-based and stream-based I/O.
-     - The stream-based ADIOS I/O API can then be used for both file-based and
-       stream-based I/O, the latter facilitating staging and _in-situ_
-       visualization (and debugging), e.g., via DataSpaces, NSSI, DataTap,
-       DIMES, FlexPath, and/or ParaView/Catalyst.
-     - We could develop our native fields + particles format based on ADIOS
-       schema and .bp format.
-     - Using an ADIOS visualization schema (or pulling our own) we could write
-       our own ParaView reader plugin.
+  1. For large binary fields I/O we use ExodusII HDF5, single file and
+     multiple files, if the mesh changes, e.g., due to mesh refinement or
+     arbitrary-Lagrangian-Eulerian mesh motion.
+  2. For Exodus I/O we use the Seacas/ExodusII library in Trilinos.
 */

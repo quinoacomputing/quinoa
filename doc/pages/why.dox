@@ -105,10 +105,6 @@ and users be assured of correctness.
 
 In Quinoa code correctness is verified and quantified using multiple levels of
 testing:
- - Our random number generator test suite, @ref rngtest_main, subjects
-   generators to stringent statistical tests which enables quantitative ranking
-   of all generators available with respect to their quality and computational
-   cost.
  - Our unit test suite, @ref unittest_main, capable of testing serial,
    synchronous (e.g., MPI) parallel, and asynchronous parallel (e.g., Charm++)
    functions with @ref coverage "code coverage analysis" is used to test the
@@ -204,7 +200,7 @@ Quinoa's main language of choice is C++ for the following reasons.
 
  - It allows programming using more than one programming style, each to its best
    effect; as such it supports @ref genEsup() "procedural",
-   @ref walker::DiffEq "object oriented", @ref record() "generic", as well as
+   @ref inciter::PDE "object oriented", @ref record() "generic", as well as
    [many features](https://stackoverflow.com/a/21472274) of @ref recordModel()
    "functional" programming.
 
@@ -316,8 +312,7 @@ search](http://blog.magnum.graphics/meta/implementing-a-fast-doxygen-search/)
 capability, with no large separate documents to open or print. Documentation is
 added via editing the source itself and [looks great on any
 device](http://mcss.mosra.cz/doxygen/#features), including
-[figures](walker_example_ou.html#walker_example_ou_pdf) and
-[math](_generalized_dirichlet_8hpp.html).
+[figures](inciter_example_f16.html) and [math](inciter_alecg.html).
 
 @m_div{m-col-t-4 m-col-m-2 m-right-t}
 <img src="Happy-Penguin.svg"/>

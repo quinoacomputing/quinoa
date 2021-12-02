@@ -1,23 +1,6 @@
 /*!
   \page      examples Examples
 
-\section walker_examples Walker examples
-  - \subpage walker_example_dirichlet
-  - \subpage walker_example_gendir
-  - \subpage walker_example_skewnormal
-  - \subpage walker_example_diagou
-  - \subpage walker_example_ou
-  - \subpage walker_example_beta
-  - \subpage walker_example_gamma
-  - \subpage walker_example_numfracbeta
-  - \subpage walker_example_massfracbeta
-  - \subpage walker_example_mixmassfracbeta
-
-\section rngtest_examples RNGTest examples
-  - \subpage rngtest_example_smallcrush
-  - \subpage rngtest_example_smallcrush_all
-  - \subpage rngtest_example_crush_all
-
 \section inciter_examples Inciter examples
   - \subpage inciter_example_shear
   - \subpage inciter_example_slot_cyl
