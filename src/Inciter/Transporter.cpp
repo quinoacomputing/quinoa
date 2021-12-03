@@ -490,6 +490,14 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
   // of tag::bc)
   brigand::for_each< PDETypes >( UserTimedepBC(g_inputdeck, usedsets) );
 
+  // Query side sets of boundaries used as Dirichlet BCs for ALE mesh velocity
+  for (auto s : g_inputdeck.get< tag::ale, tag::bcdir >())
+    usedsets.insert( std::stoi(s) );
+
+  // Query side sets of boundaries used as symmetry BCs for ALE mesh velocity
+  for (auto s : g_inputdeck.get< tag::ale, tag::bcsym >())
+    usedsets.insert( std::stoi(s) );
+
   // Query side sets of boundaries prescribed as moving with ALE
   for (const auto& move : g_inputdeck.get< tag::ale, tag::move >())
     for (auto i : move.get< tag::sideset >())
@@ -520,7 +528,7 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
     return sidesets_used.find( item.first ) == end(sidesets_used);
   });
 
-  return !bnd.empty();
+  return not bnd.empty();
 }
 
 void

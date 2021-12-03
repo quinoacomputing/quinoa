@@ -24,6 +24,7 @@
 #include "QuinoaBuildConfig.hpp"
 #include "ConjugateGradients.hpp"
 #include "ALE.hpp"
+#include "UserBC.hpp"
 
 #ifdef HAS_EXAM2M
   #include "Controller.hpp"
@@ -95,7 +96,9 @@ Discretization::Discretization(
   m_nsrc( 0 ),
   m_ndst( 0 ),
   m_meshvel( 0, 3 ),
-  m_meshvel_converged( true )
+  m_meshvel_converged( true ),
+  m_meshvel_bface(),
+  m_meshvel_bnode()
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID
@@ -210,6 +213,104 @@ Discretization::transferInit()
     CkCallback( CkReductionTarget(Transporter,disccreated), m_transporter ) );
 }
 
+void
+Discretization::physBndSetup(
+  std::map< int, std::vector< std::size_t > >& bnd ) const
+// *****************************************************************************
+//  Setup boundary face/node/sideset data used for physics only
+//! \param[in,out] bnd Boundary-faces or nodes mapped to side sets
+//! \details This functions takes the boundary faces or nodes, referenced
+//!  in the input file by the user, and keeps only those that are used for
+//!  physics boundary conditions or physics output only.
+// *****************************************************************************
+{
+  using PDETypes = ctr::parameters::Keys;
+  // Query side set ids at which BCs assigned for all BC types for all PDEs
+  using PDEsBCs =
+    tk::cartesian_product< PDETypes, ctr::bc::Keys >;
+  std::unordered_set< int > usedsets;
+  brigand::for_each< PDEsBCs >( UserBC( g_inputdeck, usedsets ) );
+
+  // Query side sets of time dependent BCs (since tag::bctimedep is not a part
+  // of tag::bc)
+  brigand::for_each< PDETypes >( UserTimedepBC(g_inputdeck, usedsets) );
+
+  // Add sidesets requested for field output
+  const auto& ss = g_inputdeck.get< tag::cmd, tag::io, tag::surface >();
+  for (const auto& s : ss) {
+    std::stringstream conv( s );
+    int num;
+    conv >> num;
+    usedsets.insert( num );
+  }
+
+  // Find user-configured side sets among side sets passed in
+  std::unordered_set< int > phys_sidesets;
+  for (auto i : usedsets)         // for all side sets used in control file
+    if (bnd.find(i) != end(bnd))  // used set found among side sets in file
+      phys_sidesets.insert( i );  // store side set id used by physics
+
+  // Remove sidesets not used for physics
+  tk::erase_if( bnd, [&]( auto& item ) {
+    return phys_sidesets.find( item.first ) == end(phys_sidesets);
+  });
+}
+
+void
+Discretization::meshvelBndSetup(
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::map< int, std::vector< std::size_t > >& bnode )
+// *****************************************************************************
+//  Setup boundary face/node/sideset data for ALE mesh motion
+//! \param[in] bface Boundary-faces mapped to side sets used in the input file
+//! \param[in] bnode Boundary-nodes mapped to side sets used in the input file
+//! \details This functions takes the boundary faces and node lists, referenced
+//!  in the input file by the user, and extracts only those that are used for
+//!  mesh velocity boundary conditions for ALE mesh motion.
+// *****************************************************************************
+{
+  // Collect side sets and their associated face or node lists of boundaries
+  // used as Dirichlet BCs for ALE mesh velocity
+  auto collectDirBCs = [&]( const auto& bnd, auto& meshvelbnd ){
+    for (auto s : g_inputdeck.get< tag::ale, tag::bcdir >()) {
+      auto i = std::stoi(s);
+      auto b = bnd.find(i);
+      if (b != end(bnd)) meshvelbnd[i] = b->second;
+    }
+  };
+
+  // Collect side sets and their associated face or node lists of boundaries
+  // used as symmetry BCs for ALE mesh velocity
+  auto collectSymBCs = [&]( const auto& bnd, auto& meshvelbnd ){
+    for (auto s : g_inputdeck.get< tag::ale, tag::bcsym >()) {
+      auto i = std::stoi(s);
+      auto b = bnd.find(i);
+      if (b != end(bnd)) meshvelbnd[i] = b->second;
+    }
+  };
+
+  // Collect side sets and their associated face or node lists of boundaries
+  // prescribed as moving with ALE
+  auto collectMovBCs = [&]( const auto& bnd, auto& meshvelbnd ){
+    for (const auto& move : g_inputdeck.get< tag::ale, tag::move >())
+      for (auto s : move.get< tag::sideset >()) {
+        auto i = std::stoi(s);
+        auto b = bnd.find(i);
+        if (b != end(bnd)) meshvelbnd[i] = b->second;
+      }
+  };
+
+  m_meshvel_bface.clear();
+  collectDirBCs( bface, m_meshvel_bface );
+  collectSymBCs( bface, m_meshvel_bface );
+  collectMovBCs( bface, m_meshvel_bface );
+
+  m_meshvel_bnode.clear();
+  collectDirBCs( bnode, m_meshvel_bnode );
+  collectSymBCs( bnode, m_meshvel_bnode );
+  collectMovBCs( bnode, m_meshvel_bnode );
+}
+
 std::vector< std::unordered_set< std::size_t > >
 Discretization::meshvelBox()
 // *****************************************************************************
@@ -286,36 +387,30 @@ Discretization::meshvel() const
 }
 
 std::unordered_map< int, std::unordered_set< std::size_t > >
-Discretization::meshvelNorm(
-  const std::map< int, std::vector< std::size_t > >& bnode ) const
+Discretization::meshvelNorm() const
 // *****************************************************************************
 //  Query nodes at which mesh velocity symmetry BCs are specified
-//! \param[in] bnode Boundary-node lists mapped to side sets used in input file
 //! \return Local node ids associated to side set ids at which normals are
 //!         required
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::ale, tag::ale >())
-    return m_ale[ thisIndex ].ckLocal()->norm( bnode );
+    return m_ale[ thisIndex ].ckLocal()->norm( m_meshvel_bnode );
   else
     return {};
 }
 
 void
-Discretization::meshvelBnd(
-  const std::map< int, std::vector< std::size_t > >& bface,
-  const std::map< int, std::vector< std::size_t > >& bnode,
-  const std::vector< std::size_t >& triinpoel) const
+Discretization::meshvelBnd( const std::vector< std::size_t >& triinpoel ) const
 // *****************************************************************************
 // Query ALE mesh velocity boundary condition node lists and node lists at
 // which ALE moves boundaries
-//! \param[in] bface Boundary-faces mapped to side sets used in the input file
-//! \param[in] bnode Boundary-node lists mapped to side sets used in input file
 //! \param[in] triinpoel Boundary-face connectivity where BCs set
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::ale, tag::ale >())
-    m_ale[ thisIndex ].ckLocal()->meshvelBnd( bface, bnode, triinpoel );
+    m_ale[ thisIndex ].ckLocal()->
+     meshvelBnd( m_meshvel_bface, m_meshvel_bnode, triinpoel );
 }
 
 void

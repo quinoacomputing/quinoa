@@ -95,6 +95,15 @@ class Discretization : public CBase_Discretization {
     std::vector< std::unordered_set< std::size_t > > meshvelBox();
 
   public:
+    //! Setup boundary face/node/sideset data used for physics only
+    void physBndSetup(
+      std::map< int, std::vector< std::size_t > >& bnd ) const;
+
+    //! Setup boundary face/node/sideset data for ALE mesh motion
+    void meshvelBndSetup(
+      const std::map< int, std::vector< std::size_t > >& bface,
+      const std::map< int, std::vector< std::size_t > >& bnode );
+
     //! Start computing new mesh veloctity for ALE mesh motion
     void meshvelStart(
       const tk::UnsMesh::Coords vel,
@@ -109,15 +118,11 @@ class Discretization : public CBase_Discretization {
 
     //! Query nodes at which mesh velocity symmetry BCs are specified
     std::unordered_map< int, std::unordered_set< std::size_t > >
-    meshvelNorm( const std::map< int, std::vector< std::size_t > >& bnode )
-    const;
+    meshvelNorm() const;
 
     //! \brief Query ALE mesh velocity boundary condition node lists and node
     //!   lists at which ALE moves boundaries
-    void meshvelBnd(
-      const std::map< int, std::vector< std::size_t > >& bface,
-      const std::map< int, std::vector< std::size_t > >& bnode,
-      const std::vector< std::size_t >& triinpoel ) const;
+    void meshvelBnd( const std::vector< std::size_t >& triinpoel ) const;
 
     //! Assess and record mesh velocity linear solver convergence
     void meshvelConv();
@@ -462,6 +467,8 @@ class Discretization : public CBase_Discretization {
       p | m_ndst;
       p | m_meshvel;
       p | m_meshvel_converged;
+      p | m_meshvel_bface;
+      p | m_meshvel_bnode;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -604,6 +611,10 @@ class Discretization : public CBase_Discretization {
     //! \brief True if all stages of the time step converged the mesh velocity
     //!   linear solve in ALE
     bool m_meshvel_converged;
+    //! Boundary-faces mapped to side sets for ALE mesh motion
+    std::map< int, std::vector< std::size_t > > m_meshvel_bface;
+    //! Boundary-nodes mapped to side sets for ALE mesh motion
+    std::map< int, std::vector< std::size_t > > m_meshvel_bnode;
 
     //! Generate {A,x,b} for Laplacian mesh velocity smoother
     std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >

@@ -134,6 +134,13 @@ ALECG::ALECG( const CProxy_Discretization& disc,
     tk::remap( m_triinpoel, map );
   }
 
+  // Setup boundary face/node/sideset data for ALE mesh motion
+  d->meshvelBndSetup( bface, bnode );
+
+  // Setup boundary face/node/sideset data for physics only
+  d->physBndSetup( m_bface );
+  d->physBndSetup( m_bnode );
+
   // Query/update boundary-conditions-related data structures from user input
   queryBnd();
 
@@ -237,7 +244,7 @@ ALECG::queryBnd()
 
   // Query ALE mesh velocity boundary condition node lists and node lists at
   // which ALE moves boundaries
-  d->meshvelBnd( m_bface, m_bnode, m_triinpoel );
+  d->meshvelBnd( m_triinpoel );
 }
 
 void
@@ -257,7 +264,7 @@ ALECG::norm()
   for (const auto& [s,n] : far) bn[s].insert( begin(n), end(n) );
 
   // Query nodes at which mesh velocity symmetry BCs are specified
-  auto ms = d->meshvelNorm( m_bnode );
+  auto ms = d->meshvelNorm();
   // Merge BC data where boundary-point normals are required
   for (const auto& [s,n] : ms) bn[s].insert( begin(n), end(n) );
 
