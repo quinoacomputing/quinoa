@@ -12,12 +12,21 @@
 // *****************************************************************************
 
 #include "Ghosts.hpp"
+#include "DerivedData.hpp"
+#include "Reorder.hpp"
 
 using inciter::Ghosts;
 
-Ghosts::Ghosts()
+Ghosts::Ghosts( const CProxy_Discretization& disc,
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::vector< std::size_t >& triinpoel ) :
+  m_disc( disc ),
+//  m_fd( m_inpoel, bface, tk::remap(triinpoel,Disc()->Lid()) )
 // *****************************************************************************
 //  Constructor
+//! \param[in] disc Discretization proxy
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
 }

@@ -14,10 +14,14 @@
 
 module ghosts {
 
+  extern module transporter;
+
   namespace inciter {
 
     array [1D] Ghosts {
-      entry Ghosts();
+      entry Ghosts( const CProxy_Discretization& disc,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::vector< std::size_t >& triinpoel );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

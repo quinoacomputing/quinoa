@@ -25,6 +25,7 @@
 #include "Options/UserTable.hpp"
 #include "Fields.hpp"
 #include "Table.hpp"
+#include "FaceData.hpp"
 
 #include "NoWarning/ghosts.decl.h"
 
@@ -59,7 +60,8 @@ class Ghosts : public CBase_Ghosts {
 
     //! Constructor
     explicit
-    Ghosts();
+    Ghosts( const std::map< int, std::vector< std::size_t > >& bface,
+      const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -77,6 +79,8 @@ class Ghosts : public CBase_Ghosts {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_disc;
+      p | m_fd;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -85,6 +89,16 @@ class Ghosts : public CBase_Ghosts {
     ///@}
 
   private:
+    //! Discretization proxy
+    CProxy_Discretization m_disc;
+    //! Face data
+    FaceData m_fd;
+
+    //! Access bound Discretization class pointer
+    Discretization* Disc() const {
+      Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
+      return m_disc[ thisIndex ].ckLocal();
+    }
 };
 
 } // inciter::
