@@ -136,10 +136,6 @@ DG::DG( const CProxy_Discretization& disc,
     thisProxy[ thisIndex ].wait4nod();
   }
 
-  // Ensure that mesh partition is not leaky
-  Assert( !tk::leakyPartition(myGhosts()->m_fd.Esuel(), myGhosts()->m_inpoel,
-          myGhosts()->m_coord), "Input mesh to DG leaky" );
-
   m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_nunk);
 
   // global-sync to call doneInserting on m_ghosts

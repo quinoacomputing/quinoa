@@ -26,9 +26,6 @@ Ghosts::Ghosts( const CProxy_Discretization& disc,
   const std::vector< std::size_t >& triinpoel,
   std::size_t nunk ) :
   m_disc( disc ),
-  m_ncomfac( 0 ),
-  m_nadj( 0 ),
-  m_ncomEsup( 0 ),
   m_nunk( nunk ),
   m_inpoel( Disc()->Inpoel() ),
   m_coord( Disc()->Coord() ),
@@ -36,24 +33,28 @@ Ghosts::Ghosts( const CProxy_Discretization& disc,
   m_geoFace( tk::genGeoFaceTri( m_fd.Nipfac(), m_fd.Inpofa(), m_coord) ),
   m_geoElem( tk::genGeoElemTet( m_inpoel, m_coord ) ),
   m_nfac( m_fd.Inpofa().size()/3 ),
-  m_ipface(),
   m_bndFace(),
-  m_ghostData(),
   m_sendGhost(),
-  m_ghostReq( 0 ),
   m_ghost(),
   m_exptGhost(),
   m_bid(),
+  m_esup(),
+  m_ncomfac( 0 ),
+  m_nadj( 0 ),
+  m_ncomEsup( 0 ),
+  m_ipface(),
+  m_ghostData(),
+  m_ghostReq( 0 ),
   m_initial( 1 ),
   m_expChBndFace(),
   m_infaces(),
-  m_esup(),
   m_esupc()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
+//! \param[in] nunk Number of unknowns
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
@@ -68,6 +69,10 @@ Ghosts::startCommSetup()
 //  Start setup of communication maps for cell-centered schemes
 // *****************************************************************************
 {
+  // Ensure that mesh partition is not leaky
+  Assert( !tk::leakyPartition(m_fd.Esuel(), m_inpoel, m_coord),
+    "Input mesh to Ghosts leaky" );
+
   // Ensure mesh physical boundary for the entire problem not leaky,
   // effectively checking if the user has specified boundary conditions on all
   // physical boundary faces
@@ -267,8 +272,8 @@ Ghosts::bndFaces()
   tk::destroy(m_infaces);
 
   // Ensure all expected faces have been received
-  Assert( receivedChBndFaces(thisIndex, m_bndFace, m_expChBndFace, d->Lid(),
-          m_coord), "Expected and received chare boundary faces mismatch" );
+  Assert( receivedChBndFaces(),
+    "Expected and received chare boundary faces mismatch" );
 
   // Basic error checking on chare-boundary-face map
   Assert( m_bndFace.find( thisIndex ) == m_bndFace.cend(),
@@ -282,7 +287,7 @@ Ghosts::bndFaces()
         tk::UnsMesh::Face t{{ gid[ m_inpoel[ mark + tk::lpofa[f][0] ] ],
                               gid[ m_inpoel[ mark + tk::lpofa[f][1] ] ],
                               gid[ m_inpoel[ mark + tk::lpofa[f][2] ] ] }};
-        auto c = findchare( m_bndFace, t );
+        auto c = findchare(t);
         if (c > -1) {
           auto& lbndface = tk::ref_find( m_bndFace, c );
           auto& face = tk::ref_find( lbndface, t );
@@ -340,7 +345,7 @@ Ghosts::setupGhost()
         tk::UnsMesh::Face t{{ gid[ m_inpoel[ mark + tk::lpofa[f][0] ] ],
                               gid[ m_inpoel[ mark + tk::lpofa[f][1] ] ],
                               gid[ m_inpoel[ mark + tk::lpofa[f][2] ] ] }};
-        auto c = findchare( m_bndFace, t );
+        auto c = findchare(t);
         // It is possible that we do not find the chare for this face. We are
         // looping through all of our tets and interrogating all faces that do
         // not have neighboring tets but we only care about chare-boundary faces
@@ -495,7 +500,7 @@ Ghosts::comGhost( int fromch, const GhostData& ghost )
       // find local face & tet ids for t
       auto id = tk::cref_find( tk::cref_find(m_bndFace,fromch), t );
       // compute face geometry for chare-boundary face
-      addGeoFace( m_geoFace, lid, m_coord, t, id );
+      addGeoFace(t, id);
       // add node-triplet to node-face connectivity
       inpofa[3*id[0]+0] = tk::cref_find( lid, t[2] );
       inpofa[3*id[0]+1] = tk::cref_find( lid, t[1] );
@@ -505,14 +510,14 @@ Ghosts::comGhost( int fromch, const GhostData& ghost )
       auto i = ghostelem.find( e );
       if (i != end(ghostelem)) {
         // fill in elements surrounding face
-        addEsuf( m_fd.Esuf(), id, i->second );
+        addEsuf(id, i->second);
         // fill in elements surrounding element
-        addEsuel( m_fd.Esuel(), m_fd.Esuf(), lid, m_inpoel, id, i->second, t );
+        addEsuel(id, i->second, t);
       } else {
         // fill in elements surrounding face
-        addEsuf( m_fd.Esuf(), id, m_nunk );
+        addEsuf(id, m_nunk);
         // fill in elements surrounding element
-        addEsuel( m_fd.Esuel(), m_fd.Esuf(), lid, m_inpoel, id, m_nunk, t );
+        addEsuel(id, m_nunk, t);
         ghostelem[e] = m_nunk;     // assign new local tet id to remote ghost id
         m_geoElem.push_back( geo );// store ghost elem geometry
         ++m_nunk;                  // increase number of unknowns on this chare
@@ -545,7 +550,7 @@ Ghosts::comGhost( int fromch, const GhostData& ghost )
       }
 
       // additional tests to ensure that entries in inpoel and t/inpofa match
-      Assert( nodetripletMatch(m_fd, d->Lid(), m_inpoel, id, t) == 3,
+      Assert( nodetripletMatch(id, t) == 3,
         "Mismatch/Overmatch in inpoel and inpofa at chare-boundary face" );
     }
   }
@@ -594,8 +599,8 @@ Ghosts::faceAdj()
       Assert( i.first < m_fd.Esuel().size()/4, "Sender contains ghost tet id " );
 
   // Perform leak test on face geometry data structure enlarged by ghosts
-  Assert( !leakyAdjacency(m_fd, m_geoFace), "Face adjacency leaky" );
-  Assert( faceMatch(m_fd, m_inpoel, m_coord), "Chare-boundary element-face "
+  Assert( !leakyAdjacency(), "Face adjacency leaky" );
+  Assert( faceMatch(), "Chare-boundary element-face "
     "connectivity (esuf) does not match" );
 
   // Create new map of elements along chare boundary which are ghosts for
@@ -796,6 +801,292 @@ Ghosts::adj()
   std::vector< std::size_t > meshdata{ m_initial, Disc()->MeshId() };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
+}
+
+bool
+Ghosts::leakyAdjacency()
+// *****************************************************************************
+// Perform leak-test on chare boundary faces
+//! \details This function computes a surface integral over the boundary of the
+//!   faces after the face adjacency communication map is completed. A non-zero
+//!   vector result indicates a leak, e.g., a hole in the partition (covered by
+//!   the faces of the face adjacency communication map), which indicates an
+//!   error upstream in the code that sets up the face communication data
+//!   structures.
+//! \note Compared to tk::leakyPartition() this function performs the leak-test
+//!   on the face geometry data structure enlarged by ghost faces on this
+//!   partition by computing a discrete surface integral considering the
+//!   physical and chare boundary faces, which should be equal to zero for a
+//!   closed domain.
+//! \return True if our chare face adjacency leaks.
+// *****************************************************************************
+{
+  // Storage for surface integral over our chunk of the adjacency
+  std::array< tk::real, 3 > s{{ 0.0, 0.0, 0.0 }};
+
+  // physical boundary faces
+  for (std::size_t f=0; f<m_fd.Nbfac(); ++f) {
+    s[0] += m_geoFace(f,0,0) * m_geoFace(f,1,0);
+    s[1] += m_geoFace(f,0,0) * m_geoFace(f,2,0);
+    s[2] += m_geoFace(f,0,0) * m_geoFace(f,3,0);
+  }
+
+  // chare-boundary faces
+  for (std::size_t f=m_fd.Nipfac(); f<m_fd.Esuf().size()/2; ++f) {
+    s[0] += m_geoFace(f,0,0) * m_geoFace(f,1,0);
+    s[1] += m_geoFace(f,0,0) * m_geoFace(f,2,0);
+    s[2] += m_geoFace(f,0,0) * m_geoFace(f,3,0);
+  }
+
+  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+  return std::abs(s[0]) > eps || std::abs(s[1]) > eps || std::abs(s[2]) > eps;
+}
+
+bool
+Ghosts::faceMatch()
+// *****************************************************************************
+// Check if esuf of chare-boundary faces matches
+//! \details This function checks each chare-boundary esuf entry for the left
+//!   and right elements. Then, it tries to match all vertices of these
+//!   elements. Exactly three of these vertices must match if the esuf entry
+//!   has been updated correctly at chare-boundaries.
+//! \return True if chare-boundary faces match.
+// *****************************************************************************
+{
+  const auto& esuf = m_fd.Esuf();
+  bool match(true);
+
+  auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
+
+  for (auto f=m_fd.Nipfac(); f<esuf.size()/2; ++f)
+  {
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    std::size_t count = 0;
+
+    for (std::size_t i=0; i<4; ++i)
+    {
+      auto ip = m_inpoel[4*el+i];
+      for (std::size_t j=0; j<4; ++j)
+      {
+        auto jp = m_inpoel[4*er+j];
+        auto xdiff = std::abs( m_coord[0][ip] - m_coord[0][jp] );
+        auto ydiff = std::abs( m_coord[1][ip] - m_coord[1][jp] );
+        auto zdiff = std::abs( m_coord[2][ip] - m_coord[2][jp] );
+
+        if ( xdiff<=eps && ydiff<=eps && zdiff<=eps ) ++count;
+      }
+    }
+
+    match = (match && count == 3);
+  }
+
+  return match;
+}
+
+bool
+Ghosts::receivedChBndFaces()
+// *****************************************************************************
+// Verify that all chare-boundary faces have been received
+//! \return True if all chare-boundary faces have been received
+// *****************************************************************************
+{
+  const auto& lid = Disc()->Lid();
+  tk::UnsMesh::FaceSet recvBndFace;
+
+  // Collect chare-boundary faces that have been received and expected
+  for (const auto& c : m_bndFace)
+    for (const auto& f : c.second)
+      if (m_expChBndFace.find(f.first) != end(m_expChBndFace))
+        recvBndFace.insert(f.first);
+
+   // Collect info on expected but not received faces
+   std::stringstream msg;
+   for (const auto& f : m_expChBndFace)
+     if (recvBndFace.find(f) == end(recvBndFace)) {
+       const auto& x = m_coord[0];
+       const auto& y = m_coord[1];
+       const auto& z = m_coord[2];
+       auto A = tk::cref_find( lid, f[0] );
+       auto B = tk::cref_find( lid, f[1] );
+       auto C = tk::cref_find( lid, f[2] );
+       msg << '{' << A << ',' << B << ',' << C << "}:("
+           << x[A] << ',' << y[A] << ',' << z[A] << ' '
+           << x[B] << ',' << y[B] << ',' << z[B] << ' '
+           << x[C] << ',' << y[C] << ',' << z[C] << ") ";
+     }
+
+  tk::destroy( m_expChBndFace );
+
+  // Error out with info on missing faces
+  auto s = msg.str();
+  if (!s.empty()) {
+    Throw( "Ghosts chare " + std::to_string(thisIndex) +
+           " missing face(s) {local node ids} (node coords): " + s );
+  } else {
+    return true;
+  }
+}
+
+int
+Ghosts::findchare( const tk::UnsMesh::Face& t )
+// *****************************************************************************
+// Find any chare for face (given by 3 global node IDs)
+//! \param[in] t Face given by three global node IDs
+//! \return Chare ID if found among any of the chares we communicate along
+//!   faces with, -1 if the face cannot be found.
+// *****************************************************************************
+{
+  for (const auto& cf : m_bndFace)
+    // cppcheck-suppress useStlAlgorithm
+    if (cf.second.find(t) != end(cf.second))
+      return cf.first;
+  return -1;
+}
+
+std::size_t
+Ghosts::nodetripletMatch(
+  const std::array< std::size_t, 2 >& id,
+  const tk::UnsMesh::Face& t )
+// *****************************************************************************
+// Check if entries in inpoel, inpofa and node-triplet are consistent
+//! \param[in] id Local face and (inner) tet id adjacent to it
+//! \param[in] t node-triplet associated with the chare boundary face
+//! \return number of nodes in inpoel that matched with t and inpofa
+// *****************************************************************************
+{
+  const auto& esuf = m_fd.Esuf();
+  const auto& inpofa = m_fd.Inpofa();
+  const auto& lid = Disc()->Lid();
+
+  std::size_t counter = 0;
+  for (std::size_t k=0; k<4; ++k)
+  {
+    auto el = esuf[ 2*id[0] ];
+    auto ip = m_inpoel[ 4*static_cast< std::size_t >( el )+k ];
+    Assert( el == static_cast< int >( id[1] ), "Mismatch in id and esuf" );
+    for (std::size_t j=0; j<3; ++j)
+    {
+      auto jp = tk::cref_find( lid, t[j] );
+      auto fp = inpofa[ 3*id[0]+(2-j) ];
+      if (ip == jp && ip == fp) ++counter;
+    }
+  }
+
+  return counter;
+}
+
+void
+Ghosts::addEsuf(
+  const std::array< std::size_t, 2 >& id,
+  std::size_t ghostid )
+// *****************************************************************************
+// Fill elements surrounding a face along chare boundary
+//! \param[in] id Local face and (inner) tet id adjacent to it
+//! \param[in] ghostid Local ID for ghost tet
+//! \details This function extends and fills in the elements surrounding faces
+//!   data structure (esuf) so that the left and right element id is filled
+//!   in correctly on chare boundaries to contain the correct inner tet id and
+//!   the local tet id for the outer (ghost) tet, both adjacent to the given
+//!   chare-face boundary. Prior to this function, this data structure does not
+//!   have yet face-element connectivity adjacent to chare-boundary faces, only
+//!   for physical boundaries and internal faces that are not on the chare
+//!   boundary (this latter purely as a result of mesh partitioning). The remote
+//!   element id of the ghost is stored in a location that is local to our own
+//!   esuf. The face numbering is such that esuf stores the element-face
+//!   connectivity first for the physical-boundary faces, followed by that of
+//!   the internal faces, followed by the chare-boundary faces. As a result,
+//!   esuf can be used by physics algorithms in exactly the same way as would be
+//!   used in serial. In serial, of course, this data structure is not extended
+//!   at the end by the chare-boundaries.
+// *****************************************************************************
+{
+  auto& esuf = m_fd.Esuf();
+
+  Assert( 2*id[0]+1 < esuf.size(), "Indexing out of esuf" );
+
+  // put in inner tet id
+  Assert( esuf[ 2*id[0] ] == -2 && esuf[ 2*id[0]+1 ] == -2, "Updating esuf at "
+          "wrong location instead of chare-boundary" );
+  esuf[ 2*id[0]+0 ] = static_cast< int >( id[1] );
+  // put in local id for outer/ghost tet
+  esuf[ 2*id[0]+1 ] = static_cast< int >( ghostid );
+}
+
+void
+Ghosts::addEsuel(
+  const std::array< std::size_t, 2 >& id,
+  std::size_t ghostid,
+  const tk::UnsMesh::Face& t )
+// *****************************************************************************
+// Fill elements surrounding a element along chare boundary
+//! \param[in] id Local face and (inner) tet id adjacent to it
+//! \param[in] ghostid Local ID for ghost tet
+//! \param[in] t node-triplet associated with the chare boundary face
+//! \details This function updates the elements surrounding element (esuel) data
+//    structure for the (inner) tets adjacent to the chare-boundaries. It fills
+//    esuel of this inner tet with the local tet-id that has been assigned to
+//    the outer ghost tet in Ghosts::comGhost in place of the -1 before.
+// *****************************************************************************
+{
+  const auto& lid = Disc()->Lid();
+  const auto& esuf = m_fd.Esuf();
+  auto& esuel = m_fd.Esuel();
+
+  std::array< tk::UnsMesh::Face, 4 > face;
+  for (std::size_t f = 0; f<4; ++f)
+    for (std::size_t i = 0; i<3; ++i)
+      face[f][i] = m_inpoel[ id[1]*4 + tk::lpofa[f][i] ];
+
+  tk::UnsMesh::Face tl{{ tk::cref_find( lid, t[0] ),
+                         tk::cref_find( lid, t[1] ),
+                         tk::cref_find( lid, t[2] ) }};
+
+  std::size_t i(0), nmatch(0);
+  for (const auto& f : face) {
+    if (tk::UnsMesh::Eq< 3 >()( tl, f )) {
+      Assert( esuel[ id[1]*4 + i ] == -1, "Incorrect boundary element found in "
+             "esuel");
+      esuel[ id[1]*4 + i ] = static_cast<int>(ghostid);
+      ++nmatch;
+      Assert( esuel[ id[1]*4 + i ] == esuf[ 2*id[0]+1 ], "Incorrect boundary "
+             "element entered in esuel" );
+      Assert( static_cast<int>(id[1]) == esuf[ 2*id[0]+0 ], "Boundary "
+             "element entered in incorrect esuel location" );
+    }
+    ++i;
+  }
+
+  // ensure that exactly one face matched
+  Assert( nmatch == 1, "Incorrect number of node-triplets (faces) matched for "
+         "updating esuel; matching faces = "+ std::to_string(nmatch) );
+}
+
+void
+Ghosts::addGeoFace(
+  const tk::UnsMesh::Face& t,
+  const std::array< std::size_t, 2 >& id )
+// *****************************************************************************
+// Fill face-geometry data along chare boundary
+//! \param[in] t Face (given by 3 global node IDs) on the chare boundary
+//! \param[in] id Local face and (inner) tet id adjacent to face t
+//! \details This function fills in the face geometry data along a chare
+//!    boundary.
+// *****************************************************************************
+{
+  const auto& lid = Disc()->Lid();
+
+  // get global node IDs reversing order to get outward-pointing normal
+  auto A = tk::cref_find( lid, t[2] );
+  auto B = tk::cref_find( lid, t[1] );
+  auto C = tk::cref_find( lid, t[0] );
+  auto geochf = tk::geoFaceTri( {{m_coord[0][A], m_coord[0][B], m_coord[0][C]}},
+                                {{m_coord[1][A], m_coord[1][B], m_coord[1][C]}},
+                                {{m_coord[2][A], m_coord[2][B], m_coord[2][C]}} );
+
+  for (std::size_t i=0; i<7; ++i)
+    m_geoFace(id[0],i,0) = geochf(0,i,0);
 }
 
 #include "NoWarning/ghosts.def.h"

@@ -12,7 +12,6 @@ add_library(Inciter
             Sorter.cpp
             DiagCG.cpp
             ALECG.cpp
-            ElemCommMap.cpp
             ALE.cpp
             Ghosts.cpp
             DG.cpp

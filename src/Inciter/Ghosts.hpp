@@ -23,7 +23,6 @@
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "Discretization.hpp"
-#include "ElemCommMap.hpp"
 
 #include "NoWarning/ghosts.decl.h"
 
@@ -74,6 +73,18 @@ class Ghosts : public CBase_Ghosts {
       #pragma clang diagnostic pop
     #endif
 
+    //! Local face & tet IDs associated to 3 global node IDs
+    //! \details This map stores tetrahedron cell faces (map key) and their
+    //!   associated local face ID and inner local tet id adjacent to the face
+    //!   (map value). A face is given by 3 global node IDs.
+    using FaceMap =
+      std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
+                          std::array< std::size_t, 2 >, // local face & tet ID
+                          tk::UnsMesh::Hash<3>,
+                          tk::UnsMesh::Eq<3> >;
+
+    //! Discretization proxy
+    CProxy_Discretization m_disc;
     //! Counter for number of unknowns on this chare (including ghosts)
     std::size_t m_nunk;
     //! Mesh connectivity extended
@@ -141,6 +152,7 @@ class Ghosts : public CBase_Ghosts {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+      p | m_disc;
       p | m_nunk;
       p | m_inpoel;
       p | m_coord;
@@ -154,7 +166,6 @@ class Ghosts : public CBase_Ghosts {
       p | m_exptGhost;
       p | m_bid;
       p | m_esup;
-      p | m_disc;
       p | m_ncomfac;
       p | m_nadj;
       p | m_ncomEsup;
@@ -173,8 +184,8 @@ class Ghosts : public CBase_Ghosts {
     ///@}
 
   private:
-    //! Discretization proxy
-    CProxy_Discretization m_disc;
+    using ncomp_t = kw::ncomp::info::expect::type;
+
     //! Counter for face adjacency communication map
     std::size_t m_ncomfac;
     //! Counter signaling that all ghost data have been received
@@ -216,6 +227,39 @@ class Ghosts : public CBase_Ghosts {
 
     //! Continue after node adjacency communication map completed on this chare
     void adj();
+
+    //! Perform leak-test on chare boundary faces
+    bool leakyAdjacency();
+
+    //! Check if esuf of chare-boundary faces matches
+    bool faceMatch();
+
+    //! Verify that all chare-boundary faces have been received
+    bool receivedChBndFaces();
+
+    //! Find any chare for face (given by 3 global node IDs)
+    int findchare( const tk::UnsMesh::Face& t );
+
+    //! Check if entries in inpoel, inpofa and node-triplet are consistent
+    std::size_t nodetripletMatch(
+      const std::array< std::size_t, 2 >& id,
+      const tk::UnsMesh::Face& t );
+
+    //! Fill elements surrounding a face along chare boundary
+    void addEsuf(
+      const std::array< std::size_t, 2 >& id,
+      std::size_t ghostid );
+
+    //! Fill elements surrounding a element along chare boundary
+    void addEsuel(
+      const std::array< std::size_t, 2 >& id,
+      std::size_t ghostid,
+      const tk::UnsMesh::Face& t );
+
+    //! Fill face-geometry data along chare boundary
+    void addGeoFace(
+      const tk::UnsMesh::Face& t,
+      const std::array< std::size_t, 2 >& id );
 };
 
 } // inciter::
