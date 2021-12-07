@@ -88,6 +88,9 @@ class FV : public CBase_FV {
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
 
+    //! Resize solution vectors after extension due to Ghosts and continue setup
+    void resizeSolVectors();
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
@@ -182,7 +185,6 @@ class FV : public CBase_FV {
       p | m_p;
       p | m_lhs;
       p | m_rhs;
-      p | m_nunk;
       p | m_npoin;
       p | m_diag;
       p | m_stage;
@@ -258,8 +260,6 @@ class FV : public CBase_FV {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Counter for number of unknowns on this chare (including ghosts)
-    std::size_t m_nunk;
     //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_npoin;
     //! Diagnostics object

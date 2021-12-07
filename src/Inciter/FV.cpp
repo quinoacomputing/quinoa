@@ -71,7 +71,6 @@ FV::FV( const CProxy_Discretization& disc,
   m_lhs( m_u.nunk(),
          g_inputdeck.get< tag::component >().nprop() ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
-  m_nunk( m_u.nunk() ),
   m_npoin( Disc()->Coord()[0].size() ),
   m_diag(),
   m_stage( 0 ),
@@ -104,7 +103,8 @@ FV::FV( const CProxy_Discretization& disc,
     thisProxy[ thisIndex ].wait4nod();
   }
 
-  m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_nunk);
+  m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
+    CkCallback(CkIndex_FV::resizeSolVectors(), thisProxy[thisIndex]));
 
   // global-sync to call doneInserting on m_ghosts
   auto meshid = Disc()->MeshId();
@@ -141,23 +141,17 @@ FV::ResumeFromSync()
 }
 
 void
-FV::setup()
+FV::resizeSolVectors()
 // *****************************************************************************
-// Set initial conditions, generate lhs, output mesh
+// Resize solution vectors after extension due to Ghosts
 // *****************************************************************************
 {
-  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-      g_inputdeck.get< tag::cmd, tag::quiescence >())
-    stateProxy.ckLocalBranch()->insert( "FV", thisIndex, CkMyPe(), Disc()->It(),
-                                        "setup" );
-
   // Resize solution vectors, lhs and rhs by the number of ghost tets
-  m_nunk = myGhosts()->m_nunk;
-  m_u.resize( m_nunk );
-  m_un.resize( m_nunk );
-  m_p.resize( m_nunk );
-  m_lhs.resize( m_nunk );
-  m_rhs.resize( m_nunk );
+  m_u.resize( myGhosts()->m_nunk );
+  m_un.resize( myGhosts()->m_nunk );
+  m_p.resize( myGhosts()->m_nunk );
+  m_lhs.resize( myGhosts()->m_nunk );
+  m_rhs.resize( myGhosts()->m_nunk );
 
   // Size communication buffer for solution
   for (auto& u : m_uc) u.resize( myGhosts()->m_bid.size() );
@@ -167,6 +161,23 @@ FV::setup()
   // (including those of ghosts)
   Assert( myGhosts()->m_geoElem.nunk() == m_u.nunk(),
     "GeoElem unknowns size mismatch" );
+
+  // Signal the runtime system that all workers have received their adjacency
+  std::vector< std::size_t > meshdata{ myGhosts()->m_initial, Disc()->MeshId() };
+  contribute( meshdata, CkReduction::sum_ulong,
+    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
+}
+
+void
+FV::setup()
+// *****************************************************************************
+// Set initial conditions, generate lhs, output mesh
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "FV", thisIndex, CkMyPe(), Disc()->It(),
+                                        "setup" );
 
   auto d = Disc();
 
@@ -765,7 +776,7 @@ FV::solve( tk::real newdt )
       m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
-  for (std::size_t e=0; e<m_nunk; ++e)
+  for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
     for (std::size_t c=0; c<neq; ++c)
     {
       auto rmark = c*rdof;
@@ -865,6 +876,7 @@ FV::resizePostAMR(
 
   // Set flag that indicates that we are during time stepping
   m_initial = 0;
+  myGhosts()->m_initial = 0;
 
   // Zero field output iteration count between two mesh refinement steps
   d->Itf() = 0;
@@ -898,7 +910,7 @@ FV::resizePostAMR(
     coord ) );
 
   myGhosts()->m_nfac = myGhosts()->m_fd.Inpofa().size()/3;
-  m_nunk = nelem;
+  myGhosts()->m_nunk = nelem;
   m_npoin = coord[0].size();
   myGhosts()->m_bndFace.clear();
   myGhosts()->m_exptGhost.clear();
@@ -919,13 +931,6 @@ FV::resizePostAMR(
   }
   m_un = m_u;
 
-  // Enable SDAG wait for initially building the solution vector and limiting
-  if (m_initial) {
-    thisProxy[ thisIndex ].wait4sol();
-    thisProxy[ thisIndex ].wait4lim();
-    thisProxy[ thisIndex ].wait4nod();
-  }
-
   // Resize communication buffers
   m_ghosts[thisIndex].resizeComm();
 }
@@ -939,9 +944,8 @@ FV::fieldOutput() const
 {
   auto d = Disc();
 
-  // output field data if field iteration count is reached or if the field
-  // physics time output frequency is hit or in the last time step
-  return d->fielditer() or d->fieldtime() or d->finished();
+  // Output field data
+  return d->fielditer() or d->fieldtime() or d->fieldrange() or d->finished();
 }
 
 bool
@@ -964,8 +968,8 @@ FV::writeFields( CkCallback c )
 {
   auto d = Disc();
 
-  // Output time history if we hit its output frequency
-  if (d->histiter() or d->histtime()) {
+  // Output time history
+  if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
     for (const auto& eq : g_fvpde) {
       auto h = eq.histOutput( d->Hist(), myGhosts()->m_inpoel,

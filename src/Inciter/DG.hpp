@@ -89,6 +89,9 @@ class DG : public CBase_DG {
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
 
+    //! Resize solution vectors after extension due to Ghosts and continue setup
+    void resizeSolVectors();
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
@@ -225,7 +228,6 @@ class DG : public CBase_DG {
       p | m_uNodalExtrmc;
       p | m_pNodalExtrmc;
       p | m_rhs;
-      p | m_nunk;
       p | m_npoin;
       p | m_diag;
       p | m_stage;
@@ -335,8 +337,6 @@ class DG : public CBase_DG {
     std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
     //! Buffer for vector of nodal extrema for primitive variables
     std::unordered_map< std::size_t, std::vector< tk::real > > m_pNodalExtrmc;
-    //! Counter for number of unknowns on this chare (including ghosts)
-    std::size_t m_nunk;
     //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_npoin;
     //! Diagnostics object

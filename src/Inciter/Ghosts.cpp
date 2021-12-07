@@ -24,7 +24,8 @@ using inciter::Ghosts;
 Ghosts::Ghosts( const CProxy_Discretization& disc,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel,
-  std::size_t nunk ) :
+  std::size_t nunk,
+  CkCallback cbDone ) :
   m_disc( disc ),
   m_nunk( nunk ),
   m_inpoel( Disc()->Inpoel() ),
@@ -39,22 +40,24 @@ Ghosts::Ghosts( const CProxy_Discretization& disc,
   m_exptGhost(),
   m_bid(),
   m_esup(),
+  m_initial( 1 ),
   m_ncomfac( 0 ),
   m_nadj( 0 ),
   m_ncomEsup( 0 ),
   m_ipface(),
   m_ghostData(),
   m_ghostReq( 0 ),
-  m_initial( 1 ),
   m_expChBndFace(),
   m_infaces(),
-  m_esupc()
+  m_esupc(),
+  m_cbAfterDone( cbDone )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
 //! \param[in] nunk Number of unknowns
+//! \param[in] cbDone Function to continue with when Ghosts have been computed
 // *****************************************************************************
 {
   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
@@ -797,10 +800,8 @@ Ghosts::adj()
       Assert( m_exptGhost.insert( g.second ).second,
               "Failed to store local tetid as exptected ghost id" );
 
-  // Signal the runtime system that all workers have received their adjacency
-  std::vector< std::size_t > meshdata{ m_initial, Disc()->MeshId() };
-  contribute( meshdata, CkReduction::sum_ulong,
-    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
+  // Callback function from DG/FV after ghost-setup is done
+  m_cbAfterDone.send();
 }
 
 bool

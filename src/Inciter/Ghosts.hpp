@@ -60,7 +60,8 @@ class Ghosts : public CBase_Ghosts {
     Ghosts( const CProxy_Discretization& disc,
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::vector< std::size_t >& triinpoel,
-      std::size_t nunk );
+      std::size_t nunk,
+      CkCallback cbDone );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -118,6 +119,8 @@ class Ghosts : public CBase_Ghosts {
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Elements (value) surrounding point (key) data-structure
     std::map< std::size_t, std::vector< std::size_t > > m_esup;
+    //! 1 if starting time stepping, 0 if during time stepping
+    std::size_t m_initial;
 
     //1 Start setup of communication maps for cell-centered schemes
     void startCommSetup();
@@ -166,16 +169,17 @@ class Ghosts : public CBase_Ghosts {
       p | m_exptGhost;
       p | m_bid;
       p | m_esup;
+      p | m_initial;
       p | m_ncomfac;
       p | m_nadj;
       p | m_ncomEsup;
       p | m_ipface;
       p | m_ghostData;
       p | m_ghostReq;
-      p | m_initial;
       p | m_expChBndFace;
       p | m_infaces;
       p | m_esupc;
+      p | m_cbAfterDone;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -198,14 +202,14 @@ class Ghosts : public CBase_Ghosts {
     std::unordered_map< int, GhostData > m_ghostData;
     //! Number of chares requesting ghost data
     std::size_t m_ghostReq;
-    //! 1 if starting time stepping, 0 if during time stepping
-    std::size_t m_initial;
     //! Unique set of chare-boundary faces this chare is expected to receive
     tk::UnsMesh::FaceSet m_expChBndFace;
     //! Incoming communication buffer during chare-boundary face communication
     std::unordered_map< int, tk::UnsMesh::FaceSet > m_infaces;
     //! Communication buffer for esup data-structure
     std::map< std::size_t, std::vector< std::size_t > > m_esupc;
+    //! Function call to continue with in Scheme when Ghosts is done
+    CkCallback m_cbAfterDone;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

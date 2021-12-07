@@ -24,7 +24,8 @@ module ghosts {
       entry Ghosts( const CProxy_Discretization& disc,
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::vector< std::size_t >& triinpoel,
-        std::size_t nunk );
+        std::size_t nunk,
+        CkCallback cbDone );
 
       entry void startCommSetup();
       entry void resizeComm();

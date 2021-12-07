@@ -79,7 +79,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodalExtrm(),
   m_uNodalExtrmc(),
   m_pNodalExtrmc(),
-  m_nunk( m_u.nunk() ),
   m_npoin( Disc()->Coord()[0].size() ),
   m_diag(),
   m_stage( 0 ),
@@ -125,18 +124,15 @@ DG::DG( const CProxy_Discretization& disc,
 
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
+    thisProxy[ thisIndex ].wait4sol();
+    thisProxy[ thisIndex ].wait4lim();
+    thisProxy[ thisIndex ].wait4nod();
     thisProxy[ thisIndex ].wait4reco();
     thisProxy[ thisIndex ].wait4nodalExtrema();
   }
 
-  // Enable SDAG wait for initially building the solution vector and limiting
-  if (m_initial) {
-    thisProxy[ thisIndex ].wait4sol();
-    thisProxy[ thisIndex ].wait4lim();
-    thisProxy[ thisIndex ].wait4nod();
-  }
-
-  m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_nunk);
+  m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
+    CkCallback(CkIndex_DG::resizeSolVectors(), thisProxy[thisIndex]));
 
   // global-sync to call doneInserting on m_ghosts
   auto meshid = Disc()->MeshId();
@@ -173,23 +169,17 @@ DG::ResumeFromSync()
 }
 
 void
-DG::setup()
+DG::resizeSolVectors()
 // *****************************************************************************
-// Set initial conditions, generate lhs, output mesh
+// Resize solution vectors after extension due to Ghosts and continue with setup
 // *****************************************************************************
 {
-  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
-      g_inputdeck.get< tag::cmd, tag::quiescence >())
-    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
-                                        "setup" );
-
   // Resize solution vectors, lhs and rhs by the number of ghost tets
-  m_nunk = myGhosts()->m_nunk;
-  m_u.resize( m_nunk );
-  m_un.resize( m_nunk );
-  m_p.resize( m_nunk );
-  m_lhs.resize( m_nunk );
-  m_rhs.resize( m_nunk );
+  m_u.resize( myGhosts()->m_nunk );
+  m_un.resize( myGhosts()->m_nunk );
+  m_p.resize( myGhosts()->m_nunk );
+  m_lhs.resize( myGhosts()->m_nunk );
+  m_rhs.resize( myGhosts()->m_nunk );
 
   // Size communication buffer for solution and number of degrees of freedom
   for (auto& n : m_ndofc) n.resize( myGhosts()->m_bid.size() );
@@ -201,18 +191,35 @@ DG::setup()
   if( pref )
   {
     const auto ndofmax = g_inputdeck.get< tag::pref, tag::ndofmax >();
-    m_ndof.resize( m_nunk, ndofmax );
+    m_ndof.resize( myGhosts()->m_nunk, ndofmax );
   }
   else
   {
     const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-    m_ndof.resize( m_nunk, ndof );
+    m_ndof.resize( myGhosts()->m_nunk, ndof );
   }
 
   // Ensure that we also have all the geometry and connectivity data
   // (including those of ghosts)
   Assert( myGhosts()->m_geoElem.nunk() == m_u.nunk(),
     "GeoElem unknowns size mismatch" );
+
+  // Signal the runtime system that all workers have received their adjacency
+  std::vector< std::size_t > meshdata{ myGhosts()->m_initial, Disc()->MeshId() };
+  contribute( meshdata, CkReduction::sum_ulong,
+    CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
+}
+
+void
+DG::setup()
+// *****************************************************************************
+// Set initial conditions, generate lhs, output mesh
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
+    stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
+                                        "setup" );
 
   auto d = Disc();
 
@@ -333,7 +340,7 @@ DG::next()
 
   if (pref && m_stage == 0 && d->T() > 0)
     for (const auto& eq : g_dgpde)
-      eq.eval_ndof( m_nunk, myGhosts()->m_coord, myGhosts()->m_inpoel,
+      eq.eval_ndof( myGhosts()->m_nunk, myGhosts()->m_coord, myGhosts()->m_inpoel,
                     myGhosts()->m_fd, m_u,
                     g_inputdeck.get< tag::pref, tag::indicator >(),
                     g_inputdeck.get< tag::discr, tag::ndof >(),
@@ -1341,7 +1348,7 @@ DG::solve( tk::real newdt )
   if (pref && m_stage == 0)
   {
     // When the element are coarsened, high order terms should be zero
-    for(std::size_t e = 0; e < m_nunk; e++)
+    for(std::size_t e = 0; e < myGhosts()->m_nunk; e++)
     {
       const auto ncomp= m_u.nprop()/rdof;
       if(m_ndof[e] == 1)
@@ -1378,7 +1385,7 @@ DG::solve( tk::real newdt )
       m_u, m_p, m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
-  for(std::size_t e=0; e<m_nunk; ++e)
+  for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
     for(std::size_t c=0; c<neq; ++c)
     {
       for (std::size_t k=0; k<m_numEqDof[c]; ++k)
@@ -1488,6 +1495,7 @@ DG::resizePostAMR(
 
   // Set flag that indicates that we are during time stepping
   m_initial = 0;
+  myGhosts()->m_initial = 0;
 
   // Zero field output iteration count between two mesh refinement steps
   d->Itf() = 0;
@@ -1528,7 +1536,7 @@ DG::resizePostAMR(
     coord ) );
 
   myGhosts()->m_nfac = myGhosts()->m_fd.Inpofa().size()/3;
-  m_nunk = nelem;
+  myGhosts()->m_nunk = nelem;
   m_npoin = coord[0].size();
   myGhosts()->m_bndFace.clear();
   myGhosts()->m_exptGhost.clear();
@@ -1548,13 +1556,6 @@ DG::resizePostAMR(
     for (std::size_t i=0; i<pnprop; ++i) m_p(child,i,0) = pn(parent,i,0);
   }
   m_un = m_u;
-
-  // Enable SDAG wait for initially building the solution vector and limiting
-  if (m_initial) {
-    thisProxy[ thisIndex ].wait4sol();
-    thisProxy[ thisIndex ].wait4lim();
-    thisProxy[ thisIndex ].wait4nod();
-  }
 
   // Resize communication buffers
   m_ghosts[thisIndex].resizeComm();

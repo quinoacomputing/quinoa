@@ -31,6 +31,7 @@ module fv {
                 const std::map< int, std::vector< std::size_t > >& /* bnode */,
                 const std::vector< std::size_t >& triinpoel );
       initnode void registerReducers();      
+      entry void resizeSolVectors();
       entry void setup();
       entry void box( tk::real v );
       entry void comlim( int fromch,
