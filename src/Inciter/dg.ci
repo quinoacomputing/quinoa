@@ -16,6 +16,7 @@ module dg {
 
   extern module transporter;
   extern module discretization;
+  extern module ghosts;
 
   include "UnsMesh.hpp";
   include "PUPUtil.hpp";
@@ -25,19 +26,10 @@ module dg {
 
     array [1D] DG {
       entry DG( const CProxy_Discretization& disc,
+                const CProxy_Ghosts& ghostsproxy,
                 const std::map< int, std::vector< std::size_t > >& bface,
                 const std::map< int, std::vector< std::size_t > >& /* bnode */,
                 const std::vector< std::size_t >& triinpoel );
-      entry void resizeComm();
-      entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
-      entry void comGhost( int fromch, const GhostData& ghost );
-      entry void reqGhost();
-      entry void nodeNeighSetup();
-      entry void comEsup( int fromch,
-        const std::unordered_map< std::size_t, std::vector< std::size_t > >&
-          bndEsup,
-        const std::unordered_map< std::size_t, std::vector< tk::real > >&
-          nodeBoundaryCells );
       initnode void registerReducers();      
       entry void setup();
       entry void box( tk::real v );
@@ -75,18 +67,6 @@ module dg {
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
-      entry void wait4fac() {
-        when ownfac_complete(), comfac_complete() serial "bndfaces"
-        { bndFaces(); } }
-
-      entry void wait4ghost() {
-        when ownghost_complete(), reqghost_complete() serial "ghost"
-        { sendGhost(); } }
-
-      entry void wait4esup() {
-        when ownesup_complete(), comesup_complete() serial "esup"
-        { adj(); } }
-
       entry void wait4sol() {
         when ownsol_complete(), comsol_complete() serial "sol" { reco(); } }
 
@@ -105,12 +85,6 @@ module dg {
         when ownnod_complete( CkCallback c ), comnodeout_complete()
         serial "nod" { writeFields( c ); } }
 
-      entry void ownfac_complete();
-      entry void comfac_complete();
-      entry void ownghost_complete();
-      entry void reqghost_complete();
-      entry void ownesup_complete();
-      entry void comesup_complete();
       entry void ownsol_complete();
       entry void comsol_complete();
       entry void ownreco_complete();

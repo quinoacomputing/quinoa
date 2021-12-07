@@ -3,7 +3,6 @@
 add_executable(${UNITTEST_EXECUTABLE}
                UnitTestDriver.cpp
                UnitTest.cpp
-               ../Inciter/Ghosts.cpp
                ../../tests/unit/Base/TestContainerUtil.cpp
                ../../tests/unit/Base/TestData.cpp
                ../../tests/unit/Base/TestException.cpp

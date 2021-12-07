@@ -907,7 +907,7 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb,
     Throw( err.str() );
   }
 
-  if (cb > 0.0) m_scheme[meshid].bcast< Scheme::resizeComm >();
+  if (cb > 0.0) m_scheme[meshid].ghosts().resizeComm();
 }
 
 void
@@ -975,7 +975,7 @@ Transporter::startEsup( std::size_t meshid )
 //! \note Only used for cell-centered schemes
 // *****************************************************************************
 {
-  m_scheme[meshid].bcast< Scheme::nodeNeighSetup >();
+  m_scheme[meshid].ghosts().nodeNeighSetup();
 }
 
 void
@@ -1059,9 +1059,6 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
 
   m_refiner[meshid].sendProxy();
 
-  if (g_inputdeck.centering() == tk::Centering::ELEM)
-    m_scheme[meshid].ghosts().doneInserting();
-
   if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DiagCG)
     m_scheme[meshid].fct().doneInserting();
 
@@ -1135,6 +1132,17 @@ Transporter::diagHeader()
 
   // Write diagnostics header
   dw.header( d );
+}
+
+void
+Transporter::doneInsertingGhosts(std::size_t meshid)
+// *****************************************************************************
+// Reduction target indicating all "ghosts" insertions are done
+//! \param[in] meshid Mesh id
+// *****************************************************************************
+{
+  m_scheme[meshid].ghosts().doneInserting();
+  m_scheme[meshid].ghosts().startCommSetup();
 }
 
 void

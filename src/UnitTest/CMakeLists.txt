@@ -20,6 +20,7 @@ target_include_directories(UnitTest PUBLIC
                            ${QUINOA_SOURCE_DIR}/Mesh
                            ${QUINOA_SOURCE_DIR}/LinearSolver
                            ${QUINOA_SOURCE_DIR}/PDE
+                           ${QUINOA_SOURCE_DIR}/Statistics
                            ${TUT_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}

@@ -14,17 +14,51 @@
 
 module ghosts {
 
-  extern module transporter;
+  extern module discretization;
+
+  include "FaceData.hpp";
 
   namespace inciter {
 
     array [1D] Ghosts {
       entry Ghosts( const CProxy_Discretization& disc,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::vector< std::size_t >& triinpoel );
+        const std::vector< std::size_t >& triinpoel,
+        std::size_t nunk );
+
+      entry void startCommSetup();
+      entry void resizeComm();
+      entry void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
+      entry void comGhost( int fromch, const GhostData& ghost );
+      entry void reqGhost();
+      entry void nodeNeighSetup();
+      entry void comEsup( int fromch,
+        const std::unordered_map< std::size_t, std::vector< std::size_t > >&
+          bndEsup,
+        const std::unordered_map< std::size_t, std::vector< tk::real > >&
+          nodeBoundaryCells );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      entry void wait4fac() {
+        when ownfac_complete(), comfac_complete() serial "bndfaces"
+        { bndFaces(); } }
+
+      entry void wait4ghost() {
+        when ownghost_complete(), reqghost_complete() serial "ghost"
+        { sendGhost(); } }
+
+      entry void wait4esup() {
+        when ownesup_complete(), comesup_complete() serial "esup"
+        { adj(); } }
+
+      entry void ownfac_complete();
+      entry void comfac_complete();
+      entry void ownghost_complete();
+      entry void reqghost_complete();
+      entry void ownesup_complete();
+      entry void comesup_complete();
 
     };
 

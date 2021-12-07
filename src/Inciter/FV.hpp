@@ -31,7 +31,7 @@
 #include "DerivedData.hpp"
 #include "FaceData.hpp"
 #include "ElemDiagnostics.hpp"
-#include "ElemCommMap.hpp"
+#include "Ghosts.hpp"
 
 #include "NoWarning/fv.decl.h"
 
@@ -66,6 +66,7 @@ class FV : public CBase_FV {
 
     //! Constructor
     explicit FV( const CProxy_Discretization& disc,
+                 const CProxy_Ghosts& ghostsproxy,
                  const std::map< int, std::vector< std::size_t > >& bface,
                  const std::map< int, std::vector< std::size_t > >& /* bnode */,
                  const std::vector< std::size_t >& triinpoel );
@@ -83,31 +84,6 @@ class FV : public CBase_FV {
 
     //! Return from migration
     void ResumeFromSync() override;
-
-    //! Start sizing communication buffers and setting up ghost data
-    void resizeComm();
-
-    //! Receive unique set of faces we potentially share with/from another chare
-    void comfac( int fromch, const tk::UnsMesh::FaceSet& infaces );
-
-    //! Receive ghost data on chare boundaries from fellow chare
-    void comGhost( int fromch, const GhostData& ghost );
-
-    //! Receive requests for ghost data
-    void reqGhost();
-
-    //! Send all of our ghost data to fellow chares
-    void sendGhost();
-
-    //! Setup node-neighborhood (esup)
-    void nodeNeighSetup();
-
-    //! Receive element-surr-points data on chare boundaries from fellow chare
-    void comEsup( int fromch,
-      const std::unordered_map< std::size_t, std::vector< std::size_t > >&
-        bndEsup,
-      const std::unordered_map< std::size_t, std::vector< tk::real > >&
-        nodeBndCells );
 
     //! Configure Charm++ reduction types for concatenating BC nodelists
     static void registerReducers();
@@ -196,44 +172,23 @@ class FV : public CBase_FV {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_disc;
-      p | m_ncomfac;
-      p | m_nadj;
-      p | m_ncomEsup;
+      p | m_ghosts;
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
       p | m_nnod;
-      p | m_inpoel;
-      p | m_coord;
-      p | m_fd;
       p | m_u;
       p | m_un;
       p | m_p;
-      p | m_geoFace;
-      p | m_geoElem;
       p | m_lhs;
       p | m_rhs;
-      p | m_nfac;
       p | m_nunk;
       p | m_npoin;
-      p | m_ipface;
-      p | m_bndFace;
-      p | m_ghostData;
-      p | m_sendGhost;
-      p | m_ghostReq;
-      p | m_ghost;
-      p | m_exptGhost;
-      p | m_recvGhost;
       p | m_diag;
       p | m_stage;
-      p | m_bid;
       p | m_uc;
       p | m_pc;
       p | m_initial;
-      p | m_expChBndFace;
-      p | m_infaces;
-      p | m_esup;
-      p | m_esupc;
       p | m_elemfields;
       p | m_nodefields;
       p | m_nodefieldsc;
@@ -280,12 +235,8 @@ class FV : public CBase_FV {
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
-    //! Counter for face adjacency communication map
-    std::size_t m_ncomfac;
-    //! Counter signaling that all ghost data have been received
-    std::size_t m_nadj;
-    //! Counter for element-surr-node adjacency communication map
-    std::size_t m_ncomEsup;
+    //! Distributed Ghosts proxy
+    CProxy_Ghosts m_ghosts;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
     //! \brief Counter signaling that we have received all our solution ghost
@@ -297,75 +248,30 @@ class FV : public CBase_FV {
     //! \brief Counter signaling that we have received all our node solution
     //!   contributions
     std::size_t m_nnod;
-    //! Mesh connectivity extended
-    std::vector< std::size_t > m_inpoel;
-    //! Node coordinates extended
-    tk::UnsMesh::Coords m_coord;
-    //! Face data
-    FaceData m_fd;
     //! Vector of unknown/solution average over each mesh element
     tk::Fields m_u;
     //! Vector of unknown at previous time-step
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
-    //! Face geometry
-    tk::Fields m_geoFace;
-    //! Element geometry
-    tk::Fields m_geoElem;
     //! Left-hand side mass-matrix which is a diagonal matrix
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Counter for number of faces on this chare (including chare boundaries)
-    std::size_t m_nfac;
     //! Counter for number of unknowns on this chare (including ghosts)
     std::size_t m_nunk;
     //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_npoin;
-    //! Internal + physical boundary faces (inverse of inpofa)
-    tk::UnsMesh::FaceSet m_ipface;
-    //! Face & tet IDs associated to global node IDs of the face for each chare
-    //! \details This map stores not only the unique faces associated to
-    //!   fellow chares, but also a newly assigned local face ID and adjacent
-    //!   local tet ID.
-    std::unordered_map< int, FaceMap > m_bndFace;
-    //! Ghost data associated to chare IDs we communicate with
-    std::unordered_map< int, GhostData > m_ghostData;
-    //! Elements which are ghosts for other chares associated to those chare IDs
-    std::unordered_map< int, std::unordered_set< std::size_t > > m_sendGhost;
-    //! Number of chares requesting ghost data
-    std::size_t m_ghostReq;
-    //! Local element id associated to ghost remote id charewise
-    //! \details This map associates the local element id (inner map value) to
-    //!    the (remote) element id of the ghost (inner map key) based on the
-    //!    chare id (outer map key) this remote element lies in.
-    std::unordered_map< int,
-      std::unordered_map< std::size_t, std::size_t > > m_ghost;
-    //! Expected ghost tet ids (used only in DEBUG)
-    std::set< std::size_t > m_exptGhost;
-    //! Received ghost tet ids (used only in DEBUG)
-    std::set< std::size_t > m_recvGhost;
     //! Diagnostics object
     ElemDiagnostics m_diag;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
-    //! Map local ghost tet ids (value) and zero-based boundary ids (key)
-    std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Solution receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
     //! 1 if starting time stepping, 0 if during time stepping
     std::size_t m_initial;
-    //! Unique set of chare-boundary faces this chare is expected to receive
-    tk::UnsMesh::FaceSet m_expChBndFace;
-    //! Incoming communication buffer during chare-boundary face communication
-    std::unordered_map< int, tk::UnsMesh::FaceSet > m_infaces;
-    //! Elements (value) surrounding point (key) data-structure
-    std::map< std::size_t, std::vector< std::size_t > > m_esup;
-    //! Communication buffer for esup data-structure
-    std::map< std::size_t, std::vector< std::size_t > > m_esupc;
     //! Elem output fields
     std::vector< std::vector< tk::real > > m_elemfields;
     //! Node output fields
@@ -381,27 +287,16 @@ class FV : public CBase_FV {
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
 
     //! Access bound Discretization class pointer
+    Ghosts* myGhosts() const {
+      Assert( m_ghosts[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
+      return m_ghosts[ thisIndex ].ckLocal();
+    }
+
+    //! Access bound Discretization class pointer
     Discretization* Disc() const {
       Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
-
-    //! Compute partial boundary surface integral and sum across all chares
-    void bndIntegral();
-
-    //! Compute chare-boundary faces
-    void bndFaces();
-
-    //! Setup own ghost data on this chare
-    void setupGhost();
-
-    //! Continue after face adjacency communication map completed on this chare
-    void faceAdj();
-
-    //! Continue after node adjacency communication map completed on this chare
-    void adj();
-
-    void addEsup();
 
     //! Output mesh field data
     void writeFields( CkCallback c );

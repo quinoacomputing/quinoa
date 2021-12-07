@@ -38,7 +38,6 @@ module tutsuiteinciter {
   // 
   // See also the Charm++ manual on more information on template chares.
   extern module mpirunnerinciter;
-  extern module ghosts;
 
   // TUTSuite spawns chares defined in the modules defined below as extern. If
   // this is not included, Charm++ generates bad code and valgrind detects
