@@ -84,6 +84,37 @@ class Ghosts : public CBase_Ghosts {
                           tk::UnsMesh::Hash<3>,
                           tk::UnsMesh::Eq<3> >;
 
+    //! Storage type for refined mesh used for field output
+    struct OutMesh {
+      //! Element connectivity, local->global node ids, global->local nodes ids
+      tk::UnsMesh::Chunk chunk;
+      //! Node coordinates
+      tk::UnsMesh::Coords coord;
+      //! Triangle element connectivity
+      std::vector< std::size_t > triinpoel;
+      //! Boundary-face connectivity
+      std::map< int, std::vector< std::size_t > > bface;
+      //! Node communinaction map
+      tk::NodeCommMap nodeCommMap;
+      //! \brief Pack/Unpack serialize member function
+      //! \param[in,out] p Charm++'s PUP::er serializer object reference
+      void pup( PUP::er& p ) {
+        p|chunk; p|coord; p|triinpoel; p|bface; p|nodeCommMap;
+      }
+      //! Destroyer
+      void destroy() {
+        tk::destroy( std::get<0>(chunk) );
+        tk::destroy( std::get<1>(chunk) );
+        tk::destroy( std::get<2>(chunk) );
+        tk::destroy( coord[0] );
+        tk::destroy( coord[1] );
+        tk::destroy( coord[2] );
+        tk::destroy( triinpoel );
+        tk::destroy( bface );
+        tk::destroy( nodeCommMap );
+      }
+    };
+
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! Counter for number of unknowns on this chare (including ghosts)

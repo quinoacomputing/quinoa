@@ -251,47 +251,6 @@ class DG : public CBase_DG {
     //@}
 
   private:
-    //! Local face & tet IDs associated to 3 global node IDs
-    //! \details This map stores tetrahedron cell faces (map key) and their
-    //!   associated local face ID and inner local tet id adjacent to the face
-    //!   (map value). A face is given by 3 global node IDs.
-    using FaceMap =
-      std::unordered_map< tk::UnsMesh::Face,  // 3 global node IDs
-                          std::array< std::size_t, 2 >, // local face & tet ID
-                          tk::UnsMesh::Hash<3>,
-                          tk::UnsMesh::Eq<3> >;
-
-    //! Storage type for refined mesh used for field output
-    struct OutMesh {
-      //! Element connectivity, local->global node ids, global->local nodes ids
-      tk::UnsMesh::Chunk chunk;
-      //! Node coordinates
-      tk::UnsMesh::Coords coord;
-      //! Triangle element connectivity
-      std::vector< std::size_t > triinpoel;
-      //! Boundary-face connectivity
-      std::map< int, std::vector< std::size_t > > bface;
-      //! Node communinaction map
-      tk::NodeCommMap nodeCommMap;
-      //! \brief Pack/Unpack serialize member function
-      //! \param[in,out] p Charm++'s PUP::er serializer object reference
-      void pup( PUP::er& p ) {
-        p|chunk; p|coord; p|triinpoel; p|bface; p|nodeCommMap;
-      }
-      //! Destroyer
-      void destroy() {
-        tk::destroy( std::get<0>(chunk) );
-        tk::destroy( std::get<1>(chunk) );
-        tk::destroy( std::get<2>(chunk) );
-        tk::destroy( coord[0] );
-        tk::destroy( coord[1] );
-        tk::destroy( coord[2] );
-        tk::destroy( triinpoel );
-        tk::destroy( bface );
-        tk::destroy( nodeCommMap );
-      }
-    };
-
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! Distributed Ghosts proxy
@@ -366,7 +325,7 @@ class DG : public CBase_DG {
     std::unordered_map< std::size_t, std::pair< std::vector< tk::real >,
                                                 std::size_t > > m_nodefieldsc;
     //! Storage for refined mesh used for field output
-    OutMesh m_outmesh;
+    Ghosts::OutMesh m_outmesh;
     //! Element ids at which box ICs are defined by user (multiple boxes)
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
     //! Shock detection marker for field output

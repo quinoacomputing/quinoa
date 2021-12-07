@@ -775,6 +775,10 @@ namespace grm {
       } else if (scheme == SchemeType::PDG) {
         ndof = rdof = 10;
         stack.template get< tag::pref, tag::pref >() = true;
+      } else if (scheme != SchemeType::DG &&
+          scheme != SchemeType::DiagCG &&
+          scheme != SchemeType::ALECG) {
+        Throw("Scheme type not configured in configure_scheme");
       }
     }
   };
