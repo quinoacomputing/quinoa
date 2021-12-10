@@ -1032,7 +1032,7 @@ Ghosts::addEsuel(
 // *****************************************************************************
 {
   const auto& lid = Disc()->Lid();
-  const auto& esuf = m_fd.Esuf();
+  [[maybe_unused]] const auto& esuf = m_fd.Esuf();
   auto& esuel = m_fd.Esuel();
 
   std::array< tk::UnsMesh::Face, 4 > face;
