@@ -36,7 +36,7 @@
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
 #include "Integrate/Source.hpp"
-#include "RiemannFactory.hpp"
+#include "RiemannChoice.hpp"
 #include "EoS/EoS.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -69,8 +69,8 @@ class CompFlow {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_riemann(tk::cref_find(compflowRiemannSolvers(),
-        g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system)))
+      m_riemann( compflowRiemannSolver(g_inputdeck.get< tag::param,
+        tag::compflow, tag::flux >().at(m_system)) )
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
@@ -374,12 +374,6 @@ class CompFlow {
       std::vector< std::vector< tk::real > > vriem;
       std::vector< std::vector< tk::real > > riemannLoc;
 
-      // configure Riemann flux function
-      auto rieflxfn =
-        [this]( const std::array< tk::real, 3 >& fn,
-                const std::array< std::vector< tk::real >, 2 >& u,
-                const std::vector< std::array< tk::real, 3 > >& v )
-              { return m_riemann.flux( fn, u, v ); };
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real,
         tk::real ){
@@ -387,7 +381,7 @@ class CompFlow {
 
       // compute internal surface flux integrals
       tk::surfInt( m_system, 1, m_offset, t, ndof, rdof, inpoel, coord,
-                   fd, geoFace, geoElem, rieflxfn, velfn, U, P, ndofel, R,
+                   fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel, R,
                    vriem, riemannLoc, riemannDeriv );
 
       // compute ptional source term
@@ -402,7 +396,7 @@ class CompFlow {
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
-                        geoFace, geoElem, inpoel, coord, t, rieflxfn, velfn,
+                        geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
                         b.second, U, P, ndofel, R, vriem, riemannLoc,
                         riemannDeriv );
 
@@ -821,7 +815,7 @@ class CompFlow {
     //! Offset PDE system operates from
     const ncomp_t m_offset;
     //! Riemann solver
-    RiemannSolver m_riemann;
+    tk::RiemannFluxFn m_riemann;
     //! BC configuration
     BCStateFn m_bc;
 

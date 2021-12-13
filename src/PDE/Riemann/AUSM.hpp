@@ -28,7 +28,6 @@
 namespace inciter {
 
 //! AUSM+up approximate Riemann solver
-//! \details This class can be used polymorphically with inciter::RiemannSolver
 struct AUSM {
 
   //! AUSM+up approximate Riemann solver flux function
