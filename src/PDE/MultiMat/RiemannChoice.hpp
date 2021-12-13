@@ -11,6 +11,9 @@
              hydrodynamics.
 */
 // *****************************************************************************
+#ifndef RiemannChoice_h
+#define RiemannChoice_h
+
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
 #include "Riemann/HLL.hpp"
@@ -40,3 +43,5 @@ namespace inciter {
   }
 
 } // inciter::
+
+#endif // RiemannChoice_h

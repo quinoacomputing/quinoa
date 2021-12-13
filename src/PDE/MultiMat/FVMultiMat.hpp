@@ -34,7 +34,7 @@
 #include "Integrate/Volume.hpp"
 #include "Integrate/MultiMatTerms.hpp"
 #include "Integrate/Source.hpp"
-#include "RiemannFactory.hpp"
+#include "RiemannChoice.hpp"
 #include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
@@ -68,8 +68,8 @@ class MultiMat {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_riemann( tk::cref_find( multimatRiemannSolvers(),
-        g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) )
+      m_riemann( multimatRiemannSolver(g_inputdeck.get< tag::param,
+        tag::multimat, tag::flux >().at(m_system)) )
     {
       // associate boundary condition configurations with state functions
       brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
@@ -416,13 +416,6 @@ class MultiMat {
       std::vector< std::vector< tk::real > >
         riemannDeriv( 3*nmat+1, std::vector<tk::real>(U.nunk(),0.0) );
 
-      // configure Riemann flux function
-      auto rieflxfn =
-        [this]( const std::array< tk::real, 3 >& fn,
-                const std::array< std::vector< tk::real >, 2 >& u,
-                const std::vector< std::array< tk::real, 3 > >& v )
-              { return m_riemann.flux( fn, u, v ); };
-
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real,
         tk::real ){
@@ -430,13 +423,13 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfIntFV( m_system, nmat, m_offset, t, rdof, inpoel, coord, fd,
-                     geoFace, geoElem, rieflxfn, velfn, U, P, R, riemannDeriv,
+                     geoFace, geoElem, m_riemann, velfn, U, P, R, riemannDeriv,
                      intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfIntFV( m_system, nmat, m_offset, rdof, b.first, fd, geoFace,
-                          geoElem, inpoel, coord, t, rieflxfn, velfn, b.second,
+                          geoElem, inpoel, coord, t, m_riemann, velfn, b.second,
                           U, P, R, riemannDeriv, intsharp );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
@@ -659,7 +652,7 @@ class MultiMat {
     //! Offset PDE system operates from
     const ncomp_t m_offset;
     //! Riemann solver
-    RiemannSolver m_riemann;
+    tk::RiemannFluxFn m_riemann;
     //! BC configuration
     BCStateFn m_bc;
 
