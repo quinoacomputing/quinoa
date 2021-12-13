@@ -53,6 +53,7 @@ static const std::array< tk::real, 3 > rkcoef{{ 1.0/3.0, 1.0/2.0, 1.0 }};
 using inciter::ALECG;
 
 ALECG::ALECG( const CProxy_Discretization& disc,
+              const CProxy_Ghosts&,
               const std::map< int, std::vector< std::size_t > >& bface,
               const std::map< int, std::vector< std::size_t > >& bnode,
               const std::vector< std::size_t >& triinpoel ) :

@@ -58,6 +58,22 @@ updateRhsNonCons( ncomp_t ncomp,
                 const std::vector< std::vector< tk::real > >& ncf,
                 Fields& R );
 
+//! Compute volume integrals of non-conservative terms for multi-material FV
+void
+nonConservativeIntFV(
+  ncomp_t system,
+  std::size_t nmat,
+  ncomp_t offset,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const std::vector< std::vector< tk::real > >& riemannDeriv,
+  Fields& R );
+
 //! Compute volume integrals of pressure relaxation terms in multi-material DG
 void
 pressureRelaxationInt( ncomp_t system,
@@ -89,6 +105,22 @@ updateRhsPre(
   std::vector< tk::real >& ncf,
   Fields& R );
 
+//! Compute volume integrals of pressure relaxation terms in multi-material FV
+void
+pressureRelaxationIntFV(
+  ncomp_t system,
+  std::size_t nmat,
+  ncomp_t offset,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const tk::real ct,
+  Fields& R );
+
 //! Solve the reconstruct velocity used for volume fraction equation
 std::vector< std::vector< tk::real > >
 solvevriem( std::size_t nelem,
@@ -106,6 +138,13 @@ void evaluRiemann( ncomp_t ncomp,
                    const std::array< std::vector< tk::real >, 2 >& state,
                    std::vector< std::vector< tk::real > >& vriem,
                    std::vector< std::vector< tk::real > >& riemannLoc );
+
+//! Compute the flux-function for the multimaterial PDEs
+std::vector< std::array< tk::real, 3 > >
+fluxTerms(
+  std::size_t ncomp,
+  std::size_t nmat,
+  const std::vector< tk::real >& ugp );
 } // tk::
 
 #endif // MultiMatTerms_h

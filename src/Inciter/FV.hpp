@@ -1,28 +1,27 @@
 // *****************************************************************************
 /*!
-  \file      src/Inciter/DG.hpp
+  \file      src/Inciter/FV.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     DG advances a system of PDEs with the discontinuous Galerkin scheme
-  \details   DG advances a system of partial differential equations (PDEs) using
-    discontinuous Galerkin (DG) finite element (FE) spatial discretization (on
-    tetrahedron elements) combined with Runge-Kutta (RK) time stepping.
+  \brief     FV advances a system of PDEs with the finite volume scheme
+  \details   FV advances a system of partial differential equations (PDEs) using
+    the finite volume (FV) spatial discretization (on tetrahedron elements).
 
-    There are a potentially large number of DG Charm++ chares created by
-    Transporter. Each DG gets a chunk of the full load (part of the mesh)
+    There are a potentially large number of FV Charm++ chares created by
+    Transporter. Each FV gets a chunk of the full load (part of the mesh)
     and does the same: initializes and advances a number of PDE systems in time.
 
     The implementation uses the Charm++ runtime system and is fully
     asynchronous, overlapping computation and communication. The algorithm
     utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
     overview of the algorithm structure and how it interfaces with Charm++ is
-    discussed in the Charm++ interface file src/Inciter/dg.ci.
+    discussed in the Charm++ interface file src/Inciter/fv.ci.
 */
 // *****************************************************************************
-#ifndef DG_h
-#define DG_h
+#ifndef FV_h
+#define FV_h
 
 #include <array>
 #include <set>
@@ -34,12 +33,12 @@
 #include "ElemDiagnostics.hpp"
 #include "Ghosts.hpp"
 
-#include "NoWarning/dg.decl.h"
+#include "NoWarning/fv.decl.h"
 
 namespace inciter {
 
-//! DG Charm++ chare array used to advance PDEs in time with DG+RK
-class DG : public CBase_DG {
+//! FV Charm++ chare array used to advance PDEs in time with FV
+class FV : public CBase_FV {
 
   public:
     #if defined(__clang__)
@@ -56,7 +55,7 @@ class DG : public CBase_DG {
     #endif
     // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
     // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-    DG_SDAG_CODE
+    FV_SDAG_CODE
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #elif defined(STRICT_GNUC)
@@ -66,7 +65,7 @@ class DG : public CBase_DG {
     #endif
 
     //! Constructor
-    explicit DG( const CProxy_Discretization& disc,
+    explicit FV( const CProxy_Discretization& disc,
                  const CProxy_Ghosts& ghostsproxy,
                  const std::map< int, std::vector< std::size_t > >& bface,
                  const std::map< int, std::vector< std::size_t > >& /* bnode */,
@@ -78,7 +77,7 @@ class DG : public CBase_DG {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit DG( CkMigrateMessage* msg ) : CBase_DG( msg ) {}
+    explicit FV( CkMigrateMessage* msg ) : CBase_FV( msg ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -111,47 +110,13 @@ class DG : public CBase_DG {
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
-                 const std::vector< std::vector< tk::real > >& prim,
-                 const std::vector< std::size_t >& ndof );
-
-    //! Receive chare-boundary reconstructed data from neighboring chares
-    void comreco( int fromch,
-                  const std::vector< std::size_t >& tetid,
-                  const std::vector< std::vector< tk::real > >& u,
-                  const std::vector< std::vector< tk::real > >& prim,
-                  const std::vector< std::size_t >& ndof );
+                 const std::vector< std::vector< tk::real > >& prim );
 
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
-                 std::size_t fromstage,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
-                 const std::vector< std::vector< tk::real > >& prim,
-                 const std::vector< std::size_t >& ndof );
-
-    //! Receive contributions to nodal gradients on chare-boundaries
-    void
-    comnodalExtrema( const std::vector< std::size_t >& gid,
-                     const std::vector< std::vector< tk::real > >& G1,
-                     const std::vector< std::vector< tk::real > >& G2 );
-
-    //! Initialize the vector of nodal extrema
-    void resizeNodalExtremac();
-
-    //! Compute the nodal extrema for chare-boundary nodes
-    void evalNodalExtrm( const std::size_t ncomp,
-                         const std::size_t nprim,
-                         const std::size_t ndof_NodalExtrm,
-                         const std::vector< std::size_t >& bndel,
-                         const std::vector< std::size_t >& inpoel,
-                         const tk::UnsMesh::Coords& coord,
-                         const std::vector< std::size_t >& gid,
-                         const std::unordered_map< std::size_t, std::size_t >&
-                           bid,
-                         const tk::Fields& U,
-                         const tk::Fields& P,
-                         std::vector< std::vector<tk::real> >& uNodalExtrm,
-                         std::vector< std::vector<tk::real> >& pNodalExtrm );
+                 const std::vector< std::vector< tk::real > >& prim );
 
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
@@ -195,7 +160,7 @@ class DG : public CBase_DG {
     //! Compute left hand side
     void lhs();
 
-    //! Unused in DG
+    //! Unused in FV
     void resized() {}
 
     //! Compute right hand side and solve system
@@ -211,43 +176,31 @@ class DG : public CBase_DG {
     void pup( PUP::er &p ) override {
       p | m_disc;
       p | m_ghosts;
-      p | m_ndof_NodalExtrm;
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
       p | m_nnod;
-      p | m_nreco;
-      p | m_nnodalExtrema;
       p | m_u;
       p | m_un;
       p | m_p;
-      p | m_geoElem;
       p | m_lhs;
-      p | m_uNodalExtrm;
-      p | m_pNodalExtrm;
-      p | m_uNodalExtrmc;
-      p | m_pNodalExtrmc;
       p | m_rhs;
       p | m_npoin;
       p | m_diag;
       p | m_stage;
-      p | m_ndof;
-      p | m_numEqDof;
       p | m_uc;
       p | m_pc;
-      p | m_ndofc;
       p | m_initial;
       p | m_elemfields;
       p | m_nodefields;
       p | m_nodefieldsc;
       p | m_outmesh;
       p | m_boxelems;
-      p | m_shockmarker;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i DG object reference
-    friend void operator|( PUP::er& p, DG& i ) { i.pup(p); }
+    //! \param[in,out] i FV object reference
+    friend void operator|( PUP::er& p, FV& i ) { i.pup(p); }
     //@}
 
   private:
@@ -255,11 +208,6 @@ class DG : public CBase_DG {
     CProxy_Discretization m_disc;
     //! Distributed Ghosts proxy
     CProxy_Ghosts m_ghosts;
-    //! \brief Degree of freedom for nodal extrema vector. When DGP1 is applied,
-    //!   there is one degree of freedom for cell average variable. When DGP2 is
-    //!   applied, the degree of freedom is 4 which refers to cell average and
-    //!   gradients in three directions
-    std::size_t m_ndof_NodalExtrm;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
     //! \brief Counter signaling that we have received all our solution ghost
@@ -271,48 +219,26 @@ class DG : public CBase_DG {
     //! \brief Counter signaling that we have received all our node solution
     //!   contributions
     std::size_t m_nnod;
-    //! Counter signaling that we have received all our reconstructed ghost data
-    std::size_t m_nreco;
-    //! \brief Counter signaling that we have received all our nodal extrema from
-    //!   ghost chare partitions
-    std::size_t m_nnodalExtrema;
     //! Vector of unknown/solution average over each mesh element
     tk::Fields m_u;
     //! Vector of unknown at previous time-step
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
-    //! Element geometry
-    tk::Fields m_geoElem;
     //! Left-hand side mass-matrix which is a diagonal matrix
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Vector of nodal extrema for conservative variables
-    std::vector< std::vector<tk::real> > m_uNodalExtrm;
-    //! Vector of nodal extrema for primitive variables
-    std::vector< std::vector<tk::real> > m_pNodalExtrm;
-    //! Buffer for vector of nodal extrema for conservative variables
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
-    //! Buffer for vector of nodal extrema for primitive variables
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_pNodalExtrmc;
     //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_npoin;
     //! Diagnostics object
     ElemDiagnostics m_diag;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
-    //! Vector of local number of degrees of freedom for each element
-    std::vector< std::size_t > m_ndof;
-    //! Vector of number of degrees of freedom for each PDE equation/component
-    std::vector< std::size_t > m_numEqDof;
     //! Solution receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
+    std::array< std::vector< std::vector< tk::real > >, 2 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
-    //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
-    //!   for ghosts only
-    std::array< std::vector< std::size_t >, 3 > m_ndofc;
+    std::array< std::vector< std::vector< tk::real > >, 2 > m_pc;
     //! 1 if starting time stepping, 0 if during time stepping
     std::size_t m_initial;
     //! Elem output fields
@@ -328,14 +254,6 @@ class DG : public CBase_DG {
     Ghosts::OutMesh m_outmesh;
     //! Element ids at which box ICs are defined by user (multiple boxes)
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
-    //! Shock detection marker for field output
-    std::vector< std::size_t > m_shockmarker;
-
-    //! Access bound Discretization class pointer
-    Discretization* Disc() const {
-      Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
-      return m_disc[ thisIndex ].ckLocal();
-    }
 
     //! Access bound Discretization class pointer
     Ghosts* myGhosts() const {
@@ -343,14 +261,17 @@ class DG : public CBase_DG {
       return m_ghosts[ thisIndex ].ckLocal();
     }
 
+    //! Access bound Discretization class pointer
+    Discretization* Disc() const {
+      Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
+      return m_disc[ thisIndex ].ckLocal();
+    }
+
     //! Output mesh field data
     void writeFields( CkCallback c );
 
     //! Compute solution reconstructions
     void reco();
-
-    //! Compute nodal extrema at chare-boundary nodes
-    void nodalExtrema();
 
     //! Compute limiter function
     void lim();
@@ -363,9 +284,6 @@ class DG : public CBase_DG {
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
-
-    //! p-refine all elements that are adjacent to p-refined elements
-    void propagate_ndof();
 
     //! Evaluate solution on incomping (a potentially refined) mesh
     std::tuple< tk::Fields, tk::Fields, tk::Fields, tk::Fields >
@@ -386,4 +304,4 @@ class DG : public CBase_DG {
 
 } // inciter::
 
-#endif // DG_h
+#endif // FV_h

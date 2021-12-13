@@ -40,6 +40,7 @@
 #include "FluxCorrector.hpp"
 #include "NodeDiagnostics.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "Ghosts.hpp"
 
 #include "NoWarning/alecg.decl.h"
 
@@ -76,6 +77,7 @@ class ALECG : public CBase_ALECG {
 
     //! Constructor
     explicit ALECG( const CProxy_Discretization& disc,
+                    const CProxy_Ghosts& ghostsproxy,
                     const std::map< int, std::vector< std::size_t > >& bface,
                     const std::map< int, std::vector< std::size_t > >& bnode,
                     const std::vector< std::size_t >& triinpoel );

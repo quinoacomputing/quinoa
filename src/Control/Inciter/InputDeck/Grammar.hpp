@@ -766,7 +766,7 @@ namespace grm {
       auto& ndof = discr.template get< tag::ndof >();
       auto& rdof = discr.template get< tag::rdof >();
       auto scheme = discr.template get< tag::scheme >();
-      if (scheme == SchemeType::P0P1) {
+      if (scheme == SchemeType::P0P1 || scheme == SchemeType::FV) {
         ndof = 1; rdof = 4;
       } else if (scheme == SchemeType::DGP1) {
         ndof = rdof = 4;
@@ -775,6 +775,10 @@ namespace grm {
       } else if (scheme == SchemeType::PDG) {
         ndof = rdof = 10;
         stack.template get< tag::pref, tag::pref >() = true;
+      } else if (scheme != SchemeType::DG &&
+          scheme != SchemeType::DiagCG &&
+          scheme != SchemeType::ALECG) {
+        Throw("Scheme type not configured in configure_scheme");
       }
     }
   };

@@ -28,7 +28,8 @@ namespace inciter {
 
 //! Register compressible flow PDEs into PDE factory
 void
-registerMultiMat( DGFactory& df, std::set< ctr::PDEType >& dgt );
+registerMultiMat( DGFactory& df, FVFactory& ff,
+  std::set< ctr::PDEType >& fvt, std::set< ctr::PDEType >& dgt );
 
 //! Return information on the multi-material compressible flow PDE
 std::vector< std::pair< std::string, std::string > >

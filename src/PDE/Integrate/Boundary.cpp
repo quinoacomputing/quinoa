@@ -273,4 +273,142 @@ update_rhs_bc ( ncomp_t ncomp,
   }
 }
 
+void
+bndSurfIntFV( ncomp_t system,
+  std::size_t nmat,
+  ncomp_t offset,
+  const std::size_t rdof,
+  const std::vector< bcconf_t >& bcconfig,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  real t,
+  const RiemannFluxFn& flux,
+  const VelFn& vel,
+  const StateFn& state,
+  const Fields& U,
+  const Fields& P,
+  Fields& R,
+  std::vector< std::vector< tk::real > >& riemannDeriv,
+  int intsharp )
+// *****************************************************************************
+//! Compute boundary surface flux integrals for a given boundary type for FV
+//! \details This function computes contributions from surface integrals along
+//!   all faces for a particular boundary condition type, configured by the state
+//!   function
+//! \param[in] system Equation system index
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] bcconfig BC configuration vector for multiple side sets
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] t Physical time
+//! \param[in] flux Riemann flux function to use
+//! \param[in] vel Function to use to query prescribed velocity (if any)
+//! \param[in] state Function to evaluate the left and right solution state at
+//!   boundaries
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
+//! \param[in] intsharp Interface compression tag, an optional argument, with
+//!   default 0, so that it is unused for single-material and transport.
+// *****************************************************************************
+{
+  const auto& bface = fd.Bface();
+  const auto& esuf = fd.Esuf();
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
+
+  Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
+          "derivative vector for single material compflow" );
+
+  for (const auto& s : bcconfig) {       // for all bc sidesets
+    auto bc = bface.find( std::stoi(s) );// faces for side set
+    if (bc != end(bface))
+    {
+      for (const auto& f : bc->second)
+      {
+        Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
+
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+        // Extract the left element coordinates
+        std::array< std::array< tk::real, 3>, 4 > coordel_l {{
+        {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
+        {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
+        {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
+        {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
+
+        // Compute the determinant of Jacobian matrix
+        auto detT_l =
+          Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+
+        // face normal
+        std::array< real, 3 >
+          fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+
+        // face centroid
+        std::array< real, 3 >
+          gp{{ geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0) }};
+
+        std::array< tk::real, 3> ref_gp_l{
+          Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+          Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+          Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
+
+        //Compute the basis functions for the left element
+        auto B_l = eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
+
+        // Compute the state variables at the left element
+        auto ugp = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+          rdof, nmat, el, rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+
+        Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
+                "appended boundary state vector" );
+
+        auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn );
+
+        // Compute the numerical flux
+        auto fl = flux( fn, var, vel( system, ncomp, gp[0], gp[1], gp[2], t ) );
+
+        // Add the surface integration term to the rhs
+        for (ncomp_t c=0; c<ncomp; ++c)
+        {
+          R(el, c, offset) -= geoFace(f,0,0) * fl[c];
+        }
+      
+        // Prep for non-conservative terms in multimat
+        if (fl.size() > ncomp)
+        {
+          // Gradients of partial pressures
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            for (std::size_t idir=0; idir<3; ++idir)
+              riemannDeriv[3*k+idir][el] += geoFace(f,0,0) * fl[ncomp+k]
+              * fn[idir];
+          }
+      
+          // Divergence of velocity
+          riemannDeriv[3*nmat][el] += geoFace(f,0,0) * fl[ncomp+nmat];
+        }
+      }
+    }
+  }
+}
+
 } // tk::

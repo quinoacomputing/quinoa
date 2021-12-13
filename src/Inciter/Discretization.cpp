@@ -50,6 +50,8 @@ Discretization::Discretization(
   const tk::UnsMesh::CoordMap& coordmap,
   const tk::UnsMesh::Chunk& el,
   const tk::CommMaps& msum,
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::vector< std::size_t >& triinpoel,
   int nc ) :
   m_meshid( meshid ),
   m_transfer_complete(),
@@ -95,7 +97,9 @@ Discretization::Discretization(
   m_nsrc( 0 ),
   m_ndst( 0 ),
   m_meshvel( 0, 3 ),
-  m_meshvel_converged( true )
+  m_meshvel_converged( true ),
+  m_bface( bface ),
+  m_triinpoel( triinpoel )
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID

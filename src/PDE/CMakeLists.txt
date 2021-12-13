@@ -10,6 +10,7 @@ add_library(PDE
             ConfigureMultiMat.cpp
             ConfigureOutVar.cpp
             CGPDE.cpp
+            FVPDE.cpp
             DGPDE.cpp)
 
 target_include_directories(PDE PUBLIC

@@ -160,6 +160,9 @@ class Transporter : public CBase_Transporter {
     //! Non-reduction target for receiving progress report on face adjacency
     void chadj() { m_progWork.inc< ADJ >( printer() ); }
 
+    // Reduction target indicating all "ghosts" insertions are done
+    void doneInsertingGhosts(std::size_t meshid);
+
     //! Reduction target indicating that the communication maps have been setup
     void comfinal( std::size_t initial, std::size_t summeshid );
 

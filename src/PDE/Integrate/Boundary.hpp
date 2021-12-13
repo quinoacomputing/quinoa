@@ -68,6 +68,28 @@ update_rhs_bc ( ncomp_t ncomp,
                 const std::vector< tk::real >& B_l,
                 Fields& R,
                 std::vector< std::vector< tk::real > >& riemannDeriv );
+
+//! Compute boundary surface flux integrals for a given boundary type for FV
+void
+bndSurfIntFV( ncomp_t system,
+  std::size_t nmat,
+  ncomp_t offset,
+  const std::size_t rdof,
+  const std::vector< bcconf_t >& bcconfig,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  real t,
+  const RiemannFluxFn& flux,
+  const VelFn& vel,
+  const StateFn& state,
+  const Fields& U,
+  const Fields& P,
+  Fields& R,
+  std::vector< std::vector< tk::real > >& riemannDeriv,
+  int intsharp );
 } // tk::
 
 #endif // Boundary_h

@@ -247,6 +247,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::dgp1
                                  , kw::dgp2
                                  , kw::pdg
+                                 , kw::fv
                                  , kw::flux
                                  , kw::laxfriedrichs
                                  , kw::hllc
@@ -457,6 +458,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       Assert( pnt.size() == 3*rad.size(), "Size mismatch" );
       return { std::move(pnt), std::move(rad) };
     }
+
+    //! Query scheme centering
+    //! \return Scheme centering
+    tk::Centering centering() const
+    { return ctr::Scheme().centering( get< tag::discr, tag::scheme >() ); }
 
   private:
     //! Function object to extract the mesh filenames assigned to solvers

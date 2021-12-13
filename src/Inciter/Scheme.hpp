@@ -84,8 +84,10 @@
 #include "NoWarning/alecg.decl.h"
 #include "NoWarning/distfct.decl.h"
 #include "NoWarning/dg.decl.h"
+#include "NoWarning/fv.decl.h"
 #include "NoWarning/ale.decl.h"
 #include "NoWarning/conjugategradients.decl.h"
+#include "NoWarning/ghosts.decl.h"
 
 namespace inciter {
 
@@ -96,13 +98,15 @@ class Scheme {
     //! Variant type listing all chare proxy types modeling the same concept
     using Proxy = std::variant< CProxy_DiagCG
                               , CProxy_DG
-                              , CProxy_ALECG >;
+                              , CProxy_ALECG
+                              , CProxy_FV >;
 
   public:
     //! Variant type listing all chare element proxy types
     using ProxyElem = std::variant< CProxy_DiagCG::element_t
                                   , CProxy_DG::element_t
-                                  , CProxy_ALECG::element_t >;
+                                  , CProxy_ALECG::element_t
+                                  , CProxy_FV::element_t >;
 
     //! Empty constructor for Charm++
     explicit Scheme() {}
@@ -120,7 +124,8 @@ class Scheme {
     //!   specific discretization configured by the enum.
     explicit Scheme( ctr::SchemeType scheme,
                      bool ale = false,
-                     bool linearsolver = false ) :
+                     bool linearsolver = false,
+                     tk::Centering centering = tk::Centering::NODE ) :
       discproxy( CProxy_Discretization::ckNew() )
     {
       bound.bindTo( discproxy );
@@ -136,10 +141,14 @@ class Scheme {
         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
       } else if (scheme == ctr::SchemeType::ALECG) {
         proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(bound) );
+      } else if (scheme == ctr::SchemeType::FV) {
+        proxy = static_cast< CProxy_FV >( CProxy_FV::ckNew(bound) );
       } else Throw( "Unknown discretization scheme" );
       if (ale) aleproxy = CProxy_ALE::ckNew(bound);
       if (linearsolver)
         conjugategradientsproxy = tk::CProxy_ConjugateGradients::ckNew(bound);
+      if (centering == tk::Centering::ELEM)
+        ghostsproxy = CProxy_Ghosts::ckNew(bound);
     }
 
     //! Entry method tags for specific Scheme classes to use with bcast()
@@ -244,6 +253,10 @@ class Scheme {
     tk::CProxy_ConjugateGradients& conjugategradients() noexcept
     { return conjugategradientsproxy; }
 
+    //! Get reference to Ghosts proxy
+    //! \return Ghosts Charm++ chare array proxy
+    CProxy_Ghosts& ghosts() noexcept { return ghostsproxy; }
+
     //! Get reference to scheme proxy
     //! Get reference to scheme proxy
     //! \return Variant storing Charm++ chare array proxy configured
@@ -272,6 +285,7 @@ class Scheme {
       p | fctproxy;
       p | aleproxy;
       p | conjugategradientsproxy;
+      p | ghostsproxy;
       p | bound;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -291,6 +305,8 @@ class Scheme {
     CProxy_ALE aleproxy;
     //! Charm++ proxy to conjugate gradients linear solver class
     tk::CProxy_ConjugateGradients conjugategradientsproxy;
+    //! Charm++ proxy to Ghosts class
+    CProxy_Ghosts ghostsproxy;
     //! Charm++ array options for binding chares
     CkArrayOptions bound;
 

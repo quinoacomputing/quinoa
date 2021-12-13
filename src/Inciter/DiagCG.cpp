@@ -45,6 +45,7 @@ extern std::vector< CGPDE > g_cgpde;
 using inciter::DiagCG;
 
 DiagCG::DiagCG( const CProxy_Discretization& disc,
+                const CProxy_Ghosts&,
                 const std::map< int, std::vector< std::size_t > >& bface,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 const std::vector< std::size_t >& triinpoel ) :

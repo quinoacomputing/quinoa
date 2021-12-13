@@ -20,6 +20,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "CGPDE.hpp"
 #include "DGPDE.hpp"
+#include "FVPDE.hpp"
 #include "DerivedData.hpp"
 #include "UnsMesh.hpp"
 #include "Centering.hpp"
@@ -33,6 +34,7 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
+extern std::vector< FVPDE > g_fvpde;
 
 } // inciter::
 
@@ -851,10 +853,13 @@ Refiner::writeMesh( const std::string& basefilename,
     // Generate left hand side for DG initialize
     auto geoElem = tk::genGeoElemTet( m_inpoel, m_coord );
     for (const auto& eq : g_dgpde) eq.lhs( geoElem, lhs );
+    for (const auto& eq : g_fvpde) eq.lhs( geoElem, lhs );
 
     // Evaluate initial conditions on current mesh at t0
     auto u = lhs;
     for (const auto& eq : g_dgpde)
+      eq.initialize( lhs, m_inpoel, m_coord, inbox, u, t0, m_inpoel.size()/4 );
+    for (const auto& eq : g_fvpde)
       eq.initialize( lhs, m_inpoel, m_coord, inbox, u, t0, m_inpoel.size()/4 );
 
     // Extract all scalar components from solution for output to file
@@ -1390,6 +1395,11 @@ Refiner::nodeinit( std::size_t npoin,
     for (const auto& eq : g_dgpde)
       eq.lhs( geoElem, lhs );
     for (const auto& eq : g_dgpde)
+      eq.initialize( lhs, m_inpoel, m_coord, inbox, ue, t0, esuel.size()/4 );
+
+    for (const auto& eq : g_fvpde)
+      eq.lhs( geoElem, lhs );
+    for (const auto& eq : g_fvpde)
       eq.initialize( lhs, m_inpoel, m_coord, inbox, ue, t0, esuel.size()/4 );
 
     // Transfer initial conditions from cells to nodes
