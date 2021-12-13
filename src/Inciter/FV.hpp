@@ -236,9 +236,9 @@ class FV : public CBase_FV {
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Solution receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
+    std::array< std::vector< std::vector< tk::real > >, 2 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
+    std::array< std::vector< std::vector< tk::real > >, 2 > m_pc;
     //! 1 if starting time stepping, 0 if during time stepping
     std::size_t m_initial;
     //! Elem output fields

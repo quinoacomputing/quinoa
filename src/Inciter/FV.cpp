@@ -676,10 +676,10 @@ FV::comlim( int fromch,
     Assert( j >= myGhosts()->m_fd.Esuel().size()/4,
       "Receiving solution non-ghost data" );
     auto b = tk::cref_find( myGhosts()->m_bid, j );
-    Assert( b < m_uc[2].size(), "Indexing out of bounds" );
-    Assert( b < m_pc[2].size(), "Indexing out of bounds" );
-    m_uc[2][b] = u[i];
-    m_pc[2][b] = prim[i];
+    Assert( b < m_uc[1].size(), "Indexing out of bounds" );
+    Assert( b < m_pc[1].size(), "Indexing out of bounds" );
+    m_uc[1][b] = u[i];
+    m_pc[1][b] = prim[i];
   }
 
   // if we have received all solution ghost contributions from neighboring
@@ -702,13 +702,13 @@ FV::dt()
   // Combine own and communicated contributions of limited solution and degrees
   // of freedom in cells (if p-adaptive)
   for (const auto& b : myGhosts()->m_bid) {
-    Assert( m_uc[2][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
-    Assert( m_pc[2][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+    Assert( m_uc[1][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[1][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c,0) = m_uc[2][b.second][c];
+      m_u(b.first,c,0) = m_uc[1][b.second][c];
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(b.first,c,0) = m_pc[2][b.second][c];
+      m_p(b.first,c,0) = m_pc[1][b.second][c];
     }
   }
 
