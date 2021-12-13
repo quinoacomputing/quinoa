@@ -6646,6 +6646,19 @@ struct pdg_info {
 };
 using pdg = keyword< pdg_info, TAOCPP_PEGTL_STRING("pdg") >;
 
+struct fv_info {
+  static std::string name() { return "FV"; }
+  static std::string shortDescription() { return
+    "Select 2nd-order finite volume discretization"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the second-order accurate finite volume,
+    P0P1, spatial discretiztaion used in Inciter. This method uses a
+    least-squares procedure to reconstruct the second-order solution from the
+    first-order one. See Control/Inciter/Options/Scheme.hpp for other valid
+    options.)"; }
+};
+using fv = keyword< fv_info, TAOCPP_PEGTL_STRING("fv") >;
+
 struct scheme_info {
   static std::string name() { return "Discretization scheme"; }
   static std::string shortDescription() { return

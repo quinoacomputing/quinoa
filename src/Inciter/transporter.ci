@@ -51,6 +51,7 @@ module transporter {
       entry [reductiontarget] void startEsup( std::size_t meshid );
       entry [reductiontarget] void queried( std::size_t meshid );
       entry [reductiontarget] void responded( std::size_t meshid );
+      entry [reductiontarget] void doneInsertingGhosts(std::size_t meshid);
       entry [reductiontarget] void comfinal( std::size_t initial,
                                              std::size_t summeshid );
       entry [reductiontarget] void totalvol( tk::real v,

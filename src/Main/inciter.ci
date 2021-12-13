@@ -19,9 +19,11 @@ mainmodule inciter {
   extern module partitioner;
   extern module conjugategradients;
   extern module ale;
+  extern module ghosts;
   extern module diagcg;
   extern module alecg;
   extern module dg;
+  extern module fv;
   extern module charestatecollector;
   extern module lbswitch;
   #ifdef HAS_EXAM2M
@@ -40,6 +42,7 @@ mainmodule inciter {
     readonly ctr::InputDeck g_inputdeck;
     readonly std::vector< CGPDE > g_cgpde;
     readonly std::vector< DGPDE > g_dgpde;
+    readonly std::vector< FVPDE > g_fvpde;
 
   } // inciter::
 

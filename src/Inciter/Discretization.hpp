@@ -74,6 +74,8 @@ class Discretization : public CBase_Discretization {
         const tk::UnsMesh::CoordMap& coordmap,
         const tk::UnsMesh::Chunk& el,
         const tk::CommMaps& msum,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::vector< std::size_t >& triinpoel,
         int nc );
 
     #if defined(__clang__)
@@ -452,6 +454,8 @@ class Discretization : public CBase_Discretization {
       p | m_ndst;
       p | m_meshvel;
       p | m_meshvel_converged;
+      p | m_bface;
+      p | m_triinpoel;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -594,6 +598,10 @@ class Discretization : public CBase_Discretization {
     //! \brief True if all stages of the time step converged the mesh velocity
     //!   linear solve in ALE
     bool m_meshvel_converged;
+    //! Boundary faces side-set information
+    std::map< int, std::vector< std::size_t > > m_bface;
+    //! Triangle face connecitivity
+    std::vector< std::size_t > m_triinpoel;
 
     //! Generate {A,x,b} for Laplacian mesh velocity smoother
     std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >

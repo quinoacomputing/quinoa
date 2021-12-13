@@ -18,6 +18,7 @@ module alecg {
   //! [External modules and includes]
   extern module transporter;
   extern module discretization;
+  extern module ghosts;
 
   include "UnsMesh.hpp";
   include "PUPUtil.hpp";
@@ -30,6 +31,7 @@ module alecg {
     //! [1D Charm++ chare array]
       //! [Entry methods]
       entry ALECG( const CProxy_Discretization& disc,
+                   const CProxy_Ghosts& ghostsproxy,
                    const std::map< int, std::vector< std::size_t > >& bface,
                    const std::map< int, std::vector< std::size_t > >& bnode,
                    const std::vector< std::size_t >& triinpoel );

@@ -11,6 +11,7 @@ add_library(PDE
             ConfigureOutVar.cpp
             CGPDE.cpp
             DGPDE.cpp
+            FVPDE.cpp
             CompFlow/RiemannFactory.cpp
             MultiMat/RiemannFactory.cpp)
 

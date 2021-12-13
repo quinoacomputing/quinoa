@@ -52,6 +52,7 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
+extern std::vector< FVPDE > g_fvpde;
 
 }
 
@@ -194,6 +195,8 @@ Transporter::info( const InciterPrint& print )
                 stack.cgfactory(), stack.cgntypes() );
   print.eqlist( "Registered PDEs using discontinuous Galerkin (DG) methods",
                 stack.dgfactory(), stack.dgntypes() );
+  print.eqlist( "Registered PDEs using finite volume (DG) methods",
+                stack.fvfactory(), stack.fvntypes() );
   print.endpart();
 
   // Print out information on problem
@@ -225,9 +228,7 @@ Transporter::info( const InciterPrint& print )
       print.item( "Clipping FCT",
                   g_inputdeck.get< tag::discr, tag::fctclip >() );
     }
-  } else if (scheme == ctr::SchemeType::DG ||
-             scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
-             scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
+  } else if (g_inputdeck.centering() == tk::Centering::ELEM)
   {
     print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
@@ -557,7 +558,8 @@ Transporter::createPartitioner()
   for ([[maybe_unused]] const auto& filename : m_input)
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
                            g_inputdeck.get< tag::ale, tag::ale >(),
-                           need_linearsolver() );
+                           need_linearsolver(),
+                           centering );
 
   ErrChk( !m_input.empty(), "No input mesh" );
 
@@ -905,7 +907,7 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb,
     Throw( err.str() );
   }
 
-  if (cb > 0.0) m_scheme[meshid].bcast< Scheme::resizeComm >();
+  if (cb > 0.0) m_scheme[meshid].ghosts().resizeComm();
 }
 
 void
@@ -973,7 +975,7 @@ Transporter::startEsup( std::size_t meshid )
 //! \note Only used for cell-centered schemes
 // *****************************************************************************
 {
-  m_scheme[meshid].bcast< Scheme::nodeNeighSetup >();
+  m_scheme[meshid].ghosts().nodeNeighSetup();
 }
 
 void
@@ -1100,6 +1102,8 @@ Transporter::diagHeader()
            scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
            scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
     for (const auto& eq : g_dgpde) varnames( eq, var );
+  else if (scheme == ctr::SchemeType::FV)
+    for (const auto& eq : g_fvpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
 
   const tk::ctr::Error opt;
@@ -1128,6 +1132,17 @@ Transporter::diagHeader()
 
   // Write diagnostics header
   dw.header( d );
+}
+
+void
+Transporter::doneInsertingGhosts(std::size_t meshid)
+// *****************************************************************************
+// Reduction target indicating all "ghosts" insertions are done
+//! \param[in] meshid Mesh id
+// *****************************************************************************
+{
+  m_scheme[meshid].ghosts().doneInserting();
+  m_scheme[meshid].ghosts().startCommSetup();
 }
 
 void
